@@ -18,7 +18,7 @@ import {
   type PlaywrightNodeRunSnapshot,
 } from '@/shared/lib/ai-paths/api/client/agent';
 
-type LiveTraderaAction = 'list' | 'relist' | 'sync' | 'check_status';
+type LiveTraderaAction = 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
 
 export type LiveTraderaExecutionState = {
   runId: string;
@@ -48,7 +48,8 @@ const normalizeLiveTraderaAction = (value: unknown): LiveTraderaAction | null =>
     normalized === 'list' ||
     normalized === 'relist' ||
     normalized === 'sync' ||
-    normalized === 'check_status'
+    normalized === 'check_status' ||
+    normalized === 'move_to_unsold'
   ) {
     return normalized;
   }
@@ -115,11 +116,14 @@ const buildLiveTraderaExecutionState = (
 ): LiveTraderaExecutionState => {
   const { outputs, metadata, resultValue, finalUrl } = resolveLiveRunOutputs(snapshot);
   const emittedSteps = readTraderaExecutionSteps(outputs['steps']);
+  const rawExecutionSteps = readTraderaExecutionSteps(resultValue['executionSteps']);
   const executionSteps =
     emittedSteps.length > 0
       ? emittedSteps
       : action === 'check_status'
         ? resolveTraderaCheckStatusExecutionStepsFromResult(resultValue)
+        : action === 'move_to_unsold'
+          ? rawExecutionSteps
         : buildTraderaQuicklistExecutionSteps({
             action,
             rawResult: resultValue,

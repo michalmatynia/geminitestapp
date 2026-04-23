@@ -69,6 +69,50 @@ describe('mongoProductWriteImpl.duplicateProduct', () => {
 });
 
 describe('mongoProductWriteImpl custom fields persistence', () => {
+  it('stores derived structured title terms on create and update when English title changes', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      } as any,
+      async () => ({ insertOne }) as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        name_en: 'Survey Corps | 7 cm | Acrylic | Anime Pin | Naruto',
+      } as any,
+      async () => ({ findOneAndUpdate }) as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        structuredTitle: {
+          size: '4 cm',
+          material: 'Metal',
+          theme: 'Attack On Titan',
+        },
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          structuredTitle: {
+            size: '7 cm',
+            material: 'Acrylic',
+            theme: 'Naruto',
+          },
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
   it('stores normalized custom fields on create', async () => {
     const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
     const collection = {

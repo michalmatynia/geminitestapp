@@ -123,7 +123,7 @@ describe('AgenticCodingCodex54 lesson panels', () => {
     render(<>{mcpSlides['mcp-integrations'][1]?.content}</>);
 
     const supportingItem = screen.getByText(
-      'Najczęstsze integracje: Figma, Linear, GitHub, wewnętrzne bazy wiedzy.'
+      'Najczęstsze integracje: Figma, GitHub, wewnętrzne bazy wiedzy.'
     );
 
     expect(supportingItem.closest('.kangur-lesson-visual-supporting')).toBeTruthy();

@@ -27,10 +27,10 @@ function AdminFilemakerPageInner(): React.JSX.Element {
         actions={[
           {
             key: 'mail',
-            label: 'Mail',
+            label: 'Email Client',
             icon: <Mail className='size-4' />,
             variant: 'outline',
-            onClick: () => startTransition(() => { router.push('/admin/filemaker/mail'); }),
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/mail-client'); }),
           },
           {
             key: 'campaigns',

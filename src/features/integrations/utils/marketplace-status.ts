@@ -17,6 +17,8 @@ export const FAILURE_STATUSES = new Set([
   'error',
   'auth_required',
   'needs_login',
+  'ended',
+  'unsold',
   'removed',
   'archived',
 ]);

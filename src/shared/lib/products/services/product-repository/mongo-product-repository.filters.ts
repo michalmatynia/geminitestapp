@@ -110,6 +110,108 @@ const buildMongoStringFieldCondition = (
   return null;
 };
 
+const buildStructuredTitleSegmentValuePattern = (value: string): string =>
+  value
+    .trim()
+    .split(/\s+/)
+    .map((segment: string) => escapeRegex(segment))
+    .join('\\s+');
+
+const buildStructuredTitleSegmentPrefixPattern = (segmentIndex: number): string =>
+  Array.from({ length: segmentIndex }, () => '\\s*[^|]*\\s*\\|').join('');
+
+const buildStructuredTitleSegmentExactPattern = (segmentIndex: number, value: string): string =>
+  `^${buildStructuredTitleSegmentPrefixPattern(segmentIndex)}\\s*${buildStructuredTitleSegmentValuePattern(value)}${segmentIndex === 4 ? '\\s*$' : '\\s*\\|'}`;
+
+const buildStructuredTitleSegmentPresencePattern = (segmentIndex: number): string =>
+  `^${buildStructuredTitleSegmentPrefixPattern(segmentIndex)}\\s*[^|]*\\S[^|]*${segmentIndex === 4 ? '\\s*$' : '\\s*\\|'}`;
+
+const buildMongoStructuredTitleFieldCondition = (
+  path: 'structuredTitle.size' | 'structuredTitle.material' | 'structuredTitle.theme',
+  segmentIndex: 1 | 2 | 4,
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (condition.operator === 'isEmpty') {
+    return {
+      $and: [
+        buildEmptyStringPathCondition(path),
+        {
+          $nor: [
+            {
+              name_en: {
+                $regex: buildStructuredTitleSegmentPresencePattern(segmentIndex),
+              },
+            },
+          ],
+        },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return {
+      $or: [
+        buildNonEmptyStringPathCondition(path),
+        {
+          name_en: {
+            $regex: buildStructuredTitleSegmentPresencePattern(segmentIndex),
+          },
+        },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (condition.operator === 'eq') {
+    if (!value) return null;
+    return {
+      $or: [
+        { [path]: value },
+        {
+          name_en: {
+            $regex: buildStructuredTitleSegmentExactPattern(segmentIndex, value),
+          },
+        },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'in') {
+    const values = toAdvancedStringArrayValues(condition.value);
+    if (values.length === 0) return null;
+    return {
+      $or: [
+        { [path]: { $in: values } },
+        ...values.map((entry: string) => ({
+          name_en: {
+            $regex: buildStructuredTitleSegmentExactPattern(segmentIndex, entry),
+          },
+        })),
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'neq') {
+    const equalCondition = buildMongoStructuredTitleFieldCondition(path, segmentIndex, {
+      ...condition,
+      operator: 'eq',
+    });
+    if (!equalCondition) return null;
+    return { $nor: [equalCondition] } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'notIn') {
+    const inCondition = buildMongoStructuredTitleFieldCondition(path, segmentIndex, {
+      ...condition,
+      operator: 'in',
+    });
+    if (!inCondition) return null;
+    return { $nor: [inCondition] } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
 const buildMongoIdCondition = (
   condition: ProductAdvancedFilterCondition
 ): Filter<ProductDocument> | null => {
@@ -396,6 +498,12 @@ const compileAdvancedMongoCondition = async (
       ['description_en', 'description_pl', 'description_de'],
       condition
     );
+  if (condition.field === 'titleSize')
+    return buildMongoStructuredTitleFieldCondition('structuredTitle.size', 1, condition);
+  if (condition.field === 'titleMaterial')
+    return buildMongoStructuredTitleFieldCondition('structuredTitle.material', 2, condition);
+  if (condition.field === 'titleTheme')
+    return buildMongoStructuredTitleFieldCondition('structuredTitle.theme', 4, condition);
   if (condition.field === 'categoryId') return buildMongoCategoryCondition(condition);
   if (condition.field === 'catalogId')
     return buildMongoNestedIdArrayCondition('catalogs.catalogId', 'catalogs', condition);

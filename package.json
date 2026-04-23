@@ -161,6 +161,7 @@
     "products:summarize:parameter-source-recovery": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/summarize-product-parameter-source-recovery.ts",
     "products:restore:parameters:from-localized-values": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/restore-product-parameters-from-localized-values.ts",
     "products:restore:parameters:from-names": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/restore-product-parameters-from-names.ts",
+    "products:backfill:structured-title": "cross-env NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/backfill-product-structured-title.ts",
     "products:normalize:v2": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/db/normalize-products-v2.ts",
     "restore:base-listing-statuses": "tsx scripts/db/restore-base-listing-statuses.ts",
     "cleanup:db-providers": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/cleanup/cleanup-db-provider-settings.ts",

@@ -7,6 +7,7 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 const createCreateMutationV2Mock = vi.hoisted(() => vi.fn());
 const createDeleteMutationV2Mock = vi.hoisted(() => vi.fn());
+const apiDeleteMock = vi.hoisted(() => vi.fn());
 const apiPostMock = vi.hoisted(() => vi.fn());
 const queryClientMock = vi.hoisted(() => ({
   cancelQueries: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock('@/shared/lib/query-factories-v2', async (importOriginal) => {
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
+    delete: apiDeleteMock,
     post: apiPostMock,
   },
   ApiError: class ApiError extends Error {},
@@ -43,6 +45,7 @@ vi.mock('@/shared/lib/api-client', () => ({
 import {
   useDeleteFromBaseMutation,
   useCheckTraderaStatusMutation,
+  usePurgeListingMutation,
   useRelistTraderaMutation,
   useSyncTraderaMutation,
 } from './useProductListingMutations';
@@ -52,6 +55,7 @@ describe('useProductListingMutations', () => {
     vi.clearAllMocks();
     createCreateMutationV2Mock.mockReturnValue({ kind: 'mutation' });
     createDeleteMutationV2Mock.mockReturnValue({ kind: 'delete-mutation' });
+    apiDeleteMock.mockResolvedValue(undefined);
     apiPostMock.mockResolvedValue({
       queued: true,
       listingId: 'listing-1',
@@ -157,6 +161,33 @@ describe('useProductListingMutations', () => {
       externalListingId: null,
       failureReason: null,
     });
+    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: QUERY_KEYS.products.lists(),
+    });
+    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: productDetailQueryKey,
+    });
+    expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
+      queryKey: productDetailEditQueryKey,
+    });
+  });
+
+  it('invalidates product detail caches after purging a listing connection', async () => {
+    const productDetailQueryKey = QUERY_KEYS.products.detail('product-1');
+    const productDetailEditQueryKey = QUERY_KEYS.products.detailEdit('product-1');
+
+    const { result } = renderHook(() => usePurgeListingMutation('product-1'));
+    const config = createDeleteMutationV2Mock.mock.calls[0]?.[0];
+
+    expect(result.current).toEqual({ kind: 'delete-mutation' });
+
+    await expect(config.mutationFn('listing-1')).resolves.toBeUndefined();
+    expect(apiDeleteMock).toHaveBeenCalledWith(
+      '/api/v2/integrations/products/product-1/listings/listing-1/purge'
+    );
+
+    await config.invalidate(queryClientMock);
+
     expect(queryClientMock.invalidateQueries).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.lists(),
     });

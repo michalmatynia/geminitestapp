@@ -15,13 +15,20 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
   const {
     listingToDelete,
     setListingToDelete,
+    listingToMoveToUnsold,
+    setListingToMoveToUnsold,
     listingToPurge,
     setListingToPurge,
     isSyncImagesConfirmOpen,
     setIsSyncImagesConfirmOpen,
   } = useProductListingsModals();
 
-  const { handleDeleteFromBase, handlePurgeListing, handleSyncBaseImages } =
+  const {
+    handleDeleteFromBase,
+    handleMoveTraderaListingToUnsold,
+    handlePurgeListing,
+    handleSyncBaseImages,
+  } =
     useProductListingsActions();
 
   const baseListing =
@@ -42,6 +49,21 @@ export function ProductListingsConfirmDialogs(): React.JSX.Element {
       title: 'Delete from Base.com',
       description: 'Delete this product from Base.com? This cannot be undone.',
       confirmText: 'Delete',
+      isDestructive: true,
+    },
+    {
+      id: 'move-tradera-listing-to-unsold',
+      open: Boolean(listingToMoveToUnsold),
+      onOpenChange: (open: boolean) => !open && setListingToMoveToUnsold(null),
+      onConfirm: () => {
+        if (listingToMoveToUnsold) void handleMoveTraderaListingToUnsold(listingToMoveToUnsold, {
+          browserMode: 'headed',
+        });
+      },
+      title: 'End On Tradera',
+      description:
+        'End this Tradera listing and move it to Unsold if possible? The app connection and listing history will be kept so you can relist it later.',
+      confirmText: 'End Listing',
       isDestructive: true,
     },
     {

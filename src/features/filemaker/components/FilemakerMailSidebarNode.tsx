@@ -63,6 +63,7 @@ export const FilemakerMailSidebarNode = memo(({
     onNewMailbox,
     onSelectSearch,
     onSelectAttention,
+    onSelectRecent,
     onSelectAccountSettings,
     onSelectFolder,
     onAccountUpdated,
@@ -299,14 +300,22 @@ export const FilemakerMailSidebarNode = memo(({
           setSyncingAccountId(parsed.accountId);
           void (async () => {
             try {
-              const result = await fetchJson<{ result: { fetchedMessageCount: number } }>(
+              const result = await fetchJson<{
+                result: { fetchedMessageCount: number; lastSyncError?: string | null };
+              }>(
                 `/api/filemaker/mail/accounts/${encodeURIComponent(parsed.accountId)}/sync`,
                 { method: 'POST' }
               );
               await fetchAccountsAndFolders();
-              toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
-                variant: 'success',
-              });
+              if (result.result.lastSyncError) {
+                toast(result.result.lastSyncError, {
+                  variant: 'error',
+                });
+              } else {
+                toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
+                  variant: 'success',
+                });
+              }
             } catch (error) {
               toast(error instanceof Error ? error.message : 'Mailbox sync failed.', {
                 variant: 'error',
@@ -351,6 +360,10 @@ export const FilemakerMailSidebarNode = memo(({
           return;
         }
         if (parsed?.kind === 'mail_account_recent') {
+          if (onSelectRecent) {
+            onSelectRecent(parsed.accountId);
+            return;
+          }
           startTransition(() => {
             router.push(
               buildMailSelectionHref({
@@ -409,7 +422,7 @@ export const FilemakerMailSidebarNode = memo(({
             router.push(
               buildMailSelectionHref({
                 accountId: parsed.accountId,
-                panel: 'account',
+                panel: 'settings',
                 recentMailboxFilter,
                 recentUnreadOnly,
                 recentQuery,

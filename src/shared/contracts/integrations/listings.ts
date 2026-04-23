@@ -237,6 +237,36 @@ export const productListingRelistResponseSchema = z.object({
 
 export type ProductListingRelistResponse = z.infer<typeof productListingRelistResponseSchema>;
 
+export const productListingMoveToUnsoldPayloadSchema = z.object({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
+});
+
+export type ProductListingMoveToUnsoldPayload = z.infer<
+  typeof productListingMoveToUnsoldPayloadSchema
+>;
+
+export const productListingMoveToUnsoldVariablesSchema = productListingActionSchema.extend({
+  browserMode: playwrightRelistBrowserModeSchema.optional(),
+  selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
+});
+
+export type ProductListingMoveToUnsoldVariables = z.infer<
+  typeof productListingMoveToUnsoldVariablesSchema
+>;
+
+export const productListingMoveToUnsoldResponseSchema = z.object({
+  queued: z.boolean(),
+  alreadyQueued: z.boolean().optional(),
+  listingId: z.string(),
+  status: z.string().optional(),
+  queue: productListingQueueJobSchema.optional(),
+});
+
+export type ProductListingMoveToUnsoldResponse = z.infer<
+  typeof productListingMoveToUnsoldResponseSchema
+>;
+
 export const productListingSyncPayloadSchema = z.object({
   browserMode: playwrightRelistBrowserModeSchema.optional(),
   selectorProfile: traderaSelectorProfileOverrideSchema.optional(),

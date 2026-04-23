@@ -11,5 +11,5 @@ export type ThreadsResponse = { threads: FilemakerMailThread[] };
 export type MailPageSelection = {
   accountId: string | null;
   mailboxPath: string | null;
-  panel: 'account' | 'attention' | 'recent' | 'search' | 'settings' | null;
+  panel: 'attention' | 'recent' | 'search' | 'settings' | null;
 };

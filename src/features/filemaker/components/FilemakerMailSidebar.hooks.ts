@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import type {
   FilemakerMailAccount,
   FilemakerMailFolderSummary,
@@ -9,35 +10,41 @@ import type {
 import { fetchFilemakerMailJson as fetchJson } from '../mail-ui-helpers';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import { logSystemError } from '@/shared/lib/observability/system-logger-client';
-
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type FoldersResponse = { folders: FilemakerMailFolderSummary[] };
 type ThreadsResponse = { threads: FilemakerMailThread[] };
+type UseFilemakerMailDataResult = {
+  accounts: FilemakerMailAccount[];
+  setAccounts: Dispatch<SetStateAction<FilemakerMailAccount[]>>;
+  folders: FilemakerMailFolderSummary[];
+  setFolders: Dispatch<SetStateAction<FilemakerMailFolderSummary[]>>;
+  threads: FilemakerMailThread[];
+  setThreads: Dispatch<SetStateAction<FilemakerMailThread[]>>;
+  recentThreads: FilemakerMailThread[];
+  setRecentThreads: Dispatch<SetStateAction<FilemakerMailThread[]>>;
+  isLoading: boolean;
+  syncingAccountId: string | null;
+  setSyncingAccountId: Dispatch<SetStateAction<string | null>>;
+  fetchAccountsAndFolders: () => Promise<void>;
+};
+const RECENT_THREAD_PREVIEW_LIMIT = 5;
 
 export const useFilemakerMailData = ({
+  enabled,
   refreshKey,
   selectedAccountId,
   selectedMailboxPath,
-  searchContextAccountId,
-  searchQuery,
-  recentMailboxFilter: _recentMailboxFilter,
-  recentQuery: _recentQuery,
 }: {
+  enabled: boolean;
   refreshKey: number;
   selectedAccountId: string | null;
   selectedMailboxPath: string | null;
-  searchContextAccountId: string | null;
-  searchQuery: string | null;
-  recentMailboxFilter: string | null;
-  recentQuery: string | null;
-}) => {
+}): UseFilemakerMailDataResult => {
   const { toast } = useToast();
   const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
   const [folders, setFolders] = useState<FilemakerMailFolderSummary[]>([]);
   const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
   const [recentThreads, setRecentThreads] = useState<FilemakerMailThread[]>([]);
-  const [searchResults, setSearchResults] = useState<FilemakerMailThread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
 
@@ -60,13 +67,17 @@ export const useFilemakerMailData = ({
   }, [toast]);
 
   const fetchRecentThreads = useCallback(async (): Promise<void> => {
-    if (!selectedAccountId) {
+    if (selectedAccountId === null) {
       setRecentThreads([]);
       return;
     }
     try {
+      const params = new URLSearchParams({
+        accountId: selectedAccountId,
+        limit: String(RECENT_THREAD_PREVIEW_LIMIT),
+      });
       const result = await fetchJson<ThreadsResponse>(
-        `/api/filemaker/mail/threads?accountId=${encodeURIComponent(selectedAccountId)}`
+        `/api/filemaker/mail/threads?${params.toString()}`
       );
       setRecentThreads(result.threads);
     } catch (error) {
@@ -77,7 +88,7 @@ export const useFilemakerMailData = ({
   }, [selectedAccountId, toast]);
 
   const fetchFolderThreads = useCallback(async (): Promise<void> => {
-    if (!selectedAccountId || !selectedMailboxPath) {
+    if (selectedAccountId === null || selectedMailboxPath === null) {
       setThreads([]);
       return;
     }
@@ -95,44 +106,26 @@ export const useFilemakerMailData = ({
     }
   }, [selectedAccountId, selectedMailboxPath, toast]);
 
-  const fetchSearchResults = useCallback(async (): Promise<void> => {
-    if (!searchQuery) {
-      setSearchResults([]);
+  useEffect((): void => {
+    if (!enabled) {
       return;
     }
-    try {
-      const params = new URLSearchParams({ query: searchQuery });
-      if (searchContextAccountId) params.set('accountId', searchContextAccountId);
-
-      const result = await fetchJson<ThreadsResponse>(
-        `/api/filemaker/mail/search?${params.toString()}`
-      );
-      setSearchResults(result.threads);
-    } catch (error) {
-      void logSystemError({
-        message: 'Failed to fetch search results',
-        error,
-        source: 'filemaker.mail.hooks.useFilemakerMailData',
-        context: { searchContextAccountId, searchQuery },
-      });
-    }
-  }, [searchContextAccountId, searchQuery]);
-
-  useEffect((): void => {
     void fetchAccountsAndFolders();
-  }, [fetchAccountsAndFolders, refreshKey]);
+  }, [enabled, fetchAccountsAndFolders, refreshKey]);
 
   useEffect((): void => {
+    if (!enabled) {
+      return;
+    }
     void fetchRecentThreads();
-  }, [fetchRecentThreads, refreshKey]);
+  }, [enabled, fetchRecentThreads, refreshKey]);
 
   useEffect((): void => {
+    if (!enabled) {
+      return;
+    }
     void fetchFolderThreads();
-  }, [fetchFolderThreads, refreshKey]);
-
-  useEffect((): void => {
-    void fetchSearchResults();
-  }, [fetchSearchResults]);
+  }, [enabled, fetchFolderThreads, refreshKey]);
 
   return {
     accounts,
@@ -143,7 +136,6 @@ export const useFilemakerMailData = ({
     setThreads,
     recentThreads,
     setRecentThreads,
-    searchResults,
     isLoading,
     syncingAccountId,
     setSyncingAccountId,

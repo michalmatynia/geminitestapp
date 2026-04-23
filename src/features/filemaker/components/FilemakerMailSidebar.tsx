@@ -18,7 +18,6 @@ import {
   toFilemakerMailAccountNodeId,
   toFilemakerMailAccountComposeNodeId,
   toFilemakerMailAccountRecentNodeId,
-  toFilemakerMailAccountSettingsNodeId,
   toFilemakerMailAccountStatusToggleNodeId,
   toFilemakerMailAccountSyncNodeId,
   toFilemakerMailFolderNodeId,
@@ -51,7 +50,7 @@ export type FilemakerMailSidebarSelection = {
   accountId: string | null;
   mailboxPath: string | null;
   threadId: string | null;
-  panel: 'account' | 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
+  panel: 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
   originPanel: 'recent' | 'search' | null;
 };
 
@@ -69,6 +68,7 @@ export type FilemakerMailSidebarActions = {
   onRecentUnreadOnlyChange?: (value: boolean) => void;
   onSelectAttention?: () => void;
   onSelectSearch?: () => void;
+  onSelectRecent?: (accountId: string) => void;
   onSelectAccount?: (accountId: string) => void;
   onSelectAccountSettings?: (accountId: string) => void;
   onSelectFolder?: (selection: { accountId: string; mailboxPath: string }) => void;
@@ -124,25 +124,23 @@ export function FilemakerMailSidebar({
   } = filters;
 
   const router = useRouter();
-  const {
-    accounts,
-    setAccounts,
-    folders,
-    threads,
-    recentThreads,
-    isLoading,
-    syncingAccountId,
-    setSyncingAccountId,
-    fetchAccountsAndFolders,
-  } = useFilemakerMailData({
+  const fallbackData = useFilemakerMailData({
+    enabled: pageContext == null,
     refreshKey,
     selectedAccountId,
     selectedMailboxPath,
-    searchContextAccountId,
-    searchQuery,
-    recentMailboxFilter,
-    recentQuery,
   });
+  const accounts = pageContext?.accounts ?? fallbackData.accounts;
+  const setAccounts = pageContext?.setAccounts ?? fallbackData.setAccounts;
+  const folders = pageContext?.folders ?? fallbackData.folders;
+  const threads = pageContext?.threads ?? fallbackData.threads;
+  const recentThreads = pageContext?.recentPreviewThreads ?? fallbackData.recentThreads;
+  const isLoading = pageContext?.isNavigationLoading ?? fallbackData.isLoading;
+  const syncingAccountId = pageContext?.syncingAccountId ?? fallbackData.syncingAccountId;
+  const setSyncingAccountId =
+    pageContext?.setSyncingAccountId ?? fallbackData.setSyncingAccountId;
+  const fetchAccountsAndFolders =
+    pageContext?.loadNavigation ?? fallbackData.fetchAccountsAndFolders;
 
   const [statusUpdatingAccountId, setStatusUpdatingAccountId] = useState<string | null>(null);
 
@@ -248,9 +246,6 @@ export function FilemakerMailSidebar({
     if (selectedAccountId && statusUpdatingAccountId === selectedAccountId) {
       return toFilemakerMailAccountStatusToggleNodeId(selectedAccountId);
     }
-    if (selectedAccountId && selectedPanel === 'settings') {
-      return toFilemakerMailAccountSettingsNodeId(selectedAccountId);
-    }
     if (selectedAccountId) {
       return toFilemakerMailAccountNodeId(selectedAccountId);
     }
@@ -319,13 +314,164 @@ export function FilemakerMailSidebar({
     [recentMailboxFilter, recentQuery, recentUnreadOnly, router, selectedAccountId]
   );
 
+  const applyPageSelection = useCallback(
+    (nextSelection: {
+      accountId: string | null;
+      mailboxPath: string | null;
+      panel: FilemakerMailSidebarSelection['panel'];
+    }): void => {
+      if (!pageContext) {
+        return;
+      }
+      if (
+        pageContext.selectedAccountId === nextSelection.accountId &&
+        pageContext.selectedMailboxPath === nextSelection.mailboxPath &&
+        pageContext.selectedPanel === nextSelection.panel
+      ) {
+        return;
+      }
+      pageContext.setSelection(nextSelection);
+    },
+    [pageContext]
+  );
+
+  const openAttentionPanel = useCallback((): void => {
+    applyPageSelection({ accountId: null, mailboxPath: null, panel: 'attention' });
+  }, [applyPageSelection]);
+
+  const openSearchPanel = useCallback((): void => {
+    applyPageSelection({
+      accountId: effectiveSearchAccountId,
+      mailboxPath: null,
+      panel: 'search',
+    });
+  }, [applyPageSelection, effectiveSearchAccountId]);
+
+  const openAccountSettings = useCallback(
+    (accountId: string): void => {
+      applyPageSelection({
+        accountId,
+        mailboxPath: null,
+        panel: 'settings',
+      });
+    },
+    [applyPageSelection]
+  );
+
+  const openFolder = useCallback(
+    (nextSelection: { accountId: string; mailboxPath: string }): void => {
+      applyPageSelection({
+        accountId: nextSelection.accountId,
+        mailboxPath: nextSelection.mailboxPath,
+        panel: null,
+      });
+    },
+    [applyPageSelection]
+  );
+
+  const openRecentPanel = useCallback(
+    (accountId: string): void => {
+      applyPageSelection({
+        accountId,
+        mailboxPath: null,
+        panel: 'recent',
+      });
+    },
+    [applyPageSelection]
+  );
+
+  const updateRecentFilters = useCallback(
+    (input: {
+      recentMailboxFilter?: string | null;
+      recentUnreadOnly?: boolean;
+      recentQuery?: string;
+    }): void => {
+      if (pageContext && selectedAccountId) {
+        const nextMailboxFilter = input.recentMailboxFilter ?? recentMailboxFilter ?? '';
+        const nextRecentUnreadOnly = input.recentUnreadOnly ?? recentUnreadOnly;
+        const nextRecentQuery = input.recentQuery ?? recentQuery ?? '';
+        if (
+          pageContext.recentMailboxFilter === nextMailboxFilter &&
+          pageContext.recentUnreadOnly === nextRecentUnreadOnly &&
+          pageContext.query === nextRecentQuery
+        ) {
+          return;
+        }
+        startTransition(() => {
+          pageContext.setRecentMailboxFilter(nextMailboxFilter);
+          pageContext.setRecentUnreadOnly(nextRecentUnreadOnly);
+          pageContext.setQuery(nextRecentQuery);
+        });
+        return;
+      }
+      updateRecentRoute(input);
+    },
+    [
+      pageContext,
+      recentMailboxFilter,
+      recentQuery,
+      recentUnreadOnly,
+      selectedAccountId,
+      updateRecentRoute,
+    ]
+  );
+
+  const clearRecentFilters = useCallback((): void => {
+    if (pageContext && selectedAccountId) {
+      if (
+        pageContext.recentMailboxFilter === '' &&
+        pageContext.recentUnreadOnly === false &&
+        pageContext.query === ''
+      ) {
+        return;
+      }
+      startTransition(() => {
+        pageContext.setRecentMailboxFilter('');
+        pageContext.setRecentUnreadOnly(false);
+        pageContext.setQuery('');
+      });
+      return;
+    }
+    startTransition(() => {
+      router.push(
+        buildMailSelectionHref({
+          accountId: selectedAccountId,
+          panel: 'recent',
+        })
+      );
+    });
+  }, [pageContext, router, selectedAccountId]);
+
+  const clearSearchQuery = useCallback((): void => {
+    if (pageContext) {
+      if (pageContext.deepSearchQuery === '') {
+        return;
+      }
+      startTransition(() => {
+        pageContext.setDeepSearchQuery('');
+      });
+      return;
+    }
+    startTransition(() => {
+      router.push(
+        buildMailSelectionHref({
+          accountId: effectiveSearchAccountId,
+          panel: 'search',
+        })
+      );
+    });
+  }, [effectiveSearchAccountId, pageContext, router]);
+
   const onNewMailbox = propsActions?.onNewMailbox ?? pageContext?.onNewMailbox;
-  const onSelectSearch = propsActions?.onSelectSearch;
-  const onSelectAttention = propsActions?.onSelectAttention;
-  const onSelectAccountSettings = propsActions?.onSelectAccountSettings;
-  const onSelectFolder = propsActions?.onSelectFolder;
+  const onSelectSearch = propsActions?.onSelectSearch ?? (pageContext ? openSearchPanel : undefined);
+  const onSelectAttention =
+    propsActions?.onSelectAttention ?? (pageContext ? openAttentionPanel : undefined);
+  const onSelectRecent = propsActions?.onSelectRecent ?? (pageContext ? openRecentPanel : undefined);
+  const onSelectAccountSettings =
+    propsActions?.onSelectAccountSettings ?? (pageContext ? openAccountSettings : undefined);
+  const onSelectFolder = propsActions?.onSelectFolder ?? (pageContext ? openFolder : undefined);
   const onAccountUpdated = propsActions?.onAccountUpdated;
-  const onSelectAccount = propsActions?.onSelectAccount;
+  const onSelectAccount = propsActions?.onSelectAccount ?? (pageContext ? openAccountSettings : undefined);
   const onRecentMailboxFilterChange = propsActions?.onRecentMailboxFilterChange;
   const onRecentQueryChange = propsActions?.onRecentQueryChange;
   const onRecentUnreadOnlyChange = propsActions?.onRecentUnreadOnlyChange;
@@ -350,6 +496,7 @@ export function FilemakerMailSidebar({
       onNewMailbox,
       onSelectSearch,
       onSelectAttention,
+      onSelectRecent,
       onSelectAccountSettings,
       onSelectFolder,
       onAccountUpdated,
@@ -374,6 +521,7 @@ export function FilemakerMailSidebar({
       onNewMailbox,
       onSelectSearch,
       onSelectAttention,
+      onSelectRecent,
       onSelectAccountSettings,
       onSelectFolder,
       onAccountUpdated,
@@ -442,16 +590,7 @@ export function FilemakerMailSidebar({
                     type='button'
                     size='sm'
                     variant='outline'
-                    onClick={(): void => {
-                      startTransition(() => {
-                        router.push(
-                          buildMailSelectionHref({
-                            accountId: selectedAccountId,
-                            panel: 'recent',
-                          })
-                        );
-                      });
-                    }}
+                    onClick={clearRecentFilters}
                   >
                     <FilterX className='mr-2 size-4' />
                     Clear Recent
@@ -462,16 +601,7 @@ export function FilemakerMailSidebar({
                     type='button'
                     size='sm'
                     variant='outline'
-                    onClick={(): void => {
-                      startTransition(() => {
-                        router.push(
-                          buildMailSelectionHref({
-                            accountId: effectiveSearchAccountId,
-                            panel: 'search',
-                          })
-                        );
-                      });
-                    }}
+                    onClick={clearSearchQuery}
                   >
                     <FilterX className='mr-2 size-4' />
                     Clear Search
@@ -487,7 +617,7 @@ export function FilemakerMailSidebar({
                         onRecentMailboxFilterChange(nextValue);
                         return;
                       }
-                      updateRecentRoute({ recentMailboxFilter: nextValue });
+                      updateRecentFilters({ recentMailboxFilter: nextValue });
                     }}
                     options={recentMailboxOptions}
                     placeholder='All mailboxes'
@@ -501,7 +631,7 @@ export function FilemakerMailSidebar({
                         onRecentQueryChange(nextValue);
                         return;
                       }
-                      updateRecentRoute({ recentQuery: nextValue });
+                      updateRecentFilters({ recentQuery: nextValue });
                     }}
                     aria-label='Sidebar recent search'
                     placeholder='Filter recent threads...'
@@ -519,7 +649,7 @@ export function FilemakerMailSidebar({
                           onRecentUnreadOnlyChange(nextValue);
                           return;
                         }
-                        updateRecentRoute({ recentUnreadOnly: nextValue });
+                        updateRecentFilters({ recentUnreadOnly: nextValue });
                       }}
                     />
                     Sidebar recent unread only

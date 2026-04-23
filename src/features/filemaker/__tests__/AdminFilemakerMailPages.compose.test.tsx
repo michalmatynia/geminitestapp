@@ -654,9 +654,17 @@ describe('AdminFilemakerMail pages compose flows', () => {
     await screen.findByText('Alice');
     fireEvent.click(screen.getByRole('button', { name: 'Forward' }));
 
-    expect(routerPushMock).toHaveBeenCalledWith(
-      '/admin/filemaker/mail/compose?accountId=account-1&forwardThreadId=thread+1&mailboxPath=VIP&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
-    );
+    const composeHref = String(routerPushMock.mock.calls.at(-1)?.[0] ?? '');
+    const composeUrl = new URL(composeHref, 'http://localhost');
+
+    expect(composeUrl.pathname).toBe('/admin/filemaker/mail/compose');
+    expect(composeUrl.searchParams.get('accountId')).toBe('account-1');
+    expect(composeUrl.searchParams.get('forwardThreadId')).toBe('thread 1');
+    expect(composeUrl.searchParams.get('mailboxPath')).toBe('VIP');
+    expect(composeUrl.searchParams.get('panel')).toBe('recent');
+    expect(composeUrl.searchParams.get('recentMailbox')).toBe('VIP');
+    expect(composeUrl.searchParams.get('recentUnread')).toBe('1');
+    expect(composeUrl.searchParams.get('recentQuery')).toBe('welcome');
   });
 
   it('normalizes a fresh compose route by removing stale recent and search params', async () => {
@@ -717,7 +725,10 @@ describe('AdminFilemakerMail pages compose flows', () => {
       if (url === '/api/filemaker/mail/folders' && !init?.method) {
         return jsonResponse({ folders: mockFolders });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         return jsonResponse({
           threads: [
             {
@@ -807,7 +818,10 @@ describe('AdminFilemakerMail pages compose flows', () => {
       if (url === '/api/filemaker/mail/folders' && !init?.method) {
         return jsonResponse({ folders: mockFolders });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         return jsonResponse({
           threads: [
             {

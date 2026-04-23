@@ -111,7 +111,7 @@ describe('AdminFilemakerMail pages', () => {
         );
       }
       if (url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST') {
-        return jsonResponse({ result: { fetchedMessageCount: 3 } });
+        return jsonResponse({ result: { fetchedMessageCount: 3, lastSyncError: null } });
       }
       if (url.startsWith('/api/filemaker/mail/threads')) {
         return jsonResponse({ threads: [] });
@@ -273,7 +273,7 @@ describe('AdminFilemakerMail pages', () => {
         });
       }
       if (url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST') {
-        return jsonResponse({ result: { fetchedMessageCount: 3 } });
+        return jsonResponse({ result: { fetchedMessageCount: 3, lastSyncError: null } });
       }
       if (url.startsWith('/api/filemaker/mail/threads')) {
         return jsonResponse({ threads: [] });
@@ -300,6 +300,101 @@ describe('AdminFilemakerMail pages', () => {
       expect(toastMock).toHaveBeenCalledWith('Mailbox sync finished. Messages fetched: 3.', {
         variant: 'success',
       });
+    });
+  });
+
+  it('surfaces sync errors returned by the mailbox sync endpoint', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'mailboxPath') return 'INBOX';
+      return null;
+    });
+
+    let navigationLoadCount = 0;
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        navigationLoadCount += 1;
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError:
+                navigationLoadCount > 1 ? 'Authentication failed' : null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST') {
+        return jsonResponse({
+          result: {
+            fetchedMessageCount: 0,
+            lastSyncError: 'Authentication failed',
+          },
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads')) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    renderWithProviders(<AdminFilemakerMailPage />);
+
+    await screen.findByText('Support inbox');
+    const syncNodeButton = screen
+      .getAllByRole('button', { name: /Sync/ })
+      .find((button) => button.textContent?.includes('•Sync'));
+
+    expect(syncNodeButton).toBeDefined();
+    fireEvent.click(syncNodeButton!);
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith('Authentication failed', {
+        variant: 'error',
+      });
+      expect(screen.getAllByText('Sync error: Authentication failed').length).toBeGreaterThan(0);
     });
   });
 
@@ -375,6 +470,440 @@ describe('AdminFilemakerMail pages', () => {
 
     await waitFor(() => {
       expect(routerReplaceMock).toHaveBeenCalledWith('/admin/filemaker/mail');
+    });
+  });
+
+  it('syncs a newly created mailbox immediately after save', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+
+    let navigationLoadCount = 0;
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        navigationLoadCount += 1;
+        return jsonResponse({
+          accounts:
+            navigationLoadCount > 1
+              ? [
+                  {
+                    id: 'account-1',
+                    name: 'Support inbox',
+                    emailAddress: 'support@example.com',
+                    status: 'active',
+                    imapHost: 'imap.example.com',
+                    imapPort: 993,
+                    imapSecure: true,
+                    imapUser: 'support@example.com',
+                    imapPasswordSettingKey: 'imap-key',
+                    smtpHost: 'smtp.example.com',
+                    smtpPort: 465,
+                    smtpSecure: true,
+                    smtpUser: 'support@example.com',
+                    smtpPasswordSettingKey: 'smtp-key',
+                    fromName: 'Support',
+                    replyToEmail: null,
+                    folderAllowlist: ['INBOX'],
+                    initialSyncLookbackDays: 30,
+                    maxMessagesPerSync: 100,
+                    lastSyncedAt: '2026-03-28T10:10:00.000Z',
+                    lastSyncError: null,
+                    createdAt: '2026-03-28T10:00:00.000Z',
+                    updatedAt: '2026-03-28T10:10:00.000Z',
+                    provider: 'imap_smtp',
+                  },
+                ]
+              : [],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders:
+            navigationLoadCount > 1
+              ? [
+                  {
+                    id: 'account-1::INBOX',
+                    accountId: 'account-1',
+                    mailboxPath: 'INBOX',
+                    mailboxRole: 'inbox',
+                    threadCount: 2,
+                    unreadCount: 1,
+                    lastMessageAt: '2026-03-28T10:10:00.000Z',
+                  },
+                ]
+              : [],
+        });
+      }
+      if (url === '/api/filemaker/mail/accounts' && init?.method === 'POST') {
+        return jsonResponse(
+          {
+            account: {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:05:00.000Z',
+              provider: 'imap_smtp',
+            },
+          },
+          201
+        );
+      }
+      if (url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST') {
+        return jsonResponse({
+          result: {
+            fetchedMessageCount: 2,
+            lastSyncError: null,
+          },
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads')) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    renderWithProviders(<AdminFilemakerMailPage />);
+
+    await screen.findByRole('button', { name: 'Save Mailbox' });
+
+    fireEvent.change(screen.getByLabelText('Mailbox name'), {
+      target: { value: 'Support inbox' },
+    });
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP host'), {
+      target: { value: 'imap.example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP user'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP password'), {
+      target: { value: 'imap-secret' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP host'), {
+      target: { value: 'smtp.example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP user'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP password'), {
+      target: { value: 'smtp-secret' },
+    });
+    fireEvent.change(screen.getByLabelText('Mailbox allowlist'), {
+      target: { value: 'INBOX' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Mailbox' }));
+
+    await waitFor(() => {
+      const syncCall = fetchMock.mock.calls.find(
+        ([url, init]) =>
+          url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST'
+      );
+      expect(syncCall).toBeDefined();
+      expect(toastMock).toHaveBeenCalledWith('Mailbox account saved.', {
+        variant: 'success',
+      });
+      expect(toastMock).toHaveBeenCalledWith('Mailbox sync finished. Messages fetched: 2.', {
+        variant: 'success',
+      });
+    });
+  });
+
+  it('shows the server-reported initial sync error after saving a mailbox', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+
+    let navigationLoadCount = 0;
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        navigationLoadCount += 1;
+        return jsonResponse({
+          accounts:
+            navigationLoadCount > 1
+              ? [
+                  {
+                    id: 'account-1',
+                    name: 'Support inbox',
+                    emailAddress: 'support@example.com',
+                    status: 'active',
+                    imapHost: 'imap.example.com',
+                    imapPort: 993,
+                    imapSecure: true,
+                    imapUser: 'support@example.com',
+                    imapPasswordSettingKey: 'imap-key',
+                    smtpHost: 'smtp.example.com',
+                    smtpPort: 465,
+                    smtpSecure: true,
+                    smtpUser: 'support@example.com',
+                    smtpPasswordSettingKey: 'smtp-key',
+                    fromName: 'Support',
+                    replyToEmail: null,
+                    folderAllowlist: ['INBOX'],
+                    initialSyncLookbackDays: 30,
+                    maxMessagesPerSync: 100,
+                    lastSyncedAt: null,
+                    lastSyncError: 'Authentication failed',
+                    createdAt: '2026-03-28T10:00:00.000Z',
+                    updatedAt: '2026-03-28T10:10:00.000Z',
+                    provider: 'imap_smtp',
+                  },
+                ]
+              : [],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: [] });
+      }
+      if (url === '/api/filemaker/mail/accounts' && init?.method === 'POST') {
+        return jsonResponse(
+          {
+            account: {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:05:00.000Z',
+              provider: 'imap_smtp',
+            },
+          },
+          201
+        );
+      }
+      if (url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST') {
+        return jsonResponse({
+          result: {
+            fetchedMessageCount: 0,
+            lastSyncError: 'Authentication failed',
+          },
+        });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads')) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    renderWithProviders(<AdminFilemakerMailPage />);
+
+    await screen.findByRole('button', { name: 'Save Mailbox' });
+
+    fireEvent.change(screen.getByLabelText('Mailbox name'), {
+      target: { value: 'Support inbox' },
+    });
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP host'), {
+      target: { value: 'imap.example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP user'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP password'), {
+      target: { value: 'imap-secret' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP host'), {
+      target: { value: 'smtp.example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP user'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP password'), {
+      target: { value: 'smtp-secret' },
+    });
+    fireEvent.change(screen.getByLabelText('Mailbox allowlist'), {
+      target: { value: 'INBOX' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Mailbox' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith('Mailbox account saved.', {
+        variant: 'success',
+      });
+      expect(toastMock).toHaveBeenCalledWith('Authentication failed', {
+        variant: 'error',
+      });
+      expect(screen.getAllByText('Authentication failed').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('keeps the saved mailbox when the initial sync request fails after create', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+
+    let navigationLoadCount = 0;
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        navigationLoadCount += 1;
+        return jsonResponse({
+          accounts:
+            navigationLoadCount > 1
+              ? [
+                  {
+                    id: 'account-1',
+                    name: 'Support inbox',
+                    emailAddress: 'support@example.com',
+                    status: 'active',
+                    imapHost: 'imap.example.com',
+                    imapPort: 993,
+                    imapSecure: true,
+                    imapUser: 'support@example.com',
+                    imapPasswordSettingKey: 'imap-key',
+                    smtpHost: 'smtp.example.com',
+                    smtpPort: 465,
+                    smtpSecure: true,
+                    smtpUser: 'support@example.com',
+                    smtpPasswordSettingKey: 'smtp-key',
+                    fromName: 'Support',
+                    replyToEmail: null,
+                    folderAllowlist: ['INBOX'],
+                    initialSyncLookbackDays: 30,
+                    maxMessagesPerSync: 100,
+                    lastSyncedAt: null,
+                    lastSyncError: 'Connection timeout',
+                    createdAt: '2026-03-28T10:00:00.000Z',
+                    updatedAt: '2026-03-28T10:10:00.000Z',
+                    provider: 'imap_smtp',
+                  },
+                ]
+              : [],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: [] });
+      }
+      if (url === '/api/filemaker/mail/accounts' && init?.method === 'POST') {
+        return jsonResponse(
+          {
+            account: {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:05:00.000Z',
+              provider: 'imap_smtp',
+            },
+          },
+          201
+        );
+      }
+      if (url === '/api/filemaker/mail/accounts/account-1/sync' && init?.method === 'POST') {
+        throw new Error('Connection timeout');
+      }
+      if (url.startsWith('/api/filemaker/mail/threads')) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    renderWithProviders(<AdminFilemakerMailPage />);
+
+    await screen.findByRole('button', { name: 'Save Mailbox' });
+
+    fireEvent.change(screen.getByLabelText('Mailbox name'), {
+      target: { value: 'Support inbox' },
+    });
+    fireEvent.change(screen.getByLabelText('Email address'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP host'), {
+      target: { value: 'imap.example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP user'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('IMAP password'), {
+      target: { value: 'imap-secret' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP host'), {
+      target: { value: 'smtp.example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP user'), {
+      target: { value: 'support@example.com' },
+    });
+    fireEvent.change(screen.getByLabelText('SMTP password'), {
+      target: { value: 'smtp-secret' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Mailbox' }));
+
+    await waitFor(() => {
+      expect(toastMock).toHaveBeenCalledWith('Mailbox account saved.', {
+        variant: 'success',
+      });
+      expect(toastMock).toHaveBeenCalledWith(
+        'Mailbox saved, but initial sync failed: Connection timeout',
+        {
+          variant: 'error',
+        }
+      );
+      expect(screen.getByDisplayValue('Support inbox')).toBeInTheDocument();
     });
   });
 
@@ -645,7 +1174,8 @@ describe('AdminFilemakerMail pages', () => {
     fireEvent.click(attentionNodeButton!);
 
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith(
+      expect(routerPushMock).not.toHaveBeenCalled();
+      expect(routerReplaceMock).toHaveBeenCalledWith(
         '/admin/filemaker/mail?accountId=account-1&panel=settings'
       );
     });
@@ -706,7 +1236,8 @@ describe('AdminFilemakerMail pages', () => {
     fireEvent.click(screen.getByRole('button', { name: /Needs Attention/ }));
 
     await waitFor(() => {
-      expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=attention');
+      expect(routerPushMock).not.toHaveBeenCalled();
+      expect(routerReplaceMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=attention');
     });
   });
 

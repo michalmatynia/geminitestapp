@@ -50,6 +50,13 @@ describe('filemaker mail routing helpers', () => {
     expect(
       buildFilemakerMailSelectionHref({
         accountId: 'account-1',
+        panel: 'account',
+      })
+    ).toBe('/admin/filemaker/mail?accountId=account-1&panel=settings');
+
+    expect(
+      buildFilemakerMailSelectionHref({
+        accountId: 'account-1',
         mailboxPath: 'VIP',
         panel: 'search',
         searchQuery: 'invoice',

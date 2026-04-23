@@ -38,6 +38,24 @@ export const ADVANCED_FILTER_FIELD_CONFIGS: readonly AdvancedFilterFieldConfig[]
     operators: ['contains', 'eq', 'neq', 'isEmpty', 'isNotEmpty'],
   },
   {
+    field: 'titleSize',
+    label: 'Title Size',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  },
+  {
+    field: 'titleMaterial',
+    label: 'Title Material',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  },
+  {
+    field: 'titleTheme',
+    label: 'Title Theme / Lore',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  },
+  {
     field: 'categoryId',
     label: 'Category',
     kind: 'string',

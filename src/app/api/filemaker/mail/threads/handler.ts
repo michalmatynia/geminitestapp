@@ -11,17 +11,19 @@ const querySchema = z.object({
   query: optionalTrimmedQueryString(),
   accountId: optionalTrimmedQueryString(),
   mailboxPath: optionalTrimmedQueryString(),
+  limit: z.coerce.number().int().positive().max(50).optional(),
 });
 
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
-  const { query, accountId, mailboxPath } = querySchema.parse(
+  const { query, accountId, mailboxPath, limit } = querySchema.parse(
     Object.fromEntries(req.nextUrl.searchParams.entries())
   );
   const input = {
     ...(query ? { query } : {}),
     ...(accountId ? { accountId } : {}),
     ...(mailboxPath ? { mailboxPath } : {}),
+    ...(typeof limit === 'number' ? { limit } : {}),
   };
   return Response.json({
     threads: await listFilemakerMailThreads(input),

@@ -84,7 +84,7 @@ export function MailboxesAttentionSection(): React.JSX.Element {
                     setSelection({
                       accountId: account.id,
                       mailboxPath: null,
-                      panel: 'account',
+                      panel: 'settings',
                     });
                   }}
                 >

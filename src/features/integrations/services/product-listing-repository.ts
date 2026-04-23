@@ -363,7 +363,16 @@ const mongoRepository: ProductListingRepository = {
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const collection = await getListingCollection();
-    const terminalStatuses = ['failed', 'auth_required', 'ended', 'expired', 'sold', 'removed', 'cancelled'];
+    const terminalStatuses = [
+      'failed',
+      'auth_required',
+      'ended',
+      'expired',
+      'unsold',
+      'sold',
+      'removed',
+      'cancelled',
+    ];
     const count = await collection.countDocuments({
       $and: [
         buildLookupFilter('productId', productId),

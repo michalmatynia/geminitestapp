@@ -17,6 +17,7 @@ const {
   useProductCategoriesMock,
   useProductListFiltersContextMock,
   useProducersMock,
+  useTitleTermsMock,
 } = vi.hoisted(() => ({
   advancedFilterModalMock: vi.fn(),
   filterPanelMock: vi.fn(),
@@ -26,6 +27,7 @@ const {
   useProductCategoriesMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProducersMock: vi.fn(),
+  useTitleTermsMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/context/ProductListContext', () => ({
@@ -42,6 +44,7 @@ vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useCatalogs: (...args: unknown[]) => useCatalogsMock(...args),
   useFilterTags: (...args: unknown[]) => useFilterTagsMock(...args),
   useProducers: (...args: unknown[]) => useProducersMock(...args),
+  useTitleTerms: (...args: unknown[]) => useTitleTermsMock(...args),
 }));
 
 vi.mock('@/features/products/components/list/advanced-filter', () => ({
@@ -123,6 +126,7 @@ describe('ProductFilters layout contract', () => {
     useCatalogsMock.mockReturnValue({ data: [] });
     useFilterTagsMock.mockReturnValue({ data: [] });
     useProducersMock.mockReturnValue({ data: [] });
+    useTitleTermsMock.mockReturnValue({ data: [] });
   });
 
   it('passes the current Products list layout props into FilterPanel', () => {
@@ -167,6 +171,18 @@ describe('ProductFilters layout contract', () => {
     expect(useCatalogsMock).toHaveBeenCalledWith({ enabled: false });
     expect(useFilterTagsMock).toHaveBeenCalledWith(undefined, { enabled: false });
     expect(useProducersMock).toHaveBeenCalledWith({ enabled: false });
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(1, undefined, 'size', {
+      enabled: false,
+      allowWithoutCatalog: true,
+    });
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(2, undefined, 'material', {
+      enabled: false,
+      allowWithoutCatalog: true,
+    });
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(3, undefined, 'theme', {
+      enabled: false,
+      allowWithoutCatalog: true,
+    });
   });
 
   it('passes a deterministic id base when rendered for a specific layout instance', () => {
@@ -189,6 +205,18 @@ describe('ProductFilters layout contract', () => {
       expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
       expect(useFilterTagsMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
       expect(useProducersMock).toHaveBeenLastCalledWith({ enabled: true });
+      expect(useTitleTermsMock).toHaveBeenCalledWith(undefined, 'size', {
+        enabled: true,
+        allowWithoutCatalog: true,
+      });
+      expect(useTitleTermsMock).toHaveBeenCalledWith(undefined, 'material', {
+        enabled: true,
+        allowWithoutCatalog: true,
+      });
+      expect(useTitleTermsMock).toHaveBeenCalledWith(undefined, 'theme', {
+        enabled: true,
+        allowWithoutCatalog: true,
+      });
       expect(screen.getByTestId('advanced-filter-modal')).toBeInTheDocument();
     });
   });
@@ -201,6 +229,18 @@ describe('ProductFilters layout contract', () => {
     render(<ProductFilters />);
 
     expect(useFilterTagsMock).toHaveBeenCalledWith('catalog-1', { enabled: true });
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(1, 'catalog-1', 'size', {
+      enabled: true,
+      allowWithoutCatalog: true,
+    });
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(2, 'catalog-1', 'material', {
+      enabled: true,
+      allowWithoutCatalog: true,
+    });
+    expect(useTitleTermsMock).toHaveBeenNthCalledWith(3, 'catalog-1', 'theme', {
+      enabled: true,
+      allowWithoutCatalog: true,
+    });
   });
 
   it('stays renderable when metadata hooks return malformed cached payloads', () => {
@@ -209,10 +249,111 @@ describe('ProductFilters layout contract', () => {
     useProducersMock.mockReturnValue({ data: { invalid: true } });
     useProductCategoriesMock.mockReturnValue({ data: { invalid: true } });
     useProductCategoriesForCatalogsMock.mockReturnValue({ data: { invalid: true } });
+    useTitleTermsMock.mockReturnValue({ data: { invalid: true } });
 
     render(<ProductFilters />);
 
     expect(screen.getByTestId('filter-panel')).toBeInTheDocument();
+  });
+
+  it('deduplicates title term options for advanced filters across all catalogs', () => {
+    useTitleTermsMock.mockImplementation((_catalogId: unknown, type: unknown) => {
+      if (type === 'size') {
+        return {
+          data: [
+            {
+              id: 'size-4-c1',
+              catalogId: 'catalog-1',
+              type: 'size',
+              name: '4 cm',
+              name_en: '4 cm',
+              name_pl: null,
+            },
+            {
+              id: 'size-4-c2',
+              catalogId: 'catalog-2',
+              type: 'size',
+              name: '4 cm',
+              name_en: '4 cm',
+              name_pl: null,
+            },
+            {
+              id: 'size-7',
+              catalogId: 'catalog-2',
+              type: 'size',
+              name: '7 cm',
+              name_en: '7 cm',
+              name_pl: null,
+            },
+          ],
+        };
+      }
+      if (type === 'material') {
+        return {
+          data: [
+            {
+              id: 'material-metal',
+              catalogId: 'catalog-1',
+              type: 'material',
+              name: 'Metal',
+              name_en: 'Metal',
+              name_pl: null,
+            },
+            {
+              id: 'material-acrylic',
+              catalogId: 'catalog-2',
+              type: 'material',
+              name: 'Acrylic',
+              name_en: 'Acrylic',
+              name_pl: null,
+            },
+          ],
+        };
+      }
+      if (type === 'theme') {
+        return {
+          data: [
+            {
+              id: 'theme-aot',
+              catalogId: 'catalog-1',
+              type: 'theme',
+              name: 'Attack On Titan',
+              name_en: 'Attack On Titan',
+              name_pl: null,
+            },
+            {
+              id: 'theme-naruto',
+              catalogId: 'catalog-2',
+              type: 'theme',
+              name: 'Naruto',
+              name_en: 'Naruto',
+              name_pl: null,
+            },
+          ],
+        };
+      }
+      return { data: [] };
+    });
+
+    render(<ProductFilters />);
+    fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
+
+    const advancedFilterModalProps = advancedFilterModalMock.mock.lastCall?.[0] as {
+      fieldValueOptions?: Record<string, Array<{ value: string; label: string }>>;
+    };
+
+    expect(advancedFilterModalProps.fieldValueOptions?.titleSize).toEqual([
+      { value: '4 cm', label: '4 cm' },
+      { value: '7 cm', label: '7 cm' },
+    ]);
+    expect(advancedFilterModalProps.fieldValueOptions?.titleMaterial).toEqual([
+      { value: 'Acrylic', label: 'Acrylic' },
+      { value: 'Metal', label: 'Metal' },
+    ]);
+    expect(advancedFilterModalProps.fieldValueOptions?.titleTheme).toEqual([
+      { value: 'Attack On Titan', label: 'Attack On Titan' },
+      { value: 'Naruto', label: 'Naruto' },
+    ]);
   });
 
   it('builds category options across all catalogs when Product List is scoped to all catalogs', () => {

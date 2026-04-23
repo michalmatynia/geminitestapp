@@ -17,6 +17,7 @@ export type StructuredProductName = {
 export type StructuredProductTitleLocale = 'en' | 'pl';
 
 export type StructuredProductNameSegments = readonly [string, string, string, string, string];
+export type StructuredProductTitleTermValues = Partial<Record<ProductTitleTermType, string>>;
 
 export type PolishStructuredProductNameSyncResult = {
   polishTitle: string;
@@ -41,6 +42,21 @@ export const splitStructuredProductName = (value: string): string[] =>
   value
     .split('|')
     .map((segment: string): string => normalizeSegment(segment));
+
+export const resolveStructuredProductTitleTermValues = (
+  value: string
+): StructuredProductTitleTermValues => {
+  const segments = splitStructuredProductName(value);
+  const size = segments[1] ?? '';
+  const material = segments[2] ?? '';
+  const theme = segments[4] ?? '';
+
+  return {
+    ...(size ? { size } : {}),
+    ...(material ? { material } : {}),
+    ...(theme ? { theme } : {}),
+  };
+};
 
 export const normalizeStructuredProductName = (value: string): string =>
   splitStructuredProductName(value)

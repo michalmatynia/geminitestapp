@@ -4,6 +4,7 @@ export * from './pages/AdminFilemakerPersonsPage';
 export * from './pages/AdminFilemakerOrganizationsPage';
 export * from './pages/AdminFilemakerEventsPage';
 export * from './pages/AdminFilemakerEmailsPage';
+export * from './pages/AdminFilemakerMailClientPage';
 export * from './pages/AdminFilemakerMailPage';
 export * from './pages/AdminFilemakerMailComposePage';
 export * from './pages/AdminFilemakerMailThreadPage';

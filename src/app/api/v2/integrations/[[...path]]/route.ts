@@ -47,6 +47,7 @@ import * as productListings from '../product-listings/route-handler';
 import * as integrationProductsListings from '../products/[id]/listings/route-handler';
 import * as integrationProductListing from '../products/[id]/listings/[listingId]/route-handler';
 import * as integrationProductListingDelete from '../products/[id]/listings/[listingId]/delete-from-base/route-handler';
+import * as integrationProductListingMoveToUnsold from '../products/[id]/listings/[listingId]/move-to-unsold/route-handler';
 import * as integrationProductListingPurge from '../products/[id]/listings/[listingId]/purge/route-handler';
 import * as integrationProductListingRelist from '../products/[id]/listings/[listingId]/relist/route-handler';
 import * as integrationProductListingSync from '../products/[id]/listings/[listingId]/sync/route-handler';
@@ -83,6 +84,7 @@ const ROUTES = [
   { pattern: ['products', { param: 'id' }, 'listings'], module: integrationProductsListings },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }], module: integrationProductListing },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }, 'delete-from-base'], module: integrationProductListingDelete },
+  { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }, 'move-to-unsold'], module: integrationProductListingMoveToUnsold },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }, 'purge'], module: integrationProductListingPurge },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }, 'relist'], module: integrationProductListingRelist },
   { pattern: ['products', { param: 'id' }, 'listings', { param: 'listingId' }, 'sync'], module: integrationProductListingSync },

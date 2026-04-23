@@ -16,33 +16,35 @@ import {
   type RunDocument,
 } from './shared';
 
+const getRunIdsToDelete = (runDocs: RunDocument[]): string[] => {
+  return runDocs
+    .map((doc: RunDocument) => doc.id ?? doc._id)
+    .filter((value): value is string => typeof value === 'string' && value !== '');
+};
+
 export const deleteRuns = async (
   options: AiPathRunListOptions = {}
 ): Promise<{ count: number }> => {
   await ensureIndexes();
   const db = await getMongoDb();
   let filter = buildRunFilter(options);
-  const nodeId = options.nodeId !== null && options.nodeId !== undefined ? options.nodeId.trim() : undefined;
+  const nodeId = options.nodeId?.trim();
+
   if (nodeId !== undefined && nodeId !== '') {
     const runIdsForNode = await resolveRunIdsForNodeFilter(db, nodeId);
-    if (runIdsForNode.length === 0) {
-      return { count: 0 };
-    }
+    if (runIdsForNode.length === 0) return { count: 0 };
     filter = appendRunIdConstraint(filter, runIdsForNode);
   }
+
   const runDocs = await db
     .collection<RunDocument>(RUNS_COLLECTION)
     .find(filter, { projection: { _id: 1, id: 1 } })
     .toArray();
-  if (runDocs.length === 0) {
-    return { count: 0 };
-  }
-  const runIds = runDocs
-    .map((doc: RunDocument) => doc.id ?? doc._id)
-    .filter((value: string | undefined | null): value is string => value !== null && value !== undefined && value !== '');
-  if (runIds.length === 0) {
-    return { count: 0 };
-  }
+
+  if (runDocs.length === 0) return { count: 0 };
+
+  const runIds = getRunIdsToDelete(runDocs);
+  if (runIds.length === 0) return { count: 0 };
 
   const [runDelete] = await Promise.all([
     db.collection<RunDocument>(RUNS_COLLECTION).deleteMany({
@@ -52,5 +54,5 @@ export const deleteRuns = async (
     db.collection<EventDocument>(EVENTS_COLLECTION).deleteMany({ runId: { $in: runIds } }),
   ]);
 
-  return { count: runDelete.deletedCount ?? 0 };
+  return { count: runDelete.deletedCount };
 };

@@ -36,7 +36,11 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 export type { TraderaListingJobInput };
 
 import { runTraderaApiListing } from './tradera-listing/api';
-import { runTraderaBrowserListing, runTraderaBrowserCheckStatus } from './tradera-listing/browser';
+import {
+  runTraderaBrowserListing,
+  runTraderaBrowserCheckStatus,
+  runTraderaBrowserMoveToUnsold,
+} from './tradera-listing/browser';
 import { resolveEffectiveListingSettings, buildRelistPolicy } from './tradera-listing/settings';
 import {
   classifyTraderaFailure,
@@ -79,11 +83,16 @@ const resolveRequestedTraderaBrowserMode = ({
 
 const buildTraderaHistoryFields = (
   browserMode: string | null | undefined,
-  action: 'list' | 'relist' | 'sync' | 'check_status'
+  action: 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold'
 ): string[] | null =>
   buildPlaywrightListingHistoryFields({
     browserMode,
-    extraFields: action === 'sync' ? ['action:sync'] : undefined,
+    extraFields:
+      action === 'sync'
+        ? ['action:sync']
+        : action === 'move_to_unsold'
+          ? ['action:move_to_unsold']
+          : undefined,
   });
 
 const toRecord = (value: unknown): Record<string, unknown> =>
@@ -100,7 +109,7 @@ const buildPendingTraderaRunMarketplaceData = ({
   runId,
 }: {
   existingMarketplaceData: unknown;
-  action: 'list' | 'relist' | 'sync' | 'check_status';
+  action: 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
   requestedBrowserMode: PlaywrightRelistBrowserMode;
   requestedSelectorProfile?: string;
   requestId: string | null;
@@ -306,10 +315,90 @@ export const runTraderaListing = async (
       });
     }
 
+    if (action === 'move_to_unsold') {
+      const moveToUnsoldResult = await runTraderaBrowserMoveToUnsold({
+        listing,
+        connection,
+        systemSettings,
+        browserMode: requestedBrowserMode,
+      }, {
+        onRunStarted: persistPendingRunId,
+      });
+
+      const resolvedMoveToUnsoldStatus =
+        typeof moveToUnsoldResult.metadata?.['checkedStatus'] === 'string' &&
+        moveToUnsoldResult.metadata['checkedStatus'].trim()
+          ? moveToUnsoldResult.metadata['checkedStatus'].trim()
+          : 'ended';
+      let mergedMetadata: Record<string, unknown> = {
+        ...(moveToUnsoldResult.metadata ?? {}),
+        checkedStatus: resolvedMoveToUnsoldStatus,
+      };
+
+      try {
+        const checkResult = await runTraderaBrowserCheckStatus({
+          listing,
+          connection,
+          systemSettings,
+          browserMode: requestedBrowserMode,
+        });
+        const verifiedStatus =
+          typeof checkResult.metadata?.['checkedStatus'] === 'string' &&
+          checkResult.metadata['checkedStatus'].trim()
+            ? checkResult.metadata['checkedStatus'].trim()
+            : null;
+
+        mergedMetadata = {
+          ...(moveToUnsoldResult.metadata ?? {}),
+          ...(checkResult.metadata ?? {}),
+          moveToUnsoldRunId:
+            typeof moveToUnsoldResult.metadata?.['runId'] === 'string'
+              ? moveToUnsoldResult.metadata['runId']
+              : null,
+          moveToUnsoldVerificationMethod:
+            typeof moveToUnsoldResult.metadata?.['verificationMethod'] === 'string'
+              ? moveToUnsoldResult.metadata['verificationMethod']
+              : null,
+          moveToUnsoldVerifiedInUnsold:
+            moveToUnsoldResult.metadata?.['verifiedInUnsold'] === true,
+          checkedStatus: verifiedStatus ?? resolvedMoveToUnsoldStatus,
+        };
+      } catch (verificationError) {
+        void ErrorSystem.captureException(verificationError, {
+          service: 'tradera-listing',
+          listingId: listing.id,
+          action,
+          source,
+          phase: 'post-move-status-check',
+        });
+      }
+
+      return buildPlaywrightServiceListingSuccess({
+        externalListingId:
+          moveToUnsoldResult.externalListingId ?? listing.externalListingId ?? null,
+        listingUrl: moveToUnsoldResult.listingUrl ?? null,
+        metadata: mergedMetadata,
+        extra: {
+          expiresAt: null,
+          nextRelistAt: null,
+        },
+      });
+    }
+
     if (useApi) {
       if (action === 'sync') {
         return buildPlaywrightServiceListingFailure({
           error: 'Sync is only supported for Tradera browser listings.',
+          errorCategory: 'NOT_FOUND',
+          extra: {
+            expiresAt: null,
+            nextRelistAt: null,
+          },
+        });
+      }
+      if (action === 'move_to_unsold') {
+        return buildPlaywrightServiceListingFailure({
+          error: 'Move to unsold is only supported for Tradera browser listings.',
           errorCategory: 'NOT_FOUND',
           extra: {
             expiresAt: null,
@@ -442,7 +531,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
       ...(action === 'sync' && result.ok
         ? { lastSyncedAt: now.toISOString() }
         : {}),
-      ...(action === 'check_status' && result.ok
+      ...((action === 'check_status' || action === 'move_to_unsold') && result.ok
         ? { lastStatusCheckAt: now.toISOString() }
         : {}),
     },
@@ -462,20 +551,25 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     duplicateMatchStrategy !== null ||
     latestStage === 'duplicate_linked';
   const isSyncAction = action === 'sync';
+  const isMoveToUnsoldAction = action === 'move_to_unsold';
   const persistedListedAt = duplicateLinked
     ? listing.listedAt ?? null
-    : isSyncAction
+    : isSyncAction || isMoveToUnsoldAction
       ? listing.listedAt ?? null
       : now;
   const persistedExpiresAt = duplicateLinked
     ? null
     : isSyncAction
       ? listing.expiresAt ?? null
+      : isMoveToUnsoldAction
+        ? null
       : result.expiresAt ?? null;
   const persistedNextRelistAt = duplicateLinked
     ? null
     : isSyncAction
       ? listing.nextRelistAt ?? null
+      : isMoveToUnsoldAction
+        ? null
       : result.nextRelistAt ?? null;
   const persistedLastRelistedAt =
     action === 'relist' ? now : (listing.lastRelistedAt ?? null);
@@ -496,6 +590,46 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
         marketplaceData,
         statusOnSuccess: statusToWrite,
         failureMessage: 'Tradera live status check failed.',
+      });
+      return;
+    }
+
+    if (action === 'move_to_unsold') {
+      const checkedStatus =
+        typeof result.metadata?.['checkedStatus'] === 'string' &&
+        result.metadata['checkedStatus'].trim()
+          ? result.metadata['checkedStatus'].trim()
+          : 'ended';
+      await finalizePlaywrightStandardListingJobOutcome({
+        repository,
+        listingId: input.listingId,
+        result,
+        at: now,
+        marketplaceData,
+        relist: false,
+        requestId: input.jobId ?? null,
+        historyFields,
+        success: {
+          historyStatus: checkedStatus,
+          externalListingId: persistedExternalListingId,
+          expiresAt: null,
+          updateExtra: {
+            status: checkedStatus,
+            listedAt: persistedListedAt,
+            expiresAt: null,
+            nextRelistAt: null,
+            lastRelistedAt: persistedLastRelistedAt,
+            lastStatusCheckAt: now,
+          },
+        },
+        failure: {
+          historyStatus: resolvePlaywrightFailureListingStatus(result.errorCategory),
+          failureReason: 'Tradera end listing failed.',
+          updateExtra: {
+            status: resolvePlaywrightFailureListingStatus(result.errorCategory),
+            nextRelistAt: null,
+          },
+        },
       });
       return;
     }

@@ -62,7 +62,7 @@ export type TraderaSystemSettings = z.infer<typeof traderaSystemSettingsSchema>;
 
 export const traderaListingJobInputSchema = z.object({
   listingId: z.string(),
-  action: z.enum(['list', 'relist', 'sync', 'check_status']),
+  action: z.enum(['list', 'relist', 'sync', 'check_status', 'move_to_unsold']),
   source: z.enum(['manual', 'scheduler', 'api']).optional(),
   jobId: z.string().optional(),
   browserMode: playwrightRelistBrowserModeSchema.optional(),

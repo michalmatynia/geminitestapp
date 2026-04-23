@@ -264,7 +264,7 @@ export const LESSON_LIBRARY_FRAGMENT_DETAILS: Record<
   agentic_coding_codex_5_4_mcp_integrations: {
     explanation:
       'Integracje MCP: podłączanie zewnętrznych narzędzi i kontekstu. Lekcja dla dorosłych.',
-    triggerPhrases: ['mcp integrations', 'linear', 'figma', 'github mcp'],
+    triggerPhrases: ['mcp integrations', 'figma', 'github mcp', 'codex mcp remove'],
   },
   agentic_coding_codex_5_4_automations: {
     explanation:

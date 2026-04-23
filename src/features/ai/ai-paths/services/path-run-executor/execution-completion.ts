@@ -98,11 +98,12 @@ export const handleExecutionCompletion = async (
 
   const finishedAt = new Date().toISOString();
   const finalRuntimeState = await stateManager.buildCurrentRuntimeStateSnapshot();
+  const runtimeTraceRaw = runMetaWithRuntimeContext['runtimeTrace'];
   const runtimeTraceRecord =
-    runMetaWithRuntimeContext['runtimeTrace'] &&
-    typeof runMetaWithRuntimeContext['runtimeTrace'] === 'object' &&
-    !Array.isArray(runMetaWithRuntimeContext['runtimeTrace'])
-      ? (runMetaWithRuntimeContext['runtimeTrace'] as Record<string, unknown>)
+    runtimeTraceRaw !== null &&
+    typeof runtimeTraceRaw === 'object' &&
+    !Array.isArray(runtimeTraceRaw)
+      ? (runtimeTraceRaw as Record<string, unknown>)
       : {};
   const runtimeKernelParity = summarizeRuntimeKernelParityFromHistory(finalRuntimeState.history);
 

@@ -10,6 +10,7 @@ const NON_BLOCKING_LISTING_STATUSES = new Set([
   'auth_required',
   'ended',
   'expired',
+  'unsold',
   'sold',
   'removed',
   'cancelled',

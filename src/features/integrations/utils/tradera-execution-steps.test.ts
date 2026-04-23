@@ -6,6 +6,29 @@ import {
   resolveTraderaExecutionStepsFromMarketplaceData,
 } from './tradera-execution-steps';
 
+const QUICKLIST_STEP_IDS = [
+  'browser_preparation',
+  'browser_open',
+  'cookie_accept',
+  'auth_check',
+  'auth_login',
+  'auth_manual',
+  'duplicate_check',
+  'deep_duplicate_check',
+  'sell_page_open',
+  'image_cleanup',
+  'image_upload',
+  'title_fill',
+  'description_fill',
+  'listing_format_select',
+  'price_set',
+  'category_select',
+  'attribute_select',
+  'shipping_set',
+  'publish',
+  'publish_verify',
+];
+
 describe('tradera-execution-steps', () => {
   it('builds a successful quicklist step timeline from scripted logs and final stage', () => {
     const steps = buildTraderaQuicklistExecutionSteps({
@@ -541,6 +564,71 @@ describe('tradera-execution-steps', () => {
     expect(execution.steps.find((step) => step.id === 'category_select')).toMatchObject({
       status: 'error',
       message: 'FAIL_CATEGORY_SET: Tradera category could not be selected.',
+    });
+  });
+
+  it('prefers reconstructed failed quicklist steps over stale persisted pending metadata', () => {
+    const execution = resolveTraderaExecutionStepsFromMarketplaceData({
+      tradera: {
+        lastExecution: {
+          action: 'relist',
+          ok: false,
+          error:
+            'FAIL_PUBLISH_VALIDATION: Publish verification did not find the listing after submit.',
+          metadata: {
+            executionSteps: QUICKLIST_STEP_IDS.map((stepId) => ({
+              id: stepId,
+              label: stepId,
+              status: stepId === 'publish_verify' ? 'error' : 'pending',
+              ...(stepId === 'publish_verify'
+                ? {
+                    message:
+                      'FAIL_PUBLISH_VALIDATION: Publish verification did not find the listing after submit.',
+                  }
+                : {}),
+            })),
+            rawResult: {
+              stage: 'publish_clicked',
+              executionSteps: QUICKLIST_STEP_IDS.map((stepId) => ({
+                id: stepId,
+                label: stepId,
+                status: stepId === 'publish_verify' ? 'error' : 'pending',
+              })),
+            },
+            logTail: [
+              '[user] tradera.quicklist.start {"listingAction":"relist"}',
+              '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+              '[user] tradera.quicklist.auth.final {"loggedIn":true}',
+              '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+              '[user] tradera.quicklist.sell_page.entry_point {"url":"https://www.tradera.com/en/selling/new"}',
+              '[user] tradera.quicklist.image.upload_start {"fileCount":2}',
+              '[user] tradera.quicklist.field.verified {"field":"title"}',
+              '[user] tradera.quicklist.category.search_result {"path":"Collectibles > Pins"}',
+              '[user] tradera.quicklist.delivery.save.applied {"shippingCondition":"Buyer pays shipping"}',
+              '[user] tradera.quicklist.publish.click_result {"clicked":true}',
+            ],
+          },
+        },
+      },
+    });
+
+    expect(execution.ok).toBe(false);
+    expect(execution.steps.find((step) => step.id === 'duplicate_check')).toMatchObject({
+      status: 'success',
+    });
+    expect(execution.steps.find((step) => step.id === 'image_upload')).toMatchObject({
+      status: 'success',
+    });
+    expect(execution.steps.find((step) => step.id === 'shipping_set')).toMatchObject({
+      status: 'success',
+    });
+    expect(execution.steps.find((step) => step.id === 'publish')).toMatchObject({
+      status: 'success',
+    });
+    expect(execution.steps.find((step) => step.id === 'publish_verify')).toMatchObject({
+      status: 'error',
+      message:
+        'FAIL_PUBLISH_VALIDATION: Publish verification did not find the listing after submit.',
     });
   });
 

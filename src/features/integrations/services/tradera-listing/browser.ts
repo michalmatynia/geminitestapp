@@ -8,6 +8,7 @@ export { ensureLoggedIn } from './tradera-browser-auth';
 import {
   runTraderaBrowserListingScripted,
   runTraderaBrowserCheckStatus as runTraderaBrowserCheckStatusScripted,
+  runTraderaBrowserMoveToUnsold as runTraderaBrowserMoveToUnsoldScripted,
 } from './tradera-browser-scripted';
 import { runTraderaBrowserListingStandard } from './tradera-browser-standard';
 
@@ -73,6 +74,27 @@ export const runTraderaBrowserCheckStatus = async ({
   browserMode: PlaywrightRelistBrowserMode;
 }, options?: TraderaBrowserRunOptions): Promise<BrowserListingResultDto> =>
   runTraderaBrowserCheckStatusScripted(
+    {
+      listing,
+      connection,
+      systemSettings: systemSettings ?? DEFAULT_TRADERA_SYSTEM_SETTINGS,
+      browserMode,
+    },
+    options
+  );
+
+export const runTraderaBrowserMoveToUnsold = async ({
+  listing,
+  connection,
+  systemSettings,
+  browserMode,
+}: {
+  listing: ProductListing;
+  connection: IntegrationConnectionRecord;
+  systemSettings?: TraderaSystemSettings;
+  browserMode: PlaywrightRelistBrowserMode;
+}, options?: TraderaBrowserRunOptions): Promise<BrowserListingResultDto> =>
+  runTraderaBrowserMoveToUnsoldScripted(
     {
       listing,
       connection,

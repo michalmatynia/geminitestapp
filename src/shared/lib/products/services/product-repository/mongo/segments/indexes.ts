@@ -22,6 +22,18 @@ export const ensureProductIndexes = async (): Promise<void> => {
         collection.createIndex({ name_pl: 1 }, { name: 'products_name_pl' }),
         collection.createIndex({ name_de: 1 }, { name: 'products_name_de' }),
         collection.createIndex(
+          { 'structuredTitle.size': 1 },
+          { name: 'products_structuredTitle_size' }
+        ),
+        collection.createIndex(
+          { 'structuredTitle.material': 1 },
+          { name: 'products_structuredTitle_material' }
+        ),
+        collection.createIndex(
+          { 'structuredTitle.theme': 1 },
+          { name: 'products_structuredTitle_theme' }
+        ),
+        collection.createIndex(
           { 'catalogs.catalogId': 1, createdAt: -1 },
           { name: 'products_catalogId_createdAt' }
         ),

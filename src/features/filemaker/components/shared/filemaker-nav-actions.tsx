@@ -47,8 +47,8 @@ const NAV_ITEMS: Array<{
   },
   {
     key: 'mail',
-    label: 'Mail',
-    href: '/admin/filemaker/mail',
+    label: 'Email Client',
+    href: '/admin/filemaker/mail-client',
     icon: <Mail className='size-4' />,
     variant: 'outline',
   },
@@ -85,11 +85,18 @@ export function buildFilemakerNavActions(
   router: AppRouterInstance,
   currentPage: FilemakerPageKey
 ): PanelAction[] {
-  return NAV_ITEMS.filter((item) => item.key !== currentPage).map((item) => ({
-    key: item.key,
-    label: item.label,
-    icon: item.icon,
-    ...(item.variant ? { variant: item.variant } : {}),
-    onClick: () => startTransition(() => { router.push(item.href); }),
-  }));
+  return NAV_ITEMS.filter((item) => item.key !== currentPage).map((item) => {
+    const action: PanelAction = {
+      key: item.key,
+      label: item.label,
+      icon: item.icon,
+      onClick: () => startTransition(() => { router.push(item.href); }),
+    };
+
+    if (item.variant !== undefined) {
+      action.variant = item.variant;
+    }
+
+    return action;
+  });
 }

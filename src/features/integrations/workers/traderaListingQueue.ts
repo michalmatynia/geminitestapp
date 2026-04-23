@@ -6,7 +6,7 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 type TraderaListingQueueJobData = {
   listingId: string;
-  action: 'list' | 'relist' | 'sync' | 'check_status';
+  action: 'list' | 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
   source?: 'manual' | 'scheduler' | 'api';
   jobId?: string;
   browserMode?: 'connection_default' | 'headless' | 'headed';

@@ -376,6 +376,87 @@ describe('mongo-product-repository.filters', () => {
     });
   });
 
+  it('compiles structured title term advanced filters against stored fields with name fallbacks', async () => {
+    const filter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'title-root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'title-size',
+            field: 'titleSize',
+            operator: 'eq',
+            value: '4 cm',
+          },
+          {
+            type: 'condition',
+            id: 'title-material',
+            field: 'titleMaterial',
+            operator: 'notIn',
+            value: ['Metal', 'Wood'],
+          },
+          {
+            type: 'condition',
+            id: 'title-theme',
+            field: 'titleTheme',
+            operator: 'isNotEmpty',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(filter).toEqual({
+      $and: [
+        {
+          $or: [
+            { 'structuredTitle.size': '4 cm' },
+            {
+              name_en: {
+                $regex: '^\\s*[^|]*\\s*\\|\\s*4\\s+cm\\s*\\|',
+              },
+            },
+          ],
+        },
+        {
+          $nor: [
+            {
+              $or: [
+                { 'structuredTitle.material': { $in: ['Metal', 'Wood'] } },
+                {
+                  name_en: {
+                    $regex:
+                      '^\\s*[^|]*\\s*\\|\\s*[^|]*\\s*\\|\\s*Metal\\s*\\|',
+                  },
+                },
+                {
+                  name_en: {
+                    $regex:
+                      '^\\s*[^|]*\\s*\\|\\s*[^|]*\\s*\\|\\s*Wood\\s*\\|',
+                  },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          $or: [
+            { 'structuredTitle.theme': { $exists: true, $nin: [null, ''] } },
+            {
+              name_en: {
+                $regex:
+                  '^\\s*[^|]*\\s*\\|\\s*[^|]*\\s*\\|\\s*[^|]*\\s*\\|\\s*[^|]*\\s*\\|\\s*[^|]*\\S[^|]*\\s*$',
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
   it('builds mongo where clauses for classic filters and advanced/base-export filters', async () => {
     const advancedFilter = JSON.stringify({
       type: 'group',

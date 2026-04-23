@@ -21,6 +21,7 @@ import {
   useCatalogs,
   useFilterTags,
   useProducers,
+  useTitleTerms,
 } from '@/features/products/hooks/useProductMetadataQueries';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
@@ -28,6 +29,7 @@ import type { ProductAdvancedFilterField, ProductAdvancedFilterGroup } from '@/s
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { Producer } from '@/shared/contracts/products/producers';
 import type { ProductTag } from '@/shared/contracts/products/tags';
+import type { ProductTitleTerm } from '@/shared/contracts/products/title-terms';
 
 const ID_MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'exact' | 'partial'>> = [
   { value: 'exact', label: 'Exact' },
@@ -93,6 +95,32 @@ const isProducer = (value: unknown): value is Producer =>
   Boolean(value) &&
   typeof value === 'object' &&
   normalizeString((value as { id?: unknown }).id).length > 0;
+
+const isProductTitleTerm = (value: unknown): value is ProductTitleTerm =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  normalizeString((value as { id?: unknown }).id).length > 0 &&
+  normalizeString((value as { name_en?: unknown }).name_en).length > 0;
+
+const buildTitleTermOptions = (
+  terms: ProductTitleTerm[]
+): Array<LabeledOptionDto<string>> => {
+  const optionMap = new Map<string, LabeledOptionDto<string>>();
+  terms.forEach((term) => {
+    const value = normalizeString(term.name_en);
+    if (!value || optionMap.has(value)) return;
+    optionMap.set(value, {
+      value,
+      label: value,
+    });
+  });
+  return Array.from(optionMap.values()).sort((left, right) =>
+    left.label.localeCompare(right.label, undefined, {
+      sensitivity: 'base',
+      numeric: true,
+    })
+  );
+};
 
 type ProductFiltersProps = {
   instanceId?: string;
@@ -166,11 +194,31 @@ export function ProductFilters({
   const { data: rawAvailableTags } = useFilterTags(selectedCatalogId, {
     enabled: filterMetadataEnabled,
   });
+  const titleTermQueryOptions = {
+    enabled: filterMetadataEnabled,
+    allowWithoutCatalog: true,
+  } as const;
+  const { data: rawSizeTerms } = useTitleTerms(selectedCatalogId, 'size', titleTermQueryOptions);
+  const { data: rawMaterialTerms } = useTitleTerms(
+    selectedCatalogId,
+    'material',
+    titleTermQueryOptions
+  );
+  const { data: rawThemeTerms } = useTitleTerms(
+    selectedCatalogId,
+    'theme',
+    titleTermQueryOptions
+  );
   const categorySource = selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories;
   const categories = Array.isArray(categorySource) ? categorySource.filter(isProductCategory) : [];
   const availableTags = Array.isArray(rawAvailableTags)
     ? rawAvailableTags.filter(isProductTag)
     : [];
+  const sizeTerms = Array.isArray(rawSizeTerms) ? rawSizeTerms.filter(isProductTitleTerm) : [];
+  const materialTerms = Array.isArray(rawMaterialTerms)
+    ? rawMaterialTerms.filter(isProductTitleTerm)
+    : [];
+  const themeTerms = Array.isArray(rawThemeTerms) ? rawThemeTerms.filter(isProductTitleTerm) : [];
   const catalogNameById = new Map(
     catalogs.map(
       (catalog) =>
@@ -221,6 +269,9 @@ export function ProductFilters({
       value: normalizeString(producer.id),
       label: normalizeString(producer.name) || normalizeString(producer.id),
     })),
+    titleSize: buildTitleTermOptions(sizeTerms),
+    titleMaterial: buildTitleTermOptions(materialTerms),
+    titleTheme: buildTitleTermOptions(themeTerms),
   };
 
   // Filter configuration

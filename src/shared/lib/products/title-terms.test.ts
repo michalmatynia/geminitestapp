@@ -8,6 +8,7 @@ import {
   normalizeStructuredProductName,
   normalizeTitleTermName,
   parseStructuredProductName,
+  resolveStructuredProductTitleTermValues,
   splitStructuredProductName,
   syncPolishStructuredProductName,
   translateStructuredProductName,
@@ -56,6 +57,21 @@ describe('product title term helpers', () => {
         theme: ' Attack On Titan ',
       })
     ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+  });
+
+  it('extracts structured title term values for search fields', () => {
+    expect(
+      resolveStructuredProductTitleTermValues(
+        'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan'
+      )
+    ).toEqual({
+      size: '4 cm',
+      material: 'Metal',
+      theme: 'Attack On Titan',
+    });
+    expect(resolveStructuredProductTitleTermValues('Scout Regiment | 4 cm')).toEqual({
+      size: '4 cm',
+    });
   });
 
   it('translates structured names segment-by-segment with English fallbacks', () => {

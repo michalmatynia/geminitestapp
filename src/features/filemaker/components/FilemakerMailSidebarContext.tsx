@@ -23,6 +23,7 @@ export type FilemakerMailSidebarContextValue = {
   onNewMailbox?: () => void;
   onSelectSearch?: () => void;
   onSelectAttention?: () => void;
+  onSelectRecent?: (accountId: string) => void;
   onSelectAccountSettings?: (accountId: string) => void;
   onSelectFolder?: (selection: { accountId: string; mailboxPath: string }) => void;
   onAccountUpdated?: (account: FilemakerMailAccount) => void | Promise<void>;

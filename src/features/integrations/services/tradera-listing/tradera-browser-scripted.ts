@@ -4,6 +4,7 @@ import {
   type TraderaSystemSettings,
 } from '@/features/integrations/constants/tradera';
 import {
+  createCustomPlaywrightInstance,
   createTraderaListingStatusScrapePlaywrightInstance,
   createTraderaScriptedListingPlaywrightInstance,
 } from '@/features/playwright/server';
@@ -71,6 +72,7 @@ import {
   usesStaleManagedDefaultTraderaQuickListScript,
 } from './managed-script';
 import { buildTraderaCheckStatusScript } from './check-status-script';
+import { buildTraderaMoveToUnsoldScript } from './move-to-unsold-script';
 
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
 export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
@@ -115,6 +117,7 @@ type ScriptSource =
   | 'invalid-connection-fallback';
 
 const TRADERA_CHECK_STATUS_TIMEOUT_MS = 60_000;
+const TRADERA_MOVE_TO_UNSOLD_TIMEOUT_MS = 90_000;
 const TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES: Partial<PlaywrightSettings> = {
   slowMo: 0,
   humanizeMouse: false,
@@ -788,6 +791,107 @@ export const runTraderaBrowserCheckStatus = async ({
           ? rawResult['verificationCandidateCount']
           : null,
     },
+  });
+};
+
+export const runTraderaBrowserMoveToUnsold = async ({
+  listing,
+  connection,
+  systemSettings,
+  browserMode,
+}: {
+  listing: ProductListing;
+  connection: IntegrationConnectionRecord;
+  systemSettings?: TraderaSystemSettings;
+  browserMode: PlaywrightRelistBrowserMode;
+}, options?: {
+  onRunStarted?: TraderaPlaywrightRunStartedCallback;
+}): Promise<BrowserListingResultDto> => {
+  const resolvedSystemSettings = systemSettings ?? DEFAULT_TRADERA_SYSTEM_SETTINGS;
+  const resolvedListingUrl = resolveExistingListingUrl(listing);
+  if (!resolvedListingUrl && !listing.externalListingId) {
+    throw notFoundError('Tradera end listing requires a linked listing URL or listing ID.', {
+      listingId: listing.id,
+    });
+  }
+
+  let verificationSearchTerms: string[] = [];
+  const productRepository = await getProductRepository();
+  const product = await productRepository.getProductById(listing.productId);
+  if (product) {
+    const resolvedCopy = resolveMarketplaceAwareProductCopy({
+      product,
+      integrationId: listing.integrationId,
+      preferredLocales: ['en', 'pl', 'de'],
+    });
+    const englishTitle = toTrimmedString(product.name_en);
+    verificationSearchTerms = buildDuplicateSearchTerms(
+      englishTitle ? [englishTitle] : [resolvedCopy.title]
+    );
+  }
+
+  const selectorRuntimeResolution = await resolveTraderaSelectorRegistryRuntime({
+    profile: resolvedSystemSettings.selectorProfile,
+  });
+  const moveToUnsoldScript = buildTraderaMoveToUnsoldScript(
+    selectorRuntimeResolution.runtime
+  );
+
+  const result = await runPlaywrightScrapeScript({
+    script: moveToUnsoldScript,
+    input: {
+      listingUrl: resolvedListingUrl,
+      externalListingId: listing.externalListingId ?? null,
+      searchTitle: verificationSearchTerms[0] ?? null,
+    },
+    connection,
+    instance: createCustomPlaywrightInstance({
+      family: 'scrape',
+      label: 'Tradera end listing',
+      tags: ['integration', 'tradera', 'listing', 'end'],
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+      listingId: listing.id,
+      productId: listing.productId,
+    }),
+    timeoutMs: TRADERA_MOVE_TO_UNSOLD_TIMEOUT_MS,
+    browserMode,
+    runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
+    ...(options?.onRunStarted ? { onRunStarted: options.onRunStarted } : {}),
+  });
+
+  if (result.run.status === 'failed') {
+    throw internalError(result.run.error ?? 'Tradera end listing failed.', {
+      ...buildPlaywrightEngineRunFailureMeta(result.run, {
+        includeRawResult: true,
+      }),
+      logs: Array.isArray(result.run.logs) ? result.run.logs : [],
+    });
+  }
+
+  const rawResult = result.rawResult;
+  const resolvedExternalListingId =
+    toTrimmedString(rawResult['externalListingId']) || listing.externalListingId || null;
+  const resolvedResultListingUrl =
+    toTrimmedString(rawResult['listingUrl']) || resolvedListingUrl || null;
+  const checkedStatus = toTrimmedString(rawResult['status']) || null;
+  const executionSteps = resolveTraderaCheckStatusExecutionStepsFromResult(rawResult);
+
+  return buildPlaywrightListingResult({
+    externalListingId: resolvedExternalListingId,
+    listingUrl: resolvedResultListingUrl ?? undefined,
+    metadata: buildPlaywrightScriptListingMetadata({
+      result,
+      requestedBrowserMode: browserMode,
+      additional: {
+        checkedStatus,
+        verificationMethod: toTrimmedString(rawResult['verificationMethod']) || null,
+        verifiedInUnsold: rawResult['verifiedInUnsold'] === true,
+        actionConfirmed: rawResult['actionConfirmed'] === true,
+        ...buildSelectorRuntimeMetadata(selectorRuntimeResolution),
+        ...(executionSteps.length > 0 ? { executionSteps } : {}),
+      },
+    }),
   });
 };
 

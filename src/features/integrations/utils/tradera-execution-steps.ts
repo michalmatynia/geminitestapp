@@ -54,6 +54,28 @@ const readExecutionStepMessage = (record: Record<string, unknown>): string | nul
   return readString(info['message']) ?? readString(info['reason']) ?? readString(info['error']);
 };
 
+const countResolvedExecutionSteps = (
+  steps: readonly TraderaExecutionStep[]
+): number => steps.reduce((count, step) => count + (step.status === 'pending' ? 0 : 1), 0);
+
+const pickMostInformativeExecutionSteps = (
+  candidates: readonly TraderaExecutionStep[][]
+): TraderaExecutionStep[] => {
+  let bestSteps: TraderaExecutionStep[] = [];
+  let bestResolvedCount = 0;
+
+  for (const candidate of candidates) {
+    if (candidate.length === 0) continue;
+    const resolvedCount = countResolvedExecutionSteps(candidate);
+    if (bestSteps.length === 0 || resolvedCount > bestResolvedCount) {
+      bestSteps = candidate;
+      bestResolvedCount = resolvedCount;
+    }
+  }
+
+  return bestSteps;
+};
+
 
 const parseUserLogEvent = (
   entry: string
@@ -1024,27 +1046,37 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
   const rawExecutionSteps = readTraderaExecutionSteps(rawResult['executionSteps']);
   const logs = readStringArray(metadata['logTail']);
   const errorMessage = readString(lastExecution['error']);
+  const ok = typeof lastExecution['ok'] === 'boolean' ? lastExecution['ok'] : null;
 
   let derivedSteps: TraderaExecutionStep[] = [];
-  if (persistedSteps.length === 0) {
-    if (rawExecutionSteps.length > 0) {
-      derivedSteps = rawExecutionSteps;
-    } else if (action === 'check_status') {
-      derivedSteps = rawExecutionSteps;
-    } else if (action === 'list' || action === 'relist' || action === 'sync') {
-      derivedSteps = buildTraderaQuicklistExecutionSteps({
-        action,
-        rawResult,
-        logs,
-        errorMessage,
-      });
-    }
+  if (action === 'list' || action === 'relist' || action === 'sync') {
+    derivedSteps = buildTraderaQuicklistExecutionSteps({
+      action,
+      rawResult,
+      logs,
+      errorMessage,
+    });
+  } else if (
+    rawExecutionSteps.length > 0 ||
+    action === 'check_status' ||
+    action === 'move_to_unsold'
+  ) {
+    derivedSteps = rawExecutionSteps;
   }
+
+  const steps =
+    ok === false && (action === 'list' || action === 'relist' || action === 'sync')
+      ? pickMostInformativeExecutionSteps([persistedSteps, rawExecutionSteps, derivedSteps])
+      : persistedSteps.length > 0
+        ? persistedSteps
+        : rawExecutionSteps.length > 0
+          ? rawExecutionSteps
+          : derivedSteps;
 
   return {
     action,
-    steps: persistedSteps.length > 0 ? persistedSteps : derivedSteps,
-    ok: typeof lastExecution['ok'] === 'boolean' ? lastExecution['ok'] : null,
+    steps,
+    ok,
     error: errorMessage,
   };
 };

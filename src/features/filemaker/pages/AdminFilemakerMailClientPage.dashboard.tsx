@@ -1,0 +1,292 @@
+import React from 'react';
+
+import { MailClientAttentionSection } from './AdminFilemakerMailClientPage.attention';
+import {
+  type MailClientDashboardActions,
+  type MailClientDashboardFilterState,
+  type MailClientDashboardProps,
+  type MailClientDashboardState,
+  useMailClientDashboardFilterState,
+} from './AdminFilemakerMailClientPage.dashboard-state';
+import { MailClientDashboardFilters } from './AdminFilemakerMailClientPage.filters';
+import { MailClientMailboxSection } from './AdminFilemakerMailClientPage.mailboxes';
+import { MailClientRecentThreadsSection } from './AdminFilemakerMailClientPage.recent';
+import {
+  MailClientQuickActions,
+  MailClientSummaryCards,
+} from './AdminFilemakerMailClientPage.sections';
+
+type MailClientAttentionBlockProps = Pick<
+  MailClientDashboardState,
+  'accounts' | 'attentionAccounts' | 'foldersByAccount'
+> &
+  Pick<
+    MailClientDashboardFilterState,
+    'clearDashboardFilters' | 'dashboardAccountId' | 'dashboardQuery' | 'dashboardScope' | 'hasActiveDashboardFilter' | 'visibleAttentionAccounts'
+  > &
+  Pick<
+    MailClientDashboardActions,
+    'syncingAccountId' | 'statusUpdatingAccountId' | 'handleSyncAccount' | 'handleToggleAccountStatus'
+  >;
+
+type MailClientWorkspaceBlocksProps = Pick<
+  MailClientDashboardState,
+  'accounts' | 'foldersByAccount' | 'recentThreads' | 'recentThreadsError' | 'isLoading' | 'loadError' | 'loadMailboxData'
+> &
+  Pick<
+    MailClientDashboardActions,
+    'syncingAccountId' | 'statusUpdatingAccountId' | 'handleSyncAccount' | 'handleToggleAccountStatus'
+  > &
+  Pick<
+    MailClientDashboardFilterState,
+    'clearDashboardFilters' | 'dashboardAccountId' | 'dashboardQuery' | 'dashboardScope' | 'hasActiveDashboardFilter' | 'visibleAccounts' | 'visibleRecentThreads'
+  >;
+
+type MailClientDashboardSectionsContentProps = Omit<MailClientDashboardProps, 'loadMailboxData'> & {
+  loadMailboxData: MailClientDashboardState['loadMailboxData'];
+  filterState: MailClientDashboardFilterState;
+};
+
+function MailClientDashboardOverview({
+  accounts,
+  folders,
+  activeAccounts,
+  attentionAccounts,
+  firstActiveAccount,
+  recentThreads,
+  dashboardAccountId,
+  dashboardScope,
+  dashboardQuery,
+  setDashboardAccountId,
+  setDashboardQuery,
+  setDashboardScope,
+  clearDashboardFilters,
+  visibleAttentionAccounts,
+  visibleAccounts,
+  visibleRecentThreads,
+}: Pick<
+  MailClientDashboardState,
+  'accounts' | 'folders' | 'activeAccounts' | 'attentionAccounts' | 'firstActiveAccount' | 'recentThreads'
+> &
+  MailClientDashboardFilterState): React.JSX.Element {
+  return (
+    <>
+      <MailClientSummaryCards
+        accountCount={accounts.length}
+        activeCount={activeAccounts.length}
+        attentionCount={attentionAccounts.length}
+        folderCount={folders.length}
+      />
+      <MailClientQuickActions
+        accountCount={accounts.length}
+        activeCount={activeAccounts.length}
+        attentionCount={attentionAccounts.length}
+        firstActiveAccount={firstActiveAccount}
+      />
+      <MailClientDashboardFilters
+        accountId={dashboardAccountId}
+        accounts={accounts}
+        query={dashboardQuery}
+        scope={dashboardScope}
+        onAccountIdChange={setDashboardAccountId}
+        onQueryChange={setDashboardQuery}
+        onScopeChange={setDashboardScope}
+        onClearFilters={clearDashboardFilters}
+        visibleAccountCount={visibleAccounts.length}
+        visibleAttentionCount={visibleAttentionAccounts.length}
+        totalAccountCount={accounts.length}
+        totalAttentionCount={attentionAccounts.length}
+        visibleRecentThreadCount={visibleRecentThreads.length}
+        totalRecentThreadCount={recentThreads.length}
+      />
+    </>
+  );
+}
+
+function MailClientAttentionBlock({
+  accounts,
+  attentionAccounts,
+  visibleAttentionAccounts,
+  dashboardAccountId,
+  dashboardQuery,
+  dashboardScope,
+  hasActiveDashboardFilter,
+  clearDashboardFilters,
+  foldersByAccount,
+  syncingAccountId,
+  statusUpdatingAccountId,
+  handleSyncAccount,
+  handleToggleAccountStatus,
+}: MailClientAttentionBlockProps): React.JSX.Element {
+  return (
+    <MailClientAttentionSection
+      attentionAccounts={visibleAttentionAccounts}
+      accountCount={accounts.length}
+      hasActiveFilter={hasActiveDashboardFilter}
+      hasAnyAttentionAccounts={attentionAccounts.length > 0}
+      dashboardAccountId={dashboardAccountId}
+      dashboardQuery={dashboardQuery}
+      dashboardScope={dashboardScope}
+      foldersByAccount={foldersByAccount}
+      onClearFilter={clearDashboardFilters}
+      onSyncAccount={handleSyncAccount}
+      onToggleAccountStatus={handleToggleAccountStatus}
+      syncingAccountId={syncingAccountId}
+      statusUpdatingAccountId={statusUpdatingAccountId}
+    />
+  );
+}
+
+function MailClientWorkspaceBlocks({
+  accounts,
+  foldersByAccount,
+  recentThreads,
+  recentThreadsError,
+  isLoading,
+  loadError,
+  loadMailboxData,
+  syncingAccountId,
+  statusUpdatingAccountId,
+  handleSyncAccount,
+  handleToggleAccountStatus,
+  dashboardAccountId,
+  dashboardQuery,
+  dashboardScope,
+  clearDashboardFilters,
+  hasActiveDashboardFilter,
+  visibleAccounts,
+  visibleRecentThreads,
+}: MailClientWorkspaceBlocksProps): React.JSX.Element {
+  return (
+    <>
+      <MailClientRecentThreadsSection
+        accounts={accounts}
+        dashboardAccountId={dashboardAccountId}
+        dashboardQuery={dashboardQuery}
+        dashboardScope={dashboardScope}
+        hasActiveFilter={hasActiveDashboardFilter}
+        hasAnyRecentThreads={recentThreads.length > 0}
+        onClearFilter={clearDashboardFilters}
+        recentThreads={visibleRecentThreads}
+        recentThreadsError={recentThreadsError}
+      />
+      <MailClientMailboxSection
+        accounts={visibleAccounts}
+        dashboardAccountId={dashboardAccountId}
+        dashboardQuery={dashboardQuery}
+        dashboardScope={dashboardScope}
+        hasConfiguredAccounts={accounts.length > 0}
+        hasActiveFilter={hasActiveDashboardFilter}
+        foldersByAccount={foldersByAccount}
+        isLoading={isLoading}
+        loadError={loadError}
+        onClearFilter={clearDashboardFilters}
+        onRetry={loadMailboxData}
+        onSyncAccount={handleSyncAccount}
+        onToggleAccountStatus={handleToggleAccountStatus}
+        syncingAccountId={syncingAccountId}
+        statusUpdatingAccountId={statusUpdatingAccountId}
+      />
+    </>
+  );
+}
+
+export function MailClientDashboardSections(props: MailClientDashboardProps): React.JSX.Element {
+  const {
+    accounts,
+    folders,
+    foldersByAccount,
+    recentThreads,
+    recentThreadsError,
+    activeAccounts,
+    attentionAccounts,
+    firstActiveAccount,
+    isLoading,
+    loadError,
+    loadMailboxData,
+    syncingAccountId,
+    statusUpdatingAccountId,
+    handleSyncAccount,
+    handleToggleAccountStatus,
+  } = props;
+  const filterState = useMailClientDashboardFilterState({
+    accounts,
+    foldersByAccount,
+    recentThreads,
+  });
+
+  return (
+    <MailClientDashboardSectionsContent
+      accounts={accounts}
+      folders={folders}
+      foldersByAccount={foldersByAccount}
+      recentThreads={recentThreads}
+      recentThreadsError={recentThreadsError}
+      activeAccounts={activeAccounts}
+      attentionAccounts={attentionAccounts}
+      firstActiveAccount={firstActiveAccount}
+      isLoading={isLoading}
+      loadError={loadError}
+      loadMailboxData={loadMailboxData}
+      syncingAccountId={syncingAccountId}
+      statusUpdatingAccountId={statusUpdatingAccountId}
+      handleSyncAccount={handleSyncAccount}
+      handleToggleAccountStatus={handleToggleAccountStatus}
+      filterState={filterState}
+    />
+  );
+}
+
+function MailClientDashboardSectionsContent({
+  accounts,
+  folders,
+  foldersByAccount,
+  recentThreads,
+  recentThreadsError,
+  activeAccounts,
+  attentionAccounts,
+  firstActiveAccount,
+  isLoading,
+  loadError,
+  loadMailboxData,
+  syncingAccountId,
+  statusUpdatingAccountId,
+  handleSyncAccount,
+  handleToggleAccountStatus,
+  filterState,
+}: MailClientDashboardSectionsContentProps): React.JSX.Element {
+  return (
+    <>
+      <MailClientDashboardOverview accounts={accounts} folders={folders} activeAccounts={activeAccounts} attentionAccounts={attentionAccounts} firstActiveAccount={firstActiveAccount} recentThreads={recentThreads} {...filterState} />
+      <MailClientAttentionBlock
+        accounts={accounts}
+        attentionAccounts={attentionAccounts}
+        visibleAttentionAccounts={filterState.visibleAttentionAccounts}
+        dashboardAccountId={filterState.dashboardAccountId}
+        dashboardQuery={filterState.dashboardQuery}
+        dashboardScope={filterState.dashboardScope}
+        hasActiveDashboardFilter={filterState.hasActiveDashboardFilter}
+        clearDashboardFilters={filterState.clearDashboardFilters}
+        foldersByAccount={foldersByAccount}
+        syncingAccountId={syncingAccountId}
+        statusUpdatingAccountId={statusUpdatingAccountId}
+        handleSyncAccount={handleSyncAccount}
+        handleToggleAccountStatus={handleToggleAccountStatus}
+      />
+      <MailClientWorkspaceBlocks
+        accounts={accounts}
+        foldersByAccount={foldersByAccount}
+        recentThreads={recentThreads}
+        recentThreadsError={recentThreadsError}
+        isLoading={isLoading}
+        loadError={loadError}
+        loadMailboxData={loadMailboxData}
+        syncingAccountId={syncingAccountId}
+        statusUpdatingAccountId={statusUpdatingAccountId}
+        handleSyncAccount={handleSyncAccount}
+        handleToggleAccountStatus={handleToggleAccountStatus}
+        {...filterState}
+      />
+    </>
+  );
+}

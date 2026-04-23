@@ -73,6 +73,7 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     syncingTraderaListing,
     checkingTraderaStatusListing,
     relistingListing,
+    movingTraderaListingToUnsold,
     relistingBrowserMode,
     openingTraderaLogin,
   } = useProductListingsUIState();
@@ -87,7 +88,8 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     handleRecoverTraderaListing,
   } = useProductListingsActions();
 
-  const { setListingToDelete, setListingToPurge } = useProductListingsModals();
+  const { setListingToDelete, setListingToMoveToUnsold, setListingToPurge } =
+    useProductListingsModals();
 
   const imageRetryPresets = useImageRetryPresets();
   const isBaseListing = ['baselinker', 'base-com', 'base'].includes(
@@ -117,6 +119,8 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
 
   const traderaMarketplaceData = toRecord(listing.marketplaceData);
   const traderaData = toRecord(traderaMarketplaceData['tradera']);
+  const traderaListingUrl =
+    readString(traderaMarketplaceData['listingUrl']) ?? readString(traderaData['listingUrl']);
   const traderaLastExecution = toRecord(traderaData['lastExecution']);
   const traderaPendingExecution = toRecord(traderaData['pendingExecution']);
   const playwrightData = toRecord(traderaMarketplaceData['playwright']);
@@ -139,15 +143,18 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
       ));
   const effectiveTraderaAction = liveTraderaAction ?? traderaLastExecutionAction;
   const checkStatusRetryPreferred = effectiveTraderaAction === 'check_status';
+  const moveToUnsoldRetryPreferred = effectiveTraderaAction === 'move_to_unsold';
   const traderaNeedsManualLogin =
     isTraderaBrowserListing &&
     !isTraderaDuplicateLinked &&
     (['failed', 'needs_login', 'auth_required'].includes(normalizedListingStatus) ||
-      checkStatusRetryPreferred) &&
+      checkStatusRetryPreferred ||
+      moveToUnsoldRetryPreferred) &&
     (traderaErrorCategory === 'auth' ||
       hasTraderaAuthSignal(traderaFailureReason) ||
       hasTraderaAuthSignal(traderaExecutionError));
   const isRelistingCurrentListing = relistingListing === listing.id;
+  const isMovingToUnsoldCurrentListing = movingTraderaListingToUnsold === listing.id;
   const isSyncingCurrentListing = syncingTraderaListing === listing.id;
   const isCheckingCurrentListing = checkingTraderaStatusListing === listing.id;
   const isRelistingPlaywrightHeadless =
@@ -191,6 +198,14 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const isQueuedTraderaSyncFieldsOnly =
     isQueuedTraderaSync && persistedTraderaPendingSkipImages;
   const syncRetryPreferred = persistedTraderaPendingAction === 'sync' || traderaLastExecutionAction === 'sync';
+  const isQueuedTraderaMoveToUnsold =
+    !isMovingToUnsoldCurrentListing &&
+    isPersistedTraderaQueueState &&
+    persistedTraderaPendingAction === 'move_to_unsold';
+  const canMoveTraderaListingToUnsold =
+    isTraderaBrowserListing &&
+    Boolean(listing.externalListingId || traderaListingUrl) &&
+    !['unsold', 'ended', 'sold', 'removed'].includes(normalizedListingStatus);
   const isQueuedTraderaHeadless =
     !isRelistingCurrentListing &&
     isPersistedTraderaQueueState &&
@@ -345,6 +360,8 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                   connectionId: listing.connectionId,
                   action: checkStatusRetryPreferred
                     ? 'check_status'
+                    : moveToUnsoldRetryPreferred
+                      ? 'move_to_unsold'
                     : syncRetryPreferred
                       ? 'sync'
                       : 'relist',
@@ -358,6 +375,8 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                 ? 'Waiting for manual login...'
                 : checkStatusRetryPreferred
                   ? 'Login and retry status check'
+                  : moveToUnsoldRetryPreferred
+                    ? 'Login and retry end listing'
                   : syncRetryPreferred
                   ? 'Login and retry sync'
                   : 'Login and retry relist'}
@@ -500,6 +519,31 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
                   : 'Check Status'}
             </Button>
           )}
+          {canMoveTraderaListingToUnsold ? (
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                setListingToMoveToUnsold(listing.id);
+              }}
+              disabled={
+                isMovingToUnsoldCurrentListing ||
+                isLiveTraderaRunActive ||
+                isPersistedTraderaQueueState ||
+                isSyncingCurrentListing ||
+                isCheckingCurrentListing ||
+                isRelistingCurrentListing ||
+                isQueuedTraderaStatusCheck
+              }
+            >
+              {isQueuedTraderaMoveToUnsold
+                ? 'Queued end listing'
+                : isMovingToUnsoldCurrentListing
+                  ? 'Queuing end listing...'
+                  : 'End on Tradera'}
+            </Button>
+          ) : null}
           <Button
             type='button'
             variant='success'

@@ -17,6 +17,195 @@ import {
 setupAdminFilemakerMailPagesTest();
 
 describe('AdminFilemakerMail pages search flow', () => {
+  it('ignores a stale deep-search response after clearing the search query', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'panel') return 'search';
+      if (key === 'accountId') return 'account-1';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    let resolveSearchRequest: ((response: Response) => void) | null = null;
+
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return Promise.resolve(jsonResponse({ accounts: mockAccounts }));
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return Promise.resolve(jsonResponse({ folders: mockFolders }));
+      }
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
+        return Promise.resolve(jsonResponse({ threads: [] }));
+      }
+      if (url === '/api/filemaker/mail/search?query=invoice&accountId=account-1') {
+        return new Promise<Response>((resolve) => {
+          resolveSearchRequest = resolve;
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    await screen.findByLabelText('Deep message search');
+    await waitFor(() => {
+      expect(resolveSearchRequest).not.toBeNull();
+    });
+
+    routerReplaceMock.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear Search' }));
+
+    await waitFor(() => {
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?panel=search&accountId=account-1'
+      );
+    });
+
+    resolveSearchRequest?.(
+      jsonResponse({
+        totalHits: 1,
+        groups: [
+          {
+            threadId: 'thread-1',
+            threadSubject: 'Invoice question',
+            accountId: 'account-1',
+            mailboxPath: 'VIP',
+            lastMessageAt: '2026-03-28T10:00:00.000Z',
+            hits: [
+              {
+                messageId: 'message-1',
+                matchField: 'body',
+                matchSnippet: 'Invoice status update',
+                from: { address: 'alice@example.com', name: 'Alice' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Invoice question')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Enter a search term to find messages across all synced mailboxes.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('clears previous deep-search results immediately when the query changes', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'panel') return 'search';
+      if (key === 'accountId') return 'account-1';
+      if (key === 'searchQuery') return 'invoice';
+      return null;
+    });
+
+    let resolveReceiptSearchRequest: ((response: Response) => void) | null = null;
+
+    fetchMock.mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return Promise.resolve(jsonResponse({ accounts: mockAccounts }));
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return Promise.resolve(jsonResponse({ folders: mockFolders }));
+      }
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
+        return Promise.resolve(jsonResponse({ threads: [] }));
+      }
+      if (url === '/api/filemaker/mail/search?query=invoice&accountId=account-1') {
+        return Promise.resolve(
+          jsonResponse({
+            totalHits: 1,
+            groups: [
+              {
+                threadId: 'thread-1',
+                threadSubject: 'Invoice question',
+                accountId: 'account-1',
+                mailboxPath: 'VIP',
+                lastMessageAt: '2026-03-28T10:00:00.000Z',
+                hits: [
+                  {
+                    messageId: 'message-1',
+                    matchField: 'body',
+                    matchSnippet: 'Invoice status update',
+                    from: { address: 'alice@example.com', name: 'Alice' },
+                    to: [{ address: 'support@example.com', name: 'Support' }],
+                    sentAt: '2026-03-28T10:00:00.000Z',
+                    receivedAt: '2026-03-28T10:00:00.000Z',
+                  },
+                ],
+              },
+            ],
+          })
+        );
+      }
+      if (url === '/api/filemaker/mail/search?query=receipt&accountId=account-1') {
+        return new Promise<Response>((resolve) => {
+          resolveReceiptSearchRequest = resolve;
+        });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    expect(await screen.findByText('Invoice question')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Deep message search'), {
+      target: { value: 'receipt' },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Invoice question')).not.toBeInTheDocument();
+      expect(screen.getByText('Searching messages...')).toBeInTheDocument();
+    });
+
+    resolveReceiptSearchRequest?.(
+      jsonResponse({
+        totalHits: 1,
+        groups: [
+          {
+            threadId: 'thread-2',
+            threadSubject: 'Receipt request',
+            accountId: 'account-1',
+            mailboxPath: 'VIP',
+            lastMessageAt: '2026-03-28T10:00:00.000Z',
+            hits: [
+              {
+                messageId: 'message-2',
+                matchField: 'subject',
+                matchSnippet: 'Receipt request',
+                from: { address: 'bob@example.com', name: 'Bob' },
+                to: [{ address: 'support@example.com', name: 'Support' }],
+                sentAt: '2026-03-28T10:00:00.000Z',
+                receivedAt: '2026-03-28T10:00:00.000Z',
+              },
+            ],
+          },
+        ],
+      })
+    );
+
+    expect((await screen.findAllByText('Receipt request')).length).toBeGreaterThan(0);
+  });
+
   it('preserves search-origin context in compose back and send routes', async () => {
     const { AdminFilemakerMailComposePage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailComposePage'
@@ -627,7 +816,10 @@ describe('AdminFilemakerMail pages search flow', () => {
       if (url === '/api/filemaker/mail/folders' && !init?.method) {
         return jsonResponse({ folders: mockFolders });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         return jsonResponse({
           threads: [
             {

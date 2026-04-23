@@ -9,6 +9,7 @@ import {
   normalizeProductNotes,
   normalizeProductMarketplaceContentOverrides,
 } from '@/shared/contracts/products/product';
+import { resolveStructuredProductTitleTermValues } from '@/shared/lib/products/title-terms';
 
 import { type ProductDocument, toProductResponse } from '../mongo-product-repository-mappers';
 import {
@@ -40,6 +41,7 @@ export const mongoProductWriteImpl = {
       name_en: data.name_en || null,
       name_pl: data.name_pl || null,
       name_de: data.name_de || null,
+      structuredTitle: resolveStructuredProductTitleTermValues(data.name_en ?? ''),
       description_en: data.description_en || null,
       description_pl: data.description_pl || null,
       description_de: data.description_de || null,
@@ -106,6 +108,7 @@ export const mongoProductWriteImpl = {
 
     if (data.name_en !== undefined) {
       set['name_en'] = data.name_en;
+      set['structuredTitle'] = resolveStructuredProductTitleTermValues(data.name_en ?? '');
     }
     if (data.name_pl !== undefined) {
       set['name_pl'] = data.name_pl;

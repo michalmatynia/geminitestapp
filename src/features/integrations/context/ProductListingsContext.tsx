@@ -206,6 +206,7 @@ export interface ProductListingsUIState {
   syncingTraderaListing: string | null;
   checkingTraderaStatusListing: string | null;
   relistingListing: string | null;
+  movingTraderaListingToUnsold: string | null;
   relistingBrowserMode: PlaywrightRelistBrowserMode | null;
   openingTraderaLogin: string | null;
   openingVintedLogin: string | null;
@@ -223,6 +224,8 @@ export const { Context: UIStateContext, useValue: useProductListingsUIState } =
 export interface ProductListingsModals {
   listingToDelete: string | null;
   setListingToDelete: (id: string | null) => void;
+  listingToMoveToUnsold: string | null;
+  setListingToMoveToUnsold: (id: string | null) => void;
   listingToPurge: string | null;
   setListingToPurge: (id: string | null) => void;
   isSyncImagesConfirmOpen: boolean;
@@ -289,6 +292,14 @@ export interface ProductListingsActions {
       selectorProfile?: string;
     }
   ) => Promise<void>;
+  handleMoveTraderaListingToUnsold: (
+    listingId: string,
+    options?: {
+      skipSessionPreflight?: boolean;
+      browserMode?: PlaywrightRelistBrowserMode;
+      selectorProfile?: string;
+    }
+  ) => Promise<void>;
   handleOpenTraderaLogin: (
     listingId: string,
     integrationId: string,
@@ -298,7 +309,7 @@ export interface ProductListingsActions {
     listingId: string;
     integrationId: string;
     connectionId: string;
-    action: 'relist' | 'sync' | 'check_status';
+    action: 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
     browserMode?: PlaywrightRelistBrowserMode;
     selectorProfile?: string;
     skipImages?: boolean;
@@ -357,11 +368,14 @@ export function ProductListingsProvider({
   const [checkingTraderaStatusListing, setCheckingTraderaStatusListing] =
     useState<string | null>(null);
   const [relistingListing, setRelistingListing] = useState<string | null>(null);
+  const [movingTraderaListingToUnsold, setMovingTraderaListingToUnsold] =
+    useState<string | null>(null);
   const [relistingBrowserMode, setRelistingBrowserMode] =
     useState<PlaywrightRelistBrowserMode | null>(null);
   const [openingTraderaLogin, setOpeningTraderaLogin] = useState<string | null>(null);
   const [openingVintedLogin, setOpeningVintedLogin] = useState<string | null>(null);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
+  const [listingToMoveToUnsold, setListingToMoveToUnsold] = useState<string | null>(null);
   const [listingToPurge, setListingToPurge] = useState<string | null>(null);
   const [isSyncImagesConfirmOpen, setIsSyncImagesConfirmOpen] = useState(false);
   const [resolvedRecoveryContext, setResolvedRecoveryContext] =
@@ -658,8 +672,10 @@ export function ProductListingsProvider({
     setIsSyncImagesConfirmOpen,
     setLastExportListingId,
     setListingToDelete,
+    setListingToMoveToUnsold,
     setListingToPurge,
     setLogsOpen,
+    setMovingTraderaListingToUnsold,
     setOpeningTraderaLogin,
     setOpeningVintedLogin,
     setRecoveryContext: setResolvedRecoveryContext,
@@ -693,6 +709,7 @@ export function ProductListingsProvider({
       syncingTraderaListing,
       checkingTraderaStatusListing,
       relistingListing,
+      movingTraderaListingToUnsold,
       relistingBrowserMode,
       openingTraderaLogin,
       openingVintedLogin,
@@ -710,6 +727,7 @@ export function ProductListingsProvider({
       syncingTraderaListing,
       checkingTraderaStatusListing,
       relistingListing,
+      movingTraderaListingToUnsold,
       relistingBrowserMode,
       openingTraderaLogin,
       openingVintedLogin,
@@ -722,6 +740,8 @@ export function ProductListingsProvider({
     () => ({
       listingToDelete,
       setListingToDelete,
+      listingToMoveToUnsold,
+      setListingToMoveToUnsold,
       listingToPurge,
       setListingToPurge,
       isSyncImagesConfirmOpen,
@@ -734,6 +754,7 @@ export function ProductListingsProvider({
     }),
     [
       listingToDelete,
+      listingToMoveToUnsold,
       listingToPurge,
       isSyncImagesConfirmOpen,
       onClose,

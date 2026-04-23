@@ -23,6 +23,8 @@ import type { WithId } from 'mongodb';
 
 type ProductCatalogRelation = NonNullable<ProductWithImages['catalogs']>[number];
 
+type StructuredTitleDocument = Partial<Record<'size' | 'material' | 'theme', string>>;
+
 export type ProductDocument = Omit<
   ProductRecord,
   | 'createdAt'
@@ -51,6 +53,7 @@ export type ProductDocument = Omit<
   categoryId?: string | null;
   tags?: ProductWithImages['tags'];
   producers?: ProductWithImages['producers'];
+  structuredTitle?: StructuredTitleDocument;
   noteIds?: string[];
 };
 

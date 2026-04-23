@@ -368,7 +368,10 @@ describe('AdminFilemakerMail pages thread actions flows', () => {
           ],
         });
       }
-      if (url === '/api/filemaker/mail/threads?accountId=account-1') {
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1' ||
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5'
+      ) {
         recentLoads += 1;
         return jsonResponse({
           threads: [

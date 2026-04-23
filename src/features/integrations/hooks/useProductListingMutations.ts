@@ -9,7 +9,7 @@ import {
   normalizeIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { buildQueuedTraderaStatusCheckMarketplaceData } from '@/features/integrations/utils/tradera-status-check';
-import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingSyncResponse, ProductListingSyncVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
+import type { ListingBadgesPayload, MarketplaceBadgeEntry, ProductListingCreatePayload, ProductListingCreateResponse, ProductListingCreateVariables, ProductListingDeleteFromBaseResponse, ProductListingDeleteFromBaseVariables, ProductListingInventoryUpdateVariables, ProductListingMoveToUnsoldResponse, ProductListingMoveToUnsoldVariables, ProductListingRelistResponse, ProductListingRelistVariables, ProductListingSyncBaseImagesResponse, ProductListingSyncBaseImagesVariables, ProductListingSyncResponse, ProductListingSyncVariables, ProductListingUpdateResponse, ProductListingWithDetails, TraderaProductLinkExistingPayload, TraderaProductLinkExistingResponse } from '@/shared/contracts/integrations/listings';
 import type { ProductJob } from '@/shared/contracts/integrations/domain';
 import type { ExportToBaseVariables, ExportResponse } from '@/shared/contracts/integrations/base-com';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
@@ -103,7 +103,7 @@ const patchQueuedPlaywrightRelist = (
 const patchQueuedTraderaRelist = (
   listing: ProductListingWithDetails,
   options: {
-    action?: 'relist' | 'sync';
+    action?: 'relist' | 'sync' | 'move_to_unsold';
     browserMode?: ListingQueueBrowserMode;
     selectorProfile?: string;
     requestId?: string | null;
@@ -476,6 +476,7 @@ export function usePurgeListingMutation(productId: string): DeleteMutation {
       description: 'Deletes integrations listings purge.'},
     invalidate: async (queryClient) => {
       await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProductsAndDetail(queryClient, productId);
     },
   });
 }
@@ -766,6 +767,94 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
       }
       if (queueName === 'playwright-programmable-listings') {
         setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued_relist');
+      }
+      await invalidateProductListingsAndBadges(queryClient, productId);
+      await invalidateProducts(queryClient);
+    },
+  });
+}
+
+export function useMoveTraderaListingToUnsoldMutation(productId: string): UpdateMutation<
+  ProductListingMoveToUnsoldResponse,
+  ProductListingMoveToUnsoldVariables
+> {
+  const queryClient = useQueryClient();
+  const listingQueryKey = getProductListingsQueryKey(productId);
+
+  return createCreateMutationV2({
+    mutationFn: ({ listingId, browserMode, selectorProfile }: ProductListingMoveToUnsoldVariables) =>
+      api.post<ProductListingMoveToUnsoldResponse>(
+        `/api/v2/integrations/products/${productId}/listings/${listingId}/move-to-unsold`,
+        {
+          ...(typeof browserMode === 'string' ? { browserMode } : {}),
+          ...(typeof selectorProfile === 'string' && selectorProfile.trim().length > 0
+            ? { selectorProfile }
+            : {}),
+        }
+      ),
+    mutationKey: getProductListingsQueryKey(productId),
+    meta: {
+      source: 'integrations.hooks.useMoveTraderaListingToUnsoldMutation',
+      operation: 'create',
+      resource: 'integrations.listings.tradera-move-to-unsold',
+      domain: 'integrations',
+      mutationKey: listingQueryKey,
+      tags: ['integrations', 'listings', 'tradera', 'move-to-unsold'],
+      description: 'Creates integrations listings tradera move to unsold.',
+    },
+    onMutate: async (vars): Promise<ProductListingAndJobsContext> => {
+      await cancelProductListingsAndJobs(queryClient, productId);
+
+      const previousListings =
+        queryClient.getQueryData<ProductListingWithDetails[]>(listingQueryKey);
+      const previousIntegrationJobs =
+        queryClient.getQueryData<ProductJob[]>(integrationJobsQueryKey);
+
+      if (previousListings) {
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          previousListings.map((listing) =>
+            listing.id === vars.listingId
+              ? patchQueuedTraderaRelist(listing, {
+                  action: 'move_to_unsold',
+                  browserMode: vars.browserMode,
+                  selectorProfile: vars.selectorProfile,
+                })
+              : listing
+          )
+        );
+      }
+
+      return { previousListings, previousIntegrationJobs };
+    },
+    onError: (_error, _vars, context: ProductListingAndJobsContext | undefined): void => {
+      if (context?.previousListings) {
+        queryClient.setQueryData(listingQueryKey, context.previousListings);
+      }
+      if (context?.previousIntegrationJobs) {
+        queryClient.setQueryData(integrationJobsQueryKey, context.previousIntegrationJobs);
+      }
+    },
+    invalidate: async (queryClient, data, vars) => {
+      if (data.queue?.name === 'tradera-listings') {
+        const queuedAt = data.queue.enqueuedAt ?? null;
+        const requestId = data.queue.jobId ?? null;
+        queryClient.setQueryData<ProductListingWithDetails[]>(
+          listingQueryKey,
+          (current) =>
+            current?.map((listing) =>
+              listing.id === vars.listingId
+                ? patchQueuedTraderaRelist(listing, {
+                    action: 'move_to_unsold',
+                    browserMode: vars.browserMode,
+                    selectorProfile: vars.selectorProfile,
+                    requestId,
+                    queuedAt,
+                  })
+                : listing
+            ) ?? current
+        );
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
       }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);

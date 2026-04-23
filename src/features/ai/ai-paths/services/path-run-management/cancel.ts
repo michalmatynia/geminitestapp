@@ -1,6 +1,6 @@
 import { type AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { type getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { cleanupRunQueueEntries } from '../path-run-management-service';
+import { cleanupRunQueueEntries } from './cleanup';
 
 const isTerminal = (status: string): boolean => 
   ['canceled', 'completed', 'failed', 'dead_lettered'].includes(status);

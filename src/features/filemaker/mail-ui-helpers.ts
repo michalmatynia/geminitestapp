@@ -24,26 +24,27 @@ export const buildFilemakerMailSelectionHref = (input: {
   recentQuery?: string | null;
   searchQuery?: string | null;
 }): string => {
+  const panel = input.panel === 'account' ? 'settings' : input.panel ?? null;
   const search = new URLSearchParams();
-  if (input.panel !== 'attention' && input.panel !== 'search' && input.accountId) search.set('accountId', input.accountId);
-  if (!input.panel && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
-  if (input.panel === 'attention') search.set('panel', 'attention');
-  if (input.panel === 'search') {
+  if (panel !== 'attention' && panel !== 'search' && input.accountId) search.set('accountId', input.accountId);
+  if (!panel && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
+  if (panel === 'attention') search.set('panel', 'attention');
+  if (panel === 'search') {
     search.set('panel', 'search');
     if (input.accountId) search.set('accountId', input.accountId);
   }
-  if (input.accountId && input.panel === 'recent') search.set('panel', 'recent');
-  if (input.accountId && input.panel === 'settings') search.set('panel', 'settings');
-  if (input.accountId && input.panel === 'recent' && input.recentMailboxFilter) {
+  if (input.accountId && panel === 'recent') search.set('panel', 'recent');
+  if (input.accountId && panel === 'settings') search.set('panel', 'settings');
+  if (input.accountId && panel === 'recent' && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }
-  if (input.accountId && input.panel === 'recent' && input.recentUnreadOnly) {
+  if (input.accountId && panel === 'recent' && input.recentUnreadOnly) {
     search.set('recentUnread', '1');
   }
-  if (input.accountId && input.panel === 'recent' && input.recentQuery) {
+  if (input.accountId && panel === 'recent' && input.recentQuery) {
     search.set('recentQuery', input.recentQuery);
   }
-  if (input.panel === 'search' && input.searchQuery) {
+  if (panel === 'search' && input.searchQuery) {
     search.set('searchQuery', input.searchQuery);
   }
   const nextSearch = search.toString();

@@ -10,6 +10,7 @@ import {
   useCheckTraderaStatusMutation,
   useDeleteFromBaseMutation,
   useExportToBaseMutation,
+  useMoveTraderaListingToUnsoldMutation,
   usePurgeListingMutation,
   useRelistTraderaMutation,
   useSyncTraderaMutation,
@@ -76,8 +77,10 @@ export const useProductListingsActionsImpl = ({
   setIsSyncImagesConfirmOpen,
   setLastExportListingId,
   setListingToDelete,
+  setListingToMoveToUnsold,
   setListingToPurge,
   setLogsOpen,
+  setMovingTraderaListingToUnsold,
   setOpeningTraderaLogin,
   setOpeningVintedLogin,
   setRecoveryContext,
@@ -104,8 +107,10 @@ export const useProductListingsActionsImpl = ({
   setIsSyncImagesConfirmOpen: Dispatch<SetStateAction<boolean>>;
   setLastExportListingId: Dispatch<SetStateAction<string | null>>;
   setListingToDelete: Dispatch<SetStateAction<string | null>>;
+  setListingToMoveToUnsold: Dispatch<SetStateAction<string | null>>;
   setListingToPurge: Dispatch<SetStateAction<string | null>>;
   setLogsOpen: Dispatch<SetStateAction<boolean>>;
+  setMovingTraderaListingToUnsold: Dispatch<SetStateAction<string | null>>;
   setOpeningTraderaLogin: Dispatch<SetStateAction<string | null>>;
   setOpeningVintedLogin: Dispatch<SetStateAction<string | null>>;
   setRecoveryContext: Dispatch<SetStateAction<ProductListingsRecoveryContext | null>>;
@@ -146,6 +151,7 @@ export const useProductListingsActionsImpl = ({
   const updateInventoryIdMutation = useUpdateListingInventoryIdMutation(productId);
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const relistTraderaMutation = useRelistTraderaMutation(productId);
+  const moveTraderaListingToUnsoldMutation = useMoveTraderaListingToUnsoldMutation(productId);
   const syncTraderaMutation = useSyncTraderaMutation(productId);
   const checkTraderaStatusMutation = useCheckTraderaStatusMutation(productId);
   const syncBaseImagesMutation = useSyncBaseImagesMutation(productId);
@@ -383,6 +389,119 @@ export const useProductListingsActionsImpl = ({
       setRecoveryContext,
       setRelistingBrowserMode,
       setRelistingListing,
+      toast,
+      ensureTraderaPreflightSessionReady,
+    ]
+  );
+
+  const handleMoveTraderaListingToUnsold = useCallback(
+    async (
+      listingId: string,
+      options?: {
+        skipSessionPreflight?: boolean;
+        browserMode?: PlaywrightRelistBrowserMode;
+        selectorProfile?: string;
+      }
+    ) => {
+      const listing = listings.find((item) => item.id === listingId);
+
+      try {
+        setMovingTraderaListingToUnsold(listingId);
+        setError(null);
+
+        if (
+          !options?.skipSessionPreflight &&
+          listing &&
+          isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+          listing.integrationId &&
+          listing.connectionId
+        ) {
+          await ensureTraderaPreflightSessionReady({
+            integrationId: listing.integrationId,
+            connectionId: listing.connectionId,
+            productId:
+              typeof listing.productId === 'string' && listing.productId.trim()
+                ? listing.productId.trim()
+                : productId,
+          });
+        }
+
+        const response = await moveTraderaListingToUnsoldMutation.mutateAsync({
+          listingId,
+          ...(options?.browserMode ? { browserMode: options.browserMode } : {}),
+          ...(options?.selectorProfile ? { selectorProfile: options.selectorProfile } : {}),
+        });
+        const queueJobId = response.queue?.jobId;
+        toast(
+          queueJobId
+            ? `Tradera end listing queued (job ${queueJobId}).`
+            : 'Tradera end listing queued.',
+          { variant: 'success' }
+        );
+        setRecoveryContext((current) =>
+          current?.integrationSlug === 'tradera' ? null : current
+        );
+        onListingsUpdated?.();
+      } catch (err: unknown) {
+        logClientCatch(err, {
+          source: 'ProductListingsContext',
+          action: 'moveTraderaListingToUnsold',
+          listingId,
+          productId,
+        });
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to queue Tradera end listing';
+        if (isTraderaBrowserAuthRequiredMessage(errorMessage)) {
+          if (
+            listing &&
+            isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+            listing.integrationId &&
+            listing.connectionId
+          ) {
+            setRecoveryContext(
+              createTraderaRecoveryContext({
+                status: 'auth_required',
+                runId: null,
+                failureReason: errorMessage,
+                integrationId: listing.integrationId,
+                connectionId: listing.connectionId,
+              })
+            );
+          }
+          toast(errorMessage, { variant: 'error' });
+          return;
+        }
+        if (
+          listing &&
+          isTraderaBrowserIntegrationSlug(listing.integration.slug) &&
+          listing.integrationId &&
+          listing.connectionId
+        ) {
+          setRecoveryContext(
+            createTraderaRecoveryContext({
+              status: 'failed',
+              runId: null,
+              failureReason: errorMessage,
+              integrationId: listing.integrationId,
+              connectionId: listing.connectionId,
+            })
+          );
+        }
+        setError(errorMessage);
+      } finally {
+        setMovingTraderaListingToUnsold(null);
+        setListingToMoveToUnsold(null);
+      }
+    },
+    [
+      listings,
+      moveTraderaListingToUnsoldMutation,
+      onListingsUpdated,
+      productId,
+      setError,
+      setListingToMoveToUnsold,
+      setMovingTraderaListingToUnsold,
+      setRecoveryContext,
       toast,
       ensureTraderaPreflightSessionReady,
     ]
@@ -676,7 +795,7 @@ export const useProductListingsActionsImpl = ({
       listingId: string;
       integrationId: string;
       connectionId: string;
-      action: 'relist' | 'sync' | 'check_status';
+      action: 'relist' | 'sync' | 'check_status' | 'move_to_unsold';
       browserMode?: PlaywrightRelistBrowserMode;
       selectorProfile?: string;
       skipImages?: boolean;
@@ -707,6 +826,15 @@ export const useProductListingsActionsImpl = ({
         return true;
       }
 
+      if (action === 'move_to_unsold') {
+        await handleMoveTraderaListingToUnsold(listingId, {
+          skipSessionPreflight: true,
+          browserMode,
+          ...(selectorProfile ? { selectorProfile } : {}),
+        });
+        return true;
+      }
+
       await handleRelistTradera(listingId, {
         skipSessionPreflight: true,
         browserMode,
@@ -716,6 +844,7 @@ export const useProductListingsActionsImpl = ({
     },
     [
       handleCheckTraderaStatus,
+      handleMoveTraderaListingToUnsold,
       handleOpenTraderaLogin,
       handleRelistTradera,
       handleSyncTradera,
@@ -972,6 +1101,7 @@ export const useProductListingsActionsImpl = ({
     handleSyncTradera,
     handleCheckTraderaStatus,
     handleRelistTradera,
+    handleMoveTraderaListingToUnsold,
     handleOpenTraderaLogin,
     handleRecoverTraderaListing,
     handleOpenVintedLogin,

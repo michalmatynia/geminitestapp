@@ -71,6 +71,8 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
       ? 'Pending status check'
       : traderaExecution.pendingAction === 'sync'
         ? 'Pending sync'
+        : traderaExecution.pendingAction === 'move_to_unsold'
+          ? 'Pending end listing'
         : traderaExecution.pendingAction === 'list'
           ? 'Pending listing'
         : 'Pending relist';

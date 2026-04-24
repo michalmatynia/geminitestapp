@@ -9,7 +9,7 @@ import {
 } from './duels-primitives';
 import {
   resolveWinnerSummary,
-} from './duels-utils';
+} from './utils/duels-ui';
 import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];

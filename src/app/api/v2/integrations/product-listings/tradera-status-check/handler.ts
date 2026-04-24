@@ -20,15 +20,47 @@ import {
 import {
   traderaListingStatusCheckBatchPayloadSchema,
   type TraderaListingStatusCheckBatchItem,
+  type TraderaListingStatusCheckBatchTarget,
   type TraderaListingStatusCheckBatchResponse,
 } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
-const normalizeRequestedProductIds = (productIds: readonly string[]): string[] =>
-  Array.from(
-    new Set(productIds.map((value) => value.trim()).filter((value) => value.length > 0))
-  );
+type NormalizedBatchTarget = {
+  productId: string;
+  listingId: string | null;
+};
+
+const normalizeRequestedBatchTargets = ({
+  productIds,
+  targets,
+}: {
+  productIds?: readonly string[] | undefined;
+  targets?: readonly TraderaListingStatusCheckBatchTarget[] | undefined;
+}): NormalizedBatchTarget[] => {
+  const normalizedTargets: NormalizedBatchTarget[] = [];
+  const seenProductIds = new Set<string>();
+
+  for (const target of targets ?? []) {
+    const productId = target.productId.trim();
+    const listingId =
+      typeof target.listingId === 'string' && target.listingId.trim().length > 0
+        ? target.listingId.trim()
+        : null;
+    if (!productId || seenProductIds.has(productId)) continue;
+    seenProductIds.add(productId);
+    normalizedTargets.push({ productId, listingId });
+  }
+
+  for (const rawProductId of productIds ?? []) {
+    const productId = rawProductId.trim();
+    if (!productId || seenProductIds.has(productId)) continue;
+    seenProductIds.add(productId);
+    normalizedTargets.push({ productId, listingId: null });
+  }
+
+  return normalizedTargets;
+};
 
 export async function postHandler(
   req: NextRequest,
@@ -41,7 +73,8 @@ export async function postHandler(
     return parsed.response;
   }
 
-  const requestedProductIds = normalizeRequestedProductIds(parsed.data.productIds);
+  const requestedTargets = normalizeRequestedBatchTargets(parsed.data);
+  const requestedProductIds = requestedTargets.map((target) => target.productId);
   const listingRepository = await getProductListingRepository();
   const integrationRepository = await getIntegrationRepository();
   const [listings, integrations] = await Promise.all([
@@ -68,17 +101,31 @@ export async function postHandler(
     listing: (typeof listings)[number];
   }> = [];
 
-  for (const productId of requestedProductIds) {
-    const productListings = listingsByProductId.get(productId) ?? [];
+  for (const target of requestedTargets) {
+    const productListings = listingsByProductId.get(target.productId) ?? [];
     const browserListings = productListings.filter((listing) =>
       isTraderaBrowserIntegrationSlug(integrationSlugById.get(listing.integrationId))
     );
+    const explicitlyRequestedListing = target.listingId
+      ? browserListings.find((listing) => listing.id === target.listingId) ?? null
+      : null;
     const selectedListing =
+      explicitlyRequestedListing ??
       selectPreferredTraderaListingForStatusCheck(browserListings);
 
+    if (target.listingId && !explicitlyRequestedListing) {
+      resultByProductId.set(target.productId, {
+        productId: target.productId,
+        listingId: target.listingId,
+        status: 'skipped',
+        message: 'The selected Tradera listing is no longer available for live status check.',
+      });
+      continue;
+    }
+
     if (!selectedListing) {
-      resultByProductId.set(productId, {
-        productId,
+      resultByProductId.set(target.productId, {
+        productId: target.productId,
         listingId: null,
         status: 'skipped',
         message: 'No Tradera browser listing available for live status check.',
@@ -87,8 +134,8 @@ export async function postHandler(
     }
 
     if (isTraderaStatusCheckPending(selectedListing)) {
-      resultByProductId.set(productId, {
-        productId,
+      resultByProductId.set(target.productId, {
+        productId: target.productId,
         listingId: selectedListing.id,
         status: 'already_queued',
         message: 'Live status check already queued for this listing.',
@@ -96,7 +143,7 @@ export async function postHandler(
       continue;
     }
 
-    queueCandidates.push({ productId, listing: selectedListing });
+    queueCandidates.push({ productId: target.productId, listing: selectedListing });
   }
 
   const preflightReadyCandidates: typeof queueCandidates = [];

@@ -54,7 +54,6 @@ describe('product-listings-recovery', () => {
   it('matches grouped marketplace aliases consistently', () => {
     expect(matchesProductListingsIntegrationScope('baselinker', 'base')).toBe(true);
     expect(matchesProductListingsIntegrationScope('tradera', 'tradera')).toBe(true);
-    expect(matchesProductListingsIntegrationScope('tradera-api', 'tradera')).toBe(true);
     expect(matchesProductListingsIntegrationScope('baselinker', 'tradera')).toBe(false);
     expect(
       matchesProductListingsIntegrationScope(

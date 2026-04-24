@@ -20,11 +20,17 @@ import type { FilemakerMailAccount } from '../types';
 
 type MailClientAttentionBlockProps = Pick<
   MailClientDashboardState,
-  'accounts' | 'attentionAccounts' | 'foldersByAccount'
+  'accounts' | 'attentionAccounts' | 'firstActiveAccount' | 'foldersByAccount'
 > &
   Pick<
     MailClientDashboardFilterState,
-    'clearDashboardFilters' | 'dashboardAccountId' | 'dashboardQuery' | 'dashboardScope' | 'hasActiveDashboardFilter' | 'visibleAttentionAccounts'
+    | 'clearDashboardFilters'
+    | 'clearDashboardQuery'
+    | 'dashboardAccountId'
+    | 'dashboardQuery'
+    | 'dashboardScope'
+    | 'hasActiveDashboardFilter'
+    | 'visibleAttentionAccounts'
   > &
   Pick<
     MailClientDashboardActions,
@@ -41,7 +47,14 @@ type MailClientWorkspaceBlocksProps = Pick<
   > &
   Pick<
     MailClientDashboardFilterState,
-    'clearDashboardFilters' | 'dashboardAccountId' | 'dashboardQuery' | 'dashboardScope' | 'hasActiveDashboardFilter' | 'visibleAccounts' | 'visibleRecentThreads'
+    | 'clearDashboardFilters'
+    | 'clearDashboardQuery'
+    | 'dashboardAccountId'
+    | 'dashboardQuery'
+    | 'dashboardScope'
+    | 'hasActiveDashboardFilter'
+    | 'visibleAccounts'
+    | 'visibleRecentThreads'
   >;
 
 type MailClientDashboardSectionsContentProps = Omit<MailClientDashboardProps, 'loadMailboxData'> & {
@@ -64,6 +77,7 @@ function MailClientDashboardOverview({
   setDashboardQuery,
   setDashboardScope,
   clearDashboardFilters,
+  clearDashboardQuery,
   visibleAttentionAccounts,
   visibleAccounts,
   visibleRecentThreads,
@@ -78,9 +92,11 @@ function MailClientDashboardOverview({
     <>
       <MailClientSummaryCards
         accountCount={accounts.length}
-        activeCount={activeAccounts.length}
         attentionCount={attentionAccounts.length}
+        dashboardQuery={dashboardQuery}
+        focusedAccount={focusedAccount}
         folderCount={folders.length}
+        healthyCount={accounts.length - attentionAccounts.length}
       />
       <MailClientQuickActions
         accountCount={accounts.length}
@@ -89,6 +105,7 @@ function MailClientDashboardOverview({
         dashboardQuery={dashboardQuery}
         firstActiveAccount={firstActiveAccount}
         focusedAccount={focusedAccount}
+        healthyCount={accounts.length - attentionAccounts.length}
       />
       <MailClientDashboardFilters
         accountId={dashboardAccountId}
@@ -98,7 +115,7 @@ function MailClientDashboardOverview({
         onAccountIdChange={setDashboardAccountId}
         onQueryChange={setDashboardQuery}
         onScopeChange={setDashboardScope}
-        onClearFilters={clearDashboardFilters}
+        onClearQuery={clearDashboardQuery}
         visibleAccountCount={visibleAccounts.length}
         visibleAttentionCount={visibleAttentionAccounts.length}
         totalAccountCount={accounts.length}
@@ -113,18 +130,23 @@ function MailClientDashboardOverview({
 function MailClientAttentionBlock({
   accounts,
   attentionAccounts,
+  firstActiveAccount,
   visibleAttentionAccounts,
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
   hasActiveDashboardFilter,
   clearDashboardFilters,
+  clearDashboardQuery,
   foldersByAccount,
   syncingAccountId,
   statusUpdatingAccountId,
   handleSyncAccount,
   handleToggleAccountStatus,
 }: MailClientAttentionBlockProps): React.JSX.Element {
+  const handleClearFilter =
+    dashboardQuery.trim() !== '' ? clearDashboardQuery : clearDashboardFilters;
+
   return (
     <MailClientAttentionSection
       attentionAccounts={visibleAttentionAccounts}
@@ -134,8 +156,9 @@ function MailClientAttentionBlock({
       dashboardAccountId={dashboardAccountId}
       dashboardQuery={dashboardQuery}
       dashboardScope={dashboardScope}
+      firstActiveAccountId={firstActiveAccount?.id ?? null}
       foldersByAccount={foldersByAccount}
-      onClearFilter={clearDashboardFilters}
+      onClearFilter={handleClearFilter}
       onSyncAccount={handleSyncAccount}
       onToggleAccountStatus={handleToggleAccountStatus}
       syncingAccountId={syncingAccountId}
@@ -160,10 +183,14 @@ function MailClientWorkspaceBlocks({
   dashboardQuery,
   dashboardScope,
   clearDashboardFilters,
+  clearDashboardQuery,
   hasActiveDashboardFilter,
   visibleAccounts,
   visibleRecentThreads,
 }: MailClientWorkspaceBlocksProps): React.JSX.Element {
+  const handleClearFilter =
+    dashboardQuery.trim() !== '' ? clearDashboardQuery : clearDashboardFilters;
+
   return (
     <>
       <MailClientRecentThreadsSection
@@ -173,7 +200,9 @@ function MailClientWorkspaceBlocks({
         dashboardScope={dashboardScope}
         hasActiveFilter={hasActiveDashboardFilter}
         hasAnyRecentThreads={recentThreads.length > 0}
-        onClearFilter={clearDashboardFilters}
+        isLoading={isLoading}
+        onClearFilter={handleClearFilter}
+        onRetry={loadMailboxData}
         recentThreads={visibleRecentThreads}
         recentThreadsError={recentThreadsError}
       />
@@ -187,7 +216,7 @@ function MailClientWorkspaceBlocks({
         foldersByAccount={foldersByAccount}
         isLoading={isLoading}
         loadError={loadError}
-        onClearFilter={clearDashboardFilters}
+        onClearFilter={handleClearFilter}
         onRetry={loadMailboxData}
         onSyncAccount={handleSyncAccount}
         onToggleAccountStatus={handleToggleAccountStatus}
@@ -275,6 +304,7 @@ function MailClientDashboardSectionsContent({
         dashboardAccountId={filterState.dashboardAccountId}
         dashboardQuery={filterState.dashboardQuery}
         dashboardScope={filterState.dashboardScope}
+        fallbackComposeAccountId={firstActiveAccount?.id ?? null}
         folders={focusedAccount !== null ? foldersByAccount.get(focusedAccount.id) ?? [] : []}
         recentThreads={
           focusedAccount !== null
@@ -289,6 +319,7 @@ function MailClientDashboardSectionsContent({
       <MailClientAttentionBlock
         accounts={accounts}
         attentionAccounts={attentionAccounts}
+        firstActiveAccount={firstActiveAccount}
         visibleAttentionAccounts={filterState.visibleAttentionAccounts}
         dashboardAccountId={filterState.dashboardAccountId}
         dashboardQuery={filterState.dashboardQuery}

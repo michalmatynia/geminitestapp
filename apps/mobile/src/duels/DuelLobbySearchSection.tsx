@@ -155,6 +155,84 @@ function SearchResultsList({
   return null;
 }
 
+function SearchInputArea({
+  lobby,
+  copy,
+}: {
+  lobby: DuelLobbyState;
+  copy: DuelCopy;
+}): React.JSX.Element {
+  return (
+    <View style={{ gap: 8, alignSelf: 'stretch' }}>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {copy({
+          de: 'Gib mindestens 2 Zeichen des Logins oder Namens des Lernenden ein.',
+          en: 'Enter at least 2 characters from the learner login or name.',
+          pl: 'Wpisz co najmniej 2 znaki loginu lub nazwy ucznia.',
+        })}
+      </Text>
+      <TextInput
+        accessibilityLabel={copy({
+          de: 'Lernendensuche',
+          en: 'Learner search',
+          pl: 'Wyszukiwarka uczniów',
+        })}
+        onChangeText={lobby.setSearchQuery}
+        placeholder={copy({
+          de: 'Lernenden suchen',
+          en: 'Search learner',
+          pl: 'Szukaj ucznia',
+        })}
+        style={{
+          backgroundColor: '#ffffff',
+          borderColor: '#cbd5e1',
+          borderRadius: 16,
+          borderWidth: 1,
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          width: '100%',
+        }}
+        value={lobby.searchQuery}
+      />
+    </View>
+  );
+}
+
+function SearchActionButtons({
+  lobby,
+  copy,
+}: {
+  lobby: DuelLobbyState;
+  copy: DuelCopy;
+}): React.JSX.Element {
+  return (
+    <View style={{ gap: 8 }}>
+      <ActionButton
+        disabled={lobby.searchQuery.trim().length < 2}
+        label={copy({
+          de: 'Suchen',
+          en: 'Search',
+          pl: 'Szukaj',
+        })}
+        onPress={lobby.submitSearch}
+        stretch
+      />
+      {lobby.searchSubmittedQuery !== '' ? (
+        <ActionButton
+          label={copy({
+            de: 'Suche löschen',
+            en: 'Clear search',
+            pl: 'Wyczyść wyszukiwanie',
+          })}
+          onPress={lobby.clearSearch}
+          stretch
+          tone='secondary'
+        />
+      ) : null}
+    </View>
+  );
+}
+
 function SearchForm({
   lobby,
   copy,
@@ -166,62 +244,8 @@ function SearchForm({
 }): React.JSX.Element {
   return (
     <>
-      <View style={{ gap: 8, alignSelf: 'stretch' }}>
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Gib mindestens 2 Zeichen des Logins oder Namens des Lernenden ein.',
-            en: 'Enter at least 2 characters from the learner login or name.',
-            pl: 'Wpisz co najmniej 2 znaki loginu lub nazwy ucznia.',
-          })}
-        </Text>
-        <TextInput
-          accessibilityLabel={copy({
-            de: 'Lernendensuche',
-            en: 'Learner search',
-            pl: 'Wyszukiwarka uczniów',
-          })}
-          onChangeText={lobby.setSearchQuery}
-          placeholder={copy({
-            de: 'Lernenden suchen',
-            en: 'Search learner',
-            pl: 'Szukaj ucznia',
-          })}
-          style={{
-            backgroundColor: '#ffffff',
-            borderColor: '#cbd5e1',
-            borderRadius: 16,
-            borderWidth: 1,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-            width: '100%',
-          }}
-          value={lobby.searchQuery}
-        />
-        <View style={{ gap: 8 }}>
-          <ActionButton
-            disabled={lobby.searchQuery.trim().length < 2}
-            label={copy({
-              de: 'Suchen',
-              en: 'Search',
-              pl: 'Szukaj',
-            })}
-            onPress={lobby.submitSearch}
-            stretch
-          />
-          {lobby.searchSubmittedQuery !== '' ? (
-            <ActionButton
-              label={copy({
-                de: 'Suche löschen',
-                en: 'Clear search',
-                pl: 'Wyczyść wyszukiwanie',
-              })}
-              onPress={lobby.clearSearch}
-              stretch
-              tone='secondary'
-            />
-          ) : null}
-        </View>
-      </View>
+      <SearchInputArea copy={copy} lobby={lobby} />
+      <SearchActionButtons copy={copy} lobby={lobby} />
       <SearchResultsList copy={copy} lobby={lobby} onOpenSession={onOpenSession} />
     </>
   );

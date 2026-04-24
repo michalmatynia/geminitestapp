@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { KangurMobileCard as Card } from '../shared/KangurMobileUi';
 import { MessageCard } from './duels-primitives';
-import { formatRelativeAge } from './duels-utils';
+import { formatRelativeAge } from './utils/duels-ui';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];

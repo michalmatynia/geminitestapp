@@ -1,46 +1,20 @@
 'use client';
 
-import {
-  BoxesIcon,
-  BracesIcon,
-  DatabaseIcon,
-  FileTextIcon,
-  HashIcon,
-  KeyIcon,
-  LayersIcon,
-  ListIcon,
-  PlayIcon,
-  RefreshCwIcon,
-  SettingsIcon,
-  ShieldCheckIcon,
-  TableIcon,
-} from 'lucide-react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import React, { Suspense, useMemo, useState } from 'react';
-
-import type {
-  DatabaseColumnInfo,
-  DatabaseForeignKeyInfo,
-  DatabaseIndexInfo,
-  DatabaseTablePreviewData,
-  DatabaseTableDetail,
-  DatabaseType,
-  DatabasePreviewMode,
-} from '@/shared/contracts/database';
+import { ShieldCheckIcon } from 'lucide-react';
 import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
-import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger, Alert, CollapsibleSection } from '@/shared/ui/primitives.public';
-import { Pagination, MetadataItem, LoadingState, CompactEmptyState, UI_CENTER_ROW_RELAXED_CLASSNAME, UI_CENTER_ROW_SPACED_CLASSNAME, UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
-import { FormSection, SearchInput, Hint } from '@/shared/ui/forms-and-actions.public';
-import { StandardDataTablePanel } from '@/shared/ui/templates.public';
-import { StatusBadge } from '@/shared/ui/data-display.public';
-
-import { CrudPanel } from '../components/CrudPanel';
-import { formatDatabaseCellValue } from '../components/format-cell-value';
+import { Alert, CollapsibleSection, Button, LoadingState } from '@/shared/ui/primitives.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
+import { CrudPanel } from '../components/CrudPanel';
 import { DatabaseProvider } from '../context/DatabaseContext';
 import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
-
-import type { ColumnDef } from '@tanstack/react-table';
+import { DatabaseMetrics } from './database-preview/DatabaseMetrics';
+import { TableBrowserSection } from './database-preview/TableBrowserSection';
+import { AdditionalObjectsSection } from './database-preview/AdditionalObjectsSection';
+import { DatabaseIcon, BracesIcon, LayersIcon, HashIcon, FileTextIcon, BoxesIcon, ListIcon, RefreshCwIcon, ShieldCheckIcon as ShieldCheckIconObj } from 'lucide-react';
 
 const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   TABLE: TableIcon,
@@ -53,722 +27,82 @@ const groupIconMap: Record<string, React.ComponentType<{ className?: string }>> 
   TYPE: BoxesIcon,
   INDEX: ListIcon,
   TRIGGER: RefreshCwIcon,
-  CONSTRAINT: ShieldCheckIcon,
+  CONSTRAINT: ShieldCheckIconObj,
   SCHEMA: FileTextIcon,
   EXTENSION: FileTextIcon,
 };
 
-/* ─── Table Detail Card ─── */
-
-type TableDetailCardResolvedProps = {
-  detail: DatabaseTableDetail;
-  tableRow: DatabaseTablePreviewData | undefined;
-  onQueryTable?: (tableName: string) => void;
-  onManageTable?: (tableName: string) => void;
-  expanded: boolean;
-  setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
-  columnsTabContent: React.JSX.Element;
-  indexesTabContent: React.JSX.Element;
-  foreignKeysTabContent: React.JSX.Element;
-  dataTabContent: React.JSX.Element;
-};
-
-const renderTableDetailCardTitle = ({
-  detail,
-}: Pick<TableDetailCardResolvedProps, 'detail'>): React.JSX.Element => (
-  <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} flex-1`}>
-    <TableIcon className='size-4 text-emerald-300' />
-    <span className='text-sm font-semibold text-gray-200'>{detail.name}</span>
-    <Hint size='xxs' uppercase className='text-gray-500'>
-      {detail.rowEstimate.toLocaleString()} rows • {detail.sizeFormatted}
-    </Hint>
-  </div>
-);
-
-const renderTableDetailCardActions = ({
-  detail,
-  onQueryTable,
-  onManageTable,
-}: Pick<
-  TableDetailCardResolvedProps,
-  'detail' | 'onQueryTable' | 'onManageTable'
->): React.ReactNode => {
-  if (!onQueryTable && !onManageTable) return null;
-
-  return (
-    <div className='flex items-center gap-2'>
-      {onQueryTable && (
-        <Button
-          variant='ghost'
-          size='xs'
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onQueryTable(detail.name);
-          }}
-          className='h-7 gap-1 text-[10px] text-gray-400 hover:text-blue-300'
-        >
-          <PlayIcon className='size-3' />
-          Query
-        </Button>
-      )}
-      {onManageTable && (
-        <Button
-          variant='ghost'
-          size='xs'
-          onClick={(e: React.MouseEvent): void => {
-            e.stopPropagation();
-            onManageTable(detail.name);
-          }}
-          className='h-7 gap-1 text-[10px] text-gray-400 hover:text-emerald-300'
-        >
-          <SettingsIcon className='size-3' />
-          Manage
-        </Button>
-      )}
-    </div>
-  );
-};
-
-const renderTableDetailCard = ({
-  detail,
-  tableRow,
-  onQueryTable,
-  onManageTable,
-  expanded,
-  setExpanded,
-  columnsTabContent,
-  indexesTabContent,
-  foreignKeysTabContent,
-  dataTabContent,
-}: TableDetailCardResolvedProps): React.JSX.Element => (
-  <CollapsibleSection
-    open={expanded}
-    onOpenChange={setExpanded}
-    title={renderTableDetailCardTitle({ detail })}
-    actions={
-      renderTableDetailCardActions({
-        detail,
-        ...(onQueryTable !== undefined ? { onQueryTable } : {}),
-        ...(onManageTable !== undefined ? { onManageTable } : {}),
-      })
-    }
-    variant='card'
-    className='bg-card/60'
-    headerClassName='px-4 py-3'
-  >
-    <div className='border-t border-border bg-black/20'>
-      <Tabs defaultValue='columns' className='w-full'>
-        <div className='px-4 pt-2'>
-          <TabsList
-            className='h-8 bg-transparent border-b border-white/5 w-full justify-start rounded-none'
-            aria-label='Table detail tabs'
-          >
-            <TabsTrigger value='columns' className='text-[10px] uppercase tracking-wider'>
-              Columns ({detail.columns.length})
-            </TabsTrigger>
-            <TabsTrigger value='indexes' className='text-[10px] uppercase tracking-wider'>
-              Indexes ({detail.indexes.length})
-            </TabsTrigger>
-            <TabsTrigger value='foreignKeys' className='text-[10px] uppercase tracking-wider'>
-              Foreign Keys ({detail.foreignKeys.length})
-            </TabsTrigger>
-            <TabsTrigger value='data' className='text-[10px] uppercase tracking-wider'>
-              Preview {tableRow ? `(${tableRow.totalRows})` : ''}
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <TabsContent value='columns' className='mt-0'>
-          {columnsTabContent}
-        </TabsContent>
-
-        <TabsContent value='indexes' className='mt-0'>
-          {indexesTabContent}
-        </TabsContent>
-
-        <TabsContent value='foreignKeys' className='mt-0'>
-          {foreignKeysTabContent}
-        </TabsContent>
-
-        <TabsContent value='data' className='mt-0'>
-          {dataTabContent}
-        </TabsContent>
-      </Tabs>
-    </div>
-  </CollapsibleSection>
-);
-
-export function TableDetailCard({
-  detail,
-  onQueryTable,
-  onManageTable,
-}: {
-  detail: DatabaseTableDetail;
-  onQueryTable?: (tableName: string) => void;
-  onManageTable?: (tableName: string) => void;
-}): React.JSX.Element {
-  const [expanded, setExpanded] = useState(false);
-  const { tableRows } = useDatabasePreviewState();
-
-  const tableRow = useMemo(
-    () => tableRows.find((r: DatabaseTablePreviewData) => r.name === detail.name),
-    [tableRows, detail.name]
-  );
-  const columnsTabContent = useColumnsTabContent(detail);
-  const indexesTabContent = useIndexesTabContent(detail);
-  const foreignKeysTabContent = useForeignKeysTabContent(detail);
-  const dataTabContent = useDataTabContent(tableRow);
-
-  return renderTableDetailCard({
-    detail,
-    tableRow,
-    ...(onQueryTable !== undefined ? { onQueryTable } : {}),
-    ...(onManageTable !== undefined ? { onManageTable } : {}),
-    expanded,
-    setExpanded,
-    columnsTabContent,
-    indexesTabContent,
-    foreignKeysTabContent,
-    dataTabContent,
-  });
-}
-
-function useColumnsTabContent(
-  detail: TableDetailCardResolvedProps['detail']
-): React.JSX.Element {
-  const tableColumns = useMemo<ColumnDef<DatabaseColumnInfo>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Column',
-        cell: ({ row }) => (
-          <span className='font-mono font-medium text-emerald-200'>{row.original.name}</span>
-        ),
-      },
-      {
-        accessorKey: 'type',
-        header: 'Type',
-        cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.type}</span>,
-      },
-      {
-        accessorKey: 'nullable',
-        header: 'Nullable',
-        cell: ({ row }) => (
-          <span className={row.original.nullable ? 'text-amber-400' : 'text-gray-500'}>
-            {row.original.nullable ? 'YES' : 'NO'}
-          </span>
-        ),
-      },
-      {
-        accessorKey: 'defaultValue',
-        header: 'Default',
-        cell: ({ row }) => {
-          const val = row.original.defaultValue;
-          const rendered =
-            val === null || val === undefined
-              ? '—'
-              : typeof val === 'object'
-                ? JSON.stringify(val)
-                : String(val);
-          return <span className='font-mono text-gray-400'>{rendered}</span>;
-        },
-      },
-      {
-        id: 'key',
-        header: 'Key',
-        cell: ({ row }) =>
-          row.original.isPrimaryKey && (
-            <StatusBadge
-              status='PK'
-              variant='pending'
-              icon={<KeyIcon />}
-              size='sm'
-              className='font-bold'
-            />
-          ),
-      },
-    ],
-    []
-  );
-
-  return (
-    <div className='p-2'>
-      <StandardDataTablePanel columns={tableColumns} data={detail.columns} variant='flat' />
-    </div>
-  );
-}
-
-function useIndexesTabContent(
-  detail: TableDetailCardResolvedProps['detail']
-): React.JSX.Element {
-  const tableColumns = useMemo<ColumnDef<DatabaseIndexInfo>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Index',
-        cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
-      },
-      {
-        accessorKey: 'columns',
-        header: 'Columns',
-        cell: ({ row }) => (
-          <span className='font-mono text-blue-300'>{row.original.columns.join(', ')}</span>
-        ),
-      },
-      {
-        accessorKey: 'isUnique',
-        header: 'Unique',
-        cell: ({ row }) =>
-          row.original.isUnique ? (
-            <StatusBadge status='UNIQUE' variant='success' className='text-[9px]' />
-          ) : (
-            <span className='text-gray-500'>—</span>
-          ),
-      },
-      {
-        accessorKey: 'definition',
-        header: 'Definition',
-        cell: ({ row }) => (
-          <div
-            className='max-w-[300px] truncate font-mono text-gray-400 text-[10px]'
-            title={row.original.definition}
-          >
-            {row.original.definition}
-          </div>
-        ),
-      },
-    ],
-    []
-  );
-
-  return (
-    <div className='p-2'>
-      <StandardDataTablePanel columns={tableColumns} data={detail.indexes} variant='flat' />
-    </div>
-  );
-}
-
-function useForeignKeysTabContent(
-  detail: TableDetailCardResolvedProps['detail']
-): React.JSX.Element {
-  const tableColumns = useMemo<ColumnDef<DatabaseForeignKeyInfo>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Constraint',
-        cell: ({ row }) => <span className='font-mono text-emerald-200'>{row.original.name}</span>,
-      },
-      {
-        accessorKey: 'column',
-        header: 'Column',
-        cell: ({ row }) => <span className='font-mono text-blue-300'>{row.original.column}</span>,
-      },
-      {
-        id: 'references',
-        header: 'References',
-        cell: ({ row }) => (
-          <div className='font-mono text-gray-200'>
-            <span className='text-emerald-300'>{row.original.referencedTable}</span>
-            <span className='text-gray-500'>.</span>
-            <span className='text-blue-300'>{row.original.referencedColumn}</span>
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'onDelete',
-        header: 'On Delete',
-        cell: ({ row }) => <span className='text-gray-400'>{row.original.onDelete}</span>,
-      },
-    ],
-    []
-  );
-
-  return (
-    <div className='p-2'>
-      <StandardDataTablePanel columns={tableColumns} data={detail.foreignKeys} variant='flat' />
-    </div>
-  );
-}
-
-function useDataTabContent(
-  tableRows: TableDetailCardResolvedProps['tableRow']
-): React.JSX.Element {
-  const { page, pageSize } = useDatabasePreviewState();
-
-  const columns = useMemo(() => {
-    if (!tableRows || tableRows.rows.length === 0) return [];
-    return Object.keys(tableRows.rows[0] ?? {}).map(
-      (col) =>
-        ({
-          accessorKey: col,
-          header: col,
-          cell: ({ row }: { row: { original: Record<string, unknown> } }) => (
-            <span
-              className='max-w-[200px] truncate font-mono block'
-              title={formatDatabaseCellValue(row.original[col])}
-            >
-              {formatDatabaseCellValue(row.original[col])}
-            </span>
-          ),
-        }) as ColumnDef<Record<string, unknown>>
-    );
-  }, [tableRows]);
-
-  if (!tableRows || tableRows.rows.length === 0) {
-    return (
-      <CompactEmptyState
-        title='No row data available'
-        description='This table appears to be empty.'
-        className='py-8'
-       />
-    );
-  }
-
-  const startRow = (page - 1) * pageSize + 1;
-
-  return (
-    <div className='p-2 space-y-2'>
-      <Hint size='xxs' uppercase className='px-2 font-bold text-gray-500'>
-        Rows {startRow}–{startRow + tableRows.rows.length - 1} of{' '}
-        {tableRows.totalRows.toLocaleString()}
-      </Hint>
-      <StandardDataTablePanel
-        columns={columns}
-        data={tableRows.rows}
-        variant='flat'
-        maxHeight='50vh'
-        enableVirtualization={true}
-      />
-    </div>
-  );
-}
-
-/* ─── Main Page Content ─── */
-
-/* ─── Sub-components for DatabasePreviewContent ─── */
-
-const DatabaseMetrics = ({
-  databaseSize,
-  tablesCount,
-  enumsCount,
-  totalIndexes,
-  totalFks,
-}: {
-  databaseSize: string | null;
-  tablesCount: number;
-  enumsCount: number;
-  totalIndexes: number;
-  totalFks: number;
-}): React.JSX.Element => (
-  <div className={`${UI_GRID_RELAXED_CLASSNAME} md:grid-cols-2 lg:grid-cols-5`}>
-    {databaseSize && (
-      <MetadataItem
-        label='Total Size'
-        value={databaseSize}
-        variant='card'
-        valueClassName='text-lg font-semibold text-white mt-1'
-        className='p-4'
-      />
-    )}
-    <MetadataItem
-      label='Tables'
-      value={tablesCount}
-      variant='card'
-      valueClassName='text-lg font-semibold text-white mt-1'
-      className='p-4'
-    />
-    <MetadataItem
-      label='Enums'
-      value={enumsCount}
-      variant='card'
-      valueClassName='text-lg font-semibold text-white mt-1'
-      className='p-4'
-    />
-    <MetadataItem
-      label='Indexes'
-      value={totalIndexes}
-      variant='card'
-      valueClassName='text-lg font-semibold text-white mt-1'
-      className='p-4'
-    />
-    <MetadataItem
-      label='Relations'
-      value={totalFks}
-      variant='card'
-      valueClassName='text-lg font-semibold text-white mt-1'
-      className='p-4'
-    />
-  </div>
-);
-
-const TableBrowserSection = ({
-  tableDetails,
-  filteredTableDetails,
-  tableQuery,
-  setTableQuery,
-  page,
-  setPage,
-  pageSize,
-  setPageSize,
-  maxPage,
-  handleQueryTable,
-  handleManageTable,
-}: {
-  tableDetails: DatabaseTableDetail[];
-  filteredTableDetails: DatabaseTableDetail[];
-  tableQuery: string;
-  setTableQuery: (v: string) => void;
-  page: number;
-  setPage: (p: number) => void;
-  pageSize: number;
-  setPageSize: (s: number) => void;
-  maxPage: number;
-  handleQueryTable: (tableName: string) => void;
-  handleManageTable: (tableName: string) => void;
-}): React.JSX.Element | null => {
-  if (tableDetails.length === 0) return null;
-
-  return (
-    <FormSection
-      title='Table Browser'
-      description={`${filteredTableDetails.length} items`}
-      actions={
-        <div className={UI_CENTER_ROW_RELAXED_CLASSNAME}>
-          <SearchInput
-            size='sm'
-            value={tableQuery}
-            onChange={(e) => setTableQuery(e.target.value)}
-            onClear={() => setTableQuery('')}
-            placeholder='Filter tables...'
-            className='h-8 w-48'
-          />
-          <div className='flex items-center gap-2'>
-            <Pagination
-              page={page}
-              totalPages={maxPage}
-              onPageChange={setPage}
-              pageSize={pageSize}
-              onPageSizeChange={(s) => {
-                setPage(1);
-                setPageSize(s);
-              }}
-              pageSizeOptions={[10, 20, 50, 100]}
-              showPageSize
-              variant='compact'
-            />
-          </div>
-        </div>
-      }
-      className='p-6'
-    >
-      <div className='grid gap-3 mt-4'>
-        {filteredTableDetails.map((detail) => (
-          <TableDetailCard
-            key={detail.name}
-            detail={detail}
-            onQueryTable={handleQueryTable}
-            onManageTable={handleManageTable}
-          />
-        ))}
-      </div>
-    </FormSection>
-  );
-};
-
-const AdditionalObjectsSection = ({
-  groups,
-  filteredGroups,
-  groupQuery,
-  setGroupQuery,
-  expandedGroups,
-  toggleGroup,
-}: {
-  groups: any[];
-  filteredGroups: any[];
-  groupQuery: string;
-  setGroupQuery: (v: string) => void;
-  expandedGroups: Record<string, boolean>;
-  toggleGroup: (type: string) => void;
-}): React.JSX.Element | null => {
-  if (groups.length === 0) return null;
-
-  return (
-    <FormSection
-      title='Additional Objects'
-      description='Functions, views, and sequences'
-      actions={
-        <SearchInput
-          size='sm'
-          value={groupQuery}
-          onChange={(e) => setGroupQuery(e.target.value)}
-          onClear={() => setGroupQuery('')}
-          placeholder='Search objects...'
-          className='h-8 w-40'
-        />
-      }
-      className='p-6'
-    >
-      <div className='grid gap-2 mt-4'>
-        {filteredGroups.map((group) => {
-          const isExpanded = expandedGroups[group.type] ?? false;
-          const Icon = groupIconMap[group.type] ?? FileTextIcon;
-          return (
-            <CollapsibleSection
-              key={group.type}
-              open={isExpanded}
-              onOpenChange={() => toggleGroup(group.type)}
-              variant='card'
-              className='bg-card/40'
-              title={
-                <div className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
-                  <Icon className='size-4 text-sky-300' />
-                  {group.type}
-                  <Badge variant='outline' className='text-[9px] bg-sky-500/5 ml-1'>
-                    {group.objects.length}
-                  </Badge>
-                </div>
-              }
-            >
-              <div className='p-3 bg-black/20'>
-                <div className='flex flex-wrap gap-2'>
-                  {group.objects.map((obj: string) => (
-                    <span
-                      key={obj}
-                      className='font-mono text-[10px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5'
-                    >
-                      {obj}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </CollapsibleSection>
-          );
-        })}
-      </div>
-    </FormSection>
-  );
-};
-
 function DatabasePreviewContent(): React.JSX.Element {
-  const {
-    dbType,
-    tableDetails,
-    filteredTableDetails,
-    groups,
-    filteredGroups,
-    tables,
-    enums,
-    databaseSize,
-    isLoading,
-    error,
-    mode,
-    backupName,
-    page,
-    setPage,
-    pageSize,
-    setPageSize,
-    maxPage,
-    groupQuery,
-    setGroupQuery,
-    tableQuery,
-    setTableQuery,
-    expandedGroups,
-    toggleGroup,
-    consoleSql,
-    showConsole,
-    setShowConsole,
-    crudTable,
-    showCrud,
-    setShowCrud,
-    consoleSectionRef,
-    crudSectionRef,
-    handleQueryTable,
-    handleManageTable,
-    stats,
-  } = useDatabasePreviewState();
+  const state = useDatabasePreviewState();
 
-  const description =
-    mode === 'current'
-      ? 'Source: Current database instance'
-      : (backupName !== '' ? `Source: ${backupName}` : 'No source selected.');
+  const description = state.mode === 'current'
+    ? 'Source: Current database instance'
+    : (state.backupName !== '' ? `Source: ${state.backupName}` : 'No source selected.');
 
   return (
     <AdminDatabasePageLayout
       title='Database Preview'
       current='Preview'
       description={description}
-      refresh={{
-        onRefresh: () => window.location.reload(),
-        isRefreshing: false,
-      }}
+      refresh={{ onRefresh: () => window.location.reload(), isRefreshing: false }}
     >
-      {error && (
+      {state.error && (
         <Alert variant='error' className={`${UI_CENTER_ROW_SPACED_CLASSNAME} mb-6`}>
           <ShieldCheckIcon className='size-4 shrink-0' />
-          {error}
+          {state.error}
         </Alert>
       )}
 
-      {isLoading ? (
+      {state.isLoading ? (
         <LoadingState message='Reconstructing database schema preview...' className='py-20' />
       ) : (
         <div className='space-y-6'>
           <DatabaseMetrics
-            databaseSize={databaseSize}
-            tablesCount={tables.length}
-            enumsCount={enums.length}
-            totalIndexes={stats.totalIndexes}
-            totalFks={stats.totalFks}
+            databaseSize={state.databaseSize}
+            tablesCount={state.tables.length}
+            enumsCount={state.enums.length}
+            totalIndexes={state.stats.totalIndexes}
+            totalFks={state.stats.totalFks}
           />
 
           <TableBrowserSection
-            tableDetails={tableDetails}
-            filteredTableDetails={filteredTableDetails}
-            tableQuery={tableQuery}
-            setTableQuery={setTableQuery}
-            page={page}
-            setPage={setPage}
-            pageSize={pageSize}
-            setPageSize={setPageSize}
-            maxPage={maxPage}
-            handleQueryTable={handleQueryTable}
-            handleManageTable={handleManageTable}
+            tableDetails={state.tableDetails}
+            filteredTableDetails={state.filteredTableDetails}
+            tableQuery={state.tableQuery}
+            setTableQuery={state.setTableQuery}
+            page={state.page}
+            setPage={state.setPage}
+            pageSize={state.pageSize}
+            setPageSize={state.setPageSize}
+            maxPage={state.maxPage}
+            handleQueryTable={state.handleQueryTable}
+            handleManageTable={state.handleManageTable}
           />
 
           <AdditionalObjectsSection
-            groups={groups}
-            filteredGroups={filteredGroups}
-            groupQuery={groupQuery}
-            setGroupQuery={setGroupQuery}
-            expandedGroups={expandedGroups}
-            toggleGroup={toggleGroup}
+            groups={state.groups}
+            filteredGroups={state.filteredGroups}
+            groupQuery={state.groupQuery}
+            setGroupQuery={state.setGroupQuery}
+            expandedGroups={state.expandedGroups}
+            toggleGroup={state.toggleGroup}
+            groupIconMap={groupIconMap}
           />
 
-          <div ref={consoleSectionRef} className='scroll-mt-6'>
-            <CollapsibleSection
-              title='MongoDB Command Console'
-              open={showConsole}
-              onOpenChange={setShowConsole}
-              className='p-6'
-            >
-              <SqlQueryConsole defaultDbType='mongodb' initialSql={consoleSql} />
+          <div ref={state.consoleSectionRef} className='scroll-mt-6'>
+            <CollapsibleSection title='MongoDB Command Console' open={state.showConsole} onOpenChange={state.setShowConsole} className='p-6'>
+              <SqlQueryConsole defaultDbType='mongodb' initialSql={state.consoleSql} />
             </CollapsibleSection>
           </div>
 
-          {showCrud && tableDetails.length > 0 && (
-            <div ref={crudSectionRef} className='scroll-mt-6'>
+          {state.showCrud && state.tableDetails.length > 0 && (
+            <div ref={state.crudSectionRef} className='scroll-mt-6'>
               <FormSection
                 title='Row Management'
-                actions={
-                  <Button variant='outline' size='xs' onClick={() => setShowCrud(false)}>
-                    Exit Manager
-                  </Button>
-                }
+                actions={<Button variant='outline' size='xs' onClick={() => state.setShowCrud(false)}>Exit Manager</Button>}
                 className='p-6 border-emerald-500/20'
               >
-                <div className='mt-4'>
-                  <CrudPanel tableDetails={tableDetails} defaultTable={crudTable} dbType={dbType} />
-                </div>
+                <div className='mt-4'><CrudPanel tableDetails={state.tableDetails} defaultTable={state.crudTable} dbType={state.dbType} /></div>
               </FormSection>
             </div>
           )}
@@ -778,32 +112,16 @@ function DatabasePreviewContent(): React.JSX.Element {
   );
 }
 
-function DatabasePreviewPageInner(): React.JSX.Element {
+export default function DatabasePreviewPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const backupName = searchParams.get('backup') ?? '';
   const mode = searchParams.get('mode') ?? 'backup';
-  const previewType: DatabaseType = 'mongodb';
-  const previewMode: DatabasePreviewMode = mode === 'current' ? 'current' : 'backup';
 
   return (
-    <DatabaseProvider
-      defaultDbType={previewType as DatabaseType}
-      mode={previewMode}
-      backupName={backupName || undefined}
-    >
-      <DatabasePreviewContent />
-    </DatabaseProvider>
-  );
-}
-
-export default function DatabasePreviewPage(): React.JSX.Element {
-  return (
-    <Suspense
-      fallback={
-        <LoadingState message='Mounting database preview environment...' className='py-12' />
-      }
-    >
-      <DatabasePreviewPageInner />
+    <Suspense fallback={<LoadingState message='Mounting database preview environment...' className='py-12' />}>
+      <DatabaseProvider defaultDbType='mongodb' mode={mode === 'current' ? 'current' : 'backup'} backupName={backupName || undefined}>
+        <DatabasePreviewContent />
+      </DatabaseProvider>
     </Suspense>
   );
 }

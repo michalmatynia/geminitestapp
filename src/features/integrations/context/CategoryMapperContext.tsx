@@ -100,10 +100,6 @@ const resolveInitialCategoryFetchMethod = ({
     return 'playwright_listing_form';
   }
 
-  if (integrationSlug === 'tradera-api') {
-    return 'soap';
-  }
-
   return 'playwright';
 };
 
@@ -130,8 +126,7 @@ export function CategoryMapperProvider({
   const [selectedCatalogId, setSelectedCatalogId] = useState<string | null>(null);
   const hasInitializedCatalog = useRef(false);
   const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
-  const isTraderaConnection =
-    normalizedIntegrationSlug === 'tradera' || normalizedIntegrationSlug === 'tradera-api';
+  const isTraderaConnection = normalizedIntegrationSlug === 'tradera';
   const settingsMapQuery = useSettingsMap({ enabled: isTraderaConnection });
 
   // Auto-select default catalog

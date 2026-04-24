@@ -8,6 +8,7 @@ const {
   ensureVintedBrowserSessionMock,
   exportToBaseMutateAsyncMock,
   checkTraderaStatusMutateAsyncMock,
+  moveTraderaListingToUnsoldMutateAsyncMock,
   preflightTraderaQuickListSessionMock,
   refreshTraderaBrowserSessionMock,
   relistTraderaMutateAsyncMock,
@@ -17,6 +18,7 @@ const {
   ensureVintedBrowserSessionMock: vi.fn(),
   exportToBaseMutateAsyncMock: vi.fn(),
   checkTraderaStatusMutateAsyncMock: vi.fn(),
+  moveTraderaListingToUnsoldMutateAsyncMock: vi.fn(),
   preflightTraderaQuickListSessionMock: vi.fn(),
   refreshTraderaBrowserSessionMock: vi.fn(),
   relistTraderaMutateAsyncMock: vi.fn(),
@@ -33,6 +35,9 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
   usePurgeListingMutation: () => ({ mutateAsync: vi.fn() }),
   useRelistTraderaMutation: () => ({
     mutateAsync: relistTraderaMutateAsyncMock,
+  }),
+  useMoveTraderaListingToUnsoldMutation: () => ({
+    mutateAsync: moveTraderaListingToUnsoldMutateAsyncMock,
   }),
   useCheckTraderaStatusMutation: () => ({
     mutateAsync: checkTraderaStatusMutateAsyncMock,
@@ -103,8 +108,10 @@ const buildBaseParams = (overrides?: {
   setIsSyncImagesConfirmOpen: vi.fn(),
   setLastExportListingId: vi.fn(),
   setListingToDelete: vi.fn(),
+  setListingToMoveToUnsold: vi.fn(),
   setListingToPurge: vi.fn(),
   setLogsOpen: vi.fn(),
+  setMovingTraderaListingToUnsold: vi.fn(),
   setOpeningTraderaLogin: vi.fn(),
   setOpeningVintedLogin: vi.fn(),
   setRecoveryContext: vi.fn(),
@@ -180,31 +187,6 @@ describe('useProductListingsActionsImpl', () => {
     expect(toastMock).toHaveBeenCalledWith('Tradera relist queued (job job-tradera-relist-1).', {
       variant: 'success',
     });
-  });
-
-  it('skips session preflight for Tradera API relists', async () => {
-    const { result } = renderHook(() =>
-      useProductListingsActionsImpl(
-        buildBaseParams({
-          listings: [
-            {
-              id: 'listing-1',
-              productId: 'product-1',
-              integrationId: 'integration-tradera-api-1',
-              connectionId: 'connection-tradera-api-1',
-              integration: { slug: 'tradera-api' },
-            },
-          ],
-        })
-      )
-    );
-
-    await act(async () => {
-      await result.current.handleRelistTradera('listing-1');
-    });
-
-    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
-    expect(relistTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
   });
 
   it('can skip session preflight for relists after a completed manual login flow', async () => {

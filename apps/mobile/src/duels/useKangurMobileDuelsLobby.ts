@@ -1,4 +1,18 @@
-import type { KangurDuelDifficulty, KangurDuelLeaderboardEntry, KangurDuelLobbyEntry, KangurDuelLobbyPresenceEntry, KangurDuelMode, KangurDuelOpponentEntry, KangurDuelOperation, KangurDuelSearchEntry } from '@kangur/contracts/kangur-duels';
+import type {
+  KangurDuelDifficulty,
+  KangurDuelLeaderboardEntry,
+  KangurDuelLeaderboardResponse,
+  KangurDuelLobbyEntry,
+  KangurDuelLobbyPresenceEntry,
+  KangurDuelLobbyPresenceResponse,
+  KangurDuelLobbyResponse,
+  KangurDuelMode,
+  KangurDuelOpponentEntry,
+  KangurDuelOpponentsResponse,
+  KangurDuelOperation,
+  KangurDuelSearchEntry,
+  KangurDuelSearchResponse,
+} from '@kangur/contracts/kangur-duels';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
@@ -183,7 +197,7 @@ export const useKangurMobileDuelsLobby =
       normalizedSearchQuery,
     ] as const;
 
-    const lobbyQuery = useQuery({
+    const lobbyQuery = useQuery<KangurDuelLobbyResponse>({
       queryKey: lobbyQueryKey,
       queryFn: async () =>
         apiClient.listDuelLobby(
@@ -194,7 +208,7 @@ export const useKangurMobileDuelsLobby =
       staleTime: 10_000,
     });
 
-    const presenceQuery = useQuery({
+    const presenceQuery = useQuery<KangurDuelLobbyPresenceResponse>({
       enabled: isAuthenticated,
       queryKey: presenceQueryKey,
       queryFn: async () =>
@@ -206,7 +220,7 @@ export const useKangurMobileDuelsLobby =
       staleTime: 10_000,
     });
 
-    const opponentsQuery = useQuery({
+    const opponentsQuery = useQuery<KangurDuelOpponentsResponse>({
       enabled: isAuthenticated,
       queryKey: opponentsQueryKey,
       queryFn: async () =>
@@ -217,7 +231,7 @@ export const useKangurMobileDuelsLobby =
       staleTime: 30_000,
     });
 
-    const leaderboardQuery = useQuery({
+    const leaderboardQuery = useQuery<KangurDuelLeaderboardResponse>({
       queryKey: leaderboardQueryKey,
       queryFn: async () =>
         apiClient.getDuelLeaderboard(
@@ -230,7 +244,7 @@ export const useKangurMobileDuelsLobby =
       staleTime: 30_000,
     });
 
-    const searchQueryState = useQuery({
+    const searchQueryState = useQuery<KangurDuelSearchResponse>({
       enabled: isAuthenticated && normalizedSearchQuery.length >= 2,
       queryKey: searchQueryKey,
       queryFn: async () =>

@@ -1,0 +1,23 @@
+{
+  "id": "6a8d6a5e-5d3c-41ad-927b-72a89f528d08",
+  "productId": "a91dcb5a-ace6-4351-a5cf-f1bac947e579",
+  "status": "running",
+  "provider": "amazon",
+  "rawResult": {
+    "runId": "4878a5a9-9e25-4a31-8af7-616dacac7818",
+    "status": "queued",
+    "runtimeKey": "amazon_google_lens_candidate_search",
+    "actionId": "runtime_action__amazon_google_lens_candidate_search",
+    "selectorProfile": "amazon",
+    "imageSearchProvider": "google_lens_upload",
+    "allowManualVerification": true,
+    "manualVerificationPending": false,
+    "manualVerificationMessage": null,
+    "manualVerificationTimeoutMs": 240000,
+    "recordDiagnostics": true,
+    "runStatus": "running",
+    "latestStage": null,
+    "failureArtifacts": [],
+    "logTail": []
+  }
+}

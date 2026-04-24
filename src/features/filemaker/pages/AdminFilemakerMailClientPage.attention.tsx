@@ -12,10 +12,14 @@ import { formatFilemakerMailboxAllowlist } from '../mail-utils';
 import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount, FilemakerMailFolderSummary } from '../types';
 import {
+  buildMailClientComposeHref,
+  buildMailClientWorkspaceHref,
+  buildMailClientSearchHref,
   getFilemakerMailPrimaryFolder,
   hasText,
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
+import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.route';
 import {
   MailClientDashboardFocusButton,
   MailClientStatusButton,
@@ -28,6 +32,7 @@ type MailClientAttentionSectionProps = {
   dashboardAccountId: string;
   dashboardQuery: string;
   dashboardScope: MailClientDashboardScope;
+  firstActiveAccountId: string | null;
   hasActiveFilter: boolean;
   hasAnyAttentionAccounts: boolean;
   foldersByAccount: Map<string, FilemakerMailFolderSummary[]>;
@@ -49,21 +54,74 @@ const buildAttentionMailboxHref = (
       })
     : buildFilemakerMailSelectionHref({ accountId, panel: 'settings' });
 
-function MailClientHealthyAttentionCard(): React.JSX.Element {
+function MailClientHealthyAttentionCard({
+  dashboardAccountId,
+  dashboardQuery,
+}: {
+  dashboardAccountId: string;
+  dashboardQuery: string;
+}): React.JSX.Element {
+  const focusedAccountId = dashboardAccountId === '' ? null : dashboardAccountId;
+  const healthyHref = buildMailClientDashboardHref({
+    accountId: dashboardAccountId,
+    query: dashboardQuery,
+    scope: 'healthy',
+  });
+  const workspaceHref = buildMailClientWorkspaceHref({
+    focusedAccountId,
+  });
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId,
+  });
+  const searchLabel = dashboardQuery.trim() !== '' ? 'Continue Search' : 'Search Messages';
+
   return (
-    <Card variant='subtle' padding='md' className='border-border/70 bg-card/50'>
-      <div className='text-sm text-gray-400'>All connected mailboxes currently look healthy.</div>
+    <Card
+      data-testid='mail-client-attention-healthy-status'
+      variant='subtle'
+      padding='md'
+      className='border-border/70 bg-card/50'
+    >
+      <div className='space-y-3'>
+        <div className='text-sm text-gray-400'>All connected mailboxes currently look healthy.</div>
+        <div className='flex flex-wrap gap-2'>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={healthyHref}>Healthy Mailboxes</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={workspaceHref}>Open Workspace</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={searchHref}>{searchLabel}</Link>
+          </Button>
+        </div>
+      </div>
     </Card>
   );
 }
 
 function MailClientFilteredAttentionCard({
+  dashboardAccountId,
+  dashboardQuery,
   onClearFilter,
 }: {
+  dashboardAccountId: string;
+  dashboardQuery: string;
   onClearFilter: () => void;
 }): React.JSX.Element {
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: dashboardAccountId === '' ? null : dashboardAccountId,
+  });
+
   return (
-    <Card variant='subtle' padding='md' className='border-border/70 bg-card/50'>
+    <Card
+      data-testid='mail-client-attention-status'
+      variant='subtle'
+      padding='md'
+      className='border-border/70 bg-card/50'
+    >
       <div className='space-y-3'>
         <div className='text-base font-semibold text-white'>No attention mailboxes match the current filter.</div>
         <p className='text-sm text-gray-400'>
@@ -72,6 +130,9 @@ function MailClientFilteredAttentionCard({
         <div className='flex flex-wrap gap-2'>
           <Button type='button' variant='outline' onClick={onClearFilter}>
             Clear Filter
+          </Button>
+          <Button asChild variant='outline'>
+            <Link href={searchHref}>Search Messages</Link>
           </Button>
         </div>
       </div>
@@ -134,6 +195,7 @@ function MailClientAttentionAccountActions({
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
+  firstActiveAccountId,
   primaryFolder,
   onSyncAccount,
   onToggleAccountStatus,
@@ -144,12 +206,24 @@ function MailClientAttentionAccountActions({
   dashboardAccountId: string;
   dashboardQuery: string;
   dashboardScope: MailClientDashboardScope;
+  firstActiveAccountId: string | null;
   primaryFolder: FilemakerMailFolderSummary | null;
   onSyncAccount: (accountId: string) => Promise<void>;
   onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
   isSyncing: boolean;
   isStatusUpdating: boolean;
 }): React.JSX.Element {
+  const composeHref = buildMailClientComposeHref({
+    composeAccountId: account.status === 'active' ? account.id : firstActiveAccountId,
+    dashboardQuery,
+    focusedAccountId: account.id,
+  });
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: account.id,
+  });
+  const trimmedDashboardQuery = dashboardQuery.trim();
+
   return (
     <div className='flex flex-wrap gap-2'>
       <MailClientSyncButton
@@ -170,6 +244,11 @@ function MailClientAttentionAccountActions({
         <Link href={buildAttentionMailboxHref(account.id, primaryFolder)}>Open Mailbox</Link>
       </Button>
       <Button asChild variant='outline' size='sm'>
+        <Link href={searchHref}>
+          {trimmedDashboardQuery !== '' ? 'Continue Search' : 'Search Mailbox'}
+        </Link>
+      </Button>
+      <Button asChild variant='outline' size='sm'>
         <Link
           href={buildFilemakerMailSelectionHref({
             accountId: account.id,
@@ -178,6 +257,9 @@ function MailClientAttentionAccountActions({
         >
           Open Settings
         </Link>
+      </Button>
+      <Button asChild variant='outline' size='sm'>
+        <Link href={composeHref}>Compose</Link>
       </Button>
       <MailClientDashboardFocusButton
         activeDashboardAccountId={dashboardAccountId}
@@ -194,6 +276,7 @@ function MailClientAttentionAccountCard({
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
+  firstActiveAccountId,
   folders,
   onSyncAccount,
   onToggleAccountStatus,
@@ -204,6 +287,7 @@ function MailClientAttentionAccountCard({
   dashboardAccountId: string;
   dashboardQuery: string;
   dashboardScope: MailClientDashboardScope;
+  firstActiveAccountId: string | null;
   folders: FilemakerMailFolderSummary[];
   onSyncAccount: (accountId: string) => Promise<void>;
   onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
@@ -226,6 +310,7 @@ function MailClientAttentionAccountCard({
           dashboardAccountId={dashboardAccountId}
           dashboardQuery={dashboardQuery}
           dashboardScope={dashboardScope}
+          firstActiveAccountId={firstActiveAccountId}
           primaryFolder={primaryFolder}
           onSyncAccount={onSyncAccount}
           onToggleAccountStatus={onToggleAccountStatus}
@@ -243,6 +328,7 @@ function MailClientAttentionSection({
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
+  firstActiveAccountId,
   hasActiveFilter,
   hasAnyAttentionAccounts,
   foldersByAccount,
@@ -256,9 +342,20 @@ function MailClientAttentionSection({
 
   let content: React.JSX.Element;
   if (attentionAccounts.length === 0 && hasAnyAttentionAccounts && hasActiveFilter) {
-    content = <MailClientFilteredAttentionCard onClearFilter={onClearFilter} />;
+    content = (
+      <MailClientFilteredAttentionCard
+        dashboardAccountId={dashboardAccountId}
+        dashboardQuery={dashboardQuery}
+        onClearFilter={onClearFilter}
+      />
+    );
   } else if (attentionAccounts.length === 0) {
-    content = <MailClientHealthyAttentionCard />;
+    content = (
+      <MailClientHealthyAttentionCard
+        dashboardAccountId={dashboardAccountId}
+        dashboardQuery={dashboardQuery}
+      />
+    );
   } else {
     content = (
       <div className='grid gap-3 xl:grid-cols-2'>
@@ -269,6 +366,7 @@ function MailClientAttentionSection({
             dashboardAccountId={dashboardAccountId}
             dashboardQuery={dashboardQuery}
             dashboardScope={dashboardScope}
+            firstActiveAccountId={firstActiveAccountId}
             folders={foldersByAccount.get(account.id) ?? []}
             onSyncAccount={onSyncAccount}
             onToggleAccountStatus={onToggleAccountStatus}

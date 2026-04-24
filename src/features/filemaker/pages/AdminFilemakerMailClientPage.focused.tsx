@@ -17,12 +17,16 @@ import type {
   FilemakerMailThread,
 } from '../types';
 import {
+  buildMailClientComposeHref,
+  buildMailClientSearchHref,
+  buildMailClientWorkspaceHref,
   getFilemakerMailAccountStatusLabel,
   getFilemakerMailPrimaryFolder,
   hasFilemakerMailSyncIssue,
   hasText,
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
+import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.route';
 import {
   MailClientMailboxActions,
   MailClientMailboxShortcuts,
@@ -76,6 +80,7 @@ type MailClientFocusedAccountSectionProps = {
   dashboardAccountId: string;
   dashboardQuery: string;
   dashboardScope: MailClientDashboardScope;
+  fallbackComposeAccountId: string | null;
   folders: FilemakerMailFolderSummary[];
   recentThreads: FilemakerMailThread[];
   isSyncing: boolean;
@@ -89,6 +94,7 @@ function MailClientFocusedAccountSection({
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
+  fallbackComposeAccountId,
   folders,
   recentThreads,
   isSyncing,
@@ -101,6 +107,11 @@ function MailClientFocusedAccountSection({
   const primaryFolder = getFilemakerMailPrimaryFolder(folders);
   const folderSnapshot = getFocusedFolderSnapshot(folders);
   const focusedRecentThreads = getFocusedRecentThreads(recentThreads);
+  const composeHref = buildMailClientComposeHref({
+    composeAccountId: account.status === 'active' ? account.id : fallbackComposeAccountId,
+    dashboardQuery,
+    focusedAccountId: account.id,
+  });
   const unreadCount = folders.reduce((sum, folder) => sum + folder.unreadCount, 0);
   const allowlistLabel =
     account.folderAllowlist.length > 0
@@ -151,11 +162,15 @@ function MailClientFocusedAccountSection({
               {syncErrorMessage}
             </div>
           ) : (
-            <div className='text-sm text-gray-500'>No sync errors recorded.</div>
+            <MailClientFocusedSyncStatus
+              account={account}
+              dashboardQuery={dashboardQuery}
+            />
           )}
 
           <MailClientMailboxActions
             account={account}
+            composeHref={composeHref}
             dashboardAccountId={dashboardAccountId}
             dashboardQuery={dashboardQuery}
             dashboardScope={dashboardScope}
@@ -169,22 +184,112 @@ function MailClientFocusedAccountSection({
           <MailClientFocusedRecentThreads
             accountId={account.id}
             dashboardQuery={dashboardQuery}
+            dashboardScope={dashboardScope}
             recentThreads={focusedRecentThreads}
           />
 
           {folders.length > 0 ? (
-            <>
-              <MailClientFocusedFolderSnapshot
-                accountId={account.id}
-                folders={folderSnapshot}
-                primaryFolder={primaryFolder}
-              />
-              <MailClientMailboxShortcuts accountId={account.id} folders={folders} />
-            </>
+            <MailClientFocusedFolderSnapshot
+              accountId={account.id}
+              folders={folderSnapshot}
+              primaryFolder={primaryFolder}
+            />
+          ) : (
+            <MailClientFocusedFolderStatus
+              accountId={account.id}
+              dashboardQuery={dashboardQuery}
+              dashboardScope={dashboardScope}
+            />
+          )}
+
+          {folders.length > 0 ? (
+            <MailClientMailboxShortcuts accountId={account.id} folders={folders} />
           ) : null}
         </CardContent>
       </Card>
     </section>
+  );
+}
+
+function MailClientFocusedSyncStatus({
+  account,
+  dashboardQuery,
+}: {
+  account: FilemakerMailAccount;
+  dashboardQuery: string;
+}): React.JSX.Element {
+  const isHealthy = account.status === 'active';
+  const href = buildMailClientDashboardHref({
+    accountId: account.id,
+    query: dashboardQuery,
+    scope: isHealthy ? 'healthy' : 'attention',
+  });
+
+  return (
+    <div
+      data-testid='mail-client-focused-sync-status'
+      className='flex flex-wrap items-center justify-between gap-3 rounded-md border border-border/70 bg-card/50 px-3 py-2'
+    >
+      <div className='text-sm text-gray-400'>
+        {isHealthy ? 'Mailbox looks healthy. No sync errors recorded.' : 'This mailbox is currently paused.'}
+      </div>
+      <Button asChild variant='outline' size='sm'>
+        <Link href={href}>{isHealthy ? 'Healthy Mailboxes' : 'Needs Attention'}</Link>
+      </Button>
+    </div>
+  );
+}
+
+function MailClientFocusedFolderStatus({
+  accountId,
+  dashboardQuery,
+  dashboardScope,
+}: {
+  accountId: string;
+  dashboardQuery: string;
+  dashboardScope: MailClientDashboardScope;
+}): React.JSX.Element {
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: accountId,
+  });
+  const workspaceHref = buildMailClientWorkspaceHref({
+    focusedAccountId: accountId,
+  });
+  const showAllHref = buildMailClientDashboardHref({
+    accountId: '',
+    query: dashboardQuery,
+    scope: dashboardScope,
+  });
+  const trimmedDashboardQuery = dashboardQuery.trim();
+  const searchLabel = trimmedDashboardQuery !== '' ? 'Continue Search' : 'Search Mailbox';
+
+  return (
+    <div className='space-y-3'>
+      <div className='flex flex-wrap items-center justify-between gap-2'>
+        <div className='text-xs uppercase tracking-[0.18em] text-gray-500'>Folder Snapshot</div>
+        <div className='text-xs text-gray-500'>Tracked folders will appear here when available.</div>
+      </div>
+      <div
+        data-testid='mail-client-focused-folder-status'
+        className='space-y-3 rounded-lg border border-border/70 bg-card/50 p-3'
+      >
+        <div className='text-sm text-gray-400'>
+          No tracked folders are available for this mailbox yet.
+        </div>
+        <div className='flex flex-wrap gap-2'>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={searchHref}>{searchLabel}</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={workspaceHref}>Open Workspace</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={showAllHref}>Show All</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -246,14 +351,29 @@ function MailClientFocusedFolderSnapshot({
 function MailClientFocusedRecentThreads({
   accountId,
   dashboardQuery,
+  dashboardScope,
   recentThreads,
 }: {
   accountId: string;
   dashboardQuery: string;
+  dashboardScope: MailClientDashboardScope;
   recentThreads: FilemakerMailThread[];
 }): React.JSX.Element {
   const latestThread = recentThreads[0] ?? null;
   const trimmedDashboardQuery = dashboardQuery.trim();
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: accountId,
+  });
+  const workspaceHref = buildMailClientWorkspaceHref({
+    focusedAccountId: accountId,
+  });
+  const showAllHref = buildMailClientDashboardHref({
+    accountId: '',
+    query: dashboardQuery,
+    scope: dashboardScope,
+  });
+  const searchLabel = trimmedDashboardQuery !== '' ? 'Continue Search' : 'Search Mailbox';
 
   return (
     <div className='space-y-3'>
@@ -328,8 +448,24 @@ function MailClientFocusedRecentThreads({
           ))}
         </div>
       ) : (
-        <div className='rounded-lg border border-border/70 bg-card/50 p-3 text-sm text-gray-400'>
-          No recent threads match the current dashboard view for this mailbox.
+        <div
+          data-testid='mail-client-focused-recent-status'
+          className='space-y-3 rounded-lg border border-border/70 bg-card/50 p-3'
+        >
+          <div className='text-sm text-gray-400'>
+            No recent threads match the current dashboard view for this mailbox.
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={searchHref}>{searchLabel}</Link>
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={workspaceHref}>Open Workspace</Link>
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={showAllHref}>Show All</Link>
+            </Button>
+          </div>
         </div>
       )}
     </div>

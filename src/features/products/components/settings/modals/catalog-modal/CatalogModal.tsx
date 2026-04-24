@@ -68,7 +68,7 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
     return languages.filter(
       (l) =>
         !selectedSet.has(l.id) &&
-        (!query || l.name.toLowerCase().includes(query) || l.code.toLowerCase().includes(query))
+        (query === '' || l.name.toLowerCase().includes(query) || l.code.toLowerCase().includes(query))
     );
   }, [languages, selectedLanguageIds, languageQuery, canonicalizeLanguageId]);
 
@@ -155,12 +155,12 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
 
   const handleSubmit = async (): Promise<void> => {
     await handleFormSubmit();
-    if (!error) {
+    if (error === null) {
       onSuccess?.();
     }
   };
 
-  const handleChange = (vals: Partial<typeof form>) => {
+  const handleChange = (vals: Partial<typeof form>): void => {
     setForm((prev) => ({ ...prev, ...vals }));
   };
 
@@ -205,7 +205,7 @@ export function CatalogModal(props: CatalogModalProps): React.JSX.Element {
         onChange={handleChange}
         size='lg'
       />
-      {error && (
+      {error !== null && (
         <div className='fixed bottom-20 left-1/2 -translate-x-1/2 z-[60] w-full max-w-md px-4'>
           <Alert variant='error' className='shadow-2xl'>
             {error}

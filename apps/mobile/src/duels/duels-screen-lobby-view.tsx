@@ -23,7 +23,7 @@ import {
 } from './duels-screen-lobby-secondary-sections';
 import {
   HOME_ROUTE,
-} from './duels-utils';
+} from './utils/duels-ui';
 import { DuelLobbyChatPanel } from './DuelLobbyChatPanel';
 import { DuelLobbyPlayPanel } from './DuelLobbyPlayPanel';
 import { DuelLobbyRoomsPanel } from './DuelLobbyRoomsPanel';

@@ -313,32 +313,6 @@ describe('integration listing relist handler', () => {
     });
   });
 
-  it('rejects browser mode overrides for relists that are not Playwright or Tradera browser', async () => {
-    getIntegrationByIdMock.mockResolvedValue({
-      id: 'integration-tradera-api-1',
-      slug: 'tradera-api',
-    });
-
-    await expect(
-      postHandler(
-        new Request('http://localhost/api', {
-          method: 'POST',
-          body: JSON.stringify({ browserMode: 'headed' }),
-          headers: {
-            'content-type': 'application/json',
-          },
-        }) as never,
-        {} as never,
-        { id: 'product-1', listingId: 'listing-1' }
-      )
-    ).rejects.toThrow(
-      'Browser mode override is only supported for Playwright and Tradera browser relists'
-    );
-
-    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
-    expect(enqueuePlaywrightListingJobMock).not.toHaveBeenCalled();
-  });
-
   it('rejects selectorProfile overrides for relists that are not Tradera browser', async () => {
     getIntegrationByIdMock.mockResolvedValue({
       id: 'integration-playwright-1',

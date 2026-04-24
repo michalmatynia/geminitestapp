@@ -4,21 +4,19 @@ import React from 'react';
 
 import {
   is1688IntegrationSlug,
-  isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import type { ConnectionFormState } from '@/features/integrations/context/integrations-context-types';
-import type { IntegrationConnection } from '@/shared/contracts/integrations/connections';
 import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 
 const TRADERA_CATEGORY_STRATEGY_OPTIONS = [
-  { value: 'mapper', label: 'Category mapper (with Other fallback)' },
-  { value: 'top_suggested', label: 'Top suggested by Tradera' },
+  { value: 'mapper', label: 'Category mapper (strict mapped category)' },
+  { value: 'top_suggested', label: 'Top suggested by Tradera (automatic)' },
 ] as const;
 
 const TRADERA_BROWSER_MODE_OPTIONS = [
@@ -41,7 +39,6 @@ type ConnectionFormFieldsProps = {
   form: ConnectionFormState;
   setForm: React.Dispatch<React.SetStateAction<ConnectionFormState>>;
   mode: 'create' | 'edit';
-  selectedConnection?: IntegrationConnection | null;
   idPrefix?: string;
 };
 
@@ -51,14 +48,12 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
     form,
     setForm,
     mode,
-    selectedConnection = null,
     idPrefix = 'connection-form',
   } = props;
 
   const isCreateMode = mode === 'create';
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
-  const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
-  const isTraderaBrowser = isTradera && !isTraderaApi;
+  const isTraderaBrowser = isTradera;
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
@@ -71,7 +66,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'Integration name (e.g. LinkedIn Main)'
       : isVinted
         ? 'Integration name (e.g. Vinted Browser)'
-        : is1688
+      : is1688
           ? 'Integration name (e.g. 1688 Main)'
       : isBaselinker
         ? 'Integration name (e.g. Main Baselinker)'
@@ -83,13 +78,11 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'LinkedIn client ID'
       : isVinted
         ? 'Vinted email (optional)'
-        : is1688
+      : is1688
           ? '1688 account label (optional)'
       : isBaselinker
         ? 'Account name (optional)'
-        : isTraderaApi
-          ? 'Tradera username/alias'
-          : 'Tradera username';
+        : 'Tradera username';
 
   const usernamePlaceholder = isAllegro
     ? 'Allegro client ID'
@@ -97,13 +90,11 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'LinkedIn client ID'
       : isVinted
         ? 'Vinted email (optional)'
-        : is1688
+      : is1688
           ? '1688 account label (optional)'
       : isBaselinker
         ? 'Account name (for reference)'
-        : isTraderaApi
-          ? 'Tradera username/alias'
-          : 'Tradera username';
+        : 'Tradera username';
 
   const passwordLabel = isAllegro
     ? 'Allegro client secret'
@@ -111,13 +102,11 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'LinkedIn client secret'
       : isVinted
         ? 'Vinted password (optional)'
-        : is1688
+      : is1688
           ? '1688 password (optional)'
       : isBaselinker
         ? 'Baselinker API token'
-        : isTraderaApi
-          ? 'Fallback secret'
-          : 'Tradera password';
+        : 'Tradera password';
 
   const passwordPlaceholder = isCreateMode
     ? isAllegro
@@ -126,13 +115,11 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
         ? 'LinkedIn client secret'
         : isVinted
           ? 'Vinted password (optional)'
-          : is1688
+        : is1688
             ? '1688 password (optional)'
         : isBaselinker
           ? 'Baselinker API token'
-          : isTraderaApi
-            ? 'Fallback secret (required)'
-            : 'Tradera password'
+          : 'Tradera password'
     : isAllegro
       ? 'New client secret (leave blank to keep)'
       : isLinkedIn
@@ -141,14 +128,17 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           ? 'New Vinted password (leave blank to keep)'
           : is1688
             ? 'New 1688 password (leave blank to keep)'
-      : isTraderaApi
-          ? 'New fallback secret (leave blank to keep)'
-          : 'New password (leave blank to keep)';
+      : 'New password (leave blank to keep)';
 
   const browserSessionCredentialDescription =
     isVinted || is1688
       ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
       : undefined;
+
+  const traderaCategoryStrategyDescription =
+    form.traderaCategoryStrategy === 'top_suggested'
+      ? 'Lets Tradera choose the category automatically during listing.'
+      : 'Uses the synced Category Mapper match and stops the listing if that Tradera category cannot be selected.';
 
   return (
     <>
@@ -343,7 +333,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               </FormField>
               <FormField
                 label='Category selection strategy'
-                description='How Tradera category is chosen when listing a product'
+                description={traderaCategoryStrategyDescription}
               >
                 <SelectSimple
                   id={`${idPrefix}-traderaCategoryStrategy`}
@@ -478,118 +468,6 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               Enable auto relist by default
             </Label>
           </div>
-          {isTraderaApi && (
-            <>
-              <FormField label='Tradera API App ID'>
-                <Input
-                  variant='subtle'
-                  size='sm'
-                  placeholder='5683'
-                  inputMode='numeric'
-                  value={form.traderaApiAppId}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setForm((prev) => ({
-                      ...prev,
-                      traderaApiAppId: event.target.value,
-                    }))
-                  }
-                 aria-label='5683' title='5683'/>
-              </FormField>
-              <FormField label='Tradera API App Key'>
-                <Input
-                  variant='subtle'
-                  size='sm'
-                  type='password'
-                  placeholder={
-                    isCreateMode ? 'Application key' : 'New application key (leave blank to keep)'
-                  }
-                  value={form.traderaApiAppKey}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setForm((prev) => ({
-                      ...prev,
-                      traderaApiAppKey: event.target.value,
-                    }))
-                  }
-                 aria-label={isCreateMode ? 'Application key' : 'New application key (leave blank to keep)'} title={isCreateMode ? 'Application key' : 'New application key (leave blank to keep)'}/>
-                {!isCreateMode &&
-                  !form.traderaApiAppKey.trim() &&
-                  selectedConnection?.hasTraderaApiAppKey && (
-                  <p className='mt-1 text-xs text-emerald-300'>
-                      Stored app key retained. Leave blank to keep it.
-                  </p>
-                )}
-              </FormField>
-              <FormField label='Tradera API Public Key (optional)'>
-                <Input
-                  variant='subtle'
-                  size='sm'
-                  placeholder='Public key'
-                  value={form.traderaApiPublicKey}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setForm((prev) => ({
-                      ...prev,
-                      traderaApiPublicKey: event.target.value,
-                    }))
-                  }
-                 aria-label='Public key' title='Public key'/>
-              </FormField>
-              <FormField label='Tradera API User ID'>
-                <Input
-                  variant='subtle'
-                  size='sm'
-                  placeholder='Numeric user ID'
-                  inputMode='numeric'
-                  value={form.traderaApiUserId}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setForm((prev) => ({
-                      ...prev,
-                      traderaApiUserId: event.target.value,
-                    }))
-                  }
-                 aria-label='Numeric user ID' title='Numeric user ID'/>
-              </FormField>
-              <FormField label='Tradera API Token'>
-                <Input
-                  variant='subtle'
-                  size='sm'
-                  type='password'
-                  placeholder={isCreateMode ? 'Access token' : 'New token (leave blank to keep)'}
-                  value={form.traderaApiToken}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                    setForm((prev) => ({
-                      ...prev,
-                      traderaApiToken: event.target.value,
-                    }))
-                  }
-                 aria-label={isCreateMode ? 'Access token' : 'New token (leave blank to keep)'} title={isCreateMode ? 'Access token' : 'New token (leave blank to keep)'}/>
-                {!isCreateMode &&
-                  !form.traderaApiToken.trim() &&
-                  selectedConnection?.hasTraderaApiToken && (
-                  <p className='mt-1 text-xs text-emerald-300'>
-                      Stored token retained. Leave blank to keep it.
-                  </p>
-                )}
-              </FormField>
-              <div className={`${UI_CENTER_ROW_SPACED_CLASSNAME} py-1`}>
-                <Checkbox
-                  id={`${idPrefix}-traderaApiSandbox`}
-                  checked={form.traderaApiSandbox}
-                  onCheckedChange={(checked: boolean): void =>
-                    setForm((prev) => ({
-                      ...prev,
-                      traderaApiSandbox: checked,
-                    }))
-                  }
-                />
-                <Label
-                  htmlFor={`${idPrefix}-traderaApiSandbox`}
-                  className='text-xs font-medium text-gray-300'
-                >
-                  Use Tradera sandbox
-                </Label>
-              </div>
-            </>
-          )}
         </>
       )}
     </>

@@ -912,6 +912,134 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     return 'unsold';
   };
 
+  const buildDirectListingVerificationUrl = () => {
+    if (normalizeWhitespace(listingUrl)) {
+      return normalizeWhitespace(listingUrl);
+    }
+
+    const resolvedExternalListingId =
+      normalizeWhitespace(externalListingId) || extractListingId(listingUrl);
+    if (!resolvedExternalListingId) {
+      return null;
+    }
+
+    return 'https://www.tradera.com/item/' + encodeURIComponent(resolvedExternalListingId);
+  };
+
+  const readDirectListingVerificationSnapshot = async () =>
+    page
+      .evaluate(() => {
+        const normalize = (value) =>
+          String(value || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+        const title = normalize(document.title || '');
+        const headings = Array.from(
+          document.querySelectorAll('h1, h2, [role="heading"], main, [role="main"]')
+        )
+          .map((node) => normalize(node.textContent || ''))
+          .filter(Boolean)
+          .slice(0, 8)
+          .join(' | ');
+        const bodyText = normalize(document.body?.innerText || '').slice(0, 4_000);
+
+        return {
+          title,
+          headings,
+          bodyText,
+        };
+      })
+      .catch(() => ({
+        title: '',
+        headings: '',
+        bodyText: '',
+      }));
+
+  const verifyDirectListingStatus = async () => {
+    const targetUrl = buildDirectListingVerificationUrl();
+    if (!targetUrl) {
+      return null;
+    }
+
+    let responseStatus = null;
+    try {
+      const response = await page.goto(targetUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      });
+      responseStatus = response ? response.status() : null;
+    } catch {
+      return null;
+    }
+
+    await acceptCookies();
+    await waitForPageIdle(1_200);
+
+    const finalUrl = page.url();
+    const snapshot = await readDirectListingVerificationSnapshot();
+    const combinedText = normalizeWhitespace(
+      [snapshot.title, snapshot.headings, snapshot.bodyText].filter(Boolean).join(' | ')
+    ).toLowerCase();
+    const normalizedFinalUrl = normalizeWhitespace(finalUrl).toLowerCase();
+    const removalHints = [
+      'could not be found',
+      'listing could not be found',
+      'item could not be found',
+      'no longer available',
+      'listing is no longer available',
+      'item is no longer available',
+      'annonsen kunde inte hittas',
+      'objektet kunde inte hittas',
+      'kunde inte hittas',
+      'finns inte längre',
+      'annonsen finns inte längre',
+      'item not found',
+      'listing not found',
+    ];
+    const looksRemoved =
+      (typeof responseStatus === 'number' && responseStatus >= 400) ||
+      normalizedFinalUrl.includes('/404') ||
+      normalizedFinalUrl.includes('not-found') ||
+      removalHints.some((hint) => combinedText.includes(hint));
+
+    if (!looksRemoved) {
+      return {
+        listingUrl: finalUrl || targetUrl,
+        listingId:
+          extractListingId(finalUrl) ||
+          extractListingId(targetUrl) ||
+          normalizeWhitespace(externalListingId) ||
+          null,
+        rawStatusTag: responseStatus ? 'reachable:' + String(responseStatus) : 'reachable',
+        canonicalStatus: 'unknown',
+        matchStrategy: 'direct-listing-page-reachable',
+        matchedProductId: null,
+        sectionId: 'public_listing',
+        sectionLabel: 'public listing page',
+        candidateCount: 0,
+      };
+    }
+
+    return {
+      listingUrl: finalUrl || targetUrl,
+      listingId:
+        extractListingId(finalUrl) ||
+        extractListingId(targetUrl) ||
+        normalizeWhitespace(externalListingId) ||
+        null,
+      rawStatusTag:
+        typeof responseStatus === 'number' && responseStatus >= 400
+          ? 'http:' + String(responseStatus)
+          : 'removed',
+      canonicalStatus: 'removed',
+      matchStrategy: 'direct-listing-page-missing',
+      matchedProductId: null,
+      sectionId: 'public_listing',
+      sectionLabel: 'public listing page',
+      candidateCount: 0,
+    };
+  };
+
   const inspectMatchingCandidate = async (section, candidate) => {
     const rawStatusTag = resolveRawStatusTag(section.id, candidate);
     await page.goto(candidate.listingUrl, {

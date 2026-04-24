@@ -21,7 +21,11 @@ import {
 import { resolveTraderaExecutionStepsFromMarketplaceData } from '@/features/integrations/utils/tradera-execution-steps';
 import { Button } from '@/shared/ui/button';
 import { StatusBadge } from '@/shared/ui/data-display.public';
-import { resolveTraderaExecutionSummary } from './product-listings-modal/listing-item/ProductListingDetails.utils';
+import {
+  formatTraderaStatusVerificationSection,
+  formatTraderaStatusVerificationStrategy,
+  resolveTraderaExecutionSummary,
+} from './product-listings-modal/listing-item/ProductListingDetails.utils';
 import { TraderaExecutionSteps } from './TraderaExecutionSteps';
 import {
   ALREADY_QUEUED_STATUSES,
@@ -115,6 +119,26 @@ export function ListingRowView({
     traderaExecutionSummary?.resolvedSelectorProfile;
   const displayedSelectorProfile =
     displayedResolvedSelectorProfile ?? displayedRequestedSelectorProfile;
+  const displayedVerificationSection =
+    displayedTraderaAction === 'check_status'
+      ? traderaExecutionSummary?.verificationSection ?? null
+      : null;
+  const displayedVerificationStrategy =
+    displayedTraderaAction === 'check_status'
+      ? traderaExecutionSummary?.verificationMatchStrategy ?? null
+      : null;
+  const displayedVerificationRawTag =
+    displayedTraderaAction === 'check_status'
+      ? traderaExecutionSummary?.verificationRawStatusTag ?? null
+      : null;
+  const displayedVerificationProductId =
+    displayedTraderaAction === 'check_status'
+      ? traderaExecutionSummary?.verificationMatchedProductId ?? null
+      : null;
+  const displayedVerificationCandidateCount =
+    displayedTraderaAction === 'check_status'
+      ? traderaExecutionSummary?.verificationCandidateCount ?? null
+      : null;
   const requiresSessionRefresh =
     supportsLiveCheck &&
     (isTraderaBrowserAuthRequiredMessage(liveCheckError ?? displayedFailureReason) ||
@@ -187,6 +211,41 @@ export function ListingRowView({
               <>
                 <span className='text-muted-foreground'>Selector profile</span>
                 <span className='truncate'>{displayedSelectorProfile}</span>
+              </>
+            ) : null}
+
+            {displayedVerificationSection ? (
+              <>
+                <span className='text-muted-foreground'>Verified in</span>
+                <span>{formatTraderaStatusVerificationSection(displayedVerificationSection)}</span>
+              </>
+            ) : null}
+
+            {displayedVerificationStrategy ? (
+              <>
+                <span className='text-muted-foreground'>Match strategy</span>
+                <span>{formatTraderaStatusVerificationStrategy(displayedVerificationStrategy)}</span>
+              </>
+            ) : null}
+
+            {displayedVerificationRawTag ? (
+              <>
+                <span className='text-muted-foreground'>Tradera tag</span>
+                <span className='font-mono break-all'>{displayedVerificationRawTag}</span>
+              </>
+            ) : null}
+
+            {displayedVerificationProductId ? (
+              <>
+                <span className='text-muted-foreground'>Matched Product ID</span>
+                <span className='font-mono break-all'>{displayedVerificationProductId}</span>
+              </>
+            ) : null}
+
+            {typeof displayedVerificationCandidateCount === 'number' ? (
+              <>
+                <span className='text-muted-foreground'>Candidates inspected</span>
+                <span>{displayedVerificationCandidateCount}</span>
               </>
             ) : null}
 

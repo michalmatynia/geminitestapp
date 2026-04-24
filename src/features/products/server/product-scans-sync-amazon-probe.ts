@@ -69,6 +69,7 @@ import {
   resolveAmazonTriageEvaluatorConfig,
   resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
+import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 
 const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
 
@@ -249,6 +250,7 @@ export async function synchronizeAmazonProbeReady({
               scan.rawResult,
               amazonImageSearchProvider
             );
+            const diagnosticCapture = resolveAmazonScanDiagnosticCapture(scan.rawResult);
             const fallbackRun = await startPlaywrightEngineTask({
               request: {
                 runtimeKey: amazonScanRuntime.runtimeKey,
@@ -279,10 +281,7 @@ export async function synchronizeAmazonProbeReady({
                 }),
                 browserEngine: 'chromium',
                 ...scannerRuntimeOptions,
-                capture: {
-                  screenshot: true,
-                  html: true,
-                },
+                capture: diagnosticCapture,
                 preventNewPages: true,
               },
               ownerUserId: scan.updatedBy?.trim() || null,
@@ -340,6 +339,7 @@ export async function synchronizeAmazonProbeReady({
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: probeEvaluationRawResult,
+                    recordDiagnostics: diagnosticCapture.trace === true,
                     ...requestedStepSequenceInput,
                   }),
                   providerFallback: true,
@@ -420,6 +420,7 @@ export async function synchronizeAmazonProbeReady({
               resolveScanManualVerificationTimeoutMs(scannerSettings);
             const amazonSelectorProfile =
               readOptionalString(toRecord(scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
+            const diagnosticCapture = resolveAmazonScanDiagnosticCapture(scan.rawResult);
             const continuationRun = await startPlaywrightEngineTask({
               request: {
           runtimeKey: amazonScanRuntime.runtimeKey,
@@ -453,10 +454,7 @@ export async function synchronizeAmazonProbeReady({
                 }),
                 browserEngine: 'chromium',
                 ...scannerRuntimeOptions,
-                capture: {
-                  screenshot: true,
-                  html: true,
-                },
+                capture: diagnosticCapture,
                 preventNewPages: true,
               },
               ownerUserId: scan.updatedBy?.trim() || null,
@@ -528,6 +526,7 @@ export async function synchronizeAmazonProbeReady({
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: probeEvaluationRawResult,
+                    recordDiagnostics: diagnosticCapture.trace === true,
                     ...requestedStepSequenceInput,
                   }),
                   candidateRejectedByAi: true,
@@ -647,6 +646,7 @@ export async function synchronizeAmazonProbeReady({
     );
     const amazonSelectorProfile =
       readOptionalString(toRecord(scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
+    const diagnosticCapture = resolveAmazonScanDiagnosticCapture(scan.rawResult);
     const extractionRun = await startPlaywrightEngineTask({
       request: {
           runtimeKey: amazonScanRuntime.runtimeKey,
@@ -683,10 +683,7 @@ export async function synchronizeAmazonProbeReady({
         }),
         browserEngine: 'chromium',
         ...scannerRuntimeOptions,
-        capture: {
-          screenshot: true,
-          html: true,
-        },
+        capture: diagnosticCapture,
         preventNewPages: true,
       },
       ownerUserId: scan.updatedBy?.trim() || null,
@@ -747,6 +744,7 @@ export async function synchronizeAmazonProbeReady({
           manualVerificationTimeoutMs,
           previousRunId: engineRunId,
           previousResult: probeEvaluationRawResult,
+          recordDiagnostics: diagnosticCapture.trace === true,
           ...requestedStepSequenceInput,
         }),
         approvedCandidateExtraction: true,

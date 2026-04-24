@@ -142,6 +142,7 @@ const buildCommonSearchUrl = (search: URLSearchParams, input: {
   originPanel?: 'recent' | 'search' | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
+  searchContextAccountId?: string | null;
   recentQuery?: string | null;
   searchAccountId?: string | null;
   searchQuery?: string | null;
@@ -158,6 +159,15 @@ const buildCommonSearchUrl = (search: URLSearchParams, input: {
   if (input.originPanel === 'search') {
     if (input.searchQuery !== null && input.searchQuery !== undefined && input.searchQuery !== '') search.set('searchQuery', input.searchQuery);
     if (input.searchAccountId === 'all') search.set('searchAccountId', 'all');
+    if (
+      input.searchAccountId !== 'all' &&
+      input.searchContextAccountId !== null &&
+      input.searchContextAccountId !== undefined &&
+      input.searchContextAccountId !== '' &&
+      input.searchContextAccountId !== input.accountId
+    ) {
+      search.set('searchContextAccountId', input.searchContextAccountId);
+    }
   }
 };
 
@@ -169,6 +179,7 @@ const buildFilemakerMailComposeHref = (input: {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchContextAccountId?: string | null;
   searchAccountId?: string | null;
   searchQuery?: string | null;
 }): string => {
@@ -187,6 +198,7 @@ const buildFilemakerMailThreadHref = (input: {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  searchContextAccountId?: string | null;
   searchAccountId?: string | null;
   searchQuery?: string | null;
 }): string => {

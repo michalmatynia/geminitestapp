@@ -76,6 +76,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const rawRecentQuery = searchParams.get('recentQuery');
   const rawSearchQuery = searchParams.get('searchQuery');
   const rawSearchAccountId = searchParams.get('searchAccountId');
+  const rawSearchContextAccountId = searchParams.get('searchContextAccountId');
   const recentMailboxFilter =
     originPanel === 'recent' && rawRecentMailboxFilter ? rawRecentMailboxFilter : null;
   const recentUnreadOnly = originPanel === 'recent' ? rawRecentUnreadOnly : false;
@@ -84,10 +85,17 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const searchAccountId =
     originPanel === 'search' && rawSearchAccountId === 'all' ? 'all' : null;
   const isGlobalSearchContext = searchAccountId === 'all';
+  const persistedSearchContextAccountId =
+    originPanel === 'search' &&
+    !isGlobalSearchContext &&
+    rawSearchContextAccountId &&
+    rawSearchContextAccountId !== accountIdFromRoute
+      ? rawSearchContextAccountId
+      : null;
   const searchContextAccountId = originPanel === 'search'
     ? isGlobalSearchContext
       ? null
-      : accountIdFromRoute
+      : persistedSearchContextAccountId ?? accountIdFromRoute
     : null;
   const backLabel =
     originPanel === 'recent'
@@ -122,7 +130,8 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       rawRecentUnreadOnly === recentUnreadOnly &&
       (rawRecentQuery ?? null) === recentQuery &&
       (rawSearchQuery ?? null) === searchQuery &&
-      (rawSearchAccountId ?? null) === searchAccountId
+      (rawSearchAccountId ?? null) === searchAccountId &&
+      (rawSearchContextAccountId ?? null) === persistedSearchContextAccountId
     ) {
       return;
     }
@@ -136,6 +145,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
               recentMailboxFilter,
               recentUnreadOnly,
               recentQuery,
+              searchContextAccountId: persistedSearchContextAccountId,
               searchAccountId,
               searchQuery,
             })
@@ -150,17 +160,19 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     rawRecentQuery,
     rawRecentUnreadOnly,
     rawSearchAccountId,
+    rawSearchContextAccountId,
     rawSearchQuery,
     recentMailboxFilter,
     recentQuery,
     recentUnreadOnly,
+    persistedSearchContextAccountId,
     router,
     searchAccountId,
     searchQuery,
   ]);
   const composeDraftResetKey = forwardThreadId
     ? `forward:${accountIdFromRoute ?? ''}:${forwardThreadId}`
-    : `fresh:${accountIdFromRoute ?? ''}:${mailboxPathFromRoute ?? ''}:${originPanel ?? ''}:${recentMailboxFilter ?? ''}:${recentUnreadOnly ? '1' : '0'}:${recentQuery ?? ''}:${rawSearchAccountId ?? ''}:${searchQuery ?? ''}`;
+    : `fresh:${accountIdFromRoute ?? ''}:${mailboxPathFromRoute ?? ''}:${originPanel ?? ''}:${recentMailboxFilter ?? ''}:${recentUnreadOnly ? '1' : '0'}:${recentQuery ?? ''}:${rawSearchAccountId ?? ''}:${rawSearchContextAccountId ?? ''}:${searchQuery ?? ''}`;
 
   useEffect(() => {
     setAccountId(accountIdFromRoute ?? '');
@@ -255,6 +267,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
                   recentMailboxFilter: preserveRouteContext ? recentMailboxFilter : null,
                   recentUnreadOnly: preserveRouteContext ? recentUnreadOnly : false,
                   recentQuery: preserveRouteContext ? recentQuery : null,
+                  searchContextAccountId: preserveRouteContext ? persistedSearchContextAccountId : null,
                   searchAccountId: preserveRouteContext && isGlobalSearchContext ? 'all' : null,
                   searchQuery: preserveRouteContext ? searchQuery : null,
                 })

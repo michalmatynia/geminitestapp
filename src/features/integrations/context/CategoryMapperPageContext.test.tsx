@@ -65,19 +65,6 @@ const TRADERA_INTEGRATION = {
   ],
 };
 
-const TRADERA_API_INTEGRATION = {
-  id: 'integration-tradera-api-1',
-  name: 'Tradera API',
-  slug: 'tradera-api',
-  connections: [
-    {
-      id: 'conn-tradera-api-1',
-      name: 'Tradera API Alpha',
-      integrationId: 'integration-tradera-api-1',
-    },
-  ],
-};
-
 const UNRELATED_INTEGRATION = {
   id: 'integration-shopify-1',
   name: 'Shopify',
@@ -92,7 +79,7 @@ describe('CategoryMapperPageContext', () => {
     vi.clearAllMocks();
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
     useIntegrationsWithConnectionsMock.mockReturnValue({
-      data: [BASE_INTEGRATION, TRADERA_INTEGRATION, TRADERA_API_INTEGRATION, UNRELATED_INTEGRATION],
+      data: [BASE_INTEGRATION, TRADERA_INTEGRATION, UNRELATED_INTEGRATION],
       isLoading: false,
       isError: false,
       error: null,
@@ -129,17 +116,6 @@ describe('CategoryMapperPageContext', () => {
 
       const slugs = result.current.integrations.map((i) => i.slug);
       expect(slugs).toContain('tradera');
-    });
-
-    it('excludes Tradera API integrations from the mapper', () => {
-      useSearchParamsMock.mockReturnValue(new URLSearchParams('marketplace=tradera'));
-
-      const { result } = renderHook(() => useCategoryMapperPageData(), {
-        wrapper: createWrapper(),
-      });
-
-      const slugs = result.current.integrations.map((i) => i.slug);
-      expect(slugs).not.toContain('tradera-api');
     });
 
     it('excludes unrelated integrations like Shopify', () => {

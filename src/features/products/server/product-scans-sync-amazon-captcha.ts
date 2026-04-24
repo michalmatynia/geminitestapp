@@ -53,6 +53,7 @@ import {
   resolveAmazonScanRuntimeTimeoutMs,
   resolveAmazonTriageEvaluatorConfig,
 } from './product-scans-service.helpers.amazon';
+import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 
 const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
 
@@ -159,6 +160,7 @@ export async function synchronizeAmazonCaptchaRequired({
     );
     const amazonSelectorProfile =
       readOptionalString(toRecord(claimedScan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
+    const diagnosticCapture = resolveAmazonScanDiagnosticCapture(claimedScan.rawResult);
     const runRetry = await startPlaywrightEngineTask({
       request: {
         runtimeKey: amazonScanRuntime.runtimeKey,
@@ -187,10 +189,7 @@ export async function synchronizeAmazonCaptchaRequired({
         }),
         browserEngine: 'chromium',
         ...scannerRuntimeOptions,
-        capture: {
-          screenshot: true,
-          html: true,
-        },
+        capture: diagnosticCapture,
         preventNewPages: true,
       },
       ownerUserId: claimedScan.updatedBy?.trim() || null,
@@ -230,6 +229,7 @@ export async function synchronizeAmazonCaptchaRequired({
           manualVerificationMessage: retryManualVerificationPending
             ? manualVerificationMessage
             : null,
+          recordDiagnostics: diagnosticCapture.trace === true,
           ...requestedStepSequenceInput,
         }),
         captchaRetryStarted: true,

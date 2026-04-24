@@ -13,6 +13,7 @@ export type MailClientDashboardFilterState = {
   dashboardAccountId: string;
   dashboardQuery: string;
   clearDashboardFilters: () => void;
+  clearDashboardQuery: () => void;
   dashboardScope: MailClientDashboardScope;
   hasActiveDashboardFilter: boolean;
   setDashboardAccountId: React.Dispatch<React.SetStateAction<string>>;
@@ -184,7 +185,14 @@ function useMailClientDashboardFilterRouteSync({
 }
 function useMailClientDashboardFilterInputs(): Pick<
   MailClientDashboardFilterState,
-  'clearDashboardFilters' | 'dashboardAccountId' | 'dashboardQuery' | 'dashboardScope' | 'setDashboardAccountId' | 'setDashboardQuery' | 'setDashboardScope'
+  | 'clearDashboardFilters'
+  | 'clearDashboardQuery'
+  | 'dashboardAccountId'
+  | 'dashboardQuery'
+  | 'dashboardScope'
+  | 'setDashboardAccountId'
+  | 'setDashboardQuery'
+  | 'setDashboardScope'
 > {
   const {
     currentDashboardHref,
@@ -196,6 +204,9 @@ function useMailClientDashboardFilterInputs(): Pick<
   const [dashboardAccountId, setDashboardAccountId] = React.useState(requestedDashboardAccountId);
   const [dashboardQuery, setDashboardQuery] = React.useState(requestedDashboardQuery);
   const [dashboardScope, setDashboardScope] = React.useState<MailClientDashboardScope>(requestedDashboardScope);
+  const clearDashboardQuery = React.useCallback(() => {
+    setDashboardQuery('');
+  }, []);
   const clearDashboardFilters = React.useCallback(() => {
     setDashboardAccountId('');
     setDashboardQuery('');
@@ -218,6 +229,7 @@ function useMailClientDashboardFilterInputs(): Pick<
     dashboardAccountId,
     dashboardQuery,
     clearDashboardFilters,
+    clearDashboardQuery,
     dashboardScope,
     setDashboardAccountId,
     setDashboardQuery,

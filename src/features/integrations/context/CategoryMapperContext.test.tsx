@@ -378,7 +378,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
   it('stores and clears the shallow Tradera fetch warning around successive fetch attempts', async () => {
     const user = userEvent.setup();
     const shallowFetchError = new ApiError(
-      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.',
       422
     );
     shallowFetchError.payload = {
@@ -399,8 +399,8 @@ describe('CategoryMapperProvider auto-match by name', () => {
       .mockResolvedValueOnce({
         fetched: 3,
         total: 3,
-        source: 'Tradera SOAP API',
-        message: 'Successfully synced 3 categories from Tradera SOAP API (roots: 1, max depth: 2).',
+        source: 'Tradera listing form picker',
+        message: 'Successfully synced 3 categories from Tradera listing form picker (roots: 1, max depth: 2).',
         categoryStats: {
           rootCount: 1,
           withParentCount: 2,

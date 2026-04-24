@@ -41,8 +41,9 @@ const shouldRejectShallowTraderaPublicSync = ({
 /**
  * POST /api/marketplace/categories/fetch
  * Fetches marketplace categories and stores them locally.
- * Base.com uses the API, Tradera uses the SOAP API when configured and otherwise
- * falls back to the public categories taxonomy pages.
+ * Base.com uses the API.
+ * Browser Tradera defaults to the authenticated listing form picker, while explicit
+ * Tradera fetch-method overrides can still use the public taxonomy pages.
  */
 export async function postHandler(
   request: NextRequest,
@@ -91,7 +92,7 @@ export async function postHandler(
   const externalCategoryRepo = getExternalCategoryRepository();
   const fetchedCategoryStats = buildMarketplaceCategoryStats(categoriesWithFetchMetadata);
 
-  if (context.mode === 'tradera' || context.mode === 'tradera-api') {
+  if (context.mode === 'tradera') {
     const existingCategories = await externalCategoryRepo.listByConnection(connectionId);
 
     if (existingCategories.length > 0) {
@@ -105,6 +106,9 @@ export async function postHandler(
       );
 
       if (context.mode === 'tradera') {
+        const shallowFetchRecoveryMessage = context.supportsListingForm
+          ? 'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.'
+          : 'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Public taxonomy pages are currently the only available Tradera category source for this integration.';
         if (
           shouldRejectShallowTraderaPublicSync({
             existingTotal: existingCategories.length,
@@ -116,7 +120,7 @@ export async function postHandler(
           })
         ) {
           throw unprocessableEntityError(
-            'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+            shallowFetchRecoveryMessage,
             {
               connectionId,
               sourceName: context.responseSourceName,
@@ -127,25 +131,6 @@ export async function postHandler(
             }
           );
         }
-      }
-
-      // Protect against partial SOAP API responses — reject if fetched count drops below 50% of existing
-      if (
-        context.mode === 'tradera-api' &&
-        existingCategories.length >= 50 &&
-        categoriesWithFetchMetadata.length < existingCategories.length * 0.5
-      ) {
-        throw unprocessableEntityError(
-          `Tradera SOAP API returned ${categoriesWithFetchMetadata.length} categories, significantly fewer than the ${existingCategories.length} already stored. This may indicate a partial API response. Existing categories were kept. Retry the fetch.`,
-          {
-            connectionId,
-            sourceName: context.responseSourceName,
-            existingTotal: existingCategories.length,
-            existingMaxDepth: existingCategoryStats.maxDepth,
-            fetchedTotal: categoriesWithFetchMetadata.length,
-            fetchedMaxDepth: fetchedCategoryStats.maxDepth,
-          }
-        );
       }
     }
   }

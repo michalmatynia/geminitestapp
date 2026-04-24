@@ -22,6 +22,7 @@ import type {
 import { ScripterDiffPanel } from './ScripterDiffPanel';
 import { ScripterDryRunPanel } from './ScripterDryRunPanel';
 import { ScripterFieldMapForm } from './ScripterFieldMapForm';
+import { ScripterImportFromConnectionPanel } from './ScripterImportFromConnectionPanel';
 import { ScripterProbePanel } from './ScripterProbePanel';
 import { ScripterStepForm } from './ScripterStepForm';
 
@@ -286,6 +287,15 @@ export function ScripterEditorPageRuntime(): JSX.Element {
       <main className='space-y-4'>
         {error ? <Alert variant='destructive'>{error}</Alert> : null}
         {info ? <Alert>{info}</Alert> : null}
+
+        <ScripterImportFromConnectionPanel
+          onImported={({ definition: imported, warnings }) => {
+            setSelectedId(null);
+            setDefinition(imported);
+            if (warnings.length > 0) setInfo(warnings.join(' '));
+            else setInfo(`Imported "${imported.id}" draft — review and save.`);
+          }}
+        />
 
         {definition ? (
           <>

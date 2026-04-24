@@ -8,6 +8,8 @@ import { TraderaExecutionSteps } from '@/features/integrations/components/listin
 import { 
   formatTimestamp, 
   formatTraderaDuplicateMatchStrategy,
+  formatTraderaStatusVerificationSection,
+  formatTraderaStatusVerificationStrategy,
   type resolveTraderaExecutionSummary,
   type resolveDisplayedTraderaDuplicateSummary,
 } from '../ProductListingDetails.utils';
@@ -159,6 +161,46 @@ export function TraderaSection({
             label='Publish verified'
             value={execution.publishVerified ? 'Yes' : 'No'}
             valueClassName={execution.publishVerified ? 'text-emerald-400' : 'text-rose-400'}
+            variant='minimal'
+          />
+        )}
+        {(execution.checkedStatus ?? '') !== '' && (
+          <MetadataItem label='Checked status' value={execution.checkedStatus} variant='minimal' />
+        )}
+        {(execution.verificationSection ?? '') !== '' && (
+          <MetadataItem
+            label='Verified in'
+            value={formatTraderaStatusVerificationSection(execution.verificationSection)}
+            variant='minimal'
+          />
+        )}
+        {(execution.verificationMatchStrategy ?? '') !== '' && (
+          <MetadataItem
+            label='Match strategy'
+            value={formatTraderaStatusVerificationStrategy(execution.verificationMatchStrategy)}
+            variant='minimal'
+          />
+        )}
+        {(execution.verificationRawStatusTag ?? '') !== '' && (
+          <MetadataItem
+            label='Tradera tag'
+            value={execution.verificationRawStatusTag}
+            mono
+            variant='minimal'
+          />
+        )}
+        {(execution.verificationMatchedProductId ?? '') !== '' && (
+          <MetadataItem
+            label='Matched Product ID'
+            value={execution.verificationMatchedProductId}
+            mono
+            variant='minimal'
+          />
+        )}
+        {execution.verificationCandidateCount !== null && (
+          <MetadataItem
+            label='Candidates inspected'
+            value={String(execution.verificationCandidateCount)}
             variant='minimal'
           />
         )}

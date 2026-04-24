@@ -22,7 +22,7 @@ const {
 
 vi.mock('@/features/integrations/product-integrations-adapter', () => ({
   isTraderaIntegrationSlug: (value: string | null | undefined) =>
-    ['tradera', 'tradera-api'].includes((value ?? '').trim().toLowerCase()),
+    (value ?? '').trim().toLowerCase() === 'tradera',
   useDefaultTraderaConnection: () => useDefaultTraderaConnectionMock(),
   useIntegrationsWithConnections: () => useIntegrationsWithConnectionsMock(),
   useLinkExistingTraderaListingMutation: () => useLinkExistingTraderaListingMutationMock(),

@@ -69,7 +69,7 @@ export function useDuelSpectator(options: DuelSpectatorOptions) {
     }
 
     const fetchSpectatorState = async (showLoading = false): Promise<void> => {
-      if (spectatorPollingRef.current) return;
+      if (spectatorPollingRef.current === true) return;
       
       abortSpectatorRequest();
       const controller = new AbortController();

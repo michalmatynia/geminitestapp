@@ -6,7 +6,6 @@ import {
   is1688IntegrationSlug,
   isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
-  isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -138,9 +137,7 @@ export function useIntegrationsActionsImpl(args: {
 
     const formData = options.formData;
     const isTraderaIntegration = isTraderaIntegrationSlug(args.activeIntegration.slug);
-    const isTraderaApiIntegration = isTraderaApiIntegrationSlug(args.activeIntegration.slug);
-    const isTraderaBrowserIntegration =
-      isTraderaIntegration && !isTraderaApiIntegration;
+    const isTraderaBrowserIntegration = isTraderaIntegration;
     const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
     const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
@@ -226,16 +223,6 @@ export function useIntegrationsActionsImpl(args: {
             0,
             Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
           ),
-        }
-        : {}),
-      ...(isTraderaApiIntegration
-        ? {
-          traderaApiAppId: Number.parseInt(formData.traderaApiAppId, 10),
-          traderaApiAppKey: formData.traderaApiAppKey.trim(),
-          traderaApiPublicKey: formData.traderaApiPublicKey.trim() || null,
-          traderaApiUserId: Number.parseInt(formData.traderaApiUserId, 10),
-          traderaApiToken: formData.traderaApiToken.trim(),
-          traderaApiSandbox: formData.traderaApiSandbox,
         }
         : {}),
     };

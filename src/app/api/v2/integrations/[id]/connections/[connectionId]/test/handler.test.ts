@@ -102,10 +102,6 @@ vi.mock('@/shared/lib/products/services/product-repository', () => ({
   }),
 }));
 
-vi.mock('@/features/integrations/services/tradera-api-client', () => ({
-  getTraderaUserInfo: vi.fn(),
-}));
-
 vi.mock('@/features/integrations/services/tradera-listing/preflight', () => ({
   validateTraderaQuickListProductConfig: (...args: unknown[]) =>
     validateTraderaQuickListProductConfigMock(...args),

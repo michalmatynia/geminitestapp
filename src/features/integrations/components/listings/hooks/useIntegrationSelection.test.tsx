@@ -48,34 +48,6 @@ describe('useIntegrationSelection', () => {
     expect(result.current.isTraderaIntegration).toBe(true);
   });
 
-  it('does not apply the Tradera browser default connection to Tradera API integrations', async () => {
-    useQueriesMock.mockReturnValue([
-      { data: { connectionId: 'conn-base-1' } },
-      { data: { connectionId: 'conn-tradera-browser-default' } },
-      {
-        data: [
-          {
-            id: 'integration-tradera-api-1',
-            name: 'Tradera API',
-            slug: 'tradera-api',
-            connections: [
-              { id: 'conn-tradera-api-1', name: 'API Alpha', integrationId: 'integration-tradera-api-1' },
-              { id: 'conn-tradera-api-2', name: 'API Zulu', integrationId: 'integration-tradera-api-1' },
-            ],
-          },
-        ],
-        isPending: false,
-      },
-    ]);
-
-    const { result } = renderHook(() => useIntegrationSelection('integration-tradera-api-1'));
-
-    await waitFor(() => {
-      expect(result.current.selectedConnectionId).toBe('conn-tradera-api-1');
-    });
-    expect(result.current.isTraderaIntegration).toBe(true);
-  });
-
   it('filters the selection list to the requested marketplace scope', async () => {
     useQueriesMock.mockReturnValue([
       { data: { connectionId: 'conn-base-1' } },

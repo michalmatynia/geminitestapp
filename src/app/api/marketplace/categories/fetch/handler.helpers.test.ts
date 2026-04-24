@@ -7,18 +7,12 @@ const {
   fetchTraderaCategoriesForConnectionMock,
   fetchTraderaCategoriesFromListingFormForConnectionMock,
   resolveBaseConnectionTokenMock,
-  getTraderaCategoriesMock,
-  getTraderaSubCategoriesMock,
-  resolveTraderaPublicApiCredentialsMock,
   loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
   fetchTraderaCategoriesForConnectionMock: vi.fn(),
   fetchTraderaCategoriesFromListingFormForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
-  getTraderaCategoriesMock: vi.fn(),
-  getTraderaSubCategoriesMock: vi.fn(),
-  resolveTraderaPublicApiCredentialsMock: vi.fn(),
   loadTraderaSystemSettingsMock: vi.fn(),
 }));
 
@@ -35,15 +29,6 @@ vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
 
 vi.mock('@/features/integrations/services/tradera-system-settings', () => ({
   loadTraderaSystemSettings: loadTraderaSystemSettingsMock,
-}));
-
-vi.mock('@/features/integrations/services/tradera-api-client', () => ({
-  getTraderaCategories: getTraderaCategoriesMock,
-  getTraderaSubCategories: getTraderaSubCategoriesMock,
-}));
-
-vi.mock('@/features/integrations/services/tradera-listing/api', () => ({
-  resolveTraderaPublicApiCredentials: resolveTraderaPublicApiCredentialsMock,
 }));
 
 import {
@@ -81,7 +66,6 @@ const createIntegration = (overrides: Partial<IntegrationRecord> = {}): Integrat
 describe('marketplace categories fetch helpers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getTraderaSubCategoriesMock.mockResolvedValue([]);
     resolveBaseConnectionTokenMock.mockReturnValue({
       token: 'base-token',
       source: 'baseApiToken',
@@ -96,7 +80,7 @@ describe('marketplace categories fetch helpers', () => {
       allowSimulatedSuccess: false,
       listingFormUrl: 'https://www.tradera.com/en/selling/new',
       selectorProfile: 'default',
-      categoryFetchMethod: 'playwright',
+      categoryFetchMethod: 'playwright_listing_form',
     });
   });
 
@@ -136,10 +120,6 @@ describe('marketplace categories fetch helpers', () => {
 
   it('resolves tradera contexts, builds responses, and rejects unsupported integrations', async () => {
     // Browser connection defaults to the authenticated listing form picker
-    resolveTraderaPublicApiCredentialsMock.mockImplementation(() => {
-      throw new Error('Tradera API App ID is missing.');
-    });
-
     const traderaRepo: CategoryFetchIntegrationRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
@@ -175,32 +155,32 @@ describe('marketplace categories fetch helpers', () => {
       'Other is not yet supported for category fetch'
     );
 
-    // tradera-api slug uses the SOAP API when credentials are available
-    resolveTraderaPublicApiCredentialsMock.mockReturnValue({
-      appId: 123,
-      appKey: 'test-key',
-      sandbox: false,
-    });
-    getTraderaCategoriesMock.mockResolvedValue([
-      { id: 'api-cat-1', name: 'API Category 1', parentId: null },
+    // Explicit browser fallback still allows the public taxonomy pages
+    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
+      { id: 'public-cat-1', name: 'Public Category 1', parentId: null },
     ]);
 
-    const traderaApiRepo: CategoryFetchIntegrationRepository = {
+    const traderaPublicRepo: CategoryFetchIntegrationRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
-        createIntegration({ name: 'Tradera API', slug: 'tradera-api' })
+        createIntegration({ name: 'Tradera', slug: 'tradera' })
       ),
     };
 
-    const traderaApiContext = await resolveMarketplaceCategoryFetchContext(traderaApiRepo, 'conn-1');
-    expect(traderaApiContext).toMatchObject({
+    const traderaPublicContext = await resolveMarketplaceCategoryFetchContext(
+      traderaPublicRepo,
+      'conn-1',
+      'playwright'
+    );
+    expect(traderaPublicContext).toMatchObject({
       connectionId: 'conn-1',
       sourceName: 'Tradera',
-      responseSourceName: 'Tradera SOAP API',
-      mode: 'tradera-api',
+      responseSourceName: 'Tradera public taxonomy pages',
+      supportsListingForm: true,
+      mode: 'tradera',
     });
-    await expect(fetchMarketplaceCategories(traderaApiContext)).resolves.toEqual([
-      { id: 'api-cat-1', name: 'API Category 1', parentId: null },
+    await expect(fetchMarketplaceCategories(traderaPublicContext)).resolves.toEqual([
+      { id: 'public-cat-1', name: 'Public Category 1', parentId: null },
     ]);
 
     expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera public taxonomy pages')).toEqual({
@@ -257,6 +237,37 @@ describe('marketplace categories fetch helpers', () => {
           '2': 1,
         },
       },
+    });
+  });
+
+  it('honors an explicit public taxonomy pages override for browser Tradera', async () => {
+    loadTraderaSystemSettingsMock.mockResolvedValue({
+      defaultDurationHours: 72,
+      autoRelistEnabled: true,
+      autoRelistLeadMinutes: 180,
+      schedulerEnabled: false,
+      schedulerIntervalMs: 300000,
+      allowSimulatedSuccess: false,
+      listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      selectorProfile: 'default',
+      categoryFetchMethod: 'playwright',
+    });
+
+    const traderaRepo: CategoryFetchIntegrationRepository = {
+      getConnectionById: vi.fn().mockResolvedValue(createConnection()),
+      getIntegrationById: vi.fn().mockResolvedValue(
+        createIntegration({ name: 'Tradera', slug: 'tradera' })
+      ),
+    };
+
+    const traderaContext = await resolveMarketplaceCategoryFetchContext(traderaRepo, 'conn-1');
+
+    expect(traderaContext).toMatchObject({
+      connectionId: 'conn-1',
+      sourceName: 'Tradera',
+      responseSourceName: 'Tradera public taxonomy pages',
+      supportsListingForm: true,
+      mode: 'tradera',
     });
   });
 });

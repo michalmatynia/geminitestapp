@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   resolveDisplayedTraderaFailureReason,
+  resolvePreferredTraderaListing,
   resolveTraderaRowStatusPresentation,
 } from './TraderaStatusCheckModal.utils';
 
@@ -97,5 +98,44 @@ describe('TraderaStatusCheckModal.utils', () => {
       label: 'Failed',
       variant: 'error',
     });
+  });
+
+  it('renders unknown status as a neutral row state', () => {
+    const listing = makeListing({
+      status: 'unknown',
+    });
+
+    expect(
+      resolveTraderaRowStatusPresentation({
+        listing,
+      })
+    ).toEqual({
+      status: 'unknown',
+      label: 'Unknown',
+      variant: 'neutral',
+    });
+  });
+
+  it('prefers the linked active Tradera listing when multiple Tradera rows exist', () => {
+    const selected = resolvePreferredTraderaListing([
+      makeListing({
+        id: 'listing-unlinked',
+        externalListingId: null,
+        marketplaceData: {
+          tradera: {},
+        },
+      }),
+      makeListing({
+        id: 'listing-linked',
+        externalListingId: '721891408',
+        marketplaceData: {
+          tradera: {
+            listingUrl: 'https://www.tradera.com/item/721891408',
+          },
+        },
+      }),
+    ]);
+
+    expect(selected?.id).toBe('listing-linked');
   });
 });

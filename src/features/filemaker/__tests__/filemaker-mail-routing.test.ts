@@ -147,4 +147,30 @@ describe('filemaker mail routing helpers', () => {
       '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=search&searchQuery=invoice&searchAccountId=all'
     );
   });
+
+  it('keeps distinct focused search context on search-origin compose and thread routes', () => {
+    expect(
+      buildFilemakerMailComposeHref({
+        accountId: 'account-1',
+        originPanel: 'search',
+        searchContextAccountId: 'account-2',
+        searchQuery: 'invoice',
+      })
+    ).toBe(
+      '/admin/filemaker/mail/compose?accountId=account-1&panel=search&searchQuery=invoice&searchContextAccountId=account-2'
+    );
+
+    expect(
+      buildFilemakerMailThreadHref({
+        threadId: 'thread-1',
+        accountId: 'account-1',
+        mailboxPath: 'VIP',
+        originPanel: 'search',
+        searchContextAccountId: 'account-2',
+        searchQuery: 'invoice',
+      })
+    ).toBe(
+      '/admin/filemaker/mail/threads/thread-1?accountId=account-1&mailboxPath=VIP&panel=search&searchQuery=invoice&searchContextAccountId=account-2'
+    );
+  });
 });

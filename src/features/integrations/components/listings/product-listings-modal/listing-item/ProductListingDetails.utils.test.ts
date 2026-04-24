@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   resolveDisplayedTraderaDuplicateSummary,
+  formatTraderaStatusVerificationSection,
+  formatTraderaStatusVerificationStrategy,
   resolveTraderaExecutionSummary,
   resolveTraderaStatusBadge,
 } from './ProductListingDetails.utils';
@@ -165,5 +167,41 @@ describe('ProductListingDetails.utils', () => {
       duplicateIgnoredNonExactCandidateCount: 2,
       duplicateIgnoredCandidateTitles: ['Persisted One', 'Persisted Two'],
     });
+  });
+
+  it('extracts Tradera status-check verification metadata from persisted execution data', () => {
+    const summary = resolveTraderaExecutionSummary({
+      tradera: {
+        lastExecution: {
+          action: 'check_status',
+          metadata: {
+            checkedStatus: 'ended',
+            verificationSection: 'unsold',
+            verificationMatchStrategy: 'title+product-id',
+            verificationRawStatusTag: 'ended',
+            verificationMatchedProductId: 'BASE-1',
+            verificationSearchTitle: 'Example title',
+            verificationCandidateCount: 1,
+          },
+        },
+      },
+    });
+
+    expect(summary.checkedStatus).toBe('ended');
+    expect(summary.verificationSection).toBe('unsold');
+    expect(summary.verificationMatchStrategy).toBe('title+product-id');
+    expect(summary.verificationRawStatusTag).toBe('ended');
+    expect(summary.verificationMatchedProductId).toBe('BASE-1');
+    expect(summary.verificationSearchTitle).toBe('Example title');
+    expect(summary.verificationCandidateCount).toBe(1);
+  });
+
+  it('formats Tradera status-check verification labels for the modal', () => {
+    expect(formatTraderaStatusVerificationSection('public_listing')).toBe(
+      'Public listing page'
+    );
+    expect(formatTraderaStatusVerificationStrategy('seller-sections-miss')).toBe(
+      'Seller sections miss'
+    );
   });
 });

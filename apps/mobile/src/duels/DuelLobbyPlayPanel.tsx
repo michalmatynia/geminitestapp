@@ -1,4 +1,8 @@
 import { Text, View } from 'react-native';
+import type {
+  KangurDuelOperation,
+  KangurDuelDifficulty,
+} from '@kangur/contracts/kangur-duels';
 
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
@@ -16,7 +20,7 @@ import {
   formatDifficultyLabel,
   formatOperationLabel,
   formatSeriesBestOfLabel,
-} from './duels-utils';
+} from './utils/duels-ui';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
@@ -30,15 +34,17 @@ type DuelLobbyPlayPanelProps = {
   loginStartCallToAction: React.JSX.Element;
 };
 
+type OperationSelectorProps = {
+  lobby: DuelLobbyState;
+  locale: DuelLocale;
+  copy: DuelCopy;
+};
+
 function OperationSelector({
   lobby,
   locale,
   copy,
-}: {
-  lobby: DuelLobbyState;
-  locale: DuelLocale;
-  copy: DuelCopy;
-}): React.JSX.Element {
+}: OperationSelectorProps): React.JSX.Element {
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ color: '#0f172a', fontWeight: '700' }}>
@@ -49,7 +55,7 @@ function OperationSelector({
         })}
       </Text>
       <View style={{ flexDirection: 'column', gap: 8 }}>
-        {OPERATION_OPTIONS.map((option) => (
+        {(OPERATION_OPTIONS as ReadonlyArray<KangurDuelOperation>).map((option) => (
           <KangurMobileFilterChip
             key={option}
             fullWidth
@@ -65,15 +71,17 @@ function OperationSelector({
   );
 }
 
+type DifficultySelectorProps = {
+  lobby: DuelLobbyState;
+  locale: DuelLocale;
+  copy: DuelCopy;
+};
+
 function DifficultySelector({
   lobby,
   locale,
   copy,
-}: {
-  lobby: DuelLobbyState;
-  locale: DuelLocale;
-  copy: DuelCopy;
-}): React.JSX.Element {
+}: DifficultySelectorProps): React.JSX.Element {
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ color: '#0f172a', fontWeight: '700' }}>
@@ -84,7 +92,7 @@ function DifficultySelector({
         })}
       </Text>
       <View style={{ flexDirection: 'column', gap: 8 }}>
-        {DIFFICULTY_OPTIONS.map((option) => (
+        {(DIFFICULTY_OPTIONS as ReadonlyArray<KangurDuelDifficulty>).map((option) => (
           <KangurMobileFilterChip
             key={option}
             fullWidth
@@ -100,15 +108,17 @@ function DifficultySelector({
   );
 }
 
+type FormatSelectorProps = {
+  lobby: DuelLobbyState;
+  locale: DuelLocale;
+  copy: DuelCopy;
+};
+
 function FormatSelector({
   lobby,
   locale,
   copy,
-}: {
-  lobby: DuelLobbyState;
-  locale: DuelLocale;
-  copy: DuelCopy;
-}): React.JSX.Element {
+}: FormatSelectorProps): React.JSX.Element {
   return (
     <View style={{ gap: 8 }}>
       <Text style={{ color: '#0f172a', fontWeight: '700' }}>
@@ -148,17 +158,19 @@ function FormatSelector({
   );
 }
 
+type ActionButtonsProps = {
+  lobby: DuelLobbyState;
+  copy: DuelCopy;
+  onOpenSession: (sessionId: string) => void;
+  loginStartCallToAction: React.JSX.Element;
+};
+
 function ActionButtons({
   lobby,
   copy,
   onOpenSession,
   loginStartCallToAction,
-}: {
-  lobby: DuelLobbyState;
-  copy: DuelCopy;
-  onOpenSession: (sessionId: string) => void;
-  loginStartCallToAction: React.JSX.Element;
-}): React.JSX.Element {
+}: ActionButtonsProps): React.JSX.Element {
   if (!lobby.isAuthenticated) {
     return loginStartCallToAction;
   }

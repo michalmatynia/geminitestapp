@@ -78,3 +78,8 @@ export {
   type ScripterCommitDiff,
   type ScripterDiffEntry,
 } from './commit-diff';
+export {
+  importScripterFromConnection,
+  type ConnectionImportInput,
+  type ConnectionImportResult,
+} from './from-connection';

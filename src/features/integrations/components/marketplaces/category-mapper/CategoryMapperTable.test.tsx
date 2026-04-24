@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -312,6 +312,29 @@ describe('CategoryMapperTable', () => {
     ).toBeInTheDocument();
   });
 
+  it('orders browser Tradera fetch methods with listing form picker first', async () => {
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    const fetchMethodSelect = screen.getByLabelText('Category fetch method');
+    const optionLabels = within(fetchMethodSelect)
+      .getAllByRole('option')
+      .map((option) => option.textContent?.trim() ?? '')
+      .filter((label) => label && label !== 'Select catalog');
+
+    expect(optionLabels).toEqual([
+      'Listing form picker',
+      'Public taxonomy pages',
+    ]);
+  });
+
   it('renders nested external categories in the left-column tree when parent-child links exist', async () => {
     mocks.externalCategories = [
       createExternalCategory({
@@ -543,7 +566,7 @@ describe('CategoryMapperTable', () => {
       'Roots: 4. Categories with parents: 8. Max depth: 1.'
     );
     expect(alerts[0]).toHaveTextContent(
-      'Tradera is using the public taxonomy-page fallback and only reached shallow levels.'
+      'Tradera is using the public taxonomy-page fallback and only reached shallow levels. Switch to Listing form picker for deeper category coverage.'
     );
   });
 
@@ -556,7 +579,7 @@ describe('CategoryMapperTable', () => {
         path: 'Collectibles',
         isLeaf: false,
         metadata: {
-          categoryFetchSource: 'Tradera SOAP API',
+          categoryFetchSource: 'Tradera listing form picker',
         },
       }),
       createExternalCategory({
@@ -568,7 +591,7 @@ describe('CategoryMapperTable', () => {
         depth: 1,
         isLeaf: false,
         metadata: {
-          categoryFetchSource: 'Tradera SOAP API',
+          categoryFetchSource: 'Tradera listing form picker',
         },
       }),
       createExternalCategory({
@@ -580,7 +603,7 @@ describe('CategoryMapperTable', () => {
         depth: 2,
         isLeaf: true,
         metadata: {
-          categoryFetchSource: 'Tradera SOAP API',
+          categoryFetchSource: 'Tradera listing form picker',
         },
       }),
     ];
@@ -597,7 +620,7 @@ describe('CategoryMapperTable', () => {
 
     const alerts = await screen.findAllByTestId('mapper-alert');
     expect(alerts[0]).toHaveTextContent(
-      'Category source: Tradera SOAP API. Loaded 3 categories.'
+      'Category source: Tradera listing form picker. Loaded 3 categories.'
     );
     expect(alerts[0]).toHaveTextContent(
       'Roots: 1. Categories with parents: 2. Max depth: 2.'
@@ -638,7 +661,7 @@ describe('CategoryMapperTable', () => {
     ];
 
     const error = new ApiError(
-      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.',
       422
     );
     error.payload = {

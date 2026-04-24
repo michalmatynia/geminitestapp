@@ -10,7 +10,11 @@ import {
 } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount, FilemakerMailThread } from '../types';
-import type { MailClientDashboardScope } from './AdminFilemakerMailClientPage.helpers';
+import {
+  buildMailClientSearchHref,
+  buildMailClientWorkspaceHref,
+  type MailClientDashboardScope,
+} from './AdminFilemakerMailClientPage.helpers';
 import { MailClientDashboardFocusButton } from './AdminFilemakerMailClientPage.mailbox-actions';
 
 type MailClientRecentThreadsSectionProps = {
@@ -20,7 +24,9 @@ type MailClientRecentThreadsSectionProps = {
   dashboardScope: MailClientDashboardScope;
   hasActiveFilter: boolean;
   hasAnyRecentThreads: boolean;
+  isLoading: boolean;
   onClearFilter: () => void;
+  onRetry: () => Promise<void>;
   recentThreads: FilemakerMailThread[];
   recentThreadsError: string | null;
 };
@@ -32,28 +38,84 @@ const formatThreadTimestamp = (value: string): string => {
 };
 
 function MailClientRecentThreadsStatus({
+  dashboardAccountId,
+  dashboardQuery,
   hasActiveFilter,
   hasAnyRecentThreads,
+  isLoading,
   onClearFilter,
+  onRetry,
   recentThreads,
   recentThreadsError,
 }: Pick<
   MailClientRecentThreadsSectionProps,
-  'hasActiveFilter' | 'hasAnyRecentThreads' | 'onClearFilter' | 'recentThreads' | 'recentThreadsError'
+  | 'dashboardAccountId'
+  | 'dashboardQuery'
+  | 'hasActiveFilter'
+  | 'hasAnyRecentThreads'
+  | 'isLoading'
+  | 'onClearFilter'
+  | 'onRetry'
+  | 'recentThreads'
+  | 'recentThreadsError'
 >): React.JSX.Element | null {
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: dashboardAccountId === '' ? null : dashboardAccountId,
+  });
+  const workspaceHref = buildMailClientWorkspaceHref({
+    focusedAccountId: dashboardAccountId === '' ? null : dashboardAccountId,
+  });
+
   if (recentThreadsError !== null) {
     return (
-      <Card variant='warning' padding='md'>
-        <div className='text-sm text-amber-100'>{recentThreadsError}</div>
+      <Card data-testid='mail-client-recent-status' variant='warning' padding='md'>
+        <div className='space-y-3'>
+          <div className='text-sm text-amber-100'>{recentThreadsError}</div>
+          <div className='flex flex-wrap gap-2'>
+            <Button type='button' variant='outline' size='sm' onClick={() => { void onRetry(); }}>
+              Retry Recent Activity
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={workspaceHref}>Open Workspace</Link>
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={searchHref}>Search Messages</Link>
+            </Button>
+          </div>
+        </div>
       </Card>
     );
   }
 
   if (recentThreads.length > 0) return null;
 
+  if (isLoading) {
+    return (
+      <Card
+        data-testid='mail-client-recent-status'
+        variant='subtle'
+        padding='md'
+        className='border-border/70 bg-card/50'
+      >
+        <div className='space-y-3'>
+          <div className='text-sm text-gray-400'>Loading recent activity...</div>
+          <div className='flex flex-wrap gap-2'>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={workspaceHref}>Open Workspace</Link>
+            </Button>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={searchHref}>Search Messages</Link>
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
+
   if (hasAnyRecentThreads && hasActiveFilter) {
     return (
-      <Card variant='subtle' padding='md' className='border-border/70 bg-card/50'>
+      <Card data-testid='mail-client-recent-status' variant='subtle' padding='md' className='border-border/70 bg-card/50'>
         <div className='space-y-3'>
           <div className='text-base font-semibold text-white'>No recent threads match the current filter.</div>
           <p className='text-sm text-gray-400'>
@@ -63,6 +125,9 @@ function MailClientRecentThreadsStatus({
             <Button type='button' variant='outline' size='sm' onClick={onClearFilter}>
               Clear Filter
             </Button>
+            <Button asChild variant='outline' size='sm'>
+              <Link href={searchHref}>Search Messages</Link>
+            </Button>
           </div>
         </div>
       </Card>
@@ -70,7 +135,7 @@ function MailClientRecentThreadsStatus({
   }
 
   return (
-    <Card variant='subtle' padding='md' className='border-border/70 bg-card/50'>
+    <Card data-testid='mail-client-recent-status' variant='subtle' padding='md' className='border-border/70 bg-card/50'>
       <div className='space-y-3'>
         <div className='text-base font-semibold text-white'>No recent threads yet.</div>
         <p className='text-sm text-gray-400'>
@@ -81,10 +146,10 @@ function MailClientRecentThreadsStatus({
             <Link href={buildFilemakerMailSelectionHref({ panel: 'settings' })}>Add Mailbox</Link>
           </Button>
           <Button asChild variant='outline' size='sm'>
-            <Link href='/admin/filemaker/mail'>Open Workspace</Link>
+            <Link href={workspaceHref}>Open Workspace</Link>
           </Button>
           <Button asChild variant='outline' size='sm'>
-            <Link href={buildFilemakerMailSelectionHref({ panel: 'search' })}>Search Messages</Link>
+            <Link href={searchHref}>Search Messages</Link>
           </Button>
         </div>
       </div>
@@ -107,6 +172,10 @@ function MailClientRecentThreadCard({
 }): React.JSX.Element {
   const trimmedDashboardQuery = dashboardQuery.trim();
   const isSearchHandoff = trimmedDashboardQuery !== '';
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: thread.accountId,
+  });
 
   return (
     <Card
@@ -149,6 +218,11 @@ function MailClientRecentThreadCard({
           <Button asChild variant='outline' size='sm'>
             <Link href={buildFilemakerMailSelectionHref({ accountId: thread.accountId, mailboxPath: thread.mailboxPath })}>Open Mailbox</Link>
           </Button>
+          <Button asChild variant='outline' size='sm'>
+            <Link href={searchHref}>
+              {isSearchHandoff ? 'Continue Search' : 'Search Mailbox'}
+            </Link>
+          </Button>
           <MailClientDashboardFocusButton
             activeDashboardAccountId={activeDashboardAccountId}
             accountId={thread.accountId}
@@ -169,7 +243,9 @@ function MailClientRecentThreadsSection({
   dashboardScope,
   hasActiveFilter,
   hasAnyRecentThreads,
+  isLoading,
   onClearFilter,
+  onRetry,
   recentThreads,
   recentThreadsError,
 }: MailClientRecentThreadsSectionProps): React.JSX.Element {
@@ -183,9 +259,13 @@ function MailClientRecentThreadsSection({
       />
 
       <MailClientRecentThreadsStatus
+        dashboardAccountId={dashboardAccountId}
+        dashboardQuery={dashboardQuery}
         hasActiveFilter={hasActiveFilter}
         hasAnyRecentThreads={hasAnyRecentThreads}
+        isLoading={isLoading}
         onClearFilter={onClearFilter}
+        onRetry={onRetry}
         recentThreads={recentThreads}
         recentThreadsError={recentThreadsError}
       />

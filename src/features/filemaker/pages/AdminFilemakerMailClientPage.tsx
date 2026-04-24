@@ -7,17 +7,20 @@ import React from 'react';
 
 import { PanelHeader } from '@/shared/ui/templates.public';
 
-import { buildFilemakerMailComposeHref } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import { useAdminFilemakerMailClientPageActions } from './AdminFilemakerMailClientPage.actions';
 import { MailClientDashboardSections } from './AdminFilemakerMailClientPage.dashboard';
+import {
+  buildMailClientComposeHref,
+  buildMailClientWorkspaceHref,
+} from './AdminFilemakerMailClientPage.helpers';
 import { useAdminFilemakerMailClientPageState } from './AdminFilemakerMailClientPage.hooks';
 import { normalizeMailClientDashboardAccountId } from './AdminFilemakerMailClientPage.route';
 
 const buildMailClientHeaderActions = (
   router: ReturnType<typeof useRouter>,
-  composeAccountId: string | null,
+  composeHref: string,
   focusedAccountId: string | null,
   onRefresh: () => Promise<void>
 ): Parameters<typeof PanelHeader>[0]['actions'] => [
@@ -27,14 +30,7 @@ const buildMailClientHeaderActions = (
     icon: <Inbox className='size-4' />,
     variant: 'outline' as const,
     onClick: () => {
-      router.push(
-        focusedAccountId !== null
-          ? buildFilemakerMailSelectionHref({
-              accountId: focusedAccountId,
-              panel: 'settings',
-            })
-          : '/admin/filemaker/mail'
-      );
+      router.push(buildMailClientWorkspaceHref({ focusedAccountId }));
     },
   },
   {
@@ -52,7 +48,7 @@ const buildMailClientHeaderActions = (
     icon: <MailPlus className='size-4' />,
     variant: 'outline' as const,
     onClick: () => {
-      router.push(buildFilemakerMailComposeHref({ accountId: composeAccountId }));
+      router.push(composeHref);
     },
   },
   {
@@ -82,6 +78,11 @@ export function AdminFilemakerMailClientPage(): React.JSX.Element {
   );
   const composeAccount =
     focusedAccount?.status === 'active' ? focusedAccount : firstActiveAccount;
+  const composeHref = buildMailClientComposeHref({
+    composeAccountId: composeAccount?.id ?? null,
+    dashboardQuery: searchParams.get('query') ?? '',
+    focusedAccountId: focusedAccount?.id ?? null,
+  });
 
   return (
     <div className='page-section-compact space-y-6'>
@@ -91,7 +92,7 @@ export function AdminFilemakerMailClientPage(): React.JSX.Element {
         icon={<Mail className='size-4' />}
         actions={buildMailClientHeaderActions(
           router,
-          composeAccount?.id ?? null,
+          composeHref,
           focusedAccount?.id ?? null,
           loadMailboxData
         )}

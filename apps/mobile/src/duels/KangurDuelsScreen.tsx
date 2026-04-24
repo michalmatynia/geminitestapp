@@ -17,7 +17,7 @@ import {
   normalizeSeriesBestOf,
   resolveSessionIdParam,
   resolveSpectateParam,
-} from './duels-utils';
+} from './utils/duels-ui';
 import { useKangurDuelsSearchStatus } from './useKangurDuelsSearchStatus';
 import { useKangurDuelsSessionState } from './useKangurDuelsSessionState';
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';

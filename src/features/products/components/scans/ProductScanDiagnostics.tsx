@@ -1,8 +1,10 @@
+'use client';
 
-
+import React from 'react';
 import { ExternalLink } from 'lucide-react';
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
+import { api } from '@/shared/lib/api-client';
 import { CopyButton } from '@/shared/ui/copy-button';
 import {
   resolveProductScanEvaluationPolicySummary,
@@ -43,6 +45,28 @@ type ScanDiagnostics = {
   failureArtifacts: ScanFailureArtifact[];
   runtimePosture: ScanRuntimePosture | null;
   logTail: string[];
+};
+
+type RecordedDiagnosticArtifact = {
+  filename: string;
+  sizeBytes: number;
+  mtime: string;
+  mimeType: string;
+};
+
+type RecordedDiagnosticClassification = {
+  kind: string;
+  details: {
+    reason: string;
+  };
+};
+
+type RecordedDiagnosticResponse = {
+  scanId: string;
+  provider: string;
+  status: string;
+  classification: RecordedDiagnosticClassification;
+  artifacts: RecordedDiagnosticArtifact[];
 };
 
 type AmazonAiStageEvidence = {
@@ -306,6 +330,44 @@ export const buildProductScanArtifactHref = (scanId: string, artifact: ScanFailu
   return `/api/v2/products/scans/${encodeURIComponent(normalizedScanId)}/artifacts/${encodeURIComponent(fileName)}`;
 };
 
+export const buildProductScanRecordedDiagnosticArtifactHref = (
+  scanId: string,
+  filename: string
+): string | null => {
+  const normalizedScanId = scanId.trim();
+  const normalizedFilename = filename.trim();
+  if (normalizedScanId.length === 0 || normalizedFilename.length === 0) {
+    return null;
+  }
+
+  return `/api/v2/products/scans/${encodeURIComponent(normalizedScanId)}/diagnostics/${encodeURIComponent(normalizedFilename)}`;
+};
+
+const formatFileSize = (sizeBytes: number): string | null => {
+  if (!Number.isFinite(sizeBytes) || sizeBytes < 0) {
+    return null;
+  }
+  if (sizeBytes < 1024) return `${sizeBytes} B`;
+  if (sizeBytes < 1024 * 1024) return `${(sizeBytes / 1024).toFixed(1)} KB`;
+  return `${(sizeBytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const resolveRecordedDiagnosticActionLabel = (artifact: RecordedDiagnosticArtifact): string => {
+  if (artifact.mimeType.startsWith('image/')) {
+    return 'View recorded screenshot';
+  }
+  if (artifact.mimeType === 'application/zip') {
+    return 'Open trace ZIP';
+  }
+  if (artifact.mimeType.includes('html')) {
+    return 'Open HTML snapshot';
+  }
+  if (artifact.mimeType === 'application/json') {
+    return 'Open JSON snapshot';
+  }
+  return 'Open diagnostic artifact';
+};
+
 const isRuntimePostureArtifact = (artifact: ScanFailureArtifact): boolean => {
   const normalizedName = artifact.name.trim().toLowerCase();
   const normalizedPath = artifact.path.trim().toLowerCase();
@@ -532,319 +594,491 @@ export const resolveProductScanDiagnosticFailureSummary = (
   };
 };
 
+const isAmazonRecordedDiagnosticsResponse = (
+  value: unknown
+): value is RecordedDiagnosticResponse => {
+  if (!isObjectRecord(value)) {
+    return false;
+  }
+
+  const artifacts = value['artifacts'];
+  const classification = value['classification'];
+  return (
+    typeof value['scanId'] === 'string' &&
+    typeof value['provider'] === 'string' &&
+    typeof value['status'] === 'string' &&
+    Array.isArray(artifacts) &&
+    isObjectRecord(classification) &&
+    typeof classification['kind'] === 'string' &&
+    isObjectRecord(classification['details']) &&
+    typeof classification['details']['reason'] === 'string'
+  );
+};
+
 export function ProductScanDiagnostics(props: {
-  scan: Pick<ProductScanRecord, 'id' | 'rawResult' | 'steps'>;
+  scan: Pick<ProductScanRecord, 'id' | 'rawResult' | 'steps'> &
+    Partial<Pick<ProductScanRecord, 'provider'>>;
 }): React.JSX.Element | null {
   const diagnostics = resolveProductScanDiagnostics(props.scan);
+  const shouldLoadRecordedDiagnostics =
+    props.scan.provider === 'amazon' && props.scan.id.trim().length > 0;
   const evaluationPolicySummary = resolveProductScanEvaluationPolicySummary(props.scan.steps ?? []);
-  if (!diagnostics) {
+  const [recordedDiagnostics, setRecordedDiagnostics] =
+    React.useState<RecordedDiagnosticResponse | null>(null);
+  const [recordedDiagnosticsStatus, setRecordedDiagnosticsStatus] = React.useState<
+    'idle' | 'loading' | 'loaded' | 'error'
+  >(shouldLoadRecordedDiagnostics ? 'loading' : 'idle');
+
+  React.useEffect(() => {
+    if (!shouldLoadRecordedDiagnostics) {
+      setRecordedDiagnostics(null);
+      setRecordedDiagnosticsStatus('idle');
+      return;
+    }
+
+    const abortController = new AbortController();
+    setRecordedDiagnosticsStatus('loading');
+    void api
+      .get<RecordedDiagnosticResponse>(
+        `/api/v2/products/scans/${encodeURIComponent(props.scan.id)}/diagnostics`,
+        {
+          cache: 'no-store',
+          signal: abortController.signal,
+        }
+      )
+      .then((response) => {
+        if (!isAmazonRecordedDiagnosticsResponse(response)) {
+          setRecordedDiagnostics(null);
+          setRecordedDiagnosticsStatus('error');
+          return;
+        }
+        setRecordedDiagnostics(response);
+        setRecordedDiagnosticsStatus('loaded');
+      })
+      .catch((error: unknown) => {
+        if (abortController.signal.aborted) {
+          return;
+        }
+        setRecordedDiagnostics(null);
+        setRecordedDiagnosticsStatus(
+          error instanceof Error && error.name === 'AbortError' ? 'idle' : 'error'
+        );
+      });
+
+    return () => {
+      abortController.abort();
+    };
+  }, [props.scan.id, shouldLoadRecordedDiagnostics]);
+
+  const recordedArtifacts = recordedDiagnostics?.artifacts ?? [];
+  const recordedClassification = recordedDiagnostics?.classification ?? null;
+
+  if (
+    !diagnostics &&
+    recordedClassification === null &&
+    recordedArtifacts.length === 0 &&
+    recordedDiagnosticsStatus !== 'loading'
+  ) {
     return null;
   }
 
   return (
     <div className='space-y-3 rounded-md border border-border/60 bg-muted/20 px-3 py-3'>
       <div className='flex flex-wrap gap-2'>
-        {(diagnostics.runId ?? null) !== null ? (
+        {diagnostics?.runId ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
-            Run {diagnostics.runId!}
+            Run {diagnostics.runId}
           </span>
         ) : null}
-        {(diagnostics.runStatus ?? null) !== null ? (
+        {diagnostics?.runStatus ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
             {formatLabel(diagnostics.runStatus)}
           </span>
         ) : null}
-        {(diagnostics.imageSearchProvider ?? null) !== null ? (
+        {diagnostics?.imageSearchProvider ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
             {formatAmazonImageSearchProvider(diagnostics.imageSearchProvider)}
           </span>
         ) : null}
-        {(diagnostics.latestStage ?? null) !== null ? (
+        {diagnostics?.latestStage ? (
           <span className='inline-flex items-center rounded-md border border-amber-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-amber-300'>
             Stage: {formatLabel(diagnostics.latestStage)}
           </span>
         ) : null}
-        {diagnostics.failureArtifacts.length > 0 ? (
+        {diagnostics && diagnostics.failureArtifacts.length > 0 ? (
           <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
             {diagnostics.failureArtifacts.length} artifact
             {diagnostics.failureArtifacts.length === 1 ? '' : 's'}
           </span>
         ) : null}
+        {recordedClassification ? (
+          <span className='inline-flex items-center rounded-md border border-sky-500/40 bg-background/70 px-2.5 py-1 text-xs font-medium text-sky-300'>
+            Signature: {formatLabel(recordedClassification.kind)}
+          </span>
+        ) : null}
+        {recordedArtifacts.length > 0 ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium'>
+            {recordedArtifacts.length} recorded artifact
+            {recordedArtifacts.length === 1 ? '' : 's'}
+          </span>
+        ) : null}
+        {recordedDiagnosticsStatus === 'loading' && !diagnostics ? (
+          <span className='inline-flex items-center rounded-md border border-border/60 bg-background/70 px-2.5 py-1 text-xs font-medium text-muted-foreground'>
+            Loading recorded diagnostics
+          </span>
+        ) : null}
       </div>
 
-      {(diagnostics.latestStageUrl ?? null) !== null ? (
-        <div className='space-y-1'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            Latest Stage URL
-          </p>
-          <div className='flex flex-wrap items-center gap-2'>
-            <a
-              href={diagnostics.latestStageUrl!}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
-            >
-              Open URL
-              <ExternalLink className='h-3.5 w-3.5' />
-            </a>
-            <CopyButton
-              value={diagnostics.latestStageUrl!}
-              variant='outline'
-              size='sm'
-              showText
-              className='h-7 px-2 text-xs'
-              ariaLabel='Copy latest stage URL'
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {(diagnostics.imageSearchPageUrl ?? null) !== null ? (
-        <div className='space-y-1'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            Image Search Page URL
-          </p>
-          <div className='flex flex-wrap items-center gap-2'>
-            <a
-              href={diagnostics.imageSearchPageUrl!}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
-            >
-              Open search page
-              <ExternalLink className='h-3.5 w-3.5' />
-            </a>
-            <CopyButton
-              value={diagnostics.imageSearchPageUrl!}
-              variant='outline'
-              size='sm'
-              showText
-              className='h-7 px-2 text-xs'
-              ariaLabel='Copy image search page URL'
-            />
-          </div>
-        </div>
-      ) : null}
-
-      {diagnostics.runtimePosture !== null ? (
+      {recordedClassification || recordedArtifacts.length > 0 ? (
         <div className='space-y-2'>
           <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            Runtime Posture
+            Recorded Diagnostics
           </p>
-          <div className='grid gap-2 sm:grid-cols-2'>
-            {[
-              { label: 'Browser', content: formatRuntimePostureBrowser(diagnostics.runtimePosture) },
-              { label: 'Identity', content: formatRuntimePostureIdentity(diagnostics.runtimePosture) },
-              { label: 'Proxy', content: formatRuntimePostureProxy(diagnostics.runtimePosture) },
-              { label: 'Sticky state', content: formatRuntimePostureStorage(diagnostics.runtimePosture) },
-            ]
-              .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
-              .map((entry) => (
-                <div
-                  key={entry.label}
-                  className='space-y-1 rounded-md border border-border/40 bg-background/70 px-3 py-2'
-                >
-                  <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-                    {entry.label}
-                  </p>
-                  <p className='break-words text-sm'>{entry.content}</p>
-                </div>
-              ))}
-          </div>
-        </div>
-      ) : null}
+          {recordedClassification ? (
+            <div className='rounded-md border border-border/40 bg-background/70 px-3 py-2'>
+              <p className='text-sm font-medium'>
+                Failure signature: {formatLabel(recordedClassification.kind)}
+              </p>
+              <p className='mt-1 text-xs text-muted-foreground'>
+                {recordedClassification.details.reason}
+              </p>
+            </div>
+          ) : null}
+          {recordedArtifacts.length > 0 ? (
+            <ul className='space-y-2'>
+              {recordedArtifacts.map((artifact) => {
+                const artifactHref = buildProductScanRecordedDiagnosticArtifactHref(
+                  props.scan.id,
+                  artifact.filename
+                );
 
-      {evaluationPolicySummary !== null ? (
-        <div className='space-y-2'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            AI Evaluator Policy
-          </p>
-          <div className='grid gap-2 sm:grid-cols-2'>
-            {[
-              { label: 'Execution', content: evaluationPolicySummary.executionLabel },
-              { label: 'Model source', content: evaluationPolicySummary.modelSource },
-              { label: 'Model', content: evaluationPolicySummary.modelLabel },
-              { label: 'Threshold', content: evaluationPolicySummary.thresholdLabel },
-              { label: 'Evaluation scope', content: evaluationPolicySummary.scopeLabel },
-              {
-                label: 'Similarity decision',
-                content: evaluationPolicySummary.similarityDecisionLabel,
-              },
-              { label: 'Language gate', content: evaluationPolicySummary.languageGateLabel },
-              {
-                label: 'Language detection',
-                content: evaluationPolicySummary.languageDetectionLabel,
-              },
-            ]
-              .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
-              .map((entry) => (
-                <div
-                  key={entry.label}
-                  className='space-y-1 rounded-md border border-border/40 bg-background/70 px-3 py-2'
-                >
-                  <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-                    {entry.label}
-                  </p>
-                  <p className='break-words text-sm'>{entry.content}</p>
-                </div>
-              ))}
-          </div>
-        </div>
-      ) : null}
-
-      {diagnostics.amazonAiStages.length > 0 ? (
-        <div className='space-y-2'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            Amazon AI Chain
-          </p>
-          <ul className='space-y-2'>
-            {diagnostics.amazonAiStages.map((stage, index) => (
-              <li
-                key={`${stage.stage}-${stage.evaluatedAt ?? 'na'}-${index}`}
-                className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
-              >
-                <div className='flex flex-wrap items-center gap-2'>
-                  <span className='text-sm font-medium'>{formatAmazonAiStage(stage.stage)}</span>
-                  {formatAmazonAiStageStatus(stage.status) ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                      {formatAmazonAiStageStatus(stage.status)}
-                    </span>
-                  ) : null}
-                  {stage.model ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                      {stage.model}
-                    </span>
-                  ) : null}
-                  {formatAmazonAiThreshold(stage.threshold) ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                      Threshold {formatAmazonAiThreshold(stage.threshold)}
-                    </span>
-                  ) : null}
-                  {stage.candidateRankBefore != null ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                      Rank before #{stage.candidateRankBefore}
-                    </span>
-                  ) : null}
-                  {stage.candidateRankAfter != null ? (
-                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                      Rank after #{stage.candidateRankAfter}
-                    </span>
-                  ) : null}
-                </div>
-                <div className='grid gap-2 sm:grid-cols-2'>
-                  {[
-                    { label: 'Recommended action', value: formatLabel(stage.recommendedAction) },
-                    { label: 'Rejection category', value: formatLabel(stage.rejectionCategory) },
-                    { label: 'Language', value: formatAmazonAiStageLanguage(stage.pageLanguage) },
-                    {
-                      label: 'Language accepted',
-                      value:
-                        typeof stage.languageAccepted === 'boolean'
-                          ? String(stage.languageAccepted)
-                          : null,
-                    },
-                    {
-                      label: 'Image search provider',
-                      value: formatAmazonImageSearchProvider(stage.provider),
-                    },
-                    { label: 'Evaluated at', value: formatTimestamp(stage.evaluatedAt) },
-                  ]
-                    .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
-                    .map((entry) => (
-                      <div
-                        key={`${stage.stage}-${entry.label}`}
-                        className='space-y-1 rounded-md border border-border/40 bg-muted/20 px-3 py-2'
-                      >
-                        <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-                          {entry.label}
-                        </p>
-                        <p className='break-words text-sm'>{entry.value}</p>
-                      </div>
-                    ))}
-                </div>
-                {stage.topReasons.length > 0 ? (
-                  <div className='space-y-1'>
-                    <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-                      Top reasons
-                    </p>
-                    <ul className='space-y-1 text-sm text-muted-foreground'>
-                      {stage.topReasons.map((reason) => (
-                        <li key={`${stage.stage}-${reason}`}>{reason}</li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
-
-      {diagnostics.failureArtifacts.length > 0 ? (
-        <div className='space-y-2'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            Artifacts
-          </p>
-          <ul className='space-y-2'>
-            {diagnostics.failureArtifacts.map((artifact) => {
-              const artifactHref = buildProductScanArtifactHref(props.scan.id, artifact);
-
-              return (
-                <li
-                  key={`${artifact.name}-${artifact.path}`}
-                  className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
-                >
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <span className='text-sm font-medium'>{resolveArtifactDisplayName(artifact)}</span>
-                    {artifact.kind ? (
-                      <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
-                        {formatLabel(artifact.kind)}
-                      </span>
-                    ) : null}
-                    {artifact.mimeType ? (
+                return (
+                  <li
+                    key={artifact.filename}
+                    className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                  >
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <span className='text-sm font-medium'>{artifact.filename}</span>
                       <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
                         {artifact.mimeType}
                       </span>
+                      {formatFileSize(artifact.sizeBytes) ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          {formatFileSize(artifact.sizeBytes)}
+                        </span>
+                      ) : null}
+                    </div>
+                    {formatTimestamp(artifact.mtime) ? (
+                      <p className='text-xs text-muted-foreground'>
+                        Updated {formatTimestamp(artifact.mtime)}
+                      </p>
                     ) : null}
-                  </div>
-                  <p className='break-all text-xs text-muted-foreground'>{artifact.path}</p>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    {artifactHref ? (
-                      <a
-                        href={artifactHref}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
-                      >
-                        {resolveArtifactActionLabel(artifact)}
-                        <ExternalLink className='h-3.5 w-3.5' />
-                      </a>
-                    ) : null}
-                    <CopyButton
-                      value={artifact.path}
-                      variant='outline'
-                      size='sm'
-                      showText
-                      className='h-7 px-2 text-xs'
-                      ariaLabel={`Copy artifact path for ${artifact.name}`}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      {artifactHref ? (
+                        <a
+                          href={artifactHref}
+                          target='_blank'
+                          rel='noopener noreferrer'
+                          className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                        >
+                          {resolveRecordedDiagnosticActionLabel(artifact)}
+                          <ExternalLink className='h-3.5 w-3.5' />
+                        </a>
+                      ) : null}
+                      <CopyButton
+                        value={artifact.filename}
+                        variant='outline'
+                        size='sm'
+                        showText
+                        className='h-7 px-2 text-xs'
+                        ariaLabel={`Copy diagnostic filename for ${artifact.filename}`}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : null}
         </div>
       ) : null}
 
-      {diagnostics.logTail.length > 0 ? (
-        <div className='space-y-2'>
-          <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
-            Log Tail
-          </p>
-          <pre className='max-h-52 overflow-auto rounded-md border border-border/40 bg-background/70 px-3 py-2 text-[11px] text-muted-foreground'>
-            {diagnostics.logTail.join('\n')}
-          </pre>
-        </div>
+      {diagnostics !== null ? (
+        <>
+          {(diagnostics.latestStageUrl ?? null) !== null ? (
+            <div className='space-y-1'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Latest Stage URL
+              </p>
+              <div className='flex flex-wrap items-center gap-2'>
+                <a
+                  href={diagnostics.latestStageUrl!}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                >
+                  Open URL
+                  <ExternalLink className='h-3.5 w-3.5' />
+                </a>
+                <CopyButton
+                  value={diagnostics.latestStageUrl!}
+                  variant='outline'
+                  size='sm'
+                  showText
+                  className='h-7 px-2 text-xs'
+                  ariaLabel='Copy latest stage URL'
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {(diagnostics.imageSearchPageUrl ?? null) !== null ? (
+            <div className='space-y-1'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Image Search Page URL
+              </p>
+              <div className='flex flex-wrap items-center gap-2'>
+                <a
+                  href={diagnostics.imageSearchPageUrl!}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                >
+                  Open search page
+                  <ExternalLink className='h-3.5 w-3.5' />
+                </a>
+                <CopyButton
+                  value={diagnostics.imageSearchPageUrl!}
+                  variant='outline'
+                  size='sm'
+                  showText
+                  className='h-7 px-2 text-xs'
+                  ariaLabel='Copy image search page URL'
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {diagnostics.runtimePosture !== null ? (
+            <div className='space-y-2'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Runtime Posture
+              </p>
+              <div className='grid gap-2 sm:grid-cols-2'>
+                {[
+                  { label: 'Browser', content: formatRuntimePostureBrowser(diagnostics.runtimePosture) },
+                  { label: 'Identity', content: formatRuntimePostureIdentity(diagnostics.runtimePosture) },
+                  { label: 'Proxy', content: formatRuntimePostureProxy(diagnostics.runtimePosture) },
+                  { label: 'Sticky state', content: formatRuntimePostureStorage(diagnostics.runtimePosture) },
+                ]
+                  .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
+                  .map((entry) => (
+                    <div
+                      key={entry.label}
+                      className='space-y-1 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                    >
+                      <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                        {entry.label}
+                      </p>
+                      <p className='break-words text-sm'>{entry.content}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : null}
+
+          {evaluationPolicySummary !== null ? (
+            <div className='space-y-2'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                AI Evaluator Policy
+              </p>
+              <div className='grid gap-2 sm:grid-cols-2'>
+                {[
+                  { label: 'Execution', content: evaluationPolicySummary.executionLabel },
+                  { label: 'Model source', content: evaluationPolicySummary.modelSource },
+                  { label: 'Model', content: evaluationPolicySummary.modelLabel },
+                  { label: 'Threshold', content: evaluationPolicySummary.thresholdLabel },
+                  { label: 'Evaluation scope', content: evaluationPolicySummary.scopeLabel },
+                  {
+                    label: 'Similarity decision',
+                    content: evaluationPolicySummary.similarityDecisionLabel,
+                  },
+                  { label: 'Language gate', content: evaluationPolicySummary.languageGateLabel },
+                  {
+                    label: 'Language detection',
+                    content: evaluationPolicySummary.languageDetectionLabel,
+                  },
+                ]
+                  .filter((entry): entry is { label: string; content: string } => hasText(entry.content))
+                  .map((entry) => (
+                    <div
+                      key={entry.label}
+                      className='space-y-1 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                    >
+                      <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                        {entry.label}
+                      </p>
+                      <p className='break-words text-sm'>{entry.content}</p>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          ) : null}
+
+          {diagnostics.amazonAiStages.length > 0 ? (
+            <div className='space-y-2'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Amazon AI Chain
+              </p>
+              <ul className='space-y-2'>
+                {diagnostics.amazonAiStages.map((stage, index) => (
+                  <li
+                    key={`${stage.stage}-${stage.evaluatedAt ?? 'na'}-${index}`}
+                    className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                  >
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <span className='text-sm font-medium'>{formatAmazonAiStage(stage.stage)}</span>
+                      {formatAmazonAiStageStatus(stage.status) ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          {formatAmazonAiStageStatus(stage.status)}
+                        </span>
+                      ) : null}
+                      {stage.model ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          {stage.model}
+                        </span>
+                      ) : null}
+                      {formatAmazonAiThreshold(stage.threshold) ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          Threshold {formatAmazonAiThreshold(stage.threshold)}
+                        </span>
+                      ) : null}
+                      {stage.candidateRankBefore != null ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          Rank before #{stage.candidateRankBefore}
+                        </span>
+                      ) : null}
+                      {stage.candidateRankAfter != null ? (
+                        <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                          Rank after #{stage.candidateRankAfter}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className='grid gap-2 sm:grid-cols-2'>
+                      {[
+                        { label: 'Recommended action', value: formatLabel(stage.recommendedAction) },
+                        { label: 'Rejection category', value: formatLabel(stage.rejectionCategory) },
+                        { label: 'Language', value: formatAmazonAiStageLanguage(stage.pageLanguage) },
+                        {
+                          label: 'Language accepted',
+                          value:
+                            typeof stage.languageAccepted === 'boolean'
+                              ? String(stage.languageAccepted)
+                              : null,
+                        },
+                        {
+                          label: 'Image search provider',
+                          value: formatAmazonImageSearchProvider(stage.provider),
+                        },
+                        { label: 'Evaluated at', value: formatTimestamp(stage.evaluatedAt) },
+                      ]
+                        .filter((entry): entry is { label: string; value: string } => hasText(entry.value))
+                        .map((entry) => (
+                          <div
+                            key={`${stage.stage}-${entry.label}`}
+                            className='space-y-1 rounded-md border border-border/40 bg-muted/20 px-3 py-2'
+                          >
+                            <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                              {entry.label}
+                            </p>
+                            <p className='break-words text-sm'>{entry.value}</p>
+                          </div>
+                        ))}
+                    </div>
+                    {stage.topReasons.length > 0 ? (
+                      <div className='space-y-1'>
+                        <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                          Top reasons
+                        </p>
+                        <ul className='space-y-1 text-sm text-muted-foreground'>
+                          {stage.topReasons.map((reason) => (
+                            <li key={`${stage.stage}-${reason}`}>{reason}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {diagnostics.failureArtifacts.length > 0 ? (
+            <div className='space-y-2'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Artifacts
+              </p>
+              <ul className='space-y-2'>
+                {diagnostics.failureArtifacts.map((artifact) => {
+                  const artifactHref = buildProductScanArtifactHref(props.scan.id, artifact);
+
+                  return (
+                    <li
+                      key={`${artifact.name}-${artifact.path}`}
+                      className='space-y-2 rounded-md border border-border/40 bg-background/70 px-3 py-2'
+                    >
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <span className='text-sm font-medium'>{resolveArtifactDisplayName(artifact)}</span>
+                        {artifact.kind ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                            {formatLabel(artifact.kind)}
+                          </span>
+                        ) : null}
+                        {artifact.mimeType ? (
+                          <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                            {artifact.mimeType}
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className='break-all text-xs text-muted-foreground'>{artifact.path}</p>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        {artifactHref ? (
+                          <a
+                            href={artifactHref}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='inline-flex items-center gap-1 text-xs text-primary underline-offset-2 hover:underline'
+                          >
+                            {resolveArtifactActionLabel(artifact)}
+                            <ExternalLink className='h-3.5 w-3.5' />
+                          </a>
+                        ) : null}
+                        <CopyButton
+                          value={artifact.path}
+                          variant='outline'
+                          size='sm'
+                          showText
+                          className='h-7 px-2 text-xs'
+                          ariaLabel={`Copy artifact path for ${artifact.name}`}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+
+          {diagnostics.logTail.length > 0 ? (
+            <div className='space-y-2'>
+              <p className='text-[11px] font-medium uppercase tracking-wide text-muted-foreground'>
+                Log Tail
+              </p>
+              <pre className='max-h-52 overflow-auto rounded-md border border-border/40 bg-background/70 px-3 py-2 text-[11px] text-muted-foreground'>
+                {diagnostics.logTail.join('\n')}
+              </pre>
+            </div>
+          ) : null}
+        </>
       ) : null}
     </div>
   );

@@ -3,15 +3,13 @@ import 'server-only';
 /**
  * Tradera Listing Service
  *
- * Orchestrates product listings on Tradera via browser automation (Playwright)
- * or official Tradera API.
+ * Orchestrates product listings on Tradera via browser automation (Playwright).
  */
 
 export * from './tradera-listing/config';
 export * from './tradera-listing/utils';
 export * from './tradera-listing/settings';
 export * from './tradera-listing/browser';
-export * from './tradera-listing/api';
 // NOTE: categories.ts is NOT re-exported here because it directly imports `playwright`
 // (chromium, devices) at the module level. Including it in this barrel would pull the
 // heavyweight playwright external into the BullMQ worker chunk, causing
@@ -19,7 +17,6 @@ export * from './tradera-listing/api';
 // Import fetchTraderaCategoriesForConnection directly from
 // '@/features/integrations/services/tradera-listing/categories' instead.
 
-import { isTraderaApiIntegrationSlug } from '@/features/integrations/constants/slugs';
 import {
   findProductListingByIdAcrossProviders,
   getIntegrationRepository,
@@ -35,7 +32,6 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type { TraderaListingJobInput };
 
-import { runTraderaApiListing } from './tradera-listing/api';
 import {
   runTraderaBrowserListing,
   runTraderaBrowserCheckStatus,
@@ -234,9 +230,7 @@ export const runTraderaListing = async (
     if (requestedSelectorProfile) {
       systemSettings.selectorProfile = requestedSelectorProfile;
     }
-    const integrationSlug = integration.slug;
-    const useApi = isTraderaApiIntegrationSlug(integrationSlug);
-    if (!useApi && action === 'list') {
+    if (action === 'list') {
       const linkedTraderaListing = await resolveExistingLinkedTraderaListingCandidate({
         listingId: listing.id,
         productId: listing.productId,
@@ -381,50 +375,6 @@ export const runTraderaListing = async (
         extra: {
           expiresAt: null,
           nextRelistAt: null,
-        },
-      });
-    }
-
-    if (useApi) {
-      if (action === 'sync') {
-        return buildPlaywrightServiceListingFailure({
-          error: 'Sync is only supported for Tradera browser listings.',
-          errorCategory: 'NOT_FOUND',
-          extra: {
-            expiresAt: null,
-            nextRelistAt: null,
-          },
-        });
-      }
-      if (action === 'move_to_unsold') {
-        return buildPlaywrightServiceListingFailure({
-          error: 'Move to unsold is only supported for Tradera browser listings.',
-          errorCategory: 'NOT_FOUND',
-          extra: {
-            expiresAt: null,
-            nextRelistAt: null,
-          },
-        });
-      }
-      const result = await runTraderaApiListing({ listing, connection });
-      const settings = resolveEffectiveListingSettings(listing, connection, systemSettings);
-      const expiresAt = resolveExpiry(settings.durationHours);
-      const nextRelistAt = resolveNextRelistAt(
-        expiresAt,
-        settings.autoRelistEnabled,
-        settings.autoRelistLeadMinutes
-      );
-
-      return buildPlaywrightServiceListingSuccess({
-        externalListingId: result.externalListingId,
-        listingUrl: result.listingUrl ?? null,
-        metadata: {
-          ...result.metadata,
-          relistPolicy: buildRelistPolicy(settings),
-        },
-        extra: {
-          expiresAt,
-          nextRelistAt,
         },
       });
     }
@@ -685,7 +635,7 @@ const findDueRelistsInMongo = async (limit: number): Promise<string[]> => {
   const db = await getMongoDb();
   const traderaIntegrations = await db
     .collection<{ _id: string; slug: string }>('integrations')
-    .find({ slug: { $regex: /^(tradera|tradera-api)$/i } }, { projection: { _id: 1 } })
+    .find({ slug: { $regex: /^tradera$/i } }, { projection: { _id: 1 } })
     .toArray();
   if (traderaIntegrations.length === 0) return [];
 

@@ -190,9 +190,16 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
     !externalCategoriesQuery.isLoading && Boolean(selectedConnectionId) && externalCategories.length === 0;
   const hasNoLeafExternalCategories =
     externalCategories.length > 0 && !externalCategoriesQuery.isLoading && leafExternalCategories.length === 0;
-  const isShallowPublicTraderaTree =
-    activeExternalCategorySource === TRADERA_PUBLIC_TAXONOMY_SOURCE_NAME &&
+  const isPublicTaxonomyTraderaTree =
+    activeExternalCategorySource === TRADERA_PUBLIC_TAXONOMY_SOURCE_NAME;
+  const isShallowLegacyTraderaTree =
+    !activeExternalCategorySource &&
     externalCategoryMaxDepth <= 1;
+  const isShallowExternalTraderaTree =
+    (isPublicTaxonomyTraderaTree || isShallowLegacyTraderaTree) &&
+    externalCategoryMaxDepth <= 1;
+  const shouldOfferCategoryResync =
+    isPublicTaxonomyTraderaTree || isShallowLegacyTraderaTree || hasNoLeafExternalCategories;
 
   const parameterCatalogEntries = useMemo(
     (): TraderaParameterMapperCatalogEntry[] =>
@@ -821,7 +828,7 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
 
       {externalCategories.length > 0 ? (
         <Alert
-          variant={isShallowPublicTraderaTree || hasNoLeafExternalCategories ? 'warning' : 'info'}
+          variant={shouldOfferCategoryResync ? 'warning' : 'info'}
         >
           <div className='space-y-1'>
             <div>
@@ -831,11 +838,26 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
               categor{leafExternalCategories.length === 1 ? 'y' : 'ies'}, max depth{' '}
               {externalCategoryMaxDepth}.
             </div>
-            {isShallowPublicTraderaTree ? (
+            {activeExternalCategorySource === TRADERA_PUBLIC_TAXONOMY_SOURCE_NAME &&
+            isShallowExternalTraderaTree ? (
               <div>
                 This tree still comes from the shallow public taxonomy pages. Re-fetch Tradera
-                categories in Category Mapper using Listing form picker or SOAP API, then return here
-                to fetch field catalogs for the deeper categories.
+                categories in Category Mapper using Listing form picker, then return here to fetch
+                field catalogs for the deeper categories.
+              </div>
+            ) : null}
+            {isPublicTaxonomyTraderaTree && !isShallowExternalTraderaTree ? (
+              <div>
+                This tree comes from the public taxonomy pages. If Tradera category matches still feel
+                too broad, sync Tradera categories again using Listing form picker for better
+                coverage before fetching field catalogs here.
+              </div>
+            ) : null}
+            {isShallowLegacyTraderaTree ? (
+              <div>
+                This tree appears to be legacy or missing source metadata and only reaches shallow
+                levels. Sync Tradera categories again using Listing form picker, then return here to
+                fetch field catalogs for the deeper categories.
               </div>
             ) : null}
             {hasNoLeafExternalCategories ? (
@@ -844,7 +866,7 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
                 fetches. Re-fetch categories in Category Mapper before continuing.
               </div>
             ) : null}
-            {(isShallowPublicTraderaTree || hasNoLeafExternalCategories) ? (
+            {shouldOfferCategoryResync ? (
               <div>
                 <div className='flex flex-wrap gap-2'>
                   <Button

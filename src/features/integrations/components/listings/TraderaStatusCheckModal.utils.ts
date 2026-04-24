@@ -221,7 +221,7 @@ export function statusLabel(status: string): string {
 export function statusVariant(status: string): 'active' | 'neutral' | 'error' | 'pending' | 'removed' | 'processing' | undefined {
   const s = status.toLowerCase();
   if (s === 'active' || s === 'sold') return 'active';
-  if (s === 'ended' || s === 'unsold') return 'neutral';
+  if (s === 'ended' || s === 'unsold' || s === 'unknown') return 'neutral';
   if (s === 'failed') return 'error';
   if (s === 'removed') return 'removed';
   if (s === 'queued' || s === 'queued_relist' || s === 'pending') return 'pending';

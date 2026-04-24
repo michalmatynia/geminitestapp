@@ -179,6 +179,7 @@ export const createProductScanStartedRawResult = (input: {
   manualVerificationTimeoutMs?: number;
   stepSequenceKey?: string;
   stepSequence?: ProductScanRequestSequenceEntry[];
+  recordDiagnostics?: boolean;
 }): Record<string, unknown> => {
   const status = normalizeStartedRawStatus(input.status);
   return {
@@ -201,6 +202,7 @@ export const createProductScanStartedRawResult = (input: {
       input.manualVerificationTimeoutMs ?? DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
     ...(input.stepSequenceKey ? { stepSequenceKey: input.stepSequenceKey } : {}),
     ...(input.stepSequence ? { stepSequence: input.stepSequence } : {}),
+    ...(input.recordDiagnostics === true ? { recordDiagnostics: true } : {}),
   };
 };
 

@@ -3,7 +3,17 @@
  */
 
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { apiGetMock } = vi.hoisted(() => ({
+  apiGetMock: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    get: (...args: unknown[]) => apiGetMock(...args),
+  },
+}));
 
 import {
   buildProductScanArtifactHref,
@@ -13,17 +23,34 @@ import {
 } from './ProductScanDiagnostics';
 
 describe('ProductScanDiagnostics', () => {
+  beforeEach(() => {
+    apiGetMock.mockReset();
+    apiGetMock.mockResolvedValue({
+      scanId: 'scan-1',
+      provider: 'amazon',
+      status: 'failed',
+      classification: {
+        kind: 'selector_rot',
+        details: {
+          reason: 'Candidates were found but ASIN extraction failed.',
+        },
+      },
+      artifacts: [],
+    });
+  });
+
   it('returns null when no scan diagnostics are available', () => {
     expect(resolveProductScanDiagnostics({ rawResult: null } as never)).toBeNull();
     expect(resolveProductScanDiagnostics({ rawResult: {} } as never)).toBeNull();
   });
 
-  it('renders run metadata, artifacts, and log tail from rawResult', () => {
+  it('renders run metadata, artifacts, and log tail from rawResult', async () => {
     render(
       <ProductScanDiagnostics
         scan={
           {
             id: 'scan-1',
+            provider: 'amazon',
             steps: [
               {
                 key: 'amazon_ai_evaluate',
@@ -189,6 +216,7 @@ describe('ProductScanDiagnostics', () => {
     expect(screen.getByText('English only')).toBeInTheDocument();
     expect(screen.getByText(/first log line/)).toBeInTheDocument();
     expect(screen.getByText(/second log line/)).toBeInTheDocument();
+    expect(await screen.findByText('Failure signature: Selector Rot')).toBeInTheDocument();
   });
 
   it('builds an artifact href from the artifact file name', () => {
@@ -200,6 +228,69 @@ describe('ProductScanDiagnostics', () => {
         mimeType: 'image/png',
       })
     ).toBe('/api/v2/products/scans/scan-1/artifacts/amazon-scan-stage.png');
+  });
+
+  it('builds a recorded diagnostic artifact href from the filename', async () => {
+    const module = await import('./ProductScanDiagnostics');
+    expect(
+      module.buildProductScanRecordedDiagnosticArtifactHref(
+        'scan-1',
+        'stage-000-sync.enter.parsed.json'
+      )
+    ).toBe(
+      '/api/v2/products/scans/scan-1/diagnostics/stage-000-sync.enter.parsed.json'
+    );
+  });
+
+  it('renders recorded diagnostic artifacts from the diagnostics endpoint', async () => {
+    apiGetMock.mockResolvedValue({
+      scanId: 'scan-2',
+      provider: 'amazon',
+      status: 'failed',
+      classification: {
+        kind: 'captcha',
+        details: {
+          reason: 'Captcha challenge detected in the recorded HTML.',
+        },
+      },
+      artifacts: [
+        {
+          filename: 'stage-000-sync.enter.parsed.json',
+          sizeBytes: 320,
+          mtime: '2026-04-24T10:00:00.000Z',
+          mimeType: 'application/json',
+        },
+        {
+          filename: 'playwright-trace.zip',
+          sizeBytes: 4096,
+          mtime: '2026-04-24T10:00:01.000Z',
+          mimeType: 'application/zip',
+        },
+      ],
+    });
+
+    render(
+      <ProductScanDiagnostics
+        scan={{
+          id: 'scan-2',
+          provider: 'amazon',
+          rawResult: { recordDiagnostics: true },
+          steps: [],
+        } as never}
+      />
+    );
+
+    expect(await screen.findByText('Failure signature: Captcha')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open JSON snapshot' })).toHaveAttribute(
+      'href',
+      '/api/v2/products/scans/scan-2/diagnostics/stage-000-sync.enter.parsed.json'
+    );
+    expect(screen.getByRole('link', { name: 'Open trace ZIP' })).toHaveAttribute(
+      'href',
+      '/api/v2/products/scans/scan-2/diagnostics/playwright-trace.zip'
+    );
+    expect(screen.getByText('320 B')).toBeInTheDocument();
+    expect(screen.getByText('4.0 KB')).toBeInTheDocument();
   });
 
   it('builds a compact failure summary from raw diagnostics', () => {

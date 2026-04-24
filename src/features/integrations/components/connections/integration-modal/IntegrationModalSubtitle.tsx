@@ -15,8 +15,5 @@ export function IntegrationModalSubtitle(): React.JSX.Element {
   if (showPlaywright && (isTradera || isVinted)) {
     return <>Manage connections and Step Sequencer-backed browser automation.</>;
   }
-  if (isTradera) {
-    return <>Manage connections via Tradera API credentials and tokens.</>;
-  }
   return <>Manage connections and marketplace API settings.</>;
 }

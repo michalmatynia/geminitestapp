@@ -5,6 +5,9 @@ import type {
 type TraderaStatusCheckListingCandidate = {
   status: string;
   listedAt?: string | null | undefined;
+  lastStatusCheckAt?: string | null | undefined;
+  externalListingId?: string | null | undefined;
+  marketplaceData?: unknown;
 };
 
 type TraderaPendingListingCandidate = {
@@ -27,6 +30,7 @@ export const rankTraderaListingForStatusCheck = (status: string): number => {
   const normalized = normalizeStatus(status);
   if (normalized === 'active') return 5;
   if (normalized === 'sold') return 4;
+  if (normalized === 'unknown') return 3;
   if (
     normalized === 'queued' ||
     normalized === 'queued_relist' ||
@@ -41,17 +45,61 @@ export const rankTraderaListingForStatusCheck = (status: string): number => {
   return 0;
 };
 
+const hasLinkedTraderaTarget = (
+  candidate: Pick<TraderaStatusCheckListingCandidate, 'externalListingId' | 'marketplaceData'>
+): boolean => {
+  if (readString(candidate.externalListingId)) {
+    return true;
+  }
+
+  const marketplaceData = toRecord(candidate.marketplaceData);
+  const directListingUrl = readString(marketplaceData['listingUrl']);
+  if (directListingUrl) {
+    return true;
+  }
+
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const nestedListingUrl = readString(traderaData['listingUrl']);
+  if (nestedListingUrl) {
+    return true;
+  }
+
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  return Boolean(readString(lastExecution['listingUrl']));
+};
+
+const compareRecency = (
+  left: string | null | undefined,
+  right: string | null | undefined
+): number => (right ?? '').localeCompare(left ?? '');
+
 export const compareTraderaListingsForStatusCheck = <
   T extends TraderaStatusCheckListingCandidate,
 >(
   left: T,
   right: T
 ): number => {
+  const leftPending = isTraderaStatusCheckPending(left);
+  const rightPending = isTraderaStatusCheckPending(right);
+  if (leftPending !== rightPending) {
+    return leftPending ? -1 : 1;
+  }
+
   const rankDiff =
     rankTraderaListingForStatusCheck(right.status) -
     rankTraderaListingForStatusCheck(left.status);
   if (rankDiff !== 0) return rankDiff;
-  return (right.listedAt ?? '').localeCompare(left.listedAt ?? '');
+
+  const leftLinked = hasLinkedTraderaTarget(left);
+  const rightLinked = hasLinkedTraderaTarget(right);
+  if (leftLinked !== rightLinked) {
+    return leftLinked ? -1 : 1;
+  }
+
+  const lastStatusCheckDiff = compareRecency(left.lastStatusCheckAt, right.lastStatusCheckAt);
+  if (lastStatusCheckDiff !== 0) return lastStatusCheckDiff;
+
+  return compareRecency(left.listedAt, right.listedAt);
 };
 
 export const selectPreferredTraderaListingForStatusCheck = <

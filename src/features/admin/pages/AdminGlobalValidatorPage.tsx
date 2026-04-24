@@ -1,176 +1,21 @@
 'use client';
 
-import { useRouter } from 'nextjs-toploader/app';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { startTransition, useMemo } from 'react';
-
-import { AdminPromptEngineValidationPatternsPage } from '@/features/admin/components/AdminPromptEngineValidationPatternsPage';
-import {
-  ValidatorDocsTooltipsProvider,
-  ValidatorSettings,
-} from '@/features/admin/components/AdminValidatorSettings';
-import {
-  parseValidatorPatternLists,
-  VALIDATOR_PATTERN_LISTS_KEY,
-  VALIDATOR_SCOPE_DESCRIPTIONS,
-  type ValidatorScope,
-} from '@/features/admin/pages/validator-scope';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { formatAdminAiEyebrow } from '@/shared/ui/admin.public';
-
+import { ValidatorDocsTooltipsProvider } from '@/features/admin/components/AdminValidatorSettings';
 import { GlobalValidatorPanelLayout } from './admin-global-validator-layout';
-
-type GlobalValidatorView = 'patterns' | 'tooltips';
-type ValidatorPatternListItem = ReturnType<typeof parseValidatorPatternLists>[number];
-
-const toGlobalValidatorView = (value: string | null): GlobalValidatorView =>
-  value === 'tooltips' ? 'tooltips' : 'patterns';
-
-function pushValidatorRoute(pathname: string, queryString: string, router: ReturnType<typeof useRouter>): void {
-  const nextHref = queryString !== '' ? `${pathname}?${queryString}` : pathname;
-  startTransition(() => {
-    router.push(nextHref, { scroll: false });
-  });
-}
-
-function createPromptEnginePanel(
-  props: React.ComponentProps<typeof AdminPromptEngineValidationPatternsPage>
-): React.JSX.Element {
-  return <AdminPromptEngineValidationPatternsPage embedded {...props} />;
-}
-
-function renderScopePanel(scope: ValidatorScope): React.JSX.Element {
-  switch (scope) {
-    case 'products':
-      return <ValidatorSettings />;
-    case 'image-studio':
-      return createPromptEnginePanel({
-        eyebrow: formatAdminAiEyebrow('Image Studio'),
-        backLinkHref: '/admin/image-studio',
-        backLinkLabel: 'Back to Studio',
-      });
-    case 'prompt-exploder':
-      return createPromptEnginePanel({
-        eyebrow: formatAdminAiEyebrow('Image Studio Prompt Exploder'),
-        initialPatternTab: 'prompt_exploder',
-        initialExploderSubTab: 'prompt_exploder_rules',
-        lockedPatternTab: 'prompt_exploder',
-        lockedExploderSubTab: 'prompt_exploder_rules',
-      });
-    case 'case-resolver-plain-text':
-      return createPromptEnginePanel({
-        eyebrow: formatAdminAiEyebrow('Case Resolver Plain Text'),
-        initialPatternTab: 'core',
-        lockedPatternTab: 'core',
-        initialScope: 'case_resolver_plain_text',
-        lockedScope: 'case_resolver_plain_text',
-      });
-    case 'ai-paths':
-      return createPromptEnginePanel({
-        eyebrow: formatAdminAiEyebrow('AI Paths'),
-        initialPatternTab: 'core',
-        lockedPatternTab: 'core',
-        initialScope: 'ai_paths',
-        lockedScope: 'ai_paths',
-      });
-    default:
-      return createPromptEnginePanel({
-        eyebrow: formatAdminAiEyebrow('Case Resolver Prompt Exploder'),
-        initialPatternTab: 'prompt_exploder',
-        initialExploderSubTab: 'case_resolver_rules',
-        lockedPatternTab: 'prompt_exploder',
-        lockedExploderSubTab: 'case_resolver_rules',
-      });
-  }
-}
-
-function resolveActiveList(
-  patternLists: ValidatorPatternListItem[],
-  searchParams: ReturnType<typeof useSearchParams>
-): ValidatorPatternListItem | null {
-  const listParam = searchParams.get('list');
-  if (listParam !== null && listParam !== '') {
-    const matchedById = patternLists.find((list) => list.id === listParam);
-    if (matchedById !== undefined) {
-      return matchedById;
-    }
-  }
-
-  return patternLists[0] ?? null;
-}
-
-function getActiveDescription(activeList: ValidatorPatternListItem | null): string {
-  if (activeList === null) {
-    return '';
-  }
-
-  const customDescription = activeList.description.trim();
-  if (customDescription === '') {
-    return '';
-  }
-
-  return customDescription === VALIDATOR_SCOPE_DESCRIPTIONS[activeList.scope]
-    ? ''
-    : customDescription;
-}
-
-function getCurrentBreadcrumbLabel(
-  activeList: ValidatorPatternListItem | null,
-  activeView: GlobalValidatorView
-): string {
-  return activeView === 'tooltips' ? 'Settings' : activeList?.name ?? 'Validation Pattern Lists';
-}
-
-function getScopePanel(activeList: ValidatorPatternListItem | null): React.JSX.Element | null {
-  return activeList === null ? null : renderScopePanel(activeList.scope);
-}
-
-function getListQueryString(
-  listId: string,
-  searchParams: ReturnType<typeof useSearchParams>
-): string {
-  const nextParams = new URLSearchParams(searchParams.toString());
-  nextParams.set('list', listId);
-  return nextParams.toString();
-}
-
-function getViewQueryString(
-  searchParams: ReturnType<typeof useSearchParams>,
-  view: GlobalValidatorView
-): string {
-  const nextParams = new URLSearchParams(searchParams.toString());
-  if (view === 'patterns') {
-    nextParams.delete('view');
-  } else {
-    nextParams.set('view', view);
-  }
-
-  return nextParams.toString();
-}
+import { useValidatorNavigation } from './validator-page/useValidatorNavigation';
+import { useValidatorState } from './validator-page/useValidatorState';
+import { renderScopePanel } from './validator-page/ValidatorScopeRenderer';
 
 function AdminGlobalValidatorContent(): React.JSX.Element {
-  const pathname = usePathname();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const activeView = toGlobalValidatorView(searchParams.get('view'));
-  const settingsQuery = useSettingsMap({ scope: 'light' });
-  const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
-  const patternLists = useMemo(() => parseValidatorPatternLists(rawPatternLists), [rawPatternLists]);
-  const activeList = useMemo(
-    () => resolveActiveList(patternLists, searchParams),
-    [patternLists, searchParams]
-  );
-  const activeDescription = getActiveDescription(activeList);
-  const currentBreadcrumbLabel = getCurrentBreadcrumbLabel(activeList, activeView);
-  const scopePanel = getScopePanel(activeList);
-
-  const handleSelectList = (listId: string): void => {
-    pushValidatorRoute(pathname, getListQueryString(listId, searchParams), router);
-  };
-
-  const handleSelectView = (view: GlobalValidatorView): void => {
-    pushValidatorRoute(pathname, getViewQueryString(searchParams, view), router);
-  };
+  const {
+    activeView,
+    patternLists,
+    activeList,
+    activeDescription,
+    currentBreadcrumbLabel,
+  } = useValidatorState();
+  
+  const { handleSelectList, handleSelectView } = useValidatorNavigation();
 
   return (
     <GlobalValidatorPanelLayout
@@ -182,7 +27,7 @@ function AdminGlobalValidatorContent(): React.JSX.Element {
       handleSelectList={handleSelectList}
       handleSelectView={handleSelectView}
       patternLists={patternLists}
-      scopePanel={scopePanel}
+      scopePanel={activeList ? renderScopePanel(activeList.scope) : null}
     />
   );
 }

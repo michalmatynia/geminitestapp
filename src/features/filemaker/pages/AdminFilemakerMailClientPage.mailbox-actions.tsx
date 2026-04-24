@@ -7,7 +7,10 @@ import { Button } from '@/shared/ui/primitives.public';
 import { buildFilemakerMailComposeHref, formatFilemakerMailFolderLabel } from '../components/FilemakerMailSidebar.helpers';
 import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount, FilemakerMailFolderSummary } from '../types';
-import type { MailClientDashboardScope } from './AdminFilemakerMailClientPage.helpers';
+import {
+  buildMailClientSearchHref,
+  type MailClientDashboardScope,
+} from './AdminFilemakerMailClientPage.helpers';
 import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.route';
 
 const MAILBOX_SHORTCUT_LIMIT = 4;
@@ -25,6 +28,7 @@ const buildPrimaryMailboxHref = (
 
 function MailClientMailboxActions({
   account,
+  composeHref: composeHrefOverride,
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
@@ -35,6 +39,7 @@ function MailClientMailboxActions({
   isStatusUpdating,
 }: {
   account: FilemakerMailAccount;
+  composeHref?: string;
   dashboardAccountId: string;
   dashboardQuery: string;
   dashboardScope: MailClientDashboardScope;
@@ -47,6 +52,18 @@ function MailClientMailboxActions({
   const settingsHref = buildFilemakerMailSelectionHref({
     accountId: account.id,
     panel: 'settings',
+  });
+  const trimmedDashboardQuery = dashboardQuery.trim();
+  const defaultComposeHref = buildFilemakerMailComposeHref({
+    accountId: account.id,
+    originPanel: trimmedDashboardQuery !== '' ? 'search' : null,
+    searchAccountId: trimmedDashboardQuery !== '' && dashboardAccountId === '' ? 'all' : null,
+    searchQuery: trimmedDashboardQuery,
+  });
+  const effectiveComposeHref = composeHrefOverride ?? defaultComposeHref;
+  const searchHref = buildMailClientSearchHref({
+    dashboardQuery,
+    focusedAccountId: account.id,
   });
 
   return (
@@ -72,7 +89,12 @@ function MailClientMailboxActions({
         <Link href={settingsHref}>Settings</Link>
       </Button>
       <Button asChild variant='outline' size='sm'>
-        <Link href={buildFilemakerMailComposeHref({ accountId: account.id })}>Compose</Link>
+        <Link href={searchHref}>
+          {trimmedDashboardQuery !== '' ? 'Continue Search' : 'Search Mailbox'}
+        </Link>
+      </Button>
+      <Button asChild variant='outline' size='sm'>
+        <Link href={effectiveComposeHref}>Compose</Link>
       </Button>
       <MailClientDashboardFocusButton
         activeDashboardAccountId={dashboardAccountId}

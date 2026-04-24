@@ -74,6 +74,7 @@ import {
   resolveAmazonImageSearchPageUrl,
   resolveAmazonScanRuntimeTimeoutMs,
 } from './product-scans-service.helpers.amazon';
+import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 
 import {
   SCANNER_1688_MISSING_LOCAL_IMAGE_MESSAGE,
@@ -441,6 +442,7 @@ async function queueBatchProductScans(input: {
             amazonRuntimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY;
           const isCandidateExtractionRuntime =
             amazonRuntimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY;
+          const amazonDiagnosticCapture = resolveAmazonScanDiagnosticCapture(requestInput);
           run = await startPlaywrightEngineTask({
             request: {
               runtimeKey: amazonRuntimeKey ?? AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
@@ -496,10 +498,7 @@ async function queueBatchProductScans(input: {
               }),
               browserEngine: 'chromium',
               ...scannerRuntimeOptions,
-              capture: {
-                screenshot: true,
-                html: true,
-              },
+              capture: amazonDiagnosticCapture,
               preventNewPages: true,
             },
             ownerUserId: input.ownerUserId ?? null,
@@ -653,6 +652,7 @@ async function queueBatchProductScans(input: {
             allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             ...requestedStepSequenceInput,
+            recordDiagnostics: requestInput['recordDiagnostics'] === true,
           }),
           updatedBy: input.ownerUserId ?? null,
         });
@@ -699,13 +699,19 @@ export async function queueAmazonBatchProductScans(input: {
   userId?: string | null;
   stepSequenceKey?: string | null;
   stepSequence?: any[] | null;
+  recordDiagnostics?: boolean;
 }): Promise<ProductScanBatchResponse> {
-  const requestInput = input.requestInput ?? {
+  const baseRequestInput = input.requestInput ?? {
     runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
     collectAmazonCandidatePreviews: true,
     ...((input.stepSequenceKey ?? '') !== '' ? { stepSequenceKey: input.stepSequenceKey } : {}),
     ...(input.stepSequence !== null && input.stepSequence !== undefined ? { stepSequence: input.stepSequence } : {}),
   };
+
+  const requestInput: Record<string, unknown> =
+    input.recordDiagnostics === true
+      ? { ...baseRequestInput, recordDiagnostics: true }
+      : baseRequestInput;
 
   return await queueBatchProductScans({
     productIds: input.productIds,
@@ -716,6 +722,7 @@ export async function queueAmazonBatchProductScans(input: {
             runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
             collectAmazonCandidatePreviews: true,
             ...input.requestInput,
+            ...(input.recordDiagnostics === true ? { recordDiagnostics: true } : {}),
           }
         : requestInput,
     ownerUserId: input.ownerUserId ?? input.userId,

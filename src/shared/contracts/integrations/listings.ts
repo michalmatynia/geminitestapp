@@ -312,9 +312,29 @@ export const traderaExecutionStepSchema = z.object({
 
 export type TraderaExecutionStep = z.infer<typeof traderaExecutionStepSchema>;
 
+export const traderaListingStatusCheckBatchTargetSchema = z.object({
+  productId: z.string().trim().min(1),
+  listingId: z.string().trim().min(1).optional(),
+});
+
+export type TraderaListingStatusCheckBatchTarget = z.infer<
+  typeof traderaListingStatusCheckBatchTargetSchema
+>;
+
 export const traderaListingStatusCheckBatchPayloadSchema = z.object({
-  productIds: z.array(z.string().trim().min(1)).min(1).max(250),
+  productIds: z.array(z.string().trim().min(1)).min(1).max(250).optional(),
+  targets: z.array(traderaListingStatusCheckBatchTargetSchema).min(1).max(250).optional(),
   selectorProfile: traderaSelectorProfileOverrideSchema.optional(),
+}).superRefine((value, ctx) => {
+  const hasProductIds = Array.isArray(value.productIds) && value.productIds.length > 0;
+  const hasTargets = Array.isArray(value.targets) && value.targets.length > 0;
+  if (!hasProductIds && !hasTargets) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Provide at least one Tradera status-check target.',
+      path: ['targets'],
+    });
+  }
 });
 
 export type TraderaListingStatusCheckBatchPayload = z.infer<

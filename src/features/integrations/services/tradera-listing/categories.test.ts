@@ -257,7 +257,7 @@ describe('fetchTraderaCategoriesForConnection', () => {
       } as never)
     ).rejects.toMatchObject({
       message:
-        'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
+        'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Retry category fetch using Listing form picker if it is available for this connection.',
       httpStatus: 422,
       meta: expect.objectContaining({
         connectionId: 'connection-1',

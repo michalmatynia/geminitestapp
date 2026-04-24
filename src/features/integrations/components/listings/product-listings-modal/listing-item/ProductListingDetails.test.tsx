@@ -1360,6 +1360,64 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('job-tradera-status-check-1')).toBeInTheDocument();
   });
 
+  it('shows Tradera status-check verification evidence in the listing details panel', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-status-result',
+            status: 'unknown',
+            externalListingId: '721891408',
+            inventoryId: null,
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistAttempts: 0,
+            createdAt: '2026-04-02T10:00:00.000Z',
+            failureReason: null,
+            exportHistory: [],
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-1',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              listingUrl: 'https://www.tradera.com/item/721891408',
+              tradera: {
+                lastExecution: {
+                  action: 'check_status',
+                  metadata: {
+                    checkedStatus: 'unknown',
+                    verificationSection: 'public_listing',
+                    verificationMatchStrategy: 'seller-sections-miss',
+                    verificationRawStatusTag: 'unknown',
+                    verificationMatchedProductId: 'BASE-1',
+                    verificationCandidateCount: 0,
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Checked status:')).toBeInTheDocument();
+    expect(screen.getAllByText('unknown').length).toBeGreaterThan(0);
+    expect(screen.getByText('Verified in:')).toBeInTheDocument();
+    expect(screen.getByText('Public listing page')).toBeInTheDocument();
+    expect(screen.getByText('Match strategy:')).toBeInTheDocument();
+    expect(screen.getByText('Seller sections miss')).toBeInTheDocument();
+    expect(screen.getByText('Tradera tag:')).toBeInTheDocument();
+    expect(screen.getByText('Matched Product ID:')).toBeInTheDocument();
+    expect(screen.getByText('BASE-1')).toBeInTheDocument();
+    expect(screen.getByText('Candidates inspected:')).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
   it('shows Playwright execution metadata including browser mode for troubleshooting relists', () => {
     useProductListingsUIStateMock.mockReturnValue({
       historyOpenByListing: { 'listing-1': true },

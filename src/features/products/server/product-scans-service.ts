@@ -129,6 +129,7 @@ export async function queueAmazonBatchProductScans(input: {
   userId?: string | null;
   stepSequenceKey?: string | null;
   stepSequence?: ProductScanRequestSequenceEntry[] | null;
+  recordDiagnostics?: boolean;
 }): Promise<ProductScanBatchResponse> {
   return await queueAmazonBatch(input);
 }

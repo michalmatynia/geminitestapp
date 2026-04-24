@@ -18,15 +18,19 @@ import {
   formatSpectatorQuestionProgress,
   formatStatusLabel,
   getStatusTone,
-} from './duels-utils';
-import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
+} from './utils/duels-ui';
+import { 
+    type UseKangurMobileDuelSessionResult,
+    type KangurDuelSession,
+    type KangurDuelPlayer
+} from './useKangurMobileDuelSession';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
 
 type DuelSessionDetailsCardProps = {
   copy: DuelCopy;
-  duel: DuelSessionState;
+  duel: UseKangurMobileDuelSessionResult;
   hasWaitingSession: boolean;
   locale: DuelLocale;
   roundProgress: {
@@ -87,7 +91,6 @@ function RoundProgressBar({
   status: string;
 }): React.JSX.Element {
   const isFinished = status === 'completed' || status === 'aborted';
-
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -120,7 +123,7 @@ function DetailsHeader({
   copy,
   locale,
 }: {
-  session: NonNullable<DuelSessionState['session']>;
+  session: KangurDuelSession;
   copy: DuelCopy;
   locale: DuelLocale;
 }): React.JSX.Element {
@@ -132,24 +135,37 @@ function DetailsHeader({
   } else {
     infoLabel = `${session.questionCount} pytań · ${session.timePerQuestionSec}s na odpowiedź · ${formatDifficultyLabel(session.difficulty, locale)}`;
   }
-
   return (
     <View style={{ gap: 10 }}>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {copy({
-          de: `Sitzung ${session.id}`,
-          en: `Session ${session.id}`,
-          pl: `Sesja ${session.id}`,
-        })}
+        {copy({ de: `Sitzung ${session.id}`, en: `Session ${session.id}`, pl: `Sesja ${session.id}` })}
       </Text>
       <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-        {formatModeLabel(session.mode, locale)} ·{' '}
-        {formatOperationLabel(session.operation, locale)}
+        {formatModeLabel(session.mode, locale)} · {formatOperationLabel(session.operation, locale)}
       </Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {infoLabel}
-      </Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{infoLabel}</Text>
     </View>
+  );
+}
+
+function ProgressPill({
+  duel,
+  session,
+  locale,
+}: {
+  duel: UseKangurMobileDuelSessionResult;
+  session: KangurDuelSession;
+  locale: DuelLocale;
+}): React.JSX.Element {
+  return (
+    <Pill
+      label={
+        duel.player
+          ? formatQuestionProgress(session, duel.player as KangurDuelPlayer, locale)
+          : formatSpectatorQuestionProgress(session, locale)
+      }
+      tone={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe', textColor: '#1d4ed8' }}
+    />
   );
 }
 
@@ -158,93 +174,39 @@ function DetailsPills({
   copy,
   locale,
 }: {
-  duel: DuelSessionState;
+  duel: UseKangurMobileDuelSessionResult;
   copy: DuelCopy;
   locale: DuelLocale;
 }): React.JSX.Element {
-  const { session } = duel;
+  const session = duel.session;
   if (!session) return <></>;
-
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+      <Pill label={formatStatusLabel(session.status, locale)} tone={getStatusTone(session.status)} />
       <Pill
-        label={formatStatusLabel(session.status, locale)}
-        tone={getStatusTone(session.status)}
+        label={session.visibility === 'private' ? copy({ de: 'Privat', en: 'Private', pl: 'Prywatny' }) : copy({ de: 'Öffentlich', en: 'Public', pl: 'Publiczny' })}
+        tone={{ backgroundColor: '#f8fafc', borderColor: '#cbd5e1', textColor: '#475569' }}
       />
-      <Pill
-        label={
-          session.visibility === 'private'
-            ? copy({ de: 'Privat', en: 'Private', pl: 'Prywatny' })
-            : copy({ de: 'Öffentlich', en: 'Public', pl: 'Publiczny' })
-        }
-        tone={{
-          backgroundColor: '#f8fafc',
-          borderColor: '#cbd5e1',
-          textColor: '#475569',
-        }}
-      />
-      <Pill
-        label={
-          duel.player
-            ? formatQuestionProgress(session, duel.player, locale)
-            : formatSpectatorQuestionProgress(session, locale)
-        }
-        tone={{
-          backgroundColor: '#eff6ff',
-          borderColor: '#bfdbfe',
-          textColor: '#1d4ed8',
-        }}
-      />
+      <ProgressPill duel={duel} locale={locale} session={session} />
       {(duel.isSpectating || duel.spectatorCount > 0) ? (
         <Pill
-          label={copy({
-            de: `Zuschauer ${duel.spectatorCount}`,
-            en: `Audience ${duel.spectatorCount}`,
-            pl: `Widownia ${duel.spectatorCount}`,
-          })}
-          tone={{
-            backgroundColor: '#f5f3ff',
-            borderColor: '#ddd6fe',
-            textColor: '#6d28d9',
-          }}
+          label={copy({ de: `Zuschauer ${duel.spectatorCount}`, en: `Audience ${duel.spectatorCount}`, pl: `Widownia ${duel.spectatorCount}` })}
+          tone={{ backgroundColor: '#f5f3ff', borderColor: '#ddd6fe', textColor: '#6d28d9' }}
         />
       ) : null}
       {session.series ? (
-        <Pill
-          label={formatSeriesTitle(session.series, locale)}
-          tone={{
-            backgroundColor: '#f5f3ff',
-            borderColor: '#ddd6fe',
-            textColor: '#6d28d9',
-          }}
-        />
+        <Pill label={formatSeriesTitle(session.series, locale)} tone={{ backgroundColor: '#f5f3ff', borderColor: '#ddd6fe', textColor: '#6d28d9' }} />
       ) : null}
     </View>
   );
 }
 
-export function DuelSessionDetailsCard({
-  copy,
-  duel,
-  hasWaitingSession,
-  locale,
-  roundProgress,
-  sessionTimelineItems,
-}: DuelSessionDetailsCardProps): React.JSX.Element {
-  const { session } = duel;
-  if (session === null) {
-    return <></>;
-  }
-
-  const renderSpectatorMessage = (): React.JSX.Element => (
+function SpectatorMessage({ copy, isAuthenticated }: { copy: DuelCopy, isAuthenticated: boolean }): React.JSX.Element {
+  return (
     <MessageCard
-      title={copy({
-        de: 'Zuschauermodus',
-        en: 'Spectator mode',
-        pl: 'Tryb obserwatora',
-      })}
+      title={copy({ de: 'Zuschauermodus', en: 'Spectator mode', pl: 'Tryb obserwatora' })}
       description={
-        duel.isAuthenticated
+        isAuthenticated
           ? copy({
               de: 'Du beobachtest das öffentliche Duell. Du kannst Reaktionen senden, beantwortest aber keine Fragen.',
               en: 'You are watching the public duel. You can send reactions, but you do not answer questions.',
@@ -258,37 +220,64 @@ export function DuelSessionDetailsCard({
       }
     />
   );
+}
 
+function DetailsBody({
+  copy,
+  duel,
+  hasWaitingSession,
+  locale,
+  roundProgress,
+  session,
+  sessionTimelineItems
+}: {
+  copy: DuelCopy;
+  duel: UseKangurMobileDuelSessionResult;
+  hasWaitingSession: boolean;
+  locale: DuelLocale;
+  roundProgress: DuelSessionDetailsCardProps['roundProgress'];
+  session: KangurDuelSession;
+  sessionTimelineItems: string[];
+}): React.JSX.Element {
   return (
-    <Card>
+    <>
       <DetailsHeader copy={copy} locale={locale} session={session} />
       <DetailsPills copy={copy} duel={duel} locale={locale} />
-
       {roundProgress !== null && !hasWaitingSession ? (
-        <RoundProgressBar
-          locale={locale}
-          roundProgress={roundProgress}
-          status={session.status}
-        />
+        <RoundProgressBar locale={locale} roundProgress={roundProgress} status={session.status} />
       ) : null}
-
       {sessionTimelineItems.length > 0 ? (
         <SessionTimeline copy={copy} items={sessionTimelineItems} />
       ) : null}
-
-      {duel.isSpectating ? renderSpectatorMessage() : null}
-
+      {duel.isSpectating ? <SpectatorMessage copy={copy} isAuthenticated={duel.isAuthenticated} /> : null}
       {duel.actionError !== null ? (
-        <MessageCard
-          title={copy({
-            de: 'Aktion fehlgeschlagen',
-            en: 'Action failed',
-            pl: 'Akcja nie powiodła się',
-          })}
-          description={duel.actionError}
-          tone='error'
-        />
+        <MessageCard title={copy({ de: 'Aktion fehlgeschlagen', en: 'Action failed', pl: 'Akcja nie powiodła się' })} description={duel.actionError} tone='error' />
       ) : null}
+    </>
+  );
+}
+
+export function DuelSessionDetailsCard({
+  copy,
+  duel,
+  hasWaitingSession,
+  locale,
+  roundProgress,
+  sessionTimelineItems,
+}: DuelSessionDetailsCardProps): React.JSX.Element {
+  const session = duel.session;
+  if (session === null) return <></>;
+  return (
+    <Card>
+      <DetailsBody
+        copy={copy}
+        duel={duel}
+        hasWaitingSession={hasWaitingSession}
+        locale={locale}
+        roundProgress={roundProgress}
+        session={session}
+        sessionTimelineItems={sessionTimelineItems}
+      />
     </Card>
   );
 }

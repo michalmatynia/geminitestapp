@@ -57,8 +57,7 @@ export function CategoryMapperTable(): React.JSX.Element {
   const isSavePending = saveMutation.isPending;
   const pendingCount = pendingMappings.size;
   const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
-  const isTraderaConnection =
-    normalizedIntegrationSlug === 'tradera' || normalizedIntegrationSlug === 'tradera-api';
+  const isTraderaConnection = normalizedIntegrationSlug === 'tradera';
   const categoryFetchMethodOptions = useMemo<
     { value: TraderaCategoryFetchMethod; label: string }[] | undefined
   >(() => {
@@ -66,9 +65,7 @@ export function CategoryMapperTable(): React.JSX.Element {
       return undefined;
     }
 
-    const options: { value: TraderaCategoryFetchMethod; label: string }[] = [
-      { value: 'playwright', label: 'Public taxonomy pages' },
-    ];
+    const options: { value: TraderaCategoryFetchMethod; label: string }[] = [];
 
     if (normalizedIntegrationSlug === 'tradera') {
       options.push({
@@ -77,7 +74,7 @@ export function CategoryMapperTable(): React.JSX.Element {
       });
     }
 
-    options.push({ value: 'soap', label: 'SOAP API' });
+    options.push({ value: 'playwright', label: 'Public taxonomy pages' });
     return options;
   }, [isTraderaConnection, normalizedIntegrationSlug]);
   const persistedFetchSource = useMemo(() => {
@@ -129,6 +126,13 @@ export function CategoryMapperTable(): React.JSX.Element {
     isTraderaConnection && activeFetchSource === 'Tradera public taxonomy pages';
   const fetchedShallowTraderaTree =
     usedTraderaPublicFallback && (activeFetchStats?.maxDepth ?? 0) <= 1;
+  const shallowTraderaFallbackGuidance = useMemo((): string | null => {
+    if (!fetchedShallowTraderaTree) {
+      return null;
+    }
+
+    return 'Tradera is using the public taxonomy-page fallback and only reached shallow levels. Switch to Listing form picker for deeper category coverage.';
+  }, [fetchedShallowTraderaTree, normalizedIntegrationSlug]);
   const preservedCategoryCount =
     externalCategories.length > 0
       ? externalCategories.length
@@ -279,11 +283,9 @@ export function CategoryMapperTable(): React.JSX.Element {
                   Roots: {activeFetchStats.rootCount}. Categories with parents:{' '}
                   {activeFetchStats.withParentCount}. Max depth: {activeFetchStats.maxDepth}.
                 </div>
-                {fetchedShallowTraderaTree ? (
+                {shallowTraderaFallbackGuidance ? (
                   <div>
-                    Tradera is using the public taxonomy-page fallback and only reached shallow
-                    levels. Re-fetch after the scraper update, or configure Tradera App ID and App
-                    Key to use the SOAP API for deeper category coverage.
+                    {shallowTraderaFallbackGuidance}
                   </div>
                 ) : null}
               </div>

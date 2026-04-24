@@ -4,7 +4,7 @@ import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './use
 import {
   isWaitingSessionStatus,
   resolveRoundProgress,
-} from './duels-utils';
+} from './utils/duels-ui';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];

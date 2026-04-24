@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { KangurMobileCard as Card } from '../shared/KangurMobileUi';
 import { ActionButton, MessageCard } from './duels-primitives';
-import { formatRelativeAge } from './duels-utils';
+import { formatRelativeAge } from './utils/duels-ui';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
@@ -116,52 +116,62 @@ function OpponentsStatus({
   return null;
 }
 
+function RecentOpponentsContent({
+  lobby,
+  copy,
+  locale,
+  onOpenSession,
+}: {
+  lobby: DuelLobbyState;
+  copy: DuelCopy;
+  locale: DuelLocale;
+  onOpenSession: (sessionId: string) => void;
+}): React.JSX.Element {
+  const status = OpponentsStatus({ lobby, copy });
+  if (status !== null) {
+    return status;
+  }
+
+  if (lobby.opponents.length === 0) {
+    return (
+      <MessageCard
+        title={copy({
+          de: 'Noch keine letzten Rivalen',
+          en: 'No recent rivals yet',
+          pl: 'Brak jeszcze ostatnich rywali',
+        })}
+        description={copy({
+          de: 'Beende das erste Duell, damit sich diese Liste automatisch füllt.',
+          en: 'Finish the first duel and this list will fill automatically.',
+          pl: 'Rozegraj pierwszy pojedynek, aby ta lista wypełniła się automatycznie.',
+        })}
+      />
+    );
+  }
+
+  return (
+    <View style={{ gap: 10 }}>
+      {lobby.opponents.map((entry) => (
+        <OpponentEntryRow
+          key={entry.learnerId}
+          copy={copy}
+          createPrivateChallenge={lobby.createPrivateChallenge}
+          entry={entry}
+          isActionPending={lobby.isActionPending}
+          locale={locale}
+          onOpenSession={onOpenSession}
+        />
+      ))}
+    </View>
+  );
+}
+
 export function DuelLobbyRecentOpponentsSection({
   copy,
   locale,
   lobby,
   onOpenSession,
 }: DuelLobbyRecentOpponentsSectionProps): React.JSX.Element {
-  const renderContent = (): React.JSX.Element => {
-    const status = OpponentsStatus({ lobby, copy });
-    if (status !== null) {
-      return status;
-    }
-
-    if (lobby.opponents.length === 0) {
-      return (
-        <MessageCard
-          title={copy({
-            de: 'Noch keine letzten Rivalen',
-            en: 'No recent rivals yet',
-            pl: 'Brak jeszcze ostatnich rywali',
-          })}
-          description={copy({
-            de: 'Beende das erste Duell, damit sich diese Liste automatisch füllt.',
-            en: 'Finish the first duel and this list will fill automatically.',
-            pl: 'Rozegraj pierwszy pojedynek, aby ta lista wypełniła się automatycznie.',
-          })}
-        />
-      );
-    }
-
-    return (
-      <View style={{ gap: 10 }}>
-        {lobby.opponents.map((entry) => (
-          <OpponentEntryRow
-            key={entry.learnerId}
-            copy={copy}
-            createPrivateChallenge={lobby.createPrivateChallenge}
-            entry={entry}
-            isActionPending={lobby.isActionPending}
-            locale={locale}
-            onOpenSession={onOpenSession}
-          />
-        ))}
-      </View>
-    );
-  };
-
   return (
     <Card>
       <View style={{ gap: 8 }}>
@@ -186,7 +196,12 @@ export function DuelLobbyRecentOpponentsSection({
           />
         ) : null}
       </View>
-      {renderContent()}
+      <RecentOpponentsContent
+        copy={copy}
+        lobby={lobby}
+        locale={locale}
+        onOpenSession={onOpenSession}
+      />
     </Card>
   );
 }

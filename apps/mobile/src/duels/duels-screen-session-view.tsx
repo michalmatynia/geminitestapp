@@ -14,7 +14,7 @@ import {
   MessageCard,
   NextStepsCard,
 } from './duels-primitives';
-import { type resolveRoundProgress } from './duels-utils';
+import { type resolveRoundProgress } from './utils/duels-ui';
 import { DuelSessionActionsCard } from './DuelSessionActionsCard';
 import { DuelSessionDetailsCard } from './DuelSessionDetailsCard';
 import { DuelSessionPlayersCard } from './DuelSessionPlayersCard';

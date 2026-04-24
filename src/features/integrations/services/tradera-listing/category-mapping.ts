@@ -2,13 +2,8 @@ import type { CategoryMappingWithDetails } from '@/shared/contracts/integrations
 import type { ExternalCategoryRepository } from '@/shared/contracts/integrations/repositories';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import { getTraderaSubCategories, type TraderaPublicApiCredentials } from '../tradera-api-client';
 import { getCategoryMappingRepository } from '../category-mapping-repository';
-
-// Re-export so callers don't need to import from two places
-export type { TraderaPublicApiCredentials };
 
 export type ResolvedTraderaCategoryMapping = {
   externalCategoryId: string;
@@ -560,19 +555,16 @@ export type LeafCategoryResolution = {
  *
  * Resolution order:
  * 1. Local DB leaf descendants (sorted alphabetically by path)
- * 2. On-demand SOAP GetSubCategories call (if credentials provided)
- * 3. Original category unchanged (best-effort fallback)
+ * 2. Original category unchanged (best-effort fallback)
  */
 export const resolveToLeafCategory = async ({
   connectionId,
   externalCategoryId,
   externalCategoryRepo,
-  credentials,
 }: {
   connectionId: string;
   externalCategoryId: string;
   externalCategoryRepo: ExternalCategoryRepository;
-  credentials?: TraderaPublicApiCredentials;
 }): Promise<LeafCategoryResolution> => {
   const noChange: LeafCategoryResolution = {
     resolvedExternalCategoryId: externalCategoryId,
@@ -605,31 +597,6 @@ export const resolveToLeafCategory = async ({
       resolvedPath: first.path,
       originalExternalCategoryId: externalCategoryId,
     };
-  }
-
-  // No local leaves — try on-demand SOAP fetch
-  if (credentials) {
-    try {
-      const subcategories = await getTraderaSubCategories(externalCategoryId, credentials);
-      if (subcategories.length > 0) {
-        subcategories.sort((a, b) => a.name.localeCompare(b.name));
-        const first = subcategories[0]!;
-        return {
-          resolvedExternalCategoryId: first.id,
-          autoResolved: true,
-          resolvedName: first.name,
-          resolvedPath: null,
-          originalExternalCategoryId: externalCategoryId,
-        };
-      }
-    } catch (error) {
-      void ErrorSystem.captureException(error, {
-        service: 'tradera-category-mapping',
-        action: 'resolveToLeafCategory.onDemandSoap',
-        connectionId,
-        externalCategoryId,
-      });
-    }
   }
 
   // Best-effort fallback — use original non-leaf

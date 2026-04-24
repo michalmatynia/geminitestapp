@@ -4,7 +4,7 @@ import { z } from 'zod';
  * Marketplace sync DTOs
  */
 
-export const TRADERA_CATEGORY_FETCH_METHODS = ['playwright', 'playwright_listing_form', 'soap'] as const;
+export const TRADERA_CATEGORY_FETCH_METHODS = ['playwright', 'playwright_listing_form'] as const;
 export type TraderaCategoryFetchMethod = (typeof TRADERA_CATEGORY_FETCH_METHODS)[number];
 export const traderaCategoryFetchMethodSchema = z.enum(TRADERA_CATEGORY_FETCH_METHODS);
 

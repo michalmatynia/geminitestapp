@@ -55,7 +55,7 @@ export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   allowSimulatedSuccess: false,
   listingFormUrl: TRADERA_DIRECT_LISTING_FORM_URL,
   selectorProfile: 'default',
-  categoryFetchMethod: 'playwright',
+  categoryFetchMethod: 'playwright_listing_form',
 };
 
 const toBoolean = (value: string | null | undefined, fallback: boolean): boolean => {

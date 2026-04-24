@@ -69,7 +69,7 @@ describe('marketplace categories fetch handler', () => {
       allowSimulatedSuccess: false,
       listingFormUrl: 'https://www.tradera.com/en/selling/new',
       selectorProfile: 'default',
-      categoryFetchMethod: 'playwright',
+      categoryFetchMethod: 'playwright_listing_form',
     });
     getIntegrationRepositoryMock.mockResolvedValue({
       getConnectionById: getConnectionByIdMock,
@@ -168,7 +168,7 @@ describe('marketplace categories fetch handler', () => {
       createdAt: new Date(0).toISOString(),
       updatedAt: null,
     });
-    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([]);
+    fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([]);
 
     const request = new NextRequest('http://localhost/api/marketplace/categories/fetch', {
       method: 'POST',
@@ -188,8 +188,8 @@ describe('marketplace categories fetch handler', () => {
     await expect(response.json()).resolves.toEqual({
       fetched: 0,
       total: 0,
-      message: 'No categories found in Tradera public taxonomy pages.',
-      source: 'Tradera public taxonomy pages',
+      message: 'No categories found in Tradera listing form picker.',
+      source: 'Tradera listing form picker',
       categoryStats: {
         rootCount: 0,
         withParentCount: 0,
@@ -235,7 +235,7 @@ describe('marketplace categories fetch handler', () => {
       createdAt: new Date(0).toISOString(),
       updatedAt: null,
     });
-    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
+    fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([
       { id: 'cat-1', name: 'Category 1', parentId: '0' },
     ]);
     syncFromBaseMock.mockRejectedValue(new Error('mongo write failed'));
@@ -268,7 +268,7 @@ describe('marketplace categories fetch handler', () => {
         name: 'Category 1',
         parentId: '0',
         metadata: {
-          categoryFetchSource: 'Tradera public taxonomy pages',
+          categoryFetchSource: 'Tradera listing form picker',
         },
       },
     ]);
@@ -335,6 +335,7 @@ describe('marketplace categories fetch handler', () => {
       method: 'POST',
       body: JSON.stringify({
         connectionId: 'conn-1',
+        categoryFetchMethod: 'playwright',
       }),
       headers: {
         'content-type': 'application/json',
@@ -343,7 +344,7 @@ describe('marketplace categories fetch handler', () => {
 
     await expect(postHandler(request, createContext())).rejects.toMatchObject({
       message:
-        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch or configure Tradera App ID and App Key to use the SOAP API.',
+        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.',
       httpStatus: 422,
       code: 'UNPROCESSABLE_ENTITY',
       meta: {

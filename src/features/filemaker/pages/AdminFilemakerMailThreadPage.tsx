@@ -95,6 +95,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const rawRecentQuery = searchParams.get('recentQuery');
   const rawSearchQuery = searchParams.get('searchQuery');
   const rawSearchAccountId = searchParams.get('searchAccountId');
+  const rawSearchContextAccountId = searchParams.get('searchContextAccountId');
   const recentMailboxFilter =
     originPanel === 'recent' && rawRecentMailboxFilter ? rawRecentMailboxFilter : null;
   const recentUnreadOnly = originPanel === 'recent' ? rawRecentUnreadOnly : false;
@@ -103,10 +104,17 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
   const searchAccountId =
     originPanel === 'search' && rawSearchAccountId === 'all' ? 'all' : null;
   const isGlobalSearchContext = searchAccountId === 'all';
+  const persistedSearchContextAccountId =
+    originPanel === 'search' &&
+    !isGlobalSearchContext &&
+    rawSearchContextAccountId &&
+    rawSearchContextAccountId !== accountId
+      ? rawSearchContextAccountId
+      : null;
   const searchContextAccountId = originPanel === 'search'
     ? isGlobalSearchContext
       ? null
-      : accountId
+      : persistedSearchContextAccountId ?? accountId
     : null;
   const backLabel =
     originPanel === 'recent'
@@ -141,7 +149,8 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
       rawRecentUnreadOnly === recentUnreadOnly &&
       (rawRecentQuery ?? null) === recentQuery &&
       (rawSearchQuery ?? null) === searchQuery &&
-      (rawSearchAccountId ?? null) === searchAccountId
+      (rawSearchAccountId ?? null) === searchAccountId &&
+      (rawSearchContextAccountId ?? null) === persistedSearchContextAccountId
     ) {
       return;
     }
@@ -155,6 +164,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
               recentMailboxFilter,
               recentUnreadOnly,
               recentQuery,
+              searchContextAccountId: persistedSearchContextAccountId,
               searchAccountId,
               searchQuery,
             })
@@ -168,10 +178,12 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     rawRecentQuery,
     rawRecentUnreadOnly,
     rawSearchAccountId,
+    rawSearchContextAccountId,
     rawSearchQuery,
     recentMailboxFilter,
     recentQuery,
     recentUnreadOnly,
+    persistedSearchContextAccountId,
     router,
     searchAccountId,
     searchQuery,
@@ -344,6 +356,7 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                                                   recentMailboxFilter,
                                                   recentUnreadOnly,
                                                   recentQuery,
+                                                  searchContextAccountId: persistedSearchContextAccountId,
                                                   searchAccountId: isGlobalSearchContext ? 'all' : null,
                                                   searchQuery,
                                                 })

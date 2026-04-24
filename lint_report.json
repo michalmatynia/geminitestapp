@@ -1,0 +1,4 @@
+
+> libapp2@0.1.0 lint
+> cross-env NODE_OPTIONS=--max-old-space-size=8192 eslint src --no-error-on-unmatched-pattern --format json
+

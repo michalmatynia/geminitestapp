@@ -614,15 +614,105 @@ describe('TraderaParameterMappingPage', () => {
         /Synced Tradera category tree: Tradera public taxonomy pages\. Loaded 2 categories, 2 leaf categories, max depth 1\./i
       )
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        /This tree still comes from the shallow public taxonomy pages\. Re-fetch Tradera categories in Category Mapper using Listing form picker or SOAP API/i
-      )
-    ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+        /This tree still comes from the shallow public taxonomy pages\. Re-fetch Tradera categories in Category Mapper using Listing form picker/i
+        )
+      ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
       'href',
       '/admin/integrations/marketplaces/category-mapper?marketplace=tradera&connectionId=connection-1'
     );
+  });
+
+  it('still offers category resync when the Tradera tree comes from public taxonomy pages', () => {
+    useExternalCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: 'external-1',
+          externalId: 'cat-accessories',
+          name: 'Accessories',
+          path: 'Accessories',
+          isLeaf: false,
+          depth: 0,
+          metadata: {
+            categoryFetchSource: 'Tradera public taxonomy pages',
+          },
+        },
+        {
+          id: 'external-2',
+          externalId: 'cat-patches',
+          name: 'Patches & pins',
+          path: 'Accessories > Patches & pins',
+          isLeaf: false,
+          depth: 1,
+          metadata: {
+            categoryFetchSource: 'Tradera public taxonomy pages',
+          },
+        },
+        {
+          id: 'external-3',
+          externalId: 'cat-pins',
+          name: 'Pins',
+          path: 'Accessories > Patches & pins > Pins',
+          isLeaf: true,
+          depth: 2,
+          metadata: {
+            categoryFetchSource: 'Tradera public taxonomy pages',
+          },
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<TraderaParameterMappingPage />);
+
+      expect(
+        screen.getByText(
+        /This tree comes from the public taxonomy pages\. If Tradera category matches still feel too broad, sync Tradera categories again using Listing form picker/i
+        )
+      ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sync Tradera Categories' })).toBeInTheDocument();
+  });
+
+  it('warns when the synced Tradera tree is legacy and only reaches shallow levels', () => {
+    useExternalCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: 'external-1',
+          externalId: 'cat-collectibles',
+          name: 'Collectibles',
+          path: 'Collectibles',
+          isLeaf: true,
+          depth: 0,
+          metadata: null,
+        },
+        {
+          id: 'external-2',
+          externalId: 'cat-pins',
+          name: 'Pins',
+          path: 'Collectibles > Pins',
+          isLeaf: true,
+          depth: 1,
+          metadata: null,
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<TraderaParameterMappingPage />);
+
+    expect(
+      screen.getByText(
+        /Synced Tradera category tree: legacy \/ unknown source\. Loaded 2 categories, 2 leaf categories, max depth 1\./i
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /This tree appears to be legacy or missing source metadata and only reaches shallow levels\. Sync Tradera categories again using Listing form picker/i
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sync Tradera Categories' })).toBeInTheDocument();
   });
 
   it('can sync Tradera categories directly from the shallow-tree warning', async () => {

@@ -5,7 +5,6 @@ import { useState } from 'react';
 import {
   is1688IntegrationSlug,
   isVintedIntegrationSlug,
-  isTraderaApiIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -56,13 +55,12 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
 
   const integrationSlug = activeIntegration.slug;
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
-  const isTraderaApi = isTraderaApiIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
   const is1688 = is1688IntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
-  const showPlaywright = (isTradera && !isTraderaApi) || isVinted || is1688;
+  const showPlaywright = isTradera || isVinted || is1688;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
   const activeConnection =

@@ -71,6 +71,42 @@ export const formatTraderaDuplicateMatchStrategy = (
   }
 };
 
+export const formatTraderaStatusVerificationSection = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'active':
+      return 'Active listings';
+    case 'unsold':
+      return 'Unsold items';
+    case 'sold':
+      return 'Sold items';
+    case 'public_listing':
+      return 'Public listing page';
+    default:
+      return formatListValue(value);
+  }
+};
+
+export const formatTraderaStatusVerificationStrategy = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'title+description':
+      return 'Exact title + description';
+    case 'title+product-id':
+      return 'Exact title + product ID';
+    case 'direct-listing-page-missing':
+      return 'Direct listing page missing';
+    case 'direct-listing-page-reachable':
+      return 'Direct listing page reachable';
+    case 'seller-sections-miss':
+      return 'Seller sections miss';
+    default:
+      return formatListValue(value);
+  }
+};
+
 export const resolveTraderaStatusBadge = (
   status: string | null | undefined,
   duplicateLinked: boolean | null | undefined
@@ -144,6 +180,13 @@ export const resolveTraderaExecutionSummary = (
   duplicateSearchTitle: string | null;
   duplicateIgnoredNonExactCandidateCount: number | null;
   duplicateIgnoredCandidateTitles: string[];
+  checkedStatus: string | null;
+  verificationSection: string | null;
+  verificationMatchStrategy: string | null;
+  verificationRawStatusTag: string | null;
+  verificationMatchedProductId: string | null;
+  verificationSearchTitle: string | null;
+  verificationCandidateCount: number | null;
   shippingCondition: string | null;
   shippingPriceEur: number | null;
   imageInputSource: string | null;
@@ -259,6 +302,26 @@ export const resolveTraderaExecutionSummary = (
             .filter((value): value is string => typeof value === 'string')
             .slice(0, 5)
         : [],
+    checkedStatus:
+      readString(metadata['checkedStatus']) ?? readString(rawResult['status']),
+    verificationSection:
+      readString(metadata['verificationSection']) ??
+      readString(rawResult['verificationSection']),
+    verificationMatchStrategy:
+      readString(metadata['verificationMatchStrategy']) ??
+      readString(rawResult['verificationMatchStrategy']),
+    verificationRawStatusTag:
+      readString(metadata['verificationRawStatusTag']) ??
+      readString(rawResult['verificationRawStatusTag']),
+    verificationMatchedProductId:
+      readString(metadata['verificationMatchedProductId']) ??
+      readString(rawResult['verificationMatchedProductId']),
+    verificationSearchTitle:
+      readString(metadata['verificationSearchTitle']) ??
+      readString(rawResult['verificationSearchTitle']),
+    verificationCandidateCount:
+      readNumber(metadata['verificationCandidateCount']) ??
+      readNumber(rawResult['verificationCandidateCount']),
     shippingCondition: readString(metadata['shippingCondition']),
     shippingPriceEur: readNumber(metadata['shippingPriceEur']),
     imageInputSource: readString(metadata['imageInputSource']),

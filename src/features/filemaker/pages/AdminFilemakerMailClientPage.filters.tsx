@@ -19,7 +19,7 @@ type MailClientDashboardFiltersProps = {
   onAccountIdChange: (accountId: string) => void;
   onQueryChange: (value: string) => void;
   onScopeChange: (value: MailClientDashboardScope) => void;
-  onClearFilters: () => void;
+  onClearQuery: () => void;
   visibleAccountCount: number;
   visibleAttentionCount: number;
   totalAccountCount: number;
@@ -97,7 +97,7 @@ function MailClientDashboardFilters({
   onAccountIdChange,
   onQueryChange,
   onScopeChange,
-  onClearFilters,
+  onClearQuery,
   visibleAccountCount,
   visibleAttentionCount,
   totalAccountCount,
@@ -141,7 +141,7 @@ function MailClientDashboardFilters({
         <SearchInput
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
-          onClear={onClearFilters}
+          onClear={onClearQuery}
           placeholder='Filter mailboxes and recent threads...'
           aria-label='Filter mailboxes and recent threads'
           variant='subtle'

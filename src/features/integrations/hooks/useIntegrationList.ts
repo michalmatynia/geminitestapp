@@ -13,7 +13,6 @@ type IntegrationListState = {
   integrationSlugs: Integration['slug'][];
   hasIntegrations: boolean;
   traderaDefinition: IntegrationDefinition | null;
-  traderaApiDefinition: IntegrationDefinition | null;
   allegroDefinition: IntegrationDefinition | null;
   vintedDefinition: IntegrationDefinition | null;
   scanner1688Definition: IntegrationDefinition | null;
@@ -29,8 +28,6 @@ export function useIntegrationList(): IntegrationListState {
 
   const traderaDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'tradera') ?? null;
-  const traderaApiDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'tradera-api') ?? null;
   const allegroDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'allegro') ?? null;
   const vintedDefinition =
@@ -48,7 +45,6 @@ export function useIntegrationList(): IntegrationListState {
     integrationSlugs,
     hasIntegrations,
     traderaDefinition,
-    traderaApiDefinition,
     allegroDefinition,
     vintedDefinition,
     scanner1688Definition,

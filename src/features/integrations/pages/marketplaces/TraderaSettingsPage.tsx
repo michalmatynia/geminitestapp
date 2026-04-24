@@ -308,7 +308,7 @@ export default function TraderaSettingsPage(): React.JSX.Element {
 
             <FormField
               label='Category Fetch Method'
-              description='Sequencer used when fetching Tradera categories for this connection.'
+              description='Default source used when syncing Tradera categories. Listing form picker is the recommended browser default, with public taxonomy pages available as a fallback.'
             >
               <Select
                 value={categoryFetchMethod}
@@ -319,14 +319,11 @@ export default function TraderaSettingsPage(): React.JSX.Element {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='playwright'>
-                    Public taxonomy pages (Playwright)
-                  </SelectItem>
                   <SelectItem value='playwright_listing_form'>
                     Listing form picker (Playwright, requires auth)
                   </SelectItem>
-                  <SelectItem value='soap'>
-                    Tradera SOAP API (requires App ID &amp; Key)
+                  <SelectItem value='playwright'>
+                    Public taxonomy pages (Playwright)
                   </SelectItem>
                 </SelectContent>
               </Select>

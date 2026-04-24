@@ -222,34 +222,73 @@ export const buildTraderaCheckStatusScript = (
       return;
     }
 
+    const directVerification = await verifyDirectListingStatus();
+
+    if (directVerification?.canonicalStatus === 'removed') {
+      updateStep(
+        'resolve_status',
+        'success',
+        'The listing was not found in seller sections and the public listing page confirmed it is no longer available.'
+      );
+
+      if (log) {
+        log('tradera.check_status.status_detected', {
+          status: 'removed',
+          rawStatusTag: directVerification.rawStatusTag,
+          verificationSection: directVerification.sectionId,
+          verificationMatchStrategy: directVerification.matchStrategy,
+          finalUrl: directVerification.listingUrl || listingUrl,
+        });
+      }
+
+      updateStep('browser_close', 'success', 'Browser was closed.');
+      emit('result', {
+        publishVerified: false,
+        listingUrl: directVerification.listingUrl || listingUrl,
+        externalListingId: directVerification.listingId || externalListingId,
+        status: 'removed',
+        verificationSection: directVerification.sectionId,
+        verificationMatchStrategy: directVerification.matchStrategy,
+        verificationRawStatusTag: directVerification.rawStatusTag,
+        verificationMatchedProductId: null,
+        verificationSearchTitle: resolvedSearchTitle,
+        verificationCandidateCount: directVerification.candidateCount,
+        executionSteps,
+      });
+      return;
+    }
+
     updateStep(
       'resolve_status',
       'success',
-      'The listing was not found in Active listings, Unsold items, or Your sold items, so it was treated as removed.'
+      directVerification
+        ? 'The listing was not found in seller sections, but the public listing page was still reachable, so the final status remains unknown.'
+        : 'The listing was not found in seller sections and Tradera did not provide enough evidence to confirm removal, so the final status remains unknown.'
     );
 
     if (log) {
       log('tradera.check_status.status_detected', {
-        status: 'removed',
-        rawStatusTag: 'removed',
-        verificationSection: null,
-        verificationMatchStrategy: null,
-        finalUrl: listingUrl,
+        status: 'unknown',
+        rawStatusTag: directVerification?.rawStatusTag || 'unknown',
+        verificationSection: directVerification?.sectionId || null,
+        verificationMatchStrategy: directVerification?.matchStrategy || 'seller-sections-miss',
+        finalUrl: directVerification?.listingUrl || listingUrl,
       });
     }
 
     updateStep('browser_close', 'success', 'Browser was closed.');
     emit('result', {
       publishVerified: false,
-      listingUrl,
-      externalListingId,
-      status: 'removed',
-      verificationSection: null,
-      verificationMatchStrategy: null,
-      verificationRawStatusTag: 'removed',
+      listingUrl: directVerification?.listingUrl || listingUrl,
+      externalListingId: directVerification?.listingId || externalListingId,
+      status: 'unknown',
+      verificationSection: directVerification?.sectionId || null,
+      verificationMatchStrategy:
+        directVerification?.matchStrategy || 'seller-sections-miss',
+      verificationRawStatusTag: directVerification?.rawStatusTag || 'unknown',
       verificationMatchedProductId: null,
       verificationSearchTitle: resolvedSearchTitle,
-      verificationCandidateCount: 0,
+      verificationCandidateCount: directVerification?.candidateCount ?? 0,
       executionSteps,
     });
   } catch (err) {

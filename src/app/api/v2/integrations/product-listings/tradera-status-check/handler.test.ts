@@ -48,8 +48,8 @@ describe('integrations product-listings tradera-status-check handler', () => {
         slug: 'tradera',
       },
       {
-        id: 'integration-tradera-api',
-        slug: 'tradera-api',
+        id: 'integration-base',
+        slug: 'baselinker',
       },
     ]);
     getListingsByProductIdsMock.mockResolvedValue([
@@ -63,10 +63,10 @@ describe('integrations product-listings tradera-status-check handler', () => {
         marketplaceData: null,
       },
       {
-        id: 'listing-api-2',
+        id: 'listing-base-2',
         productId: 'product-2',
-        integrationId: 'integration-tradera-api',
-        connectionId: 'connection-tradera-api-1',
+        integrationId: 'integration-base',
+        connectionId: 'connection-base-1',
         status: 'active',
         listedAt: '2026-04-02T10:00:00.000Z',
         marketplaceData: null,
@@ -165,6 +165,69 @@ describe('integrations product-listings tradera-status-check handler', () => {
           productId: 'product-4',
           listingId: null,
           status: 'skipped',
+        }),
+      ],
+    });
+  });
+
+  it('queues the explicitly targeted listing when batch targets include listing ids', async () => {
+    getListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-browser-old',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-browser',
+        connectionId: 'connection-tradera-1',
+        status: 'active',
+        listedAt: '2026-04-01T10:00:00.000Z',
+        marketplaceData: null,
+      },
+      {
+        id: 'listing-browser-target',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-browser',
+        connectionId: 'connection-tradera-1',
+        status: 'ended',
+        listedAt: '2026-04-03T10:00:00.000Z',
+        marketplaceData: null,
+      },
+    ]);
+
+    const response = await postHandler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({
+          targets: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-target',
+            },
+          ],
+        }),
+        headers: {
+          'content-type': 'application/json',
+        },
+      }) as never,
+      {} as never
+    );
+
+    const payload = await response.json();
+
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith({
+      listingId: 'listing-browser-target',
+      action: 'check_status',
+      source: 'manual',
+    });
+    expect(payload).toMatchObject({
+      total: 1,
+      queued: 1,
+      alreadyQueued: 0,
+      skipped: 0,
+      failed: 0,
+      results: [
+        expect.objectContaining({
+          productId: 'product-1',
+          listingId: 'listing-browser-target',
+          status: 'queued',
         }),
       ],
     });

@@ -94,6 +94,12 @@ import {
 } from './product-scans-service.helpers.amazon';
 
 import {
+  amazonScanDiagnosticArtifact,
+  collectAmazonScanRunDiagnosticArtifacts,
+  createAmazonScanDiagnosticEmitter,
+  resolveAmazonScanDiagnosticCapture,
+} from './product-scan-amazon-diagnostics';
+import {
   synchronizeAmazonCaptchaRequired,
 } from './product-scans-sync-amazon-captcha';
 import {
@@ -269,10 +275,7 @@ const retryAmazonScanWithFallbackProviderAfterNoCandidates = async (input: {
         }),
         browserEngine: 'chromium',
         ...scannerRuntimeOptions,
-        capture: {
-          screenshot: true,
-          html: true,
-        },
+        capture: resolveAmazonScanDiagnosticCapture(input.scan.rawResult),
         preventNewPages: true,
       },
       ownerUserId: input.scan.updatedBy?.trim() || null,
@@ -330,6 +333,8 @@ const retryAmazonScanWithFallbackProviderAfterNoCandidates = async (input: {
           manualVerificationTimeoutMs,
           previousRunId: input.engineRunId,
           previousResult: input.resultValue,
+          recordDiagnostics:
+            resolveAmazonScanDiagnosticCapture(input.scan.rawResult).trace === true,
           ...input.requestedStepSequenceInput,
         }),
         providerFallback: true,
@@ -396,6 +401,29 @@ export async function synchronizeAmazonProductScan(
 
     const { resultValue, finalUrl } = resolvePlaywrightEngineRunOutputs(run.result);
     const parsedResult = parseAmazonScanRuntimeResult(resultValue);
+    const diagnostics = createAmazonScanDiagnosticEmitter(scan);
+    if (diagnostics.enabled) {
+      const runArtifacts = await collectAmazonScanRunDiagnosticArtifacts(run);
+      await diagnostics.emit('sync.enter', {
+        'run-metadata': amazonScanDiagnosticArtifact.json({
+          engineRunId,
+          status: run.status,
+          startedAt: run.startedAt,
+          completedAt: run.completedAt,
+          finalUrl,
+        }),
+        'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+        'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+        'scan-snapshot': amazonScanDiagnosticArtifact.json({
+          id: scan.id,
+          productId: scan.productId,
+          status: scan.status,
+          provider: scan.provider,
+          rawResult: scan.rawResult,
+        }),
+        ...runArtifacts,
+      });
+    }
     const currentAmazonRuntimeKey = resolveAmazonScanRuntimeKey(scan);
     const currentAmazonRuntimeAction = await resolveAmazonScanRuntimeAction(scan);
     const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
@@ -431,6 +459,13 @@ export async function synchronizeAmazonProductScan(
         activeRunIsHeadless;
 
       if (shouldRelaunchCaptchaRun) {
+        if (diagnostics.enabled) {
+          await diagnostics.emit('captcha.detected', {
+            'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+            'active-run-diagnostics': amazonScanDiagnosticArtifact.json(activeRunDiagnostics),
+            'runtime-posture': amazonScanDiagnosticArtifact.json(runtimePosture ?? null),
+          });
+        }
         return await synchronizeAmazonCaptchaRequired({
           scan,
           run,
@@ -561,6 +596,13 @@ export async function synchronizeAmazonProductScan(
     }
 
     if (parsedResult.status === 'captcha_required') {
+      if (diagnostics.enabled) {
+        await diagnostics.emit('captcha.detected', {
+          'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+          'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+          reason: amazonScanDiagnosticArtifact.text('parsedResult.status === "captcha_required"'),
+        });
+      }
       return await synchronizeAmazonCaptchaRequired({
         scan,
         run,
@@ -598,6 +640,13 @@ export async function synchronizeAmazonProductScan(
           completedAt: run.completedAt ?? new Date().toISOString(),
         });
       }
+      if (diagnostics.enabled) {
+        await diagnostics.emit('triage.evaluated', {
+          'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+          'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+          'existing-evaluation': amazonScanDiagnosticArtifact.json(existingAmazonEvaluation),
+        });
+      }
       return await synchronizeAmazonTriageReady({
         scan,
         run,
@@ -610,6 +659,14 @@ export async function synchronizeAmazonProductScan(
     }
 
     if (parsedResult.status === 'probe_ready') {
+      if (diagnostics.enabled) {
+        await diagnostics.emit('probe.evaluated', {
+          'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+          'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+          'persisted-probe': amazonScanDiagnosticArtifact.json(persistedAmazonProbe),
+          'existing-evaluation': amazonScanDiagnosticArtifact.json(existingAmazonEvaluation),
+        });
+      }
       return await synchronizeAmazonProbeReady({
         scan,
         run,
@@ -623,6 +680,14 @@ export async function synchronizeAmazonProductScan(
     }
 
     if (parsedResult.status === 'no_match') {
+      if (diagnostics.enabled) {
+        await diagnostics.emit('no_match', {
+          'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+          'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+          'persisted-probe': amazonScanDiagnosticArtifact.json(persistedAmazonProbe),
+          'existing-evaluation': amazonScanDiagnosticArtifact.json(existingAmazonEvaluation),
+        });
+      }
       return await persistSynchronizedScan(scan, {
         engineRunId,
         status: 'no_match',
@@ -669,6 +734,16 @@ export async function synchronizeAmazonProductScan(
         parsedResult.message || collectPlaywrightEngineRunFailureMessages(run)[0],
         `${resolveAmazonRuntimeOperationLabel(currentAmazonRuntimeKey)} failed.`
       );
+      if (diagnostics.enabled) {
+        await diagnostics.emit('failed', {
+          'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+          'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+          'failure-messages': amazonScanDiagnosticArtifact.json(
+            collectPlaywrightEngineRunFailureMessages(run)
+          ),
+          'failure-message': amazonScanDiagnosticArtifact.text(failureMessage),
+        });
+      }
       return await persistSynchronizedScan(scan, {
         engineRunId,
         status: 'failed',
@@ -689,6 +764,14 @@ export async function synchronizeAmazonProductScan(
       });
     }
 
+    if (diagnostics.enabled) {
+      await diagnostics.emit('matched', {
+        'raw-engine-result': amazonScanDiagnosticArtifact.json(resultValue),
+        'parsed-result': amazonScanDiagnosticArtifact.json(parsedResult),
+        'persisted-probe': amazonScanDiagnosticArtifact.json(persistedAmazonProbe),
+        'existing-evaluation': amazonScanDiagnosticArtifact.json(existingAmazonEvaluation),
+      });
+    }
     const product = await productService.getProductById(scan.productId);
     if (!product) {
       const message = 'Product not found while finalizing the Amazon scan.';
@@ -885,10 +968,7 @@ export async function synchronizeAmazonProductScan(
                 }),
                 browserEngine: 'chromium',
                 ...fallbackScannerRuntimeOptions,
-                capture: {
-                  screenshot: true,
-                  html: true,
-                },
+                capture: resolveAmazonScanDiagnosticCapture(scan.rawResult),
                 preventNewPages: true,
               },
               ownerUserId: scan.updatedBy?.trim() || null,
@@ -946,6 +1026,7 @@ export async function synchronizeAmazonProductScan(
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: extractionEvaluationRawResult,
+                    recordDiagnostics: diagnostics.enabled,
                     ...requestedStepSequenceInput,
                   }),
                   providerFallback: true,
@@ -1019,10 +1100,7 @@ export async function synchronizeAmazonProductScan(
                 }),
                 browserEngine: 'chromium',
                 ...scannerRuntimeOptions,
-                capture: {
-                  screenshot: true,
-                  html: true,
-                },
+                capture: resolveAmazonScanDiagnosticCapture(scan.rawResult),
                 preventNewPages: true,
               },
               ownerUserId: scan.updatedBy?.trim() || null,
@@ -1084,6 +1162,7 @@ export async function synchronizeAmazonProductScan(
                     manualVerificationTimeoutMs,
                     previousRunId: engineRunId,
                     previousResult: extractionEvaluationRawResult,
+                    recordDiagnostics: diagnostics.enabled,
                     ...requestedStepSequenceInput,
                   }),
                   candidateRejectedByAi: true,

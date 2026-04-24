@@ -129,7 +129,7 @@ export const fetchTraderaCategoriesForConnection = async (
 
       if (categories.length === 0) {
         throw new AppError(
-          'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Configure Tradera API credentials (App ID and App Key) on the connection to fetch categories via the Tradera SOAP API instead.',
+          'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Retry category fetch using Listing form picker if it is available for this connection.',
           {
             code: AppErrorCodes.operationFailed,
             httpStatus: 422,
@@ -139,9 +139,9 @@ export const fetchTraderaCategoriesForConnection = async (
               categorySource: result.categorySource,
               diagnostics: result.diagnostics,
               crawlStats: result.crawlStats,
-              recoveryAction: 'tradera_configure_api_credentials',
+              recoveryAction: 'tradera_retry_alternate_category_fetch',
               recoveryMessage:
-                'Add Tradera API App ID and App Key to this connection, then retry category fetch.',
+                'Retry category fetch using Listing form picker if it is available for this connection.',
             },
             expected: true,
           }

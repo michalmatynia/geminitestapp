@@ -171,6 +171,71 @@ describe('AdminFilemakerMail pages compose flows', () => {
     });
   });
 
+  it('preserves focused search context when compose sends from a fallback account', async () => {
+    const { AdminFilemakerMailComposePage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailComposePage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'panel') return 'search';
+      if (key === 'searchQuery') return 'billing';
+      if (key === 'searchContextAccountId') return 'account-2';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({ accounts: mockAccounts });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: mockFolders });
+      }
+      if (url.startsWith('/api/filemaker/mail/threads?')) {
+        return jsonResponse({ threads: [] });
+      }
+      if (url === '/api/filemaker/mail/send' && init?.method === 'POST') {
+        return jsonResponse({ message: { threadId: 'thread-201' } }, 201);
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailComposePage />);
+
+    await screen.findByText(/Sending from:/);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to Search' }));
+    const backHref = String(routerPushMock.mock.calls.at(-1)?.[0] ?? '');
+    const backUrl = new URL(backHref, 'http://localhost');
+    expect(backUrl.pathname).toBe('/admin/filemaker/mail');
+    expect(backUrl.searchParams.get('panel')).toBe('search');
+    expect(backUrl.searchParams.get('accountId')).toBe('account-2');
+    expect(backUrl.searchParams.get('searchQuery')).toBe('billing');
+
+    fireEvent.change(screen.getByLabelText('Subject'), {
+      target: { value: 'Billing follow-up' },
+    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Jane Doe <jane@example.com>, team@example.com'),
+      {
+        target: { value: 'billing@example.com' },
+      }
+    );
+    fireEvent.change(screen.getByTestId('document-wysiwyg-editor'), {
+      target: { value: '<p>Reply from compose fallback</p>' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Send Email' })[0]!);
+
+    await waitFor(() => {
+      const sentHref = String(routerPushMock.mock.calls.at(-1)?.[0] ?? '');
+      const sentUrl = new URL(sentHref, 'http://localhost');
+      expect(sentUrl.pathname).toBe('/admin/filemaker/mail/threads/thread-201');
+      expect(sentUrl.searchParams.get('accountId')).toBe('account-1');
+      expect(sentUrl.searchParams.get('panel')).toBe('search');
+      expect(sentUrl.searchParams.get('searchQuery')).toBe('billing');
+      expect(sentUrl.searchParams.get('searchContextAccountId')).toBe('account-2');
+    });
+  });
+
   it('loads a forward draft in compose and keeps recent context on send', async () => {
     const { AdminFilemakerMailComposePage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailComposePage'

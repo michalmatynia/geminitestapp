@@ -10,7 +10,6 @@ const {
   loadTraderaSystemSettingsMock,
   runTraderaBrowserListingMock,
   runTraderaBrowserCheckStatusMock,
-  runTraderaApiListingMock,
   resolveEffectiveListingSettingsMock,
   buildRelistPolicyMock,
   captureExceptionMock,
@@ -22,7 +21,6 @@ const {
   loadTraderaSystemSettingsMock: vi.fn(),
   runTraderaBrowserListingMock: vi.fn(),
   runTraderaBrowserCheckStatusMock: vi.fn(),
-  runTraderaApiListingMock: vi.fn(),
   resolveEffectiveListingSettingsMock: vi.fn(),
   buildRelistPolicyMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -54,11 +52,6 @@ vi.mock('./tradera-listing/browser', () => ({
     runTraderaBrowserListingMock(...args) as Promise<unknown>,
   runTraderaBrowserCheckStatus: (...args: unknown[]) =>
     runTraderaBrowserCheckStatusMock(...args) as Promise<unknown>,
-}));
-
-vi.mock('./tradera-listing/api', () => ({
-  runTraderaApiListing: (...args: unknown[]) =>
-    runTraderaApiListingMock(...args) as Promise<unknown>,
 }));
 
 vi.mock('./tradera-listing/settings', () => ({
@@ -242,7 +235,7 @@ describe('processTraderaListingJob', () => {
       listingId: 'listing-1',
       action: 'list',
       source: 'api',
-      jobId: 'job-tradera-api-1',
+      jobId: 'job-tradera-scripted-1',
     });
 
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
@@ -257,7 +250,7 @@ describe('processTraderaListingJob', () => {
       'listing-1',
       expect.objectContaining({
         fields: ['browser_mode:headed'],
-        requestId: 'job-tradera-api-1',
+        requestId: 'job-tradera-scripted-1',
       })
     );
   });
@@ -301,7 +294,7 @@ describe('processTraderaListingJob', () => {
       listingId: 'listing-1',
       action: 'list',
       source: 'api',
-      jobId: 'job-tradera-api-persona-1',
+      jobId: 'job-tradera-scripted-persona-1',
     });
 
     expect(runTraderaBrowserListingMock).toHaveBeenCalledWith(
@@ -716,6 +709,63 @@ describe('processTraderaListingJob', () => {
       })
     );
     expect(appendExportHistoryMock).not.toHaveBeenCalled();
+  });
+
+  it('persists unknown when Tradera cannot confirm removal from seller sections', async () => {
+    const updateListingMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-check-status-unknown',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: vi.fn(),
+        updateListing: updateListingMock,
+        appendExportHistory: vi.fn(),
+      },
+    });
+    runTraderaBrowserCheckStatusMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/1',
+      metadata: {
+        checkedStatus: 'unknown',
+        requestedBrowserMode: 'headed',
+        runId: 'run-check-status-unknown',
+        verificationMatchStrategy: 'seller-sections-miss',
+        verificationRawStatusTag: 'unknown',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-check-status-unknown',
+      action: 'check_status',
+      source: 'manual',
+    });
+
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-check-status-unknown',
+      expect.objectContaining({
+        status: 'unknown',
+        lastStatusCheckAt: expect.any(Date),
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastExecution: expect.objectContaining({
+              action: 'check_status',
+              ok: true,
+              metadata: expect.objectContaining({
+                checkedStatus: 'unknown',
+                verificationMatchStrategy: 'seller-sections-miss',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
   });
 
   it('still honors an explicit headed override for a live status check', async () => {

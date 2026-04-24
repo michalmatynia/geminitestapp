@@ -562,7 +562,10 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
     const requestedSelectorProfile =
       typeof selectorProfileOverride === 'string' ? selectorProfileOverride.trim() : '';
     const requestBody = {
-      productIds: eligibleProductIds,
+      targets: eligibleRows.map((row) => ({
+        productId: row.productId,
+        listingId: row.listing?.id,
+      })),
       ...(requestedSelectorProfile.length > 0
         ? { selectorProfile: requestedSelectorProfile }
         : {}),

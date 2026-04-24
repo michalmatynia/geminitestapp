@@ -88,4 +88,29 @@ describe('CategoryMapperTableHeaderActions', () => {
 
     expect(screen.getByRole('option', { name: 'Listing form picker' })).toBeInTheDocument();
   });
+
+  it('orders Tradera fetch methods with listing form picker first', () => {
+    render(
+      <CategoryMapperTableHeaderActions
+        onFetch={() => {}}
+        isFetching={false}
+        onAutoMatchByName={() => {}}
+        autoMatchDisabled={false}
+        onSave={() => {}}
+        isSaving={false}
+        pendingCount={0}
+        categoryFetchMethod='playwright_listing_form'
+        onCategoryFetchMethodChange={() => {}}
+      />
+    );
+
+    const optionLabels = screen
+      .getAllByRole('option')
+      .map((option) => option.textContent?.trim() ?? '');
+
+    expect(optionLabels).toEqual([
+      'Listing form picker',
+      'Public taxonomy pages',
+    ]);
+  });
 });

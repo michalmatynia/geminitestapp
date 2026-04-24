@@ -34,17 +34,8 @@ import {
   getSelectorRegistryProbeSuggestionTextPreview,
 } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-formatting';
 import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
-import {
-  Badge,
-  Button,
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  useToast,
-} from '@/shared/ui/primitives.public';
+import { useSelectorRegistryProbeSessions } from './selector-registry-probe-sessions/useSelectorRegistryProbeSessions';
+import { useToast } from '@/shared/ui/primitives.public';
 import { buildSelectorRegistryProbeSessionClusters } from './selectorRegistryProbeSessionClustering';
 
 type Props = {
@@ -81,13 +72,22 @@ export function SelectorRegistryProbeSessionsSection({
   showArchived,
   onShowArchivedChange,
 }: Props) {
-  const { toast } = useToast();
-  const saveMutation = useSaveSelectorRegistryEntryMutation();
-  const archiveMutation = useArchiveSelectorRegistryProbeSessionMutation();
-  const restoreMutation = useRestoreSelectorRegistryProbeSessionMutation();
-  const deleteMutation = useDeleteSelectorRegistryProbeSessionMutation();
-  const [selectedKeys, setSelectedKeys] = useState<Record<string, string>>({});
-  const [manuallySelectedKeys, setManuallySelectedKeys] = useState<Record<string, boolean>>({});
+  const {
+    activeSessions,
+    selectedKeys,
+    manuallySelectedKeys,
+    updateSelection,
+    saveMutation,
+    archiveMutation,
+    restoreMutation,
+    deleteMutation,
+  } = useSelectorRegistryProbeSessions(
+    namespace,
+    profile,
+    sessions,
+    promotableEntries,
+    defaultKeysByRole
+  );
   const [bulkPromotingSessionId, setBulkPromotingSessionId] = useState<string | null>(null);
   const [promotingAndArchivingSessionId, setPromotingAndArchivingSessionId] = useState<string | null>(null);
   const [rejectingSessionId, setRejectingSessionId] = useState<string | null>(null);
@@ -699,16 +699,7 @@ export function SelectorRegistryProbeSessionsSection({
                                 <Select
                                   value={selectedKey}
                                   onValueChange={(value) => {
-                                    const nextState =
-                                      applySelectorRegistryProbeCarryForwardManualSelection({
-                                        items: clusterCarryForwardItems,
-                                        selectedKeys,
-                                        manuallySelectedKeys,
-                                        itemId: suggestionKey,
-                                        selectedKey: value,
-                                      });
-                                    setManuallySelectedKeys(nextState.manuallySelectedKeys);
-                                    setSelectedKeys(nextState.selectedKeys);
+                                    updateSelection(suggestionKey, value, clusterCarryForwardItems);
                                   }}
                                 >
                                   <SelectTrigger id={`stored-probe-key-${suggestionKey}`}>

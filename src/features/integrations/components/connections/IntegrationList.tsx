@@ -17,7 +17,6 @@ export function IntegrationList(): React.JSX.Element {
     integrationSlugs,
     hasIntegrations,
     traderaDefinition,
-    traderaApiDefinition,
     allegroDefinition,
     vintedDefinition,
     scanner1688Definition,
@@ -82,14 +81,6 @@ export function IntegrationList(): React.JSX.Element {
                   variant: 'warning' as const,
                   color: 'warning' as const,
                   definition: scanner1688Definition,
-                },
-                {
-                  slug: 'tradera-api',
-                  label: 'Tradera API',
-                  type: 'API',
-                  variant: 'info' as const,
-                  color: 'info' as const,
-                  definition: traderaApiDefinition,
                 },
                 {
                   slug: 'allegro',

@@ -67,6 +67,7 @@ import {
   resolveAmazonTriageEvaluatorConfig,
   resolveAmazonRuntimeActionDefinition,
 } from './product-scans-service.helpers.amazon';
+import { resolveAmazonScanDiagnosticCapture } from './product-scan-amazon-diagnostics';
 
 const amazonScanRuntime = requireProductScanNativeRuntime(AMAZON_PRODUCT_SCAN_PROVIDER);
 
@@ -278,6 +279,7 @@ export async function synchronizeAmazonTriageReady({
         scan.rawResult,
         currentProvider
       );
+      const diagnosticCapture = resolveAmazonScanDiagnosticCapture(scan.rawResult);
       const fallbackRun = await startPlaywrightEngineTask({
         request: {
           runtimeKey: amazonScanRuntime.runtimeKey,
@@ -307,10 +309,7 @@ export async function synchronizeAmazonTriageReady({
           }),
           browserEngine: 'chromium',
           ...scannerRuntimeOptions,
-          capture: {
-            screenshot: true,
-            html: true,
-          },
+          capture: diagnosticCapture,
           preventNewPages: true,
         },
         ownerUserId: scan.updatedBy?.trim() || null,
@@ -338,6 +337,7 @@ export async function synchronizeAmazonTriageReady({
             manualVerificationTimeoutMs,
             previousRunId: engineRunId,
             previousResult: triageRawResult,
+            recordDiagnostics: diagnosticCapture.trace === true,
             ...requestedStepSequenceInput,
           }),
           providerFallback: true,
@@ -413,6 +413,7 @@ export async function synchronizeAmazonTriageReady({
         scan.rawResult,
         currentProvider
       );
+      const diagnosticCapture = resolveAmazonScanDiagnosticCapture(scan.rawResult);
       const continuationRun = await startPlaywrightEngineTask({
         request: {
           runtimeKey: amazonScanRuntime.runtimeKey,
@@ -446,10 +447,7 @@ export async function synchronizeAmazonTriageReady({
           }),
           browserEngine: 'chromium',
           ...scannerRuntimeOptions,
-          capture: {
-            screenshot: true,
-            html: true,
-          },
+          capture: diagnosticCapture,
           preventNewPages: true,
         },
         ownerUserId: scan.updatedBy?.trim() || null,
@@ -477,6 +475,7 @@ export async function synchronizeAmazonTriageReady({
             manualVerificationTimeoutMs,
             previousRunId: engineRunId,
             previousResult: triageRawResult,
+            recordDiagnostics: diagnosticCapture.trace === true,
             ...requestedStepSequenceInput,
           }),
           candidateTriageSelectedUrls: selectedCandidateUrls,

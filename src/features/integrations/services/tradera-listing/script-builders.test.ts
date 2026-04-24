@@ -13,4 +13,15 @@ describe('Tradera script builders', () => {
     expect(script).toContain("id: 'resolve_status'");
     expect(script).toContain('const updateStep = (id, status, message = null) => {');
   });
+
+  it('buildTraderaCheckStatusScript keeps seller-section misses uncertain unless removal is directly verified', () => {
+    const script = buildTraderaCheckStatusScript();
+
+    expect(script).toContain('const directVerification = await verifyDirectListingStatus();');
+    expect(script).toContain("status: 'unknown'");
+    expect(script).toContain("matchStrategy: 'direct-listing-page-missing'");
+    expect(script).not.toContain(
+      'so it was treated as removed.'
+    );
+  });
 });

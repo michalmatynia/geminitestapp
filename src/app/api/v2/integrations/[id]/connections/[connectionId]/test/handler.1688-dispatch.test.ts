@@ -25,10 +25,6 @@ vi.mock('@/features/integrations/server', () => ({
   }),
 }));
 
-vi.mock('./handler.tradera-api', () => ({
-  handleTraderaApiTest: vi.fn(),
-}));
-
 vi.mock('./handler.linkedin', () => ({
   handleLinkedinApiTest: vi.fn(),
 }));

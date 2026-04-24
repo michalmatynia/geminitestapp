@@ -1,5 +1,4 @@
 import { handleLinkedinApiTest } from './handler.linkedin';
-import { handleTraderaApiTest } from './handler.tradera-api';
 import { handleVintedBrowserTest } from './handler.vinted-browser';
 import { handleTraderaBrowserTest } from './handler.tradera-browser';
 import { handle1688BrowserTest } from './handler.1688-browser';
@@ -8,7 +7,6 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   is1688IntegrationSlug,
-  isTraderaApiIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -123,10 +121,6 @@ export async function postTestConnectionHandler(
       },
       { status: 400 }
     );
-  }
-
-  if (isTraderaApiIntegrationSlug(integration.slug)) {
-    return handleTraderaApiTest(ctx);
   }
 
   if (integration.slug === 'linkedin') {

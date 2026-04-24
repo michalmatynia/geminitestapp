@@ -109,11 +109,26 @@ describe('ConnectionFormFields', () => {
     expect((textarea as HTMLTextAreaElement).value).toBe('');
   });
 
-  it('does not show scripted browser controls for Tradera API connections', () => {
-    renderFields('tradera-api');
+  it('explains strict mapped categories versus Tradera automatic category selection', () => {
+    renderFields('tradera');
 
-    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
-    expect(screen.queryByLabelText('Playwright listing script')).toBeNull();
+    const strategySelect = screen.getByLabelText('Category selection strategy');
+
+    expect(screen.getByText('Category mapper (strict mapped category)')).toBeInTheDocument();
+    expect(screen.getByText('Top suggested by Tradera (automatic)')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Uses the synced Category Mapper match and stops the listing if that Tradera category cannot be selected.'
+      )
+    ).toBeInTheDocument();
+
+    fireEvent.change(strategySelect, {
+      target: { value: 'top_suggested' },
+    });
+
+    expect(
+      screen.getByText('Lets Tradera choose the category automatically during listing.')
+    ).toBeInTheDocument();
   });
 
   it('shows optional Vinted credential fields for reusable browser sessions', () => {

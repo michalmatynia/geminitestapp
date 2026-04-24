@@ -238,37 +238,6 @@ describe('useListProductForm', () => {
     expect(onSuccess).toHaveBeenCalled();
   });
 
-  it('skips browser session preflight and default persistence for Tradera API listings', async () => {
-    useListingSelectionMock.mockReturnValue({
-      selectedIntegrationId: 'integration-tradera-api-1',
-      selectedConnectionId: 'conn-tradera-api-1',
-      selectedIntegration: { id: 'integration-tradera-api-1', slug: 'tradera-api' },
-      isBaseComIntegration: false,
-      isTraderaIntegration: true,
-    });
-
-    const onSuccess = vi.fn();
-    const { result } = renderHook(() => useListProductForm('product-1', 'category-1'));
-
-    await act(async () => {
-      await result.current.handleSubmit(onSuccess);
-    });
-
-    await waitFor(() => {
-      expect(createListingMutateAsyncMock).toHaveBeenCalledWith({
-        integrationId: 'integration-tradera-api-1',
-        connectionId: 'conn-tradera-api-1',
-        durationHours: 168,
-        autoRelistEnabled: true,
-        autoRelistLeadMinutes: 30,
-        templateId: 'template-tradera-1',
-      });
-    });
-    expect(preflightTraderaQuickListSessionMock).not.toHaveBeenCalled();
-    expect(updateDefaultTraderaConnectionMutateAsyncMock).not.toHaveBeenCalled();
-    expect(onSuccess).toHaveBeenCalled();
-  });
-
   it('shows a toast and preserves the auth-required message when Tradera quick preflight needs manual verification', async () => {
     preflightTraderaQuickListSessionMock.mockRejectedValue(
       new Error(

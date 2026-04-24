@@ -7,9 +7,8 @@ import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api';
 
 const TRADERA_FETCH_METHOD_OPTIONS: { value: TraderaCategoryFetchMethod; label: string }[] = [
-  { value: 'playwright', label: 'Public taxonomy pages' },
   { value: 'playwright_listing_form', label: 'Listing form picker' },
-  { value: 'soap', label: 'SOAP API' },
+  { value: 'playwright', label: 'Public taxonomy pages' },
 ];
 
 type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {

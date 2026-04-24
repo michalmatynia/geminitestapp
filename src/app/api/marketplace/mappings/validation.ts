@@ -1,7 +1,7 @@
 import { getExternalCategoryRepository, getIntegrationRepository } from '@/features/integrations/server';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
-const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera', 'tradera-api']);
+const TRADERA_MARKETPLACE_SLUGS = new Set(['tradera']);
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';

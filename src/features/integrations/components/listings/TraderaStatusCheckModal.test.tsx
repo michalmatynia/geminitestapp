@@ -200,13 +200,13 @@ describe('TraderaStatusCheckModal', () => {
       if (url.includes('/products/product-2/listings')) {
         return Promise.resolve([
           makeListing({
-            id: 'listing-api-2',
+            id: 'listing-base-2',
             productId: 'product-2',
-            integrationId: 'integration-tradera-api',
+            integrationId: 'integration-base-1',
             integration: {
-              id: 'integration-tradera-api',
-              name: 'Tradera API',
-              slug: 'tradera-api',
+              id: 'integration-base-1',
+              name: 'Base.com',
+              slug: 'baselinker',
             },
           }),
         ]);
@@ -268,9 +268,7 @@ describe('TraderaStatusCheckModal', () => {
     );
 
     await screen.findByText('Product One');
-    expect(
-      screen.getByText('Live check requires a Tradera browser listing.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('No listing')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Check All Live' }));
 
@@ -278,7 +276,16 @@ describe('TraderaStatusCheckModal', () => {
       expect(apiPostMock).toHaveBeenCalledWith(
         '/api/v2/integrations/product-listings/tradera-status-check',
         {
-          productIds: ['product-1', 'product-3'],
+          targets: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-1',
+            },
+            {
+              productId: 'product-3',
+              listingId: 'listing-browser-3',
+            },
+          ],
         }
       );
     });
@@ -357,7 +364,12 @@ describe('TraderaStatusCheckModal', () => {
       expect(apiPostMock).toHaveBeenCalledWith(
         '/api/v2/integrations/product-listings/tradera-status-check',
         {
-          productIds: ['product-1'],
+          targets: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-1',
+            },
+          ],
           selectorProfile: 'profile-market-a',
         }
       );
@@ -807,6 +819,17 @@ describe('TraderaStatusCheckModal', () => {
           marketplaceData: {
             tradera: {
               pendingExecution: null,
+              lastExecution: {
+                action: 'check_status',
+                metadata: {
+                  checkedStatus: 'ended',
+                  verificationSection: 'unsold',
+                  verificationMatchStrategy: 'title+product-id',
+                  verificationRawStatusTag: 'ended',
+                  verificationMatchedProductId: 'BASE-1',
+                  verificationCandidateCount: 1,
+                },
+              },
             },
           },
         }),
@@ -853,6 +876,16 @@ describe('TraderaStatusCheckModal', () => {
       { timeout: 5_000 }
     );
     expect(screen.getByText('Ended')).toBeInTheDocument();
+    expect(screen.getByText('Verified in')).toBeInTheDocument();
+    expect(screen.getByText('Unsold items')).toBeInTheDocument();
+    expect(screen.getByText('Match strategy')).toBeInTheDocument();
+    expect(screen.getByText('Exact title + product ID')).toBeInTheDocument();
+    expect(screen.getByText('Tradera tag')).toBeInTheDocument();
+    expect(screen.getAllByText('ended').length).toBeGreaterThan(0);
+    expect(screen.getByText('Matched Product ID')).toBeInTheDocument();
+    expect(screen.getByText('BASE-1')).toBeInTheDocument();
+    expect(screen.getByText('Candidates inspected')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 
   it('renders live check steps while the Tradera status-check run is still active', async () => {
@@ -916,6 +949,47 @@ describe('TraderaStatusCheckModal', () => {
     expect(
       screen.getByText('Searching Unsold listings for the current Tradera item.')
     ).toBeInTheDocument();
+  });
+
+  it('shows persisted unknown verification evidence after a completed status check', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+        status: 'unknown',
+        marketplaceData: {
+          tradera: {
+            lastExecution: {
+              action: 'check_status',
+              metadata: {
+                checkedStatus: 'unknown',
+                verificationSection: 'public_listing',
+                verificationMatchStrategy: 'seller-sections-miss',
+                verificationRawStatusTag: 'unknown',
+                verificationCandidateCount: 0,
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+    expect(screen.getByText('Verified in')).toBeInTheDocument();
+    expect(screen.getByText('Public listing page')).toBeInTheDocument();
+    expect(screen.getByText('Match strategy')).toBeInTheDocument();
+    expect(screen.getByText('Seller sections miss')).toBeInTheDocument();
   });
 
   it('shows linked status and suppresses stale failure UI when a live Tradera run has already duplicate-linked the listing', async () => {

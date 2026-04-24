@@ -1,6 +1,8 @@
 import {
+  buildFilemakerMailComposeHref,
   formatFilemakerMailThreadParticipantsLabel,
 } from '../components/FilemakerMailSidebar.helpers';
+import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount, FilemakerMailFolderSummary, FilemakerMailThread } from '../types';
 
 type MailClientDashboardScope = 'all' | 'attention' | 'healthy';
@@ -117,7 +119,70 @@ const matchesMailClientThreadQuery = (
   return haystack.includes(query);
 };
 
+const buildMailClientComposeHref = ({
+  composeAccountId,
+  dashboardQuery,
+  focusedAccountId,
+}: {
+  composeAccountId: string | null;
+  dashboardQuery: string;
+  focusedAccountId: string | null;
+}): string => {
+  const trimmedDashboardQuery = dashboardQuery.trim();
+  if (trimmedDashboardQuery === '') {
+    return buildFilemakerMailComposeHref({ accountId: composeAccountId });
+  }
+
+  if (focusedAccountId === null) {
+    return buildFilemakerMailComposeHref({
+      accountId: composeAccountId,
+      originPanel: 'search',
+      searchAccountId: 'all',
+      searchQuery: trimmedDashboardQuery,
+    });
+  }
+
+  return buildFilemakerMailComposeHref({
+    accountId: composeAccountId,
+    originPanel: 'search',
+    searchContextAccountId:
+      composeAccountId !== null && composeAccountId !== focusedAccountId ? focusedAccountId : null,
+    searchQuery: trimmedDashboardQuery,
+  });
+};
+
+const buildMailClientSearchHref = ({
+  dashboardQuery,
+  focusedAccountId,
+}: {
+  dashboardQuery: string;
+  focusedAccountId: string | null;
+}): string => {
+  const trimmedDashboardQuery = dashboardQuery.trim();
+
+  return buildFilemakerMailSelectionHref({
+    panel: 'search',
+    accountId: focusedAccountId,
+    searchQuery: trimmedDashboardQuery,
+  });
+};
+
+const buildMailClientWorkspaceHref = ({
+  focusedAccountId,
+}: {
+  focusedAccountId: string | null;
+}): string =>
+  focusedAccountId !== null
+    ? buildFilemakerMailSelectionHref({
+        accountId: focusedAccountId,
+        panel: 'settings',
+      })
+    : '/admin/filemaker/mail';
+
 export {
+  buildMailClientComposeHref,
+  buildMailClientSearchHref,
+  buildMailClientWorkspaceHref,
   getFilemakerMailAccountStatusLabel,
   getFilemakerMailPrimaryFolder,
   groupFilemakerMailFoldersByAccount,

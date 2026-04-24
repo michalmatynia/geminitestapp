@@ -1,5 +1,5 @@
-import { Button, SelectSimple } from '@/shared/ui/primitives.public';
-import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export function DefaultRoleSettings({

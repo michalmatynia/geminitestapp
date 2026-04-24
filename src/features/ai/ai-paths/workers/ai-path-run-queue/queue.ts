@@ -1,5 +1,4 @@
 import {
-  recordRuntimeRunFinished,
   recordRuntimeRunStarted,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { processRun } from '@/features/ai/ai-paths/workers/ai-path-run-processor';
@@ -14,6 +13,15 @@ import {
   JOB_EXECUTION_TIMEOUT_MS,
   LOG_SOURCE,
 } from './config';
+import {
+  AI_PATH_EXECUTION_LEASE_MS,
+  AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+  type AiPathRunRepository,
+  type ClaimedAiPathRun,
+  type ExecutionLeaseResult,
+  recordBlockedLeaseFailure,
+  resolveLeaseFailureDetails,
+} from './lease-failure';
 import { type AiPathRunJobData } from './types';
 import { createDebugQueueLogger } from '../ai-path-run-queue-utils';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -25,14 +33,15 @@ const { log: debugQueueLog, warn: debugQueueWarn } = createDebugQueueLogger(
   process.env['AI_PATHS_QUEUE_DEBUG'] === 'true'
 );
 
-const AI_PATH_EXECUTION_LEASE_RESOURCE_ID = 'ai-paths.run.execution';
-const AI_PATH_EXECUTION_LEASE_MS = Math.max(60_000, JOB_EXECUTION_TIMEOUT_MS || 0, 5 * 60 * 1000);
-
 const resolveQueueWorkerAgentId = (): string => {
-  const agentId = process.env['AI_AGENT_ID']?.trim() ??
-                  process.env['CODEX_AGENT_ID']?.trim() ??
-                  process.env['AGENT_ID']?.trim();
-  return agentId !== null && agentId !== undefined && agentId !== '' ? agentId : `ai-path-run-queue-${process.pid}`;
+  const agentId = [
+    process.env['AI_AGENT_ID'],
+    process.env['CODEX_AGENT_ID'],
+    process.env['AGENT_ID'],
+  ]
+    .map((value) => value?.trim())
+    .find((value): value is string => typeof value === 'string' && value.length > 0);
+  return agentId ?? `ai-path-run-queue-${process.pid}`;
 };
 
 export const enqueuePathRunJob = async (
@@ -42,13 +51,13 @@ export const enqueuePathRunJob = async (
   await queue.enqueue({ runId }, { delay: options.delayMs, jobId: runId });
 };
 
-const jobTimeout = (typeof JOB_EXECUTION_TIMEOUT_MS === 'number' && JOB_EXECUTION_TIMEOUT_MS > 0) ? JOB_EXECUTION_TIMEOUT_MS : undefined;
+const jobTimeout = JOB_EXECUTION_TIMEOUT_MS > 0 ? JOB_EXECUTION_TIMEOUT_MS : undefined;
 
 const handleLease = async (
   runId: string,
-  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
+  repo: AiPathRunRepository,
   ownerAgentId: string
-): Promise<{ run: Awaited<ReturnType<typeof repo.claimRunForProcessing>>; leaseResult: ReturnType<typeof mutateAgentLease> } | null> => {
+): Promise<{ run: ClaimedAiPathRun; leaseResult: ExecutionLeaseResult } | null> => {
   const run = await repo.claimRunForProcessing(runId);
   if (run === null) {
     const latest = await repo.findRunById(runId);
@@ -77,112 +86,109 @@ const handleLease = async (
 };
 
 const handleBlockedLease = async (
-  run: Awaited<ReturnType<typeof getPathRunRepository>> extends infer R ? R extends { claimRunForProcessing: (...args: any[]) => Promise<infer U> } ? U : never : never,
-  leaseResult: ReturnType<typeof mutateAgentLease>,
-  repo: Awaited<ReturnType<typeof getPathRunRepository>>,
+  run: ClaimedAiPathRun,
+  leaseResult: ExecutionLeaseResult,
+  repo: AiPathRunRepository,
   ownerAgentId: string
 ): Promise<void> => {
-      const failedAt = new Date();
-      const failedAtIso = failedAt.toISOString();
-      const conflictingLease = leaseResult.conflictingLease ?? null;
-      const blockingOwnerAgentId = conflictingLease?.ownerAgentId ?? null;
-      const failed = await repo.updateRunIfStatus(run.id, ['running'], {
-        status: 'failed',
-        finishedAt: failedAtIso,
-        errorMessage: 'Run failed: execution lease is already owned by another worker.',
-        meta: {
-          ...(run.meta ?? {}),
-          executionLeaseFailure: {
-            resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
-            scopeId: run.id,
-            requestedBy: ownerAgentId,
-            failedAt: failedAtIso,
-            blockingOwnerAgentId,
-            ownerAgentId: blockingOwnerAgentId,
-            ownerRunId: conflictingLease?.ownerRunId ?? null,
-            leaseId: conflictingLease?.leaseId ?? null,
-            leaseMs: conflictingLease?.leaseMs ?? AI_PATH_EXECUTION_LEASE_MS,
-            expiresAt: conflictingLease?.expiresAt ?? null,
-            resultCode: leaseResult.code,
-          },
-        },
-      });
+  const failedAt = new Date();
+  const failedAtIso = failedAt.toISOString();
+  const { blockingOwnerAgentId, meta } = resolveLeaseFailureDetails(
+    run,
+    leaseResult,
+    ownerAgentId,
+    failedAtIso
+  );
+  const failed = await repo.updateRunIfStatus(run.id, ['running'], {
+    status: 'failed',
+    finishedAt: failedAtIso,
+    errorMessage: 'Run failed: execution lease is already owned by another worker.',
+    meta: {
+      ...(run.meta ?? {}),
+      executionLeaseFailure: meta,
+    },
+  });
 
-      if (failed) {
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'error',
-          message: 'Run failed because execution ownership could not be claimed.',
-          metadata: {
-            leaseResourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
-            leaseScopeId: run.id,
-            requestedBy: ownerAgentId,
-            blockingOwnerAgentId,
-            ownerRunId: conflictingLease?.ownerRunId ?? null,
-            leaseExpiresAt: conflictingLease?.expiresAt ?? null,
-            failedAt: failedAtIso,
-          },
-        });
-        await recordRuntimeRunFinished({
-          runId: run.id,
-          status: 'failed',
-          timestamp: failedAt,
-          durationMs:
-            typeof run.startedAt === 'string' && Number.isFinite(Date.parse(run.startedAt))
-              ? Math.max(0, failedAt.getTime() - Date.parse(run.startedAt))
-              : undefined,
-        });
-        void logSystemEvent({
-          level: 'error',
-          source: LOG_SOURCE,
-          message: `AI-Paths run failed due to lease contention: ${run.pathName ?? run.pathId}`,
-          context: {
-            event: 'run.failed',
-            runId: run.id,
-            pathId: run.pathId,
-            pathName: run.pathName,
-            entityId: run.entityId,
-            blockingOwnerAgentId,
-          },
-        });
-      }
+  if (!failed) return;
+
+  await recordBlockedLeaseFailure({
+    run,
+    repo,
+    failedAt,
+    failedAtIso,
+    blockingOwnerAgentId,
+    conflictingLease: leaseResult.conflictingLease ?? null,
+    ownerAgentId,
+  });
 };
 
-const runQueueJob = async (data: AiPathRunJobData, signal: AbortSignal): Promise<void> => {
-    const repo = await getPathRunRepository();
-    const ownerAgentId = resolveQueueWorkerAgentId();
-    const result = await handleLease(data.runId, repo, ownerAgentId);
-    if (result === null) return;
-    
-    const { run, leaseResult } = result;
+const releaseExecutionLease = (
+  run: ClaimedAiPathRun,
+  leaseResult: ExecutionLeaseResult,
+  ownerAgentId: string
+): void => {
+  mutateAgentLease({
+    action: 'release',
+    resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
+    scopeId: run.id,
+    ownerAgentId,
+    ownerRunId: run.id,
+    leaseId: leaseResult.lease?.leaseId ?? undefined,
+    reason: 'ai-path queue worker finished processing',
+  });
+};
 
-    if (leaseResult.ok === false) {
-      if (run !== null) {
-        await handleBlockedLease(run, leaseResult, repo, ownerAgentId);
-        debugQueueLog(
-            `[aiPathRunQueue] Run ${data.runId} blocked on execution lease owned by ${leaseResult.conflictingLease?.ownerAgentId ?? 'unknown-owner'}`
-        );
-      }
-      return;
-    }
+const processClaimedRun = async (
+  run: ClaimedAiPathRun,
+  leaseResult: ExecutionLeaseResult,
+  ownerAgentId: string,
+  signal?: AbortSignal
+): Promise<void> => {
+  try {
+    await recordRuntimeRunStarted({ runId: run.id });
+    await processRun(run, signal);
+  } finally {
+    releaseExecutionLease(run, leaseResult, ownerAgentId);
+  }
+};
 
-    try {
-      if (run === null) throw new Error('Run is null');
-      await recordRuntimeRunStarted({ runId: run.id });
-      await processRun(run, signal);
-    } finally {
-      if (run !== null) {
-        mutateAgentLease({
-          action: 'release',
-          resourceId: AI_PATH_EXECUTION_LEASE_RESOURCE_ID,
-          scopeId: run.id,
-          ownerAgentId,
-          ownerRunId: run.id,
-          leaseId: leaseResult.lease?.leaseId ?? undefined,
-          reason: 'ai-path queue worker finished processing',
-        });
-      }
-    }
+type QueueLeaseResultInput = {
+  data: AiPathRunJobData;
+  result: { run: ClaimedAiPathRun; leaseResult: ExecutionLeaseResult };
+  repo: AiPathRunRepository;
+  ownerAgentId: string;
+  signal?: AbortSignal;
+};
+
+const handleQueueLeaseResult = async ({
+  data,
+  result,
+  repo,
+  ownerAgentId,
+  signal,
+}: QueueLeaseResultInput): Promise<void> => {
+  const { run, leaseResult } = result;
+  if (leaseResult.ok === false) {
+    await handleBlockedLease(run, leaseResult, repo, ownerAgentId);
+    debugQueueLog(
+      `[aiPathRunQueue] Run ${data.runId} blocked on execution lease owned by ${leaseResult.conflictingLease?.ownerAgentId ?? 'unknown-owner'}`
+    );
+    return;
+  }
+
+  await processClaimedRun(run, leaseResult, ownerAgentId, signal);
+};
+
+const runQueueJob = async (
+  data: AiPathRunJobData,
+  _jobId: string,
+  signal?: AbortSignal
+): Promise<void> => {
+  const repo = await getPathRunRepository();
+  const ownerAgentId = resolveQueueWorkerAgentId();
+  const result = await handleLease(data.runId, repo, ownerAgentId);
+  if (result === null) return;
+  await handleQueueLeaseResult({ data, result, repo, ownerAgentId, signal });
 };
 
 export const queue = createManagedQueue<AiPathRunJobData>({

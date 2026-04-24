@@ -39,6 +39,16 @@ describe('shouldEmbedTriggerEntitySnapshot', () => {
     ).toBe(true);
   });
 
+  it('embeds entity snapshots for parameter row triggers even when entityId exists', () => {
+    expect(
+      shouldEmbedTriggerEntitySnapshot({
+        entityType: 'product',
+        entityId: 'product-1',
+        sourceLocation: 'product_parameter_row',
+      })
+    ).toBe(true);
+  });
+
   it('embeds for note_modal source location', () => {
     expect(
       shouldEmbedTriggerEntitySnapshot({

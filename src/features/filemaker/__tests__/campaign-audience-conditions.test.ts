@@ -31,6 +31,7 @@ const orgFixture: FilemakerOrganization = {
   countryId: 'country-pl',
   taxId: '1234567890',
   krs: '0000987654',
+  tradingName: 'Acme Widgets',
 };
 
 const personFixture: FilemakerPerson = {
@@ -112,6 +113,27 @@ describe('evaluateAudienceCondition — operators', () => {
       evaluateAudienceCondition(
         buildCondition({ field: 'person.lastName', operator: 'ends_with', value: 'oe' }),
         { person: personFixture }
+      )
+    ).toBe(true);
+  });
+
+  it('filters by organization.tradingName', () => {
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({ field: 'organization.tradingName', operator: 'contains', value: 'widgets' }),
+        { organization: orgFixture }
+      )
+    ).toBe(true);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({ field: 'organization.tradingName', operator: 'equals', value: 'acme corporation' }),
+        { organization: orgFixture }
+      )
+    ).toBe(false);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({ field: 'organization.tradingName', operator: 'is_empty', value: '' }),
+        { organization: { ...orgFixture, tradingName: undefined } }
       )
     ).toBe(true);
   });

@@ -84,6 +84,9 @@ export const filemakerMailAccountSchema = dtoBaseSchema.extend({
   pushEnabled: z.boolean().default(true),
   lastSyncedAt: z.string().nullable().optional(),
   lastSyncError: z.string().nullable().optional(),
+  dkimDomain: z.string().nullable().optional(),
+  dkimKeySelector: z.string().nullable().optional(),
+  dkimPrivateKeySettingKey: z.string().nullable().optional(),
 });
 export type FilemakerMailAccountDto = z.infer<typeof filemakerMailAccountSchema>;
 export type FilemakerMailAccount = FilemakerMailAccountDto;
@@ -242,12 +245,12 @@ export const filemakerMailAccountDraftSchema = z.object({
   imapPort: z.number().int().positive(),
   imapSecure: z.boolean().default(true),
   imapUser: z.string().min(1),
-  imapPassword: z.string(),
+  imapPassword: z.string().default(''),
   smtpHost: z.string().min(1),
   smtpPort: z.number().int().positive(),
   smtpSecure: z.boolean().default(true),
   smtpUser: z.string().min(1),
-  smtpPassword: z.string(),
+  smtpPassword: z.string().default(''),
   fromName: z.string().nullable().optional(),
   replyToEmail: z.string().nullable().optional(),
   folderAllowlist: z.array(z.string()).default([]),
@@ -309,6 +312,7 @@ export const filemakerMailSyncResultSchema = z.object({
   updatedMessageCount: z.number().int().nonnegative(),
   touchedThreadCount: z.number().int().nonnegative(),
   completedAt: z.string(),
+  lastSyncError: z.string().nullable().optional(),
 });
 export type FilemakerMailSyncResultDto = z.infer<typeof filemakerMailSyncResultSchema>;
 export type FilemakerMailSyncResult = FilemakerMailSyncResultDto;

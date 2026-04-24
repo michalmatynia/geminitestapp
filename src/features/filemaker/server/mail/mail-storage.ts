@@ -177,6 +177,16 @@ export const getMailMessageByUid = async (accountId: string, mailboxPath: string
   return await mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).findOne({ accountId, mailboxPath, providerUid });
 };
 
+export const countMailMessagesForMailbox = async (
+  accountId: string,
+  mailboxPath: string
+): Promise<number> => {
+  const mongo = await getMongoDb();
+  return await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .countDocuments({ accountId, mailboxPath });
+};
+
 export const listMailMessagesByThreadId = async (threadId: string): Promise<FilemakerMailMessage[]> => {
   const mongo = await getMongoDb();
   return await mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)

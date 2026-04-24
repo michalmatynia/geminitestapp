@@ -6,7 +6,7 @@ import { ScannerConfigForm } from './scanner-settings/ScannerConfigForm';
 import { DeviceDiagnosticsPanel } from './scanner-settings/DeviceDiagnosticsPanel';
 import { ScannerCameraIntegration } from './scanner-settings/ScannerCameraIntegration';
 
-export default function AdminProductScannerSettingsPage(): React.JSX.Element {
+export function AdminProductScannerSettingsPage(): React.JSX.Element {
   const ctrl = useProductScannerController();
 
   if (ctrl.isLoading) return <LoadingState message='Loading scanner settings...' />;
@@ -25,3 +25,5 @@ export default function AdminProductScannerSettingsPage(): React.JSX.Element {
     </div>
   );
 }
+
+export default AdminProductScannerSettingsPage;

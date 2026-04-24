@@ -22,6 +22,7 @@ const generateAudienceEntityId = (prefix: string): string => {
 
 const AUDIENCE_FIELDS: FilemakerAudienceField[] = [
   'organization.name',
+  'organization.tradingName',
   'organization.taxId',
   'organization.krs',
   'organization.city',
@@ -208,6 +209,8 @@ const resolveFieldValue = (
   switch (field) {
     case 'organization.name':
       return context.organization?.name ?? null;
+    case 'organization.tradingName':
+      return context.organization?.tradingName ?? null;
     case 'organization.taxId':
       return context.organization?.taxId ?? null;
     case 'organization.krs':

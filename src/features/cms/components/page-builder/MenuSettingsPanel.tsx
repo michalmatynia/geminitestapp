@@ -1,11 +1,11 @@
 'use client';
 
-import { SectionHeader, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { useMenuSettingsController } from './menu-settings/useMenuSettingsController';
 import { MenuEditor } from './menu-settings/MenuEditor';
 import { MenuSectionContainer } from './menu-settings/MenuSectionContainer';
 import { MENU_SECTIONS } from './menu-settings/menu-constants';
-import { SettingsFieldsRenderer } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 export function MenuSettingsPanel({ showHeader = true }: { showHeader?: boolean } = {}): React.JSX.Element {
   const ctrl = useMenuSettingsController();

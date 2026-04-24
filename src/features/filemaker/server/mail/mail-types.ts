@@ -46,7 +46,7 @@ export type MailparserParsedMail = {
   messageId?: string | null;
   date?: Date | null;
   inReplyTo?: string | null;
-  references?: string[] | null;
+  references?: string | string[] | null;
   attachments?: MailparserAttachment[] | null;
 };
 

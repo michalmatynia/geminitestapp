@@ -14,12 +14,14 @@ const {
   subscribeToTrackedAiPathRunMock,
   useIntegrationsMock,
   useProductFormCoreMock,
+  useProductFormImagesMock,
 } = vi.hoisted(() => ({
   fireAiPathTriggerEventMock: vi.fn(),
   getAiPathRunMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
   useIntegrationsMock: vi.fn(),
   useProductFormCoreMock: vi.fn(),
+  useProductFormImagesMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
@@ -45,6 +47,10 @@ vi.mock('@/features/integrations/constants/slugs', async (importOriginal) => {
 
 vi.mock('@/features/products/context/ProductFormCoreContext', () => ({
   useProductFormCore: () => useProductFormCoreMock(),
+}));
+
+vi.mock('@/features/products/context/ProductFormImageContext', () => ({
+  useProductFormImages: () => useProductFormImagesMock(),
 }));
 
 vi.mock('@/shared/lib/ai-paths/api/client', () => ({
@@ -229,6 +235,9 @@ describe('ProductFormMarketplaceCopy', () => {
       ],
       isLoading: false,
     });
+    useProductFormImagesMock.mockReturnValue({
+      imageLinks: [],
+    });
     subscribeToTrackedAiPathRunMock.mockImplementation(() => vi.fn());
     getAiPathRunMock.mockResolvedValue({
       ok: true,
@@ -281,9 +290,17 @@ describe('ProductFormMarketplaceCopy', () => {
 
   it('builds row-specific debrand trigger context from the current English copy', async () => {
     const user = userEvent.setup();
+    useProductFormImagesMock.mockReturnValue({
+      imageLinks: [
+        'https://cdn.example.com/keycha108-1.jpg',
+        '   ',
+        'https://cdn.example.com/keycha108-2.jpg',
+      ],
+    });
     renderMarketplaceCopy({
       name_en: 'Warhammer 40,000 Space Marine Figure',
       description_en: 'Official branded description',
+      imageLinks: ['https://stored.example.com/ignored.jpg'],
       marketplaceContentOverrides: [
         {
           integrationIds: ['integration-tradera', 'integration-vinted'],
@@ -309,6 +326,10 @@ describe('ProductFormMarketplaceCopy', () => {
       id: 'product-1',
       name_en: 'Warhammer 40,000 Space Marine Figure',
       description_en: 'Official branded description',
+      imageLinks: [
+        'https://cdn.example.com/keycha108-1.jpg',
+        'https://cdn.example.com/keycha108-2.jpg',
+      ],
       marketplaceCopyDebrandInput: {
         sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
         sourceEnglishDescription: 'Official branded description',

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { TableIcon, SettingsIcon, PlayIcon, KeyIcon } from 'lucide-react';
-import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger, CollapsibleSection, Hint } from '@/shared/ui/primitives.public';
+import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger, CollapsibleSection } from '@/shared/ui/primitives.public';
+import { Hint } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';

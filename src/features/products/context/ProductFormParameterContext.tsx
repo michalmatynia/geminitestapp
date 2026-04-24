@@ -83,6 +83,118 @@ const normalizeSourceParameterValues = (
   });
 };
 
+const normalizeEditableParameterValuesByLanguage = (
+  input: unknown
+): Record<string, string> => {
+  if (input === null || input === undefined || typeof input !== 'object' || Array.isArray(input)) {
+    return {};
+  }
+
+  const entries = Object.entries(input as Record<string, unknown>)
+    .map(([languageCode, rawValue]: [string, unknown]): [string, string] | null => {
+      const normalizedLanguageCode = languageCode.trim().toLowerCase();
+      if (
+        normalizedLanguageCode.length === 0 ||
+        typeof rawValue !== 'string' ||
+        rawValue.length === 0
+      ) {
+        return null;
+      }
+      return [normalizedLanguageCode, rawValue];
+    })
+    .filter((entry: [string, string] | null): entry is [string, string] => entry !== null);
+
+  return Object.fromEntries(entries);
+};
+
+const resolveEditableParameterValue = (
+  valuesByLanguage: Record<string, string>,
+  directValue: string | null | undefined = ''
+): string => {
+  const normalizedDirectValue = typeof directValue === 'string' ? directValue : '';
+  const defaultValue = valuesByLanguage['default'];
+  if (typeof defaultValue === 'string' && defaultValue.length > 0) return defaultValue;
+
+  const localizedValues = Object.values(valuesByLanguage);
+  if (localizedValues.length === 0) return normalizedDirectValue;
+
+  return normalizedDirectValue.length > 0 && localizedValues.includes(normalizedDirectValue)
+    ? normalizedDirectValue
+    : '';
+};
+
+const resolveNextEditableScalarCandidate = ({
+  currentScalarValue,
+  previousLocalizedValue,
+  hadLocalizedValues,
+  nextLocalizedValue,
+}: {
+  currentScalarValue: string;
+  previousLocalizedValue: string;
+  hadLocalizedValues: boolean;
+  nextLocalizedValue: string;
+}): string => {
+  if (currentScalarValue.length === 0) return currentScalarValue;
+  if (currentScalarValue === previousLocalizedValue) return nextLocalizedValue;
+  if (!hadLocalizedValues) return nextLocalizedValue;
+  return currentScalarValue;
+};
+
+const applyEditableLocalizedValue = (
+  currentValues: Record<string, string>,
+  languageCode: string,
+  nextValue: string
+): Record<string, string> => {
+  if (nextValue.length > 0) {
+    return { ...currentValues, [languageCode]: nextValue };
+  }
+
+  return Object.fromEntries(
+    Object.entries(currentValues).filter(
+      ([entryLanguageCode]: [string, string]): boolean => entryLanguageCode !== languageCode
+    )
+  );
+};
+
+const resolveEditableLocalizedParameterEntry = ({
+  current,
+  languageCode,
+  nextValue,
+}: {
+  current: ProductParameterValue;
+  languageCode: string;
+  nextValue: string;
+}): ProductParameterValue | null => {
+  const normalizedLang = languageCode.trim().toLowerCase();
+  if (normalizedLang.length === 0) return null;
+
+  const currentValues = normalizeEditableParameterValuesByLanguage(current.valuesByLanguage);
+  const hadLocalizedValues = Object.keys(currentValues).length > 0;
+  const previousLocalizedValue = currentValues[normalizedLang] ?? '';
+  const nextValues = applyEditableLocalizedValue(currentValues, normalizedLang, nextValue);
+  const currentScalarValue = typeof current.value === 'string' ? current.value : '';
+  const nextScalarCandidate = resolveNextEditableScalarCandidate({
+    currentScalarValue,
+    previousLocalizedValue,
+    hadLocalizedValues,
+    nextLocalizedValue: nextValue,
+  });
+  const nextPrimaryValue = resolveEditableParameterValue(nextValues, nextScalarCandidate);
+  const nextEntry: ProductParameterValue = {
+    ...current,
+    value: nextPrimaryValue,
+  };
+
+  if (Object.keys(nextValues).length > 0) {
+    return { ...nextEntry, valuesByLanguage: nextValues };
+  }
+
+  return {
+    parameterId: nextEntry.parameterId,
+    value: nextEntry.value,
+  };
+};
+
 const serializeParameterValues = (value: ProductParameterValue[]): string => JSON.stringify(value);
 
 type MergedParameterValuesResult = {
@@ -365,14 +477,14 @@ export function ProductFormParameterProvider({
       });
     };
 
-    const updateParameterValue = (index: number, value: string): void => {
+    const updateParameterValue = (index: number, nextValue: string): void => {
       onInteraction?.();
       setBaseParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
         const baseIndex = parameterValueIndexMap[index] ?? index;
         if (baseIndex < 0) return prev;
         const next = [...prev];
         if (!next[baseIndex]) return prev;
-        next[baseIndex] = { ...next[baseIndex], value };
+        next[baseIndex] = { ...next[baseIndex], value: nextValue };
         return next;
       });
     };
@@ -380,43 +492,21 @@ export function ProductFormParameterProvider({
     const updateParameterValueByLanguage = (
       index: number,
       languageCode: string,
-      value: string
+      nextValue: string
     ): void => {
       onInteraction?.();
       setBaseParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
         const baseIndex = parameterValueIndexMap[index] ?? index;
         if (baseIndex < 0) return prev;
         const next = [...prev];
-        if (!next[baseIndex]) return prev;
-        const normalizedLang = languageCode.trim().toLowerCase();
-        if (!normalizedLang) return prev;
         const current = next[baseIndex];
-        const currentValues = normalizeParameterValuesByLanguage(current.valuesByLanguage);
-        const hadLocalizedValues = Object.keys(currentValues).length > 0;
-        const previousLocalizedValue = currentValues[normalizedLang] ?? '';
-        const normalizedValue = value.trim();
-        if (normalizedValue.length > 0) {
-          currentValues[normalizedLang] = normalizedValue;
-        } else {
-          delete currentValues[normalizedLang];
-        }
-        const currentScalarValue = typeof current.value === 'string' ? current.value.trim() : '';
-        const nextScalarCandidate =
-          currentScalarValue && currentScalarValue === previousLocalizedValue
-            ? normalizedValue
-            : !hadLocalizedValues && currentScalarValue
-              ? normalizedValue
-              : currentScalarValue;
-        const nextPrimaryValue = resolveStoredParameterValue(currentValues, nextScalarCandidate);
-        const nextEntry: ProductParameterValue = {
-          ...current,
-          value: nextPrimaryValue,
-        };
-        if (Object.keys(currentValues).length > 0) {
-          nextEntry.valuesByLanguage = currentValues;
-        } else {
-          delete nextEntry.valuesByLanguage;
-        }
+        if (current === undefined) return prev;
+        const nextEntry = resolveEditableLocalizedParameterEntry({
+          current,
+          languageCode,
+          nextValue,
+        });
+        if (nextEntry === null) return prev;
         next[baseIndex] = nextEntry;
         return next;
       });

@@ -32,6 +32,20 @@ export function OrganizationBasicInfoSection(): React.JSX.Element {
             placeholder='e.g. Acme Corp'
            aria-label='e.g. Acme Corp' title='e.g. Acme Corp'/>
         </FormField>
+        <FormField label='Trading Name / Title'>
+          <Input
+            value={orgDraft.tradingName ?? ''}
+            onChange={(e) =>
+              setOrgDraft((prev: Partial<FilemakerOrganization>) => ({
+                ...prev,
+                tradingName: e.target.value,
+              }))
+            }
+            placeholder='e.g. Acme Widgets'
+            aria-label='Trading name or title'
+            title='Trading name or title used in campaign audience filters'
+          />
+        </FormField>
       </div>
     </FormSection>
   );

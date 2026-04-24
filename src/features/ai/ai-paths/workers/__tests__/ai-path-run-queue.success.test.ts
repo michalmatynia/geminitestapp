@@ -123,7 +123,8 @@ describe('ai-path-run queue execution lease success', () => {
       throw new Error('Expected the AI Paths queue module to register a managed queue processor.');
     }
 
-    await config.processor({ runId: 'run-1' }, 'job-1');
+    const abortController = new AbortController();
+    await config.processor({ runId: 'run-1' }, 'job-1', abortController.signal);
 
     expect(claimRunForProcessingMock).toHaveBeenCalledWith('run-1');
     expect(mutateAgentLeaseMock).toHaveBeenNthCalledWith(
@@ -136,7 +137,10 @@ describe('ai-path-run queue execution lease success', () => {
       })
     );
     expect(recordRuntimeRunStartedMock).toHaveBeenCalledWith({ runId: 'run-1' });
-    expect(processRunMock).toHaveBeenCalled();
+    expect(processRunMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'run-1' }),
+      abortController.signal
+    );
     expect(recordRuntimeRunBlockedOnLeaseMock).not.toHaveBeenCalled();
     expect(mutateAgentLeaseMock).toHaveBeenNthCalledWith(
       2,

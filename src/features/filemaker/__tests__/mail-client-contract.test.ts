@@ -4,6 +4,7 @@ import {
   filemakerMailCampaignContextSchema,
   filemakerMailComposeInputSchema,
   filemakerMailFlagPatchSchema,
+  filemakerMailSyncResultSchema,
   filemakerMailThreadSchema,
 } from '@/shared/contracts/filemaker-mail';
 import {
@@ -117,6 +118,21 @@ describe('filemaker mail client contract extensions', () => {
     });
     expect(parsed.attachments).toHaveLength(1);
     expect(parsed.overrideSuppression).toBe(true);
+  });
+
+  it('sync result schema preserves optional sync errors', () => {
+    const parsed = filemakerMailSyncResultSchema.parse({
+      accountId: 'acct-1',
+      foldersScanned: ['INBOX'],
+      fetchedMessageCount: 0,
+      insertedMessageCount: 0,
+      updatedMessageCount: 0,
+      touchedThreadCount: 0,
+      completedAt: '2026-01-01T00:00:00.000Z',
+      lastSyncError: 'IMAP command failed (NO): sync is not available',
+    });
+
+    expect(parsed.lastSyncError).toBe('IMAP command failed (NO): sync is not available');
   });
 });
 

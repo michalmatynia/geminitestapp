@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Input, FormField } from '@/shared/ui/primitives.public';
+import { Button, Input } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
 
 export function AddRoleForm({ onAdd }: { onAdd: (name: string, desc: string) => void }) {
   const [name, setName] = useState('');

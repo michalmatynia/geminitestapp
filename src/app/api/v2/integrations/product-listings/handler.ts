@@ -16,7 +16,7 @@ import {
   applyCanonicalBaseBadgeFallback,
   isCanonicalBaseIntegrationSlug,
 } from '@/features/integrations/services/base-listing-canonicalization';
-import { resolvePendingTraderaExecutionAction } from '@/features/integrations/utils/tradera-status-check';
+import { resolvePendingTraderaExecutionAction } from '@/features/integrations/utils/tradera-listing-status';
 import type { ListingBadgesPayload, MarketplaceBadgeEntry } from '@/shared/contracts/integrations/listings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

@@ -232,5 +232,19 @@ describe('sendFilemakerCampaignEmail', () => {
         replyToEmail: 'campaign-replies@example.com',
       }),
     ]);
+
+    const sendMailArgs = sendMailMock.mock.calls.at(-1)?.[0] as
+      | { headers?: Record<string, string> }
+      | undefined;
+    expect(sendMailArgs?.headers).toBeDefined();
+    expect(sendMailArgs?.headers?.['List-Unsubscribe']).toMatch(
+      /^<mailto:sales@example\.com\?subject=unsubscribe>, <https?:\/\/.+\/unsubscribe\?token=.+>$/
+    );
+    expect(sendMailArgs?.headers?.['List-Unsubscribe-Post']).toBe(
+      'List-Unsubscribe=One-Click'
+    );
+    expect(sendMailArgs?.headers?.['X-Campaign-ID']).toBe('campaign-1');
+    expect(sendMailArgs?.headers?.['X-Entity-Ref-ID']).toBe('delivery-1');
+    expect(sendMailArgs?.headers?.['Precedence']).toBe('bulk');
   });
 });

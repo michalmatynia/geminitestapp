@@ -49,6 +49,15 @@ describe('trigger button validation', () => {
     expect(parsed.locations).toEqual(['product_marketplace_copy_row']);
   });
 
+  it('accepts parameter row locations on create payloads', () => {
+    const parsed = aiTriggerButtonCreateSchema.parse({
+      name: 'Infer Parameter Value',
+      locations: ['product_parameter_row'],
+    });
+
+    expect(parsed.locations).toEqual(['product_parameter_row']);
+  });
+
   it('keeps explicit enabled=false on create payloads', () => {
     const parsed = aiTriggerButtonCreateSchema.parse({
       name: 'Run Path',

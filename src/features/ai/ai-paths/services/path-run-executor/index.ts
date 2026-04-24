@@ -47,6 +47,7 @@ import {
 } from './helpers';
 import { runExecutorPreflight } from './preflight';
 import { createPathRunProfiling } from './profiling';
+import { parseRuntimeState } from '../path-run-executor.runtime-state';
 import { resolveRuntimeKernelConfigForPathRun } from './runtime-kernel-config';
 import { PathRunRuntimeStateManager } from './runtime-state-manager';
 import { createTracing } from './tracing';
@@ -140,7 +141,7 @@ export const executePathRun = async (
   const edges = sanitizeEdges(nodes, run.graph?.edges ?? []);
   const triggerNodeId =
     resolveTriggerNodeId(nodes, edges, run.triggerEvent, run.triggerNodeId) ?? null;
-  const runtimeState = ((run.runtimeState ?? {}) as RuntimeState) || ({} as RuntimeState);
+  const runtimeState = parseRuntimeState(run.runtimeState);
   const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta;
 
   const {
@@ -158,22 +159,22 @@ export const executePathRun = async (
 
   const accInputs: Record<string, RuntimePortValues> = mergeRuntimePortMaps(
     {},
-    runtimeState.inputs ?? {}
+    runtimeState.inputs
   );
   const accOutputs: Record<string, RuntimePortValues> = mergeRuntimePortMaps(
     {},
-    runtimeState.outputs ?? {}
+    runtimeState.outputs
   );
   const resolvedRunStartedAt = runStartedAt;
 
-  const stateManager = new PathRunRuntimeStateManager(
+  const stateManager = new PathRunRuntimeStateManager({
     run,
-    runtimeState,
+    initialRuntimeState: runtimeState,
     accInputs,
     accOutputs,
     repo,
     resolvedRunStartedAt
-  );
+  });
 
   const saveIntermediateState = async (): Promise<void> => {
     try {

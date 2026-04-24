@@ -7,11 +7,20 @@ import {
   MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
 } from '@/shared/lib/ai-paths/marketplace-copy-debrand';
+import {
+  PARAMETER_VALUE_INFERENCE_PATH_ID,
+  PARAMETER_VALUE_INFERENCE_STARTER_TEMPLATE_ID,
+  PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
+  PARAMETER_VALUE_INFERENCE_TRIGGER_LOCATION,
+  PARAMETER_VALUE_INFERENCE_TRIGGER_NAME,
+  PARAMETER_VALUE_INFERENCE_TRIGGER_SORT_INDEX,
+} from '@/shared/lib/ai-paths/parameter-value-inference';
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
 import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canvas.json';
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
+import parameterValueInferenceAsset from '../assets/parameter-value-inference.canvas.json';
 import productNameNormalizeAsset from '../assets/product-name-normalize.canvas.json';
 import translationEnPlAsset from '../assets/translation-en-pl.canvas.json';
 import { hasParameterInferencePromptStructure } from './structural-matchers';
@@ -62,6 +71,41 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       versionedOverlayScope: 'any_provenance_path',
       lowOverlapReplacementMode: 'any_resolved',
       lowOverlapStructuralMatcher: hasParameterInferencePromptStructure,
+    },
+  },
+  {
+    templateId: PARAMETER_VALUE_INFERENCE_STARTER_TEMPLATE_ID,
+    name: 'Infer Parameter Value',
+    description:
+      'Infer one selected product parameter value from title, description, images, and parameter metadata.',
+    semanticAsset: parameterValueInferenceAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: PARAMETER_VALUE_INFERENCE_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: PARAMETER_VALUE_INFERENCE_TRIGGER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
+        name: PARAMETER_VALUE_INFERENCE_TRIGGER_NAME,
+        pathId: PARAMETER_VALUE_INFERENCE_PATH_ID,
+        locations: [PARAMETER_VALUE_INFERENCE_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(PARAMETER_VALUE_INFERENCE_TRIGGER_NAME),
+        enabled: true,
+        mode: 'click',
+        sortIndex: PARAMETER_VALUE_INFERENCE_TRIGGER_SORT_INDEX,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'parameter_value_inference',
+      templateVersion: 1,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
     },
   },
   {
@@ -164,7 +208,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'marketplace_copy_debrand',
-      templateVersion: 4,
+      templateVersion: 5,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

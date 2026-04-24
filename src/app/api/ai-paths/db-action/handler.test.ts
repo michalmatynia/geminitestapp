@@ -100,4 +100,64 @@ describe('ai-paths db-action handler', () => {
       requestedCollection: 'products',
     });
   });
+
+  it('expands product id filters and executes update actions', async () => {
+    const updateOneMock = vi.fn().mockResolvedValue({
+      matchedCount: 1,
+      modifiedCount: 1,
+      upsertedId: null,
+    });
+
+    getMongoDbMock.mockResolvedValueOnce({
+      collection: vi.fn().mockReturnValue({
+        updateOne: updateOneMock,
+      }),
+    });
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        collection: 'products',
+        action: 'updateOne',
+        filter: { id: 'product-1' },
+        update: { $set: { description_en: 'Generated description' } },
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/ai-paths/db-action', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          collection: 'products',
+          action: 'updateOne',
+          filter: { id: 'product-1' },
+          update: { $set: { description_en: 'Generated description' } },
+        }),
+      }),
+      {} as Parameters<typeof postHandler>[1]
+    );
+
+    expect(response.status).toBe(200);
+    expect(updateOneMock).toHaveBeenCalledWith(
+      {
+        $or: [{ id: 'product-1' }, { _id: 'product-1' }],
+      },
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          description_en: 'Generated description',
+          updatedAt: expect.any(Date),
+        }),
+      }),
+      { upsert: false }
+    );
+    await expect(response.json()).resolves.toEqual({
+      matchedCount: 1,
+      modifiedCount: 1,
+      upsertedId: null,
+      requestedProvider: 'auto',
+      resolvedProvider: 'mongodb',
+      collection: 'products',
+      requestedCollection: 'products',
+    });
+  });
 });

@@ -30,15 +30,42 @@ const buildUnsubscribeNotes = (source: string | null | undefined): string =>
     ? `Self-service unsubscribe request. Source: ${source.trim()}`
     : 'Self-service unsubscribe request.';
 
+const isOneClickFormBody = (contentType: string | null, bodyText: string): boolean => {
+  if (!contentType) return false;
+  if (!/application\/x-www-form-urlencoded/i.test(contentType)) return false;
+  const params = new URLSearchParams(bodyText);
+  return params.get('List-Unsubscribe') === 'One-Click';
+};
+
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
-  const result: JsonParseResult<FilemakerEmailCampaignUnsubscribeRequest> = await parseJsonBody(
-    req,
-    filemakerEmailCampaignUnsubscribeRequestSchema,
-    { logPrefix: 'filemaker.campaigns.unsubscribe.POST' }
-  );
-  if (!result.ok) {
-    return result.response;
+  const queryToken = req.nextUrl.searchParams.get('token');
+  const contentType = req.headers.get('content-type');
+
+  let parsedRequest: FilemakerEmailCampaignUnsubscribeRequest;
+  if (queryToken && contentType && /application\/x-www-form-urlencoded/i.test(contentType)) {
+    const bodyText = await req.text();
+    if (!isOneClickFormBody(contentType, bodyText)) {
+      throw badRequestError('Expected List-Unsubscribe=One-Click form body.');
+    }
+    parsedRequest = {
+      token: queryToken,
+      source: 'list-unsubscribe-one-click',
+    };
+  } else {
+    const result: JsonParseResult<FilemakerEmailCampaignUnsubscribeRequest> = await parseJsonBody(
+      req,
+      filemakerEmailCampaignUnsubscribeRequestSchema,
+      { logPrefix: 'filemaker.campaigns.unsubscribe.POST' }
+    );
+    if (!result.ok) {
+      return result.response;
+    }
+    parsedRequest = queryToken && !result.data.token
+      ? { ...result.data, token: queryToken }
+      : result.data;
   }
+
+  const result = { data: parsedRequest };
 
   const tokenPayload = result.data.token
     ? parseFilemakerCampaignUnsubscribeToken(result.data.token)

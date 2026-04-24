@@ -24,6 +24,7 @@ const buildMailClientDashboardHref = (input: {
   const nextAccountId = normalizeMailClientDashboardAccountId(input.accountId);
   const nextQuery = input.query.trim();
 
+  search.set('tab', 'overview');
   if (input.scope !== 'all') search.set('scope', input.scope);
   if (nextAccountId !== '') search.set('accountId', nextAccountId);
   if (nextQuery !== '') search.set('query', nextQuery);

@@ -103,4 +103,48 @@ describe('filemaker mail accounts handler', () => {
       },
     });
   });
+
+  it('defaults omitted update passwords so stored credentials can be preserved', async () => {
+    upsertFilemakerMailAccountMock.mockResolvedValue({
+      id: 'account-1',
+      name: 'Support',
+      emailAddress: 'support@example.com',
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/filemaker/mail/accounts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: 'account-1',
+          name: 'Support',
+          emailAddress: 'support@example.com',
+          status: 'active',
+          imapHost: 'imap.example.com',
+          imapPort: 993,
+          imapSecure: true,
+          imapUser: 'support@example.com',
+          smtpHost: 'smtp.example.com',
+          smtpPort: 465,
+          smtpSecure: true,
+          smtpUser: 'support@example.com',
+          fromName: 'Support',
+          replyToEmail: null,
+          folderAllowlist: ['INBOX'],
+          initialSyncLookbackDays: 30,
+          maxMessagesPerSync: 100,
+        }),
+      }),
+      {} as Parameters<typeof postHandler>[1]
+    );
+
+    expect(upsertFilemakerMailAccountMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'account-1',
+        imapPassword: '',
+        smtpPassword: '',
+      })
+    );
+    expect(response.status).toBe(201);
+  });
 });

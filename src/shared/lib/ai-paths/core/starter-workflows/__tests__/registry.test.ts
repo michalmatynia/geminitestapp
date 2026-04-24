@@ -733,7 +733,7 @@ describe('starter workflow registry', () => {
 
     expect(upgraded.changed).toBe(true);
     expect(upgraded.resolution?.matchedBy).toBe('provenance');
-    expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('fail');
+    expect(dbNode?.config?.database?.writeOutcomePolicy?.onZeroAffected).toBe('warn');
     expect(dbNode?.config?.database?.updateTemplate).toContain('marketplaceContentOverrides.$.title');
     expect(dbNode?.config?.database?.query?.queryTemplate).toContain('"$elemMatch"');
   });

@@ -13,6 +13,7 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'product_list',
   'product_row',
   'product_marketplace_copy_row',
+  'product_parameter_row',
   'note_modal',
   'note_list',
   'product_list_header',

@@ -96,6 +96,7 @@ export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   countryId: z.string(),
   taxId: z.string().optional(),
   krs: z.string().optional(),
+  tradingName: z.string().optional(),
 });
 
 export type FilemakerOrganizationDto = z.infer<typeof filemakerOrganizationSchema>;
@@ -286,6 +287,7 @@ export type FilemakerEmailCampaignEventType = FilemakerEmailCampaignEventTypeDto
 
 export const filemakerAudienceFieldSchema = z.enum([
   'organization.name',
+  'organization.tradingName',
   'organization.taxId',
   'organization.krs',
   'organization.city',

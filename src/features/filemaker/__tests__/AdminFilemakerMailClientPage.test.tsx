@@ -52,7 +52,7 @@ describe('AdminFilemakerMailClientPage', () => {
     routerPushMock.mockReset();
     routerReplaceMock.mockReset();
     searchParamsGetMock.mockReset();
-    routeSearchParamsState.current = new URLSearchParams();
+    routeSearchParamsState.current = new URLSearchParams('tab=overview');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
     usePathnameMock.mockReset();
     usePathnameMock.mockReturnValue('/admin/filemaker/mail-client');
@@ -197,15 +197,15 @@ describe('AdminFilemakerMailClientPage', () => {
     ).toBe(true);
     expect(screen.getByRole('link', { name: 'Mailboxes Summary' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client'
+      '/admin/filemaker/mail-client?tab=overview'
     );
     expect(screen.getByRole('link', { name: 'Healthy Summary' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=healthy'
+      '/admin/filemaker/mail-client?tab=overview&scope=healthy'
     );
     expect(screen.getByRole('link', { name: 'Attention Summary' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention'
     );
     expect(screen.getByRole('link', { name: 'Folders Summary' })).toHaveAttribute(
       'href',
@@ -222,7 +222,7 @@ describe('AdminFilemakerMailClientPage', () => {
     expect(
       screen
         .getAllByRole('link', { name: 'Healthy Mailboxes' })
-        .some((link) => link.getAttribute('href') === '/admin/filemaker/mail-client?scope=healthy')
+        .some((link) => link.getAttribute('href') === '/admin/filemaker/mail-client?tab=overview&scope=healthy')
     ).toBe(true);
     expect(
       screen
@@ -231,13 +231,9 @@ describe('AdminFilemakerMailClientPage', () => {
     ).toBe(true);
     expect(screen.getByRole('link', { name: 'Needs Attention' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention'
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Workspace' }));
-    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail');
-
-    routerPushMock.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Add Mailbox' }));
     expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=settings');
 
@@ -261,13 +257,13 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(within(supportCard).getByRole('link', { name: 'Focus' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?accountId=account-1'
+      '/admin/filemaker/mail-client?tab=overview&accountId=account-1'
     );
     const supportSyncStatus = within(supportCard).getByTestId('mail-client-mailbox-sync-status-account-1');
     expect(within(supportSyncStatus).getByText('Mailbox looks healthy. No sync errors recorded.')).toBeInTheDocument();
     expect(within(supportSyncStatus).getByRole('link', { name: 'Healthy Mailboxes' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=healthy&accountId=account-1'
+      '/admin/filemaker/mail-client?tab=overview&scope=healthy&accountId=account-1'
     );
     const billingMailboxCard = screen.getByTestId('mail-client-account-account-2');
     const billingFolderStatus = within(billingMailboxCard).getByTestId(
@@ -286,7 +282,7 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(within(billingFolderStatus).getByRole('link', { name: 'Focus' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?accountId=account-2'
+      '/admin/filemaker/mail-client?tab=overview&accountId=account-2'
     );
     expect(screen.getByRole('link', { name: 'Open Thread' })).toHaveAttribute(
       'href',
@@ -302,7 +298,7 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(screen.getByRole('link', { name: 'Focus Mailbox' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?accountId=account-1'
+      '/admin/filemaker/mail-client?tab=overview&accountId=account-1'
     );
     expect(screen.getByText('Quarterly support update')).toBeInTheDocument();
     expect(within(supportCard).getByRole('link', { name: 'VIP' })).toHaveAttribute(
@@ -463,7 +459,7 @@ describe('AdminFilemakerMailClientPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Focus Billing inbox' }));
 
     await waitFor(() => {
-      expect(routerReplaceMock).toHaveBeenCalledWith('/admin/filemaker/mail-client?accountId=account-2');
+      expect(routerReplaceMock).toHaveBeenCalledWith('/admin/filemaker/mail-client?tab=overview&accountId=account-2');
       expect(screen.queryByTestId('mail-client-account-account-1')).not.toBeInTheDocument();
       expect(screen.getByTestId('mail-client-account-account-2')).toBeInTheDocument();
     });
@@ -515,7 +511,7 @@ describe('AdminFilemakerMailClientPage', () => {
 
     await waitFor(() => {
       expect(routerReplaceMock).toHaveBeenCalledWith(
-        '/admin/filemaker/mail-client?scope=attention&accountId=account-2'
+        '/admin/filemaker/mail-client?tab=overview&scope=attention&accountId=account-2'
       );
       expect(screen.getByTestId('mail-client-account-account-2')).toBeInTheDocument();
     });
@@ -535,7 +531,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('accountId=account-1&query=support');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&accountId=account-1&query=support');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
@@ -648,7 +644,7 @@ describe('AdminFilemakerMailClientPage', () => {
     expect(await screen.findByTestId('mail-client-focused-account-account-1')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Mailboxes Summary' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?accountId=account-1&query=support'
+      '/admin/filemaker/mail-client?tab=overview&accountId=account-1&query=support'
     );
     expect(screen.getByRole('link', { name: 'Folders Summary' })).toHaveAttribute(
       'href',
@@ -660,12 +656,12 @@ describe('AdminFilemakerMailClientPage', () => {
         .some(
           (link) =>
             link.getAttribute('href') ===
-            '/admin/filemaker/mail-client?scope=healthy&accountId=account-1&query=support'
+            '/admin/filemaker/mail-client?tab=overview&scope=healthy&accountId=account-1&query=support'
         )
     ).toBe(true);
     expect(screen.getByRole('link', { name: 'Needs Attention' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention&query=support'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention&query=support'
     );
   });
 
@@ -674,7 +670,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('scope=healthy&accountId=account-1&query=support');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&scope=healthy&accountId=account-1&query=support');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
@@ -741,7 +737,7 @@ describe('AdminFilemakerMailClientPage', () => {
     const healthyAttentionStatus = screen.getByTestId('mail-client-attention-healthy-status');
     expect(within(healthyAttentionStatus).getByRole('link', { name: 'Healthy Mailboxes' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=healthy&accountId=account-1&query=support'
+      '/admin/filemaker/mail-client?tab=overview&scope=healthy&accountId=account-1&query=support'
     );
     expect(within(healthyAttentionStatus).getByRole('link', { name: 'Open Workspace' })).toHaveAttribute(
       'href',
@@ -755,7 +751,7 @@ describe('AdminFilemakerMailClientPage', () => {
     expect(within(focusedSyncStatus).getByText('Mailbox looks healthy. No sync errors recorded.')).toBeInTheDocument();
     expect(within(focusedSyncStatus).getByRole('link', { name: 'Healthy Mailboxes' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=healthy&accountId=account-1&query=support'
+      '/admin/filemaker/mail-client?tab=overview&scope=healthy&accountId=account-1&query=support'
     );
     expect(
       within(focusedMailbox).getByText(
@@ -773,7 +769,7 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(within(focusedRecentStatus).getByRole('link', { name: 'Show All' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=healthy&query=support'
+      '/admin/filemaker/mail-client?tab=overview&scope=healthy&query=support'
     );
   });
 
@@ -782,7 +778,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('scope=attention&accountId=account-2&query=billing');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&scope=attention&accountId=account-2&query=billing');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
@@ -869,7 +865,7 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(within(focusedFolderStatus).getByRole('link', { name: 'Show All' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention&query=billing'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention&query=billing'
     );
   });
 
@@ -878,7 +874,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('query=billing');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&query=billing');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
@@ -1001,7 +997,7 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(within(folderStatus).getByRole('link', { name: 'Focus' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?accountId=account-2&query=billing'
+      '/admin/filemaker/mail-client?tab=overview&accountId=account-2&query=billing'
     );
   });
 
@@ -1010,7 +1006,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('accountId=account-1&query=support');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&accountId=account-1&query=support');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     const pendingResponse = new Promise<Response>(() => {});
@@ -1148,7 +1144,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('scope=attention&accountId=account-2&query=billing');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&scope=attention&accountId=account-2&query=billing');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
@@ -1273,7 +1269,7 @@ describe('AdminFilemakerMailClientPage', () => {
     expect(screen.queryByTestId('mail-client-account-account-1')).not.toBeInTheDocument();
     expect(within(screen.getByTestId('mail-client-account-account-2')).getByRole('link', { name: 'Show All' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention&query=billing'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention&query=billing'
     );
     expect(
       screen
@@ -1286,7 +1282,7 @@ describe('AdminFilemakerMailClientPage', () => {
         .some(
           (link) =>
             link.getAttribute('href') ===
-            '/admin/filemaker/mail-client?accountId=account-2&query=billing'
+            '/admin/filemaker/mail-client?tab=overview&accountId=account-2&query=billing'
         )
     ).toBe(true);
     expect(
@@ -1295,7 +1291,7 @@ describe('AdminFilemakerMailClientPage', () => {
         .some(
           (link) =>
             link.getAttribute('href') ===
-            '/admin/filemaker/mail-client?scope=healthy&query=billing'
+            '/admin/filemaker/mail-client?tab=overview&scope=healthy&query=billing'
         )
     ).toBe(true);
     expect(
@@ -1304,7 +1300,7 @@ describe('AdminFilemakerMailClientPage', () => {
         .some(
           (link) =>
             link.getAttribute('href') ===
-            '/admin/filemaker/mail-client?scope=attention&accountId=account-2&query=billing'
+            '/admin/filemaker/mail-client?tab=overview&scope=attention&accountId=account-2&query=billing'
         )
     ).toBe(true);
     expect(
@@ -1330,7 +1326,7 @@ describe('AdminFilemakerMailClientPage', () => {
         .some(
           (link) =>
             link.getAttribute('href') ===
-            '/admin/filemaker/mail-client?scope=healthy&query=billing'
+            '/admin/filemaker/mail-client?tab=overview&scope=healthy&query=billing'
         )
     ).toBe(true);
     expect(
@@ -1348,7 +1344,7 @@ describe('AdminFilemakerMailClientPage', () => {
         .some(
           (link) =>
             link.getAttribute('href') ===
-            '/admin/filemaker/mail-client?scope=attention&accountId=account-2&query=billing'
+            '/admin/filemaker/mail-client?tab=overview&scope=attention&accountId=account-2&query=billing'
         )
     ).toBe(true);
     const focusedMailbox = screen.getByTestId('mail-client-focused-account-account-2');
@@ -1402,7 +1398,7 @@ describe('AdminFilemakerMailClientPage', () => {
     expect(within(focusedMailbox).getByText('Billing mailbox sync follow-up')).toBeInTheDocument();
     expect(within(focusedMailbox).getByRole('link', { name: 'Show All' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention&query=billing'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention&query=billing'
     );
     expect(within(focusedAttentionCard).getByRole('link', { name: 'Continue Search' })).toHaveAttribute(
       'href',
@@ -1414,12 +1410,6 @@ describe('AdminFilemakerMailClientPage', () => {
     );
     expect(routerReplaceMock).not.toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Workspace' }));
-    expect(routerPushMock).toHaveBeenCalledWith(
-      '/admin/filemaker/mail?accountId=account-2&panel=settings'
-    );
-
-    routerPushMock.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Add Mailbox' }));
     expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=settings');
 
@@ -1435,7 +1425,7 @@ describe('AdminFilemakerMailClientPage', () => {
 
     await waitFor(() => {
       expect(routerReplaceMock).toHaveBeenCalledWith(
-        '/admin/filemaker/mail-client?scope=attention&accountId=account-2&query=billing+ops'
+        '/admin/filemaker/mail-client?tab=overview&scope=attention&accountId=account-2&query=billing+ops'
       );
     });
   });
@@ -1598,7 +1588,7 @@ describe('AdminFilemakerMailClientPage', () => {
     const healthyAttentionStatus = screen.getByTestId('mail-client-attention-healthy-status');
     expect(within(healthyAttentionStatus).getByRole('link', { name: 'Healthy Mailboxes' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=healthy'
+      '/admin/filemaker/mail-client?tab=overview&scope=healthy'
     );
     expect(within(healthyAttentionStatus).getByRole('link', { name: 'Open Workspace' })).toHaveAttribute(
       'href',
@@ -1640,7 +1630,7 @@ describe('AdminFilemakerMailClientPage', () => {
     expect(within(mailboxSyncStatus).getByText('This mailbox is currently paused.')).toBeInTheDocument();
     expect(within(mailboxSyncStatus).getByRole('link', { name: 'Needs Attention' })).toHaveAttribute(
       'href',
-      '/admin/filemaker/mail-client?scope=attention&accountId=account-1'
+      '/admin/filemaker/mail-client?tab=overview&scope=attention&accountId=account-1'
     );
 
     const attentionCard = await screen.findByTestId('mail-client-attention-account-account-1');
@@ -1652,7 +1642,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('accountId=account-1&query=support');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&accountId=account-1&query=support');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
@@ -1743,7 +1733,7 @@ describe('AdminFilemakerMailClientPage', () => {
       '@/features/filemaker/pages/AdminFilemakerMailClientPage'
     );
 
-    routeSearchParamsState.current = new URLSearchParams('accountId=account-1&query=support');
+    routeSearchParamsState.current = new URLSearchParams('tab=overview&accountId=account-1&query=support');
     searchParamsGetMock.mockImplementation((key: string) => routeSearchParamsState.current.get(key));
 
     fetchMock.mockImplementation(async (input: RequestInfo | URL) => {

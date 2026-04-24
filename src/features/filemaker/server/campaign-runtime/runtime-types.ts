@@ -39,6 +39,10 @@ export type FilemakerCampaignRuntimeDeps = {
     fromName?: string | null;
   }) => Promise<FilemakerCampaignEmailSendResult>;
   now: () => Date;
+  throttleBeforeSend?: (emailAddress: string) => Promise<void>;
+  reserveWarmupSlot?: (senderKey: string) => Promise<
+    { ok: true } | { ok: false; nextAvailableAt: string; dailyCap: number; used: number }
+  >;
 };
 
 export type FilemakerCampaignRunLaunchResult = {

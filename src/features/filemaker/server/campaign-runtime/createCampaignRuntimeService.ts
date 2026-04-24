@@ -403,6 +403,33 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       });
 
       try {
+        if (deps.reserveWarmupSlot) {
+          const senderKey = campaign.mailAccountId?.trim() || 'shared-smtp';
+          const warmup = await deps.reserveWarmupSlot(senderKey);
+          if (!warmup.ok) {
+            deliveries = replaceDeliveryInCollection(deliveries, {
+              ...delivery,
+              nextRetryAt: warmup.nextAvailableAt,
+              updatedAt: nowIso,
+            });
+            eventRegistry = appendEventsToRegistry(eventRegistry, [
+              createFilemakerEmailCampaignEvent({
+                campaignId: campaign.id,
+                runId: run.id,
+                deliveryId: delivery.id,
+                type: 'status_changed',
+                message: `Warm-up daily cap reached for sender ${senderKey} (${warmup.used}/${warmup.dailyCap}). Deferred to ${warmup.nextAvailableAt}.`,
+                deliveryStatus: delivery.status,
+                createdAt: nowIso,
+                updatedAt: nowIso,
+              }),
+            ]);
+            continue;
+          }
+        }
+        if (deps.throttleBeforeSend) {
+          await deps.throttleBeforeSend(delivery.emailAddress);
+        }
         const sendResult = await deps.sendCampaignEmail({
           to: delivery.emailAddress,
           subject: campaign.subject,

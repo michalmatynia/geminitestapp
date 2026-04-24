@@ -1,5 +1,5 @@
-import { Button, SelectSimple } from '@/shared/ui/primitives.public';
-import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/primitives.public';
+import { FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
 export function ProviderRoutingForm({ provider, setProvider, onSave, isSaving }: any) {
   const options = [{ value: 'mongodb', label: 'MongoDB' }, { value: 'redis', label: 'Redis' }];

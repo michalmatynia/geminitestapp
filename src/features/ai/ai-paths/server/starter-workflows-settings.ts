@@ -12,6 +12,7 @@ import {
   resolveStarterWorkflowForPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows/segments/upgrade';
+import { readStarterProvenance } from '@/shared/lib/ai-paths/core/starter-workflows/segments/utils';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import type {
@@ -227,19 +228,28 @@ const buildCanonicalStarterConfigRewrite = (args: {
   existingRaw: string | undefined;
   pathId: string;
 }): string | null => {
-  if (args.existingRaw && isCanonicalStoredPathConfig(args.pathId, args.existingRaw)) {
-    return null;
-  }
-
   const parsedExisting = args.existingRaw ? parsePathConfigRecord(args.existingRaw) : null;
   if (parsedExisting) {
-    const refreshed = buildRefreshedStarterWorkflowConfig(parsedExisting);
-    if (refreshed) {
-      const refreshedRaw = JSON.stringify(refreshed);
-      if (isCanonicalStoredPathConfig(args.pathId, refreshedRaw)) {
-        return refreshedRaw;
+    const resolution = resolveStarterWorkflowForPathConfig(parsedExisting);
+    const provenance = readStarterProvenance(parsedExisting);
+    const hasCurrentStarterProvenance =
+      Boolean(resolution?.entry) &&
+      provenance?.starterKey === resolution?.entry.starterLineage.starterKey &&
+      provenance.templateVersion >= resolution.entry.starterLineage.templateVersion;
+
+    if (!hasCurrentStarterProvenance) {
+      const refreshed = buildRefreshedStarterWorkflowConfig(parsedExisting);
+      if (refreshed) {
+        const refreshedRaw = JSON.stringify(refreshed);
+        if (isCanonicalStoredPathConfig(args.pathId, refreshedRaw)) {
+          return refreshedRaw;
+        }
       }
     }
+  }
+
+  if (args.existingRaw && isCanonicalStoredPathConfig(args.pathId, args.existingRaw)) {
+    return null;
   }
 
   return preservePathConfigFlagsOnSeed(

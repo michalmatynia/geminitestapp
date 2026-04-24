@@ -1,8 +1,9 @@
 'use client';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { Button, LoadingState } from '@/shared/ui/primitives.public';
+import { Button } from '@/shared/ui/primitives.public';
 import { SectionHeader, UI_GRID_ROOMY_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { usePermissionsController } from './permissions/usePermissionsController';
 import { PermissionsLibrary } from './permissions/PermissionsLibrary';
 import { AddPermissionForm } from './permissions/AddPermissionForm';

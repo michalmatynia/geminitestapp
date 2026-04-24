@@ -1,4 +1,5 @@
-import { Button, FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/button';
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { ChevronDown } from 'lucide-react';
 import React from 'react';
 

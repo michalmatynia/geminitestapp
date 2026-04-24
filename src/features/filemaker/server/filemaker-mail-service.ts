@@ -111,6 +111,15 @@ const roleSortOrder: Record<FilemakerMailFolderRole, number> = {
   custom: 6,
 };
 
+type ImapCommandError = Error & {
+  code?: unknown;
+  mailboxMissing?: unknown;
+  response?: unknown;
+  responseStatus?: unknown;
+  responseText?: unknown;
+  serverResponseCode?: unknown;
+};
+
 const upsertSecretSettingValue = async (key: string, value: string): Promise<void> => {
   const provider = await findProviderForKey(key);
   if (provider) {
@@ -355,27 +364,85 @@ const resolveMailboxPathsToSync = (
   return autoPaths.length > 0 ? autoPaths : ['INBOX'];
 };
 
+const normalizeErrorTextPart = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const formatImapSyncError = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return 'Mailbox sync failed.';
+  }
+
+  const imapError = error as ImapCommandError;
+  const responseText = normalizeErrorTextPart(imapError.responseText);
+  const response = normalizeErrorTextPart(imapError.response);
+  const responseStatus = normalizeErrorTextPart(imapError.responseStatus);
+  const responseCode =
+    normalizeErrorTextPart(imapError.serverResponseCode) ??
+    normalizeErrorTextPart(imapError.code);
+  const detail = responseText ?? response;
+  const statusParts: string[] = [];
+  if (responseStatus !== null) statusParts.push(responseStatus);
+  if (responseCode !== null) statusParts.push(responseCode);
+  const statusLabel = statusParts.join(' ');
+
+  if (error.message === 'Command failed') {
+    if (detail !== null) {
+      return statusLabel.length > 0
+        ? `IMAP command failed (${statusLabel}): ${detail}`
+        : `IMAP command failed: ${detail}`;
+    }
+    if (imapError.mailboxMissing === true) {
+      return 'IMAP command failed: mailbox not found.';
+    }
+    return 'IMAP command failed.';
+  }
+
+  if (detail !== null && detail !== error.message) {
+    return `${error.message}: ${detail}`;
+  }
+
+  return error.message || 'Mailbox sync failed.';
+};
+
+const formatFolderSyncErrors = (errors: string[]): string => {
+  const suffix = errors.length === 1 ? 'folder' : 'folders';
+  return `Mailbox sync finished with ${errors.length} failed ${suffix}: ${errors.join('; ')}`;
+};
+
+const resolveImapSearchResults = (
+  searchResults: number[] | false,
+  mailboxPath: string
+): number[] => {
+  if (searchResults === false) {
+    throw new Error(
+      `IMAP search failed for mailbox ${mailboxPath}. The server rejected the search command.`
+    );
+  }
+  return searchResults.slice().sort((left, right) => left - right);
+};
+
 const buildInitialMailboxUids = async (
   client: ReturnType<typeof createImapClient>,
-  account: FilemakerMailAccount
+  account: FilemakerMailAccount,
+  mailboxPath: string
 ): Promise<number[]> => {
   const lookbackStart = new Date();
   lookbackStart.setDate(lookbackStart.getDate() - account.initialSyncLookbackDays);
   const searchResults = await client.search({ since: lookbackStart }, { uid: true });
-  const uids = (Array.isArray(searchResults) ? searchResults : [])
-    .slice()
-    .sort((left, right) => left - right);
+  const uids = resolveImapSearchResults(searchResults, mailboxPath);
   return uids.slice(-account.maxMessagesPerSync);
 };
 
 const buildIncrementalMailboxUids = async (
   client: ReturnType<typeof createImapClient>,
-  lastUid: number
+  lastUid: number,
+  mailboxPath: string
 ): Promise<number[]> => {
   const searchResults = await client.search({ uid: `${lastUid + 1}:*` }, { uid: true });
-  return (Array.isArray(searchResults) ? searchResults : [])
-    .slice()
-    .sort((left, right) => left - right);
+  return resolveImapSearchResults(searchResults, mailboxPath);
 };
 
 const syncMailboxMessages = async (input: {
@@ -409,23 +476,33 @@ const syncMailboxMessages = async (input: {
       input.account.id,
       input.mailboxPath
     );
+    const existingMessageCount = existingSyncState
+      ? await storage.countMailMessagesForMailbox(input.account.id, input.mailboxPath)
+      : 0;
     const uidValidityChanged =
       Boolean(existingSyncState?.uidValidity) &&
       existingSyncState?.uidValidity !== uidValidity;
     const isIncremental =
       Boolean(existingSyncState) &&
+      existingMessageCount > 0 &&
       !uidValidityChanged &&
       existingSyncState?.uidValidity === uidValidity &&
       (existingSyncState?.lastUid ?? 0) > 0;
+    const shouldResetSyncCursor = Boolean(existingSyncState) && existingMessageCount === 0;
 
     const messageUids = isIncremental
-      ? await buildIncrementalMailboxUids(input.client, existingSyncState?.lastUid ?? 0)
-      : await buildInitialMailboxUids(input.client, input.account);
+      ? await buildIncrementalMailboxUids(
+          input.client,
+          existingSyncState?.lastUid ?? 0,
+          input.mailboxPath
+        )
+      : await buildInitialMailboxUids(input.client, input.account, input.mailboxPath);
 
     let fetchedMessageCount = 0;
     let insertedMessageCount = 0;
     let updatedMessageCount = 0;
-    let highestSeenUid = uidValidityChanged ? 0 : existingSyncState?.lastUid ?? 0;
+    let highestSeenUid =
+      uidValidityChanged || shouldResetSyncCursor ? 0 : existingSyncState?.lastUid ?? 0;
 
     if (messageUids.length > 0) {
       const limitedUids = messageUids.slice(-input.account.maxMessagesPerSync);
@@ -513,9 +590,11 @@ const syncMailboxMessages = async (input: {
         const inReplyToHeader = normalizeString(parsed.inReplyTo ?? entry.envelope?.inReplyTo) || null;
         const referenceIds = Array.from(
           new Set(
-            (parsed.references ?? mailServerUtils.parseReferencesHeader(entry.envelope) ?? [])
-              .concat(inReplyToHeader ? [inReplyToHeader] : [])
-              .filter(Boolean)
+            [
+              ...mailServerUtils.normalizeReferenceIds(parsed.references),
+              ...mailServerUtils.parseReferencesHeader(entry.envelope),
+              ...(inReplyToHeader ? [inReplyToHeader] : []),
+            ].filter((referenceId) => referenceId.trim().length > 0)
           )
         );
 
@@ -711,6 +790,16 @@ export const upsertFilemakerMailAccount = async (
   const id = existing?.id ?? draft.id ?? `mail-account-${toIdToken(draft.emailAddress) || randomUUID()}`;
   const now = new Date().toISOString();
   const isCreate = !existing;
+  const existingImapPasswordSettingKey = normalizeString(existing?.imapPasswordSettingKey);
+  const existingSmtpPasswordSettingKey = normalizeString(existing?.smtpPasswordSettingKey);
+  const imapPasswordSettingKey =
+    existingImapPasswordSettingKey.length > 0
+      ? existingImapPasswordSettingKey
+      : mailServerUtils.buildAccountSecretSettingKey(id, 'imap_password');
+  const smtpPasswordSettingKey =
+    existingSmtpPasswordSettingKey.length > 0
+      ? existingSmtpPasswordSettingKey
+      : mailServerUtils.buildAccountSecretSettingKey(id, 'smtp_password');
 
   const nextAccount: FilemakerMailAccount = {
     id,
@@ -724,12 +813,12 @@ export const upsertFilemakerMailAccount = async (
     imapPort: draft.imapPort,
     imapSecure: draft.imapSecure,
     imapUser: normalizeString(draft.imapUser),
-    imapPasswordSettingKey: mailServerUtils.buildAccountSecretSettingKey(id, 'imap_password'),
+    imapPasswordSettingKey,
     smtpHost: normalizeString(draft.smtpHost),
     smtpPort: draft.smtpPort,
     smtpSecure: draft.smtpSecure,
     smtpUser: normalizeString(draft.smtpUser),
-    smtpPasswordSettingKey: mailServerUtils.buildAccountSecretSettingKey(id, 'smtp_password'),
+    smtpPasswordSettingKey,
     fromName: normalizeNullableString(draft.fromName),
     replyToEmail: normalizeNullableEmail(draft.replyToEmail),
     folderAllowlist: parseFilemakerMailboxAllowlistInput(draft.folderAllowlist.join(',')),
@@ -901,7 +990,7 @@ export const syncFilemakerMailAccount = async (
 ): Promise<FilemakerMailSyncResult & { lastSyncError: string | null }> => {
   const account = await getFilemakerMailAccount(id);
   const completedAt = new Date().toISOString();
-  const imapPasswordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'imap_password');
+  const imapPasswordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
   const defaultFolders =
     account.folderAllowlist.length > 0 ? account.folderAllowlist : ['INBOX'];
 
@@ -919,6 +1008,8 @@ export const syncFilemakerMailAccount = async (
     let fetchedMessageCount = 0;
     let insertedMessageCount = 0;
     let updatedMessageCount = 0;
+    let successfulFolderCount = 0;
+    const folderSyncErrors: string[] = [];
 
     try {
       await client.connect();
@@ -929,17 +1020,33 @@ export const syncFilemakerMailAccount = async (
       foldersScanned = resolveMailboxPathsToSync(account, mailboxes);
 
       for (const mailboxPath of foldersScanned) {
-        const mailboxResult = await syncMailboxMessages({
-          account,
-          mailboxPath,
-          mailboxRole:
-            mailboxRoleByPath.get(mailboxPath) ?? inferMailboxRoleFromPath(mailboxPath),
-          client,
-          touchedThreadIds,
-        });
-        fetchedMessageCount += mailboxResult.fetchedMessageCount;
-        insertedMessageCount += mailboxResult.insertedMessageCount;
-        updatedMessageCount += mailboxResult.updatedMessageCount;
+        try {
+          const mailboxResult = await syncMailboxMessages({
+            account,
+            mailboxPath,
+            mailboxRole:
+              mailboxRoleByPath.get(mailboxPath) ?? inferMailboxRoleFromPath(mailboxPath),
+            client,
+            touchedThreadIds,
+          });
+          fetchedMessageCount += mailboxResult.fetchedMessageCount;
+          insertedMessageCount += mailboxResult.insertedMessageCount;
+          updatedMessageCount += mailboxResult.updatedMessageCount;
+          successfulFolderCount += 1;
+        } catch (error) {
+          const folderError = `${mailboxPath}: ${formatImapSyncError(error)}`;
+          folderSyncErrors.push(folderError);
+          await logSystemEvent({
+            level: 'warn',
+            source: 'filemaker-mail-sync',
+            message: `Failed to sync Filemaker mailbox ${mailboxPath} for ${account.emailAddress}`,
+            error,
+            context: {
+              accountId: account.id,
+              mailboxPath,
+            },
+          }).catch(() => {});
+        }
       }
     } finally {
       try {
@@ -949,11 +1056,17 @@ export const syncFilemakerMailAccount = async (
       }
     }
 
+    if (successfulFolderCount === 0 && folderSyncErrors.length > 0) {
+      throw new Error(formatFolderSyncErrors(folderSyncErrors));
+    }
+
+    const lastSyncError =
+      folderSyncErrors.length > 0 ? formatFolderSyncErrors(folderSyncErrors) : null;
     const nextAccount: FilemakerMailAccount = {
       ...account,
       updatedAt: completedAt,
       lastSyncedAt: completedAt,
-      lastSyncError: null,
+      lastSyncError,
     };
     await storage.upsertMailAccount(nextAccount);
 
@@ -965,11 +1078,10 @@ export const syncFilemakerMailAccount = async (
       updatedMessageCount,
       touchedThreadCount: touchedThreadIds.size,
       completedAt,
-      lastSyncError: null,
+      lastSyncError,
     };
   } catch (error) {
-    const lastSyncError =
-      error instanceof Error ? error.message : 'Mailbox sync failed.';
+    const lastSyncError = formatImapSyncError(error);
     await storage.upsertMailAccount({
       ...account,
       updatedAt: completedAt,
@@ -1079,9 +1191,12 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   outboxEntry: FilemakerMailOutboxEntry;
 }> => {
   const account = await getFilemakerMailAccount(input.accountId);
-  const smtpPasswordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'smtp_password');
-  const secrets = await readSecretSettingValues([smtpPasswordKey]);
+  const smtpPasswordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'smtp_password');
+  const dkimPrivateKeySettingKey = account.dkimPrivateKeySettingKey?.trim() || null;
+  const secretKeys = [smtpPasswordKey, ...(dkimPrivateKeySettingKey ? [dkimPrivateKeySettingKey] : [])];
+  const secrets = await readSecretSettingValues(secretKeys);
   const password = secrets[smtpPasswordKey];
+  const dkimPrivateKey = dkimPrivateKeySettingKey ? secrets[dkimPrivateKeySettingKey] ?? null : null;
 
   const to = dedupeFilemakerMailParticipants(input.to);
   const cc = dedupeFilemakerMailParticipants(input.cc ?? []);
@@ -1137,7 +1252,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   };
   await storage.upsertOutboxEntry(queuedOutbox);
 
-  const transport = smtp.createSmtpTransport(account, password ?? undefined);
+  const transport = smtp.createSmtpTransport(account, password ?? undefined, dkimPrivateKey);
   const attachments = (input.attachments ?? []).map((attachment) => ({
     filename: attachment.fileName,
     contentType: attachment.contentType,
@@ -1311,7 +1426,7 @@ export const updateFilemakerMailMessageFlags = async (
   });
 
   if (typeof message.providerUid === 'number' && (adds.length > 0 || removes.length > 0)) {
-    const passwordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'imap_password');
+    const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
     const secrets = await readSecretSettingValues([passwordKey]);
     const password = secrets[passwordKey];
     if (password) {
@@ -1387,7 +1502,7 @@ export const moveFilemakerMailMessage = async (input: {
     throw validationError('Message has no provider UID and cannot be moved.');
   }
   const account = await getFilemakerMailAccount(message.accountId);
-  const passwordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'imap_password');
+  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
   const secrets = await readSecretSettingValues([passwordKey]);
   const password = secrets[passwordKey];
   if (!password) {
@@ -1445,7 +1560,7 @@ export const appendFilemakerMailToSentFolder = async (input: {
   account: FilemakerMailAccount;
   rawMessage: string | Buffer;
 }): Promise<void> => {
-  const passwordKey = mailServerUtils.buildAccountSecretSettingKey(input.account.id, 'imap_password');
+  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(input.account, 'imap_password');
   const secrets = await readSecretSettingValues([passwordKey]);
   const password = secrets[passwordKey];
   if (!password) return;

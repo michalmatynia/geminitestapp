@@ -1,4 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Input, FormField, Label, Checkbox } from '@/shared/ui/primitives.public';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, Button, Input, Label, Checkbox } from '@/shared/ui/primitives.public';
+import { FormField } from '@/shared/ui/forms-and-actions.public';
 import type { AuthRole, AuthPermission } from '@/features/auth/utils/auth-management';
 
 export function RoleEditor({

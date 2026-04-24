@@ -88,6 +88,7 @@ export const shouldEmbedTriggerEntitySnapshot = (args: {
     normalizedSourceLocation === 'product_modal' ||
     normalizedSourceLocation === 'product_row' ||
     normalizedSourceLocation === 'product_marketplace_copy_row' ||
+    normalizedSourceLocation === 'product_parameter_row' ||
     normalizedSourceLocation === 'note_modal'
   ) {
     return true;

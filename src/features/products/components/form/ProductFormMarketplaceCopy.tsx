@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFieldArray, useFormContext, useWatch } from 'react-hook-form';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { buildMarketplaceCopyDebrandTriggerInput } from '@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import { extractDebrandedMarketplaceCopyResultFromAiPathRunDetail } from '@/features/products/lib/extractDebrandedMarketplaceCopyFromAiPathRunDetail';
@@ -159,6 +160,7 @@ function MarketplaceCopyDebrandTrigger(
     resolveCurrentRowIndex,
   } = props;
   const { product, draft, getValues, setValue } = useProductFormCore();
+  const { imageLinks } = useProductFormImages();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
   const [pendingRunId, setPendingRunId] = useState<string | null>(null);
   const [isTriggerPending, setIsTriggerPending] = useState(false);
@@ -166,7 +168,7 @@ function MarketplaceCopyDebrandTrigger(
   const persistedProductId = product?.id ?? null;
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
-    const values = getValues();
+    const values = { ...getValues(), imageLinks };
     const entityJson = buildTriggeredProductEntityJson({
       product,
       draft,
@@ -191,6 +193,7 @@ function MarketplaceCopyDebrandTrigger(
     currentTitle,
     draft,
     getValues,
+    imageLinks,
     integrationIds,
     integrationLabels,
     product,
@@ -199,7 +202,7 @@ function MarketplaceCopyDebrandTrigger(
   ]);
 
   const getTriggerExtras = useCallback((): Record<string, unknown> => {
-    const values = getValues();
+    const values = { ...getValues(), imageLinks };
     return {
       marketplaceCopyDebrandInput: buildMarketplaceCopyDebrandTriggerInput({
         values,
@@ -217,6 +220,7 @@ function MarketplaceCopyDebrandTrigger(
     currentDescription,
     currentTitle,
     getValues,
+    imageLinks,
     integrationIds,
     integrationLabels,
     rowId,

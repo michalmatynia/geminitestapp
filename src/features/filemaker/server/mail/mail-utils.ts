@@ -92,6 +92,16 @@ export const buildAccountSecretSettingKey = (
   kind: 'imap_password' | 'smtp_password'
 ): string => `filemaker_mail_account_${accountId}_${kind}`;
 
+export const resolveAccountSecretSettingKey = (
+  account: Pick<FilemakerMailAccount, 'id' | 'imapPasswordSettingKey' | 'smtpPasswordSettingKey'>,
+  kind: 'imap_password' | 'smtp_password'
+): string => {
+  const configuredKey = normalizeString(
+    kind === 'imap_password' ? account.imapPasswordSettingKey : account.smtpPasswordSettingKey
+  );
+  return configuredKey.length > 0 ? configuredKey : buildAccountSecretSettingKey(account.id, kind);
+};
+
 export const buildThreadId = (input: {
   accountId: string;
   providerThreadId?: string | null;
@@ -134,4 +144,17 @@ export const parseReferencesHeader = (envelope: MessageEnvelopeObject | undefine
     .split(/\s+/)
     .map((entry) => entry.trim())
     .filter(Boolean);
+};
+
+export const normalizeReferenceIds = (input: unknown): string[] => {
+  if (Array.isArray(input)) {
+    return input.flatMap((entry) => normalizeReferenceIds(entry));
+  }
+  if (typeof input !== 'string') {
+    return [];
+  }
+  return input
+    .split(/[\s,]+/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
 };

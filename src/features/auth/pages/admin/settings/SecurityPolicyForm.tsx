@@ -1,5 +1,5 @@
-import { Button, Input, Label, Checkbox, FormField } from '@/shared/ui/primitives.public';
-import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Button, Input, Label, Checkbox } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { UI_GRID_RELAXED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import type { AuthSecurityPolicy } from '@/features/auth/utils/auth-security';
 

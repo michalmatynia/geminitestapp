@@ -103,7 +103,7 @@ const startIdleConnection = async (state: AccountState): Promise<void> => {
     return;
   }
 
-  const passwordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'imap_password');
+  const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
   const secrets = await readSecretSettingValues([passwordKey]);
   const password = secrets[passwordKey];
   if (!password) {

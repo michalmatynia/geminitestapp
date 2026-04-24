@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button, Input, FormField, Alert } from '@/shared/ui/primitives.public';
-import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Button, Input, Alert } from '@/shared/ui/primitives.public';
+import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { insetPanelVariants } from '@/shared/ui/navigation-and-layout.public';
 
 export function MfaSettings({

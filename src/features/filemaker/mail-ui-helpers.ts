@@ -1,3 +1,32 @@
+const isJsonResponse = (response: Response): boolean =>
+  (response.headers.get('content-type') ?? '').toLowerCase().includes('application/json');
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object';
+
+const readStringField = (record: Record<string, unknown>, key: string): string | null => {
+  const value = record[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readJsonErrorMessage = async (response: Response): Promise<string | null> => {
+  try {
+    const body = (await response.json()) as unknown;
+    if (!isRecord(body)) return null;
+    return readStringField(body, 'error') ?? readStringField(body, 'message');
+  } catch {
+    return null;
+  }
+};
+
+const readFilemakerMailErrorMessage = async (response: Response): Promise<string> => {
+  const fallback = `Request failed (${response.status})`;
+  if (!isJsonResponse(response)) return fallback;
+  return (await readJsonErrorMessage(response)) ?? fallback;
+};
+
 export const fetchFilemakerMailJson = async <T,>(
   url: string,
   init?: RequestInit
@@ -10,7 +39,7 @@ export const fetchFilemakerMailJson = async <T,>(
     },
   });
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
+    throw new Error(await readFilemakerMailErrorMessage(response));
   }
   return (await response.json()) as T;
 };

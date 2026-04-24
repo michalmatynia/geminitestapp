@@ -1,4 +1,5 @@
-import { Button, SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/button';
+import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 import { UserPlusIcon, Key } from 'lucide-react';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 

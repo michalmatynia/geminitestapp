@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,13 +9,28 @@ import type { Language } from '@/shared/contracts/internationalization';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import {
   ProductFormMetadataContext,
   type ProductFormMetadataContextType,
 } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductFormParameterProvider } from '@/features/products/context/ProductFormParameterContext';
+import {
+  PARAMETER_VALUE_INFERENCE_PATH_ID,
+  PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
+  PARAMETER_VALUE_INFERENCE_TRIGGER_LOCATION,
+} from '@/shared/lib/ai-paths/parameter-value-inference';
 
-const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
+const {
+  fireAiPathTriggerEventMock,
+  getAiPathRunMock,
+  subscribeToTrackedAiPathRunMock,
+  useParametersMock,
+  useTitleTermsMock,
+} = vi.hoisted(() => ({
+  fireAiPathTriggerEventMock: vi.fn(),
+  getAiPathRunMock: vi.fn(),
+  subscribeToTrackedAiPathRunMock: vi.fn(),
   useParametersMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
 }));
@@ -23,6 +38,21 @@ const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
   useTitleTerms: useTitleTermsMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/api/client', () => ({
+  getAiPathRun: (...args: unknown[]) => getAiPathRunMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
+  subscribeToTrackedAiPathRun: (...args: unknown[]) =>
+    subscribeToTrackedAiPathRunMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+  useAiPathTriggerEvent: () => ({
+    fireAiPathTriggerEvent: fireAiPathTriggerEventMock,
+  }),
 }));
 
 vi.mock('lucide-react', () => ({
@@ -277,9 +307,13 @@ const textParameter = {
 const createProduct = ({
   parameters,
   nameEn = 'Product 1',
+  descriptionEn = '',
+  imageLinks = [],
 }: {
   parameters: NonNullable<ProductWithImages['parameters']>;
   nameEn?: string;
+  descriptionEn?: string;
+  imageLinks?: string[];
 }
 ): ProductWithImages =>
   ({
@@ -291,11 +325,11 @@ const createProduct = ({
     gtin: null,
     asin: null,
     name: { en: nameEn, pl: null, de: null },
-    description: { en: '', pl: null, de: null },
+    description: { en: descriptionEn, pl: null, de: null },
     name_en: nameEn,
     name_pl: null,
     name_de: null,
-    description_en: null,
+    description_en: descriptionEn,
     description_pl: null,
     description_de: null,
     supplierName: null,
@@ -315,7 +349,7 @@ const createProduct = ({
     images: [],
     catalogs: [],
     parameters,
-    imageLinks: [],
+    imageLinks,
     imageBase64s: [],
     noteIds: [],
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -326,10 +360,14 @@ function renderParameters({
   parameters,
   parameterDefinitions = [textParameter],
   nameEn = 'Product 1',
+  descriptionEn = '',
+  imageLinks = [],
 }: {
   parameters: NonNullable<ProductWithImages['parameters']>;
   parameterDefinitions?: ProductParameter[];
   nameEn?: string;
+  descriptionEn?: string;
+  imageLinks?: string[];
 }) {
   useParametersMock.mockReturnValue({
     data: parameterDefinitions,
@@ -340,21 +378,46 @@ function renderParameters({
     const methods = useForm<ProductFormData>({
       defaultValues: {
         name_en: nameEn,
+        description_en: descriptionEn,
       } as ProductFormData,
     });
 
     return <FormProvider {...methods}>{children}</FormProvider>;
   }
 
+  const imageContextValue = {
+    imageSlots: [],
+    imageLinks,
+    imageBase64s: [],
+    productId: 'product-1',
+    uploading: false,
+    uploadError: null,
+    uploadSuccess: false,
+    showFileManager: false,
+    setShowFileManager: vi.fn(),
+    handleSlotImageChange: vi.fn(),
+    handleSlotFileSelect: vi.fn(),
+    handleSlotDisconnectImage: vi.fn(),
+    handleMultiImageChange: vi.fn(),
+    handleMultiFileSelect: vi.fn(),
+    swapImageSlots: vi.fn(),
+    setImageLinkAt: vi.fn(),
+    setImageBase64At: vi.fn(),
+    setImagesReordering: vi.fn(),
+    refreshImagesFromProduct: vi.fn(),
+  };
+
   return render(
     <Wrapper>
       <ProductFormMetadataContext.Provider value={metadataValue}>
-        <ProductFormParameterProvider
-          product={createProduct({ parameters, nameEn })}
-          selectedCatalogIds={['catalog-1']}
-        >
-          <ProductFormParameters />
-        </ProductFormParameterProvider>
+        <ProductFormImageContext.Provider value={imageContextValue}>
+          <ProductFormParameterProvider
+            product={createProduct({ parameters, nameEn, descriptionEn, imageLinks })}
+            selectedCatalogIds={['catalog-1']}
+          >
+            <ProductFormParameters />
+          </ProductFormParameterProvider>
+        </ProductFormImageContext.Provider>
       </ProductFormMetadataContext.Provider>
     </Wrapper>
   );
@@ -362,10 +425,140 @@ function renderParameters({
 
 describe('ProductFormParameters', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
+    fireAiPathTriggerEventMock.mockResolvedValue(undefined);
+    subscribeToTrackedAiPathRunMock.mockReturnValue(vi.fn());
+    getAiPathRunMock.mockResolvedValue({ ok: true, data: {} });
     useTitleTermsMock.mockImplementation(() => ({
       data: [],
       isLoading: false,
     }));
+  });
+
+  it('preserves spaces while typing text parameter values', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: '',
+        },
+      ],
+    });
+
+    const englishInput = screen.getByPlaceholderText('Value (English)');
+
+    await user.type(englishInput, 'Soft plush');
+
+    expect(englishInput).toHaveValue('Soft plush');
+  });
+
+  it('fires the row-level parameter trigger with product copy, images, and selected parameter metadata', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Used',
+          valuesByLanguage: { en: 'Used' },
+        },
+      ],
+      nameEn: 'Soft plush keychain',
+      descriptionEn: 'Small plush keychain with metal ring.',
+      imageLinks: ['https://example.test/keychain.jpg'],
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Trigger parameter inference for Condition' })
+    );
+
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        triggerEventId: PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
+        preferredPathId: PARAMETER_VALUE_INFERENCE_PATH_ID,
+        entityType: 'product',
+        source: {
+          tab: 'product',
+          location: PARAMETER_VALUE_INFERENCE_TRIGGER_LOCATION,
+        },
+      })
+    );
+
+    const triggerArgs = fireAiPathTriggerEventMock.mock.calls[0]?.[0] as {
+      extras: Record<string, unknown>;
+      getEntityJson: () => Record<string, unknown>;
+    };
+    expect(triggerArgs.extras['parameterValueInferenceInput']).toEqual(
+      expect.objectContaining({
+        product: expect.objectContaining({
+          title: 'Soft plush keychain',
+          description: 'Small plush keychain with metal ring.',
+          imageLinks: ['https://example.test/keychain.jpg'],
+        }),
+        targetParameter: expect.objectContaining({
+          id: 'condition',
+          name: 'Condition',
+          selectorType: 'text',
+          currentValue: 'Used',
+        }),
+      })
+    );
+    expect(triggerArgs.getEntityJson()['parameterValueInferenceInput']).toEqual(
+      triggerArgs.extras['parameterValueInferenceInput']
+    );
+  });
+
+  it('applies a completed row-level parameter inference result to the active language value', async () => {
+    const user = userEvent.setup();
+    fireAiPathTriggerEventMock.mockImplementation(async (args: { onSuccess?: (runId: string) => void }) => {
+      args.onSuccess?.('run-parameter-value-1');
+    });
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (_runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        listener({
+          trackingState: 'stopped',
+          status: 'completed',
+          errorMessage: null,
+        });
+        return vi.fn();
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            type: 'regex',
+            outputs: {
+              value: {
+                parameterId: 'condition',
+                value: 'Soft plush',
+                confidence: 0.91,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: '',
+        },
+      ],
+      nameEn: 'Soft plush keychain',
+      descriptionEn: 'Small plush keychain with metal ring.',
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Trigger parameter inference for Condition' })
+    );
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Soft plush');
+    });
   });
 
   it('keeps Polish separate when English is cleared in the UI', async () => {

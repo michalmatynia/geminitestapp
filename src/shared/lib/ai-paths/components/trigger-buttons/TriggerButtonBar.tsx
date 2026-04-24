@@ -58,11 +58,13 @@ const {
 const PRODUCT_RUN_FEEDBACK_LOCATIONS = new Set<AiTriggerButtonLocation>([
   'product_row',
   'product_marketplace_copy_row',
+  'product_parameter_row',
   'product_modal',
 ]);
 const COMPACT_TRIGGER_BUTTON_INLINE_LIMITS: Partial<Record<AiTriggerButtonLocation, number>> = {
   product_row: 1,
   product_marketplace_copy_row: 1,
+  product_parameter_row: 1,
   product_list: 1,
   product_list_header: 1,
 };

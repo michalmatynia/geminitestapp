@@ -1,0 +1,592 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_parameter_value_inference_v1",
+    "version": 1,
+    "name": "Infer Parameter Value",
+    "description": "Infer one selected product parameter value from the current product title, description, images, and parameter metadata.",
+    "trigger": "Product Parameter Row - Trigger",
+    "updatedAt": "2026-04-24T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-parameter-value-inference",
+      "type": "trigger",
+      "title": "Trigger: Parameter Value",
+      "description": "Fire row-level parameter value inference from trigger context.",
+      "position": {
+        "x": 24,
+        "y": 240
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "58f2ec28-531a-4d8e-955b-4ef177f9cc3e",
+          "contextMode": "trigger_only"
+        }
+      },
+      "connections": {
+        "incoming": [],
+        "outgoing": [
+          {
+            "edgeId": "edge-trigger-fetcher-parameter-value-inference",
+            "fromNodeId": "node-trigger-parameter-value-inference",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-parameter-value-inference",
+            "toPort": "trigger"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-fetcher-parameter-value-inference",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve the current product snapshot and trigger metadata.",
+      "position": {
+        "x": 240,
+        "y": 240
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "product",
+          "entityId": "",
+          "productId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-trigger-fetcher-parameter-value-inference",
+            "fromNodeId": "node-trigger-parameter-value-inference",
+            "fromPort": "trigger",
+            "toNodeId": "node-fetcher-parameter-value-inference",
+            "toPort": "trigger"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-fetcher-parser-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "context",
+            "toNodeId": "node-parser-parameter-value-inference",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-fetcher-context-model-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "context",
+            "toNodeId": "node-model-parameter-value-inference",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-fetcher-context-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "context",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-id-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "entityId",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-type-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "entityType",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-fetcher-meta-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "meta",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "meta"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-parser-parameter-value-inference",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract the product copy, target parameter, current value, and images from trigger context.",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "sourceTitle",
+        "sourceDescription",
+        "targetParameter",
+        "currentValue",
+        "images"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "sourceTitle": "$.parameterValueInferenceInput.product.title",
+            "sourceDescription": "$.parameterValueInferenceInput.product.description",
+            "targetParameter": "$.parameterValueInferenceInput.targetParameter",
+            "currentValue": "$.parameterValueInferenceInput.currentValue",
+            "images": ""
+          },
+          "outputMode": "bundle",
+          "presetId": "product_core"
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-fetcher-parser-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "context",
+            "toNodeId": "node-parser-parameter-value-inference",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-parser-prompt-parameter-value-inference",
+            "fromNodeId": "node-parser-parameter-value-inference",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-parameter-value-inference",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-parser-images-parameter-value-inference",
+            "fromNodeId": "node-parser-parameter-value-inference",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-parameter-value-inference",
+            "toPort": "images"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-prompt-parameter-value-inference",
+      "type": "prompt",
+      "title": "Prompt",
+      "description": "Infer one parameter value from product evidence.",
+      "position": {
+        "x": 930,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "images"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "You infer exactly one product parameter value from product evidence.\\nUse the current product title, description, images, and target parameter metadata.\\n\\nProduct title: \"{{bundle.sourceTitle}}\"\\nProduct description: \"{{bundle.sourceDescription}}\"\\nCurrent value: \"{{bundle.currentValue}}\"\\nTarget parameter JSON: {{bundle.targetParameter}}\\nFull parsed bundle JSON: {{bundle}}\\n\\nReturn ONLY valid JSON with this exact schema:\\n{\"parameterId\":\"\",\"value\":\"\",\"confidence\":0}\\n\\nRules:\\n1. Set parameterId to targetParameter.id.\\n2. Infer only the requested target parameter, not any other product attribute.\\n3. If targetParameter.optionLabels is not empty and selectorType is select, dropdown, radio, checklist, or checkbox, use only labels from optionLabels.\\n4. For select, dropdown, and radio, return one label only.\\n5. For checklist, return a comma-separated list of supported labels only.\\n6. For checkbox, return the configured option label when true or an empty string when false/unsupported.\\n7. For text and textarea, return a concise value supported by the title, description, or images.\\n8. If there is not enough evidence, return value as an empty string and confidence as 0.\\n9. Do not invent dimensions, material, color, theme, compatibility, or brand facts not supported by evidence.\\n10. JSON only. No markdown, no code fences, no commentary."
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-parser-prompt-parameter-value-inference",
+            "fromNodeId": "node-parser-parameter-value-inference",
+            "fromPort": "bundle",
+            "toNodeId": "node-prompt-parameter-value-inference",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-parser-images-parameter-value-inference",
+            "fromNodeId": "node-parser-parameter-value-inference",
+            "fromPort": "images",
+            "toNodeId": "node-prompt-parameter-value-inference",
+            "toPort": "images"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-prompt-model-parameter-value-inference",
+            "fromNodeId": "node-prompt-parameter-value-inference",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-parameter-value-inference",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-prompt-images-model-parameter-value-inference",
+            "fromNodeId": "node-prompt-parameter-value-inference",
+            "fromPort": "images",
+            "toNodeId": "node-model-parameter-value-inference",
+            "toPort": "images"
+          },
+          {
+            "edgeId": "edge-prompt-viewer-parameter-value-inference",
+            "fromNodeId": "node-prompt-parameter-value-inference",
+            "fromPort": "prompt",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "prompt"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-model-parameter-value-inference",
+      "type": "model",
+      "title": "Model",
+      "description": "Generate the selected parameter value in one vision-enabled pass.",
+      "position": {
+        "x": 1320,
+        "y": 240
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.1,
+          "maxTokens": 500,
+          "vision": true,
+          "waitForResult": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-prompt-model-parameter-value-inference",
+            "fromNodeId": "node-prompt-parameter-value-inference",
+            "fromPort": "prompt",
+            "toNodeId": "node-model-parameter-value-inference",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-prompt-images-model-parameter-value-inference",
+            "fromNodeId": "node-prompt-parameter-value-inference",
+            "fromPort": "images",
+            "toNodeId": "node-model-parameter-value-inference",
+            "toPort": "images"
+          },
+          {
+            "edgeId": "edge-fetcher-context-model-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "context",
+            "toNodeId": "node-model-parameter-value-inference",
+            "toPort": "context"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-model-regex-parameter-value-inference",
+            "fromNodeId": "node-model-parameter-value-inference",
+            "fromPort": "result",
+            "toNodeId": "node-regex-parameter-value-inference",
+            "toPort": "value"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-regex-parameter-value-inference",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse the model JSON response.",
+      "position": {
+        "x": 1710,
+        "y": 240
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-model-regex-parameter-value-inference",
+            "fromNodeId": "node-model-parameter-value-inference",
+            "fromPort": "result",
+            "toNodeId": "node-regex-parameter-value-inference",
+            "toPort": "value"
+          }
+        ],
+        "outgoing": [
+          {
+            "edgeId": "edge-regex-viewer-parameter-value-inference",
+            "fromNodeId": "node-regex-parameter-value-inference",
+            "fromPort": "value",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "bundle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "node-view-parameter-value-inference",
+      "type": "viewer",
+      "title": "Result Viewer",
+      "description": "Inspect the inferred parameter value and source context.",
+      "position": {
+        "x": 2090,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "context",
+        "prompt",
+        "entityId",
+        "entityType",
+        "meta"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "context": "",
+            "prompt": "",
+            "entityId": "",
+            "entityType": "",
+            "meta": ""
+          }
+        }
+      },
+      "connections": {
+        "incoming": [
+          {
+            "edgeId": "edge-regex-viewer-parameter-value-inference",
+            "fromNodeId": "node-regex-parameter-value-inference",
+            "fromPort": "value",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "bundle"
+          },
+          {
+            "edgeId": "edge-fetcher-context-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "context",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "context"
+          },
+          {
+            "edgeId": "edge-prompt-viewer-parameter-value-inference",
+            "fromNodeId": "node-prompt-parameter-value-inference",
+            "fromPort": "prompt",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "prompt"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-id-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "entityId",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "entityId"
+          },
+          {
+            "edgeId": "edge-fetcher-entity-type-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "entityType",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "entityType"
+          },
+          {
+            "edgeId": "edge-fetcher-meta-viewer-parameter-value-inference",
+            "fromNodeId": "node-fetcher-parameter-value-inference",
+            "fromPort": "meta",
+            "toNodeId": "node-view-parameter-value-inference",
+            "toPort": "meta"
+          }
+        ],
+        "outgoing": []
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-fetcher-parameter-value-inference",
+      "fromNodeId": "node-trigger-parameter-value-inference",
+      "toNodeId": "node-fetcher-parameter-value-inference",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-fetcher-parser-parameter-value-inference",
+      "fromNodeId": "node-fetcher-parameter-value-inference",
+      "toNodeId": "node-parser-parameter-value-inference",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-parser-prompt-parameter-value-inference",
+      "fromNodeId": "node-parser-parameter-value-inference",
+      "toNodeId": "node-prompt-parameter-value-inference",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-parser-images-parameter-value-inference",
+      "fromNodeId": "node-parser-parameter-value-inference",
+      "toNodeId": "node-prompt-parameter-value-inference",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-prompt-model-parameter-value-inference",
+      "fromNodeId": "node-prompt-parameter-value-inference",
+      "toNodeId": "node-model-parameter-value-inference",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-prompt-images-model-parameter-value-inference",
+      "fromNodeId": "node-prompt-parameter-value-inference",
+      "toNodeId": "node-model-parameter-value-inference",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-fetcher-context-model-parameter-value-inference",
+      "fromNodeId": "node-fetcher-parameter-value-inference",
+      "toNodeId": "node-model-parameter-value-inference",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-regex-parameter-value-inference",
+      "fromNodeId": "node-model-parameter-value-inference",
+      "toNodeId": "node-regex-parameter-value-inference",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-regex-viewer-parameter-value-inference",
+      "fromNodeId": "node-regex-parameter-value-inference",
+      "toNodeId": "node-view-parameter-value-inference",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-fetcher-context-viewer-parameter-value-inference",
+      "fromNodeId": "node-fetcher-parameter-value-inference",
+      "toNodeId": "node-view-parameter-value-inference",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-viewer-parameter-value-inference",
+      "fromNodeId": "node-prompt-parameter-value-inference",
+      "toNodeId": "node-view-parameter-value-inference",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-fetcher-entity-id-viewer-parameter-value-inference",
+      "fromNodeId": "node-fetcher-parameter-value-inference",
+      "toNodeId": "node-view-parameter-value-inference",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-fetcher-entity-type-viewer-parameter-value-inference",
+      "fromNodeId": "node-fetcher-parameter-value-inference",
+      "toNodeId": "node-view-parameter-value-inference",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-fetcher-meta-viewer-parameter-value-inference",
+      "fromNodeId": "node-fetcher-parameter-value-inference",
+      "toNodeId": "node-view-parameter-value-inference",
+      "fromPort": "meta",
+      "toPort": "meta"
+    }
+  ],
+  "execution": {},
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-24T00:00:00.000Z",
+    "pathId": "path_parameter_value_inference_v1"
+  }
+}

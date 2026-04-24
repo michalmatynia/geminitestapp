@@ -204,7 +204,7 @@ describe('starter marketplace copy debrand workflow', () => {
         entityType: 'product',
         updatePayloadMode: 'custom',
         writeOutcomePolicy: {
-          onZeroAffected: 'fail',
+          onZeroAffected: 'warn',
         },
       })
     );

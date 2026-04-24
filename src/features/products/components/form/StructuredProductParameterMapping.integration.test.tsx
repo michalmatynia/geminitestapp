@@ -15,7 +15,8 @@ import {
 } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductFormParameterProvider } from '@/features/products/context/ProductFormParameterContext';
 
-const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
+const { fireAiPathTriggerEventMock, useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
+  fireAiPathTriggerEventMock: vi.fn(),
   useParametersMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
 }));
@@ -23,6 +24,12 @@ const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
   useTitleTerms: useTitleTermsMock,
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+  useAiPathTriggerEvent: () => ({
+    fireAiPathTriggerEvent: fireAiPathTriggerEventMock,
+  }),
 }));
 
 vi.mock('lucide-react', () => ({

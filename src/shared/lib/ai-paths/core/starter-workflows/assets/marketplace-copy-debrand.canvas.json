@@ -3,7 +3,7 @@
   "kind": "canvas",
   "path": {
     "id": "path_marketplace_copy_debrand_v1",
-    "version": 4,
+    "version": 5,
     "name": "Debrand Marketplace Copy",
     "description": "Generate debranded alternate marketplace title and description from English product copy and images.",
     "trigger": "Marketplace Copy Row - Debrand",
@@ -478,7 +478,7 @@
             "single": true
           },
           "writeOutcomePolicy": {
-            "onZeroAffected": "fail"
+            "onZeroAffected": "warn"
           }
         },
         "runtime": {

@@ -25,6 +25,9 @@ export function FilemakerOrganizationsSection(): React.JSX.Element {
       renderMain={(organization: FilemakerOrganization) => (
         <>
           <div className='text-sm font-semibold text-white'>{organization.name}</div>
+          {organization.tradingName ? (
+            <div className='text-xs italic text-gray-400'>{organization.tradingName}</div>
+          ) : null}
           <div className='text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
         </>
       )}

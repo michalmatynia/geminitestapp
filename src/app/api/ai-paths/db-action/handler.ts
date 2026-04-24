@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { type z } from 'zod';
 
 import {
   enforceAiPathsActionRateLimit,
@@ -16,10 +17,14 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
+  expandFilter,
   isProviderResolutionError,
+  normalizeObjectId,
 } from './handler.helpers';
 import { handlers } from './actions';
 import { type MongoActionContext } from './handler.mongo';
+
+type AiPathsDbActionRequest = z.infer<typeof aiPathsDbActionRequestSchema>;
 
 const resolveCollection = (requestedCollection: string, collectionMap: unknown): ReturnType<typeof resolveAiPathsCollectionName> => {
   const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
@@ -35,35 +40,35 @@ const resolveCollection = (requestedCollection: string, collectionMap: unknown):
   return resolution;
 };
 
-const executeAction = async (resolvedCollection: string, data: z.infer<typeof aiPathsDbActionRequestSchema>): Promise<Record<string, unknown>> => {
-  const mongoUri = process.env['MONGODB_URI'];
-  if (mongoUri === undefined || mongoUri === '') {
-    throw internalError('MongoDB is not configured');
-  }
+const assertMongoConfigured = (): void => {
+  if ((process.env['MONGODB_URI'] ?? '') === '') throw internalError('MongoDB is not configured');
+};
 
-  const mongo = await getMongoDb();
-  const collectionRef = mongo.collection(resolvedCollection);
+const createMongoActionContext = (
+  resolvedCollection: string,
+  data: AiPathsDbActionRequest,
+  collectionRef: MongoActionContext['collectionRef']
+): MongoActionContext => ({
+  provider: 'mongodb',
+  requestedProvider: data.provider ?? 'auto',
+  collectionRef,
+  resolvedCollection,
+  action: data.action,
+  filter: data.filter ?? {},
+  idType: data.idType,
+  projection: data.projection,
+  sort: data.sort,
+  limit: data.limit ?? 20,
+  distinctField: data.distinctField,
+  pipeline: data.pipeline ?? [],
+  document: data.document ?? {},
+  documents: data.documents ?? [],
+  update: data.update,
+  upsert: Boolean(data.upsert),
+  returnDocument: data.returnDocument ?? 'after',
+});
 
-  const actionCtx: MongoActionContext = {
-    provider: 'mongodb',
-    requestedProvider: (data.provider as DbActionRequestedProvider) ?? 'auto',
-    collectionRef,
-    resolvedCollection,
-    action: data.action,
-    filter: (data.filter ?? {}) as Record<string, unknown>,
-    idType: data.idType,
-    projection: (data.projection as Record<string, unknown> | undefined),
-    sort: (data.sort as Record<string, unknown> | undefined),
-    limit: data.limit ?? 20,
-    distinctField: data.distinctField,
-    pipeline: (data.pipeline ?? []) as unknown[],
-    document: (data.document ?? {}) as Record<string, unknown>,
-    documents: (data.documents ?? []) as Record<string, unknown>[],
-    update: data.update,
-    upsert: Boolean(data.upsert),
-    returnDocument: (data.returnDocument as 'before' | 'after') ?? 'after',
-  };
-
+const executeMongoAction = async (actionCtx: MongoActionContext): Promise<Record<string, unknown>> => {
   const handler = handlers[actionCtx.action];
   if (handler === undefined) {
     throw badRequestError('Unsupported action');
@@ -76,8 +81,18 @@ const executeAction = async (resolvedCollection: string, data: z.infer<typeof ai
   return await handler(actionCtx, normalizedFilter);
 };
 
+const executeAction = async (
+  resolvedCollection: string,
+  data: AiPathsDbActionRequest
+): Promise<Record<string, unknown>> => {
+  assertMongoConfigured();
+  const mongo = await getMongoDb();
+  const collectionRef = mongo.collection(resolvedCollection);
+  return await executeMongoAction(createMongoActionContext(resolvedCollection, data, collectionRef));
+};
+
 const processAction = async (
-  data: z.infer<typeof aiPathsDbActionRequestSchema>,
+  data: AiPathsDbActionRequest,
   resolution: ReturnType<typeof resolveAiPathsCollectionName>
 ): Promise<Record<string, unknown>> => {
   const result = await executeAction(resolution.collection, data);
@@ -85,9 +100,7 @@ const processAction = async (
     ...result,
     collection: resolution.collection,
     requestedCollection: data.collection.trim(),
-    ...(resolution.mappedFrom !== undefined &&
-    resolution.mappedFrom !== null &&
-    resolution.mappedFrom !== ''
+    ...(resolution.mappedFrom !== undefined && resolution.mappedFrom !== ''
       ? { collectionMappedFrom: resolution.mappedFrom }
       : {}),
   };

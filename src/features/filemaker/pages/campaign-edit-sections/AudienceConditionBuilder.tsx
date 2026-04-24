@@ -22,6 +22,7 @@ type FieldOption = { value: FilemakerAudienceField; label: string };
 
 const FIELD_OPTIONS: FieldOption[] = [
   { value: 'organization.name', label: 'Organisation → Name' },
+  { value: 'organization.tradingName', label: 'Organisation → Trading name / Title' },
   { value: 'organization.taxId', label: 'Organisation → Tax ID' },
   { value: 'organization.krs', label: 'Organisation → KRS' },
   { value: 'organization.city', label: 'Organisation → City' },

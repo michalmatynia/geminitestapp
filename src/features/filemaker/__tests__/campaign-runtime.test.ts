@@ -198,6 +198,8 @@ const createRuntimeHarness = (input?: {
     },
     sendCampaignEmail,
     now: () => new Date(iso),
+    throttleBeforeSend: async () => {},
+    reserveWarmupSlot: async () => ({ ok: true }),
   });
 
   return {

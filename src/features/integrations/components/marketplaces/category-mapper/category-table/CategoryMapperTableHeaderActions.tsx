@@ -8,6 +8,7 @@ import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api'
 
 const TRADERA_FETCH_METHOD_OPTIONS: { value: TraderaCategoryFetchMethod; label: string }[] = [
   { value: 'playwright', label: 'Public taxonomy pages' },
+  { value: 'playwright_listing_form', label: 'Listing form picker' },
   { value: 'soap', label: 'SOAP API' },
 ];
 
@@ -17,6 +18,9 @@ type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {
   /** When set, shows the Tradera fetch method dropdown */
   categoryFetchMethod?: TraderaCategoryFetchMethod | undefined;
   onCategoryFetchMethodChange?: ((method: TraderaCategoryFetchMethod) => void) | undefined;
+  categoryFetchMethodOptions?:
+    | { value: TraderaCategoryFetchMethod; label: string }[]
+    | undefined;
 };
 
 export function CategoryMapperTableHeaderActions(
@@ -32,6 +36,7 @@ export function CategoryMapperTableHeaderActions(
     pendingCount,
     categoryFetchMethod,
     onCategoryFetchMethodChange,
+    categoryFetchMethodOptions,
   } = props;
 
   return (
@@ -42,7 +47,7 @@ export function CategoryMapperTableHeaderActions(
             size='sm'
             value={categoryFetchMethod}
             onValueChange={(v) => onCategoryFetchMethodChange(v as TraderaCategoryFetchMethod)}
-            options={TRADERA_FETCH_METHOD_OPTIONS}
+            options={categoryFetchMethodOptions ?? TRADERA_FETCH_METHOD_OPTIONS}
             disabled={isFetching}
             ariaLabel='Category fetch method'
             title='Category fetch method'

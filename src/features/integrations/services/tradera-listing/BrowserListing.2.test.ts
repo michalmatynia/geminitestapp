@@ -493,95 +493,41 @@ beforeEach(() => {
     });
   });
 
-  it('falls back to Other > Other when the Tradera category mapper has no active mapping', async () => {
+  it('rejects mapper-mode listings when the Tradera category mapper has no active mapping', async () => {
     listCategoryMappingsMock.mockResolvedValue([]);
-    runPlaywrightListingScriptMock.mockResolvedValue({
-      runId: 'run-fallback-no-mapping',
-      externalListingId: 'listing-fallback-no-mapping',
-      listingUrl: 'https://www.tradera.com/item/fallback-no-mapping',
-      publishVerified: true,
-      personaId: null,
-      executionSettings: {
-        headless: false,
-        slowMo: 85,
-        timeout: 30000,
-        navigationTimeout: 45000,
-        humanizeMouse: true,
-        mouseJitter: 12,
-        clickDelayMin: 40,
-        clickDelayMax: 140,
-        inputDelayMin: 30,
-        inputDelayMax: 110,
-        actionDelayMin: 220,
-        actionDelayMax: 800,
-        proxyEnabled: false,
-        emulateDevice: false,
-        deviceName: 'Desktop Chrome',
-      },
-      rawResult: {
-        listingUrl: 'https://www.tradera.com/item/fallback-no-mapping',
-        categoryPath: 'Other > Other',
-        categorySource: 'fallback',
-      },
-    });
-
-    const result = await runTraderaBrowserListing({
-      listing: {
-        id: 'listing-1',
-        productId: 'product-1',
-        integrationId: 'integration-1',
-        connectionId: 'connection-1',
-        relistPolicy: {
-          enabled: true,
-          leadMinutes: 30,
-          durationHours: 48,
-          templateId: 'template-1',
-        },
-      } as never,
-      connection: {
-        id: 'connection-1',
-        traderaBrowserMode: 'scripted',
-        playwrightListingScript: 'export default async function run() {}',
-      } as never,
-      systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
-      } as never,
-      source: 'manual',
-      action: 'list',
-      browserMode: 'headed',
-    });
-
-    const playwrightInput = runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.input as
-      | Record<string, unknown>
-      | undefined;
-
-    expect(playwrightInput).toBeDefined();
-    expect(playwrightInput).not.toHaveProperty('traderaCategory');
-    expect(playwrightInput).toMatchObject({
-      traderaCategoryMapping: {
-        reason: 'no_active_mapping',
-        matchScope: 'none',
-        internalCategoryId: 'internal-category-1',
-        matchingMappingCount: 0,
-        validMappingCount: 0,
-        catalogMatchedMappingCount: 0,
-      },
-    });
-    expect(result).toMatchObject({
-      externalListingId: 'listing-fallback-no-mapping',
-      listingUrl: 'https://www.tradera.com/item/fallback-no-mapping',
-      metadata: {
-        categoryMappingReason: 'no_active_mapping',
-        categoryMatchScope: 'none',
-        categoryInternalCategoryId: 'internal-category-1',
-        categoryId: null,
-        categoryPath: 'Other > Other',
-        categorySource: 'fallback',
-      },
-    });
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+          relistPolicy: {
+            enabled: true,
+            leadMinutes: 30,
+            durationHours: 48,
+            templateId: 'template-1',
+          },
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: 'export default async function run() {}',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+        browserMode: 'headed',
+      })
+    ).rejects.toThrow(
+      'Tradera export requires an active Tradera category mapping for this product category. Fetch Tradera categories in Category Mapper, map the category, and retry.'
+    );
+    expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
   });
 
-  it('falls back to Other > Other when the mapped Tradera category is stale', async () => {
+  it('rejects mapper-mode listings when the mapped Tradera category is stale', async () => {
     listCategoryMappingsMock.mockResolvedValue([
       {
         id: 'mapping-stale',
@@ -618,84 +564,33 @@ beforeEach(() => {
         },
       },
     ]);
-    runPlaywrightListingScriptMock.mockResolvedValue({
-      runId: 'run-fallback-stale-mapping',
-      externalListingId: 'listing-fallback-stale-mapping',
-      listingUrl: 'https://www.tradera.com/item/fallback-stale-mapping',
-      publishVerified: true,
-      personaId: null,
-      executionSettings: {
-        headless: false,
-        slowMo: 85,
-        timeout: 30000,
-        navigationTimeout: 45000,
-        humanizeMouse: true,
-        mouseJitter: 12,
-        clickDelayMin: 40,
-        clickDelayMax: 140,
-        inputDelayMin: 30,
-        inputDelayMax: 110,
-        actionDelayMin: 220,
-        actionDelayMax: 800,
-        proxyEnabled: false,
-        emulateDevice: false,
-        deviceName: 'Desktop Chrome',
-      },
-      rawResult: {
-        listingUrl: 'https://www.tradera.com/item/fallback-stale-mapping',
-        categoryPath: 'Other > Other',
-        categorySource: 'fallback',
-        categoryFallbackReason: 'fallback_requested',
-      },
-    });
-
-    const result = await runTraderaBrowserListing({
-      listing: {
-        id: 'listing-1',
-        productId: 'product-1',
-        integrationId: 'integration-1',
-        connectionId: 'connection-1',
-      } as never,
-      connection: {
-        id: 'connection-1',
-        traderaBrowserMode: 'scripted',
-        playwrightListingScript: 'export default async function run() {}',
-      } as never,
-      systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
-      } as never,
-      source: 'manual',
-      action: 'list',
-      browserMode: 'headed',
-    });
-
-    const playwrightInput = runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.input as
-      | Record<string, unknown>
-      | undefined;
-
-    expect(playwrightInput).toBeDefined();
-    expect(playwrightInput).not.toHaveProperty('traderaCategory');
-    expect(playwrightInput).toMatchObject({
-      traderaCategoryMapping: {
-        reason: 'stale_external_category',
-        matchScope: 'none',
-        internalCategoryId: 'internal-category-1',
-        matchingMappingCount: 1,
-        validMappingCount: 0,
-        catalogMatchedMappingCount: 0,
-      },
-    });
-    expect(result).toMatchObject({
-      metadata: {
-        categoryMappingReason: 'stale_external_category',
-        categoryPath: 'Other > Other',
-        categorySource: 'fallback',
-        categoryFallbackReason: 'fallback_requested',
-      },
-    });
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: 'export default async function run() {}',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+        browserMode: 'headed',
+      })
+    ).rejects.toThrow(
+      'The mapped Tradera category is stale or missing from fetched Tradera categories. Fetch Tradera categories again, update the mapping, and retry.'
+    );
+    expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
   });
 
-  it('falls back to Other > Other when the mapped Tradera category is invalid', async () => {
+  it('rejects mapper-mode listings when the mapped Tradera category is invalid', async () => {
     listCategoryMappingsMock.mockResolvedValue([
       {
         id: 'mapping-invalid',
@@ -732,82 +627,33 @@ beforeEach(() => {
         },
       },
     ]);
-    runPlaywrightListingScriptMock.mockResolvedValue({
-      runId: 'run-fallback-invalid-mapping',
-      externalListingId: 'listing-fallback-invalid-mapping',
-      listingUrl: 'https://www.tradera.com/item/fallback-invalid-mapping',
-      publishVerified: true,
-      personaId: null,
-      executionSettings: {
-        headless: false,
-        slowMo: 85,
-        timeout: 30000,
-        navigationTimeout: 45000,
-        humanizeMouse: true,
-        mouseJitter: 12,
-        clickDelayMin: 40,
-        clickDelayMax: 140,
-        inputDelayMin: 30,
-        inputDelayMax: 110,
-        actionDelayMin: 220,
-        actionDelayMax: 800,
-        proxyEnabled: false,
-        emulateDevice: false,
-        deviceName: 'Desktop Chrome',
-      },
-      rawResult: {
-        listingUrl: 'https://www.tradera.com/item/fallback-invalid-mapping',
-        categoryPath: 'Other > Other',
-        categorySource: 'fallback',
-      },
-    });
-
-    const result = await runTraderaBrowserListing({
-      listing: {
-        id: 'listing-1',
-        productId: 'product-1',
-        integrationId: 'integration-1',
-        connectionId: 'connection-1',
-      } as never,
-      connection: {
-        id: 'connection-1',
-        traderaBrowserMode: 'scripted',
-        playwrightListingScript: 'export default async function run() {}',
-      } as never,
-      systemSettings: {
-        listingFormUrl: 'https://www.tradera.com/en/selling/new',
-      } as never,
-      source: 'manual',
-      action: 'list',
-      browserMode: 'headed',
-    });
-
-    const playwrightInput = runPlaywrightListingScriptMock.mock.calls[0]?.[0]?.input as
-      | Record<string, unknown>
-      | undefined;
-
-    expect(playwrightInput).toBeDefined();
-    expect(playwrightInput).not.toHaveProperty('traderaCategory');
-    expect(playwrightInput).toMatchObject({
-      traderaCategoryMapping: {
-        reason: 'invalid_external_category',
-        matchScope: 'none',
-        internalCategoryId: 'internal-category-1',
-        matchingMappingCount: 1,
-        validMappingCount: 0,
-        catalogMatchedMappingCount: 0,
-      },
-    });
-    expect(result).toMatchObject({
-      metadata: {
-        categoryMappingReason: 'invalid_external_category',
-        categoryPath: 'Other > Other',
-        categorySource: 'fallback',
-      },
-    });
+    await expect(
+      runTraderaBrowserListing({
+        listing: {
+          id: 'listing-1',
+          productId: 'product-1',
+          integrationId: 'integration-1',
+          connectionId: 'connection-1',
+        } as never,
+        connection: {
+          id: 'connection-1',
+          traderaBrowserMode: 'scripted',
+          playwrightListingScript: 'export default async function run() {}',
+        } as never,
+        systemSettings: {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        } as never,
+        source: 'manual',
+        action: 'list',
+        browserMode: 'headed',
+      })
+    ).rejects.toThrow(
+      'The mapped Tradera category is invalid. Fetch Tradera categories again, update the Tradera category mapping, and retry.'
+    );
+    expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
   });
 
-  it('preserves the autofilled Tradera category when no category mapping is available', async () => {
+  it('preserves the autofilled Tradera category when top_suggested strategy is enabled', async () => {
     listCategoryMappingsMock.mockResolvedValue([]);
     runPlaywrightListingScriptMock.mockResolvedValue({
       runId: 'run-autofill-no-mapping',
@@ -849,6 +695,7 @@ beforeEach(() => {
       connection: {
         id: 'connection-1',
         traderaBrowserMode: 'scripted',
+        traderaCategoryStrategy: 'top_suggested',
         playwrightListingScript: 'export default async function run() {}',
       } as never,
       systemSettings: {

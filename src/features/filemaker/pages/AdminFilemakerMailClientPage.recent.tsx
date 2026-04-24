@@ -78,6 +78,9 @@ function MailClientRecentThreadsStatus({
         </p>
         <div className='flex flex-wrap gap-2'>
           <Button asChild variant='outline' size='sm'>
+            <Link href={buildFilemakerMailSelectionHref({ panel: 'settings' })}>Add Mailbox</Link>
+          </Button>
+          <Button asChild variant='outline' size='sm'>
             <Link href='/admin/filemaker/mail'>Open Workspace</Link>
           </Button>
           <Button asChild variant='outline' size='sm'>
@@ -102,8 +105,16 @@ function MailClientRecentThreadCard({
   dashboardScope: MailClientDashboardScope;
   thread: FilemakerMailThread;
 }): React.JSX.Element {
+  const trimmedDashboardQuery = dashboardQuery.trim();
+  const isSearchHandoff = trimmedDashboardQuery !== '';
+
   return (
-    <Card key={thread.id} variant='subtle' className='border-border/70 bg-card/50'>
+    <Card
+      key={thread.id}
+      data-testid={`mail-client-recent-thread-${thread.id}`}
+      variant='subtle'
+      className='border-border/70 bg-card/50'
+    >
       <CardContent className='space-y-3 p-4'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
           <div className='min-w-0 flex-1'>
@@ -122,7 +133,18 @@ function MailClientRecentThreadCard({
         </div>
         <div className='flex flex-wrap gap-2'>
           <Button asChild variant='outline' size='sm'>
-            <Link href={buildFilemakerMailThreadHref({ threadId: thread.id, accountId: thread.accountId, mailboxPath: thread.mailboxPath })}>Open Thread</Link>
+            <Link
+              href={buildFilemakerMailThreadHref({
+                threadId: thread.id,
+                accountId: thread.accountId,
+                mailboxPath: thread.mailboxPath,
+                originPanel: isSearchHandoff ? 'search' : null,
+                searchAccountId: isSearchHandoff && activeDashboardAccountId === '' ? 'all' : null,
+                searchQuery: trimmedDashboardQuery,
+              })}
+            >
+              Open Thread
+            </Link>
           </Button>
           <Button asChild variant='outline' size='sm'>
             <Link href={buildFilemakerMailSelectionHref({ accountId: thread.accountId, mailboxPath: thread.mailboxPath })}>Open Mailbox</Link>

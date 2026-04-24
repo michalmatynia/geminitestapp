@@ -22,7 +22,9 @@ type MailClientQuickActionsProps = {
   accountCount: number;
   activeCount: number;
   attentionCount: number;
+  dashboardQuery: string;
   firstActiveAccount: FilemakerMailAccount | null;
+  focusedAccount: FilemakerMailAccount | null;
 };
 
 function MailClientSummaryCards({
@@ -57,31 +59,73 @@ function MailClientQuickActions({
   accountCount,
   activeCount,
   attentionCount,
+  dashboardQuery,
   firstActiveAccount,
+  focusedAccount,
 }: MailClientQuickActionsProps): React.JSX.Element {
+  const trimmedDashboardQuery = dashboardQuery.trim();
+  const composeAccount =
+    focusedAccount?.status === 'active' ? focusedAccount : firstActiveAccount;
   const composeDescription =
-    firstActiveAccount !== null
-      ? `Start a message from ${firstActiveAccount.name}.`
+    composeAccount !== null
+      ? `Start a message from ${composeAccount.name}.`
       : 'Open the composer and choose a mailbox.';
   const attentionDescription =
     attentionCount > 0
       ? `${attentionCount} mailbox${attentionCount === 1 ? '' : 'es'} need follow-up.`
       : 'All configured mailboxes currently look healthy.';
+  const workspaceHref =
+    focusedAccount !== null
+      ? buildFilemakerMailSelectionHref({
+          accountId: focusedAccount.id,
+          panel: 'settings',
+        })
+      : '/admin/filemaker/mail';
+  const workspaceDescription =
+    focusedAccount !== null
+      ? `Open ${focusedAccount.name} directly in the full workspace.`
+      : 'Go directly into folders, recent threads, and account settings.';
+  const workspaceBadge = focusedAccount !== null ? 'Focused' : `${accountCount} mailboxes`;
+  const searchHref = buildFilemakerMailSelectionHref({
+    panel: 'search',
+    accountId: focusedAccount?.id ?? null,
+    searchQuery: trimmedDashboardQuery,
+  });
+  const searchDescription =
+    trimmedDashboardQuery !== ''
+      ? focusedAccount !== null
+        ? `Continue searching for "${trimmedDashboardQuery}" inside ${focusedAccount.name}.`
+        : `Continue searching for "${trimmedDashboardQuery}" across connected Filemaker mailboxes.`
+      : focusedAccount !== null
+        ? `Run deep search inside ${focusedAccount.name}.`
+        : 'Run deep search across connected Filemaker mailboxes.';
+  const searchBadge =
+    trimmedDashboardQuery !== '' ? 'Query' : focusedAccount !== null ? 'Focused' : 'Global';
 
   return (
-    <NavigationCardGrid className='sm:grid-cols-2 xl:grid-cols-4'>
+    <NavigationCardGrid className='sm:grid-cols-2 xl:grid-cols-5'>
       <NavigationCard
-        href='/admin/filemaker/mail'
+        href={workspaceHref}
         ariaLabel='Open Workspace'
         linkClassName='group'
         className='border-border/70 bg-card/50 group-hover:border-sky-500/40 group-hover:bg-card/70'
         leading={<div className='flex size-12 items-center justify-center rounded-lg bg-sky-500/10 text-sky-300'><Inbox className='size-6' /></div>}
         title='Open Workspace'
-        description='Go directly into folders, recent threads, and account settings.'
-        trailing={<Badge variant='outline'>{accountCount} mailboxes</Badge>}
+        description={workspaceDescription}
+        trailing={<Badge variant='outline'>{workspaceBadge}</Badge>}
       />
       <NavigationCard
-        href={buildFilemakerMailComposeHref({ accountId: firstActiveAccount?.id ?? null })}
+        href={buildFilemakerMailSelectionHref({ panel: 'settings' })}
+        ariaLabel='Add Mailbox'
+        linkClassName='group'
+        className='border-border/70 bg-card/50 group-hover:border-cyan-500/40 group-hover:bg-card/70'
+        leading={<div className='flex size-12 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-300'><MailPlus className='size-6' /></div>}
+        title='Add Mailbox'
+        description='Create a new mailbox connection and open its setup form immediately.'
+        trailing={<Badge variant='outline'>Setup</Badge>}
+      />
+      <NavigationCard
+        href={buildFilemakerMailComposeHref({ accountId: composeAccount?.id ?? null })}
         ariaLabel='Compose'
         linkClassName='group'
         className='border-border/70 bg-card/50 group-hover:border-emerald-500/40 group-hover:bg-card/70'
@@ -91,14 +135,14 @@ function MailClientQuickActions({
         trailing={<Badge variant='outline'>{activeCount} active</Badge>}
       />
       <NavigationCard
-        href={buildFilemakerMailSelectionHref({ panel: 'search' })}
+        href={searchHref}
         ariaLabel='Search Messages'
         linkClassName='group'
         className='border-border/70 bg-card/50 group-hover:border-violet-500/40 group-hover:bg-card/70'
         leading={<div className='flex size-12 items-center justify-center rounded-lg bg-violet-500/10 text-violet-300'><Search className='size-6' /></div>}
         title='Search Messages'
-        description='Run deep search across connected Filemaker mailboxes.'
-        trailing={<Badge variant='outline'>Global</Badge>}
+        description={searchDescription}
+        trailing={<Badge variant='outline'>{searchBadge}</Badge>}
       />
       <NavigationCard
         href={buildFilemakerMailSelectionHref({ panel: 'attention' })}

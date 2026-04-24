@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Plus, RefreshCw } from 'lucide-react';
 
@@ -8,6 +9,7 @@ import { isTraderaBrowserIntegrationSlug } from '@/features/integrations/constan
 import { useIntegrationConnections, useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
 import { useUpsertConnection } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrationCatalogs } from '@/features/integrations/hooks/useIntegrationProductQueries';
+import { useFetchExternalCategoriesMutation } from '@/features/integrations/hooks/useMarketplaceMutations';
 import {
   useFetchTraderaParameterMapperCatalogMutation,
   useTraderaParameterMapperParameters,
@@ -61,6 +63,30 @@ import { MappingsRulesTable } from './components/MappingsRulesTable';
 import { CatalogCategoryTable } from './components/CatalogCategoryTable';
 import { CatalogEntriesTable } from './components/CatalogEntriesTable';
 
+const TRADERA_PUBLIC_TAXONOMY_SOURCE_NAME = 'Tradera public taxonomy pages';
+
+const toTrimmedString = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const resolveExternalCategoryDepth = (category: ExternalCategory): number => {
+  if (typeof category.depth === 'number' && Number.isFinite(category.depth)) {
+    return category.depth;
+  }
+
+  const path = toTrimmedString(category.path);
+  if (!path) {
+    return 0;
+  }
+
+  return Math.max(
+    0,
+    path
+      .split(' > ')
+      .map((segment) => segment.trim())
+      .filter(Boolean).length - 1
+  );
+};
+
 export default function TraderaParameterMappingPage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -79,6 +105,7 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
   const integrationsQuery = useIntegrations();
   const catalogsQuery = useIntegrationCatalogs();
   const upsertConnectionMutation = useUpsertConnection();
+  const syncExternalCategoriesMutation = useFetchExternalCategoriesMutation();
   const fetchCatalogMutation = useFetchTraderaParameterMapperCatalogMutation();
 
   const traderaIntegration = useMemo(
@@ -141,6 +168,31 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
         ),
     [externalCategories]
   );
+  const activeExternalCategorySource = useMemo((): string | null => {
+    for (const category of externalCategories) {
+      const source = toTrimmedString(category.metadata?.['categoryFetchSource']);
+      if (source) {
+        return source;
+      }
+    }
+
+    return null;
+  }, [externalCategories]);
+  const externalCategoryMaxDepth = useMemo(
+    (): number =>
+      externalCategories.reduce(
+        (maxDepth, category) => Math.max(maxDepth, resolveExternalCategoryDepth(category)),
+        0
+      ),
+    [externalCategories]
+  );
+  const hasNoSyncedExternalCategories =
+    !externalCategoriesQuery.isLoading && Boolean(selectedConnectionId) && externalCategories.length === 0;
+  const hasNoLeafExternalCategories =
+    externalCategories.length > 0 && !externalCategoriesQuery.isLoading && leafExternalCategories.length === 0;
+  const isShallowPublicTraderaTree =
+    activeExternalCategorySource === TRADERA_PUBLIC_TAXONOMY_SOURCE_NAME &&
+    externalCategoryMaxDepth <= 1;
 
   const parameterCatalogEntries = useMemo(
     (): TraderaParameterMapperCatalogEntry[] =>
@@ -262,6 +314,13 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
         : parameterMapperRules,
     [parameterMapperRuleStatuses, parameterMapperRules, showStaleRulesOnly]
   );
+  const categoryMapperHref = useMemo((): string => {
+    const params = new URLSearchParams({ marketplace: 'tradera' });
+    if (selectedConnectionId) {
+      params.set('connectionId', selectedConnectionId);
+    }
+    return `/admin/integrations/marketplaces/category-mapper?${params.toString()}`;
+  }, [selectedConnectionId]);
 
   useEffect(() => {
     if (!mappingCategories.length) {
@@ -542,6 +601,26 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
     }
   };
 
+  const handleSyncExternalCategories = async (): Promise<void> => {
+    if (!selectedConnectionId) {
+      return;
+    }
+
+    try {
+      const result = await syncExternalCategoriesMutation.mutateAsync({
+        connectionId: selectedConnectionId,
+        categoryFetchMethod: 'playwright_listing_form',
+      });
+      toast(result.message, {
+        variant: result.fetched > 0 ? 'success' : 'info',
+      });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to sync Tradera categories.', {
+        variant: 'error',
+      });
+    }
+  };
+
   const connectionOptions = useMemo(
     () =>
       (connectionsQuery.data ?? []).map((connection) => ({
@@ -712,6 +791,80 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
           </div>
         </div>
       </Card>
+
+      {hasNoSyncedExternalCategories ? (
+        <Alert variant='warning'>
+          <div className='space-y-1'>
+            <div>
+              No synced Tradera categories are available for this connection. Re-fetch categories in
+              Category Mapper before fetching field catalogs or creating Tradera parameter rules.
+            </div>
+            <div>
+              <div className='flex flex-wrap gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => void handleSyncExternalCategories()}
+                  loading={syncExternalCategoriesMutation.isPending}
+                  disabled={!selectedConnectionId}
+                >
+                  Sync Tradera Categories
+                </Button>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href={categoryMapperHref}>Open Category Mapper</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Alert>
+      ) : null}
+
+      {externalCategories.length > 0 ? (
+        <Alert
+          variant={isShallowPublicTraderaTree || hasNoLeafExternalCategories ? 'warning' : 'info'}
+        >
+          <div className='space-y-1'>
+            <div>
+              Synced Tradera category tree: {activeExternalCategorySource ?? 'legacy / unknown source'}.
+              Loaded {externalCategories.length} categor
+              {externalCategories.length === 1 ? 'y' : 'ies'}, {leafExternalCategories.length} leaf
+              categor{leafExternalCategories.length === 1 ? 'y' : 'ies'}, max depth{' '}
+              {externalCategoryMaxDepth}.
+            </div>
+            {isShallowPublicTraderaTree ? (
+              <div>
+                This tree still comes from the shallow public taxonomy pages. Re-fetch Tradera
+                categories in Category Mapper using Listing form picker or SOAP API, then return here
+                to fetch field catalogs for the deeper categories.
+              </div>
+            ) : null}
+            {hasNoLeafExternalCategories ? (
+              <div>
+                The synced Tradera tree currently has no leaf categories available for field-catalog
+                fetches. Re-fetch categories in Category Mapper before continuing.
+              </div>
+            ) : null}
+            {(isShallowPublicTraderaTree || hasNoLeafExternalCategories) ? (
+              <div>
+                <div className='flex flex-wrap gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => void handleSyncExternalCategories()}
+                    loading={syncExternalCategoriesMutation.isPending}
+                    disabled={!selectedConnectionId}
+                  >
+                    Sync Tradera Categories
+                  </Button>
+                  <Button asChild variant='outline' size='sm'>
+                    <Link href={categoryMapperHref}>Open Category Mapper</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </Alert>
+      ) : null}
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as MapperTab)}>
         <TabsList className='grid w-full max-w-md grid-cols-2'>

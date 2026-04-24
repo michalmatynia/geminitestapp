@@ -70,3 +70,11 @@ export {
   type RobotsGroup,
   type RobotsRule,
 } from './robots';
+export { computeSelectorForElement } from './iframe-selector';
+export {
+  buildScripterCommitDiff,
+  type ExistingProductRef,
+  type LookupExistingFn,
+  type ScripterCommitDiff,
+  type ScripterDiffEntry,
+} from './commit-diff';

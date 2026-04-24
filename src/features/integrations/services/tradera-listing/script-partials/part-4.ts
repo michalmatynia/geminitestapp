@@ -361,7 +361,24 @@ export const PART_4 = String.raw`
       }
     }
 
-    selectedCategoryPath = segments.join(' > ');
+    const confirmedPath = await readCurrentSelectedCategoryPath();
+    if (!categoryPathMatches(confirmedPath, segments)) {
+      const pickerState = await readCategoryPickerState();
+      log?.('tradera.quicklist.category.mapped_confirmation_failed', {
+        mappedPath: segments.join(' > '),
+        confirmedPath,
+        selectedPath: pickerState.selectedPath,
+        breadcrumbs: pickerState.breadcrumbs,
+        visibleOptions: pickerState.visibleOptions,
+      });
+      await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
+        () => undefined
+      );
+      await wait(200);
+      return false;
+    }
+
+    selectedCategoryPath = confirmedPath || segments.join(' > ');
     selectedCategorySource = 'categoryMapper';
     selectedCategoryFallbackReason = null;
     return true;
@@ -374,25 +391,22 @@ export const PART_4 = String.raw`
         return;
       }
 
-      const preservedCategoryPath = await readCurrentSelectedCategoryPath();
-      if (preservedCategoryPath) {
-        selectedCategoryPath = preservedCategoryPath;
-        selectedCategorySource = 'preserved';
-        selectedCategoryFallbackReason = 'mapped_selection_failed_preserved_existing';
-        log?.('tradera.quicklist.category.mapped_failed_preserving_selected', {
-          mappedPath: mappedCategorySegments.join(' > '),
-          preservedPath: selectedCategoryPath,
-        });
-        return;
-      }
-
-      log?.('tradera.quicklist.category.mapped_failed_falling_back', {
-        mappedPath: mappedCategorySegments.join(' > '),
-        fallbackPath: FALLBACK_CATEGORY_PATH,
-      });
-      selectedCategoryFallbackReason = 'mapped_selection_failed';
-      await chooseFallbackCategory();
-      return;
+      const pickerState = await readCategoryPickerState().catch(() => ({
+        selectedPath: null,
+        visibleOptions: [],
+        breadcrumbs: [],
+        backButtonVisible: false,
+      }));
+      throw new Error(
+        'FAIL_CATEGORY_SET: Unable to apply mapped category "' +
+          mappedCategorySegments.join(' > ') +
+          '". Last state: ' +
+          JSON.stringify({
+            selectedPath: pickerState.selectedPath,
+            breadcrumbs: pickerState.breadcrumbs,
+            visibleOptions: pickerState.visibleOptions,
+          })
+      );
     }
 
     const currentSelectedPath = await readCurrentSelectedCategoryPath();

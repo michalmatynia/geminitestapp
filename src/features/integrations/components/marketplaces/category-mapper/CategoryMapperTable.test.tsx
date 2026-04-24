@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   internalCategories: [] as unknown[],
   externalCategories: [] as unknown[],
   mappings: [] as unknown[],
+  settingsMap: new Map<string, string>(),
   toast: vi.fn(),
   fetchMutateAsync: vi.fn(),
   saveMutateAsync: vi.fn(),
@@ -199,6 +200,12 @@ vi.mock('@/features/integrations/hooks/useMarketplaceMutations', () => ({
   }),
 }));
 
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useSettingsMap: () => ({
+    data: mocks.settingsMap,
+  }),
+}));
+
 const createCatalog = (
   overrides: Partial<CatalogRecord> & Pick<CatalogRecord, 'id' | 'name'>
 ): CatalogRecord => ({
@@ -253,6 +260,7 @@ describe('CategoryMapperTable', () => {
     mocks.toast.mockReset();
     mocks.fetchMutateAsync.mockReset();
     mocks.saveMutateAsync.mockReset();
+    mocks.settingsMap = new Map();
 
     mocks.catalogs = [createCatalog({ id: 'catalog-1', name: 'Default catalog' })];
     mocks.internalCategories = [createInternalCategory({ id: 'int-1', name: 'office chairs' })];
@@ -286,6 +294,22 @@ describe('CategoryMapperTable', () => {
     expect(mocks.toast).toHaveBeenCalledWith('Matched 1 category.', {
       variant: 'success',
     });
+  });
+
+  it('shows the listing form picker method for browser Tradera connections', async () => {
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    expect(
+      screen.getByRole('option', { name: 'Listing form picker' })
+    ).toBeInTheDocument();
   });
 
   it('renders nested external categories in the left-column tree when parent-child links exist', async () => {

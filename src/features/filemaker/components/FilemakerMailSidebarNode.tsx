@@ -200,8 +200,7 @@ export const FilemakerMailSidebarNode = memo(({
   return (
     <button
       type='button'
-      onClick={(event): void => {
-        input.select(event);
+      onClick={(): void => {
         if (parsed?.kind === 'mail_new_account') {
           if (onNewMailbox) {
             onNewMailbox();

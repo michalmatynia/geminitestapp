@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   internalCategories: [] as unknown[],
   externalCategories: [] as unknown[],
   mappings: [] as unknown[],
+  settingsMap: new Map<string, string>(),
   toast: vi.fn(),
   fetchMutateAsync: vi.fn(),
   saveMutateAsync: vi.fn(),
@@ -66,6 +67,12 @@ vi.mock('@/features/integrations/hooks/useMarketplaceMutations', () => ({
   useSaveMappingsMutation: () => ({
     isPending: false,
     mutateAsync: mocks.saveMutateAsync,
+  }),
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useSettingsMap: () => ({
+    data: mocks.settingsMap,
   }),
 }));
 
@@ -141,7 +148,13 @@ const createCategoryMapping = (
 
 function Harness(): React.JSX.Element {
   const { selectedCatalogId, categoryTree } = useCategoryMapperData();
-  const { pendingMappings, lastFetchWarning, staleMappings, stats } = useCategoryMapperUIState();
+  const {
+    pendingMappings,
+    lastFetchWarning,
+    staleMappings,
+    stats,
+    categoryFetchMethod,
+  } = useCategoryMapperUIState();
   const {
     handleAutoMatchByName,
     getMappingForExternal,
@@ -154,6 +167,7 @@ function Harness(): React.JSX.Element {
     <div>
       <div data-testid='selected-catalog'>{selectedCatalogId ?? 'none'}</div>
       <div data-testid='pending-count'>{String(pendingMappings.size)}</div>
+      <div data-testid='fetch-method'>{categoryFetchMethod}</div>
       <div data-testid='fetch-warning'>{lastFetchWarning?.message ?? 'none'}</div>
       <div data-testid='stale-count'>{String(stats.stale)}</div>
       <div data-testid='unmapped-count'>{String(stats.unmapped)}</div>
@@ -195,6 +209,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
     mocks.toast.mockReset();
     mocks.fetchMutateAsync.mockReset();
     mocks.saveMutateAsync.mockReset();
+    mocks.settingsMap = new Map();
 
     const deskLamps = createInternalCategory({ id: 'int-desk', name: 'Desk Lamps' });
 
@@ -260,6 +275,22 @@ describe('CategoryMapperProvider auto-match by name', () => {
     expect(mocks.toast).toHaveBeenCalledWith(
       'Matched 1 category, 1 already mapped, 1 ambiguous, 1 unmatched.',
       { variant: 'success' }
+    );
+  });
+
+  it('defaults browser Tradera fetches to the listing form picker when no setting is saved', async () => {
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('fetch-method')).toHaveTextContent('playwright_listing_form')
     );
   });
 

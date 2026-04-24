@@ -40,7 +40,7 @@ const NAV_ITEMS: Array<{
   },
   {
     key: 'emails',
-    label: 'Emails',
+    label: 'Email Records',
     href: '/admin/filemaker/emails',
     icon: <Mail className='size-4' />,
     variant: 'outline',

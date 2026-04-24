@@ -24,7 +24,7 @@ type UseKangurMobileDuelSessionOptions = {
   spectate?: boolean;
 };
 
-type UseKangurMobileDuelSessionResult = {
+export type UseKangurMobileDuelSessionResult = {
   actionError: string | null;
   currentQuestion: KangurDuelQuestion | null;
   error: string | null;

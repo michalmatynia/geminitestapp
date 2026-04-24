@@ -1,10 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 
+import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
-import { type KangurMobileTone as Tone } from '../shared/KangurMobileUi';
 import { shareKangurDuelInvite } from './duelInviteShare';
 import { createKangurDuelsHref } from './duelsHref';
 import { ActionButton, LinkButton } from './duels-primitives';
@@ -15,12 +14,12 @@ import {
   AUTO_REFRESH_INTERVAL_MS,
   HOME_ROUTE,
   LOBBY_CHAT_PREVIEW_LIMIT,
-  isWaitingSessionStatus,
   normalizeSeriesBestOf,
-  resolveRoundProgress,
   resolveSessionIdParam,
   resolveSpectateParam,
 } from './duels-utils';
+import { useKangurDuelsSearchStatus } from './useKangurDuelsSearchStatus';
+import { useKangurDuelsSessionState } from './useKangurDuelsSessionState';
 import { useKangurMobileDuelLobbyChat } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby } from './useKangurMobileDuelsLobby';
@@ -77,137 +76,9 @@ export function KangurDuelsScreen(): React.JSX.Element {
         en: 'Auto refresh (Off)',
         pl: 'Auto odświeżanie (Wyłączone)',
       });
-  const trimmedSearchQuery = lobby.searchQuery.trim();
-  const trimmedSearchSubmittedQuery = lobby.searchSubmittedQuery.trim();
 
-  let searchStatusTone: Tone = {
-    backgroundColor: '#f8fafc',
-    borderColor: '#cbd5e1',
-    textColor: '#475569',
-  };
-
-  if (lobby.isSearchLoading) {
-    searchStatusTone = {
-      backgroundColor: '#fffbeb',
-      borderColor: '#fde68a',
-      textColor: '#b45309',
-    };
-  } else if (trimmedSearchSubmittedQuery.length >= 2 || trimmedSearchQuery.length >= 2) {
-    searchStatusTone = {
-      backgroundColor: '#eff6ff',
-      borderColor: '#bfdbfe',
-      textColor: '#1d4ed8',
-    };
-  }
-
-  let searchStatusLabel = '';
-  if (lobby.isSearchLoading) {
-    searchStatusLabel = copy({
-      de: 'Suche läuft',
-      en: 'Searching',
-      pl: 'Trwa wyszukiwanie',
-    });
-  } else if (trimmedSearchSubmittedQuery.length >= 2) {
-    searchStatusLabel = copy({
-      de: `Suche: ${trimmedSearchSubmittedQuery}`,
-      en: `Search: ${trimmedSearchSubmittedQuery}`,
-      pl: `Szukano: ${trimmedSearchSubmittedQuery}`,
-    });
-  } else if (trimmedSearchQuery.length >= 2) {
-    searchStatusLabel = copy({
-      de: `Bereit: ${trimmedSearchQuery}`,
-      en: `Ready: ${trimmedSearchQuery}`,
-      pl: `Gotowe: ${trimmedSearchQuery}`,
-    });
-  } else if (lobby.isAuthenticated) {
-    searchStatusLabel = copy({
-      de: 'Mindestens 2 Zeichen',
-      en: 'At least 2 characters',
-      pl: 'Co najmniej 2 znaki',
-    });
-  } else {
-    searchStatusLabel = copy({
-      de: 'Anmeldung erforderlich',
-      en: 'Sign-in required',
-      pl: 'Wymaga logowania',
-    });
-  }
-
-  const hasWaitingSession = duel.session !== null && isWaitingSessionStatus(duel.session.status);
-  const isFinishedSession = duel.session !== null && (duel.session.status === 'completed' || duel.session.status === 'aborted');
-  const roundProgress = duel.session !== null
-    ? resolveRoundProgress(duel.session, duel.player, duel.isSpectating)
-    : null;
-  const activePlayersCount =
-    duel.session?.players.filter((player) => player.status !== 'left').length ?? 0;
-  const hasPendingInvitedPlayer =
-    duel.session?.players.some((player) => player.status === 'invited') ?? false;
-
-  let isInvitedLearnerMissing = false;
-  if (duel.session?.invitedLearnerId !== null && duel.session?.invitedLearnerId !== undefined) {
-    const invitedId = duel.session.invitedLearnerId;
-    isInvitedLearnerMissing = !duel.session.players.some(
-      (player) =>
-        player.learnerId === invitedId &&
-        player.status !== 'left',
-    );
-  }
-
-  const needsMorePlayersToStart = duel.session !== null && activePlayersCount < (duel.session.minPlayersToStart ?? 2);
-  const canShareInvite = Boolean(
-    duel.session !== null &&
-      duel.player !== null &&
-      !duel.isSpectating &&
-      duel.session.visibility === 'private' &&
-      hasWaitingSession &&
-      (hasPendingInvitedPlayer || isInvitedLearnerMissing || needsMorePlayersToStart),
-  );
-
-  const rawInviteeName = duel.session?.invitedLearnerName?.trim();
-  const inviteeName =
-    typeof rawInviteeName === 'string' && rawInviteeName !== ''
-      ? rawInviteeName
-      : copy({
-          de: 'der zweiten Person',
-          en: 'the other player',
-          pl: 'drugiej osoby',
-        });
-
-  const sessionTimelineItems: string[] = [];
-  if (duel.session !== null) {
-    sessionTimelineItems.push(
-      copy({
-        de: `Erstellt ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
-        en: `Created ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
-        pl: `Utworzono ${formatKangurMobileScoreDateTime(duel.session.createdAt, locale)}`,
-      }),
-    );
-    if (duel.session.startedAt !== null) {
-      sessionTimelineItems.push(
-        copy({
-          de: `Gestartet ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
-          en: `Started ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
-          pl: `Rozpoczęto ${formatKangurMobileScoreDateTime(duel.session.startedAt, locale)}`,
-        }),
-      );
-    }
-    sessionTimelineItems.push(
-      copy({
-        de: `Zuletzt aktualisiert ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
-        en: `Last updated ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
-        pl: `Ostatnia aktualizacja ${formatKangurMobileScoreDateTime(duel.session.updatedAt, locale)}`,
-      }),
-    );
-    if (duel.session.endedAt !== null) {
-      sessionTimelineItems.push(
-        copy({
-          de: `Beendet ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
-          en: `Ended ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
-          pl: `Zakończenie ${formatKangurMobileScoreDateTime(duel.session.endedAt, locale)}`,
-        }),
-      );
-    }
-  }
+  const { searchStatusLabel, searchStatusTone } = useKangurDuelsSearchStatus(copy, lobby);
+  const sessionState = useKangurDuelsSessionState(copy, locale, duel);
 
   const createLoginCallToAction = (label: string): React.JSX.Element =>
     supportsLearnerCredentials ? (
@@ -225,7 +96,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
   };
 
   const handleRematch = async (): Promise<void> => {
-    if (!duel.session || duel.isSpectating) {
+    if (duel.session === null || duel.isSpectating) {
       return;
     }
 
@@ -265,7 +136,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
   };
 
   const handleInviteShare = async (): Promise<void> => {
-    if (!duel.session || !duel.player || duel.isSpectating) {
+    if (duel.session === null || duel.player === null || duel.isSpectating) {
       return;
     }
 
@@ -355,12 +226,12 @@ export function KangurDuelsScreen(): React.JSX.Element {
     }
 
     handleLobbyRefresh();
-    const intervalId = setInterval(() => {
+    const intervalId = safeSetInterval(() => {
       handleLobbyRefresh();
     }, AUTO_REFRESH_INTERVAL_MS);
 
     return () => {
-      clearInterval(intervalId);
+      safeClearInterval(intervalId);
     };
   }, [autoRefreshEnabled, lobby.refresh]);
 
@@ -447,13 +318,13 @@ export function KangurDuelsScreen(): React.JSX.Element {
   if (sessionId !== null) {
     return (
       <DuelsSessionView
-        canShareInvite={canShareInvite}
+        canShareInvite={sessionState.canShareInvite}
         copy={copy}
         duel={duel}
-        hasWaitingSession={hasWaitingSession}
-        inviteeName={inviteeName}
+        hasWaitingSession={sessionState.hasWaitingSession}
+        inviteeName={sessionState.inviteeName}
         inviteShareError={inviteShareError}
-        isFinishedSession={isFinishedSession}
+        isFinishedSession={sessionState.isFinishedSession}
         isLoadingAuth={isLoadingAuth}
         isLobbyActionPending={lobby.isActionPending}
         locale={locale}
@@ -467,8 +338,8 @@ export function KangurDuelsScreen(): React.JSX.Element {
         onHandleInviteShare={handleInviteShare}
         onHandleRematch={handleRematch}
         onOpenLobby={openLobby}
-        roundProgress={roundProgress}
-        sessionTimelineItems={sessionTimelineItems}
+        roundProgress={sessionState.roundProgress}
+        sessionTimelineItems={sessionState.sessionTimelineItems}
       />
     );
   }

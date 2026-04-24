@@ -34,7 +34,7 @@ export const buildFilemakerMailSelectionHref = (input: {
     if (input.accountId) search.set('accountId', input.accountId);
   }
   if (input.accountId && panel === 'recent') search.set('panel', 'recent');
-  if (input.accountId && panel === 'settings') search.set('panel', 'settings');
+  if (panel === 'settings') search.set('panel', 'settings');
   if (input.accountId && panel === 'recent' && input.recentMailboxFilter) {
     search.set('recentMailbox', input.recentMailboxFilter);
   }

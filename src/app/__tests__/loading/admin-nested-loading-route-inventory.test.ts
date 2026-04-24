@@ -52,6 +52,7 @@ const adminNestedRoutesWithDedicatedLoading = [
   'filemaker/events',
   'filemaker/list',
   'filemaker/mail',
+  'filemaker/mail-client',
   'filemaker/organizations',
   'filemaker/persons',
   'image-studio/settings',

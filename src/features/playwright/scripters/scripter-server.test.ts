@@ -92,6 +92,85 @@ describe('createScripterServer', () => {
     expect(createDraft).toHaveBeenCalledTimes(1);
   });
 
+  it('blocks dry-run when enforceRobots is true and the check disallows it', async () => {
+    const registry = createInMemoryScripterRegistry([definition]);
+    const driverFactory = vi.fn(async () => ({ driver: makeDriver([]), close: async () => {} }));
+    const robotsCheck = vi.fn(async () => ({
+      allowed: false,
+      source: 'fetched' as const,
+      reason: 'Disallowed by robots.txt for /products',
+    }));
+    const server = createScripterServer({
+      registry,
+      driverFactory,
+      createDraft: vi.fn() as never,
+      robotsCheck,
+    });
+    await expect(
+      server.dryRun({ scripterId: 'shop-example', enforceRobots: true })
+    ).rejects.toThrow(/robots\.txt/);
+    expect(driverFactory).not.toHaveBeenCalled();
+  });
+
+  it('skips robots enforcement by default', async () => {
+    const registry = createInMemoryScripterRegistry([definition]);
+    const driverFactory = vi.fn(async () => ({
+      driver: makeDriver([{ '@type': 'Product', name: 'X', offers: { price: '1' } }]),
+      close: async () => {},
+    }));
+    const robotsCheck = vi.fn(async () => ({ allowed: false, source: 'fetched' as const }));
+    const server = createScripterServer({
+      registry,
+      driverFactory,
+      createDraft: vi.fn() as never,
+      robotsCheck,
+    });
+    await server.dryRun({ scripterId: 'shop-example' });
+    expect(robotsCheck).not.toHaveBeenCalled();
+    expect(driverFactory).toHaveBeenCalledTimes(1);
+  });
+
+  it('diff classifies drafts using the injected lookupExisting', async () => {
+    const registry = createInMemoryScripterRegistry([definition]);
+    const driverFactory = vi.fn(async () => ({
+      driver: makeDriver([
+        { '@type': 'Product', name: 'Alpha New', sku: 'A1', offers: { price: '10' } },
+        { '@type': 'Product', name: 'Beta', sku: 'B2', offers: { price: '20' } },
+      ]),
+      close: async () => {},
+    }));
+    const lookupExisting = vi.fn(async () => [
+      { id: 'p-1', sku: 'A1', name: 'Alpha Old', price: 10 },
+    ]);
+    const server = createScripterServer({
+      registry,
+      driverFactory,
+      createDraft: vi.fn() as never,
+      lookupExisting,
+    });
+    const sourceDef = await registry.get('shop-example');
+    if (sourceDef) {
+      sourceDef.fieldMap.bindings.sku = { path: 'sku' };
+    }
+    const result = await server.diff({ scripterId: 'shop-example' });
+    expect(lookupExisting).toHaveBeenCalledWith(['A1', 'B2']);
+    expect(result.diff.totals.new).toBe(1);
+    expect(result.diff.totals.update).toBe(1);
+    expect(result.diff.update[0]?.changedFields).toContain('name');
+  });
+
+  it('diff throws when no lookupExisting is configured', async () => {
+    const registry = createInMemoryScripterRegistry([definition]);
+    const server = createScripterServer({
+      registry,
+      driverFactory: vi.fn(async () => ({ driver: makeDriver([]), close: async () => {} })),
+      createDraft: vi.fn() as never,
+    });
+    await expect(server.diff({ scripterId: 'shop-example' })).rejects.toThrow(
+      /lookupExisting/
+    );
+  });
+
   it('always closes the session even when extraction throws', async () => {
     const registry = createInMemoryScripterRegistry([definition]);
     const close = vi.fn(async () => {});

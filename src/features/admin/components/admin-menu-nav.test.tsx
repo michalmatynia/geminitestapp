@@ -133,4 +133,29 @@ describe('buildAdminNav', () => {
     expect(productImportItem).not.toBeNull();
     expect(baseExportItem).not.toBeNull();
   });
+
+  it('includes the Filemaker email client and separates it from email records', () => {
+    const nav = buildAdminNav({
+      onOpenChat: () => undefined,
+      onCreatePageClick: () => undefined,
+    }) as AdminNavNode[];
+
+    const emailClientItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'filemaker/mail-client' &&
+        entry.label === 'Email Client' &&
+        entry.href === '/admin/filemaker/mail-client'
+    );
+    const emailRecordsItem = findNavItem(
+      nav,
+      (entry) =>
+        entry.id === 'filemaker/emails' &&
+        entry.label === 'Email Records' &&
+        entry.href === '/admin/filemaker/emails'
+    );
+
+    expect(emailClientItem).not.toBeNull();
+    expect(emailRecordsItem).not.toBeNull();
+  });
 });

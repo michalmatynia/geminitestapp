@@ -12,7 +12,7 @@ import { resolveMobileDuelErrorMessage } from './mobileDuelErrorMessages';
 
 const MOBILE_DUEL_CHAT_POLL_MS = 12_000;
 
-type UseKangurMobileDuelLobbyChatResult = {
+export type UseKangurMobileDuelLobbyChatResult = {
   error: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;

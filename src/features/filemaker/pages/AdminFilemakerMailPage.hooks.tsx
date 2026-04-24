@@ -178,6 +178,24 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
       ? rawRequestedRecentQuery
       : '';
+  const requestedSelection = useMemo(
+    () =>
+      ({
+        accountId: requestedAccountId,
+        mailboxPath: requestedMailboxPath,
+        panel: requestedPanel,
+      }) satisfies MailPageSelection,
+    [requestedAccountId, requestedMailboxPath, requestedPanel]
+  );
+  const requestedSelectionHref = buildMailSelectionHref({
+    accountId: requestedAccountId,
+    mailboxPath: requestedMailboxPath,
+    panel: requestedPanel,
+    recentMailboxFilter: requestedRecentMailboxFilter,
+    recentUnreadOnly: requestedRecentUnreadOnly,
+    recentQuery: requestedRecentQuery,
+    searchQuery: requestedSearchQuery,
+  });
   const effectiveQuery = shouldIgnoreActiveRecentState ? '' : query;
   const effectiveRecentMailboxFilter = shouldIgnoreActiveRecentState ? '' : recentMailboxFilter;
   const effectiveRecentUnreadOnly = shouldIgnoreActiveRecentState ? false : recentUnreadOnly;
@@ -211,6 +229,23 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const deepSearchSourceKeyRef = useRef<string | null>(null);
   const recentPreviewAccountIdRef = useRef<string | null>(null);
   const routeSyncHrefRef = useRef<string | null>(null);
+  const routeSyncSourceKeyRef = useRef<string | null>(null);
+  const hasPendingRouteSync = routeSyncHrefRef.current !== null;
+  const isPendingRequestedRouteStale =
+    hasPendingRouteSync && routeSyncHrefRef.current !== requestedSelectionHref;
+  const shouldHoldLocalSelectionFromRoute =
+    isPendingRequestedRouteStale &&
+    !isSameMailPageSelection(selection, requestedSelection);
+  const shouldHoldLocalRecentStateFromRoute =
+    isPendingRequestedRouteStale &&
+    selection.panel === 'recent' &&
+    (recentMailboxFilter !== requestedRecentMailboxFilter ||
+      recentUnreadOnly !== requestedRecentUnreadOnly ||
+      query !== requestedRecentQuery);
+  const shouldHoldLocalSearchStateFromRoute =
+    isPendingRequestedRouteStale &&
+    selection.panel === 'search' &&
+    deepSearchQuery !== requestedSearchQuery;
 
   const setSelection = useCallback<React.Dispatch<React.SetStateAction<MailPageSelection>>>(
     (nextSelection) => {
@@ -336,25 +371,43 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   }, [loadNavigation]);
 
   useEffect(() => {
-    setSelection({
-      accountId: requestedAccountId,
-      mailboxPath: requestedMailboxPath,
-      panel: requestedPanel,
-    });
-  }, [requestedAccountId, requestedMailboxPath, requestedPanel]);
+    if (shouldHoldLocalSelectionFromRoute) {
+      return;
+    }
+    setSelection(requestedSelection);
+  }, [
+    requestedSelection,
+    setSelection,
+    shouldHoldLocalSelectionFromRoute,
+  ]);
 
   useEffect(() => {
+    if (shouldHoldLocalRecentStateFromRoute) {
+      return;
+    }
     setRecentMailboxFilter(requestedRecentMailboxFilter);
     setRecentUnreadOnly(requestedRecentUnreadOnly);
-  }, [requestedRecentMailboxFilter, requestedRecentUnreadOnly]);
+  }, [
+    requestedRecentMailboxFilter,
+    requestedRecentUnreadOnly,
+    setRecentMailboxFilter,
+    setRecentUnreadOnly,
+    shouldHoldLocalRecentStateFromRoute,
+  ]);
 
   useEffect(() => {
+    if (shouldHoldLocalSearchStateFromRoute) {
+      return;
+    }
     setDeepSearchQuery(requestedSearchQuery);
-  }, [requestedSearchQuery]);
+  }, [requestedSearchQuery, setDeepSearchQuery, shouldHoldLocalSearchStateFromRoute]);
 
   useEffect(() => {
+    if (shouldHoldLocalRecentStateFromRoute) {
+      return;
+    }
     setQuery(requestedPanel === 'recent' ? requestedRecentQuery : '');
-  }, [requestedPanel, requestedRecentQuery]);
+  }, [requestedPanel, requestedRecentQuery, setQuery, shouldHoldLocalRecentStateFromRoute]);
 
   useLayoutEffect(() => {
     if (selection.panel !== 'recent') {
@@ -627,6 +680,15 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       recentQuery: nextRecentQuery,
       searchQuery: nextSearchQuery,
     });
+    const currentRouteStateKey = [
+      rawRequestedAccountId ?? '',
+      rawRequestedMailboxPath ?? '',
+      rawRequestedPanel ?? '',
+      rawRequestedRecentMailboxFilter,
+      rawRequestedRecentUnreadOnly ? '1' : '0',
+      rawRequestedRecentQuery,
+      rawRequestedSearchQuery,
+    ].join('::');
     if (
       (rawRequestedAccountId ?? null) === nextAccountId &&
       (rawRequestedMailboxPath ?? null) === nextMailboxPath &&
@@ -637,12 +699,17 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       rawRequestedSearchQuery === nextSearchQuery
     ) {
       routeSyncHrefRef.current = null;
+      routeSyncSourceKeyRef.current = null;
       return;
     }
-    if (routeSyncHrefRef.current === nextHref) {
+    if (
+      routeSyncHrefRef.current === nextHref &&
+      routeSyncSourceKeyRef.current === currentRouteStateKey
+    ) {
       return;
     }
     routeSyncHrefRef.current = nextHref;
+    routeSyncSourceKeyRef.current = currentRouteStateKey;
     startTransition(() => {
       router.replace(nextHref);
     });

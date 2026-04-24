@@ -15,8 +15,8 @@ describe('TraderaParameterMappingPage route guardrails', () => {
     expect(source).not.toMatch(/\bredirect\s*\(/);
   });
 
-  it('renders TraderaParameterMappingPage from the integrations public barrel', () => {
+  it('renders TraderaParameterMappingPage from an integrations feature barrel', () => {
     expect(source).toContain('TraderaParameterMappingPage');
-    expect(source).toMatch(/@\/features\/integrations\/(pages\.)?public/);
+    expect(source).toMatch(/@\/features\/integrations\/(admin\.)?public/);
   });
 });

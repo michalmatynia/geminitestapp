@@ -21,7 +21,7 @@ describe('Category mapper route guardrails', () => {
     });
 
     it('imports from the integrations feature public barrel', () => {
-      expect(source).toMatch(/@\/features\/integrations\/public/);
+      expect(source).toMatch(/@\/features\/integrations\/(admin\.)?public/);
     });
   });
 

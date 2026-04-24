@@ -294,7 +294,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           },
           {
             key: 'emails',
-            label: 'Emails Page',
+            label: 'Email Records',
             icon: <Mail className='size-4' />,
             variant: 'outline',
             onClick: () => startTransition(() => { router.push('/admin/filemaker/emails'); }),

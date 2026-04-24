@@ -187,7 +187,15 @@ export const resolveMarketplaceCategoryFetchContext = async (
       systemSettings.categoryFetchMethod !== 'playwright'
         ? systemSettings.categoryFetchMethod
         : undefined;
-    const effectiveMethod = categoryFetchMethod ?? storedOverride;
+    let effectiveMethod = categoryFetchMethod ?? storedOverride;
+
+    if (!effectiveMethod && integrationSlug === 'tradera') {
+      effectiveMethod = 'playwright_listing_form';
+    }
+
+    if (integrationSlug !== 'tradera' && effectiveMethod === 'playwright_listing_form') {
+      effectiveMethod = undefined;
+    }
 
     if (effectiveMethod === 'playwright_listing_form') {
       return {
@@ -200,9 +208,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
       };
     }
 
-    // If 'playwright' is explicitly requested, skip SOAP and use the scraper.
-    if (effectiveMethod !== 'playwright') {
-      // Try SOAP API when credentials are present (or when explicitly requested via 'soap').
+    if (effectiveMethod === 'soap') {
       try {
         const apiCredentials = resolveTraderaPublicApiCredentials(connection);
         return {
@@ -220,17 +226,42 @@ export const resolveMarketplaceCategoryFetchContext = async (
             'Tradera SOAP API is not configured for this connection. Add Tradera App ID and App Key in the connection settings, or switch to the public taxonomy pages fetch method.'
           );
         }
-        // No credentials and no explicit method — fall back to Playwright
+        throw badRequestError(
+          'Tradera SOAP API is not configured for this connection. Add Tradera App ID and App Key in the connection settings, or switch to another fetch method.'
+        );
       }
     }
 
-    return {
-      connectionId,
-      connection,
-      sourceName: 'Tradera',
-      responseSourceName: 'Tradera public taxonomy pages',
-      mode: 'tradera',
-    };
+    if (effectiveMethod === 'playwright') {
+      return {
+        connectionId,
+        connection,
+        sourceName: 'Tradera',
+        responseSourceName: 'Tradera public taxonomy pages',
+        mode: 'tradera',
+      };
+    }
+
+    // Auto-detect remains only for legacy/API-style Tradera flows with no explicit override.
+    try {
+      const apiCredentials = resolveTraderaPublicApiCredentials(connection);
+      return {
+        connectionId,
+        connection,
+        sourceName: 'Tradera',
+        responseSourceName: 'Tradera SOAP API',
+        apiCredentials,
+        mode: 'tradera-api',
+      };
+    } catch {
+      return {
+        connectionId,
+        connection,
+        sourceName: 'Tradera',
+        responseSourceName: 'Tradera public taxonomy pages',
+        mode: 'tradera',
+      };
+    }
   }
 
   throw badRequestError(`${integration.name} is not yet supported for category fetch`);

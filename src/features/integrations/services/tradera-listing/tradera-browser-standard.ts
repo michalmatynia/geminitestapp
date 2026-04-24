@@ -35,6 +35,8 @@ import {
   readTraderaAuthState,
   type TraderaEnsureLoggedInStatusUpdate,
 } from './tradera-browser-auth';
+import { resolveTraderaCategoryMappingResolutionForProduct } from './category-mapping';
+import { assertTraderaCategoryMappingReady } from './preflight';
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
@@ -43,6 +45,20 @@ const STANDARD_REQUESTED_BROWSER_MODE = 'connection_default';
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
+
+const buildListingFormUrlWithCategoryId = (
+  listingFormUrl: string,
+  categoryId: string | null
+): string => {
+  const normalizedListingFormUrl = normalizeTraderaListingFormUrl(listingFormUrl);
+  if (!categoryId) {
+    return normalizedListingFormUrl;
+  }
+
+  const url = new URL(normalizedListingFormUrl);
+  url.searchParams.set('categoryId', categoryId);
+  return url.toString();
+};
 
 const buildStandardExecutionTracker = async (): Promise<StepTracker> =>
   StepTracker.fromSteps(await buildResolvedActionSteps('tradera_standard_list'));
@@ -126,6 +142,12 @@ export const runTraderaBrowserListingStandard = async ({
   let tracker: StepTracker | null = null;
   let pricingMetadata: Record<string, unknown> | null = null;
   let authLoginAttempted = false;
+  let listingEditorUrl = listingFormUrl;
+  let mappedCategoryExternalId: string | null = null;
+  let mappedCategoryPath: string | null = null;
+  let categoryMappingReason: string | null = null;
+  let categoryMatchScope: string | null = null;
+  let categoryInternalCategoryId: string | null = null;
   return runPlaywrightConnectionNativeTask({
     connection,
     runtimeActionKey: 'tradera_standard_list',
@@ -203,7 +225,45 @@ export const runTraderaBrowserListingStandard = async ({
         return formControlsPromise;
       };
 
-      await ensureLoggedIn(page, connection, listingFormUrl, {
+      const ensureProductLoaded = async (): Promise<ProductWithImages> => {
+        if (product) {
+          return product;
+        }
+
+        const productRepository = await getProductRepository();
+        const loadedProduct = await productRepository.getProductById(listing.productId);
+        if (!loadedProduct) {
+          throw notFoundError('Product not found', { productId: listing.productId });
+        }
+
+        product = loadedProduct;
+        return loadedProduct;
+      };
+
+      if (connection.traderaCategoryStrategy !== 'top_suggested') {
+        const loadedProduct = await ensureProductLoaded();
+        const categoryMapping = await resolveTraderaCategoryMappingResolutionForProduct({
+          connectionId: connection.id,
+          product: loadedProduct,
+        });
+        mappedCategoryExternalId = categoryMapping.mapping?.externalCategoryId ?? null;
+        mappedCategoryPath =
+          categoryMapping.mapping?.externalCategoryPath ??
+          categoryMapping.mapping?.externalCategoryName ??
+          null;
+        categoryMappingReason = categoryMapping.reason;
+        categoryMatchScope = categoryMapping.matchScope;
+        categoryInternalCategoryId = categoryMapping.internalCategoryId;
+        assertTraderaCategoryMappingReady({
+          categoryMapping,
+          product: loadedProduct,
+          connection,
+        });
+      }
+
+      listingEditorUrl = buildListingFormUrlWithCategoryId(listingFormUrl, mappedCategoryExternalId);
+
+      await ensureLoggedIn(page, connection, listingEditorUrl, {
         onStatus: (update: TraderaEnsureLoggedInStatusUpdate) => {
           switch (update.status) {
             case 'opening_session_check':
@@ -263,11 +323,7 @@ export const runTraderaBrowserListingStandard = async ({
         emit: () => undefined,
         helpers: {
           loadProduct: async () => {
-            const productRepository = await getProductRepository();
-            product = await productRepository.getProductById(listing.productId);
-            if (!product) {
-              throw notFoundError('Product not found', { productId: listing.productId });
-            }
+            await ensureProductLoaded();
           },
           resolvePrice: async () => {
             if (!product) {
@@ -277,7 +333,7 @@ export const runTraderaBrowserListingStandard = async ({
                   session,
                   additional: {
                     mode: 'standard',
-                    listingFormUrl,
+                    listingFormUrl: listingEditorUrl,
                     productId: listing.productId,
                   },
                 }
@@ -300,7 +356,7 @@ export const runTraderaBrowserListingStandard = async ({
                   session,
                   additional: {
                     mode: 'standard',
-                    listingFormUrl,
+                    listingFormUrl: listingEditorUrl,
                     ...pricingMetadata,
                   },
                 }
@@ -403,7 +459,13 @@ export const runTraderaBrowserListingStandard = async ({
         completedAt: resolvedCompletedAt,
         metadata: {
           mode: 'standard',
-          listingFormUrl,
+          listingFormUrl: listingEditorUrl,
+          categoryId: mappedCategoryExternalId,
+          categoryPath: mappedCategoryPath,
+          categorySource: mappedCategoryExternalId ? 'categoryMapper' : null,
+          categoryMappingReason,
+          categoryMatchScope,
+          categoryInternalCategoryId,
           completedAt: resolvedCompletedAt,
           executionSteps: tracker.getSteps(),
           ...pricingMetadata,
@@ -434,7 +496,13 @@ export const runTraderaBrowserListingStandard = async ({
 
       return {
         mode: 'standard',
-        listingFormUrl,
+        listingFormUrl: listingEditorUrl,
+        categoryId: mappedCategoryExternalId,
+        categoryPath: mappedCategoryPath,
+        categorySource: mappedCategoryExternalId ? 'categoryMapper' : null,
+        categoryMappingReason,
+        categoryMatchScope,
+        categoryInternalCategoryId,
         executionSteps: activeTracker.getSteps(),
         ...(pricingMetadata ?? {}),
         debugArtifacts,

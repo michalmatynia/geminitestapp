@@ -194,6 +194,14 @@ describe('AdminFilemakerMailClientPage', () => {
       'href',
       '/admin/filemaker/mail'
     );
+    expect(screen.getByRole('link', { name: 'Add Mailbox' })).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail?panel=settings'
+    );
+    expect(screen.getByRole('link', { name: 'Search Messages' })).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail?panel=search'
+    );
     expect(
       screen
         .getAllByRole('link', { name: 'Compose' })
@@ -203,6 +211,18 @@ describe('AdminFilemakerMailClientPage', () => {
       'href',
       '/admin/filemaker/mail?panel=attention'
     );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Workspace' }));
+    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail');
+
+    routerPushMock.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Mailbox' }));
+    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=settings');
+
+    routerPushMock.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Compose' }));
+    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail/compose?accountId=account-1');
+    expect(screen.queryByTestId('mail-client-focused-account-account-1')).not.toBeInTheDocument();
 
     const supportCard = screen.getByTestId('mail-client-account-account-1');
     expect(within(supportCard).getByRole('link', { name: 'Open Inbox' })).toHaveAttribute(
@@ -476,11 +496,53 @@ describe('AdminFilemakerMailClientPage', () => {
       }
 
       if (url === '/api/filemaker/mail/folders') {
-        return Response.json({ folders: [] });
+        return Response.json({
+          folders: [
+            {
+              id: 'folder-billing-archive',
+              accountId: 'account-2',
+              mailboxPath: 'Archive',
+              mailboxRole: 'custom',
+              threadCount: 18,
+              unreadCount: 6,
+              lastMessageAt: '2026-04-23T10:00:00.000Z',
+            },
+            {
+              id: 'folder-billing-inbox',
+              accountId: 'account-2',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 4,
+              unreadCount: 1,
+              lastMessageAt: '2026-04-22T08:00:00.000Z',
+            },
+          ],
+        });
       }
 
       if (url === '/api/filemaker/mail/threads?limit=6') {
-        return Response.json({ threads: [] });
+        return Response.json({
+          threads: [
+            {
+              id: 'thread-billing-1',
+              accountId: 'account-2',
+              mailboxPath: 'Archive',
+              mailboxRole: 'custom',
+              providerThreadId: null,
+              subject: 'Billing mailbox sync follow-up',
+              normalizedSubject: 'billing mailbox sync follow-up',
+              snippet: 'Billing auth and sync details for the latest retry.',
+              participantSummary: [{ address: 'ops@example.com', name: 'Billing Ops' }],
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              unreadCount: 2,
+              messageCount: 4,
+              lastMessageAt: '2026-04-23T10:30:00.000Z',
+              createdAt: '2026-04-23T10:00:00.000Z',
+              updatedAt: '2026-04-23T10:30:00.000Z',
+            },
+          ],
+        });
       }
 
       throw new Error(`Unexpected fetch: ${url}`);
@@ -496,7 +558,72 @@ describe('AdminFilemakerMailClientPage', () => {
       'href',
       '/admin/filemaker/mail-client?scope=attention&query=billing'
     );
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Open Workspace' })
+        .some((link) => link.getAttribute('href') === '/admin/filemaker/mail?accountId=account-2&panel=settings')
+    ).toBe(true);
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Search Messages' })
+        .some(
+          (link) =>
+            link.getAttribute('href') ===
+            '/admin/filemaker/mail?panel=search&accountId=account-2&searchQuery=billing'
+        )
+    ).toBe(true);
+    const focusedMailbox = screen.getByTestId('mail-client-focused-account-account-2');
+    const focusedRecentCard = screen.getByTestId('mail-client-recent-thread-thread-billing-1');
+    expect(within(focusedMailbox).getByText('Focused mailbox')).toBeInTheDocument();
+    expect(within(focusedMailbox).getByText('Mailbox auth failed')).toBeInTheDocument();
+    expect(
+      within(focusedMailbox).getByTestId('mail-client-focused-folder-folder-billing-archive')
+    ).toBeInTheDocument();
+    expect(within(focusedMailbox).getByRole('link', { name: 'Open Archive' })).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail?accountId=account-2&mailboxPath=Archive'
+    );
+    expect(within(focusedMailbox).getByText('Threads: 18')).toBeInTheDocument();
+    expect(
+      within(focusedMailbox).getByTestId('mail-client-focused-thread-thread-billing-1')
+    ).toBeInTheDocument();
+    expect(
+      within(focusedMailbox).getByRole('link', { name: 'Open Thread' })
+    ).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail/threads/thread-billing-1?accountId=account-2&mailboxPath=Archive&panel=search&searchQuery=billing'
+    );
+    expect(
+      within(focusedMailbox).getByRole('link', { name: 'Open Latest Thread' })
+    ).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail/threads/thread-billing-1?accountId=account-2&mailboxPath=Archive&panel=search&searchQuery=billing'
+    );
+    expect(
+      within(focusedRecentCard).getByRole('link', { name: 'Open Thread' })
+    ).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail/threads/thread-billing-1?accountId=account-2&mailboxPath=Archive&panel=search&searchQuery=billing'
+    );
+    expect(within(focusedMailbox).getByText('Billing mailbox sync follow-up')).toBeInTheDocument();
+    expect(within(focusedMailbox).getByRole('link', { name: 'Show All' })).toHaveAttribute(
+      'href',
+      '/admin/filemaker/mail-client?scope=attention&query=billing'
+    );
     expect(routerReplaceMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open Workspace' }));
+    expect(routerPushMock).toHaveBeenCalledWith(
+      '/admin/filemaker/mail?accountId=account-2&panel=settings'
+    );
+
+    routerPushMock.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Add Mailbox' }));
+    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=settings');
+
+    routerPushMock.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Compose' }));
+    expect(routerPushMock).toHaveBeenCalledWith('/admin/filemaker/mail/compose?accountId=account-1');
 
     fireEvent.change(screen.getByRole('searchbox', { name: 'Filter mailboxes and recent threads' }), {
       target: { value: 'billing ops' },
@@ -531,6 +658,11 @@ describe('AdminFilemakerMailClientPage', () => {
     render(<AdminFilemakerMailClientPage />);
 
     expect(await screen.findByText('No mailboxes configured yet.')).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByRole('link', { name: 'Add Mailbox' })
+        .some((link) => link.getAttribute('href') === '/admin/filemaker/mail?panel=settings')
+    ).toBe(true);
     expect(
       screen
         .getAllByRole('link', { name: 'Open Workspace' })

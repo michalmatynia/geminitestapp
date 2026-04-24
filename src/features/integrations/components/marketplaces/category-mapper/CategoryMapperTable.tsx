@@ -9,6 +9,7 @@ import {
   useCategoryMapperData,
   useCategoryMapperUIState,
 } from '@/features/integrations/context/CategoryMapperContext';
+import type { TraderaCategoryFetchMethod } from '@/shared/contracts/integrations/marketplace';
 import { StandardDataTablePanel, GenericMapperStats } from '@/shared/ui/templates.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { Alert } from '@/shared/ui/primitives.public';
@@ -58,6 +59,27 @@ export function CategoryMapperTable(): React.JSX.Element {
   const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
   const isTraderaConnection =
     normalizedIntegrationSlug === 'tradera' || normalizedIntegrationSlug === 'tradera-api';
+  const categoryFetchMethodOptions = useMemo<
+    { value: TraderaCategoryFetchMethod; label: string }[] | undefined
+  >(() => {
+    if (!isTraderaConnection) {
+      return undefined;
+    }
+
+    const options: { value: TraderaCategoryFetchMethod; label: string }[] = [
+      { value: 'playwright', label: 'Public taxonomy pages' },
+    ];
+
+    if (normalizedIntegrationSlug === 'tradera') {
+      options.push({
+        value: 'playwright_listing_form',
+        label: 'Listing form picker',
+      });
+    }
+
+    options.push({ value: 'soap', label: 'SOAP API' });
+    return options;
+  }, [isTraderaConnection, normalizedIntegrationSlug]);
   const persistedFetchSource = useMemo(() => {
     for (const category of externalCategories) {
       const source =
@@ -209,6 +231,7 @@ export function CategoryMapperTable(): React.JSX.Element {
           pendingCount={pendingCount}
           categoryFetchMethod={isTraderaConnection ? categoryFetchMethod : undefined}
           onCategoryFetchMethodChange={isTraderaConnection ? setCategoryFetchMethod : undefined}
+          categoryFetchMethodOptions={categoryFetchMethodOptions}
         />
       }
       filters={

@@ -9,12 +9,14 @@ import {
   useMailClientDashboardFilterState,
 } from './AdminFilemakerMailClientPage.dashboard-state';
 import { MailClientDashboardFilters } from './AdminFilemakerMailClientPage.filters';
+import { MailClientFocusedAccountSection } from './AdminFilemakerMailClientPage.focused';
 import { MailClientMailboxSection } from './AdminFilemakerMailClientPage.mailboxes';
 import { MailClientRecentThreadsSection } from './AdminFilemakerMailClientPage.recent';
 import {
   MailClientQuickActions,
   MailClientSummaryCards,
 } from './AdminFilemakerMailClientPage.sections';
+import type { FilemakerMailAccount } from '../types';
 
 type MailClientAttentionBlockProps = Pick<
   MailClientDashboardState,
@@ -53,6 +55,7 @@ function MailClientDashboardOverview({
   activeAccounts,
   attentionAccounts,
   firstActiveAccount,
+  focusedAccount,
   recentThreads,
   dashboardAccountId,
   dashboardScope,
@@ -68,7 +71,9 @@ function MailClientDashboardOverview({
   MailClientDashboardState,
   'accounts' | 'folders' | 'activeAccounts' | 'attentionAccounts' | 'firstActiveAccount' | 'recentThreads'
 > &
-  MailClientDashboardFilterState): React.JSX.Element {
+  MailClientDashboardFilterState & {
+    focusedAccount: FilemakerMailAccount | null;
+  }): React.JSX.Element {
   return (
     <>
       <MailClientSummaryCards
@@ -81,7 +86,9 @@ function MailClientDashboardOverview({
         accountCount={accounts.length}
         activeCount={activeAccounts.length}
         attentionCount={attentionAccounts.length}
+        dashboardQuery={dashboardQuery}
         firstActiveAccount={firstActiveAccount}
+        focusedAccount={focusedAccount}
       />
       <MailClientDashboardFilters
         accountId={dashboardAccountId}
@@ -255,9 +262,30 @@ function MailClientDashboardSectionsContent({
   handleToggleAccountStatus,
   filterState,
 }: MailClientDashboardSectionsContentProps): React.JSX.Element {
+  const focusedAccount =
+    filterState.dashboardAccountId === ''
+      ? null
+      : accounts.find((account) => account.id === filterState.dashboardAccountId) ?? null;
+
   return (
     <>
-      <MailClientDashboardOverview accounts={accounts} folders={folders} activeAccounts={activeAccounts} attentionAccounts={attentionAccounts} firstActiveAccount={firstActiveAccount} recentThreads={recentThreads} {...filterState} />
+      <MailClientDashboardOverview accounts={accounts} folders={folders} activeAccounts={activeAccounts} attentionAccounts={attentionAccounts} firstActiveAccount={firstActiveAccount} focusedAccount={focusedAccount} recentThreads={recentThreads} {...filterState} />
+      <MailClientFocusedAccountSection
+        account={focusedAccount}
+        dashboardAccountId={filterState.dashboardAccountId}
+        dashboardQuery={filterState.dashboardQuery}
+        dashboardScope={filterState.dashboardScope}
+        folders={focusedAccount !== null ? foldersByAccount.get(focusedAccount.id) ?? [] : []}
+        recentThreads={
+          focusedAccount !== null
+            ? filterState.visibleRecentThreads.filter((thread) => thread.accountId === focusedAccount.id)
+            : []
+        }
+        isSyncing={focusedAccount !== null && syncingAccountId === focusedAccount.id}
+        isStatusUpdating={focusedAccount !== null && statusUpdatingAccountId === focusedAccount.id}
+        onSyncAccount={handleSyncAccount}
+        onToggleAccountStatus={handleToggleAccountStatus}
+      />
       <MailClientAttentionBlock
         accounts={accounts}
         attentionAccounts={attentionAccounts}

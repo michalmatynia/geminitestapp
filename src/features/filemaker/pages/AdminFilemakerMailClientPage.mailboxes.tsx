@@ -16,6 +16,7 @@ import {
   hasText,
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
+import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import {
   MailClientMailboxActions,
   MailClientMailboxShortcuts,
@@ -281,9 +282,12 @@ function MailClientEmptyStateCard(): React.JSX.Element {
       <div className='space-y-3'>
         <div className='text-base font-semibold text-white'>No mailboxes configured yet.</div>
         <p className='text-sm text-gray-400'>
-          Open the workspace to add the first Filemaker mailbox and run the initial sync.
+          Create the first Filemaker mailbox from setup, then return here to monitor sync health and activity.
         </p>
         <div className='flex flex-wrap gap-2'>
+          <Button asChild variant='outline'>
+            <Link href={buildFilemakerMailSelectionHref({ panel: 'settings' })}>Add Mailbox</Link>
+          </Button>
           <Button asChild variant='outline'>
             <Link href='/admin/filemaker/mail'>Open Workspace</Link>
           </Button>

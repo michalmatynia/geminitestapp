@@ -42,7 +42,9 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/filemaker/persons': 'Search and review Filemaker persons.',
   '/admin/filemaker/organizations': 'Search and review Filemaker organizations.',
   '/admin/filemaker/events': 'Search and review Filemaker events with linked organizations.',
-  '/admin/filemaker/emails': 'Search and review Filemaker emails and relationship links.',
+  '/admin/filemaker/mail-client':
+    'Open the Filemaker email client dashboard for mailbox health, recent activity, and mailbox actions.',
+  '/admin/filemaker/emails': 'Search and review Filemaker email records and relationship links.',
   '/admin/filemaker/list':
     'Search and review the combined Filemaker person, organization, and event registry.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',

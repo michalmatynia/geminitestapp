@@ -35,13 +35,11 @@ export const buildMissingTraderaCategoryMappingMessage = ({
 };
 
 export const canUseFallbackTraderaCategory = ({
-  categoryMapping,
+  connection,
 }: {
-  categoryMapping: TraderaCategoryMappingResolution;
+  connection: IntegrationConnectionRecord;
 }): boolean =>
-  categoryMapping.reason === 'no_active_mapping' ||
-  categoryMapping.reason === 'stale_external_category' ||
-  categoryMapping.reason === 'invalid_external_category';
+  connection.traderaCategoryStrategy === 'top_suggested';
 
 export const assertTraderaCategoryMappingReady = ({
   categoryMapping,
@@ -56,7 +54,7 @@ export const assertTraderaCategoryMappingReady = ({
     return;
   }
 
-  if (canUseFallbackTraderaCategory({ categoryMapping })) {
+  if (canUseFallbackTraderaCategory({ connection })) {
     return;
   }
 

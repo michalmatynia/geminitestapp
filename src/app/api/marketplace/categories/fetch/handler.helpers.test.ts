@@ -135,7 +135,7 @@ describe('marketplace categories fetch helpers', () => {
   });
 
   it('resolves tradera contexts, builds responses, and rejects unsupported integrations', async () => {
-    // Browser connection without API credentials falls back to Playwright scrape
+    // Browser connection defaults to the authenticated listing form picker
     resolveTraderaPublicApiCredentialsMock.mockImplementation(() => {
       throw new Error('Tradera API App ID is missing.');
     });
@@ -154,9 +154,12 @@ describe('marketplace categories fetch helpers', () => {
     expect(traderaContext).toMatchObject({
       connectionId: 'conn-1',
       sourceName: 'Tradera',
-      responseSourceName: 'Tradera public taxonomy pages',
-      mode: 'tradera',
+      responseSourceName: 'Tradera listing form picker',
+      mode: 'tradera-listing-form',
     });
+    fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([
+      { id: 'cat-2', name: 'Category 2', parentId: '0' },
+    ]);
     await expect(fetchMarketplaceCategories(traderaContext)).resolves.toEqual([
       { id: 'cat-2', name: 'Category 2', parentId: '0' },
     ]);

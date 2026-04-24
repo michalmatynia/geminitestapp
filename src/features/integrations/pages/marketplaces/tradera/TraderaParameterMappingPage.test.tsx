@@ -7,12 +7,29 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const toastMock = vi.hoisted(() => vi.fn());
 const upsertConnectionMutateAsyncMock = vi.hoisted(() => vi.fn());
 const fetchCatalogMutateAsyncMock = vi.hoisted(() => vi.fn());
+const fetchExternalCategoriesMutateAsyncMock = vi.hoisted(() => vi.fn());
 const refetchConnectionsMock = vi.hoisted(() => vi.fn());
+const useExternalCategoriesMock = vi.hoisted(() => vi.fn());
 
 vi.mock('next/navigation', () => ({
   useSearchParams: () => ({
     get: () => null,
   }),
+}));
+
+vi.mock('next/link', () => ({
+  default: ({
+    href,
+    children,
+    ...props
+  }: {
+    href: string;
+    children: React.ReactNode;
+  }) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 vi.mock('nextjs-toploader/app', () => ({
@@ -165,6 +182,13 @@ vi.mock('@/features/integrations/hooks/useIntegrationMutations', () => ({
   }),
 }));
 
+vi.mock('@/features/integrations/hooks/useMarketplaceMutations', () => ({
+  useFetchExternalCategoriesMutation: () => ({
+    mutateAsync: fetchExternalCategoriesMutateAsyncMock,
+    isPending: false,
+  }),
+}));
+
 vi.mock('@/features/integrations/hooks/useIntegrationProductQueries', () => ({
   useIntegrationCatalogs: () => ({
     data: [{ id: 'catalog-a', name: 'Main Catalog', isDefault: true }],
@@ -204,25 +228,7 @@ vi.mock('@/features/integrations/hooks/useTraderaParameterMapper', () => ({
 }));
 
 vi.mock('@/features/integrations/hooks/useMarketplaceQueries', () => ({
-  useExternalCategories: () => ({
-    data: [
-      {
-        id: 'external-1',
-        externalId: 'cat-jewellery',
-        name: 'Jewellery',
-        path: 'Accessories > Jewellery',
-        isLeaf: true,
-      },
-      {
-        id: 'external-2',
-        externalId: 'cat-watches',
-        name: 'Watches',
-        path: 'Accessories > Watches',
-        isLeaf: true,
-      },
-    ],
-    isLoading: false,
-  }),
+  useExternalCategories: (...args: unknown[]) => useExternalCategoriesMock(...args),
 }));
 
 vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
@@ -340,6 +346,12 @@ describe('TraderaParameterMappingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     upsertConnectionMutateAsyncMock.mockResolvedValue(undefined);
+    fetchExternalCategoriesMutateAsyncMock.mockResolvedValue({
+      fetched: 2,
+      total: 2,
+      message: 'Successfully synced 2 categories from Tradera listing form picker.',
+      source: 'Tradera listing form picker',
+    });
     fetchCatalogMutateAsyncMock.mockResolvedValue({
       connectionId: 'connection-1',
       externalCategoryId: 'cat-jewellery',
@@ -347,6 +359,33 @@ describe('TraderaParameterMappingPage', () => {
       message: 'No additional Tradera dropdown fields were detected.',
     });
     refetchConnectionsMock.mockResolvedValue(undefined);
+    useExternalCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: 'external-1',
+          externalId: 'cat-jewellery',
+          name: 'Jewellery',
+          path: 'Accessories > Jewellery',
+          isLeaf: true,
+          depth: 1,
+          metadata: {
+            categoryFetchSource: 'Tradera listing form picker',
+          },
+        },
+        {
+          id: 'external-2',
+          externalId: 'cat-watches',
+          name: 'Watches',
+          path: 'Accessories > Watches',
+          isLeaf: true,
+          depth: 1,
+          metadata: {
+            categoryFetchSource: 'Tradera listing form picker',
+          },
+        },
+      ],
+      isLoading: false,
+    });
   });
 
   it('clears a stale target option when switching to a different Tradera field', async () => {
@@ -537,5 +576,87 @@ describe('TraderaParameterMappingPage', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Fetch Tradera category')).toHaveValue('cat-watches');
     });
+  });
+
+  it('warns when the synced Tradera tree still comes from shallow public taxonomy pages', () => {
+    useExternalCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: 'external-1',
+          externalId: 'cat-collectibles',
+          name: 'Collectibles',
+          path: 'Collectibles',
+          isLeaf: true,
+          depth: 0,
+          metadata: {
+            categoryFetchSource: 'Tradera public taxonomy pages',
+          },
+        },
+        {
+          id: 'external-2',
+          externalId: 'cat-pins',
+          name: 'Pins',
+          path: 'Collectibles > Pins',
+          isLeaf: true,
+          depth: 1,
+          metadata: {
+            categoryFetchSource: 'Tradera public taxonomy pages',
+          },
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<TraderaParameterMappingPage />);
+
+    expect(
+      screen.getByText(
+        /Synced Tradera category tree: Tradera public taxonomy pages\. Loaded 2 categories, 2 leaf categories, max depth 1\./i
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /This tree still comes from the shallow public taxonomy pages\. Re-fetch Tradera categories in Category Mapper using Listing form picker or SOAP API/i
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Category Mapper' })).toHaveAttribute(
+      'href',
+      '/admin/integrations/marketplaces/category-mapper?marketplace=tradera&connectionId=connection-1'
+    );
+  });
+
+  it('can sync Tradera categories directly from the shallow-tree warning', async () => {
+    useExternalCategoriesMock.mockReturnValue({
+      data: [
+        {
+          id: 'external-1',
+          externalId: 'cat-collectibles',
+          name: 'Collectibles',
+          path: 'Collectibles',
+          isLeaf: true,
+          depth: 0,
+          metadata: {
+            categoryFetchSource: 'Tradera public taxonomy pages',
+          },
+        },
+      ],
+      isLoading: false,
+    });
+
+    render(<TraderaParameterMappingPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sync Tradera Categories' }));
+
+    await waitFor(() => {
+      expect(fetchExternalCategoriesMutateAsyncMock).toHaveBeenCalledWith({
+        connectionId: 'connection-1',
+        categoryFetchMethod: 'playwright_listing_form',
+      });
+    });
+
+    expect(toastMock).toHaveBeenCalledWith(
+      'Successfully synced 2 categories from Tradera listing form picker.',
+      expect.objectContaining({ variant: 'success' })
+    );
   });
 });

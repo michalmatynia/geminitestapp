@@ -354,7 +354,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v145',
+        scriptMarker: 'tradera-quicklist-default:v146',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -382,10 +382,10 @@ beforeEach(() => {
         latestStage: null,
         latestStageUrl: null,
         publishVerified: true,
-        imageInputSource: 'remote',
+        imageInputSource: 'local',
         imageUploadSource: null,
-        localImagePathCount: 0,
-        imageUrlCount: 2,
+        localImagePathCount: 1,
+        imageUrlCount: 1,
         ...EXPECTED_TRADERA_PRICING_METADATA,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
@@ -478,7 +478,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v145',
+        scriptMarker: 'tradera-quicklist-default:v146',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -506,10 +506,10 @@ beforeEach(() => {
         latestStage: null,
         latestStageUrl: null,
         publishVerified: true,
-        imageInputSource: 'remote',
+        imageInputSource: 'local',
         imageUploadSource: null,
-        localImagePathCount: 0,
-        imageUrlCount: 2,
+        localImagePathCount: 1,
+        imageUrlCount: 1,
         ...EXPECTED_TRADERA_PRICING_METADATA,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
@@ -557,7 +557,7 @@ beforeEach(() => {
     });
 
     const staleMarkedManagedScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT
-      .replace('tradera-quicklist-default:v145', 'tradera-quicklist-default:v144')
+      .replace('tradera-quicklist-default:v146', 'tradera-quicklist-default:v145')
       .replace(
         'let currentImageUploadSource = null;\n\n  try {',
         'try {\n    emitStage(\'draft_cleared\');\n\n    let currentImageUploadSource = null;'
@@ -1074,7 +1074,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v145',
+      'tradera-quicklist-default:v146',
       'tradera-quicklist-default:v89'
     );
 
@@ -1259,7 +1259,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v145',
+        scriptMarker: 'tradera-quicklist-default:v146',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',
@@ -1289,7 +1289,7 @@ beforeEach(() => {
         publishVerified: true,
         categoryFallbackUsed: false,
         categoryName: 'Pins',
-        imageInputSource: 'remote',
+        imageInputSource: 'local',
         imageUploadFallbackUsed: false,
         imagePreviewMismatch: false,
         imageUploadSource: null,
@@ -1297,8 +1297,8 @@ beforeEach(() => {
         observedImagePreviewCount: null,
         observedImagePreviewDelta: null,
         observedImagePreviewDescriptors: [],
-        localImagePathCount: 0,
-        imageUrlCount: 2,
+        localImagePathCount: 1,
+        imageUrlCount: 1,
         ...EXPECTED_TRADERA_PRICING_METADATA,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',

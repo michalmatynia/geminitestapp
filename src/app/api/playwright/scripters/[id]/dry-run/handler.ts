@@ -10,6 +10,7 @@ const dryRunInputSchema = z
     entryUrl: z.string().url().optional(),
     limit: z.number().int().positive().optional(),
     skipRecordsWithErrors: z.boolean().optional(),
+    enforceRobots: z.boolean().optional(),
     catalogDefaults: z
       .object({
         catalogIds: z.array(z.string()).optional(),
@@ -38,9 +39,11 @@ export const postHandler = async (
   }
   try {
     const server = getDefaultScripterServer();
+    const { enforceRobots, ...sourceOptions } = parsed.data;
     const result = await server.dryRun({
       scripterId: params.id,
-      options: parsed.data,
+      options: sourceOptions,
+      enforceRobots: enforceRobots ?? false,
     });
     return NextResponse.json(result);
   } catch (err) {

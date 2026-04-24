@@ -47,6 +47,7 @@ import { IntegrationSelector } from '@/shared/ui/integration-selector';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 import { ErrorSystem } from '@/shared/utils/observability/error-system-client';
+import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
 
 import { loadProductForm } from './product-form-preload';
 
@@ -56,7 +57,7 @@ const ProductForm = dynamic(loadProductForm, {
   loading: () => <EditProductSkeletonContent />,
 });
 
-const FileManager = dynamic(() => import('@/features/files/public').then((mod) => mod.default || mod.FileManager), {
+const FileManager = dynamic(() => import('@/features/files/public').then((mod) => mod.default ?? mod.FileManager), {
   ssr: false,
 });
 
@@ -75,7 +76,7 @@ const isTranslationEnPlTriggerButton = (button: AiTriggerButtonRecord): boolean 
     return true;
   }
 
-  const labels = [button.name, button.display?.label]
+  const labels = [button.name, button.display.label]
     .map((value) => (typeof value === 'string' ? value.trim().toLowerCase() : ''))
     .filter((v): v is string => v !== '');
   return labels.some(
@@ -181,18 +182,18 @@ function ProductFormModalBody(props: {
 
   const handleSubmitTranslationSnapshot = useCallback(
     async (
-      snapshot: any,
+      snapshot: TrackedAiPathRunSnapshot,
       trackedRunId: string,
       isActive: () => boolean
     ): Promise<void> => {
       if (snapshot.status !== 'completed') {
-        if (isActive()) {
+        if (isActive() === true) {
           setPendingTranslationRunId((current) => (current === trackedRunId ? null : current));
         }
         return;
       }
 
-      const streamedTranslation = snapshot.run
+      const streamedTranslation = (snapshot.run !== null && snapshot.run !== undefined)
         ? extractTranslationEnPlFromAiPathRunDetail({ run: snapshot.run })
         : null;
       let translationResult = streamedTranslation;
@@ -751,7 +752,7 @@ export function ProductModals(): React.JSX.Element {
     onSelectIntegrationFromModal,
   } = useProductListModalsContext();
   const selectedMassListProducts = React.useMemo(() => {
-    if (massListProductIds === null || massListProductIds === undefined || massListProductIds.length === 0) return [];
+    if (massListProductIds.length === 0) return [];
     const productById = new Map(data.map((product) => [product.id, product]));
     return massListProductIds
       .map((productId) => productById.get(productId))
@@ -759,16 +760,16 @@ export function ProductModals(): React.JSX.Element {
   }, [data, massListProductIds]);
 
   const hydratedEditingProduct =
-    (editingProduct !== null && editingProduct !== undefined && isEditingProductHydrated(editingProduct)) ? editingProduct : null;
+    (editingProduct !== null && isEditingProductHydrated(editingProduct)) ? editingProduct : null;
   // Show the form immediately with list-level data while hydrating, instead of a skeleton.
   // The save button stays disabled until hydration completes (showSkeleton controls that).
   const showEditSkeleton = false;
-  const isEditOpen = editingProduct !== null && editingProduct !== undefined;
+  const isEditOpen = editingProduct !== null;
 
-  const createProviderKey = (createDraft !== null && createDraft !== undefined) ? ['create', createDraft.id].join(':') : 'create';
+  const createProviderKey = (createDraft !== null) ? ['create', createDraft.id].join(':') : 'create';
   // Include hydration state in the key so the form remounts with full data
   // (list-level data may lack descriptions, etc.)
-  const editProviderKey = (editingProduct !== null && editingProduct !== undefined)
+  const editProviderKey = (editingProduct !== null)
     ? ['edit', editingProduct.id, hydratedEditingProduct !== null ? 'h' : 'p'].join(':')
     : 'edit';
   const effectiveIntegrationsFilterIntegrationSlug = resolveProductListingsIntegrationScope({
@@ -782,7 +783,7 @@ export function ProductModals(): React.JSX.Element {
         isOpen={isCreateOpen}
         onClose={onCloseCreate}
         title='Create Product'
-        subtitle={(createDraft !== null && createDraft !== undefined) ? `Using draft template: ${createDraft.name}` : undefined}
+        subtitle={(createDraft !== null) ? `Using draft template: ${createDraft.name}` : undefined}
         saveText='Create'
         submitButtonText='Create'
         providerKey={createProviderKey}
@@ -810,9 +811,9 @@ export function ProductModals(): React.JSX.Element {
         isSaveDisabledOverride={isEditHydrating}
       />
 
-      {integrationsProduct !== null && integrationsProduct !== undefined && !showListProductModal && (
+      {integrationsProduct !== null && !showListProductModal && (
         <ProductListingsModal
-          isOpen={integrationsProduct !== null && integrationsProduct !== undefined}
+          isOpen={integrationsProduct !== null}
           item={integrationsProduct}
           onClose={onCloseIntegrations}
           onStartListing={onStartListing}
@@ -822,9 +823,9 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {integrationsProduct !== null && integrationsProduct !== undefined && showListProductModal && (
+      {integrationsProduct !== null && showListProductModal && (
         <ListProductModal
-          isOpen={integrationsProduct !== null && integrationsProduct !== undefined}
+          isOpen={integrationsProduct !== null}
           item={integrationsProduct}
           onClose={onCloseListProduct}
           onSuccess={onListProductSuccess}
@@ -834,9 +835,9 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {exportSettingsProduct !== null && exportSettingsProduct !== undefined && onCloseExportSettings !== undefined && onCloseExportSettings !== null && (
+      {exportSettingsProduct !== null && onCloseExportSettings !== undefined && (
         <ProductListingsModal
-          isOpen={exportSettingsProduct !== null && exportSettingsProduct !== undefined}
+          isOpen={exportSettingsProduct !== null}
           item={exportSettingsProduct}
           onClose={onCloseExportSettings}
           filterIntegrationSlug='baselinker'
@@ -844,7 +845,7 @@ export function ProductModals(): React.JSX.Element {
         />
       )}
 
-      {massListIntegration !== null && massListIntegration !== undefined && massListProductIds !== null && massListProductIds !== undefined && massListProductIds.length > 0 && (
+      {massListIntegration !== null && massListProductIds.length > 0 && (
         <MassListProductModal
           isOpen={true}
           onSuccess={onMassListSuccess ?? (() => {})}

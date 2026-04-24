@@ -176,7 +176,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v145');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v146');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
@@ -191,8 +191,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await acceptCookiesIfPresent({ context: 'before-wait', attempts: 1 })");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("await acceptCookiesIfPresent({ context: 'after-wait', attempts: 1 })");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("log?.('tradera.quicklist.cookie.accepted', {");
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.category.mapped_failed_falling_back');
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.category.mapped_failed_preserving_selected');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.category.mapped_confirmation_failed');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_CATEGORY_SET: Unable to apply mapped category "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let selectedCategoryFallbackReason = null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('categoryFallbackReason: selectedCategoryFallbackReason');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('observedPreviewCount: imageUploadResult?.observedPreviewCount ?? null');

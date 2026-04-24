@@ -640,6 +640,140 @@ describe('AdminFilemakerMail pages - Routing and Param Cleaning', () => {
     });
   });
 
+  it('reissues the latest account-settings route after an older account route lands', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    let currentSearchParams = new URLSearchParams();
+    searchParamsGetMock.mockImplementation((key: string) => currentSearchParams.get(key));
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+            {
+              id: 'account-2',
+              name: 'Sales inbox',
+              emailAddress: 'sales@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'sales@example.com',
+              imapPasswordSettingKey: 'imap-sales-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'sales@example.com',
+              smtpPasswordSettingKey: 'smtp-sales-key',
+              fromName: 'Sales',
+              replyToEmail: null,
+              folderAllowlist: ['INBOX'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({
+          folders: [
+            {
+              id: 'account-1::INBOX',
+              accountId: 'account-1',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount: 1,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+            {
+              id: 'account-2::INBOX',
+              accountId: 'account-2',
+              mailboxPath: 'INBOX',
+              mailboxRole: 'inbox',
+              threadCount: 1,
+              unreadCount: 0,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+            },
+          ],
+        });
+      }
+      if (
+        url === '/api/filemaker/mail/threads?accountId=account-1&limit=5' ||
+        url === '/api/filemaker/mail/threads?accountId=account-2&limit=5'
+      ) {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    const { rerender } = render(<AdminFilemakerMailPage />);
+
+    const sidebar = await screen.findByText('Mail Navigation');
+    const scoped = within(sidebar.closest('section')!);
+
+    fireEvent.click(scoped.getByRole('button', { name: /Support inbox/ }));
+    await waitFor(() => {
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-1&panel=settings'
+      );
+    });
+
+    fireEvent.click(scoped.getByRole('button', { name: /Sales inbox/ }));
+    await waitFor(() => {
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-2&panel=settings'
+      );
+    });
+
+    routerReplaceMock.mockClear();
+    currentSearchParams = new URLSearchParams('accountId=account-1&panel=settings');
+    rerender(<AdminFilemakerMailPage />);
+
+    await waitFor(() => {
+      expect(routerReplaceMock).toHaveBeenCalledWith(
+        '/admin/filemaker/mail?accountId=account-2&panel=settings'
+      );
+      expect(scoped.getByRole('button', { name: /Sales inbox/ })).toHaveClass('bg-sky-500/15');
+      expect(scoped.getByRole('button', { name: /Support inbox/ })).not.toHaveClass(
+        'bg-sky-500/15'
+      );
+    });
+  });
+
   it('clears the previous account recent preview immediately when switching accounts', async () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'

@@ -3,8 +3,10 @@ import 'server-only';
 import { join } from 'node:path';
 
 import { createDraft } from '@/features/drafter/server';
+import { productService } from '@/features/products/server';
 
 import { createFilesystemScripterRegistry } from './filesystem-scripter-registry';
+import { getDefaultRobotsFetcher } from './robots-fetcher';
 import { createSimpleScripterDriverFactory } from './scripter-driver-factory';
 import { createScripterServer, type ScripterServer } from './scripter-server';
 import type { ScripterRegistry } from './scripter-registry';
@@ -30,12 +32,24 @@ export const getDefaultScripterRegistry = (): ScripterRegistry => {
 
 export const getDefaultScripterServer = (): ScripterServer => {
   if (!cachedServer) {
+    const fetcher = getDefaultRobotsFetcher();
     cachedServer = createScripterServer({
       registry: getDefaultScripterRegistry(),
       driverFactory: createSimpleScripterDriverFactory({ headless: true }),
       createDraft: async (input) => {
         const draft = await createDraft(input);
         return { id: draft.id };
+      },
+      robotsCheck: (url) => fetcher.check(url),
+      lookupExisting: async (skus) => {
+        if (skus.length === 0) return [];
+        const products = await productService.getProductsBySkus(skus);
+        return products.map((product) => ({
+          id: product.id,
+          sku: product.sku ?? null,
+          name: product.name_en ?? null,
+          price: typeof product.price === 'number' ? product.price : null,
+        }));
       },
     });
   }

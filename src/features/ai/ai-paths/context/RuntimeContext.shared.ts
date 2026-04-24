@@ -118,7 +118,7 @@ export interface RuntimeProviderProps {
 export const INITIAL_RUNTIME_STATE: RuntimeState = {
   inputs: {},
   outputs: {},
-} as RuntimeState;
+};
 
 export const MAX_RUNTIME_EVENTS = 300;
 

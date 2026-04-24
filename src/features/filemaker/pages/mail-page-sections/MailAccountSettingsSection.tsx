@@ -222,6 +222,43 @@ export function MailAccountSettingsSection(): React.JSX.Element {
             />
           </FormField>
         </div>
+        <FormSection title='DKIM signing (optional)' className='space-y-3 p-0'>
+          <div className='grid gap-3 md:grid-cols-2'>
+            <FormField label='DKIM domain'>
+              <Input
+                value={draft.dkimDomain ?? ''}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setDraft((prev) => ({ ...prev, dkimDomain: event.target.value || null }))
+                }
+                placeholder='example.com'
+              />
+            </FormField>
+            <FormField label='DKIM selector'>
+              <Input
+                value={draft.dkimKeySelector ?? ''}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  setDraft((prev) => ({ ...prev, dkimKeySelector: event.target.value || null }))
+                }
+                placeholder='mail'
+              />
+            </FormField>
+          </div>
+          <FormField label='DKIM private key (PEM)'>
+            <Input
+              type='password'
+              value={draft.dkimPrivateKey}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setDraft((prev) => ({ ...prev, dkimPrivateKey: event.target.value }))
+              }
+              placeholder={
+                selectedAccount?.dkimPrivateKeySettingKey
+                  ? 'Leave blank to keep the current key'
+                  : '-----BEGIN PRIVATE KEY-----'
+              }
+              autoComplete='off'
+            />
+          </FormField>
+        </FormSection>
         <div className='flex items-center gap-6'>
           <label
             htmlFor='filemaker-mail-account-imap-secure'

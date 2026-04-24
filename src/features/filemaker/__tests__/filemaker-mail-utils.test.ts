@@ -6,7 +6,9 @@ import {
   buildFilemakerMailReplyHtmlSeed,
   buildFilemakerMailSnippet,
   ensureFilemakerForwardSubject,
+  ensureFilemakerMailPlainTextAlternative,
   ensureFilemakerReplySubject,
+  FILEMAKER_MAIL_EMPTY_TEXT_FALLBACK,
   formatFilemakerMailboxAllowlist,
   formatFilemakerMailParticipants,
   normalizeFilemakerMailSubject,
@@ -121,5 +123,28 @@ describe('filemaker mail utils', () => {
     expect(textSeed).toContain('Plain text body');
     expect(textSeed).toContain('Unknown time');
     expect(textSeed).toContain('(no subject)');
+  });
+
+  describe('ensureFilemakerMailPlainTextAlternative', () => {
+    it('returns the text as-is when non-empty', () => {
+      expect(ensureFilemakerMailPlainTextAlternative('Hello', '<p>Hello</p>')).toBe('Hello');
+    });
+
+    it('derives text from HTML when text is empty', () => {
+      const result = ensureFilemakerMailPlainTextAlternative('', '<p>Hello <strong>world</strong></p>');
+      expect(result).toContain('Hello');
+      expect(result).toContain('world');
+    });
+
+    it('falls back to a default notice when both text and derived HTML text are empty', () => {
+      expect(
+        ensureFilemakerMailPlainTextAlternative('', '<img src="tracker.png"/>')
+      ).toBe(FILEMAKER_MAIL_EMPTY_TEXT_FALLBACK);
+    });
+
+    it('returns undefined when both inputs are empty', () => {
+      expect(ensureFilemakerMailPlainTextAlternative('', '')).toBeUndefined();
+      expect(ensureFilemakerMailPlainTextAlternative(null, null)).toBeUndefined();
+    });
   });
 });

@@ -4,20 +4,12 @@ import { type Dispatch, type SetStateAction, useCallback, useState } from 'react
 
 import { useOptionalToast } from '@/shared/ui/primitives.public';
 
-import { fetchFilemakerMailJson } from '../mail-ui-helpers';
+import {
+  fetchFilemakerMailJson,
+  resolveFilemakerMailSyncNotice,
+  type FilemakerMailSyncDispatchResponseLike,
+} from '../mail-ui-helpers';
 import type { FilemakerMailAccount } from '../types';
-
-type SyncResponse = {
-  result: {
-    fetchedMessageCount: number;
-    lastSyncError?: string | null;
-  };
-};
-
-const resolveSyncErrorMessage = (result: SyncResponse): string | null => {
-  const value = result.result.lastSyncError;
-  return typeof value === 'string' && value.trim() !== '' ? value : null;
-};
 
 const createSyncAccountHandler = (input: {
   onReload: () => Promise<void>;
@@ -26,19 +18,12 @@ const createSyncAccountHandler = (input: {
 }) => async (accountId: string): Promise<void> => {
   input.setSyncingAccountId(accountId);
   try {
-    const result = await fetchFilemakerMailJson<SyncResponse>(
+    const result = await fetchFilemakerMailJson<FilemakerMailSyncDispatchResponseLike>(
       `/api/filemaker/mail/accounts/${encodeURIComponent(accountId)}/sync`,
       { method: 'POST' }
     );
-    const syncError = resolveSyncErrorMessage(result);
-
-    if (syncError !== null) {
-      input.toast(syncError, { variant: 'error' });
-    } else {
-      input.toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
-        variant: 'success',
-      });
-    }
+    const notice = resolveFilemakerMailSyncNotice(result);
+    input.toast(notice.message, { variant: notice.variant });
 
     await input.onReload();
   } catch (error) {

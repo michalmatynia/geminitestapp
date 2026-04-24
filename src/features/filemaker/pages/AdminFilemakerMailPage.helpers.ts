@@ -20,6 +20,9 @@ const createDefaultFilemakerMailDraft = (): FilemakerMailAccountDraft => ({
   initialSyncLookbackDays: 30,
   maxMessagesPerSync: 100,
   pushEnabled: true,
+  dkimDomain: null,
+  dkimKeySelector: null,
+  dkimPrivateKey: '',
 });
 
 const toDraftFromFilemakerMailAccount = (
@@ -45,6 +48,9 @@ const toDraftFromFilemakerMailAccount = (
   initialSyncLookbackDays: account.initialSyncLookbackDays,
   maxMessagesPerSync: account.maxMessagesPerSync,
   pushEnabled: account.pushEnabled ?? true,
+  dkimDomain: account.dkimDomain ?? null,
+  dkimKeySelector: account.dkimKeySelector ?? null,
+  dkimPrivateKey: '',
 });
 
 export { createDefaultFilemakerMailDraft, toDraftFromFilemakerMailAccount };

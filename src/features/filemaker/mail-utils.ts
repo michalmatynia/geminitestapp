@@ -32,6 +32,21 @@ export const buildFilemakerMailPlainText = (html: string): string =>
     value: html,
   }).plainText;
 
+export const FILEMAKER_MAIL_EMPTY_TEXT_FALLBACK =
+  'This message is formatted in HTML. Please view it in an HTML-capable email client.';
+
+export const ensureFilemakerMailPlainTextAlternative = (
+  text: string | null | undefined,
+  html: string | null | undefined
+): string | undefined => {
+  const normalizedText = (text ?? '').trim();
+  if (normalizedText.length > 0) return text ?? undefined;
+  const normalizedHtml = (html ?? '').trim();
+  if (normalizedHtml.length === 0) return undefined;
+  const derived = buildFilemakerMailPlainText(normalizedHtml).trim();
+  return derived.length > 0 ? derived : FILEMAKER_MAIL_EMPTY_TEXT_FALLBACK;
+};
+
 export const buildFilemakerMailSnippet = (
   textBody: string | null | undefined,
   htmlBody?: string | null | undefined

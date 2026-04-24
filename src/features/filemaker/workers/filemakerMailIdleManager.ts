@@ -5,10 +5,11 @@ import type { ImapFlow } from 'imapflow';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 
-import { listFilemakerMailAccounts, syncFilemakerMailAccount } from '../server/filemaker-mail-service';
+import { listFilemakerMailAccounts } from '../server/filemaker-mail-service';
 import * as mailServerUtils from '../server/mail/mail-utils';
 import { createImapClient } from '../server/mail/mail-imap';
 import type { FilemakerMailAccount } from '../types';
+import { enqueueFilemakerMailSyncJob, startFilemakerMailSyncQueue } from './filemakerMailSyncQueue';
 
 const LOG_SOURCE = 'filemaker-mail-idle';
 const MIN_BACKOFF_MS = 5_000;
@@ -77,12 +78,16 @@ const scheduleDebouncedSync = (state: AccountState): void => {
   state.syncTimer = setTimeout(async () => {
     state.syncTimer = null;
     try {
-      await syncFilemakerMailAccount(state.accountId);
+      startFilemakerMailSyncQueue();
+      await enqueueFilemakerMailSyncJob({
+        accountId: state.accountId,
+        reason: 'idle',
+      });
     } catch (error) {
       await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
-        message: `Debounced sync failed for account ${state.accountId}`,
+        message: `Debounced sync enqueue failed for account ${state.accountId}`,
         error,
       }).catch(() => {});
     }

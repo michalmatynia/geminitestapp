@@ -18,6 +18,17 @@ export const resolveFailureStatus = (
     ? 'bounced'
     : 'failed';
 
+export const isFilemakerEmailCampaignPermanentFailureCategory = (
+  failureCategory:
+    | 'soft_bounce'
+    | 'hard_bounce'
+    | 'invalid_recipient'
+    | 'provider_rejected'
+    | 'rate_limited'
+    | 'timeout'
+    | 'unknown'
+): boolean => failureCategory === 'hard_bounce' || failureCategory === 'invalid_recipient';
+
 export const resolveCampaignBodyText = (campaign: FilemakerEmailCampaign): string => {
   const text = campaign.bodyText?.trim() ?? '';
   if (text.length > 0) return text;

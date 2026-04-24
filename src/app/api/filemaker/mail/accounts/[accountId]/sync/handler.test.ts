@@ -3,15 +3,21 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   requireFilemakerMailAdminSessionMock,
-  syncFilemakerMailAccountMock,
+  enqueueFilemakerMailSyncJobMock,
+  startFilemakerMailSyncQueueMock,
 } = vi.hoisted(() => ({
   requireFilemakerMailAdminSessionMock: vi.fn(),
-  syncFilemakerMailAccountMock: vi.fn(),
+  enqueueFilemakerMailSyncJobMock: vi.fn(),
+  startFilemakerMailSyncQueueMock: vi.fn(),
 }));
 
 vi.mock('@/features/filemaker/server', () => ({
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
-  syncFilemakerMailAccount: syncFilemakerMailAccountMock,
+}));
+
+vi.mock('@/server/queues/filemaker', () => ({
+  enqueueFilemakerMailSyncJob: enqueueFilemakerMailSyncJobMock,
+  startFilemakerMailSyncQueue: startFilemakerMailSyncQueueMock,
 }));
 
 import { postHandler } from './handler';
@@ -22,15 +28,13 @@ describe('filemaker mail account sync handler', () => {
     requireFilemakerMailAdminSessionMock.mockResolvedValue(undefined);
   });
 
-  it('decodes the route param and returns the sync result', async () => {
-    syncFilemakerMailAccountMock.mockResolvedValue({
+  it('decodes the route param and returns the queued sync dispatch', async () => {
+    enqueueFilemakerMailSyncJobMock.mockResolvedValue({
       accountId: 'account 1',
-      foldersScanned: ['INBOX'],
-      fetchedMessageCount: 12,
-      insertedMessageCount: 10,
-      updatedMessageCount: 2,
-      touchedThreadCount: 5,
-      lastSyncError: null,
+      dispatchMode: 'queued',
+      jobId: 'job-1',
+      reason: 'manual',
+      requestedAt: '2026-04-24T10:00:00.000Z',
     });
 
     const response = await postHandler(
@@ -40,12 +44,18 @@ describe('filemaker mail account sync handler', () => {
       { params: { accountId: 'account%201' } } as Parameters<typeof postHandler>[1]
     );
 
-    expect(syncFilemakerMailAccountMock).toHaveBeenCalledWith('account 1');
+    expect(startFilemakerMailSyncQueueMock).toHaveBeenCalledTimes(1);
+    expect(enqueueFilemakerMailSyncJobMock).toHaveBeenCalledWith({
+      accountId: 'account 1',
+      reason: 'manual',
+    });
+    expect(response.status).toBe(202);
     await expect(response.json()).resolves.toEqual({
-      result: expect.objectContaining({
-        accountId: 'account 1',
-        fetchedMessageCount: 12,
-      }),
+      accountId: 'account 1',
+      dispatchMode: 'queued',
+      jobId: 'job-1',
+      reason: 'manual',
+      requestedAt: '2026-04-24T10:00:00.000Z',
     });
   });
 });

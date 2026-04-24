@@ -826,4 +826,76 @@ describe('filemaker campaign runtime service', () => {
       })
     );
   });
+
+  it('does not auto-suppress on a soft bounce (transient failure)', async () => {
+    const sendCampaignEmail = vi.fn().mockRejectedValue(
+      new FilemakerCampaignEmailDeliveryError({
+        message: 'Temporary failure try again later (greylist).',
+        provider: 'smtp',
+        failureCategory: 'soft_bounce',
+      })
+    );
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+    await service.processRun({ runId: launched.run.id });
+
+    const storedSuppressions = parseFilemakerEmailCampaignSuppressionRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY)
+    );
+    expect(storedSuppressions.entries).toHaveLength(0);
+  });
+
+  it('skips a queued delivery when the recipient gets suppressed between launch and processing', async () => {
+    const sendCampaignEmail = vi.fn().mockResolvedValue({
+      provider: 'smtp',
+      providerMessage: 'Sent through SMTP.',
+      sentAt: iso,
+    });
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    // Simulate a suppression entry landing after launch (e.g., inbound DSN,
+    // manual unsubscribe, or a hard-bounce from another run).
+    store.set(
+      FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            id: 'suppression-post-launch-1',
+            createdAt: iso,
+            updatedAt: iso,
+            emailAddress: 'jan@example.com',
+            reason: 'bounced',
+            actor: 'system',
+            campaignId: null,
+            runId: null,
+            deliveryId: null,
+            notes: 'Inbound DSN 5.1.1',
+          },
+        ],
+      })
+    );
+
+    await service.processRun({ runId: launched.run.id });
+
+    const sentTos = sendCampaignEmail.mock.calls.map((call) => call[0]?.to);
+    expect(sentTos).not.toContain('jan@example.com');
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    const suppressedDelivery = storedDeliveries.deliveries.find(
+      (delivery) => delivery.emailAddress === 'jan@example.com'
+    );
+    expect(suppressedDelivery?.status).toBe('skipped');
+    expect(suppressedDelivery?.providerMessage).toContain('suppression list');
+  });
 });

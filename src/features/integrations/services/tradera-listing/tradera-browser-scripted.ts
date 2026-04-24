@@ -6,7 +6,10 @@ import {
 import {
   createCustomPlaywrightInstance,
   createTraderaListingStatusScrapePlaywrightInstance,
+  createTraderaStandardListingPlaywrightInstance,
   createTraderaScriptedListingPlaywrightInstance,
+  persistPlaywrightConnectionStorageState,
+  runPlaywrightConnectionNativeTask,
 } from '@/features/playwright/server';
 import {
   buildPlaywrightListingResult,
@@ -17,6 +20,7 @@ import { buildPlaywrightEngineRunFailureMeta } from '@/features/playwright/serve
 import { runPlaywrightScrapeScript } from '@/features/playwright/server';
 import { validatePlaywrightEngineScript } from '@/features/playwright/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
+import { getIntegrationRepository } from '@/features/integrations/server';
 import type {
   BrowserListingResultDto,
   PlaywrightRelistBrowserMode,
@@ -25,6 +29,7 @@ import type {
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { decryptSecret } from '@/shared/lib/security/encryption';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { resolveMarketplaceAwareProductCopy } from '@/shared/lib/products/utils/marketplace-content-overrides';
 
@@ -73,6 +78,7 @@ import {
 } from './managed-script';
 import { buildTraderaCheckStatusScript } from './check-status-script';
 import { buildTraderaMoveToUnsoldScript } from './move-to-unsold-script';
+import { ensureLoggedIn } from './tradera-browser-auth';
 
 export const TRADERA_HEADED_FAILURE_HOLD_OPEN_MS = 30_000;
 export const TRADERA_SCRIPTED_LISTING_TIMEOUT_MS = 240_000;
@@ -204,6 +210,51 @@ const buildManagedQuicklistRuntimeSettingsOverrides = (
       }
     : undefined;
 
+const refreshTraderaAuthenticatedConnectionForScriptedRun = async ({
+  connection,
+  listing,
+  systemSettings,
+  browserMode,
+}: {
+  connection: IntegrationConnectionRecord;
+  listing: ProductListing;
+  systemSettings: TraderaSystemSettings;
+  browserMode: PlaywrightRelistBrowserMode;
+}): Promise<IntegrationConnectionRecord> => {
+  let refreshedConnection = connection;
+  const listingFormUrl = normalizeTraderaListingFormUrl(systemSettings.listingFormUrl);
+
+  await runPlaywrightConnectionNativeTask<void>({
+    connection,
+    runtimeActionKey: 'tradera_standard_list',
+    instance: createTraderaStandardListingPlaywrightInstance({
+      connectionId: connection.id,
+      integrationId: connection.integrationId,
+      listingId: listing.id,
+    }),
+    requestedBrowserMode: browserMode,
+    execute: async ({ context, page }) => {
+      await ensureLoggedIn(page, connection, listingFormUrl);
+      const storageState = await context.storageState();
+      const updatedAt = new Date().toISOString();
+      const repo = await getIntegrationRepository();
+      await persistPlaywrightConnectionStorageState({
+        connectionId: connection.id,
+        storageState,
+        updatedAt,
+        repo,
+      });
+      refreshedConnection = (await repo.getConnectionById(connection.id)) ?? connection;
+    },
+    getErrorMessage: (error) =>
+      error instanceof Error
+        ? error.message
+        : 'Tradera scripted listing authentication failed',
+  });
+
+  return refreshedConnection;
+};
+
 const buildSelectorRuntimeMetadata = (
   resolution: ResolvedTraderaSelectorRegistryRuntime | null | undefined
 ): Record<string, unknown> =>
@@ -285,7 +336,14 @@ const buildTraderaScriptInput = async ({
   const mappedCategory = categoryMapping.mapping;
   const shippingGroup = shippingGroupResolution.shippingGroup;
   const englishTitle = toTrimmedString(product.name_en);
-  const duplicateSearchTerms = buildDuplicateSearchTerms(englishTitle ? [englishTitle] : [title]);
+  const duplicateSearchTerms = buildDuplicateSearchTerms(
+    englishTitle.length > 0 ? [englishTitle] : [title]
+  );
+  const username = toTrimmedString(connection.username);
+  const password =
+    typeof connection.password === 'string' && connection.password.trim().length > 0
+      ? decryptSecret(connection.password)
+      : null;
 
   return {
     productId: product.id,
@@ -309,7 +367,12 @@ const buildTraderaScriptInput = async ({
     height: product.sizeLength ?? null,
     duplicateSearchTitle: duplicateSearchTerms[0] ?? null,
     duplicateSearchTerms,
-    rawDescriptionEn: toTrimmedString(resolvedCopy.description) || null,
+    username: username.length > 0 ? username : null,
+    password,
+    rawDescriptionEn:
+      toTrimmedString(resolvedCopy.description).length > 0
+        ? toTrimmedString(resolvedCopy.description)
+        : null,
     title,
     description,
     price: priceResolution.listingPrice,
@@ -589,10 +652,17 @@ const runTraderaScriptedListingForProduct = async ({
         )
       : resolvedScript;
   const runtimeSettingsOverrides = buildManagedQuicklistRuntimeSettingsOverrides(script);
+  const authenticatedConnection =
+    await refreshTraderaAuthenticatedConnectionForScriptedRun({
+      connection,
+      listing,
+      systemSettings,
+      browserMode,
+    });
   const result = await runPlaywrightListingScript({
     script,
     input: scriptInput,
-    connection,
+    connection: authenticatedConnection,
     instance: createTraderaScriptedListingPlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,

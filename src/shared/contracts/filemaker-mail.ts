@@ -257,6 +257,9 @@ export const filemakerMailAccountDraftSchema = z.object({
   initialSyncLookbackDays: z.number().int().positive().max(365).default(30),
   maxMessagesPerSync: z.number().int().positive().max(500).default(100),
   pushEnabled: z.boolean().default(true),
+  dkimDomain: z.string().nullable().optional(),
+  dkimKeySelector: z.string().nullable().optional(),
+  dkimPrivateKey: z.string().default(''),
 });
 export type FilemakerMailAccountDraftDto = z.infer<typeof filemakerMailAccountDraftSchema>;
 export type FilemakerMailAccountDraft = FilemakerMailAccountDraftDto;
@@ -316,3 +319,33 @@ export const filemakerMailSyncResultSchema = z.object({
 });
 export type FilemakerMailSyncResultDto = z.infer<typeof filemakerMailSyncResultSchema>;
 export type FilemakerMailSyncResult = FilemakerMailSyncResultDto;
+
+export const filemakerMailSyncDispatchModeSchema = z.enum(['queued', 'inline']);
+export type FilemakerMailSyncDispatchModeDto = z.infer<
+  typeof filemakerMailSyncDispatchModeSchema
+>;
+export type FilemakerMailSyncDispatchMode = FilemakerMailSyncDispatchModeDto;
+
+export const filemakerMailSyncDispatchReasonSchema = z.enum([
+  'manual',
+  'initial',
+  'scheduler',
+  'idle',
+]);
+export type FilemakerMailSyncDispatchReasonDto = z.infer<
+  typeof filemakerMailSyncDispatchReasonSchema
+>;
+export type FilemakerMailSyncDispatchReason = FilemakerMailSyncDispatchReasonDto;
+
+export const filemakerMailSyncDispatchResponseSchema = z.object({
+  accountId: z.string(),
+  dispatchMode: filemakerMailSyncDispatchModeSchema,
+  jobId: z.string().nullable(),
+  reason: filemakerMailSyncDispatchReasonSchema,
+  requestedAt: z.string(),
+  result: filemakerMailSyncResultSchema.nullable().optional(),
+});
+export type FilemakerMailSyncDispatchResponseDto = z.infer<
+  typeof filemakerMailSyncDispatchResponseSchema
+>;
+export type FilemakerMailSyncDispatchResponse = FilemakerMailSyncDispatchResponseDto;

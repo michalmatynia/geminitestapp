@@ -12,6 +12,8 @@ import {
   USERNAME_SELECTORS,
   PASSWORD_SELECTORS,
   LOGIN_BUTTON_SELECTORS,
+  TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS,
+  TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS,
   TRADERA_AUTH_ERROR_SELECTORS,
   TRADERA_CAPTCHA_HINTS,
   TRADERA_COOKIE_ACCEPT_SELECTORS,
@@ -24,6 +26,7 @@ import {
   isLocatorVisible,
   readVisibleLocatorText,
 } from './utils';
+import { resolveTraderaEmailVerificationCode } from './tradera-auth-email-code';
 
 const TRADERA_AUTH_RESOLUTION_TIMEOUT_MS = 15_000;
 const TRADERA_AUTH_RESOLUTION_POLL_MS = 500;
@@ -58,6 +61,8 @@ export type TraderaEnsureLoggedInStatus =
   | 'waiting_for_login_entry'
   | 'waiting_for_login_controls'
   | 'submitting_login'
+  | 'waiting_for_email_verification_code'
+  | 'submitting_email_verification_code'
   | 'waiting_for_post_login'
   | 'opening_listing_form'
   | 'waiting_for_listing_form';
@@ -85,6 +90,12 @@ const waitOnPage = async (page: Page, timeoutMs: number): Promise<void> => {
 
   await Promise.resolve();
 };
+
+const hasConfiguredTraderaCredentials = (
+  connection: IntegrationConnectionRecord
+): boolean =>
+  (connection.username?.trim().length ?? 0) > 0 &&
+  (connection.password?.trim().length ?? 0) > 0;
 
 export const acceptTraderaCookies = async (page: Page): Promise<void> => {
   await clickTraderaCookiesIfVisible(page);
@@ -318,6 +329,34 @@ const waitForTraderaLoginControls = async (
   });
 };
 
+const waitForTraderaEmailVerificationControls = async (
+  page: Page,
+  timeoutMs = 10_000
+): Promise<{
+  codeInput: Locator;
+  submitButton: Locator | null;
+} | null> => {
+  const maxAttempts = Math.max(1, Math.ceil(timeoutMs / 300));
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const [codeInput, submitButton] = await Promise.all([
+      findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS),
+      findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS),
+    ]);
+
+    if (codeInput) {
+      return {
+        codeInput,
+        submitButton,
+      };
+    }
+
+    await waitOnPage(page, 300);
+  }
+
+  return null;
+};
+
 export const buildTraderaAuthRequiredError = ({
   hasStoredSession,
   authState,
@@ -410,12 +449,17 @@ export const ensureLoggedIn = async (
           return true;
         }
 
+        const hasCredentials = hasConfiguredTraderaCredentials(connection);
         if (hasStoredSession) {
           emitStatus({
             status: 'stored_session_rejected',
             message: 'Stored Tradera session needs login or manual verification.',
             authState: initialAuthState,
           });
+          if (hasCredentials) {
+            return false;
+          }
+
           throw buildTraderaAuthRequiredError({
             hasStoredSession: true,
             authState: initialAuthState,
@@ -423,9 +467,6 @@ export const ensureLoggedIn = async (
         }
 
         // No stored session — require credentials before attempting login
-        const hasCredentials = Boolean(
-          connection.username?.trim() && connection.password?.trim()
-        );
         if (!hasCredentials) {
           const noCredentialsAuthState = authFlowState.currentAuthState ?? initialAuthState;
           emitStatus({
@@ -539,6 +580,7 @@ export const ensureLoggedIn = async (
           status: 'submitting_login',
           message: 'Submitting Tradera login credentials.',
         });
+        const credentialSubmittedAt = new Date().toISOString();
         await Promise.allSettled([
           page.waitForNavigation({
             waitUntil: 'domcontentloaded',
@@ -559,10 +601,53 @@ export const ensureLoggedIn = async (
           hasStoredSession: false,
         });
         authFlowState.currentAuthState = postLoginAuthState;
-        if (postLoginAuthState.resolution !== 'authenticated') {
+        if (
+          postLoginAuthState.resolution === 'manual_verification_required' &&
+          !postLoginAuthState.captchaDetected
+        ) {
+          const verificationControls = await waitForTraderaEmailVerificationControls(page);
+          const emailAddress = connection.username?.trim() ?? '';
+          if (verificationControls !== null && emailAddress.length > 0) {
+            emitStatus({
+              status: 'waiting_for_email_verification_code',
+              message: 'Waiting for Tradera email verification code.',
+              authState: postLoginAuthState,
+            });
+            const verificationCode = await resolveTraderaEmailVerificationCode({
+              emailAddress,
+              requestedAfter: credentialSubmittedAt,
+            });
+            if (verificationCode !== null) {
+              await verificationControls.codeInput.fill(verificationCode.code);
+              emitStatus({
+                status: 'submitting_email_verification_code',
+                message: 'Submitting Tradera email verification code.',
+                authState: postLoginAuthState,
+              });
+              await Promise.allSettled([
+                page.waitForNavigation({
+                  waitUntil: 'domcontentloaded',
+                  timeout: 20_000,
+                }),
+                verificationControls.submitButton?.click() ?? page.keyboard.press('Enter'),
+              ]);
+              await waitOnPage(page, 1500);
+              await acceptTraderaCookies(page);
+              const codeAuthState = await waitForTraderaAuthResolution({
+                page,
+                phase: 'post_login',
+                hasStoredSession: false,
+              });
+              authFlowState.currentAuthState = codeAuthState;
+            }
+          }
+        }
+
+        const finalPostLoginAuthState = authFlowState.currentAuthState ?? postLoginAuthState;
+        if (finalPostLoginAuthState.resolution !== 'authenticated') {
           throw buildTraderaAuthRequiredError({
             hasStoredSession: false,
-            authState: postLoginAuthState,
+            authState: finalPostLoginAuthState,
           });
         }
 

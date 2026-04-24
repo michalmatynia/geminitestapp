@@ -22,6 +22,7 @@ import {
 } from './filemaker-mail-service';
 import {
   buildFilemakerMailSnippet,
+  ensureFilemakerMailPlainTextAlternative,
   normalizeFilemakerMailSubject,
 } from '../mail-utils';
 import { createSmtpTransport } from './mail/mail-smtp';
@@ -550,7 +551,8 @@ export const sendFilemakerCampaignEmail = async (input: {
         from: formatFromHeader(record.fromName, accountConfig.account.emailAddress),
         to: record.to,
         subject: record.subject,
-        text: record.text,
+        text:
+          ensureFilemakerMailPlainTextAlternative(record.text, record.html) ?? record.text,
         ...(record.html !== null && record.html.length > 0 ? { html: record.html } : {}),
         ...(record.replyToEmail !== null && record.replyToEmail.length > 0
           ? { replyTo: record.replyToEmail }
@@ -651,7 +653,8 @@ export const sendFilemakerCampaignEmail = async (input: {
         from: formatFromHeader(record.fromName, secrets.smtp.from),
         to: record.to,
         subject: record.subject,
-        text: record.text,
+        text:
+          ensureFilemakerMailPlainTextAlternative(record.text, record.html) ?? record.text,
         ...(record.html ? { html: record.html } : {}),
         ...(record.replyToEmail ? { replyTo: record.replyToEmail } : {}),
         headers: buildCampaignDeliverabilityHeaders({

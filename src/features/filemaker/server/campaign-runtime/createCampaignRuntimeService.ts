@@ -18,6 +18,7 @@ import {
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   getFilemakerEmailCampaignDeliveriesForRun,
   getFilemakerEmailCampaignDeliveryAttemptsForDelivery,
+  getFilemakerEmailCampaignSuppressionByAddress,
   isFilemakerEmailCampaignRetryableFailureCategory,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignDeliveryAttemptRegistry,
@@ -78,6 +79,7 @@ import {
   applyCampaignRecipientTemplateTokens,
   assertCampaignReadyForDelivery,
   resolveCampaignBodyText,
+  isFilemakerEmailCampaignPermanentFailureCategory,
   resolveFailureStatus,
 } from './runtime-utils';
 
@@ -402,6 +404,34 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         htmlMode: true,
       });
 
+      const currentSuppression = getFilemakerEmailCampaignSuppressionByAddress(
+        suppressionRegistry,
+        delivery.emailAddress
+      );
+      if (currentSuppression) {
+        deliveries = replaceDeliveryInCollection(deliveries, {
+          ...delivery,
+          status: 'skipped',
+          providerMessage: `Recipient is on the suppression list (${currentSuppression.reason}).`,
+          lastError: null,
+          nextRetryAt: null,
+          updatedAt: nowIso,
+        });
+        eventRegistry = appendEventsToRegistry(eventRegistry, [
+          createFilemakerEmailCampaignEvent({
+            campaignId: campaign.id,
+            runId: run.id,
+            deliveryId: delivery.id,
+            type: 'status_changed',
+            message: `Skipped ${delivery.emailAddress}: on suppression list (${currentSuppression.reason}).`,
+            deliveryStatus: 'skipped',
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          }),
+        ]);
+        continue;
+      }
+
       try {
         if (deps.reserveWarmupSlot) {
           const senderKey = campaign.mailAccountId?.trim() || 'shared-smtp';
@@ -557,7 +587,10 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
           }),
         ]);
 
-        if (status === 'bounced') {
+        if (
+          status === 'bounced' &&
+          isFilemakerEmailCampaignPermanentFailureCategory(failure.failureCategory)
+        ) {
           suppressionRegistry = upsertFilemakerEmailCampaignSuppressionEntry({
             registry: suppressionRegistry,
             entry: createFilemakerEmailCampaignSuppressionEntry({
@@ -566,6 +599,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
               campaignId: campaign.id,
               runId: run.id,
               deliveryId: delivery.id,
+              notes: `Auto-suppressed after ${failure.failureCategory} from ${delivery.emailAddress}: ${failure.message}`,
               createdAt: nowIso,
               updatedAt: nowIso,
             }),

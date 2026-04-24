@@ -17,6 +17,8 @@ const turbopackTransientPanicPattern =
   /FATAL:\s+An unexpected Turbopack error occurred[\s\S]*?(?:failed to create symlink|File exists \(os error 17\))/i;
 const webpackServerManifestRacePattern =
   /(?:Cannot find module|ENOENT: no such file or directory, open) ['"].*\/\.next\/server\/[^'"]*manifest(?:\.[^'"]+)?['"]/i;
+const webpackStaticManifestRacePattern =
+  /(?:Cannot find module|ENOENT: no such file or directory, open) ['"].*\/\.next\/static\/[^'"]*\/_(?:build|ssg)Manifest\.js(?:\.[^'"]+)?['"]/i;
 const largeMachineHeapThresholdMb = 24 * 1024;
 const localDefaultHeapMb = 8192;
 const largeMachineLocalHeapMb = 12288;
@@ -120,7 +122,8 @@ const shouldRetryWebpackServerManifestRace = (result) =>
   result.bundler === 'webpack' &&
   result.code !== 0 &&
   !result.signal &&
-  webpackServerManifestRacePattern.test(result.output);
+  (webpackServerManifestRacePattern.test(result.output) ||
+    webpackStaticManifestRacePattern.test(result.output));
 
 const getPreferredBundler = (bundler) => {
   if (bundler === 'webpack' || bundler === 'turbopack') return bundler;
@@ -170,7 +173,7 @@ const main = async () => {
 
   if (shouldRetryWebpackServerManifestRace(result)) {
     console.warn(
-      '[run-next-build] Webpack hit a transient server manifest race. Retrying webpack once.'
+      '[run-next-build] Webpack hit a transient manifest race. Retrying webpack once.'
     );
     result = await runBuild('webpack');
 

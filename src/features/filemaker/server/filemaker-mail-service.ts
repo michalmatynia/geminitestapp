@@ -22,6 +22,7 @@ import {
   buildFilemakerMailSnippet,
   dedupeFilemakerMailParticipants,
   ensureFilemakerForwardSubject,
+  ensureFilemakerMailPlainTextAlternative,
   ensureFilemakerReplySubject,
   normalizeFilemakerMailSubject,
   parseFilemakerMailboxAllowlistInput,
@@ -58,8 +59,15 @@ import {
   detectFilemakerCampaignReplyContext,
   recordFilemakerCampaignReply,
 } from './campaign-reply-detector';
-import { filterFilemakerMailSuppressionEntries } from './campaign-suppression';
+import {
+  filterFilemakerMailSuppressionEntries,
+  recordFilemakerMailBounceSuppressions,
+} from './campaign-suppression';
 import { createImapClient, listImapMailboxes } from './mail/mail-imap';
+import {
+  isLikelyFilemakerMailBounceMessage,
+  parseFilemakerMailDsnReport,
+} from './mail/mail-dsn';
 import { parseMailSource } from './mail/mail-processor';
 import * as storage from './mail/mail-storage';
 import * as smtp from './mail/mail-smtp';
@@ -680,6 +688,25 @@ const syncMailboxMessages = async (input: {
           }).catch(() => {});
         }
 
+        if (
+          !existingMessage &&
+          direction === 'inbound' &&
+          isLikelyFilemakerMailBounceMessage(parsed)
+        ) {
+          const report = parseFilemakerMailDsnReport(parsed);
+          if (report.isPermanent && report.bouncedAddresses.length > 0) {
+            void recordFilemakerMailBounceSuppressions({
+              addresses: report.bouncedAddresses,
+              notes: `Auto-suppressed after inbound DSN${
+                report.status ? ` (status ${report.status})` : ''
+              }${report.diagnosticCode ? `: ${report.diagnosticCode}` : '.'}`,
+              campaignId: campaignReplyContext?.campaignId ?? null,
+              runId: campaignReplyContext?.runId ?? null,
+              deliveryId: campaignReplyContext?.deliveryId ?? null,
+            }).catch(() => {});
+          }
+        }
+
         const wasUnread =
           existingMessage?.direction === 'inbound' && !existingMessage.flags.seen ? 1 : 0;
         const isUnread = nextMessage.direction === 'inbound' && !nextMessage.flags.seen ? 1 : 0;
@@ -800,6 +827,15 @@ export const upsertFilemakerMailAccount = async (
     existingSmtpPasswordSettingKey.length > 0
       ? existingSmtpPasswordSettingKey
       : mailServerUtils.buildAccountSecretSettingKey(id, 'smtp_password');
+  const dkimDomain = normalizeNullableString(draft.dkimDomain);
+  const dkimKeySelector = normalizeNullableString(draft.dkimKeySelector);
+  const hasIncomingDkimPrivateKey = normalizeString(draft.dkimPrivateKey).length > 0;
+  const existingDkimPrivateKeySettingKey = normalizeString(existing?.dkimPrivateKeySettingKey);
+  const shouldPersistDkimKey = Boolean(dkimDomain && dkimKeySelector && hasIncomingDkimPrivateKey);
+  const dkimPrivateKeySettingKey =
+    shouldPersistDkimKey && existingDkimPrivateKeySettingKey.length === 0
+      ? mailServerUtils.buildAccountSecretSettingKey(id, 'dkim_private_key')
+      : existingDkimPrivateKeySettingKey || null;
 
   const nextAccount: FilemakerMailAccount = {
     id,
@@ -827,6 +863,9 @@ export const upsertFilemakerMailAccount = async (
     pushEnabled: draft.pushEnabled ?? existing?.pushEnabled ?? true,
     lastSyncedAt: existing?.lastSyncedAt ?? null,
     lastSyncError: existing?.lastSyncError ?? null,
+    dkimDomain: dkimDomain ?? existing?.dkimDomain ?? null,
+    dkimKeySelector: dkimKeySelector ?? existing?.dkimKeySelector ?? null,
+    dkimPrivateKeySettingKey: dkimPrivateKeySettingKey ?? null,
   };
 
   if (isCreate && !normalizeString(draft.imapPassword)) {
@@ -843,6 +882,9 @@ export const upsertFilemakerMailAccount = async (
   }
   if (normalizeString(draft.smtpPassword)) {
     await upsertSecretSettingValue(nextAccount.smtpPasswordSettingKey, draft.smtpPassword);
+  }
+  if (shouldPersistDkimKey && nextAccount.dkimPrivateKeySettingKey) {
+    await upsertSecretSettingValue(nextAccount.dkimPrivateKeySettingKey, draft.dkimPrivateKey);
   }
 
   await storage.ensureMailIndexes();
@@ -1268,7 +1310,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     replyTo: account.replyToEmail ?? undefined,
     inReplyTo: input.inReplyTo ?? undefined,
     subject: normalizeString(input.subject),
-    text: bodyText || undefined,
+    text: ensureFilemakerMailPlainTextAlternative(bodyText, input.bodyHtml),
     html: input.bodyHtml,
     attachments: attachments.length > 0 ? attachments : undefined,
   });

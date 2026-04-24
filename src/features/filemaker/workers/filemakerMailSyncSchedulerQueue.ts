@@ -5,7 +5,8 @@ import { createManagedQueue } from '@/shared/lib/queue';
 import type { ScheduledTickJobData, SchedulerQueueState } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import { listFilemakerMailAccounts, syncFilemakerMailAccount } from '../server/filemaker-mail-service';
+import { listFilemakerMailAccounts } from '../server/filemaker-mail-service';
+import { enqueueFilemakerMailSyncJob, startFilemakerMailSyncQueue } from './filemakerMailSyncQueue';
 
 const LOG_SOURCE = 'filemaker-mail-sync-scheduler';
 
@@ -51,8 +52,18 @@ const queue = createManagedQueue<ScheduledTickJobData>({
   processor: async () => {
     const accounts = await listFilemakerMailAccounts();
     const activeAccounts = accounts.filter((account) => account.status === 'active');
+    if (activeAccounts.length > 0) {
+      startFilemakerMailSyncQueue();
+    }
+    const requestedAt = new Date().toISOString();
     const results = await Promise.allSettled(
-      activeAccounts.map((account) => syncFilemakerMailAccount(account.id))
+      activeAccounts.map((account) =>
+        enqueueFilemakerMailSyncJob({
+          accountId: account.id,
+          reason: 'scheduler',
+          requestedAt,
+        })
+      )
     );
     const succeeded = results.filter((result) => result.status === 'fulfilled').length;
     const failed = results.length - succeeded;
@@ -60,10 +71,10 @@ const queue = createManagedQueue<ScheduledTickJobData>({
       await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
-        message: `Mail sync tick completed with ${failed} failures of ${activeAccounts.length} accounts`,
+        message: `Mail sync tick completed with ${failed} enqueue failures of ${activeAccounts.length} accounts`,
       }).catch(() => {});
     }
-    return { attempted: activeAccounts.length, succeeded, failed };
+    return { attempted: activeAccounts.length, enqueued: succeeded, failed };
   },
   onFailed: async (_jobId, error) => {
     await ErrorSystem.captureException(error, { service: LOG_SOURCE });
@@ -75,6 +86,7 @@ export const startFilemakerMailSyncSchedulerQueue = (): void => {
 
   if (queueState.workerStarted === false) {
     queueState.workerStarted = true;
+    startFilemakerMailSyncQueue();
     queue.startWorker();
   }
 

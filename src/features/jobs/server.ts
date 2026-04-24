@@ -50,6 +50,10 @@ export {
   startFilemakerEmailCampaignQueue,
   stopFilemakerEmailCampaignQueue,
   enqueueFilemakerEmailCampaignRunJob,
+  startFilemakerMailSyncSchedulerQueue,
+  startFilemakerMailSyncQueue,
+  stopFilemakerMailSyncQueue,
+  enqueueFilemakerMailSyncJob,
 } from '@/server/queues/filemaker';
 
 export {

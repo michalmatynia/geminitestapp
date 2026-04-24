@@ -4,6 +4,7 @@ import {
   filemakerMailCampaignContextSchema,
   filemakerMailComposeInputSchema,
   filemakerMailFlagPatchSchema,
+  filemakerMailSyncDispatchResponseSchema,
   filemakerMailSyncResultSchema,
   filemakerMailThreadSchema,
 } from '@/shared/contracts/filemaker-mail';
@@ -133,6 +134,19 @@ describe('filemaker mail client contract extensions', () => {
     });
 
     expect(parsed.lastSyncError).toBe('IMAP command failed (NO): sync is not available');
+  });
+
+  it('sync dispatch schema represents queued runtime jobs', () => {
+    const parsed = filemakerMailSyncDispatchResponseSchema.parse({
+      accountId: 'acct-1',
+      dispatchMode: 'queued',
+      jobId: 'mail-sync-job-1',
+      reason: 'manual',
+      requestedAt: '2026-04-24T10:00:00.000Z',
+    });
+
+    expect(parsed.dispatchMode).toBe('queued');
+    expect(parsed.jobId).toBe('mail-sync-job-1');
   });
 });
 

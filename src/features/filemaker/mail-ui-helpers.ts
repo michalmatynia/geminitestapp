@@ -44,6 +44,40 @@ export const fetchFilemakerMailJson = async <T,>(
   return (await response.json()) as T;
 };
 
+export type FilemakerMailSyncDispatchResponseLike = {
+  accountId?: string;
+  dispatchMode?: 'queued' | 'inline';
+  jobId?: string | null;
+  reason?: string;
+  requestedAt?: string;
+  result?: {
+    fetchedMessageCount: number;
+    lastSyncError?: string | null;
+  } | null;
+};
+
+export const resolveFilemakerMailSyncNotice = (
+  result: FilemakerMailSyncDispatchResponseLike
+): { message: string; variant: 'success' | 'error' } => {
+  const syncError =
+    typeof result.result?.lastSyncError === 'string' && result.result.lastSyncError.trim() !== ''
+      ? result.result.lastSyncError
+      : null;
+  if (syncError !== null) {
+    return { message: syncError, variant: 'error' };
+  }
+  if (result.result) {
+    return {
+      message: `Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`,
+      variant: 'success',
+    };
+  }
+  return {
+    message: result.dispatchMode === 'queued' ? 'Mailbox sync queued.' : 'Mailbox sync started.',
+    variant: 'success',
+  };
+};
+
 type FilemakerMailSelectionPanel =
   | 'account'
   | 'attention'

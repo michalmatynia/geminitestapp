@@ -268,6 +268,35 @@ export const LOGIN_BUTTON_SELECTORS = [
   'button:has-text("Logga in")',
 ] as const;
 
+export const EMAIL_VERIFICATION_CODE_INPUT_SELECTORS = [
+  'input[autocomplete="one-time-code"]',
+  'input[name*="verification" i]',
+  'input[id*="verification" i]',
+  'input[name*="code" i]',
+  'input[id*="code" i]',
+  'input[inputmode="numeric"]',
+  'input[type="tel"]',
+  'input[type="text"][maxlength="6"]',
+] as const;
+
+export const TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS =
+  EMAIL_VERIFICATION_CODE_INPUT_SELECTORS;
+
+export const EMAIL_VERIFICATION_SUBMIT_SELECTORS = [
+  'button[type="submit"]',
+  'button:has-text("Verify")',
+  'button:has-text("Continue")',
+  'button:has-text("Confirm")',
+  'button:has-text("Submit")',
+  'button:has-text("Verifiera")',
+  'button:has-text("Fortsätt")',
+  'button:has-text("Bekräfta")',
+  'button:has-text("Skicka")',
+] as const;
+
+export const TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS =
+  EMAIL_VERIFICATION_SUBMIT_SELECTORS;
+
 export const COOKIE_ACCEPT_SELECTORS = [
   '#onetrust-accept-btn-handler',
   'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',

@@ -23,5 +23,13 @@ export {
   buildFilemakerCampaignOpenTrackingUrl,
   buildFilemakerCampaignClickTrackingUrl,
 } from './server/campaign-unsubscribe-token';
+export {
+  filterFilemakerMailSuppressionEntries,
+  findFilemakerMailSuppressionEntry,
+  isFilemakerMailAddressSuppressed,
+  loadFilemakerMailSuppressionEntries,
+  recordFilemakerMailBounceSuppressions,
+  removeFilemakerMailSuppressionEntry,
+} from './server/campaign-suppression';
 export * from './settings';
 export * from './types';

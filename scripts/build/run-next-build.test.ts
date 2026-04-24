@@ -105,7 +105,19 @@ describe('run-next-build', () => {
     ).toBe(true);
   });
 
-  it('does not retry webpack failures that are not the known server manifest race', () => {
+  it('retries the known webpack static manifest race once', () => {
+    expect(
+      shouldRetryWebpackServerManifestRace({
+        bundler: 'webpack',
+        code: 1,
+        signal: null,
+        output:
+          "ENOENT: no such file or directory, open '/tmp/project/.next/static/build-id/_ssgManifest.js'",
+      })
+    ).toBe(true);
+  });
+
+  it('does not retry webpack failures that are not known manifest races', () => {
     expect(
       shouldRetryWebpackServerManifestRace({
         bundler: 'webpack',

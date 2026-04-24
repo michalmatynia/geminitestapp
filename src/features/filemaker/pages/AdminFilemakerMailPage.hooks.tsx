@@ -17,6 +17,8 @@ import { formatFilemakerMailFolderLabel } from '../mail-master-tree';
 import {
   buildFilemakerMailSelectionHref as buildMailSelectionHref,
   fetchFilemakerMailJson as fetchJson,
+  resolveFilemakerMailSyncNotice,
+  type FilemakerMailSyncDispatchResponseLike,
 } from '../mail-ui-helpers';
 import { formatFilemakerMailboxAllowlist } from '../mail-utils';
 import {
@@ -896,24 +898,12 @@ export function useAdminFilemakerMailPageState(): MailPageState {
 
       if (isCreate) {
         try {
-          const syncResult = await fetchJson<{
-            result: { fetchedMessageCount: number; lastSyncError?: string | null };
-          }>(`/api/filemaker/mail/accounts/${encodeURIComponent(result.account.id)}/sync`, {
-            method: 'POST',
-          });
-
-          if (syncResult.result.lastSyncError) {
-            toast(syncResult.result.lastSyncError, {
-              variant: 'error',
-            });
-          } else {
-            toast(
-              `Mailbox sync finished. Messages fetched: ${syncResult.result.fetchedMessageCount}.`,
-              {
-                variant: 'success',
-              }
-            );
-          }
+          const syncResult = await fetchJson<FilemakerMailSyncDispatchResponseLike>(
+            `/api/filemaker/mail/accounts/${encodeURIComponent(result.account.id)}/sync`,
+            { method: 'POST' }
+          );
+          const notice = resolveFilemakerMailSyncNotice(syncResult);
+          toast(notice.message, { variant: notice.variant });
         } catch (error) {
           toast(
             error instanceof Error
@@ -945,22 +935,12 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     async (accountId: string): Promise<void> => {
       setSyncingAccountId(accountId);
       try {
-        const result = await fetchJson<{
-          result: { fetchedMessageCount: number; lastSyncError?: string | null };
-        }>(
+        const result = await fetchJson<FilemakerMailSyncDispatchResponseLike>(
           `/api/filemaker/mail/accounts/${encodeURIComponent(accountId)}/sync`,
           { method: 'POST' }
         );
-
-        if (result.result.lastSyncError) {
-          toast(result.result.lastSyncError, {
-            variant: 'error',
-          });
-        } else {
-          toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
-            variant: 'success',
-          });
-        }
+        const notice = resolveFilemakerMailSyncNotice(result);
+        toast(notice.message, { variant: notice.variant });
 
         await loadNavigation();
       } catch (error) {

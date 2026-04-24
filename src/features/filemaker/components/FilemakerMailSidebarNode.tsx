@@ -15,6 +15,8 @@ import type { FilemakerMailFolderRole } from '@/shared/contracts/filemaker-mail'
 import {
   buildFilemakerMailSelectionHref as buildMailSelectionHref,
   fetchFilemakerMailJson as fetchJson,
+  resolveFilemakerMailSyncNotice,
+  type FilemakerMailSyncDispatchResponseLike,
 } from '../mail-ui-helpers';
 import {
   buildFilemakerMailComposeHref as buildComposeHref,
@@ -299,22 +301,13 @@ export const FilemakerMailSidebarNode = memo(({
           setSyncingAccountId(parsed.accountId);
           void (async () => {
             try {
-              const result = await fetchJson<{
-                result: { fetchedMessageCount: number; lastSyncError?: string | null };
-              }>(
+              const result = await fetchJson<FilemakerMailSyncDispatchResponseLike>(
                 `/api/filemaker/mail/accounts/${encodeURIComponent(parsed.accountId)}/sync`,
                 { method: 'POST' }
               );
               await fetchAccountsAndFolders();
-              if (result.result.lastSyncError) {
-                toast(result.result.lastSyncError, {
-                  variant: 'error',
-                });
-              } else {
-                toast(`Mailbox sync finished. Messages fetched: ${result.result.fetchedMessageCount}.`, {
-                  variant: 'success',
-                });
-              }
+              const notice = resolveFilemakerMailSyncNotice(result);
+              toast(notice.message, { variant: notice.variant });
             } catch (error) {
               toast(error instanceof Error ? error.message : 'Mailbox sync failed.', {
                 variant: 'error',

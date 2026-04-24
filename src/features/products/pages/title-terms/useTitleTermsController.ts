@@ -8,7 +8,7 @@ import type { ProductTitleTerm, ProductTitleTermType } from '@/shared/contracts/
 
 export function useTitleTermsController() {
   const { toast } = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, ConfirmationModal } = useConfirm();
   const searchParams = useSearchParams();
   const [catalogFilter, setCatalogFilter] = useState(searchParams.get('catalogId') ?? 'all');
   const [typeFilter, setTypeFilter] = useState(searchParams.get('type') ?? 'all');
@@ -71,6 +71,7 @@ export function useTitleTermsController() {
     isLoading: titleTermsQuery.isLoading || catalogsQuery.isLoading,
     open, setOpen,
     editing,
-    saveMutation
+    saveMutation,
+    ConfirmationModal
   };
 }

@@ -7,7 +7,7 @@ import type { Producer } from '@/shared/contracts/products/producers';
 
 export function useProducersController() {
   const { toast } = useToast();
-  const { confirm } = useConfirm();
+  const { confirm, ConfirmationModal } = useConfirm();
   const producersQuery = useProducers();
   const saveMutation = useSaveProducerMutation();
   const deleteMutation = useDeleteProducerMutation();
@@ -75,6 +75,7 @@ export function useProducersController() {
     openCreate,
     openEdit,
     deleteProducer,
-    saveMutation
+    saveMutation,
+    ConfirmationModal
   };
 }

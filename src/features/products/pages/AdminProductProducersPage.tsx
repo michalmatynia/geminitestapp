@@ -6,10 +6,10 @@ import { useProducersController } from './producers/useProducersController';
 import { ProducersToolbar } from './producers/ProducersToolbar';
 import { ProducersTable } from './producers/ProducersTable';
 import { ProducerEditorModal } from './producers/ProducerEditorModal';
-import { ConfirmationModal } from '@/shared/ui/templates/modals';
 
-export default function AdminProductProducersPage(): React.JSX.Element {
+export function AdminProductProducersPage(): React.JSX.Element {
   const ctrl = useProducersController();
+  const ConfirmationModal = ctrl.ConfirmationModal;
 
   return (
     <AdminProductsPageLayout
@@ -42,7 +42,9 @@ export default function AdminProductProducersPage(): React.JSX.Element {
         isSaving={ctrl.saveMutation.isPending} 
       />
 
-      <ConfirmationModal />
+      {ConfirmationModal ? <ConfirmationModal /> : null}
     </AdminProductsPageLayout>
   );
 }
+
+export default AdminProductProducersPage;

@@ -7,10 +7,10 @@ import { useTitleTermsController } from './title-terms/useTitleTermsController';
 import { TitleTermsToolbar } from './title-terms/TitleTermsToolbar';
 import { TitleTermsTable } from './title-terms/TitleTermsTable';
 import { TitleTermEditorModal } from './title-terms/TitleTermEditorModal';
-import { ConfirmationModal } from '@/shared/ui/templates/modals';
 
-export default function AdminProductTitleTermsPage(): React.JSX.Element {
+export function AdminProductTitleTermsPage(): React.JSX.Element {
   const ctrl = useTitleTermsController();
+  const ConfirmationModal = ctrl.ConfirmationModal;
   const [form, setForm] = useState({ catalogId: '', type: 'size', name_en: '', name_pl: '' });
 
   const fields = useMemo(() => [
@@ -46,7 +46,9 @@ export default function AdminProductTitleTermsPage(): React.JSX.Element {
         isSaving={ctrl.saveMutation.isPending} 
         fields={fields} 
       />
-      <ConfirmationModal />
+      {ConfirmationModal ? <ConfirmationModal /> : null}
     </AdminProductsPageLayout>
   );
 }
+
+export default AdminProductTitleTermsPage;

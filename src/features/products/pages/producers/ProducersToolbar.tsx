@@ -1,4 +1,5 @@
-import { Button, SearchInput } from '@/shared/ui/forms-and-actions.public';
+import { Button } from '@/shared/ui/button';
+import { SearchInput } from '@/shared/ui/search-input';
 import { Plus } from 'lucide-react';
 
 export function ProducersToolbar({ query, setQuery, openCreate }: any) {

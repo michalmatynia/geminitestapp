@@ -36,13 +36,6 @@ vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
   recordRuntimeRunFinished: recordRuntimeRunFinishedMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
-  recoverStaleRunningRuns: vi.fn(),
-  recoverBlockedLeaseRuns: vi.fn(),
-  resolveAiPathsStaleRunningCleanupIntervalMs: vi.fn(),
-  resolveAiPathsStaleRunningMaxAgeMs: vi.fn(),
-}));
-
 vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: logSystemEventMock,
 }));

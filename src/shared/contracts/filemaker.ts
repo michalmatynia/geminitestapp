@@ -284,15 +284,85 @@ export type FilemakerEmailCampaignEventTypeDto = z.infer<
 >;
 export type FilemakerEmailCampaignEventType = FilemakerEmailCampaignEventTypeDto;
 
+export const filemakerAudienceFieldSchema = z.enum([
+  'organization.name',
+  'organization.taxId',
+  'organization.krs',
+  'organization.city',
+  'organization.country',
+  'organization.postalCode',
+  'organization.street',
+  'person.firstName',
+  'person.lastName',
+  'person.city',
+  'person.country',
+  'person.postalCode',
+  'person.street',
+  'person.nip',
+  'person.regon',
+  'person.phoneNumbers',
+  'email.address',
+  'email.status',
+  'organizationId',
+  'eventId',
+]);
+export type FilemakerAudienceFieldDto = z.infer<typeof filemakerAudienceFieldSchema>;
+export type FilemakerAudienceField = FilemakerAudienceFieldDto;
+
+export const filemakerAudienceOperatorSchema = z.enum([
+  'equals',
+  'not_equals',
+  'contains',
+  'not_contains',
+  'starts_with',
+  'ends_with',
+  'is_empty',
+  'is_not_empty',
+]);
+export type FilemakerAudienceOperatorDto = z.infer<typeof filemakerAudienceOperatorSchema>;
+export type FilemakerAudienceOperator = FilemakerAudienceOperatorDto;
+
+export const filemakerAudienceConditionSchema = z.object({
+  id: z.string(),
+  type: z.literal('condition').default('condition'),
+  field: filemakerAudienceFieldSchema,
+  operator: filemakerAudienceOperatorSchema,
+  value: z.string().default(''),
+});
+export type FilemakerAudienceConditionDto = z.infer<typeof filemakerAudienceConditionSchema>;
+export type FilemakerAudienceCondition = FilemakerAudienceConditionDto;
+
+export type FilemakerAudienceConditionGroup = {
+  id: string;
+  type: 'group';
+  combinator: 'and' | 'or';
+  children: Array<FilemakerAudienceCondition | FilemakerAudienceConditionGroup>;
+};
+
+export const filemakerAudienceConditionGroupSchema: z.ZodType<FilemakerAudienceConditionGroup> =
+  z.lazy(() =>
+    z.object({
+      id: z.string(),
+      type: z.literal('group'),
+      combinator: z.enum(['and', 'or']),
+      children: z.array(
+        z.union([filemakerAudienceConditionSchema, filemakerAudienceConditionGroupSchema])
+      ),
+    })
+  );
+export type FilemakerAudienceConditionGroupDto = FilemakerAudienceConditionGroup;
+
 export const filemakerEmailCampaignAudienceRuleSchema = z.object({
   partyKinds: z.array(filemakerPartyKindSchema),
   emailStatuses: z.array(filemakerEmailStatusSchema),
   includePartyReferences: z.array(filemakerPartyReferenceSchema),
   excludePartyReferences: z.array(filemakerPartyReferenceSchema),
-  organizationIds: z.array(z.string()),
-  eventIds: z.array(z.string()),
-  countries: z.array(z.string()),
-  cities: z.array(z.string()),
+  conditionGroup: filemakerAudienceConditionGroupSchema,
+  // Legacy fields — retained for back-compat; the normalizer folds them into conditionGroup on read.
+  organizationIds: z.array(z.string()).default([]),
+  eventIds: z.array(z.string()).default([]),
+  countries: z.array(z.string()).default([]),
+  cities: z.array(z.string()).default([]),
   dedupeByEmail: z.boolean(),
   limit: z.number().int().positive().nullable().optional(),
 });
@@ -415,6 +485,8 @@ export const filemakerEmailCampaignEventSchema = dtoBaseSchema.extend({
   message: z.string(),
   actor: z.string().nullable().optional(),
   targetUrl: z.string().nullable().optional(),
+  mailThreadId: z.string().nullable().optional(),
+  mailMessageId: z.string().nullable().optional(),
   runStatus: filemakerEmailCampaignRunStatusSchema.nullable().optional(),
   deliveryStatus: filemakerEmailCampaignDeliveryStatusSchema.nullable().optional(),
 });

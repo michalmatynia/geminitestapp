@@ -12,7 +12,7 @@ export const keyTotals = (): string => `${KEY_PREFIX}:totals`;
 
 const parseEnvNumber = (name: string, fallback: number, min: number, max: number): number => {
   const raw = process.env[name];
-  if (!raw) return fallback;
+  if (raw === undefined || raw === '') return fallback;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed)) return fallback;
   return Math.max(min, Math.min(max, parsed));

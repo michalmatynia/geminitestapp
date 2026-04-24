@@ -88,7 +88,7 @@ function JobQueueBottomControls(): React.JSX.Element {
     setAutoRefreshEnabled,
     setAutoRefreshInterval,
     pauseAllStreams,
-    resumeAllStreams,
+    reconnectAllStreams,
   } = useJobQueueActions();
 
   return (
@@ -121,10 +121,10 @@ function JobQueueBottomControls(): React.JSX.Element {
       </AiPathsPillButton>
       <AiPathsPillButton
         className='text-gray-200'
-        onClick={resumeAllStreams}
+        onClick={reconnectAllStreams}
         disabled={expandedRunIds.size === 0}
       >
-        Resume all streams
+        Reconnect all streams
       </AiPathsPillButton>
     </div>
   );

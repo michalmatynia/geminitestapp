@@ -2,7 +2,6 @@ import 'server-only';
 
 import { type AiPathRunQueueStatus } from '@/shared/contracts/ai-paths-runtime';
 import { serviceUnavailableError } from '@/shared/errors/app-error';
-import type { RepeatableJobEntry } from '@/shared/lib/queue/scheduler-queue-types';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import {
@@ -61,38 +60,12 @@ type QueueJobLookupApi = {
   getJob: (jobId: string) => Promise<QueueJobRemovalApi | null>;
 };
 
-const hasRepeatableQueueApi = (
-  value: unknown
-): value is {
-  getRepeatableJobs: () => Promise<RepeatableJobEntry[]>;
-  removeRepeatableByKey: (key: string) => Promise<void>;
-} =>
-  typeof value === 'object' &&
-  value !== null &&
-  typeof (value as { getRepeatableJobs?: unknown }).getRepeatableJobs === 'function' &&
-  typeof (value as { removeRepeatableByKey?: unknown }).removeRepeatableByKey === 'function';
-
 const hasJobLookupQueueApi = (value: unknown): value is QueueJobLookupApi =>
   typeof value === 'object' &&
   value !== null &&
   typeof (value as { getJob?: unknown }).getJob === 'function';
 
-const removeRecoveryRepeatJobs = async (): Promise<void> => {
-  const queueApi = queue.getQueue();
-  if (!hasRepeatableQueueApi(queueApi)) return;
-  const repeatableJobs = await queueApi.getRepeatableJobs();
-  const targets = repeatableJobs.filter((job) => job.id === 'ai-path-run-recovery');
-  await Promise.all(targets.map(async (job) => queueApi.removeRepeatableByKey(job.key)));
-};
-
 const stopAiPathRunQueueInternal = async (): Promise<void> => {
-  await removeRecoveryRepeatJobs().catch((error) => {
-    void ErrorSystem.captureException(error, {
-      service: LOG_SOURCE,
-      action: 'removeRecoverySchedule',
-    });
-  });
-  aiPathRunQueueState.recoveryScheduled = false;
   if (!aiPathRunQueueState.workerStarted) return;
   await queue.stopWorker();
   aiPathRunQueueState.workerStarted = false;
@@ -138,13 +111,6 @@ export const startAiPathRunQueue = (): void => {
         }
       })();
     }
-    aiPathRunQueueState.recoveryScheduled = true;
-    await removeRecoveryRepeatJobs().catch((error) => {
-      void ErrorSystem.captureException(error, {
-        service: LOG_SOURCE,
-        action: 'removeLegacyRecoverySchedule',
-      });
-    });
   })().finally(() => {
     reconcileInFlight = null;
   });

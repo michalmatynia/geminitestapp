@@ -30,7 +30,7 @@ export type JobQueueContextValue = {
   pausedStreams: Set<string>;
   toggleStream: (runId: string) => void;
   pauseAllStreams: () => void;
-  resumeAllStreams: () => void;
+  reconnectAllStreams: () => void;
   autoRefreshEnabled: boolean;
   setAutoRefreshEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   autoRefreshInterval: number;
@@ -77,7 +77,7 @@ export type JobQueueActionKey =
   | 'setHistorySelection'
   | 'toggleStream'
   | 'pauseAllStreams'
-  | 'resumeAllStreams'
+  | 'reconnectAllStreams'
   | 'setAutoRefreshEnabled'
   | 'setAutoRefreshInterval'
   | 'setShowMetricsPanel'

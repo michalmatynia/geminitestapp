@@ -29,7 +29,7 @@ export async function updateChatbotJob(
  */
 export async function deleteChatbotJob(jobId: string, force?: boolean): Promise<void> {
   const options: Parameters<typeof api.delete>[1] = {};
-  if (force) options.params = { force: 'true' };
+  if (force === true) options.params = { force: 'true' };
   await api.delete(`/api/chatbot/jobs/${jobId}`, options);
 }
 

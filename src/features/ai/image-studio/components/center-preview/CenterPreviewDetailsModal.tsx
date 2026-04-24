@@ -26,7 +26,7 @@ export function CenterPreviewDetailsModal(): React.JSX.Element {
     DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
 
   const detailsSlot = useMemo(
-    () => (detailsSlotId ? (slots.find((slot) => slot.id === detailsSlotId) ?? null) : null),
+    () => (detailsSlotId !== null && detailsSlotId !== '' ? (slots.find((slot) => slot.id === detailsSlotId) ?? null) : null),
     [detailsSlotId, slots]
   );
 

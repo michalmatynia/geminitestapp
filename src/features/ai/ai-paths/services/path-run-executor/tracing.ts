@@ -56,7 +56,6 @@ export const createTracing = (ctx: TracingCtx) => {
       cache: patch.cache !== undefined ? patch.cache : existing?.cache,
       branch: patch.branch !== undefined ? patch.branch : existing?.branch,
       effect: patch.effect !== undefined ? patch.effect : existing?.effect,
-      resume: patch.resume !== undefined ? patch.resume : existing?.resume,
       error: patch.error !== undefined ? patch.error : existing?.error,
     };
     runtimeTraceSpans.set(spanId, next);

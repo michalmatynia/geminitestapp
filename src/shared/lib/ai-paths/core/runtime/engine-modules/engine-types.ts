@@ -14,7 +14,6 @@ import type {
   RuntimeProfileOptions,
   RuntimeSideEffectDecision,
   RuntimeSideEffectPolicy,
-  RuntimeTraceResume,
   RuntimeState,
   RuntimeHistoryEntry,
   RuntimeTraceCacheDecision,
@@ -175,7 +174,6 @@ export type EvaluateGraphOptions = {
   seedHistory?: Record<string, RuntimeHistoryEntry[]> | undefined;
   seedRunId?: string | undefined;
   seedRunStartedAt?: string | undefined;
-  resumeByNodeId?: Record<string, RuntimeTraceResume> | undefined;
   cache?: Map<string, RuntimePortValues> | undefined;
   maxIterations?: number | undefined;
   maxDurationMs?: number | undefined;

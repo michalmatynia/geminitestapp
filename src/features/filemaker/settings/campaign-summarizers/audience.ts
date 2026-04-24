@@ -24,6 +24,13 @@ import {
   normalizeCampaignAudienceRule,
   normalizeFilemakerEmailCampaignSuppressionRegistry,
 } from '../campaign-factories';
+import {
+  evaluateAudienceConditionGroup,
+} from '../campaign-audience-conditions';
+import type {
+  FilemakerAudienceCondition,
+  FilemakerAudienceConditionGroup,
+} from '@/shared/contracts/filemaker';
 
 export const matchesPartyReferenceFilter = (
   references: FilemakerPartyReference[],
@@ -75,6 +82,30 @@ const buildOrganizationsByEventId = (
     );
   });
   return organizationsByEventId;
+};
+
+const collectEventIdValuesFromGroup = (
+  group: FilemakerAudienceConditionGroup,
+  collected: Set<string>
+): void => {
+  group.children.forEach((child) => {
+    if (child.type === 'group') {
+      collectEventIdValuesFromGroup(child, collected);
+      return;
+    }
+    const condition = child as FilemakerAudienceCondition;
+    if (condition.field === 'eventId' && condition.value) {
+      collected.add(condition.value);
+    }
+  });
+};
+
+const collectEventIdsFromConditions = (
+  group: FilemakerAudienceConditionGroup
+): string[] => {
+  const collected = new Set<string>();
+  collectEventIdValuesFromGroup(group, collected);
+  return Array.from(collected);
 };
 
 const isEmailSuppressed = (
@@ -130,21 +161,6 @@ const matchesAudienceOrganizationFilter = (
   if (audience.organizationIds.length === 0) return true;
   return link.partyKind === 'organization' && audience.organizationIds.includes(link.partyId);
 };
-
-const resolveMatchedAudienceEventIds = (
-  context: AudiencePreviewContext,
-  link: FilemakerEmailLink
-): string[] => {
-  if (context.audience.eventIds.length === 0) return [];
-  return context.audience.eventIds.filter((eventId: string): boolean =>
-    context.organizationsByEventId.get(eventId)?.has(link.partyId) ?? false
-  );
-};
-
-const hasRequiredEventMatch = (
-  audience: FilemakerEmailCampaignAudienceRule,
-  matchedEventIds: string[]
-): boolean => audience.eventIds.length === 0 || matchedEventIds.length > 0;
 
 const matchesAudiencePartyLocation = (
   audience: FilemakerEmailCampaignAudienceRule,
@@ -203,6 +219,18 @@ const excludedAudienceLink = (suppressed = false): AudienceLinkEvaluation => ({
   suppressed,
 });
 
+const resolveEventIdsForLink = (
+  context: AudiencePreviewContext,
+  link: FilemakerEmailLink
+): string[] => {
+  if (context.organizationsByEventId.size === 0) return [];
+  const matched: string[] = [];
+  context.organizationsByEventId.forEach((organizationIds, eventId) => {
+    if (organizationIds.has(link.partyId)) matched.push(eventId);
+  });
+  return matched;
+};
+
 const evaluateAudienceEmailLink = (
   context: AudiencePreviewContext,
   link: FilemakerEmailLink
@@ -218,9 +246,17 @@ const evaluateAudienceEmailLink = (
   if (resolution === null) return excludedAudienceLink();
   if (!matchesAudienceOrganizationFilter(context.audience, link)) return excludedAudienceLink();
 
-  const matchedEventIds = resolveMatchedAudienceEventIds(context, link);
-  if (!hasRequiredEventMatch(context.audience, matchedEventIds)) return excludedAudienceLink();
+  const matchedEventIds = resolveEventIdsForLink(context, link);
   if (!matchesAudiencePartyLocation(context.audience, resolution.party)) return excludedAudienceLink();
+
+  const conditionsMatch = evaluateAudienceConditionGroup(context.audience.conditionGroup, {
+    person: resolution.person,
+    organization: resolution.organization,
+    email,
+    organizationIds: link.partyKind === 'organization' ? [link.partyId] : [],
+    eventIds: matchedEventIds,
+  });
+  if (!conditionsMatch) return excludedAudienceLink();
 
   return {
     recipient: toAudienceRecipient(email, link, resolution, matchedEventIds),
@@ -262,11 +298,12 @@ export const resolveFilemakerEmailCampaignAudiencePreview = (
   let excludedCount = 0;
   let suppressedCount = 0;
   let totalLinkedEmailCount = 0;
+  const eventIdsInConditions = collectEventIdsFromConditions(normalizedAudience.conditionGroup);
   const context = {
     database,
     audience: normalizedAudience,
     suppressionRegistry: normalizedSuppressionRegistry,
-    organizationsByEventId: buildOrganizationsByEventId(database, normalizedAudience.eventIds),
+    organizationsByEventId: buildOrganizationsByEventId(database, eventIdsInConditions),
   };
 
   database.emailLinks.forEach((link): void => {

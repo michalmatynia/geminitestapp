@@ -14,6 +14,7 @@ const {
   getAiPathsSettingMock,
   enqueuePathRunMock,
   upsertAiPathsSettingsMock,
+  ensureCanonicalStarterWorkflowSettingsForPathIdsMock,
   assertAiPathRunQueueReadyForEnqueueMock,
   logSystemEventMock,
   contextRegistryResolveRefsMock,
@@ -24,6 +25,7 @@ const {
   getAiPathsSettingMock: vi.fn(),
   enqueuePathRunMock: vi.fn(),
   upsertAiPathsSettingsMock: vi.fn(),
+  ensureCanonicalStarterWorkflowSettingsForPathIdsMock: vi.fn(),
   assertAiPathRunQueueReadyForEnqueueMock: vi.fn(),
   logSystemEventMock: vi.fn(),
   contextRegistryResolveRefsMock: vi.fn(),
@@ -44,6 +46,7 @@ vi.mock('@/features/ai/ai-paths/workers/aiPathRunQueue', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
+  ensureCanonicalStarterWorkflowSettingsForPathIds: ensureCanonicalStarterWorkflowSettingsForPathIdsMock,
   upsertAiPathsSettings: upsertAiPathsSettingsMock,
 }));
 
@@ -289,6 +292,10 @@ describe('ai-paths runs enqueue handler', () => {
     getAiPathsSettingMock.mockReset().mockResolvedValue(null);
     enqueuePathRunMock.mockReset().mockResolvedValue({ id: 'run-1', status: 'queued' });
     upsertAiPathsSettingsMock.mockReset().mockResolvedValue(undefined);
+    ensureCanonicalStarterWorkflowSettingsForPathIdsMock.mockReset().mockResolvedValue({
+      records: [],
+      affectedCount: 0,
+    });
     assertAiPathRunQueueReadyForEnqueueMock.mockReset().mockResolvedValue(undefined);
     logSystemEventMock.mockReset().mockResolvedValue(undefined);
     resolvePathRunRepositoryMock.mockReset().mockResolvedValue({

@@ -9,7 +9,7 @@ export type DisabledNodePolicyViolation = {
 };
 
 const toNodeTypeSet = (value: string | undefined): Set<string> => {
-  if (!value) return new Set<string>();
+  if (value === undefined || value === '') return new Set<string>();
   return new Set(
     value
       .split(',')

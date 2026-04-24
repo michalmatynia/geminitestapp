@@ -189,7 +189,7 @@ export interface UseAiPathsSettingsStateReturn {
   ) => Promise<void>;
   handleRunSimulation: (node: AiNode, triggerEvent?: string) => Promise<void>;
   handlePauseActiveRun: () => void;
-  handleResumeActiveRun: () => void;
+  handleContinueActiveRun: () => void;
   handleStepActiveRun: (triggerNode?: AiNode) => void;
   handleCancelActiveRun: () => void;
   runtimeRunStatus:

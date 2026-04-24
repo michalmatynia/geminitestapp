@@ -32,7 +32,7 @@ describe('filemaker mail threads handler', () => {
 
     const response = await getHandler(
       new NextRequest(
-        'http://localhost/api/filemaker/mail/threads?query=hello&accountId=account-1&limit=5'
+        'http://localhost/api/filemaker/mail/threads?query=hello&accountId=account-1&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1&limit=5'
       ),
       {} as Parameters<typeof getHandler>[1]
     );
@@ -40,6 +40,9 @@ describe('filemaker mail threads handler', () => {
     expect(listFilemakerMailThreadsMock).toHaveBeenCalledWith({
       query: 'hello',
       accountId: 'account-1',
+      campaignId: 'campaign-1',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
       limit: 5,
     });
     await expect(response.json()).resolves.toEqual({

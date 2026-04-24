@@ -21,7 +21,7 @@ const isGeminiModelId = (modelName: string): boolean =>
 
 export const detectCaseResolverOcrProvider = (modelName: string): CaseResolverOcrProvider => {
   const normalized = modelName.trim();
-  if (!normalized) return 'ollama';
+  if (normalized === '') return 'ollama';
   if (isAnthropicModelId(normalized)) return 'anthropic';
   if (isGeminiModelId(normalized)) return 'gemini';
   if (isOpenAiModelId(normalized)) return 'openai';

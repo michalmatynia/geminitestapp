@@ -142,7 +142,7 @@ Current run-control entrypoints include:
 - `GET /api/ai-paths/runs/queue-status`
 - `GET /api/ai-paths/runtime-analytics/summary`
 
-Resume, replay, handoff, node retry, and dead-letter requeue operations are retired. Those legacy routes have been removed from the active API router.
+Forward-only run control is limited to fresh execution, queue inspection, analytics, and cancellation.
 
 ## Failure Playbook
 
@@ -172,7 +172,7 @@ Resume, replay, handoff, node retry, and dead-letter requeue operations are reti
 
 - `docs/ai-paths/overview.md`
 - `docs/ai-paths/ai-paths-improvements-plan-2026-03-06.md`
-- `docs/platform/ai-paths-resume-vs-handoff.md`
+- `docs/platform/forward-only-execution.md`
 - `docs/prompt-exploder/overview.md`
 - `docs/prompt-exploder/tooltip-guide.md`
 - `docs/prompt-exploder/operations-runbook.md`

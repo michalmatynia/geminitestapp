@@ -29,7 +29,7 @@ const buildNormalizeConfig = (): { nodes: AiNode[]; edges: Edge[] } => {
 };
 
 describe('engine-core normalize starter flow', () => {
-  it('executes the shipped normalize starter workflow end to end with stable data handoff', async () => {
+  it('executes the shipped normalize starter workflow end to end with stable data flow', async () => {
     const { nodes, edges } = buildNormalizeConfig();
     const finishedOrder: string[] = [];
     const seenInputs = new Map<string, RuntimePortValues>();

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { runMaintenanceAction } from '@/features/ai/ai-paths/server/settings-store.maintenance';
-import { restoreStaticStarterWorkflowBundle } from '@/features/ai/ai-paths/server/starter-workflows-settings';
+import { seedCanonicalStarterWorkflows } from '@/features/ai/ai-paths/server/starter-workflows-settings';
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
   AI_PATHS_INDEX_KEY,
@@ -9,7 +9,7 @@ import {
 } from '@/features/ai/ai-paths/server/settings-store.constants';
 
 const buildStaleNormalizeRefreshRecords = () =>
-  restoreStaticStarterWorkflowBundle([
+  seedCanonicalStarterWorkflows([
     {
       key: AI_PATHS_INDEX_KEY,
       value: '[]',

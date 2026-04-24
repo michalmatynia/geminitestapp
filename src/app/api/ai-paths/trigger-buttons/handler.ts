@@ -8,6 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import {
   getAllAiPathsSettings,
+  ensureCanonicalStarterWorkflowSettingsForPathIds,
 } from '@/features/ai/ai-paths/server/settings-store';
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -33,8 +34,6 @@ import {
   PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_QUERY_PARAM,
   shouldIncludePlaywrightAiPathsFixtureButtons,
 } from '@/shared/lib/ai-paths/playwright-fixture-scope';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
-import { getStaticRecoveryStarterWorkflowEntryByDefaultPathId } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -64,6 +63,15 @@ const createMinimalTriggerButtonSettingsSnapshot = (): AiPathsSettingRecord[] =>
 const buildSettingsValueMap = (records: AiPathsSettingRecord[]): Map<string, string> =>
   new Map(records.map((record) => [record.key, record.value]));
 
+const getBoundPathIds = (buttons: AiTriggerButtonRecord[]): string[] =>
+  Array.from(
+    new Set(
+      buttons
+        .map((button) => button.pathId?.trim() ?? '')
+        .filter((pathId) => pathId.length > 0)
+    )
+  );
+
 const readTriggerButtonSettingsSnapshot = async (): Promise<Map<string, string>> => {
   const existingRecords = await readAllAiPathsSettings();
   const sourceRecords =
@@ -84,46 +92,6 @@ const isMalformedPathIndexPayload = (raw: string | null): boolean => {
   } catch (error) {
     void ErrorSystem.captureException(error);
     return true;
-  }
-};
-
-const shouldSilenceRecoverableStarterPathConfigError = (args: {
-  pathId: string;
-  rawConfig: string;
-  error: unknown;
-}): boolean => {
-  if (
-    !isAppError(args.error) ||
-    args.error.code !== AppErrorCodes.validation
-  ) {
-    return false;
-  }
-
-  const source = args.error.meta?.['source'];
-  if (source !== 'ai_paths.path_config' && source !== 'ai_paths.trigger_payload') {
-    return false;
-  }
-
-  const reason = args.error.meta?.['reason'];
-  if (reason !== 'non_canonical_persisted_values' && reason !== 'unsupported_node_identities') {
-    return false;
-  }
-
-  if (!getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
-    return false;
-  }
-
-  try {
-    materializeStoredTriggerPathConfig({
-      pathId: args.pathId,
-      rawConfig: args.rawConfig,
-      fallbackName: args.pathId,
-      applyStarterWorkflowUpgrade: true,
-      allowStaticRecoveryFallback: true,
-    });
-    return true;
-  } catch {
-    return false;
   }
 };
 
@@ -164,15 +132,6 @@ const filterButtonsWithExistingPaths = async (
         });
         validButtonIds.add(button.id);
       } catch (error) {
-        if (
-          shouldSilenceRecoverableStarterPathConfigError({
-            pathId,
-            rawConfig,
-            error,
-          })
-        ) {
-          return;
-        }
         void ErrorSystem.captureException(error);
 
         // Hide buttons bound to malformed or otherwise invalid path configs.
@@ -236,7 +195,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     throw error;
   }
 
-  const settingsSnapshot = await readTriggerButtonSettingsSnapshot();
+  let settingsSnapshot = await readTriggerButtonSettingsSnapshot();
   const raw = settingsSnapshot.get(AI_PATHS_TRIGGER_BUTTONS_KEY) ?? null;
   let parsedButtons: AiTriggerButtonRecord[];
   try {
@@ -253,6 +212,15 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   if (deprecatedPrune.removedCount > 0) {
     parsedButtons = deprecatedPrune.nextButtons;
     await writeTriggerButtonsRaw(serializeAiTriggerButtonsRaw(parsedButtons));
+  }
+  const starterMaintenance = await ensureCanonicalStarterWorkflowSettingsForPathIds(
+    getBoundPathIds(parsedButtons)
+  );
+  if (starterMaintenance.affectedCount > 0) {
+    settingsSnapshot = buildSettingsValueMap(starterMaintenance.records);
+    parsedButtons = parseAiTriggerButtonsRaw(
+      settingsSnapshot.get(AI_PATHS_TRIGGER_BUTTONS_KEY) ?? null
+    );
   }
   const query = aiTriggerButtonsQuerySchema.parse(_ctx.query ?? {});
   const fixtureCookieValue = readRequestCookie(req, PLAYWRIGHT_AI_PATHS_TRIGGER_BUTTONS_COOKIE_NAME);

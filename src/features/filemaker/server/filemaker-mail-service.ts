@@ -183,13 +183,29 @@ const listThreadDocuments = async (
   input: {
     accountId?: string | null;
     mailboxPath?: string | null;
+    campaignId?: string | null;
+    runId?: string | null;
+    deliveryId?: string | null;
     limit?: number | null;
   } = {}
 ): Promise<FilemakerMailThread[]> => {
   const mongo = await getMongoDb();
   const filter: Record<string, unknown> = {};
-  if (input.accountId) filter['accountId'] = input.accountId;
-  if (input.mailboxPath) filter['mailboxPath'] = input.mailboxPath;
+  if (typeof input.accountId === 'string' && input.accountId.length > 0) {
+    filter['accountId'] = input.accountId;
+  }
+  if (typeof input.mailboxPath === 'string' && input.mailboxPath.length > 0) {
+    filter['mailboxPath'] = input.mailboxPath;
+  }
+  if (typeof input.campaignId === 'string' && input.campaignId.length > 0) {
+    filter['campaignContext.campaignId'] = input.campaignId;
+  }
+  if (typeof input.runId === 'string' && input.runId.length > 0) {
+    filter['campaignContext.runId'] = input.runId;
+  }
+  if (typeof input.deliveryId === 'string' && input.deliveryId.length > 0) {
+    filter['campaignContext.deliveryId'] = input.deliveryId;
+  }
   const cursor = mongo
     .collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION)
     .find(filter)
@@ -528,6 +544,9 @@ const syncMailboxMessages = async (input: {
             references: referenceIds,
           });
         }
+        if (!campaignReplyContext && direction === 'inbound') {
+          campaignReplyContext = currentThread?.campaignContext ?? null;
+        }
 
         const nextMessage: FilemakerMailMessage = {
           id: existingMessage?.id ?? `filemaker-mail-message-${randomUUID()}`,
@@ -814,17 +833,54 @@ export const listFilemakerMailThreads = async (input?: {
   query?: string | null;
   accountId?: string | null;
   mailboxPath?: string | null;
+  campaignId?: string | null;
+  runId?: string | null;
+  deliveryId?: string | null;
   limit?: number | null;
 }): Promise<FilemakerMailThread[]> => {
   const threads = await listThreadDocuments({
     accountId: input?.accountId ?? null,
     mailboxPath: input?.mailboxPath ?? null,
+    campaignId: input?.campaignId ?? null,
+    runId: input?.runId ?? null,
+    deliveryId: input?.deliveryId ?? null,
     limit: input?.query ? null : input?.limit ?? null,
   });
   const matchingThreads = sortThreadsByActivity(
     threads.filter((thread) => matchesThreadQuery(thread, input?.query ?? ''))
   );
   return typeof input?.limit === 'number' ? matchingThreads.slice(0, input.limit) : matchingThreads;
+};
+
+export const listFilemakerMailThreadsForCampaign = async (input: {
+  campaignId: string;
+  runId?: string | null;
+  deliveryId?: string | null;
+  limit?: number | null;
+}): Promise<FilemakerMailThread[]> => {
+  const campaignId = normalizeString(input.campaignId);
+  if (campaignId.length === 0) return [];
+
+  return listFilemakerMailThreads({
+    campaignId,
+    runId: normalizeNullableString(input.runId),
+    deliveryId: normalizeNullableString(input.deliveryId),
+    limit: input.limit ?? null,
+  });
+};
+
+export const getFilemakerMailThreadForCampaignDelivery = async (input: {
+  campaignId: string;
+  runId?: string | null;
+  deliveryId: string;
+}): Promise<FilemakerMailThread | null> => {
+  const threads = await listFilemakerMailThreadsForCampaign({
+    campaignId: input.campaignId,
+    runId: input.runId ?? null,
+    deliveryId: input.deliveryId,
+    limit: 1,
+  });
+  return threads[0] ?? null;
 };
 
 export const syncFilemakerMailAccount = async (

@@ -19,6 +19,7 @@ const createDefaultFilemakerMailDraft = (): FilemakerMailAccountDraft => ({
   folderAllowlist: [],
   initialSyncLookbackDays: 30,
   maxMessagesPerSync: 100,
+  pushEnabled: true,
 });
 
 const toDraftFromFilemakerMailAccount = (
@@ -43,6 +44,7 @@ const toDraftFromFilemakerMailAccount = (
   folderAllowlist: account.folderAllowlist,
   initialSyncLookbackDays: account.initialSyncLookbackDays,
   maxMessagesPerSync: account.maxMessagesPerSync,
+  pushEnabled: account.pushEnabled ?? true,
 });
 
 export { createDefaultFilemakerMailDraft, toDraftFromFilemakerMailAccount };

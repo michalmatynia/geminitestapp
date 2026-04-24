@@ -613,7 +613,7 @@ describe('useAiPathsPersistence idle prefetch', () => {
     });
   });
 
-  it('does not persist trigger-context remediation while prefetching configs', async () => {
+  it('does not persist trigger-context normalization while prefetching configs', async () => {
     const activePathId = 'path_active';
     const secondaryPathId = 'path_secondary_legacy_trigger';
     const activeConfig = createDefaultPathConfig(activePathId);

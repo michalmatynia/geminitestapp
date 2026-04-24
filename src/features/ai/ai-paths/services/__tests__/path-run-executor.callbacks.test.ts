@@ -26,34 +26,6 @@ type TestContextOptions = {
   pathId?: string | null;
   pathName?: string | null;
   traceId?: string;
-  resumeByNodeId?: Map<string, {
-    mode: 'resume' | 'retry' | 'replay';
-    decision: 'reused' | 'reexecuted';
-    reason:
-      | 'completed_upstream'
-      | 'failed_node'
-      | 'downstream_of_failure'
-      | 'retry_target'
-      | 'downstream_of_retry'
-      | 'incomplete'
-      | 'replay_requested';
-    sourceTraceId?: string | null;
-    sourceSpanId?: string | null;
-    sourceRunStartedAt?: string | null;
-    sourceStatus?:
-      | 'pending'
-      | 'running'
-      | 'completed'
-      | 'cached'
-      | 'failed'
-      | 'blocked'
-      | 'waiting_callback'
-      | 'advance_pending'
-      | 'timeout'
-      | 'canceled'
-      | 'skipped'
-      | null;
-  }>;
 };
 
 const buildTestContext = (options: TestContextOptions = {}) => {
@@ -97,7 +69,6 @@ const buildTestContext = (options: TestContextOptions = {}) => {
     accInputs,
     accOutputs,
     logNodeStartEvents: false,
-    resumeByNodeId: options.resumeByNodeId ?? new Map(),
     appendRuntimeHistoryEntry,
     setRuntimeNodeStatus,
   };
@@ -132,20 +103,6 @@ describe('path-run-executor callbacks', () => {
   });
 
   it('records cached database finishes with event metadata and analytics', async () => {
-    const resumeByNodeId = new Map([
-      [
-        'node-db',
-        {
-          mode: 'resume' as const,
-          decision: 'reused' as const,
-          reason: 'completed_upstream' as const,
-          sourceTraceId: 'trace-prev',
-          sourceSpanId: 'span-prev',
-          sourceRunStartedAt: '2026-04-09T12:55:00.000Z',
-          sourceStatus: 'completed' as const,
-        },
-      ],
-    ]);
     const {
       ctx,
       repo,
@@ -157,7 +114,7 @@ describe('path-run-executor callbacks', () => {
       reportAiPathsError,
       accInputs,
       accOutputs,
-    } = buildTestContext({ resumeByNodeId });
+    } = buildTestContext();
 
     const { createCallbacks } = await loadModule();
     const callbacks = createCallbacks(ctx as never);
@@ -223,10 +180,6 @@ describe('path-run-executor callbacks', () => {
           decision: 'skipped_duplicate',
           sourceSpanId: 'span-source-1',
         }),
-        resume: expect.objectContaining({
-          mode: 'resume',
-          decision: 'reused',
-        }),
       })
     );
     expect(syncRuntimeTraceMeta).toHaveBeenCalledTimes(1);
@@ -279,8 +232,6 @@ describe('path-run-executor callbacks', () => {
           runtimeStrategy: 'code_object_v3',
           runtimeResolutionSource: 'registry',
           runtimeCodeObjectId: 'code-object-1',
-          resumeMode: 'resume',
-          resumeDecision: 'reused',
           nodeMetadata: {
             database: {
               collection: 'orders',
@@ -430,20 +381,6 @@ describe('path-run-executor callbacks', () => {
   });
 
   it('tracks waiting-callback blocks without marking node analytics complete', async () => {
-    const resumeByNodeId = new Map([
-      [
-        'node-callback',
-        {
-          mode: 'replay' as const,
-          decision: 'reexecuted' as const,
-          reason: 'replay_requested' as const,
-          sourceTraceId: 'trace-original',
-          sourceSpanId: 'span-original',
-          sourceRunStartedAt: '2026-04-09T12:40:00.000Z',
-          sourceStatus: 'blocked' as const,
-        },
-      ],
-    ]);
     const {
       ctx,
       repo,
@@ -453,7 +390,7 @@ describe('path-run-executor callbacks', () => {
       throttledSaveIntermediateState,
       reportAiPathsError,
       accOutputs,
-    } = buildTestContext({ resumeByNodeId });
+    } = buildTestContext();
 
     const { createCallbacks } = await loadModule();
     const callbacks = createCallbacks(ctx as never);
@@ -488,10 +425,6 @@ describe('path-run-executor callbacks', () => {
         attempt: 2,
         finishedAt: '2026-04-09T13:00:00.000Z',
         status: 'waiting_callback',
-        resume: expect.objectContaining({
-          mode: 'replay',
-          decision: 'reexecuted',
-        }),
         error: {
           message: 'Awaiting webhook callback.',
         },
@@ -546,8 +479,6 @@ describe('path-run-executor callbacks', () => {
           waitingOnPorts: ['callback_url'],
           runtimeResolutionSource: 'override',
           runtimeCodeObjectId: null,
-          resumeMode: 'replay',
-          resumeDecision: 'reexecuted',
         }),
       })
     );
@@ -560,237 +491,6 @@ describe('path-run-executor callbacks', () => {
         status: 'waiting_callback',
         waitingOnPorts: ['callback_url'],
         waitingOnDetails: [{ kind: 'webhook', attempt: 2 }],
-      })
-    );
-  });
-
-  it('records seeded node reuse into runtime history, trace spans, and status state', async () => {
-    const {
-      ctx,
-      repo,
-      profiling,
-      upsertRuntimeTraceSpan,
-      syncRuntimeTraceMeta,
-      publishNodeUpdate,
-      throttledSaveIntermediateState,
-      reportAiPathsError,
-      appendRuntimeHistoryEntry,
-      setRuntimeNodeStatus,
-      accInputs,
-      accOutputs,
-    } = buildTestContext({
-      runId: 'run-callbacks-2',
-      pathId: 'path-seeded',
-      pathName: 'Seeded Path',
-      traceId: 'trace-seeded',
-    });
-
-    const { createCallbacks } = await loadModule();
-    const callbacks = createCallbacks(ctx as never);
-
-    await callbacks.recordNodeReuse({
-      node: {
-        id: 'node-seeded',
-        type: 'agent',
-        title: 'Seeded Agent',
-      } as never,
-      spanId: 'span-seeded-1',
-      iteration: 3,
-      attempt: 0,
-      nodeInputs: {
-        prompt: 'hello',
-      },
-      nodeOutputs: {
-        status: 'completed',
-        answer: 'world',
-      },
-      resume: {
-        mode: 'resume',
-        decision: 'reused',
-        reason: 'completed_upstream',
-        sourceTraceId: 'trace-origin',
-        sourceSpanId: null,
-        sourceRunStartedAt: '2026-04-09T12:10:00.000Z',
-        sourceStatus: 'completed',
-      },
-      sourceHistory: {
-        timestamp: '2026-04-09T12:12:00.000Z',
-        nodeId: 'node-seeded',
-        nodeType: 'agent',
-        nodeTitle: 'Seeded Agent',
-        status: 'completed',
-        iteration: 1,
-        attempt: 0,
-        inputs: {
-          prompt: 'hello',
-        },
-        outputs: {
-          status: 'completed',
-          answer: 'world',
-        },
-        inputHash: 'input-hash-origin',
-        sideEffectPolicy: 'per_run',
-        sideEffectDecision: 'executed',
-        activationHash: 'activation-origin',
-        idempotencyKey: 'idempotency-origin',
-        spanId: 'span-source-history',
-        inputsFrom: [{ nodeId: 'node-a', nodeType: 'input', nodeTitle: 'Input', fromPort: null, toPort: 'prompt' }],
-        outputsTo: [{ nodeId: 'node-b', nodeType: 'output', nodeTitle: 'Output', fromPort: 'answer', toPort: null }],
-        durationMs: 25,
-        runtimeStrategy: 'code_object_v3',
-        runtimeResolutionSource: 'registry',
-        runtimeCodeObjectId: 'code-origin',
-        pathId: 'path-origin',
-        pathName: 'Origin Path',
-      },
-    });
-
-    expect(profiling.beginRuntimeNodeSpan).toHaveBeenCalledWith({
-      spanId: 'span-seeded-1',
-      nodeId: 'node-seeded',
-      nodeType: 'agent',
-      nodeTitle: 'Seeded Agent',
-      iteration: 3,
-      attempt: 0,
-      startedAt: '2026-04-09T13:00:00.000Z',
-    });
-    expect(profiling.finalizeRuntimeNodeSpan).toHaveBeenCalledWith({
-      spanId: 'span-seeded-1',
-      status: 'cached',
-      finishedAt: '2026-04-09T13:00:00.000Z',
-    });
-    expect(upsertRuntimeTraceSpan).toHaveBeenCalledWith(
-      'span-seeded-1',
-      expect.objectContaining({
-        nodeId: 'node-seeded',
-        nodeType: 'agent',
-        iteration: 3,
-        attempt: 0,
-        startedAt: '2026-04-09T13:00:00.000Z',
-        finishedAt: '2026-04-09T13:00:00.000Z',
-        status: 'cached',
-        activationHash: 'activation-origin',
-        cache: expect.objectContaining({
-          decision: 'seed',
-        }),
-        effect: expect.objectContaining({
-          policy: 'per_run',
-          sourceSpanId: 'span-source-history',
-        }),
-        resume: expect.objectContaining({
-          mode: 'resume',
-          decision: 'reused',
-          sourceTraceId: 'trace-origin',
-        }),
-      })
-    );
-    expect(syncRuntimeTraceMeta).toHaveBeenCalledTimes(1);
-    expect(setRuntimeNodeStatus).toHaveBeenCalledWith('node-seeded', 'cached');
-    expect(appendRuntimeHistoryEntry).toHaveBeenCalledWith(
-      'node-seeded',
-      expect.objectContaining({
-        timestamp: '2026-04-09T13:00:00.000Z',
-        pathId: 'path-seeded',
-        pathName: 'Seeded Path',
-        traceId: 'trace-seeded',
-        spanId: 'span-seeded-1',
-        nodeId: 'node-seeded',
-        nodeType: 'agent',
-        nodeTitle: 'Seeded Agent',
-        status: 'cached',
-        iteration: 3,
-        attempt: 0,
-        inputs: {
-          prompt: 'hello',
-        },
-        outputs: {
-          status: 'completed',
-          answer: 'world',
-        },
-        cacheDecision: 'seed',
-        sideEffectPolicy: 'per_run',
-        sideEffectDecision: 'executed',
-        activationHash: 'activation-origin',
-        idempotencyKey: 'idempotency-origin',
-        effectSourceSpanId: 'span-source-history',
-        resumeMode: 'resume',
-        resumeDecision: 'reused',
-        resumeReason: 'completed_upstream',
-        resumeSourceTraceId: 'trace-origin',
-        resumeSourceSpanId: null,
-        resumeSourceRunStartedAt: '2026-04-09T12:10:00.000Z',
-        resumeSourceStatus: 'completed',
-        inputsFrom: [{ nodeId: 'node-a', nodeType: 'input', nodeTitle: 'Input', fromPort: null, toPort: 'prompt' }],
-        outputsTo: [{ nodeId: 'node-b', nodeType: 'output', nodeTitle: 'Output', fromPort: 'answer', toPort: null }],
-        durationMs: 0,
-        runtimeStrategy: 'code_object_v3',
-        runtimeResolutionSource: 'registry',
-        runtimeCodeObjectId: 'code-origin',
-      })
-    );
-    expect(publishNodeUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        nodeId: 'node-seeded',
-        status: 'cached',
-        traceId: 'trace-seeded',
-        spanId: 'span-seeded-1',
-        startedAt: '2026-04-09T13:00:00.000Z',
-        finishedAt: '2026-04-09T13:00:00.000Z',
-        errorMessage: null,
-      })
-    );
-    expect(repo.upsertRunNode).toHaveBeenCalledWith('run-callbacks-2', 'node-seeded', {
-      nodeType: 'agent',
-      nodeTitle: 'Seeded Agent',
-      status: 'cached',
-      attempt: 0,
-      inputs: {
-        prompt: 'hello',
-      },
-      outputs: {
-        status: 'completed',
-        answer: 'world',
-      },
-      startedAt: '2026-04-09T13:00:00.000Z',
-      finishedAt: '2026-04-09T13:00:00.000Z',
-      error: null,
-    });
-    expect(repo.createRunEvent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        runId: 'run-callbacks-2',
-        level: 'info',
-        message: 'Node Seeded Agent reused seeded outputs during resume.',
-        metadata: expect.objectContaining({
-          traceId: 'trace-seeded',
-          spanId: 'span-seeded-1',
-          nodeId: 'node-seeded',
-          nodeType: 'agent',
-          cached: true,
-          cacheDecision: 'seed',
-          sideEffectPolicy: 'per_run',
-          effectSourceSpanId: 'span-source-history',
-          activationHash: 'activation-origin',
-          resumeMode: 'resume',
-          resumeDecision: 'reused',
-          resumeReason: 'completed_upstream',
-        }),
-      })
-    );
-    expect(recordRuntimeNodeStatusMock).toHaveBeenCalledWith({
-      runId: 'run-callbacks-2',
-      nodeId: 'node-seeded',
-      status: 'cached',
-    });
-    expect(throttledSaveIntermediateState).toHaveBeenCalledTimes(1);
-    expect(reportAiPathsError).not.toHaveBeenCalled();
-    expect(logClientErrorMock).not.toHaveBeenCalled();
-    expect(accInputs['node-seeded']).toEqual({
-      prompt: 'hello',
-    });
-    expect(accOutputs['node-seeded']).toEqual(
-      expect.objectContaining({
-        status: 'cached',
-        answer: 'world',
       })
     );
   });

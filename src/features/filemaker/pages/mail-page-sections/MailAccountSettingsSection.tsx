@@ -249,6 +249,20 @@ export function MailAccountSettingsSection(): React.JSX.Element {
             />
             SMTP secure
           </label>
+          <label
+            htmlFor='filemaker-mail-account-push-enabled'
+            className='flex items-center gap-2 text-sm text-white'
+            title='Maintain a live IMAP IDLE connection for push-style new-mail notifications'
+          >
+            <Checkbox
+              id='filemaker-mail-account-push-enabled'
+              checked={draft.pushEnabled ?? true}
+              onCheckedChange={(checked) =>
+                setDraft((prev) => ({ ...prev, pushEnabled: checked === true }))
+              }
+            />
+            Push (IMAP IDLE)
+          </label>
         </div>
         <div className='flex flex-wrap gap-2'>
           <Button

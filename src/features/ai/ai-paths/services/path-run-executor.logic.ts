@@ -25,23 +25,6 @@ import type {
   RuntimeProfileSnapshot,
 } from './path-run-executor.types';
 
-import {
-  buildResumePlan,
-  type RuntimeResumePlan
-} from './path-run-executor.resume';
-
-export { buildResumePlan, type RuntimeResumePlan };
-
-export const buildSkipSet = (
-  run: AiPathRunRecord,
-  edges: Edge[],
-  nodeStatusMap: Map<string, string>,
-  runtimeState: RuntimeState = EMPTY_RUNTIME_STATE
-): Set<string> => {
-  const plan = buildResumePlan(run, edges, nodeStatusMap, runtimeState) as unknown as RuntimeResumePlan;
-  return plan.skipNodeIds;
-};
-
 let sanitizeDropWarningCount = 0;
 const SANITIZE_DROP_WARNING_LIMIT = 20;
 

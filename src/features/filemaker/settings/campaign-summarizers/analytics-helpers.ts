@@ -37,6 +37,7 @@ type CampaignEventGroups = {
   resubscribeEvents: FilemakerEmailCampaignEvent[];
   openEvents: FilemakerEmailCampaignEvent[];
   clickEvents: FilemakerEmailCampaignEvent[];
+  replyEvents: FilemakerEmailCampaignEvent[];
 };
 
 const EMPTY_DELIVERY_TOTALS: DeliveryTotals = {
@@ -186,6 +187,7 @@ export const groupCampaignEvents = (
   resubscribeEvents: filterCampaignEventsByType(events, 'resubscribed'),
   openEvents: filterCampaignEventsByType(events, 'opened'),
   clickEvents: filterCampaignEventsByType(events, 'clicked'),
+  replyEvents: filterCampaignEventsByType(events, 'reply_received'),
 });
 
 export const applyClickRates = (
@@ -259,6 +261,8 @@ export const buildEngagementMetrics = (
   | 'resubscribeRatePercent'
   | 'netUnsubscribeCount'
   | 'netUnsubscribeRatePercent'
+  | 'replyCount'
+  | 'replyRatePercent'
 > => {
   const uniqueOpenCount = summarizeUniqueDeliveryEventCount(groups.openEvents);
   const uniqueClickCount = summarizeUniqueDeliveryEventCount(groups.clickEvents);
@@ -282,6 +286,8 @@ export const buildEngagementMetrics = (
     resubscribeRatePercent: roundPercentage(groups.resubscribeEvents.length, sentCount),
     netUnsubscribeCount,
     netUnsubscribeRatePercent: roundPercentage(netUnsubscribeCount, sentCount),
+    replyCount: groups.replyEvents.length,
+    replyRatePercent: roundPercentage(groups.replyEvents.length, sentCount),
   };
 };
 
@@ -324,6 +330,7 @@ export const buildLatestActivityMetrics = (
   | 'latestActivityAt'
   | 'latestOpenAt'
   | 'latestClickAt'
+  | 'latestReplyAt'
   | 'latestUnsubscribeAt'
   | 'latestResubscribeAt'
 > => ({
@@ -332,6 +339,7 @@ export const buildLatestActivityMetrics = (
   latestActivityAt: resolveLatestActivityAt(latestRun, campaignEvents),
   latestOpenAt: resolveLatestEventTimestamp(groups.openEvents),
   latestClickAt: resolveLatestEventTimestamp(groups.clickEvents),
+  latestReplyAt: resolveLatestEventTimestamp(groups.replyEvents),
   latestUnsubscribeAt: resolveLatestEventTimestamp(groups.unsubscribeEvents),
   latestResubscribeAt: resolveLatestEventTimestamp(groups.resubscribeEvents),
 });

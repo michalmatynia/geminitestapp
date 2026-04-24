@@ -110,10 +110,10 @@ export const useRuntimeExternalActions = ({
     handler();
   }, [reportMissingRunControlHandler, runControlHandlersRef]);
 
-  const resumeActiveRun = useCallback(() => {
-    const handler = runControlHandlersRef.current.resumeActiveRun;
+  const continueActiveRun = useCallback(() => {
+    const handler = runControlHandlersRef.current.continueActiveRun;
     if (!handler) {
-      reportMissingRunControlHandler('resumeActiveRun');
+      reportMissingRunControlHandler('continueActiveRun');
       return;
     }
     handler();
@@ -221,7 +221,7 @@ export const useRuntimeExternalActions = ({
     fireTrigger,
     fireTriggerPersistent,
     pauseActiveRun,
-    resumeActiveRun,
+    continueActiveRun,
     stepActiveRun,
     cancelActiveRun,
     clearWires,

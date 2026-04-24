@@ -350,6 +350,71 @@ describe('filemaker campaign runtime service', () => {
     expect(storedEvents.events.some((event) => event.type === 'completed')).toBe(true);
   });
 
+  it('carries mail filing links from campaign sends into delivery events', async () => {
+    const sendCampaignEmail = vi.fn(async (input: { deliveryId: string }) => ({
+      provider: 'smtp' as const,
+      providerMessage: 'Sent through SMTP.',
+      sentAt: iso,
+      mailFilingStatus: 'filed' as const,
+      mailThreadId: `thread-${input.deliveryId}`,
+      mailMessageId: `message-${input.deliveryId}`,
+    }));
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    await service.processRun({
+      runId: launched.run.id,
+    });
+
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+    const deliverySentEvents = storedEvents.events.filter(
+      (event) => event.type === 'delivery_sent'
+    );
+
+    expect(deliverySentEvents).toHaveLength(2);
+    expect(deliverySentEvents[0]?.mailThreadId).toEqual(expect.stringContaining('thread-'));
+    expect(deliverySentEvents[0]?.mailMessageId).toEqual(expect.stringContaining('message-'));
+  });
+
+  it('records a non-blocking event when campaign send mail filing fails', async () => {
+    const sendCampaignEmail = vi.fn(async () => ({
+      provider: 'smtp' as const,
+      providerMessage: 'Sent through SMTP.',
+      sentAt: iso,
+      mailFilingStatus: 'failed' as const,
+      mailThreadId: null,
+      mailMessageId: null,
+      mailFilingError: 'Mongo unavailable',
+    }));
+    const { service, store } = createRuntimeHarness({ sendCampaignEmail });
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+
+    const processed = await service.processRun({
+      runId: launched.run.id,
+    });
+
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+
+    expect(processed.progress.sentCount).toBe(2);
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'status_changed' &&
+          event.message.includes('filing into the mail client failed')
+      )
+    ).toBe(true);
+  });
+
   it('passes the selected mail account id into campaign delivery processing', async () => {
     const { service, sendCampaignEmail } = createRuntimeHarness({
       campaign: createCampaign({

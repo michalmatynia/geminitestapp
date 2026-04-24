@@ -8,7 +8,6 @@ export const aiPathRunQueueState =
   globalWithAiPathRunQueueState.__aiPathRunQueueState__ ??
   (globalWithAiPathRunQueueState.__aiPathRunQueueState__ = {
     workerStarted: false,
-    recoveryScheduled: false,
   });
 
 const MAX_LOCAL_FALLBACK_TIMERS = 1_000;

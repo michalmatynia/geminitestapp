@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, SendHorizonal } from 'lucide-react';
+import { ArrowLeft, Paperclip, SendHorizonal, X } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useMemo, useState, startTransition } from 'react';
@@ -31,6 +31,16 @@ type ForwardDraftResponse = {
 
 const EMPTY_BODY_HTML = '<p><br/></p>';
 
+class FetchJsonError extends Error {
+  readonly status: number;
+  readonly body: unknown;
+  constructor(status: number, body: unknown, message: string) {
+    super(message);
+    this.status = status;
+    this.body = body;
+  }
+}
+
 const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(url, {
     ...init,
@@ -40,9 +50,48 @@ const fetchJson = async <T,>(url: string, init?: RequestInit): Promise<T> => {
     },
   });
   if (!response.ok) {
-    throw new Error(`Request failed (${response.status})`);
+    let body: unknown = null;
+    try {
+      body = await response.json();
+    } catch {
+      try {
+        body = await response.text();
+      } catch {
+        body = null;
+      }
+    }
+    const message =
+      (body && typeof body === 'object' && 'message' in (body as Record<string, unknown>) &&
+        typeof (body as { message?: unknown }).message === 'string'
+          ? (body as { message: string }).message
+          : null) ?? `Request failed (${response.status})`;
+    throw new FetchJsonError(response.status, body, message);
   }
   return (await response.json()) as T;
+};
+
+const readFileAsBase64 = async (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = (): void => reject(reader.error ?? new Error('File read failed'));
+    reader.onload = (): void => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Unexpected file reader result'));
+        return;
+      }
+      const commaIndex = result.indexOf(',');
+      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
+    };
+    reader.readAsDataURL(file);
+  });
+
+type ComposeAttachment = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  dataBase64: string;
 };
 
 const formatParticipants = (participants: FilemakerMailParticipant[]): string =>
@@ -59,6 +108,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState('');
   const [bodyHtml, setBodyHtml] = useState(EMPTY_BODY_HTML);
+  const [attachments, setAttachments] = useState<ComposeAttachment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const accountIdFromRoute = searchParams.get('accountId');
@@ -181,6 +231,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     setBcc('');
     setSubject('');
     setBodyHtml(EMPTY_BODY_HTML);
+    setAttachments([]);
   }, [accountIdFromRoute, composeDraftResetKey]);
 
   useEffect(() => {
@@ -242,7 +293,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     };
   }, [accountIdFromRoute, forwardThreadId, toast]);
 
-  const handleSend = async (): Promise<void> => {
+  const handleSend = async (options?: { overrideSuppression?: boolean }): Promise<void> => {
     setIsSending(true);
     try {
       const result = await fetchJson<{ message: { threadId: string } }>('/api/filemaker/mail/send', {
@@ -254,6 +305,12 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
           bcc: parseFilemakerMailParticipantsInput(bcc),
           subject,
           bodyHtml,
+          attachments: attachments.map((entry) => ({
+            fileName: entry.fileName,
+            contentType: entry.contentType,
+            dataBase64: entry.dataBase64,
+          })),
+          ...(options?.overrideSuppression ? { overrideSuppression: true } : {}),
         }),
       });
       toast('Email sent.', { variant: 'success' });
@@ -273,11 +330,53 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
                 })
               ); });
     } catch (error) {
+      const isSuppression =
+        error instanceof FetchJsonError &&
+        error.status >= 400 &&
+        error.status < 500 &&
+        /suppression/i.test(error.message);
+      if (isSuppression && !options?.overrideSuppression) {
+        const confirmed =
+          typeof window !== 'undefined' &&
+          window.confirm(
+            `${error.message}\n\nSend anyway? This will bypass the campaign suppression list for this message only.`
+          );
+        if (confirmed) {
+          setIsSending(false);
+          await handleSend({ overrideSuppression: true });
+          return;
+        }
+      }
       toast(error instanceof Error ? error.message : 'Failed to send email.', {
         variant: 'error',
       });
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleAddAttachments = async (fileList: FileList | null): Promise<void> => {
+    if (!fileList || fileList.length === 0) return;
+    const additions: ComposeAttachment[] = [];
+    for (const file of Array.from(fileList)) {
+      try {
+        const dataBase64 = await readFileAsBase64(file);
+        additions.push({
+          id: `${file.name}-${file.size}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+          fileName: file.name,
+          contentType: file.type || 'application/octet-stream',
+          sizeBytes: file.size,
+          dataBase64,
+        });
+      } catch (error) {
+        toast(
+          `Could not attach ${file.name}: ${error instanceof Error ? error.message : 'unknown error'}`,
+          { variant: 'error' }
+        );
+      }
+    }
+    if (additions.length > 0) {
+      setAttachments((current) => [...current, ...additions]);
     }
   };
 
@@ -371,6 +470,53 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
             onChange={setBodyHtml}
             placeholder='Write your email...'
           />
+
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2'>
+              <label className='inline-flex cursor-pointer items-center gap-2 text-xs text-gray-300 underline-offset-2 hover:underline'>
+                <Paperclip className='size-4' />
+                Add attachments
+                <input
+                  type='file'
+                  multiple
+                  className='hidden'
+                  onChange={(event) => {
+                    const files = event.target.files;
+                    void handleAddAttachments(files);
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+              {attachments.length > 0 ? (
+                <span className='text-[11px] text-gray-500'>{attachments.length} file(s)</span>
+              ) : null}
+            </div>
+            {attachments.length > 0 ? (
+              <ul className='flex flex-wrap gap-2'>
+                {attachments.map((entry) => (
+                  <li
+                    key={entry.id}
+                    className='inline-flex items-center gap-2 rounded-md border border-border/60 bg-card/30 px-2 py-1 text-[11px] text-gray-300'
+                  >
+                    <span>{entry.fileName}</span>
+                    <span className='text-gray-500'>
+                      {(entry.sizeBytes / 1024).toFixed(1)} KB
+                    </span>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setAttachments((current) => current.filter((item) => item.id !== entry.id));
+                      }}
+                      aria-label={`Remove ${entry.fileName}`}
+                      className='text-gray-400 hover:text-red-300'
+                    >
+                      <X className='size-3' />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
 
           {accountId ? (
             <div className='text-xs text-gray-500'>

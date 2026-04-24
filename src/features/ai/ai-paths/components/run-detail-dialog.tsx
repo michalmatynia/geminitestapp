@@ -192,7 +192,7 @@ export function RunDetailDialog(): React.JSX.Element {
                   size='sm'
                   onClick={() => onStreamPauseToggle(!runStreamPaused)}
                 >
-                  {runStreamPaused ? 'Resume stream' : 'Pause stream'}
+                  {runStreamPaused ? 'Reconnect stream' : 'Pause stream'}
                 </Button>
               </div>
             </RunDetailField>
@@ -315,8 +315,6 @@ export function RunDetailDialog(): React.JSX.Element {
                 <div>Node spans: {runtimeTraceSummary?.nodeSpanCount ?? 0}</div>
                 <div>Seed reuses: {runtimeTraceSummary?.seededSpanCount ?? 0}</div>
                 <div>Effect reuses: {runtimeTraceSummary?.effectReplayCount ?? 0}</div>
-                <div>Resume reuses: {runtimeTraceSummary?.resumeReuseCount ?? 0}</div>
-                <div>Resume re-execs: {runtimeTraceSummary?.resumeReexecutionCount ?? 0}</div>
                 <div>Source: {runtimeTraceSummary?.source ?? 'unknown'}</div>
                 <div>
                   Trace finished:{' '}

@@ -14,7 +14,11 @@ export const createCancellationMonitor = (params: {
   abortController: AbortController;
   pollIntervalMs: number;
   onMissingRun: () => void;
-}) => {
+}): {
+  start: () => Promise<boolean>;
+  stop: () => void;
+  check: () => Promise<boolean>;
+} => {
   const state: CancellationMonitorState = {
     active: false,
     timer: null,
@@ -54,21 +58,26 @@ export const createCancellationMonitor = (params: {
     const cancelledBeforeStart = await check();
     if (cancelledBeforeStart) return true;
     state.active = true;
-    const scheduleNext = (): void => {
-      if (!state.active) return;
-      state.timer = setTimeout(() => {
-        void (async () => {
-          if (!state.active) return;
-          const cancelled = await check();
-          if (!cancelled) {
-            scheduleNext();
-          }
-        })();
-      }, params.pollIntervalMs);
-    };
-    scheduleNext();
+    scheduleNext(state, params, check);
     return false;
   };
 
   return { start, stop, check };
+};
+
+const scheduleNext = (
+  state: CancellationMonitorState,
+  params: { pollIntervalMs: number },
+  check: () => Promise<boolean>
+): void => {
+  if (!state.active) return;
+  state.timer = setTimeout(() => {
+    void (async () => {
+      if (!state.active) return;
+      const cancelled = await check();
+      if (!cancelled) {
+        scheduleNext(state, params, check);
+      }
+    })();
+  }, params.pollIntervalMs);
 };

@@ -656,6 +656,100 @@ describe('filemaker mail service - accounts and sending', () => {
     expect(threads.map((thread) => thread.id)).toEqual(['thread-newest', 'thread-middle']);
   });
 
+  it('lists campaign-linked threads by campaign, run, and delivery context', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_threads', [
+      {
+        _id: 'thread-campaign-delivery-1',
+        id: 'thread-campaign-delivery-1',
+        accountId: 'account-1',
+        mailboxPath: 'Sent',
+        mailboxRole: 'sent',
+        providerThreadId: null,
+        subject: 'Campaign delivery 1',
+        normalizedSubject: 'campaign delivery 1',
+        snippet: 'Preview 1',
+        participantSummary: [{ address: 'one@example.com', name: 'One' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T10:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
+      },
+      {
+        _id: 'thread-campaign-delivery-2',
+        id: 'thread-campaign-delivery-2',
+        accountId: 'account-1',
+        mailboxPath: 'Sent',
+        mailboxRole: 'sent',
+        providerThreadId: null,
+        subject: 'Campaign delivery 2',
+        normalizedSubject: 'campaign delivery 2',
+        snippet: 'Preview 2',
+        participantSummary: [{ address: 'two@example.com', name: 'Two' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T11:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-2',
+        },
+      },
+      {
+        _id: 'thread-other-campaign',
+        id: 'thread-other-campaign',
+        accountId: 'account-1',
+        mailboxPath: 'Sent',
+        mailboxRole: 'sent',
+        providerThreadId: null,
+        subject: 'Other campaign',
+        normalizedSubject: 'other campaign',
+        snippet: 'Other preview',
+        participantSummary: [{ address: 'other@example.com', name: 'Other' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-29T12:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-other',
+          runId: 'run-2',
+          deliveryId: 'delivery-3',
+        },
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const {
+      getFilemakerMailThreadForCampaignDelivery,
+      listFilemakerMailThreadsForCampaign,
+    } = await import('./filemaker-mail-service');
+
+    const runThreads = await listFilemakerMailThreadsForCampaign({
+      campaignId: 'campaign-spring',
+      runId: 'run-1',
+    });
+    const deliveryThread = await getFilemakerMailThreadForCampaignDelivery({
+      campaignId: 'campaign-spring',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
+    });
+
+    expect(runThreads.map((thread) => thread.id)).toEqual([
+      'thread-campaign-delivery-2',
+      'thread-campaign-delivery-1',
+    ]);
+    expect(deliveryThread?.id).toBe('thread-campaign-delivery-1');
+  });
+
   it('downloads IMAP messages, stores them, and updates sync state', async () => {
     const mongoHarness = createMongoHarness();
     mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
@@ -778,6 +872,98 @@ describe('filemaker mail service - accounts and sending', () => {
         id: 'account-1',
         lastSyncError: null,
         lastSyncedAt: expect.any(String),
+      })
+    );
+  });
+
+  it('inherits campaign context for inbound replies matched to an existing campaign thread', async () => {
+    const mongoHarness = createMongoHarness();
+    mongoHarness.seed('filemaker_mail_accounts', [createMailAccountDoc()]);
+    mongoHarness.seed('filemaker_mail_threads', [
+      {
+        _id: 'campaign-thread-1',
+        id: 'campaign-thread-1',
+        createdAt: '2026-03-27T10:00:00.000Z',
+        updatedAt: '2026-03-27T10:00:00.000Z',
+        accountId: 'account-1',
+        mailboxPath: 'INBOX',
+        mailboxRole: 'inbox',
+        providerThreadId: null,
+        subject: 'Spring Offer',
+        normalizedSubject: 'Spring Offer',
+        anchorAddress: 'jane@example.com',
+        snippet: 'Campaign sent',
+        participantSummary: [{ address: 'jane@example.com', name: 'Jane Recipient' }],
+        relatedPersonIds: [],
+        relatedOrganizationIds: [],
+        unreadCount: 0,
+        messageCount: 1,
+        lastMessageAt: '2026-03-27T10:00:00.000Z',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
+      },
+    ]);
+    getMongoDbMock.mockResolvedValue(mongoHarness.mongo);
+
+    const client = createMockImapClient({
+      mailboxStates: {
+        INBOX: {
+          uidValidity: 123n,
+          uidNext: 44,
+        },
+      },
+      initialSearchUids: [43],
+      entries: [
+        {
+          uid: 43,
+          flags: new Set(),
+          envelope: {
+            subject: 'Re: Spring Offer',
+            messageId: '<reply-43@example.com>',
+            from: [{ name: 'Jane Recipient', address: 'jane@example.com' }],
+            to: [{ address: 'support@example.com' }],
+            date: new Date('2026-03-27T10:30:00.000Z'),
+          },
+          internalDate: new Date('2026-03-27T10:31:00.000Z'),
+        },
+      ],
+    });
+    createImapClientMock.mockReturnValue(client);
+    listImapMailboxesMock.mockResolvedValue([
+      {
+        path: 'INBOX',
+        flags: new Set<string>(),
+        specialUse: '\\Inbox',
+      },
+    ]);
+    parseMailSourceMock.mockResolvedValueOnce({
+      subject: 'Re: Spring Offer',
+      messageId: '<reply-43@example.com>',
+      from: { value: [{ name: 'Jane Recipient', address: 'jane@example.com' }] },
+      to: { value: [{ address: 'support@example.com' }] },
+      text: 'Sounds good',
+      html: '<p>Sounds good</p>',
+      date: new Date('2026-03-27T10:30:00.000Z'),
+      references: [],
+      attachments: [],
+    });
+
+    const { syncFilemakerMailAccount } = await import('./filemaker-mail-service');
+
+    await syncFilemakerMailAccount('account-1');
+
+    const messageDocs = mongoHarness.docs<MockDocument>('filemaker_mail_messages');
+    expect(messageDocs[0]).toEqual(
+      expect.objectContaining({
+        threadId: 'campaign-thread-1',
+        campaignContext: {
+          campaignId: 'campaign-spring',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
       })
     );
   });

@@ -91,7 +91,7 @@ export interface RuntimeActions {
   fireTrigger: (node: AiNode, event?: MouseEvent<Element>) => Promise<void>;
   fireTriggerPersistent: (node: AiNode, event?: MouseEvent<Element>) => Promise<void>;
   pauseActiveRun: () => void;
-  resumeActiveRun: () => void;
+  continueActiveRun: () => void;
   stepActiveRun: (triggerNode?: AiNode) => void;
   cancelActiveRun: () => void;
   clearWires: () => void;

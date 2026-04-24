@@ -52,7 +52,7 @@ describe('path-run-management lifecycle', () => {
     vi.useRealTimers();
   });
 
-  it('cancels queued or running runs without legacy recovery statuses', async () => {
+  it('cancels queued or running runs with terminal forward-only statuses', async () => {
     const run = {
       id: 'run-1',
       status: 'running',

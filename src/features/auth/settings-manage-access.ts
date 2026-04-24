@@ -5,10 +5,13 @@ import { readOptionalServerAuthSession } from './optional-server-auth';
 
 export async function assertSettingsManageAccess(): Promise<void> {
   const session = await readOptionalServerAuthSession();
-  const isElevated = session?.user?.isElevated ?? false;
-  const canManage = session?.user?.permissions?.includes('settings.manage') ?? false;
-
-  if (isElevated || canManage) return;
+  if (hasAccess(session)) return;
 
   throw authError('Unauthorized.');
+}
+
+function hasAccess(session: any): boolean {
+  const isElevated = session?.user?.isElevated ?? false;
+  const canManage = session?.user?.permissions?.includes('settings.manage') ?? false;
+  return isElevated || canManage;
 }

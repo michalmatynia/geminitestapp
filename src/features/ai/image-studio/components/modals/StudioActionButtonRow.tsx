@@ -46,7 +46,9 @@ export function StudioActionButtonRow({
           title={action.title}
           aria-label={action.ariaLabel}
         >
-          {action.icon ? <span className='mr-2'>{action.icon}</span> : null}
+          {action.icon !== undefined && action.icon !== null ? (
+            <span className='mr-2'>{action.icon}</span>
+          ) : null}
           {action.label}
         </Button>
       ))}

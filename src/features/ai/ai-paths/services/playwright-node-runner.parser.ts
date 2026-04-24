@@ -48,7 +48,7 @@ const toPlaywrightScriptParseError = (
   if (error instanceof SyntaxError) {
     const prefix =
       mode === 'wrapped'
-        ? 'Invalid Playwright script syntax after function-body recovery'
+        ? 'Invalid Playwright script syntax after function-body wrapping'
         : 'Invalid Playwright script syntax';
     const normalized = new SyntaxError(`${prefix}: ${error.message}`);
     normalized.stack = error.stack;

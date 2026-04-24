@@ -11,7 +11,6 @@ const {
   captureExceptionMock,
   logWarningMock,
   processRunMock,
-  processStaleRunRecoveryMock,
   getMongoClientMock,
 } = vi.hoisted(() => ({
   createManagedQueueMock: vi.fn(),
@@ -24,7 +23,6 @@ const {
   captureExceptionMock: vi.fn(),
   logWarningMock: vi.fn(),
   processRunMock: vi.fn(),
-  processStaleRunRecoveryMock: vi.fn(),
   getMongoClientMock: vi.fn(),
 }));
 
@@ -43,10 +41,6 @@ vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
   recordRuntimeRunStarted: vi.fn(),
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
-  resolveAiPathsStaleRunningCleanupIntervalMs: () => 60_000,
-}));
-
 vi.mock('@/features/ai/ai-paths/workers/ai-path-run-queue/brain-gate', () => ({
   getAiPathsEnabledCached: getAiPathsEnabledCachedMock,
   assertAiPathsEnabled: vi.fn(),
@@ -55,7 +49,6 @@ vi.mock('@/features/ai/ai-paths/workers/ai-path-run-queue/brain-gate', () => ({
 
 vi.mock('@/features/ai/ai-paths/workers/ai-path-run-processor', () => ({
   processRun: processRunMock,
-  processStaleRunRecovery: processStaleRunRecoveryMock,
 }));
 
 vi.mock('@/shared/lib/ai-brain/server', () => ({
@@ -133,11 +126,10 @@ describe('aiPathRunQueue status', () => {
     });
     (
       globalThis as typeof globalThis & {
-        __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
+        __aiPathRunQueueState__?: { workerStarted: boolean };
       }
     ).__aiPathRunQueueState__ = {
       workerStarted: true,
-      recoveryScheduled: false,
     };
   });
 
@@ -258,14 +250,13 @@ describe('aiPathRunQueue status', () => {
     expect(status.brainAnalytics24h.totalReports).toBe(5);
   });
 
-  it('starts the worker and clears legacy recovery scheduling when queue readiness is requested', async () => {
+  it('starts the worker when queue readiness is requested', async () => {
     (
       globalThis as typeof globalThis & {
-        __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
+        __aiPathRunQueueState__?: { workerStarted: boolean };
       }
     ).__aiPathRunQueueState__ = {
       workerStarted: false,
-      recoveryScheduled: false,
     };
     const queueMock = createQueueMock();
     createManagedQueueMock.mockReturnValue(queueMock);
@@ -299,11 +290,10 @@ describe('aiPathRunQueue status', () => {
     createManagedQueueMock.mockReturnValue(queueMock);
     (
       globalThis as typeof globalThis & {
-        __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
+        __aiPathRunQueueState__?: { workerStarted: boolean };
       }
     ).__aiPathRunQueueState__ = {
       workerStarted: false,
-      recoveryScheduled: false,
     };
 
     const { assertAiPathRunQueueReadyForEnqueue } = await loadModule();

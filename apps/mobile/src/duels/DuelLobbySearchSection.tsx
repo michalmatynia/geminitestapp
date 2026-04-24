@@ -19,7 +19,7 @@ type DuelLobbySearchSectionProps = {
   searchStatusTone: Tone;
 };
 
-function SearchResultRow({
+function SearchResult({
   entry,
   copy,
   isActionPending,
@@ -33,44 +33,13 @@ function SearchResultRow({
   createPrivateChallenge: DuelLobbyState['createPrivateChallenge'];
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#f8fafc',
-        padding: 14,
-        gap: 8,
-        alignSelf: 'stretch',
-        width: '100%',
-      }}
-    >
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-        {entry.displayName}
-      </Text>
-      <Text style={{ color: '#64748b', fontSize: 12 }}>
-        {copy({
-          de: `Login: ${entry.loginName}`,
-          en: `Login: ${entry.loginName}`,
-          pl: `Login: ${entry.loginName}`,
-        })}
-      </Text>
-      <ActionButton
-        disabled={isActionPending}
-        label={copy({
-          de: 'Private Herausforderung senden',
-          en: 'Send private challenge',
-          pl: 'Wyślij prywatne wyzwanie',
-        })}
-        onPress={async () => {
-          const nextSessionId = await createPrivateChallenge(entry.learnerId);
-          if (nextSessionId !== null) {
-            onOpenSession(nextSessionId);
-          }
-        }}
-        stretch
-      />
-    </View>
+    <SearchResultRow
+      copy={copy}
+      createPrivateChallenge={createPrivateChallenge}
+      entry={entry}
+      isActionPending={isActionPending}
+      onOpenSession={onOpenSession}
+    />
   );
 }
 
@@ -84,62 +53,22 @@ function SearchResultsList({
   onOpenSession: (sessionId: string) => void;
 }): React.JSX.Element | null {
   if (lobby.searchError !== null) {
-    return (
-      <MessageCard
-        title={copy({
-          de: 'Suche fehlgeschlagen',
-          en: 'Search failed',
-          pl: 'Wyszukiwanie nie powiodło się',
-        })}
-        description={lobby.searchError}
-        tone='error'
-      />
-    );
+    return <MessageCard title={copy({ de: 'Suche fehlgeschlagen', en: 'Search failed', pl: 'Wyszukiwanie nie powiodło się' })} description={lobby.searchError} tone='error' />;
   }
 
   if (lobby.isSearchLoading) {
-    return (
-      <MessageCard
-        title={copy({
-          de: 'Lernende werden gesucht',
-          en: 'Searching learners',
-          pl: 'Szukamy uczniów',
-        })}
-        description={copy({
-          de: 'Die Ergebnisse für die eingegebene Anfrage werden abgeglichen.',
-          en: 'Matching results for the entered query.',
-          pl: 'Dopasowujemy wyniki dla wpisanego zapytania.',
-        })}
-      />
-    );
+    return <MessageCard title={copy({ de: 'Lernende werden gesucht', en: 'Searching learners', pl: 'Szukamy uczniów' })} description={copy({ de: 'Die Ergebnisse werden abgeglichen.', en: 'Matching results.', pl: 'Dopasowujemy wyniki.' })} />;
   }
 
-  if (
-    lobby.searchSubmittedQuery !== '' &&
-    lobby.searchSubmittedQuery.length >= 2 &&
-    lobby.searchResults.length === 0
-  ) {
-    return (
-      <MessageCard
-        title={copy({
-          de: 'Keine Ergebnisse',
-          en: 'No results',
-          pl: 'Brak wyników',
-        })}
-        description={copy({
-          de: 'Es wurden keine Lernenden gefunden, die zur eingegebenen Anfrage passen.',
-          en: 'We did not find any learners matching the entered query.',
-          pl: 'Nie znaleźliśmy uczniów pasujących do wpisanego zapytania.',
-        })}
-      />
-    );
+  if (lobby.searchSubmittedQuery !== '' && lobby.searchSubmittedQuery.length >= 2 && lobby.searchResults.length === 0) {
+    return <MessageCard title={copy({ de: 'Keine Ergebnisse', en: 'No results', pl: 'Brak wyników' })} description={copy({ de: 'Es wurden keine Lernenden gefunden.', en: 'No learners found.', pl: 'Nie znaleziono uczniów.' })} />;
   }
 
   if (lobby.searchResults.length > 0) {
     return (
       <View style={{ gap: 10 }}>
         {lobby.searchResults.map((entry) => (
-          <SearchResultRow
+          <SearchResult
             key={entry.learnerId}
             copy={copy}
             createPrivateChallenge={lobby.createPrivateChallenge}

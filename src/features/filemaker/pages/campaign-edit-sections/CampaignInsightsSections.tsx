@@ -86,6 +86,13 @@ export const CampaignAnalyticsSection = () => {
           </div>
         </div>
         <div className='rounded-md border border-border/60 bg-card/25 p-3'>
+          <div className='text-[11px] text-gray-500'>Replies</div>
+          <div className='mt-1 text-lg font-semibold text-white'>{analytics.replyCount}</div>
+          <div className='text-[11px] text-gray-500'>
+            Reply rate: {analytics.replyRatePercent}%
+          </div>
+        </div>
+        <div className='rounded-md border border-border/60 bg-card/25 p-3'>
           <div className='text-[11px] text-gray-500'>Opt-outs</div>
           <div className='mt-1 text-lg font-semibold text-white'>{analytics.unsubscribeCount}</div>
           <div className='text-[11px] text-gray-500'>
@@ -119,6 +126,10 @@ export const CampaignAnalyticsSection = () => {
         <div>
           Latest click:{' '}
           {analytics.latestClickAt ? formatTimestamp(analytics.latestClickAt) : 'No click tracking yet'}
+        </div>
+        <div>
+          Latest reply:{' '}
+          {analytics.latestReplyAt ? formatTimestamp(analytics.latestReplyAt) : 'No replies yet'}
         </div>
         <div>
           Latest opt-out:{' '}

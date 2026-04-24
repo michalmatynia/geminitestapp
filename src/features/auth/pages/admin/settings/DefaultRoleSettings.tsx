@@ -20,7 +20,7 @@ export function DefaultRoleSettings({
   disabled: boolean;
   isSaving: boolean;
   defaultDirty: boolean;
-}) {
+}): React.JSX.Element {
   return (
     <FormSection
       title='Default role'

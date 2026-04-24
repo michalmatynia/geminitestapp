@@ -7,8 +7,9 @@ import {
   formatCommaSeparatedValues as filemakerFormatCommaSeparatedValues,
   parseCommaSeparatedValues as filemakerParseCommaSeparatedValues,
 } from '../AdminFilemakerCampaignEditPage.utils';
-import type { FilemakerPartyKind } from '../../types';
+import type { FilemakerAudienceConditionGroup, FilemakerPartyKind } from '../../types';
 import { useCampaignEditContext } from '../AdminFilemakerCampaignEditPage.context';
+import { AudienceConditionBuilder } from './AudienceConditionBuilder';
 
 export const AudienceSourceSection = () => {
   const { draft, setDraft } = useCampaignEditContext();
@@ -78,6 +79,24 @@ export const AudienceSourceSection = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className='space-y-2'>
+        <div className='text-xs font-semibold text-gray-400'>
+          Field Conditions (organisation / person / email)
+        </div>
+        <AudienceConditionBuilder
+          value={draft.audience.conditionGroup}
+          onChange={(next: FilemakerAudienceConditionGroup) =>
+            setDraft((prev) => ({
+              ...prev,
+              audience: {
+                ...prev.audience,
+                conditionGroup: next,
+              },
+            }))
+          }
+        />
       </div>
     </FormSection>
   );

@@ -20,5 +20,4 @@ export type AiPathRunQueueHotStatus = {
 
 export type AiPathRunQueueState = {
   workerStarted: boolean;
-  recoveryScheduled: boolean;
 };

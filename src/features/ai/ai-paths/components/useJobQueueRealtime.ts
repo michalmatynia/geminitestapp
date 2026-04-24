@@ -44,7 +44,7 @@ interface JobQueueRealtimeResult {
   pauseAllStreams: () => void;
   pausedStreams: Set<string>;
   queueHistory: QueueHistoryEntry[];
-  resumeAllStreams: () => void;
+  reconnectAllStreams: () => void;
   setQueueHistory: Dispatch<SetStateAction<QueueHistoryEntry[]>>;
   streamStatuses: Record<string, StreamConnectionStatus>;
 }
@@ -100,7 +100,7 @@ export function useJobQueueRealtime({
     });
   }, [expandedRunIds]);
 
-  const resumeAllStreams = useCallback((): void => {
+  const reconnectAllStreams = useCallback((): void => {
     if (expandedRunIds.size === 0) return;
     setPausedStreams(new Set());
     setStreamStatuses((prev) => {
@@ -361,7 +361,7 @@ export function useJobQueueRealtime({
     pauseAllStreams,
     pausedStreams,
     queueHistory,
-    resumeAllStreams,
+    reconnectAllStreams,
     setQueueHistory,
     streamStatuses,
   };

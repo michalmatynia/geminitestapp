@@ -365,7 +365,7 @@ describe('useAiPathsServerExecution history streaming', () => {
     expect(enqueueArgs?.meta).not.toHaveProperty('runtimeKernelConfig');
   });
 
-  it('fails enqueue transport errors without recovery', async () => {
+  it('fails enqueue transport errors directly', async () => {
     let runtimeState: RuntimeState = {
       status: 'idle',
       nodeStatuses: {},

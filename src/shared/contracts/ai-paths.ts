@@ -429,33 +429,6 @@ export const aiPathRunStreamQuerySchema = z.object({
 });
 export type AiPathRunStreamQuery = z.infer<typeof aiPathRunStreamQuerySchema>;
 
-export const aiPathRunResumeRequestSchema = z.object({
-  mode: z.enum(['resume', 'replay']).optional(),
-});
-export type AiPathRunResumeRequest = z.infer<typeof aiPathRunResumeRequestSchema>;
-
-export const aiPathRunRetryNodeRequestSchema = z.object({
-  nodeId: z.string().trim().min(1),
-});
-export type AiPathRunRetryNodeRequest = z.infer<typeof aiPathRunRetryNodeRequestSchema>;
-
-export const aiPathRunDeadLetterRequeueRequestSchema = z.object({
-  runIds: z.array(z.string().trim().min(1)).optional(),
-  pathId: z.string().trim().optional().nullable(),
-  query: z.string().trim().optional(),
-  mode: z.enum(['resume', 'replay']).optional(),
-  limit: z.number().int().min(1).max(1000).optional(),
-});
-export type AiPathRunDeadLetterRequeueRequest = z.infer<
-  typeof aiPathRunDeadLetterRequeueRequestSchema
->;
-
-export const aiPathRunHandoffRequestSchema = z.object({
-  reason: z.string().trim().min(1).max(500).optional(),
-  checkpointLineageId: z.string().trim().min(1).max(200).optional(),
-});
-export type AiPathRunHandoffRequest = z.infer<typeof aiPathRunHandoffRequestSchema>;
-
 export const aiPathsPlaywrightEnqueueRequestSchema = z.object({
   script: z.string().trim().min(1),
   input: z.record(z.string(), z.unknown()).optional(),

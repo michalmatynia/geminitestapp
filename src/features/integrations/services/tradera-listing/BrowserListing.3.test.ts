@@ -804,7 +804,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'invalid-connection-fallback',
         scriptValidationError: expect.stringContaining(
-          'Invalid Playwright script syntax after function-body recovery:'
+          'Invalid Playwright script syntax after function-body wrapping:'
         ),
       },
     });

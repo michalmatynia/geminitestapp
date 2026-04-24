@@ -13,7 +13,7 @@ export function RoleEditor({
   onRemove: (id: string) => void;
   onFieldChange: (roleId: string, field: 'name' | 'description' | 'level', val: string) => void;
   onTogglePermission: (roleId: string, pId: string) => void;
-}) {
+}): React.JSX.Element {
   return (
     <Card className='bg-card border-border'>
       <CardHeader>

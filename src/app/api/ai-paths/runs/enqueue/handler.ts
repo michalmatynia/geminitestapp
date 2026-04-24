@@ -11,6 +11,7 @@ import {
   getAiPathsSetting,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
+import { ensureCanonicalStarterWorkflowSettingsForPathIds } from '@/features/ai/ai-paths/server/settings-store';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
@@ -66,6 +67,7 @@ const withTimeout = async <T>(
 };
 
 const loadStoredPathConfig = async (pathId: string): Promise<PathConfig> => {
+  await ensureCanonicalStarterWorkflowSettingsForPathIds([pathId]);
   const raw = await getAiPathsSetting(`${PATH_CONFIG_PREFIX}${pathId}`);
   if (typeof raw !== 'string' || raw === '') throw badRequestError(`Stored AI Path config not found for "${pathId}".`);
 

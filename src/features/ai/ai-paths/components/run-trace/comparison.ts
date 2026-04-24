@@ -1,9 +1,5 @@
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import type { 
-  RuntimeHistoryEntry,
-  RuntimeTraceResumeMode,
-  RuntimeTraceResumeDecision
-} from '@/shared/contracts/ai-paths-runtime';
+import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
 import { buildNodeAggregateIndex } from './aggregation';
 import { 
@@ -12,22 +8,11 @@ import {
   buildPayloadDiff 
 } from './normalization';
 
-import type { 
-  RunTraceComparison, 
+import type {
+  RunTraceComparison,
   RunTraceComparisonRow,
-  HistoryPayloadSnapshot
+  HistoryPayloadSnapshot,
 } from './types';
-
-export const runTraceComparisonRowHasResumeChange = (
-  row: Pick<
-    RunTraceComparisonRow,
-    'leftResumeMode' | 'rightResumeMode' | 'leftResumeDecision' | 'rightResumeDecision'
-  >
-): boolean =>
-  ((row.leftResumeMode ?? null) !== (row.rightResumeMode ?? null) &&
-    (row.leftResumeMode !== null || row.rightResumeMode !== null)) ||
-  ((row.leftResumeDecision ?? null) !== (row.rightResumeDecision ?? null) &&
-    (row.leftResumeDecision !== null || row.rightResumeDecision !== null));
 
 export const buildHistoryPayloadIndex = (run: AiPathRunRecord): Map<string, HistoryPayloadSnapshot> => {
   const latestByNode = new Map<string, RuntimeHistoryEntry>();
@@ -93,21 +78,6 @@ export const buildRunTraceComparison = (
           : 'mixed';
 
   const keys = new Set([...leftAggregate.index.keys(), ...rightAggregate.index.keys()]);
-  const getResumeChangeScore = (row: {
-    leftResumeMode: RuntimeTraceResumeMode | null;
-    rightResumeMode: RuntimeTraceResumeMode | null;
-    leftResumeDecision: RuntimeTraceResumeDecision | null;
-    rightResumeDecision: RuntimeTraceResumeDecision | null;
-  }): number => {
-    let score = 0;
-    if ((row.leftResumeMode ?? null) !== (row.rightResumeMode ?? null)) {
-      score += 1;
-    }
-    if ((row.leftResumeDecision ?? null) !== (row.rightResumeDecision ?? null)) {
-      score += 2;
-    }
-    return score;
-  };
   const rows = Array.from(keys)
     .map((key): RunTraceComparisonRow => {
       const left = leftAggregate.index.get(key) ?? null;
@@ -151,10 +121,6 @@ export const buildRunTraceComparison = (
         deltaMs,
         leftSpanCount: left?.spanCount ?? 0,
         rightSpanCount: right?.spanCount ?? 0,
-        leftResumeMode: left?.resumeMode ?? null,
-        rightResumeMode: right?.resumeMode ?? null,
-        leftResumeDecision: left?.resumeDecision ?? null,
-        rightResumeDecision: right?.resumeDecision ?? null,
         leftHistorySpanId: leftPayload?.spanId ?? null,
         rightHistorySpanId: rightPayload?.spanId ?? null,
         leftInputs: leftPayload?.inputs ?? null,
@@ -174,11 +140,6 @@ export const buildRunTraceComparison = (
       };
       const rankDiff = rank(left.classification) - rank(right.classification);
       if (rankDiff !== 0) return rankDiff;
-      const leftResumeScore = getResumeChangeScore(left);
-      const rightResumeScore = getResumeChangeScore(right);
-      if (rightResumeScore !== leftResumeScore) {
-        return rightResumeScore - leftResumeScore;
-      }
       const leftDelta = Math.abs(left.deltaMs ?? 0);
       const rightDelta = Math.abs(right.deltaMs ?? 0);
       if (rightDelta !== leftDelta) return rightDelta - leftDelta;
@@ -214,30 +175,6 @@ export const buildRunTraceComparison = (
     payloadChangedCount: rows.filter(
       (row) => row.inputDiff?.hasChanges || row.outputDiff?.hasChanges
     ).length,
-    resumeModeChangeCount: rows.filter(
-      (row) =>
-        (row.leftResumeMode ?? null) !== (row.rightResumeMode ?? null) &&
-        (row.leftResumeMode !== null || row.rightResumeMode !== null)
-    ).length,
-    resumeDecisionChangeCount: rows.filter(
-      (row) =>
-        (row.leftResumeDecision ?? null) !== (row.rightResumeDecision ?? null) &&
-        (row.leftResumeDecision !== null || row.rightResumeDecision !== null)
-    ).length,
-    resumedNodeDelta:
-      leftSummary && rightSummary
-        ? rightSummary.resumeReuseCount +
-            rightSummary.resumeReexecutionCount -
-          (leftSummary.resumeReuseCount + leftSummary.resumeReexecutionCount)
-        : null,
-    reusedNodeDelta:
-      leftSummary && rightSummary
-        ? rightSummary.resumeReuseCount - leftSummary.resumeReuseCount
-        : null,
-    reexecutedNodeDelta:
-      leftSummary && rightSummary
-        ? rightSummary.resumeReexecutionCount - leftSummary.resumeReexecutionCount
-        : null,
     rows,
   };
 };

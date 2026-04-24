@@ -76,8 +76,8 @@ export function useAuthUserSecurity(userId?: string | null): SingleQuery<AuthUse
   return createSingleQueryV2<AuthUserSecurityProfile>({
     id: userId ?? 'auth-user-security',
     queryKey,
-    queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId as string),
-    enabled: Boolean(userId),
+    queryFn: (): Promise<AuthUserSecurityProfile> => fetchAuthUserSecurity(userId ?? ''),
+    enabled: userId !== undefined && userId !== null && userId !== '',
     staleTime: AUTH_SECURITY_STALE_MS,
     meta: {
       source: 'auth.hooks.useAuthUserSecurity',

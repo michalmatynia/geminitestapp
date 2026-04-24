@@ -23,11 +23,16 @@ export const detectFilemakerCampaignReplyContext = async (input: {
   accountId: string;
   references: string[];
 }): Promise<FilemakerMailCampaignContext | null> => {
-  const references = input.references.map((entry) => entry?.trim()).filter(Boolean);
+  const references = input.references
+    .map((entry) => entry.trim())
+    .filter((entry): entry is string => entry.length > 0);
   if (references.length === 0) return null;
   const messages = await mailStorage.findMailMessagesByProviderIds(input.accountId, references);
   const matched = messages.find(
-    (message) => message.direction === 'outbound' && message.campaignContext
+    (message) =>
+      message.direction === 'outbound' &&
+      typeof message.campaignContext?.campaignId === 'string' &&
+      message.campaignContext.campaignId.length > 0
   );
   return matched?.campaignContext ?? null;
 };
@@ -46,6 +51,8 @@ export const recordFilemakerCampaignReply = async (input: {
       type: 'reply_received',
       message: `Reply received from ${input.replyMessage.from?.address ?? 'unknown'}`,
       actor: input.replyMessage.from?.address ?? null,
+      mailThreadId: input.replyMessage.threadId,
+      mailMessageId: input.replyMessage.id,
     });
     const next = appendEventsToRegistry(registry, [replyEvent]);
     await upsertFilemakerCampaignSettingValue(

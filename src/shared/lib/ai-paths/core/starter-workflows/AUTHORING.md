@@ -11,13 +11,13 @@ Rules:
   - optional `upgradePolicy`
   - optional trigger button presets
   - starter lineage metadata
-- If a workflow must be recoverable after AI Paths settings loss, give it a canonical `defaultPathId`
-  plus `seedPolicy.restoreOnStaticRecovery: true`.
+- If a workflow belongs in the shipped canonical starter set, give it a canonical `defaultPathId`
+  plus `seedPolicy.includeInCanonicalSeed: true`.
 - If a workflow ships a trigger button preset plus a canonical `defaultPathId`, it should also
   use `seedPolicy.autoSeed: true` so the default path and button materialize together on fresh
   settings stores.
-- Use `upgradePolicy` metadata for starter-specific overlay, replacement, and legacy-repair
-  behavior. Do not branch on starter keys directly in upgrade or repair code.
+- Use `upgradePolicy` metadata for starter-specific overlay and replacement behavior. Do not branch
+  on starter keys directly in upgrade code.
 - Use the shared semantic materializer path. Do not build workflow graphs in TypeScript.
 - Do not add workflow-specific server seed modules (`settings-store-<workflow>.ts`).
 - Do not add workflow-specific runtime sanitizers or upgrader hooks keyed by workflow id/name.

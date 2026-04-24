@@ -97,6 +97,24 @@ const matchesMailClientAccountQuery = (
   return haystack.includes(query);
 };
 
+const getMailClientThreadAccountTokens = (
+  account: FilemakerMailAccount | null
+): string[] => {
+  if (account === null) return [];
+  return [account.name, account.emailAddress];
+};
+
+const getMailClientThreadCampaignTokens = (
+  campaignContext: FilemakerMailThread['campaignContext']
+): string[] => {
+  if (campaignContext === null || campaignContext === undefined) return [];
+  return [
+    campaignContext.campaignId,
+    campaignContext.runId ?? '',
+    campaignContext.deliveryId ?? '',
+  ];
+};
+
 const matchesMailClientThreadQuery = (
   thread: FilemakerMailThread,
   account: FilemakerMailAccount | null,
@@ -110,8 +128,8 @@ const matchesMailClientThreadQuery = (
     thread.snippet ?? '',
     thread.mailboxPath,
     formatFilemakerMailThreadParticipantsLabel(thread.participantSummary),
-    account?.name ?? '',
-    account?.emailAddress ?? '',
+    ...getMailClientThreadAccountTokens(account),
+    ...getMailClientThreadCampaignTokens(thread.campaignContext),
   ]
     .join(' ')
     .toLowerCase();

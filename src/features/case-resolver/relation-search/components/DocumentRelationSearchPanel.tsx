@@ -88,23 +88,36 @@ function DocumentRelationSearchInner(): React.JSX.Element {
   );
 
   return (
+    <DocumentRelationSearchLayout
+      showFiltersBar={showFiltersBar}
+      resultHeight={resultHeight}
+      runtimeValue={relationTreeBrowserRuntimeValue}
+    />
+  );
+}
+
+function DocumentRelationSearchLayout({
+  showFiltersBar,
+  resultHeight,
+  runtimeValue,
+}: {
+  showFiltersBar: boolean;
+  resultHeight: string;
+  runtimeValue: RelationTreeBrowserRuntimeValue;
+}) {
+  return (
     <>
       <div className='flex flex-col overflow-hidden rounded-md border border-border/60 bg-card/20'>
         <ScopeBar />
-
         {showFiltersBar && <FilterBar />}
-
         <SearchBar />
-
         <BulkActionBar />
-
-        <div className={cn('overflow-auto', RESULT_HEIGHT_MAP[resultHeight])}>
-          <RelationTreeBrowserRuntimeContext.Provider value={relationTreeBrowserRuntimeValue}>
+        <div className={cn('overflow-auto', RESULT_HEIGHT_MAP[resultHeight as keyof typeof RESULT_HEIGHT_MAP])}>
+          <RelationTreeBrowserRuntimeContext.Provider value={runtimeValue}>
             <RelationTreeBrowser mode='link_relations' emptyLabel='No matching files' />
           </RelationTreeBrowserRuntimeContext.Provider>
         </div>
       </div>
-
       <DocumentPreviewDialog />
     </>
   );

@@ -206,6 +206,18 @@ describe('filemaker campaign settings', () => {
             createdAt: '2026-03-30T11:00:00.000Z',
             updatedAt: '2026-03-30T11:00:00.000Z',
           },
+          {
+            id: 'event-7',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'reply_received',
+            message: 'jan@example.com replied to the campaign email.',
+            mailThreadId: 'thread-reply-1',
+            mailMessageId: 'message-reply-1',
+            createdAt: '2026-03-31T08:00:00.000Z',
+            updatedAt: '2026-03-31T08:00:00.000Z',
+          },
         ],
       })
     );
@@ -263,14 +275,17 @@ describe('filemaker campaign settings', () => {
         resubscribeRatePercent: 100,
         netUnsubscribeCount: 0,
         netUnsubscribeRatePercent: 0,
+        replyCount: 1,
+        replyRatePercent: 100,
         latestRunStatus: 'completed',
         latestRunAt: '2026-03-28T10:00:00.000Z',
-        latestActivityAt: '2026-03-30T11:00:00.000Z',
+        latestActivityAt: '2026-03-31T08:00:00.000Z',
         latestOpenAt: '2026-03-28T12:05:00.000Z',
         latestClickAt: '2026-03-28T13:07:00.000Z',
+        latestReplyAt: '2026-03-31T08:00:00.000Z',
         latestUnsubscribeAt: '2026-03-29T09:00:00.000Z',
         latestResubscribeAt: '2026-03-30T11:00:00.000Z',
-        eventCount: 9,
+        eventCount: 10,
       })
     );
     expect(analytics.topClickedLinks).toEqual([

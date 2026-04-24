@@ -18,8 +18,6 @@ interface RunComparisonToolProps {
   secondaryRun: AiPathRunRecord;
   traceComparison: RunTraceComparison | null;
   displayedComparisonRows: RunTraceComparisonRow[];
-  compareResumeChangesOnly: boolean;
-  onToggleResumeChangesOnly: () => void;
   compareInspectorRowKey: string | null;
   onSetCompareInspectorRowKey: (rowKey: string | null) => void;
 }
@@ -45,7 +43,6 @@ type RunComparisonRowSummaryProps = {
   hasPayloadInspectorData: boolean;
   compareInspectorRowKey: string | null;
   onSetCompareInspectorRowKey: (rowKey: string | null) => void;
-  formatResumeComparisonLabel: (mode: string | null, decision: string | null) => string;
 };
 
 type RunComparisonInlineDiffSectionProps = {
@@ -151,18 +148,6 @@ function renderRunComparisonSummaryCard({
         typeof traceSummary?.effectReplayCount === 'number' ? traceSummary.effectReplayCount : 'n/a',
     },
     {
-      label: 'Resume reuses',
-      value:
-        typeof traceSummary?.resumeReuseCount === 'number' ? traceSummary.resumeReuseCount : 'n/a',
-    },
-    {
-      label: 'Resume re-execs',
-      value:
-        typeof traceSummary?.resumeReexecutionCount === 'number'
-          ? traceSummary.resumeReexecutionCount
-          : 'n/a',
-    },
-    {
       label: 'Retries',
       value:
         typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number'
@@ -231,7 +216,6 @@ const renderRunComparisonRowSummary = ({
   hasPayloadInspectorData,
   compareInspectorRowKey,
   onSetCompareInspectorRowKey,
-  formatResumeComparisonLabel,
 }: RunComparisonRowSummaryProps): React.JSX.Element => {
   return (
     <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -264,14 +248,6 @@ const renderRunComparisonRowSummary = ({
           {'->'}
           {row.rightSpanCount}
         </span>
-        {row.leftResumeDecision !== row.rightResumeDecision ||
-        row.leftResumeMode !== row.rightResumeMode ? (
-          <RunComparisonChip className='border-sky-500/40 bg-sky-500/10 text-sky-100'>
-            resume {formatResumeComparisonLabel(row.leftResumeMode, row.leftResumeDecision)}
-            {' -> '}
-            {formatResumeComparisonLabel(row.rightResumeMode, row.rightResumeDecision)}
-          </RunComparisonChip>
-        ) : null}
         {row.inputDiff?.hasChanges ? (
           <RunComparisonChip className='border-sky-500/40 bg-sky-500/10 text-sky-100'>
             inputs {getPayloadDiffChangeCount(row.inputDiff)}
@@ -334,21 +310,9 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
     secondaryRun,
     traceComparison,
     displayedComparisonRows,
-    compareResumeChangesOnly,
-    onToggleResumeChangesOnly,
     compareInspectorRowKey,
     onSetCompareInspectorRowKey,
   } = props;
-
-  const formatResumeComparisonLabel = (
-    mode: string | null,
-    decision: string | null
-  ): string => {
-    const parts: string[] = [];
-    if (mode) parts.push(mode);
-    if (decision) parts.push(decision);
-    return parts.join('/') || 'none';
-  };
 
   const renderPayloadInspectorPane = (
     title: string,
@@ -477,20 +441,6 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
               <span>Added: {traceComparison.addedCount}</span>
               <span>Removed: {traceComparison.removedCount}</span>
               <span>Payload changes: {traceComparison.payloadChangedCount}</span>
-              <RunHistoryPillButton
-                variant='outline'
-                baseClassName='h-6 px-2 text-[10px]'
-                active={compareResumeChangesOnly}
-                activeClassName='border-sky-500/50 bg-sky-500/10 text-sky-100'
-                inactiveClassName=''
-                disabled={
-                  traceComparison.resumeModeChangeCount === 0 &&
-                  traceComparison.resumeDecisionChangeCount === 0
-                }
-                onClick={onToggleResumeChangesOnly}
-              >
-                {compareResumeChangesOnly ? 'Show all rows' : 'Resume changes only'}
-              </RunHistoryPillButton>
             </div>
           </div>
           <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
@@ -503,26 +453,6 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
             <RunComparisonChip className='border-border/60 bg-black/20'>
               Span delta: {traceComparison.spanDelta ?? 'n/a'}
             </RunComparisonChip>
-          </div>
-          <div className='mt-2 flex flex-wrap gap-2 text-[10px] text-gray-300'>
-            <RunComparisonChip className='border-sky-500/30 bg-sky-500/10 text-sky-100'>
-              Resume mode changes: {traceComparison.resumeModeChangeCount}
-            </RunComparisonChip>
-            <RunComparisonChip className='border-sky-500/30 bg-sky-500/10 text-sky-100'>
-              Resume decision changes: {traceComparison.resumeDecisionChangeCount}
-            </RunComparisonChip>
-            <RunComparisonChip className='border-sky-500/30 bg-sky-500/10 text-sky-100'>
-              Resumed nodes Δ (B-A): {traceComparison.resumedNodeDelta ?? 'n/a'}
-            </RunComparisonChip>
-            <RunComparisonChip className='border-emerald-500/30 bg-emerald-500/10 text-emerald-100'>
-              Reused Δ (B-A): {traceComparison.reusedNodeDelta ?? 'n/a'}
-            </RunComparisonChip>
-            <RunComparisonChip className='border-amber-500/30 bg-amber-500/10 text-amber-100'>
-              Re-exec Δ (B-A): {traceComparison.reexecutedNodeDelta ?? 'n/a'}
-            </RunComparisonChip>
-          </div>
-          <div className='mt-2 text-[10px] text-gray-500'>
-            Rows with replay or resume behavior changes are listed first within each diff class.
           </div>
           <div className='mt-1 text-[10px] text-gray-500'>
             Showing {displayedComparisonRows.length} of {traceComparison.rows.length} rows.
@@ -548,7 +478,6 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
                       hasPayloadInspectorData,
                       compareInspectorRowKey,
                       onSetCompareInspectorRowKey,
-                      formatResumeComparisonLabel,
                     })}
                     {renderRunComparisonInlineDiffSection({ row })}
                     {compareInspectorRowKey === row.key ? (
@@ -611,9 +540,7 @@ export function RunComparisonTool(props: RunComparisonToolProps): React.JSX.Elem
             </div>
           ) : (
             <div className='mt-2 text-[10px] text-gray-500'>
-              {compareResumeChangesOnly
-                ? 'No rows with replay or resume behavior changes.'
-                : 'No trace-level node deltas available for these runs yet.'}
+              No trace-level node deltas available for these runs yet.
             </div>
           )}
         </div>

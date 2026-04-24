@@ -1,37 +1,213 @@
 {
-  "generatedAt": "2026-04-15T09:38:21.665Z",
-  "status": "passed",
+  "generatedAt": "2026-04-24T11:48:03.793Z",
+  "status": "failed",
   "summary": {
-    "total": 0,
-    "errorCount": 0,
-    "warningCount": 0,
+    "total": 15,
+    "errorCount": 7,
+    "warningCount": 8,
     "infoCount": 0,
-    "status": "passed",
-    "routeCount": 322,
-    "methodCount": 472,
-    "csrfExemptionCount": 57,
+    "status": "failed",
+    "routeCount": 358,
+    "methodCount": 525,
+    "csrfExemptionCount": 66,
     "csrfExemptionsByPolicy": {
-      "webhook-ingest": 1,
       "telemetry-ingest": 3,
       "auth-bootstrap": 11,
       "public-campaign-links": 2,
       "deprecated-public-auth": 2,
-      "external-integrations": 38
+      "unreviewed": 6,
+      "external-integrations": 42
     }
   },
   "routeRoots": [
     "src/app/api",
     "src/features/ai/agentcreator/api"
   ],
-  "issues": [],
-  "rules": [],
-  "csrfExemptions": [
+  "issues": [
     {
-      "routePath": "ai-paths/portable-engine/remediation-webhook",
-      "method": "POST",
-      "policy": "webhook-ingest",
-      "reason": "Webhook-style endpoints must accept third-party callbacks."
+      "severity": "error",
+      "ruleId": "route-export-direct-function",
+      "message": "Route exports GET as a function. Use apiHandler/apiHandlerWithParams wrapper exports instead.",
+      "file": "src/app/api/playwright/live-scripter/ws/route.ts",
+      "line": 3,
+      "column": 17,
+      "snippet": null,
+      "context": null
     },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/playwright/programmable/connections/[id]/cleanup-browser-persistence/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/playwright/programmable/connections/[id]/promote-browser-ownership/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "PUT disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/playwright/programmable/connections/[id]/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/playwright/programmable/connections/cleanup-browser-persistence/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/playwright/programmable/connections/route-handler.ts",
+      "line": 12,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "error",
+      "ruleId": "route-csrf-optout-unreviewed",
+      "message": "POST disables CSRF without matching a reviewed exemption policy.",
+      "file": "src/app/api/playwright/programmable/test/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-export-none-detected",
+      "message": "Route file did not expose any HTTP method exports.",
+      "file": "src/app/api/playwright/live-scripter/ws/route.ts",
+      "line": null,
+      "column": null,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"playwright.programmable.connections.[id].cleanupBrowserPersistence.POST\" but expected \"playwright.programmable.connections.[id].cleanup-browser-persistence.POST\".",
+      "file": "src/app/api/playwright/programmable/connections/[id]/cleanup-browser-persistence/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"playwright.programmable.connections.[id].promoteBrowserOwnership.POST\" but expected \"playwright.programmable.connections.[id].promote-browser-ownership.POST\".",
+      "file": "src/app/api/playwright/programmable/connections/[id]/promote-browser-ownership/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"playwright.programmable.connections.cleanupBrowserPersistence.POST\" but expected \"playwright.programmable.connections.cleanup-browser-persistence.POST\".",
+      "file": "src/app/api/playwright/programmable/connections/cleanup-browser-persistence/route-handler.ts",
+      "line": 7,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-parsejson-without-bodyschema",
+      "message": "POST parses JSON without a bodySchema guard.",
+      "file": "src/app/api/query-telemetry/route.ts",
+      "line": 6,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"v2.integrations.[id].connections.cleanupPlaywrightBrowserPersistence.POST\" but expected \"v2.integrations.[id].connections.cleanup-playwright-browser-persistence.POST\".",
+      "file": "src/app/api/v2/integrations/[id]/connections/cleanup-playwright-browser-persistence/route-handler.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"v2.integrations.connections.[id].cleanupPlaywrightBrowserPersistence.POST\" but expected \"v2.integrations.connections.[id].cleanup-playwright-browser-persistence.POST\".",
+      "file": "src/app/api/v2/integrations/connections/[id]/cleanup-playwright-browser-persistence/route-handler.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    },
+    {
+      "severity": "warn",
+      "ruleId": "route-source-mismatch",
+      "message": "Route export POST uses source \"v2.integrations.connections.[id].promotePlaywrightBrowserOwnership.POST\" but expected \"v2.integrations.connections.[id].promote-playwright-browser-ownership.POST\".",
+      "file": "src/app/api/v2/integrations/connections/[id]/promote-playwright-browser-ownership/route-handler.ts",
+      "line": 8,
+      "column": 14,
+      "snippet": null,
+      "context": null
+    }
+  ],
+  "rules": [
+    {
+      "ruleId": "route-csrf-optout-unreviewed",
+      "errorCount": 6,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-export-direct-function",
+      "errorCount": 1,
+      "warningCount": 0,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-source-mismatch",
+      "errorCount": 0,
+      "warningCount": 6,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-export-none-detected",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
+    },
+    {
+      "ruleId": "route-parsejson-without-bodyschema",
+      "errorCount": 0,
+      "warningCount": 1,
+      "infoCount": 0
+    }
+  ],
+  "csrfExemptions": [
     {
       "routePath": "analytics/events",
       "method": "POST",
@@ -135,6 +311,42 @@
       "reason": "Deprecated auth endpoints stay reachable so stale clients receive a controlled 410 response."
     },
     {
+      "routePath": "playwright/programmable/connections/[id]/cleanup-browser-persistence",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "playwright/programmable/connections/[id]/promote-browser-ownership",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "playwright/programmable/connections/[id]",
+      "method": "PUT",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "playwright/programmable/connections/cleanup-browser-persistence",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "playwright/programmable/connections",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
+      "routePath": "playwright/programmable/test",
+      "method": "POST",
+      "policy": "unreviewed",
+      "reason": "No approved exemption policy matched."
+    },
+    {
       "routePath": "query-telemetry",
       "method": "POST",
       "policy": "telemetry-ingest",
@@ -183,7 +395,25 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/[id]/connections/cleanup-playwright-browser-persistence",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/[id]/connections",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]/cleanup-playwright-browser-persistence",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
+      "routePath": "v2/integrations/connections/[id]/promote-playwright-browser-ownership",
       "method": "POST",
       "policy": "external-integrations",
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
@@ -321,6 +551,12 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     },
     {
+      "routePath": "v2/integrations/products/[id]/listings/[listingId]/move-to-unsold",
+      "method": "POST",
+      "policy": "external-integrations",
+      "reason": "Integration routes accept external callbacks, requests, and connection flows."
+    },
+    {
       "routePath": "v2/integrations/products/[id]/listings/[listingId]/purge",
       "method": "DELETE",
       "policy": "external-integrations",
@@ -369,5 +605,5 @@
       "reason": "Integration routes accept external callbacks, requests, and connection flows."
     }
   ],
-  "durationMs": 120
+  "durationMs": 124
 }

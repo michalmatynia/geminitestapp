@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  aiPathRunHandoffRequestSchema,
   aiPathRunQueueStatusQuerySchema,
-  aiPathRunResumeRequestSchema,
   aiPathRunRouteParamsSchema,
   aiPathRunStreamQuerySchema,
   aiPathRunsDeleteQuerySchema,
@@ -66,21 +64,6 @@ describe('ai paths runs contract runtime', () => {
     });
     expect(aiPathRunStreamQuerySchema.parse({ since: '2026-03-22T10:00:00.000Z' })).toEqual({
       since: '2026-03-22T10:00:00.000Z',
-    });
-  });
-
-  it('parses run action request DTOs', () => {
-    expect(aiPathRunResumeRequestSchema.parse({ mode: 'replay' })).toEqual({
-      mode: 'replay',
-    });
-    expect(
-      aiPathRunHandoffRequestSchema.parse({
-        reason: ' Worker lease is still held ',
-        checkpointLineageId: ' checkpoint-1 ',
-      })
-    ).toEqual({
-      reason: 'Worker lease is still held',
-      checkpointLineageId: 'checkpoint-1',
     });
   });
 });

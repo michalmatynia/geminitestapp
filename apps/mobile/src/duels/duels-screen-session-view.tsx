@@ -1,28 +1,9 @@
 import { View } from 'react-native';
-
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import {
-  KangurMobileCard as Card,
-  KangurMobileScrollScreen,
-  KangurMobileSectionTitle,
-} from '../shared/KangurMobileUi';
-import {
-  ActionButton,
-  BadgesCard,
-  LessonCheckpointsCard,
-  LessonMasteryCard,
-  MessageCard,
-  NextStepsCard,
-} from './duels-primitives';
+import { KangurMobileCard as Card, KangurMobileScrollScreen, KangurMobileSectionTitle } from '../shared/KangurMobileUi';
+import { ActionButton, MessageCard } from './duels-primitives';
 import { type resolveRoundProgress } from './utils/duels-ui';
-import { DuelSessionActionsCard } from './DuelSessionActionsCard';
-import { DuelSessionDetailsCard } from './DuelSessionDetailsCard';
-import { DuelSessionPlayersCard } from './DuelSessionPlayersCard';
-import { DuelSessionQuestionCard } from './DuelSessionQuestionCard';
-import { DuelSessionReactionsCard } from './DuelSessionReactionsCard';
-import { DuelSessionSeriesCard } from './DuelSessionSeriesCard';
-import { DuelSessionSummaryCard } from './DuelSessionSummaryCard';
-import { DuelSessionWaitingRoomCard } from './DuelSessionWaitingRoomCard';
+import { DuelSessionFullContent } from './DuelSessionFullContent';
 import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
@@ -48,232 +29,68 @@ type DuelsSessionViewProps = {
   sessionTimelineItems: string[];
 };
 
-export function DuelsSessionView({
-  canShareInvite,
-  copy,
-  duel,
-  hasWaitingSession,
-  inviteeName,
-  inviteShareError,
-  isFinishedSession,
-  isLoadingAuth,
-  isLobbyActionPending,
-  locale,
-  loginCallToAction,
-  onHandleInviteShare,
-  onHandleRematch,
-  onOpenLobby,
-  roundProgress,
-  sessionTimelineItems,
-}: DuelsSessionViewProps): React.JSX.Element {
-  const renderLoading = (): React.JSX.Element => (
+function LoadingCard({ duel, copy }: { duel: DuelSessionState, copy: DuelCopy }): React.JSX.Element {
+  let description = copy({ de: 'Rundenstatus wird geladen.', en: 'Loading round state.', pl: 'Pobieramy stan rundy.' });
+  if (duel.isRestoringAuth) {
+    description = copy({ de: 'Die Anmeldung wird wiederhergestellt.', en: 'Restoring sign-in.', pl: 'Przywracamy logowanie.' });
+  } else if (duel.isSpectating) {
+    description = copy({ de: 'Status wird geladen.', en: 'Loading state.', pl: 'Pobieramy stan.' });
+  }
+
+  return (
     <Card>
       <MessageCard
-        title={
-          duel.isSpectating
-            ? copy({
-                de: 'Öffentliches Duell wird geladen',
-                en: 'Loading public duel',
-                pl: 'Ładujemy publiczny pojedynek',
-              })
-            : copy({
-                de: 'Duell wird geladen',
-                en: 'Loading duel',
-                pl: 'Ładujemy pojedynek',
-              })
-        }
-        description={
-          duel.isRestoringAuth
-            ? copy({
-                de: 'Die Anmeldung wird wiederhergestellt und das aktive Duell geladen.',
-                en: 'Restoring sign-in and loading the active duel.',
-                pl: 'Przywracamy logowanie i pobieramy aktywny pojedynek.',
-              })
-            : duel.isSpectating
-              ? copy({
-                  de: 'Der öffentliche Rundenstatus, die Spielerliste und die Zahl der Zuschauer werden geladen.',
-                  en: 'Loading the public round state, player list, and spectator count.',
-                  pl: 'Pobieramy publiczny stan rundy, listę graczy i liczbę widzów.',
-                })
-              : copy({
-                  de: 'Der aktuelle Rundenstatus und die Spielerliste werden geladen.',
-                  en: 'Loading the current round state and player list.',
-                  pl: 'Pobieramy aktualny stan rundy i listę graczy.',
-                })
-        }
+        title={duel.isSpectating ? copy({ de: 'Öffentliches Duell wird geladen', en: 'Loading public duel', pl: 'Ładujemy publiczny pojedynek' }) : copy({ de: 'Duell wird geladen', en: 'Loading duel', pl: 'Ładujemy pojedynek' })}
+        description={description}
       />
     </Card>
   );
+}
 
-  const renderError = (): React.JSX.Element => (
+function ErrorCard({ duel, copy, onOpenLobby }: { duel: DuelSessionState, copy: DuelCopy, onOpenLobby: () => void }): React.JSX.Element {
+  const errorMsg = duel.error ?? copy({ de: 'Es fehlen Duelldaten.', en: 'Duel data is missing.', pl: 'Brakuje danych.' });
+  return (
     <Card>
       <MessageCard
-        title={
-          duel.isSpectating
-            ? copy({
-                de: 'Öffentliches Duell konnte nicht geöffnet werden',
-                en: 'Could not open the public duel',
-                pl: 'Nie udało się otworzyć publicznego pojedynku',
-              })
-            : copy({
-                de: 'Duell konnte nicht geöffnet werden',
-                en: 'Could not open the duel',
-                pl: 'Nie udało się otworzyć pojedynku',
-              })
-        }
-        description={
-          duel.error ??
-          (duel.isSpectating
-            ? copy({
-                de: 'Es fehlen öffentliche Duelldaten. Kehre zur Lobby zurück und versuche es erneut.',
-                en: 'Public duel details are missing. Go back to the lobby and try again.',
-                pl: 'Brakuje danych publicznego pojedynku. Wróć do lobby i spróbuj jeszcze raz.',
-              })
-            : copy({
-                de: 'Es fehlen Duelldaten. Kehre zur Lobby zurück und versuche es erneut.',
-                en: 'The duel data is missing. Go back to the lobby and try again.',
-                pl: 'Brakuje danych pojedynku. Wróć do lobby i spróbuj jeszcze raz.',
-              }))
-        }
+        title={duel.isSpectating ? copy({ de: 'Öffentliches Duell konnte nicht geöffnet werden', en: 'Could not open the public duel', pl: 'Nie udało się otworzyć publicznego pojedynku' }) : copy({ de: 'Duell konnte nicht geöffnet werden', en: 'Could not open the duel', pl: 'Nie udało się otworzyć pojedynku' })}
+        description={errorMsg}
         tone='error'
       />
-      <ActionButton
-        label={copy({
-          de: 'Zurück zur Lobby',
-          en: 'Back to lobby',
-          pl: 'Wróć do lobby',
-        })}
-        onPress={onOpenLobby}
-        stretch
-      />
+      <ActionButton label={copy({ de: 'Zurück zur Lobby', en: 'Back to lobby', pl: 'Wróć do lobby' })} onPress={onOpenLobby} stretch />
     </Card>
   );
+}
 
-  const renderAuthRequired = (): React.JSX.Element => (
+function AuthRequiredCard({ copy, loginCallToAction }: { copy: DuelCopy, loginCallToAction: React.JSX.Element }): React.JSX.Element {
+  return (
     <Card>
-      <MessageCard
-        title={copy({
-          de: 'Anmelden, um dieses Duell zu öffnen',
-          en: 'Sign in to open this duel',
-          pl: 'Zaloguj się, aby otworzyć ten pojedynek',
-        })}
-        description={copy({
-          de: 'Melde dich zuerst an, dann kannst du dieses Duell öffnen.',
-          en: 'Sign in first to open this duel.',
-          pl: 'Najpierw się zaloguj, aby otworzyć ten pojedynek.',
-        })}
-      />
+      <MessageCard title={copy({ de: 'Anmelden, um dieses Duell zu öffnen', en: 'Sign in to open this duel', pl: 'Zaloguj się, aby otworzyć ten pojedynek' })} description={copy({ de: 'Melde dich zuerst an.', en: 'Sign in first.', pl: 'Najpierw się zaloguj.' })} />
       {loginCallToAction}
     </Card>
   );
+}
+
+export function DuelsSessionView(props: DuelsSessionViewProps): React.JSX.Element {
+  const { copy, duel, onOpenLobby } = props;
 
   const renderContent = (): React.JSX.Element => {
-    if (!duel.isSpectating && !duel.isAuthenticated && !isLoadingAuth) {
-      return renderAuthRequired();
-    }
-
-    if (duel.isLoading) {
-      return renderLoading();
-    }
-
-    if (duel.error !== null || !duel.session || (!duel.isSpectating && !duel.player)) {
-      return renderError();
-    }
-
-    return (
-      <>
-        <DuelSessionDetailsCard
-          copy={copy}
-          duel={duel}
-          hasWaitingSession={hasWaitingSession}
-          locale={locale}
-          roundProgress={roundProgress}
-          sessionTimelineItems={sessionTimelineItems}
-        />
-        <DuelSessionSeriesCard copy={copy} duel={duel} locale={locale} />
-        <DuelSessionPlayersCard copy={copy} duel={duel} locale={locale} />
-        <DuelSessionReactionsCard copy={copy} duel={duel} locale={locale} />
-        <DuelSessionWaitingRoomCard
-          canShareInvite={canShareInvite}
-          copy={copy}
-          duel={duel}
-          inviteeName={inviteeName}
-          inviteShareError={inviteShareError}
-          onHandleInviteShare={onHandleInviteShare}
-        />
-        <DuelSessionQuestionCard copy={copy} duel={duel} />
-        <DuelSessionSummaryCard
-          copy={copy}
-          duel={duel}
-          isFinishedSession={isFinishedSession}
-          isLobbyActionPending={isLobbyActionPending}
-          locale={locale}
-          onHandleRematch={onHandleRematch}
-          onOpenLobby={onOpenLobby}
-        />
-        <DuelSessionActionsCard
-          copy={copy}
-          duel={duel}
-          hasWaitingSession={hasWaitingSession}
-          isFinishedSession={isFinishedSession}
-          onOpenLobby={onOpenLobby}
-        />
-        <LessonCheckpointsCard context='session' />
-        <LessonMasteryCard context='session' />
-        <BadgesCard context='session' />
-        <NextStepsCard context='session' />
-      </>
-    );
+    if (!duel.isSpectating && !duel.isAuthenticated && !props.isLoadingAuth) return <AuthRequiredCard copy={copy} loginCallToAction={props.loginCallToAction} />;
+    if (duel.isLoading) return <LoadingCard duel={duel} copy={copy} />;
+    return <SessionContent {...props} />;
   };
 
-  return (
-    <KangurMobileScrollScreen
-      contentContainerStyle={{
-        gap: 18,
-        paddingHorizontal: 20,
-        paddingVertical: 24,
-      }}
-    >
-      <View style={{ gap: 14 }}>
-        <ActionButton
-          label={copy({
-            de: 'Zurück zur Lobby',
-            en: 'Back to lobby',
-            pl: 'Wróć do lobby',
-          })}
-          onPress={onOpenLobby}
-          tone='ghost'
-        />
-        <KangurMobileSectionTitle
-          title={
-            duel.isSpectating
-              ? copy({
-                  de: 'Öffentliches Duell',
-                  en: 'Public duel',
-                  pl: 'Publiczny pojedynek',
-                })
-              : copy({
-                  de: 'Duell',
-                  en: 'Duel',
-                  pl: 'Pojedynek',
-                })
-          }
-          subtitle={
-            duel.isSpectating
-              ? copy({
-                  de: 'Im Zuschauermodus verfolgst du das öffentliche Duell und die Reaktionen, ohne als Spieler beizutreten.',
-                  en: 'In spectator mode, you follow the public duel and reactions without joining as a player.',
-                  pl: 'W trybie obserwatora śledzisz publiczny pojedynek i reakcje bez dołączania jako gracz.',
-                })
-              : copy({
-                  de: 'Hier kannst du im Warteraum bleiben, den Spielfortschritt verfolgen und den Rundenstatus prüfen, ohne das Duell zu verlassen.',
-                  en: 'Here you can stay in the waiting room, follow player progress, and check round status without leaving the duel.',
-                  pl: 'Tutaj możesz zostać w poczekalni, śledzić postęp graczy i sprawdzać stan rundy bez wychodzenia z pojedynku.',
-                })
-          }
-        />
-      </View>
+  function SessionContent(contentProps: DuelsSessionViewProps): React.JSX.Element {
+    const { duel: sessionDuel, onOpenLobby: sessionOnOpenLobby } = contentProps;
+    if (sessionDuel.error !== null || !sessionDuel.session || (!sessionDuel.isSpectating && !sessionDuel.player)) return <ErrorCard duel={sessionDuel} copy={contentProps.copy} onOpenLobby={sessionOnOpenLobby} />;
+    return <DuelSessionFullContent {...contentProps} />;
+  }
 
+  return (
+    <KangurMobileScrollScreen contentContainerStyle={{ gap: 18, paddingHorizontal: 20, paddingVertical: 24 }}>
+      <View style={{ gap: 14 }}>
+        <ActionButton label={copy({ de: 'Zurück zur Lobby', en: 'Back to lobby', pl: 'Wróć do lobby' })} onPress={onOpenLobby} tone='ghost' />
+        <KangurMobileSectionTitle title={duel.isSpectating ? copy({ de: 'Öffentliches Duell', en: 'Public duel', pl: 'Publiczny pojedynek' }) : copy({ de: 'Duell', en: 'Duel', pl: 'Pojedynek' })} subtitle={duel.isSpectating ? copy({ de: 'Zuschauermodus.', en: 'Spectator mode.', pl: 'Tryb obserwatora.' }) : copy({ de: 'Duell-Sitzung.', en: 'Duel session.', pl: 'Sesja pojedynku.' })} />
+      </View>
       {renderContent()}
     </KangurMobileScrollScreen>
   );

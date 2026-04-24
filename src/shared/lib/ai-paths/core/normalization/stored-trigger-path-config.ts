@@ -1,10 +1,6 @@
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
-import {
-  getStaticRecoveryStarterWorkflowEntryByDefaultPathId,
-  materializeStarterWorkflowPathConfig,
-  upgradeStarterWorkflowPathConfig,
-} from '@/shared/lib/ai-paths/core/starter-workflows';
+import { upgradeStarterWorkflowPathConfig } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { resolvePortablePathInput } from '@/shared/lib/ai-paths/portable-engine';
@@ -77,12 +73,6 @@ const resolveStoredUiState = (args: {
   };
 };
 
-const normalizeOptionalText = (value: unknown): string | undefined => {
-  if (typeof value !== 'string') return undefined;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
-
 const hasNodeWithId = (nodes: AiNode[] | undefined, selectedNodeId: string | null | undefined): boolean =>
   Boolean(selectedNodeId && (nodes ?? []).some((node: AiNode): boolean => node.id === selectedNodeId));
 
@@ -128,46 +118,6 @@ const resolveSelectedNodeIdOverride = (
   }
 
   return resolveStoredSelectedNodeIdValue(resolveStoredUiStateRecord(parsedConfig));
-};
-
-const resolveRecoverableStarterFallbackConfig = (args: {
-  pathId: string;
-  rawConfig: string;
-  fallbackName?: string | null | undefined;
-}): PathConfig | null => {
-  const { pathId, rawConfig, fallbackName } = args;
-  const entry = getStaticRecoveryStarterWorkflowEntryByDefaultPathId(pathId);
-  if (!entry) return null;
-
-  let parsedConfig: Record<string, unknown> | null = null;
-  try {
-    const parsed = JSON.parse(rawConfig) as unknown;
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      parsedConfig = parsed as Record<string, unknown>;
-    }
-  } catch (error) {
-    logClientError(error);
-    parsedConfig = null;
-  }
-
-  return materializeStarterWorkflowPathConfig(entry, {
-    pathId,
-    name:
-      normalizeLoadedPathName(pathId, parsedConfig?.['name']) ||
-      normalizeLoadedPathName(pathId, fallbackName) ||
-      entry.name,
-    description: normalizeOptionalText(parsedConfig?.['description']),
-    isActive:
-      typeof parsedConfig?.['isActive'] === 'boolean'
-        ? parsedConfig['isActive']
-        : entry.seedPolicy?.isActive,
-    isLocked:
-      typeof parsedConfig?.['isLocked'] === 'boolean'
-        ? parsedConfig['isLocked']
-        : entry.seedPolicy?.isLocked,
-    seededDefault: entry.seedPolicy?.autoSeed === true,
-    updatedAt: normalizeOptionalText(parsedConfig?.['updatedAt']),
-  });
 };
 
 const normalizeResolvedTriggerConfig = (args: {
@@ -253,7 +203,6 @@ export const materializeStoredTriggerPathConfig = (args: {
   rawConfig: string;
   fallbackName?: string | null | undefined;
   applyStarterWorkflowUpgrade?: boolean | undefined;
-  allowStaticRecoveryFallback?: boolean | undefined;
 }): {
   config: PathConfig;
   changed: boolean;
@@ -358,24 +307,6 @@ export const materializeStoredTriggerPathConfig = (args: {
     };
   } catch (error) {
     logClientError(error);
-    if (args.allowStaticRecoveryFallback === false) {
-      throw error;
-    }
-    const fallbackConfig = resolveRecoverableStarterFallbackConfig({
-      pathId,
-      rawConfig,
-      fallbackName,
-    });
-    if (!fallbackConfig) {
-      throw error;
-    }
-    return {
-      config: normalizeResolvedTriggerConfig({
-        pathId,
-        fallbackName,
-        config: fallbackConfig,
-      }),
-      changed: true,
-    };
+    throw error;
   }
 };

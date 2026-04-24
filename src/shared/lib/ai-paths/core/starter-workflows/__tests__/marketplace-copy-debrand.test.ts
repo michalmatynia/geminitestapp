@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getStarterWorkflowTemplateById,
-  materializeStarterWorkflowRecoveryBundle,
+  materializeStarterWorkflowSeedBundle,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { handleParser } from '@/shared/lib/ai-paths/core/runtime/handlers/transform/parser';
@@ -31,7 +31,7 @@ describe('starter marketplace copy debrand workflow', () => {
   });
 
   it('ships a canonical Debrand trigger button bound to the starter path', () => {
-    const bundle = materializeStarterWorkflowRecoveryBundle('auto_seed');
+    const bundle = materializeStarterWorkflowSeedBundle('auto_seed');
     const triggerButton = bundle.triggerButtons.find(
       (button) => button.id === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4'
     );
@@ -66,8 +66,8 @@ describe('starter marketplace copy debrand workflow', () => {
     expect(triggerNodes[0]?.config?.trigger?.event).toBe(MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID);
   });
 
-  it('restores the canonical Debrand row trigger from the static recovery bundle', () => {
-    const bundle = materializeStarterWorkflowRecoveryBundle('static_recovery');
+  it('seeds the canonical Debrand row trigger from the canonical starter bundle', () => {
+    const bundle = materializeStarterWorkflowSeedBundle('canonical_seed');
     const triggerButton = bundle.triggerButtons.find(
       (button) => button.id === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4'
     );

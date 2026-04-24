@@ -283,34 +283,6 @@ export const runtimeTraceEffectSchema = z.object({
 });
 export type RuntimeTraceEffect = z.infer<typeof runtimeTraceEffectSchema>;
 
-export const runtimeTraceResumeModeSchema = z.enum(['resume', 'retry', 'replay']);
-export type RuntimeTraceResumeMode = z.infer<typeof runtimeTraceResumeModeSchema>;
-
-export const runtimeTraceResumeDecisionSchema = z.enum(['reused', 'reexecuted']);
-export type RuntimeTraceResumeDecision = z.infer<typeof runtimeTraceResumeDecisionSchema>;
-
-export const runtimeTraceResumeReasonSchema = z.enum([
-  'completed_upstream',
-  'failed_node',
-  'downstream_of_failure',
-  'retry_target',
-  'downstream_of_retry',
-  'incomplete',
-  'replay_requested',
-]);
-export type RuntimeTraceResumeReason = z.infer<typeof runtimeTraceResumeReasonSchema>;
-
-export const runtimeTraceResumeSchema = z.object({
-  mode: runtimeTraceResumeModeSchema,
-  decision: runtimeTraceResumeDecisionSchema,
-  reason: runtimeTraceResumeReasonSchema,
-  sourceTraceId: z.string().nullable().optional(),
-  sourceSpanId: z.string().nullable().optional(),
-  sourceRunStartedAt: z.string().nullable().optional(),
-  sourceStatus: aiPathNodeStatusSchema.nullable().optional(),
-});
-export type RuntimeTraceResume = z.infer<typeof runtimeTraceResumeSchema>;
-
 export const runtimeTraceErrorSchema = z.object({
   code: z.string().nullable().optional(),
   message: z.string().nullable().optional(),
@@ -347,7 +319,6 @@ export const runtimeTraceSpanSchema = z.object({
   cache: runtimeTraceCacheSchema.optional(),
   branch: runtimeTraceBranchSchema.optional(),
   effect: runtimeTraceEffectSchema.optional(),
-  resume: runtimeTraceResumeSchema.optional(),
   error: runtimeTraceErrorSchema.optional(),
 });
 export type RuntimeTraceSpan = z.infer<typeof runtimeTraceSpanSchema>;
@@ -404,13 +375,6 @@ export const runtimeHistoryEntrySchema = z.object({
   activationHash: z.string().nullable().optional(),
   idempotencyKey: z.string().nullable().optional(),
   effectSourceSpanId: z.string().nullable().optional(),
-  resumeMode: runtimeTraceResumeModeSchema.optional(),
-  resumeDecision: runtimeTraceResumeDecisionSchema.optional(),
-  resumeReason: runtimeTraceResumeReasonSchema.optional(),
-  resumeSourceTraceId: z.string().nullable().optional(),
-  resumeSourceSpanId: z.string().nullable().optional(),
-  resumeSourceRunStartedAt: z.string().nullable().optional(),
-  resumeSourceStatus: aiPathNodeStatusSchema.nullable().optional(),
   correlationIds: z.array(z.string()).optional(),
   cacheDecision: runtimeTraceCacheDecisionSchema.optional(),
   branch: runtimeTraceBranchSchema.optional(),

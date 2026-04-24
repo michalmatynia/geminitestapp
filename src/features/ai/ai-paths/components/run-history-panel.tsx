@@ -13,13 +13,13 @@ import { useRunComparison } from '../hooks/useRunComparison';
 export type RunHistoryFilterView = 'all' | 'active' | 'failed' | 'canceled';
 
 export function RunHistoryPanel(): React.JSX.Element {
-  const runHistoryState = useRunHistoryState();
   const {
     runList: resolvedRuns,
     runsRefreshing: resolvedIsRefreshing,
     expandedRunHistory,
     runHistorySelection,
-  } = runHistoryState;
+    runFilter: rawRunFilter,
+  } = useRunHistoryState();
   const {
     setRunFilter: setRunFilterContext,
     setExpandedRunHistory,
@@ -29,37 +29,59 @@ export function RunHistoryPanel(): React.JSX.Element {
     cancelRun,
   } = useRunHistoryActions();
 
-  const {
-    compareMode,
-    toggleCompareMode,
-    primaryRunId,
-    setPrimaryRunId,
-    secondaryRunId,
-    setSecondaryRunId,
-    compareInspectorRowKey,
-    setCompareInspectorRowKey,
-    compareResumeChangesOnly,
-    setCompareResumeChangesOnly,
-    primaryRun,
-    secondaryRun,
-    traceComparison,
-    displayedComparisonRows,
-  } = useRunComparison(resolvedRuns);
+  const comparison = useRunComparison(resolvedRuns);
 
-  const handleRefresh = (): void => {
-    void refreshRuns().catch(() => {});
-  };
+  const { runFilter, setRunFilter, filteredRunList } = useFilteredRunList(
+    rawRunFilter as string,
+    resolvedRuns,
+    setRunFilterContext
+  );
 
-  const handleOpenRunDetail = (runId: string): void => {
-    openRunDetail(runId);
-  };
+  return (
+    <Card variant='subtle' padding='md' className='bg-card/60'>
+      <RunHistoryFilterControls
+        runFilter={runFilter}
+        onSetRunFilter={setRunFilter}
+        compareMode={comparison.compareMode}
+        onToggleCompareMode={comparison.toggleCompareMode}
+        isRefreshing={resolvedIsRefreshing}
+        onRefresh={() => void refreshRuns().catch(() => {})}
+      />
 
-  const handleCancelRun = (runId: string): void => {
-    void cancelRun(runId).catch(() => {});
-  };
+      <RunHistoryList
+        runs={filteredRunList}
+        compareMode={comparison.compareMode}
+        primaryRunId={comparison.primaryRunId}
+        secondaryRunId={comparison.secondaryRunId}
+        onSetPrimaryRunId={comparison.setPrimaryRunId}
+        onSetSecondaryRunId={comparison.setSecondaryRunId}
+        onOpenRunDetail={openRunDetail}
+        onExpandedRunHistory={setExpandedRunHistory}
+        expandedRunHistory={expandedRunHistory}
+        runHistorySelection={runHistorySelection}
+        onSetRunHistorySelection={setRunHistorySelection}
+        onCancelRun={(runId) => void cancelRun(runId).catch(() => {})}
+      />
 
-  const rawRunFilter = runHistoryState.runFilter as string;
+      {comparison.compareMode && comparison.primaryRun && comparison.secondaryRun && (
+        <RunComparisonTool
+          primaryRun={comparison.primaryRun}
+          secondaryRun={comparison.secondaryRun}
+          traceComparison={comparison.traceComparison}
+          displayedComparisonRows={comparison.displayedComparisonRows}
+          compareInspectorRowKey={comparison.compareInspectorRowKey}
+          onSetCompareInspectorRowKey={comparison.setCompareInspectorRowKey}
+        />
+      )}
+    </Card>
+  );
+}
 
+function useFilteredRunList(
+  rawRunFilter: string,
+  resolvedRuns: AiPathRunRecord[],
+  setRunFilterContext: (next: string) => void
+) {
   const runFilter: RunHistoryFilterView = React.useMemo((): RunHistoryFilterView => {
     if (rawRunFilter === 'active' || rawRunFilter === 'running' || rawRunFilter === 'queued') {
       return 'active';
@@ -89,44 +111,5 @@ export function RunHistoryPanel(): React.JSX.Element {
     return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'canceled');
   }, [runFilter, resolvedRuns]);
 
-  return (
-    <Card variant='subtle' padding='md' className='bg-card/60'>
-      <RunHistoryFilterControls
-        runFilter={runFilter}
-        onSetRunFilter={setRunFilter}
-        compareMode={compareMode}
-        onToggleCompareMode={toggleCompareMode}
-        isRefreshing={resolvedIsRefreshing}
-        onRefresh={handleRefresh}
-      />
-
-      <RunHistoryList
-        runs={filteredRunList}
-        compareMode={compareMode}
-        primaryRunId={primaryRunId}
-        secondaryRunId={secondaryRunId}
-        onSetPrimaryRunId={setPrimaryRunId}
-        onSetSecondaryRunId={setSecondaryRunId}
-        onOpenRunDetail={handleOpenRunDetail}
-        onExpandedRunHistory={setExpandedRunHistory}
-        expandedRunHistory={expandedRunHistory}
-        runHistorySelection={runHistorySelection}
-        onSetRunHistorySelection={setRunHistorySelection}
-        onCancelRun={handleCancelRun}
-      />
-
-      {compareMode && primaryRun && secondaryRun && (
-        <RunComparisonTool
-          primaryRun={primaryRun}
-          secondaryRun={secondaryRun}
-          traceComparison={traceComparison}
-          displayedComparisonRows={displayedComparisonRows}
-          compareResumeChangesOnly={compareResumeChangesOnly}
-          compareInspectorRowKey={compareInspectorRowKey}
-          onSetCompareInspectorRowKey={setCompareInspectorRowKey}
-          onToggleResumeChangesOnly={(): void => setCompareResumeChangesOnly((prev) => !prev)}
-        />
-      )}
-    </Card>
-  );
+  return { runFilter, setRunFilter, filteredRunList };
 }

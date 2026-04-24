@@ -2,11 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { __testOnly } from '@/features/ai/ai-paths/server/settings-store';
 import {
-  countPendingStaticStarterWorkflowBundle,
+  countPendingCanonicalStarterWorkflows,
   countPendingStarterWorkflowDefaults,
+  ensureCanonicalStarterWorkflowRecordsForPathIds,
   ensureStarterWorkflowDefaults,
   refreshStarterWorkflowConfigs,
-  restoreStaticStarterWorkflowBundle,
+  seedCanonicalStarterWorkflows,
 } from '@/features/ai/ai-paths/server/starter-workflows-settings';
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -30,8 +31,8 @@ const buildEmptyStarterSettings = () => [
   { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
 ];
 
-const buildStaticRecoveryRecords = () =>
-  restoreStaticStarterWorkflowBundle(buildEmptyStarterSettings()).nextRecords;
+const buildCanonicalStarterRecords = () =>
+  seedCanonicalStarterWorkflows(buildEmptyStarterSettings()).nextRecords;
 
 describe('settings-store flag preservation and maintenance-only starter policy', () => {
   it('preserves path activation and lock flags when seeded defaults are rewritten', () => {
@@ -318,17 +319,17 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(starterExtension?.['templateVersion']).not.toBe(3);
   });
 
-  it('restores the broader static recovery bundle from semantic workflow assets', () => {
+  it('seeds the broader canonical starter workflow bundle from semantic workflow assets', () => {
     const initial = [
       { key: AI_PATHS_INDEX_KEY, value: '[]' },
       { key: AI_PATHS_TRIGGER_BUTTONS_KEY, value: '[]' },
     ];
 
-    expect(countPendingStaticStarterWorkflowBundle(initial)).toBeGreaterThan(
+    expect(countPendingCanonicalStarterWorkflows(initial)).toBeGreaterThan(
       countPendingStarterWorkflowDefaults(initial)
     );
 
-    const restored = restoreStaticStarterWorkflowBundle(initial);
+    const restored = seedCanonicalStarterWorkflows(initial);
 
     expect(restored.affectedCount).toBeGreaterThan(0);
     expect(
@@ -366,8 +367,63 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     ).toBe(true);
   });
 
-  it('restores the canonical marketplace copy debrand row trigger when it is removed from the static recovery bundle', () => {
-    const restored = buildStaticRecoveryRecords();
+  it('rewrites invalid canonical starter configs for requested trigger path ids', () => {
+    const restored = buildCanonicalStarterRecords();
+    const staleRecords = restored.map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`) return record;
+      const parsed = JSON.parse(record.value) as Record<string, unknown>;
+      const edges = Array.isArray(parsed['edges']) ? parsed['edges'] : [];
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...parsed,
+          edges: edges.map((edge: unknown) => {
+            const edgeRecord =
+              edge && typeof edge === 'object' && !Array.isArray(edge)
+                ? (edge as Record<string, unknown>)
+                : {};
+            return {
+              id: edgeRecord['id'],
+              fromNodeId: edgeRecord['from'],
+              toNodeId: edgeRecord['to'],
+              fromPort: edgeRecord['fromPort'] ?? null,
+              toPort: edgeRecord['toPort'] ?? null,
+            };
+          }),
+        }),
+      };
+    });
+
+    const staleRecord = staleRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`
+    );
+    if (!staleRecord) throw new Error('Expected stale description starter config');
+    expect(() =>
+      loadCanonicalStoredPathConfig({
+        pathId: 'path_descv3lite',
+        rawConfig: staleRecord.value,
+      })
+    ).toThrow();
+
+    const refreshed = ensureCanonicalStarterWorkflowRecordsForPathIds(staleRecords, [
+      'path_descv3lite',
+    ]);
+
+    expect(refreshed.affectedCount).toBeGreaterThan(0);
+    const nextRecord = refreshed.nextRecords.find(
+      (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_descv3lite`
+    );
+    if (!nextRecord) throw new Error('Expected refreshed description starter config');
+    const canonical = loadCanonicalStoredPathConfig({
+      pathId: 'path_descv3lite',
+      rawConfig: nextRecord.value,
+    });
+    expect(canonical.edges.every((edge) => typeof edge.from === 'string')).toBe(true);
+    expect(canonical.edges.every((edge) => typeof edge.to === 'string')).toBe(true);
+  });
+
+  it('seeds the canonical marketplace copy debrand row trigger when it is removed from the canonical bundle', () => {
+    const restored = buildCanonicalStarterRecords();
     const withoutDebrandTrigger = restored.map((record) => {
       if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
       const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
@@ -381,9 +437,9 @@ describe('settings-store flag preservation and maintenance-only starter policy',
       };
     });
 
-    expect(countPendingStaticStarterWorkflowBundle(withoutDebrandTrigger)).toBeGreaterThan(0);
+    expect(countPendingCanonicalStarterWorkflows(withoutDebrandTrigger)).toBeGreaterThan(0);
 
-    const repaired = restoreStaticStarterWorkflowBundle(withoutDebrandTrigger);
+    const repaired = seedCanonicalStarterWorkflows(withoutDebrandTrigger);
     const triggerButtonsRecord = repaired.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
     );
@@ -672,7 +728,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
   });
 
   it('does not inherit normalize starter model selection from other starter paths', () => {
-    const seeded = buildStaticRecoveryRecords();
+    const seeded = buildCanonicalStarterRecords();
 
     const descriptionButton = {
       id: 'f5af953f-632d-4704-adec-cc7e58aa68c6',
@@ -804,8 +860,8 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(modelConfig?.['modelId']).toBeUndefined();
   });
 
-  it('does not rewrite a legacy normalize node override during static recovery restore', () => {
-    const seeded = buildStaticRecoveryRecords();
+  it('does not rewrite a legacy normalize node override during canonical starter seeding', () => {
+    const seeded = buildCanonicalStarterRecords();
 
     const staleRecords = seeded
       .filter((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`)
@@ -856,7 +912,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
       };
       });
 
-    const refreshed = restoreStaticStarterWorkflowBundle(staleRecords);
+    const refreshed = seedCanonicalStarterWorkflows(staleRecords);
     const normalizeRecord = refreshed.nextRecords.find(
       (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`
     );
@@ -877,7 +933,7 @@ describe('settings-store flag preservation and maintenance-only starter policy',
   });
 
   it('refreshes stale Normalize starter configs while preserving edited model settings', () => {
-    const seeded = buildStaticRecoveryRecords();
+    const seeded = buildCanonicalStarterRecords();
 
     const staleRecords = seeded
       .filter((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_name_normalize_v1`)

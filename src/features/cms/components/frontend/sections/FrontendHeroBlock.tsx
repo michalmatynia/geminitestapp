@@ -15,7 +15,7 @@ export function FrontendHeroBlock(): React.ReactNode {
       className='cms-media relative min-h-[200px] overflow-hidden'
       style={mediaStyles ?? undefined}
     >
-      {image ? (
+      {image !== undefined && image !== '' ? (
         <div
           className='absolute inset-0 bg-cover bg-center'
           style={{ backgroundImage: `url(${image})` }}

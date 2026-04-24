@@ -507,7 +507,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
-  it('repairs broken recoverable default-path configs even when the starter is not auto-seeded', async () => {
+  it('rejects broken default-path configs with a validation error', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
     >('@/shared/lib/ai-paths/portable-engine');
@@ -518,21 +518,13 @@ describe('materializeStoredTriggerPathConfig', () => {
 
     mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
 
-    const resolved = materializeStoredTriggerPathConfig({
-      pathId: 'path_96708d',
-      rawConfig: '{"broken":',
-      fallbackName: template.name,
-    });
-
-    expect(resolved.config.id).toBe('path_96708d');
-    expect(resolved.config.nodes.some((node) => node.type === 'trigger')).toBe(true);
-    expect(resolved.config.extensions?.['aiPathsStarter']).toEqual(
-      expect.objectContaining({
-        templateId: 'starter_translation_en_pl',
-        seededDefault: false,
+    expect(() =>
+      materializeStoredTriggerPathConfig({
+        pathId: 'path_96708d',
+        rawConfig: '{"broken":',
+        fallbackName: template.name,
       })
-    );
-    expect(resolved.changed).toBe(true);
+    ).toThrow('Invalid AI Path config payload.');
   });
 
   it('canonically rewrites default-path normalize starter graphs with random node ids even without starter provenance', async () => {
@@ -655,7 +647,7 @@ describe('materializeStoredTriggerPathConfig', () => {
     expect(resolved.changed).toBe(true);
   });
 
-  it('materializes stored starter configs whose edges still use semantic alias keys', async () => {
+  it('rejects stored starter configs whose edges only use old alias keys', async () => {
     const actualPortableEngine = await vi.importActual<
       typeof import('@/shared/lib/ai-paths/portable-engine')
     >('@/shared/lib/ai-paths/portable-engine');
@@ -687,29 +679,12 @@ describe('materializeStoredTriggerPathConfig', () => {
 
     mockResolvePortablePathInput.mockImplementation(actualPortableEngine.resolvePortablePathInput);
 
-    const resolved = materializeStoredTriggerPathConfig({
-      pathId: 'path_descv3lite',
-      rawConfig: JSON.stringify(legacyEdgeConfig),
-      fallbackName: config.name,
-    });
-
-    expect(resolved.config.id).toBe('path_descv3lite');
-    expect(resolved.config.edges).toHaveLength(27);
-    expect(
-      resolved.config.edges.every(
-        (edge) =>
-          typeof edge.from === 'string' &&
-          edge.from.length > 0 &&
-          typeof edge.to === 'string' &&
-          edge.to.length > 0 &&
-          !Object.prototype.hasOwnProperty.call(edge, 'fromNodeId') &&
-          !Object.prototype.hasOwnProperty.call(edge, 'toNodeId')
-      )
-    ).toBe(true);
-    expect(
-      resolved.config.nodes.find((node) => node.title === 'Database Query')?.config?.database
-        ?.writeOutcomePolicy?.onZeroAffected
-    ).toBe('warn');
-    expect(resolved.changed).toBe(true);
+    expect(() =>
+      materializeStoredTriggerPathConfig({
+        pathId: 'path_descv3lite',
+        rawConfig: JSON.stringify(legacyEdgeConfig),
+        fallbackName: config.name,
+      })
+    ).toThrow('Invalid AI Path trigger node payload.');
   });
 });

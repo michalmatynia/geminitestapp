@@ -13,7 +13,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
     'compact_oversized_configs',
     'repair_path_index',
     'prune_deprecated_starter_workflows',
-    'restore_static_recovery_bundle',
+    'seed_canonical_starter_workflows',
     'ensure_starter_workflow_defaults',
     'refresh_starter_workflow_configs',
     'normalize_runtime_kernel_settings',
@@ -76,9 +76,9 @@ describe('ai-paths maintenance handler', () => {
     expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith(['repair_path_index']);
   });
 
-  it('accepts static recovery restore action ids', async () => {
+  it('accepts canonical starter seeding action ids', async () => {
     applyAiPathsSettingsMaintenanceMock.mockResolvedValue({
-      appliedActionIds: ['restore_static_recovery_bundle'],
+      appliedActionIds: ['seed_canonical_starter_workflows'],
       report: {
         scannedAt: '2026-03-03T10:00:00.000Z',
         pendingActions: 0,
@@ -90,14 +90,14 @@ describe('ai-paths maintenance handler', () => {
     const response = await postHandler(
       new NextRequest('http://localhost/api/ai-paths/settings/maintenance', {
         method: 'POST',
-        body: JSON.stringify({ actionIds: ['restore_static_recovery_bundle'] }),
+        body: JSON.stringify({ actionIds: ['seed_canonical_starter_workflows'] }),
       }),
       {} as Parameters<typeof postHandler>[1]
     );
 
     expect(response.status).toBe(200);
     expect(applyAiPathsSettingsMaintenanceMock).toHaveBeenCalledWith([
-      'restore_static_recovery_bundle',
+      'seed_canonical_starter_workflows',
     ]);
   });
 

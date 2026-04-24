@@ -99,7 +99,7 @@ const toCanonicalAiTriggerButtonRecord = (
 export const parseAiTriggerButtonsRawWithReport = (
   raw: string | null
 ): AiTriggerButtonsRawParseReport => {
-  if (!raw) {
+  if (raw === null || raw === '') {
     return {
       records: [],
       shouldPersist: false,

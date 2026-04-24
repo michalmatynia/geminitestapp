@@ -75,6 +75,10 @@ export type FilemakerCampaignEmailSendResult = {
   provider: FilemakerEmailCampaignDeliveryProvider;
   providerMessage: string;
   sentAt: string;
+  mailFilingStatus?: 'not_applicable' | 'filed' | 'failed';
+  mailThreadId?: string | null;
+  mailMessageId?: string | null;
+  mailFilingError?: string | null;
 };
 
 export class FilemakerCampaignEmailDeliveryError extends Error {
@@ -354,17 +358,17 @@ const resolveAccountDeliveryConfig = async (input: {
   };
 };
 
-const fileCampaignSendAsMailMessage = async (input: {
+export const fileFilemakerCampaignEmailRecordAsMailMessage = async (input: {
   account: FilemakerMailAccount;
   record: FilemakerCampaignEmailDeliveryRecord;
   providerMessageId: string | null;
-}): Promise<void> => {
+}): Promise<{ threadId: string; messageId: string }> => {
   const { account, record, providerMessageId } = input;
   const now = new Date().toISOString();
   const normalizedSubject = normalizeFilemakerMailSubject(record.subject);
   const anchorAddress = pickAnchorAddress([{ address: record.to, name: null }]);
 
-  let thread = await mailStorage.findMailThreadBySubjectAndAnchor(
+  const thread = await mailStorage.findMailThreadBySubjectAndAnchor(
     account.id,
     normalizedSubject,
     anchorAddress
@@ -378,21 +382,19 @@ const fileCampaignSendAsMailMessage = async (input: {
       anchorAddress,
     });
 
-  const textBody = record.text ?? '';
-  const htmlBody = record.html ?? null;
-  const snippet = buildFilemakerMailSnippet(
-    textBody,
-    htmlBody ?? stripHtmlToPlainText(htmlBody ?? '')
-  );
+  const textBody = record.text;
+  const htmlBody = record.html;
+  const snippet = buildFilemakerMailSnippet(textBody, htmlBody);
   const recipientSummary = [{ address: record.to, name: null as string | null }];
   const campaignContext = {
     campaignId: record.campaignId,
     runId: record.runId,
     deliveryId: record.deliveryId,
   };
+  const messageId = `filemaker-mail-message-${randomUUID()}`;
 
   const message: FilemakerMailMessage = {
-    id: `filemaker-mail-message-${randomUUID()}`,
+    id: messageId,
     createdAt: now,
     updatedAt: now,
     accountId: account.id,
@@ -412,7 +414,7 @@ const fileCampaignSendAsMailMessage = async (input: {
     to: recipientSummary,
     cc: [],
     bcc: [],
-    replyTo: record.replyToEmail
+    replyTo: record.replyToEmail !== null && record.replyToEmail.length > 0
       ? [{ address: record.replyToEmail, name: null }]
       : [],
     sentAt: record.sentAt,
@@ -450,6 +452,8 @@ const fileCampaignSendAsMailMessage = async (input: {
     campaignContext,
   };
   await mailStorage.upsertMailThread(nextThread);
+
+  return { threadId, messageId };
 };
 
 export const sendFilemakerCampaignEmail = async (input: {
@@ -502,12 +506,14 @@ export const sendFilemakerCampaignEmail = async (input: {
         to: record.to,
         subject: record.subject,
         text: record.text,
-        ...(record.html ? { html: record.html } : {}),
-        ...(record.replyToEmail ? { replyTo: record.replyToEmail } : {}),
+        ...(record.html !== null && record.html.length > 0 ? { html: record.html } : {}),
+        ...(record.replyToEmail !== null && record.replyToEmail.length > 0
+          ? { replyTo: record.replyToEmail }
+          : {}),
       });
       providerMessageId = typeof result.messageId === 'string' ? result.messageId : null;
       const rawMessage = (result as unknown as { message?: Buffer | string }).message;
-      if (rawMessage) {
+      if (rawMessage !== null && rawMessage !== undefined) {
         void appendFilemakerMailToSentFolder({
           account: accountConfig.account,
           rawMessage,
@@ -517,23 +523,38 @@ export const sendFilemakerCampaignEmail = async (input: {
       throw toCampaignDeliveryError(error, { provider: 'smtp' });
     }
 
-    void fileCampaignSendAsMailMessage({
-      account: accountConfig.account,
-      record,
-      providerMessageId,
-    }).catch((error) => {
+    let mailFilingStatus: FilemakerCampaignEmailSendResult['mailFilingStatus'] = 'filed';
+    let mailThreadId: string | null = null;
+    let mailMessageId: string | null = null;
+    let mailFilingError: string | null = null;
+    try {
+      const filingResult = await fileFilemakerCampaignEmailRecordAsMailMessage({
+        account: accountConfig.account,
+        record,
+        providerMessageId,
+      });
+      mailThreadId = filingResult.threadId;
+      mailMessageId = filingResult.messageId;
+    } catch (error) {
+      mailFilingStatus = 'failed';
+      mailFilingError =
+        error instanceof Error ? error.message : 'Could not file campaign send into mail thread.';
       logSystemEvent({
         level: 'warn',
         source: 'filemaker-campaign-mail-filing',
         message: `Could not file campaign send ${record.deliveryId} into mail thread`,
         error,
       }).catch(() => {});
-    });
+    }
 
     return {
       provider: 'smtp',
       providerMessage: `Sent through the Filemaker mail account "${accountConfig.account.name}".`,
       sentAt: record.sentAt,
+      mailFilingStatus,
+      mailThreadId,
+      mailMessageId,
+      mailFilingError,
     };
   }
 
@@ -573,6 +594,7 @@ export const sendFilemakerCampaignEmail = async (input: {
           ? 'Accepted by the Filemaker campaign webhook.'
           : 'Accepted by the shared auth email webhook fallback.',
       sentAt: record.sentAt,
+      mailFilingStatus: 'not_applicable',
     };
   }
 
@@ -603,6 +625,7 @@ export const sendFilemakerCampaignEmail = async (input: {
           ? 'Sent through the Filemaker campaign SMTP provider.'
           : 'Sent through the shared auth SMTP fallback.',
       sentAt: record.sentAt,
+      mailFilingStatus: 'not_applicable',
     };
   }
 

@@ -42,18 +42,39 @@ export const FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS = 3;
 export const createCampaignId = (name: string): string =>
   `filemaker-email-campaign-${toIdToken(name) || 'untitled'}`;
 
+import {
+  buildDefaultAudienceConditionGroup,
+  normalizeAudienceConditionGroup,
+  foldLegacyFieldsIntoConditionGroup,
+} from './campaign-audience-conditions';
+
 export const normalizeCampaignAudienceRule = (
   input: Partial<FilemakerEmailCampaignAudienceRule> | null | undefined
 ): FilemakerEmailCampaignAudienceRule => {
+  const organizationIds = normalizeStringList(input?.organizationIds);
+  const eventIds = normalizeStringList(input?.eventIds);
+  const countries = normalizeStringList(input?.countries);
+  const cities = normalizeStringList(input?.cities);
+  const rawGroup = input?.conditionGroup
+    ? normalizeAudienceConditionGroup(input.conditionGroup)
+    : buildDefaultAudienceConditionGroup();
+  const conditionGroup = foldLegacyFieldsIntoConditionGroup(rawGroup, {
+    organizationIds,
+    eventIds,
+    countries,
+    cities,
+  });
   return {
     partyKinds: normalizePartyKinds(input?.partyKinds),
     emailStatuses: normalizeEmailStatuses(input?.emailStatuses),
     includePartyReferences: normalizePartyReferences(input?.includePartyReferences),
     excludePartyReferences: normalizePartyReferences(input?.excludePartyReferences),
-    organizationIds: normalizeStringList(input?.organizationIds),
-    eventIds: normalizeStringList(input?.eventIds),
-    countries: normalizeStringList(input?.countries),
-    cities: normalizeStringList(input?.cities),
+    conditionGroup,
+    // Legacy fields emptied after folding so the rule has a single source of truth.
+    organizationIds: [],
+    eventIds: [],
+    countries: [],
+    cities: [],
     dedupeByEmail: input?.dedupeByEmail ?? true,
     limit: normalizeNullablePositiveInt(input?.limit),
   };
@@ -536,6 +557,8 @@ export const createFilemakerEmailCampaignEvent = (
     message: normalizeString(input.message),
     actor: normalizeString(input.actor) || null,
     targetUrl: normalizeString(input.targetUrl) || null,
+    mailThreadId: normalizeString(input.mailThreadId) || null,
+    mailMessageId: normalizeString(input.mailMessageId) || null,
     runStatus:
       normalizeString(input.runStatus).toLowerCase() === 'pending' ||
       normalizeString(input.runStatus).toLowerCase() === 'queued' ||

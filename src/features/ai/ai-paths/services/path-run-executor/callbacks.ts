@@ -17,7 +17,6 @@ import type {
   RuntimeSideEffectDecision,
   RuntimeSideEffectPolicy,
   RuntimeTraceEffect,
-  RuntimeTraceResume,
   RuntimeTraceSpanStatus,
 } from '@/shared/contracts/ai-paths-runtime';
 import type {
@@ -55,7 +54,6 @@ export type CallbackCtx = {
   accInputs: Record<string, RuntimePortValues>;
   accOutputs: Record<string, RuntimePortValues>;
   logNodeStartEvents: boolean;
-  resumeByNodeId: Map<string, RuntimeTraceResume>;
   appendRuntimeHistoryEntry?: (nodeId: string, entry: RuntimeHistoryEntry) => void;
   setRuntimeNodeStatus?: (nodeId: string, status: AiPathRunNodeRecord['status']) => void;
 };
@@ -135,7 +133,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
     accInputs,
     accOutputs,
     logNodeStartEvents,
-    resumeByNodeId,
     appendRuntimeHistoryEntry,
     setRuntimeNodeStatus,
   } = ctx;
@@ -178,24 +175,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
     };
   };
 
-  const resolveResume = (nodeId: string): RuntimeTraceResume | undefined =>
-    resumeByNodeId.get(nodeId);
-
-  const toResumeRunEventMetadata = (
-    resume: RuntimeTraceResume | undefined
-  ): Record<string, unknown> => {
-    if (!resume) return {};
-    return {
-      resumeMode: resume.mode,
-      resumeDecision: resume.decision,
-      resumeReason: resume.reason,
-      resumeSourceTraceId: resume.sourceTraceId ?? null,
-      resumeSourceSpanId: resume.sourceSpanId ?? null,
-      resumeSourceRunStartedAt: resume.sourceRunStartedAt ?? null,
-      resumeSourceStatus: resume.sourceStatus ?? null,
-    };
-  };
-
   const nodeStartedAtBySpanId = new Map<string, string>();
 
   const resolveDurationMs = (
@@ -235,7 +214,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
     runtimeStrategy?: unknown;
     runtimeResolutionSource?: unknown;
     runtimeCodeObjectId?: unknown;
-    resume?: RuntimeTraceResume;
     reason?: string | null;
     errorMessage?: string | null;
     waitingOnPorts?: string[] | null;
@@ -283,7 +261,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         reason: input.reason ?? null,
         errorMessage: input.errorMessage ?? null,
         waitingOnPorts: input.waitingOnPorts ?? null,
-        ...toResumeRunEventMetadata(input.resume),
         ...toRunEventRuntimeKernelMetadata({
           runtimeStrategy: input.runtimeStrategy,
           runtimeResolutionSource: input.runtimeResolutionSource,
@@ -307,7 +284,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
     }: RuntimeNodeStartEvent) => {
       try {
         const nodeStartedAt = new Date().toISOString();
-        const resume = resolveResume(node.id);
         nodeStartedAtBySpanId.set(nodeSpanId, nodeStartedAt);
 
         profiling.beginRuntimeNodeSpan({
@@ -334,7 +310,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           cache: {
             decision: 'miss',
           },
-          resume,
         });
         syncRuntimeTraceMeta();
         accInputs[node.id] = safeInputs;
@@ -390,7 +365,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                     nodeType: node.type,
                     iteration,
                     attempt,
-                    ...toResumeRunEventMetadata(resume),
                     ...toRunEventRuntimeKernelMetadata({
                       runtimeStrategy,
                       runtimeResolutionSource,
@@ -412,7 +386,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           attempt,
           status: 'running',
           startedAt: nodeStartedAt,
-          resume,
           runtimeStrategy,
           runtimeResolutionSource,
           runtimeCodeObjectId,
@@ -448,7 +421,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         const finishedAt = new Date().toISOString();
         const status = resolveFinishedNodeStatus({ cached, nextOutputs });
         const traceStatus = resolveRuntimeTraceSpanStatus(status);
-        const resume = resolveResume(node.id);
         const startedAt = nodeStartedAtBySpanId.get(nodeSpanId) ?? null;
         nodeStartedAtBySpanId.delete(nodeSpanId);
         const durationMs = resolveDurationMs(startedAt, finishedAt);
@@ -480,7 +452,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             sideEffectDecision,
             effectSourceSpanId,
           }),
-          resume,
         });
         syncRuntimeTraceMeta();
         accInputs[node.id] = safeInputs;
@@ -533,7 +504,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           activationHash: activationHash ?? null,
           idempotencyKey: idempotencyKey ?? null,
           effectSourceSpanId: effectSourceSpanId ?? null,
-          ...toResumeRunEventMetadata(resolveResume(node.id)),
           durationMs: durationMs ?? 0,
           runtimeStrategy: runtimeStrategy as any,
           runtimeResolutionSource: runtimeResolutionSource as any,
@@ -575,7 +545,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 idempotencyKey: idempotencyKey ?? null,
                 effectSourceSpanId: effectSourceSpanId ?? null,
                 durationMs,
-                ...toResumeRunEventMetadata(resume),
                 ...toRunEventRuntimeKernelMetadata({
                   runtimeStrategy,
                   runtimeResolutionSource,
@@ -608,7 +577,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           runtimeStrategy,
           runtimeResolutionSource,
           runtimeCodeObjectId,
-          resume,
           errorMessage: status === 'failed' ? ((nextOutputs['message'] as string) ?? null) : null,
         });
             
@@ -640,7 +608,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         const runtimeStatus = status === 'waiting_callback' ? 'waiting_callback' : 'blocked';
         const traceStatus: RuntimeTraceSpanStatus =
           runtimeStatus === 'waiting_callback' ? 'waiting_callback' : 'blocked';
-        const resume = resolveResume(node.id);
         const startedAt = nodeStartedAtBySpanId.get(nodeSpanId) ?? null;
         nodeStartedAtBySpanId.delete(nodeSpanId);
         const durationMs = resolveDurationMs(startedAt, finishedAt);
@@ -660,7 +627,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           attempt,
           finishedAt,
           status: traceStatus,
-          resume,
           error:
             typeof message === 'string' && message.trim().length > 0
               ? {
@@ -710,7 +676,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           inputHash: null,
           skipReason: reason,
           waitingOnPorts: waitingOnPorts ?? undefined,
-          ...toResumeRunEventMetadata(resolveResume(node.id)),
           durationMs: durationMs ?? 0,
           runtimeStrategy: runtimeStrategy as any,
           runtimeResolutionSource: runtimeResolutionSource as any,
@@ -747,7 +712,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 reason,
                 status: runtimeStatus,
                 durationMs,
-                ...toResumeRunEventMetadata(resume),
                 ...toRunEventRuntimeKernelMetadata({
                   runtimeStrategy,
                   runtimeResolutionSource,
@@ -773,7 +737,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           runtimeStrategy,
           runtimeResolutionSource,
           runtimeCodeObjectId,
-          resume,
           reason,
           errorMessage: message,
           waitingOnPorts: waitingOnPorts ?? null,
@@ -802,7 +765,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
         const finishedAt = new Date().toISOString();
         const errorMessage =
           error instanceof Error ? error.message : String(error ?? 'Unknown error');
-        const resume = resolveResume(node.id);
         const startedAt = nodeStartedAtBySpanId.get(nodeSpanId) ?? null;
         nodeStartedAtBySpanId.delete(nodeSpanId);
         const durationMs = resolveDurationMs(startedAt, finishedAt);
@@ -828,7 +790,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           finishedAt,
           status: 'failed',
           inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
-          resume,
           error: {
             message: errorMessage,
           },
@@ -876,7 +837,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           outputsTo: [],
           inputHash: hashRuntimeValue(safeInputs ?? nodeInputs),
           error: errorMessage,
-          ...toResumeRunEventMetadata(resolveResume(node.id)),
           durationMs: durationMs ?? 0,
           runtimeStrategy: runtimeStrategy as any,
           runtimeResolutionSource: runtimeResolutionSource as any,
@@ -907,7 +867,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
                 iteration,
                 attempt,
                 durationMs,
-                ...toResumeRunEventMetadata(resume),
                 ...toRunEventRuntimeKernelMetadata({
                   runtimeStrategy,
                   runtimeResolutionSource,
@@ -932,7 +891,6 @@ export const createCallbacks = (ctx: CallbackCtx) => {
           runtimeStrategy,
           runtimeResolutionSource,
           runtimeCodeObjectId,
-          resume,
           errorMessage,
         });
             
@@ -947,195 +905,5 @@ export const createCallbacks = (ctx: CallbackCtx) => {
             
     },
 
-    recordNodeReuse: async (input: {
-      node: AiNode;
-      spanId: string;
-      iteration: number;
-      attempt: number;
-      nodeInputs: RuntimePortValues;
-      nodeOutputs: RuntimePortValues;
-      resume: RuntimeTraceResume;
-      sourceHistory?: RuntimeHistoryEntry | null;
-    }): Promise<void> => {
-      try {
-        const startedAt = new Date().toISOString();
-        const finishedAt = startedAt;
-        const safeInputs = cloneJsonSafe(input.nodeInputs) as RuntimePortValues;
-        const safeOutputs = cloneJsonSafe(input.nodeOutputs) as RuntimePortValues;
-        const effectSourceSpanId =
-          input.resume.sourceSpanId ??
-          input.sourceHistory?.effectSourceSpanId ??
-          input.sourceHistory?.spanId ??
-          null;
-
-        profiling.beginRuntimeNodeSpan({
-          spanId: input.spanId,
-          nodeId: input.node.id,
-          nodeType: input.node.type,
-          nodeTitle: input.node.title ?? null,
-          iteration: input.iteration,
-          attempt: input.attempt,
-          startedAt,
-        });
-        profiling.finalizeRuntimeNodeSpan({
-          spanId: input.spanId,
-          status: 'cached',
-          finishedAt,
-        });
-
-        upsertRuntimeTraceSpan(input.spanId, {
-          nodeId: input.node.id,
-          nodeType: input.node.type,
-          nodeTitle: input.node.title ?? null,
-          iteration: input.iteration,
-          attempt: input.attempt,
-          startedAt,
-          finishedAt,
-          status: 'cached',
-          inputHash: hashRuntimeValue(safeInputs ?? input.nodeInputs),
-          activationHash: input.sourceHistory?.activationHash ?? undefined,
-          cache: {
-            decision: 'seed',
-          },
-          effect: buildRuntimeTraceEffect({
-            nodeType: input.node.type,
-            sideEffectPolicy: input.sourceHistory?.sideEffectPolicy,
-            effectSourceSpanId,
-          }),
-          resume: input.resume,
-        });
-        syncRuntimeTraceMeta();
-        accInputs[input.node.id] = safeInputs;
-        accOutputs[input.node.id] = mergeNodeOutputsForStatus({
-          previous: accOutputs[input.node.id],
-          next: safeOutputs,
-          status: 'cached',
-        });
-        setRuntimeNodeStatus?.(input.node.id, 'cached');
-        appendRuntimeHistoryEntry?.(input.node.id, {
-          timestamp: finishedAt,
-          pathId: run.pathId ?? null,
-          pathName: run.pathName ?? null,
-          traceId,
-          spanId: input.spanId,
-          nodeId: input.node.id,
-          nodeType: input.node.type,
-          nodeTitle: input.node.title ?? null,
-          status: 'cached',
-          iteration: input.iteration,
-          attempt: input.attempt,
-          inputs: safeInputs,
-          outputs: safeOutputs,
-          inputHash: hashRuntimeValue(safeInputs ?? input.nodeInputs),
-          cacheDecision: 'seed',
-          sideEffectPolicy: input.sourceHistory?.sideEffectPolicy,
-          sideEffectDecision: input.sourceHistory?.sideEffectDecision,
-          activationHash: input.sourceHistory?.activationHash ?? null,
-          idempotencyKey: input.sourceHistory?.idempotencyKey ?? null,
-          effectSourceSpanId,
-          resumeMode: input.resume.mode,
-          resumeDecision: input.resume.decision,
-          resumeReason: input.resume.reason,
-          resumeSourceTraceId: input.resume.sourceTraceId ?? null,
-          resumeSourceSpanId: input.resume.sourceSpanId ?? null,
-          resumeSourceRunStartedAt: input.resume.sourceRunStartedAt ?? null,
-          resumeSourceStatus: input.resume.sourceStatus ?? null,
-          inputsFrom: input.sourceHistory?.inputsFrom ?? [],
-          outputsTo: input.sourceHistory?.outputsTo ?? [],
-          durationMs: 0,
-          runtimeStrategy: input.sourceHistory?.runtimeStrategy,
-          runtimeResolutionSource: input.sourceHistory?.runtimeResolutionSource,
-          runtimeCodeObjectId: input.sourceHistory?.runtimeCodeObjectId ?? null,
-        });
-
-        publishNodeUpdate({
-          nodeId: input.node.id,
-          nodeType: input.node.type,
-          nodeTitle: input.node.title ?? null,
-          status: 'cached',
-          attempt: input.attempt,
-          traceId,
-          spanId: input.spanId,
-          iteration: input.iteration,
-          inputs: safeInputs,
-          outputs: safeOutputs,
-          startedAt,
-          finishedAt,
-          updatedAt: finishedAt,
-          errorMessage: null,
-        });
-
-        await Promise.all([
-          repo
-            .upsertRunNode(run.id, input.node.id, {
-              nodeType: input.node.type,
-              nodeTitle: input.node.title ?? null,
-              status: 'cached',
-              attempt: input.attempt,
-              inputs: safeInputs,
-              outputs: safeOutputs,
-              startedAt,
-              finishedAt,
-              error: null,
-            })
-            .catch(() => {}),
-          repo
-            .createRunEvent({
-              runId: run.id,
-              level: 'info',
-              message: `Node ${input.node.title ?? input.node.id} reused seeded outputs during ${input.resume.mode}.`,
-              metadata: {
-                traceId,
-                spanId: input.spanId,
-                nodeId: input.node.id,
-                nodeType: input.node.type,
-                iteration: input.iteration,
-                attempt: input.attempt,
-                cached: true,
-                cacheDecision: 'seed',
-                sideEffectPolicy: input.sourceHistory?.sideEffectPolicy ?? null,
-                effectSourceSpanId: effectSourceSpanId ?? null,
-                activationHash: input.sourceHistory?.activationHash ?? null,
-                durationMs: 0,
-                ...toResumeRunEventMetadata(input.resume),
-              },
-            })
-            .catch(() => {}),
-        ]);
-
-        emitNodeLifecycleSystemEvent({
-          event: 'node.reused_seeded',
-          level: 'info',
-          node: input.node,
-          spanId: input.spanId,
-          iteration: input.iteration,
-          attempt: input.attempt,
-          status: 'cached',
-          startedAt,
-          finishedAt,
-          durationMs: 0,
-          cached: true,
-          cacheDecision: 'seed',
-          sideEffectPolicy: input.sourceHistory?.sideEffectPolicy,
-          sideEffectDecision: input.sourceHistory?.sideEffectDecision,
-          activationHash: input.sourceHistory?.activationHash ?? null,
-          idempotencyKey: input.sourceHistory?.idempotencyKey ?? null,
-          effectSourceSpanId: effectSourceSpanId ?? null,
-          resume: input.resume,
-          runtimeStrategy: input.sourceHistory?.runtimeStrategy,
-          runtimeResolutionSource: input.sourceHistory?.runtimeResolutionSource,
-          runtimeCodeObjectId: input.sourceHistory?.runtimeCodeObjectId ?? null,
-        });
-            
-        void throttledSaveIntermediateState();
-        void recordRuntimeNodeStatus({ runId: run.id, nodeId: input.node.id, status: 'cached' }).catch(
-          () => {}
-        );
-      } catch (error) {
-        logClientError(error);
-        reportAiPathsError(error, { nodeId: input.node.id, action: 'recordNodeReuse' });
-      }
-            
-    },
   };
 };

@@ -28,7 +28,7 @@ const OCR_MODEL_ID_HINTS = [
 
 export const isLikelyCaseResolverOcrCapableModelId = (value: string): boolean => {
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return false;
+  if (normalized === '') return false;
   return OCR_MODEL_ID_HINTS.some((hint) => normalized.includes(hint));
 };
 

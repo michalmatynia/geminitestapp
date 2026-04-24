@@ -35,94 +35,152 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
     responsePath: '',
   };
 
+  const updateConfig = (patch: Partial<HttpConfig>): void => {
+    updateSelectedNodeConfig({
+      http: { ...httpConfig, ...patch },
+    });
+  };
+
   return (
     <div className='space-y-4'>
-      <FormField label='URL'>
-        <Input
-          variant='subtle'
+      <UrlField value={httpConfig.url} onChange={(url) => updateConfig({ url })} />
+
+      <MethodAndResponseModeFields
+        method={httpConfig.method}
+        responseMode={httpConfig.responseMode}
+        onMethodChange={(method) => updateConfig({ method })}
+        onResponseModeChange={(responseMode) => updateConfig({ responseMode })}
+      />
+
+      <HeadersField value={httpConfig.headers} onChange={(headers) => updateConfig({ headers })} />
+
+      <BodyTemplateField
+        value={httpConfig.bodyTemplate}
+        onChange={(bodyTemplate) => updateConfig({ bodyTemplate })}
+      />
+
+      <ResponsePathField
+        value={httpConfig.responsePath}
+        onChange={(responsePath) => updateConfig({ responsePath })}
+      />
+    </div>
+  );
+}
+
+function UrlField({ value, onChange }: { value: string; onChange: (v: string) => void }): React.JSX.Element {
+  return (
+    <FormField label='URL'>
+      <Input
+        variant='subtle'
+        size='sm'
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label='URL'
+        title='URL'
+      />
+    </FormField>
+  );
+}
+
+function MethodAndResponseModeFields({
+  method,
+  responseMode,
+  onMethodChange,
+  onResponseModeChange,
+}: {
+  method: HttpConfig['method'];
+  responseMode: HttpConfig['responseMode'];
+  onMethodChange: (v: HttpConfig['method']) => void;
+  onResponseModeChange: (v: HttpConfig['responseMode']) => void;
+}): React.JSX.Element {
+  return (
+    <div className='grid gap-3 sm:grid-cols-2'>
+      <FormField label='Method'>
+        <SelectSimple
           size='sm'
-          value={httpConfig.url}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-            updateSelectedNodeConfig({
-              http: { ...httpConfig, url: event.target.value },
-            })
-          }
-         aria-label='URL' title='URL'/>
+          variant='subtle'
+          value={method}
+          onValueChange={(v) => onMethodChange(v as HttpConfig['method'])}
+          options={methodOptions}
+          placeholder='Select method'
+          ariaLabel='Select method'
+          title='Select method'
+        />
       </FormField>
-      <div className='grid gap-3 sm:grid-cols-2'>
-        <FormField label='Method'>
-          <SelectSimple
-            size='sm'
-            variant='subtle'
-            value={httpConfig.method}
-            onValueChange={(value: string): void =>
-              updateSelectedNodeConfig({
-                http: { ...httpConfig, method: value as HttpConfig['method'] },
-              })
-            }
-            options={methodOptions}
-            placeholder='Select method'
-           ariaLabel='Select method' title='Select method'/>
-        </FormField>
-        <FormField label='Response Mode'>
-          <SelectSimple
-            size='sm'
-            variant='subtle'
-            value={httpConfig.responseMode}
-            onValueChange={(value: string): void =>
-              updateSelectedNodeConfig({
-                http: {
-                  ...httpConfig,
-                  responseMode: value as HttpConfig['responseMode'],
-                },
-              })
-            }
-            options={responseModeOptions}
-            placeholder='Select mode'
-           ariaLabel='Select mode' title='Select mode'/>
-        </FormField>
-      </div>
-      <FormField label='Headers (JSON)'>
-        <Textarea
-          variant='subtle'
+      <FormField label='Response Mode'>
+        <SelectSimple
           size='sm'
-          className='min-h-[90px]'
-          value={httpConfig.headers}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-            updateSelectedNodeConfig({
-              http: { ...httpConfig, headers: event.target.value },
-            })
-          }
-         aria-label='Headers (JSON)' title='Headers (JSON)'/>
-      </FormField>
-      <FormField label='Body Template'>
-        <Textarea
           variant='subtle'
-          size='sm'
-          className='min-h-[110px]'
-          value={httpConfig.bodyTemplate}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-            updateSelectedNodeConfig({
-              http: { ...httpConfig, bodyTemplate: event.target.value },
-            })
-          }
-         aria-label='Body Template' title='Body Template'/>
-      </FormField>
-      <FormField
-        label='Response Path'
-        description='Optional JSON path to extract a field from the response.'
-      >
-        <Input
-          variant='subtle'
-          size='sm'
-          value={httpConfig.responsePath}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-            updateSelectedNodeConfig({
-              http: { ...httpConfig, responsePath: event.target.value },
-            })
-          }
-         aria-label='Response Path' title='Response Path'/>
+          value={responseMode}
+          onValueChange={(v) => onResponseModeChange(v as HttpConfig['responseMode'])}
+          options={responseModeOptions}
+          placeholder='Select mode'
+          ariaLabel='Select mode'
+          title='Select mode'
+        />
       </FormField>
     </div>
+  );
+}
+
+function HeadersField({ value, onChange }: { value: string; onChange: (v: string) => void }): React.JSX.Element {
+  return (
+    <FormField label='Headers (JSON)'>
+      <Textarea
+        variant='subtle'
+        size='sm'
+        className='min-h-[90px]'
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label='Headers (JSON)'
+        title='Headers (JSON)'
+      />
+    </FormField>
+  );
+}
+
+function BodyTemplateField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}): React.JSX.Element {
+  return (
+    <FormField label='Body Template'>
+      <Textarea
+        variant='subtle'
+        size='sm'
+        className='min-h-[110px]'
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label='Body Template'
+        title='Body Template'
+      />
+    </FormField>
+  );
+}
+
+function ResponsePathField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}): React.JSX.Element {
+  return (
+    <FormField
+      label='Response Path'
+      description='Optional JSON path to extract a field from the response.'
+    >
+      <Input
+        variant='subtle'
+        size='sm'
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label='Response Path'
+        title='Response Path'
+      />
+    </FormField>
   );
 }

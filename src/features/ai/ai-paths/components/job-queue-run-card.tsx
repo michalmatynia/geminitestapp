@@ -275,7 +275,7 @@ export function JobQueueRunCard({ runId, run }: JobQueueRunCardProps): React.JSX
             onClick={onToggleStream}
             disabled={!isExpanded}
           >
-            {paused ? 'Resume stream' : 'Pause stream'}
+            {paused ? 'Reconnect stream' : 'Pause stream'}
           </AiPathsPillButton>
           <AiPathsPillButton
             className='text-gray-200 hover:bg-muted/60'

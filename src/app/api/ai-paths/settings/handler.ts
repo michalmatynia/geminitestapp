@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   deleteAiPathsSettings,
+  ensureCanonicalStarterWorkflowSettingsForPathIds,
   listAiPathsSettings,
   upsertAiPathsSetting,
   upsertAiPathsSettingsBulk,
@@ -57,8 +58,17 @@ const parseRequestedKeys = (req: NextRequest): string[] => {
   return unique;
 };
 
+const getRequestedConfigPathIds = (keys: string[]): string[] =>
+  keys
+    .filter((key) => key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX))
+    .map((key) => key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length))
+    .filter((pathId) => pathId.length > 0);
+
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const requestedKeys = parseRequestedKeys(req);
+  if (requestedKeys.length > 0) {
+    await ensureCanonicalStarterWorkflowSettingsForPathIds(getRequestedConfigPathIds(requestedKeys));
+  }
   const startedAt = Date.now();
   const settings =
     requestedKeys.length > 0

@@ -170,7 +170,7 @@ export interface UseAiPathsRuntimeResult {
   handleFireTrigger: (triggerNode: AiNode, event?: React.MouseEvent) => void;
   handleFireTriggerPersistent: (triggerNode: AiNode, event?: React.MouseEvent) => Promise<void>;
   handlePauseRun: () => void;
-  handleResumeRun: () => void;
+  handleContinueRun: () => void;
   handleStepRun: (triggerNode?: AiNode) => void;
   handleCancelRun: () => void;
   runStatus: RunStatus;

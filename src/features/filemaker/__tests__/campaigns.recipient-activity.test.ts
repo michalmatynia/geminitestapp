@@ -99,6 +99,18 @@ describe('filemaker campaign settings', () => {
             createdAt: '2026-03-30T11:00:00.000Z',
             updatedAt: '2026-03-30T11:00:00.000Z',
           },
+          {
+            id: 'event-7',
+            campaignId: 'campaign-analytics',
+            runId: 'run-1',
+            deliveryId: 'delivery-1',
+            type: 'reply_received',
+            mailThreadId: 'thread-reply-1',
+            mailMessageId: 'message-reply-1',
+            message: 'jan@example.com replied to the campaign email.',
+            createdAt: '2026-03-31T08:00:00.000Z',
+            updatedAt: '2026-03-31T08:00:00.000Z',
+          },
         ],
       })
     );
@@ -121,22 +133,31 @@ describe('filemaker campaign settings', () => {
         skippedCount: 1,
         openCount: 1,
         clickCount: 1,
+        replyCount: 1,
         unsubscribeCount: 1,
         resubscribeCount: 1,
         latestSentAt: '2026-03-27T10:05:00.000Z',
         latestOpenAt: '2026-03-28T12:00:00.000Z',
         latestClickAt: '2026-03-28T13:00:00.000Z',
+        latestReplyAt: '2026-03-31T08:00:00.000Z',
         latestUnsubscribeAt: '2026-03-29T09:00:00.000Z',
         latestResubscribeAt: '2026-03-30T11:00:00.000Z',
       })
     );
     expect(summary.recentActivity.map((entry) => entry.type)).toEqual([
+      'reply_received',
       'resubscribed',
       'unsubscribed',
       'clicked',
       'opened',
       'delivery_sent',
     ]);
+    expect(summary.recentActivity[0]).toEqual(
+      expect.objectContaining({
+        mailThreadId: 'thread-reply-1',
+        mailMessageId: 'message-reply-1',
+      })
+    );
   });
 
   it('summarizes recipient activity across all campaigns when no campaign scope is provided', () => {

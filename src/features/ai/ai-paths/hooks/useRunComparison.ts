@@ -2,24 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import {
-  buildRunTraceComparison,
-  runTraceComparisonRowHasResumeChange,
-} from '../components/run-trace-utils';
+import { buildRunTraceComparison } from '../components/run-trace-utils';
 
 export function useRunComparison(runs: AiPathRunRecord[]) {
   const [compareMode, setCompareMode] = useState(false);
   const [primaryRunId, setPrimaryRunId] = useState<string | null>(null);
   const [secondaryRunId, setSecondaryRunId] = useState<string | null>(null);
   const [compareInspectorRowKey, setCompareInspectorRowKey] = useState<string | null>(null);
-  const [compareResumeChangesOnly, setCompareResumeChangesOnly] = useState(false);
 
   const toggleCompareMode = useCallback(() => {
     setCompareMode((prev) => !prev);
     setPrimaryRunId(null);
     setSecondaryRunId(null);
     setCompareInspectorRowKey(null);
-    setCompareResumeChangesOnly(false);
   }, []);
 
   const primaryRun = useMemo(
@@ -38,11 +33,8 @@ export function useRunComparison(runs: AiPathRunRecord[]) {
   );
 
   const displayedComparisonRows = useMemo(
-    () =>
-      compareResumeChangesOnly
-        ? (traceComparison?.rows.filter((row) => runTraceComparisonRowHasResumeChange(row)) ?? [])
-        : (traceComparison?.rows ?? []),
-    [compareResumeChangesOnly, traceComparison]
+    () => traceComparison?.rows ?? [],
+    [traceComparison]
   );
 
   useEffect(() => {
@@ -60,8 +52,6 @@ export function useRunComparison(runs: AiPathRunRecord[]) {
     setSecondaryRunId,
     compareInspectorRowKey,
     setCompareInspectorRowKey,
-    compareResumeChangesOnly,
-    setCompareResumeChangesOnly,
     primaryRun,
     secondaryRun,
     traceComparison,

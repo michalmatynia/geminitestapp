@@ -75,11 +75,14 @@ export type FilemakerEmailCampaignAnalytics = {
   resubscribeRatePercent: number;
   netUnsubscribeCount: number;
   netUnsubscribeRatePercent: number;
+  replyCount: number;
+  replyRatePercent: number;
   latestRunStatus: FilemakerEmailCampaignRunStatus | null;
   latestRunAt: string | null;
   latestActivityAt: string | null;
   latestOpenAt: string | null;
   latestClickAt: string | null;
+  latestReplyAt: string | null;
   latestUnsubscribeAt: string | null;
   latestResubscribeAt: string | null;
   topClickedLinks: FilemakerEmailCampaignLinkPerformance[];
@@ -262,6 +265,7 @@ export type FilemakerEmailCampaignRecipientActivityType =
   | 'delivery_bounced'
   | 'opened'
   | 'clicked'
+  | 'reply_received'
   | 'unsubscribed'
   | 'resubscribed';
 
@@ -272,6 +276,8 @@ export type FilemakerEmailCampaignRecipientActivityItem = {
   campaignName: string | null;
   runId: string | null;
   deliveryId: string | null;
+  mailThreadId?: string | null;
+  mailMessageId?: string | null;
   timestamp: string;
   details: string | null;
 };
@@ -287,11 +293,13 @@ export type FilemakerEmailCampaignRecipientActivitySummary = {
   skippedCount: number;
   openCount: number;
   clickCount: number;
+  replyCount: number;
   unsubscribeCount: number;
   resubscribeCount: number;
   latestSentAt: string | null;
   latestOpenAt: string | null;
   latestClickAt: string | null;
+  latestReplyAt: string | null;
   latestUnsubscribeAt: string | null;
   latestResubscribeAt: string | null;
   recentActivity: FilemakerEmailCampaignRecipientActivityItem[];

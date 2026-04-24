@@ -86,5 +86,4 @@ The platform now exposes an AI-first concurrent agentic coding baseline:
 - [Forward-Only Execution](./forward-only-execution.md)
 - [Agent Discovery](./agent-discovery.md)
 - [Shared Lease Service](./shared-lease-service.md)
-
-- [AI Paths resume vs handoff](./ai-paths-resume-vs-handoff.md)
+- [Forward-Only Execution](./forward-only-execution.md)

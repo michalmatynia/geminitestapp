@@ -31,7 +31,7 @@ vi.mock('@/features/ai/ai-paths/server/starter-workflows-settings', () => ({
     affectedCount: 0,
     nextRecords: records,
   }),
-  restoreStaticStarterWorkflowBundle: () => ({
+  seedCanonicalStarterWorkflows: () => ({
     affectedCount: 5,
     nextRecords: [
       {
@@ -107,7 +107,7 @@ describe('settings-store keyset cache', () => {
     expect(fetchMongoAiPathsSettingsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('does not fall back to the static recovery bundle by default when keyset Mongo reads fail', async () => {
+  it('does not synthesize starter workflow settings when keyset Mongo reads fail', async () => {
     fetchMongoAiPathsSettingsMock.mockRejectedValue(new Error('mongo unavailable'));
 
     const { getAiPathsSettings } = await loadSettingsStore();
@@ -121,8 +121,8 @@ describe('settings-store keyset cache', () => {
     ).rejects.toThrow('mongo unavailable');
   });
 
-  it('does not fall back to the static recovery bundle even when the legacy fallback env is enabled', async () => {
-    process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'] = 'true';
+  it('does not synthesize starter workflow settings when an obsolete fallback env is enabled', async () => {
+    process.env['AI_PATHS_STATIC_SETTINGS_FALLBACK_ENABLED'] = 'true';
     fetchMongoAiPathsSettingsMock.mockRejectedValue(new Error('mongo unavailable'));
 
     const { getAiPathsSettings } = await loadSettingsStore();
@@ -136,8 +136,8 @@ describe('settings-store keyset cache', () => {
     ).rejects.toThrow('mongo unavailable');
   });
 
-  it('does not fall back to the static recovery bundle when Mongo is not configured', async () => {
-    process.env['AI_PATHS_STATIC_RECOVERY_FALLBACK_ENABLED'] = 'true';
+  it('does not synthesize starter workflow settings when Mongo is not configured', async () => {
+    process.env['AI_PATHS_STATIC_SETTINGS_FALLBACK_ENABLED'] = 'true';
     assertMongoConfiguredMock.mockImplementation(() => {
       throw new Error('AI Paths settings require MongoDB.');
     });

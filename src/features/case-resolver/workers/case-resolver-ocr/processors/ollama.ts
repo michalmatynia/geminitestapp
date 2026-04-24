@@ -40,7 +40,7 @@ export const runOllamaOcrRequest = async (input: {
   if (!response.ok) {
     const responseBody = await response.text();
     const fallback = `OCR runtime request failed (${response.status})`;
-    throw new Error(responseBody.trim() || fallback);
+    throw new Error(responseBody.trim() !== '' ? responseBody.trim() : fallback);
   }
 
   const payload = (await response.json()) as OllamaChatPayload;

@@ -469,7 +469,7 @@ describe('AdminFilemakerMail pages', () => {
     fireEvent.click(screen.getByRole('button', { name: /Add Mailbox/ }));
 
     await waitFor(() => {
-      expect(routerReplaceMock).toHaveBeenCalledWith('/admin/filemaker/mail');
+      expect(routerReplaceMock).toHaveBeenCalledWith('/admin/filemaker/mail?panel=settings');
     });
   });
 

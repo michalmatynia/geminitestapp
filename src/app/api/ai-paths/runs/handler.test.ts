@@ -6,8 +6,6 @@ const {
   requireAiPathsRunAccessMock,
   canAccessGlobalAiPathRunsMock,
   enforceAiPathsActionRateLimitMock,
-  recoverStaleRunningRunsMock,
-  recoverStaleBaseExportRunsMock,
   resolvePathRunRepositoryMock,
   deletePathRunsWithRepositoryMock,
 } = vi.hoisted(() => ({
@@ -15,8 +13,6 @@ const {
   requireAiPathsRunAccessMock: vi.fn(),
   canAccessGlobalAiPathRunsMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
-  recoverStaleRunningRunsMock: vi.fn(),
-  recoverStaleBaseExportRunsMock: vi.fn(),
   resolvePathRunRepositoryMock: vi.fn(),
   deletePathRunsWithRepositoryMock: vi.fn(),
 }));
@@ -26,9 +22,6 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
   requireAiPathsRunAccess: requireAiPathsRunAccessMock,
   canAccessGlobalAiPathRuns: canAccessGlobalAiPathRunsMock,
   enforceAiPathsActionRateLimit: enforceAiPathsActionRateLimitMock,
-  recoverStaleRunningRuns: recoverStaleRunningRunsMock,
-  resolveAiPathsStaleRunningCleanupIntervalMs: vi.fn(() => 60_000),
-  resolveAiPathsStaleRunningMaxAgeMs: vi.fn(() => 300_000),
   deletePathRunsWithRepository: deletePathRunsWithRepositoryMock,
 }));
 
@@ -41,11 +34,7 @@ vi.mock('@/shared/lib/ai-paths/services/path-run-repository', async (importOrigi
   };
 });
 
-vi.mock('@/features/integrations/services/base-export-run-recovery', () => ({
-  recoverStaleBaseExportRuns: (...args: unknown[]) => recoverStaleBaseExportRunsMock(...args),
-}));
-
-import { __testOnly, getHandler } from './handler';
+import { __testOnly, getPathRunsHandler as getHandler } from './handler';
 
 describe('ai-paths runs handler', () => {
   const repo = {
@@ -58,8 +47,6 @@ describe('ai-paths runs handler', () => {
     requireAiPathsRunAccessMock.mockReset().mockResolvedValue({ userId: 'user-1' });
     canAccessGlobalAiPathRunsMock.mockReset().mockReturnValue(false);
     enforceAiPathsActionRateLimitMock.mockReset().mockResolvedValue(undefined);
-    recoverStaleRunningRunsMock.mockReset().mockResolvedValue(undefined);
-    recoverStaleBaseExportRunsMock.mockReset().mockResolvedValue(0);
     deletePathRunsWithRepositoryMock.mockReset().mockResolvedValue({ count: 0 });
     repo.listRuns.mockReset().mockResolvedValue({
       runs: [{ id: 'run-1', status: 'queued', pathId: 'path-1' }],
@@ -157,16 +144,17 @@ describe('ai-paths runs handler', () => {
     );
   });
 
-  it('repairs stale Base export runs before listing the Base export path', async () => {
+  it('lists Base export runs without invoking side effects', async () => {
     const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/runs?pathId=integration-base-export&fresh=1'),
       {} as Parameters<typeof getHandler>[1]
     );
 
     expect(response.status).toBe(200);
-    expect(recoverStaleBaseExportRunsMock).toHaveBeenCalledWith({
-      repo,
-      userId: 'user-1',
-    });
+    expect(repo.listRuns).toHaveBeenCalledWith(
+      expect.objectContaining({
+        pathId: 'integration-base-export',
+      })
+    );
   });
 });

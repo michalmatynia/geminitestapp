@@ -12,9 +12,9 @@ import type {
 } from './types';
 import { STARTER_WORKFLOW_REGISTRY } from './templates';
 
-export type StarterWorkflowRecoveryBundleScope = 'auto_seed' | 'static_recovery';
+export type StarterWorkflowSeedBundleScope = 'auto_seed' | 'canonical_seed';
 
-export type StarterWorkflowRecoveryBundle = {
+export type StarterWorkflowSeedBundle = {
   entries: AiPathTemplateRegistryEntry[];
   pathMetas: PathMeta[];
   pathConfigs: PathConfig[];
@@ -34,15 +34,15 @@ export const getAutoSeedStarterWorkflowEntries = (): AiPathTemplateRegistryEntry
     (left, right) => (left.seedPolicy?.sortOrder ?? 0) - (right.seedPolicy?.sortOrder ?? 0)
   );
 
-export const getStaticRecoveryStarterWorkflowEntries = (): AiPathTemplateRegistryEntry[] =>
+export const getCanonicalSeedStarterWorkflowEntries = (): AiPathTemplateRegistryEntry[] =>
   STARTER_WORKFLOW_REGISTRY.filter(
     (entry) =>
       typeof entry.seedPolicy?.defaultPathId === 'string' &&
       entry.seedPolicy.defaultPathId.trim().length > 0 &&
-      entry.seedPolicy.restoreOnStaticRecovery === true
+      entry.seedPolicy.includeInCanonicalSeed === true
   ).sort((left, right) => (left.seedPolicy?.sortOrder ?? 0) - (right.seedPolicy?.sortOrder ?? 0));
 
-export const getStaticRecoveryStarterWorkflowEntryByDefaultPathId = (
+export const getCanonicalSeedStarterWorkflowEntryByDefaultPathId = (
   pathId: string
 ): AiPathTemplateRegistryEntry | null => {
   const normalizedPathId = pathId.trim();
@@ -51,7 +51,7 @@ export const getStaticRecoveryStarterWorkflowEntryByDefaultPathId = (
   }
 
   return (
-    getStaticRecoveryStarterWorkflowEntries().find(
+    getCanonicalSeedStarterWorkflowEntries().find(
       (entry) => entry.seedPolicy?.defaultPathId === normalizedPathId
     ) ?? null
   );
@@ -93,7 +93,7 @@ export const materializeStarterWorkflowPathConfig = (
   );
 };
 
-const buildRecoveryPathMeta = (config: PathConfig): PathMeta => {
+const buildStarterPathMeta = (config: PathConfig): PathMeta => {
   const fallbackTime = new Date().toISOString();
   const createdAt =
     typeof config.updatedAt === 'string' && config.updatedAt.trim().length > 0
@@ -114,7 +114,7 @@ const buildRecoveryPathMeta = (config: PathConfig): PathMeta => {
   };
 };
 
-const buildRecoveryTriggerButtonRecord = (
+const buildStarterTriggerButtonRecord = (
   preset: NonNullable<AiPathTemplateRegistryEntry['triggerButtonPresets']>[number],
   timestamp: string
 ): AiTriggerButtonRecord => ({
@@ -134,13 +134,13 @@ const buildRecoveryTriggerButtonRecord = (
   sortIndex: preset.sortIndex ?? 0,
 });
 
-export const materializeStarterWorkflowRecoveryBundle = (
-  scope: StarterWorkflowRecoveryBundleScope = 'static_recovery'
-): StarterWorkflowRecoveryBundle => {
+export const materializeStarterWorkflowSeedBundle = (
+  scope: StarterWorkflowSeedBundleScope = 'canonical_seed'
+): StarterWorkflowSeedBundle => {
   const entries =
     scope === 'auto_seed'
       ? getAutoSeedStarterWorkflowEntries()
-      : getStaticRecoveryStarterWorkflowEntries();
+      : getCanonicalSeedStarterWorkflowEntries();
   const timestamp = new Date().toISOString();
   const pathConfigs = entries.flatMap((entry): PathConfig[] => {
     const pathId = entry.seedPolicy?.defaultPathId?.trim() ?? '';
@@ -152,10 +152,10 @@ export const materializeStarterWorkflowRecoveryBundle = (
       }),
     ];
   });
-  const pathMetas = pathConfigs.map((config) => buildRecoveryPathMeta(config));
+  const pathMetas = pathConfigs.map((config) => buildStarterPathMeta(config));
   const triggerButtons = entries.flatMap((entry): AiTriggerButtonRecord[] =>
     (entry.triggerButtonPresets ?? []).map((preset) =>
-      buildRecoveryTriggerButtonRecord(preset, timestamp)
+      buildStarterTriggerButtonRecord(preset, timestamp)
     )
   );
 

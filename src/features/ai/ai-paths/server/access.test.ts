@@ -21,10 +21,6 @@ vi.mock('@/features/auth/server', () => ({
   readOptionalServerAuthSession: readOptionalServerAuthSessionMock,
 }));
 
-vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
-  resolveAiPathsStaleRunningMaxAgeMs: () => 300_000,
-}));
-
 vi.mock('@/shared/lib/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: getPathRunRepositoryMock,
 }));
@@ -65,7 +61,6 @@ describe('ai paths access helpers', () => {
     process.env['AI_PATHS_RUN_ACTIVE_LIMIT'] = '1';
     process.env['AI_PATHS_RUN_GLOBAL_QUEUED_LIMIT'] = '3';
     process.env['AI_PATHS_RUN_RATE_QUERY_TIMEOUT_MS'] = '100';
-    process.env['AI_PATHS_RUN_ACTIVE_STALE_RECOVERY_INTERVAL_MS'] = '0';
     getPathRunRepositoryMock.mockResolvedValue({
       listRuns: vi.fn().mockResolvedValue({ runs: [], total: 0 }),
       getQueueStats: vi.fn().mockResolvedValue({ queuedCount: 0 }),

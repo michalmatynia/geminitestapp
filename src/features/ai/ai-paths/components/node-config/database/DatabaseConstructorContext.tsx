@@ -103,32 +103,45 @@ export function DatabaseConstructorContextProvider({
   value: DatabaseConstructorContextValue;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const stateValue = useDatabaseConstructorStateValue(value);
+  const actionsValue = useDatabaseConstructorActionsValue(value);
+
+  return (
+    <DatabaseConstructorActionsContext.Provider value={actionsValue}>
+      <DatabaseConstructorStateContext.Provider value={stateValue}>
+        {children}
+      </DatabaseConstructorStateContext.Provider>
+    </DatabaseConstructorActionsContext.Provider>
+  );
+}
+
+function useDatabaseConstructorStateValue(value: DatabaseConstructorContextValue): DatabaseConstructorStateContextValue {
+  return useMemo<DatabaseConstructorStateContextValue>(() => {
+    const {
+      setPendingAiQuery: _1,
+      setAiQueries: _2,
+      setSelectedAiQueryId: _3,
+      applyDatabasePreset: _4,
+      openSaveQueryPresetModal: _5,
+      updateQueryConfig: _6,
+      onSyncSchema: _7,
+      mapInputsToTargets: _8,
+      updateMapping: _9,
+      removeMapping: _10,
+      addMapping: _11,
+      setSelectedSnippetIndex: _12,
+      insertTemplateSnippet: _13,
+      applyQueryTemplateUpdate: _14,
+      insertQueryPlaceholder: _15,
+      insertAiPromptPlaceholder: _16,
+      ...state
+    } = value;
+    return state;
+  }, [value]);
+}
+
+function useDatabaseConstructorActionsValue(value: DatabaseConstructorContextValue): DatabaseConstructorActionsContextValue {
   const {
-    pendingAiQuery,
-    aiQueries,
-    selectedAiQueryId,
-    presetOptions,
-    databaseConfig,
-    queryConfig,
-    resolvedProvider,
-    operation,
-    queryTemplateValue,
-    queryTemplateRef,
-    sampleState,
-    parsedSampleError,
-    connectedPlaceholders,
-    hasSchemaConnection,
-    fetchedDbSchema,
-    schemaMatrix,
-    schemaSyncing,
-    schemaLoading,
-    bundleKeys,
-    aiPromptRef,
-    mappings,
-    availablePorts,
-    uniqueTargetPathOptions,
-    codeSnippets,
-    selectedSnippetIndex,
     setPendingAiQuery,
     setAiQueries,
     setSelectedAiQueryId,
@@ -147,64 +160,7 @@ export function DatabaseConstructorContextProvider({
     insertAiPromptPlaceholder,
   } = value;
 
-  const stateValue = useMemo<DatabaseConstructorStateContextValue>(
-    () => ({
-      pendingAiQuery,
-      aiQueries,
-      selectedAiQueryId,
-      presetOptions,
-      databaseConfig,
-      queryConfig,
-      resolvedProvider,
-      operation,
-      queryTemplateValue,
-      queryTemplateRef,
-      sampleState,
-      parsedSampleError,
-      connectedPlaceholders,
-      hasSchemaConnection,
-      fetchedDbSchema,
-      schemaMatrix,
-      schemaSyncing,
-      schemaLoading,
-      bundleKeys,
-      aiPromptRef,
-      mappings,
-      availablePorts,
-      uniqueTargetPathOptions,
-      codeSnippets,
-      selectedSnippetIndex,
-    }),
-    [
-      pendingAiQuery,
-      aiQueries,
-      selectedAiQueryId,
-      presetOptions,
-      databaseConfig,
-      queryConfig,
-      resolvedProvider,
-      operation,
-      queryTemplateValue,
-      queryTemplateRef,
-      sampleState,
-      parsedSampleError,
-      connectedPlaceholders,
-      hasSchemaConnection,
-      fetchedDbSchema,
-      schemaMatrix,
-      schemaSyncing,
-      schemaLoading,
-      bundleKeys,
-      aiPromptRef,
-      mappings,
-      availablePorts,
-      uniqueTargetPathOptions,
-      codeSnippets,
-      selectedSnippetIndex,
-    ]
-  );
-
-  const actionsValue = useMemo<DatabaseConstructorActionsContextValue>(
+  return useMemo<DatabaseConstructorActionsContextValue>(
     () => ({
       setPendingAiQuery,
       setAiQueries,
@@ -241,14 +197,6 @@ export function DatabaseConstructorContextProvider({
       insertQueryPlaceholder,
       insertAiPromptPlaceholder,
     ]
-  );
-
-  return (
-    <DatabaseConstructorActionsContext.Provider value={actionsValue}>
-      <DatabaseConstructorStateContext.Provider value={stateValue}>
-        {children}
-      </DatabaseConstructorStateContext.Provider>
-    </DatabaseConstructorActionsContext.Provider>
   );
 }
 

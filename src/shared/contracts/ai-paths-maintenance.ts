@@ -4,7 +4,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'compact_oversized_configs',
   'repair_path_index',
   'prune_deprecated_starter_workflows',
-  'restore_static_recovery_bundle',
+  'seed_canonical_starter_workflows',
   'ensure_starter_workflow_defaults',
   'refresh_starter_workflow_configs',
   'normalize_runtime_kernel_settings',

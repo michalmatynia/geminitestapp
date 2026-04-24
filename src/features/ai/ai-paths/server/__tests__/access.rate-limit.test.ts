@@ -190,7 +190,7 @@ describe('enforceAiPathsRunRateLimit', () => {
     ).rejects.toThrow('Too many active runs. Wait for one to finish before starting another.');
   });
 
-  it('does not trigger stale-run recovery from the admission hot path', async () => {
+  it('does not mark stale runs from the admission hot path', async () => {
     listRunsMock.mockResolvedValueOnce({ runs: [], total: 0 }).mockResolvedValueOnce({
       runs: [
         buildRun('run-r1', 'running'),

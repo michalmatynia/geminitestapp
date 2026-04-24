@@ -11,7 +11,7 @@ export type StarterWorkflowSeedPolicy = {
   isActive?: boolean;
   isLocked?: boolean;
   sortOrder?: number;
-  restoreOnStaticRecovery?: boolean;
+  includeInCanonicalSeed?: boolean;
 };
 
 export type StarterWorkflowTriggerPreset = {

@@ -1,28 +1,23 @@
-import type { RuntimeTraceResumeDecision, RuntimeTraceResumeMode } from '@/shared/contracts/ai-paths-runtime';
 import type { RuntimeHistoryEntry } from '@/shared/contracts/ai-paths-runtime';
 
 export type RunHistoryActionSource = {
   status?: string | null;
-  resumeMode?: RuntimeTraceResumeMode | null;
-  resumeDecision?: RuntimeTraceResumeDecision | null;
 };
 
-export type RunHistoryEntryActionKind = 'replay_run';
+export type RunHistoryEntryActionKind = 'rerun_from_inputs';
 
 export type RunHistoryEntryAction = {
   kind: RunHistoryEntryActionKind;
   label: string;
   title: string;
   description: string;
-  resumeMode: 'resume' | 'replay' | null;
 };
 
 const RUN_HISTORY_ACTION: RunHistoryEntryAction = {
-  kind: 'replay_run',
-  label: 'Replay run',
-  title: 'Replay this run from the recorded inputs captured in this history entry.',
-  description: 'Forward-only mode replays the full run from recorded inputs.',
-  resumeMode: 'replay',
+  kind: 'rerun_from_inputs',
+  label: 'Run again',
+  title: 'Start a fresh run from the recorded inputs captured in this history entry.',
+  description: 'Forward-only mode starts a fresh run from recorded inputs.',
 };
 
 export const resolveRunHistoryAction = (_input: RunHistoryActionSource): RunHistoryEntryAction =>
@@ -33,8 +28,6 @@ export const resolveRunHistoryEntryAction = (
 ): RunHistoryEntryAction =>
   resolveRunHistoryAction({
     status: entry.status,
-    resumeMode: entry.resumeMode ?? null,
-    resumeDecision: entry.resumeDecision ?? null,
   });
 
 export const runHistoryEntryActionTitle = (

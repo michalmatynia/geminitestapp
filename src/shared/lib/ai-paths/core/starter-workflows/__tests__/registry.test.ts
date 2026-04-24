@@ -4,7 +4,7 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import {
   STARTER_WORKFLOW_REGISTRY,
   computeStarterWorkflowGraphHash,
-  materializeStarterWorkflowRecoveryBundle,
+  materializeStarterWorkflowSeedBundle,
   materializeStarterWorkflowPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
@@ -570,8 +570,8 @@ describe('starter workflow registry', () => {
     });
   });
 
-  it('materializes a static recovery bundle that includes all canonical recoverable workflows', () => {
-    const bundle = materializeStarterWorkflowRecoveryBundle('static_recovery');
+  it('materializes a canonical starter bundle that includes all canonical seed workflows', () => {
+    const bundle = materializeStarterWorkflowSeedBundle('canonical_seed');
 
     expect(bundle.pathConfigs.some((config) => config.id === 'path_descv3lite')).toBe(true);
     expect(bundle.pathConfigs.some((config) => config.id === 'path_name_normalize_v1')).toBe(true);

@@ -30,7 +30,7 @@ export function useCanvasTouchHandlers(args: {
   const maybeStartTouchPanInertia = useCallback(
     (lastSample: TouchPointSample): void => {
       const now = performance.now();
-      if (now - (lastSample.ts ?? lastSample.time ?? 0) > 100) return;
+      if (now - (lastSample.ts ?? 0) > 100) return;
       args.nav.startPanInertia(lastSample.vx ?? 0, lastSample.vy ?? 0);
     },
     [args.nav]

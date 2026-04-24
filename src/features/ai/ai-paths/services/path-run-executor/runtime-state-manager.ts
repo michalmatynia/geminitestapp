@@ -15,19 +15,21 @@ import { sanitizeRuntimeState } from '../path-run-executor.logic';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
+export interface PathRunRuntimeStateManagerParams {
+  run: AiPathRunRecord;
+  initialRuntimeState: RuntimeState;
+  accInputs: Record<string, RuntimePortValues>;
+  accOutputs: Record<string, RuntimePortValues>;
+  repo: AiPathRunRepository;
+  resolvedRunStartedAt: string;
+}
+
 export class PathRunRuntimeStateManager {
   private latestSnapshot: RuntimeState | null = null;
   private historyEntriesByNode = new Map<string, RuntimeHistoryEntry[]>();
   private nodeStatusOverrides = new Map<string, RuntimeState['nodeStatuses'][string]>();
 
-  constructor(
-    private run: AiPathRunRecord,
-    private initialRuntimeState: RuntimeState,
-    private accInputs: Record<string, RuntimePortValues>,
-    private accOutputs: Record<string, RuntimePortValues>,
-    private repo: AiPathRunRepository,
-    private resolvedRunStartedAt: string
-  ) {}
+  constructor(private params: PathRunRuntimeStateManagerParams) {}
 
   setLatestSnapshot(snapshot: RuntimeState | null): void {
     this.latestSnapshot = snapshot;
@@ -45,7 +47,7 @@ export class PathRunRuntimeStateManager {
 
   private async loadRunNodesForRuntimeRepair(): Promise<AiPathRunNodeRecord[]> {
     try {
-      return await this.repo.listRunNodes(this.run.id);
+      return await this.params.repo.listRunNodes(this.params.run.id);
     } catch (error) {
       void ErrorSystem.captureException(error);
       return [];
@@ -54,15 +56,15 @@ export class PathRunRuntimeStateManager {
 
   async buildCurrentRuntimeStateSnapshot(): Promise<RuntimeState> {
     const currentRun = {
-      ...this.run,
+      ...this.params.run,
       status: 'running' as const,
-      startedAt: this.resolvedRunStartedAt,
+      startedAt: this.params.resolvedRunStartedAt,
     };
 
     // The partial update from our local tracking
     const localUpdate: Partial<RuntimeState> = {
-      inputs: this.accInputs,
-      outputs: this.accOutputs,
+      inputs: this.params.accInputs,
+      outputs: this.params.accOutputs,
       nodeStatuses: Object.fromEntries(this.nodeStatusOverrides),
       history: Object.fromEntries(this.historyEntriesByNode),
     };
@@ -74,7 +76,7 @@ export class PathRunRuntimeStateManager {
     }
     updates.push(localUpdate);
 
-    const reconciled = reconcileRuntimeState(this.initialRuntimeState, updates);
+    const reconciled = reconcileRuntimeState(this.params.initialRuntimeState, updates);
 
     // Ensure the currentRun is correctly set
     const candidate: RuntimeState = {

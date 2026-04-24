@@ -24,7 +24,7 @@ export function FileTypeIcon({
 }
 
 export function formatShortDate(isoDate: string | null | undefined): string {
-  if (!isoDate) return '—';
+  if (isoDate === null || isoDate === undefined || isoDate === '') return '—';
   const d = new Date(isoDate);
   if (isNaN(d.getTime())) return '—';
   return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });

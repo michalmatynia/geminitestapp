@@ -9,7 +9,7 @@ const mockState = vi.hoisted(() => ({
   setAutoRefreshEnabled: vi.fn(),
   setAutoRefreshInterval: vi.fn(),
   pauseAllStreams: vi.fn(),
-  resumeAllStreams: vi.fn(),
+  reconnectAllStreams: vi.fn(),
 }));
 
 vi.mock('../JobQueueContext', () => ({
@@ -20,7 +20,7 @@ vi.mock('../JobQueueContext', () => ({
     setAutoRefreshEnabled: mockState.setAutoRefreshEnabled,
     setAutoRefreshInterval: mockState.setAutoRefreshInterval,
     pauseAllStreams: mockState.pauseAllStreams,
-    resumeAllStreams: mockState.resumeAllStreams,
+    reconnectAllStreams: mockState.reconnectAllStreams,
   }),
 }));
 
@@ -84,7 +84,7 @@ describe('JobQueueControls', () => {
     mockState.setAutoRefreshEnabled.mockReset();
     mockState.setAutoRefreshInterval.mockReset();
     mockState.pauseAllStreams.mockReset();
-    mockState.resumeAllStreams.mockReset();
+    mockState.reconnectAllStreams.mockReset();
   });
 
   it('renders control labels, interval options, and forwards enabled actions', () => {
@@ -98,7 +98,7 @@ describe('JobQueueControls', () => {
     expect(screen.getByRole('button', { name: 'Clear All' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Auto-refresh on' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Pause all streams' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Resume all streams' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Reconnect all streams' })).toBeEnabled();
     expect(screen.getAllByTestId('trash-icon')).toHaveLength(2);
 
     const intervalSelect = screen.getByLabelText('Base interval');
@@ -112,7 +112,7 @@ describe('JobQueueControls', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear Finished' }));
     fireEvent.click(screen.getByRole('button', { name: 'Clear All' }));
     fireEvent.click(screen.getByRole('button', { name: 'Pause all streams' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Resume all streams' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reconnect all streams' }));
     fireEvent.change(intervalSelect, { target: { value: '30000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Auto-refresh on' }));
 
@@ -120,7 +120,7 @@ describe('JobQueueControls', () => {
     expect(mockState.setClearScope).toHaveBeenNthCalledWith(1, 'terminal');
     expect(mockState.setClearScope).toHaveBeenNthCalledWith(2, 'all');
     expect(mockState.pauseAllStreams).toHaveBeenCalledTimes(1);
-    expect(mockState.resumeAllStreams).toHaveBeenCalledTimes(1);
+    expect(mockState.reconnectAllStreams).toHaveBeenCalledTimes(1);
     expect(mockState.setAutoRefreshInterval).toHaveBeenCalledWith(30000);
     expect(mockState.setAutoRefreshEnabled).toHaveBeenCalledTimes(1);
     const toggle = mockState.setAutoRefreshEnabled.mock.calls[0]?.[0] as (prev: boolean) => boolean;
@@ -147,7 +147,7 @@ describe('JobQueueControls', () => {
     expect(screen.getByLabelText('Base interval')).toBeDisabled();
     expect(screen.getByLabelText('Base interval')).toHaveValue('60000');
     expect(screen.getByRole('button', { name: 'Pause all streams' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Resume all streams' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Reconnect all streams' })).toBeDisabled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Auto-refresh off' }));
     const toggle = mockState.setAutoRefreshEnabled.mock.calls[0]?.[0] as (prev: boolean) => boolean;

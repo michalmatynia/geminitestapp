@@ -3,7 +3,6 @@ import {
   buildRunTraceComparison,
   buildRuntimeTimelineItems,
   readRuntimeTraceSummary,
-  runTraceComparisonRowHasResumeChange,
 } from '../run-trace-utils';
 describe('run-trace-utils', () => {
   it('prefers V1 runtimeTrace.spans over legacy profile.nodeSpans', () => {
@@ -36,14 +35,6 @@ describe('run-trace-utils', () => {
               decision: 'skipped_duplicate',
               sourceSpanId: 'effect-origin:1:1',
             },
-            resume: {
-              mode: 'resume',
-              decision: 'reused',
-              reason: 'completed_upstream',
-              sourceTraceId: 'run-previous',
-              sourceSpanId: 'resume-origin:1:1',
-              sourceStatus: 'completed',
-            },
           },
         ],
         profile: {
@@ -69,72 +60,13 @@ describe('run-trace-utils', () => {
     expect(summary?.durationMs).toBe(2000);
     expect(summary?.seededSpanCount).toBe(1);
     expect(summary?.effectReplayCount).toBe(1);
-    expect(summary?.resumeReuseCount).toBe(1);
-    expect(summary?.resumeReexecutionCount).toBe(0);
     expect(summary?.spans[0]).toMatchObject({
       cacheDecision: 'seed',
       effectPolicy: 'per_activation',
       effectDecision: 'skipped_duplicate',
       effectSourceSpanId: 'effect-origin:1:1',
       activationHash: 'activation-hash-1',
-      resumeMode: 'resume',
-      resumeDecision: 'reused',
-      resumeReason: 'completed_upstream',
-      resumeSourceTraceId: 'run-previous',
-      resumeSourceSpanId: 'resume-origin:1:1',
-      resumeSourceStatus: 'completed',
     });
-  });
-  it('counts re-executed resume spans separately from reused spans', () => {
-    const summary = readRuntimeTraceSummary({
-      runtimeTrace: {
-        version: 'ai-paths.trace.v1',
-        traceId: 'run-3',
-        runId: 'run-3',
-        source: 'server',
-        startedAt: '2026-03-06T10:00:00.000Z',
-        finishedAt: '2026-03-06T10:00:05.000Z',
-        spans: [
-          {
-            spanId: 'node-a:2:1',
-            runId: 'run-3',
-            traceId: 'run-3',
-            nodeId: 'node-a',
-            nodeType: 'fetcher',
-            iteration: 1,
-            attempt: 2,
-            startedAt: '2026-03-06T10:00:00.000Z',
-            finishedAt: '2026-03-06T10:00:01.000Z',
-            status: 'cached',
-            resume: {
-              mode: 'resume',
-              decision: 'reused',
-              reason: 'completed_upstream',
-            },
-          },
-          {
-            spanId: 'node-b:2:1',
-            runId: 'run-3',
-            traceId: 'run-3',
-            nodeId: 'node-b',
-            nodeType: 'parser',
-            iteration: 1,
-            attempt: 2,
-            startedAt: '2026-03-06T10:00:01.000Z',
-            finishedAt: '2026-03-06T10:00:03.000Z',
-            status: 'completed',
-            resume: {
-              mode: 'resume',
-              decision: 'reexecuted',
-              reason: 'failed_node',
-            },
-          },
-        ],
-      },
-    });
-
-    expect(summary?.resumeReuseCount).toBe(1);
-    expect(summary?.resumeReexecutionCount).toBe(1);
   });
   it('falls back to legacy profile.nodeSpans when V1 spans are absent', () => {
     const summary = readRuntimeTraceSummary({
@@ -227,13 +159,6 @@ describe('run-trace-utils', () => {
                   policy: 'per_activation',
                   decision: 'skipped_duplicate',
                   sourceSpanId: 'effect-origin:1:1',
-                },
-                resume: {
-                  mode: 'resume',
-                  decision: 'reused',
-                  reason: 'completed_upstream',
-                  sourceSpanId: 'resume-origin:1:1',
-                  sourceStatus: 'completed',
                 },
               },
             ],
@@ -567,7 +492,7 @@ describe('run-trace-utils', () => {
     expect(comparison?.rows[0]?.outputDiff?.lines.join('\n')).toContain('~ payload:');
   });
 
-  it('summarizes resume and replay behavior changes between runs', () => {
+  it('summarizes payload and duration changes between runs', () => {
     const comparison = buildRunTraceComparison(
       {
         id: 'run-left',
@@ -595,8 +520,6 @@ describe('run-trace-utils', () => {
                 inputs: {},
                 outputs: { value: 'cached' },
                 inputHash: 'hash-a',
-                resumeMode: 'resume',
-                resumeDecision: 'reused',
               },
             ],
             'node-b': [
@@ -640,11 +563,6 @@ describe('run-trace-utils', () => {
                 startedAt: '2026-03-06T12:00:01.000Z',
                 finishedAt: '2026-03-06T12:00:01.100Z',
                 status: 'cached',
-                resume: {
-                  mode: 'resume',
-                  decision: 'reused',
-                  reason: 'completed_upstream',
-                },
               },
               {
                 spanId: 'node-b:1:1',
@@ -689,8 +607,6 @@ describe('run-trace-utils', () => {
                 inputs: {},
                 outputs: { value: 'fresh' },
                 inputHash: 'hash-a-2',
-                resumeMode: 'resume',
-                resumeDecision: 'reexecuted',
               },
             ],
             'node-b': [
@@ -709,8 +625,6 @@ describe('run-trace-utils', () => {
                 inputs: {},
                 outputs: { value: 'parsed' },
                 inputHash: 'hash-b-2',
-                resumeMode: 'resume',
-                resumeDecision: 'reused',
               },
             ],
           },
@@ -736,11 +650,6 @@ describe('run-trace-utils', () => {
                 startedAt: '2026-03-06T12:05:01.000Z',
                 finishedAt: '2026-03-06T12:05:01.100Z',
                 status: 'completed',
-                resume: {
-                  mode: 'resume',
-                  decision: 'reexecuted',
-                  reason: 'failed_node',
-                },
               },
               {
                 spanId: 'node-b:2:1',
@@ -754,11 +663,6 @@ describe('run-trace-utils', () => {
                 startedAt: '2026-03-06T12:05:01.200Z',
                 finishedAt: '2026-03-06T12:05:01.300Z',
                 status: 'cached',
-                resume: {
-                  mode: 'resume',
-                  decision: 'reused',
-                  reason: 'completed_upstream',
-                },
               },
             ],
           },
@@ -766,35 +670,23 @@ describe('run-trace-utils', () => {
       } as never
     );
 
-    expect(comparison?.resumeModeChangeCount).toBe(1);
-    expect(comparison?.resumeDecisionChangeCount).toBe(2);
-    expect(comparison?.resumedNodeDelta).toBe(1);
-    expect(comparison?.reusedNodeDelta).toBe(0);
-    expect(comparison?.reexecutedNodeDelta).toBe(1);
     expect(comparison?.rows).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           nodeId: 'node-a',
-          leftResumeMode: 'resume',
-          rightResumeMode: 'resume',
-          leftResumeDecision: 'reused',
-          rightResumeDecision: 'reexecuted',
+          leftStatus: 'cached',
+          rightStatus: 'completed',
         }),
         expect.objectContaining({
           nodeId: 'node-b',
-          leftResumeMode: null,
-          rightResumeMode: 'resume',
-          leftResumeDecision: null,
-          rightResumeDecision: 'reused',
+          leftStatus: 'completed',
+          rightStatus: 'cached',
         }),
       ])
     );
-    expect(comparison?.rows.filter((row) => runTraceComparisonRowHasResumeChange(row))).toHaveLength(
-      2
-    );
   });
 
-  it('prioritizes resume behavior changes ahead of plain diffs within the same class', () => {
+  it('prioritizes larger duration deltas ahead of plain diffs within the same class', () => {
     const comparison = buildRunTraceComparison(
       {
         id: 'run-left-order',
@@ -878,11 +770,6 @@ describe('run-trace-utils', () => {
                 startedAt: '2026-03-06T13:00:01.200Z',
                 finishedAt: '2026-03-06T13:00:01.300Z',
                 status: 'completed',
-                resume: {
-                  mode: 'resume',
-                  decision: 'reused',
-                  reason: 'completed_upstream',
-                },
               },
             ],
           },
@@ -932,8 +819,6 @@ describe('run-trace-utils', () => {
                 inputs: {},
                 outputs: { value: 'b2' },
                 inputHash: 'hash-b2',
-                resumeMode: 'resume',
-                resumeDecision: 'reexecuted',
               },
             ],
           },
@@ -970,13 +855,8 @@ describe('run-trace-utils', () => {
                 iteration: 1,
                 attempt: 2,
                 startedAt: '2026-03-06T13:05:01.200Z',
-                finishedAt: '2026-03-06T13:05:01.300Z',
+                finishedAt: '2026-03-06T13:05:01.900Z',
                 status: 'completed',
-                resume: {
-                  mode: 'resume',
-                  decision: 'reexecuted',
-                  reason: 'failed_node',
-                },
               },
             ],
           },

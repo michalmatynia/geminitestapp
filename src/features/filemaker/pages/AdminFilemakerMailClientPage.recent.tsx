@@ -15,6 +15,7 @@ import {
   buildMailClientWorkspaceHref,
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
+import { FilemakerCampaignContextLinks } from './FilemakerCampaignMailLinks';
 import { MailClientDashboardFocusButton } from './AdminFilemakerMailClientPage.mailbox-actions';
 
 type MailClientRecentThreadsSectionProps = {
@@ -199,6 +200,12 @@ function MailClientRecentThreadCard({
           <Badge variant='outline'>{accountName}</Badge>
           <Badge variant='outline'>{thread.mailboxPath}</Badge>
           <Badge variant='outline'>{formatThreadTimestamp(thread.lastMessageAt)}</Badge>
+          {thread.campaignContext ? (
+            <FilemakerCampaignContextLinks
+              context={thread.campaignContext}
+              className='flex flex-wrap gap-2'
+            />
+          ) : null}
         </div>
         <div className='flex flex-wrap gap-2'>
           <Button asChild variant='outline' size='sm'>

@@ -147,5 +147,3 @@ Platform-level guidance for AI-first concurrent coding now lives under `docs/pla
 - `docs/platform/forward-only-execution.md`
 - `docs/platform/agent-discovery.md`
 - `docs/platform/shared-lease-service.md`
-
-- [Platform: AI Paths resume vs handoff](./platform/ai-paths-resume-vs-handoff.md)

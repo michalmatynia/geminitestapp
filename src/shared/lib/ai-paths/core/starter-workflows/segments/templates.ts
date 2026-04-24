@@ -39,7 +39,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 20,
-      restoreOnStaticRecovery: true,
+      includeInCanonicalSeed: true,
     },
     triggerButtonPresets: [
       {
@@ -76,7 +76,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 25,
-      restoreOnStaticRecovery: true,
+      includeInCanonicalSeed: true,
     },
     triggerButtonPresets: [
       {
@@ -113,7 +113,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 30,
-      restoreOnStaticRecovery: true,
+      includeInCanonicalSeed: true,
     },
     triggerButtonPresets: [
       {
@@ -148,7 +148,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: MARKETPLACE_COPY_DEBRAND_TRIGGER_SORT_INDEX,
-      restoreOnStaticRecovery: true,
+      includeInCanonicalSeed: true,
     },
     triggerButtonPresets: [
       {
@@ -182,7 +182,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       isActive: true,
       isLocked: false,
       sortOrder: 50,
-      restoreOnStaticRecovery: true,
+      includeInCanonicalSeed: true,
     },
     starterLineage: {
       starterKey: 'translation_en_pl',

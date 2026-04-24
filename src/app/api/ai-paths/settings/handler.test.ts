@@ -3,17 +3,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   listAiPathsSettingsMock,
+  ensureCanonicalStarterWorkflowSettingsForPathIdsMock,
   upsertAiPathsSettingMock,
   upsertAiPathsSettingsBulkMock,
   deleteAiPathsSettingsMock,
 } = vi.hoisted(() => ({
   listAiPathsSettingsMock: vi.fn(),
+  ensureCanonicalStarterWorkflowSettingsForPathIdsMock: vi.fn(),
   upsertAiPathsSettingMock: vi.fn(),
   upsertAiPathsSettingsBulkMock: vi.fn(),
   deleteAiPathsSettingsMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
+  ensureCanonicalStarterWorkflowSettingsForPathIds: ensureCanonicalStarterWorkflowSettingsForPathIdsMock,
   listAiPathsSettings: listAiPathsSettingsMock,
   upsertAiPathsSetting: upsertAiPathsSettingMock,
   upsertAiPathsSettingsBulk: upsertAiPathsSettingsBulkMock,
@@ -25,6 +28,11 @@ import { deleteHandler, getHandler, postHandler } from './handler';
 describe('ai-paths settings handler', () => {
   beforeEach(() => {
     listAiPathsSettingsMock.mockReset();
+    ensureCanonicalStarterWorkflowSettingsForPathIdsMock.mockReset();
+    ensureCanonicalStarterWorkflowSettingsForPathIdsMock.mockResolvedValue({
+      records: [],
+      affectedCount: 0,
+    });
     upsertAiPathsSettingMock.mockReset();
     upsertAiPathsSettingsBulkMock.mockReset();
     deleteAiPathsSettingsMock.mockReset();
@@ -38,6 +46,7 @@ describe('ai-paths settings handler', () => {
     );
 
     expect(response.status).toBe(200);
+    expect(ensureCanonicalStarterWorkflowSettingsForPathIdsMock).not.toHaveBeenCalled();
     expect(listAiPathsSettingsMock).toHaveBeenCalledWith();
     await expect(response.json()).resolves.toEqual([{ key: 'ai_paths_index', value: '[]' }]);
   });
@@ -52,6 +61,7 @@ describe('ai-paths settings handler', () => {
     );
 
     expect(response.status).toBe(200);
+    expect(ensureCanonicalStarterWorkflowSettingsForPathIdsMock).toHaveBeenCalledWith([]);
     expect(listAiPathsSettingsMock).toHaveBeenCalledWith(['ai_paths_index', 'ai_paths_ui_state']);
     await expect(response.json()).resolves.toEqual([{ key: 'ai_paths_index', value: '[]' }]);
   });
@@ -93,6 +103,9 @@ describe('ai-paths settings handler', () => {
     );
 
     expect(response.status).toBe(200);
+    expect(ensureCanonicalStarterWorkflowSettingsForPathIdsMock).toHaveBeenCalledWith([
+      'path_name_normalize_v1',
+    ]);
     expect(listAiPathsSettingsMock).toHaveBeenCalledWith([
       'ai_paths_config_path_name_normalize_v1',
     ]);

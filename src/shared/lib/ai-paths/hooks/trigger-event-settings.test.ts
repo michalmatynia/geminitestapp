@@ -595,7 +595,7 @@ describe('loadPathConfigsFromSettings', () => {
     );
   });
 
-  it('repairs legacy mapping-mode updates during trigger load', async () => {
+  it('preserves mapping-mode custom starter derivatives during trigger load', async () => {
     const pathId = 'path-live-parameter-inference-broken';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -611,8 +611,15 @@ describe('loadPathConfigsFromSettings', () => {
     const loaded = await loadPathConfigsFromSettings(data);
     const databaseNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'database');
 
-    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
-    expect(databaseNode?.config?.database?.updateTemplate).toContain('"parameters": {{value}}');
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('mapping');
+    expect(databaseNode?.config?.database?.mappings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePort: 'value',
+          targetPath: 'parameters',
+        }),
+      ])
+    );
   });
 
   it('keeps query providers canonical while normalizing db_schema provider defaults before trigger preflight validation', async () => {

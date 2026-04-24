@@ -40,7 +40,7 @@ export const resolveRequestedFileSyncResolution = ({
   selectedFolderPath: string | null;
   activeFileId: string | null;
 }): CaseResolverRequestedFileSyncResolution => {
-  if (!requestedFileId) {
+  if (requestedFileId === null) {
     return {
       nextHandledRequestedFileId: null,
       shouldClearSelectedAsset: false,

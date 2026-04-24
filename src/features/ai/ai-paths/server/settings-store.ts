@@ -22,6 +22,11 @@ import {
 } from './settings-store.maintenance';
 import { parsePathMetas, preservePathConfigFlagsOnSeed } from './settings-store.parsing';
 import {
+  ensureCanonicalStarterWorkflowRecordsForPathIds,
+  getCanonicalStarterWorkflowPathIds,
+  isCanonicalStarterWorkflowPathId,
+} from './starter-workflows-settings';
+import {
   deleteMongoAiPathsSettings,
   fetchMongoAiPathsSettings,
   upsertMongoAiPathsSettings,
@@ -165,8 +170,10 @@ export async function getAiPathsSetting(key: string): Promise<string | null> {
   return records[0]?.value ?? null;
 }
 
-export async function getAllAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
-  return await getAiPathsSettings();
+export async function getAllAiPathsSettings(options?: {
+  bypassCache?: boolean;
+}): Promise<AiPathsSettingRecord[]> {
+  return await getAiPathsSettings(undefined, options);
 }
 
 export const listAiPathsSettings = getAiPathsSettings;
@@ -198,6 +205,29 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
   await deleteMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
   invalidateServerSettingsCache();
   return normalizedKeys.length;
+}
+
+export async function ensureCanonicalStarterWorkflowSettingsForPathIds(
+  pathIds?: string[]
+): Promise<{ records: AiPathsSettingRecord[]; affectedCount: number }> {
+  const targetPathIds =
+    pathIds && pathIds.length > 0
+      ? Array.from(new Set(pathIds.map((pathId) => pathId.trim()).filter(isCanonicalStarterWorkflowPathId)))
+      : getCanonicalStarterWorkflowPathIds();
+  if (targetPathIds.length === 0) {
+    return { records: [], affectedCount: 0 };
+  }
+
+  const allSettings = await getAllAiPathsSettings({ bypassCache: true });
+  const result = ensureCanonicalStarterWorkflowRecordsForPathIds(allSettings, targetPathIds);
+  if (result.affectedCount > 0) {
+    await upsertAiPathsSettings(result.nextRecords);
+  }
+
+  return {
+    records: result.nextRecords,
+    affectedCount: result.affectedCount,
+  };
 }
 
 export const runAiPathsMaintenance = async (

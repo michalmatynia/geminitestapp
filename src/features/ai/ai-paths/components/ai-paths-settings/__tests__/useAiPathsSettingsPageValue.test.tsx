@@ -223,7 +223,7 @@ const createState = (
     handleFetchUpdaterSample: vi.fn(),
     handleRunSimulation: vi.fn(),
     handlePauseActiveRun: vi.fn(),
-    handleResumeActiveRun: vi.fn(),
+    handleContinueActiveRun: vi.fn(),
     handleStepActiveRun: vi.fn(),
     handleCancelActiveRun: vi.fn(),
     runtimeRunStatus: 'idle',

@@ -125,5 +125,6 @@ export const isRecipientActivityType = (
   type === 'delivery_bounced' ||
   type === 'opened' ||
   type === 'clicked' ||
+  type === 'reply_received' ||
   type === 'unsubscribed' ||
   type === 'resubscribed';

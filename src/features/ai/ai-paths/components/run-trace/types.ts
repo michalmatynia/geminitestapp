@@ -1,4 +1,9 @@
-import type { RuntimeTraceRecord, RuntimeTraceCacheDecision, RuntimeSideEffectPolicy, RuntimeSideEffectDecision, RuntimeTraceResumeMode, RuntimeTraceResumeDecision, RuntimeTraceResumeReason } from '@/shared/contracts/ai-paths-runtime';
+import type {
+  RuntimeTraceRecord,
+  RuntimeTraceCacheDecision,
+  RuntimeSideEffectPolicy,
+  RuntimeSideEffectDecision,
+} from '@/shared/contracts/ai-paths-runtime';
 
 export type RuntimeTraceProfileSummary = {
   durationMs?: number | null;
@@ -31,15 +36,6 @@ export type RuntimeTraceSnapshot = Partial<RuntimeTraceRecord> & {
       durationMs?: number | null;
       error?: string | null;
       cached?: boolean;
-      resume?: {
-        mode?: string;
-        decision?: string;
-        reason?: string;
-        sourceTraceId?: string | null;
-        sourceSpanId?: string | null;
-        sourceRunStartedAt?: string | null;
-        sourceStatus?: string | null;
-      } | null;
     }>;
     summary?: RuntimeTraceProfileSummary;
   } | null;
@@ -63,12 +59,6 @@ export type RuntimeTraceSpanSummary = {
   effectPolicy: RuntimeSideEffectPolicy | null;
   effectDecision: RuntimeSideEffectDecision | null;
   effectSourceSpanId: string | null;
-  resumeMode: RuntimeTraceResumeMode | null;
-  resumeDecision: RuntimeTraceResumeDecision | null;
-  resumeReason: RuntimeTraceResumeReason | null;
-  resumeSourceTraceId: string | null;
-  resumeSourceSpanId: string | null;
-  resumeSourceStatus: string | null;
 };
 
 export type RuntimeTraceSummary = {
@@ -86,8 +76,6 @@ export type RuntimeTraceSummary = {
   cachedSpanCount: number;
   seededSpanCount: number;
   effectReplayCount: number;
-  resumeReuseCount: number;
-  resumeReexecutionCount: number;
   hottestNode: {
     nodeId?: string;
     nodeType?: string;
@@ -143,8 +131,6 @@ export type AggregatedRuntimeNode = {
   avgMs: number | null;
   maxMs: number | null;
   spanCount: number;
-  resumeMode: RuntimeTraceResumeMode | null;
-  resumeDecision: RuntimeTraceResumeDecision | null;
 };
 
 export type RunTraceComparisonRow = {
@@ -160,10 +146,6 @@ export type RunTraceComparisonRow = {
   deltaMs: number | null;
   leftSpanCount: number;
   rightSpanCount: number;
-  leftResumeMode: RuntimeTraceResumeMode | null;
-  rightResumeMode: RuntimeTraceResumeMode | null;
-  leftResumeDecision: RuntimeTraceResumeDecision | null;
-  rightResumeDecision: RuntimeTraceResumeDecision | null;
   leftHistorySpanId: string | null;
   rightHistorySpanId: string | null;
   leftInputs: unknown | null;
@@ -186,11 +168,6 @@ export type RunTraceComparison = {
   addedCount: number;
   removedCount: number;
   payloadChangedCount: number;
-  resumeModeChangeCount: number;
-  resumeDecisionChangeCount: number;
-  resumedNodeDelta: number | null;
-  reusedNodeDelta: number | null;
-  reexecutedNodeDelta: number | null;
   rows: RunTraceComparisonRow[];
 };
 

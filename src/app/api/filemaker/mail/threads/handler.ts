@@ -11,18 +11,27 @@ const querySchema = z.object({
   query: optionalTrimmedQueryString(),
   accountId: optionalTrimmedQueryString(),
   mailboxPath: optionalTrimmedQueryString(),
+  campaignId: optionalTrimmedQueryString(),
+  runId: optionalTrimmedQueryString(),
+  deliveryId: optionalTrimmedQueryString(),
   limit: z.coerce.number().int().positive().max(50).optional(),
 });
 
+const hasQueryValue = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.length > 0;
+
 export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
-  const { query, accountId, mailboxPath, limit } = querySchema.parse(
+  const { query, accountId, mailboxPath, campaignId, runId, deliveryId, limit } = querySchema.parse(
     Object.fromEntries(req.nextUrl.searchParams.entries())
   );
   const input = {
-    ...(query ? { query } : {}),
-    ...(accountId ? { accountId } : {}),
-    ...(mailboxPath ? { mailboxPath } : {}),
+    ...(hasQueryValue(query) ? { query } : {}),
+    ...(hasQueryValue(accountId) ? { accountId } : {}),
+    ...(hasQueryValue(mailboxPath) ? { mailboxPath } : {}),
+    ...(hasQueryValue(campaignId) ? { campaignId } : {}),
+    ...(hasQueryValue(runId) ? { runId } : {}),
+    ...(hasQueryValue(deliveryId) ? { deliveryId } : {}),
     ...(typeof limit === 'number' ? { limit } : {}),
   };
   return Response.json({

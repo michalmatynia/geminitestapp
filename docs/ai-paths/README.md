@@ -25,7 +25,7 @@ catalogs, and dated plans.
 - High-level overview: [`./overview.md`](./overview.md)
 - Extended reference: [`./reference.md`](./reference.md)
 - Semantic grammar hub: [`./semantic-grammar/README.md`](./semantic-grammar/README.md)
-- Resume vs handoff operator policy: [`../platform/ai-paths-resume-vs-handoff.md`](../platform/ai-paths-resume-vs-handoff.md)
+- Forward-only execution policy: [`../platform/forward-only-execution.md`](../platform/forward-only-execution.md)
 
 ## Which Doc To Use
 
@@ -34,7 +34,7 @@ catalogs, and dated plans.
 | What is AI Paths and where is the code? | [`./overview.md`](./overview.md) |
 | How should operators change, test, and roll out paths? | [`./reference.md`](./reference.md) |
 | What is the node and port contract? | [`./semantic-grammar/README.md`](./semantic-grammar/README.md) |
-| How do path runs behave under lease contention? | [`../platform/ai-paths-resume-vs-handoff.md`](../platform/ai-paths-resume-vs-handoff.md) |
+| How do path runs behave under lease contention? | [`../platform/forward-only-execution.md`](../platform/forward-only-execution.md) |
 | How does the Playwright node work? | [`./playwright-node.md`](./playwright-node.md) |
 | How do parameter inference and portable engine flows work? | [`./parameter-inference-workflow.md`](./parameter-inference-workflow.md), [`./portable-engine-scaffolding.md`](./portable-engine-scaffolding.md) |
 

@@ -9,7 +9,7 @@ const normalizeListFromTextarea = (value: string): string[] => {
     .split('\n')
     .map((item: string) => item.trim())
     .forEach((item: string) => {
-      if (!item || seen.has(item)) return;
+      if (item === '' || seen.has(item)) return;
       seen.add(item);
       next.push(item);
     });

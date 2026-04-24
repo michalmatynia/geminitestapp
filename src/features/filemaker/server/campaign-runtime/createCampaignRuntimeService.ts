@@ -445,7 +445,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             updatedAt: nowIso,
           }),
         ]);
-        eventRegistry = appendEventsToRegistry(eventRegistry, [
+        const deliveryEvents = [
           createFilemakerEmailCampaignEvent({
             campaignId: campaign.id,
             runId: run.id,
@@ -453,10 +453,29 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             type: 'delivery_sent',
             message: `Delivered to ${delivery.emailAddress}.`,
             deliveryStatus: 'sent',
+            mailThreadId: sendResult.mailThreadId ?? null,
+            mailMessageId: sendResult.mailMessageId ?? null,
             createdAt: nowIso,
             updatedAt: nowIso,
           }),
-        ]);
+        ];
+        if (sendResult.mailFilingStatus === 'failed') {
+          deliveryEvents.push(
+            createFilemakerEmailCampaignEvent({
+              campaignId: campaign.id,
+              runId: run.id,
+              deliveryId: delivery.id,
+              type: 'status_changed',
+              message: `Delivered to ${delivery.emailAddress}, but filing into the mail client failed: ${
+                sendResult.mailFilingError ?? 'unknown error'
+              }`,
+              deliveryStatus: 'sent',
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            })
+          );
+        }
+        eventRegistry = appendEventsToRegistry(eventRegistry, deliveryEvents);
       } catch (error) {
         const failure = resolveFilemakerCampaignEmailFailureMetadata(error);
         const status = resolveFailureStatus(failure.failureCategory);

@@ -72,15 +72,31 @@ export function AgentCreatorSettingsProvider({
 }: {
   children: ReactNode;
 }): React.JSX.Element {
+  const modesValue = useAgentCreatorModesValue();
+  const performanceValue = useAgentCreatorPerformanceValue();
+  const operationsValue = useAgentCreatorOperationsValue();
+
+  return (
+    <ModesContext.Provider value={modesValue}>
+      <PerformanceContext.Provider value={performanceValue}>
+        <OperationsContext.Provider value={operationsValue}>{children}</OperationsContext.Provider>
+      </PerformanceContext.Provider>
+    </ModesContext.Provider>
+  );
+}
+
+function useAgentCreatorModesValue(): AgentCreatorModes {
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
-  const [agentBrowser, setAgentBrowser] = useState(DEFAULT_AGENT_SETTINGS.agentBrowser);
-  const [agentRunHeadless, setAgentRunHeadless] = useState(DEFAULT_AGENT_SETTINGS.runHeadless);
-  const [agentIgnoreRobotsTxt, setAgentIgnoreRobotsTxt] = useState(
-    DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
+  return useMemo<AgentCreatorModes>(
+    () => ({
+      agentModeEnabled,
+      setAgentModeEnabled,
+    }),
+    [agentModeEnabled]
   );
-  const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(
-    DEFAULT_AGENT_SETTINGS.requireHumanApproval
-  );
+}
+
+function useAgentCreatorPerformanceValue(): AgentCreatorPerformance {
   const [agentMaxSteps, setAgentMaxSteps] = useState(DEFAULT_AGENT_SETTINGS.maxSteps);
   const [agentMaxStepAttempts, setAgentMaxStepAttempts] = useState(
     DEFAULT_AGENT_SETTINGS.maxStepAttempts
@@ -104,15 +120,7 @@ export function AgentCreatorSettingsProvider({
     DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
   );
 
-  const modesValue = useMemo<AgentCreatorModes>(
-    () => ({
-      agentModeEnabled,
-      setAgentModeEnabled,
-    }),
-    [agentModeEnabled]
-  );
-
-  const performanceValue = useMemo<AgentCreatorPerformance>(
+  return useMemo<AgentCreatorPerformance>(
     () => ({
       agentMaxSteps,
       setAgentMaxSteps,
@@ -142,8 +150,19 @@ export function AgentCreatorSettingsProvider({
       agentLoopBackoffMaxMs,
     ]
   );
+}
 
-  const operationsValue = useMemo<AgentCreatorOperations>(
+function useAgentCreatorOperationsValue(): AgentCreatorOperations {
+  const [agentBrowser, setAgentBrowser] = useState(DEFAULT_AGENT_SETTINGS.agentBrowser);
+  const [agentRunHeadless, setAgentRunHeadless] = useState(DEFAULT_AGENT_SETTINGS.runHeadless);
+  const [agentIgnoreRobotsTxt, setAgentIgnoreRobotsTxt] = useState(
+    DEFAULT_AGENT_SETTINGS.ignoreRobotsTxt
+  );
+  const [agentRequireHumanApproval, setAgentRequireHumanApproval] = useState(
+    DEFAULT_AGENT_SETTINGS.requireHumanApproval
+  );
+
+  return useMemo<AgentCreatorOperations>(
     () => ({
       agentBrowser,
       setAgentBrowser,
@@ -155,13 +174,5 @@ export function AgentCreatorSettingsProvider({
       setAgentRequireHumanApproval,
     }),
     [agentBrowser, agentRunHeadless, agentIgnoreRobotsTxt, agentRequireHumanApproval]
-  );
-
-  return (
-    <ModesContext.Provider value={modesValue}>
-      <PerformanceContext.Provider value={performanceValue}>
-        <OperationsContext.Provider value={operationsValue}>{children}</OperationsContext.Provider>
-      </PerformanceContext.Provider>
-    </ModesContext.Provider>
   );
 }

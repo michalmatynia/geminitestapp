@@ -1,7 +1,5 @@
 import { pathConfigSchema, type PathConfig } from '@/shared/contracts/ai-paths';
 import { validationError } from '@/shared/errors/app-error';
-import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
-import { getStaticRecoveryStarterWorkflowEntryByDefaultPathId } from '@/shared/lib/ai-paths/core/starter-workflows';
 
 import { sanitizePathConfig } from './path-config-sanitization';
 import { stableStringify } from './runtime';
@@ -17,24 +15,6 @@ const throwInvalidStoredPathConfig = (args: {
     reason: args.reason,
     ...(args.cause ? { cause: args.cause } : {}),
   });
-};
-
-const isStarterBackedPathConfig = (args: {
-  pathId: string;
-  parsedConfig: unknown;
-}): boolean => {
-  if (getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
-    return true;
-  }
-  if (!args.parsedConfig || typeof args.parsedConfig !== 'object' || Array.isArray(args.parsedConfig)) {
-    return false;
-  }
-  const extensions = (args.parsedConfig as { extensions?: unknown }).extensions;
-  if (!extensions || typeof extensions !== 'object' || Array.isArray(extensions)) {
-    return false;
-  }
-  const starter = (extensions as { aiPathsStarter?: unknown }).aiPathsStarter;
-  return Boolean(starter && typeof starter === 'object' && !Array.isArray(starter));
 };
 
 export type LoadedStoredPathConfig = {
@@ -74,26 +54,7 @@ const loadStoredPathConfig = (args: {
     });
   }
 
-  let sanitizedConfig: PathConfig;
-  try {
-    sanitizedConfig = sanitizePathConfig(parsedPathConfig!);
-  } catch (error) {
-    if (!isStarterBackedPathConfig({ pathId: args.pathId, parsedConfig })) {
-      throw error;
-    }
-    const resolvedStarterConfig = materializeStoredTriggerPathConfig({
-      pathId: args.pathId,
-      rawConfig: args.rawConfig,
-      fallbackName:
-        typeof parsedPathConfig?.name === 'string' ? parsedPathConfig.name : null,
-      applyStarterWorkflowUpgrade: false,
-      allowStaticRecoveryFallback: false,
-    });
-    return {
-      config: resolvedStarterConfig.config,
-      changed: resolvedStarterConfig.changed,
-    };
-  }
+  const sanitizedConfig = sanitizePathConfig(parsedPathConfig!);
   const normalizedId =
     typeof sanitizedConfig.id === 'string' ? sanitizedConfig.id.trim() : '';
   if (!normalizedId || normalizedId !== args.pathId) {

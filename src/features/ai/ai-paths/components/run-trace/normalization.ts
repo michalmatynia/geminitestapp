@@ -4,9 +4,6 @@ import type {
   RuntimeSideEffectDecision,
   RuntimeSideEffectPolicy,
   RuntimeTraceCacheDecision,
-  RuntimeTraceResumeDecision,
-  RuntimeTraceResumeMode,
-  RuntimeTraceResumeReason,
 } from '@/shared/contracts/ai-paths-runtime';
 import { formatRuntimeValue, stableStringify } from '@/shared/lib/ai-paths/core/utils';
 
@@ -67,38 +64,6 @@ export const asSideEffectDecision = (value: unknown): RuntimeSideEffectDecision 
   return null;
 };
 
-export const asResumeMode = (value: unknown): RuntimeTraceResumeMode | null => {
-  const normalized = asString(value);
-  if (normalized === 'resume' || normalized === 'retry' || normalized === 'replay') {
-    return normalized;
-  }
-  return null;
-};
-
-export const asResumeDecision = (value: unknown): RuntimeTraceResumeDecision | null => {
-  const normalized = asString(value);
-  if (normalized === 'reused' || normalized === 'reexecuted') {
-    return normalized;
-  }
-  return null;
-};
-
-export const asResumeReason = (value: unknown): RuntimeTraceResumeReason | null => {
-  const normalized = asString(value);
-  if (
-    normalized === 'completed_upstream' ||
-    normalized === 'failed_node' ||
-    normalized === 'downstream_of_failure' ||
-    normalized === 'retry_target' ||
-    normalized === 'downstream_of_retry' ||
-    normalized === 'incomplete' ||
-    normalized === 'replay_requested'
-  ) {
-    return normalized;
-  }
-  return null;
-};
-
 export const toDate = (value: string | null): Date | null => {
   if (!value) return null;
   const parsed = new Date(value);
@@ -120,7 +85,6 @@ export const normalizeRuntimeTraceSpan = (value: unknown): RuntimeTraceSpanSumma
   const durationMs = asNumber(value['durationMs']) ?? resolveDurationMs(startedAt, finishedAt);
   const cache = isRecord(value['cache']) ? value['cache'] : null;
   const effect = isRecord(value['effect']) ? value['effect'] : null;
-  const resume = isRecord(value['resume']) ? value['resume'] : null;
   const rawError = value['error'];
   const error =
     typeof rawError === 'string'
@@ -147,12 +111,6 @@ export const normalizeRuntimeTraceSpan = (value: unknown): RuntimeTraceSpanSumma
     effectPolicy: asSideEffectPolicy(effect?.['policy']),
     effectDecision: asSideEffectDecision(effect?.['decision']),
     effectSourceSpanId: asString(effect?.['sourceSpanId']),
-    resumeMode: asResumeMode(resume?.['mode']),
-    resumeDecision: asResumeDecision(resume?.['decision']),
-    resumeReason: asResumeReason(resume?.['reason']),
-    resumeSourceTraceId: asString(resume?.['sourceTraceId']),
-    resumeSourceSpanId: asString(resume?.['sourceSpanId']),
-    resumeSourceStatus: asString(resume?.['sourceStatus']),
   };
 };
 
@@ -218,8 +176,6 @@ export const readRuntimeTraceSummary = (meta: unknown): RuntimeTraceSummary | nu
     cachedSpanCount: spans.filter((span) => span.cached).length,
     seededSpanCount: spans.filter((span) => span.cacheDecision === 'seed').length,
     effectReplayCount: spans.filter((span) => span.effectDecision === 'skipped_duplicate').length,
-    resumeReuseCount: spans.filter((span) => span.resumeDecision === 'reused').length,
-    resumeReexecutionCount: spans.filter((span) => span.resumeDecision === 'reexecuted').length,
     hottestNode: profileSummary?.hottestNodes?.[0] ?? null,
     spans,
     slowestSpan,
@@ -283,8 +239,6 @@ export const formatTraceSpanActionExplanation = (span: RuntimeTraceSpanSummary):
   if (!hasActionContext) return null;
   return resolveRunHistoryAction({
     status: span.status,
-    resumeMode: span.resumeMode,
-    resumeDecision: span.resumeDecision,
   }).description;
 };
 

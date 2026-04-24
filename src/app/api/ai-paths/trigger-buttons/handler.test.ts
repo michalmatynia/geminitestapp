@@ -15,6 +15,7 @@ import {
 
 const {
   getAllAiPathsSettingsMock,
+  ensureCanonicalStarterWorkflowSettingsForPathIdsMock,
   getAiPathsSettingMock,
   requireAiPathsAccessMock,
   requireAiPathsRunAccessMock,
@@ -23,6 +24,7 @@ const {
   captureExceptionMock,
 } = vi.hoisted(() => ({
   getAllAiPathsSettingsMock: vi.fn(),
+  ensureCanonicalStarterWorkflowSettingsForPathIdsMock: vi.fn(),
   getAiPathsSettingMock: vi.fn(),
   requireAiPathsAccessMock: vi.fn(),
   requireAiPathsRunAccessMock: vi.fn(),
@@ -39,6 +41,7 @@ vi.mock('@/features/ai/ai-paths/server', () => ({
 }));
 
 vi.mock('@/features/ai/ai-paths/server/settings-store', () => ({
+  ensureCanonicalStarterWorkflowSettingsForPathIds: ensureCanonicalStarterWorkflowSettingsForPathIdsMock,
   getAllAiPathsSettings: getAllAiPathsSettingsMock,
   upsertAiPathsSettings: upsertAiPathsSettingsMock,
 }));
@@ -101,6 +104,10 @@ describe('ai-paths trigger-buttons GET handler', () => {
       isElevated: false,
     });
     getAllAiPathsSettingsMock.mockResolvedValue(createSettingsSnapshot());
+    ensureCanonicalStarterWorkflowSettingsForPathIdsMock.mockResolvedValue({
+      records: [],
+      affectedCount: 0,
+    });
   });
 
   it('returns buttons when stored payload uses canonical persisted shape', async () => {
@@ -131,6 +138,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
 
     expect(response.status).toBe(200);
     expect(getAllAiPathsSettingsMock).toHaveBeenCalledTimes(1);
+    expect(ensureCanonicalStarterWorkflowSettingsForPathIdsMock).toHaveBeenCalledWith([]);
     expect(upsertAiPathsSettingsMock).not.toHaveBeenCalled();
     expect(upsertAiPathsSettingMock).not.toHaveBeenCalled();
 
@@ -705,7 +713,7 @@ describe('ai-paths trigger-buttons GET handler', () => {
     expect(body).toEqual([]);
   });
 
-  it('silences recoverable non-canonical starter configs while keeping the bound trigger hidden', async () => {
+  it('repairs canonical starter configs before filtering bound trigger buttons', async () => {
     const template = getStarterWorkflowTemplateById('starter_product_name_normalize');
     if (!template) {
       throw new Error('Missing starter_product_name_normalize template');
@@ -740,36 +748,49 @@ describe('ai-paths trigger-buttons GET handler', () => {
       },
     };
 
+    const triggerButtons = [
+      {
+        id: 'btn-normalize',
+        name: 'Normalize',
+        iconId: null,
+        pathId: 'path_name_normalize_v1',
+        enabled: true,
+        locations: ['product_modal'],
+        mode: 'click',
+        display: 'icon_label',
+        createdAt: '2026-03-03T00:00:00.000Z',
+        updatedAt: '2026-03-03T00:00:00.000Z',
+        sortIndex: 0,
+      },
+    ];
+    const pathMetas = [
+      {
+        id: 'path_name_normalize_v1',
+        name: 'Normalize',
+        createdAt: '2026-03-03T00:00:00.000Z',
+        updatedAt: '2026-03-03T00:00:00.000Z',
+      },
+    ];
+
     getAllAiPathsSettingsMock.mockResolvedValue(
       createSettingsSnapshot({
-        triggerButtons: [
-          {
-            id: 'btn-normalize',
-            name: 'Normalize',
-            iconId: null,
-            pathId: 'path_name_normalize_v1',
-            enabled: true,
-            locations: ['product_modal'],
-            mode: 'click',
-            display: 'icon_label',
-            createdAt: '2026-03-03T00:00:00.000Z',
-            updatedAt: '2026-03-03T00:00:00.000Z',
-            sortIndex: 0,
-          },
-        ],
-        pathMetas: [
-          {
-            id: 'path_name_normalize_v1',
-            name: 'Normalize',
-            createdAt: '2026-03-03T00:00:00.000Z',
-            updatedAt: '2026-03-03T00:00:00.000Z',
-          },
-        ],
+        triggerButtons,
+        pathMetas,
         configs: {
           path_name_normalize_v1: JSON.stringify(randomIdConfig),
         },
       })
     );
+    ensureCanonicalStarterWorkflowSettingsForPathIdsMock.mockResolvedValueOnce({
+      affectedCount: 1,
+      records: createSettingsSnapshot({
+        triggerButtons,
+        pathMetas,
+        configs: {
+          path_name_normalize_v1: config,
+        },
+      }),
+    });
 
     const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/trigger-buttons'),
@@ -777,7 +798,14 @@ describe('ai-paths trigger-buttons GET handler', () => {
     );
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual([]);
+    await expect(response.json()).resolves.toEqual([
+      expect.objectContaining({
+        id: 'btn-normalize',
+      }),
+    ]);
+    expect(ensureCanonicalStarterWorkflowSettingsForPathIdsMock).toHaveBeenCalledWith([
+      'path_name_normalize_v1',
+    ]);
     expect(captureExceptionMock).not.toHaveBeenCalled();
   });
 

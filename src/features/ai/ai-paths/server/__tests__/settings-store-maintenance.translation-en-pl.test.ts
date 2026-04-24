@@ -301,7 +301,7 @@ const buildDeprecatedBlwoStarterRecords = (): AiPathsSettingRecord[] => [
   },
 ];
 
-const buildBrokenRecoverableTranslationDefaultPathRecords = (): AiPathsSettingRecord[] => [
+const buildBrokenTranslationDefaultPathRecords = (): AiPathsSettingRecord[] => [
   {
     key: AI_PATHS_INDEX_KEY,
     value: JSON.stringify([
@@ -319,7 +319,7 @@ const buildBrokenRecoverableTranslationDefaultPathRecords = (): AiPathsSettingRe
   },
 ];
 
-const buildEmptyRecoveryRecords = (): AiPathsSettingRecord[] => [
+const buildEmptyStarterRecords = (): AiPathsSettingRecord[] => [
   {
     key: AI_PATHS_INDEX_KEY,
     value: '[]',
@@ -371,13 +371,13 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
   });
 
-  it('surfaces static recovery restore when canonical workflows are missing from settings', () => {
-    const report = buildAiPathsMaintenanceReport(buildEmptyRecoveryRecords());
+  it('surfaces canonical starter seeding when canonical workflows are missing from settings', () => {
+    const report = buildAiPathsMaintenanceReport(buildEmptyStarterRecords());
 
     expect(report.actions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'restore_static_recovery_bundle',
+          id: 'seed_canonical_starter_workflows',
           status: 'pending',
         }),
       ])
@@ -387,10 +387,10 @@ describe('AI Paths maintenance forward-only action ids', () => {
     );
   });
 
-  it('restores canonical AI Paths and trigger buttons from the static recovery bundle', () => {
+  it('seeds canonical AI Paths and trigger buttons from semantic starter assets', () => {
     const result = runMaintenanceAction({
-      actionId: 'restore_static_recovery_bundle',
-      records: buildEmptyRecoveryRecords(),
+      actionId: 'seed_canonical_starter_workflows',
+      records: buildEmptyStarterRecords(),
     });
 
     expect(result.success).toBe(true);
@@ -523,28 +523,18 @@ describe('AI Paths maintenance forward-only action ids', () => {
     expect(triggerButtonsRecord.value).toBe('[]');
   });
 
-  it('repairs broken recoverable translation default-path configs through the generic refresh action', () => {
+  it('does not repair broken translation default-path configs through the generic refresh action', () => {
     const result = runMaintenanceAction({
       actionId: 'refresh_starter_workflow_configs',
-      records: buildBrokenRecoverableTranslationDefaultPathRecords(),
+      records: buildBrokenTranslationDefaultPathRecords(),
     });
 
     expect(result.success).toBe(true);
-    expect(result.affectedCount).toBe(1);
+    expect(result.affectedCount).toBe(0);
 
     const configRecord = result.nextRecords.find(
       (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`
     );
-    if (!configRecord) throw new Error('Expected repaired translation config record');
-
-    const parsed = JSON.parse(configRecord.value) as PathConfig;
-    expect(parsed.id).toBe('path_96708d');
-    expect(parsed.nodes.some((node) => node.type === 'trigger')).toBe(true);
-    expect(parsed.extensions?.['aiPathsStarter']).toEqual(
-      expect.objectContaining({
-        templateId: 'starter_translation_en_pl',
-        seededDefault: false,
-      })
-    );
+    expect(configRecord?.value).toBe('{"broken":');
   });
 });

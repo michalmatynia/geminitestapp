@@ -123,7 +123,7 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
     fireTrigger,
     fireTriggerPersistent,
     pauseActiveRun: pauseRun,
-    resumeActiveRun: resumeRun,
+    continueActiveRun: continueRun,
     stepActiveRun: stepRun,
     cancelActiveRun: cancelRun,
     clearWires,
@@ -627,10 +627,10 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
                     type='button'
                     size='sm'
                     variant='success'
-                    onClick={resumeRun}
-                    disabled={!resumeRun}
+                    onClick={continueRun}
+                    disabled={!continueRun}
                   >
-                  Resume
+                  Continue
                   </Button>
                   <Button
                     type='button'

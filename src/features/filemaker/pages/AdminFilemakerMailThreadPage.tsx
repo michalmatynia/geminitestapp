@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, Eye, EyeOff, Forward, Reply, Trash2 } from 'lucide-react';
+import { Archive, ArrowLeft, Eye, EyeOff, Forward, Paperclip, Reply, Star, StarOff, Trash2 } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import { useParams, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState, startTransition } from 'react';
@@ -17,6 +17,7 @@ import type { FilemakerMailParticipant, FilemakerMailThreadDetail } from '../typ
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 import { PanelHeader } from '@/shared/ui/templates.public';
+import { FilemakerCampaignContextLinks } from './FilemakerCampaignMailLinks';
 
 type ThreadResponse = {
   detail: FilemakerMailThreadDetail;
@@ -289,6 +290,47 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
     }
   };
 
+  const [pendingMessageAction, setPendingMessageAction] = useState<string | null>(null);
+
+  const handleToggleFlag = useCallback(async (messageId: string, flagged: boolean): Promise<void> => {
+    setPendingMessageAction(`${messageId}:flag`);
+    try {
+      await fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(messageId)}/flags`, {
+        method: 'PATCH',
+        body: JSON.stringify({ flagged }),
+      });
+      await load({ preserveReplyDraft: true });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to update flag.', {
+        variant: 'error',
+      });
+    } finally {
+      setPendingMessageAction(null);
+    }
+  }, [load, toast]);
+
+  const handleMoveMessage = useCallback(async (
+    messageId: string,
+    targetRole: 'archive' | 'trash'
+  ): Promise<void> => {
+    setPendingMessageAction(`${messageId}:${targetRole}`);
+    try {
+      await fetchJson(`/api/filemaker/mail/messages/${encodeURIComponent(messageId)}/move`, {
+        method: 'POST',
+        body: JSON.stringify({ targetRole }),
+      });
+      toast(targetRole === 'archive' ? 'Archived.' : 'Moved to trash.', { variant: 'success' });
+      await load({ preserveReplyDraft: true });
+      setSidebarRefreshKey((current) => current + 1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to move message.', {
+        variant: 'error',
+      });
+    } finally {
+      setPendingMessageAction(null);
+    }
+  }, [load, toast]);
+
   const isThreadUnread = (detail?.thread.unreadCount ?? 0) > 0;
 
   return (
@@ -388,6 +430,12 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
               <Badge variant='outline' className='text-[10px]'>
                 Mailbox: {detail.thread.mailboxPath}
               </Badge>
+              {detail.thread.campaignContext ? (
+                <FilemakerCampaignContextLinks
+                  context={detail.thread.campaignContext}
+                  className='flex flex-wrap gap-2'
+                />
+              ) : null}
             </div>
 
             <div className='space-y-3'>
@@ -404,11 +452,59 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                       <div className='text-[11px] text-gray-500'>
                         To: {formatParticipants(message.to)}
                       </div>
+                      {message.campaignContext ? (
+                        <FilemakerCampaignContextLinks
+                          context={message.campaignContext}
+                          className='mt-2 flex flex-wrap gap-2'
+                        />
+                      ) : null}
                     </div>
-                    <div className='text-[11px] text-gray-500'>
-                      {(message.receivedAt ?? message.sentAt)
-                        ? new Date(message.receivedAt ?? message.sentAt ?? '').toLocaleString()
-                        : 'Unknown time'}
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={pendingMessageAction === `${message.id}:flag`}
+                        onClick={(): void => {
+                          void handleToggleFlag(message.id, message.flags?.flagged !== true);
+                        }}
+                        aria-label={message.flags?.flagged === true ? 'Unstar message' : 'Star message'}
+                      >
+                        {message.flags?.flagged === true ? (
+                          <Star className='size-4 fill-yellow-300 text-yellow-300' />
+                        ) : (
+                          <StarOff className='size-4' />
+                        )}
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={pendingMessageAction === `${message.id}:archive`}
+                        onClick={(): void => {
+                          void handleMoveMessage(message.id, 'archive');
+                        }}
+                        aria-label='Archive message'
+                      >
+                        <Archive className='size-4' />
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        disabled={pendingMessageAction === `${message.id}:trash`}
+                        onClick={(): void => {
+                          void handleMoveMessage(message.id, 'trash');
+                        }}
+                        aria-label='Move message to trash'
+                      >
+                        <Trash2 className='size-4' />
+                      </Button>
+                      <div className='text-[11px] text-gray-500'>
+                        {(message.receivedAt ?? message.sentAt)
+                          ? new Date(message.receivedAt ?? message.sentAt ?? '').toLocaleString()
+                          : 'Unknown time'}
+                      </div>
                     </div>
                   </div>
                   {message.htmlBody ? (
@@ -421,6 +517,24 @@ export function AdminFilemakerMailThreadPage(): React.JSX.Element {
                       {message.textBody ?? '(no content)'}
                     </pre>
                   )}
+                  {(message.attachments ?? []).length > 0 ? (
+                    <div className='mt-3 flex flex-wrap gap-2 border-t border-border/40 pt-2'>
+                      {(message.attachments ?? []).map((attachment) => (
+                        <div
+                          key={attachment.id}
+                          className='inline-flex items-center gap-2 rounded-md border border-border/60 bg-background/40 px-2 py-1 text-[11px] text-gray-300'
+                        >
+                          <Paperclip className='size-3' />
+                          <span className='font-mono'>{attachment.fileName ?? 'attachment'}</span>
+                          {typeof attachment.sizeBytes === 'number' ? (
+                            <span className='text-gray-500'>
+                              {(attachment.sizeBytes / 1024).toFixed(1)} KB
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>

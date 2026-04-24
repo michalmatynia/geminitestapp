@@ -28,7 +28,7 @@ describe('playwright-node-runner.parser', () => {
     expect(logs).toContain('[parser] Script contains bare return — wrapping in async function.');
   });
 
-  it('returns an actionable syntax error when wrapped recovery still fails', () => {
+  it('returns an actionable syntax error when function-body wrapping still fails', () => {
     const validation = validatePlaywrightNodeScript(`
       if (true) {
         return { ok: true };
@@ -38,7 +38,7 @@ describe('playwright-node-runner.parser', () => {
       ok: false,
       error: expect.objectContaining({
         message: expect.stringContaining(
-          'Invalid Playwright script syntax after function-body recovery:'
+          'Invalid Playwright script syntax after function-body wrapping:'
         ),
       }),
     });

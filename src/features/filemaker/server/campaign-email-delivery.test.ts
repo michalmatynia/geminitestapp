@@ -5,12 +5,20 @@ import type { FilemakerMailAccount } from '../types';
 const {
   readSecretSettingValuesMock,
   getFilemakerMailAccountMock,
+  appendFilemakerMailToSentFolderMock,
+  findMailThreadBySubjectAndAnchorMock,
+  upsertMailMessageMock,
+  upsertMailThreadMock,
   sendMailMock,
   createTransportMock,
   logSystemEventMock,
 } = vi.hoisted(() => ({
   readSecretSettingValuesMock: vi.fn(),
   getFilemakerMailAccountMock: vi.fn(),
+  appendFilemakerMailToSentFolderMock: vi.fn(),
+  findMailThreadBySubjectAndAnchorMock: vi.fn(),
+  upsertMailMessageMock: vi.fn(),
+  upsertMailThreadMock: vi.fn(),
   sendMailMock: vi.fn(),
   createTransportMock: vi.fn(),
   logSystemEventMock: vi.fn(),
@@ -26,6 +34,13 @@ vi.mock('@/shared/lib/observability/system-logger', () => ({
 
 vi.mock('./filemaker-mail-service', () => ({
   getFilemakerMailAccount: getFilemakerMailAccountMock,
+  appendFilemakerMailToSentFolder: appendFilemakerMailToSentFolderMock,
+}));
+
+vi.mock('./mail/mail-storage', () => ({
+  findMailThreadBySubjectAndAnchor: findMailThreadBySubjectAndAnchorMock,
+  upsertMailMessage: upsertMailMessageMock,
+  upsertMailThread: upsertMailThreadMock,
 }));
 
 vi.mock('nodemailer', () => ({
@@ -66,6 +81,11 @@ describe('sendFilemakerCampaignEmail', () => {
       sendMail: sendMailMock,
     });
     sendMailMock.mockResolvedValue({ messageId: 'message-1' });
+    appendFilemakerMailToSentFolderMock.mockResolvedValue(undefined);
+    findMailThreadBySubjectAndAnchorMock.mockResolvedValue(null);
+    upsertMailMessageMock.mockResolvedValue(undefined);
+    upsertMailThreadMock.mockResolvedValue(undefined);
+    logSystemEventMock.mockResolvedValue(undefined);
     readSecretSettingValuesMock.mockResolvedValue({
       'filemaker_mail_account_mail-account-sales_smtp_password': 'account-password',
     });
@@ -117,6 +137,30 @@ describe('sendFilemakerCampaignEmail', () => {
       expect.objectContaining({
         provider: 'smtp',
         providerMessage: 'Sent through the Filemaker mail account "Sales".',
+        mailFilingStatus: 'filed',
+        mailFilingError: null,
+      })
+    );
+    expect(result.mailThreadId).toEqual(expect.stringContaining('filemaker-mail-thread-'));
+    expect(result.mailMessageId).toEqual(expect.stringContaining('filemaker-mail-message-'));
+    expect(upsertMailMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        threadId: result.mailThreadId,
+        campaignContext: {
+          campaignId: 'campaign-1',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
+      })
+    );
+    expect(upsertMailThreadMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: result.mailThreadId,
+        campaignContext: {
+          campaignId: 'campaign-1',
+          runId: 'run-1',
+          deliveryId: 'delivery-1',
+        },
       })
     );
     expect(module.__getDeliveredFilemakerCampaignEmails()).toEqual([
@@ -128,6 +172,37 @@ describe('sendFilemakerCampaignEmail', () => {
       }),
     ]);
     expect(logSystemEventMock).not.toHaveBeenCalled();
+  });
+
+  it('reports mail filing failures without failing the campaign send', async () => {
+    const module = await import('./campaign-email-delivery');
+    upsertMailMessageMock.mockRejectedValue(new Error('Mongo unavailable'));
+
+    const result = await module.sendFilemakerCampaignEmail({
+      to: 'recipient@example.com',
+      subject: 'Filing failure',
+      text: 'Hello from campaign',
+      campaignId: 'campaign-1',
+      runId: 'run-1',
+      deliveryId: 'delivery-1',
+      mailAccountId: 'mail-account-sales',
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        provider: 'smtp',
+        mailFilingStatus: 'failed',
+        mailThreadId: null,
+        mailMessageId: null,
+        mailFilingError: 'Mongo unavailable',
+      })
+    );
+    expect(logSystemEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        level: 'warn',
+        source: 'filemaker-campaign-mail-filing',
+      })
+    );
   });
 
   it('lets campaign sender overrides win over selected account defaults', async () => {

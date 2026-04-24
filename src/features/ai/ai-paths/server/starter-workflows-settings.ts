@@ -3,16 +3,17 @@ import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { materializeStoredTriggerPathConfig } from '@/shared/lib/ai-paths/core/normalization/stored-trigger-path-config';
 import {
+  getCanonicalSeedStarterWorkflowEntryByDefaultPathId,
   getAutoSeedStarterWorkflowEntries,
-  getStaticRecoveryStarterWorkflowEntryByDefaultPathId,
-  getStaticRecoveryStarterWorkflowEntries,
-  materializeStarterWorkflowRecoveryBundle,
+  getCanonicalSeedStarterWorkflowEntries,
+  materializeStarterWorkflowSeedBundle,
 } from '@/shared/lib/ai-paths/core/starter-workflows/segments/api';
 import {
   resolveStarterWorkflowForPathConfig,
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows/segments/upgrade';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import type {
   AiPathTemplateRegistryEntry,
   StarterWorkflowTriggerPreset,
@@ -24,7 +25,7 @@ import {
   AI_PATHS_TRIGGER_BUTTONS_KEY,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
-import { parsePathConfigFlags, parsePathConfigMeta, parsePathMetas, parseTriggerButtons } from './settings-store.parsing';
+import { parsePathConfigFlags, parsePathConfigMeta, parsePathMetas, parseTriggerButtons, preservePathConfigFlagsOnSeed } from './settings-store.parsing';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const DEPRECATED_STARTER_WORKFLOW_PATH_IDS = new Set<string>(['path_base_export_blwo_v1']);
@@ -155,6 +156,15 @@ const parsePathConfigRecord = (value: string): PathConfig | null => {
   }
 };
 
+const isCanonicalStoredPathConfig = (pathId: string, rawConfig: string): boolean => {
+  try {
+    loadCanonicalStoredPathConfig({ pathId, rawConfig });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const toTimestampOrNull = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value : null;
 
@@ -195,41 +205,74 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
     rawConfig: JSON.stringify(backfillStarterRefreshTimestamps(upgraded.config)),
     fallbackName: upgraded.config.name,
     applyStarterWorkflowUpgrade: false,
-    allowStaticRecoveryFallback: false,
   }).config;
   return sanitizePathConfig(canonicalized);
 };
 
-const tryRepairBrokenRecoverableStarterConfig = (args: {
+const buildCanonicalStarterConfigRaw = (args: {
+  canonicalConfig: PathConfig;
   pathId: string;
-  rawConfig: string;
-}): PathConfig | null => {
-  if (!getStaticRecoveryStarterWorkflowEntryByDefaultPathId(args.pathId)) {
-    return null;
-  }
-  try {
-    const resolved = materializeStoredTriggerPathConfig({
-      pathId: args.pathId,
-      rawConfig: args.rawConfig,
-      fallbackName: args.pathId,
-      applyStarterWorkflowUpgrade: true,
-      allowStaticRecoveryFallback: true,
-    });
-    return resolved.changed ? sanitizePathConfig(resolved.config) : null;
-  } catch (error) {
-    void ErrorSystem.captureException(error);
-    return null;
-  }
+}): string => {
+  const materialized = materializeStoredTriggerPathConfig({
+    pathId: args.pathId,
+    rawConfig: JSON.stringify(args.canonicalConfig),
+    fallbackName: args.canonicalConfig.name,
+    applyStarterWorkflowUpgrade: false,
+  }).config;
+  return JSON.stringify(sanitizePathConfig(materialized));
 };
+
+const buildCanonicalStarterConfigRewrite = (args: {
+  canonicalConfig: PathConfig;
+  existingRaw: string | undefined;
+  pathId: string;
+}): string | null => {
+  if (args.existingRaw && isCanonicalStoredPathConfig(args.pathId, args.existingRaw)) {
+    return null;
+  }
+
+  const parsedExisting = args.existingRaw ? parsePathConfigRecord(args.existingRaw) : null;
+  if (parsedExisting) {
+    const refreshed = buildRefreshedStarterWorkflowConfig(parsedExisting);
+    if (refreshed) {
+      const refreshedRaw = JSON.stringify(refreshed);
+      if (isCanonicalStoredPathConfig(args.pathId, refreshedRaw)) {
+        return refreshedRaw;
+      }
+    }
+  }
+
+  return preservePathConfigFlagsOnSeed(
+    buildCanonicalStarterConfigRaw({
+      canonicalConfig: args.canonicalConfig,
+      pathId: args.pathId,
+    }),
+    args.existingRaw
+  );
+};
+
+export const isCanonicalStarterWorkflowPathId = (pathId: string | null | undefined): boolean => {
+  const normalizedPathId = typeof pathId === 'string' ? pathId.trim() : '';
+  return normalizedPathId.length > 0
+    ? getCanonicalSeedStarterWorkflowEntryByDefaultPathId(normalizedPathId) !== null
+    : false;
+};
+
+export const getCanonicalStarterWorkflowPathIds = (): string[] =>
+  getCanonicalSeedStarterWorkflowEntries()
+    .map((entry) => entry.seedPolicy?.defaultPathId?.trim() ?? '')
+    .filter((pathId): pathId is string => pathId.length > 0);
 
 export const countPendingStarterWorkflowDefaults = (records: AiPathsSettingRecord[]): number => {
   return ensureStarterWorkflowEntries(records, getAutoSeedStarterWorkflowEntries()).affectedCount;
 };
 
-export const countPendingStaticStarterWorkflowBundle = (
+export const countPendingCanonicalStarterWorkflows = (
   records: AiPathsSettingRecord[]
 ): number =>
-  ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries()).affectedCount;
+  ensureStarterWorkflowEntries(records, getCanonicalSeedStarterWorkflowEntries(), {
+    rewriteInvalidExistingConfigs: true,
+  }).affectedCount;
 
 export const pruneDeprecatedStarterWorkflowRecords = (
   records: AiPathsSettingRecord[]
@@ -288,7 +331,10 @@ export const pruneDeprecatedStarterWorkflowRecords = (
 
 const ensureStarterWorkflowEntries = (
   records: AiPathsSettingRecord[],
-  entries: AiPathTemplateRegistryEntry[]
+  entries: AiPathTemplateRegistryEntry[],
+  options?: {
+    rewriteInvalidExistingConfigs?: boolean;
+  }
 ): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } => {
   const now = new Date().toISOString();
   const nextRecords = records.map((record) => ({ ...record }));
@@ -324,8 +370,8 @@ const ensureStarterWorkflowEntries = (
   const nextButtons = parseTriggerButtons(triggerButtonsEntry.value);
   const bundleScope = entries.every((entry) => entry.seedPolicy?.autoSeed === true)
     ? 'auto_seed'
-    : 'static_recovery';
-  const bundle = materializeStarterWorkflowRecoveryBundle(bundleScope);
+    : 'canonical_seed';
+  const bundle = materializeStarterWorkflowSeedBundle(bundleScope);
   const bundleConfigByPathId = new Map(
     bundle.pathConfigs.map((config) => [config.id, config] as const)
   );
@@ -342,10 +388,10 @@ const ensureStarterWorkflowEntries = (
     const existingConfig = nextRecords.find((record) => record.key === configKey);
     const hasConfig = Boolean(existingConfig);
     let currentConfigRaw = existingConfig?.value;
+    const canonicalConfig = bundleConfigByPathId.get(defaultPathId);
     if (!hasConfig) {
-      const canonicalConfig = bundleConfigByPathId.get(defaultPathId);
       if (!canonicalConfig) return;
-      const raw = JSON.stringify(canonicalConfig);
+      const raw = buildCanonicalStarterConfigRaw({ canonicalConfig, pathId: defaultPathId });
       nextRecords.push({ key: configKey, value: raw });
       currentConfigRaw = raw;
       affectedCount += 1;
@@ -374,6 +420,18 @@ const ensureStarterWorkflowEntries = (
           if (index >= 0) {
             nextMetas[index] = meta;
           }
+        }
+      }
+      if (canonicalConfig && options?.rewriteInvalidExistingConfigs === true) {
+        const canonicalRewrite = buildCanonicalStarterConfigRewrite({
+          canonicalConfig,
+          existingRaw: existingConfig.value,
+          pathId: defaultPathId,
+        });
+        if (canonicalRewrite && canonicalRewrite !== existingConfig.value) {
+          existingConfig.value = canonicalRewrite;
+          currentConfigRaw = canonicalRewrite;
+          affectedCount += 1;
         }
       }
     }
@@ -416,10 +474,40 @@ export const ensureStarterWorkflowDefaults = (
 ): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } =>
   ensureStarterWorkflowEntries(records, getAutoSeedStarterWorkflowEntries());
 
-export const restoreStaticStarterWorkflowBundle = (
+export const seedCanonicalStarterWorkflows = (
   records: AiPathsSettingRecord[]
 ): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } =>
-  ensureStarterWorkflowEntries(records, getStaticRecoveryStarterWorkflowEntries());
+  ensureStarterWorkflowEntries(records, getCanonicalSeedStarterWorkflowEntries(), {
+    rewriteInvalidExistingConfigs: true,
+  });
+
+export const ensureCanonicalStarterWorkflowRecordsForPathIds = (
+  records: AiPathsSettingRecord[],
+  pathIds: string[]
+): { nextRecords: AiPathsSettingRecord[]; affectedCount: number } => {
+  const requestedPathIds = new Set(
+    pathIds
+      .map((pathId) => pathId.trim())
+      .filter((pathId) => pathId.length > 0 && isCanonicalStarterWorkflowPathId(pathId))
+  );
+  if (requestedPathIds.size === 0) {
+    return {
+      nextRecords: records.map((record) => ({ ...record })),
+      affectedCount: 0,
+    };
+  }
+
+  return ensureStarterWorkflowEntries(
+    records,
+    getCanonicalSeedStarterWorkflowEntries().filter((entry) => {
+      const defaultPathId = entry.seedPolicy?.defaultPathId?.trim() ?? '';
+      return defaultPathId.length > 0 && requestedPathIds.has(defaultPathId);
+    }),
+    {
+      rewriteInvalidExistingConfigs: true,
+    }
+  );
+};
 
 export const countPendingStarterWorkflowConfigRefreshes = (
   records: AiPathsSettingRecord[]
@@ -433,30 +521,11 @@ export const refreshStarterWorkflowConfigs = (
 
   nextRecords.forEach((record) => {
     if (!record.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
-    const pathId = record.key.replace(AI_PATHS_CONFIG_KEY_PREFIX, '');
     const parsedConfig = parsePathConfigRecord(record.value);
-    if (!parsedConfig) {
-      const repairedStarterConfig = tryRepairBrokenRecoverableStarterConfig({
-        pathId,
-        rawConfig: record.value,
-      });
-      if (!repairedStarterConfig) return;
-      record.value = JSON.stringify(repairedStarterConfig);
-      affectedCount += 1;
-      return;
-    }
+    if (!parsedConfig) return;
 
     const refreshed = buildRefreshedStarterWorkflowConfig(parsedConfig);
-    if (!refreshed) {
-      const repairedStarterConfig = tryRepairBrokenRecoverableStarterConfig({
-        pathId,
-        rawConfig: record.value,
-      });
-      if (!repairedStarterConfig) return;
-      record.value = JSON.stringify(repairedStarterConfig);
-      affectedCount += 1;
-      return;
-    }
+    if (!refreshed) return;
 
     record.value = JSON.stringify(refreshed);
     affectedCount += 1;

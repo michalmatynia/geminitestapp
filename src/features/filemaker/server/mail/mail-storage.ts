@@ -35,6 +35,10 @@ export const ensureMailIndexes = async (): Promise<void> => {
       { accountId: 1, providerThreadId: 1 },
       { sparse: true }
     ),
+    mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex(
+      { 'campaignContext.campaignId': 1, 'campaignContext.runId': 1, 'campaignContext.deliveryId': 1 },
+      { sparse: true }
+    ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex({ threadId: 1, sentAt: 1, receivedAt: 1 }),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
       { accountId: 1, providerMessageId: 1 },
@@ -42,6 +46,10 @@ export const ensureMailIndexes = async (): Promise<void> => {
     ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
       { accountId: 1, mailboxPath: 1, providerUid: 1 },
+      { sparse: true }
+    ),
+    mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
+      { 'campaignContext.campaignId': 1, 'campaignContext.runId': 1, 'campaignContext.deliveryId': 1 },
       { sparse: true }
     ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(

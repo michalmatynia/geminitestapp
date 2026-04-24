@@ -380,7 +380,7 @@ describe('useAiPathsSettingsPathActions handleSwitchPath', () => {
     );
   });
 
-  it('does not persist trigger-context remediation while switching paths', async () => {
+  it('does not persist trigger-context normalization while switching paths', async () => {
     const { input, mocks } = buildInput();
     const nextPathId = 'path_legacy_trigger';
     const fetchedConfig = buildLegacyTriggerConfig(nextPathId);

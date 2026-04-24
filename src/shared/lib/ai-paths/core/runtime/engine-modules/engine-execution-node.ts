@@ -2,7 +2,6 @@ import { type AiNode, type Edge, type RuntimePortValues } from '@/shared/contrac
 import {
   type NodeHandlerContext,
   type RuntimeHistoryEntry,
-  type RuntimeTraceResume,
 } from '@/shared/contracts/ai-paths-runtime';
 
 import {
@@ -188,19 +187,6 @@ const resolveSourceSpanId = (input: {
   return typeof matched?.spanId === 'string' ? matched.spanId : null;
 };
 
-const resolveNodeResume = (
-  options: EvaluateGraphOptions,
-  nodeId: string
-): RuntimeTraceResume | null => {
-  const resumeByNodeId = options['resumeByNodeId'];
-  if (!resumeByNodeId || typeof resumeByNodeId !== 'object' || Array.isArray(resumeByNodeId)) {
-    return null;
-  }
-  const value = (resumeByNodeId as Record<string, unknown>)[nodeId];
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as RuntimeTraceResume;
-};
-
 const appendNodeHistoryEntry = (input: {
   state: EngineStateManager;
   options: EvaluateGraphOptions;
@@ -221,7 +207,6 @@ const appendNodeHistoryEntry = (input: {
   sideEffectDecision?: string;
   idempotencyKey?: string | null;
   effectSourceSpanId?: string | null;
-  resume?: RuntimeTraceResume | null;
   error?: string | null;
   durationMs?: number;
   runtimeTelemetry?: RuntimeNodeResolutionTelemetry | null;
@@ -249,13 +234,6 @@ const appendNodeHistoryEntry = (input: {
     sideEffectDecision: input.sideEffectDecision,
     idempotencyKey: input.idempotencyKey ?? null,
     effectSourceSpanId: input.effectSourceSpanId ?? null,
-    resumeMode: input.resume?.mode,
-    resumeDecision: input.resume?.decision,
-    resumeReason: input.resume?.reason,
-    resumeSourceTraceId: input.resume?.sourceTraceId ?? null,
-    resumeSourceSpanId: input.resume?.sourceSpanId ?? null,
-    resumeSourceRunStartedAt: input.resume?.sourceRunStartedAt ?? null,
-    resumeSourceStatus: input.resume?.sourceStatus ?? null,
     error: input.error ?? undefined,
     inputsFrom: buildInputLinks(
       input.node.id,
@@ -305,7 +283,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   const activationHash = buildNodeInputHash(node, nodeInputs, {
     iteration,
   });
-  const resume = resolveNodeResume(options, node.id);
 
   // --- Cache Check Start ---
   const nodeHash = buildNodeHash(
@@ -399,7 +376,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
       idempotencyKey,
       effectSourceSpanId,
-      resume,
       runtimeTelemetry,
     });
 
@@ -691,7 +667,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         sideEffectPolicy,
         sideEffectDecision,
         idempotencyKey,
-        resume,
         durationMs: nodeDurationMs,
         runtimeTelemetry,
       });
@@ -767,7 +742,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision,
       idempotencyKey,
-      resume,
       durationMs: nodeDurationMs,
       runtimeTelemetry,
     });
@@ -967,7 +941,6 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       sideEffectPolicy,
       sideEffectDecision: sideEffectPolicy ? 'failed' : undefined,
       idempotencyKey,
-      resume,
       error: graphError.message,
       durationMs: nodeDurationMs,
       runtimeTelemetry,

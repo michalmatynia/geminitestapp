@@ -55,9 +55,7 @@ export function BrainRoutingFeatureNodeItem(
       className={cn('relative h-9 text-xs', isDragging && 'opacity-50')}
     >
       <div className='flex h-full w-full min-w-0 items-center gap-1.5 text-left'>
-        <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
-          <GripVertical className='size-3.5 shrink-0 cursor-default text-gray-600' aria-hidden='true' />
-        </span>
+        <GripIcon />
         <TreeCaret
           isOpen={isExpanded}
           hasChildren={hasChildren}
@@ -67,23 +65,7 @@ export function BrainRoutingFeatureNodeItem(
           buttonClassName='hover:bg-gray-700'
           placeholderClassName='w-3'
         />
-        <button
-          type='button'
-          className='flex h-full min-w-0 flex-1 items-center gap-1.5 text-left'
-          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-            event.stopPropagation();
-            select();
-          }}
-          title={group.description}
-        >
-          <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
-            <Brain className='size-3.5 text-cyan-300' aria-hidden='true' />
-          </span>
-          <span className='min-w-0 flex-1 truncate font-semibold text-cyan-100'>{node.name}</span>
-          <span className='ml-1 shrink-0 text-[10px] text-gray-500'>
-            {group.capabilities.length} route{group.capabilities.length === 1 ? '' : 's'}
-          </span>
-        </button>
+        <FeatureNameButton node={node} group={group} select={select} />
         <StatusToggle
           enabled={enabled}
           disabled={isPending}
@@ -95,5 +77,43 @@ export function BrainRoutingFeatureNodeItem(
         />
       </div>
     </TreeRow>
+  );
+}
+
+function GripIcon(): React.JSX.Element {
+  return (
+    <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100'>
+      <GripVertical className='size-3.5 shrink-0 cursor-default text-gray-600' aria-hidden='true' />
+    </span>
+  );
+}
+
+function FeatureNameButton({
+  node,
+  group,
+  select,
+}: {
+  node: MasterTreeNode;
+  group: BrainRoutingCapabilityGroup;
+  select: () => void;
+}): React.JSX.Element {
+  return (
+    <button
+      type='button'
+      className='flex h-full min-w-0 flex-1 items-center gap-1.5 text-left'
+      onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+        event.stopPropagation();
+        select();
+      }}
+      title={group.description}
+    >
+      <span className='inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center'>
+        <Brain className='size-3.5 text-cyan-300' aria-hidden='true' />
+      </span>
+      <span className='min-w-0 flex-1 truncate font-semibold text-cyan-100'>{node.name}</span>
+      <span className='ml-1 shrink-0 text-[10px] text-gray-500'>
+        {group.capabilities.length} route{group.capabilities.length === 1 ? '' : 's'}
+      </span>
+    </button>
   );
 }

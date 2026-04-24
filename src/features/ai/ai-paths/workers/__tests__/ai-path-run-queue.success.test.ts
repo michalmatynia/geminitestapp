@@ -5,7 +5,6 @@ const {
   getPathRunRepositoryMock,
   mutateAgentLeaseMock,
   processRunMock,
-  processStaleRunRecoveryMock,
   recordRuntimeRunStartedMock,
   recordRuntimeRunBlockedOnLeaseMock,
 } = vi.hoisted(() => ({
@@ -13,7 +12,6 @@ const {
   getPathRunRepositoryMock: vi.fn(),
   mutateAgentLeaseMock: vi.fn(),
   processRunMock: vi.fn(),
-  processStaleRunRecoveryMock: vi.fn(),
   recordRuntimeRunStartedMock: vi.fn(),
   recordRuntimeRunBlockedOnLeaseMock: vi.fn(),
 }));
@@ -33,7 +31,6 @@ vi.mock('@/shared/lib/agent-lease-service', () => ({
 
 vi.mock('@/features/ai/ai-paths/workers/ai-path-run-processor', () => ({
   processRun: processRunMock,
-  processStaleRunRecovery: processStaleRunRecoveryMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
@@ -58,7 +55,6 @@ describe('ai-path-run queue execution lease success', () => {
     vi.clearAllMocks();
     createManagedQueueMock.mockReturnValue(createQueueMock());
     processRunMock.mockResolvedValue(undefined);
-    processStaleRunRecoveryMock.mockResolvedValue(undefined);
     recordRuntimeRunStartedMock.mockResolvedValue(undefined);
     recordRuntimeRunBlockedOnLeaseMock.mockResolvedValue(undefined);
   });
@@ -116,7 +112,7 @@ describe('ai-path-run queue execution lease success', () => {
     const config = createManagedQueueMock.mock.calls[0]?.[0] as
       | {
           processor?: (
-            data: { runId: string; type: 'run' | 'recovery' },
+            data: { runId: string },
             jobId: string,
             signal?: AbortSignal
           ) => Promise<void>;
@@ -127,7 +123,7 @@ describe('ai-path-run queue execution lease success', () => {
       throw new Error('Expected the AI Paths queue module to register a managed queue processor.');
     }
 
-    await config.processor({ runId: 'run-1', type: 'run' }, 'job-1');
+    await config.processor({ runId: 'run-1' }, 'job-1');
 
     expect(claimRunForProcessingMock).toHaveBeenCalledWith('run-1');
     expect(mutateAgentLeaseMock).toHaveBeenNthCalledWith(

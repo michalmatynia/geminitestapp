@@ -37,7 +37,7 @@ export default function AuthPermissionsPage(): React.JSX.Element {
       </div>
 
       <div className='flex items-center justify-end gap-3 pt-6'>
-        <Button size='sm' onClick={handleSave} disabled={!dirty || isSaving} loading={isSaving}>Save permissions</Button>
+        <Button size='sm' onClick={() => void handleSave()} disabled={!dirty || isSaving} loading={isSaving}>Save permissions</Button>
       </div>
     </div>
   );

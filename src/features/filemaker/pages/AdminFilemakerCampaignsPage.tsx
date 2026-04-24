@@ -404,6 +404,9 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             <div className='text-[11px] text-gray-500'>
               Click rate: {row.original.analytics.clickRatePercent}% • unique {row.original.analytics.uniqueClickRatePercent}%
             </div>
+            <div className='text-[11px] text-gray-500'>
+              Replies: {row.original.analytics.replyCount} ({row.original.analytics.replyRatePercent}%)
+            </div>
             {row.original.analytics.topClickedLinks[0] ? (
               <div className='text-[11px] text-gray-500 break-all'>
                 Top link: {row.original.analytics.topClickedLinks[0].clickCount} clicks

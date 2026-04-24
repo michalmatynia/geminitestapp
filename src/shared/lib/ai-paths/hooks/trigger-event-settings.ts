@@ -67,7 +67,6 @@ export const loadTriggerPathConfigCached = (args: {
     rawConfig: args.rawConfig,
     fallbackName: args.pathId,
     applyStarterWorkflowUpgrade: true,
-    allowStaticRecoveryFallback: true,
   }).config;
   writeTriggerPathConfigCache(args.pathId, args.rawConfig, config);
   return config;

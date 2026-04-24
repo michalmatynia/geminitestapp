@@ -37,6 +37,7 @@ const RECIPIENT_ACTIVITY_LABELS: Record<FilemakerEmailCampaignRecipientActivityI
   delivery_bounced: 'Bounced',
   opened: 'Opened',
   clicked: 'Clicked',
+  reply_received: 'Reply',
   unsubscribed: 'Unsubscribed',
   resubscribed: 'Restored',
 };
@@ -307,7 +308,7 @@ export function FilemakerCampaignPreferencesPage({
                     {recipientSummary.openCount} opens
                   </div>
                   <div className='text-[11px] text-gray-400'>
-                    {recipientSummary.clickCount} clicks
+                    {recipientSummary.clickCount} clicks • {recipientSummary.replyCount} replies
                   </div>
                 </div>
                 <div className='rounded-xl border border-border/40 bg-background/40 p-3'>
@@ -342,6 +343,12 @@ export function FilemakerCampaignPreferencesPage({
                 <div>
                   Latest click:{' '}
                   {recipientSummary.latestClickAt ? recipientSummary.latestClickAt : 'No clicks yet'}
+                </div>
+                <div>
+                  Latest reply:{' '}
+                  {recipientSummary.latestReplyAt !== null
+                    ? recipientSummary.latestReplyAt
+                    : 'No replies yet'}
                 </div>
                 <div>
                   Latest opt-out:{' '}

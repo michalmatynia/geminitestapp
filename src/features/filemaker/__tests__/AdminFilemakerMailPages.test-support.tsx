@@ -15,7 +15,10 @@ const {
   routerReplaceMock: vi.fn(),
   searchParamsGetMock: vi.fn<(key: string) => string | null>(),
   usePathnameMock: vi.fn(() => '/'),
-  routeParamsMock: { threadId: 'thread-1' as string | string[] | undefined },
+  routeParamsMock: {
+    threadId: 'thread-1' as string | string[] | undefined,
+    runId: undefined as string | string[] | undefined,
+  },
   toastMock: vi.fn(),
   fetchMock: vi.fn(),
 }));
@@ -330,6 +333,24 @@ vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
       {children}
     </div>
   ),
+  SectionHeader: ({
+    title,
+    description,
+    eyebrow,
+    actions,
+  }: {
+    title: string;
+    description?: string;
+    eyebrow?: React.ReactNode;
+    actions?: React.ReactNode;
+  }) => (
+    <header>
+      {eyebrow}
+      <h1>{title}</h1>
+      {description ? <p>{description}</p> : null}
+      {actions}
+    </header>
+  ),
 }));
 
 vi.mock('@/features/filemaker/components/shared/FilemakerEntityTablePage', () => ({
@@ -444,6 +465,7 @@ const setupAdminFilemakerMailPagesTest = (): void => {
     vi.clearAllMocks();
     searchParamsGetMock.mockReturnValue(null);
     routeParamsMock.threadId = 'thread-1';
+    routeParamsMock.runId = undefined;
     vi.stubGlobal('fetch', fetchMock);
   });
 };

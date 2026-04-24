@@ -18,7 +18,7 @@ export interface RuntimeControlHandlers {
   fireTrigger?: (node: AiNode, event?: React.MouseEvent<Element>) => void | Promise<void>;
   fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<Element>) => void | Promise<void>;
   pauseActiveRun?: () => void;
-  resumeActiveRun?: () => void;
+  continueActiveRun?: () => void;
   stepActiveRun?: (triggerNode?: AiNode) => void;
   cancelActiveRun?: () => void;
   clearWires?: () => void | Promise<void>;

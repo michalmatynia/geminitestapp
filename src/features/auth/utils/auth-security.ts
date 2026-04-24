@@ -102,10 +102,11 @@ export const normalizeAuthSecurityPolicy = (raw: unknown): AuthSecurityPolicy =>
       ? (raw as Record<string, unknown>)
       : {};
 
-  return {
+  const policy: AuthSecurityPolicy = {
     ...DEFAULT_AUTH_SECURITY_POLICY,
     ...normalizePasswordPolicy(data),
     ...normalizeLockoutPolicy(data),
     ...normalizeRateLimitPolicy(data),
-  } as AuthSecurityPolicy;
+  };
+  return policy;
 };

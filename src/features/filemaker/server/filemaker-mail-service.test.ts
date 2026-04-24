@@ -730,6 +730,7 @@ describe('filemaker mail service - accounts and sending', () => {
 
     const {
       getFilemakerMailThreadForCampaignDelivery,
+      listFilemakerMailThreads,
       listFilemakerMailThreadsForCampaign,
     } = await import('./filemaker-mail-service');
 
@@ -742,12 +743,19 @@ describe('filemaker mail service - accounts and sending', () => {
       runId: 'run-1',
       deliveryId: 'delivery-1',
     });
+    const queriedThreads = await listFilemakerMailThreads({
+      query: 'run-1',
+    });
 
     expect(runThreads.map((thread) => thread.id)).toEqual([
       'thread-campaign-delivery-2',
       'thread-campaign-delivery-1',
     ]);
     expect(deliveryThread?.id).toBe('thread-campaign-delivery-1');
+    expect(queriedThreads.map((thread) => thread.id)).toEqual([
+      'thread-campaign-delivery-2',
+      'thread-campaign-delivery-1',
+    ]);
   });
 
   it('downloads IMAP messages, stores them, and updates sync state', async () => {

@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
-import { useSettingsStore } from '@/features/cms/shared/providers/SettingsStoreProvider';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   CMS_MENU_SETTINGS_KEY,

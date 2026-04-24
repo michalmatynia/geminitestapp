@@ -4,7 +4,7 @@ import { Badge, Button, Tabs, TabsContent, TabsList, TabsTrigger, CollapsibleSec
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { StandardDataTablePanel } from '@/shared/ui/templates.public';
-import { formatDatabaseCellValue } from '../format-cell-value';
+import { formatDatabaseCellValue } from '../../components/format-cell-value';
 import { useDatabasePreviewState } from '../../hooks/useDatabasePreviewState';
 import type { DatabaseTableDetail, DatabaseTablePreviewData, DatabaseColumnInfo, DatabaseIndexInfo, DatabaseForeignKeyInfo } from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';

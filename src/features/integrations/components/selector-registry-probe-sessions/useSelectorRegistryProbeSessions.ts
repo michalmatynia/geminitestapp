@@ -67,7 +67,9 @@ export function useSelectorRegistryProbeSessions(
   return {
     activeSessions,
     selectedKeys,
+    setSelectedKeys,
     manuallySelectedKeys,
+    setManuallySelectedKeys,
     updateSelection,
     saveMutation,
     archiveMutation,

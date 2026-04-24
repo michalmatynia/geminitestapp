@@ -224,6 +224,18 @@ const sortThreadsByActivity = (threads: FilemakerMailThread[]): FilemakerMailThr
     return left.subject.localeCompare(right.subject);
   });
 
+const getThreadCampaignContextSearchTokens = (
+  thread: FilemakerMailThread
+): string[] => {
+  const context = thread.campaignContext;
+  if (context === null || context === undefined) return [];
+  return [
+    context.campaignId,
+    context.runId ?? '',
+    context.deliveryId ?? '',
+  ];
+};
+
 const matchesThreadQuery = (thread: FilemakerMailThread, query: string): boolean => {
   const normalizedQuery = normalizeString(query).toLowerCase();
   if (!normalizedQuery) return true;
@@ -236,6 +248,7 @@ const matchesThreadQuery = (thread: FilemakerMailThread, query: string): boolean
       participant.name ?? '',
       participant.address,
     ]),
+    ...getThreadCampaignContextSearchTokens(thread),
   ]
     .join('\n')
     .toLowerCase()

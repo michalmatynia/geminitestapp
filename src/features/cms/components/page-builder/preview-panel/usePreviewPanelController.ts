@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
-import { usePageBuilderState, usePageBuilderDispatch, useVectorOverlay } from '../../hooks/page-builder-context';
-import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
-import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
+import { usePageBuilderState, usePageBuilderDispatch, useVectorOverlay } from '../../../hooks/usePageBuilderContext';
+import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';
+import { useCmsSlugs, useUpdatePage } from '../../../hooks/useCmsQueries';
 import { useThemeSettingsValue } from '../ThemeSettingsContext';
-import { normalizePageSlugValues } from '../../utils/slug-utils';
+import { normalizePageSlugValues } from '../../../utils/slug-utils';
 
 export function usePreviewPanelController() {
   const state = usePageBuilderState();

@@ -359,6 +359,99 @@ describe('AdminFilemakerMail pages recent flows', () => {
     expect(screen.queryByRole('button', { name: 'Clear Filters' })).not.toBeInTheDocument();
   });
 
+  it('loads account recent threads from campaign route filters', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+    searchParamsGetMock.mockImplementation((key: string) => {
+      if (key === 'accountId') return 'account-1';
+      if (key === 'panel') return 'recent';
+      if (key === 'campaignId') return 'campaign-1';
+      if (key === 'runId') return 'run-1';
+      if (key === 'deliveryId') return 'delivery-1';
+      return null;
+    });
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({
+          accounts: [
+            {
+              id: 'account-1',
+              name: 'Support inbox',
+              emailAddress: 'support@example.com',
+              status: 'active',
+              imapHost: 'imap.example.com',
+              imapPort: 993,
+              imapSecure: true,
+              imapUser: 'support@example.com',
+              imapPasswordSettingKey: 'imap-key',
+              smtpHost: 'smtp.example.com',
+              smtpPort: 465,
+              smtpSecure: true,
+              smtpUser: 'support@example.com',
+              smtpPasswordSettingKey: 'smtp-key',
+              fromName: 'Support',
+              replyToEmail: null,
+              folderAllowlist: ['Sent'],
+              initialSyncLookbackDays: 30,
+              maxMessagesPerSync: 100,
+              lastSyncedAt: null,
+              lastSyncError: null,
+              createdAt: '2026-03-28T10:00:00.000Z',
+              updatedAt: '2026-03-28T10:00:00.000Z',
+              provider: 'imap_smtp',
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: [] });
+      }
+      if (
+        url ===
+        '/api/filemaker/mail/threads?accountId=account-1&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
+      ) {
+        return jsonResponse({
+          threads: [
+            {
+              id: 'thread-campaign-1',
+              accountId: 'account-1',
+              subject: 'Campaign reply',
+              participantSummary: [{ address: 'jane@example.com', name: 'Jane' }],
+              snippet: 'Campaign branch preview',
+              mailboxPath: 'Sent',
+              mailboxRole: 'sent',
+              normalizedSubject: 'Campaign reply',
+              relatedPersonIds: [],
+              relatedOrganizationIds: [],
+              messageCount: 2,
+              unreadCount: 0,
+              lastMessageAt: '2026-03-28T10:00:00.000Z',
+              campaignContext: {
+                campaignId: 'campaign-1',
+                runId: 'run-1',
+                deliveryId: 'delivery-1',
+              },
+            },
+          ],
+        });
+      }
+      if (url === '/api/filemaker/mail/threads?accountId=account-1&limit=5') {
+        return jsonResponse({ threads: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    render(<AdminFilemakerMailPage />);
+
+    expect(await screen.findByText('Campaign reply')).toBeInTheDocument();
+    expect(screen.getByText('Campaign: campaign-1')).toBeInTheDocument();
+    expect(screen.getByText('Run: run-1')).toBeInTheDocument();
+    expect(screen.getByText('Delivery: delivery-1')).toBeInTheDocument();
+  });
+
   it('keeps the latest local recent filters when an older recent route lands', async () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'
@@ -688,6 +781,9 @@ describe('AdminFilemakerMail pages recent flows', () => {
       if (key === 'recentMailbox') return 'VIP';
       if (key === 'recentUnread') return '1';
       if (key === 'recentQuery') return 'welcome';
+      if (key === 'campaignId') return 'campaign-1';
+      if (key === 'runId') return 'run-1';
+      if (key === 'deliveryId') return 'delivery-1';
       return null;
     });
 
@@ -781,7 +877,7 @@ describe('AdminFilemakerMail pages recent flows', () => {
     await screen.findByText('Alice');
     fireEvent.click(screen.getByRole('button', { name: 'Back to Recent' }));
     expect(routerPushMock).toHaveBeenCalledWith(
-      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome'
+      '/admin/filemaker/mail?accountId=account-1&panel=recent&recentMailbox=VIP&recentUnread=1&recentQuery=welcome&campaignId=campaign-1&runId=run-1&deliveryId=delivery-1'
     );
   });
 

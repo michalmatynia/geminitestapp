@@ -15,38 +15,85 @@ export const fetchFilemakerMailJson = async <T,>(
   return (await response.json()) as T;
 };
 
-export const buildFilemakerMailSelectionHref = (input: {
+type FilemakerMailSelectionPanel =
+  | 'account'
+  | 'attention'
+  | 'compose'
+  | 'recent'
+  | 'search'
+  | 'settings';
+
+type FilemakerMailSelectionHrefInput = {
   accountId?: string | null;
   mailboxPath?: string | null;
-  panel?: 'account' | 'attention' | 'compose' | 'recent' | 'search' | 'settings' | null;
+  panel?: FilemakerMailSelectionPanel | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  recentCampaignId?: string | null;
+  recentRunId?: string | null;
+  recentDeliveryId?: string | null;
   searchQuery?: string | null;
-}): string => {
-  const panel = input.panel === 'account' ? 'settings' : input.panel ?? null;
+};
+
+const hasRouteValue = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const normalizeMailSelectionPanel = (
+  panel: FilemakerMailSelectionHrefInput['panel']
+): Exclude<FilemakerMailSelectionPanel, 'account'> | null => {
+  if (panel === 'account') return 'settings';
+  return panel ?? null;
+};
+
+const setSearchParamIfValue = (
+  search: URLSearchParams,
+  key: string,
+  value: string | null | undefined
+): void => {
+  if (hasRouteValue(value)) search.set(key, value);
+};
+
+const setRecentSelectionSearchParams = (
+  search: URLSearchParams,
+  input: FilemakerMailSelectionHrefInput,
+  hasAccount: boolean
+): void => {
+  if (!hasAccount || input.panel !== 'recent') return;
+  search.set('panel', 'recent');
+  setSearchParamIfValue(search, 'recentMailbox', input.recentMailboxFilter);
+  if (input.recentUnreadOnly === true) search.set('recentUnread', '1');
+  setSearchParamIfValue(search, 'recentQuery', input.recentQuery);
+  setSearchParamIfValue(search, 'campaignId', input.recentCampaignId);
+  setSearchParamIfValue(search, 'runId', input.recentRunId);
+  setSearchParamIfValue(search, 'deliveryId', input.recentDeliveryId);
+};
+
+const setSearchSelectionSearchParams = (
+  search: URLSearchParams,
+  input: FilemakerMailSelectionHrefInput,
+  hasAccount: boolean
+): void => {
+  if (input.panel !== 'search') return;
+  search.set('panel', 'search');
+  if (hasAccount) search.set('accountId', input.accountId);
+  setSearchParamIfValue(search, 'searchQuery', input.searchQuery);
+};
+
+export const buildFilemakerMailSelectionHref = (
+  input: FilemakerMailSelectionHrefInput
+): string => {
+  const panel = normalizeMailSelectionPanel(input.panel);
   const search = new URLSearchParams();
-  if (panel !== 'attention' && panel !== 'search' && input.accountId) search.set('accountId', input.accountId);
-  if (!panel && input.mailboxPath) search.set('mailboxPath', input.mailboxPath);
+  const hasAccount = hasRouteValue(input.accountId);
+  if (panel !== 'attention' && panel !== 'search' && hasAccount) {
+    search.set('accountId', input.accountId);
+  }
+  if (panel === null) setSearchParamIfValue(search, 'mailboxPath', input.mailboxPath);
   if (panel === 'attention') search.set('panel', 'attention');
-  if (panel === 'search') {
-    search.set('panel', 'search');
-    if (input.accountId) search.set('accountId', input.accountId);
-  }
-  if (input.accountId && panel === 'recent') search.set('panel', 'recent');
   if (panel === 'settings') search.set('panel', 'settings');
-  if (input.accountId && panel === 'recent' && input.recentMailboxFilter) {
-    search.set('recentMailbox', input.recentMailboxFilter);
-  }
-  if (input.accountId && panel === 'recent' && input.recentUnreadOnly) {
-    search.set('recentUnread', '1');
-  }
-  if (input.accountId && panel === 'recent' && input.recentQuery) {
-    search.set('recentQuery', input.recentQuery);
-  }
-  if (panel === 'search' && input.searchQuery) {
-    search.set('searchQuery', input.searchQuery);
-  }
+  setRecentSelectionSearchParams(search, { ...input, panel }, hasAccount);
+  setSearchSelectionSearchParams(search, { ...input, panel }, hasAccount);
   const nextSearch = search.toString();
-  return nextSearch ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
+  return nextSearch !== '' ? `/admin/filemaker/mail?${nextSearch}` : '/admin/filemaker/mail';
 };

@@ -142,6 +142,9 @@ const buildCommonSearchUrl = (search: URLSearchParams, input: {
   originPanel?: 'recent' | 'search' | null;
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
+  recentCampaignId?: string | null;
+  recentRunId?: string | null;
+  recentDeliveryId?: string | null;
   searchContextAccountId?: string | null;
   recentQuery?: string | null;
   searchAccountId?: string | null;
@@ -155,6 +158,9 @@ const buildCommonSearchUrl = (search: URLSearchParams, input: {
     if (input.recentMailboxFilter !== null && input.recentMailboxFilter !== undefined && input.recentMailboxFilter !== '') search.set('recentMailbox', input.recentMailboxFilter);
     if (input.recentUnreadOnly === true) search.set('recentUnread', '1');
     if (input.recentQuery !== null && input.recentQuery !== undefined && input.recentQuery !== '') search.set('recentQuery', input.recentQuery);
+    if (input.recentCampaignId !== null && input.recentCampaignId !== undefined && input.recentCampaignId !== '') search.set('campaignId', input.recentCampaignId);
+    if (input.recentRunId !== null && input.recentRunId !== undefined && input.recentRunId !== '') search.set('runId', input.recentRunId);
+    if (input.recentDeliveryId !== null && input.recentDeliveryId !== undefined && input.recentDeliveryId !== '') search.set('deliveryId', input.recentDeliveryId);
   }
   if (input.originPanel === 'search') {
     if (input.searchQuery !== null && input.searchQuery !== undefined && input.searchQuery !== '') search.set('searchQuery', input.searchQuery);
@@ -179,6 +185,9 @@ const buildFilemakerMailComposeHref = (input: {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  recentCampaignId?: string | null;
+  recentRunId?: string | null;
+  recentDeliveryId?: string | null;
   searchContextAccountId?: string | null;
   searchAccountId?: string | null;
   searchQuery?: string | null;
@@ -198,6 +207,9 @@ const buildFilemakerMailThreadHref = (input: {
   recentMailboxFilter?: string | null;
   recentUnreadOnly?: boolean;
   recentQuery?: string | null;
+  recentCampaignId?: string | null;
+  recentRunId?: string | null;
+  recentDeliveryId?: string | null;
   searchContextAccountId?: string | null;
   searchAccountId?: string | null;
   searchQuery?: string | null;

@@ -124,6 +124,9 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   const rawRecentMailboxFilter = searchParams.get('recentMailbox');
   const rawRecentUnreadOnly = searchParams.get('recentUnread') === '1';
   const rawRecentQuery = searchParams.get('recentQuery');
+  const rawRecentCampaignId = searchParams.get('campaignId');
+  const rawRecentRunId = searchParams.get('runId');
+  const rawRecentDeliveryId = searchParams.get('deliveryId');
   const rawSearchQuery = searchParams.get('searchQuery');
   const rawSearchAccountId = searchParams.get('searchAccountId');
   const rawSearchContextAccountId = searchParams.get('searchContextAccountId');
@@ -131,6 +134,11 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     originPanel === 'recent' && rawRecentMailboxFilter ? rawRecentMailboxFilter : null;
   const recentUnreadOnly = originPanel === 'recent' ? rawRecentUnreadOnly : false;
   const recentQuery = originPanel === 'recent' && rawRecentQuery ? rawRecentQuery : null;
+  const recentCampaignId =
+    originPanel === 'recent' && rawRecentCampaignId ? rawRecentCampaignId : null;
+  const recentRunId = originPanel === 'recent' && rawRecentRunId ? rawRecentRunId : null;
+  const recentDeliveryId =
+    originPanel === 'recent' && rawRecentDeliveryId ? rawRecentDeliveryId : null;
   const searchQuery = originPanel === 'search' && rawSearchQuery ? rawSearchQuery : null;
   const searchAccountId =
     originPanel === 'search' && rawSearchAccountId === 'all' ? 'all' : null;
@@ -161,14 +169,20 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       recentMailboxFilter: originPanel === 'recent' ? recentMailboxFilter : null,
       recentUnreadOnly: originPanel === 'recent' ? recentUnreadOnly : false,
       recentQuery: originPanel === 'recent' ? recentQuery : null,
+      recentCampaignId: originPanel === 'recent' ? recentCampaignId : null,
+      recentRunId: originPanel === 'recent' ? recentRunId : null,
+      recentDeliveryId: originPanel === 'recent' ? recentDeliveryId : null,
       searchQuery: originPanel === 'search' ? searchQuery : null,
     });
   }, [
     accountIdFromRoute,
     mailboxPathFromRoute,
     originPanel,
+    recentCampaignId,
+    recentDeliveryId,
     recentMailboxFilter,
     recentQuery,
+    recentRunId,
     recentUnreadOnly,
     searchContextAccountId,
     searchQuery,
@@ -179,6 +193,9 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
       (rawRecentMailboxFilter ?? null) === recentMailboxFilter &&
       rawRecentUnreadOnly === recentUnreadOnly &&
       (rawRecentQuery ?? null) === recentQuery &&
+      (rawRecentCampaignId ?? null) === recentCampaignId &&
+      (rawRecentRunId ?? null) === recentRunId &&
+      (rawRecentDeliveryId ?? null) === recentDeliveryId &&
       (rawSearchQuery ?? null) === searchQuery &&
       (rawSearchAccountId ?? null) === searchAccountId &&
       (rawSearchContextAccountId ?? null) === persistedSearchContextAccountId
@@ -195,6 +212,9 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
               recentMailboxFilter,
               recentUnreadOnly,
               recentQuery,
+              recentCampaignId,
+              recentRunId,
+              recentDeliveryId,
               searchContextAccountId: persistedSearchContextAccountId,
               searchAccountId,
               searchQuery,
@@ -206,14 +226,20 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
     mailboxPathFromRoute,
     originPanel,
     rawOriginPanel,
+    rawRecentCampaignId,
+    rawRecentDeliveryId,
     rawRecentMailboxFilter,
     rawRecentQuery,
+    rawRecentRunId,
     rawRecentUnreadOnly,
     rawSearchAccountId,
     rawSearchContextAccountId,
     rawSearchQuery,
+    recentCampaignId,
+    recentDeliveryId,
     recentMailboxFilter,
     recentQuery,
+    recentRunId,
     recentUnreadOnly,
     persistedSearchContextAccountId,
     router,
@@ -222,7 +248,7 @@ export function AdminFilemakerMailComposePage(): React.JSX.Element {
   ]);
   const composeDraftResetKey = forwardThreadId
     ? `forward:${accountIdFromRoute ?? ''}:${forwardThreadId}`
-    : `fresh:${accountIdFromRoute ?? ''}:${mailboxPathFromRoute ?? ''}:${originPanel ?? ''}:${recentMailboxFilter ?? ''}:${recentUnreadOnly ? '1' : '0'}:${recentQuery ?? ''}:${rawSearchAccountId ?? ''}:${rawSearchContextAccountId ?? ''}:${searchQuery ?? ''}`;
+    : `fresh:${accountIdFromRoute ?? ''}:${mailboxPathFromRoute ?? ''}:${originPanel ?? ''}:${recentMailboxFilter ?? ''}:${recentUnreadOnly ? '1' : '0'}:${recentQuery ?? ''}:${recentCampaignId ?? ''}:${recentRunId ?? ''}:${recentDeliveryId ?? ''}:${rawSearchAccountId ?? ''}:${rawSearchContextAccountId ?? ''}:${searchQuery ?? ''}`;
 
   useEffect(() => {
     setAccountId(accountIdFromRoute ?? '');

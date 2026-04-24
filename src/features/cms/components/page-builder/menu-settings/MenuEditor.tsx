@@ -7,7 +7,7 @@ export function MenuEditor({ settings, updateMenuItem, removeMenuItem, addMenuIt
     updateMenuItem: (id: string, field: 'label' | 'url' | 'imageUrl', value: string) => void,
     removeMenuItem: (id: string) => void,
     addMenuItem: () => void 
-}) {
+}): React.JSX.Element {
   return (
     <div className='space-y-2'>
       {settings.items.map((item: MenuItem) => (

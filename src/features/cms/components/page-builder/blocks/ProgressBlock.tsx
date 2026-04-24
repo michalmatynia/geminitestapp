@@ -1,4 +1,4 @@
-export function ProgressBlock({ settings }: { settings: Record<string, unknown> }) {
+export function ProgressBlock({ settings }: { settings: Record<string, unknown> }): React.JSX.Element {
   const value = typeof settings['progressValue'] === 'number' ? settings['progressValue'] : 0;
   const max = typeof settings['progressMax'] === 'number' && settings['progressMax'] > 0 ? settings['progressMax'] : 100;
   const height = typeof settings['progressHeight'] === 'number' && settings['progressHeight'] > 0 ? settings['progressHeight'] : 12;

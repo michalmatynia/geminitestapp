@@ -54,41 +54,21 @@ export function InspectorAiProvider({
   onUpdateCustomCssAiConfig,
   contentAiAllowedKeys = [],
 }: InspectorAiProviderProps): React.JSX.Element {
-  const {
-    state,
-    selectedSection,
-    selectedBlock,
-    selectedColumn,
-    selectedColumnParentSection,
-    selectedParentSection,
-    selectedParentColumn,
-    selectedParentBlock,
-  } = usePageBuilder();
+  const pageBuilder = usePageBuilder();
   const { toast } = useToast();
   const { assignment: brainAssignment } = useBrainAssignment({
     capability: 'cms.css_stream',
   });
 
   const preview = useInspectorAiContextPreview({
-    state,
-    selectedSection,
-    selectedBlock,
-    selectedColumn,
-    selectedColumnParentSection,
-    selectedParentSection,
-    selectedParentColumn,
-    selectedParentBlock,
+    ...pageBuilder,
     toast,
   });
 
-  const brainAiProvider = brainAssignment.provider;
-  const brainAiModelId = brainAssignment.modelId.trim();
-  const brainAiAgentId = brainAssignment.agentId.trim();
-
   const generation = useInspectorAiGeneration({
-    brainAiProvider,
-    brainAiModelId,
-    brainAiAgentId,
+    brainAiProvider: brainAssignment.provider,
+    brainAiModelId: brainAssignment.modelId.trim(),
+    brainAiAgentId: brainAssignment.agentId.trim(),
     buildPageContext: preview.buildPageContext,
     buildElementContext: preview.buildElementContext,
     contentAiAllowedKeys,
@@ -99,8 +79,31 @@ export function InspectorAiProvider({
     toast,
   });
 
-  const stateValue = useMemo(
-    (): InspectorAiStateContextValue => ({
+  const stateValue = useInspectorAiStateValue(generation, preview, brainAssignment, customCssValue, customCssAiConfig, contentAiAllowedKeys);
+  const actionsValue = useInspectorAiActionsValue(generation, preview, onUpdateCustomCssAiConfig);
+
+  return (
+    <InspectorAiActionsContext.Provider value={actionsValue}>
+      <InspectorAiStateContext.Provider value={stateValue}>
+        {children}
+      </InspectorAiStateContext.Provider>
+    </InspectorAiActionsContext.Provider>
+  );
+}
+
+function useInspectorAiStateValue(
+  params: {
+    generation: ReturnType<typeof useInspectorAiGeneration>;
+    preview: ReturnType<typeof useInspectorAiContextPreview>;
+    brainAssignment: any;
+    customCssValue: any;
+    customCssAiConfig: any;
+    contentAiAllowedKeys: string[];
+  }
+): InspectorAiStateContextValue {
+  const { generation, preview, brainAssignment, customCssValue, customCssAiConfig, contentAiAllowedKeys } = params;
+  return useMemo(
+    () => ({
       cssAiLoading: generation.cssAiLoading,
       cssAiError: generation.cssAiError,
       cssAiOutput: generation.cssAiOutput,
@@ -116,42 +119,25 @@ export function InspectorAiProvider({
       contextPreviewNonce: preview.contextPreviewNonce,
       pageContextPreview: preview.pageContextPreview,
       elementContextPreview: preview.elementContextPreview,
-      brainAiProvider,
-      brainAiModelId,
-      brainAiAgentId,
+      brainAiProvider: brainAssignment.provider,
+      brainAiModelId: brainAssignment.modelId.trim(),
+      brainAiAgentId: brainAssignment.agentId.trim(),
       customCssValue,
       customCssAiConfig,
       contentAiAllowedKeys,
       contentAiPlaceholder: generation.contentAiPlaceholder,
     }),
-    [
-      brainAiAgentId,
-      brainAiModelId,
-      brainAiProvider,
-      contentAiAllowedKeys,
-      customCssAiConfig,
-      customCssValue,
-      generation.contentAiError,
-      generation.contentAiLoading,
-      generation.contentAiOutput,
-      generation.contentAiPlaceholder,
-      generation.contentAiPrompt,
-      generation.cssAiAppend,
-      generation.cssAiAutoApply,
-      generation.cssAiError,
-      generation.cssAiLoading,
-      generation.cssAiOutput,
-      preview.contextPreviewFull,
-      preview.contextPreviewNonce,
-      preview.contextPreviewOpen,
-      preview.contextPreviewTab,
-      preview.elementContextPreview,
-      preview.pageContextPreview,
-    ]
+    [brainAssignment, generation, preview, customCssValue, customCssAiConfig, contentAiAllowedKeys]
   );
+}
 
-  const actionsValue = useMemo(
-    (): InspectorAiActionsContextValue => ({
+function useInspectorAiActionsValue(
+  generation: ReturnType<typeof useInspectorAiGeneration>,
+  preview: ReturnType<typeof useInspectorAiContextPreview>,
+  onUpdateCustomCssAiConfig: any
+): InspectorAiActionsContextValue {
+  return useMemo(
+    () => ({
       setCssAiAppend: generation.setCssAiAppend,
       setCssAiAutoApply: generation.setCssAiAutoApply,
       generateCss: generation.generateCss,
@@ -168,31 +154,7 @@ export function InspectorAiProvider({
       updateCustomCssAiConfig: onUpdateCustomCssAiConfig,
       applyCss: generation.applyCss,
     }),
-    [
-      generation.applyContent,
-      generation.applyCss,
-      generation.cancelContent,
-      generation.cancelCss,
-      generation.generateContent,
-      generation.generateCss,
-      generation.setContentAiPrompt,
-      generation.setCssAiAppend,
-      generation.setCssAiAutoApply,
-      onUpdateCustomCssAiConfig,
-      preview.copyContext,
-      preview.setContextPreviewFull,
-      preview.setContextPreviewNonce,
-      preview.setContextPreviewOpen,
-      preview.setContextPreviewTab,
-    ]
-  );
-
-  return (
-    <InspectorAiActionsContext.Provider value={actionsValue}>
-      <InspectorAiStateContext.Provider value={stateValue}>
-        {children}
-      </InspectorAiStateContext.Provider>
-    </InspectorAiActionsContext.Provider>
+    [generation, preview, onUpdateCustomCssAiConfig]
   );
 }
 

@@ -42,6 +42,9 @@ export function MailThreadsSection(): React.JSX.Element {
     setRecentMailboxFilter: onRecentMailboxFilterChange,
     recentUnreadOnly,
     setRecentUnreadOnly: onRecentUnreadOnlyChange,
+    recentCampaignId,
+    recentRunId,
+    recentDeliveryId,
     query,
     setQuery: onQueryChange,
     recentMailboxOptions,
@@ -97,6 +100,21 @@ export function MailThreadsSection(): React.JSX.Element {
               {query ? (
                 <Badge variant='outline' className='text-[10px]'>
                   Search: {query}
+                </Badge>
+              ) : null}
+              {recentCampaignId !== '' ? (
+                <Badge variant='outline' className='text-[10px]'>
+                  Campaign: {recentCampaignId}
+                </Badge>
+              ) : null}
+              {recentRunId !== '' ? (
+                <Badge variant='outline' className='text-[10px]'>
+                  Run: {recentRunId}
+                </Badge>
+              ) : null}
+              {recentDeliveryId !== '' ? (
+                <Badge variant='outline' className='text-[10px]'>
+                  Delivery: {recentDeliveryId}
                 </Badge>
               ) : null}
               <SelectSimple

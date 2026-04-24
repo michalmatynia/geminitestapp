@@ -4,24 +4,20 @@ import {
   resolveFocusedKangurLessonId,
   type KangurLessonMasteryPresentation,
   type KangurPortableLesson,
-  buildKangurLessonMasteryUpdate,
-  checkKangurNewBadges,
-  getKangurLessonMasteryPresentation,
   getKangurPracticeOperationForLessonComponent,
-  getLocalizedKangurPortableLessons,
-  resolveFocusedKangurLessonId,
-  type KangurLessonMasteryPresentation,
-  type KangurPortableLesson,
+  type KangurProgressState,
 } from '@kangur/core';
 import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
-import { useMemo, useState, useSyncExternalStore } from 'react';
+import { useMemo, useState, useSyncExternalStore, useCallback } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { createKangurPracticeHref } from '../practice/practiceHref';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import { saveLessonCheckpoint, type SaveLessonCheckpointInput } from './lesson-checkpoint-service';
+import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 
-type KangurMobileLessonItem = {
+export type KangurMobileLessonItem = {
   checkpointSummary: {
     attempts: number;
     bestScorePercent: number;
@@ -39,16 +35,38 @@ type UseKangurMobileLessonsResult = {
   actionError: string | null;
   focusToken: string | null;
   lessons: KangurMobileLessonItem[];
-  saveLessonCheckpoint: (input: {
-    countsAsLessonCompletion?: boolean;
-    lessonComponentId: string;
-    scorePercent: number;
-  }) => {
+  saveLessonCheckpoint: (input: SaveLessonCheckpointInput) => {
     countsAsLessonCompletion: boolean;
     newBadges: string[];
     scorePercent: number;
   } | null;
   selectedLesson: KangurMobileLessonItem | null;
+};
+
+const transformLesson = (
+  lesson: KangurPortableLesson,
+  progress: KangurProgressState,
+  locale: KangurMobileLocale,
+  selectedLessonId: string | null
+): KangurMobileLessonItem => {
+  const checkpoint = progress.lessonMastery[lesson.componentId];
+  const practiceOperation = getKangurPracticeOperationForLessonComponent(lesson.componentId);
+
+  return {
+    checkpointSummary: checkpoint !== undefined && typeof checkpoint.lastCompletedAt === 'string'
+      ? {
+          attempts: checkpoint.attempts,
+          bestScorePercent: checkpoint.bestScorePercent,
+          lastCompletedAt: checkpoint.lastCompletedAt,
+          lastScorePercent: checkpoint.lastScorePercent,
+          masteryPercent: checkpoint.masteryPercent,
+        }
+      : null,
+    isFocused: lesson.id === selectedLessonId,
+    lesson,
+    mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),
+    practiceHref: practiceOperation ? createKangurPracticeHref(practiceOperation) : null,
+  };
 };
 
 export const useKangurMobileLessons = (
@@ -62,106 +80,43 @@ export const useKangurMobileLessons = (
     progressStore.loadProgress,
     createDefaultKangurProgressState,
   );
-  const focusToken = rawFocusToken?.trim().toLowerCase() || null;
+  const focusToken = rawFocusToken !== null ? rawFocusToken.trim().toLowerCase() : null;
   const portableLessons = useMemo(() => getLocalizedKangurPortableLessons(locale), [locale]);
 
   const selectedLessonId = useMemo(
     () =>
-      focusToken
+      focusToken !== null
         ? resolveFocusedKangurLessonId(focusToken, portableLessons)
         : null,
     [focusToken, portableLessons],
   );
 
   const lessons = useMemo(
-    () =>
-      portableLessons.map((lesson) => {
-        const checkpoint = progress.lessonMastery[lesson.componentId];
-        const practiceOperation = getKangurPracticeOperationForLessonComponent(
-          lesson.componentId,
-        );
-
-        return {
-          checkpointSummary:
-            typeof checkpoint?.lastCompletedAt === 'string'
-              ? {
-                  attempts: checkpoint.attempts,
-                  bestScorePercent: checkpoint.bestScorePercent,
-                  lastCompletedAt: checkpoint.lastCompletedAt,
-                  lastScorePercent: checkpoint.lastScorePercent,
-                  masteryPercent: checkpoint.masteryPercent,
-                }
-              : null,
-          isFocused: lesson.id === selectedLessonId,
-          lesson,
-          mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),
-          practiceHref: practiceOperation
-            ? createKangurPracticeHref(practiceOperation)
-            : null,
-        };
-      }),
+    () => portableLessons.map((lesson) => transformLesson(lesson, progress, locale, selectedLessonId)),
     [locale, portableLessons, progress, selectedLessonId],
   );
+
+  const handleSaveLessonCheckpoint = useCallback((input: SaveLessonCheckpointInput) => {
+    const normalizedLessonComponentId = input.lessonComponentId.trim();
+    if (normalizedLessonComponentId === '') {
+      setActionError(copy({ de: 'Diese Lektion konnte lokal nicht gespeichert werden.', en: 'Could not save this lesson locally.', pl: 'Nie udało się zapisać tej lekcji lokalnie.' }));
+      return null;
+    }
+    try {
+      const result = saveLessonCheckpoint(input, progress, progressStore);
+      setActionError(null);
+      return result;
+    } catch {
+      setActionError(copy({ de: 'Diese Lektion konnte lokal nicht gespeichert werden.', en: 'Could not save this lesson locally.', pl: 'Nie udało się zapisać tej lekcji lokalnie.' }));
+      return null;
+    }
+  }, [copy, progress, progressStore]);
 
   return {
     actionError,
     focusToken,
     lessons,
-    saveLessonCheckpoint: (input) => {
-      const normalizedLessonComponentId = input.lessonComponentId.trim();
-      if (!normalizedLessonComponentId) {
-        setActionError(
-          copy({
-            de: 'Diese Lektion konnte lokal nicht gespeichert werden.',
-            en: 'Could not save this lesson locally.',
-            pl: 'Nie udało się zapisać tej lekcji lokalnie.',
-          }),
-        );
-        return null;
-      }
-
-      try {
-        const currentProgress = progressStore.loadProgress();
-        const normalizedScorePercent = Math.max(
-          0,
-          Math.min(100, Math.round(input.scorePercent)),
-        );
-        const countsAsLessonCompletion = input.countsAsLessonCompletion === true;
-        const updatedProgress = {
-          ...currentProgress,
-          lessonMastery: buildKangurLessonMasteryUpdate(
-            currentProgress,
-            normalizedLessonComponentId,
-            normalizedScorePercent,
-          ),
-          lessonsCompleted: countsAsLessonCompletion
-            ? currentProgress.lessonsCompleted + 1
-            : currentProgress.lessonsCompleted,
-        };
-        const newBadges = checkKangurNewBadges(updatedProgress);
-
-        updatedProgress.badges = Array.from(
-          new Set([...updatedProgress.badges, ...newBadges]),
-        );
-        progressStore.saveProgress(updatedProgress);
-        setActionError(null);
-
-        return {
-          countsAsLessonCompletion,
-          newBadges,
-          scorePercent: normalizedScorePercent,
-        };
-      } catch {
-        setActionError(
-          copy({
-            de: 'Diese Lektion konnte lokal nicht gespeichert werden.',
-            en: 'Could not save this lesson locally.',
-            pl: 'Nie udało się zapisać tej lekcji lokalnie.',
-          }),
-        );
-        return null;
-      }
-    },
+    saveLessonCheckpoint: handleSaveLessonCheckpoint,
     selectedLesson: lessons.find((lesson) => lesson.isFocused) ?? null,
   };
 };

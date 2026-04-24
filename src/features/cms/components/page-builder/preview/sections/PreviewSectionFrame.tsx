@@ -43,7 +43,7 @@ export function PreviewSectionFrame({
       className={cn(
         'relative group w-full cursor-pointer text-left transition',
         selectedRing,
-        section.id ? `cms-node-${section.id}` : null,
+        section.id ? `cms-node-${section.id}` : undefined,
         className
       )}
     >

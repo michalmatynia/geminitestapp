@@ -1,9 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useToast, useToastSettings } from '@/shared/ui/primitives.public';
-import type { PositionType, AccentType } from '../types';
-import { accentOptions } from '../constants';
+import { accentOptions, type PositionType, type AccentType } from './types';
 
-export function useNotificationSettingsController() {
+export function useNotificationSettingsController(): {
+  position: PositionType;
+  setPosition: React.Dispatch<React.SetStateAction<PositionType>>;
+  accent: AccentType;
+  setAccent: React.Dispatch<React.SetStateAction<AccentType>>;
+  handleSave: () => void;
+  showPreview: (variant: 'success' | 'error' | 'info') => void;
+  accentSelectOptions: { value: string; label: string; description?: string }[];
+} {
   const { settings, updateSettings } = useToastSettings();
   const { toast } = useToast();
   const [position, setPosition] = useState<PositionType>(settings.position);

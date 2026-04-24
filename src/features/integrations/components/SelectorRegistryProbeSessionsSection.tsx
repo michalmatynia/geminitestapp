@@ -3,12 +3,6 @@
 import { Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  useArchiveSelectorRegistryProbeSessionMutation,
-  useDeleteSelectorRegistryProbeSessionMutation,
-  useRestoreSelectorRegistryProbeSessionMutation,
-  useSaveSelectorRegistryEntryMutation,
-} from '@/features/integrations/hooks/useSelectorRegistry';
 import type {
   SelectorRegistryEntry,
   SelectorRegistryNamespace,
@@ -72,10 +66,16 @@ export function SelectorRegistryProbeSessionsSection({
   showArchived,
   onShowArchivedChange,
 }: Props) {
+  const defaultKeysByRole = useMemo(
+    () => buildSelectorRegistryProbeCarryForwardDefaultKeysByRole(promotableEntries),
+    [promotableEntries]
+  );
   const {
     activeSessions,
     selectedKeys,
+    setSelectedKeys,
     manuallySelectedKeys,
+    setManuallySelectedKeys,
     updateSelection,
     saveMutation,
     archiveMutation,
@@ -97,10 +97,6 @@ export function SelectorRegistryProbeSessionsSection({
   const [rejectingClusterKey, setRejectingClusterKey] = useState<string | null>(null);
   const [restoringClusterKey, setRestoringClusterKey] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
-  const activeSessions = useMemo(
-    () => sessions.filter((session) => session.archivedAt === null),
-    [sessions]
-  );
   const archivedSessions = useMemo(
     () => sessions.filter((session) => session.archivedAt !== null),
     [sessions]
@@ -120,11 +116,6 @@ export function SelectorRegistryProbeSessionsSection({
     () => buildSelectorRegistryProbeEntriesByRole(promotableEntries),
     [promotableEntries]
   );
-  const defaultKeysByRole = useMemo(
-    () => buildSelectorRegistryProbeCarryForwardDefaultKeysByRole(promotableEntries),
-    [promotableEntries]
-  );
-
   const suggestionIds = useMemo(
     () =>
       activeSessions.flatMap((session) =>

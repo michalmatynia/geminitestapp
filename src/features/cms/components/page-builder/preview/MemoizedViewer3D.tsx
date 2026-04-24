@@ -41,66 +41,39 @@ export interface MemoizedViewer3DProps {
 export const MemoizedViewer3D = memo((
   props: MemoizedViewer3DProps
 ): React.ReactElement => {
-  const {
-    modelUrl,
-    height,
-    backgroundColor,
-    autoRotate,
-    autoRotateSpeed,
-    environment,
-    lighting,
-    lightIntensity,
-    enableShadows,
-    enableBloom,
-    bloomIntensity,
-    exposure,
-    showGround,
-    enableContactShadows,
-    enableVignette,
-    autoFit,
-    presentationMode,
-    positionX,
-    positionY,
-    positionZ,
-    rotationX,
-    rotationY,
-    rotationZ,
-    scale,
-  } = props;
+  const { height, modelUrl, autoFit, presentationMode } = props;
 
   const position = useMemo<[number, number, number]>(
-    () => [positionX, positionY, positionZ],
-    [positionX, positionY, positionZ]
+    () => [props.positionX, props.positionY, props.positionZ],
+    [props.positionX, props.positionY, props.positionZ]
   );
   const rotation = useMemo<[number, number, number]>(
-    () => [toRadians(rotationX), toRadians(rotationY), toRadians(rotationZ)],
-    [rotationX, rotationY, rotationZ]
+    () => [toRadians(props.rotationX), toRadians(props.rotationY), toRadians(props.rotationZ)],
+    [props.rotationX, props.rotationY, props.rotationZ]
   );
+
+  const viewerSettings = useMemo(() => ({
+    backgroundColor: props.backgroundColor,
+    autoRotate: props.autoRotate,
+    autoRotateSpeed: props.autoRotateSpeed,
+    environment: props.environment,
+    lighting: props.lighting,
+    lightIntensity: props.lightIntensity,
+    enableShadows: props.enableShadows,
+    enableBloom: props.enableBloom,
+    bloomIntensity: props.bloomIntensity,
+    exposure: props.exposure,
+    showGround: props.showGround,
+    enableContactShadows: props.enableContactShadows,
+    enableVignette: props.enableVignette,
+    transform: { position, rotation, scale: props.scale },
+  }), [props, position, rotation]);
 
   return (
     <div style={{ height: `${Math.max(120, height)}px` }} className='w-full'>
       <Viewer3D
         modelUrl={modelUrl}
-        settings={{
-          backgroundColor,
-          autoRotate,
-          autoRotateSpeed,
-          environment,
-          lighting,
-          lightIntensity,
-          enableShadows,
-          enableBloom,
-          bloomIntensity,
-          exposure,
-          showGround,
-          enableContactShadows,
-          enableVignette,
-          transform: {
-            position,
-            rotation,
-            scale,
-          },
-        }}
+        settings={viewerSettings}
         autoFit={autoFit}
         presentationMode={presentationMode}
         allowUserControls={false}

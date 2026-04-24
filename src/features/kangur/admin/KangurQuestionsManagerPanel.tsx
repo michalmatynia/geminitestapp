@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useKangurQuestionsManagerRuntimeContext } from '../context/KangurQuestionsManagerRuntimeContext';
+import React, { useMemo } from 'react';
+import { useKangurQuestionsManagerRuntimeContext } from './context/KangurQuestionsManagerRuntimeContext';
 import { useKangurQuestionsManagerController } from './questions-manager/useKangurQuestionsManagerController';
 import { QuestionsManagerHeader } from './questions-manager/QuestionsManagerHeader';
 import { QuestionsManagerFilters } from './questions-manager/QuestionsManagerFilters';

@@ -86,6 +86,9 @@ export interface MailPageState {
   setRecentMailboxFilter: React.Dispatch<React.SetStateAction<string>>;
   recentUnreadOnly: boolean;
   setRecentUnreadOnly: React.Dispatch<React.SetStateAction<boolean>>;
+  recentCampaignId: string;
+  recentRunId: string;
+  recentDeliveryId: string;
   attentionAccounts: FilemakerMailAccount[];
   selectedAccount: FilemakerMailAccount | null;
   selectedFolder: FilemakerMailFolderSummary | null;
@@ -117,6 +120,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const rawRequestedRecentMailboxFilter = searchParams.get('recentMailbox') ?? '';
   const rawRequestedRecentUnreadOnly = searchParams.get('recentUnread') === '1';
   const rawRequestedRecentQuery = searchParams.get('recentQuery') ?? '';
+  const rawRequestedRecentCampaignId = searchParams.get('campaignId') ?? '';
+  const rawRequestedRecentRunId = searchParams.get('runId') ?? '';
+  const rawRequestedRecentDeliveryId = searchParams.get('deliveryId') ?? '';
 
   const requestedPanel =
     rawRequestedPanel === 'attention'
@@ -142,6 +148,15 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const [recentPreviewThreads, setRecentPreviewThreads] = useState<FilemakerMailThread[]>([]);
   const [recentMailboxFilter, setRecentMailboxFilterState] = useState('');
   const [recentUnreadOnly, setRecentUnreadOnlyState] = useState(false);
+  const [recentCampaignId, setRecentCampaignIdState] = useState(
+    rawRequestedPanel === 'recent' ? rawRequestedRecentCampaignId : ''
+  );
+  const [recentRunId, setRecentRunIdState] = useState(
+    rawRequestedPanel === 'recent' ? rawRequestedRecentRunId : ''
+  );
+  const [recentDeliveryId, setRecentDeliveryIdState] = useState(
+    rawRequestedPanel === 'recent' ? rawRequestedRecentDeliveryId : ''
+  );
   const [selection, setSelectionState] = useState<MailPageSelection>({
     accountId: requestedAccountId,
     mailboxPath: requestedMailboxPath,
@@ -178,6 +193,18 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
       ? rawRequestedRecentQuery
       : '';
+  const requestedRecentCampaignId =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentCampaignId
+      : '';
+  const requestedRecentRunId =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentRunId
+      : '';
+  const requestedRecentDeliveryId =
+    requestedPanel === 'recent' && !shouldIgnoreRequestedRecentState
+      ? rawRequestedRecentDeliveryId
+      : '';
   const requestedSelection = useMemo(
     () =>
       ({
@@ -194,11 +221,17 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     recentMailboxFilter: requestedRecentMailboxFilter,
     recentUnreadOnly: requestedRecentUnreadOnly,
     recentQuery: requestedRecentQuery,
+    recentCampaignId: requestedRecentCampaignId,
+    recentRunId: requestedRecentRunId,
+    recentDeliveryId: requestedRecentDeliveryId,
     searchQuery: requestedSearchQuery,
   });
   const effectiveQuery = shouldIgnoreActiveRecentState ? '' : query;
   const effectiveRecentMailboxFilter = shouldIgnoreActiveRecentState ? '' : recentMailboxFilter;
   const effectiveRecentUnreadOnly = shouldIgnoreActiveRecentState ? false : recentUnreadOnly;
+  const effectiveRecentCampaignId = shouldIgnoreActiveRecentState ? '' : recentCampaignId;
+  const effectiveRecentRunId = shouldIgnoreActiveRecentState ? '' : recentRunId;
+  const effectiveRecentDeliveryId = shouldIgnoreActiveRecentState ? '' : recentDeliveryId;
   const deferredQuery = useDeferredValue(query.trim());
   const currentNonRecentQueryScopeKey =
     selection.panel === 'recent'
@@ -241,7 +274,10 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     selection.panel === 'recent' &&
     (recentMailboxFilter !== requestedRecentMailboxFilter ||
       recentUnreadOnly !== requestedRecentUnreadOnly ||
-      query !== requestedRecentQuery);
+      query !== requestedRecentQuery ||
+      recentCampaignId !== requestedRecentCampaignId ||
+      recentRunId !== requestedRecentRunId ||
+      recentDeliveryId !== requestedRecentDeliveryId);
   const shouldHoldLocalSearchStateFromRoute =
     isPendingRequestedRouteStale &&
     selection.panel === 'search' &&
@@ -291,6 +327,48 @@ export function useAdminFilemakerMailPageState(): MailPageState {
         return previousRecentUnreadOnly === resolvedRecentUnreadOnly
           ? previousRecentUnreadOnly
           : resolvedRecentUnreadOnly;
+      });
+    },
+    []
+  );
+
+  const setRecentCampaignId = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextRecentCampaignId) => {
+      setRecentCampaignIdState((previousRecentCampaignId) => {
+        const resolvedRecentCampaignId = resolveStateAction(
+          nextRecentCampaignId,
+          previousRecentCampaignId
+        );
+        return previousRecentCampaignId === resolvedRecentCampaignId
+          ? previousRecentCampaignId
+          : resolvedRecentCampaignId;
+      });
+    },
+    []
+  );
+
+  const setRecentRunId = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextRecentRunId) => {
+      setRecentRunIdState((previousRecentRunId) => {
+        const resolvedRecentRunId = resolveStateAction(nextRecentRunId, previousRecentRunId);
+        return previousRecentRunId === resolvedRecentRunId
+          ? previousRecentRunId
+          : resolvedRecentRunId;
+      });
+    },
+    []
+  );
+
+  const setRecentDeliveryId = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (nextRecentDeliveryId) => {
+      setRecentDeliveryIdState((previousRecentDeliveryId) => {
+        const resolvedRecentDeliveryId = resolveStateAction(
+          nextRecentDeliveryId,
+          previousRecentDeliveryId
+        );
+        return previousRecentDeliveryId === resolvedRecentDeliveryId
+          ? previousRecentDeliveryId
+          : resolvedRecentDeliveryId;
       });
     },
     []
@@ -387,10 +465,19 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     }
     setRecentMailboxFilter(requestedRecentMailboxFilter);
     setRecentUnreadOnly(requestedRecentUnreadOnly);
+    setRecentCampaignId(requestedRecentCampaignId);
+    setRecentRunId(requestedRecentRunId);
+    setRecentDeliveryId(requestedRecentDeliveryId);
   }, [
+    requestedRecentCampaignId,
+    requestedRecentDeliveryId,
     requestedRecentMailboxFilter,
+    requestedRecentRunId,
     requestedRecentUnreadOnly,
+    setRecentCampaignId,
+    setRecentDeliveryId,
     setRecentMailboxFilter,
+    setRecentRunId,
     setRecentUnreadOnly,
     shouldHoldLocalRecentStateFromRoute,
   ]);
@@ -413,12 +500,24 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     if (selection.panel !== 'recent') {
       setRecentMailboxFilter('');
       setRecentUnreadOnly(false);
+      setRecentCampaignId('');
+      setRecentRunId('');
+      setRecentDeliveryId('');
       setQuery('');
     }
     if (selection.panel !== 'search') {
       setDeepSearchQuery('');
     }
-  }, [selection.panel, setDeepSearchQuery, setQuery, setRecentMailboxFilter, setRecentUnreadOnly]);
+  }, [
+    selection.panel,
+    setDeepSearchQuery,
+    setQuery,
+    setRecentCampaignId,
+    setRecentDeliveryId,
+    setRecentMailboxFilter,
+    setRecentRunId,
+    setRecentUnreadOnly,
+  ]);
 
   useLayoutEffect(() => {
     if (selection.panel === 'recent') {
@@ -462,6 +561,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       selection.panel ?? '',
       selectedFolder?.mailboxPath ?? '',
       threadSourceQuery,
+      effectiveRecentCampaignId,
+      effectiveRecentRunId,
+      effectiveRecentDeliveryId,
     ].join('::');
     if (threadsSourceKeyRef.current !== nextThreadsSourceKey) {
       threadsRequestIdRef.current += 1;
@@ -469,7 +571,15 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       setIsThreadsLoading(true);
       setThreads([]);
     }
-  }, [selectedAccountId, selectedFolder, selection.panel, threadSourceQuery]);
+  }, [
+    effectiveRecentCampaignId,
+    effectiveRecentDeliveryId,
+    effectiveRecentRunId,
+    selectedAccountId,
+    selectedFolder,
+    selection.panel,
+    threadSourceQuery,
+  ]);
 
   useEffect(() => {
     if (!selectedAccountId || (!selectedFolder && selection.panel !== 'recent')) {
@@ -483,15 +593,18 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     const loadThreads = async (): Promise<void> => {
       setIsThreadsLoading(true);
       try {
-        const baseQuery = `/api/filemaker/mail/threads?accountId=${encodeURIComponent(
-          selectedAccountId
-        )}`;
+        const params = new URLSearchParams({ accountId: selectedAccountId });
+        if (selection.panel === 'recent') {
+          if (activeThreadQuery !== '') params.set('query', activeThreadQuery);
+          if (effectiveRecentCampaignId !== '') params.set('campaignId', effectiveRecentCampaignId);
+          if (effectiveRecentRunId !== '') params.set('runId', effectiveRecentRunId);
+          if (effectiveRecentDeliveryId !== '') params.set('deliveryId', effectiveRecentDeliveryId);
+        } else {
+          params.set('mailboxPath', selectedFolder?.mailboxPath ?? '');
+          if (activeThreadQuery !== '') params.set('query', activeThreadQuery);
+        }
         const result = await fetchJson<ThreadsResponse>(
-          selection.panel === 'recent'
-            ? `${baseQuery}${activeThreadQuery ? `&query=${encodeURIComponent(activeThreadQuery)}` : ''}`
-            : `${baseQuery}&mailboxPath=${encodeURIComponent(selectedFolder?.mailboxPath ?? '')}${
-                activeThreadQuery ? `&query=${encodeURIComponent(activeThreadQuery)}` : ''
-              }`
+          `/api/filemaker/mail/threads?${params.toString()}`
         );
         if (requestId !== threadsRequestIdRef.current) {
           return;
@@ -512,7 +625,16 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     };
 
     void loadThreads();
-  }, [activeThreadQuery, selectedAccountId, selectedFolder, selection.panel, toast]);
+  }, [
+    activeThreadQuery,
+    effectiveRecentCampaignId,
+    effectiveRecentDeliveryId,
+    effectiveRecentRunId,
+    selectedAccountId,
+    selectedFolder,
+    selection.panel,
+    toast,
+  ]);
 
   useEffect(() => {
     if (isNavigationLoading) return;
@@ -670,6 +792,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     const nextRecentMailboxFilter = nextPanel === 'recent' ? effectiveRecentMailboxFilter : '';
     const nextRecentUnreadOnly = nextPanel === 'recent' ? effectiveRecentUnreadOnly : false;
     const nextRecentQuery = nextPanel === 'recent' ? effectiveQuery : '';
+    const nextRecentCampaignId = nextPanel === 'recent' ? effectiveRecentCampaignId : '';
+    const nextRecentRunId = nextPanel === 'recent' ? effectiveRecentRunId : '';
+    const nextRecentDeliveryId = nextPanel === 'recent' ? effectiveRecentDeliveryId : '';
     const nextSearchQuery = nextPanel === 'search' ? effectiveDeepSearchQuery : '';
     const nextHref = buildMailSelectionHref({
       accountId: nextAccountId,
@@ -678,6 +803,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       recentMailboxFilter: nextRecentMailboxFilter,
       recentUnreadOnly: nextRecentUnreadOnly,
       recentQuery: nextRecentQuery,
+      recentCampaignId: nextRecentCampaignId,
+      recentRunId: nextRecentRunId,
+      recentDeliveryId: nextRecentDeliveryId,
       searchQuery: nextSearchQuery,
     });
     const currentRouteStateKey = [
@@ -687,6 +815,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       rawRequestedRecentMailboxFilter,
       rawRequestedRecentUnreadOnly ? '1' : '0',
       rawRequestedRecentQuery,
+      rawRequestedRecentCampaignId,
+      rawRequestedRecentRunId,
+      rawRequestedRecentDeliveryId,
       rawRequestedSearchQuery,
     ].join('::');
     if (
@@ -696,6 +827,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       rawRequestedRecentMailboxFilter === nextRecentMailboxFilter &&
       rawRequestedRecentUnreadOnly === nextRecentUnreadOnly &&
       rawRequestedRecentQuery === nextRecentQuery &&
+      rawRequestedRecentCampaignId === nextRecentCampaignId &&
+      rawRequestedRecentRunId === nextRecentRunId &&
+      rawRequestedRecentDeliveryId === nextRecentDeliveryId &&
       rawRequestedSearchQuery === nextSearchQuery
     ) {
       routeSyncHrefRef.current = null;
@@ -715,15 +849,21 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     });
   }, [
     effectiveDeepSearchQuery,
+    effectiveRecentCampaignId,
+    effectiveRecentDeliveryId,
     effectiveQuery,
     effectiveRecentMailboxFilter,
+    effectiveRecentRunId,
     effectiveRecentUnreadOnly,
     isNavigationLoading,
     rawRequestedAccountId,
+    rawRequestedRecentCampaignId,
+    rawRequestedRecentDeliveryId,
     rawRequestedMailboxPath,
     rawRequestedPanel,
     rawRequestedRecentMailboxFilter,
     rawRequestedRecentQuery,
+    rawRequestedRecentRunId,
     rawRequestedRecentUnreadOnly,
     rawRequestedSearchQuery,
     router,
@@ -899,6 +1039,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
                                       recentMailboxFilter: isRecentPanel ? effectiveRecentMailboxFilter : null,
                                       recentUnreadOnly: isRecentPanel ? effectiveRecentUnreadOnly : false,
                                       recentQuery: isRecentPanel ? effectiveQuery : null,
+                                      recentCampaignId: isRecentPanel ? effectiveRecentCampaignId : null,
+                                      recentRunId: isRecentPanel ? effectiveRecentRunId : null,
+                                      recentDeliveryId: isRecentPanel ? effectiveRecentDeliveryId : null,
                                     })
                                   ); });
               }}
@@ -909,7 +1052,16 @@ export function useAdminFilemakerMailPageState(): MailPageState {
         ),
       },
     ],
-    [effectiveQuery, effectiveRecentMailboxFilter, effectiveRecentUnreadOnly, isRecentPanel, router]
+    [
+      effectiveQuery,
+      effectiveRecentCampaignId,
+      effectiveRecentDeliveryId,
+      effectiveRecentMailboxFilter,
+      effectiveRecentRunId,
+      effectiveRecentUnreadOnly,
+      isRecentPanel,
+      router,
+    ]
   );
 
   const recentMailboxOptions = useMemo(
@@ -947,6 +1099,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
                           recentMailboxFilter: isRecentPanel ? effectiveRecentMailboxFilter : null,
                           recentUnreadOnly: isRecentPanel ? effectiveRecentUnreadOnly : false,
                           recentQuery: isRecentPanel ? effectiveQuery : null,
+                          recentCampaignId: isRecentPanel ? effectiveRecentCampaignId : null,
+                          recentRunId: isRecentPanel ? effectiveRecentRunId : null,
+                          recentDeliveryId: isRecentPanel ? effectiveRecentDeliveryId : null,
                         })
                       ); }),
       },
@@ -964,7 +1119,14 @@ export function useAdminFilemakerMailPageState(): MailPageState {
             },
           ]
         : []),
-      ...(isRecentPanel && (effectiveRecentMailboxFilter || effectiveRecentUnreadOnly || effectiveQuery)
+      ...(isRecentPanel && (
+        effectiveRecentMailboxFilter ||
+        effectiveRecentUnreadOnly ||
+        effectiveQuery ||
+        effectiveRecentCampaignId ||
+        effectiveRecentRunId ||
+        effectiveRecentDeliveryId
+      )
         ? [
             {
               key: 'clear-recent-filters',
@@ -975,6 +1137,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
                 setQuery('');
                 setRecentMailboxFilter('');
                 setRecentUnreadOnly(false);
+                setRecentCampaignId('');
+                setRecentRunId('');
+                setRecentDeliveryId('');
               },
             },
           ]
@@ -1007,7 +1172,10 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     ],
     [
       effectiveQuery,
+      effectiveRecentCampaignId,
+      effectiveRecentDeliveryId,
       effectiveRecentMailboxFilter,
+      effectiveRecentRunId,
       effectiveRecentUnreadOnly,
       handleSyncAccount,
       isRecentPanel,
@@ -1015,7 +1183,10 @@ export function useAdminFilemakerMailPageState(): MailPageState {
       selectedAccount,
       selectedAccountId,
       selectedFolder,
+      setRecentCampaignId,
+      setRecentDeliveryId,
       syncingAccountId,
+      setRecentRunId,
     ]
   );
 
@@ -1047,6 +1218,9 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     setRecentMailboxFilter,
     recentUnreadOnly: effectiveRecentUnreadOnly,
     setRecentUnreadOnly,
+    recentCampaignId: effectiveRecentCampaignId,
+    recentRunId: effectiveRecentRunId,
+    recentDeliveryId: effectiveRecentDeliveryId,
     attentionAccounts,
     selectedAccountId,
     selectedMailboxPath,

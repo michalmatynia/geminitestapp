@@ -144,62 +144,89 @@ export function SectionPickerModal(props: SectionPickerModalProps): React.JSX.El
           <CategorySection title='Elements' items={elements} />
           <CategorySection title='Templates' items={templates} />
 
-          {Object.entries(groupedTemplates).length > 0 && (
-            <div>
-              <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
-                Saved templates
-              </div>
-              <div className='space-y-3'>
-                {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => (
-                  <div key={category}>
-                    {categoryTemplates.length > 0 && (
-                      <div className='space-y-2'>
-                        <div className='text-xs font-medium text-gray-300'>{category}</div>
-                        <div className='grid gap-3 md:grid-cols-2'>
-                          {categoryTemplates.map((template) => (
-                            <div
-                              key={template.name}
-                              className='flex items-center justify-between rounded-md border border-border/50 bg-card/60 p-3'
-                            >
-                              <Button
-                                variant='ghost'
-                                onClick={() => {
-                                  template.create?.();
-                                  onSelect(template.name);
-                                }}
-                                className='flex-1 justify-start h-auto p-0 font-normal hover:bg-transparent transition text-left group'
-                              >
-                                <div>
-                                  <span className='text-sm font-medium text-gray-200 group-hover:text-white transition'>
-                                    {template.name}
-                                  </span>
-                                  <span className='block text-xs text-gray-500'>
-                                    {template.description}
-                                  </span>
-                                </div>
-                              </Button>
-                              <Button
-                                variant='ghost'
-                                size='sm'
-                                onClick={() => onDeleteTemplate(template.name)}
-                                className='ml-2 size-8 p-0 text-gray-400 hover:text-red-400'
-                                aria-label={`Delete ${template.name} template`}
-                                title='Delete template'
-                              >
-                                <Trash2 className='size-4' />
-                              </Button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <GroupedTemplatesSection
+            groupedTemplates={groupedTemplates}
+            onSelect={onSelect}
+            onDeleteTemplate={onDeleteTemplate}
+          />
         </div>
       </SectionPickerSelectionContext.Provider>
     </DetailModal>
+  );
+}
+
+function GroupedTemplatesSection({
+  groupedTemplates,
+  onSelect,
+  onDeleteTemplate,
+}: {
+  groupedTemplates: Record<string, SectionTemplate[]>;
+  onSelect: (type: string) => void;
+  onDeleteTemplate: (name: string) => void;
+}): React.JSX.Element | null {
+  if (Object.entries(groupedTemplates).length === 0) return null;
+
+  return (
+    <div>
+      <div className='mb-2 text-xs font-medium uppercase tracking-wide text-gray-400'>
+        Saved templates
+      </div>
+      <div className='space-y-3'>
+        {Object.entries(groupedTemplates).map(([category, categoryTemplates]) => (
+          <CategoryGroup key={category} category={category} templates={categoryTemplates} onSelect={onSelect} onDeleteTemplate={onDeleteTemplate} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CategoryGroup({ category, templates, onSelect, onDeleteTemplate }: { category: string; templates: SectionTemplate[]; onSelect: (type: string) => void; onDeleteTemplate: (name: string) => void }): React.JSX.Element | null {
+  if (templates.length === 0) return null;
+  return (
+    <div className='space-y-2'>
+      <div className='text-xs font-medium text-gray-300'>{category}</div>
+      <div className='grid gap-3 md:grid-cols-2'>
+        {templates.map((template) => (
+          <TemplateItem key={template.name} template={template} onSelect={onSelect} onDeleteTemplate={onDeleteTemplate} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TemplateItem({ template, onSelect, onDeleteTemplate }: { template: SectionTemplate; onSelect: (type: string) => void; onDeleteTemplate: (name: string) => void }): React.JSX.Element {
+  return (
+    <div
+      key={template.name}
+      className='flex items-center justify-between rounded-md border border-border/50 bg-card/60 p-3'
+    >
+      <Button
+        variant='ghost'
+        onClick={() => {
+          template.create?.();
+          onSelect(template.name);
+        }}
+        className='flex-1 justify-start h-auto p-0 font-normal hover:bg-transparent transition text-left group'
+      >
+        <div>
+          <span className='text-sm font-medium text-gray-200 group-hover:text-white transition'>
+            {template.name}
+          </span>
+          <span className='block text-xs text-gray-500'>
+            {template.description}
+          </span>
+        </div>
+      </Button>
+      <Button
+        variant='ghost'
+        size='sm'
+        onClick={() => onDeleteTemplate(template.name)}
+        className='ml-2 size-8 p-0 text-gray-400 hover:text-red-400'
+        aria-label={`Delete ${template.name} template`}
+        title='Delete template'
+      >
+        <Trash2 className='size-4' />
+      </Button>
+    </div>
   );
 }

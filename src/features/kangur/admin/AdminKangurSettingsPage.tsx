@@ -3,14 +3,14 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { Button, Alert } from '@/features/kangur/shared/ui';
-import { KangurAdminContentShell } from '../components/KangurAdminContentShell';
-import { useSettingsController } from './settings/useSettingsController';
+import { KangurAdminContentShell } from './components/KangurAdminContentShell';
+import { useKangurSettingsController } from './settings/useKangurSettingsController';
 import { StorefrontThemePanel } from './settings/StorefrontThemePanel';
 import { LaunchRouteSettingsPanel } from './settings/LaunchRouteSettingsPanel';
 import { AiTutorSettingsPanel } from './settings/AiTutorSettingsPanel';
 import { ParentVerificationPanel } from './settings/ParentVerificationPanel';
 import { OperationsPanel } from './settings/OperationsPanel';
-import { renderKangurNarratorSettingsPanel } from '../components/KangurNarratorSettingsPanel';
+import { renderKangurNarratorSettingsPanel } from './components/KangurNarratorSettingsPanel';
 import { KANGUR_GRID_ROOMY_CLASSNAME } from '@/features/kangur/ui/design/tokens';
 
 const SETTINGS_SECTION_CLASS_NAME = 'border-border/60 bg-card/35 shadow-sm';
@@ -20,7 +20,7 @@ const KANGUR_LAUNCH_ROUTE_OPTIONS = [
 ];
 
 export default function AdminKangurSettingsPage() {
-  const ctrl = useSettingsController();
+  const ctrl = useKangurSettingsController();
 
   return (
     <KangurAdminContentShell

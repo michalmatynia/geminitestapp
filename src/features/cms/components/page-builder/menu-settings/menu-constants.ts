@@ -1,4 +1,4 @@
-import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
+import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 export const FONT_FAMILY_OPTIONS: ReadonlyArray<LabeledOptionDto<string>> = [
   { label: 'Inter', value: 'Inter, sans-serif' },

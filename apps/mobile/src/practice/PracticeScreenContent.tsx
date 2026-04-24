@@ -1,6 +1,7 @@
 import React from 'react';
 import { KangurMobileAiTutorCard } from '../shared/KangurMobileUi';
-import { PracticeCompletionCard, PracticePreparationCard } from './practice-sections';
+import { PracticeCompletionCard } from './PracticeCompletionCard';
+import { PracticePreparationCard } from './PracticePreparationCard';
 import { PracticeQuestionDisplay } from './PracticeQuestionDisplay';
 import { type PracticeData } from './practice-types';
 import { type PracticePreparationCardProps } from './PracticePreparationCard';

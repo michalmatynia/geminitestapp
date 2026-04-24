@@ -12,7 +12,7 @@ export function MenuSectionContainer({
     isOpen: boolean, 
     onToggle: () => void, 
     children: React.ReactNode 
-}) {
+}): React.JSX.Element {
   return (
     <FormSection
       title={title}

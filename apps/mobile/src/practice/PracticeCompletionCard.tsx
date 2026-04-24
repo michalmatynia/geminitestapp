@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { KangurMobileCard as Card } from '../shared/KangurMobileUi';
-import { ActionButton, LinkButton } from './duels-primitives';
+import { ActionButton, LinkButton } from '../duels/duels-primitives/BaseComponents';
 import { formatPracticeResultLabel, formatPracticeSummaryMeta } from './practice-utils';
 import { PracticeSyncProofPanel } from './PracticeSyncProofPanel';
 import { PracticeDuelsPanel } from './PracticeDuelsPanel';

@@ -1,8 +1,8 @@
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
-import { FrontPageStatus } from './front-page/FrontPageStatus';
-import { FrontPageOptionList } from './front-page/FrontPageOptionList';
-import { CmsFrontPageHint } from './front-page/CmsFrontPageHint';
-import { SaveSelectionButton } from './front-page/SaveSelectionButton';
+import { FrontPageStatus } from './FrontPageStatus';
+import { FrontPageOptionList } from './FrontPageOptionList';
+import { CmsFrontPageHint } from './CmsFrontPageHint';
+import { SaveSelectionButton } from './SaveSelectionButton';
 import type { FrontPageSelectableApp } from '@/shared/lib/front-page-app';
 
 export function FrontManageSelectionForm({

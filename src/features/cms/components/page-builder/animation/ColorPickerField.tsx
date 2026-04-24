@@ -13,7 +13,7 @@ export function ColorPickerField({
   value: string;
   onChange: (value: string) => void;
 }): React.JSX.Element {
-  const resolved = value || '#ffffff';
+  const resolved = value !== '' ? value : '#ffffff';
   return (
     <div className='space-y-1'>
       <Hint size='xxs' uppercase className='text-gray-500'>

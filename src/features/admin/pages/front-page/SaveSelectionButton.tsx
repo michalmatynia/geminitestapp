@@ -9,7 +9,7 @@ export function SaveSelectionButton({
   isDirty: boolean;
   isPending: boolean;
   onClick: () => void;
-}) {
+}): React.ReactNode {
   let buttonLabel = 'Saved';
   if (isPending) {
     buttonLabel = 'Saving...';

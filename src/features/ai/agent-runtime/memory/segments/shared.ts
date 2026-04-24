@@ -6,7 +6,7 @@ export type { MemoryScope };
 export const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
 
 export const parseJsonObject = (raw: string): unknown => {
-  if (!raw) return null;
+  if (raw === '') return null;
   const match = raw.match(/\{[\s\S]*\}/);
   const jsonText = match ? match[0] : raw;
   try {

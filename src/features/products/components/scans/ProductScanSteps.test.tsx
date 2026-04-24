@@ -269,14 +269,189 @@ describe('ProductScanSteps', () => {
     ]);
 
     expect(summary).toEqual({
+      badgeLabel: 'Candidate continuation',
+      contextLabel: 'After AI rejection',
       phaseLabel: 'Input',
       stepLabel: 'Continue with next Amazon candidate',
       message: 'Queued the next Amazon candidate after AI rejection.',
       resultCodeLabel: 'Run Queued',
       attempt: 2,
       rejectedUrl: 'https://www.amazon.com/dp/B00TEST123',
+      rejectedUrlLabel: 'Rejected',
       nextUrl: 'https://www.amazon.com/dp/B00TEST456',
+      nextUrlLabel: 'Next up',
       rejectionKind: 'product',
+    });
+  });
+
+  it('resolves automatic Google retry continuation summaries after a captcha block', () => {
+    const summary = resolveProductScanContinuationSummary([
+      {
+        key: 'google_captcha',
+        label: 'Resolve Google captcha',
+        group: 'google_lens',
+        attempt: 1,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: 'url',
+        retryOf: null,
+        resultCode: 'captcha_required',
+        status: 'failed',
+        message: 'Google Lens requested captcha verification.',
+        warning: null,
+        details: [],
+        url: 'https://www.google.com/sorry/index',
+        startedAt: '2026-04-11T10:00:05.000Z',
+        completedAt: '2026-04-11T10:00:08.000Z',
+        durationMs: 3000,
+      },
+      {
+        key: 'google_stealth_retry',
+        label: 'Retry Google candidate search with fresh proxy session',
+        group: 'google_lens',
+        attempt: 1,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: 'url',
+        retryOf: 'run-1',
+        resultCode: 'run_started',
+        status: 'completed',
+        message:
+          'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+        warning: null,
+        details: [
+          { label: 'Retry mode', value: 'Rotate proxy session' },
+          { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+        ],
+        url: 'https://www.google.com/sorry/index',
+        startedAt: '2026-04-11T10:00:08.000Z',
+        completedAt: '2026-04-11T10:00:09.000Z',
+        durationMs: 1000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      badgeLabel: 'Automatic retry',
+      contextLabel: 'After captcha block',
+      phaseLabel: 'Google Lens',
+      stepLabel: 'Retry Google candidate search with fresh proxy session',
+      message:
+        'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+      resultCodeLabel: 'Run Started',
+      attempt: 1,
+      nextUrl: 'https://www.google.com/sorry/index',
+      nextUrlLabel: 'Blocked at',
+      rejectedUrl: null,
+      rejectedUrlLabel: null,
+      rejectionKind: null,
+    });
+  });
+
+  it('resolves skipped automatic Google retry summaries when no proxy is configured', () => {
+    const summary = resolveProductScanContinuationSummary([
+      {
+        key: 'google_stealth_retry_skipped',
+        label: 'Skip automatic Google retry',
+        group: 'google_lens',
+        attempt: 1,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: 'url',
+        retryOf: 'run-1',
+        resultCode: 'proxy_unavailable',
+        status: 'skipped',
+        message:
+          'Skipped automatic Google retry because no proxy is configured; continuing to manual verification settings.',
+        warning: null,
+        details: [
+          { label: 'Skip reason', value: 'Proxy is not enabled for this scanner runtime' },
+          { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+        ],
+        url: 'https://www.google.com/sorry/index',
+        startedAt: '2026-04-11T10:00:08.000Z',
+        completedAt: '2026-04-11T10:00:09.000Z',
+        durationMs: 1000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      badgeLabel: 'Automatic retry skipped',
+      contextLabel: 'Proxy is not enabled for this scanner runtime',
+      phaseLabel: 'Google Lens',
+      stepLabel: 'Skip automatic Google retry',
+      message:
+        'Skipped automatic Google retry because no proxy is configured; continuing to manual verification settings.',
+      resultCodeLabel: 'Proxy Unavailable',
+      attempt: 1,
+      nextUrl: 'https://www.google.com/sorry/index',
+      nextUrlLabel: 'Blocked at',
+      rejectedUrl: null,
+      rejectedUrlLabel: null,
+      rejectionKind: null,
+    });
+  });
+
+  it('resolves manual Google fallback continuation summaries after automatic retry', () => {
+    const summary = resolveProductScanContinuationSummary([
+      {
+        key: 'google_stealth_retry',
+        label: 'Retry Google candidate search with fresh proxy session',
+        group: 'google_lens',
+        attempt: 1,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: 'url',
+        retryOf: 'run-1',
+        resultCode: 'run_started',
+        status: 'completed',
+        message:
+          'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+        warning: null,
+        details: [
+          { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+        ],
+        url: 'https://www.google.com/sorry/index',
+        startedAt: '2026-04-11T10:00:08.000Z',
+        completedAt: '2026-04-11T10:00:09.000Z',
+        durationMs: 1000,
+      },
+      {
+        key: 'google_manual_retry',
+        label: 'Open Google candidate search in visible browser',
+        group: 'google_lens',
+        attempt: 1,
+        candidateId: null,
+        candidateRank: null,
+        inputSource: 'url',
+        retryOf: 'run-stealth-1',
+        resultCode: 'run_started',
+        status: 'completed',
+        message: 'Opened a visible browser for Google captcha verification.',
+        warning: null,
+        details: [
+          { label: 'Recovery path', value: 'After automatic retry' },
+          { label: 'Opened URL', value: 'https://www.google.com/sorry/index' },
+        ],
+        url: 'https://www.google.com/sorry/index',
+        startedAt: '2026-04-11T10:00:09.000Z',
+        completedAt: '2026-04-11T10:00:10.000Z',
+        durationMs: 1000,
+      },
+    ]);
+
+    expect(summary).toEqual({
+      badgeLabel: 'Manual fallback',
+      contextLabel: 'After automatic retry',
+      phaseLabel: 'Google Lens',
+      stepLabel: 'Open Google candidate search in visible browser',
+      message: 'Opened a visible browser for Google captcha verification.',
+      resultCodeLabel: 'Run Started',
+      attempt: 1,
+      nextUrl: 'https://www.google.com/sorry/index',
+      nextUrlLabel: 'Opened at',
+      rejectedUrl: null,
+      rejectedUrlLabel: null,
+      rejectionKind: null,
     });
   });
 

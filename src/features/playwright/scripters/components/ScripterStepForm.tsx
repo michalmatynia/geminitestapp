@@ -121,7 +121,7 @@ const NumberRow = ({
       value={value === undefined ? '' : value}
       onChange={(e) => {
         const raw = e.target.value.trim();
-        if (raw === '') return onChange(undefined);
+        if (raw === '') { onChange(undefined); return; }
         const parsed = Number(raw);
         onChange(Number.isFinite(parsed) ? parsed : undefined);
       }}
@@ -401,7 +401,7 @@ export function ScripterStepForm({
               </Button>
             ) : null}
             <ExtractListFieldsEditor
-              fields={step.fields as Record<string, FieldSpec>}
+              fields={step.fields}
               onChange={(next) => update({ fields: next })}
               onProbeSelector={onProbeSelector}
             />

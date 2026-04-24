@@ -135,4 +135,4 @@ AI Paths queue workers now claim the partitioned `ai-paths.run.execution` resour
 - Inspect all execution scopes with `GET /api/agent/leases?resourceId=ai-paths.run.execution`
 - Inspect a single run scope with `GET /api/agent/leases?resourceId=ai-paths.run.execution&scopeId=<runId>`
 
-If a worker cannot claim the execution lease, the run is moved into `blocked_on_lease` and can later be marked `handoff_ready` for delegated continuation.
+If a worker cannot claim the execution lease, the run fails fast and should be restarted as a new run once ownership is available.

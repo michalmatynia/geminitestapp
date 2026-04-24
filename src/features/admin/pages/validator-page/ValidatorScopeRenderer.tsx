@@ -1,7 +1,7 @@
 import React from 'react';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/admin/components/AdminPromptEngineValidationPatternsPage';
 import { ValidatorSettings } from '@/features/admin/components/AdminValidatorSettings';
-import { ValidatorScope } from '@/features/admin/pages/validator-scope';
+import { type ValidatorScope } from '@/features/admin/pages/validator-scope';
 import { formatAdminAiEyebrow } from '@/shared/ui/admin.public';
 
 function createPromptEnginePanel(

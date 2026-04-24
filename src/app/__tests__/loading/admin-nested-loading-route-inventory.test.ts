@@ -32,7 +32,6 @@ const adminNestedRoutesWithDedicatedLoading = [
   'cms/slugs',
   'cms/themes',
   'cms/zones',
-  'ai-paths/dead-letter',
   'ai-paths/jobs',
   'ai-paths/queue',
   'ai-paths/trigger-buttons',

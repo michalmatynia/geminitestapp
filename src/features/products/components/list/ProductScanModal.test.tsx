@@ -2453,6 +2453,30 @@ describe('ProductScanModal', () => {
           price: null,
           url: null,
           description: null,
+          steps: [
+            {
+              key: 'google_manual_retry',
+              label: 'Open Google candidate search in visible browser',
+              group: 'google_lens',
+              attempt: 1,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: 'url',
+              retryOf: 'run-1-prev',
+              resultCode: 'run_started',
+              status: 'completed',
+              message: 'Opened a visible browser for Google captcha verification.',
+              warning: null,
+              details: [
+                { label: 'Recovery path', value: 'After captcha block' },
+                { label: 'Opened URL', value: 'https://www.google.com/sorry/index' },
+              ],
+              url: 'https://www.google.com/sorry/index',
+              startedAt: '2026-04-11T03:59:00.000Z',
+              completedAt: '2026-04-11T03:59:01.000Z',
+              durationMs: 1000,
+            },
+          ],
           rawResult: {
             status: 'captcha_required',
             manualVerificationPending: true,
@@ -2486,7 +2510,17 @@ describe('ProductScanModal', () => {
     await screen.findByText(
       'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
     );
-    expect(screen.getByText('Captcha')).toBeInTheDocument();
+    expect(screen.getByText('Manual Fallback')).toBeInTheDocument();
+    expect(screen.getByText('Manual fallback')).toBeInTheDocument();
+    expect(screen.getByText('After captcha block')).toBeInTheDocument();
+    expect(
+      screen.getAllByText('Opened a visible browser for Google captcha verification.').length
+    ).toBeGreaterThan(0);
+    expect(screen.getByText('Opened at:')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'https://www.google.com/sorry/index' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/sorry/index'
+    );
     expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
   });
 
@@ -2838,6 +2872,106 @@ describe('ProductScanModal', () => {
     expect(await screen.findByText('Candidate continuation')).toBeInTheDocument();
     expect(screen.getByText('After language rejection')).toBeInTheDocument();
     expect(screen.getAllByText('Started the next Amazon candidate after language rejection.').length).toBeGreaterThan(0);
+  });
+
+  it('shows automatic retry context when a scan queues a Google stealth retry', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 0,
+      running: 1,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'running',
+          message: 'Amazon candidate search running.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          steps: [
+            {
+              key: 'google_stealth_retry',
+              label: 'Retry Google candidate search with fresh proxy session',
+              group: 'google_lens',
+              attempt: 1,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: 'url',
+              retryOf: 'run-prev',
+              resultCode: 'run_started',
+              status: 'completed',
+              message:
+                'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+              warning: null,
+              details: [
+                { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+              ],
+              url: 'https://www.google.com/sorry/index',
+              startedAt: '2026-04-11T03:59:02.000Z',
+              completedAt: '2026-04-11T03:59:03.000Z',
+              durationMs: 1000,
+            },
+          ],
+          rawResult: {
+            captchaStealthRetryStarted: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Automatic retry')).toBeInTheDocument();
+    expect(screen.getByText('After captcha block')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Queued an automatic Google retry with a fresh proxy session before manual fallback.'
+      ).length
+    ).toBeGreaterThan(0);
+    expect(screen.getByText('Blocked at:')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'https://www.google.com/sorry/index' })).toHaveAttribute(
+      'href',
+      'https://www.google.com/sorry/index'
+    );
   });
 
   it('shows the current phase and step for an active scan row without expanding steps', async () => {

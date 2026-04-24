@@ -22,12 +22,10 @@ const {
 
 import {
   enqueuePathRun,
-  resumePathRun,
   cancelPathRun,
   cancelPathRunWithRepository,
   deletePathRunWithRepository,
   deletePathRunsWithRepository,
-  retryPathRunNode,
 } from '@/features/ai/ai-paths/services/path-run-service';
 import type {
   AiNode,
@@ -300,49 +298,6 @@ describe('PathRunService', () => {
     });
   });
 
-  describe('resumePathRun', () => {
-    it('should reset run status to queued', async () => {
-      const run = await enqueuePathRun({
-        pathId: 'test-path',
-        nodes: mockNodes,
-        edges: [],
-      });
-
-      // Manually fail it
-      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'Error' });
-
-      const resumed = await resumePathRun(run.id, 'resume');
-      expect(resumed.status).toBe('queued');
-      expect(resumed.errorMessage).toBeNull();
-
-      const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: AiPathRunEventRecord) => e.message === 'Run resumed (resume).')).toBe(true);
-    });
-
-    it('reverts run status when dispatch fails during resume', async () => {
-      const run = await enqueuePathRun({
-        pathId: 'test-path-resume-dispatch-fail',
-        nodes: mockNodes,
-        edges: [],
-      });
-      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'original-failure' });
-      enqueuePathRunJobMock.mockRejectedValueOnce(new Error('dispatch unavailable'));
-
-      await expect(resumePathRun(run.id, 'resume')).rejects.toThrow('Run dispatch failed');
-
-      const latest = await repo.findRunById(run.id);
-      expect(latest?.status).toBe('failed');
-      expect(latest?.errorMessage).toBe('original-failure');
-
-      const events = await repo.listRunEvents(run.id);
-      expect(
-        events.some((event: AiPathRunEventRecord) =>
-          event.message.includes('Run dispatch failed during resume')
-        )
-      ).toBe(true);
-    });
-  });
-
   describe('cancelPathRun', () => {
     it('should set status to canceled and mark finishedAt', async () => {
       const run = await enqueuePathRun({
@@ -410,58 +365,6 @@ describe('PathRunService', () => {
       const result = await cancelPathRun(run.id);
       expect(result.status).toBe('completed');
       expect(removePathRunQueueEntriesMock).toHaveBeenCalledWith([run.id]);
-    });
-  });
-
-  describe('retryPathRunNode', () => {
-    it('should reset specific node and re-queue the run', async () => {
-      const run = await enqueuePathRun({
-        pathId: 'test-path',
-        nodes: mockNodes,
-        edges: [],
-      });
-
-      // Mark node as failed
-      await repo.upsertRunNode(run.id, 'node-1', {
-        nodeType: 'trigger',
-        status: 'failed',
-        errorMessage: 'Node failed',
-      });
-      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'Run failed' });
-
-      const updatedRun = await retryPathRunNode(run.id, 'node-1');
-      expect(updatedRun.status).toBe('queued');
-
-      const nodes = await repo.listRunNodes(run.id);
-      expect(nodes[0]!.status).toBe('pending');
-      expect(nodes[0]!.errorMessage).toBeNull();
-
-      const events = await repo.listRunEvents(run.id);
-      expect(events.some((e: AiPathRunEventRecord) => e.message === 'Retry node node-1.')).toBe(true);
-    });
-
-    it('reverts run status when dispatch fails during node retry', async () => {
-      const run = await enqueuePathRun({
-        pathId: 'test-path-retry-dispatch-fail',
-        nodes: mockNodes,
-        edges: [],
-      });
-      await repo.updateRun(run.id, { status: 'failed', errorMessage: 'original-node-failure' });
-
-      enqueuePathRunJobMock.mockRejectedValueOnce(new Error('dispatch unavailable'));
-
-      await expect(retryPathRunNode(run.id, 'node-1')).rejects.toThrow('Run dispatch failed');
-
-      const latest = await repo.findRunById(run.id);
-      expect(latest?.status).toBe('failed');
-      expect(latest?.errorMessage).toBe('original-node-failure');
-
-      const events = await repo.listRunEvents(run.id);
-      expect(
-        events.some((event: AiPathRunEventRecord) =>
-          event.message.includes('Run dispatch failed during node retry')
-        )
-      ).toBe(true);
     });
   });
 

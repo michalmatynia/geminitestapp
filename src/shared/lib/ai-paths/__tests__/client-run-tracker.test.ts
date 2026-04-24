@@ -775,14 +775,14 @@ describe('isTrackedAiPathRunTerminal', () => {
     trackingState: 'active',
   });
 
-  it.each(['completed', 'failed', 'canceled', 'dead_lettered'] as const)(
+  it.each(['completed', 'failed', 'canceled'] as const)(
     'returns true for terminal status %s',
     (status) => {
       expect(isTrackedAiPathRunTerminal(makeSnapshot(status))).toBe(true);
     }
   );
 
-  it.each(['queued', 'running', 'blocked_on_lease', 'paused', 'handoff_ready'] as const)(
+  it.each(['queued', 'running'] as const)(
     'returns false for non-terminal status %s',
     (status) => {
       expect(isTrackedAiPathRunTerminal(makeSnapshot(status))).toBe(false);

@@ -19,6 +19,9 @@ export const PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE =
 export const PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_LABEL = 'Retrying Google';
 export const PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE =
   'Retrying Google Lens automatically with a fresh proxy session before manual fallback.';
+export const PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_LABEL = 'Manual Fallback';
+export const PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_MESSAGE =
+  'Opening a visible browser for Google captcha verification.';
 
 const PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS: Record<
   ProductScanStatus,
@@ -87,6 +90,26 @@ export const isProductScanGoogleStealthRetrying = (
   );
 };
 
+export const isProductScanGoogleManualFallbackOpen = (
+  scan: Pick<ProductScanRecord, 'status' | 'rawResult' | 'steps'> | null | undefined
+): boolean => {
+  if (scan?.status !== 'running' && scan?.status !== 'queued') {
+    return false;
+  }
+
+  const rawResult = scan.rawResult;
+  const rawResultRecord =
+    rawResult && typeof rawResult === 'object' && !Array.isArray(rawResult)
+      ? (rawResult as Record<string, unknown>)
+      : null;
+  const hasManualRetryFlag = rawResultRecord?.['captchaManualRetryStarted'] === true;
+  const hasManualRetryStep =
+    Array.isArray(scan.steps) &&
+    scan.steps.some((step) => step.key === 'google_manual_retry');
+
+  return hasManualRetryFlag || hasManualRetryStep;
+};
+
 const getManualVerificationMessage = (
   scan: Pick<ProductScanRecord, 'rawResult' | 'asinUpdateMessage'> | null | undefined
 ): string | null => {
@@ -124,6 +147,7 @@ export const resolveProductScanRunFeedbackPresentation = (
     manualVerificationPending?: boolean | null;
     manualVerificationMessage?: string | null;
     googleStealthRetrying?: boolean | null;
+    googleManualFallbackOpen?: boolean | null;
     candidateSelectionRequired?: boolean | null;
     amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
     amazonEvaluationLanguageAccepted?: boolean | null;
@@ -136,6 +160,13 @@ export const resolveProductScanRunFeedbackPresentation = (
         variant: 'warning',
         badgeClassName:
           'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+      }
+    : (status === 'running' || status === 'queued') && options?.googleManualFallbackOpen
+    ? {
+        label: PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_LABEL,
+        variant: 'warning',
+        badgeClassName:
+          'border-sky-500/40 bg-sky-500/20 text-sky-200 hover:bg-sky-500/25',
       }
     : status === 'running' && options?.manualVerificationPending
     ? {
@@ -199,6 +230,7 @@ export const buildProductScanRunFeedbackFromRecord = (
     manualVerificationPending: isManualVerificationPending(scan),
     manualVerificationMessage: getManualVerificationMessage(scan),
     googleStealthRetrying: isProductScanGoogleStealthRetrying(scan),
+    googleManualFallbackOpen: isProductScanGoogleManualFallbackOpen(scan),
     candidateSelectionRequired: isProductScanCandidateSelectionRequired(scan),
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
     amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,

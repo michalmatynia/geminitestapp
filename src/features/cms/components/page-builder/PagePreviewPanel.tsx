@@ -29,7 +29,7 @@ export function PagePreviewPanel(): React.ReactNode {
       />
       
       <div className='flex-1 overflow-y-auto' data-cms-canvas-viewport='true'>
-        <PreviewCanvas canvasRef={null} previewWidthClass="w-full" previewFrameClass="" isInspecting={ctrl.state.inspectorEnabled} styles={{}}>
+        <PreviewCanvas canvasRef={null} previewWidthClass='w-full' previewFrameClass='' isInspecting={ctrl.state.inspectorEnabled} styles={{}}>
             {/* Page content */}
         </PreviewCanvas>
       </div>

@@ -247,9 +247,9 @@ describe('trigger-button-run-feedback', () => {
     ).toBeNull();
   });
 
-  it('resolves the presentation for blocked-on-lease runs', () => {
-    expect(resolveTriggerButtonRunFeedbackPresentation('blocked_on_lease')).toEqual({
-      label: 'Awaiting resource',
+  it('resolves the presentation for canceled runs', () => {
+    expect(resolveTriggerButtonRunFeedbackPresentation('canceled')).toEqual({
+      label: 'Canceled',
       variant: 'warning',
     });
   });

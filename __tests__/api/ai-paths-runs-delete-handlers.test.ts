@@ -57,7 +57,7 @@ const terminalScopedRunsDeleteExpectation = expect.objectContaining({
   pathId: 'path-1',
   source: 'trigger',
   sourceMode: 'exclude',
-  statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
+  statuses: ['completed', 'failed', 'canceled'],
 });
 
 describe('AI Paths run delete handlers', () => {

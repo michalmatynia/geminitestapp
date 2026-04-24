@@ -27,6 +27,14 @@ export const ensureMailIndexes = async (): Promise<void> => {
   await Promise.all([
     mongo.collection<FilemakerMailAccountDocument>(MAIL_ACCOUNTS_COLLECTION).createIndex({ emailAddress: 1 }),
     mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex({ accountId: 1, lastMessageAt: -1 }),
+    mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex(
+      { accountId: 1, normalizedSubject: 1, anchorAddress: 1 },
+      { sparse: true }
+    ),
+    mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).createIndex(
+      { accountId: 1, providerThreadId: 1 },
+      { sparse: true }
+    ),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex({ threadId: 1, sentAt: 1, receivedAt: 1 }),
     mongo.collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION).createIndex(
       { accountId: 1, providerMessageId: 1 },
@@ -83,7 +91,7 @@ export const getMailSyncState = async (accountId: string, mailboxPath: string): 
 export const upsertMailSyncState = async (state: FilemakerMailFolderSyncState): Promise<void> => {
   const mongo = await getMongoDb();
   await mongo.collection<FilemakerMailSyncStateDocument>(MAIL_SYNC_STATES_COLLECTION).updateOne(
-    { id: state.id },
+    { accountId: state.accountId, mailboxPath: state.mailboxPath },
     { $set: state },
     { upsert: true }
   );
@@ -111,6 +119,35 @@ export const findMailThreadByProviderId = async (accountId: string, providerThre
 export const findMailThreadBySubjectAndAnchor = async (accountId: string, normalizedSubject: string, anchorAddress: string): Promise<FilemakerMailThread | null> => {
   const mongo = await getMongoDb();
   return await mongo.collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION).findOne({ accountId, normalizedSubject, anchorAddress });
+};
+
+export const findMailThreadByReferences = async (
+  accountId: string,
+  references: string[]
+): Promise<FilemakerMailThread | null> => {
+  const trimmed = references.map((entry) => entry?.trim()).filter((entry): entry is string => Boolean(entry));
+  if (trimmed.length === 0) return null;
+  const mongo = await getMongoDb();
+  const message = await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .findOne({ accountId, providerMessageId: { $in: trimmed } });
+  if (!message) return null;
+  return await mongo
+    .collection<FilemakerMailThreadDocument>(MAIL_THREADS_COLLECTION)
+    .findOne({ id: message.threadId });
+};
+
+export const findMailMessagesByProviderIds = async (
+  accountId: string,
+  providerMessageIds: string[]
+): Promise<FilemakerMailMessage[]> => {
+  const trimmed = providerMessageIds.map((entry) => entry?.trim()).filter((entry): entry is string => Boolean(entry));
+  if (trimmed.length === 0) return [];
+  const mongo = await getMongoDb();
+  return await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .find({ accountId, providerMessageId: { $in: trimmed } })
+    .toArray();
 };
 
 export const upsertMailMessage = async (message: FilemakerMailMessage): Promise<void> => {

@@ -6,14 +6,31 @@ import { AUTH_SECRET_SETTINGS_KEYS } from '@/shared/lib/auth/auth-secret-setting
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
+import { randomUUID } from 'crypto';
+
 import type {
   FilemakerEmailCampaignDeliveryFailureCategory,
   FilemakerEmailCampaignDeliveryProvider,
   FilemakerMailAccount,
+  FilemakerMailMessage,
+  FilemakerMailThread,
 } from '../types';
-import { getFilemakerMailAccount } from './filemaker-mail-service';
+import { stripHtmlToPlainText } from '@/shared/lib/document-editor-format';
+import {
+  appendFilemakerMailToSentFolder,
+  getFilemakerMailAccount,
+} from './filemaker-mail-service';
+import {
+  buildFilemakerMailSnippet,
+  normalizeFilemakerMailSubject,
+} from '../mail-utils';
 import { createSmtpTransport } from './mail/mail-smtp';
-import { buildAccountSecretSettingKey } from './mail/mail-utils';
+import * as mailStorage from './mail/mail-storage';
+import {
+  buildAccountSecretSettingKey,
+  buildThreadId,
+  pickAnchorAddress,
+} from './mail/mail-utils';
 
 export const FILEMAKER_CAMPAIGN_EMAIL_SECRET_SETTINGS_KEYS = {
   webhookUrl: 'filemaker_campaign_email_webhook_url',
@@ -337,6 +354,104 @@ const resolveAccountDeliveryConfig = async (input: {
   };
 };
 
+const fileCampaignSendAsMailMessage = async (input: {
+  account: FilemakerMailAccount;
+  record: FilemakerCampaignEmailDeliveryRecord;
+  providerMessageId: string | null;
+}): Promise<void> => {
+  const { account, record, providerMessageId } = input;
+  const now = new Date().toISOString();
+  const normalizedSubject = normalizeFilemakerMailSubject(record.subject);
+  const anchorAddress = pickAnchorAddress([{ address: record.to, name: null }]);
+
+  let thread = await mailStorage.findMailThreadBySubjectAndAnchor(
+    account.id,
+    normalizedSubject,
+    anchorAddress
+  );
+  const threadId =
+    thread?.id ??
+    buildThreadId({
+      accountId: account.id,
+      providerThreadId: null,
+      normalizedSubject,
+      anchorAddress,
+    });
+
+  const textBody = record.text ?? '';
+  const htmlBody = record.html ?? null;
+  const snippet = buildFilemakerMailSnippet(
+    textBody,
+    htmlBody ?? stripHtmlToPlainText(htmlBody ?? '')
+  );
+  const recipientSummary = [{ address: record.to, name: null as string | null }];
+  const campaignContext = {
+    campaignId: record.campaignId,
+    runId: record.runId,
+    deliveryId: record.deliveryId,
+  };
+
+  const message: FilemakerMailMessage = {
+    id: `filemaker-mail-message-${randomUUID()}`,
+    createdAt: now,
+    updatedAt: now,
+    accountId: account.id,
+    threadId,
+    mailboxPath: thread?.mailboxPath ?? 'Sent',
+    mailboxRole: thread?.mailboxRole ?? 'sent',
+    providerMessageId,
+    providerThreadId: thread?.providerThreadId ?? null,
+    providerUid: null,
+    direction: 'outbound',
+    subject: record.subject,
+    snippet,
+    from: {
+      address: account.emailAddress,
+      name: record.fromName ?? account.fromName ?? null,
+    },
+    to: recipientSummary,
+    cc: [],
+    bcc: [],
+    replyTo: record.replyToEmail
+      ? [{ address: record.replyToEmail, name: null }]
+      : [],
+    sentAt: record.sentAt,
+    receivedAt: record.sentAt,
+    flags: { seen: true, answered: false, flagged: false, draft: false, deleted: false },
+    textBody,
+    htmlBody,
+    inReplyTo: null,
+    references: [],
+    attachments: [],
+    relatedPersonIds: [],
+    relatedOrganizationIds: [],
+    campaignContext,
+  };
+  await mailStorage.upsertMailMessage(message);
+
+  const nextThread: FilemakerMailThread = {
+    id: threadId,
+    createdAt: thread?.createdAt ?? now,
+    updatedAt: now,
+    accountId: account.id,
+    mailboxPath: thread?.mailboxPath ?? 'Sent',
+    mailboxRole: thread?.mailboxRole ?? 'sent',
+    providerThreadId: thread?.providerThreadId ?? null,
+    subject: record.subject,
+    normalizedSubject,
+    anchorAddress,
+    snippet,
+    participantSummary: recipientSummary,
+    relatedPersonIds: thread?.relatedPersonIds ?? [],
+    relatedOrganizationIds: thread?.relatedOrganizationIds ?? [],
+    unreadCount: thread?.unreadCount ?? 0,
+    messageCount: (thread?.messageCount ?? 0) + 1,
+    lastMessageAt: record.sentAt,
+    campaignContext,
+  };
+  await mailStorage.upsertMailThread(nextThread);
+};
+
 export const sendFilemakerCampaignEmail = async (input: {
   to: string;
   subject: string;
@@ -380,8 +495,9 @@ export const sendFilemakerCampaignEmail = async (input: {
     }
 
     const transport = createSmtpTransport(accountConfig.account, accountConfig.password);
+    let providerMessageId: string | null = null;
     try {
-      await transport.sendMail({
+      const result = await transport.sendMail({
         from: formatFromHeader(record.fromName, accountConfig.account.emailAddress),
         to: record.to,
         subject: record.subject,
@@ -389,9 +505,30 @@ export const sendFilemakerCampaignEmail = async (input: {
         ...(record.html ? { html: record.html } : {}),
         ...(record.replyToEmail ? { replyTo: record.replyToEmail } : {}),
       });
+      providerMessageId = typeof result.messageId === 'string' ? result.messageId : null;
+      const rawMessage = (result as unknown as { message?: Buffer | string }).message;
+      if (rawMessage) {
+        void appendFilemakerMailToSentFolder({
+          account: accountConfig.account,
+          rawMessage,
+        }).catch(() => {});
+      }
     } catch (error) {
       throw toCampaignDeliveryError(error, { provider: 'smtp' });
     }
+
+    void fileCampaignSendAsMailMessage({
+      account: accountConfig.account,
+      record,
+      providerMessageId,
+    }).catch((error) => {
+      logSystemEvent({
+        level: 'warn',
+        source: 'filemaker-campaign-mail-filing',
+        message: `Could not file campaign send ${record.deliveryId} into mail thread`,
+        error,
+      }).catch(() => {});
+    });
 
     return {
       provider: 'smtp',

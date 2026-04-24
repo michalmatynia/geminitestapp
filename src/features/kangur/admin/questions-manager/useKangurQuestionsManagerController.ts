@@ -14,7 +14,7 @@ export function useKangurQuestionsManagerController(currentSuite: any, suites: a
   const questionSummaries = useMemo(() => new Map(questions.map(q => [q.id, getQuestionAuthoringSummary(q)])), [questions]);
   
   const filteredQuestions = useMemo(() => {
-    let filtered = questions.filter(q => {
+    const filtered = questions.filter(q => {
         if (searchQuery.trim()) {
             const summary = questionSummaries.get(q.id);
             const searchable = [q.prompt, q.explanation, q.correctChoiceLabel, summary?.status].join(' ').toLowerCase();

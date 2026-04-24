@@ -341,8 +341,6 @@ export const QUERY_KEYS = {
         [...QUERY_KEYS.ai.aiPaths.lists(), 'runs', filters ? { filters } : 'all'] as const,
       details: () => [...QUERY_KEYS.ai.aiPaths.all, 'detail'] as const,
       run: (id: string) => [...QUERY_KEYS.ai.aiPaths.details(), id] as const,
-      deadLetter: (filters: unknown) =>
-        [...QUERY_KEYS.ai.aiPaths.lists(), 'dead-letter', filters] as const,
       runtimeAnalytics: (range: string) =>
         [...QUERY_KEYS.ai.aiPaths.all, 'runtime-analytics', { range }] as const,
       jobQueue: (filters: unknown) =>

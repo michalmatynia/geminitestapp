@@ -1,5 +1,12 @@
 import type { Href } from 'expo-router';
-import type { KangurDuelMode, KangurDuelOperation, KangurDuelDifficulty, KangurDuelReactionType } from '@kangur/contracts/kangur-duels';
+import type { 
+  KangurDuelMode, 
+  KangurDuelOperation, 
+  KangurDuelDifficulty, 
+  KangurDuelStatus, 
+  KangurDuelPlayerStatus, 
+  KangurDuelReactionType 
+} from '@kangur/contracts/kangur-duels';
 import type { KangurMobileLocalizedValue } from '../../i18n/kangurMobileI18n';
 
 export const HOME_ROUTE = '/' as Href;
@@ -40,6 +47,31 @@ export const DUEL_DIFFICULTY_EMOJIS: Record<KangurDuelDifficulty, string> = {
   hard: '🔴',
 };
 
+export const DUEL_STATUS_LABELS: Record<KangurDuelStatus, KangurMobileLocalizedValue<string>> = {
+  aborted: { de: 'Abgebrochen', en: 'Aborted', pl: 'Przerwany' },
+  completed: { de: 'Beendet', en: 'Completed', pl: 'Zakończony' },
+  created: { de: 'Erstellt', en: 'Created', pl: 'Utworzony' },
+  in_progress: { de: 'Läuft', en: 'In progress', pl: 'W trakcie' },
+  ready: { de: 'Bereit', en: 'Ready', pl: 'Gotowy' },
+  waiting: { de: 'Warten', en: 'Waiting', pl: 'Oczekiwanie' },
+};
+
+export const DUEL_PLAYER_STATUS_LABELS: Record<KangurDuelPlayerStatus, KangurMobileLocalizedValue<string>> = {
+  completed: { de: 'Fertig', en: 'Completed', pl: 'Ukończono' },
+  invited: { de: 'Eingeladen', en: 'Invited', pl: 'Zaproszony' },
+  left: { de: 'Verlassen', en: 'Left', pl: 'Wyszedł' },
+  playing: { de: 'Spielt', en: 'Playing', pl: 'Gra' },
+  ready: { de: 'Bereit', en: 'Ready', pl: 'Gotowy' },
+};
+
+export const MODE_FILTER_OPTIONS: readonly { value: 'all' | KangurDuelMode; label: KangurMobileLocalizedValue<string> }[] = [
+  { value: 'all', label: { de: 'Alle', en: 'All', pl: 'Wszystkie' } },
+  { value: 'quick_match', label: { de: 'Schnelle Matches', en: 'Quick matches', pl: 'Szybkie mecze' } },
+  { value: 'challenge', label: { de: 'Herausforderungen', en: 'Challenges', pl: 'Wyzwania' } },
+];
+
+export const OPERATION_OPTIONS: KangurDuelOperation[] = ['addition', 'subtraction', 'multiplication', 'division'];
+export const DIFFICULTY_OPTIONS: KangurDuelDifficulty[] = ['easy', 'medium', 'hard'];
 export const SERIES_BEST_OF_OPTIONS: Array<1 | 3 | 5 | 7 | 9> = [1, 3, 5, 7, 9];
 
 export const DUEL_REACTION_OPTIONS: KangurDuelReactionType[] = [
@@ -54,4 +86,14 @@ export const DUEL_REACTION_EMOJIS: Record<KangurDuelReactionType, string> = {
   clap: '🙌',
   rocket: '🚀',
   thumbs_up: '👍',
+};
+
+export const DUEL_REACTION_LABELS: Record<KangurDuelReactionType, KangurMobileLocalizedValue<string>> = {
+  cheer: { de: 'Applaus', en: 'Cheer', pl: 'Brawa' },
+  wow: { de: 'Wow', en: 'Wow', pl: 'Wow' },
+  gg: { de: 'Gutes Spiel', en: 'Good game', pl: 'Dobra gra' },
+  fire: { de: 'Feuer', en: 'Fire', pl: 'Ogień' },
+  clap: { de: 'Super', en: 'Nice', pl: 'Super' },
+  rocket: { de: 'Rakete', en: 'Rocket', pl: 'Rakieta' },
+  thumbs_up: { de: 'Daumen hoch', en: 'Thumbs up', pl: 'Kciuk w górę' },
 };

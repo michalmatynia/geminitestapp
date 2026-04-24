@@ -3,7 +3,6 @@ import type {
     KangurDuelMode, KangurDuelOperation, KangurDuelDifficulty, KangurDuelStatus, 
     KangurDuelReactionType 
 } from '@kangur/contracts/kangur-duels';
-import type { KangurLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import * as Constants from './duels-constants';
 import * as Formatters from './duels-formatters';
 
@@ -12,14 +11,39 @@ export const {
   DUEL_OPERATION_LABELS,
   DUEL_DIFFICULTY_LABELS,
   DUEL_DIFFICULTY_EMOJIS,
+  DUEL_MODE_LABELS,
   OPERATION_OPTIONS,
   DIFFICULTY_OPTIONS,
   SERIES_BEST_OF_OPTIONS,
+  DUEL_REACTION_OPTIONS,
+  AUTO_REFRESH_INTERVAL_MS,
+  HOME_ROUTE,
+  LOBBY_CHAT_PREVIEW_LIMIT,
 } = Constants;
+
+export const {
+  formatPlayerStatusLabel,
+  formatQuestionProgress,
+  formatRoundProgressLabel,
+  formatSeriesProgress,
+  formatSeriesSummary,
+  formatSeriesTitle,
+  formatSpectatorQuestionProgress,
+  getPlayerStatusTone,
+  getStatusTone,
+  localizeDuelText,
+  resolveSeriesWins,
+  resolveWinnerSummary,
+} = Formatters;
+
+export type DuelModeFilterOption = {
+  value: 'all' | KangurDuelMode;
+  label: KangurMobileLocalizedValue<string>;
+};
 
 export const DUEL_STATUS_LABELS: Record<KangurDuelStatus, KangurMobileLocalizedValue<string>> = Constants.DUEL_STATUS_LABELS;
 
-export const MODE_FILTER_OPTIONS: readonly { value: KangurDuelMode; label: KangurMobileLocalizedValue<string> }[] = Constants.MODE_FILTER_OPTIONS;
+export const MODE_FILTER_OPTIONS = Constants.MODE_FILTER_OPTIONS;
 
 export function formatModeLabel(mode: KangurDuelMode, locale: KangurMobileLocale): string {
   return Formatters.localizeDuelText(Constants.DUEL_MODE_LABELS[mode], locale);
@@ -74,11 +98,12 @@ export function normalizeSeriesBestOf(bestOf: number | null | undefined): 1 | 3 
 export function resolveSessionIdParam(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value;
   const normalized = typeof raw === 'string' ? raw.trim() : '';
-  return normalized || null;
+  return normalized !== '' ? normalized : null;
 }
 
 export function resolveSpectateParam(value: string | string[] | undefined): boolean {
-  const normalized = (typeof value === 'string' ? value.trim() : Array.isArray(value) ? value[0]?.trim() : '').toLowerCase();
+  const raw = Array.isArray(value) ? value[0] : value;
+  const normalized = (typeof raw === 'string' ? raw.trim() : '').toLowerCase();
   return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }
 

@@ -93,21 +93,16 @@ async function main(): Promise<void> {
     candidateRunIds = dedupeRunIds(diagnostics.findings).slice(0, options.maxApply);
   }
 
-  const requeued: string[] = [];
+  const manualRestartRequiredRunIds = [...candidateRunIds];
   const failed: Array<{ runId: string; error: string }> = [];
 
   if (options.apply) {
-    const { resumePathRun } = await import('@/features/ai/ai-paths/services/path-run-service');
     for (const runId of candidateRunIds) {
-      try {
-        await resumePathRun(runId, 'replay');
-        requeued.push(runId);
-      } catch (error) {
-        failed.push({
-          runId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
+      failed.push({
+        runId,
+        error:
+          'AI Paths is forward-only. This diagnostic script can no longer replay runs; start a fresh run manually.',
+      });
     }
   }
 
@@ -126,8 +121,8 @@ async function main(): Promise<void> {
         scannedNodes,
         findingCount,
         candidateRunIds,
-        requeuedCount: requeued.length,
-        requeued,
+        manualRestartRequiredCount: manualRestartRequiredRunIds.length,
+        manualRestartRequiredRunIds,
         failedCount: failed.length,
         failed,
       },

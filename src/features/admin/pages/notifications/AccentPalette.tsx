@@ -7,13 +7,13 @@ export function AccentPalette({
 }: {
   accent: AccentType;
   setAccent: (accent: AccentType) => void;
-}) {
+}): React.ReactNode {
   return (
     <div className='grid grid-cols-5 gap-2'>
       {accentOptions.map((option) => (
         <Tooltip key={option.value} content={option.label}>
           <Button
-            onClick={() => setAccent(option.value as AccentType)}
+            onClick={() => setAccent(option.value)}
             className={`group relative flex items-center justify-center rounded-lg px-3 py-2 transition-all ${
               accent === option.value
                 ? 'ring-2 ring-offset-2 ring-offset-gray-950 ring-white'

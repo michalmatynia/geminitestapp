@@ -13,7 +13,16 @@ const FRONT_PAGE_OPTION_LABELS = new Map(
   FRONT_PAGE_OPTIONS.map((option) => [option.id, option.title])
 );
 
-export function useFrontPageController(initialSelected: FrontPageSelectableApp) {
+export function useFrontPageController(initialSelected: FrontPageSelectableApp): {
+  ConfirmationModal: () => React.JSX.Element | null;
+  currentLabel: string;
+  handleSaveClick: () => void;
+  isDirty: boolean;
+  isSaving: boolean;
+  pendingLabel: string;
+  selected: FrontPageSelectableApp;
+  setSelected: (value: FrontPageSelectableApp) => void;
+} {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
   const [selected, setSelected] = useState<FrontPageSelectableApp>(initialSelected);

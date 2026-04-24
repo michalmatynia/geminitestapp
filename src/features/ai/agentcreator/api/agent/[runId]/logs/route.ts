@@ -37,7 +37,7 @@ async function getHandler(
   const { searchParams } = new URL(req.url);
   const stepId = searchParams.get('stepId');
   const logs = await agentBrowserLog.findMany<AgentBrowserLogRouteRecord>({
-    where: stepId ? { runId, stepId } : { runId },
+    where: stepId !== null ? { runId, stepId } : { runId },
     orderBy: { createdAt: 'desc' },
     take: 50,
   });

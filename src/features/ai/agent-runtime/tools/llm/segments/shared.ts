@@ -4,7 +4,7 @@ import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-cli
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const parseJsonObject = (raw: string): Record<string, unknown> | null => {
-  if (!raw) return null;
+  if (raw === '') return null;
   const match = raw.match(/\{[\s\S]*\}/);
   const jsonText = match ? match[0] : raw;
   try {

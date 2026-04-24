@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto';
 export async function createAsset3D(db: Db, data: Asset3DCreateInput): Promise<Asset3DRecord> {
   const collection = await getCollection(db);
   const doc: Asset3DDocument = {
-    _id: new randomUUID().toString(),
+    _id: randomUUID(),
     id: randomUUID(),
     name: data.name ?? null,
     description: data.description ?? null,

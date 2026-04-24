@@ -6,26 +6,7 @@ import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/por
 const builders = vi.hoisted(() => ({
   requireAiPathsAccessMock: vi.fn(),
   getPortablePathRunExecutionSnapshotMock: vi.fn(),
-  loadPortablePathAuditSinkAutoRemediationDeadLettersMock: vi.fn(),
   loadPortablePathSigningPolicyTrendSnapshotsMock: vi.fn(),
-  loadPortablePathAuditSinkStartupHealthStateMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock:
-    vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock: vi.fn(),
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -37,44 +18,8 @@ vi.mock('@/shared/lib/ai-paths/portable-engine/portable-engine-observability', (
 }));
 
 vi.mock('@/shared/lib/ai-paths/portable-engine/server', () => ({
-  loadPortablePathAuditSinkAutoRemediationDeadLetters:
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock,
   loadPortablePathSigningPolicyTrendSnapshots:
     builders.loadPortablePathSigningPolicyTrendSnapshotsMock,
-  loadPortablePathAuditSinkStartupHealthState:
-    builders.loadPortablePathAuditSinkStartupHealthStateMock,
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock,
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment:
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock,
 }));
 
 import { getHandler } from './handler';
@@ -110,9 +55,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       },
       recentEvents: [],
     });
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock
-      .mockReset()
-      .mockResolvedValue([]);
     builders.loadPortablePathSigningPolicyTrendSnapshotsMock.mockReset().mockResolvedValue([
       {
         at: '2026-03-05T00:00:00.000Z',
@@ -163,70 +105,9 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         driftAlerts: [],
       },
     ]);
-    builders.loadPortablePathAuditSinkStartupHealthStateMock.mockReset().mockResolvedValue({
-      consecutiveFailureCount: 0,
-      lastFailureAt: null,
-      lastRecoveredAt: '2026-03-05T00:00:00.000Z',
-      lastFailedSinkIds: [],
-      remediationCount: 1,
-      lastRemediatedAt: '2026-03-04T23:00:00.000Z',
-      remediationWindowStartedAt: '2026-03-04T23:00:00.000Z',
-      remediationWindowActionCount: 1,
-      lastRemediationSkippedAt: null,
-      lastRemediationSkippedReason: null,
-      lastStatus: 'healthy',
-    });
-    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(true);
-    builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(120);
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(1800);
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(2);
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(true);
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('https://example.test/webhook');
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('https://example.test/email-webhook');
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(['ops@example.test']);
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(5000);
-    builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(100);
-    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('degrade_to_log_only');
-    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue(4);
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('webhook-secret');
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('webhook-key-id');
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('email-secret');
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock
-      .mockReset()
-      .mockReturnValue('email-key-id');
   });
 
-  it('returns portable trend snapshots payload with summary', async () => {
+  it('returns portable trend snapshots payload with live summary only', async () => {
     builders.getPortablePathRunExecutionSnapshotMock.mockReturnValue({
       totals: {
         attempts: 4,
@@ -280,18 +161,7 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
         },
       ],
     });
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockResolvedValue([
-      {
-        queuedAt: '2026-03-05T00:10:00.000Z',
-        channel: 'webhook',
-        endpoint: 'https://example.test/webhook',
-        payload: { event: 'portable_audit_sink_auto_remediation' },
-        error: 'notification_http_502',
-        statusCode: 502,
-        attemptCount: 1,
-        signature: null,
-      },
-    ]);
+
     const response = await getHandler(
       new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots?limit=12'),
       {} as Parameters<typeof getHandler>[1]
@@ -301,9 +171,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
     expect(builders.requireAiPathsAccessMock).toHaveBeenCalledTimes(1);
     expect(builders.loadPortablePathSigningPolicyTrendSnapshotsMock).toHaveBeenCalledWith({
       maxSnapshots: 12,
-    });
-    expect(builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock).toHaveBeenCalledWith({
-      maxEntries: 100,
     });
 
     const payload = (await response.json()) as Record<string, unknown>;
@@ -320,42 +187,6 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       latestSnapshotAt: '2026-03-05T00:00:00.000Z',
       driftAlertsTotal: 0,
       sinkWritesFailedTotal: 0,
-      notificationDeadLetterCount: 1,
-      latestNotificationDeadLetterAt: '2026-03-05T00:10:00.000Z',
-      notificationDeadLetterTopErrors: [{ reason: 'notification_http_502', count: 1 }],
-    });
-    const autoRemediation = payload['autoRemediation'] as Record<string, unknown>;
-    expect(autoRemediation).toEqual(
-      expect.objectContaining({
-        enabled: true,
-        strategy: 'degrade_to_log_only',
-        threshold: 4,
-        cooldownSeconds: 120,
-        rateLimitWindowSeconds: 1800,
-        rateLimitMaxActions: 2,
-      })
-    );
-    const notifications = (autoRemediation['notifications'] as Record<string, unknown> | undefined) ?? {};
-    expect(notifications).toEqual(
-      expect.objectContaining({
-        enabled: true,
-        webhookConfigured: true,
-        webhookSigningConfigured: true,
-        webhookSignatureKeyId: 'webhook-key-id',
-        emailWebhookConfigured: true,
-        emailWebhookSigningConfigured: true,
-        emailWebhookSignatureKeyId: 'email-key-id',
-        emailRecipients: ['ops@example.test'],
-        timeoutMs: 5000,
-      })
-    );
-    expect((notifications['deadLetter'] as Record<string, unknown> | undefined) ?? {}).toEqual({
-      maxEntries: 100,
-      queuedCount: 1,
-      latestQueuedAt: '2026-03-05T00:10:00.000Z',
-      topErrors: [{ reason: 'notification_http_502', count: 1 }],
-      replayPolicySkipsTotal: 0,
-      replayPolicySkipReasons: [],
     });
     expect(payload['runExecution']).toEqual({
       source: 'in_memory',
@@ -521,159 +352,5 @@ describe('ai-paths portable-engine trend snapshots handler', () => {
       topFailureErrors: [],
       recentFailures: [],
     });
-  });
-
-  it('falls back to default remediation threshold when resolver returns null', async () => {
-    builders.resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironmentMock.mockReturnValue(
-      null
-    );
-    builders.resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironmentMock.mockReturnValue(
-      null
-    );
-
-    const response = await getHandler(
-      new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
-      {} as Parameters<typeof getHandler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    const payload = (await response.json()) as Record<string, unknown>;
-    const autoRemediation = payload['autoRemediation'] as Record<string, unknown>;
-    expect(autoRemediation).toEqual(
-      expect.objectContaining({
-        enabled: true,
-        strategy: 'unregister_all',
-        threshold: 3,
-        cooldownSeconds: 300,
-        rateLimitWindowSeconds: 3600,
-        rateLimitMaxActions: 3,
-      })
-    );
-    const notifications = (autoRemediation['notifications'] as Record<string, unknown> | undefined) ?? {};
-    expect(notifications).toEqual(
-      expect.objectContaining({
-        enabled: true,
-        webhookConfigured: false,
-        webhookSigningConfigured: false,
-        webhookSignatureKeyId: null,
-        emailWebhookConfigured: false,
-        emailWebhookSigningConfigured: false,
-        emailWebhookSignatureKeyId: null,
-        emailRecipients: [],
-        timeoutMs: 8000,
-      })
-    );
-    expect((notifications['deadLetter'] as Record<string, unknown> | undefined) ?? {}).toEqual({
-      maxEntries: 200,
-      queuedCount: 0,
-      latestQueuedAt: null,
-      topErrors: [],
-      replayPolicySkipsTotal: 0,
-      replayPolicySkipReasons: [],
-    });
-  });
-
-  it('summarizes dead-letter replay policy skip reasons', async () => {
-    builders.loadPortablePathAuditSinkAutoRemediationDeadLettersMock.mockResolvedValue([
-      {
-        queuedAt: '2026-03-05T00:10:00.000Z',
-        channel: 'webhook',
-        endpoint: 'https://example.test/webhook',
-        payload: { event: 'portable_audit_sink_auto_remediation' },
-        error: 'dead_letter_outside_replay_window',
-        statusCode: null,
-        attemptCount: 2,
-        signature: null,
-      },
-      {
-        queuedAt: '2026-03-05T00:11:00.000Z',
-        channel: 'webhook',
-        endpoint: 'https://example.test/webhook',
-        payload: { event: 'portable_audit_sink_auto_remediation' },
-        error: 'dead_letter_endpoint_disallowed',
-        statusCode: null,
-        attemptCount: 2,
-        signature: null,
-      },
-      {
-        queuedAt: '2026-03-05T00:12:00.000Z',
-        channel: 'webhook',
-        endpoint: 'https://example.test/webhook',
-        payload: { event: 'portable_audit_sink_auto_remediation' },
-        error: 'dead_letter_outside_replay_window',
-        statusCode: null,
-        attemptCount: 3,
-        signature: null,
-      },
-    ]);
-
-    const response = await getHandler(
-      new NextRequest('http://localhost/api/ai-paths/portable-engine/trend-snapshots'),
-      {} as Parameters<typeof getHandler>[1]
-    );
-
-    expect(response.status).toBe(200);
-    const payload = (await response.json()) as Record<string, unknown>;
-    expect(payload['summary']).toEqual(
-      expect.objectContaining({
-        notificationDeadLetterTopErrors: [
-          { reason: 'dead_letter_outside_replay_window', count: 2 },
-          { reason: 'dead_letter_endpoint_disallowed', count: 1 },
-        ],
-      })
-    );
-    const autoRemediation = payload['autoRemediation'] as Record<string, unknown>;
-    const notifications = (autoRemediation['notifications'] as Record<string, unknown> | undefined) ?? {};
-    expect((notifications['deadLetter'] as Record<string, unknown> | undefined) ?? {}).toEqual(
-      expect.objectContaining({
-        replayPolicySkipsTotal: 3,
-        replayPolicySkipReasons: [
-          { reason: 'dead_letter_outside_replay_window', count: 2 },
-          { reason: 'dead_letter_endpoint_disallowed', count: 1 },
-        ],
-      })
-    );
   });
 });

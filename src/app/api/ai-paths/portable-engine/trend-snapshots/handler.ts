@@ -7,38 +7,14 @@ import { badRequestError } from '@/shared/errors/app-error';
 import { AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION } from '@/shared/lib/ai-paths/portable-engine';
 import { getPortablePathRunExecutionSnapshot } from '@/shared/lib/ai-paths/portable-engine/portable-engine-observability';
 import {
-  loadPortablePathAuditSinkAutoRemediationDeadLetters,
   loadPortablePathSigningPolicyTrendSnapshots,
-  loadPortablePathAuditSinkStartupHealthState,
-  resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment,
-  resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment,
 } from '@/shared/lib/ai-paths/portable-engine/server';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 const DEFAULT_TREND_SNAPSHOT_LIMIT = 50;
 const MAX_TREND_SNAPSHOT_LIMIT = 500;
-const DEFAULT_AUTO_REMEDIATION_THRESHOLD = 3;
-const DEFAULT_AUTO_REMEDIATION_COOLDOWN_SECONDS = 300;
-const DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_WINDOW_SECONDS = 3600;
-const DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS = 3;
-const DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS = 8000;
-const DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES = 200;
-const DEAD_LETTER_ERROR_BREAKDOWN_LIMIT = 5;
+const TOP_REASON_BREAKDOWN_LIMIT = 5;
 const RUN_EXECUTION_RECENT_FAILURE_LIMIT = 10;
 
 export const querySchema = portablePathTrendSnapshotsQuerySchema;
@@ -50,12 +26,6 @@ const resolveTrendSnapshotsQueryInput = (
   ...Object.fromEntries(new URL(req.url).searchParams.entries()),
   ...((ctx.query ?? {}) as Record<string, unknown>),
 });
-const DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS = new Set<string>([
-  'dead_letter_endpoint_missing',
-  'dead_letter_endpoint_invalid',
-  'dead_letter_endpoint_disallowed',
-  'dead_letter_outside_replay_window',
-]);
 const _TREND_SNAPSHOT_TRIGGERS = ['manual', 'threshold'] as const;
 const TREND_SNAPSHOT_CURSOR_VERSION = 1 as const;
 
@@ -156,9 +126,9 @@ const parseTrendSnapshotCursor = (
 const encodeTrendSnapshotCursor = (payload: TrendSnapshotCursorPayload): string =>
   Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
 
-const toTopDeadLetterErrorBreakdown = (
+const toTopReasonBreakdown = (
   counts: Record<string, number>,
-  limit = DEAD_LETTER_ERROR_BREAKDOWN_LIMIT
+  limit = TOP_REASON_BREAKDOWN_LIMIT
 ): Array<{ reason: string; count: number }> =>
   Object.entries(counts)
     .sort((left, right) => {
@@ -302,7 +272,7 @@ const buildRunExecutionSummary = (): {
       bySurface: snapshot.bySurface,
       byInputSource: snapshot.bySource,
       failureStageCounts: snapshot.failureStageCounts,
-      topFailureErrors: toTopDeadLetterErrorBreakdown(failureErrorCounts),
+      topFailureErrors: toTopReasonBreakdown(failureErrorCounts),
       recentFailures,
     };
   } catch (error) {
@@ -330,19 +300,11 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   const hasFilters = Boolean(trigger || from || to);
   const hasCursor = cursor !== null;
   const loadLimit = hasFilters || hasCursor ? MAX_TREND_SNAPSHOT_LIMIT : limit;
-  const deadLetterMaxEntries =
-    resolvePortablePathAuditSinkAutoRemediationDeadLetterMaxEntriesFromEnvironment() ??
-    DEFAULT_AUTO_REMEDIATION_DEAD_LETTER_MAX_ENTRIES;
 
-  const [snapshotsRaw, autoRemediationState, deadLettersRaw] = await Promise.all([
+  const [snapshotsRaw] = await Promise.all([
     loadPortablePathSigningPolicyTrendSnapshots({ maxSnapshots: loadLimit }),
-    loadPortablePathAuditSinkStartupHealthState(),
-    loadPortablePathAuditSinkAutoRemediationDeadLetters({
-      maxEntries: deadLetterMaxEntries,
-    }),
   ]);
   const snapshots = snapshotsRaw;
-  const deadLetters = deadLettersRaw;
 
   const fromTime = from?.getTime() ?? null;
   const toTime = to?.getTime() ?? null;
@@ -392,60 +354,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
         to: to?.toISOString() ?? null,
       })
       : null;
-  const notificationDeadLetterCount = deadLetters.length;
-  const lastDeadLetter =
-    notificationDeadLetterCount > 0 ? deadLetters[notificationDeadLetterCount - 1] : null;
-  const latestNotificationDeadLetterAt = lastDeadLetter?.queuedAt ?? null;
-  const deadLetterErrorCounts: Record<string, number> = {};
-  const deadLetterReplayPolicySkipCounts: Record<string, number> = {};
-  for (const entry of deadLetters) {
-    const reason =
-      typeof entry.error === 'string' && entry.error.trim().length > 0 ? entry.error : 'unknown';
-    deadLetterErrorCounts[reason] = (deadLetterErrorCounts[reason] ?? 0) + 1;
-    if (DEAD_LETTER_REPLAY_POLICY_SKIP_REASONS.has(reason)) {
-      deadLetterReplayPolicySkipCounts[reason] =
-        (deadLetterReplayPolicySkipCounts[reason] ?? 0) + 1;
-    }
-  }
-  const deadLetterTopErrors = toTopDeadLetterErrorBreakdown(deadLetterErrorCounts);
-  const deadLetterReplayPolicySkipReasons = toTopDeadLetterErrorBreakdown(
-    deadLetterReplayPolicySkipCounts
-  );
-  const deadLetterReplayPolicySkipsTotal = Object.values(deadLetterReplayPolicySkipCounts).reduce(
-    (sum, value) => sum + value,
-    0
-  );
   const runExecution = buildRunExecutionSummary();
-
-  const notifications = {
-    enabled:
-      resolvePortablePathAuditSinkAutoRemediationNotificationsEnabledFromEnvironment() ?? true,
-    webhookConfigured:
-      resolvePortablePathAuditSinkAutoRemediationWebhookUrlFromEnvironment() !== null,
-    webhookSigningConfigured:
-      resolvePortablePathAuditSinkAutoRemediationWebhookSecretFromEnvironment() !== null,
-    webhookSignatureKeyId:
-      resolvePortablePathAuditSinkAutoRemediationWebhookSignatureKeyIdFromEnvironment(),
-    emailWebhookConfigured:
-      resolvePortablePathAuditSinkAutoRemediationEmailWebhookUrlFromEnvironment() !== null,
-    emailWebhookSigningConfigured:
-      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSecretFromEnvironment() !== null,
-    emailWebhookSignatureKeyId:
-      resolvePortablePathAuditSinkAutoRemediationEmailWebhookSignatureKeyIdFromEnvironment(),
-    emailRecipients:
-      resolvePortablePathAuditSinkAutoRemediationEmailRecipientsFromEnvironment() ?? [],
-    timeoutMs:
-      resolvePortablePathAuditSinkAutoRemediationNotificationTimeoutMsFromEnvironment() ??
-      DEFAULT_AUTO_REMEDIATION_NOTIFICATION_TIMEOUT_MS,
-    deadLetter: {
-      maxEntries: deadLetterMaxEntries,
-      queuedCount: notificationDeadLetterCount,
-      latestQueuedAt: latestNotificationDeadLetterAt,
-      topErrors: deadLetterTopErrors,
-      replayPolicySkipsTotal: deadLetterReplayPolicySkipsTotal,
-      replayPolicySkipReasons: deadLetterReplayPolicySkipReasons,
-    },
-  };
 
   return NextResponse.json({
     specVersion: AI_PATH_PORTABLE_PACKAGE_SPEC_VERSION,
@@ -467,28 +376,6 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
       latestSnapshotAt,
       driftAlertsTotal,
       sinkWritesFailedTotal,
-      notificationDeadLetterCount,
-      latestNotificationDeadLetterAt,
-      notificationDeadLetterTopErrors: deadLetterTopErrors,
-    },
-    autoRemediation: {
-      enabled: resolvePortablePathAuditSinkAutoRemediationEnabledFromEnvironment() ?? true,
-      strategy:
-        resolvePortablePathAuditSinkAutoRemediationStrategyFromEnvironment() ?? 'unregister_all',
-      threshold:
-        resolvePortablePathAuditSinkAutoRemediationThresholdFromEnvironment() ??
-        DEFAULT_AUTO_REMEDIATION_THRESHOLD,
-      cooldownSeconds:
-        resolvePortablePathAuditSinkAutoRemediationCooldownSecondsFromEnvironment() ??
-        DEFAULT_AUTO_REMEDIATION_COOLDOWN_SECONDS,
-      rateLimitWindowSeconds:
-        resolvePortablePathAuditSinkAutoRemediationRateLimitWindowSecondsFromEnvironment() ??
-        DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_WINDOW_SECONDS,
-      rateLimitMaxActions:
-        resolvePortablePathAuditSinkAutoRemediationRateLimitMaxActionsFromEnvironment() ??
-        DEFAULT_AUTO_REMEDIATION_RATE_LIMIT_MAX_ACTIONS,
-      notifications,
-      state: autoRemediationState,
     },
     runExecution,
     snapshots: pageSnapshots,

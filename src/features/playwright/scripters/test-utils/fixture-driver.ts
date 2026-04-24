@@ -45,7 +45,7 @@ const readField = (root: Element, spec: ExtractFieldSpec): ExtractedFieldValue =
     .map((el) => {
       if (spec.attribute) return el.getAttribute(spec.attribute);
       if (spec.html) return (el as { innerHTML?: string }).innerHTML ?? null;
-      if (spec.text !== false) return ((el.textContent ?? '') as string).trim();
+      if (spec.text !== false) return ((el.textContent ?? '')).trim();
       return null;
     })
     .filter((value): value is string => typeof value === 'string' && value.length > 0);
@@ -56,7 +56,7 @@ const readField = (root: Element, spec: ExtractFieldSpec): ExtractedFieldValue =
 export const createFixtureDriver = (options: FixtureDriverOptions): PageDriver => {
   let activeUrl = options.initialUrl ?? options.pages[0]?.url ?? 'about:blank';
   const window = new Window();
-  let document = window.document;
+  const document = window.document;
 
   const loadPage = (page: FixtureDriverPage | null): void => {
     if (!page) {
@@ -108,7 +108,7 @@ export const createFixtureDriver = (options: FixtureDriverOptions): PageDriver =
       );
       const out: unknown[] = [];
       for (const script of scripts) {
-        const text = ((script.textContent ?? '') as string).trim();
+        const text = ((script.textContent ?? '')).trim();
         if (!text) continue;
         try {
           out.push(JSON.parse(text));

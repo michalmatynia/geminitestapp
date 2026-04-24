@@ -8,7 +8,7 @@ export async function generateOllamaEmbedding(params: {
   text: string;
 }): Promise<number[]> {
   const text = params.text;
-  if (!text.trim()) throw new Error('Text is required.');
+  if (text.trim() === '') throw new Error('Text is required.');
   const config = await resolveBrainExecutionConfigForCapability('agent_teaching.embeddings', {
     runtimeKind: 'embedding',
   });

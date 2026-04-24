@@ -13,11 +13,7 @@ import {
   DEPRECATED_RUNTIME_KERNEL_CONFIG_STRICT_ALIAS_FIELD,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 
-const enqueueAiPathRunMock = vi.hoisted(() => vi.fn());
 const streamAiPathRunMock = vi.hoisted(() => vi.fn());
-const createAiPathTriggerRequestIdMock = vi.hoisted(() => vi.fn());
-const isRecoverableTriggerEnqueueErrorMock = vi.hoisted(() => vi.fn());
-const recoverEnqueuedRunByRequestIdMock = vi.hoisted(() => vi.fn());
 const logClientErrorMock = vi.hoisted(() => vi.fn());
 
 const invalidateAiPathQueueMock = vi.hoisted(() => vi.fn());
@@ -51,14 +47,13 @@ vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphActions: () => graphActionsMock,
 }));
 
-vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-utils', () => ({
-  createAiPathTriggerRequestId: createAiPathTriggerRequestIdMock,
-  isRecoverableTriggerEnqueueError: isRecoverableTriggerEnqueueErrorMock,
-}));
-
-vi.mock('@/shared/lib/ai-paths/hooks/trigger-event-recovery', () => ({
-  recoverEnqueuedRunByRequestId: recoverEnqueuedRunByRequestIdMock,
-}));
+vi.mock('@/shared/lib/ai-paths/api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/ai-paths/api')>();
+  return {
+    ...actual,
+    streamAiPathRun: streamAiPathRunMock,
+  };
+});
 
 vi.mock('@/shared/utils/observability/client-error-logger', () => ({
   logClientError: logClientErrorMock,
@@ -158,16 +153,14 @@ describe('useAiPathsServerExecution history streaming', () => {
       onerror: null,
     } as unknown as EventSource;
 
-    enqueueAiPathRunMock.mockResolvedValue({
-      ok: true,
-      data: {
-        run: {
-          id: 'run_server_1',
-          status: 'queued',
-          createdAt: '2026-03-05T07:10:00.000Z',
-          updatedAt: '2026-03-05T07:10:00.000Z',
-          pathId: 'path-main',
-        },
+    performEnqueueMock.mockResolvedValue({
+      runId: 'run_server_1',
+      runRecord: {
+        id: 'run_server_1',
+        status: 'queued',
+        createdAt: '2026-03-05T07:10:00.000Z',
+        updatedAt: '2026-03-05T07:10:00.000Z',
+        pathId: 'path-main',
       },
     });
     streamAiPathRunMock.mockReturnValue(eventSource);
@@ -298,16 +291,14 @@ describe('useAiPathsServerExecution history streaming', () => {
       }
     );
 
-    enqueueAiPathRunMock.mockResolvedValue({
-      ok: true,
-      data: {
-        run: {
-          id: 'run_server_2',
-          status: 'queued',
-          createdAt: '2026-03-05T07:10:00.000Z',
-          updatedAt: '2026-03-05T07:10:00.000Z',
-          pathId: 'path-main',
-        },
+    performEnqueueMock.mockResolvedValue({
+      runId: 'run_server_2',
+      runRecord: {
+        id: 'run_server_2',
+        status: 'queued',
+        createdAt: '2026-03-05T07:10:00.000Z',
+        updatedAt: '2026-03-05T07:10:00.000Z',
+        pathId: 'path-main',
       },
     });
     streamAiPathRunMock.mockReturnValue({
@@ -368,14 +359,13 @@ describe('useAiPathsServerExecution history streaming', () => {
       await result.current.runServerStream(triggerNode, 'manual', {});
     });
 
-    const enqueueArgs = enqueueAiPathRunMock.mock.calls[0]?.[0] as
+    const enqueueArgs = performEnqueueMock.mock.calls[0]?.[1] as
       | { meta?: Record<string, unknown> }
       | undefined;
     expect(enqueueArgs?.meta).not.toHaveProperty('runtimeKernelConfig');
-    expect(enqueueAiPathRunMock.mock.calls[0]?.[1]).toEqual({ timeoutMs: 90_000 });
   });
 
-  it('recovers queued server runs after a transport failure', async () => {
+  it('fails enqueue transport errors without recovery', async () => {
     let runtimeState: RuntimeState = {
       status: 'idle',
       nodeStatuses: {},
@@ -402,20 +392,12 @@ describe('useAiPathsServerExecution history streaming', () => {
     const setRunStatus = vi.fn();
     const toast = vi.fn();
 
-    createAiPathTriggerRequestIdMock.mockReturnValue('trigger:path-main:req-1');
-    enqueueAiPathRunMock.mockResolvedValue({
-      ok: false,
-      error: 'Failed to fetch',
-    });
-    isRecoverableTriggerEnqueueErrorMock.mockReturnValue(true);
-    recoverEnqueuedRunByRequestIdMock.mockResolvedValue({
-      runId: 'run_server_recovered',
-      runRecord: {
-        id: 'run_server_recovered',
-        status: 'queued',
-        pathId: 'path-main',
-        createdAt: '2026-03-05T07:10:00.000Z',
-        updatedAt: '2026-03-05T07:10:00.000Z',
+    performEnqueueMock.mockResolvedValue({
+      error: 'enqueue_failed',
+      metadata: null,
+      result: {
+        ok: false,
+        error: 'Failed to fetch',
       },
     });
     streamAiPathRunMock.mockReturnValue({
@@ -475,40 +457,32 @@ describe('useAiPathsServerExecution history streaming', () => {
       await result.current.runServerStream(triggerNode, 'manual', {});
     });
 
-    expect(createAiPathTriggerRequestIdMock).toHaveBeenCalledWith({
-      pathId: 'path-main',
-      triggerEventId: 'manual',
-      entityType: 'custom',
-      entityId: null,
-    });
-    const enqueueArgs = enqueueAiPathRunMock.mock.calls[0]?.[0] as
-      | { requestId?: string; meta?: Record<string, unknown> }
-      | undefined;
-    expect(enqueueArgs?.requestId).toBe('trigger:path-main:req-1');
-    expect(enqueueArgs?.meta?.['requestId']).toBe('trigger:path-main:req-1');
-    expect(enqueueAiPathRunMock.mock.calls[0]?.[1]).toEqual({ timeoutMs: 90_000 });
-    expect(recoverEnqueuedRunByRequestIdMock).toHaveBeenCalledWith({
-      pathId: 'path-main',
-      requestId: 'trigger:path-main:req-1',
-    });
     expect(appendRuntimeEvent).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: 'run_warning',
-        message: 'Recovered queued server run after losing the enqueue response.',
+        kind: 'run_failed',
+        level: 'error',
+        message: 'Failed to fetch',
       })
     );
-    expect(notifyAiPathRunEnqueuedMock).toHaveBeenCalledWith('run_server_recovered', {
-      entityId: null,
-      entityType: null,
-    });
-    expect(toast).not.toHaveBeenCalledWith(expect.stringContaining('Failed to enqueue'), {
+    expect(setNodeStatus).toHaveBeenCalledWith(expect.objectContaining({
+      nodeId: 'node-trigger',
+      status: 'failed',
+      kind: 'node_failed',
+      message: 'Node Trigger failed to enqueue.',
+      metadata: expect.objectContaining({
+        error: 'Failed to fetch',
+      }),
+    }));
+    expect(notifyAiPathRunEnqueuedMock).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith('Failed to fetch', {
       variant: 'error',
     });
-    expect(settleTransientNodeStatuses).not.toHaveBeenCalledWith(
+    expect(settleTransientNodeStatuses).toHaveBeenCalledWith(
       'failed',
       {},
       { settleQueued: true }
     );
+    expect(setRunStatus).toHaveBeenCalledWith('idle');
   });
 
   it('logs reconnecting server stream failures as warn-level client reports', async () => {
@@ -547,16 +521,14 @@ describe('useAiPathsServerExecution history streaming', () => {
       onerror: null,
     } as unknown as EventSource;
 
-    enqueueAiPathRunMock.mockResolvedValue({
-      ok: true,
-      data: {
-        run: {
-          id: 'run_server_warn',
-          status: 'queued',
-          createdAt: '2026-03-05T07:10:00.000Z',
-          updatedAt: '2026-03-05T07:10:00.000Z',
-          pathId: 'path-main',
-        },
+    performEnqueueMock.mockResolvedValue({
+      runId: 'run_server_warn',
+      runRecord: {
+        id: 'run_server_warn',
+        status: 'queued',
+        createdAt: '2026-03-05T07:10:00.000Z',
+        updatedAt: '2026-03-05T07:10:00.000Z',
+        pathId: 'path-main',
       },
     });
     streamAiPathRunMock.mockReturnValue(eventSource);

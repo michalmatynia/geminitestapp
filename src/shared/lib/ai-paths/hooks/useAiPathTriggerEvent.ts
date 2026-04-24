@@ -9,7 +9,6 @@ import { type FireAiPathTriggerEventArgs } from '@/shared/contracts/ai-trigger-b
 import { isAppError } from '@/shared/errors/app-error';
 import {
   enqueueAiPathRun,
-  listAiPathRuns,
   mergeEnqueuedAiPathRunForCache,
   resolveAiPathRunFromEnqueueResponseData,
 } from '@/shared/lib/ai-paths/api/client';
@@ -36,7 +35,6 @@ import {
 
 import { buildTriggerContext } from './trigger-event-context';
 import { handleAiPathTriggerInvalidation } from './trigger-event-invalidation';
-import { recoverEnqueuedRunByRequestId } from './trigger-event-recovery';
 import { resolveTriggerSelection } from './trigger-event-selection';
 import {
   loadTriggerSettingsData,
@@ -46,7 +44,6 @@ import {
 } from './trigger-event-settings';
 import {
   isTimeoutMessage,
-  isRecoverableTriggerEnqueueError,
   createAiPathTriggerRequestId,
 } from './trigger-event-utils';
 import { shouldEmbedTriggerEntitySnapshot } from './trigger-event-sanitization';
@@ -513,21 +510,6 @@ export function useAiPathTriggerEvent(): {
 
         let runId: string | null = null;
         let runRecord: AiPathRunRecord | null = null;
-        let enqueueRecovered = false;
-
-        if (!runResult.ok) {
-          if (isRecoverableTriggerEnqueueError(runResult.error)) {
-            const recoveredRun = await recoverEnqueuedRunByRequestId({
-              pathId: selectedConfig.id,
-              requestId,
-            });
-            if (recoveredRun) {
-              runId = recoveredRun.runId;
-              runRecord = recoveredRun.runRecord;
-              enqueueRecovered = true;
-            }
-          }
-        }
 
         if (!runResult.ok && !runId) {
           reportLaunchError({
@@ -543,18 +525,6 @@ export function useAiPathTriggerEvent(): {
           const resolved = resolveAiPathRunFromEnqueueResponseData(runResult.data);
           runId = resolved.runId;
           runRecord = resolved.runRecord;
-        }
-
-        if (!runId) {
-          const recoveredRun = await recoverEnqueuedRunByRequestId({
-            pathId: selectedConfig.id,
-            requestId,
-          });
-          if (recoveredRun) {
-            runId = recoveredRun.runId;
-            runRecord = recoveredRun.runRecord;
-            enqueueRecovered = true;
-          }
         }
 
         if (!runId) {
@@ -577,7 +547,6 @@ export function useAiPathTriggerEvent(): {
             pathId: selectedConfig.id,
             runId,
             requestId,
-            enqueueRecovered,
             triggerEventId,
             totalPrepMs,
             performance: {
@@ -627,6 +596,11 @@ export function useAiPathTriggerEvent(): {
           entityType: args.entityType,
           entityId: effectiveQueuedEntityId,
         });
+        notifyAiPathRunEnqueued(runId, {
+          entityId: effectiveQueuedEntityId,
+          entityType: args.entityType,
+          run: queuedRunForCache,
+        });
 
         const currentActivePathId = resolveCurrentActivePathId({
           preferredActivePathId,
@@ -652,50 +626,6 @@ export function useAiPathTriggerEvent(): {
           node: null,
         });
         finishLaunch();
-
-        void listAiPathRuns({
-          pathId: selectedConfig.id,
-          requestId,
-          status: 'running',
-          limit: 1,
-          fresh: true,
-        }).then((waitResult) => {
-          if (!waitResult.ok) {
-            logClientError(new Error('Wait for run status failed'), {
-              context: { source: 'useAiPathTriggerEvent', action: 'waitForStatusError', runId },
-            });
-            return;
-          }
-          const runningRunCandidate = Array.isArray(waitResult.data?.runs)
-            ? (waitResult.data.runs.find(
-              (candidate: unknown): boolean =>
-                Boolean(candidate) &&
-                typeof candidate === 'object' &&
-                (candidate as { id?: unknown }).id === runId
-            ) ??
-              waitResult.data.runs[0] ??
-              null)
-            : null;
-          if (!runningRunCandidate || typeof runningRunCandidate !== 'object') {
-            return;
-          }
-          const runningRunForCache = mergeEnqueuedAiPathRunForCache({
-            fallbackRun: queuedRunForCache,
-            runId,
-            runRecord: runningRunCandidate,
-          });
-          const effectiveRunningEntityId =
-            typeof runningRunForCache.entityId === 'string' &&
-            runningRunForCache.entityId.trim().length > 0
-              ? runningRunForCache.entityId.trim()
-              : effectiveQueuedEntityId;
-          optimisticallyInsertAiPathRunInQueueCache(queryClient, runningRunForCache);
-          notifyAiPathRunEnqueued(runId, {
-            entityId: effectiveRunningEntityId,
-            entityType: args.entityType,
-            run: runningRunForCache,
-          });
-        });
       } catch (error) {
         const message =
           error instanceof Error && error.message.trim().length > 0

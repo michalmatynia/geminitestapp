@@ -385,7 +385,6 @@ export const buildAdminNav = (handlers: {
     keywords: ['queue', 'runner', 'workers', 'background', 'tasks'],
     children: [
       { id: 'jobs/queue', label: 'Job Queue', href: '/admin/ai-paths/queue' },
-      { id: 'jobs/dead-letter', label: 'Dead Letter', href: '/admin/ai-paths/dead-letter' },
     ],
   },
   {

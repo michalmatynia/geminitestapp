@@ -86,6 +86,7 @@ export const resolveOrCreateThread = async (input: {
     providerThreadId: input.providerThreadId ?? null,
     subject: input.normalizedSubject,
     normalizedSubject: input.normalizedSubject,
+    anchorAddress: input.anchorAddress,
     lastMessageAt: input.lastMessageAt,
     snippet: input.snippet ?? null,
     participantSummary: [],

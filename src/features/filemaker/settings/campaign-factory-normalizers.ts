@@ -35,6 +35,7 @@ const FILEMAKER_CAMPAIGN_EVENT_TYPES: FilemakerEmailCampaignEvent['type'][] = [
   'completed',
   'failed',
   'cancelled',
+  'reply_received',
 ];
 const FILEMAKER_CAMPAIGN_SUPPRESSION_REASONS: FilemakerEmailCampaignSuppressionEntry['reason'][] =
   ['manual_block', 'unsubscribed', 'bounced'];

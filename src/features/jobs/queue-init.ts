@@ -10,6 +10,8 @@ import {
 } from '@/server/queues/ai';
 import { startCaseResolverOcrQueue } from '@/server/queues/case-resolver-ocr';
 import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filemaker';
+import { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
+import { startFilemakerMailIdleManager } from '@/features/filemaker/workers/filemakerMailIdleManager';
 import {
   startPlaywrightListingQueue,
   startTraderaListingQueue,
@@ -57,6 +59,8 @@ const SPECIALIZED_STARTERS = [
   startProductSyncSchedulerQueue,
   startSystemLogAlertsQueue,
   startFilemakerEmailCampaignSchedulerQueue,
+  startFilemakerMailSyncSchedulerQueue,
+  startFilemakerMailIdleManager,
 ] as const satisfies readonly QueueStarter[];
 const KANGUR_SOCIAL_STARTERS = [
   startKangurSocialSchedulerQueue,

@@ -57,7 +57,7 @@ vi.mock('@/shared/lib/ai-paths/trigger-button-run-feedback', async (importOrigin
 vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
   subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
   isTrackedAiPathRunTerminal: (snapshot: { status: string }) =>
-    new Set(['completed', 'failed', 'canceled', 'dead_lettered']).has(snapshot.status),
+    new Set(['completed', 'failed', 'canceled']).has(snapshot.status),
 }));
 
 import { useProductAiPathsRunSync } from './useProductAiPathsRunSync';

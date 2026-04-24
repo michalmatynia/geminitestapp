@@ -28,6 +28,9 @@ type AiPathsPillButtonProps = {
       | 'link';
   };
 
+const getPillStyles = (active: boolean, activeCls: string, inactiveCls: string): string =>
+  active ? activeCls : inactiveCls;
+
 export function AiPathsPillButton(props: AiPathsPillButtonProps): React.JSX.Element {
   const {
     children,
@@ -48,7 +51,7 @@ export function AiPathsPillButton(props: AiPathsPillButtonProps): React.JSX.Elem
       className={cn(
         buttonVariants({ variant, size: 'xs' }),
         baseClassName,
-        active ? activeClassName : inactiveClassName,
+        getPillStyles(active, activeClassName, inactiveClassName),
         className
       )}
       onClick={onClick}

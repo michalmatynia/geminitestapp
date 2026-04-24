@@ -216,7 +216,7 @@ describe('ai path error reporting shared-lib behavior', () => {
 
     const summary = buildAiPathRunErrorSummary({
       run: buildRun({
-        status: 'dead_lettered',
+        status: 'failed',
         errorMessage: 'Run exhausted retries',
         nextRetryAt: '2026-03-09T12:10:00.000Z',
         meta: { traceId: 'trace-run-1' },

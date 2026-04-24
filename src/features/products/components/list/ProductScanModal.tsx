@@ -77,7 +77,9 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
 import {
   isProductScanCandidateSelectionRequired,
+  isProductScanGoogleManualFallbackOpen,
   PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE,
+  PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_MESSAGE,
   isProductScanGoogleStealthRetrying,
   PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE,
   resolveProductScanRunFeedbackPresentation,
@@ -212,6 +214,7 @@ const resolveRowStatusLabel = (row: ScanModalRow): string => {
     manualVerificationPending: isManualVerificationPending(row.scan),
     manualVerificationMessage: typeof manualVerificationMessage === 'string' && manualVerificationMessage !== '' ? manualVerificationMessage : null,
     googleStealthRetrying: isProductScanGoogleStealthRetrying(row.scan),
+    googleManualFallbackOpen: isProductScanGoogleManualFallbackOpen(row.scan),
     candidateSelectionRequired: isProductScanCandidateSelectionRequired(row.scan),
     amazonEvaluationStatus: amazonEvaluationStatus ?? null,
     amazonEvaluationLanguageAccepted: typeof amazonEvaluationLanguageAccepted === 'boolean' ? amazonEvaluationLanguageAccepted : null,
@@ -233,6 +236,7 @@ const resolveRowStatusClassName = (row: ScanModalRow): string => {
     manualVerificationPending: isManualVerificationPending(row.scan),
     manualVerificationMessage: typeof manualVerificationMessage === 'string' && manualVerificationMessage !== '' ? manualVerificationMessage : null,
     googleStealthRetrying: isProductScanGoogleStealthRetrying(row.scan),
+    googleManualFallbackOpen: isProductScanGoogleManualFallbackOpen(row.scan),
     candidateSelectionRequired: isProductScanCandidateSelectionRequired(row.scan),
     amazonEvaluationStatus: amazonEvaluationStatus ?? null,
     amazonEvaluationLanguageAccepted: typeof amazonEvaluationLanguageAccepted === 'boolean' ? amazonEvaluationLanguageAccepted : null,
@@ -735,13 +739,12 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
         <div className='space-y-1 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
           <div className='flex flex-wrap items-center gap-2 text-xs'>
             <span className='inline-flex items-center rounded-md border border-amber-500/20 px-2 py-0.5 font-medium text-amber-300'>
-              Candidate continuation
+              {continuationSummary.badgeLabel}
             </span>
-            <span className='text-muted-foreground'>
-              {continuationSummary.rejectionKind === 'language'
-                ? 'After language rejection'
-                : 'After AI rejection'}
-            </span>
+            {typeof continuationSummary.contextLabel === 'string' &&
+            continuationSummary.contextLabel !== '' ? (
+              <span className='text-muted-foreground'>{continuationSummary.contextLabel}</span>
+            ) : null}
             <span className='font-medium text-foreground'>{continuationSummary.stepLabel}</span>
             {typeof continuationSummary.resultCodeLabel === 'string' && continuationSummary.resultCodeLabel !== '' ? (
               <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 font-medium text-muted-foreground'>
@@ -760,7 +763,7 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
           <div className='flex flex-wrap gap-3 text-xs text-muted-foreground'>
             {typeof continuationSummary.rejectedUrl === 'string' && continuationSummary.rejectedUrl !== '' ? (
               <div className='flex items-center gap-1.5'>
-                <span>Rejected:</span>
+                <span>{continuationSummary.rejectedUrlLabel ?? 'Rejected'}:</span>
                 <a
                   href={continuationSummary.rejectedUrl}
                   target='_blank'
@@ -773,7 +776,7 @@ function ProductScanRow(props: ProductScanRowProps): React.JSX.Element {
             ) : null}
             {typeof continuationSummary.nextUrl === 'string' && continuationSummary.nextUrl !== '' ? (
               <div className='flex items-center gap-1.5'>
-                <span>Next up:</span>
+                <span>{continuationSummary.nextUrlLabel ?? 'Next up'}:</span>
                 <a
                   href={continuationSummary.nextUrl}
                   target='_blank'
@@ -1725,6 +1728,8 @@ export function ProductScanModal(
                     scan.asinUpdateMessage ??
                     (isProductScanGoogleStealthRetrying(scan)
                       ? PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE
+                      : isProductScanGoogleManualFallbackOpen(scan)
+                        ? PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_MESSAGE
                       : resolveActiveStatusMessage(
                           modalConfig.resultStatusLabel,
                           scan.status,

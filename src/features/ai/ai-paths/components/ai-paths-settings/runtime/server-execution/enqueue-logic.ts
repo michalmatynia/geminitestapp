@@ -1,11 +1,7 @@
 import { enqueueAiPathRun, resolveAiPathRunFromEnqueueResponseData } from '@/shared/lib/ai-paths/api';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { normalizeRuntimeKernelConfigRecord } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
-import { recoverEnqueuedRunByRequestId } from '@/shared/lib/ai-paths/hooks/trigger-event-recovery';
-import {
-  createAiPathTriggerRequestId,
-  isRecoverableTriggerEnqueueError,
-} from '@/shared/lib/ai-paths/hooks/trigger-event-utils';
+import { createAiPathTriggerRequestId } from '@/shared/lib/ai-paths/hooks/trigger-event-utils';
 import { isObjectRecord } from '@/shared/utils/object-utils';
 
 import {
@@ -92,8 +88,7 @@ export const prepareEnqueuePayload = (args: ServerExecutionArgs, triggerNodeId: 
 
 export const performEnqueue = async (
   args: ServerExecutionArgs,
-  payload: EnqueuePayload,
-  requestId: string
+  payload: EnqueuePayload
 ) => {
   const enqueueResult = await enqueueAiPathRun(payload, {
     timeoutMs: SERVER_EXECUTION_ENQUEUE_TIMEOUT_MS,
@@ -101,19 +96,6 @@ export const performEnqueue = async (
 
   let runId: string | null = null;
   let runRecord: AiPathRunRecord | null = null;
-  let enqueueRecovered = false;
-
-  if (!enqueueResult.ok && isRecoverableTriggerEnqueueError(enqueueResult.error)) {
-    const recoveredRun = await recoverEnqueuedRunByRequestId({
-      pathId: args.activePathId!,
-      requestId,
-    });
-    if (recoveredRun) {
-      runId = recoveredRun.runId;
-      runRecord = recoveredRun.runRecord;
-      enqueueRecovered = true;
-    }
-  }
 
   if (enqueueResult.ok && !runId) {
     const resolved = resolveAiPathRunFromEnqueueResponseData(enqueueResult.data);
@@ -128,18 +110,5 @@ export const performEnqueue = async (
       metadata: readApiErrorMetadata(enqueueResult),
     };
   }
-
-  if (!runId) {
-    const recoveredRun = await recoverEnqueuedRunByRequestId({
-      pathId: args.activePathId!,
-      requestId,
-    });
-    if (recoveredRun) {
-      runId = recoveredRun.runId;
-      runRecord = recoveredRun.runRecord;
-      enqueueRecovered = true;
-    }
-  }
-
-  return { runId, runRecord, enqueueRecovered };
+  return { runId, runRecord };
 };

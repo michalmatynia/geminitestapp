@@ -96,6 +96,12 @@ const getViewerConfig = (doc: Asset3DDocument): Record<string, unknown> => {
     : {};
 };
 
+const getAssetFileUrl = (doc: Asset3DDocument): string | undefined =>
+  normalizeString(doc.fileUrl) ?? undefined;
+
+const getAssetSize = (doc: Asset3DDocument): number =>
+  doc.size ?? doc.fileSize ?? 0;
+
 export const mapDocToRecord = (doc: Asset3DDocument): Asset3DRecord => {
   const createdAt = normalizeDate(doc.createdAt, new Date());
 

@@ -4,7 +4,7 @@ export function PreviewButtons({
   onPreview,
 }: {
   onPreview: (variant: 'success' | 'error' | 'info') => void;
-}) {
+}): React.ReactNode {
   return (
     <>
       <Button variant='outline' onClick={() => onPreview('success')} size='sm'>

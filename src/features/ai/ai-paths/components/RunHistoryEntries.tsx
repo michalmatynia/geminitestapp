@@ -64,11 +64,6 @@ const buildExecutionMetadataChips = (entry: RuntimeHistoryEntry): string[] =>
     entry.effectSourceSpanId ? `sourceSpan=${entry.effectSourceSpanId}` : null,
     entry.activationHash ? `activation=${entry.activationHash}` : null,
     entry.idempotencyKey ? `idempotency=${entry.idempotencyKey}` : null,
-    entry.resumeDecision ? `resume=${entry.resumeDecision}` : null,
-    entry.resumeMode ? `resumeMode=${entry.resumeMode}` : null,
-    entry.resumeReason ? `resumeReason=${entry.resumeReason}` : null,
-    entry.resumeSourceSpanId ? `resumeSource=${entry.resumeSourceSpanId}` : null,
-    entry.resumeSourceStatus ? `resumeStatus=${entry.resumeSourceStatus}` : null,
   ].filter((value): value is string => Boolean(value));
 
 function RunHistoryDataPanel({

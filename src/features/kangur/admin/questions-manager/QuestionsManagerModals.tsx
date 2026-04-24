@@ -22,7 +22,7 @@ export function QuestionsManagerModals({ controller, copy }: { controller: any; 
         onClose={() => state.setQuestionToDelete(null)}
         onConfirm={mutations.handleDelete}
         title={copy.modal.deleteQuestionTitle}
-        message="Are you sure you want to delete this question?"
+        message='Are you sure you want to delete this question?'
         isDangerous
       />
     </>

@@ -113,10 +113,4 @@ Agents can inspect current AI Paths execution ownership through the lease discov
 - `GET /api/agent/leases?resourceId=ai-paths.run.execution`
 - `GET /api/agent/leases?resourceId=ai-paths.run.execution&scopeId=<runId>`
 
-A `blocked_on_lease` run indicates that another worker or agent still owns the execution scope. A `handoff_ready` run indicates that execution context has been preserved in run metadata and is ready for another agent to continue.
-
-Operator-facing UI surfaces also expose this state directly:
-
-- the run history list can mark blocked runs handoff-ready
-- the run detail dialog can mark blocked runs handoff-ready and shows current owner context
-- queue cards and the canvas sidebar show lease-blocked and handoff-ready guidance
+AI Paths no longer exposes lease-blocked or handoff-ready run states. If execution ownership cannot be claimed, the active attempt fails and operators should start a fresh run after ownership is available.

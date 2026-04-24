@@ -20,7 +20,7 @@ export async function upsertTeachingAgent(
   payload: Partial<AgentTeachingAgentRecord> & { name: string }
 ): Promise<AgentTeachingAgentRecord> {
   const id = typeof payload.id === 'string' ? payload.id.trim() : '';
-  if (id) {
+  if (id !== '') {
     const data = await api.patch<AgentTeachingAgentResponse>(
       `/api/agentcreator/teaching/agents/${id}`,
       payload

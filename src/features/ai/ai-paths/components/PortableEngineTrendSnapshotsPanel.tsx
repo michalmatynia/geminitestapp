@@ -22,32 +22,6 @@ type TrendSnapshotsPayload = {
     driftAlertsTotal: number;
     sinkWritesFailedTotal: number;
   };
-  autoRemediation: {
-    enabled: boolean;
-    strategy: 'none' | 'unregister_all' | 'degrade_to_log_only';
-    threshold: number;
-    cooldownSeconds: number;
-    rateLimitWindowSeconds: number;
-    rateLimitMaxActions: number;
-    notifications: {
-      enabled: boolean;
-      webhookConfigured: boolean;
-      emailWebhookConfigured: boolean;
-      emailRecipients: string[];
-      timeoutMs: number;
-      deadLetter: {
-        queuedCount: number;
-        replayPolicySkipsTotal: number;
-        replayPolicySkipReasons: Array<{ reason: string; count: number }>;
-      };
-    };
-    state: {
-      consecutiveFailureCount: number;
-      remediationCount: number;
-      lastStatus: string | null;
-      lastRemediatedAt: string | null;
-    };
-  };
   runExecution?: {
     source: 'in_memory' | 'unavailable';
     totals: {
@@ -284,24 +258,10 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
         <div>
           <p className='text-sm font-semibold text-gray-100'>Portable Engine Trend Snapshots</p>
           <p className='text-xs text-gray-400'>
-            Signing policy drift, sink failures, and auto-remediation state.
+            Signing policy drift, sink failures, and runtime telemetry.
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
-          <Button
-            size='xs'
-            variant='outline'
-            onClick={() => {
-              window.open(
-                '/api/ai-paths/portable-engine/remediation-dead-letters/replay-history?limit=200&includeAttempts=true',
-                '_blank',
-                'noopener,noreferrer'
-              );
-            }}
-            disabled={isLoading}
-          >
-            Export Replay History
-          </Button>
           <Button
             size='xs'
             variant='outline'
@@ -342,38 +302,12 @@ export function PortableEngineTrendSnapshotsPanel(): React.JSX.Element {
                 {badge.label}
               </Badge>
             ))}
-            <Badge
-              variant={data.autoRemediation.enabled ? 'success' : 'outline'}
-              className={
-                data.autoRemediation.enabled ? '' : portableEngineOutlineBadgeClassName
-              }
-            >
-              remediation {data.autoRemediation.enabled ? 'on' : 'off'}
-            </Badge>
           </div>
 
           <PortableEngineInfoPanel>
-            Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | consecutive
-            failures: {data.autoRemediation.state.consecutiveFailureCount} | remediations:{' '}
-            {data.autoRemediation.state.remediationCount} | threshold:{' '}
-            {data.autoRemediation.threshold} | strategy: {data.autoRemediation.strategy} | cooldown:{' '}
-            {data.autoRemediation.cooldownSeconds}s | rate limit:{' '}
-            {data.autoRemediation.rateLimitMaxActions}/{data.autoRemediation.rateLimitWindowSeconds}
-            s{' | '}notify:{' '}
-            {data.autoRemediation.notifications.enabled
-              ? `on (webhook=${data.autoRemediation.notifications.webhookConfigured ? 'yes' : 'no'}, email=${data.autoRemediation.notifications.emailWebhookConfigured ? 'yes' : 'no'})`
-              : 'off'}
-            {' | '}dead-letter queued: {data.autoRemediation.notifications.deadLetter.queuedCount}
-            {' | '}policy skips:{' '}
-            {data.autoRemediation.notifications.deadLetter.replayPolicySkipsTotal}
-          </PortableEngineInfoPanel>
-
-          <PortableEngineInfoPanel>
-            <div className='font-medium text-gray-200'>Dead-letter replay policy skip reasons</div>
-            <PortableEngineReasonBadgeList
-              entries={data.autoRemediation.notifications.deadLetter.replayPolicySkipReasons}
-              emptyMessage='No replay-policy skip reasons in dead letters.'
-            />
+            Latest snapshot: {formatTimestamp(data.summary.latestSnapshotAt)} | drift alerts:{' '}
+            {data.summary.driftAlertsTotal} | sink write failures: {data.summary.sinkWritesFailedTotal}{' '}
+            | runtime failures: {runExecution.totals.failures}
           </PortableEngineInfoPanel>
 
           <PortableEngineInfoPanel>

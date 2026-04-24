@@ -116,7 +116,7 @@ export const evaluateFieldMap = (
     if (isEmptyValue(finalValue) && binding.fallback !== undefined) {
       finalValue = binding.fallback;
     }
-    if (isEmptyValue(finalValue) && fieldMap.defaults && fieldMap.defaults[targetField] !== undefined) {
+    if (isEmptyValue(finalValue) && fieldMap.defaults?.[targetField] !== undefined) {
       finalValue = fieldMap.defaults[targetField];
     }
 

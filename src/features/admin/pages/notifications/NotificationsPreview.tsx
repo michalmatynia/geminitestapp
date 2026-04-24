@@ -12,7 +12,7 @@ export function NotificationsPreview({
   accentColor: string;
   position: PositionType;
   preview: { x: string; y: string };
-}) {
+}): React.ReactNode {
   return (
     <FormSection title='Position Preview' className='sticky top-6 p-6'>
       <FormSection variant='subtle' className='relative aspect-video w-full bg-card/40'>

@@ -16,6 +16,6 @@ export const Asset3DRepositoryImpl: Asset3DRepository = {
     const db = await getMongoDb();
     return listAssets3D(db, filters);
   },
-  update: async () => { throw new Error('Not implemented'); },
-  delete: async () => { throw new Error('Not implemented'); },
+  update: () => { throw new Error('Not implemented'); },
+  delete: () => { throw new Error('Not implemented'); },
 };

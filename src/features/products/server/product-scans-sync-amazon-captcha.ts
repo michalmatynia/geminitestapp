@@ -34,6 +34,7 @@ import {
   persistSynchronizedScan,
   resolveManualVerificationMessage,
   resolvePersistedProductScanSteps,
+  upsertPersistedProductScanStep,
   resolveProductScanRequestSequenceInput,
   resolveScanManualVerificationTimeoutMs,
   shouldAutoShowScannerCaptchaBrowser,
@@ -72,6 +73,134 @@ const shouldAttemptAmazonCaptchaStealthRetry = (
   existingRawResult['captchaStealthRetryStarted'] !== true &&
   settingsOverrides?.['proxyEnabled'] === true;
 
+const buildAmazonCaptchaStealthRetrySkippedStep = (input: {
+  scan: ProductScanRecord;
+  previousRunId: string;
+  parsedResult: AmazonScanRuntimeResult;
+}): ProductScanRecord['steps'][number] =>
+  ({
+    key: 'google_stealth_retry_skipped',
+    label: 'Skip automatic Google retry',
+    group: 'google_lens',
+    status: 'skipped',
+    resultCode: 'proxy_unavailable',
+    message:
+      'Skipped automatic Google retry because no proxy is configured; continuing to manual verification settings.',
+    details: [
+      { label: 'Retry mode', value: 'Rotate proxy session' },
+      { label: 'Skip reason', value: 'Proxy is not enabled for this scanner runtime' },
+      { label: 'Previous run ID', value: input.previousRunId },
+      { label: 'Blocked stage', value: input.parsedResult.stage },
+      { label: 'Blocked URL', value: input.parsedResult.currentUrl },
+    ].filter(
+      (
+        detail
+      ): detail is {
+        label: string;
+        value: string;
+      } => typeof detail.value === 'string' && detail.value.trim() !== ''
+    ),
+    url: input.parsedResult.currentUrl,
+    attempt:
+      input.scan.steps.filter((step) => step.key === 'google_stealth_retry_skipped').length + 1,
+    retryOf: input.previousRunId,
+    inputSource: 'url',
+    candidateId: null,
+    candidateRank: null,
+    warning: null,
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationMs: null,
+  }) satisfies ProductScanRecord['steps'][number];
+
+const buildAmazonCaptchaStealthRetryStep = (input: {
+  scan: ProductScanRecord;
+  previousRunId: string;
+  retryRunId: string;
+  retryRunStatus: 'queued' | 'running';
+  parsedResult: AmazonScanRuntimeResult;
+}): ProductScanRecord['steps'][number] =>
+  ({
+    key: 'google_stealth_retry',
+    label: 'Retry Google candidate search with fresh proxy session',
+    group: 'google_lens',
+    status: 'completed',
+    resultCode: input.retryRunStatus === 'running' ? 'run_started' : 'run_queued',
+    message:
+      'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+    details: [
+      { label: 'Retry mode', value: 'Rotate proxy session' },
+      { label: 'Previous run ID', value: input.previousRunId },
+      { label: 'Retry run ID', value: input.retryRunId },
+      { label: 'Blocked stage', value: input.parsedResult.stage },
+      { label: 'Blocked URL', value: input.parsedResult.currentUrl },
+    ].filter(
+      (
+        detail
+      ): detail is {
+        label: string;
+        value: string;
+      } => typeof detail.value === 'string' && detail.value.trim() !== ''
+    ),
+    url: input.parsedResult.currentUrl,
+    attempt:
+      input.scan.steps.filter((step) => step.key === 'google_stealth_retry').length + 1,
+    retryOf: input.previousRunId,
+    inputSource: 'url',
+    candidateId: null,
+    candidateRank: null,
+    warning: null,
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationMs: null,
+  }) satisfies ProductScanRecord['steps'][number];
+
+const buildAmazonCaptchaManualRetryStep = (input: {
+  scan: ProductScanRecord;
+  previousRunId: string;
+  retryRunId: string;
+  retryRunStatus: 'queued' | 'running';
+  parsedResult: AmazonScanRuntimeResult;
+  recoveryPath: 'After captcha block' | 'After automatic retry';
+}): ProductScanRecord['steps'][number] =>
+  ({
+    key: 'google_manual_retry',
+    label: 'Open Google candidate search in visible browser',
+    group: 'google_lens',
+    status: 'completed',
+    resultCode: input.retryRunStatus === 'running' ? 'run_started' : 'run_queued',
+    message:
+      input.retryRunStatus === 'running'
+        ? 'Opened a visible browser for Google captcha verification.'
+        : 'Queued a visible browser for Google captcha verification.',
+    details: [
+      { label: 'Recovery path', value: input.recoveryPath },
+      { label: 'Retry mode', value: 'Visible browser' },
+      { label: 'Previous run ID', value: input.previousRunId },
+      { label: 'Retry run ID', value: input.retryRunId },
+      { label: 'Blocked stage', value: input.parsedResult.stage },
+      { label: 'Opened URL', value: input.parsedResult.currentUrl },
+    ].filter(
+      (
+        detail
+      ): detail is {
+        label: string;
+        value: string;
+      } => typeof detail.value === 'string' && detail.value.trim() !== ''
+    ),
+    url: input.parsedResult.currentUrl,
+    attempt:
+      input.scan.steps.filter((step) => step.key === 'google_manual_retry').length + 1,
+    retryOf: input.previousRunId,
+    inputSource: 'url',
+    candidateId: null,
+    candidateRank: null,
+    warning: null,
+    startedAt: new Date().toISOString(),
+    completedAt: new Date().toISOString(),
+    durationMs: null,
+  }) satisfies ProductScanRecord['steps'][number];
+
 export async function synchronizeAmazonCaptchaRequired({
   scan,
   engineRunId,
@@ -80,7 +209,7 @@ export async function synchronizeAmazonCaptchaRequired({
 }: SynchronizeAmazonStatusInput): Promise<ProductScanRecord> {
   const manualVerificationMessage = resolveManualVerificationMessage(parsedResult.message);
   const existingRawResult = toRecord(scan.rawResult) ?? {};
-  const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
+  let nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
 
   if (
     existingRawResult['captchaRetryStarted'] === true ||
@@ -128,6 +257,7 @@ export async function synchronizeAmazonCaptchaRequired({
     runtimeKey: amazonRuntimeKey,
     forceHeadless: true,
   });
+  const baseSettingsOverrides = toRecord(baseScannerRuntimeOptions.settingsOverrides);
   const amazonImageSearchProvider = resolveAmazonImageSearchProvider(
     scan.rawResult,
     scannerSettings
@@ -142,7 +272,7 @@ export async function synchronizeAmazonCaptchaRequired({
 
   if (
     shouldAttemptAmazonCaptchaStealthRetry(
-      toRecord(baseScannerRuntimeOptions.settingsOverrides),
+      baseSettingsOverrides,
       existingRawResult
     )
   ) {
@@ -221,10 +351,17 @@ export async function synchronizeAmazonCaptchaRequired({
       });
 
       const retryRunStatus = runRetry.status === 'running' ? 'running' : 'queued';
+      const retryStep = buildAmazonCaptchaStealthRetryStep({
+        scan: claimedScan,
+        previousRunId: engineRunId,
+        retryRunId: runRetry.runId,
+        retryRunStatus,
+        parsedResult,
+      });
       return await persistSynchronizedScan(claimedScan, {
         engineRunId: runRetry.runId,
         status: retryRunStatus,
-        steps: claimedScan.steps,
+        steps: upsertPersistedProductScanStep(claimedScan.steps, retryStep),
         rawResult: {
           ...toRecord(claimedScan.rawResult),
           ...createProductScanStartedRawResult({
@@ -270,11 +407,31 @@ export async function synchronizeAmazonCaptchaRequired({
     }
   }
 
-  if (!shouldAutoShowScannerCaptchaBrowser(scannerSettings)) {
-    return await persistFailedSynchronization(
-      scan,
-      'Google Lens requested captcha verification, and scanner settings are configured to fail instead of reopening a visible browser.'
+  if (
+    existingRawResult['captchaStealthRetryStarted'] !== true &&
+    baseSettingsOverrides?.['proxyEnabled'] !== true
+  ) {
+    nextSteps = upsertPersistedProductScanStep(
+      nextSteps,
+      buildAmazonCaptchaStealthRetrySkippedStep({
+        scan: { ...scan, steps: nextSteps },
+        previousRunId: engineRunId,
+        parsedResult,
+      })
     );
+  }
+
+  if (!shouldAutoShowScannerCaptchaBrowser(scannerSettings)) {
+    const message =
+      'Google Lens requested captcha verification, and scanner settings are configured to fail instead of reopening a visible browser.';
+    return await persistSynchronizedScan(scan, {
+      status: 'failed',
+      steps: nextSteps,
+      error: message,
+      asinUpdateStatus: 'failed',
+      asinUpdateMessage: message,
+      completedAt: new Date().toISOString(),
+    });
   }
 
   const claimedScan = await persistSynchronizedScan(scan, {
@@ -353,11 +510,22 @@ export async function synchronizeAmazonCaptchaRequired({
 
     const retryRunStatus = runRetry.status === 'running' ? 'running' : 'queued';
     const retryManualVerificationPending = retryRunStatus === 'running';
+    const manualRetryStep = buildAmazonCaptchaManualRetryStep({
+      scan: claimedScan,
+      previousRunId: engineRunId,
+      retryRunId: runRetry.runId,
+      retryRunStatus,
+      parsedResult,
+      recoveryPath:
+        existingRawResult['captchaStealthRetryStarted'] === true
+          ? 'After automatic retry'
+          : 'After captcha block',
+    });
 
     return await persistSynchronizedScan(claimedScan, {
       engineRunId: runRetry.runId,
       status: retryRunStatus,
-      steps: claimedScan.steps,
+      steps: upsertPersistedProductScanStep(claimedScan.steps, manualRetryStep),
       rawResult: {
         ...toRecord(claimedScan.rawResult),
         ...createProductScanStartedRawResult({

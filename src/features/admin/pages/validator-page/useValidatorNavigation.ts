@@ -3,7 +3,10 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { startTransition } from 'react';
 import type { GlobalValidatorView } from './types';
 
-export function useValidatorNavigation() {
+export function useValidatorNavigation(): {
+  handleSelectList: (listId: string) => void;
+  handleSelectView: (view: GlobalValidatorView) => void;
+} {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

@@ -72,6 +72,32 @@ describe('product scan run feedback', () => {
     expect(feedback.variant).toBe('warning');
   });
 
+  it('surfaces the visible-browser Google recovery as manual fallback', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        rawResult: {
+          manualVerificationPending: true,
+          captchaManualRetryStarted: true,
+        },
+        steps: [
+          {
+            key: 'google_manual_retry',
+            label: 'Open Google candidate search in visible browser',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message: 'Opened a visible browser for Google captcha verification.',
+            details: [],
+            url: 'https://www.google.com/sorry/index',
+          },
+        ] as never,
+      })
+    );
+
+    expect(feedback.label).toBe('Manual Fallback');
+    expect(feedback.variant).toBe('warning');
+  });
+
   it('surfaces candidate-selection scans as awaiting selection instead of completed', () => {
     const feedback = buildProductScanRunFeedbackFromRecord(
       createScanRecord({

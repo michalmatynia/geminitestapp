@@ -179,6 +179,23 @@ export function DuelSessionReactionsCard({
 
   const isFinished = session.status === 'completed' || session.status === 'aborted';
 
+  let sectionContent: React.JSX.Element;
+  if (isFinished) {
+    sectionContent = <FinishedMessage copy={copy} />;
+  } else if (!duel.isAuthenticated) {
+    sectionContent = <AuthRequiredMessage copy={copy} />;
+  } else {
+    sectionContent = (
+      <SendReactionsSection
+        copy={copy}
+        isMutating={duel.isMutating}
+        isSpectating={duel.isSpectating}
+        locale={locale}
+        sendReaction={duel.sendReaction}
+      />
+    );
+  }
+
   return (
     <Card>
       <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
@@ -189,21 +206,9 @@ export function DuelSessionReactionsCard({
         })}
       </Text>
 
-      {isFinished ? (
-        <FinishedMessage copy={copy} />
-      ) : !duel.isAuthenticated ? (
-        <AuthRequiredMessage copy={copy} />
-      ) : (
-        <SendReactionsSection
-          copy={copy}
-          isMutating={duel.isMutating}
-          isSpectating={duel.isSpectating}
-          locale={locale}
-          sendReaction={duel.sendReaction}
-        />
-      )}
+      {sectionContent}
 
-      {(session.recentReactions && session.recentReactions.length > 0) ? (
+      {(session.recentReactions !== undefined && session.recentReactions.length > 0) ? (
         <RecentReactionsList
           locale={locale}
           playerLearnerId={duel.player?.learnerId}

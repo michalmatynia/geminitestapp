@@ -99,7 +99,7 @@ export function ScripterImportFromConnectionPanel({
               Loading connections…
             </div>
           ) : null}
-          {connections && connections.length === 0 ? (
+          {connections?.length === 0 ? (
             <Alert>No programmable connections available to import.</Alert>
           ) : null}
           {connections && connections.length > 0 ? (

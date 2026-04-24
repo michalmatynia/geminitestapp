@@ -81,6 +81,7 @@ export const filemakerMailAccountSchema = dtoBaseSchema.extend({
   folderAllowlist: z.array(z.string()).default([]),
   initialSyncLookbackDays: z.number().int().positive().max(365).default(30),
   maxMessagesPerSync: z.number().int().positive().max(500).default(100),
+  pushEnabled: z.boolean().default(true),
   lastSyncedAt: z.string().nullable().optional(),
   lastSyncError: z.string().nullable().optional(),
 });
@@ -112,6 +113,14 @@ export const filemakerMailFolderSummarySchema = z.object({
 export type FilemakerMailFolderSummaryDto = z.infer<typeof filemakerMailFolderSummarySchema>;
 export type FilemakerMailFolderSummary = FilemakerMailFolderSummaryDto;
 
+export const filemakerMailCampaignContextSchema = z.object({
+  campaignId: z.string(),
+  runId: z.string().nullable().optional(),
+  deliveryId: z.string().nullable().optional(),
+});
+export type FilemakerMailCampaignContextDto = z.infer<typeof filemakerMailCampaignContextSchema>;
+export type FilemakerMailCampaignContext = FilemakerMailCampaignContextDto;
+
 export const filemakerMailThreadSchema = dtoBaseSchema.extend({
   accountId: z.string(),
   mailboxPath: z.string(),
@@ -119,6 +128,7 @@ export const filemakerMailThreadSchema = dtoBaseSchema.extend({
   providerThreadId: z.string().nullable().optional(),
   subject: z.string(),
   normalizedSubject: z.string(),
+  anchorAddress: z.string().default(''),
   snippet: z.string().nullable().optional(),
   participantSummary: z.array(filemakerMailParticipantSchema),
   relatedPersonIds: z.array(z.string()).default([]),
@@ -126,6 +136,7 @@ export const filemakerMailThreadSchema = dtoBaseSchema.extend({
   unreadCount: z.number().int().nonnegative().default(0),
   messageCount: z.number().int().nonnegative().default(0),
   lastMessageAt: z.string(),
+  campaignContext: filemakerMailCampaignContextSchema.nullable().optional(),
 });
 export type FilemakerMailThreadDto = z.infer<typeof filemakerMailThreadSchema>;
 export type FilemakerMailThread = FilemakerMailThreadDto;
@@ -162,9 +173,27 @@ export const filemakerMailMessageSchema = dtoBaseSchema.extend({
   attachments: z.array(filemakerMailAttachmentSchema).default([]),
   relatedPersonIds: z.array(z.string()).default([]),
   relatedOrganizationIds: z.array(z.string()).default([]),
+  campaignContext: filemakerMailCampaignContextSchema.nullable().optional(),
 });
 export type FilemakerMailMessageDto = z.infer<typeof filemakerMailMessageSchema>;
 export type FilemakerMailMessage = FilemakerMailMessageDto;
+
+export const filemakerMailAttachmentInputSchema = z.object({
+  fileName: z.string().min(1),
+  contentType: z.string().min(1).default('application/octet-stream'),
+  dataBase64: z.string().min(1),
+});
+export type FilemakerMailAttachmentInputDto = z.infer<typeof filemakerMailAttachmentInputSchema>;
+export type FilemakerMailAttachmentInput = FilemakerMailAttachmentInputDto;
+
+export const filemakerMailFlagPatchSchema = z.object({
+  seen: z.boolean().optional(),
+  flagged: z.boolean().optional(),
+  answered: z.boolean().optional(),
+  deleted: z.boolean().optional(),
+});
+export type FilemakerMailFlagPatchDto = z.infer<typeof filemakerMailFlagPatchSchema>;
+export type FilemakerMailFlagPatch = FilemakerMailFlagPatchDto;
 
 export const filemakerMailOutboxEntrySchema = dtoBaseSchema.extend({
   accountId: z.string(),
@@ -193,6 +222,13 @@ export const filemakerMailComposeInputSchema = z.object({
   bcc: z.array(filemakerMailParticipantSchema).default([]),
   subject: z.string().min(1),
   bodyHtml: z.string().min(1),
+  attachments: z.array(z.object({
+    fileName: z.string().min(1),
+    contentType: z.string().min(1).default('application/octet-stream'),
+    dataBase64: z.string().min(1),
+  })).default([]),
+  campaignContext: filemakerMailCampaignContextSchema.nullable().optional(),
+  overrideSuppression: z.boolean().default(false),
 });
 export type FilemakerMailComposeInputDto = z.infer<typeof filemakerMailComposeInputSchema>;
 export type FilemakerMailComposeInput = FilemakerMailComposeInputDto;
@@ -217,6 +253,7 @@ export const filemakerMailAccountDraftSchema = z.object({
   folderAllowlist: z.array(z.string()).default([]),
   initialSyncLookbackDays: z.number().int().positive().max(365).default(30),
   maxMessagesPerSync: z.number().int().positive().max(500).default(100),
+  pushEnabled: z.boolean().default(true),
 });
 export type FilemakerMailAccountDraftDto = z.infer<typeof filemakerMailAccountDraftSchema>;
 export type FilemakerMailAccountDraft = FilemakerMailAccountDraftDto;

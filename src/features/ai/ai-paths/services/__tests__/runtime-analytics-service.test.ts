@@ -224,7 +224,7 @@ describe('runtime analytics service', () => {
       expect.objectContaining({
         includeTotal: false,
         limit: 100,
-        statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
+        statuses: ['completed', 'failed', 'canceled'],
       })
     );
     expect(summary.traces.source).toBe('db_sample');

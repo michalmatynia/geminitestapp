@@ -193,7 +193,7 @@
       ],
       "evidence": [
         "src/shared/lib/ai-paths/portable-engine/__tests__/portable-engine-cross-page-portability.test.ts",
-        "docs/ai-paths/portable-engine-receiver-runbook.md"
+        "docs/ai-paths/portable-engine-scaffolding.md"
       ]
     }
   ],

@@ -668,6 +668,78 @@ describe('ProductFormScans', () => {
     expect(screen.getAllByText('Started the next Amazon candidate after language rejection.').length).toBeGreaterThan(0);
   });
 
+  it('shows automatic Google retry context after a captcha-blocked scan queues a stealth retry', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-3f',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-3f',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          steps: [
+            {
+              key: 'google_stealth_retry',
+              label: 'Retry Google candidate search with fresh proxy session',
+              group: 'google_lens',
+              attempt: 1,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: 'url',
+              retryOf: 'run-3f-prev',
+              resultCode: 'run_started',
+              status: 'completed',
+              message:
+                'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+              warning: null,
+              details: [
+                { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+              ],
+              url: 'https://www.google.com/sorry/index',
+              startedAt: '2026-04-11T03:59:04.000Z',
+              completedAt: '2026-04-11T03:59:05.000Z',
+              durationMs: 1000,
+            },
+          ],
+          rawResult: {
+            captchaStealthRetryStarted: true,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Automatic retry')).toBeInTheDocument();
+    expect(screen.getByText('After captcha block')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Queued an automatic Google retry with a fresh proxy session before manual fallback.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('shows a captcha badge and guidance when manual verification is pending', async () => {
     mocks.apiGetMock.mockResolvedValue({
       scans: [
@@ -686,6 +758,30 @@ describe('ProductFormScans', () => {
           price: null,
           url: null,
           description: null,
+          steps: [
+            {
+              key: 'google_manual_retry',
+              label: 'Open Google candidate search in visible browser',
+              group: 'google_lens',
+              attempt: 1,
+              candidateId: null,
+              candidateRank: null,
+              inputSource: 'url',
+              retryOf: 'run-3b-prev',
+              resultCode: 'run_started',
+              status: 'completed',
+              message: 'Opened a visible browser for Google captcha verification.',
+              warning: null,
+              details: [
+                { label: 'Recovery path', value: 'After captcha block' },
+                { label: 'Opened URL', value: 'https://www.google.com/sorry/index' },
+              ],
+              url: 'https://www.google.com/sorry/index',
+              startedAt: '2026-04-11T03:59:00.000Z',
+              completedAt: '2026-04-11T03:59:01.000Z',
+              durationMs: 1000,
+            },
+          ],
           rawResult: {
             manualVerificationPending: true,
           },
@@ -708,7 +804,12 @@ describe('ProductFormScans', () => {
       </QueryClientProvider>
     );
 
-    expect(await screen.findByText('Captcha')).toBeInTheDocument();
+    expect(await screen.findByText('Manual Fallback')).toBeInTheDocument();
+    expect(screen.getByText('Manual fallback')).toBeInTheDocument();
+    expect(screen.getByText('After captcha block')).toBeInTheDocument();
+    expect(
+      screen.getByText('Opened a visible browser for Google captcha verification.')
+    ).toBeInTheDocument();
     expect(
       screen.getByText(
         'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'

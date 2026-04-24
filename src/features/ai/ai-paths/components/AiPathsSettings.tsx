@@ -42,11 +42,27 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
   const state = useAiPathsSettingsState({ activeTab: props.activeTab });
   const pageContextValue = useAiPathsSettingsPageValue(props, state);
   const ConfirmationModal = state.ConfirmationModal;
-  const registrySource = React.useMemo(
+  const registrySource = useAiPathsWorkspaceRegistrySource(props.activeTab, state);
+
+  useRegisterContextRegistryPageSource('ai-paths-workspace-state', registrySource);
+
+  return (
+    <AiPathsSettingsPageProvider value={pageContextValue}>
+      <AiPathsSettingsView />
+      <ConfirmationModal />
+    </AiPathsSettingsPageProvider>
+  );
+}
+
+function useAiPathsWorkspaceRegistrySource(
+  activeTab: 'canvas' | 'paths' | 'docs',
+  state: ReturnType<typeof useAiPathsSettingsState>
+) {
+  return React.useMemo(
     () => ({
       label: 'AI Paths workspace state',
       resolved: buildAiPathsWorkspaceContextBundle({
-        activeTab: props.activeTab,
+        activeTab,
         activePathId: state.activePathId,
         pathName: state.pathName,
         pathDescription: state.pathDescription,
@@ -76,7 +92,7 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       }),
     }),
     [
-      props.activeTab,
+      activeTab,
       state.activePathId,
       state.activeTrigger,
       state.aiPathsValidation,
@@ -104,14 +120,5 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       state.strictFlowMode,
       state.updaterSamples,
     ]
-  );
-
-  useRegisterContextRegistryPageSource('ai-paths-workspace-state', registrySource);
-
-  return (
-    <AiPathsSettingsPageProvider value={pageContextValue}>
-      <AiPathsSettingsView />
-      <ConfirmationModal />
-    </AiPathsSettingsPageProvider>
   );
 }

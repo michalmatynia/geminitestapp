@@ -15,7 +15,7 @@ export function useKangurLessonsManagerController() {
       buildLessonsManagerErrorReport('lesson-save', 'Saves lesson metadata.'),
       async () => {
         const lessonId = state.editingLesson?.id ?? Math.random().toString(); // Placeholder
-        const nextLessons = upsertLesson(state.lessons, { ...state.formData, id: lessonId } as any);
+        const nextLessons = upsertLesson(state.lessons, { ...state.formData, id: lessonId });
         await state.updateLessons.mutateAsync(nextLessons);
         toast('Lesson saved', { variant: 'success' });
       }

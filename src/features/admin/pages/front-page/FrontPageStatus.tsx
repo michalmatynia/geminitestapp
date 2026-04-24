@@ -8,7 +8,7 @@ export function FrontPageStatus({
   currentLabel: string;
   isDirty: boolean;
   pendingLabel: string;
-}) {
+}): React.ReactNode {
   return (
     <div className='rounded-xl border border-border/40 bg-card/20 px-4 py-3 text-sm text-gray-300'>
       <div className='flex flex-wrap items-center gap-2'>

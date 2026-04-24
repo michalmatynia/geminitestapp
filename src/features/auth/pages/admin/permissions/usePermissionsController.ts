@@ -41,8 +41,8 @@ export function usePermissionsController(
 
   const handleAddPermission = (id: string, name: string, description: string) => {
     const finalId = id.trim() || slugify(name);
-    if (!finalId || !name.trim()) return toast('Provide name', { variant: 'error' });
-    if (permissionIds.has(finalId)) return toast('ID exists', { variant: 'error' });
+    if (!finalId || !name.trim()) { toast('Provide name', { variant: 'error' }); return; }
+    if (permissionIds.has(finalId)) { toast('ID exists', { variant: 'error' }); return; }
 
     setPermissions((prev) => [...prev, { id: finalId, name: name.trim(), ...(description.trim() ? { description: description.trim() } : {}) }]);
     setDirty(true);
@@ -56,15 +56,15 @@ export function usePermissionsController(
 
   const handleAddRole = (name: string, description: string) => {
     const id = slugify(name);
-    if (!id || !name.trim()) return toast('Provide name', { variant: 'error' });
-    if (roles.some((r) => r.id === id)) return toast('Role exists', { variant: 'error' });
+    if (!id || !name.trim()) { toast('Provide name', { variant: 'error' }); return; }
+    if (roles.some((r) => r.id === id)) { toast('Role exists', { variant: 'error' }); return; }
 
     setRoles((prev) => [...prev, { id, name: name.trim(), ...(description.trim() ? { description: description.trim() } : {}), permissions: [], deniedPermissions: [], level: 10 }]);
     setDirty(true);
   };
 
   const handleRemoveRole = (roleId: string) => {
-    if (roleId === 'admin') return toast('Cannot remove admin', { variant: 'error' });
+    if (roleId === 'admin') { toast('Cannot remove admin', { variant: 'error' }); return; }
     setRoles((prev) => prev.filter((r) => r.id !== roleId));
     setDirty(true);
   };

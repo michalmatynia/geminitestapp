@@ -4,26 +4,29 @@ import { type Asset3DDocument } from './repository-utils';
 const PRIMARY_COLLECTION = 'Asset3D';
 const LEGACY_COLLECTION = 'asset3d';
 
-let cachedCollectionName: string | null = null;
+let collectionNamePromise: Promise<string> | null = null;
 
 const resolveCollectionName = async (db: Db): Promise<string> => {
-  if (cachedCollectionName !== null) return cachedCollectionName;
+  if (collectionNamePromise !== null) return collectionNamePromise;
 
-  try {
-    const collections = await db.listCollections({}, { nameOnly: true }).toArray();
-    const names = collections.map((c) => c.name);
-    
-    if (names.includes(PRIMARY_COLLECTION)) {
-      cachedCollectionName = PRIMARY_COLLECTION;
-    } else if (names.includes(LEGACY_COLLECTION)) {
-      cachedCollectionName = LEGACY_COLLECTION;
-    } else {
-      cachedCollectionName = PRIMARY_COLLECTION;
+  collectionNamePromise = (async () => {
+    try {
+      const collections = await db.listCollections({}, { nameOnly: true }).toArray();
+      const names = collections.map((c) => c.name);
+      
+      if (names.includes(PRIMARY_COLLECTION)) {
+        return PRIMARY_COLLECTION;
+      }
+      if (names.includes(LEGACY_COLLECTION)) {
+        return LEGACY_COLLECTION;
+      }
+      return PRIMARY_COLLECTION;
+    } catch {
+      return PRIMARY_COLLECTION;
     }
-  } catch {
-    cachedCollectionName = PRIMARY_COLLECTION;
-  }
-  return cachedCollectionName;
+  })();
+
+  return collectionNamePromise;
 };
 
 export const getCollection = async (db: Db): Promise<Collection<Asset3DDocument>> => {

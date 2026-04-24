@@ -60,7 +60,7 @@ export const buildSelectorCandidates = (info: SelectorElementInfo): SelectorCand
   if (role && role.trim().length > 0) {
     candidates.push({
       selector: `${tag}[role=${escapeAttrValue(role)}]`,
-      rationale: `Tag + role`,
+      rationale: 'Tag + role',
       stability: 'medium',
     });
   }

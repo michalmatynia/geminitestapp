@@ -2,11 +2,11 @@ import type { LabeledOptionDto, LabeledOptionWithDescriptionDto } from '@/shared
 
 export const FONT_FAMILY_OPTIONS: ReadonlyArray<LabeledOptionDto<string>> = [
   { label: 'Inter', value: 'Inter, sans-serif' },
-  { label: 'Bebas Neue', value: "'Bebas Neue', sans-serif" },
-  { label: 'Space Grotesk', value: "'Space Grotesk', sans-serif" },
+  { label: 'Bebas Neue', value: '\'Bebas Neue\', sans-serif' },
+  { label: 'Space Grotesk', value: '\'Space Grotesk\', sans-serif' },
   { label: 'Manrope', value: 'Manrope, sans-serif' },
   { label: 'Outfit', value: 'Outfit, sans-serif' },
-  { label: 'Plus Jakarta Sans', value: "'Plus Jakarta Sans', sans-serif" },
+  { label: 'Plus Jakarta Sans', value: '\'Plus Jakarta Sans\', sans-serif' },
   { label: 'DM Sans', value: 'DM Sans, sans-serif' },
   { label: 'Sora', value: 'Sora, sans-serif' },
 ];

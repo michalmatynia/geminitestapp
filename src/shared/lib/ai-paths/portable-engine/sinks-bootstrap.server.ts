@@ -8,11 +8,8 @@ import {
   unregisterPortablePathEnvelopeVerificationAuditSink,
 } from './portable-engine-envelope-audit-sinks';
 import {
-  notifyPortablePathAuditSinkAutoRemediation,
-  runPortablePathAuditSinkAutoRemediation,
-  type PortablePathAuditSinkAutoRemediationResult,
-} from './sinks-auto-remediation.server';
-import { resolvePortablePathEnvelopeVerificationAuditSinkBootstrapSettingsFromEnvironment } from './sinks-bootstrap-config.server';
+  resolvePortablePathEnvelopeVerificationAuditSinkBootstrapSettingsFromEnvironment,
+} from './sinks-bootstrap-config.server';
 import {
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_BOOTSTRAP_SOURCE,
   PORTABLE_PATH_ENVELOPE_VERIFICATION_AUDIT_SINK_HEALTH_CATEGORY,
@@ -324,7 +321,6 @@ export type BootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironmentRe
   healthPolicy: PortablePathEnvelopeVerificationAuditSinkHealthPolicy;
   healthTimeoutMs: number | null;
   startupHealthSummary: PortablePathEnvelopeVerificationAuditSinkStartupHealthSummary | null;
-  autoRemediation: PortablePathAuditSinkAutoRemediationResult | null;
   unregisterAll: () => void;
 };
 
@@ -336,22 +332,6 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
     profile,
     healthPolicy,
     healthTimeoutMs,
-    autoRemediationEnabled,
-    autoRemediationThreshold,
-    autoRemediationStrategy,
-    autoRemediationCooldownSeconds,
-    autoRemediationRateLimitWindowSeconds,
-    autoRemediationRateLimitMaxActions,
-    autoRemediationNotificationsEnabled,
-    autoRemediationWebhookUrl,
-    autoRemediationEmailWebhookUrl,
-    autoRemediationEmailRecipients,
-    autoRemediationNotificationTimeoutMs,
-    autoRemediationWebhookSecret,
-    autoRemediationWebhookSignatureKeyId,
-    autoRemediationEmailWebhookSecret,
-    autoRemediationEmailWebhookSignatureKeyId,
-    autoRemediationDeadLetterMaxEntries,
   } = resolvePortablePathEnvelopeVerificationAuditSinkBootstrapSettingsFromEnvironment(
     options.env ?? process.env
   );
@@ -378,7 +358,6 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
       healthPolicy,
       healthTimeoutMs,
       startupHealthSummary: null,
-      autoRemediation: null,
       unregisterAll: () => {},
     };
   }
@@ -392,63 +371,12 @@ export const bootstrapPortablePathEnvelopeVerificationAuditSinksFromEnvironment 
         emitSystemLog: options.emitSystemLog,
       },
     });
-  const remediationUnregisterCallbacks: Array<() => void> = [];
-  const autoRemediationNotificationConfig = {
-    enabled: autoRemediationNotificationsEnabled,
-    webhookUrl: autoRemediationWebhookUrl,
-    webhookSecret: autoRemediationWebhookSecret,
-    webhookSignatureKeyId: autoRemediationWebhookSignatureKeyId,
-    emailWebhookUrl: autoRemediationEmailWebhookUrl,
-    emailWebhookSecret: autoRemediationEmailWebhookSecret,
-    emailWebhookSignatureKeyId: autoRemediationEmailWebhookSignatureKeyId,
-    emailRecipients: autoRemediationEmailRecipients,
-    timeoutMs: autoRemediationNotificationTimeoutMs ?? undefined,
-    deadLetterMaxEntries: autoRemediationDeadLetterMaxEntries ?? undefined,
-  };
-  const unregisterAll = (): void => {
-    for (const unregister of [...remediationUnregisterCallbacks].reverse()) {
-      try {
-        unregister();
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-      
-        // Best-effort unregister for remediation replacement sinks.
-      }
-    }
-    remediationUnregisterCallbacks.length = 0;
-    bootstrapped.unregisterAll();
-  };
-  const autoRemediation = await runPortablePathAuditSinkAutoRemediation(
-    bootstrapped.startupHealthSummary,
-    {
-      enabled: autoRemediationEnabled,
-      threshold: autoRemediationThreshold ?? undefined,
-      strategy: autoRemediationStrategy,
-      cooldownSeconds: autoRemediationCooldownSeconds ?? undefined,
-      rateLimitWindowSeconds: autoRemediationRateLimitWindowSeconds ?? undefined,
-      rateLimitMaxActions: autoRemediationRateLimitMaxActions ?? undefined,
-      unregisterAll,
-      activateLogOnlyMode: () => {
-        unregisterAll();
-        const unregisterLogOnlySink = registerPortablePathEnvelopeVerificationAuditSink(
-          createPortablePathEnvelopeVerificationLogForwardingSink()
-        );
-        remediationUnregisterCallbacks.push(unregisterLogOnlySink);
-      },
-      notify: async (notificationInput) =>
-        notifyPortablePathAuditSinkAutoRemediation(
-          notificationInput,
-          autoRemediationNotificationConfig
-        ),
-    }
-  );
   return {
     enabled: true,
     profile,
     healthPolicy,
     healthTimeoutMs,
     startupHealthSummary: bootstrapped.startupHealthSummary,
-    autoRemediation,
-    unregisterAll,
+    unregisterAll: bootstrapped.unregisterAll,
   };
 };

@@ -57,7 +57,7 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 const loadModule = async () =>
   await import('@/features/ai/ai-paths/workers/ai-path-run-processor');
 
-describe('ai-path-run processor dead-letter transitions', () => {
+describe('ai-path-run processor failure finalization', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
@@ -67,7 +67,7 @@ describe('ai-path-run processor dead-letter transitions', () => {
     recordRuntimeRunFinishedMock.mockResolvedValue(undefined);
   });
 
-  it('publishes a structured dead-letter stream event when retries are exhausted', async () => {
+  it('publishes a structured failure event when retries are exhausted', async () => {
     const finalizeRunMock = vi.fn().mockResolvedValue(undefined);
     const findRunByIdMock = vi.fn().mockResolvedValue({
       id: 'run-dead-1',
@@ -101,51 +101,36 @@ describe('ai-path-run processor dead-letter transitions', () => {
 
     expect(finalizeRunMock).toHaveBeenCalledWith(
       'run-dead-1',
-      'dead_lettered',
+      'failed',
       expect.objectContaining({
         errorMessage: 'retryable downstream failure',
         event: expect.objectContaining({
           level: 'error',
-          message: 'Run moved to dead-letter after max retries.',
-          metadata: {
-            retryCount: 3,
-            maxAttempts: 3,
-          },
+          message: 'Run failed: retryable downstream failure',
         }),
       })
     );
     expect(recordRuntimeRunFinishedMock).toHaveBeenCalledWith({
       runId: 'run-dead-1',
-      status: 'dead_lettered',
+      status: 'failed',
       durationMs: 30_000,
       timestamp: new Date('2026-04-12T10:00:00.000Z'),
     });
     expect(publishRunUpdateMock).toHaveBeenNthCalledWith(1, 'run-dead-1', 'error', {
-      error: 'Max retries exceeded',
-      status: 'dead_lettered',
-      retryCount: 3,
-      maxAttempts: 3,
-    });
-    expect(publishRunUpdateMock).toHaveBeenNthCalledWith(2, 'run-dead-1', 'events', {
-      event: 'run.dead_lettered',
-      runId: 'run-dead-1',
-      pathId: 'path-1',
-      pathName: 'Normalize Product',
-      entityId: 'product-9',
-      retryCount: 3,
-      maxAttempts: 3,
       error: 'retryable downstream failure',
-      durationMs: 0,
+      status: 'failed',
+    });
+    expect(publishRunUpdateMock).toHaveBeenNthCalledWith(2, 'run-dead-1', 'done', {
+      error: 'retryable downstream failure',
+      status: 'failed',
     });
     expect(logSystemEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'error',
         source: 'ai-path-run-processor',
         context: expect.objectContaining({
-          event: 'run.dead_lettered',
+          event: 'run.failed',
           runId: 'run-dead-1',
-          retryCount: 3,
-          maxAttempts: 3,
           error: 'retryable downstream failure',
         }),
       })

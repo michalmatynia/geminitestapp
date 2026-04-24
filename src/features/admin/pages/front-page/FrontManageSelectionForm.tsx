@@ -21,7 +21,7 @@ export function FrontManageSelectionForm({
   pendingLabel: string;
   selected: FrontPageSelectableApp;
   setSelected: (value: FrontPageSelectableApp) => void;
-}) {
+}): React.ReactNode {
   return (
     <FormSection
       title='Front Page Destination'

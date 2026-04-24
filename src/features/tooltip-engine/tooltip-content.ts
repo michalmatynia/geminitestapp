@@ -21,7 +21,7 @@ export const getDocumentationTooltipForElement = (
 ): string | null => {
   const entry =
     resolveDocumentationEntryFromElement(moduleId, element) ??
-    (fallbackDocId ? getDocumentationEntry(moduleId, fallbackDocId) : null);
+    (fallbackDocId !== undefined && fallbackDocId !== '' ? getDocumentationEntry(moduleId, fallbackDocId) : null);
 
   if (!entry) return null;
   return formatDocumentationTooltip(entry);

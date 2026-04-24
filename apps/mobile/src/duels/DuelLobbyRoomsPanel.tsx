@@ -86,7 +86,7 @@ export function DuelLobbyRoomsPanel({ autoRefreshChipLabel, autoRefreshEnabled, 
             fullWidth
             key={option.value}
             label={localizeDuelText(option.label, locale)}
-            onPress={() => lobby.setModeFilter(option.value as DuelModeFilterOption['value'])}
+            onPress={() => lobby.setModeFilter(option.value)}
             selected={lobby.modeFilter === option.value}
           />
         ))}

@@ -13,6 +13,19 @@ export type AmazonScanFailureKind =
 export type AmazonScanFailureDetails = {
   reason: string;
   evidence: Record<string, unknown>;
+  recovery?: {
+    automaticRetryAttempted: boolean;
+    automaticRetrySkipped: boolean;
+    manualFallbackOpened: boolean;
+    recoveryPath:
+      | 'automatic_retry'
+      | 'automatic_retry_skipped'
+      | 'manual_fallback'
+      | 'automatic_retry_then_manual_fallback'
+      | 'automatic_retry_skipped_then_manual_fallback'
+      | null;
+    latestCaptchaStage: string | null;
+  };
 };
 
 export type AmazonScanFailureClassification = {
@@ -61,6 +74,18 @@ const LENS_EMPTY_MESSAGE_PATTERNS = [
   'no candidates',
 ];
 
+const readStepDetailValue = (
+  details: Array<{ label: string; value: string | null }> | null | undefined,
+  label: string
+): string | null => {
+  if (!Array.isArray(details)) {
+    return null;
+  }
+
+  const entry = details.find((detail) => detail.label === label);
+  return typeof entry?.value === 'string' && entry.value.trim() !== '' ? entry.value : null;
+};
+
 const isCaptchaSignal = (scan: ProductScanRecord): boolean => {
   const raw = toRecord(scan.rawResult);
   if (raw?.['manualVerificationPending'] === true) return true;
@@ -82,17 +107,17 @@ const isCaptchaSignal = (scan: ProductScanRecord): boolean => {
   const joined = readLowerMessage(
     scan.error,
     scan.asinUpdateMessage,
-    typeof raw?.['message'] === 'string' ? (raw['message'] as string) : null,
+    typeof raw?.['message'] === 'string' ? (raw['message']) : null,
     typeof raw?.['manualVerificationMessage'] === 'string'
-      ? (raw['manualVerificationMessage'] as string)
+      ? (raw['manualVerificationMessage'])
       : null
   );
   if (CAPTCHA_MESSAGE_PATTERNS.some((needle) => joined.includes(needle))) {
     return true;
   }
   const joinedUrl = readLowerMessage(
-    typeof raw?.['currentUrl'] === 'string' ? (raw['currentUrl'] as string) : null,
-    typeof raw?.['url'] === 'string' ? (raw['url'] as string) : null
+    typeof raw?.['currentUrl'] === 'string' ? (raw['currentUrl']) : null,
+    typeof raw?.['url'] === 'string' ? (raw['url']) : null
   );
   return CAPTCHA_URL_PATTERNS.some((needle) => joinedUrl.includes(needle));
 };
@@ -152,6 +177,48 @@ const summariseEvaluation = (
   };
 };
 
+const summariseCaptchaRecovery = (scan: ProductScanRecord): AmazonScanFailureDetails['recovery'] => {
+  const raw = toRecord(scan.rawResult);
+  const steps = scan.steps ?? [];
+  const stealthRetryStep =
+    [...steps].reverse().find((step) => step.key === 'google_stealth_retry') ?? null;
+  const stealthRetrySkippedStep =
+    [...steps].reverse().find((step) => step.key === 'google_stealth_retry_skipped') ?? null;
+  const manualRetryStep =
+    [...steps].reverse().find((step) => step.key === 'google_manual_retry') ?? null;
+
+  const automaticRetryAttempted =
+    raw?.['captchaStealthRetryStarted'] === true || stealthRetryStep !== null;
+  const automaticRetrySkipped = stealthRetrySkippedStep !== null;
+  const manualFallbackOpened =
+    raw?.['captchaManualRetryStarted'] === true ||
+    raw?.['manualVerificationPending'] === true ||
+    manualRetryStep !== null;
+  const recoveryPath = manualFallbackOpened
+    ? automaticRetryAttempted
+      ? 'automatic_retry_then_manual_fallback'
+      : automaticRetrySkipped
+        ? 'automatic_retry_skipped_then_manual_fallback'
+        : 'manual_fallback'
+    : automaticRetryAttempted
+      ? 'automatic_retry'
+      : automaticRetrySkipped
+        ? 'automatic_retry_skipped'
+        : null;
+
+  return {
+    automaticRetryAttempted,
+    automaticRetrySkipped,
+    manualFallbackOpened,
+    recoveryPath,
+    latestCaptchaStage:
+      readStepDetailValue(manualRetryStep?.details, 'Blocked stage') ??
+      readStepDetailValue(stealthRetryStep?.details, 'Blocked stage') ??
+      readStepDetailValue(stealthRetrySkippedStep?.details, 'Blocked stage') ??
+      (typeof raw?.['stage'] === 'string' ? (raw['stage']) : null),
+  };
+};
+
 /**
  * Classifies the most salient failure mode of a finished (or stuck-active) scan.
  * Order of precedence when multiple signals fire:
@@ -176,11 +243,22 @@ export function classifyAmazonScanFailure(
   };
 
   if (isCaptchaSignal(scan)) {
+    const recovery = summariseCaptchaRecovery(scan);
     return {
       kind: 'captcha',
       details: {
         reason:
-          'Captcha / manual verification detected in rawResult or error message.',
+          recovery.recoveryPath === 'automatic_retry_then_manual_fallback'
+            ? 'Captcha detected after automatic retry escalated to manual fallback.'
+            : recovery.recoveryPath === 'automatic_retry_skipped_then_manual_fallback'
+              ? 'Captcha detected, automatic retry was skipped because no proxy was configured, then manual fallback opened.'
+            : recovery.recoveryPath === 'manual_fallback'
+              ? 'Captcha detected and reopened in a visible browser for manual verification.'
+              : recovery.recoveryPath === 'automatic_retry'
+                ? 'Captcha detected and automatic retry with a fresh proxy session started.'
+                : recovery.recoveryPath === 'automatic_retry_skipped'
+                  ? 'Captcha detected and automatic retry was skipped because no proxy was configured.'
+                  : 'Captcha / manual verification detected in rawResult or error message.',
         evidence: {
           ...evidence,
           manualVerificationPending:
@@ -189,6 +267,7 @@ export function classifyAmazonScanFailure(
             (toRecord(scan.rawResult)?.['captchaRetryStarted'] ?? null),
           captchaStealthRetryStarted:
             (toRecord(scan.rawResult)?.['captchaStealthRetryStarted'] ?? null),
+          captchaStealthRetrySkipped: recovery.automaticRetrySkipped,
           captchaSteps: (scan.steps ?? [])
             .filter((step) =>
               CAPTCHA_STEP_KEY_PATTERNS.some((needle) =>
@@ -203,6 +282,7 @@ export function classifyAmazonScanFailure(
             })),
           error: scan.error,
         },
+        recovery,
       },
     };
   }

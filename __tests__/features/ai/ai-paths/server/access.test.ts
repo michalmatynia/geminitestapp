@@ -35,7 +35,6 @@ const buildRun = (userId: string | null): AiPathRunRecord =>
     retryCount: 0,
     maxAttempts: 3,
     nextRetryAt: null,
-    deadLetteredAt: null,
     startedAt: null,
     finishedAt: null,
     createdAt: new Date().toISOString(),

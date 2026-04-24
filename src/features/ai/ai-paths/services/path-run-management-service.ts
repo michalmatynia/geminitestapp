@@ -11,8 +11,6 @@ import type {
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-const FORWARD_ONLY_ERROR =
-  'AI Paths is forward-only. Resume, retry, and handoff operations have been removed.';
 const CANCELLABLE_RUN_STATUS_FILTER = ['queued', 'running'] as const;
 
 const cleanupRunQueueEntries = (runId: string): void => {
@@ -51,29 +49,6 @@ const resolveDurationMs = (startedAt: string | null | undefined): number | null 
   const startedAtMs = typeof startedAt === 'string' ? Date.parse(startedAt) : Number.NaN;
   return Number.isFinite(startedAtMs) ? Math.max(0, Date.now() - startedAtMs) : null;
 };
-
-export function resumePathRun(
-  _runId: string,
-  _mode: 'resume' | 'replay' = 'resume'
-): Promise<AiPathRunRecord> {
-  return Promise.reject(new Error(FORWARD_ONLY_ERROR));
-}
-
-export const retryPathRunNode = (
-  _runId: string,
-  _nodeId: string
-): Promise<AiPathRunRecord> => {
-  return Promise.reject(new Error(FORWARD_ONLY_ERROR));
-};
-
-export function markPathRunHandoffReady(_input: {
-  runId: string;
-  reason?: string | null;
-  checkpointLineageId?: string | null;
-  requestedBy?: string | null;
-}): Promise<AiPathRunRecord | null> {
-  return Promise.reject(new Error(FORWARD_ONLY_ERROR));
-}
 
 export const deletePathRun = async (runId: string): Promise<boolean> => {
   return deletePathRunWithRepository(await getPathRunRepository(), runId);

@@ -117,7 +117,7 @@ This is intentional for the current stage. It gives agents a single discovery an
 - managed directly by the shared lease service
 - scoped by AI Paths `runId`
 - used by queue workers before processing a run
-- exposed in operator UIs through `blocked_on_lease` and `handoff_ready`
+- surfaced through lease ownership metadata and forward-only contention failures
 
 ## Usage rules
 

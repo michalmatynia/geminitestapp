@@ -86,13 +86,17 @@ export type ProductScanLatestOutcomeSummary = {
 };
 
 export type ProductScanContinuationSummary = {
+  badgeLabel: string;
+  contextLabel: string | null;
   phaseLabel: string;
   stepLabel: string;
   message: string | null;
   resultCodeLabel: string | null;
   attempt: number | null;
   nextUrl: string | null;
+  nextUrlLabel: string | null;
   rejectedUrl: string | null;
+  rejectedUrlLabel: string | null;
   rejectionKind: 'language' | 'product' | null;
 };
 
@@ -393,6 +397,24 @@ const isAmazonCandidateContinuationStep = (
     message.includes('next Amazon candidate after language rejection') === true;
 };
 
+const isGoogleStealthRetryContinuationStep = (
+  step: Pick<ProductScanStep, 'key' | 'label'>
+): boolean =>
+  step.key === 'google_stealth_retry' ||
+  step.label === 'Retry Google candidate search with fresh proxy session';
+
+const isGoogleStealthRetrySkippedContinuationStep = (
+  step: Pick<ProductScanStep, 'key' | 'label'>
+): boolean =>
+  step.key === 'google_stealth_retry_skipped' ||
+  step.label === 'Skip automatic Google retry';
+
+const isGoogleManualRetryContinuationStep = (
+  step: Pick<ProductScanStep, 'key' | 'label'>
+): boolean =>
+  step.key === 'google_manual_retry' ||
+  step.label === 'Open Google candidate search in visible browser';
+
 const resolveAmazonCandidateContinuationRejectionKind = (
   step: Pick<ProductScanStep, 'key' | 'label' | 'message' | 'resultCode' | 'details'>
 ): 'language' | 'product' | null => {
@@ -416,7 +438,11 @@ export const resolveProductScanContinuationSummary = (
     [...steps]
       .reverse()
       .find(
-        (step) => isAmazonCandidateContinuationStep(step)
+        (step) =>
+          isAmazonCandidateContinuationStep(step) ||
+          isGoogleStealthRetryContinuationStep(step) ||
+          isGoogleStealthRetrySkippedContinuationStep(step) ||
+          isGoogleManualRetryContinuationStep(step)
       ) ?? null;
 
   if (continuationStep === null) {
@@ -425,14 +451,95 @@ export const resolveProductScanContinuationSummary = (
 
   const group = resolveStepGroup(continuationStep);
 
+  if (isGoogleStealthRetryContinuationStep(continuationStep) === true) {
+    return {
+      badgeLabel: 'Automatic retry',
+      contextLabel: 'After captcha block',
+      phaseLabel: getStepGroupLabel(group),
+      stepLabel: continuationStep.label,
+      message:
+        typeof continuationStep.message === 'string' && continuationStep.message !== ''
+          ? continuationStep.message
+          : null,
+      resultCodeLabel: formatResultCode(continuationStep.resultCode),
+      attempt: continuationStep.attempt ?? null,
+      nextUrl:
+        resolveStepDetailValue(continuationStep, 'Blocked URL') ??
+        (typeof continuationStep.url === 'string' && continuationStep.url !== ''
+          ? continuationStep.url
+          : null),
+      nextUrlLabel: 'Blocked at',
+      rejectedUrl: null,
+      rejectedUrlLabel: null,
+      rejectionKind: null,
+    };
+  }
+
+  if (isGoogleStealthRetrySkippedContinuationStep(continuationStep) === true) {
+    return {
+      badgeLabel: 'Automatic retry skipped',
+      contextLabel:
+        resolveStepDetailValue(continuationStep, 'Skip reason') ?? 'Proxy unavailable',
+      phaseLabel: getStepGroupLabel(group),
+      stepLabel: continuationStep.label,
+      message:
+        typeof continuationStep.message === 'string' && continuationStep.message !== ''
+          ? continuationStep.message
+          : null,
+      resultCodeLabel: formatResultCode(continuationStep.resultCode),
+      attempt: continuationStep.attempt ?? null,
+      nextUrl:
+        resolveStepDetailValue(continuationStep, 'Blocked URL') ??
+        (typeof continuationStep.url === 'string' && continuationStep.url !== ''
+          ? continuationStep.url
+          : null),
+      nextUrlLabel: 'Blocked at',
+      rejectedUrl: null,
+      rejectedUrlLabel: null,
+      rejectionKind: null,
+    };
+  }
+
+  if (isGoogleManualRetryContinuationStep(continuationStep) === true) {
+    return {
+      badgeLabel: 'Manual fallback',
+      contextLabel:
+        resolveStepDetailValue(continuationStep, 'Recovery path') ?? 'After captcha block',
+      phaseLabel: getStepGroupLabel(group),
+      stepLabel: continuationStep.label,
+      message:
+        typeof continuationStep.message === 'string' && continuationStep.message !== ''
+          ? continuationStep.message
+          : null,
+      resultCodeLabel: formatResultCode(continuationStep.resultCode),
+      attempt: continuationStep.attempt ?? null,
+      nextUrl:
+        resolveStepDetailValue(continuationStep, 'Opened URL') ??
+        (typeof continuationStep.url === 'string' && continuationStep.url !== ''
+          ? continuationStep.url
+          : null),
+      nextUrlLabel: 'Opened at',
+      rejectedUrl: null,
+      rejectedUrlLabel: null,
+      rejectionKind: null,
+    };
+  }
+
   return {
+    badgeLabel: 'Candidate continuation',
+    contextLabel:
+      resolveAmazonCandidateContinuationRejectionKind(continuationStep) === 'language'
+        ? 'After language rejection'
+        : 'After AI rejection',
     phaseLabel: getStepGroupLabel(group),
     stepLabel: continuationStep.label,
     message: typeof continuationStep.message === 'string' && continuationStep.message !== '' ? continuationStep.message : null,
     resultCodeLabel: formatResultCode(continuationStep.resultCode),
     attempt: continuationStep.attempt ?? null,
     nextUrl: resolveStepDetailValue(continuationStep, 'Next candidate URL'),
+    nextUrlLabel: 'Next up',
     rejectedUrl: resolveStepDetailValue(continuationStep, 'Rejected candidate URL'),
+    rejectedUrlLabel: 'Rejected',
     rejectionKind: resolveAmazonCandidateContinuationRejectionKind(continuationStep),
   };
 };

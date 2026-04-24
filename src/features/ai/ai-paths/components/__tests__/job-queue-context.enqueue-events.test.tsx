@@ -23,9 +23,6 @@ const mocks = vi.hoisted(() => ({
   createMutationV2Mock: vi.fn(),
   createDeleteMutationV2Mock: vi.fn(),
   getAiPathRunMock: vi.fn(),
-  handoffAiPathRunMock: vi.fn(),
-  resumeAiPathRunMock: vi.fn(),
-  retryAiPathRunNodeMock: vi.fn(),
   refetchSettingsMock: vi.fn(),
   refetchRunsMock: vi.fn(),
   refetchQueueStatusMock: vi.fn(),
@@ -57,9 +54,6 @@ vi.mock('@/shared/lib/query-factories-v2', () => ({
 
 vi.mock('@/shared/lib/ai-paths', () => ({
   getAiPathRun: (...args: unknown[]) => mocks.getAiPathRunMock(...args),
-  handoffAiPathRun: (...args: unknown[]) => mocks.handoffAiPathRunMock(...args),
-  resumeAiPathRun: (...args: unknown[]) => mocks.resumeAiPathRunMock(...args),
-  retryAiPathRunNode: (...args: unknown[]) => mocks.retryAiPathRunNodeMock(...args),
 }));
 
 let jobQueueRunsData: AiPathRunListResult = { runs: [], total: 0 };
@@ -127,9 +121,6 @@ describe('JobQueueProvider enqueue event listeners', () => {
     mocks.createMutationV2Mock.mockReset();
     mocks.createDeleteMutationV2Mock.mockReset();
     mocks.getAiPathRunMock.mockReset();
-    mocks.handoffAiPathRunMock.mockReset();
-    mocks.resumeAiPathRunMock.mockReset();
-    mocks.retryAiPathRunNodeMock.mockReset();
     mocks.refetchSettingsMock.mockReset();
     mocks.refetchRunsMock.mockReset();
     mocks.refetchQueueStatusMock.mockReset();
@@ -154,9 +145,6 @@ describe('JobQueueProvider enqueue event listeners', () => {
         events: [],
       },
     });
-    mocks.handoffAiPathRunMock.mockResolvedValue({ ok: true, data: { run: {} } });
-    mocks.resumeAiPathRunMock.mockResolvedValue({ ok: true, data: { run: {} } });
-    mocks.retryAiPathRunNodeMock.mockResolvedValue({ ok: true, data: { run: {} } });
     ({ JobQueueProvider, useJobQueueState } = await vi.importActual<typeof import('../JobQueueContext')>(
       '../JobQueueContext'
     ));

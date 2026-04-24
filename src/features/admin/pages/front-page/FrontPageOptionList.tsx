@@ -8,7 +8,7 @@ export function FrontPageOptionList({
 }: {
   selected: FrontPageSelectableApp;
   setSelected: (value: FrontPageSelectableApp) => void;
-}) {
+}): React.ReactNode {
   return (
     <div className='grid gap-3'>
       {FRONT_PAGE_OPTIONS.map((option: FrontPageOption) => (

@@ -6,7 +6,7 @@ describe('ai-paths server entrypoint', () => {
     expect(server).toBeDefined();
     expect(typeof server.enqueuePathRun).toBe('function');
     expect(typeof server.cancelPathRun).toBe('function');
-    expect(typeof server.resumePathRun).toBe('function');
     expect(typeof server.getAiPathsSettings).toBe('function');
+    expect('resumePathRun' in server).toBe(false);
   });
 });

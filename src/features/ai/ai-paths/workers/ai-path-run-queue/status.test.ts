@@ -121,7 +121,7 @@ describe('getAiPathRunQueueStatus', () => {
     });
     expect(repo.listRuns).toHaveBeenCalledWith(
       expect.objectContaining({
-        statuses: ['running', 'blocked_on_lease', 'handoff_ready', 'paused'],
+        statuses: ['running'],
         source: 'ai_paths_ui',
         sourceMode: 'include',
       })

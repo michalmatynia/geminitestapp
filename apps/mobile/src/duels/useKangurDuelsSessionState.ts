@@ -66,11 +66,7 @@ function getSessionTimelineItems(
   return items;
 }
 
-export function useKangurDuelsSessionState(
-  copy: DuelCopy,
-  locale: DuelLocale,
-  duel: DuelSessionState,
-): {
+export type UseKangurDuelsSessionStateResult = {
   activePlayersCount: number;
   canShareInvite: boolean;
   hasPendingInvitedPlayer: boolean;
@@ -81,11 +77,17 @@ export function useKangurDuelsSessionState(
   needsMorePlayersToStart: boolean;
   roundProgress: {
     total: number;
-    completed: number;
-    percentage: number;
+    current: number;
+    percent: number;
   } | null;
   sessionTimelineItems: string[];
-} {
+};
+
+export function useKangurDuelsSessionState(
+  copy: DuelCopy,
+  locale: DuelLocale,
+  duel: DuelSessionState,
+): UseKangurDuelsSessionStateResult {
   const hasWaitingSession = duel.session !== null && isWaitingSessionStatus(duel.session.status);
   const isFinishedSession = duel.session !== null && (duel.session.status === 'completed' || duel.session.status === 'aborted');
   const roundProgress = duel.session !== null

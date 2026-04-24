@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export function CmsFrontPageHint() {
+export function CmsFrontPageHint(): React.ReactNode {
   return (
     <div className='rounded-xl border border-border/40 bg-card/20 px-4 py-3 text-sm text-gray-300'>
       <div className='font-medium text-white'>StudiQ on HOME</div>

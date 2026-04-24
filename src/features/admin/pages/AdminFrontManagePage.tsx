@@ -2,7 +2,7 @@
 
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { normalizeFrontPageApp } from '@/shared/lib/front-page-app';
+import { normalizeFrontPageApp, type FrontPageSelectableApp } from '@/shared/lib/front-page-app';
 import { useFrontPageController } from './front-page/useFrontPageController';
 import { FrontManageSelectionForm } from './front-page/FrontManageSelectionForm';
 import { SectionHeader, SectionHeaderBackLink } from '@/shared/ui/navigation-and-layout.public';
@@ -26,7 +26,7 @@ export function AdminFrontManagePage(): React.ReactNode {
   return <AdminFrontManageContent initialSelected={initialSelected} />;
 }
 
-function AdminFrontManageContent({ initialSelected }: { initialSelected: any }) {
+function AdminFrontManageContent({ initialSelected }: { initialSelected: FrontPageSelectableApp }): React.ReactNode {
   const {
     ConfirmationModal,
     currentLabel,

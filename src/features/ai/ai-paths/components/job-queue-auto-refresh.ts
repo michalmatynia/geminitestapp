@@ -3,12 +3,14 @@ export const JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS = [5000, 10000, 30000, 6000
 export const DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL = JOB_QUEUE_AUTO_REFRESH_INTERVAL_OPTIONS[1];
 
 export const normalizeJobQueueAutoRefreshInterval = (value: unknown): number => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string'
-        ? Number.parseInt(value, 10)
-        : Number.NaN;
+  let parsed: number;
+  if (typeof value === 'number') {
+    parsed = value;
+  } else if (typeof value === 'string') {
+    parsed = Number.parseInt(value, 10);
+  } else {
+    parsed = Number.NaN;
+  }
 
   if (!Number.isFinite(parsed)) {
     return DEFAULT_JOB_QUEUE_AUTO_REFRESH_INTERVAL;

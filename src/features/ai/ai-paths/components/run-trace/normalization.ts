@@ -272,28 +272,11 @@ export const formatTraceSpanDetails = (span: RuntimeTraceSpanSummary): string[] 
   if (span.activationHash) {
     details.push(`activation=${span.activationHash}`);
   }
-  if (span.resumeDecision) {
-    details.push(`resume=${span.resumeDecision}`);
-  }
-  if (span.resumeMode) {
-    details.push(`resumeMode=${span.resumeMode}`);
-  }
-  if (span.resumeReason) {
-    details.push(`resumeReason=${span.resumeReason}`);
-  }
-  if (span.resumeSourceSpanId || span.resumeSourceTraceId) {
-    details.push(`resumeSource=${span.resumeSourceSpanId ?? span.resumeSourceTraceId}`);
-  }
-  if (span.resumeSourceStatus) {
-    details.push(`resumeStatus=${span.resumeSourceStatus}`);
-  }
   return details;
 };
 
 export const formatTraceSpanActionExplanation = (span: RuntimeTraceSpanSummary): string | null => {
   const hasActionContext =
-    span.resumeMode !== null ||
-    span.resumeDecision !== null ||
     span.status === 'failed' ||
     span.status === 'blocked' ||
     span.status === 'waiting_callback';

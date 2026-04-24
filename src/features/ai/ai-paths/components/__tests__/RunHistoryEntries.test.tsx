@@ -59,19 +59,14 @@ describe('RunHistoryEntries', () => {
     expect(screen.getByText('sourceSpan=node-origin:1:1')).toBeInTheDocument();
     expect(screen.getByText('activation=activation-hash-1')).toBeInTheDocument();
     expect(screen.getByText('idempotency=idempotency-key-1')).toBeInTheDocument();
-    expect(screen.getByText('resume=reused')).toBeInTheDocument();
-    expect(screen.getByText('resumeMode=resume')).toBeInTheDocument();
-    expect(screen.getByText('resumeReason=completed_upstream')).toBeInTheDocument();
-    expect(screen.getByText('resumeSource=node-upstream:1:1')).toBeInTheDocument();
-    expect(screen.getByText('resumeStatus=completed')).toBeInTheDocument();
     expect(
-      screen.getByText('Resume metadata present; reuses recorded upstream outputs.')
+      screen.getByText('Forward-only mode replays the full run from recorded inputs.')
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Resume run' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Replay run' }));
     expect(onReplayFromEntry).toHaveBeenCalledWith(entries[0]);
   });
 
-  it('labels failed history entries as node retries', () => {
+  it('keeps failed history entries replayable in forward-only mode', () => {
     const entries: RuntimeHistoryEntry[] = [
       {
         timestamp: '2026-03-07T10:05:00.000Z',
@@ -99,7 +94,9 @@ describe('RunHistoryEntries', () => {
 
     render(<RunHistoryEntries entries={entries} onReplayFromEntry={vi.fn()} />);
 
-    expect(screen.getByRole('button', { name: 'Retry node' })).toBeInTheDocument();
-    expect(screen.getByText('Failed node entry; queues a node-only retry.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Replay run' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Forward-only mode replays the full run from recorded inputs.')
+    ).toBeInTheDocument();
   });
 });

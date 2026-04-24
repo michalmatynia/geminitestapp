@@ -16,7 +16,7 @@ describe('toRuntimeNodeStatus', () => {
 
   it('rejects non-node run statuses', () => {
     expect(toRuntimeNodeStatus('paused')).toBeNull();
-    expect(toRuntimeNodeStatus('dead_lettered')).toBeNull();
+    expect(toRuntimeNodeStatus('legacy_server_status')).toBeNull();
   });
 
   it('returns null for unsupported values', () => {

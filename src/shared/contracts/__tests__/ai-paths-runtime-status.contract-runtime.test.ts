@@ -15,7 +15,7 @@ describe('ai-paths runtime status contract helpers', () => {
   });
 
   it('rejects non-canonical runtime statuses', () => {
-    expect(normalizeAiPathRuntimeNodeStatus('dead_lettered')).toBeNull();
+    expect(normalizeAiPathRuntimeNodeStatus('legacy_server_status')).toBeNull();
     expect(normalizeAiPathRuntimeNodeStatus('')).toBeNull();
     expect(normalizeAiPathRuntimeNodeStatus(null)).toBeNull();
   });

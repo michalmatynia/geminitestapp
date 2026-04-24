@@ -6,18 +6,6 @@ export const isTimeoutMessage = (message: string | null | undefined): boolean =>
   return normalized.includes('timed out') || normalized.includes('timeout');
 };
 
-export const isRecoverableTriggerEnqueueError = (message: string | null | undefined): boolean => {
-  if (!message || typeof message !== 'string') return false;
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes('failed to fetch') ||
-    normalized.includes('networkerror') ||
-    normalized.includes('load failed') ||
-    normalized.includes('network request failed') ||
-    isTimeoutMessage(message)
-  );
-};
-
 export const createAiPathTriggerRequestId = (args: {
   pathId: string;
   triggerEventId: string;
@@ -45,10 +33,3 @@ export const toRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : null;
-
-export const waitForMs = async (durationMs: number): Promise<void> => {
-  if (!Number.isFinite(durationMs) || durationMs <= 0) return;
-  await new Promise((resolve) => {
-    setTimeout(resolve, durationMs);
-  });
-};

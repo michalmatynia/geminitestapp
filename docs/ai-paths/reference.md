@@ -48,7 +48,7 @@ This document is the detailed operator/developer reference for AI Paths:
   - node input snapshots
   - node outputs
   - per-node errors, retries, and timing
-  - explicit lease/contention states such as `blocked_on_lease` and `handoff_ready`
+  - lease ownership metadata and contention failure details
 
 ## Node Categories
 
@@ -99,7 +99,7 @@ This document is the detailed operator/developer reference for AI Paths:
 - Keep model temperature low for deterministic classification/extraction tasks.
 - Cap retries/loops to avoid runaway runs.
 - Always expose observability payloads for drop/accept/write decisions.
-- When execution ownership is unavailable, surface lease contention and handoff explicitly instead of retrying hidden concurrent mutation.
+- When execution ownership is unavailable, surface lease contention explicitly and require a fresh run instead of retrying hidden concurrent mutation.
 
 ## Prompt Design Standard
 
@@ -138,13 +138,11 @@ This document is the detailed operator/developer reference for AI Paths:
 
 Current run-control entrypoints include:
 
-- `POST /api/ai-paths/runs/[runId]/resume`
-- `POST /api/ai-paths/runs/[runId]/handoff`
 - `POST /api/ai-paths/runs/[runId]/cancel`
-- `POST /api/ai-paths/runs/[runId]/retry-node`
-- `POST /api/ai-paths/runs/dead-letter/requeue`
+- `GET /api/ai-paths/runs/queue-status`
+- `GET /api/ai-paths/runtime-analytics/summary`
 
-Use the platform policy in `docs/platform/ai-paths-resume-vs-handoff.md` when deciding whether a blocked run should resume, replay, or move into handoff-ready state.
+Resume, replay, handoff, node retry, and dead-letter requeue operations are retired. Those legacy routes have been removed from the active API router.
 
 ## Failure Playbook
 

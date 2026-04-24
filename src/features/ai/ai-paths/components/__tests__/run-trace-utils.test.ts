@@ -260,9 +260,6 @@ describe('run-trace-utils', () => {
     const traceNodeItem = items.find((item) => item.id === 'trace-span-finish-node-a:1:1');
     expect(traceNodeItem?.source).toBe('trace');
     expect(traceNodeItem?.description).toContain('Fetcher');
-    expect(traceNodeItem?.description).toContain(
-      'Resume metadata present; reuses recorded upstream outputs.'
-    );
     expect(traceNodeItem?.details).toEqual(
       expect.arrayContaining([
         'cache=seed',
@@ -270,11 +267,6 @@ describe('run-trace-utils', () => {
         'policy=per_activation',
         'sourceSpan=effect-origin:1:1',
         'activation=activation-hash-1',
-        'resume=reused',
-        'resumeMode=resume',
-        'resumeReason=completed_upstream',
-        'resumeSource=resume-origin:1:1',
-        'resumeStatus=completed',
       ])
     );
   });

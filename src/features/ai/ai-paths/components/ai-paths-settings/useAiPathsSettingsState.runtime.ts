@@ -12,7 +12,7 @@ type BuildRuntimePersistenceConfigInput = {
 export const buildRuntimePersistenceConfig = (
   input: BuildRuntimePersistenceConfigInput
 ): PathConfig | null => {
-  if (!input.activePathId) return null;
+  if (input.activePathId === null || input.activePathId === '') return null;
   const baseConfig = input.pathConfigs[input.activePathId];
   if (!baseConfig) return null;
   return {

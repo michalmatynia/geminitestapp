@@ -82,6 +82,132 @@ describe('classifyAmazonScanFailure', () => {
     );
     expect(result.kind).toBe('captcha');
     expect(result.details.evidence['captchaStealthRetryStarted']).toBe(true);
+    expect(result.details.recovery).toMatchObject({
+      automaticRetryAttempted: true,
+      manualFallbackOpened: false,
+      recoveryPath: 'automatic_retry',
+    });
+  });
+
+  it('classifies manual fallback recovery from manual retry step evidence', () => {
+    const result = classifyAmazonScanFailure(
+      makeScan({
+        status: 'running',
+        rawResult: {
+          manualVerificationPending: true,
+          captchaManualRetryStarted: true,
+        },
+        steps: [
+          {
+            key: 'google_manual_retry',
+            label: 'Open Google candidate search in visible browser',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message: 'Opened a visible browser for Google captcha verification.',
+            details: [{ label: 'Blocked stage', value: 'google_candidates' }],
+            url: 'https://www.google.com/sorry/index',
+          },
+        ] as never,
+      })
+    );
+    expect(result.kind).toBe('captcha');
+    expect(result.details.reason).toContain('visible browser');
+    expect(result.details.recovery).toMatchObject({
+      automaticRetryAttempted: false,
+      manualFallbackOpened: true,
+      recoveryPath: 'manual_fallback',
+      latestCaptchaStage: 'google_candidates',
+    });
+  });
+
+  it('classifies skipped automatic retry before manual fallback', () => {
+    const result = classifyAmazonScanFailure(
+      makeScan({
+        status: 'running',
+        rawResult: {
+          manualVerificationPending: true,
+          captchaManualRetryStarted: true,
+        },
+        steps: [
+          {
+            key: 'google_stealth_retry_skipped',
+            label: 'Skip automatic Google retry',
+            group: 'google_lens',
+            status: 'skipped',
+            resultCode: 'proxy_unavailable',
+            message:
+              'Skipped automatic Google retry because no proxy is configured; continuing to manual verification settings.',
+            details: [{ label: 'Blocked stage', value: 'google_captcha' }],
+            url: 'https://www.google.com/sorry/index',
+          },
+          {
+            key: 'google_manual_retry',
+            label: 'Open Google candidate search in visible browser',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message: 'Opened a visible browser for Google captcha verification.',
+            details: [{ label: 'Blocked stage', value: 'google_candidates' }],
+            url: 'https://www.google.com/sorry/index',
+          },
+        ] as never,
+      })
+    );
+
+    expect(result.kind).toBe('captcha');
+    expect(result.details.reason).toContain('automatic retry was skipped');
+    expect(result.details.recovery).toMatchObject({
+      automaticRetryAttempted: false,
+      automaticRetrySkipped: true,
+      manualFallbackOpened: true,
+      recoveryPath: 'automatic_retry_skipped_then_manual_fallback',
+      latestCaptchaStage: 'google_candidates',
+    });
+  });
+
+  it('classifies automatic retry escalated to manual fallback', () => {
+    const result = classifyAmazonScanFailure(
+      makeScan({
+        status: 'running',
+        rawResult: {
+          captchaStealthRetryStarted: true,
+          captchaManualRetryStarted: true,
+          manualVerificationPending: true,
+        },
+        steps: [
+          {
+            key: 'google_stealth_retry',
+            label: 'Retry Google candidate search with fresh proxy session',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message:
+              'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+            details: [{ label: 'Blocked stage', value: 'google_captcha' }],
+            url: 'https://www.google.com/sorry/index',
+          },
+          {
+            key: 'google_manual_retry',
+            label: 'Open Google candidate search in visible browser',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message: 'Opened a visible browser for Google captcha verification.',
+            details: [{ label: 'Blocked stage', value: 'google_candidates' }],
+            url: 'https://www.google.com/sorry/index',
+          },
+        ] as never,
+      })
+    );
+    expect(result.kind).toBe('captcha');
+    expect(result.details.reason).toContain('automatic retry');
+    expect(result.details.recovery).toMatchObject({
+      automaticRetryAttempted: true,
+      manualFallbackOpened: true,
+      recoveryPath: 'automatic_retry_then_manual_fallback',
+      latestCaptchaStage: 'google_candidates',
+    });
   });
 
   it('classifies captcha from error message', () => {

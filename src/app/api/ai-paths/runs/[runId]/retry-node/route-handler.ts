@@ -1,9 +1,0 @@
-export const runtime = 'nodejs';
-
-import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-
-import { postHandler } from './handler';
-
-export const POST = apiHandlerWithParams<{ runId: string }>(postHandler, {
-  source: 'ai-paths.runs.[runId].retry-node.POST',
-});

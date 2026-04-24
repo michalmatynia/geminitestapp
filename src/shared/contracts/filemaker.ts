@@ -277,6 +277,7 @@ export const filemakerEmailCampaignEventTypeSchema = z.enum([
   'completed',
   'failed',
   'cancelled',
+  'reply_received',
 ]);
 export type FilemakerEmailCampaignEventTypeDto = z.infer<
   typeof filemakerEmailCampaignEventTypeSchema

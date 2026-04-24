@@ -41,7 +41,10 @@ const areFeedbackMapsEqual = (
     if (
       prevFeedback.scanId !== nextFeedback.scanId ||
       prevFeedback.status !== nextFeedback.status ||
-      prevFeedback.updatedAt !== nextFeedback.updatedAt
+      prevFeedback.updatedAt !== nextFeedback.updatedAt ||
+      prevFeedback.label !== nextFeedback.label ||
+      prevFeedback.variant !== nextFeedback.variant ||
+      prevFeedback.badgeClassName !== nextFeedback.badgeClassName
     ) {
       return false;
     }

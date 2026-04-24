@@ -45,7 +45,7 @@ export function PreviewBlockOrchestrator({ block, children }: { block: BlockInst
   };
 
   return wrapBlock(
-    <div className="relative group">
+    <div className='relative group'>
       {renderSelectionButton()}
       {children}
     </div>

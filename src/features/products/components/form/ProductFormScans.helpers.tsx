@@ -8,7 +8,9 @@ import type {
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
 import {
   isProductScanCandidateSelectionRequired,
+  isProductScanGoogleManualFallbackOpen,
   PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE,
+  PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_MESSAGE,
   isProductScanGoogleStealthRetrying,
   PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE,
   resolveProductScanRunFeedbackPresentation,
@@ -67,6 +69,7 @@ function resolveStatusFeedbackParams(scan: ProductScanRecord): Parameters<typeof
     manualVerificationPending: isManualVerificationPending(scan),
     manualVerificationMessage: scan.asinUpdateMessage ?? null,
     googleStealthRetrying: isProductScanGoogleStealthRetrying(scan),
+    googleManualFallbackOpen: isProductScanGoogleManualFallbackOpen(scan),
     candidateSelectionRequired: isProductScanCandidateSelectionRequired(scan),
     amazonEvaluationStatus: amazonStatus,
     amazonEvaluationLanguageAccepted: amazonLanguage,
@@ -86,6 +89,9 @@ export function resolveStatusClassName(scan: ProductScanRecord): string {
 export function resolveActiveStatusMessage(scan: ProductScanRecord): string | null {
   if (isProductScanGoogleStealthRetrying(scan)) {
     return PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE;
+  }
+  if (isProductScanGoogleManualFallbackOpen(scan)) {
+    return PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_MESSAGE;
   }
 
   const { status } = scan;

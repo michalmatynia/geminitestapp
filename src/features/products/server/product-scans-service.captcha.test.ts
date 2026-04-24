@@ -358,6 +358,44 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         engineRunId: 'run-headed-1',
         status: 'running',
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'google_stealth_retry_skipped',
+            label: 'Skip automatic Google retry',
+            group: 'google_lens',
+            status: 'skipped',
+            resultCode: 'proxy_unavailable',
+            message:
+              'Skipped automatic Google retry because no proxy is configured; continuing to manual verification settings.',
+            retryOf: 'run-1',
+            url: 'https://www.google.com/sorry/index',
+            details: expect.arrayContaining([
+              { label: 'Retry mode', value: 'Rotate proxy session' },
+              { label: 'Skip reason', value: 'Proxy is not enabled for this scanner runtime' },
+              { label: 'Previous run ID', value: 'run-1' },
+              { label: 'Blocked stage', value: 'google_captcha' },
+              { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+            ]),
+          }),
+          expect.objectContaining({
+            key: 'google_manual_retry',
+            label: 'Open Google candidate search in visible browser',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message: 'Opened a visible browser for Google captcha verification.',
+            retryOf: 'run-1',
+            url: 'https://www.google.com/sorry/index',
+            details: expect.arrayContaining([
+              { label: 'Recovery path', value: 'After captcha block' },
+              { label: 'Retry mode', value: 'Visible browser' },
+              { label: 'Previous run ID', value: 'run-1' },
+              { label: 'Retry run ID', value: 'run-headed-1' },
+              { label: 'Blocked stage', value: 'google_captcha' },
+              { label: 'Opened URL', value: 'https://www.google.com/sorry/index' },
+            ]),
+          }),
+        ]),
       })
     );
   });
@@ -463,6 +501,26 @@ describe('product-scans-service', () => {
         engineRunId: 'run-stealth-1',
         status: 'running',
         asinUpdateMessage: null,
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'google_stealth_retry',
+            label: 'Retry Google candidate search with fresh proxy session',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message:
+              'Queued an automatic Google retry with a fresh proxy session before manual fallback.',
+            retryOf: 'run-1',
+            url: 'https://www.google.com/sorry/index',
+            details: expect.arrayContaining([
+              { label: 'Retry mode', value: 'Rotate proxy session' },
+              { label: 'Previous run ID', value: 'run-1' },
+              { label: 'Retry run ID', value: 'run-stealth-1' },
+              { label: 'Blocked stage', value: 'google_captcha' },
+              { label: 'Blocked URL', value: 'https://www.google.com/sorry/index' },
+            ]),
+          }),
+        ]),
         rawResult: expect.objectContaining({
           captchaStealthRetryStarted: true,
           captchaStealthRetryMode: 'rotate',
@@ -805,6 +863,26 @@ describe('product-scans-service', () => {
         status: 'running',
         asinUpdateMessage:
           'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'google_manual_retry',
+            label: 'Open Google candidate search in visible browser',
+            group: 'google_lens',
+            status: 'completed',
+            resultCode: 'run_started',
+            message: 'Opened a visible browser for Google captcha verification.',
+            retryOf: 'run-stealth-1',
+            url: 'https://www.google.com/sorry/index',
+            details: expect.arrayContaining([
+              { label: 'Recovery path', value: 'After automatic retry' },
+              { label: 'Retry mode', value: 'Visible browser' },
+              { label: 'Previous run ID', value: 'run-stealth-1' },
+              { label: 'Retry run ID', value: 'run-headed-2' },
+              { label: 'Blocked stage', value: 'google_candidates' },
+              { label: 'Opened URL', value: 'https://www.google.com/sorry/index' },
+            ]),
+          }),
+        ]),
         rawResult: expect.objectContaining({
           captchaStealthRetryStarted: true,
           captchaRetryStarted: true,
@@ -947,6 +1025,15 @@ describe('product-scans-service', () => {
         asinUpdateStatus: 'failed',
         asinUpdateMessage:
           'Google Lens requested captcha verification, and scanner settings are configured to fail instead of reopening a visible browser.',
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'google_stealth_retry_skipped',
+            status: 'skipped',
+            resultCode: 'proxy_unavailable',
+            message:
+              'Skipped automatic Google retry because no proxy is configured; continuing to manual verification settings.',
+          }),
+        ]),
       })
     );
   });

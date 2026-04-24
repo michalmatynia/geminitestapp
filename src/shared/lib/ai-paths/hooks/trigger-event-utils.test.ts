@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createAiPathTriggerRequestId,
-  isRecoverableTriggerEnqueueError,
   isTimeoutMessage,
   toNonEmptyString,
   toRecord,
@@ -31,43 +30,6 @@ describe('isTimeoutMessage', () => {
     expect(isTimeoutMessage('Network error')).toBe(false);
     expect(isTimeoutMessage('Bad Request')).toBe(false);
     expect(isTimeoutMessage('success')).toBe(false);
-  });
-});
-
-describe('isRecoverableTriggerEnqueueError', () => {
-  it('returns false for null, undefined, or empty string', () => {
-    expect(isRecoverableTriggerEnqueueError(null)).toBe(false);
-    expect(isRecoverableTriggerEnqueueError(undefined)).toBe(false);
-    expect(isRecoverableTriggerEnqueueError('')).toBe(false);
-  });
-
-  it('treats "failed to fetch" as recoverable', () => {
-    expect(isRecoverableTriggerEnqueueError('Failed to fetch')).toBe(true);
-  });
-
-  it('treats "NetworkError" as recoverable', () => {
-    expect(isRecoverableTriggerEnqueueError('NetworkError when attempting to fetch resource')).toBe(
-      true
-    );
-  });
-
-  it('treats "load failed" as recoverable', () => {
-    expect(isRecoverableTriggerEnqueueError('Load failed')).toBe(true);
-  });
-
-  it('treats "network request failed" as recoverable', () => {
-    expect(isRecoverableTriggerEnqueueError('network request failed')).toBe(true);
-  });
-
-  it('treats timeout messages as recoverable', () => {
-    expect(isRecoverableTriggerEnqueueError('request timed out')).toBe(true);
-    expect(isRecoverableTriggerEnqueueError('queue_preflight_timeout')).toBe(true);
-  });
-
-  it('returns false for non-recoverable errors', () => {
-    expect(isRecoverableTriggerEnqueueError('400 Bad Request')).toBe(false);
-    expect(isRecoverableTriggerEnqueueError('Unauthorized')).toBe(false);
-    expect(isRecoverableTriggerEnqueueError('invalid run identifier from API')).toBe(false);
   });
 });
 

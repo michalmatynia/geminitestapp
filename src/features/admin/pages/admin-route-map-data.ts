@@ -48,7 +48,6 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/filemaker/list':
     'Search and review the combined Filemaker person, organization, and event registry.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
-  '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/validator': 'Edit validation rules for each available validator pattern list.',
   '/admin/validator/lists': 'Create, rename, lock, and remove available validator pattern lists.',
   '/admin/prompt-exploder':
@@ -77,7 +76,6 @@ const DESCRIPTION_RULES: DescriptionRule[] = [
   { matches: (label: string) => label.includes('list') || label.startsWith('all '), describe: (label) => `Browse and manage ${label.replace(/^all\s+/i, '').toLowerCase()} records.` },
   { matches: (label: string) => label.includes('jobs'), describe: (_label, parent) => `Monitor and manage ${parent.toLowerCase()} jobs and runs.` },
   { matches: (label: string) => label.includes('queue'), describe: (_label, parent) => `Inspect queued and running ${parent.toLowerCase()} tasks.` },
-  { matches: (label: string) => label.includes('dead letter'), describe: () => 'Review failed jobs and decide on retries or cleanup.' },
   { matches: (label: string) => label.includes('logs'), describe: (_label, parent) => `Review ${parent.toLowerCase()} logs and diagnostics.` },
   { matches: (label: string) => label.includes('builder'), describe: (_label, parent) => `Compose and edit ${parent.toLowerCase()} layouts.` },
   { matches: (label: string) => label.includes('themes'), describe: (_label, parent) => `Manage ${parent.toLowerCase()} themes and styling presets.` },

@@ -47,7 +47,7 @@ function JobQueuePanelInner(): React.JSX.Element {
       onConfirm: () => void handleClearRuns('terminal'),
       title: 'Clear finished AI Path runs',
       message:
-        'Delete completed, failed, canceled, and dead-lettered runs from this queue list.',
+        'Delete completed, failed, and canceled runs from this queue list.',
       confirmText: 'Clear Finished',
       loading: isClearingRuns,
     },
@@ -58,7 +58,7 @@ function JobQueuePanelInner(): React.JSX.Element {
       onConfirm: () => void handleClearRuns('all'),
       title: 'Clear all AI Path runs',
       message:
-        'Delete all runs in this queue list, including queued, running, and paused entries.',
+        'Delete all runs in this queue list, including queued, running, and finished entries.',
       confirmText: 'Clear All',
       loading: isClearingRuns,
     },

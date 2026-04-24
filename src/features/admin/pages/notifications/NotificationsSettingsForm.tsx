@@ -21,7 +21,7 @@ export function NotificationsSettingsForm({
   position: PositionType;
   setAccent: (accent: AccentType) => void;
   setPosition: (position: PositionType) => void;
-}) {
+}): React.ReactNode {
   return (
     <FormSection title='Notification Preferences' className='p-6'>
       <div className='space-y-6'>

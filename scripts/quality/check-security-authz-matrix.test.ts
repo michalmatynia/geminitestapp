@@ -85,21 +85,6 @@ describe('analyzeSecurityAuthzMatrix', () => {
     expect(report.summary.errorCount).toBe(0);
   });
 
-  it('accepts signed ingress routes with signature verification', () => {
-    const root = createTempRoot();
-    writeRoute({
-      root,
-      routePath: 'ai-paths/portable-engine/remediation-webhook',
-      method: 'POST',
-      handlerSource:
-        'export async function POST_handler() { await verifyPortablePathWebhookSignature({}); return Response.json({ ok: true }); }',
-    });
-
-    const report = analyzeSecurityAuthzMatrix({ root });
-
-    expect(report.summary.errorCount).toBe(0);
-  });
-
   it('accepts actor-scoped routes that resolve a Kangur actor', () => {
     const root = createTempRoot();
     writeRoute({

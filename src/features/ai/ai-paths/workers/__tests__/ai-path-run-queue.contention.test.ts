@@ -7,7 +7,7 @@ const {
   processRunMock,
   processStaleRunRecoveryMock,
   recordRuntimeRunStartedMock,
-  recordRuntimeRunBlockedOnLeaseMock,
+  recordRuntimeRunFinishedMock,
 } = vi.hoisted(() => ({
   createManagedQueueMock: vi.fn(),
   getPathRunRepositoryMock: vi.fn(),
@@ -15,7 +15,7 @@ const {
   processRunMock: vi.fn(),
   processStaleRunRecoveryMock: vi.fn(),
   recordRuntimeRunStartedMock: vi.fn(),
-  recordRuntimeRunBlockedOnLeaseMock: vi.fn(),
+  recordRuntimeRunFinishedMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/queue', () => ({
@@ -38,7 +38,7 @@ vi.mock('@/features/ai/ai-paths/workers/ai-path-run-processor', () => ({
 
 vi.mock('@/features/ai/ai-paths/services/runtime-analytics-service', () => ({
   recordRuntimeRunStarted: recordRuntimeRunStartedMock,
-  recordRuntimeRunBlockedOnLease: recordRuntimeRunBlockedOnLeaseMock,
+  recordRuntimeRunFinished: recordRuntimeRunFinishedMock,
 }));
 
 const createQueueMock = () => ({
@@ -60,20 +60,21 @@ describe('ai-path-run queue lease contention', () => {
     processRunMock.mockResolvedValue(undefined);
     processStaleRunRecoveryMock.mockResolvedValue(undefined);
     recordRuntimeRunStartedMock.mockResolvedValue(undefined);
-    recordRuntimeRunBlockedOnLeaseMock.mockResolvedValue(undefined);
+    recordRuntimeRunFinishedMock.mockResolvedValue(undefined);
   });
 
-  it('moves the run to blocked_on_lease when execution ownership cannot be claimed', async () => {
+  it('fails the run when execution ownership cannot be claimed', async () => {
     const claimRunForProcessingMock = vi.fn().mockResolvedValue({
       id: 'run-1',
       status: 'running',
+      startedAt: '2026-03-09T10:00:00.000Z',
       meta: {
         existing: true,
       },
     });
     const updateRunIfStatusMock = vi.fn().mockResolvedValue({
       id: 'run-1',
-      status: 'blocked_on_lease',
+      status: 'failed',
     });
     const createRunEventMock = vi.fn().mockResolvedValue(undefined);
 
@@ -135,21 +136,22 @@ describe('ai-path-run queue lease contention', () => {
       'run-1',
       expect.anything(),
       expect.objectContaining({
-        status: 'blocked_on_lease',
+        status: 'failed',
+        errorMessage: 'Run failed: execution lease is already owned by another worker.',
         meta: expect.objectContaining({
           existing: true,
-          executionLease: expect.any(Object),
+          executionLeaseFailure: expect.any(Object),
         }),
       })
     );
     expect(createRunEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
         runId: 'run-1',
-        level: 'warn',
+        level: 'error',
       })
     );
-    expect(recordRuntimeRunBlockedOnLeaseMock).toHaveBeenCalledWith(
-      expect.objectContaining({ runId: 'run-1' })
+    expect(recordRuntimeRunFinishedMock).toHaveBeenCalledWith(
+      expect.objectContaining({ runId: 'run-1', status: 'failed' })
     );
     expect(recordRuntimeRunStartedMock).not.toHaveBeenCalled();
     expect(processRunMock).not.toHaveBeenCalled();

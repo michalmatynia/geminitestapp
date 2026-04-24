@@ -61,7 +61,6 @@ const buildRunRecord = (): AiPathRunRecord =>
     startedAt: null,
     completedAt: null,
     finishedAt: null,
-    deadLetteredAt: null,
     retryCount: null,
     maxAttempts: null,
     nextRetryAt: null,

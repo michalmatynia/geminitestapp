@@ -184,10 +184,8 @@ describe('aiPathRunQueue status', () => {
         completed: 5,
         failed: 1,
         canceled: 0,
-        deadLettered: 0,
         successRate: 83.3,
         failureRate: 16.7,
-        deadLetterRate: 0,
         avgDurationMs: 1200,
         p95DurationMs: 2400,
       },
@@ -260,7 +258,7 @@ describe('aiPathRunQueue status', () => {
     expect(status.brainAnalytics24h.totalReports).toBe(5);
   });
 
-  it('starts the worker and registers recovery scheduling when queue readiness is requested', async () => {
+  it('starts the worker and clears legacy recovery scheduling when queue readiness is requested', async () => {
     (
       globalThis as typeof globalThis & {
         __aiPathRunQueueState__?: { workerStarted: boolean; recoveryScheduled: boolean };
@@ -276,10 +274,7 @@ describe('aiPathRunQueue status', () => {
     const status = await assertAiPathRunQueueReady();
 
     expect(queueMock.startWorker).toHaveBeenCalledTimes(1);
-    expect(queueMock.enqueue).toHaveBeenCalledWith(
-      { runId: '__recovery__', type: 'recovery' },
-      { repeat: { every: 60_000 }, jobId: 'ai-path-run-recovery' }
-    );
+    expect(queueMock.enqueue).not.toHaveBeenCalled();
     expect(getMongoClientMock).toHaveBeenCalledTimes(1);
     expect(status.running).toBe(true);
   });

@@ -9,8 +9,6 @@ const listAiPathRunsMock = vi.hoisted(() => vi.fn().mockImplementation(async (ar
 }));
 const getAiPathRunMock = vi.hoisted(() => vi.fn());
 const cancelAiPathRunMock = vi.hoisted(() => vi.fn());
-const resumeAiPathRunMock = vi.hoisted(() => vi.fn());
-const retryAiPathRunNodeMock = vi.hoisted(() => vi.fn());
 const eventSourceInstances = vi.hoisted((): MockEventSource[] => []);
 
 class MockEventSource {
@@ -57,10 +55,6 @@ vi.mock('@/shared/lib/ai-paths/api', () => ({
   listAiPathRuns: listAiPathRunsMock,
   getAiPathRun: getAiPathRunMock,
   cancelAiPathRun: cancelAiPathRunMock,
-  resumeAiPathRun: resumeAiPathRunMock,
-  retryAiPathRunNode: retryAiPathRunNodeMock,
-  handoffAiPathRun: vi.fn(),
-  requeueAiPathDeadLetterRuns: vi.fn(),
 }));
 
 import {
@@ -147,41 +141,6 @@ describe('useAiPathsRunHistory run coercion', () => {
         limit: 100,
       })
     );
-  });
-
-  it('registers node retry actions through the run history context', async () => {
-    listAiPathRunsMock.mockResolvedValue({
-      ok: true,
-      data: {
-        runs: [],
-        total: 0,
-      },
-    });
-    retryAiPathRunNodeMock.mockResolvedValue({
-      ok: true,
-      data: {
-        run: {
-          id: 'run-retry-1',
-          status: 'queued',
-          createdAt: '2026-03-07T11:00:00.000Z',
-        },
-      },
-    });
-
-    const { result } = renderHook(() => useHarness('path-legacy'), {
-      wrapper: createWrapper(),
-    });
-
-    await waitFor(() => {
-      expect(listAiPathRunsMock).toHaveBeenCalled();
-    });
-
-    await act(async () => {
-      await result.current.actions.retryRunNode('run-retry-1', 'node-failed');
-    });
-
-    expect(retryAiPathRunNodeMock).toHaveBeenCalledWith('run-retry-1', 'node-failed');
-    expect(toastMock).toHaveBeenCalledWith('Node retry queued.', { variant: 'success' });
   });
 
   it('does not recreate the run detail stream when streamed events are merged', async () => {

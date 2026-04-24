@@ -58,6 +58,13 @@ type RecordedDiagnosticClassification = {
   kind: string;
   details: {
     reason: string;
+    recovery?: {
+      automaticRetryAttempted?: boolean;
+      automaticRetrySkipped?: boolean;
+      manualFallbackOpened?: boolean;
+      recoveryPath?: string | null;
+      latestCaptchaStage?: string | null;
+    };
   };
 };
 
@@ -615,6 +622,54 @@ const isAmazonRecordedDiagnosticsResponse = (
   );
 };
 
+const normalizeRecordedDiagnosticRecovery = (
+  value: RecordedDiagnosticClassification['details']['recovery']
+): NonNullable<RecordedDiagnosticClassification['details']['recovery']> | null => {
+  if (!isObjectRecord(value)) {
+    return null;
+  }
+
+  const automaticRetryAttempted =
+    typeof value['automaticRetryAttempted'] === 'boolean'
+      ? value['automaticRetryAttempted']
+      : false;
+  const automaticRetrySkipped =
+    typeof value['automaticRetrySkipped'] === 'boolean'
+      ? value['automaticRetrySkipped']
+      : false;
+  const manualFallbackOpened =
+    typeof value['manualFallbackOpened'] === 'boolean'
+      ? value['manualFallbackOpened']
+      : false;
+  const recoveryPath =
+    typeof value['recoveryPath'] === 'string' && value['recoveryPath'].trim() !== ''
+      ? value['recoveryPath']
+      : null;
+  const latestCaptchaStage =
+    typeof value['latestCaptchaStage'] === 'string' &&
+    value['latestCaptchaStage'].trim() !== ''
+      ? value['latestCaptchaStage']
+      : null;
+
+  if (
+    automaticRetryAttempted !== true &&
+    automaticRetrySkipped !== true &&
+    manualFallbackOpened !== true &&
+    recoveryPath === null &&
+    latestCaptchaStage === null
+  ) {
+    return null;
+  }
+
+  return {
+    automaticRetryAttempted,
+    automaticRetrySkipped,
+    manualFallbackOpened,
+    recoveryPath,
+    latestCaptchaStage,
+  };
+};
+
 export function ProductScanDiagnostics(props: {
   scan: Pick<ProductScanRecord, 'id' | 'rawResult' | 'steps'> &
     Partial<Pick<ProductScanRecord, 'provider'>>;
@@ -672,6 +727,9 @@ export function ProductScanDiagnostics(props: {
 
   const recordedArtifacts = recordedDiagnostics?.artifacts ?? [];
   const recordedClassification = recordedDiagnostics?.classification ?? null;
+  const recordedRecovery = normalizeRecordedDiagnosticRecovery(
+    recordedClassification?.details.recovery
+  );
 
   if (
     !diagnostics &&
@@ -742,6 +800,30 @@ export function ProductScanDiagnostics(props: {
               <p className='mt-1 text-xs text-muted-foreground'>
                 {recordedClassification.details.reason}
               </p>
+              {recordedRecovery ? (
+                <div className='mt-2 flex flex-wrap gap-2'>
+                  {recordedRecovery.automaticRetryAttempted ? (
+                    <span className='inline-flex items-center rounded-md border border-amber-500/40 px-2 py-0.5 text-[11px] font-medium text-amber-300'>
+                      Automatic retry attempted
+                    </span>
+                  ) : null}
+                  {recordedRecovery.automaticRetrySkipped ? (
+                    <span className='inline-flex items-center rounded-md border border-orange-500/40 px-2 py-0.5 text-[11px] font-medium text-orange-300'>
+                      Automatic retry skipped
+                    </span>
+                  ) : null}
+                  {recordedRecovery.manualFallbackOpened ? (
+                    <span className='inline-flex items-center rounded-md border border-sky-500/40 px-2 py-0.5 text-[11px] font-medium text-sky-300'>
+                      Manual fallback opened
+                    </span>
+                  ) : null}
+                  {typeof recordedRecovery.latestCaptchaStage === 'string' ? (
+                    <span className='inline-flex items-center rounded-md border border-border/60 px-2 py-0.5 text-[11px] font-medium text-muted-foreground'>
+                      Blocked at {formatLabel(recordedRecovery.latestCaptchaStage)}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
           {recordedArtifacts.length > 0 ? (

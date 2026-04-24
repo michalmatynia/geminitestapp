@@ -22,7 +22,7 @@ export async function upsertEmbeddingCollection(
   payload: Partial<AgentTeachingEmbeddingCollectionRecord> & { name: string }
 ): Promise<AgentTeachingEmbeddingCollectionRecord> {
   const id = typeof payload.id === 'string' ? payload.id.trim() : '';
-  if (id) {
+  if (id !== '') {
     const data = await api.patch<AgentTeachingCollectionResponse>(
       `/api/agentcreator/teaching/collections/${id}`,
       payload

@@ -36,14 +36,14 @@ catalogs, and dated plans.
 | What is the node and port contract? | [`./semantic-grammar/README.md`](./semantic-grammar/README.md) |
 | How do path runs behave under lease contention? | [`../platform/ai-paths-resume-vs-handoff.md`](../platform/ai-paths-resume-vs-handoff.md) |
 | How does the Playwright node work? | [`./playwright-node.md`](./playwright-node.md) |
-| How do parameter inference and portable engine flows work? | [`./parameter-inference-workflow.md`](./parameter-inference-workflow.md), [`./portable-engine-receiver-runbook.md`](./portable-engine-receiver-runbook.md) |
+| How do parameter inference and portable engine flows work? | [`./parameter-inference-workflow.md`](./parameter-inference-workflow.md), [`./portable-engine-scaffolding.md`](./portable-engine-scaffolding.md) |
 
 ## Curated Deep Entry Points
 
 Maintained operator/runtime references:
 
 - Parameter inference workflow: [`./parameter-inference-workflow.md`](./parameter-inference-workflow.md)
-- Portable engine receiver runbook: [`./portable-engine-receiver-runbook.md`](./portable-engine-receiver-runbook.md)
+- Portable engine scaffolding: [`./portable-engine-scaffolding.md`](./portable-engine-scaffolding.md)
 - Playwright node reference: [`./playwright-node.md`](./playwright-node.md)
 
 Retained planning and transition baselines:

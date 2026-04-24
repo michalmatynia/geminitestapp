@@ -44,11 +44,6 @@ const CSRF_EXEMPTION_POLICIES = [
     pattern: /^drafts(\/|$)/,
   },
   {
-    id: 'webhook-ingest',
-    reason: 'Webhook-style endpoints must accept third-party callbacks.',
-    pattern: /^ai-paths\/portable-engine\/remediation-webhook(\/|$)/,
-  },
-  {
     id: 'public-campaign-links',
     reason: 'Public email campaign tracking and preference endpoints must accept tokenized requests from email clients and landing pages.',
     pattern: /^filemaker\/campaigns\/(click|open|preferences|unsubscribe)(\/|$)/,

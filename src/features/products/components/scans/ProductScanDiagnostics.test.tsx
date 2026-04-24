@@ -250,7 +250,14 @@ describe('ProductScanDiagnostics', () => {
       classification: {
         kind: 'captcha',
         details: {
-          reason: 'Captcha challenge detected in the recorded HTML.',
+          reason: 'Captcha detected after automatic retry escalated to manual fallback.',
+          recovery: {
+            automaticRetryAttempted: true,
+            automaticRetrySkipped: true,
+            manualFallbackOpened: true,
+            recoveryPath: 'automatic_retry_then_manual_fallback',
+            latestCaptchaStage: 'google_candidates',
+          },
         },
       },
       artifacts: [
@@ -281,6 +288,10 @@ describe('ProductScanDiagnostics', () => {
     );
 
     expect(await screen.findByText('Failure signature: Captcha')).toBeInTheDocument();
+    expect(screen.getByText('Automatic retry attempted')).toBeInTheDocument();
+    expect(screen.getByText('Automatic retry skipped')).toBeInTheDocument();
+    expect(screen.getByText('Manual fallback opened')).toBeInTheDocument();
+    expect(screen.getByText('Blocked at Google Candidates')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Open JSON snapshot' })).toHaveAttribute(
       'href',
       '/api/v2/products/scans/scan-2/diagnostics/stage-000-sync.enter.parsed.json'

@@ -37,6 +37,7 @@ import type {
   FilemakerMailAccountDraft,
   FilemakerMailAccountStatus,
   FilemakerMailComposeInput,
+  FilemakerMailFlagPatch,
   FilemakerMailFolderRole,
   FilemakerMailFolderSummary,
   FilemakerMailMessage,
@@ -50,7 +51,14 @@ import type {
   FilemakerMailThreadDetail,
 } from '../types';
 
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+
 import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
+import {
+  detectFilemakerCampaignReplyContext,
+  recordFilemakerCampaignReply,
+} from './campaign-reply-detector';
+import { filterFilemakerMailSuppressionEntries } from './campaign-suppression';
 import { createImapClient, listImapMailboxes } from './mail/mail-imap';
 import { parseMailSource } from './mail/mail-processor';
 import * as storage from './mail/mail-storage';
@@ -372,8 +380,12 @@ const syncMailboxMessages = async (input: {
       input.account.id,
       input.mailboxPath
     );
+    const uidValidityChanged =
+      Boolean(existingSyncState?.uidValidity) &&
+      existingSyncState?.uidValidity !== uidValidity;
     const isIncremental =
       Boolean(existingSyncState) &&
+      !uidValidityChanged &&
       existingSyncState?.uidValidity === uidValidity &&
       (existingSyncState?.lastUid ?? 0) > 0;
 
@@ -384,7 +396,7 @@ const syncMailboxMessages = async (input: {
     let fetchedMessageCount = 0;
     let insertedMessageCount = 0;
     let updatedMessageCount = 0;
-    let highestSeenUid = existingSyncState?.lastUid ?? 0;
+    let highestSeenUid = uidValidityChanged ? 0 : existingSyncState?.lastUid ?? 0;
 
     if (messageUids.length > 0) {
       const limitedUids = messageUids.slice(-input.account.maxMessagesPerSync);
@@ -468,18 +480,54 @@ const syncMailboxMessages = async (input: {
         const providerThreadId = normalizeString(entry.threadId) || null;
         const anchorParticipants =
           participantSummary.length > 0 ? participantSummary : allParticipants;
+        const anchorAddress = mailServerUtils.pickAnchorAddress(anchorParticipants);
+        const inReplyToHeader = normalizeString(parsed.inReplyTo ?? entry.envelope?.inReplyTo) || null;
+        const referenceIds = Array.from(
+          new Set(
+            (parsed.references ?? mailServerUtils.parseReferencesHeader(entry.envelope) ?? [])
+              .concat(inReplyToHeader ? [inReplyToHeader] : [])
+              .filter(Boolean)
+          )
+        );
+
+        let resolvedThread: FilemakerMailThread | null = null;
+        if (!existingMessage) {
+          if (providerThreadId) {
+            resolvedThread = await storage.findMailThreadByProviderId(input.account.id, providerThreadId);
+          }
+          if (!resolvedThread && referenceIds.length > 0) {
+            resolvedThread = await storage.findMailThreadByReferences(input.account.id, referenceIds);
+          }
+          if (!resolvedThread) {
+            resolvedThread = await storage.findMailThreadBySubjectAndAnchor(
+              input.account.id,
+              normalizedSubject,
+              anchorAddress
+            );
+          }
+        }
+
         const threadId =
           existingMessage?.threadId ??
+          resolvedThread?.id ??
           mailServerUtils.buildThreadId({
             accountId: input.account.id,
             providerThreadId,
             normalizedSubject,
-            anchorAddress: mailServerUtils.pickAnchorAddress(anchorParticipants),
+            anchorAddress,
           });
-        const currentThread = await storage.getMailThreadById(threadId);
+        const currentThread = resolvedThread ?? (await storage.getMailThreadById(threadId));
         const attachmentIdBase = buildAttachmentIdBase(
           providerMessageId ?? `${input.mailboxPath}-${entry.uid}`
         );
+
+        let campaignReplyContext = existingMessage?.campaignContext ?? null;
+        if (!campaignReplyContext && direction === 'inbound' && referenceIds.length > 0) {
+          campaignReplyContext = await detectFilemakerCampaignReplyContext({
+            accountId: input.account.id,
+            references: referenceIds,
+          });
+        }
 
         const nextMessage: FilemakerMailMessage = {
           id: existingMessage?.id ?? `filemaker-mail-message-${randomUUID()}`,
@@ -505,15 +553,21 @@ const syncMailboxMessages = async (input: {
           flags,
           textBody,
           htmlBody,
-          inReplyTo: normalizeString(parsed.inReplyTo ?? entry.envelope?.inReplyTo) || null,
-          references:
-            parsed.references?.filter(Boolean) ??
-            mailServerUtils.parseReferencesHeader(entry.envelope),
+          inReplyTo: inReplyToHeader,
+          references: referenceIds,
           attachments: toMessageAttachments(parsed.attachments, attachmentIdBase),
           relatedPersonIds: relatedLinks.personIds,
           relatedOrganizationIds: relatedLinks.organizationIds,
+          campaignContext: campaignReplyContext,
         };
         await storage.upsertMailMessage(nextMessage);
+
+        if (!existingMessage && campaignReplyContext && direction === 'inbound') {
+          void recordFilemakerCampaignReply({
+            campaignContext: campaignReplyContext,
+            replyMessage: nextMessage,
+          }).catch(() => {});
+        }
 
         const wasUnread =
           existingMessage?.direction === 'inbound' && !existingMessage.flags.seen ? 1 : 0;
@@ -538,6 +592,7 @@ const syncMailboxMessages = async (input: {
             ? subject
             : (currentThread?.subject ?? subject),
           normalizedSubject,
+          anchorAddress: currentThread?.anchorAddress || anchorAddress,
           snippet: shouldRefreshThreadHeadline
             ? snippet
             : (currentThread?.snippet ?? snippet),
@@ -562,6 +617,8 @@ const syncMailboxMessages = async (input: {
           lastMessageAt: shouldRefreshThreadHeadline
             ? messageTimestamp
             : (currentThread?.lastMessageAt ?? messageTimestamp),
+          campaignContext:
+            campaignReplyContext ?? currentThread?.campaignContext ?? null,
         };
         await storage.upsertMailThread(nextThread);
         input.touchedThreadIds.add(threadId);
@@ -646,6 +703,7 @@ export const upsertFilemakerMailAccount = async (
     folderAllowlist: parseFilemakerMailboxAllowlistInput(draft.folderAllowlist.join(',')),
     initialSyncLookbackDays: draft.initialSyncLookbackDays,
     maxMessagesPerSync: draft.maxMessagesPerSync,
+    pushEnabled: draft.pushEnabled ?? existing?.pushEnabled ?? true,
     lastSyncedAt: existing?.lastSyncedAt ?? null,
     lastSyncError: existing?.lastSyncError ?? null,
   };
@@ -780,7 +838,13 @@ export const syncFilemakerMailAccount = async (
 
   try {
     const secrets = await readSecretSettingValues([imapPasswordKey]);
-    const client = createImapClient(account, secrets[imapPasswordKey]);
+    const imapPassword = secrets[imapPasswordKey];
+    if (!imapPassword) {
+      throw configurationError(
+        `IMAP password not configured for ${account.emailAddress}. Set it on the mail account before syncing.`
+      );
+    }
+    const client = createImapClient(account, imapPassword);
     const touchedThreadIds = new Set<string>();
     let foldersScanned = defaultFolders;
     let fetchedMessageCount = 0;
@@ -954,6 +1018,19 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   const cc = dedupeFilemakerMailParticipants(input.cc ?? []);
   const bcc = dedupeFilemakerMailParticipants(input.bcc ?? []);
   const recipientSummary = dedupeFilemakerMailParticipants([...to, ...cc, ...bcc]);
+
+  if (!input.overrideSuppression) {
+    const suppressed = await filterFilemakerMailSuppressionEntries(
+      recipientSummary.map((participant) => participant.address)
+    );
+    if (suppressed.length > 0) {
+      throw validationError(
+        `Recipient(s) are on the suppression list: ${suppressed
+          .map((entry) => `${entry.emailAddress} (${entry.reason})`)
+          .join(', ')}. Pass overrideSuppression=true to force-send.`
+      );
+    }
+  }
   const normalizedSubject = normalizeFilemakerMailSubject(input.subject);
   const bodyText = buildFilemakerMailPlainText(input.bodyHtml);
   const snippet = buildFilemakerMailSnippet(bodyText, input.bodyHtml);
@@ -992,6 +1069,11 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
   await storage.upsertOutboxEntry(queuedOutbox);
 
   const transport = smtp.createSmtpTransport(account, password ?? undefined);
+  const attachments = (input.attachments ?? []).map((attachment) => ({
+    filename: attachment.fileName,
+    contentType: attachment.contentType,
+    content: Buffer.from(attachment.dataBase64, 'base64'),
+  }));
   const sendResult = await transport.sendMail({
     from: account.fromName
       ? `"${account.fromName}" <${account.emailAddress}>`
@@ -1004,7 +1086,15 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     subject: normalizeString(input.subject),
     text: bodyText || undefined,
     html: input.bodyHtml,
+    attachments: attachments.length > 0 ? attachments : undefined,
   });
+  const rawMessage = (sendResult as unknown as { message?: Buffer | string }).message;
+  if (rawMessage) {
+    void appendFilemakerMailToSentFolder({
+      account,
+      rawMessage,
+    }).catch(() => {});
+  }
 
   const message: FilemakerMailMessage = {
     id: `filemaker-mail-message-${randomUUID()}`,
@@ -1046,6 +1136,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     attachments: [],
     relatedPersonIds: personIds,
     relatedOrganizationIds: organizationIds,
+    campaignContext: input.campaignContext ?? null,
   };
   await storage.upsertMailMessage(message);
 
@@ -1059,6 +1150,9 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     providerThreadId: existingThread?.providerThreadId ?? null,
     subject: normalizeString(input.subject) || normalizedSubject,
     normalizedSubject,
+    anchorAddress:
+      existingThread?.anchorAddress ||
+      mailServerUtils.pickAnchorAddress(recipientSummary),
     snippet,
     participantSummary: recipientSummary,
     relatedPersonIds: personIds,
@@ -1066,6 +1160,7 @@ export const sendFilemakerMailMessage = async (input: FilemakerMailComposeInput)
     unreadCount: existingThread?.unreadCount ?? 0,
     messageCount: (existingThread?.messageCount ?? 0) + 1,
     lastMessageAt: now,
+    campaignContext: input.campaignContext ?? existingThread?.campaignContext ?? null,
   };
   await storage.upsertMailThread(thread);
 
@@ -1107,6 +1202,204 @@ export const markFilemakerMailThreadRead = async (
   };
   await storage.upsertMailThread(updatedThread);
   return updatedThread;
+};
+
+const flagKeyToImapName = (key: keyof FilemakerMailFlagPatch): string => {
+  switch (key) {
+    case 'seen':
+      return '\\Seen';
+    case 'flagged':
+      return '\\Flagged';
+    case 'answered':
+      return '\\Answered';
+    case 'deleted':
+      return '\\Deleted';
+  }
+};
+
+export const updateFilemakerMailMessageFlags = async (
+  messageId: string,
+  patch: FilemakerMailFlagPatch
+): Promise<FilemakerMailMessage> => {
+  const mongo = await getMongoDb();
+  const message = await mongo
+    .collection<FilemakerMailMessage & { _id: string }>('filemaker_mail_messages')
+    .findOne({ id: messageId });
+  if (!message) throw validationError('Message not found.');
+  const account = await getFilemakerMailAccount(message.accountId);
+  const adds: string[] = [];
+  const removes: string[] = [];
+  const nextFlags = { ...message.flags };
+  (Object.keys(patch) as Array<keyof FilemakerMailFlagPatch>).forEach((key) => {
+    const next = patch[key];
+    if (typeof next !== 'boolean') return;
+    const current = message.flags[key] ?? false;
+    if (next === current) return;
+    nextFlags[key] = next;
+    const flagName = flagKeyToImapName(key);
+    if (next) adds.push(flagName);
+    else removes.push(flagName);
+  });
+
+  if (typeof message.providerUid === 'number' && (adds.length > 0 || removes.length > 0)) {
+    const passwordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'imap_password');
+    const secrets = await readSecretSettingValues([passwordKey]);
+    const password = secrets[passwordKey];
+    if (password) {
+      const client = createImapClient(account, password);
+      try {
+        await client.connect();
+        const lock = await client.getMailboxLock(message.mailboxPath);
+        try {
+          if (adds.length > 0) {
+            await client.messageFlagsAdd({ uid: message.providerUid }, adds, { uid: true });
+          }
+          if (removes.length > 0) {
+            await client.messageFlagsRemove({ uid: message.providerUid }, removes, { uid: true });
+          }
+        } finally {
+          lock.release();
+        }
+      } finally {
+        try {
+          await client.logout();
+        } catch {
+          client.close();
+        }
+      }
+    }
+  }
+
+  const updatedMessage: FilemakerMailMessage = {
+    ...message,
+    flags: nextFlags,
+    updatedAt: new Date().toISOString(),
+  };
+  await storage.upsertMailMessage(updatedMessage);
+
+  const thread = await storage.getMailThreadById(message.threadId);
+  if (thread) {
+    const messages = await storage.listMailMessagesByThreadId(message.threadId);
+    const unreadCount = messages.filter(
+      (candidate) => candidate.direction === 'inbound' && !candidate.flags.seen
+    ).length;
+    await storage.upsertMailThread({
+      ...thread,
+      unreadCount,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return updatedMessage;
+};
+
+const resolveMailboxPathByRole = async (
+  client: ReturnType<typeof createImapClient>,
+  role: FilemakerMailFolderRole
+): Promise<string | null> => {
+  const mailboxes = await listImapMailboxes(client);
+  const match = mailboxes.find(
+    (mailbox) => mailServerUtils.normalizeMailboxRole(mailbox) === role
+  );
+  return match?.path ?? null;
+};
+
+export const moveFilemakerMailMessage = async (input: {
+  messageId: string;
+  targetMailboxPath?: string | null;
+  targetRole?: FilemakerMailFolderRole | null;
+}): Promise<FilemakerMailMessage> => {
+  const mongo = await getMongoDb();
+  const message = await mongo
+    .collection<FilemakerMailMessage & { _id: string }>('filemaker_mail_messages')
+    .findOne({ id: input.messageId });
+  if (!message) throw validationError('Message not found.');
+  if (typeof message.providerUid !== 'number') {
+    throw validationError('Message has no provider UID and cannot be moved.');
+  }
+  const account = await getFilemakerMailAccount(message.accountId);
+  const passwordKey = mailServerUtils.buildAccountSecretSettingKey(account.id, 'imap_password');
+  const secrets = await readSecretSettingValues([passwordKey]);
+  const password = secrets[passwordKey];
+  if (!password) {
+    throw configurationError(`IMAP password not configured for ${account.emailAddress}.`);
+  }
+
+  const client = createImapClient(account, password);
+  let resolvedPath = input.targetMailboxPath ?? null;
+  try {
+    await client.connect();
+    if (!resolvedPath && input.targetRole) {
+      resolvedPath = await resolveMailboxPathByRole(client, input.targetRole);
+    }
+    if (!resolvedPath) {
+      throw validationError('Target mailbox not found.');
+    }
+    const lock = await client.getMailboxLock(message.mailboxPath);
+    try {
+      await client.messageMove({ uid: message.providerUid }, resolvedPath, { uid: true });
+    } finally {
+      lock.release();
+    }
+  } finally {
+    try {
+      await client.logout();
+    } catch {
+      client.close();
+    }
+  }
+
+  const updatedMessage: FilemakerMailMessage = {
+    ...message,
+    mailboxPath: resolvedPath,
+    mailboxRole: input.targetRole ?? inferMailboxRoleFromPath(resolvedPath),
+    updatedAt: new Date().toISOString(),
+  };
+  await storage.upsertMailMessage(updatedMessage);
+
+  const threadMessages = await storage.listMailMessagesByThreadId(message.threadId);
+  const representative = threadMessages[threadMessages.length - 1] ?? updatedMessage;
+  const thread = await storage.getMailThreadById(message.threadId);
+  if (thread) {
+    await storage.upsertMailThread({
+      ...thread,
+      mailboxPath: representative.mailboxPath,
+      mailboxRole: representative.mailboxRole,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  return updatedMessage;
+};
+
+export const appendFilemakerMailToSentFolder = async (input: {
+  account: FilemakerMailAccount;
+  rawMessage: string | Buffer;
+}): Promise<void> => {
+  const passwordKey = mailServerUtils.buildAccountSecretSettingKey(input.account.id, 'imap_password');
+  const secrets = await readSecretSettingValues([passwordKey]);
+  const password = secrets[passwordKey];
+  if (!password) return;
+  const client = createImapClient(input.account, password);
+  try {
+    await client.connect();
+    const sentPath = await resolveMailboxPathByRole(client, 'sent');
+    if (!sentPath) return;
+    await client.append(sentPath, input.rawMessage, ['\\Seen']);
+  } catch (error) {
+    await logSystemEvent({
+      level: 'warn',
+      source: 'filemaker-mail-sent-append',
+      message: `Failed to append sent message for ${input.account.emailAddress}`,
+      error,
+    }).catch(() => {});
+  } finally {
+    try {
+      await client.logout();
+    } catch {
+      client.close();
+    }
+  }
 };
 
 export const deleteFilemakerMailThread = async (threadId: string): Promise<void> => {

@@ -39,7 +39,7 @@ export default function AuthSettingsPage(): React.JSX.Element {
       />
 
       <MfaSettings
-        enabled={!!ctrl.userSecurityQuery.data?.mfaEnabled}
+        enabled={Boolean(ctrl.userSecurityQuery.data?.mfaEnabled)}
         onSetup={() => {}}
         onVerify={() => {}}
         onDisable={() => {}}

@@ -8,8 +8,8 @@ import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { FormModal } from '@/shared/ui/FormModal';
 
+import { EditProductSkeletonContent } from './EditProductSkeletonContent';
 import {
-  EditProductSkeletonContent,
   ProductFormModalBody,
   ProductFormModalBridge,
 } from './ProductFormModalBody';

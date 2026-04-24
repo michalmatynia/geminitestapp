@@ -16,6 +16,7 @@ export {
   deleteAiPathsSettings,
   getAiPathsSetting,
   getAiPathsSettings,
+  ensureCanonicalStarterWorkflowSettingsForPathIds,
   inspectAiPathsSettingsMaintenance,
   listAiPathsSettings,
   upsertAiPathsSetting,

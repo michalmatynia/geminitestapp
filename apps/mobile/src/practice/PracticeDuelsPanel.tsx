@@ -1,7 +1,8 @@
 import { View, Text } from 'react-native';
 import { type KangurMobileLocale, type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { KangurMobileInsetPanel as InsetPanel } from '../shared/KangurMobileUi';
-import { ActionButton, KangurMobilePendingActionButton, LinkButton } from './duels-primitives';
+import { ActionButton, KangurMobilePendingActionButton, LinkButton } from '../duels/duels-primitives/BaseComponents';
+
 import { formatPracticeDuelRecord } from './practice-utils';
 import { type useKangurMobilePracticeDuels } from './useKangurMobilePracticeDuels';
 

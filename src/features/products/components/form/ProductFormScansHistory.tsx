@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
+import type { ProductScanAmazonCandidatePreview } from '@/features/products/lib/product-scan-amazon-candidates';
 import { ProductFormScansHistoryHeader } from './ProductFormScansHistoryHeader';
 import { ProductFormScansHistoryList } from './ProductFormScansHistoryList';
 import type { Supplier1688FormBindings, ProductFormBindings } from './ProductFormScans.types';
@@ -26,6 +27,12 @@ type ProductFormScansHistoryProps = {
   clearBlockedScanReviewed: (id: string | null | undefined) => void;
   supplier1688FormBindings: Supplier1688FormBindings;
   productFormBindings: ProductFormBindings;
+  onExtractAmazonCandidate: (
+    scan: ProductScanRecord,
+    candidate: ProductScanAmazonCandidatePreview
+  ) => Promise<void>;
+  extractingAmazonCandidateScanId: string | null;
+  extractingAmazonCandidateUrl: string | null;
 };
 
 export function ProductFormScansHistory({
@@ -48,6 +55,9 @@ export function ProductFormScansHistory({
   clearBlockedScanReviewed,
   supplier1688FormBindings,
   productFormBindings,
+  onExtractAmazonCandidate,
+  extractingAmazonCandidateScanId,
+  extractingAmazonCandidateUrl,
 }: ProductFormScansHistoryProps): React.JSX.Element {
   return (
     <div className='space-y-4'>
@@ -75,6 +85,9 @@ export function ProductFormScansHistory({
         clearBlockedScanReviewed={clearBlockedScanReviewed}
         supplier1688FormBindings={supplier1688FormBindings}
         productFormBindings={productFormBindings}
+        onExtractAmazonCandidate={onExtractAmazonCandidate}
+        extractingAmazonCandidateScanId={extractingAmazonCandidateScanId}
+        extractingAmazonCandidateUrl={extractingAmazonCandidateUrl}
       />
     </div>
   );

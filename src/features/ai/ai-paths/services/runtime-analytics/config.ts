@@ -2,7 +2,7 @@ export const KEY_PREFIX = 'ai_paths:runtime:analytics:v1';
 export const RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export const keyRuns = (
-  status: 'all' | 'queued' | 'started' | 'completed' | 'failed' | 'canceled' | 'dead_lettered'
+  status: 'all' | 'queued' | 'started' | 'completed' | 'failed' | 'canceled'
 ): string => `${KEY_PREFIX}:runs:${status}`;
 export const keyDurations = (): string => `${KEY_PREFIX}:runs:durations`;
 export const keyNodes = (status: string): string => `${KEY_PREFIX}:nodes:${status}`;

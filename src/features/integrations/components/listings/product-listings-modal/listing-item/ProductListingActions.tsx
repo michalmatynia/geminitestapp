@@ -20,6 +20,9 @@ import {
   resolveDuplicateLinkedFromListing,
   resolveDuplicateLinkedFromRunResult,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
+import {
+  resolveDisplayedTraderaListingStatus,
+} from '@/features/integrations/utils/tradera-listing-status';
 import type { ImageRetryPreset } from '@/shared/contracts/integrations/base';
 import { Button, DropdownMenuItem, Label, Input } from '@/shared/ui/primitives.public';
 import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
@@ -57,6 +60,32 @@ const isStaleQueuedTraderaExecution = (queuedAt: string | null): boolean => {
     !Number.isFinite(timestamp) ||
     Date.now() - timestamp > STALE_TRADERA_QUEUE_THRESHOLD_MS
   );
+};
+
+const resolveQueuedTraderaSyncTriggerLabel = ({
+  isQueuedSyncFieldsOnly,
+  isQueuedSyncHeaded,
+  isQueuedSyncHeadless,
+  isQueuedSync,
+  isSyncingCurrentListing,
+  pendingAction,
+}: {
+  isQueuedSyncFieldsOnly: boolean;
+  isQueuedSyncHeaded: boolean;
+  isQueuedSyncHeadless: boolean;
+  isQueuedSync: boolean;
+  isSyncingCurrentListing: boolean;
+  pendingAction: string;
+}): string => {
+  if (isQueuedSyncFieldsOnly) return 'Queued fields-only sync';
+  if (isQueuedSyncHeaded) return 'Queued headed sync';
+  if (isQueuedSyncHeadless) return 'Queued headless sync';
+  if (isQueuedSync) return 'Queued sync';
+  if (pendingAction === 'relist') return 'Relist queued';
+  if (pendingAction === 'move_to_unsold') return 'End listing queued';
+  if (pendingAction === 'check_status') return 'Status check queued';
+  if (isSyncingCurrentListing) return 'Queuing sync...';
+  return 'Sync with Tradera';
 };
 
 type ProductListingActionsProps = ProductListingWithDetailsProps;
@@ -104,6 +133,17 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
   const liveTraderaExecution = useTraderaLiveExecution(isTraderaListing ? listing : null);
 
   const normalizedListingStatus = (listing.status ?? '').trim().toLowerCase();
+  const displayedTraderaListingStatus = isTraderaListing
+    ? resolveDisplayedTraderaListingStatus({
+        status: listing.status,
+        marketplaceData: listing.marketplaceData,
+      })
+    : readString(listing.status);
+  const normalizedDisplayedTraderaListingStatus = (
+    displayedTraderaListingStatus ?? listing.status ?? ''
+  )
+    .trim()
+    .toLowerCase();
   const isSuccessStatus = ['active', 'success', 'completed', 'listed', 'ok'].includes(
     normalizedListingStatus
   );
@@ -197,15 +237,27 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
     isQueuedTraderaSync && persistedTraderaPendingBrowserMode === 'headless' && !persistedTraderaPendingSkipImages;
   const isQueuedTraderaSyncFieldsOnly =
     isQueuedTraderaSync && persistedTraderaPendingSkipImages;
+  const queuedTraderaSyncTriggerLabel = resolveQueuedTraderaSyncTriggerLabel({
+    isQueuedSyncFieldsOnly: isQueuedTraderaSyncFieldsOnly,
+    isQueuedSyncHeaded: isQueuedTraderaSyncHeaded,
+    isQueuedSyncHeadless: isQueuedTraderaSyncHeadless,
+    isQueuedSync: isQueuedTraderaSync,
+    isSyncingCurrentListing,
+    pendingAction: persistedTraderaPendingAction,
+  });
   const syncRetryPreferred = persistedTraderaPendingAction === 'sync' || traderaLastExecutionAction === 'sync';
   const isQueuedTraderaMoveToUnsold =
     !isMovingToUnsoldCurrentListing &&
     isPersistedTraderaQueueState &&
     persistedTraderaPendingAction === 'move_to_unsold';
+  const canSyncTraderaListing =
+    isTraderaBrowserListing &&
+    Boolean(listing.externalListingId || traderaListingUrl) &&
+    !['ended', 'unsold', 'sold', 'removed'].includes(normalizedDisplayedTraderaListingStatus);
   const canMoveTraderaListingToUnsold =
     isTraderaBrowserListing &&
     Boolean(listing.externalListingId || traderaListingUrl) &&
-    !['unsold', 'ended', 'sold', 'removed'].includes(normalizedListingStatus);
+    !['unsold', 'ended', 'sold', 'removed'].includes(normalizedDisplayedTraderaListingStatus);
   const isQueuedTraderaHeadless =
     !isRelistingCurrentListing &&
     isPersistedTraderaQueueState &&
@@ -384,35 +436,12 @@ export function ProductListingActions(props: ProductListingActionsProps): React.
           )}
           {isTraderaBrowserListing && (
             <ActionMenu
-              trigger={
-                isQueuedTraderaSyncFieldsOnly
-                  ? 'Queued fields-only sync'
-                  : isQueuedTraderaSyncHeaded
-                    ? 'Queued headed sync'
-                    : isQueuedTraderaSyncHeadless
-                      ? 'Queued headless sync'
-                      : isQueuedTraderaSync
-                        ? 'Queued sync'
-                        : isSyncingCurrentListing
-                          ? 'Queuing sync...'
-                          : 'Sync with Tradera'
-              }
-              ariaLabel={
-                isQueuedTraderaSyncFieldsOnly
-                  ? 'Queued fields-only sync'
-                  : isQueuedTraderaSyncHeaded
-                    ? 'Queued headed sync'
-                    : isQueuedTraderaSyncHeadless
-                      ? 'Queued headless sync'
-                      : isQueuedTraderaSync
-                        ? 'Queued sync'
-                        : isSyncingCurrentListing
-                          ? 'Queuing sync'
-                          : 'Sync with Tradera'
-              }
+              trigger={queuedTraderaSyncTriggerLabel}
+              ariaLabel={queuedTraderaSyncTriggerLabel}
               variant='outline'
               size='sm'
               disabled={
+                !canSyncTraderaListing ||
                 isSyncingCurrentListing ||
                 isLiveTraderaRunActive ||
                 isPersistedTraderaQueueState ||

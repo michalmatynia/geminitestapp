@@ -10,10 +10,7 @@ import {
 import {
   cancelAiPathRun,
   getAiPathRun,
-  handoffAiPathRun,
   listAiPathRuns,
-  resumeAiPathRun,
-  retryAiPathRunNode,
 } from '@/shared/lib/ai-paths/api';
 import {
   aiPathRunRecordSchema,
@@ -43,11 +40,6 @@ const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   queued: 'queued',
   queue: 'queued',
   running: 'running',
-  blocked_on_lease: 'blocked_on_lease',
-  blocked: 'blocked_on_lease',
-  paused: 'paused',
-  handoff_ready: 'handoff_ready',
-  handoff: 'handoff_ready',
   completed: 'completed',
   complete: 'completed',
   success: 'completed',
@@ -56,8 +48,6 @@ const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   error: 'failed',
   canceled: 'canceled',
   cancelled: 'canceled',
-  dead_lettered: 'dead_lettered',
-  deadlettered: 'dead_lettered',
 };
 
 const asTrimmedString = (value: unknown): string | null => {
@@ -80,7 +70,7 @@ const asIsoTimestamp = (value: unknown): string | null => {
 const normalizeRunStatus = (value: unknown): AiPathRunRecord['status'] | null => {
   const normalized = asTrimmedString(value)?.toLowerCase();
   if (!normalized) return null;
-  return RUN_STATUS_ALIASES[normalized] ?? null;
+  return RUN_STATUS_ALIASES[normalized] ?? 'failed';
 };
 
 const coerceRunRecord = (value: unknown): AiPathRunRecord | null => {
@@ -124,7 +114,6 @@ const coerceRunRecord = (value: unknown): AiPathRunRecord | null => {
         ? raw['maxAttempts']
         : null,
     nextRetryAt: asIsoTimestamp(raw['nextRetryAt']),
-    deadLetteredAt: asIsoTimestamp(raw['deadLetteredAt']),
     meta: raw['meta'],
     graph: raw['graph'],
     runtimeState: raw['runtimeState'],
@@ -387,10 +376,7 @@ export function useAiPathsRunHistory({
       if (!d?.ok) return false;
       const runs: AiPathRunRecord[] = d.data?.runs ?? [];
       const hasActive: boolean = runs.some(
-        (run: AiPathRunRecord): boolean =>
-          run.status === 'queued' ||
-          run.status === 'running' ||
-          run.status === 'blocked_on_lease'
+        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
       return hasActive ? 5000 : false;
     },
@@ -446,35 +432,6 @@ export function useAiPathsRunHistory({
     [runHistoryActions, toast]
   );
 
-  const handleResumeRun = useCallback(
-    async (runId: string, mode: 'resume' | 'replay'): Promise<void> => {
-      const response = await resumeAiPathRun(runId, mode);
-      if (!response.ok) {
-        toast(response.error || 'Failed to resume run.', { variant: 'error' });
-        return;
-      }
-      toast(mode === 'resume' ? 'Run resumed.' : 'Run replay queued.', {
-        variant: 'success',
-      });
-      void refetchRuns();
-    },
-    [refetchRuns, toast]
-  );
-
-  const handleHandoffRun = useCallback(
-    async (runId: string, reason?: string): Promise<boolean> => {
-      const response = await handoffAiPathRun(runId, reason ? { reason } : undefined);
-      if (!response.ok) {
-        toast(response.error || 'Failed to mark run handoff-ready.', { variant: 'error' });
-        return false;
-      }
-      toast('Run marked handoff-ready.', { variant: 'success' });
-      void refetchRuns();
-      return true;
-    },
-    [refetchRuns, toast]
-  );
-
   const handleCancelRun = useCallback(
     async (runId: string): Promise<void> => {
       const response = await cancelAiPathRun(runId);
@@ -495,32 +452,6 @@ export function useAiPathsRunHistory({
     [refetchRuns, toast]
   );
 
-  const handleRetryRunNode = useCallback(
-    async (runId: string, nodeId: string): Promise<void> => {
-      const response = await retryAiPathRunNode(runId, nodeId);
-      if (!response.ok) {
-        toast(response.error || 'Failed to queue node retry.', { variant: 'error' });
-        return;
-      }
-      toast('Node retry queued.', { variant: 'success' });
-      void refetchRuns();
-    },
-    [refetchRuns, toast]
-  );
-
-  const handleRequeueDeadLetter = useCallback(
-    async (runId: string): Promise<void> => {
-      const response = await resumeAiPathRun(runId, 'replay');
-      if (!response.ok) {
-        toast(response.error || 'Failed to requeue run.', { variant: 'error' });
-        return;
-      }
-      toast('Dead-letter run requeued.', { variant: 'success' });
-      void refetchRuns();
-    },
-    [refetchRuns, toast]
-  );
-
   useEffect(() => {
     runHistoryActions.setOpenRunDetailHandler((runId: string): void => {
       void handleOpenRunDetail(runId);
@@ -535,21 +466,13 @@ export function useAiPathsRunHistory({
       refreshRuns: async (): Promise<void> => {
         await refetchRuns();
       },
-      resumeRun: handleResumeRun,
-      handoffRun: handleHandoffRun,
-      retryRunNode: handleRetryRunNode,
       cancelRun: handleCancelRun,
-      requeueDeadLetter: handleRequeueDeadLetter,
     });
     return () => {
       runHistoryActions.setRunOperationHandlers(null);
     };
   }, [
     handleCancelRun,
-    handleHandoffRun,
-    handleRequeueDeadLetter,
-    handleResumeRun,
-    handleRetryRunNode,
     refetchRuns,
     runHistoryActions,
   ]);

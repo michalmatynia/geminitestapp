@@ -4,7 +4,6 @@ export const TERMINAL_AI_PATH_RUN_STATUSES = [
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ] as const satisfies readonly AiPathRunStatus[];
 
 export type TerminalAiPathRunStatus = (typeof TERMINAL_AI_PATH_RUN_STATUSES)[number];

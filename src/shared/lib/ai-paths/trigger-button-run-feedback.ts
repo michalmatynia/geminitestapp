@@ -49,20 +49,15 @@ const TERMINAL_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const RUN_FEEDBACK_STATUSES = new Set<TriggerButtonRunFeedbackStatus>([
   'waiting',
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const TRIGGER_BUTTON_RUN_FEEDBACK_PRESENTATIONS: Record<
@@ -87,13 +82,9 @@ const TRIGGER_BUTTON_RUN_FEEDBACK_PRESENTATIONS: Record<
     badgeClassName:
       'border-cyan-500/40 bg-cyan-500/20 text-cyan-200 hover:bg-cyan-500/25',
   },
-  blocked_on_lease: { label: 'Awaiting resource', variant: 'warning' },
-  handoff_ready: { label: 'Ready for review', variant: 'info' },
-  paused: { label: 'Paused', variant: 'warning' },
   completed: { label: 'Completed', variant: 'success' },
   failed: { label: 'Failed', variant: 'error' },
   canceled: { label: 'Canceled', variant: 'warning' },
-  dead_lettered: { label: 'Failed (max retries)', variant: 'error' },
 };
 
 export const resolveTriggerButtonRunFeedbackPresentation = (

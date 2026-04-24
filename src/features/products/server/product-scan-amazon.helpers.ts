@@ -15,6 +15,26 @@ export const normalizeAmazonAsin = (value: unknown): string | null => {
   return /^[A-Z0-9]{10}$/.test(normalized) ? normalized : null;
 };
 
+const AMAZON_ASIN_SHORTCUT_MARKETPLACE_ORIGINS = [
+  'https://www.amazon.com',
+  'https://www.amazon.co.uk',
+  'https://www.amazon.de',
+  'https://www.amazon.fr',
+  'https://www.amazon.nl',
+  'https://www.amazon.pl',
+] as const;
+
+export const buildAmazonDirectCandidateUrlsFromAsin = (value: unknown): string[] => {
+  const normalizedAsin = normalizeAmazonAsin(value);
+  if (normalizedAsin === null) {
+    return [];
+  }
+
+  return AMAZON_ASIN_SHORTCUT_MARKETPLACE_ORIGINS.map(
+    (origin) => `${origin}/dp/${normalizedAsin}`
+  );
+};
+
 export type AmazonAsinResolution = {
   scanStatus: ProductScanStatus;
   asinUpdateStatus: ProductScanAsinUpdateStatus;

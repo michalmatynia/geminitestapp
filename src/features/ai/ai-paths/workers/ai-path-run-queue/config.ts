@@ -1,5 +1,3 @@
-import { resolveAiPathsStaleRunningCleanupIntervalMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
-
 import { parseEnvNumber } from '../ai-path-run-queue-utils';
 
 export const AI_PATH_RUN_QUEUE_NAME = 'ai-path-run';
@@ -21,8 +19,6 @@ export const ORPHAN_QUEUED_RECOVERY_MIN_AGE_MS = parseEnvNumber(
   60_000,
   1_000
 );
-
-export const RECOVERY_REPEAT_MS = resolveAiPathsStaleRunningCleanupIntervalMs();
 
 export const REQUIRE_DURABLE_QUEUE =
   process.env['AI_PATHS_REQUIRE_DURABLE_QUEUE'] === 'true' ||

@@ -140,9 +140,10 @@ export async function synchronizeAmazonTriageReady({
 
   const currentProvider = resolveAmazonImageSearchProvider(scan.rawResult, scannerSettings);
   const imageSearchPageUrl = resolveAmazonImageSearchPageUrl(scan.rawResult, scannerSettings);
-  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
-    resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
+  const amazonRuntimeKey = resolveAmazonProductScanRuntimeKey(
+    toRecord(scan.rawResult)?.['runtimeKey']
   );
+  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(amazonRuntimeKey);
   const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
   const probeEvaluatorConfig = await resolveAmazonProbeEvaluatorConfig(scannerSettings);
   const triageBaselineCandidates =
@@ -260,6 +261,7 @@ export async function synchronizeAmazonTriageReady({
             rawResult: scan.rawResult,
             scannerSettings,
             currentProvider,
+            imageCandidates: scan.imageCandidates,
           })
         : null;
 
@@ -273,6 +275,7 @@ export async function synchronizeAmazonTriageReady({
         scannerEngineRequestOptions,
         actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
         actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+        runtimeKey: amazonRuntimeKey,
       });
       const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
       const providerHistory = resolveAmazonImageSearchProviderHistory(
@@ -407,6 +410,7 @@ export async function synchronizeAmazonTriageReady({
         scannerEngineRequestOptions,
         actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
         actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+        runtimeKey: amazonRuntimeKey,
       });
       const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
       const providerHistory = resolveAmazonImageSearchProviderHistory(

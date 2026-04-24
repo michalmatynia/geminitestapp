@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   useProductFormCustomFieldsMock: vi.fn(),
   useIntegrationsWithConnectionsMock: vi.fn(),
   apiGetMock: vi.fn(),
+  apiPostMock: vi.fn(),
   apiDeleteMock: vi.fn(),
   invalidateProductsMock: vi.fn().mockResolvedValue(undefined),
   productScanModalMock: vi.fn(),
@@ -43,6 +44,7 @@ vi.mock('@/features/products/context/ProductFormCustomFieldContext', () => ({
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
     get: (...args: unknown[]) => mocks.apiGetMock(...args),
+    post: (...args: unknown[]) => mocks.apiPostMock(...args),
     delete: (...args: unknown[]) => mocks.apiDeleteMock(...args),
   },
 }));
@@ -257,6 +259,170 @@ describe('ProductFormScans', () => {
     expect(
       await screen.findByText('Amazon candidate search did not return a usable Amazon result.')
     ).toBeInTheDocument();
+  });
+
+  it('shows awaiting-selection messaging for candidate-selection scans', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-selection-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'completed',
+          productName: 'Product 1',
+          engineRunId: 'run-selection-1',
+          imageCandidates: [],
+          matchedImageId: 'image-1',
+          asin: null,
+          title: null,
+          price: null,
+          url: 'https://www.amazon.co.jp/dp/B0TEST1234',
+          description: null,
+          rawResult: {
+            candidateSelectionRequired: true,
+          },
+          error: null,
+          asinUpdateStatus: 'not_needed',
+          asinUpdateMessage: 'Collected Amazon candidate previews for manual selection.',
+          createdBy: null,
+          updatedBy: null,
+          completedAt: '2026-04-11T04:00:00.000Z',
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Awaiting Selection')).toBeInTheDocument();
+    expect(
+      screen.getByText('Amazon candidates are ready for manual selection.')
+    ).toBeInTheDocument();
+  });
+
+  it('queues candidate extraction directly from scan history', async () => {
+    let getCalls = 0;
+    mocks.apiGetMock.mockImplementation(async () => {
+      getCalls += 1;
+
+      if (getCalls === 1) {
+        return {
+          scans: [
+            {
+              id: 'scan-selection-2',
+              productId: 'product-1',
+              provider: 'amazon',
+              scanType: 'google_reverse_image',
+              status: 'completed',
+              productName: 'Product 1',
+              engineRunId: 'run-selection-2',
+              imageCandidates: [],
+              matchedImageId: 'image-1',
+              asin: null,
+              title: null,
+              price: null,
+              url: null,
+              description: null,
+              rawResult: {
+                candidateSelectionRequired: true,
+                candidatePreviews: [
+                  {
+                    id: 'candidate-1',
+                    matchedImageId: 'image-1',
+                    url: 'https://www.amazon.com/dp/B000123456',
+                    title: 'Amazon candidate title',
+                    asin: 'B000123456',
+                    marketplaceDomain: 'www.amazon.com',
+                    rank: 1,
+                  },
+                ],
+              },
+              error: null,
+              asinUpdateStatus: 'not_needed',
+              asinUpdateMessage: 'Collected Amazon candidate previews for manual selection.',
+              createdBy: null,
+              updatedBy: null,
+              completedAt: '2026-04-11T04:00:00.000Z',
+              createdAt: '2026-04-11T03:59:00.000Z',
+              updatedAt: '2026-04-11T04:00:00.000Z',
+            },
+          ],
+        };
+      }
+
+      return {
+        scans: [
+          {
+            id: 'scan-extract-2',
+            productId: 'product-1',
+            provider: 'amazon',
+            scanType: 'google_reverse_image',
+            status: 'queued',
+            productName: 'Product 1',
+            engineRunId: 'run-extract-2',
+            imageCandidates: [],
+            matchedImageId: null,
+            asin: null,
+            title: null,
+            price: null,
+            url: null,
+            description: null,
+            rawResult: {
+              runtimeKey: 'amazon_candidate_extraction',
+            },
+            error: null,
+            asinUpdateStatus: 'pending',
+            asinUpdateMessage: null,
+            createdBy: null,
+            updatedBy: null,
+            completedAt: null,
+            createdAt: '2026-04-11T04:00:01.000Z',
+            updatedAt: '2026-04-11T04:00:01.000Z',
+          },
+        ],
+      };
+    });
+    mocks.apiPostMock.mockResolvedValue({
+      productId: 'product-1',
+      scanId: 'scan-extract-2',
+      runId: 'run-extract-2',
+      status: 'queued',
+      currentStatus: 'queued',
+      message: 'Amazon candidate extraction queued.',
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Candidates for extraction')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Extract this candidate' }));
+
+    await waitFor(() => {
+      expect(mocks.apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/products/scans/amazon/extract-candidate',
+        {
+          productId: 'product-1',
+          scanId: 'scan-selection-2',
+          candidateUrl: 'https://www.amazon.com/dp/B000123456',
+          candidateRank: 1,
+          candidateId: 'image-1',
+        }
+      );
+    });
+
+    expect(await screen.findByText('Queued')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByText('Candidates for extraction')).not.toBeInTheDocument();
+    });
   });
 
   it('shows a running status message for active scans without persisted update text', async () => {
@@ -546,6 +712,54 @@ describe('ProductFormScans', () => {
     expect(
       screen.getByText(
         'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('shows the automatic Google retry state before manual captcha fallback', async () => {
+    mocks.apiGetMock.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-3c',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-3c',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          rawResult: {
+            captchaStealthRetryStarted: true,
+            manualVerificationPending: false,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    render(
+      <QueryClientProvider client={createQueryClient()}>
+        <ProductFormScans />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByText('Retrying Google')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Retrying Google Lens automatically with a fresh proxy session before manual fallback.'
       )
     ).toBeInTheDocument();
   });

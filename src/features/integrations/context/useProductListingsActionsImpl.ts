@@ -546,9 +546,11 @@ export const useProductListingsActionsImpl = ({
         });
         const queueJobId = response.queue?.jobId;
         toast(
-          queueJobId
-            ? `Tradera sync queued (job ${queueJobId}).`
-            : 'Tradera sync queued.',
+          response.alreadyQueued
+            ? 'Tradera sync already queued.'
+            : queueJobId
+              ? `Tradera sync queued (job ${queueJobId}).`
+              : 'Tradera sync queued.',
           { variant: 'success' }
         );
         setRecoveryContext((current) =>

@@ -125,8 +125,19 @@ export const resolveProductScanAmazonCandidateUrls = (
 
 export const isProductScanAmazonCandidateSelectionReady = (
   scan: ProductScanAmazonCandidateSelectionScan
-): boolean =>
-  scan?.provider === 'amazon' &&
-  resolveProductScanAmazonCandidatePreviews(scan).length > 0 &&
-  (scan.amazonDetails === null || scan.amazonDetails === undefined) &&
-  (typeof scan.asin !== 'string' || scan.asin.trim().length === 0);
+): boolean => {
+  if (scan?.provider !== 'amazon') {
+    return false;
+  }
+
+  const rawResult = scan.rawResult;
+  if (isRecord(rawResult) === false || rawResult['candidateSelectionRequired'] !== true) {
+    return false;
+  }
+
+  return (
+    resolveProductScanAmazonCandidatePreviews(scan).length > 0 &&
+    (scan.amazonDetails === null || scan.amazonDetails === undefined) &&
+    (typeof scan.asin !== 'string' || scan.asin.trim().length === 0)
+  );
+};

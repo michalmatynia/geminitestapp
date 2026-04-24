@@ -1,0 +1,266 @@
+{
+  "imageSearchProvider": "google_lens_upload",
+  "imageSearchPageUrl": null,
+  "status": "failed",
+  "asin": null,
+  "title": null,
+  "price": null,
+  "url": null,
+  "description": null,
+  "amazonDetails": null,
+  "amazonProbe": null,
+  "matchedImageId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+  "candidateUrls": [],
+  "candidateResults": [],
+  "candidatePreviews": [],
+  "currentUrl": "https://www.google.com/search?vsrid=CKWVtfOCtbmYNhACGAEiJGFlYzBjMmRlLTdjZTYtNGE5Ni05YTJmLWU2NTA2NWQ1ZmU0YTJ7IgJlbigXQnMKLmxmZS1kdW1teTo0OTEyMDNkNS01YzY1LTRhZTMtYmE1NC00ZjZhMGY3NDgwMmISQQo_L2Jucy9lbi9ib3JnL2VuL2Jucy9sZW5zLWZyb250ZW5kLWFwaS9wcm9kLmxlbnMtZnJvbnRlbmQtYXBpLzU3OIXG4eSRhpQD&vsint=CAIqDAoCCAcSAggKGAEgATojChYNAAAAPxUAAAA_HQAAgD8lAACAPzABEIAIGIAIJQAAgD8&udm=26&lns_mode=un&source=lns.web.gsbubb&vsdim=1024,1024&gsessionid=90Hw_JFoAQBKKqEl12HKTesVDF2Z1dsu3LjJPW2j-IGSTJc254nXDg&lsessionid=p1P_-68wCl_oyT778E5s_2_NPw1mvV2x_6_RwbRRZdVFxar0m-9g-g&lns_surface=26&authuser=0&lns_vfs=e&qsubts=1777021723345&biw=1280&bih=720&hl=pl&sei=GzPraZe0KYKK9u8PiPqHmAs",
+  "message": "No Amazon candidates found in Google Lens results.",
+  "stage": "google_candidates",
+  "scrapedItems": [],
+  "steps": [
+    {
+      "key": "validate",
+      "label": "Validate scan input",
+      "group": "input",
+      "attempt": 1,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": "about:blank",
+      "startedAt": "2026-04-24T09:08:36.894Z",
+      "completedAt": "2026-04-24T09:08:36.894Z",
+      "durationMs": 0
+    },
+    {
+      "key": "google_lens_open",
+      "label": "Open Google Lens search",
+      "group": "google_lens",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Google Lens search opened.",
+      "warning": null,
+      "details": [
+        {
+          "label": "Image search provider",
+          "value": "google_lens_upload"
+        },
+        {
+          "label": "Open attempt",
+          "value": "1"
+        },
+        {
+          "label": "Image search page",
+          "value": "https://lens.google.com/?hl=en"
+        },
+        {
+          "label": "Current URL",
+          "value": "https://www.google.com/?olud"
+        },
+        {
+          "label": "Ready",
+          "value": "true"
+        },
+        {
+          "label": "Ready reason",
+          "value": "file_input_ready"
+        },
+        {
+          "label": "Upload entry URL",
+          "value": "false"
+        },
+        {
+          "label": "File input count",
+          "value": "3"
+        },
+        {
+          "label": "File input selector",
+          "value": "input[type=\"file\"][accept*=\"image\"]"
+        },
+        {
+          "label": "File input scope",
+          "value": "page"
+        },
+        {
+          "label": "File input frame",
+          "value": "https://www.google.com/?olud"
+        },
+        {
+          "label": "Entry trigger",
+          "value": null
+        }
+      ],
+      "url": "https://www.google.com/?olud",
+      "startedAt": "2026-04-24T09:08:36.894Z",
+      "completedAt": "2026-04-24T09:08:43.329Z",
+      "durationMs": 6435
+    },
+    {
+      "key": "google_upload",
+      "label": "Upload product image to Google",
+      "group": "google_lens",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "ok",
+      "status": "completed",
+      "message": "Image was submitted to Google Lens and the search advanced.",
+      "warning": null,
+      "details": [
+        {
+          "label": "Image search provider",
+          "value": "google_lens_upload"
+        }
+      ],
+      "url": "https://www.google.com/search?vsrid=CKWVtfOCtbmYNhACGAEiJGFlYzBjMmRlLTdjZTYtNGE5Ni05YTJmLWU2NTA2NWQ1ZmU0YTJ7IgJlbigXQnMKLmxmZS1kdW1teTo0OTEyMDNkNS01YzY1LTRhZTMtYmE1NC00ZjZhMGY3NDgwMmISQQo_L2Jucy9lbi9ib3JnL2VuL2Jucy9sZW5zLWZyb250ZW5kLWFwaS9wcm9kLmxlbnMtZnJvbnRlbmQtYXBpLzU3OIXG4eSRhpQD&vsint=CAIqDAoCCAcSAggKGAEgATojChYNAAAAPxUAAAA_HQAAgD8lAACAPzABEIAIGIAIJQAAgD8&udm=26&lns_mode=un&source=lns.web.gsbubb&vsdim=1024,1024&gsessionid=90Hw_JFoAQBKKqEl12HKTesVDF2Z1dsu3LjJPW2j-IGSTJc254nXDg&lsessionid=p1P_-68wCl_oyT778E5s_2_NPw1mvV2x_6_RwbRRZdVFxar0m-9g-g&lns_surface=26&authuser=0&lns_vfs=e&qsubts=1777021723345&biw=1280&bih=720&hl=pl&sei=GzPraZe0KYKK9u8PiPqHmAs",
+      "startedAt": "2026-04-24T09:08:43.329Z",
+      "completedAt": "2026-04-24T09:10:10.104Z",
+      "durationMs": 86775
+    },
+    {
+      "key": "google_verification_review",
+      "label": "Inspect Google verification barrier",
+      "group": "google_lens",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "google_captcha",
+      "label": "Resolve Google captcha",
+      "group": "google_lens",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "google_candidates",
+      "label": "Collect Amazon candidates from Google",
+      "group": "google_lens",
+      "attempt": 1,
+      "candidateId": "d1b9e0c4-d74e-4c87-aeae-f8149e69164e",
+      "candidateRank": 1,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": "no_candidates",
+      "status": "failed",
+      "message": "Google Lens results did not contain any Amazon product URLs.",
+      "warning": null,
+      "details": [],
+      "url": "https://www.google.com/search?vsrid=CKWVtfOCtbmYNhACGAEiJGFlYzBjMmRlLTdjZTYtNGE5Ni05YTJmLWU2NTA2NWQ1ZmU0YTJ7IgJlbigXQnMKLmxmZS1kdW1teTo0OTEyMDNkNS01YzY1LTRhZTMtYmE1NC00ZjZhMGY3NDgwMmISQQo_L2Jucy9lbi9ib3JnL2VuL2Jucy9sZW5zLWZyb250ZW5kLWFwaS9wcm9kLmxlbnMtZnJvbnRlbmQtYXBpLzU3OIXG4eSRhpQD&vsint=CAIqDAoCCAcSAggKGAEgATojChYNAAAAPxUAAAA_HQAAgD8lAACAPzABEIAIGIAIJQAAgD8&udm=26&lns_mode=un&source=lns.web.gsbubb&vsdim=1024,1024&gsessionid=90Hw_JFoAQBKKqEl12HKTesVDF2Z1dsu3LjJPW2j-IGSTJc254nXDg&lsessionid=p1P_-68wCl_oyT778E5s_2_NPw1mvV2x_6_RwbRRZdVFxar0m-9g-g&lns_surface=26&authuser=0&lns_vfs=e&qsubts=1777021723345&biw=1280&bih=720&hl=pl&sei=GzPraZe0KYKK9u8PiPqHmAs",
+      "startedAt": "2026-04-24T09:10:10.104Z",
+      "completedAt": "2026-04-24T09:10:11.622Z",
+      "durationMs": 1518
+    },
+    {
+      "key": "amazon_open",
+      "label": "Open Amazon candidate",
+      "group": "amazon",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "amazon_overlays",
+      "label": "Dismiss Amazon overlays",
+      "group": "amazon",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "amazon_content_ready",
+      "label": "Wait for Amazon product content",
+      "group": "amazon",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    },
+    {
+      "key": "amazon_probe",
+      "label": "Probe Amazon product page",
+      "group": "amazon",
+      "attempt": null,
+      "candidateId": null,
+      "candidateRank": null,
+      "inputSource": null,
+      "retryOf": null,
+      "resultCode": null,
+      "status": "pending",
+      "message": null,
+      "warning": null,
+      "details": [],
+      "url": null,
+      "startedAt": null,
+      "completedAt": null,
+      "durationMs": null
+    }
+  ]
+}

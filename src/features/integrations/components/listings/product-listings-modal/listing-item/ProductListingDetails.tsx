@@ -36,6 +36,8 @@ import {
   resolveDisplayedTraderaDuplicateSummary,
   resolveTraderaStatusBadge,
   resolveHistoryBrowserMode,
+  resolveHistoryAction,
+  formatHistoryAction,
   resolveDisplayHistoryFields,
   resolveTraderaExecutionSummary,
   resolvePlaywrightExecutionSummary,
@@ -82,7 +84,10 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
     liveLatestStage: liveTraderaExecution?.latestStage,
   });
   const traderaStatusBadge = isTraderaListing
-    ? resolveTraderaStatusBadge(listing.status, displayedTraderaDuplicateSummary.duplicateLinked)
+    ? resolveTraderaStatusBadge(listing.status, displayedTraderaDuplicateSummary.duplicateLinked, {
+        checkedStatus: traderaExecution.checkedStatus,
+        lastAction: traderaExecution.lastAction,
+      })
     : null;
 
   const getExportFieldsLabel = (): string => {
@@ -201,6 +206,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                 .slice(0, 10)
                 .map((event: ProductListingExportEvent, index: number) => {
                   const historyBrowserMode = resolveHistoryBrowserMode(event.fields);
+                  const historyAction = resolveHistoryAction(event.fields);
                   const historyDisplayFields = resolveDisplayHistoryFields(event.fields);
 
                   return (
@@ -231,6 +237,13 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
                         <MetadataItem
                           label='Browser mode'
                           value={historyBrowserMode}
+                          variant='subtle'
+                        />
+                      )}
+                      {historyAction && (
+                        <MetadataItem
+                          label='Action'
+                          value={formatHistoryAction(historyAction)}
                           variant='subtle'
                         />
                       )}

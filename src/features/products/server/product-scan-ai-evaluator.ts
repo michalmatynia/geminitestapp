@@ -205,6 +205,30 @@ const productScanVerificationReviewResponseSchema = z.object({
   ).optional().default(null),
 });
 
+const parseStructuredJsonResponse = (content: string): unknown => {
+  const trimmed = content.trim();
+  const fencedMatch = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const normalized = (fencedMatch?.[1] ?? trimmed).trim();
+
+  try {
+    return JSON.parse(normalized) as unknown;
+  } catch (error) {
+    const objectStart = normalized.indexOf('{');
+    const objectEnd = normalized.lastIndexOf('}');
+    if (objectStart !== -1 && objectEnd > objectStart) {
+      return JSON.parse(normalized.slice(objectStart, objectEnd + 1)) as unknown;
+    }
+
+    const arrayStart = normalized.indexOf('[');
+    const arrayEnd = normalized.lastIndexOf(']');
+    if (arrayStart !== -1 && arrayEnd > arrayStart) {
+      return JSON.parse(normalized.slice(arrayStart, arrayEnd + 1)) as unknown;
+    }
+
+    throw error;
+  }
+};
+
 export type ProductScanVerificationReview = {
   status: 'analyzed' | 'capture_only' | 'failed';
   provider: string;
@@ -1060,6 +1084,50 @@ export const createProductScanVerificationBarrierAutoInjectionConfig = (options?
   maxIterations: options?.maxIterations ?? 3,
   reEvaluateAfterInjection: true,
   evaluateCapture: createProductScanVerificationBarrierIterationEvaluator(),
+});
+
+export const createProductScanVerificationBarrierManualOnlyInjectionConfig = (options?: {
+  /** Freeform label used in the manual-only goal text for diagnostics. */
+  provider?: string;
+}): PlaywrightVerificationInjectionConfig<ProductScanVerificationReview> => ({
+  shouldInject: () => false,
+  goal: (review, capture) => {
+    const providerLabel = options?.provider ? `${options.provider} ` : '';
+    const parts = [
+      `Keep the ${providerLabel}verification review manual-only.`,
+      'Do not interact with the challenge UI.',
+    ];
+    if (capture.currentUrl) {
+      parts.push(`Current URL: ${capture.currentUrl}.`);
+    }
+    if (review.challengeType) {
+      parts.push(`Challenge type: ${review.challengeType}.`);
+    }
+    return parts.join(' ');
+  },
+  buildEvaluatorContext: (review, capture) => {
+    const lines: string[] = [
+      `Provider: ${review.provider}`,
+      `Stage: ${review.stage}`,
+      `Current URL: ${capture.currentUrl ?? 'unknown'}`,
+      `Challenge type: ${review.challengeType ?? 'unknown'}`,
+      'Handling mode: manual-only',
+    ];
+    if (review.visibleQuestion) {
+      lines.push(`Visible question: ${review.visibleQuestion}`);
+    }
+    if (review.visibleInstructions.length > 0) {
+      lines.push(`Instructions: ${review.visibleInstructions.join('; ')}`);
+    }
+    if (review.pageSummary) {
+      lines.push(`Page summary: ${review.pageSummary}`);
+    }
+    return lines.join('\n');
+  },
+  maxIterations: 0,
+  reEvaluateAfterInjection: false,
+  waitForNavigation: false,
+  useConversationHistory: false,
 });
 
 export const evaluateProductScanVerificationBarrier = async (
@@ -1971,7 +2039,7 @@ export const evaluateProductScanCandidateTriage = async (input: {
       ],
     });
 
-    const rawJson = JSON.parse(completion.text) as unknown;
+    const rawJson = parseStructuredJsonResponse(completion.text);
     const parsed = amazonCandidateTriageResponseSchema.parse(rawJson);
     const parsedByUrl = new Map(parsed.candidates.map((candidate) => [candidate.url, candidate]));
     const normalizedCandidates = deterministicCandidates.map((entry) => {
@@ -2142,6 +2210,14 @@ export const evaluateProductScanCandidateMatch = async (input: {
     input.run,
     readOptionalString(input.parsedResult.amazonProbe?.artifactKey)
   );
+  const sourceAsin = normalizeIdentifier(input.product.asin);
+  const candidateAsin =
+    normalizeIdentifier(input.parsedResult.amazonProbe?.asin) ??
+    normalizeIdentifier(input.parsedResult.asin) ??
+    extractAmazonAsinFromUrl(readOptionalString(input.parsedResult.amazonProbe?.canonicalUrl)) ??
+    extractAmazonAsinFromUrl(readOptionalString(input.parsedResult.amazonProbe?.candidateUrl)) ??
+    extractAmazonAsinFromUrl(readOptionalString(input.parsedResult.url)) ??
+    extractAmazonAsinFromUrl(readOptionalString(input.parsedResult.currentUrl));
   const evidence = {
     candidateUrl:
       readOptionalString(input.parsedResult.amazonProbe?.canonicalUrl) ??
@@ -2151,6 +2227,8 @@ export const evaluateProductScanCandidateMatch = async (input: {
     pageTitle:
       readOptionalString(input.parsedResult.amazonProbe?.pageTitle) ??
       readOptionalString(input.parsedResult.title),
+    ...(sourceAsin !== null ? { sourceAsin } : {}),
+    ...(candidateAsin !== null ? { candidateAsin } : {}),
     heroImageSource: readOptionalString(input.parsedResult.amazonProbe?.heroImageUrl),
     heroImageArtifactName: readOptionalString(input.parsedResult.amazonProbe?.heroImageArtifactName),
     screenshotArtifactName: evidenceArtifacts.screenshotArtifactName,
@@ -2540,7 +2618,7 @@ export const evaluateProductScanCandidateMatch = async (input: {
       });
     }
 
-    const rawJson = JSON.parse(completion.text) as unknown;
+    const rawJson = parseStructuredJsonResponse(completion.text);
     const parsed = amazonEvaluatorResponseSchema.parse(rawJson);
     const languageAccepted =
       input.evaluatorConfig.rejectNonEnglishContent === true

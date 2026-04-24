@@ -34,7 +34,6 @@ describe('playwright listing persistence helpers', () => {
   it('builds shared success update fields and preserves provider extras', () => {
     expect(
       buildPlaywrightListingSuccessUpdateFields({
-        at: new Date('2026-04-10T12:00:00.000Z'),
         marketplaceData: {
           marketplace: 'vinted',
         },
@@ -46,7 +45,6 @@ describe('playwright listing persistence helpers', () => {
       })
     ).toEqual({
       externalListingId: 'external-1',
-      lastStatusCheckAt: new Date('2026-04-10T12:00:00.000Z'),
       failureReason: null,
       marketplaceData: {
         marketplace: 'vinted',
@@ -59,7 +57,6 @@ describe('playwright listing persistence helpers', () => {
   it('builds shared failure update fields and preserves provider extras', () => {
     expect(
       buildPlaywrightListingFailureUpdateFields({
-        at: new Date('2026-04-10T12:00:00.000Z'),
         marketplaceData: {
           marketplace: 'tradera',
         },
@@ -70,7 +67,6 @@ describe('playwright listing persistence helpers', () => {
         },
       })
     ).toEqual({
-      lastStatusCheckAt: new Date('2026-04-10T12:00:00.000Z'),
       failureReason: 'AUTH_REQUIRED',
       marketplaceData: {
         marketplace: 'tradera',

@@ -377,7 +377,6 @@ export const AI_PATH_RUN_TERMINAL_STATUSES: readonly AiPathRunStatus[] = [
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ];
 
 export const aiPathRunRouteParamsSchema = z.object({

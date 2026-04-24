@@ -19,10 +19,17 @@ type CliOptions = {
   imageSearchPageUrl?: string;
   stepSequenceKey?: string;
   stepSequence?: string[];
+  directAmazonCandidateUrl?: string;
+  directAmazonCandidateUrls?: string[];
+  directMatchedImageId?: string;
+  directAmazonCandidateRank?: number;
+  skipAmazonProbe?: boolean;
 };
 
-const DEFAULT_TIMEOUT_MS = 180_000;
+const DEFAULT_TIMEOUT_MS = 600_000;
 const DEFAULT_POLL_MS = 4_000;
+const DEFAULT_TIMEOUT_WARNING =
+  'Timed out while the scan was still active. Local probe runs execute follow-up Playwright tasks in-process, so exiting early can leave the scan stuck in running.';
 
 const sleep = async (ms: number): Promise<void> =>
   await new Promise((resolve) => setTimeout(resolve, ms));
@@ -52,6 +59,8 @@ const readPositiveIntFlag = (
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : fallback;
 };
 
+const hasFlag = (argv: string[], key: string): boolean => argv.includes(`--${key}`);
+
 const parseArgs = (argv: string[]): CliOptions | null => {
   const productId = readFlagValue(argv, 'productId');
   if (!productId) {
@@ -60,6 +69,11 @@ const parseArgs = (argv: string[]): CliOptions | null => {
 
   const stepSequenceValue = readFlagValue(argv, 'stepSequence');
   const stepSequence = stepSequenceValue
+    ?.split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+  const directAmazonCandidateUrlsValue = readFlagValue(argv, 'directAmazonCandidateUrls');
+  const directAmazonCandidateUrls = directAmazonCandidateUrlsValue
     ?.split(',')
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
@@ -73,6 +87,21 @@ const parseArgs = (argv: string[]): CliOptions | null => {
     imageSearchPageUrl: readFlagValue(argv, 'imageSearchPageUrl') ?? undefined,
     stepSequenceKey: readFlagValue(argv, 'stepSequenceKey') ?? undefined,
     ...(stepSequence && stepSequence.length > 0 ? { stepSequence } : {}),
+    directAmazonCandidateUrl: readFlagValue(argv, 'directAmazonCandidateUrl') ?? undefined,
+    ...(directAmazonCandidateUrls && directAmazonCandidateUrls.length > 0
+      ? { directAmazonCandidateUrls }
+      : {}),
+    directMatchedImageId: readFlagValue(argv, 'directMatchedImageId') ?? undefined,
+    ...(readFlagValue(argv, 'directAmazonCandidateRank')
+      ? {
+          directAmazonCandidateRank: readPositiveIntFlag(
+            argv,
+            'directAmazonCandidateRank',
+            1
+          ),
+        }
+      : {}),
+    ...(hasFlag(argv, 'skipAmazonProbe') ? { skipAmazonProbe: true } : {}),
   };
 };
 
@@ -87,7 +116,15 @@ Options:
   --imageSearchPageUrl <url>    Override the image search page URL.
   --stepSequenceKey <key>       Use a named step sequence.
   --stepSequence a,b,c          Use an explicit comma-separated step sequence.
-  --timeoutMs <ms>              Total time to wait for terminal status. Default: 180000.
+  --directAmazonCandidateUrl <url>
+                                Open this Amazon URL directly instead of reverse-image search.
+  --directAmazonCandidateUrls a,b,c
+                                Provide a fallback list of direct Amazon URLs.
+  --directMatchedImageId <id>   Override the matched image id for direct candidate runs.
+  --directAmazonCandidateRank <n>
+                                Override the starting candidate rank for direct candidate runs.
+  --skipAmazonProbe             Queue extraction-only follow-up runs after a direct candidate opens.
+  --timeoutMs <ms>              Total time to wait for terminal status. Default: 600000.
   --pollMs <ms>                 Poll interval while the scan is active. Default: 4000.
 `);
 };
@@ -150,6 +187,19 @@ const main = async (): Promise<void> => {
       : {}),
     ...(options.stepSequenceKey ? { stepSequenceKey: options.stepSequenceKey } : {}),
     ...(options.stepSequence ? { stepSequence: options.stepSequence } : {}),
+    ...(options.directAmazonCandidateUrl
+      ? { directAmazonCandidateUrl: options.directAmazonCandidateUrl }
+      : {}),
+    ...(options.directAmazonCandidateUrls
+      ? { directAmazonCandidateUrls: options.directAmazonCandidateUrls }
+      : {}),
+    ...(options.directMatchedImageId
+      ? { directMatchedImageId: options.directMatchedImageId }
+      : {}),
+    ...(typeof options.directAmazonCandidateRank === 'number'
+      ? { directAmazonCandidateRank: options.directAmazonCandidateRank }
+      : {}),
+    ...(options.skipAmazonProbe === true ? { skipAmazonProbe: true } : {}),
   };
 
   const queued = await queueAmazonBatchProductScans({
@@ -203,6 +253,7 @@ const main = async (): Promise<void> => {
   const classification = classifyAmazonScanFailure(scan);
   const artifacts = await listAmazonScanDiagnosticArtifacts(scan.id);
   const stageSummary = buildStageSummary(scan);
+  const timeoutWarning = timedOut ? DEFAULT_TIMEOUT_WARNING : null;
 
   console.table(stageSummary);
   console.log(
@@ -214,6 +265,7 @@ const main = async (): Promise<void> => {
         runId: scan.engineRunId,
         status: scan.status,
         timedOut,
+        message: timeoutWarning,
         asin: scan.asin,
         title: scan.title,
         error: scan.error,
@@ -230,6 +282,9 @@ const main = async (): Promise<void> => {
       2
     )
   );
+  if (timedOut) {
+    process.exitCode = 1;
+  }
 }
 
 void main()

@@ -936,12 +936,10 @@ describe('product-scans-service', () => {
             status: 'failed',
             resultCode: 'candidate_rejected',
             details: expect.arrayContaining([
-              { label: 'Model source', value: 'AI Brain default' },
               { label: 'Threshold', value: '85%' },
-              { label: 'Evaluation scope', value: 'Every Amazon candidate' },
-              { label: 'Allowed content language', value: 'English' },
-              { label: 'Language policy', value: 'Reject non-English content' },
-              { label: 'Language detection', value: 'Deterministic first, then AI' },
+              { label: 'Rejection kind', value: 'Product mismatch' },
+              { label: 'Candidate ASIN', value: 'B00TEST123' },
+              { label: 'Candidate URL', value: 'https://www.amazon.com/dp/B00TEST123' },
             ]),
           }),
           expect.objectContaining({

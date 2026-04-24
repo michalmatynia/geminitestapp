@@ -16,7 +16,7 @@ import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled']);
 const normalizeLimit = (value: number, fallback: number): number => {
   if (!Number.isFinite(value) || value <= 0) return fallback;
   return Math.floor(value);

@@ -66,6 +66,7 @@ import {
   resolveScanEngineRunId,
   tryDirectQueuedScanUpdate,
 } from './product-scans-service.helpers';
+import { buildAmazonDirectCandidateUrlsFromAsin } from './product-scan-amazon.helpers';
 import {
   PRODUCT_SCAN_BATCH_START_CONCURRENCY,
   buildAmazonScannerRequestRuntimeOptions,
@@ -129,6 +130,67 @@ const resolveAmazonRuntimeKey = (
         | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
         | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY)
     : AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY;
+
+const hasDirectAmazonCandidateRequestInput = (
+  requestInput: Record<string, unknown> | undefined
+): boolean =>
+  readOptionalString(requestInput?.['directAmazonCandidateUrl'], 4_000) !== null ||
+  (
+    Array.isArray(requestInput?.['directAmazonCandidateUrls']) &&
+    requestInput['directAmazonCandidateUrls'].some(
+      (value) => readOptionalString(value, 4_000) !== null
+    )
+  );
+
+const AMAZON_RUNTIME_KEY_DEFAULTED_FLAG = 'amazonRuntimeKeyDefaulted';
+
+const resolveEffectiveAmazonRequestInput = (input: {
+  requestInput: Record<string, unknown>;
+  existingAsin: string | null | undefined;
+  hasUsableImageCandidates: boolean;
+}): Record<string, unknown> => {
+  if (hasDirectAmazonCandidateRequestInput(input.requestInput)) {
+    return input.requestInput;
+  }
+
+  const directCandidateUrls = buildAmazonDirectCandidateUrlsFromAsin(input.existingAsin);
+  if (directCandidateUrls.length === 0) {
+    return input.requestInput;
+  }
+
+  const requestedRuntimeKey = readOptionalString(input.requestInput['runtimeKey'], 160);
+  if (requestedRuntimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY) {
+    return {
+      ...input.requestInput,
+      runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+      directAmazonCandidateUrl: directCandidateUrls[0] ?? null,
+      directAmazonCandidateUrls: directCandidateUrls,
+    };
+  }
+
+  if (input.hasUsableImageCandidates) {
+    return input.requestInput;
+  }
+
+  const runtimeKeyWasDefaulted = input.requestInput[AMAZON_RUNTIME_KEY_DEFAULTED_FLAG] === true;
+  const shouldAutoSeedExistingAsin =
+    requestedRuntimeKey === null ||
+    (
+      runtimeKeyWasDefaulted === true &&
+      requestedRuntimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+    );
+
+  if (!shouldAutoSeedExistingAsin) {
+    return input.requestInput;
+  }
+
+  return {
+    ...input.requestInput,
+    runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+    directAmazonCandidateUrl: directCandidateUrls[0] ?? null,
+    directAmazonCandidateUrls: directCandidateUrls,
+  };
+};
 
 const resolveQueuedProductName = (product: {
   name?: unknown;
@@ -335,25 +397,6 @@ async function queueBatchProductScans(input: {
         }
         const productName = resolveQueuedProductName(product);
 
-        const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(requestInput);
-        const amazonRuntimeKey =
-          input.config.provider === 'amazon'
-            ? resolveAmazonRuntimeKey(
-                requestInput['runtimeKey'] ?? input.config.runtime.runtimeKey
-              )
-            : null;
-        const hasDirectAmazonCandidateInput =
-          input.config.provider === 'amazon' &&
-          (
-            readOptionalString(requestInput['directAmazonCandidateUrl'], 4_000) !== null ||
-            (
-              Array.isArray(requestInput['directAmazonCandidateUrls']) &&
-              requestInput['directAmazonCandidateUrls'].some(
-                (value) => readOptionalString(value, 4_000) !== null
-              )
-            )
-          );
-
         const hydratedImageCandidates = await hydrateProductScanImageCandidates({
           product,
           imageCandidates: input.config.runtime.resolveImageCandidates(product),
@@ -375,6 +418,32 @@ async function queueBatchProductScans(input: {
               input.config.provider === '1688' && !allow1688UrlImageSearchFallback,
           }
         );
+
+        const effectiveRequestInput =
+          input.config.provider === 'amazon'
+            ? resolveEffectiveAmazonRequestInput({
+                requestInput,
+                existingAsin: product.asin,
+                hasUsableImageCandidates: imageCandidates.length > 0,
+              })
+            : requestInput;
+        const hasDirectAmazonCandidateInput =
+          input.config.provider === 'amazon' &&
+          hasDirectAmazonCandidateRequestInput(effectiveRequestInput);
+        const requestedStepSequenceInput =
+          resolveProductScanRequestSequenceInput(effectiveRequestInput);
+        const requestedAmazonRuntimeKey = effectiveRequestInput['runtimeKey'];
+        const hasExplicitAmazonRuntimeKey =
+          typeof requestedAmazonRuntimeKey === 'string' &&
+          requestedAmazonRuntimeKey.trim().length > 0;
+        const amazonRuntimeKey =
+          input.config.provider === 'amazon'
+            ? !hasExplicitAmazonRuntimeKey && hasDirectAmazonCandidateInput
+              ? AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
+              : resolveAmazonRuntimeKey(
+                  requestedAmazonRuntimeKey ?? input.config.runtime.runtimeKey
+                )
+            : null;
 
         if (imageCandidates.length === 0 && !hasDirectAmazonCandidateInput) {
           let missingImageMessage = 'No usable product images for scanning.';
@@ -427,11 +496,12 @@ async function queueBatchProductScans(input: {
             scannerEngineRequestOptions,
             actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
             actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+            runtimeKey: amazonRuntimeKey,
           });
           const imageSearchProvider =
-            resolveAmazonImageSearchProvider(requestInput, scannerSettings);
+            resolveAmazonImageSearchProvider(effectiveRequestInput, scannerSettings);
           const imageSearchPageUrl =
-            resolveAmazonImageSearchPageUrl(requestInput, scannerSettings);
+            resolveAmazonImageSearchPageUrl(effectiveRequestInput, scannerSettings);
           const triageEvaluatorEnabled = (
             await resolveProductScannerAmazonCandidateEvaluatorConfig(scannerSettings)
           ).enabled;
@@ -473,22 +543,22 @@ async function queueBatchProductScans(input: {
                     ? false
                     : probeEvaluatorEnabled,
                 skipAmazonProbe:
-                  requestInput['skipAmazonProbe'] === true,
+                  effectiveRequestInput['skipAmazonProbe'] === true,
                 directAmazonCandidateUrl:
-                  typeof requestInput['directAmazonCandidateUrl'] === 'string'
-                    ? requestInput['directAmazonCandidateUrl']
+                  typeof effectiveRequestInput['directAmazonCandidateUrl'] === 'string'
+                    ? effectiveRequestInput['directAmazonCandidateUrl']
                     : null,
                 directAmazonCandidateUrls:
-                  Array.isArray(requestInput['directAmazonCandidateUrls'])
-                    ? (requestInput['directAmazonCandidateUrls'] as string[])
+                  Array.isArray(effectiveRequestInput['directAmazonCandidateUrls'])
+                    ? (effectiveRequestInput['directAmazonCandidateUrls'] as string[])
                     : null,
                 directMatchedImageId:
-                  typeof requestInput['directMatchedImageId'] === 'string'
-                    ? requestInput['directMatchedImageId']
+                  typeof effectiveRequestInput['directMatchedImageId'] === 'string'
+                    ? effectiveRequestInput['directMatchedImageId']
                     : null,
                 directAmazonCandidateRank:
-                  typeof requestInput['directAmazonCandidateRank'] === 'number'
-                    ? requestInput['directAmazonCandidateRank']
+                  typeof effectiveRequestInput['directAmazonCandidateRank'] === 'number'
+                    ? effectiveRequestInput['directAmazonCandidateRank']
                     : null,
                 ...requestedStepSequenceInput,
               }),
@@ -643,16 +713,16 @@ async function queueBatchProductScans(input: {
                   : null,
             imageSearchProvider:
               input.config.provider === 'amazon'
-                ? (resolveAmazonImageSearchProvider(requestInput, scannerSettings) ?? 'google_images_upload')
+                ? (resolveAmazonImageSearchProvider(effectiveRequestInput, scannerSettings) ?? 'google_images_upload')
                 : 'google_images_upload',
             imageSearchPageUrl:
               input.config.provider === 'amazon'
-                ? resolveAmazonImageSearchPageUrl(requestInput, scannerSettings)
+                ? resolveAmazonImageSearchPageUrl(effectiveRequestInput, scannerSettings)
                 : null,
             allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
             manualVerificationTimeoutMs,
             ...requestedStepSequenceInput,
-            recordDiagnostics: requestInput['recordDiagnostics'] === true,
+            recordDiagnostics: effectiveRequestInput['recordDiagnostics'] === true,
           }),
           updatedBy: input.ownerUserId ?? null,
         });
@@ -701,9 +771,13 @@ export async function queueAmazonBatchProductScans(input: {
   stepSequence?: any[] | null;
   recordDiagnostics?: boolean;
 }): Promise<ProductScanBatchResponse> {
+  const defaultAmazonRuntimeKey = hasDirectAmazonCandidateRequestInput(input.requestInput)
+    ? AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
+    : AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY;
   const baseRequestInput = input.requestInput ?? {
-    runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+    runtimeKey: defaultAmazonRuntimeKey,
     collectAmazonCandidatePreviews: true,
+    [AMAZON_RUNTIME_KEY_DEFAULTED_FLAG]: true,
     ...((input.stepSequenceKey ?? '') !== '' ? { stepSequenceKey: input.stepSequenceKey } : {}),
     ...(input.stepSequence !== null && input.stepSequence !== undefined ? { stepSequence: input.stepSequence } : {}),
   };
@@ -719,9 +793,19 @@ export async function queueAmazonBatchProductScans(input: {
     requestInput:
       input.requestInput !== undefined
         ? {
-            runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
             collectAmazonCandidatePreviews: true,
             ...input.requestInput,
+            ...(
+              typeof input.requestInput['runtimeKey'] === 'string' &&
+              input.requestInput['runtimeKey'].trim().length > 0
+                ? {}
+                : {
+                    runtimeKey: hasDirectAmazonCandidateRequestInput(input.requestInput)
+                      ? AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
+                      : AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+                    [AMAZON_RUNTIME_KEY_DEFAULTED_FLAG]: true,
+                  }
+            ),
             ...(input.recordDiagnostics === true ? { recordDiagnostics: true } : {}),
           }
         : requestInput,

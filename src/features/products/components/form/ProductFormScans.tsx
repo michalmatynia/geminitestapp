@@ -19,7 +19,16 @@ export default function ProductFormScans(): React.JSX.Element {
   const productId = (ctx.product?.id ?? '').trim();
 
   const state = useProductFormScansState(productId);
-  const { scans, isFetching, refetch, handleDeleteScan, isDeletingScanId } = useProductScansQuery(productId);
+  const {
+    scans,
+    isFetching,
+    refetch,
+    handleDeleteScan,
+    handleExtractAmazonCandidate,
+    extractingAmazonCandidateScanId,
+    extractingAmazonCandidateUrl,
+    isDeletingScanId,
+  } = useProductScansQuery(productId);
   const { isBlockedScanReviewed, markBlockedScanReviewed, clearBlockedScanReviewed } = useProductScan1688ReviewState();
 
   const supplierBindings = useSupplier1688FormBindings({ getValues: ctx.getValues, setValue: ctx.setValue, productFormImages: ctx.productFormImages });
@@ -73,6 +82,9 @@ export default function ProductFormScans(): React.JSX.Element {
         clearBlockedScanReviewed={clearBlockedScanReviewed}
         supplier1688FormBindings={supplierBindings}
         productFormBindings={productBindings}
+        onExtractAmazonCandidate={handleExtractAmazonCandidate}
+        extractingAmazonCandidateScanId={extractingAmazonCandidateScanId}
+        extractingAmazonCandidateUrl={extractingAmazonCandidateUrl}
       />
 
       <ProductFormScansModal provider={state.scanModalProvider} onClose={(): void => state.setScanModalProvider(null)} productId={productId} product={ctx.product} />

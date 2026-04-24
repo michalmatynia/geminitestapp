@@ -83,7 +83,7 @@ export type QueueStatus = {
         sampleSize: number;
         message: string;
       };
-      deadLetterRate24h: {
+      failureRate24h: {
         level: 'ok' | 'warning' | 'critical';
         valuePct: number;
         sampleSize: number;

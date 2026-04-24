@@ -3,7 +3,7 @@ import { type getPathRunRepository } from '@/shared/lib/ai-paths/services/path-r
 import { cleanupRunQueueEntries } from './cleanup';
 
 const isTerminal = (status: string): boolean => 
-  ['canceled', 'completed', 'failed', 'dead_lettered'].includes(status);
+  ['canceled', 'completed', 'failed'].includes(status);
 
 const getDurationMs = (startedAt: string | null | undefined): number | null => {
     const startMs = typeof startedAt === 'string' ? Date.parse(startedAt) : Number.NaN;

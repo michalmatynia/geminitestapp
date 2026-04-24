@@ -1,6 +1,5 @@
 import 'server-only';
 
-import { resolveAiPathsStaleRunningMaxAgeMs } from '@/features/ai/ai-paths/services/path-run-recovery-service';
 import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import {
   forbiddenError,
@@ -61,7 +60,10 @@ const RUN_RATE_QUERY_TIMEOUT_MS = parseNumber(
   1_500
 );
 const RUN_RATE_CACHE_TTL_MS = parseNumber(process.env['AI_PATHS_RUN_RATE_CACHE_TTL_MS'], 5_000);
-const RUN_ACTIVE_STALE_MAX_AGE_MS = resolveAiPathsStaleRunningMaxAgeMs();
+const RUN_ACTIVE_STALE_MAX_AGE_MS = parseNumber(
+  process.env['AI_PATHS_RUN_ACTIVE_STALE_MAX_AGE_MS'],
+  30 * 60 * 1000
+);
 const ACTION_RATE_WINDOW_SECONDS = parseNumber(
   process.env['AI_PATHS_ACTION_RATE_LIMIT_WINDOW_SECONDS'],
   60
@@ -498,7 +500,6 @@ const buildCachedRateLimitRun = (id: string): AiPathRunRecord =>
     retryCount: 0,
     maxAttempts: 1,
     nextRetryAt: null,
-    deadLetteredAt: null,
     createdAt: new Date(0).toISOString(),
     updatedAt: null,
     startedAt: null,

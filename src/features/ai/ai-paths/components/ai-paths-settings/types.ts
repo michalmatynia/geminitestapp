@@ -195,8 +195,6 @@ export interface UseAiPathsSettingsStateReturn {
   runtimeRunStatus:
     | 'idle'
     | 'running'
-    | 'blocked_on_lease'
-    | 'handoff_ready'
     | 'paused'
     | 'stepping'
     | 'completed'

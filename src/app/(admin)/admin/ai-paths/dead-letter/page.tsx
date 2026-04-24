@@ -1,7 +1,5 @@
-import { type JSX } from 'react';
+import { notFound } from 'next/navigation';
 
-import { AdminAiPathsDeadLetterPage } from '@/features/ai/public';
-
-export default function Page(): JSX.Element {
-  return <AdminAiPathsDeadLetterPage />;
+export default function Page(): never {
+  notFound();
 }

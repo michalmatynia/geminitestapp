@@ -1,0 +1,191 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelLobbyChatPanel/ChatStatus.tsx
+  1:10  error  'View' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelLobbyRoomsPanel.tsx
+  84:10  error  Unsafe call of a type that could not be resolved                                                  @typescript-eslint/no-unsafe-call
+  84:30  error  Unsafe member access .map on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
+  87:18  error  Unsafe assignment of an error typed value                                                         @typescript-eslint/no-unsafe-assignment
+  87:25  error  Unsafe member access .value on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+  88:20  error  Unsafe assignment of an error typed value                                                         @typescript-eslint/no-unsafe-assignment
+  88:20  error  Unsafe call of a type that could not be resolved                                                  @typescript-eslint/no-unsafe-call
+  88:44  error  Unsafe member access .label on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+  89:48  error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileDuelModeFilter`  @typescript-eslint/no-unsafe-argument
+  89:55  error  Unsafe member access .value on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+  90:51  error  Unsafe member access .value on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelLobbySearchSection.tsx
+  77:1  error  Function 'SearchResultsList' has too many lines (76). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionDetailsCard.tsx
+    4:3   error  'KangurDuelPlayer' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   99:10  error  Unsafe call of a type that could not be resolved                                    @typescript-eslint/no-unsafe-call
+  165:9   error  Unsafe assignment of an error typed value                                           @typescript-eslint/no-unsafe-assignment
+  166:13  error  Unsafe call of a type that could not be resolved                                    @typescript-eslint/no-unsafe-call
+  167:13  error  Unsafe call of a type that could not be resolved                                    @typescript-eslint/no-unsafe-call
+  187:69  error  Unsafe assignment of an error typed value                                           @typescript-eslint/no-unsafe-assignment
+  187:69  error  Unsafe call of a type that could not be resolved                                    @typescript-eslint/no-unsafe-call
+  200:22  error  Unsafe assignment of an error typed value                                           @typescript-eslint/no-unsafe-assignment
+  200:22  error  Unsafe call of a type that could not be resolved                                    @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionPlayersCard.tsx
+   83:18  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+   83:18  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+   84:17  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+   84:17  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+   90:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  100:12  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionReactionsCard.tsx
+   81:10  error  Unsafe call of a type that could not be resolved                                                                                   @typescript-eslint/no-unsafe-call
+   81:32  error  Unsafe member access .map on a type that cannot be resolved                                                                        @typescript-eslint/no-unsafe-member-access
+   83:18  error  Unsafe assignment of an `any` value                                                                                                @typescript-eslint/no-unsafe-assignment
+   85:40  error  Unsafe argument of type `any` assigned to a parameter of type `"cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"`  @typescript-eslint/no-unsafe-argument
+   87:34  error  Unsafe argument of type `any` assigned to a parameter of type `"cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"`  @typescript-eslint/no-unsafe-argument
+  123:8   error  Function 'DuelSessionReactionsCard' has too many lines (85). Maximum allowed is 60                                                 max-lines-per-function
+  195:22  error  Forbidden non-null assertion                                                                                                       @typescript-eslint/no-non-null-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionSeriesCard.tsx
+  41:10  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  44:10  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionSummaryCard.tsx
+  97:10  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/KangurDuelsScreen.test-support.tsx
+   38:25  error  Arrow function has too many lines (63). Maximum allowed is 60                                      max-lines-per-function
+   77:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   78:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   79:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   80:15  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+   88:15  error  Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly        @typescript-eslint/strict-boolean-expressions
+  124:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  125:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  126:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  127:15  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  185:70  error  Missing return type on function                                                                    @typescript-eslint/explicit-function-return-type
+  233:38  error  Arrow function has too many lines (70). Maximum allowed is 60                                      max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/KangurDuelsScreen.tsx
+   27:8   error  Function 'KangurDuelsScreen' has too many lines (330). Maximum allowed is 60              max-lines-per-function
+   27:8   error  Function 'KangurDuelsScreen' has a complexity of 15. Maximum allowed is 8                 complexity
+   85:25  error  Unsafe assignment of an error typed value                                                 @typescript-eslint/no-unsafe-assignment
+   98:49  error  Async arrow function has a complexity of 11. Maximum allowed is 8                         complexity
+  231:8   error  Unsafe argument of type error typed assigned to a parameter of type `number | undefined`  @typescript-eslint/no-unsafe-argument
+  336:1   error  File has too many lines (354). Maximum allowed is 300                                     max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/BadgesCard.tsx
+  56:8  error  Function 'BadgesCard' has too many lines (87). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/LessonCheckpointsCard.tsx
+  15:1  error  Function 'LessonCheckpointRow' has too many lines (73). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/LessonMasteryCard.tsx
+   18:1  error  Function 'LessonMasteryRow' has too many lines (71). Maximum allowed is 60    max-lines-per-function
+   93:1  error  Function 'getLessonFocusSummary' has a complexity of 9. Maximum allowed is 8  complexity
+  130:1  error  Function 'LessonMasteryList' has too many lines (65). Maximum allowed is 60   max-lines-per-function
+  199:8  error  Function 'LessonMasteryCard' has too many lines (103). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/NextStepsCard.tsx
+  116:8  error  Function 'NextStepsCard' has too many lines (64). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-screen-join-view.tsx
+  26:8  error  Function 'DuelsJoinRouteView' has too many lines (150). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-screen-lobby-view.tsx
+  61:8   error  Function 'DuelsLobbyView' has too many lines (126). Maximum allowed is 60  max-lines-per-function
+  96:17  error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-screen-session-view.tsx
+   51:8   error  Function 'DuelsSessionView' has too many lines (222). Maximum allowed is 60  max-lines-per-function
+   86:11  error  Do not nest ternary expressions                                              no-nested-ternary
+  170:47  error  Arrow function has a complexity of 9. Maximum allowed is 8                   complexity
+  190:26  error  Unsafe assignment of an error typed value                                    @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-utils.ts
+  324:1   error  File has too many lines (670). Maximum allowed is 300                                               max-lines
+  481:25  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  501:8   error  Function 'resolveRoundProgress' has a complexity of 12. Maximum allowed is 8                        complexity
+  512:38  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  515:38  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  638:8   error  Function 'formatSeriesSummary' has too many lines (70). Maximum allowed is 60                       max-lines-per-function
+  638:8   error  Function 'formatSeriesSummary' has a complexity of 11. Maximum allowed is 8                         complexity
+  719:10  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duelsHref.ts
+  11:9  error  Arrow function has a complexity of 9. Maximum allowed is 8                          complexity
+  16:7  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  26:7  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/mobileDuelErrorMessages.ts
+  43:8  error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+  57:8  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsSessionState.ts
+   69:8   error  Function 'useKangurDuelsSessionState' has a complexity of 22. Maximum allowed is 8          complexity
+   89:9   error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+   89:54  error  Unsafe call of a type that could not be resolved                                            @typescript-eslint/no-unsafe-call
+   91:9   error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+   92:7   error  Unsafe call of a type that could not be resolved                                            @typescript-eslint/no-unsafe-call
+  113:7   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  121:5   error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  126:5   error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelLobbyChat.ts
+   44:3   error  Arrow function has too many lines (82). Maximum allowed is 60                       max-lines-per-function
+   44:42  error  Arrow function has a complexity of 12. Maximum allowed is 8                         complexity
+  104:14  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelSession.errors.ts
+  42:8  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  54:8  error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelSession.helpers.ts
+   2:3  error  'KangurDuelChoice' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+  18:7  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelSession.ts
+   49:43  error  Arrow function has too many lines (245). Maximum allowed is 60  max-lines-per-function
+   52:37  error  Arrow function has a complexity of 31. Maximum allowed is 8     complexity
+  146:5   error  Arrow function expected no return value                         consistent-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelsLobby.ts
+  102:18  error  Arrow function has a complexity of 10. Maximum allowed is 8                                 complexity
+  103:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  107:36  error  Unexpected object value in conditional. The condition is always true                        @typescript-eslint/strict-boolean-expressions
+  107:36  error  Unnecessary conditional, value is always truthy                                             @typescript-eslint/no-unnecessary-condition
+  124:8   error  Unexpected string value in conditional. An explicit empty string check is required          @typescript-eslint/strict-boolean-expressions
+  137:3   error  Arrow function has too many lines (321). Maximum allowed is 60                              max-lines-per-function
+  137:39  error  Arrow function has a complexity of 20. Maximum allowed is 8                                 complexity
+  326:1   error  File has too many lines (445). Maximum allowed is 300                                       max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileLearnerDuelsSummary.ts
+   39:18  error  Arrow function has a complexity of 10. Maximum allowed is 8                                        complexity
+   40:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+   44:36  error  Unexpected object value in conditional. The condition is always true                               @typescript-eslint/strict-boolean-expressions
+   44:36  error  Unnecessary conditional, value is always truthy                                                    @typescript-eslint/no-unnecessary-condition
+   65:8   error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+   88:11  error  Arrow function has a complexity of 9. Maximum allowed is 8                                         complexity
+  110:8   error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+  130:51  error  Arrow function has too many lines (120). Maximum allowed is 60                                     max-lines-per-function
+  134:89  error  Arrow function has a complexity of 24. Maximum allowed is 8                                        complexity
+  194:23  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/utils/duels-ui.ts
+   4:5    error  'KangurDuelPlayerStatus' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+   4:53   error  'KangurDuelSession' is defined but never used. Allowed unused vars must match /^_/u                           @typescript-eslint/no-unused-vars
+   4:72   error  'KangurDuelPlayer' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+   4:90   error  'KangurDuelSeries' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+  42:81   error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocalizedValue<string>`      @typescript-eslint/no-unsafe-argument
+  42:112  error  Unsafe member access [type] on a type that cannot be resolved                                                 @typescript-eslint/no-unsafe-member-access
+  73:10   error  Unexpected string value in conditional. An explicit empty string check is required                            @typescript-eslint/strict-boolean-expressions
+  77:23   error  Do not nest ternary expressions                                                                               no-nested-ternary
+  77:89   error  Unsafe usage of optional chaining. If it short-circuits with 'undefined' the evaluation will throw TypeError  no-unsafe-optional-chaining
+  82:38   error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocalizedValue<string>`      @typescript-eslint/no-unsafe-argument
+  82:67   error  Unsafe member access [status] on a type that cannot be resolved                                               @typescript-eslint/no-unsafe-member-access
+  86:3    error  Unsafe return of a value of type error                                                                        @typescript-eslint/no-unsafe-return
+  86:18   error  Unsafe member access .senderId on a type that cannot be resolved                                              @typescript-eslint/no-unsafe-member-access
+  86:130  error  Unsafe member access .senderName on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
+
+✖ 132 problems (132 errors, 0 warnings)
+

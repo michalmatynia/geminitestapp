@@ -35,6 +35,9 @@ import {
 import {
   persistVintedQuickListFeedback,
 } from '@/features/integrations/utils/vintedQuickListFeedback';
+import {
+  resolveDisplayedTraderaListingStatus,
+} from '@/features/integrations/utils/tradera-listing-status';
 import { resolveVintedRequestId } from '@/features/integrations/utils/vinted-listing-client-utils';
 import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations/listings';
@@ -59,6 +62,16 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 
 const readString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const resolveDisplayedMarketplaceListingStatus = (
+  listing: ProductListingWithDetails
+): string | null =>
+  isTraderaIntegrationSlug(listing.integration?.slug)
+    ? resolveDisplayedTraderaListingStatus({
+        status: listing.status,
+        marketplaceData: listing.marketplaceData,
+      })
+    : readString(listing.status);
 
 const hasTraderaAuthSignal = (value: string | null | undefined): boolean => {
   const normalized = (value ?? '').trim().toLowerCase();
@@ -205,7 +218,7 @@ export function ProductListingsContent(): React.JSX.Element {
     persistedVintedQuickListFeedback?.status === 'completed'
       ? findTrackedVintedListing(filteredListings, persistedVintedQuickListFeedback)
       : null;
-  const displayListings =
+  const baseDisplayListings =
     persistedQuickListFeedback?.status === 'completed' && trackedSuccessListing
       ? filteredListings.map((listing) =>
           listing.id === trackedSuccessListing.id &&
@@ -237,6 +250,15 @@ export function ProductListingsContent(): React.JSX.Element {
                 : listing
             )
         : filteredListings;
+  const displayListings = baseDisplayListings.map((listing) => {
+      const displayedStatus = resolveDisplayedMarketplaceListingStatus(listing);
+      return displayedStatus && displayedStatus !== listing.status
+        ? {
+            ...listing,
+            status: displayedStatus,
+          }
+        : listing;
+    });
   const displayScopedStatus =
     persistedQuickListFeedback?.status === 'completed' &&
     isTraderaIntegrationSlug(filterIntegrationSlug)

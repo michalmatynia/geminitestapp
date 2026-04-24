@@ -1,0 +1,36 @@
+{
+  "id": "e1afc0b9-25d7-4094-8f79-49f52b077c7d",
+  "productId": "a86f08ed-800f-4130-952b-b678e133cf49",
+  "status": "running",
+  "provider": "amazon",
+  "rawResult": {
+    "runId": "3f9e56ca-b80b-496a-a712-434499026ba1",
+    "status": "queued",
+    "runtimeKey": "amazon_candidate_extraction",
+    "actionId": "runtime_action__amazon_candidate_extraction",
+    "selectorProfile": "amazon",
+    "imageSearchProvider": "google_lens_upload",
+    "allowManualVerification": true,
+    "manualVerificationPending": false,
+    "manualVerificationMessage": null,
+    "manualVerificationTimeoutMs": 240000,
+    "recordDiagnostics": true,
+    "runStatus": "running",
+    "latestStage": null,
+    "failureArtifacts": [
+      {
+        "name": "runtime-posture",
+        "path": "3f9e56ca-b80b-496a-a712-434499026ba1/runtime-posture-1777020066665.json",
+        "kind": "json",
+        "mimeType": "application/json"
+      }
+    ],
+    "logTail": [
+      "[runtime] Prepared Playwright runtime configuration.",
+      "[runtime] Launching chromium browser.",
+      "[runtime] Anti-detection posture: browser=Brave, profile=default, locale=default, timezone=default, proxy=disabled.",
+      "[runtime] Applied Chromium anti-detection defaults (profile: default).",
+      "[runtime] Trace capture started."
+    ]
+  }
+}

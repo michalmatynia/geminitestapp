@@ -54,7 +54,7 @@ export function RunHistoryFilterControls(
           { id: 'all', label: 'All' },
           { id: 'active', label: 'Active' },
           { id: 'failed', label: 'Failed' },
-          { id: 'dead', label: 'Dead-letter' },
+          { id: 'canceled', label: 'Canceled' },
         ].map(
           (filter: { id: string; label: string }): React.JSX.Element => (
             <RunHistoryPillButton

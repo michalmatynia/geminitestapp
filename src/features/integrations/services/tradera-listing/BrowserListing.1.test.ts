@@ -368,16 +368,13 @@ describe('runTraderaBrowserListing scripted mode', () => {
           title: 'Example title',
           description: 'Example description | Product ID: BASE-1 | SKU: SKU-1',
           price: 55,
-          localImagePaths: [],
-          imageUrls: [
-            'http://localhost:3000/uploads/products/SKU-1/example.png',
-            'https://cdn.example.com/a.jpg',
-          ],
-          traderaImageOrder: {
-            strategy: 'download-ordered',
-            imageCount: 2,
+          localImagePaths: expect.arrayContaining([expect.stringContaining('BASE-1_01.png')]),
+          imageUrls: ['https://cdn.example.com/a.jpg'],
+          traderaImageOrder: expect.objectContaining({
+            strategy: 'local-complete',
+            imageCount: 1,
             localImageCoverageCount: 1,
-          },
+          }),
           traderaConfig: {
             listingFormUrl: 'https://www.tradera.com/en/selling/new',
           },
@@ -465,7 +462,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
         publishVerified: true,
         categoryFallbackUsed: false,
         categoryName: 'Pins',
-        imageInputSource: 'remote',
+        imageInputSource: 'local',
         imageUploadFallbackUsed: false,
         imagePreviewMismatch: false,
         imageUploadSource: null,
@@ -473,8 +470,8 @@ describe('runTraderaBrowserListing scripted mode', () => {
         observedImagePreviewCount: null,
         observedImagePreviewDelta: null,
         observedImagePreviewDescriptors: [],
-        localImagePathCount: 0,
-        imageUrlCount: 2,
+        localImagePathCount: 1,
+        imageUrlCount: 1,
         ...EXPECTED_TRADERA_PRICING_METADATA,
         categoryMappingReason: 'mapped',
         categoryMatchScope: 'catalog_match',
@@ -893,6 +890,73 @@ describe('runTraderaBrowserListing scripted mode', () => {
         }),
       })
     );
+  });
+
+  it('persists sync target metadata from the sequencer-backed sync result', async () => {
+    runPlaywrightListingScriptMock.mockResolvedValue({
+      runId: 'run-sync-metadata',
+      listingUrl: 'https://www.tradera.com/item/external-existing',
+      publishVerified: true,
+      executionSettings: {
+        headless: false,
+        slowMo: 85,
+        timeout: 30000,
+        navigationTimeout: 45000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      rawResult: {
+        stage: 'sync_verified',
+        listingUrl: 'https://www.tradera.com/item/external-existing',
+        syncTargetMatchStrategy: 'direct_listing_url',
+        syncTargetListingId: 'external-existing',
+        syncTargetListingUrl: 'https://www.tradera.com/item/external-existing',
+        syncImageMode: 'fields_only',
+      },
+    });
+
+    const result = await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        externalListingId: 'external-existing',
+        marketplaceData: {
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'sync',
+      browserMode: 'headed',
+      syncSkipImages: true,
+    });
+
+    expect(result.metadata).toMatchObject({
+      scriptMode: 'scripted',
+      syncTargetMatchStrategy: 'direct_listing_url',
+      syncTargetListingId: 'external-existing',
+      syncTargetListingUrl: 'https://www.tradera.com/item/external-existing',
+      syncImageMode: 'fields_only',
+      syncFieldsOnly: true,
+    });
   });
 
   it('forces syncSkipImages=false in script input when syncSkipImages=true is passed for a non-sync action', async () => {

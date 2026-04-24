@@ -57,6 +57,28 @@ export type ListingRow = {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const toRecord = (value: unknown): Record<string, unknown> =>
+  value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const readString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const resolveLatestCheckedStatus = (
+  listing: ProductListingWithDetails | null | undefined
+): string | null => {
+  const traderaData = toRecord(listing?.marketplaceData?.['tradera']);
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  if (readString(lastExecution['action']) !== 'check_status') {
+    return null;
+  }
+
+  const metadata = toRecord(lastExecution['metadata']);
+  const rawResult = toRecord(metadata['rawResult']);
+  return readString(metadata['checkedStatus']) ?? readString(rawResult['status']);
+};
+
 const isDuplicateLinkedSignal = ({
   listing,
   liveRawResult,
@@ -155,7 +177,10 @@ export function resolveTraderaRowStatusPresentation({
   label: string;
   variant: 'active' | 'neutral' | 'error' | 'pending' | 'removed' | 'processing' | undefined;
 } {
-  const rawStatus = typeof listing?.status === 'string' ? listing.status : 'unknown';
+  const checkedStatus = resolveLatestCheckedStatus(listing);
+  const rawStatus =
+    checkedStatus ??
+    (typeof listing?.status === 'string' ? listing.status : 'unknown');
 
   if (
     listing &&

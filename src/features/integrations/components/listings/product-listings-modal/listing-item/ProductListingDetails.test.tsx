@@ -304,7 +304,7 @@ describe('ProductListingDetails', () => {
       screen.getByText('FAIL_PUBLISH_VALIDATION: Publish action is disabled.')
     ).toBeInTheDocument();
     expect(screen.getByText('Tradera run result')).toBeInTheDocument();
-    expect(screen.getByText(/publish_failed/)).toBeInTheDocument();
+    expect(screen.getAllByText(/publish_failed/).length).toBeGreaterThan(0);
     expect(screen.getByText('Tradera failure diagnostics')).toBeInTheDocument();
     expect(screen.getByText(/failure\.png/)).toBeInTheDocument();
     expect(screen.getByText(/\[runtime\]\[error\] FAIL_PUBLISH_VALIDATION/)).toBeInTheDocument();
@@ -381,6 +381,127 @@ describe('ProductListingDetails', () => {
     expect(
       screen.getByText('FAIL_CATEGORY_SET: Tradera category could not be selected.')
     ).toBeInTheDocument();
+  });
+
+  it('renders Tradera sync target metadata from the persisted sequencer result', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-sync-details',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: '987654321',
+            inventoryId: null,
+            status: 'active',
+            listedAt: '2026-04-13T10:00:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-13T09:00:00.000Z',
+            updatedAt: '2026-04-13T10:05:00.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {
+              listingUrl: 'https://www.tradera.com/item/987654321',
+              tradera: {
+                lastExecution: {
+                  action: 'sync',
+                  executedAt: '2026-04-13T10:05:00.000Z',
+                  metadata: {
+                    publishVerified: true,
+                    syncTargetMatchStrategy: 'direct_listing_url',
+                    syncTargetListingId: '987654321',
+                    syncTargetListingUrl: 'https://www.tradera.com/item/987654321',
+                    syncImageMode: 'fields_only',
+                    categorySource: 'autofill',
+                    executionSteps: [
+                      {
+                        id: 'title_fill',
+                        label: 'Enter title',
+                        status: 'success',
+                      },
+                      {
+                        id: 'description_fill',
+                        label: 'Enter description',
+                        status: 'success',
+                      },
+                      {
+                        id: 'price_set',
+                        label: 'Set price',
+                        status: 'success',
+                      },
+                      {
+                        id: 'category_select',
+                        label: 'Select category',
+                        status: 'success',
+                      },
+                      {
+                        id: 'attribute_select',
+                        label: 'Apply listing attributes',
+                        status: 'skipped',
+                        message: 'step omitted from runtime action manifest',
+                      },
+                      {
+                        id: 'shipping_set',
+                        label: 'Configure delivery',
+                        status: 'success',
+                      },
+                      {
+                        id: 'image_upload',
+                        label: 'Upload listing images',
+                        status: 'skipped',
+                        message: 'sync-skip-images',
+                      },
+                    ],
+                    logTail: [
+                      '[user] tradera.quicklist.field.verified {"field":"title","attempt":0}',
+                      '[user] tradera.quicklist.field.skipped {"field":"description","reason":"disabled-on-sync"}',
+                      '[user] tradera.quicklist.field.skipped {"field":"price","reason":"already-matched"}',
+                      '[user] tradera.quicklist.field.selected {"field":"delivery","option":"Buyer pays shipping"}',
+                    ],
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Sync target match:')).toBeInTheDocument();
+    expect(screen.getByText('Direct listing URL')).toBeInTheDocument();
+    expect(screen.getByText('Sync target ID:')).toBeInTheDocument();
+    expect(screen.getAllByText('987654321').length).toBeGreaterThan(0);
+    expect(screen.getByText('Sync target URL:')).toBeInTheDocument();
+    expect(screen.getByText('https://www.tradera.com/item/987654321')).toBeInTheDocument();
+    expect(screen.getByText('Sync image mode:')).toBeInTheDocument();
+    expect(screen.getByText('Fields only')).toBeInTheDocument();
+    expect(screen.getByText('Sync title:')).toBeInTheDocument();
+    expect(screen.getAllByText('Updated').length).toBeGreaterThan(0);
+    expect(screen.getByText('Sync description:')).toBeInTheDocument();
+    expect(screen.getByText('Locked on Tradera')).toBeInTheDocument();
+    expect(screen.getByText('Sync pricing:')).toBeInTheDocument();
+    expect(screen.getByText('Already matched')).toBeInTheDocument();
+    expect(screen.getByText('Sync category:')).toBeInTheDocument();
+    expect(screen.getAllByText('Preserved').length).toBeGreaterThan(0);
+    expect(screen.getByText('Sync attributes:')).toBeInTheDocument();
+    expect(screen.getByText('Omitted by runtime manifest')).toBeInTheDocument();
+    expect(screen.getByText('Sync shipping:')).toBeInTheDocument();
+    expect(screen.getByText('Sync images:')).toBeInTheDocument();
   });
 
   it('reconstructs the exact-title-only duplicate rationale from persisted Tradera run data', () => {
@@ -1360,13 +1481,71 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('job-tradera-status-check-1')).toBeInTheDocument();
   });
 
+  it('shows Tradera sync history actions separately from exported fields', () => {
+    useProductListingsUIStateMock.mockReturnValue({
+      historyOpenByListing: { 'listing-tradera-history-sync': true },
+      setHistoryOpenByListing: vi.fn(),
+    });
+
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-history-sync',
+            status: 'active',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: '987654321',
+            inventoryId: null,
+            listedAt: '2026-04-13T10:05:00.000Z',
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            createdAt: '2026-04-13T09:00:00.000Z',
+            updatedAt: '2026-04-13T10:05:00.000Z',
+            exportHistory: [
+              {
+                exportedAt: '2026-04-13T10:05:00.000Z',
+                status: 'active',
+                requestId: 'job-tradera-sync-1',
+                externalListingId: '987654321',
+                fields: ['browser_mode:headed', 'action:sync', 'title', 'description'],
+              },
+            ],
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Tradera Browser',
+            },
+            marketplaceData: {},
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByText('Action:')).toBeInTheDocument();
+    expect(screen.getByText('Sync')).toBeInTheDocument();
+    expect(screen.getByText('Fields:')).toBeInTheDocument();
+    expect(screen.getByText('title, description')).toBeInTheDocument();
+    expect(screen.queryByText('action:sync')).toBeNull();
+  });
+
   it('shows Tradera status-check verification evidence in the listing details panel', () => {
     render(
       <ProductListingDetails
         listing={
           {
             id: 'listing-tradera-status-result',
-            status: 'unknown',
+            status: 'active',
             externalListingId: '721891408',
             inventoryId: null,
             listedAt: null,
@@ -1407,6 +1586,7 @@ describe('ProductListingDetails', () => {
 
     expect(screen.getByText('Checked status:')).toBeInTheDocument();
     expect(screen.getAllByText('unknown').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/^active$/i)).toBeNull();
     expect(screen.getByText('Verified in:')).toBeInTheDocument();
     expect(screen.getByText('Public listing page')).toBeInTheDocument();
     expect(screen.getByText('Match strategy:')).toBeInTheDocument();
@@ -1415,7 +1595,7 @@ describe('ProductListingDetails', () => {
     expect(screen.getByText('Matched Product ID:')).toBeInTheDocument();
     expect(screen.getByText('BASE-1')).toBeInTheDocument();
     expect(screen.getByText('Candidates inspected:')).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0);
   });
 
   it('shows Playwright execution metadata including browser mode for troubleshooting relists', () => {

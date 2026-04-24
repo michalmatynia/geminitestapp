@@ -44,23 +44,21 @@ export function AiPathsCanvasName(): React.JSX.Element | null {
         ? 'Runtime running'
         : runtimeRunStatus === 'paused'
           ? 'Runtime paused'
-          : runtimeRunStatus === 'completed'
+        : runtimeRunStatus === 'completed'
             ? 'Runtime completed'
             : runtimeRunStatus === 'failed'
               ? 'Runtime failed'
               : runtimeRunStatus === 'stepping'
                 ? 'Runtime stepping'
-                : runtimeRunStatus === 'handoff_ready'
-                  ? 'Runtime ready for handoff'
-                  : 'Runtime awaiting lease';
+                : 'Runtime idle';
   const runtimeStatusVariant =
     runtimeRunStatus === 'failed'
       ? 'error'
       : runtimeRunStatus === 'running' || runtimeRunStatus === 'stepping'
         ? 'processing'
-        : runtimeRunStatus === 'completed' || runtimeRunStatus === 'handoff_ready'
+        : runtimeRunStatus === 'completed'
           ? 'success'
-          : runtimeRunStatus === 'paused' || runtimeRunStatus === 'blocked_on_lease'
+          : runtimeRunStatus === 'paused'
             ? 'warning'
             : 'neutral';
   const pathSummaryLabel =

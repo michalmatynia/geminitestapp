@@ -127,6 +127,7 @@ vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
   AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
@@ -136,6 +137,7 @@ import {
   queueAmazonBatchProductScans,
   synchronizeProductScan,
 } from './product-scans-service';
+import { buildAmazonEvaluationStepDetails } from './product-scans-service.helpers.amazon';
 
 const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanRecord => ({
   id: 'scan-1',
@@ -226,6 +228,73 @@ describe('product-scans-service', () => {
         id,
       })
     );
+  });
+
+  it('surfaces ASIN conflicts in Amazon evaluation step details', () => {
+    const details = buildAmazonEvaluationStepDetails(
+      {
+        status: 'rejected',
+        stage: 'probe_evaluate',
+        sameProduct: false,
+        imageMatch: false,
+        descriptionMatch: false,
+        pageRepresentsSameProduct: false,
+        pageLanguage: 'en',
+        languageConfidence: 0.98,
+        languageAccepted: true,
+        languageReason: 'Page content is English.',
+        confidence: 0.2,
+        proceed: false,
+        scrapeAllowed: false,
+        recommendedAction: 'try_next_candidate',
+        rejectionCategory: 'wrong_product',
+        threshold: 0.7,
+        reasons: ['The Amazon page shows a different product.'],
+        mismatches: ['ASIN points to a different item.'],
+        mismatchLabels: ['wrong_product'],
+        variantAssessment: null,
+        modelId: 'gpt-4o',
+        brainApplied: null,
+        evidence: {
+          candidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+          pageTitle: 'Wrong product',
+          sourceAsin: 'B07TWFYR7G',
+          candidateAsin: 'B00TEST123',
+          heroImageSource: null,
+          heroImageArtifactName: null,
+          screenshotArtifactName: null,
+          htmlArtifactName: null,
+          productImageSource: null,
+        },
+        error: null,
+        evaluatedAt: '2026-04-24T08:00:00.000Z',
+      },
+      {
+        enabled: true,
+        mode: 'brain_default',
+        threshold: 0.7,
+        onlyForAmbiguousCandidates: false,
+        candidateSimilarityMode: 'ai_only',
+        allowedContentLanguage: 'en',
+        rejectNonEnglishContent: true,
+        languageDetectionMode: 'ai_only',
+        modelId: 'gpt-4o',
+        systemPrompt: 'Return only JSON.',
+        brainApplied: null,
+      },
+      'probe'
+    );
+
+    expect(details).toEqual(
+      expect.arrayContaining([
+        { label: 'Source ASIN', value: 'B07TWFYR7G' },
+        { label: 'Candidate ASIN', value: 'B00TEST123' },
+        { label: 'ASIN relation', value: 'Conflict' },
+        { label: 'Reason', value: 'The Amazon page shows a different product.' },
+        { label: 'Mismatch', value: 'ASIN points to a different item.' },
+      ])
+    );
+    expect(details).toHaveLength(20);
   });
 
   it('skips the AI evaluator for non-ambiguous matches when configured to do so', async () => {
@@ -568,6 +637,7 @@ describe('product-scans-service', () => {
       'scan-1',
       expect.objectContaining({
         status: 'completed',
+        asin: null,
         matchedImageId: 'image-1',
         asinUpdateStatus: 'not_needed',
         asinUpdateMessage: 'Candidates ready for extraction.',
@@ -595,6 +665,7 @@ describe('product-scans-service', () => {
   it('does not trigger provider fallback while waiting for manual candidate selection', async () => {
     const scan = createScan({
       status: 'running',
+      asin: 'B07STALE123',
       imageCandidates: [
         {
           id: 'image-1',
@@ -656,6 +727,7 @@ describe('product-scans-service', () => {
       'scan-1',
       expect.objectContaining({
         status: 'completed',
+        asin: null,
         asinUpdateMessage: 'Candidates ready for extraction.',
         asinUpdateStatus: 'not_needed',
         rawResult: expect.objectContaining({
@@ -807,12 +879,114 @@ describe('product-scans-service', () => {
     );
   });
 
-  it('keeps google candidate failures terminal when no fallback provider remains', async () => {
+  it('falls back to google image URL search when the configured fallback was already exhausted', async () => {
     const scan = createScan({
       status: 'running',
       rawResult: {
         imageSearchProvider: 'google_images_upload',
         imageSearchProviderHistory: ['google_images_upload', 'google_lens_upload'],
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'failed',
+        stage: 'google_candidates',
+        matchedImageId: 'image-1',
+        message: 'No Amazon candidates found in Google Lens results.',
+        steps: [
+          {
+            key: 'google_candidates',
+            label: 'Collect Amazon candidates from Google Lens',
+            group: 'google',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'no_candidates',
+            status: 'failed',
+            message: 'Google Lens results did not contain any Amazon product URLs.',
+            warning: null,
+            details: [],
+            url: 'https://lens.google.com/search?p=uploaded',
+            startedAt: '2026-04-11T04:04:06.000Z',
+            completedAt: '2026-04-11T04:04:08.000Z',
+            durationMs: 2000,
+          },
+        ],
+      },
+      finalUrl: 'https://lens.google.com/search?p=uploaded',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          runtimeKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+          input: expect.objectContaining({
+            runtimeKey: AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
+            imageSearchProvider: 'google_images_url',
+          }),
+        }),
+      })
+    );
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        rawResult: expect.objectContaining({
+          imageSearchProvider: 'google_images_url',
+          imageSearchProviderHistory: [
+            'google_images_upload',
+            'google_lens_upload',
+            'google_images_url',
+          ],
+          fallbackFromImageSearchProvider: 'google_images_upload',
+          fallbackToImageSearchProvider: 'google_images_url',
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        asinUpdateStatus: 'pending',
+      })
+    );
+  });
+
+  it('keeps google candidate failures terminal when no fallback provider remains', async () => {
+    const scan = createScan({
+      status: 'running',
+      rawResult: {
+        imageSearchProvider: 'google_images_upload',
+        imageSearchProviderHistory: [
+          'google_images_upload',
+          'google_lens_upload',
+          'google_images_url',
+        ],
       },
     });
 
@@ -871,6 +1045,149 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         status: 'failed',
         asinUpdateStatus: 'failed',
+      })
+    );
+  });
+
+  it('continues with the next direct Amazon candidate after candidate-page failure', async () => {
+    const scan = createScan({
+      status: 'running',
+      rawResult: {
+        runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+        imageSearchProvider: 'google_lens_upload',
+        imageSearchProviderHistory: ['google_lens_upload'],
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      artifacts: [],
+      result: { outputs: {} },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'failed',
+        stage: 'amazon_content_ready',
+        matchedImageId: 'image-1',
+        candidateUrls: [
+          'https://www.amazon.com/dp/B00TEST123',
+          'https://www.amazon.co.uk/dp/B00TEST123',
+          'https://www.amazon.de/dp/B00TEST123',
+        ],
+        url: 'https://www.amazon.com/dp/B00TEST123',
+        currentUrl: 'https://www.amazon.com/dp/B00TEST123',
+        message: 'Amazon product content did not become visible.',
+        steps: [
+          {
+            key: 'amazon_open',
+            label: 'Open Amazon product page',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'ok',
+            status: 'completed',
+            message: 'Amazon product page opened.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T04:04:00.000Z',
+            completedAt: '2026-04-11T04:04:02.000Z',
+            durationMs: 2000,
+          },
+          {
+            key: 'amazon_content_ready',
+            label: 'Wait for Amazon content',
+            group: 'amazon',
+            attempt: 1,
+            candidateId: 'image-1',
+            candidateRank: 1,
+            inputSource: null,
+            retryOf: null,
+            resultCode: 'not_ready',
+            status: 'failed',
+            message: 'Amazon product content did not become visible.',
+            warning: null,
+            details: [],
+            url: 'https://www.amazon.com/dp/B00TEST123',
+            startedAt: '2026-04-11T04:04:02.000Z',
+            completedAt: '2026-04-11T04:04:06.000Z',
+            durationMs: 4000,
+          },
+        ],
+      },
+      finalUrl: 'https://www.amazon.com/dp/B00TEST123',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: 'B00TEST123',
+      ean: null,
+      gtin: null,
+      name_en: 'Product 1',
+      description_en: 'Product 1 description',
+      images: [],
+      imageLinks: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-2',
+      status: 'queued',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+          input: expect.objectContaining({
+            runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+            directAmazonCandidateUrl: 'https://www.amazon.co.uk/dp/B00TEST123',
+            directAmazonCandidateUrls: [
+              'https://www.amazon.co.uk/dp/B00TEST123',
+              'https://www.amazon.de/dp/B00TEST123',
+            ],
+            directAmazonCandidateRank: 2,
+          }),
+        }),
+      })
+    );
+    expect(mocks.updateProductScanMock).toHaveBeenCalledWith(
+      'scan-1',
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        error: null,
+        asinUpdateStatus: 'pending',
+        rawResult: expect.objectContaining({
+          runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+          candidateContinuation: true,
+          continuationReason: 'candidate_page_failure',
+          failedCandidateStage: 'amazon_content_ready',
+          continuationCandidateUrls: [
+            'https://www.amazon.co.uk/dp/B00TEST123',
+            'https://www.amazon.de/dp/B00TEST123',
+          ],
+          previousRunId: 'run-1',
+        }),
+        steps: expect.arrayContaining([
+          expect.objectContaining({
+            key: 'queue_scan',
+            status: 'completed',
+            resultCode: 'run_queued',
+            message: 'Queued the next Amazon candidate after candidate-page failure.',
+          }),
+        ]),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'queued',
+        engineRunId: 'run-2',
+        asinUpdateStatus: 'pending',
       })
     );
   });

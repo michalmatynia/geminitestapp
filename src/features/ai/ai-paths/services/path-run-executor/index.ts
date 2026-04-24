@@ -2,9 +2,7 @@ import 'server-only';
 
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
-  recordRuntimeRunBlockedOnLease,
   recordRuntimeRunFinished,
-  recordRuntimeRunHandoffReady,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { getAiPathsRuntimeFingerprint } from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import type {
@@ -105,11 +103,6 @@ export const executePathRun = async (
       const updated = await repo.updateRunIfStatus(run.id, UPDATE_ELIGIBLE_RUN_STATUSES, data);
       if (updated) {
         publishRunUpdate(run.id, 'run', data);
-        if (data.status === 'blocked_on_lease') {
-          void recordRuntimeRunBlockedOnLease({ runId: run.id });
-        } else if (data.status === 'handoff_ready') {
-          void recordRuntimeRunHandoffReady({ runId: run.id });
-        }
       }
       return Boolean(updated);
     } catch (error) {
@@ -492,7 +485,7 @@ export const executePathRun = async (
     const finishedAt = new Date().toISOString();
     recordRuntimeRunFinished({
       runId: run.id,
-      status: finalStatus as 'completed' | 'failed' | 'canceled' | 'dead_lettered',
+      status: finalStatus as 'completed' | 'failed' | 'canceled',
       durationMs: computeDurationMs(runStartedAt, finishedAt) ?? undefined,
     }).catch(() => {});
   } catch (error) {

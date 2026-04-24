@@ -59,6 +59,33 @@ describe('product scan run feedback', () => {
     expect(feedback.variant).toBe('processing');
   });
 
+  it('surfaces the automatic Google retry state before manual fallback', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        rawResult: {
+          captchaStealthRetryStarted: true,
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('Retrying Google');
+    expect(feedback.variant).toBe('warning');
+  });
+
+  it('surfaces candidate-selection scans as awaiting selection instead of completed', () => {
+    const feedback = buildProductScanRunFeedbackFromRecord(
+      createScanRecord({
+        status: 'completed',
+        rawResult: {
+          candidateSelectionRequired: true,
+        },
+      })
+    );
+
+    expect(feedback.label).toBe('Awaiting Selection');
+    expect(feedback.variant).toBe('warning');
+  });
+
   it('surfaces AI rejection distinctly from a generic no-match result', () => {
     const feedback = buildProductScanRunFeedbackFromRecord(
       createScanRecord({

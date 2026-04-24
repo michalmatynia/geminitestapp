@@ -13,6 +13,13 @@ export type ProductScanRunFeedback = TriggerButtonRunFeedbackPresentation & {
   updatedAt: string | null;
 };
 
+export const PRODUCT_SCAN_CANDIDATE_SELECTION_LABEL = 'Awaiting Selection';
+export const PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE =
+  'Amazon candidates are ready for manual selection.';
+export const PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_LABEL = 'Retrying Google';
+export const PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE =
+  'Retrying Google Lens automatically with a fresh proxy session before manual fallback.';
+
 const PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS: Record<
   ProductScanStatus,
   TriggerButtonRunFeedbackPresentation
@@ -60,6 +67,26 @@ const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>)
   return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
 };
 
+export const isProductScanGoogleStealthRetrying = (
+  scan: Pick<ProductScanRecord, 'status' | 'rawResult'> | null | undefined
+): boolean => {
+  if (scan?.status !== 'running' && scan?.status !== 'queued') {
+    return false;
+  }
+
+  const rawResult = scan.rawResult;
+  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+    return false;
+  }
+
+  const result = rawResult as Record<string, unknown>;
+  return (
+    result['captchaStealthRetryStarted'] === true &&
+    result['manualVerificationPending'] !== true &&
+    result['captchaManualRetryStarted'] !== true
+  );
+};
+
 const getManualVerificationMessage = (
   scan: Pick<ProductScanRecord, 'rawResult' | 'asinUpdateMessage'> | null | undefined
 ): string | null => {
@@ -76,23 +103,54 @@ const getManualVerificationMessage = (
   return typeof scan.asinUpdateMessage === 'string' ? scan.asinUpdateMessage : null;
 };
 
+export const isProductScanCandidateSelectionRequired = (
+  scan: Pick<ProductScanRecord, 'status' | 'rawResult'> | null | undefined
+): boolean => {
+  if (scan?.status !== 'completed') {
+    return false;
+  }
+
+  const rawResult = scan.rawResult;
+  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+    return false;
+  }
+
+  return (rawResult as Record<string, unknown>)['candidateSelectionRequired'] === true;
+};
+
 export const resolveProductScanRunFeedbackPresentation = (
   status: ProductScanStatus,
   options?: {
     manualVerificationPending?: boolean | null;
     manualVerificationMessage?: string | null;
+    googleStealthRetrying?: boolean | null;
+    candidateSelectionRequired?: boolean | null;
     amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
     amazonEvaluationLanguageAccepted?: boolean | null;
     supplierEvaluationStatus?: ProductScanSupplierEvaluationStatus | null;
   }
 ): TriggerButtonRunFeedbackPresentation =>
-  status === 'running' && options?.manualVerificationPending
+  (status === 'running' || status === 'queued') && options?.googleStealthRetrying
+    ? {
+        label: PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_LABEL,
+        variant: 'warning',
+        badgeClassName:
+          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+      }
+    : status === 'running' && options?.manualVerificationPending
     ? {
         label: /requested login/i.test(options?.manualVerificationMessage ?? '') ? 'Login' : 'Captcha',
         variant: 'warning',
         badgeClassName:
           'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
       }
+    : status === 'completed' && options?.candidateSelectionRequired
+      ? {
+          label: PRODUCT_SCAN_CANDIDATE_SELECTION_LABEL,
+          variant: 'warning',
+          badgeClassName:
+            'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+        }
     : status === 'no_match' &&
         options?.amazonEvaluationStatus === 'rejected' &&
         options?.amazonEvaluationLanguageAccepted === false
@@ -140,6 +198,8 @@ export const buildProductScanRunFeedbackFromRecord = (
   ...resolveProductScanRunFeedbackPresentation(scan.status, {
     manualVerificationPending: isManualVerificationPending(scan),
     manualVerificationMessage: getManualVerificationMessage(scan),
+    googleStealthRetrying: isProductScanGoogleStealthRetrying(scan),
+    candidateSelectionRequired: isProductScanCandidateSelectionRequired(scan),
     amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
     amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
     supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,

@@ -118,17 +118,31 @@ describe('installChromiumAntiDetectionInitScript', () => {
 });
 
 describe('resolveChromiumAntiDetectionRuntimeBehavior', () => {
-  it('prewarms hostile profiles on the same origin before the real start url', () => {
+  it('prewarms generic hostile search profiles on the same origin before the real start url', () => {
     expect(
       resolveChromiumAntiDetectionRuntimeBehavior({
         identityProfile: 'search',
-        startUrl: 'https://www.google.com/search?q=lamp',
+        startUrl: 'https://allowed.example.com/search?q=lamp',
       })
     ).toEqual({
-      prewarmUrl: 'https://www.google.com/',
+      prewarmUrl: 'https://allowed.example.com/',
       prewarmWaitMs: 1400,
       postStartUrlWaitMs: 900,
       launchCooldownMs: 2200,
+    });
+  });
+
+  it('uses a stronger pacing profile for Google-owned search origins', () => {
+    expect(
+      resolveChromiumAntiDetectionRuntimeBehavior({
+        identityProfile: 'search',
+        startUrl: 'https://www.google.com/imghp?hl=en',
+      })
+    ).toEqual({
+      prewarmUrl: 'https://www.google.com/',
+      prewarmWaitMs: 2200,
+      postStartUrlWaitMs: 1400,
+      launchCooldownMs: 3200,
     });
   });
 

@@ -354,7 +354,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v146',
+        scriptMarker: 'tradera-quicklist-default:v147',
         scriptStoredOnConnection: false,
         runId: 'run-456',
         requestedBrowserMode: 'headed',
@@ -478,7 +478,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'legacy-default-refresh',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v146',
+        scriptMarker: 'tradera-quicklist-default:v147',
         scriptStoredOnConnection: false,
         runId: 'run-789',
         requestedBrowserMode: 'headed',
@@ -557,7 +557,7 @@ beforeEach(() => {
     });
 
     const staleMarkedManagedScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT
-      .replace('tradera-quicklist-default:v146', 'tradera-quicklist-default:v145')
+      .replace('tradera-quicklist-default:v147', 'tradera-quicklist-default:v146')
       .replace(
         'let currentImageUploadSource = null;\n\n  try {',
         'try {\n    emitStage(\'draft_cleared\');\n\n    let currentImageUploadSource = null;'
@@ -1074,7 +1074,7 @@ beforeEach(() => {
     );
 
     const staleManagedDefaultScript = DEFAULT_TRADERA_QUICKLIST_SCRIPT.replace(
-      'tradera-quicklist-default:v146',
+      'tradera-quicklist-default:v147',
       'tradera-quicklist-default:v89'
     );
 
@@ -1259,7 +1259,7 @@ beforeEach(() => {
         scriptMode: 'scripted',
         scriptSource: 'default-fallback',
         scriptKind: 'managed',
-        scriptMarker: 'tradera-quicklist-default:v146',
+        scriptMarker: 'tradera-quicklist-default:v147',
         scriptStoredOnConnection: false,
         runId: 'run-headed-recovery',
         requestedBrowserMode: 'headed',

@@ -7,13 +7,9 @@ import {
 export type ProductAiRunFeedbackStatus =
   | 'queued'
   | 'running'
-  | 'blocked_on_lease'
-  | 'handoff_ready'
-  | 'paused'
   | 'completed'
   | 'failed'
-  | 'canceled'
-  | 'dead_lettered';
+  | 'canceled';
 
 export type ProductAiRunFeedback = TriggerButtonRunFeedbackPresentation & {
   runId: string;
@@ -24,25 +20,17 @@ export type ProductAiRunFeedback = TriggerButtonRunFeedbackPresentation & {
 const PRODUCT_AI_RUN_FEEDBACK_STATUSES = new Set<ProductAiRunFeedbackStatus>([
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const PRODUCT_AI_RUN_STATUS_PRIORITY: Record<ProductAiRunFeedbackStatus, number> = {
   completed: 0,
   failed: 0,
   canceled: 0,
-  dead_lettered: 0,
   queued: 1,
-  handoff_ready: 2,
-  paused: 3,
-  blocked_on_lease: 4,
-  running: 5,
+  running: 2,
 };
 
 const resolveUpdatedAtMs = (value: ProductAiRunFeedback): number => {

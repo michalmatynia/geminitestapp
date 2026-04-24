@@ -40,6 +40,7 @@ import {
   type RefreshRowOptions,
   type RefreshRowResult,
   resolvePreferredTraderaListing,
+  resolveTraderaRowStatusPresentation,
   resolveTraderaSessionTarget,
 } from './TraderaStatusCheckModal.utils';
 import { ListingRowView } from './TraderaStatusCheckModal.RowItem';
@@ -52,6 +53,55 @@ interface TraderaStatusCheckModalProps {
   productIds: string[];
   products: ProductWithImages[];
 }
+
+const countBatchReason = (
+  response: TraderaListingStatusCheckBatchResponse,
+  reason: keyof NonNullable<TraderaListingStatusCheckBatchResponse['reasonCounts']>
+): number => response.reasonCounts?.[reason] ?? 0;
+
+const buildBatchLiveCheckSummary = (
+  response: TraderaListingStatusCheckBatchResponse
+): { message: string; variant: 'success' | 'warning' } => {
+  const noLiveListingCount = countBatchReason(response, 'no_tradera_browser_listing');
+  const selectedListingUnavailableCount = countBatchReason(
+    response,
+    'selected_listing_unavailable'
+  );
+  const authRequiredCount =
+    countBatchReason(response, 'auth_required') ||
+    response.results.filter((result) => isTraderaBrowserAuthRequiredMessage(result.message))
+      .length;
+  const explicitFailureCount =
+    countBatchReason(response, 'preflight_failed') + countBatchReason(response, 'queue_failed');
+  const fallbackSkippedCount = Math.max(
+    response.skipped - noLiveListingCount - selectedListingUnavailableCount,
+    0
+  );
+  const fallbackFailedCount = Math.max(
+    response.failed - authRequiredCount - explicitFailureCount,
+    0
+  );
+
+  const summaryParts = [
+    response.queued > 0 && `${response.queued} queued`,
+    response.alreadyQueued > 0 && `${response.alreadyQueued} already queued`,
+    noLiveListingCount > 0 && `${noLiveListingCount} no live listing`,
+    selectedListingUnavailableCount > 0 &&
+      `${selectedListingUnavailableCount} target changed`,
+    fallbackSkippedCount > 0 && `${fallbackSkippedCount} skipped`,
+    authRequiredCount > 0 && `${authRequiredCount} need login`,
+    explicitFailureCount > 0 && `${explicitFailureCount} failed`,
+    fallbackFailedCount > 0 && `${fallbackFailedCount} failed`,
+  ].filter(Boolean);
+
+  return {
+    message:
+      summaryParts.length > 0
+        ? `Tradera live checks: ${summaryParts.join(', ')}.`
+        : 'No Tradera browser listings were eligible for live check.',
+    variant: response.failed > 0 ? 'warning' : 'success',
+  };
+};
 
 export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): React.JSX.Element {
   const { isOpen, onClose, productIds, products } = props;
@@ -612,7 +662,9 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
                 'No Tradera browser listing available for live status check.',
             };
           }
-          const authRequired = isTraderaBrowserAuthRequiredMessage(result.message);
+          const authRequired =
+            result.reason === 'auth_required' ||
+            isTraderaBrowserAuthRequiredMessage(result.message);
           return {
             ...row,
             liveCheckState: authRequired ? 'idle' : 'error',
@@ -646,25 +698,10 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
         })
       );
 
-      const summaryParts = [
-        response.queued > 0 && `${response.queued} queued`,
-        response.alreadyQueued > 0 && `${response.alreadyQueued} already queued`,
-        response.skipped > 0 && `${response.skipped} skipped`,
-        response.results.filter((result) => isTraderaBrowserAuthRequiredMessage(result.message)).length > 0 &&
-          `${response.results.filter((result) => isTraderaBrowserAuthRequiredMessage(result.message)).length} need login`,
-        response.results.filter((result) => result.status === 'error' && !isTraderaBrowserAuthRequiredMessage(result.message)).length > 0 &&
-          `${response.results.filter((result) => result.status === 'error' && !isTraderaBrowserAuthRequiredMessage(result.message)).length} failed`,
-      ].filter(Boolean);
-
-      toast(
-        summaryParts.length > 0
-          ? `Tradera live checks: ${summaryParts.join(', ')}.`
-          : 'No Tradera browser listings were eligible for live check.',
-        {
-          variant:
-            response.failed > 0 ? 'warning' : 'success',
-        }
-      );
+      const batchSummary = buildBatchLiveCheckSummary(response);
+      toast(batchSummary.message, {
+        variant: batchSummary.variant,
+      });
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to queue live status checks.';
@@ -687,18 +724,29 @@ export function TraderaStatusCheckModal(props: TraderaStatusCheckModalProps): Re
 
   // Summary counts
   const totalWithListing = rows.filter((r) => r.listing !== null).length;
-  const activeCount = rows.filter((r) => r.listing?.status === 'active').length;
-  const soldCount = rows.filter((r) => r.listing?.status === 'sold').length;
-  const endedCount = rows.filter(
-    (r) => r.listing?.status === 'ended' || r.listing?.status === 'unsold'
+  const summaryStatuses = rows
+    .map((row) =>
+      row.listing
+        ? resolveTraderaRowStatusPresentation({
+            listing: row.listing,
+          }).status
+        : null
+    )
+    .map((status) => status?.trim().toLowerCase() ?? null);
+  const activeCount = summaryStatuses.filter((status) => status === 'active').length;
+  const soldCount = summaryStatuses.filter((status) => status === 'sold').length;
+  const endedCount = summaryStatuses.filter(
+    (status) => status === 'ended' || status === 'unsold'
   ).length;
-  const failedCount = rows.filter((r) => r.listing?.status === 'failed').length;
+  const unknownCount = summaryStatuses.filter((status) => status === 'unknown').length;
+  const failedCount = summaryStatuses.filter((status) => status === 'failed').length;
 
   const summaryParts = [
     `${totalWithListing} of ${rows.length} listed`,
     activeCount > 0 && `${activeCount} active`,
     soldCount > 0 && `${soldCount} sold`,
     endedCount > 0 && `${endedCount} ended`,
+    unknownCount > 0 && `${unknownCount} unknown`,
     failedCount > 0 && `${failedCount} failed`,
   ].filter(Boolean);
   const liveCheckEligibleCount = rows.filter(

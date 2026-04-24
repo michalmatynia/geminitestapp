@@ -587,6 +587,114 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists sync success metadata without overwriting listing timing fields', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-sync-success',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-existing',
+        listedAt: new Date('2026-04-10T08:00:00.000Z'),
+        expiresAt: new Date('2026-04-20T08:00:00.000Z'),
+        nextRelistAt: new Date('2026-04-20T07:30:00.000Z'),
+        lastRelistedAt: new Date('2026-04-11T08:00:00.000Z'),
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+          tradera: {
+            pendingExecution: {
+              action: 'sync',
+              requestedBrowserMode: 'headed',
+              requestId: 'job-tradera-sync-success',
+              queuedAt: '2026-04-13T10:00:00.000Z',
+              skipImages: true,
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockResolvedValue({
+      externalListingId: 'external-existing',
+      listingUrl: 'https://www.tradera.com/item/external-existing',
+      metadata: {
+        scriptMode: 'scripted',
+        scriptSource: 'connection',
+        runId: 'run-sync-success',
+        browserMode: 'headed',
+        requestedBrowserMode: 'headed',
+        publishVerified: true,
+        syncTargetMatchStrategy: 'direct_listing_url',
+        syncTargetListingId: 'external-existing',
+        syncTargetListingUrl: 'https://www.tradera.com/item/external-existing',
+        syncImageMode: 'fields_only',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-sync-success',
+      action: 'sync',
+      source: 'manual',
+      jobId: 'job-tradera-sync-success',
+      browserMode: 'headed',
+      syncSkipImages: true,
+    });
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-sync-success',
+      expect.objectContaining({
+        status: 'active',
+        listedAt: new Date('2026-04-10T08:00:00.000Z'),
+        expiresAt: new Date('2026-04-20T08:00:00.000Z'),
+        nextRelistAt: new Date('2026-04-20T07:30:00.000Z'),
+        lastRelistedAt: new Date('2026-04-11T08:00:00.000Z'),
+        failureReason: null,
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+          externalListingId: 'external-existing',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastSyncedAt: expect.any(String),
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-sync-success',
+              ok: true,
+              action: 'sync',
+              source: 'manual',
+              metadata: expect.objectContaining({
+                runId: 'run-sync-success',
+                syncTargetMatchStrategy: 'direct_listing_url',
+                syncTargetListingId: 'external-existing',
+                syncTargetListingUrl: 'https://www.tradera.com/item/external-existing',
+                syncImageMode: 'fields_only',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock.mock.calls[0]?.[1]).not.toHaveProperty('lastStatusCheckAt');
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-sync-success',
+      expect.objectContaining({
+        status: 'active',
+        externalListingId: 'external-existing',
+        requestId: 'job-tradera-sync-success',
+        fields: ['browser_mode:headed', 'action:sync'],
+      })
+    );
+  });
+
   it('persists the resolved Tradera status after a live status check', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();
@@ -711,7 +819,7 @@ describe('processTraderaListingJob', () => {
     expect(appendExportHistoryMock).not.toHaveBeenCalled();
   });
 
-  it('persists unknown when Tradera cannot confirm removal from seller sections', async () => {
+  it('preserves a trusted persisted status when Tradera cannot confirm removal from seller sections', async () => {
     const updateListingMock = vi.fn();
     findProductListingByIdAcrossProvidersMock.mockResolvedValue({
       listing: {
@@ -749,6 +857,63 @@ describe('processTraderaListingJob', () => {
 
     expect(updateListingMock).toHaveBeenCalledWith(
       'listing-check-status-unknown',
+      expect.objectContaining({
+        lastStatusCheckAt: expect.any(Date),
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastExecution: expect.objectContaining({
+              action: 'check_status',
+              ok: true,
+              metadata: expect.objectContaining({
+                checkedStatus: 'unknown',
+                verificationMatchStrategy: 'seller-sections-miss',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock.mock.calls[0]?.[1]).not.toHaveProperty('status');
+  });
+
+  it('persists unknown when the previous listing state was only a workflow/error status', async () => {
+    const updateListingMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-check-status-failed',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'failed',
+        externalListingId: 'external-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: vi.fn(),
+        updateListing: updateListingMock,
+        appendExportHistory: vi.fn(),
+      },
+    });
+    runTraderaBrowserCheckStatusMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/1',
+      metadata: {
+        checkedStatus: 'unknown',
+        requestedBrowserMode: 'headed',
+        runId: 'run-check-status-failed',
+        verificationMatchStrategy: 'seller-sections-miss',
+        verificationRawStatusTag: 'unknown',
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-check-status-failed',
+      action: 'check_status',
+      source: 'manual',
+    });
+
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-check-status-failed',
       expect.objectContaining({
         status: 'unknown',
         lastStatusCheckAt: expect.any(Date),
@@ -896,6 +1061,78 @@ describe('processTraderaListingJob', () => {
         failureReason: 'Tradera scripted listing failed.',
         fields: ['browser_mode:headed'],
         requestId: 'job-tradera-2',
+      })
+    );
+  });
+
+  it('persists sync failures with sync action metadata and the underlying failure reason', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-sync-failure',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-existing',
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      badRequestError('FAIL_SYNC_TARGET_NOT_FOUND: Tradera listing editor was not reachable.')
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-sync-failure',
+        action: 'sync',
+        source: 'manual',
+        jobId: 'job-tradera-sync-failure',
+      })
+    ).rejects.toThrow('FAIL_SYNC_TARGET_NOT_FOUND: Tradera listing editor was not reachable.');
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-sync-failure',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason: 'FAIL_SYNC_TARGET_NOT_FOUND: Tradera listing editor was not reachable.',
+        nextRelistAt: null,
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-existing',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              action: 'sync',
+              ok: false,
+              errorCategory: 'UNKNOWN',
+              metadata: expect.objectContaining({
+                requestedBrowserMode: 'headed',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock.mock.calls[0]?.[1]).not.toHaveProperty('lastStatusCheckAt');
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-sync-failure',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason: 'FAIL_SYNC_TARGET_NOT_FOUND: Tradera listing editor was not reachable.',
+        requestId: 'job-tradera-sync-failure',
+        fields: ['browser_mode:headed', 'action:sync'],
       })
     );
   });

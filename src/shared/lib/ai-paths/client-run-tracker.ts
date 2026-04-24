@@ -18,18 +18,12 @@ const TERMINAL_RUN_STATUSES = new Set<AiPathRunRecord['status']>([
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   queued: 'queued',
   queue: 'queued',
   running: 'running',
-  blocked_on_lease: 'blocked_on_lease',
-  blocked: 'blocked_on_lease',
-  paused: 'paused',
-  handoff_ready: 'handoff_ready',
-  handoff: 'handoff_ready',
   completed: 'completed',
   complete: 'completed',
   success: 'completed',
@@ -38,8 +32,6 @@ const RUN_STATUS_ALIASES: Record<string, AiPathRunRecord['status']> = {
   error: 'failed',
   canceled: 'canceled',
   cancelled: 'canceled',
-  dead_lettered: 'dead_lettered',
-  deadlettered: 'dead_lettered',
 };
 
 export type TrackedAiPathRunSnapshot = {
@@ -95,7 +87,7 @@ const asIsoTimestamp = (value: unknown): string | null => {
 const normalizeRunStatus = (value: unknown): AiPathRunRecord['status'] | null => {
   const normalized = asTrimmedString(value)?.toLowerCase();
   if (!normalized) return null;
-  return RUN_STATUS_ALIASES[normalized] ?? null;
+  return RUN_STATUS_ALIASES[normalized] ?? 'failed';
 };
 
 const coerceAiPathRunRecord = (value: unknown): AiPathRunRecord | null => {
@@ -172,7 +164,7 @@ const shouldFinalizeTerminalSnapshotWithoutDetail = (
     return true;
   }
   if (
-    (snapshot.status === 'failed' || snapshot.status === 'dead_lettered') &&
+    snapshot.status === 'failed' &&
     typeof snapshot.errorMessage === 'string' &&
     snapshot.errorMessage.trim().length > 0
   ) {

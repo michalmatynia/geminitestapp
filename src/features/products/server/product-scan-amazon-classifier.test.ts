@@ -46,6 +46,21 @@ describe('classifyAmazonScanFailure', () => {
     expect(result.kind).toBe('healthy');
   });
 
+  it('returns healthy when candidate selection is still required', () => {
+    const result = classifyAmazonScanFailure(
+      makeScan({
+        status: 'completed',
+        imageCandidates: [{ id: 'image-1', url: 'https://cdn.example.com/p.jpg' }] as never,
+        rawResult: {
+          candidateSelectionRequired: true,
+          candidateUrls: ['https://www.amazon.co.jp/dp/B0TEST1234'],
+        },
+      })
+    );
+    expect(result.kind).toBe('healthy');
+    expect(result.details.reason).toContain('manual selection');
+  });
+
   it('classifies captcha from manualVerificationPending flag', () => {
     const result = classifyAmazonScanFailure(
       makeScan({
@@ -56,6 +71,17 @@ describe('classifyAmazonScanFailure', () => {
     );
     expect(result.kind).toBe('captcha');
     expect(result.details.evidence['manualVerificationPending']).toBe(true);
+  });
+
+  it('classifies captcha from stealth retry evidence', () => {
+    const result = classifyAmazonScanFailure(
+      makeScan({
+        status: 'failed',
+        rawResult: { captchaStealthRetryStarted: true },
+      })
+    );
+    expect(result.kind).toBe('captcha');
+    expect(result.details.evidence['captchaStealthRetryStarted']).toBe(true);
   });
 
   it('classifies captcha from error message', () => {
@@ -86,7 +112,7 @@ describe('classifyAmazonScanFailure', () => {
     expect(result.kind).toBe('lens_empty');
   });
 
-  it('classifies captcha when google verification barrier steps are present', () => {
+  it('classifies lens_empty when only placeholder captcha steps are present', () => {
     const result = classifyAmazonScanFailure(
       makeScan({
         status: 'failed',
@@ -125,21 +151,41 @@ describe('classifyAmazonScanFailure', () => {
         ] as never,
       })
     );
+    expect(result.kind).toBe('lens_empty');
+  });
+
+  it('classifies captcha when google verification barrier url is present', () => {
+    const result = classifyAmazonScanFailure(
+      makeScan({
+        status: 'failed',
+        rawResult: {
+          currentUrl: 'https://www.google.com/sorry/index?continue=https://lens.google.com/',
+        },
+        steps: [
+          {
+            key: 'google_verification_review',
+            label: 'Inspect Google verification barrier',
+            group: 'google',
+            status: 'pending',
+            resultCode: null,
+            message: null,
+            details: [],
+            url: null,
+          },
+          {
+            key: 'google_captcha',
+            label: 'Resolve Google captcha',
+            group: 'google',
+            status: 'pending',
+            resultCode: null,
+            message: null,
+            details: [],
+            url: null,
+          },
+        ] as never,
+      })
+    );
     expect(result.kind).toBe('captcha');
-    expect(result.details.evidence['captchaSteps']).toEqual([
-      {
-        key: 'google_verification_review',
-        message: null,
-        resultCode: null,
-        status: 'pending',
-      },
-      {
-        key: 'google_captcha',
-        message: null,
-        resultCode: null,
-        status: 'pending',
-      },
-    ]);
   });
 
   it('classifies lens_empty from message text', () => {

@@ -42,18 +42,15 @@ export const buildPlaywrightListingExportHistoryRecord = <
 export const buildPlaywrightListingSuccessUpdateFields = <
   TExtra extends Partial<CreateProductListingInput> = Partial<CreateProductListingInput>,
 >({
-  at,
   marketplaceData,
   externalListingId,
   extra,
 }: {
-  at: Date;
   marketplaceData: Record<string, unknown>;
   externalListingId?: string | null;
   extra?: TExtra;
 }): Partial<CreateProductListingInput> & TExtra => ({
   ...(externalListingId !== undefined ? { externalListingId } : {}),
-  lastStatusCheckAt: at,
   failureReason: null,
   marketplaceData,
   ...(extra ?? ({} as TExtra)),
@@ -62,17 +59,14 @@ export const buildPlaywrightListingSuccessUpdateFields = <
 export const buildPlaywrightListingFailureUpdateFields = <
   TExtra extends Partial<CreateProductListingInput> = Partial<CreateProductListingInput>,
 >({
-  at,
   marketplaceData,
   failureReason,
   extra,
 }: {
-  at: Date;
   marketplaceData: Record<string, unknown>;
   failureReason: string;
   extra?: TExtra;
 }): Partial<CreateProductListingInput> & TExtra => ({
-  lastStatusCheckAt: at,
   failureReason,
   marketplaceData,
   ...(extra ?? ({} as TExtra)),

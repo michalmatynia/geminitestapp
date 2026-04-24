@@ -78,6 +78,14 @@ import {
 const nodeFs = getFsPromises();
 const STICKY_SESSION_ROOT_DIR = path.join(RUN_ROOT_DIR, 'sticky-sessions');
 const STICKY_SESSION_TTL_MS = RUN_TTL_MS;
+const PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS = (() => {
+  const raw = Number(process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS']);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 2_000;
+})();
+const PLAYWRIGHT_STARTUP_TIMEOUT_MS = (() => {
+  const raw = Number(process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS']);
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : 45_000;
+})();
 const HOSTILE_STICKY_IDENTITY_PROFILES = new Set<PlaywrightSettings['identityProfile']>([
   'search',
   'marketplace',
@@ -1013,7 +1021,21 @@ const prepareRunConfiguration = async (params: {
 }> => {
   const { runId, request, queuedRun, runArtifactsDir, logs } = params;
   const playwright = getPlaywright();
-  const personaSettings = await resolvePersonaSettings(request.personaId);
+  const personaSettings = await withTimeout(
+    resolvePersonaSettings(request.personaId),
+    PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS,
+    'Timed out resolving Playwright persona settings.'
+  ).catch(async (error) => {
+    logs.push('[runtime][warn] Timed out resolving Playwright persona settings. Using defaults.');
+    await ErrorSystem.captureException(error, {
+      service: 'playwright-node-runner',
+      action: 'resolvePersonaSettings',
+      runId,
+      personaId: request.personaId ?? null,
+      timeoutMs: PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS,
+    });
+    return { ...defaultPlaywrightSettings };
+  });
   const settingsOverrides = normalizeSettingsOverrides(request.settingsOverrides);
   const effectiveSettings: PlaywrightSettings = {
     ...personaSettings,
@@ -1086,6 +1108,12 @@ const executePlaywrightNodeRun = async (
     artifacts,
   });
   const liveRunState = createLiveRunStateCoordinator(runId);
+  const queueLiveStateSnapshot = (): void => {
+    liveRunState.queueUpdate(() => ({
+      logs: [...logs],
+      artifacts: [...artifacts],
+    }));
+  };
   const sleep = async (ms: number): Promise<void> => {
     const safeMs = Math.max(0, Math.trunc(ms));
     await new Promise<void>((resolve) => setTimeout(resolve, safeMs));
@@ -1099,6 +1127,8 @@ const executePlaywrightNodeRun = async (
     runArtifactsDir,
     logs,
   });
+  logs.push('[runtime] Prepared Playwright runtime configuration.');
+  queueLiveStateSnapshot();
 
   const timeoutMs = Math.max(1_000, request.timeoutMs ?? 120_000);
 
@@ -1220,11 +1250,20 @@ const executePlaywrightNodeRun = async (
     logs.push(
       `[runtime] Anti-detection posture: browser=${runtimePostureSnapshot.browser.label}, profile=${runtimePostureSnapshot.antiDetection.identityProfile}, locale=${runtimePostureSnapshot.antiDetection.locale ?? 'default'}, timezone=${runtimePostureSnapshot.antiDetection.timezoneId ?? 'default'}, proxy=${runtimePostureSnapshot.antiDetection.proxy.enabled ? `${runtimePostureSnapshot.antiDetection.proxy.providerPreset}/${runtimePostureSnapshot.antiDetection.proxy.sessionMode}/${runtimePostureSnapshot.antiDetection.proxy.reason}` : 'disabled'}.`
     );
-    browser = await getBrowserType(playwright, browserEngine).launch(effectiveLaunchOptions);
+    queueLiveStateSnapshot();
+    browser = await withTimeout(
+      getBrowserType(playwright, browserEngine).launch(effectiveLaunchOptions),
+      PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+      `Timed out launching ${browserEngine} browser.`
+    );
     browser.on('disconnected', () => {
       logRuntimeLifecycle('browserDisconnected', '[runtime] Browser disconnected.');
     });
-    context = await browser.newContext(effectiveContextOptions);
+    context = await withTimeout(
+      browser.newContext(effectiveContextOptions),
+      PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+      'Timed out creating Playwright browser context.'
+    );
     context.on('close', () => {
       logRuntimeLifecycle('contextClosed', '[runtime] Browser context closed.');
     });
@@ -1242,21 +1281,31 @@ const executePlaywrightNodeRun = async (
     }
 
     if (request.capture?.trace === true) {
-      await context.tracing.start({
-        screenshots: true,
-        snapshots: true,
-        sources: true,
-      });
+      await withTimeout(
+        context.tracing.start({
+          screenshots: true,
+          snapshots: true,
+          sources: true,
+        }),
+        PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+        'Timed out starting Playwright trace capture.'
+      );
       logs.push('[runtime] Trace capture started.');
+      queueLiveStateSnapshot();
     }
 
-    page = await context.newPage();
+    page = await withTimeout(
+      context.newPage(),
+      PLAYWRIGHT_STARTUP_TIMEOUT_MS,
+      'Timed out creating Playwright page.'
+    );
     page.on('close', () => {
       logRuntimeLifecycle('pageClosed', '[runtime] Runner page closed.');
     });
     page.on('crash', () => {
       logRuntimeLifecycle('pageCrashed', '[runtime] Runner page crashed.');
     });
+    queueLiveStateSnapshot();
 
     if (request.preventNewPages === true) {
       const runnerPage = page;

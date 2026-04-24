@@ -65,7 +65,6 @@ const DOMAIN_CONFIG: Record<BrainOperationsDomainKey, DomainConfig> = {
     links: [
       { label: 'Queue', href: '/admin/ai-paths/queue' },
       { label: 'Canvas', href: '/admin/ai-paths' },
-      { label: 'Dead Letter', href: '/admin/ai-paths/dead-letter' },
     ],
   },
   chatbot: {

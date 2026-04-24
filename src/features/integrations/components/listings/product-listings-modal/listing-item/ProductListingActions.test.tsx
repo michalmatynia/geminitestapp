@@ -699,6 +699,104 @@ describe('ProductListingActions', () => {
     expect(screen.getByRole('button', { name: 'Queued headed relist' })).toBeDisabled();
   });
 
+  it('shows the fields-only sync queue label when the persisted Tradera sync keeps images', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'queued',
+            externalListingId: 'external-1',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'sync',
+                  requestedBrowserMode: 'connection_default',
+                  requestId: 'job-tradera-sync-fields-only',
+                  queuedAt: new Date().toISOString(),
+                  skipImages: true,
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Queued fields-only sync' })).toBeDisabled();
+  });
+
+  it('shows that sync is blocked by a queued Tradera relist', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'queued_relist',
+            externalListingId: 'external-1',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                pendingExecution: {
+                  action: 'relist',
+                  requestedBrowserMode: 'headed',
+                  requestId: 'job-tradera-relist-blocking-sync',
+                  queuedAt: new Date().toISOString(),
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Relist queued' })).toBeDisabled();
+  });
+
+  it('disables sync when the latest verified Tradera status is terminal', () => {
+    render(
+      <ProductListingActions
+        listing={
+          {
+            id: 'listing-1',
+            status: 'active',
+            externalListingId: 'external-1',
+            integrationId: 'integration-1',
+            connectionId: 'connection-1',
+            integration: {
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  action: 'check_status',
+                  metadata: {
+                    checkedStatus: 'ended',
+                  },
+                },
+              },
+            },
+          } as never
+        }
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Sync with Tradera' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Relist now' })).toBeEnabled();
+  });
+
   it.each(['queued_relist', 'running'])(
     'allows retry when a persisted %s Tradera relist is stale',
     async (status) => {

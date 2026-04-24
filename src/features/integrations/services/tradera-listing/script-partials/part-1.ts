@@ -15,7 +15,7 @@ export default async function run({
   log,
   helpers,
 }) {
-  // tradera-quicklist-default:v146
+  // tradera-quicklist-default:v147
   const ACTIVE_URL = 'https://www.tradera.com/en/my/listings?tab=active';
   const DIRECT_SELL_URL = 'https://www.tradera.com/en/selling/new';
   const TRADERA_ALLOWED_PAGE_HOSTS = ['www.tradera.com', 'tradera.com'];

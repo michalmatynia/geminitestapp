@@ -867,11 +867,27 @@ export const PART_5B = String.raw`
         );
         if (publishRecovery) {
           const recoveredResult = {
-            stage: 'publish_verified',
+            stage: listingAction === 'sync' ? 'sync_verified' : 'publish_verified',
             currentUrl: publishRecovery.listingUrl || page.url(),
             externalListingId: publishRecovery.externalListingId,
             listingUrl: publishRecovery.listingUrl,
             publishVerified: true,
+            syncTargetMatchStrategy:
+              listingAction === 'sync' ? syncTargetResolution?.matchedBy || null : null,
+            syncTargetListingId:
+              listingAction === 'sync'
+                ? syncTargetResolution?.listingId || existingExternalListingId || null
+                : null,
+            syncTargetListingUrl:
+              listingAction === 'sync'
+                ? syncTargetResolution?.listingUrl || existingListingUrl || null
+                : null,
+            syncImageMode:
+              listingAction === 'sync'
+                ? syncSkipImages
+                  ? 'fields_only'
+                  : 'full'
+                : null,
             duplicateMatchStrategy: publishRecovery.duplicateMatchStrategy,
             duplicateMatchedProductId: publishRecovery.duplicateMatchedProductId,
             duplicateCandidateCount: publishRecovery.duplicateCandidateCount,
@@ -1076,6 +1092,22 @@ export const PART_5B = String.raw`
         externalListingId: effectiveExternalListingId,
         listingUrl: effectiveListingUrl,
         publishVerified: true,
+        syncTargetMatchStrategy:
+          listingAction === 'sync' ? syncTargetResolution?.matchedBy || null : null,
+        syncTargetListingId:
+          listingAction === 'sync'
+            ? syncTargetResolution?.listingId || existingExternalListingId || null
+            : null,
+        syncTargetListingUrl:
+          listingAction === 'sync'
+            ? syncTargetResolution?.listingUrl || existingListingUrl || null
+            : null,
+        syncImageMode:
+          listingAction === 'sync'
+            ? syncSkipImages
+              ? 'fields_only'
+              : 'full'
+            : null,
         duplicateMatchStrategy: publishVerification.duplicateMatchStrategy,
         duplicateMatchedProductId: publishVerification.duplicateMatchedProductId,
         duplicateCandidateCount: publishVerification.duplicateCandidateCount,

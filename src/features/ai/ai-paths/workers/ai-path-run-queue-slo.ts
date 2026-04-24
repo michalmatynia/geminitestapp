@@ -14,7 +14,7 @@ export type ComputeQueueSloInput = {
   queueLagMs: number | null;
   successRate24h: number;
   terminalRuns24h: number;
-  deadLetterRate24h: number;
+  failureRate24h: number;
   brainErrorRate24h: number;
   brainTotalReports24h: number;
 };
@@ -37,8 +37,8 @@ export const resolveQueueSloThresholds = (): QueueSloThresholds => ({
   queueLagCriticalMs: parseEnvNumber('AI_PATHS_SLO_QUEUE_LAG_CRITICAL_MS', 180_000, 1_000),
   successRateWarningPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_WARNING_PCT', 95, 0, 100),
   successRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_SUCCESS_RATE_CRITICAL_PCT', 90, 0, 100),
-  deadLetterRateWarningPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_WARNING_PCT', 1, 0, 100),
-  deadLetterRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_DEAD_LETTER_RATE_CRITICAL_PCT', 3, 0, 100),
+  failureRateWarningPct: parseEnvFloat('AI_PATHS_SLO_FAILURE_RATE_WARNING_PCT', 5, 0, 100),
+  failureRateCriticalPct: parseEnvFloat('AI_PATHS_SLO_FAILURE_RATE_CRITICAL_PCT', 10, 0, 100),
   brainErrorRateWarningPct: parseEnvFloat('AI_PATHS_SLO_BRAIN_ERROR_RATE_WARNING_PCT', 5, 0, 100),
   brainErrorRateCriticalPct: parseEnvFloat(
     'AI_PATHS_SLO_BRAIN_ERROR_RATE_CRITICAL_PCT',
@@ -131,15 +131,15 @@ export const computeAiPathRunQueueSlo = (
   });
   add('successRate24h', success.level, success.message);
 
-  const dead = getRateIndicator(input.deadLetterRate24h, { 
-    warn: thresholds.deadLetterRateWarningPct, 
-    crit: thresholds.deadLetterRateCriticalPct, 
-    label: 'Dead-letter rate', 
+  const failure = getRateIndicator(input.failureRate24h, {
+    warn: thresholds.failureRateWarningPct,
+    crit: thresholds.failureRateCriticalPct,
+    label: 'Failure rate',
     runs: input.terminalRuns24h, 
     min: thresholds.minTerminalSamples, 
     greaterIsWorse: true 
   });
-  add('deadLetterRate24h', dead.level, dead.message);
+  add('failureRate24h', failure.level, failure.message);
 
   const brain = getRateIndicator(input.brainErrorRate24h, { warn: thresholds.brainErrorRateWarningPct, crit: thresholds.brainErrorRateCriticalPct, label: 'Brain error', runs: input.brainTotalReports24h, min: thresholds.minBrainSamples, greaterIsWorse: true });
   add('brainErrorRate24h', brain.level, brain.message);
@@ -152,7 +152,12 @@ export const computeAiPathRunQueueSlo = (
       workerHealth: { level: health.level, running: input.queueRunning, healthy: input.queueHealthy, message: health.message },
       queueLag: { level: lag.level, valueMs: input.queueLagMs, message: lag.message },
       successRate24h: { level: success.level, valuePct: success.rate, sampleSize: success.runs, message: success.message },
-      deadLetterRate24h: { level: dead.level, valuePct: dead.rate, sampleSize: dead.runs, message: dead.message },
+      failureRate24h: {
+        level: failure.level,
+        valuePct: failure.rate,
+        sampleSize: failure.runs,
+        message: failure.message,
+      },
       brainErrorRate24h: { 
         level: brain.level, 
         valuePct: brain.rate, 

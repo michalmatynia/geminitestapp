@@ -341,6 +341,20 @@ export type TraderaListingStatusCheckBatchPayload = z.infer<
   typeof traderaListingStatusCheckBatchPayloadSchema
 >;
 
+export const traderaListingStatusCheckBatchReasonSchema = z.enum([
+  'queued',
+  'already_queued',
+  'selected_listing_unavailable',
+  'no_tradera_browser_listing',
+  'auth_required',
+  'preflight_failed',
+  'queue_failed',
+]);
+
+export type TraderaListingStatusCheckBatchReason = z.infer<
+  typeof traderaListingStatusCheckBatchReasonSchema
+>;
+
 export const traderaListingStatusCheckBatchItemStatusSchema = z.enum([
   'queued',
   'already_queued',
@@ -356,6 +370,7 @@ export const traderaListingStatusCheckBatchItemSchema = z.object({
   productId: z.string(),
   listingId: z.string().nullable(),
   status: traderaListingStatusCheckBatchItemStatusSchema,
+  reason: traderaListingStatusCheckBatchReasonSchema.nullable().optional(),
   message: z.string().nullable().optional(),
   queue: productListingQueueJobSchema.optional(),
 });
@@ -364,12 +379,27 @@ export type TraderaListingStatusCheckBatchItem = z.infer<
   typeof traderaListingStatusCheckBatchItemSchema
 >;
 
+export const traderaListingStatusCheckBatchReasonCountsSchema = z.object({
+  queued: z.number().int().nonnegative().optional(),
+  already_queued: z.number().int().nonnegative().optional(),
+  selected_listing_unavailable: z.number().int().nonnegative().optional(),
+  no_tradera_browser_listing: z.number().int().nonnegative().optional(),
+  auth_required: z.number().int().nonnegative().optional(),
+  preflight_failed: z.number().int().nonnegative().optional(),
+  queue_failed: z.number().int().nonnegative().optional(),
+});
+
+export type TraderaListingStatusCheckBatchReasonCounts = z.infer<
+  typeof traderaListingStatusCheckBatchReasonCountsSchema
+>;
+
 export const traderaListingStatusCheckBatchResponseSchema = z.object({
   total: z.number().int().nonnegative(),
   queued: z.number().int().nonnegative(),
   alreadyQueued: z.number().int().nonnegative(),
   skipped: z.number().int().nonnegative(),
   failed: z.number().int().nonnegative(),
+  reasonCounts: traderaListingStatusCheckBatchReasonCountsSchema.optional(),
   results: z.array(traderaListingStatusCheckBatchItemSchema),
 });
 

@@ -116,6 +116,32 @@ describe('TraderaStatusCheckModal.utils', () => {
     });
   });
 
+  it('prefers the latest checked status when the most recent Tradera action was check_status', () => {
+    const listing = makeListing({
+      status: 'active',
+      marketplaceData: {
+        tradera: {
+          lastExecution: {
+            action: 'check_status',
+            metadata: {
+              checkedStatus: 'unknown',
+            },
+          },
+        },
+      },
+    });
+
+    expect(
+      resolveTraderaRowStatusPresentation({
+        listing,
+      })
+    ).toEqual({
+      status: 'unknown',
+      label: 'Unknown',
+      variant: 'neutral',
+    });
+  });
+
   it('prefers the linked active Tradera listing when multiple Tradera rows exist', () => {
     const selected = resolvePreferredTraderaListing([
       makeListing({

@@ -61,8 +61,6 @@ const STATUS_VARIANT_BY_STATUS: Record<string, StatusVariant> = {
   error: 'error',
   queued: 'warning',
   pending: 'warning',
-  blocked_on_lease: 'warning',
-  handoff_ready: 'warning',
   running: 'processing',
   polling: 'processing',
   waiting_callback: 'processing',

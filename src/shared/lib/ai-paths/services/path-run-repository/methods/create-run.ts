@@ -32,7 +32,6 @@ export const createRun = async (input: AiPathRunCreateInput): Promise<AiPathRunR
     retryCount: input.retryCount ?? 0,
     maxAttempts: input.maxAttempts ?? 3,
     nextRetryAt: input.nextRetryAt ? new Date(input.nextRetryAt) : null,
-    deadLetteredAt: null,
     createdAt: now,
     updatedAt: now,
     startedAt: null,

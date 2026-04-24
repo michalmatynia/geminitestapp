@@ -163,7 +163,7 @@ function TriggerRunFeedback(props: {
   const presentation = resolveTriggerButtonRunFeedbackPresentation(run.status);
   const queueHref = `/admin/ai-paths/queue?tab=paths-all&query=${encodeURIComponent(run.runId)}&runId=${encodeURIComponent(run.runId)}&status=all`;
   const messageClassName =
-    run.status === 'failed' || run.status === 'dead_lettered'
+    run.status === 'failed'
       ? 'text-amber-200'
       : 'text-gray-400';
   const summaryWidthClassName =

@@ -20,6 +20,8 @@ import {
 import {
   traderaListingStatusCheckBatchPayloadSchema,
   type TraderaListingStatusCheckBatchItem,
+  type TraderaListingStatusCheckBatchReason,
+  type TraderaListingStatusCheckBatchReasonCounts,
   type TraderaListingStatusCheckBatchTarget,
   type TraderaListingStatusCheckBatchResponse,
 } from '@/shared/contracts/integrations/listings';
@@ -29,6 +31,35 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 type NormalizedBatchTarget = {
   productId: string;
   listingId: string | null;
+};
+
+const isTraderaStatusCheckAuthRequiredMessage = (
+  value: string | null | undefined
+): boolean => {
+  const normalized = value?.trim().toLowerCase() ?? '';
+  if (!normalized) return false;
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('session expired') ||
+    normalized.includes('session has expired') ||
+    normalized.includes('missing or expired') ||
+    normalized.includes('captcha') ||
+    normalized.includes('manual verification')
+  );
+};
+
+const countBatchReasons = (
+  results: readonly TraderaListingStatusCheckBatchItem[]
+): TraderaListingStatusCheckBatchReasonCounts => {
+  const counts: Partial<Record<TraderaListingStatusCheckBatchReason, number>> = {};
+
+  for (const result of results) {
+    const reason = result.reason;
+    if (!reason) continue;
+    counts[reason] = (counts[reason] ?? 0) + 1;
+  }
+
+  return counts;
 };
 
 const normalizeRequestedBatchTargets = ({
@@ -118,6 +149,7 @@ export async function postHandler(
         productId: target.productId,
         listingId: target.listingId,
         status: 'skipped',
+        reason: 'selected_listing_unavailable',
         message: 'The selected Tradera listing is no longer available for live status check.',
       });
       continue;
@@ -128,6 +160,7 @@ export async function postHandler(
         productId: target.productId,
         listingId: null,
         status: 'skipped',
+        reason: 'no_tradera_browser_listing',
         message: 'No Tradera browser listing available for live status check.',
       });
       continue;
@@ -138,6 +171,7 @@ export async function postHandler(
         productId: target.productId,
         listingId: selectedListing.id,
         status: 'already_queued',
+        reason: 'already_queued',
         message: 'Live status check already queued for this listing.',
       });
       continue;
@@ -170,10 +204,15 @@ export async function postHandler(
     }
 
     if (failureMessage) {
+      const reason: TraderaListingStatusCheckBatchReason =
+        isTraderaStatusCheckAuthRequiredMessage(failureMessage)
+          ? 'auth_required'
+          : 'preflight_failed';
       resultByProductId.set(candidate.productId, {
         productId: candidate.productId,
         listingId: candidate.listing.id,
         status: 'error',
+        reason,
         message: failureMessage,
       });
       continue;
@@ -213,6 +252,7 @@ export async function postHandler(
         productId: candidate.productId,
         listingId: candidate.listing.id,
         status: 'queued',
+        reason: 'queued',
         queue: {
           name: 'tradera-listings',
           jobId,
@@ -220,14 +260,20 @@ export async function postHandler(
         },
       });
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to queue live status check.';
+      const reason: TraderaListingStatusCheckBatchReason =
+        isTraderaStatusCheckAuthRequiredMessage(message)
+          ? 'auth_required'
+          : 'queue_failed';
       resultByProductId.set(candidate.productId, {
         productId: candidate.productId,
         listingId: candidate.listing.id,
         status: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to queue live status check.',
+        reason,
+        message,
       });
     }
   }
@@ -242,6 +288,7 @@ export async function postHandler(
     alreadyQueued: results.filter((result) => result.status === 'already_queued').length,
     skipped: results.filter((result) => result.status === 'skipped').length,
     failed: results.filter((result) => result.status === 'error').length,
+    reasonCounts: countBatchReasons(results),
     results,
   };
 

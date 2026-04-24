@@ -9,8 +9,6 @@ export interface LastErrorInfo {
 export type RuntimeRunStatus =
   | 'idle'
   | 'running'
-  | 'blocked_on_lease'
-  | 'handoff_ready'
   | 'paused'
   | 'stepping'
   | 'completed'

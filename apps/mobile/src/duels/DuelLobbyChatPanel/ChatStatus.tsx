@@ -1,4 +1,3 @@
-import { View } from 'react-native';
 import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 import { MessageCard } from '../duels-primitives';
 import { type UseKangurMobileDuelLobbyChatResult as DuelChatState } from '../useKangurMobileDuelLobbyChat';

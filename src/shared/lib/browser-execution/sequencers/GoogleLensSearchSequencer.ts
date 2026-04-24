@@ -5,6 +5,7 @@ import {
   type PlaywrightObservationLoopDecision,
 } from '@/features/playwright/server/ai-step-service';
 import {
+  createProductScanVerificationBarrierManualOnlyInjectionConfig,
   createProductScanVerificationBarrierRuntime,
   type ProductScanVerificationObservationBase,
 } from '@/features/products/server/product-scan-ai-evaluator';
@@ -242,6 +243,10 @@ const GOOGLE_VERIFICATION_RUNTIME =
     reviewKey: 'googleVerificationReview',
     observationsKey: 'googleVerificationObservations',
     injectorProviderLabel: 'Google',
+    injectionConfigOverrides:
+      createProductScanVerificationBarrierManualOnlyInjectionConfig({
+        provider: 'Google',
+      }),
     profile: {
       key: 'google_verification_review',
       subject: 'Google verification screen',

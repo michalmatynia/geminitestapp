@@ -122,7 +122,6 @@ export const contextRuntimeDocumentTimestampsSchema = z
     createdAt: z.string().nullable().optional(),
     startedAt: z.string().nullable().optional(),
     finishedAt: z.string().nullable().optional(),
-    deadLetteredAt: z.string().nullable().optional(),
     updatedAt: z.string().nullable().optional(),
   })
   .optional();

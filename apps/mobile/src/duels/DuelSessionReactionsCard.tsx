@@ -1,13 +1,9 @@
 import { Text, View } from 'react-native';
 
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import {
-  KangurMobileCard as Card,
-} from '../shared/KangurMobileUi';
-import {
-  ActionButton,
-  MessageCard,
-} from './duels-primitives';
+import { KangurMobileCard as Card } from '../shared/KangurMobileUi';
+import { ActionButton, MessageCard } from './duels-primitives';
+import type { KangurDuelReactionType } from '@kangur/contracts/kangur-duels';
 import {
   DUEL_REACTION_OPTIONS,
   formatReactionLabel,
@@ -78,7 +74,7 @@ function SendReactionsSection({
     <>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{subtitle}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {DUEL_REACTION_OPTIONS.map((type) => (
+        {DUEL_REACTION_OPTIONS.map((type: KangurDuelReactionType) => (
           <ActionButton
             key={type}
             disabled={isMutating}
@@ -120,6 +116,52 @@ function RecentReactionsList({
   );
 }
 
+function FinishedMessage({ copy }: { copy: DuelCopy }): React.JSX.Element {
+  return (
+    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+      {copy({
+        de: 'Die Sitzung ist beendet, aber die letzten Reaktionen bleiben weiter unten sichtbar.',
+        en: 'The session is finished, but the latest reactions remain visible below.',
+        pl: 'Sesja jest zakończona, ale ostatnie reakcje nadal widać poniżej.',
+      })}
+    </Text>
+  );
+}
+
+function AuthRequiredMessage({ copy }: { copy: DuelCopy }): React.JSX.Element {
+  return (
+    <MessageCard
+      title={copy({
+        de: 'Reaktionen nur für angemeldete Nutzer',
+        en: 'Reactions for signed-in users',
+        pl: 'Reakcje dla zalogowanych',
+      })}
+      description={copy({
+        de: 'Ein angemeldeter Lernender kann live mit Emojis auf den Duellverlauf reagieren.',
+        en: 'A signed-in learner can react to the duel live with emoji.',
+        pl: 'Zalogowany uczeń może reagować na przebieg pojedynku emotkami na żywo.',
+      })}
+    />
+  );
+}
+
+function NoReactionsMessage({ copy }: { copy: DuelCopy }): React.JSX.Element {
+  return (
+    <MessageCard
+      title={copy({
+        de: 'Keine Reaktionen',
+        en: 'No reactions',
+        pl: 'Brak reakcji',
+      })}
+      description={copy({
+        de: 'Nach dem ersten Emoji erscheint die Reaktionshistorie hier.',
+        en: 'After the first emoji, the reaction history will appear here.',
+        pl: 'Po pierwszej emotce historia reakcji pojawi się tutaj.',
+      })}
+    />
+  );
+}
+
 export function DuelSessionReactionsCard({
   copy,
   duel,
@@ -129,52 +171,13 @@ export function DuelSessionReactionsCard({
   duel: DuelSessionState;
   locale: DuelLocale;
 }): React.JSX.Element {
-  const session = duel.session;
+  const { session } = duel;
 
   if (session === null) {
     return <></>;
   }
 
   const isFinished = session.status === 'completed' || session.status === 'aborted';
-
-  const renderContent = (): React.JSX.Element => {
-    if (isFinished) {
-      return (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Die Sitzung ist beendet, aber die letzten Reaktionen bleiben weiter unten sichtbar.',
-            en: 'The session is finished, but the latest reactions remain visible below.',
-            pl: 'Sesja jest zakończona, ale ostatnie reakcje nadal widać poniżej.',
-          })}
-        </Text>
-      );
-    }
-    if (!duel.isAuthenticated) {
-      return (
-        <MessageCard
-          title={copy({
-            de: 'Reaktionen nur für angemeldete Nutzer',
-            en: 'Reactions for signed-in users',
-            pl: 'Reakcje dla zalogowanych',
-          })}
-          description={copy({
-            de: 'Ein angemeldeter Lernender kann live mit Emojis auf den Duellverlauf reagieren.',
-            en: 'A signed-in learner can react to the duel live with emoji.',
-            pl: 'Zalogowany uczeń może reagować na przebieg pojedynku emotkami na żywo.',
-          })}
-        />
-      );
-    }
-    return (
-      <SendReactionsSection
-        copy={copy}
-        isMutating={duel.isMutating}
-        isSpectating={duel.isSpectating}
-        locale={locale}
-        sendReaction={duel.sendReaction}
-      />
-    );
-  };
 
   return (
     <Card>
@@ -186,27 +189,28 @@ export function DuelSessionReactionsCard({
         })}
       </Text>
 
-      {renderContent()}
+      {isFinished ? (
+        <FinishedMessage copy={copy} />
+      ) : !duel.isAuthenticated ? (
+        <AuthRequiredMessage copy={copy} />
+      ) : (
+        <SendReactionsSection
+          copy={copy}
+          isMutating={duel.isMutating}
+          isSpectating={duel.isSpectating}
+          locale={locale}
+          sendReaction={duel.sendReaction}
+        />
+      )}
 
-      {(session.recentReactions?.length ?? 0) > 0 ? (
+      {(session.recentReactions && session.recentReactions.length > 0) ? (
         <RecentReactionsList
           locale={locale}
           playerLearnerId={duel.player?.learnerId}
-          reactions={session.recentReactions!}
+          reactions={session.recentReactions}
         />
       ) : (
-        <MessageCard
-          title={copy({
-            de: 'Keine Reaktionen',
-            en: 'No reactions',
-            pl: 'Brak reakcji',
-          })}
-          description={copy({
-            de: 'Nach dem ersten Emoji erscheint die Reaktionshistorie hier.',
-            en: 'After the first emoji, the reaction history will appear here.',
-            pl: 'Po pierwszej emotce historia reakcji pojawi się tutaj.',
-          })}
-        />
+        <NoReactionsMessage copy={copy} />
       )}
     </Card>
   );

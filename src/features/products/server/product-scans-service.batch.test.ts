@@ -152,6 +152,7 @@ vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => (
 
 import type { ProductScanRecord } from '@/shared/contracts/product-scans';
 import {
+  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
   AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
 } from '@/shared/lib/browser-execution/amazon-runtime-constants';
 import {
@@ -166,6 +167,9 @@ import {
   queue1688BatchProductScans,
   queueAmazonBatchProductScans,
 } from './product-scans-service';
+import {
+  AMAZON_SCAN_DEFAULT_USER_AGENT,
+} from './product-scans-service.helpers.amazon';
 
 const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanRecord => ({
   id: 'scan-1',
@@ -547,6 +551,11 @@ describe('product-scans-service batch operations', () => {
     );
     expect(request?.launchOptions).not.toHaveProperty('channel');
     expect(request?.launchOptions).not.toHaveProperty('executablePath');
+    expect(request?.contextOptions).toEqual(
+      expect.objectContaining({
+        userAgent: AMAZON_SCAN_DEFAULT_USER_AGENT,
+      })
+    );
   });
 
   it('queues Amazon direct candidate extraction even when the product has no usable images', async () => {
@@ -572,7 +581,6 @@ describe('product-scans-service batch operations', () => {
       productIds: ['product-1'],
       userId: 'user-1',
       requestInput: {
-        runtimeKey: 'amazon_candidate_extraction',
         directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00DIRECT1',
         directAmazonCandidateUrls: [
           'https://www.amazon.com/dp/B00DIRECT1',
@@ -593,8 +601,9 @@ describe('product-scans-service batch operations', () => {
     expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
-          runtimeKey: 'amazon_candidate_extraction',
+          runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
           input: expect.objectContaining({
+            runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
             imageCandidates: [],
             directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00DIRECT1',
             directAmazonCandidateUrls: [
@@ -605,6 +614,182 @@ describe('product-scans-service batch operations', () => {
             directAmazonCandidateRank: 1,
           }),
         }),
+      })
+    );
+  });
+
+  it('auto-seeds Amazon direct candidate extraction from an existing ASIN when images are unavailable', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: ' b00test123 ',
+      name: { en: 'ASIN Shortcut Product', pl: '' },
+      name_en: 'ASIN Shortcut Product',
+      images: [],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-asin-shortcut',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-asin-shortcut',
+      })
+    );
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result.queued).toBe(1);
+    expect(result.results[0]).toMatchObject({
+      productId: 'product-1',
+      scanId: expect.any(String),
+      runId: 'run-asin-shortcut',
+      status: 'queued',
+    });
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+          input: expect.objectContaining({
+            runtimeKey: AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
+            imageCandidates: [],
+            directAmazonCandidateUrl: 'https://www.amazon.com/dp/B00TEST123',
+            directAmazonCandidateUrls: [
+              'https://www.amazon.com/dp/B00TEST123',
+              'https://www.amazon.co.uk/dp/B00TEST123',
+              'https://www.amazon.de/dp/B00TEST123',
+              'https://www.amazon.fr/dp/B00TEST123',
+              'https://www.amazon.nl/dp/B00TEST123',
+              'https://www.amazon.pl/dp/B00TEST123',
+            ],
+          }),
+        }),
+      })
+    );
+  });
+
+  it('keeps Amazon image-based candidate discovery when the product has usable images', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: 'B00TEST123',
+      name: { en: 'Image-backed Product', pl: '' },
+      name_en: 'Image-backed Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'img.jpg',
+            filepath: '/img.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-google-lens',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-google-lens',
+      })
+    );
+
+    const result = await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    expect(result.queued).toBe(1);
+    const startRequest = mocks.startPlaywrightEngineTaskMock.mock.calls[0]?.[0]?.request as
+      | Record<string, any>
+      | undefined;
+    expect(startRequest?.runtimeKey).toBe(AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY);
+    expect(startRequest?.settingsOverrides).toEqual(
+      expect.objectContaining({
+        identityProfile: 'search',
+        clickDelayMin: 90,
+        clickDelayMax: 280,
+        inputDelayMin: 70,
+        inputDelayMax: 210,
+        actionDelayMin: 650,
+        actionDelayMax: 1900,
+      })
+    );
+    expect(startRequest?.contextOptions).not.toHaveProperty('userAgent');
+    expect(startRequest?.input).toEqual(
+      expect.objectContaining({
+        runtimeKey: AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
+        imageCandidates: [
+          expect.objectContaining({
+            filepath: '/img.jpg',
+          }),
+        ],
+        directAmazonCandidateUrl: null,
+        directAmazonCandidateUrls: [],
+      })
+    );
+  });
+
+  it('opts Google-starting runs into sticky proxy affinity when proxying is already enabled', async () => {
+    mocks.findLatestActiveProductScanMock.mockResolvedValue(null);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({
+      settingsOverrides: {
+        proxyEnabled: true,
+        proxyServer: 'http://proxy.local:8080?session={session}',
+      },
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      name: { en: 'Proxy-backed Product', pl: '' },
+      name_en: 'Proxy-backed Product',
+      images: [
+        {
+          id: 'image-1',
+          imageFile: {
+            id: 'file-1',
+            filename: 'img.jpg',
+            filepath: '/img.jpg',
+            mimetype: 'image/jpeg',
+            size: 100,
+          },
+        },
+      ],
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-google-proxy',
+      status: 'queued',
+    });
+    mocks.upsertProductScanMock.mockImplementation(
+      async (input: any) => ({
+        ...input,
+        id: input.id || 'scan-google-proxy',
+      })
+    );
+
+    await queueAmazonBatchProductScans({
+      productIds: ['product-1'],
+      userId: 'user-1',
+    });
+
+    const startRequest = mocks.startPlaywrightEngineTaskMock.mock.calls[0]?.[0]?.request as
+      | Record<string, any>
+      | undefined;
+    expect(startRequest?.runtimeKey).toBe(AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY);
+    expect(startRequest?.settingsOverrides).toEqual(
+      expect.objectContaining({
+        identityProfile: 'search',
+        proxyEnabled: true,
+        proxySessionAffinity: true,
+        proxySessionMode: 'sticky',
       })
     );
   });

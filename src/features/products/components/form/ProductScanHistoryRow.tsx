@@ -5,6 +5,7 @@ import React from 'react';
 import {
   hasProductScanAmazonDetails,
 } from '@/features/products/components/scans/ProductScanAmazonDetails';
+import type { ProductScanAmazonCandidatePreview } from '@/features/products/lib/product-scan-amazon-candidates';
 import type {
   ProductScanRecord,
 } from '@/shared/contracts/product-scans';
@@ -36,6 +37,12 @@ type ProductScanHistoryRowProps = {
   clearBlockedScanReviewed: (scanId: string | null | undefined) => void;
   supplier1688FormBindings: Supplier1688FormBindings;
   productFormBindings: ProductFormBindings;
+  onExtractAmazonCandidate: (
+    scan: ProductScanRecord,
+    candidate: ProductScanAmazonCandidatePreview
+  ) => Promise<void>;
+  extractingAmazonCandidateScanId: string | null;
+  extractingAmazonCandidateUrl: string | null;
 };
 
 export function ProductScanHistoryRow({
@@ -55,6 +62,9 @@ export function ProductScanHistoryRow({
   clearBlockedScanReviewed,
   supplier1688FormBindings,
   productFormBindings,
+  onExtractAmazonCandidate,
+  extractingAmazonCandidateScanId,
+  extractingAmazonCandidateUrl,
 }: ProductScanHistoryRowProps): React.JSX.Element {
   const isAmazonScan = scan.provider !== '1688';
   const resolvedLabel = useResolvedConnectionLabel(isAmazonScan, scan.connectionId, connectionNamesById);
@@ -79,7 +89,20 @@ export function ProductScanHistoryRow({
 
       <ProductScanUrlInfo scan={scan} isAmazonScan={isAmazonScan} />
 
-      <ProductScanExpansionPanels scan={scan} isAmazonScan={isAmazonScan} extractedFieldsExpanded={extractedFieldsExpanded} diagnosticsExpanded={diagnosticsExpanded} isExpanded={isExpanded} productFormBindings={productFormBindings} />
+      <ProductScanExpansionPanels
+        scan={scan}
+        isAmazonScan={isAmazonScan}
+        extractedFieldsExpanded={extractedFieldsExpanded}
+        diagnosticsExpanded={diagnosticsExpanded}
+        isExpanded={isExpanded}
+        productFormBindings={productFormBindings}
+        onExtractAmazonCandidate={onExtractAmazonCandidate}
+        extractingCandidateUrl={
+          extractingAmazonCandidateScanId === scan.id
+            ? extractingAmazonCandidateUrl
+            : null
+        }
+      />
 
       <ProductScan1688ActionSection scan={scan} isAmazonScan={isAmazonScan} resolvedConnectionLabel={resolvedLabel} supplier1688FormBindings={supplier1688FormBindings} />
     </section>

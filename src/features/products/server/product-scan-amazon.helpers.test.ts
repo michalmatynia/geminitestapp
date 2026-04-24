@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildAmazonDirectCandidateUrlsFromAsin,
   normalizeAmazonAsin,
   resolveDetectedAmazonAsinOutcome,
   resolveProductScanDisplayName,
@@ -12,6 +13,22 @@ describe('product Amazon scan helpers', () => {
     expect(normalizeAmazonAsin(' b00test123 ')).toBe('B00TEST123');
     expect(normalizeAmazonAsin('not-an-asin')).toBeNull();
     expect(normalizeAmazonAsin(null)).toBeNull();
+  });
+
+  it('builds direct Amazon candidate URLs from a valid existing ASIN', () => {
+    expect(buildAmazonDirectCandidateUrlsFromAsin(' b00test123 ')).toEqual([
+      'https://www.amazon.com/dp/B00TEST123',
+      'https://www.amazon.co.uk/dp/B00TEST123',
+      'https://www.amazon.de/dp/B00TEST123',
+      'https://www.amazon.fr/dp/B00TEST123',
+      'https://www.amazon.nl/dp/B00TEST123',
+      'https://www.amazon.pl/dp/B00TEST123',
+    ]);
+  });
+
+  it('returns no direct candidate URLs when the ASIN is invalid', () => {
+    expect(buildAmazonDirectCandidateUrlsFromAsin('not-an-asin')).toEqual([]);
+    expect(buildAmazonDirectCandidateUrlsFromAsin(null)).toEqual([]);
   });
 
   it('returns up to three usable image candidates in file-first order', () => {

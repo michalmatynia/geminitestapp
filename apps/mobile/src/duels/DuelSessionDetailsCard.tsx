@@ -1,4 +1,7 @@
 import { Text, View } from 'react-native';
+import type { 
+  KangurDuelSession
+} from '@kangur/contracts/kangur-duels';
 
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
@@ -20,15 +23,13 @@ import {
   getStatusTone,
 } from './utils/duels-ui';
 import { 
-    type UseKangurMobileDuelSessionResult,
-    type KangurDuelSession,
-    type KangurDuelPlayer
+    type UseKangurMobileDuelSessionResult
 } from './useKangurMobileDuelSession';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
 
-type DuelSessionDetailsCardProps = {
+export interface DuelSessionDetailsCardProps {
   copy: DuelCopy;
   duel: UseKangurMobileDuelSessionResult;
   hasWaitingSession: boolean;
@@ -40,7 +41,7 @@ type DuelSessionDetailsCardProps = {
     percent: number;
   } | null;
   sessionTimelineItems: string[];
-};
+}
 
 function SessionTimeline({
   copy,
@@ -161,7 +162,7 @@ function ProgressPill({
     <Pill
       label={
         duel.player
-          ? formatQuestionProgress(session, duel.player as KangurDuelPlayer, locale)
+          ? formatQuestionProgress(session, duel.player, locale)
           : formatSpectatorQuestionProgress(session, locale)
       }
       tone={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe', textColor: '#1d4ed8' }}
@@ -222,15 +223,7 @@ function SpectatorMessage({ copy, isAuthenticated }: { copy: DuelCopy, isAuthent
   );
 }
 
-function DetailsBody({
-  copy,
-  duel,
-  hasWaitingSession,
-  locale,
-  roundProgress,
-  session,
-  sessionTimelineItems
-}: {
+function DetailsBody(props: {
   copy: DuelCopy;
   duel: UseKangurMobileDuelSessionResult;
   hasWaitingSession: boolean;
@@ -239,6 +232,7 @@ function DetailsBody({
   session: KangurDuelSession;
   sessionTimelineItems: string[];
 }): React.JSX.Element {
+  const { copy, duel, hasWaitingSession, locale, roundProgress, session, sessionTimelineItems } = props;
   return (
     <>
       <DetailsHeader copy={copy} locale={locale} session={session} />
@@ -256,6 +250,7 @@ function DetailsBody({
     </>
   );
 }
+
 
 export function DuelSessionDetailsCard({
   copy,

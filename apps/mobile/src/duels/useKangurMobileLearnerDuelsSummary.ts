@@ -33,99 +33,7 @@ export type UseKangurMobileLearnerDuelsSummaryResult = {
   refresh: () => Promise<void>;
 };
 
-const toDuelsSummaryErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string | null => {
-  if (!error) {
-    return null;
-  }
-
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um Duellstatistiken zu laden.',
-        en: 'Sign in to load duel stats.',
-        pl: 'Zaloguj się, aby pobrać statystyki pojedynków.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Die Duellstatistiken konnten nicht geladen werden.',
-      en: 'Could not load duel stats.',
-      pl: 'Nie udało się pobrać statystyk pojedynków.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Die Duellstatistiken konnten nicht geladen werden.',
-      en: 'Could not load duel stats.',
-      pl: 'Nie udało się pobrać statystyk pojedynków.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Die Duellstatistiken konnten nicht geladen werden.',
-      en: 'Could not load duel stats.',
-      pl: 'Nie udało się pobrać statystyk pojedynków.',
-    });
-  }
-
-  return message;
-};
-
-const toDuelsSummaryActionErrorMessage = (
-  error: unknown,
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-): string => {
-  if (typeof error === 'object' && error && 'status' in error) {
-    const status = (error as { status?: number }).status;
-
-    if (status === 401) {
-      return copy({
-        de: 'Melde dich an, um ein privates Rückspiel zu senden.',
-        en: 'Sign in to send a private rematch.',
-        pl: 'Zaloguj się, aby wysłać prywatny rewanż.',
-      });
-    }
-  }
-
-  if (!(error instanceof Error)) {
-    return copy({
-      de: 'Das private Rückspiel konnte nicht erstellt werden.',
-      en: 'Could not create the private rematch.',
-      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-    });
-  }
-
-  const message = error.message.trim();
-  if (!message) {
-    return copy({
-      de: 'Das private Rückspiel konnte nicht erstellt werden.',
-      en: 'Could not create the private rematch.',
-      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-    });
-  }
-
-  const normalized = message.toLowerCase();
-  if (normalized === 'failed to fetch' || normalized.includes('networkerror')) {
-    return copy({
-      de: 'Das private Rückspiel konnte nicht erstellt werden.',
-      en: 'Could not create the private rematch.',
-      pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-    });
-  }
-
-  return message;
-};
+import { toDuelsSummaryErrorMessage, toDuelsSummaryActionErrorMessage } from './useKangurMobileLearnerDuelsSummary.errors';
 
 export const useKangurMobileLearnerDuelsSummary = ({
   leaderboardLimit,
@@ -139,35 +47,37 @@ export const useKangurMobileLearnerDuelsSummary = ({
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, setIsActionPending] = useState(false);
   const [pendingOpponentLearnerId, setPendingOpponentLearnerId] = useState<string | null>(null);
-  const learnerIdentity =
-    session.user?.activeLearner?.id ??
-    session.user?.email ??
-    session.user?.id ??
-    'guest';
+  const learnerIdentity = useMemo(() => 
+    session.user?.activeLearner?.id ?? session.user?.email ?? session.user?.id ?? 'guest',
+    [session.user]
+  );
   const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
   const isAuthenticated = session.status === 'authenticated';
   const isRestoringAuth = isLoadingAuth && !isAuthenticated;
-  const leaderboardQueryKey = [
-    'kangur-mobile',
-    'duels-summary',
-    'leaderboard',
-    apiBaseUrl,
-    learnerIdentity,
-    leaderboardLimit,
-    leaderboardLookbackDays,
-  ] as const;
-  const opponentsQueryKey = [
-    'kangur-mobile',
-    'duels-summary',
-    'opponents',
-    apiBaseUrl,
-    learnerIdentity,
-    opponentsLimit,
-  ] as const;
+
+  const summaryQueries = useMemo(() => ({
+    leaderboardQueryKey: [
+      'kangur-mobile',
+      'duels-summary',
+      'leaderboard',
+      apiBaseUrl,
+      learnerIdentity,
+      leaderboardLimit,
+      leaderboardLookbackDays,
+    ] as const,
+    opponentsQueryKey: [
+      'kangur-mobile',
+      'duels-summary',
+      'opponents',
+      apiBaseUrl,
+      learnerIdentity,
+      opponentsLimit,
+    ] as const,
+  }), [apiBaseUrl, learnerIdentity, leaderboardLimit, leaderboardLookbackDays, opponentsLimit]);
 
   const leaderboardQuery = useQuery({
     enabled: isAuthenticated,
-    queryKey: leaderboardQueryKey,
+    queryKey: summaryQueries.leaderboardQueryKey,
     queryFn: async () =>
       apiClient.getDuelLeaderboard(
         {
@@ -181,7 +91,7 @@ export const useKangurMobileLearnerDuelsSummary = ({
 
   const opponentsQuery = useQuery({
     enabled: isAuthenticated,
-    queryKey: opponentsQueryKey,
+    queryKey: summaryQueries.opponentsQueryKey,
     queryFn: async () =>
       apiClient.listDuelOpponents(
         { limit: opponentsLimit },
@@ -211,7 +121,7 @@ export const useKangurMobileLearnerDuelsSummary = ({
       setPendingOpponentLearnerId(opponentLearnerId);
 
       try {
-        const response = await apiClient.createDuel(
+        const response: any = await apiClient.createDuel(
           {
             difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
             mode: 'challenge',
@@ -223,14 +133,16 @@ export const useKangurMobileLearnerDuelsSummary = ({
           },
           { cache: 'no-store' },
         );
+        const session = response?.session as { id: string };
 
         await Promise.all([
-          queryClient.invalidateQueries({ queryKey: leaderboardQueryKey }),
-          queryClient.invalidateQueries({ queryKey: opponentsQueryKey }),
+          queryClient.invalidateQueries({ queryKey: summaryQueries.leaderboardQueryKey }),
+          queryClient.invalidateQueries({ queryKey: summaryQueries.opponentsQueryKey }),
         ]);
 
-        return response.session.id;
-      } catch (error) {
+        return session?.id ?? null;
+      } catch (error: unknown) {
+
         setActionError(toDuelsSummaryActionErrorMessage(error, copy));
         return null;
       } finally {

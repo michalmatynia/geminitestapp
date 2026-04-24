@@ -1,0 +1,18 @@
+{
+  "status": "failed",
+  "asin": null,
+  "title": null,
+  "price": null,
+  "url": null,
+  "description": null,
+  "amazonDetails": null,
+  "amazonProbe": null,
+  "candidateUrls": [],
+  "candidateResults": [],
+  "candidatePreviews": [],
+  "matchedImageId": null,
+  "message": null,
+  "currentUrl": null,
+  "stage": null,
+  "steps": []
+}

@@ -10,7 +10,7 @@ import { RunHistoryList } from './RunHistoryList';
 import { useRunHistoryActions, useRunHistoryState } from '../context';
 import { useRunComparison } from '../hooks/useRunComparison';
 
-export type RunHistoryFilterView = 'all' | 'active' | 'failed' | 'dead';
+export type RunHistoryFilterView = 'all' | 'active' | 'failed' | 'canceled';
 
 export function RunHistoryPanel(): React.JSX.Element {
   const runHistoryState = useRunHistoryState();
@@ -26,17 +26,8 @@ export function RunHistoryPanel(): React.JSX.Element {
     setRunHistorySelection,
     refreshRuns,
     openRunDetail,
-    resumeRun,
-    handoffRun,
-    retryRunNode,
     cancelRun,
-    requeueDeadLetter,
   } = useRunHistoryActions();
-
-  const [handoffStateByRunId, setHandoffStateByRunId] = React.useState<
-    Record<string, 'pending' | 'success'>
-  >({});
-  const handoffResetTimeoutsRef = React.useRef<Record<string, number>>({});
 
   const {
     compareMode,
@@ -55,84 +46,18 @@ export function RunHistoryPanel(): React.JSX.Element {
     displayedComparisonRows,
   } = useRunComparison(resolvedRuns);
 
-  React.useEffect(() => {
-    return () => {
-      Object.values(handoffResetTimeoutsRef.current).forEach((timeoutId) => {
-        window.clearTimeout(timeoutId);
-      });
-      handoffResetTimeoutsRef.current = {};
-    };
-  }, []);
-
   const handleRefresh = (): void => {
     void refreshRuns().catch(() => {});
   };
+
   const handleOpenRunDetail = (runId: string): void => {
     openRunDetail(runId);
   };
-  const handleResumeRun = (runId: string, mode: 'resume' | 'replay'): void => {
-    void resumeRun(runId, mode).catch(() => {});
-  };
-  const handleHandoffRun = (runId: string): void => {
-    setHandoffStateByRunId((prev) => ({
-      ...prev,
-      [runId]: 'pending',
-    }));
-    void handoffRun(runId)
-      .then((ok: boolean) => {
-        if (!ok) {
-          const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
-          if (typeof existingTimeoutId === 'number') {
-            window.clearTimeout(existingTimeoutId);
-            delete handoffResetTimeoutsRef.current[runId];
-          }
-          setHandoffStateByRunId((prev) => {
-            const next = { ...prev };
-            delete next[runId];
-            return next;
-          });
-          return;
-        }
-        setHandoffStateByRunId((prev) => ({
-          ...prev,
-          [runId]: 'success',
-        }));
-        const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
-        if (typeof existingTimeoutId === 'number') {
-          window.clearTimeout(existingTimeoutId);
-        }
-        handoffResetTimeoutsRef.current[runId] = window.setTimeout(() => {
-          setHandoffStateByRunId((prev) => {
-            if (prev[runId] !== 'success') return prev;
-            const next = { ...prev };
-            delete next[runId];
-            return next;
-          });
-          delete handoffResetTimeoutsRef.current[runId];
-        }, 4000);
-      })
-      .catch(() => {
-        const existingTimeoutId = handoffResetTimeoutsRef.current[runId];
-        if (typeof existingTimeoutId === 'number') {
-          window.clearTimeout(existingTimeoutId);
-          delete handoffResetTimeoutsRef.current[runId];
-        }
-        setHandoffStateByRunId((prev) => {
-          const next = { ...prev };
-          delete next[runId];
-          return next;
-        });
-      });
-  };
-  const handleRetryRunNode = (runId: string, nodeId: string): void => {
-    void retryRunNode(runId, nodeId).catch(() => {});
-  };
+
   const handleCancelRun = (runId: string): void => {
     void cancelRun(runId).catch(() => {});
   };
-  const handleRequeueDeadLetter = (runId: string): void => {
-    void requeueDeadLetter(runId).catch(() => {});
-  };
+
   const rawRunFilter = runHistoryState.runFilter as string;
 
   const runFilter: RunHistoryFilterView = React.useMemo((): RunHistoryFilterView => {
@@ -140,9 +65,10 @@ export function RunHistoryPanel(): React.JSX.Element {
       return 'active';
     }
     if (rawRunFilter === 'failed') return 'failed';
-    if (rawRunFilter === 'dead') return 'dead';
+    if (rawRunFilter === 'canceled') return 'canceled';
     return 'all';
   }, [rawRunFilter]);
+
   const setRunFilter = React.useCallback(
     (nextFilter: RunHistoryFilterView): void => {
       setRunFilterContext(nextFilter);
@@ -154,21 +80,13 @@ export function RunHistoryPanel(): React.JSX.Element {
     if (runFilter === 'all') return resolvedRuns;
     if (runFilter === 'active') {
       return resolvedRuns.filter(
-        (run: AiPathRunRecord): boolean =>
-          run.status === 'queued' ||
-          run.status === 'running' ||
-          run.status === 'blocked_on_lease'
+        (run: AiPathRunRecord): boolean => run.status === 'queued' || run.status === 'running'
       );
     }
     if (runFilter === 'failed') {
-      return resolvedRuns.filter(
-        (run: AiPathRunRecord): boolean =>
-          run.status === 'failed' ||
-          run.status === 'paused' ||
-          run.status === 'handoff_ready'
-      );
+      return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'failed');
     }
-    return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'dead_lettered');
+    return resolvedRuns.filter((run: AiPathRunRecord): boolean => run.status === 'canceled');
   }, [runFilter, resolvedRuns]);
 
   return (
@@ -194,12 +112,7 @@ export function RunHistoryPanel(): React.JSX.Element {
         expandedRunHistory={expandedRunHistory}
         runHistorySelection={runHistorySelection}
         onSetRunHistorySelection={setRunHistorySelection}
-        onResumeRun={handleResumeRun}
-        onHandoffRun={handleHandoffRun}
-        handoffStateByRunId={handoffStateByRunId}
         onCancelRun={handleCancelRun}
-        onRequeueDeadLetter={handleRequeueDeadLetter}
-        onRetryRunNode={handleRetryRunNode}
       />
 
       {compareMode && primaryRun && secondaryRun && (

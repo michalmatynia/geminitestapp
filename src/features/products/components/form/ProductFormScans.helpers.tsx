@@ -6,7 +6,13 @@ import type {
   ProductScanSupplierEvaluationStatus,
 } from '@/shared/contracts/product-scans';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
-import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
+import {
+  isProductScanCandidateSelectionRequired,
+  PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE,
+  isProductScanGoogleStealthRetrying,
+  PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE,
+  resolveProductScanRunFeedbackPresentation,
+} from '@/features/products/lib/product-scan-run-feedback';
 
 export const STATUS_LABELS: Record<ProductScanStatus | 'enqueuing', string> = {
   enqueuing: 'Enqueuing...',
@@ -60,6 +66,8 @@ function resolveStatusFeedbackParams(scan: ProductScanRecord): Parameters<typeof
   return {
     manualVerificationPending: isManualVerificationPending(scan),
     manualVerificationMessage: scan.asinUpdateMessage ?? null,
+    googleStealthRetrying: isProductScanGoogleStealthRetrying(scan),
+    candidateSelectionRequired: isProductScanCandidateSelectionRequired(scan),
     amazonEvaluationStatus: amazonStatus,
     amazonEvaluationLanguageAccepted: amazonLanguage,
     supplierEvaluationStatus: resolveSupplierEvalStatus(supplierEval),
@@ -75,7 +83,12 @@ export function resolveStatusClassName(scan: ProductScanRecord): string {
   return badge ?? STATUS_CLASSES[scan.status];
 }
 
-export function resolveActiveStatusMessage(status: ProductScanStatus): string | null {
+export function resolveActiveStatusMessage(scan: ProductScanRecord): string | null {
+  if (isProductScanGoogleStealthRetrying(scan)) {
+    return PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE;
+  }
+
+  const { status } = scan;
   if (status === 'queued') return 'Amazon candidate search queued.';
   if (status === 'running') return 'Amazon candidate search running.';
   return null;
@@ -308,20 +321,42 @@ function resolveFailureMessages(asin: string | null, error: string | null): { in
   return { infoMessage: null, errorMessage: error ?? asin };
 }
 
-function resolveActiveMessages(status: ProductScanStatus, asin: string | null, error: string | null): { infoMessage: string | null; errorMessage: string | null } {
-  return { infoMessage: asin ?? resolveActiveStatusMessage(status), errorMessage: error };
+function resolveActiveMessages(
+  scan: ProductScanRecord
+): { infoMessage: string | null; errorMessage: string | null } {
+  return {
+    infoMessage: scan.asinUpdateMessage ?? resolveActiveStatusMessage(scan),
+    errorMessage: scan.error ?? null,
+  };
 }
 
-function resolveMessagesByStatus(status: ProductScanStatus, asin: string | null, error: string | null): { infoMessage: string | null; errorMessage: string | null } {
+function resolveMessagesByStatus(
+  status: ProductScanStatus,
+  asin: string | null,
+  error: string | null,
+  scan: ProductScanRecord
+): { infoMessage: string | null; errorMessage: string | null } {
   if (status === 'completed') return resolveCompletedMessages(asin);
   if (status === 'no_match') return resolveNoMatchMessages(asin, error);
   if (status === 'conflict' || status === 'failed') return resolveFailureMessages(asin, error);
-  if (isProductScanActiveStatus(status)) return resolveActiveMessages(status, asin, error);
+  if (isProductScanActiveStatus(status)) return resolveActiveMessages(scan);
   return { infoMessage: asin, errorMessage: error };
 }
 
 export function resolveScanMessages(
   scan: ProductScanRecord
 ): { infoMessage: string | null; errorMessage: string | null } {
-  return resolveMessagesByStatus(scan.status, scan.asinUpdateMessage ?? null, scan.error ?? null);
+  if (isProductScanCandidateSelectionRequired(scan)) {
+    return {
+      infoMessage: PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE,
+      errorMessage: null,
+    };
+  }
+
+  return resolveMessagesByStatus(
+    scan.status,
+    scan.asinUpdateMessage ?? null,
+    scan.error ?? null,
+    scan
+  );
 }

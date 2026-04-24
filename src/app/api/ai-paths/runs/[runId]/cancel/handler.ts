@@ -12,7 +12,7 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { validationError } from '@/shared/errors/app-error';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled']);
 
 export async function postHandler(
   _req: NextRequest,

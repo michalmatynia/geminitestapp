@@ -92,11 +92,7 @@ export function useServerRunStream(
         finalizeRun('failed', {
           run,
           message:
-            run.errorMessage ??
-            run.error ??
-            (runStatus === 'dead_lettered'
-              ? 'Run moved to dead letter queue.'
-              : 'Server run failed.'),
+            run.errorMessage ?? run.error ?? 'Server run failed.',
         });
       } catch (err) {
         logClientCatch(err, {
@@ -310,12 +306,7 @@ export function useServerRunStream(
           finalizeRun('canceled');
           return;
         }
-        finalizeRun('failed', {
-          message:
-            status === 'dead_lettered'
-              ? 'Run moved to dead letter queue.'
-              : 'Server run failed.',
-        });
+        finalizeRun('failed', { message: 'Server run failed.' });
       } catch (err) {
         logClientCatch(err, {
           source: 'useAiPathsServerExecution',

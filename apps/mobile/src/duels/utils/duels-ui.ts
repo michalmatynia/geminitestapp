@@ -1,7 +1,7 @@
-import type { KangurMobileLocale } from '../../i18n/kangurMobileI18n';
+import type { KangurMobileLocale, KangurMobileLocalizedValue } from '../../i18n/kangurMobileI18n';
 import type { 
     KangurDuelMode, KangurDuelOperation, KangurDuelDifficulty, KangurDuelStatus, 
-    KangurDuelPlayerStatus, KangurDuelReactionType, KangurDuelSession, KangurDuelPlayer, KangurDuelSeries 
+    KangurDuelReactionType 
 } from '@kangur/contracts/kangur-duels';
 import type { KangurLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import * as Constants from './duels-constants';
@@ -16,6 +16,10 @@ export const {
   DIFFICULTY_OPTIONS,
   SERIES_BEST_OF_OPTIONS,
 } = Constants;
+
+export const DUEL_STATUS_LABELS: Record<KangurDuelStatus, KangurMobileLocalizedValue<string>> = Constants.DUEL_STATUS_LABELS;
+
+export const MODE_FILTER_OPTIONS: readonly { value: KangurDuelMode; label: KangurMobileLocalizedValue<string> }[] = Constants.MODE_FILTER_OPTIONS;
 
 export function formatModeLabel(mode: KangurDuelMode, locale: KangurMobileLocale): string {
   return Formatters.localizeDuelText(Constants.DUEL_MODE_LABELS[mode], locale);
@@ -78,6 +82,19 @@ export function resolveSpectateParam(value: string | string[] | undefined): bool
   return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }
 
-export function formatLobbyChatSenderLabel(message: KangurLobbyChatMessage, activeLearnerId: string | null, locale: KangurMobileLocale): string {
-  return message.senderId === activeLearnerId ? Formatters.localizeDuelText({ de: 'Du', en: 'You', pl: 'Ty' }, locale) : message.senderName;
+export function formatStatusLabel(status: KangurDuelStatus, locale: KangurMobileLocale): string {
+  const labels = DUEL_STATUS_LABELS[status];
+  return Formatters.localizeDuelText(labels, locale);
+}
+
+export interface LocalLobbyChatMessage {
+  senderId: string;
+  senderName: string;
+}
+
+export function formatLobbyChatSenderLabel(message: LocalLobbyChatMessage, activeLearnerId: string | null, locale: KangurMobileLocale): string {
+  if (message.senderId === activeLearnerId) {
+    return Formatters.localizeDuelText({ de: 'Du', en: 'You', pl: 'Ty' }, locale);
+  }
+  return message.senderName;
 }

@@ -176,7 +176,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v146');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v147');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
@@ -425,6 +425,15 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'FAIL_SYNC_TARGET_NOT_FOUND: Direct sync target edit action was not available on the Tradera listing page. Current URL: '
     );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('let syncTargetResolution = null;');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('syncTargetResolution = await openExistingListingEditorForSync();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchedBy: syncTargetResolution?.matchedBy || null');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('syncTargetMatchStrategy:');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "listingAction === 'sync' ? syncTargetResolution?.matchedBy || null : null,"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('syncImageMode:');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("? 'fields_only'");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('matchedBy: \'exact_title\'');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedAria.includes(hint))');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('GLOBAL_HEADER_SEARCH_HINTS.some((hint) => normalizedPlaceholder.includes(hint))');

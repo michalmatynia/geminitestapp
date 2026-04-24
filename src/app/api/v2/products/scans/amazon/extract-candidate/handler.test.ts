@@ -38,12 +38,31 @@ describe('products/scans/amazon/extract-candidate handler', () => {
   it('queues a direct Amazon candidate extraction using the stored candidate order', async () => {
     getProductScanByIdMock.mockResolvedValue({
       id: 'scan-1',
+      productId: 'product-1',
+      provider: 'amazon',
+      asin: null,
+      amazonDetails: null,
       rawResult: {
+        candidateSelectionRequired: true,
         selectorProfile: 'amazon',
         candidateUrls: [
           'https://www.amazon.com/dp/B0002',
           'https://www.amazon.com/dp/B0001',
           'https://www.amazon.com/dp/B0003',
+        ],
+        candidatePreviews: [
+          {
+            id: 'cand-2',
+            matchedImageId: 'image-2',
+            rank: 1,
+            url: 'https://www.amazon.com/dp/B0002',
+          },
+          {
+            id: 'cand-1',
+            matchedImageId: 'image-1',
+            rank: 2,
+            url: 'https://www.amazon.com/dp/B0001',
+          },
         ],
       },
     });
@@ -73,8 +92,8 @@ describe('products/scans/amazon/extract-candidate handler', () => {
           productId: 'product-1',
           scanId: 'scan-1',
           candidateUrl: 'https://www.amazon.com/dp/B0001',
-          candidateRank: 2,
-          candidateId: 'image-1',
+          candidateRank: 99,
+          candidateId: 'image-body',
         },
         userId: 'user-42',
       } as ApiHandlerContext
@@ -109,6 +128,131 @@ describe('products/scans/amazon/extract-candidate handler', () => {
       status: 'queued',
       currentStatus: 'queued',
       message: 'Amazon candidate extraction queued.',
+    });
+  });
+
+  it('returns 404 when the source scan is missing', async () => {
+    getProductScanByIdMock.mockResolvedValue(null);
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/v2/products/scans/amazon/extract-candidate', {
+        method: 'POST',
+      }),
+      {
+        body: {
+          productId: 'product-1',
+          scanId: 'scan-missing',
+          candidateUrl: 'https://www.amazon.com/dp/B0001',
+        },
+        userId: 'user-42',
+      } as ApiHandlerContext
+    );
+
+    expect(queueAmazonBatchProductScansMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(404);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Source Amazon scan not found.',
+    });
+  });
+
+  it('returns 409 when the source scan belongs to a different product', async () => {
+    getProductScanByIdMock.mockResolvedValue({
+      id: 'scan-1',
+      productId: 'product-2',
+      provider: 'amazon',
+      asin: null,
+      amazonDetails: null,
+      rawResult: {
+        candidateSelectionRequired: true,
+        candidatePreviews: [{ url: 'https://www.amazon.com/dp/B0001' }],
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/v2/products/scans/amazon/extract-candidate', {
+        method: 'POST',
+      }),
+      {
+        body: {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          candidateUrl: 'https://www.amazon.com/dp/B0001',
+        },
+        userId: 'user-42',
+      } as ApiHandlerContext
+    );
+
+    expect(queueAmazonBatchProductScansMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Source Amazon scan does not belong to this product.',
+    });
+  });
+
+  it('returns 409 when the source scan is not awaiting candidate selection', async () => {
+    getProductScanByIdMock.mockResolvedValue({
+      id: 'scan-1',
+      productId: 'product-1',
+      provider: 'amazon',
+      asin: null,
+      amazonDetails: null,
+      rawResult: {
+        candidatePreviews: [{ url: 'https://www.amazon.com/dp/B0001' }],
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/v2/products/scans/amazon/extract-candidate', {
+        method: 'POST',
+      }),
+      {
+        body: {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          candidateUrl: 'https://www.amazon.com/dp/B0001',
+        },
+        userId: 'user-42',
+      } as ApiHandlerContext
+    );
+
+    expect(queueAmazonBatchProductScansMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Source Amazon scan is not awaiting candidate selection.',
+    });
+  });
+
+  it('returns 409 when the selected candidate URL is not on the source scan', async () => {
+    getProductScanByIdMock.mockResolvedValue({
+      id: 'scan-1',
+      productId: 'product-1',
+      provider: 'amazon',
+      asin: null,
+      amazonDetails: null,
+      rawResult: {
+        candidateSelectionRequired: true,
+        candidatePreviews: [{ url: 'https://www.amazon.com/dp/B0002' }],
+      },
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/v2/products/scans/amazon/extract-candidate', {
+        method: 'POST',
+      }),
+      {
+        body: {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          candidateUrl: 'https://www.amazon.com/dp/B0001',
+        },
+        userId: 'user-42',
+      } as ApiHandlerContext
+    );
+
+    expect(queueAmazonBatchProductScansMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({
+      error: 'Selected Amazon candidate was not found on the source scan.',
     });
   });
 });

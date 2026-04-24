@@ -108,7 +108,6 @@ export const finalizePlaywrightStandardListingJobOutcome = async ({
       listingId,
       transitionStatus: success.transitionStatus,
       update: buildPlaywrightListingSuccessUpdateFields({
-        at,
         marketplaceData,
         externalListingId,
         extra: success.updateExtra,
@@ -133,7 +132,6 @@ export const finalizePlaywrightStandardListingJobOutcome = async ({
     listingId,
     transitionStatus: failure.transitionStatus,
     update: buildPlaywrightListingFailureUpdateFields({
-      at,
       marketplaceData,
       failureReason,
       extra: failure.updateExtra,

@@ -202,6 +202,7 @@ const retryAmazonScanWithFallbackProviderAfterNoCandidates = async (input: {
     rawResult: input.scan.rawResult,
     scannerSettings,
     currentProvider: amazonImageSearchProvider,
+    imageCandidates: input.scan.imageCandidates,
   });
   if (!fallbackProvider) {
     return null;
@@ -220,6 +221,7 @@ const retryAmazonScanWithFallbackProviderAfterNoCandidates = async (input: {
       scannerEngineRequestOptions,
       actionExecutionSettings: input.currentAmazonRuntimeAction?.executionSettings ?? null,
       actionPersonaId: input.currentAmazonRuntimeAction?.personaId ?? null,
+      runtimeKey: input.currentAmazonRuntimeKey,
     });
     const manualVerificationTimeoutMs =
       resolveScanManualVerificationTimeoutMs(scannerSettings);
@@ -357,6 +359,187 @@ const retryAmazonScanWithFallbackProviderAfterNoCandidates = async (input: {
     });
     return null;
   }
+};
+
+const retryAmazonScanWithNextCandidateAfterAmazonStageFailure = async (input: {
+  scan: ProductScanRecord;
+  run: PlaywrightEngineRunRecord;
+  engineRunId: string;
+  resultValue: unknown;
+  parsedResult: ReturnType<typeof parseAmazonScanRuntimeResult>;
+  currentAmazonRuntimeKey: ReturnType<typeof resolveAmazonScanRuntimeKey>;
+  currentAmazonRuntimeAction: PlaywrightAction | null;
+  requestedStepSequenceInput: ReturnType<typeof resolveProductScanRequestSequenceInput>;
+  persistedAmazonProbe: ProductScanRecord['amazonProbe'];
+  existingAmazonEvaluation: ProductScanRecord['amazonEvaluation'];
+  finalUrl: string | null;
+  diagnosticsEnabled: boolean;
+}): Promise<ProductScanRecord | null> => {
+  const failedStage = readOptionalString(input.parsedResult.stage, 120);
+  if (failedStage === null || failedStage.startsWith('amazon_') === false) {
+    return null;
+  }
+
+  const currentCandidateUrl = resolvePersistableScanUrl(
+    input.parsedResult.url,
+    input.parsedResult.currentUrl,
+    input.finalUrl
+  );
+  const nextCandidate = resolveNextAmazonCandidateUrl({
+    candidateUrls: input.parsedResult.candidateUrls,
+    currentUrl: currentCandidateUrl,
+  });
+  if (nextCandidate.nextUrl === null || nextCandidate.nextRank === null) {
+    return null;
+  }
+
+  let scannerSettings = createDefaultProductScannerSettings();
+  try {
+    scannerSettings = (await getProductScannerSettings()) ?? scannerSettings;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'product-scans.service',
+      action: 'synchronizeProductScan.loadScannerSettingsForAmazonStageContinuation',
+      scanId: input.scan.id,
+      productId: input.scan.productId,
+      engineRunId: input.engineRunId,
+    });
+  }
+
+  const product = await productService.getProductById(input.scan.productId);
+  if (!product) {
+    return null;
+  }
+
+  const scannerEngineRequestOptions =
+    buildProductScannerEngineRequestOptions(scannerSettings);
+  const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
+    scannerSettings,
+    scannerEngineRequestOptions,
+    actionExecutionSettings: input.currentAmazonRuntimeAction?.executionSettings ?? null,
+    actionPersonaId: input.currentAmazonRuntimeAction?.personaId ?? null,
+    runtimeKey: input.currentAmazonRuntimeKey,
+  });
+  const manualVerificationTimeoutMs =
+    resolveScanManualVerificationTimeoutMs(scannerSettings);
+  const amazonImageSearchProvider = resolveAmazonImageSearchProvider(
+    input.scan.rawResult,
+    scannerSettings
+  );
+  const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
+    input.scan.rawResult,
+    scannerSettings
+  );
+  const amazonSelectorProfile =
+    readOptionalString(toRecord(input.scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
+  const continuationRun = await startPlaywrightEngineTask({
+    request: {
+      runtimeKey: input.currentAmazonRuntimeKey,
+      actionId: input.currentAmazonRuntimeAction?.id ?? null,
+      actionName:
+        input.currentAmazonRuntimeAction?.name ??
+        resolveAmazonRuntimeActionName(input.currentAmazonRuntimeKey),
+      selectorProfile: amazonSelectorProfile,
+      input: amazonScanRuntime.buildRequestInput({
+        productId: product.id,
+        productName: input.scan.productName,
+        existingAsin: product.asin,
+        imageCandidates: input.scan.imageCandidates,
+        runtimeKey: input.currentAmazonRuntimeKey,
+        imageSearchProvider: amazonImageSearchProvider,
+        imageSearchPageUrl: amazonImageSearchPageUrl,
+        selectorProfile: amazonSelectorProfile,
+        allowManualVerification:
+          shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+        manualVerificationTimeoutMs,
+        probeOnlyOnAmazonMatch: false,
+        skipAmazonProbe: false,
+        directAmazonCandidateUrl: nextCandidate.nextUrl,
+        directAmazonCandidateUrls: nextCandidate.remainingCandidateUrls,
+        directMatchedImageId: input.parsedResult.matchedImageId,
+        directAmazonCandidateRank: nextCandidate.nextRank,
+        ...input.requestedStepSequenceInput,
+      }),
+      timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+        allowManualVerification: shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+        manualVerificationTimeoutMs,
+      }),
+      browserEngine: 'chromium',
+      ...scannerRuntimeOptions,
+      capture: resolveAmazonScanDiagnosticCapture(input.scan.rawResult),
+      preventNewPages: true,
+    },
+    ownerUserId: input.scan.updatedBy?.trim() || null,
+    instance: createCustomPlaywrightInstance({
+      family: 'scrape',
+      label: 'Amazon failed-candidate continuation scan',
+      tags: ['product', 'amazon', 'scan', 'candidate-continuation'],
+    }),
+  });
+
+  const continuationStatus = continuationRun.status === 'running' ? 'running' : 'queued';
+  const nextSteps = resolvePersistedProductScanSteps(input.scan, input.parsedResult.steps);
+  return await persistSynchronizedScan(input.scan, {
+    engineRunId: continuationRun.runId,
+    status: continuationStatus,
+    asin: null,
+    matchedImageId: input.parsedResult.matchedImageId,
+    title: null,
+    price: null,
+    url: nextCandidate.nextUrl,
+    description: null,
+    amazonDetails: null,
+    amazonProbe: input.persistedAmazonProbe,
+    amazonEvaluation: input.existingAmazonEvaluation,
+    steps: upsertPersistedProductScanStep(nextSteps, {
+      key: 'queue_scan',
+      label: 'Continue with next Amazon candidate',
+      group: 'input',
+      attempt: resolveNextQueueStepAttempt(nextSteps),
+      status: 'completed',
+      resultCode: continuationStatus === 'running' ? 'run_started' : 'run_queued',
+      message:
+        continuationStatus === 'running'
+          ? 'Started the next Amazon candidate after candidate-page failure.'
+          : 'Queued the next Amazon candidate after candidate-page failure.',
+      details: [
+        { label: 'Failure stage', value: failedStage },
+        { label: 'Rejected candidate URL', value: currentCandidateUrl },
+        { label: 'Next candidate URL', value: nextCandidate.nextUrl },
+      ],
+      url: nextCandidate.nextUrl,
+    }),
+    rawResult: {
+      ...createProductScanStartedRawResult({
+        runId: continuationRun.runId,
+        status: continuationRun.status,
+        runtimeKey: input.currentAmazonRuntimeKey,
+        actionId: input.currentAmazonRuntimeAction?.id ?? null,
+        selectorProfile: amazonSelectorProfile,
+        imageSearchProvider: amazonImageSearchProvider,
+        imageSearchPageUrl: amazonImageSearchPageUrl,
+        imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
+          input.scan.rawResult,
+          amazonImageSearchProvider
+        ),
+        allowManualVerification:
+          shouldAutoShowScannerCaptchaBrowser(scannerSettings),
+        manualVerificationTimeoutMs,
+        previousRunId: input.engineRunId,
+        previousResult: input.resultValue,
+        recordDiagnostics: input.diagnosticsEnabled,
+        ...input.requestedStepSequenceInput,
+      }),
+      candidateContinuation: true,
+      continuationCandidateUrls: nextCandidate.remainingCandidateUrls,
+      continuationReason: 'candidate_page_failure',
+      failedCandidateStage: failedStage,
+    },
+    error: null,
+    asinUpdateStatus: 'pending',
+    asinUpdateMessage: null,
+    completedAt: null,
+  });
 };
 
 export async function synchronizeAmazonProductScan(
@@ -619,6 +802,7 @@ export async function synchronizeAmazonProductScan(
         return await persistSynchronizedScan(scan, {
           engineRunId,
           status: 'completed',
+          asin: null,
           matchedImageId: parsedResult.matchedImageId,
           title: null,
           price: null,
@@ -726,6 +910,26 @@ export async function synchronizeAmazonProductScan(
       });
       if (fallbackRetry) {
         return fallbackRetry;
+      }
+    }
+
+    if (parsedResult.status === 'failed') {
+      const candidateRetry = await retryAmazonScanWithNextCandidateAfterAmazonStageFailure({
+        scan,
+        run,
+        engineRunId,
+        resultValue,
+        parsedResult,
+        currentAmazonRuntimeKey,
+        currentAmazonRuntimeAction,
+        requestedStepSequenceInput,
+        persistedAmazonProbe,
+        existingAmazonEvaluation,
+        finalUrl,
+        diagnosticsEnabled: diagnostics.enabled,
+      });
+      if (candidateRetry) {
+        return candidateRetry;
       }
     }
 
@@ -910,6 +1114,7 @@ export async function synchronizeAmazonProductScan(
                   rawResult: scan.rawResult,
                   scannerSettings,
                   currentProvider: amazonImageSearchProvider,
+                  imageCandidates: scan.imageCandidates,
                 })
               : null;
           if (fallbackProvider) {
@@ -935,6 +1140,7 @@ export async function synchronizeAmazonProductScan(
               scannerEngineRequestOptions,
               actionExecutionSettings: fallbackRuntimeAction?.executionSettings ?? null,
               actionPersonaId: fallbackRuntimeAction?.personaId ?? null,
+              runtimeKey: fallbackRuntimeKey,
             });
             const fallbackRun = await startPlaywrightEngineTask({
               request: {
@@ -1061,6 +1267,7 @@ export async function synchronizeAmazonProductScan(
               scannerEngineRequestOptions,
               actionExecutionSettings: currentAmazonRuntimeAction?.executionSettings ?? null,
               actionPersonaId: currentAmazonRuntimeAction?.personaId ?? null,
+              runtimeKey: currentAmazonRuntimeKey,
             });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);

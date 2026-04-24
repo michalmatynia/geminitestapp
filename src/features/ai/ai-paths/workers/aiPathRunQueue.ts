@@ -13,7 +13,6 @@ import {
 import {
   AI_PATH_RUN_QUEUE_NAME,
   LOG_SOURCE,
-  RECOVERY_REPEAT_MS,
   REQUIRE_DURABLE_QUEUE,
   QUEUE_HOT_WAITING_LIMIT,
   QUEUE_UNAVAILABLE_RETRY_AFTER_MS,
@@ -82,11 +81,7 @@ const removeRecoveryRepeatJobs = async (): Promise<void> => {
   const queueApi = queue.getQueue();
   if (!hasRepeatableQueueApi(queueApi)) return;
   const repeatableJobs = await queueApi.getRepeatableJobs();
-  const targets = repeatableJobs.filter(
-    (job) =>
-      job.id === 'ai-path-run-recovery' ||
-      (job.name === AI_PATH_RUN_QUEUE_NAME && job.every === RECOVERY_REPEAT_MS)
-  );
+  const targets = repeatableJobs.filter((job) => job.id === 'ai-path-run-recovery');
   await Promise.all(targets.map(async (job) => queueApi.removeRepeatableByKey(job.key)));
 };
 
@@ -143,21 +138,13 @@ export const startAiPathRunQueue = (): void => {
         }
       })();
     }
-    if (aiPathRunQueueState.recoveryScheduled) return;
-
     aiPathRunQueueState.recoveryScheduled = true;
-    await queue
-      .enqueue(
-        { runId: '__recovery__', type: 'recovery' },
-        { repeat: { every: RECOVERY_REPEAT_MS }, jobId: 'ai-path-run-recovery' }
-      )
-      .catch((error) => {
-        aiPathRunQueueState.recoveryScheduled = false;
-        void ErrorSystem.captureException(error, {
-          service: LOG_SOURCE,
-          action: 'registerRecoverySchedule',
-        });
+    await removeRecoveryRepeatJobs().catch((error) => {
+      void ErrorSystem.captureException(error, {
+        service: LOG_SOURCE,
+        action: 'removeLegacyRecoverySchedule',
       });
+    });
   })().finally(() => {
     reconcileInFlight = null;
   });
@@ -218,7 +205,7 @@ export const assertAiPathRunQueueReadyForEnqueue = async (): Promise<AiPathRunQu
     );
   }
 
-  if (!aiPathRunQueueState.workerStarted || !aiPathRunQueueState.recoveryScheduled) {
+  if (!aiPathRunQueueState.workerStarted) {
     startAiPathRunQueue();
     await waitForQueueReconciliation();
   }

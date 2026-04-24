@@ -241,6 +241,8 @@ const writeStaleFixture = async (name: string, content: string): Promise<string>
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  delete process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS'];
+  delete process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS'];
   mocks.getSettingValueMock.mockResolvedValue(null);
   mocks.buildContextRegistryPromptMock.mockReturnValue('Context Registry Prompt');
   mocks.evaluateOutboundUrlPolicyMock.mockImplementation((url: string) =>
@@ -1127,6 +1129,80 @@ describe('enqueuePlaywrightNodeRun', () => {
         return current?.status ?? null;
       })
       .toBe('completed');
+  });
+
+  it('falls back to default persona settings when the settings lookup stalls', async () => {
+    process.env['PLAYWRIGHT_PERSONA_SETTINGS_TIMEOUT_MS'] = '10';
+    mocks.getSettingValueMock.mockImplementation(() => new Promise(() => undefined));
+
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        personaId: 'persona-stalled',
+        script: `
+          export default async function run() {
+            return { ok: true };
+          };
+        `,
+      },
+    });
+
+    expect(run.status).toBe('completed');
+    expect(run.logs).toEqual(
+      expect.arrayContaining([
+        '[runtime][warn] Timed out resolving Playwright persona settings. Using defaults.',
+      ])
+    );
+    expect(runtime.context.close).toHaveBeenCalledTimes(1);
+    expect(runtime.browser.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails stalled browser launch runs instead of leaving them stuck in running', async () => {
+    process.env['PLAYWRIGHT_STARTUP_TIMEOUT_MS'] = '10';
+    mocks.chromiumLaunchMock.mockImplementation(() => new Promise(() => undefined));
+
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const queued = await enqueuePlaywrightNodeRun({
+      waitForResult: false,
+      request: {
+        script: `
+          export default async function run() {
+            return { ok: true };
+          };
+        `,
+      },
+    });
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.logs ?? [];
+      })
+      .toEqual(
+        expect.arrayContaining([
+          '[runtime] Prepared Playwright runtime configuration.',
+          '[runtime] Launching chromium browser.',
+        ])
+      );
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.status ?? null;
+      })
+      .toBe('failed');
+
+    const finalRun = await readPlaywrightNodeRun(queued.runId);
+    expect(finalRun).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        error: 'Timed out launching chromium browser.',
+      })
+    );
   });
 
   it('exposes persona-aware interaction helpers for clicks and typing', async () => {

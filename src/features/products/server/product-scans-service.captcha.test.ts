@@ -362,6 +362,117 @@ describe('product-scans-service', () => {
     );
   });
 
+  it('retries a captcha-blocked run headlessly with rotated proxy affinity before opening a visible browser', async () => {
+    const scan = createScan({
+      status: 'running',
+      engineRunId: 'run-1',
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-1',
+      status: 'running',
+      completedAt: null,
+      result: {
+        outputs: {
+          result: {
+            status: 'captcha_required',
+            message: 'Google Lens requested captcha verification.',
+            stage: 'google_captcha',
+            currentUrl: 'https://www.google.com/sorry/index',
+          },
+        },
+      },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'captcha_required',
+        message: 'Google Lens requested captcha verification.',
+        stage: 'google_captcha',
+        currentUrl: 'https://www.google.com/sorry/index',
+      },
+      finalUrl: 'https://www.google.com/sorry/index',
+    });
+    mocks.buildPlaywrightEngineRunFailureMetaMock.mockReturnValue({
+      runId: 'run-1',
+      runStatus: 'running',
+      latestStage: 'google_captcha',
+      latestStageUrl: 'https://www.google.com/sorry/index',
+      runtimePosture: {
+        browser: {
+          headless: true,
+        },
+      },
+      rawResult: {
+        stage: 'google_captcha',
+        currentUrl: 'https://www.google.com/sorry/index',
+      },
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+    });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'chrome',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+    });
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({
+      settingsOverrides: {
+        proxyEnabled: true,
+        proxyServer: 'http://proxy.local:8080?session={session}',
+      },
+      launchOptions: {
+        channel: 'chrome',
+      },
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-stealth-1',
+      status: 'running',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          browserEngine: 'chromium',
+          settingsOverrides: expect.objectContaining({
+            headless: true,
+            proxyEnabled: true,
+            proxySessionAffinity: true,
+            proxySessionMode: 'rotate',
+          }),
+          input: expect.objectContaining({
+            productId: 'product-1',
+            productName: 'Product 1',
+            existingAsin: null,
+            allowManualVerification: false,
+            manualVerificationTimeoutMs: 180000,
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        engineRunId: 'run-stealth-1',
+        status: 'running',
+        asinUpdateMessage: null,
+        rawResult: expect.objectContaining({
+          captchaStealthRetryStarted: true,
+          captchaStealthRetryMode: 'rotate',
+          manualVerificationPending: false,
+          manualVerificationMessage: null,
+        }),
+      })
+    );
+  });
+
   it('clears manual verification messaging once the running scan continues past captcha', async () => {
     const scan = createScan({
       status: 'running',
@@ -599,6 +710,107 @@ describe('product-scans-service', () => {
       expect.objectContaining({
         engineRunId: 'run-headed-1',
         status: 'running',
+      })
+    );
+  });
+
+  it('falls back to a visible browser after a rotated stealth retry still ends in captcha', async () => {
+    const scan = createScan({
+      status: 'running',
+      engineRunId: 'run-stealth-1',
+      rawResult: {
+        runId: 'run-stealth-1',
+        captchaStealthRetryStarted: true,
+        captchaStealthRetryMode: 'rotate',
+        allowManualVerification: false,
+        manualVerificationPending: false,
+      },
+    });
+
+    mocks.readPlaywrightEngineRunMock.mockResolvedValue({
+      runId: 'run-stealth-1',
+      status: 'completed',
+      completedAt: '2026-04-11T04:05:00.000Z',
+      result: {
+        outputs: {
+          result: {
+            status: 'captcha_required',
+            message: 'Google Lens requested captcha verification.',
+            stage: 'google_candidates',
+            currentUrl: 'https://www.google.com/sorry/index',
+          },
+        },
+      },
+    });
+    mocks.resolvePlaywrightEngineRunOutputsMock.mockReturnValue({
+      resultValue: {
+        status: 'captcha_required',
+        message: 'Google Lens requested captcha verification.',
+        stage: 'google_candidates',
+        currentUrl: 'https://www.google.com/sorry/index',
+      },
+      finalUrl: 'https://www.google.com/sorry/index',
+    });
+    mocks.getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      asin: null,
+      name_en: 'Product 1',
+    });
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'chrome',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 180000,
+      amazonImageSearchProvider: 'google_images_upload',
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+    });
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({
+      settingsOverrides: {
+        proxyEnabled: true,
+        proxyServer: 'http://proxy.local:8080?session={session}',
+      },
+      launchOptions: {
+        channel: 'chrome',
+      },
+    });
+    mocks.startPlaywrightEngineTaskMock.mockResolvedValue({
+      runId: 'run-headed-2',
+      status: 'running',
+    });
+
+    const result = await synchronizeProductScan(scan);
+
+    expect(mocks.startPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          browserEngine: 'chromium',
+          settingsOverrides: expect.objectContaining({
+            headless: false,
+          }),
+          input: expect.objectContaining({
+            productId: 'product-1',
+            productName: 'Product 1',
+            existingAsin: null,
+            allowManualVerification: true,
+            manualVerificationTimeoutMs: 180000,
+          }),
+        }),
+      })
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        engineRunId: 'run-headed-2',
+        status: 'running',
+        asinUpdateMessage:
+          'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.',
+        rawResult: expect.objectContaining({
+          captchaStealthRetryStarted: true,
+          captchaRetryStarted: true,
+          captchaManualRetryStarted: true,
+          manualVerificationPending: true,
+        }),
       })
     );
   });

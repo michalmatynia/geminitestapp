@@ -3,8 +3,8 @@ import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { KangurMobileCard as Card, KangurMobileFilterChip } from '../shared/KangurMobileUi';
 import { ActionButton, AutoRefreshChip, LobbyEntryCard, MessageCard } from './duels-primitives';
 import { type KangurDuelLobbyEntry } from '@kangur/contracts/kangur-duels';
-import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState, type KangurMobileDuelModeFilter } from './useKangurMobileDuelsLobby';
-import { MODE_FILTER_OPTIONS, formatModeLabel, formatOperationLabel, formatStatusLabel, localizeDuelText } from './utils/duels-ui';
+import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
+import { type DuelModeFilterOption, MODE_FILTER_OPTIONS, formatModeLabel, formatOperationLabel, formatStatusLabel, localizeDuelText } from './utils/duels-ui';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
@@ -81,12 +81,12 @@ export function DuelLobbyRoomsPanel({ autoRefreshChipLabel, autoRefreshEnabled, 
     <Card>
       <LobbyHeader autoRefreshChipLabel={autoRefreshChipLabel} autoRefreshEnabled={autoRefreshEnabled} copy={copy} lobby={lobby} onToggleAutoRefresh={onToggleAutoRefresh} />
       <View style={{ flexDirection: 'column', gap: 8 }}>
-        {MODE_FILTER_OPTIONS.map((option) => (
+        {MODE_FILTER_OPTIONS.map((option: DuelModeFilterOption) => (
           <KangurMobileFilterChip
             fullWidth
             key={option.value}
             label={localizeDuelText(option.label, locale)}
-            onPress={() => lobby.setModeFilter(option.value as KangurMobileDuelModeFilter)}
+            onPress={() => lobby.setModeFilter(option.value as DuelModeFilterOption['value'])}
             selected={lobby.modeFilter === option.value}
           />
         ))}

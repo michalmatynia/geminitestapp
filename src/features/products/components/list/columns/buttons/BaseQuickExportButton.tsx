@@ -167,7 +167,6 @@ const TERMINAL_EXPORT_RUN_STATUSES = new Set<TriggerButtonRunFeedbackStatus>([
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 const canUseSessionStorage = (): boolean =>

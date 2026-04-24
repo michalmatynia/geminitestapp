@@ -94,13 +94,9 @@ export type AiPathRuntimeNodeStatusMap = z.infer<typeof aiPathRuntimeNodeStatusM
 export const aiPathRunStatusSchema = z.enum([
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ]);
 
 export type AiPathRunStatus = z.infer<typeof aiPathRunStatusSchema>;
@@ -132,15 +128,11 @@ export const aiPathRunSchema = dtoBaseSchema.extend({
   leaseResourceId: z.string().nullable().optional(),
   leaseScopeId: z.string().nullable().optional(),
   leaseOwnerAgentId: z.string().nullable().optional(),
-  blockedOnLeaseAt: z.string().nullable().optional(),
-  handoffReadyAt: z.string().nullable().optional(),
-  handoffReason: z.string().nullable().optional(),
   checkpointLineageId: z.string().nullable().optional(),
   memoryKey: z.string().nullable().optional(),
   startedAt: z.string().nullable().optional(),
   completedAt: z.string().nullable().optional(),
   finishedAt: z.string().nullable().optional(),
-  deadLetteredAt: z.string().nullable().optional(),
   retryCount: z.number().nullable().optional(),
   maxAttempts: z.number().nullable().optional(),
   nextRetryAt: z.string().nullable().optional(),
@@ -178,8 +170,6 @@ export type AiPathRuntimeEvent = z.infer<typeof aiPathRuntimeEventSchema>;
 export const runStatusSchema = z.enum([
   'idle',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
   'paused',
   'stepping',
   'completed',
@@ -590,8 +580,8 @@ export const queueSloThresholdsSchema = z.object({
   queueLagCriticalMs: z.number(),
   successRateWarningPct: z.number(),
   successRateCriticalPct: z.number(),
-  deadLetterRateWarningPct: z.number(),
-  deadLetterRateCriticalPct: z.number(),
+  failureRateWarningPct: z.number(),
+  failureRateCriticalPct: z.number(),
   brainErrorRateWarningPct: z.number(),
   brainErrorRateCriticalPct: z.number(),
   minTerminalSamples: z.number(),
@@ -621,7 +611,7 @@ export const aiPathRunQueueSloStatusSchema = z.object({
       sampleSize: z.number(),
       message: z.string(),
     }),
-    deadLetterRate24h: z.object({
+    failureRate24h: z.object({
       level: sloLevelSchema,
       valuePct: z.number(),
       sampleSize: z.number(),

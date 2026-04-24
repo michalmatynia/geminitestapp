@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatHistoryAction,
   resolveDisplayedTraderaDuplicateSummary,
+  formatTraderaSyncImageMode,
+  formatTraderaSyncOutcome,
+  formatTraderaSyncTargetMatchStrategy,
   formatTraderaStatusVerificationSection,
   formatTraderaStatusVerificationStrategy,
+  resolveDisplayHistoryFields,
+  resolveHistoryAction,
   resolveTraderaExecutionSummary,
   resolveTraderaStatusBadge,
 } from './ProductListingDetails.utils';
@@ -108,6 +114,25 @@ describe('ProductListingDetails.utils', () => {
     });
   });
 
+  it('prefers the latest checked status for Tradera badges when check_status was the last action', () => {
+    expect(
+      resolveTraderaStatusBadge('active', false, {
+        checkedStatus: 'unknown',
+        lastAction: 'check_status',
+      })
+    ).toEqual({
+      status: 'unknown',
+    });
+  });
+
+  it('extracts history action markers separately from browser mode and field lists', () => {
+    const fields = ['browser_mode:headed', 'action:sync', 'title', 'description'];
+
+    expect(resolveHistoryAction(fields)).toBe('sync');
+    expect(resolveDisplayHistoryFields(fields)).toEqual(['title', 'description']);
+    expect(formatHistoryAction('move_to_unsold')).toBe('End listing');
+  });
+
   it('prefers live Tradera duplicate fields over persisted listing metadata', () => {
     expect(
       resolveDisplayedTraderaDuplicateSummary({
@@ -196,6 +221,81 @@ describe('ProductListingDetails.utils', () => {
     expect(summary.verificationCandidateCount).toBe(1);
   });
 
+  it('extracts Tradera sync target metadata from persisted execution data', () => {
+    const summary = resolveTraderaExecutionSummary({
+      tradera: {
+        lastExecution: {
+          action: 'sync',
+          metadata: {
+            syncTargetMatchStrategy: 'direct_listing_url',
+            syncTargetListingId: '987654321',
+            syncTargetListingUrl: 'https://www.tradera.com/item/987654321',
+            syncImageMode: 'fields_only',
+            categorySource: 'autofill',
+            executionSteps: [
+              {
+                id: 'title_fill',
+                label: 'Enter title',
+                status: 'success',
+              },
+              {
+                id: 'description_fill',
+                label: 'Enter description',
+                status: 'success',
+              },
+              {
+                id: 'price_set',
+                label: 'Set price',
+                status: 'success',
+              },
+              {
+                id: 'category_select',
+                label: 'Select category',
+                status: 'success',
+              },
+              {
+                id: 'attribute_select',
+                label: 'Apply listing attributes',
+                status: 'skipped',
+                message: 'step omitted from runtime action manifest',
+              },
+              {
+                id: 'shipping_set',
+                label: 'Configure delivery',
+                status: 'success',
+              },
+              {
+                id: 'image_upload',
+                label: 'Upload listing images',
+                status: 'skipped',
+                message: 'sync-skip-images',
+              },
+            ],
+            logTail: [
+              '[user] tradera.quicklist.field.verified {"field":"title","attempt":0}',
+              '[user] tradera.quicklist.field.skipped {"field":"description","reason":"disabled-on-sync"}',
+              '[user] tradera.quicklist.field.skipped {"field":"price","reason":"already-matched"}',
+              '[user] tradera.quicklist.field.selected {"field":"delivery","option":"Buyer pays shipping"}',
+            ],
+          },
+        },
+      },
+    });
+
+    expect(summary.syncTargetMatchStrategy).toBe('direct_listing_url');
+    expect(summary.syncTargetListingId).toBe('987654321');
+    expect(summary.syncTargetListingUrl).toBe('https://www.tradera.com/item/987654321');
+    expect(summary.syncImageMode).toBe('fields_only');
+    expect(summary.syncFieldsOnly).toBe(true);
+    expect(summary.syncTitleOutcome).toBe('updated');
+    expect(summary.syncDescriptionOutcome).toBe('locked');
+    expect(summary.syncPricingOutcome).toBe('unchanged');
+    expect(summary.syncCategoryOutcome).toBe('preserved');
+    expect(summary.syncAttributesOutcome).toBe('omitted');
+    expect(summary.syncShippingOutcome).toBe('updated');
+    expect(summary.syncImagesOutcome).toBe('preserved');
+  });
+
   it('formats Tradera status-check verification labels for the modal', () => {
     expect(formatTraderaStatusVerificationSection('public_listing')).toBe(
       'Public listing page'
@@ -203,5 +303,10 @@ describe('ProductListingDetails.utils', () => {
     expect(formatTraderaStatusVerificationStrategy('seller-sections-miss')).toBe(
       'Seller sections miss'
     );
+    expect(formatTraderaSyncTargetMatchStrategy('active_listings_external_listing_id')).toBe(
+      'Active listings + external ID'
+    );
+    expect(formatTraderaSyncImageMode('fields_only')).toBe('Fields only');
+    expect(formatTraderaSyncOutcome('locked')).toBe('Locked on Tradera');
   });
 });

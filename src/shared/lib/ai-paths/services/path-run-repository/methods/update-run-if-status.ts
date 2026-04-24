@@ -15,7 +15,7 @@ export const updateRunIfStatus = async (
   const now = new Date();
   const updateData: Record<string, unknown> = { ...data, updatedAt: now };
 
-  const dateFields: Array<keyof typeof updateData> = ['nextRetryAt', 'deadLetteredAt', 'startedAt', 'finishedAt'];
+  const dateFields: Array<keyof typeof updateData> = ['nextRetryAt', 'startedAt', 'finishedAt'];
   for (const field of dateFields) {
     const value = updateData[field];
     if (typeof value === 'string') {

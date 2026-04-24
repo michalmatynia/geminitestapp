@@ -62,6 +62,7 @@ describe('product-scan-amazon-candidates', () => {
       isProductScanAmazonCandidateSelectionReady({
         provider: 'amazon',
         rawResult: {
+          candidateSelectionRequired: true,
           candidatePreviews: [{ url: 'https://www.amazon.com/dp/B0001' }],
         },
         amazonDetails: null,
@@ -75,11 +76,25 @@ describe('product-scan-amazon-candidates', () => {
       isProductScanAmazonCandidateSelectionReady({
         provider: 'amazon',
         rawResult: {
+          candidateSelectionRequired: true,
           candidatePreviews: [{ url: 'https://www.amazon.com/dp/B0004' }],
         },
         asin: null,
       } as never)
     ).toBe(true);
+  });
+
+  it('does not treat candidate previews alone as manual-selection ready', () => {
+    expect(
+      isProductScanAmazonCandidateSelectionReady({
+        provider: 'amazon',
+        rawResult: {
+          candidatePreviews: [{ url: 'https://www.amazon.com/dp/B0005' }],
+        },
+        amazonDetails: null,
+        asin: null,
+      } as never)
+    ).toBe(false);
   });
 
   it('resolves ordered candidate urls from raw result', () => {

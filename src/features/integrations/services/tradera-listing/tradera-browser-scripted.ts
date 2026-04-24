@@ -439,6 +439,27 @@ const buildSuccessMetadata = ({
   const observedImagePreviewDescriptors = Array.isArray(result.rawResult['observedPreviewDescriptors'])
     ? result.rawResult['observedPreviewDescriptors']
     : [];
+  const syncImageMode =
+    action === 'sync'
+      ? toTrimmedString(result.rawResult['syncImageMode']) ||
+        (scriptInput['syncSkipImages'] === true ? 'fields_only' : 'full')
+      : null;
+  const syncTargetMatchStrategy =
+    action === 'sync'
+      ? toTrimmedString(result.rawResult['syncTargetMatchStrategy']) || null
+      : null;
+  const syncTargetListingId =
+    action === 'sync'
+      ? toTrimmedString(result.rawResult['syncTargetListingId']) ||
+        toTrimmedString(scriptInput['existingExternalListingId']) ||
+        null
+      : null;
+  const syncTargetListingUrl =
+    action === 'sync'
+      ? toTrimmedString(result.rawResult['syncTargetListingUrl']) ||
+        toTrimmedString(scriptInput['existingListingUrl']) ||
+        null
+      : null;
 
   return buildPlaywrightScriptListingMetadata({
     result,
@@ -496,6 +517,15 @@ const buildSuccessMetadata = ({
         plannedImageCount !== observedImagePreviewDelta,
       localImagePathCount: imageDiagnostics.localImagePathCount,
       imageUrlCount: imageDiagnostics.imageUrlCount,
+      ...(action === 'sync'
+        ? {
+            syncImageMode,
+            syncFieldsOnly: syncImageMode === 'fields_only',
+            syncTargetMatchStrategy,
+            syncTargetListingId,
+            syncTargetListingUrl,
+          }
+        : {}),
     },
   });
 };

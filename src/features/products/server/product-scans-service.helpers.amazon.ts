@@ -75,6 +75,17 @@ export const AMAZON_SCAN_DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 export const AMAZON_SCAN_STEALTH_LAUNCH_ARGS = ['--disable-blink-features=AutomationControlled'];
 export const AMAZON_SCAN_MANUAL_VERIFICATION_BUFFER_MS = 60_000;
+export const AMAZON_GOOGLE_RUNTIME_DEFAULT_CLICK_DELAY_MIN_MS = 90;
+export const AMAZON_GOOGLE_RUNTIME_DEFAULT_CLICK_DELAY_MAX_MS = 280;
+export const AMAZON_GOOGLE_RUNTIME_DEFAULT_INPUT_DELAY_MIN_MS = 70;
+export const AMAZON_GOOGLE_RUNTIME_DEFAULT_INPUT_DELAY_MAX_MS = 210;
+export const AMAZON_GOOGLE_RUNTIME_DEFAULT_ACTION_DELAY_MIN_MS = 650;
+export const AMAZON_GOOGLE_RUNTIME_DEFAULT_ACTION_DELAY_MAX_MS = 1900;
+const AMAZON_IMAGE_SEARCH_PROVIDER_FALLBACK_ORDER = [
+  'google_images_upload',
+  'google_images_url',
+  'google_lens_upload',
+] as const satisfies ReadonlyArray<ProductScannerAmazonImageSearchProvider>;
 
 export type AmazonProductScanRuntimeKey =
   | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
@@ -218,11 +229,23 @@ export const mergeUniqueStringValues = (
   return Array.from(merged);
 };
 
+const hasFiniteNumberSetting = (value: unknown): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const isGoogleFacingAmazonRuntimeKey = (
+  runtimeKey: string | null | undefined
+): runtimeKey is
+  | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
+  | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY =>
+  runtimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY ||
+  runtimeKey === AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY;
+
 export const buildAmazonScannerRequestRuntimeOptions = (input: {
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
   scannerEngineRequestOptions: Record<string, unknown>;
   actionExecutionSettings?: PlaywrightActionExecutionSettings | null;
   actionPersonaId?: string | null;
+  runtimeKey?: string | null;
   forceHeadless?: boolean;
 }): Pick<
   NonNullable<Parameters<typeof startPlaywrightEngineTask>[0]['request']>,
@@ -293,10 +316,6 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
   const contextOptions: Record<string, unknown> = {
     ...existingContextOptions,
   };
-  const userAgent = contextOptions['userAgent'];
-  if (typeof userAgent !== 'string' || userAgent.trim().length === 0) {
-    contextOptions['userAgent'] = AMAZON_SCAN_DEFAULT_USER_AGENT;
-  }
 
   const actionPersonaId = readOptionalString(input.actionPersonaId, 160);
   const scannerPersonaId =
@@ -305,6 +324,50 @@ export const buildAmazonScannerRequestRuntimeOptions = (input: {
       ? scannerEngineRequestOptions.personaId
       : null;
   const personaId = actionPersonaId ?? scannerPersonaId;
+  const shouldApplyGoogleFacingRuntimeDefaults =
+    personaId === null && isGoogleFacingAmazonRuntimeKey(input.runtimeKey);
+
+  if (shouldApplyGoogleFacingRuntimeDefaults) {
+    settingsOverrides['identityProfile'] = 'search';
+    if (!hasFiniteNumberSetting(settingsOverrides['clickDelayMin'])) {
+      settingsOverrides['clickDelayMin'] = AMAZON_GOOGLE_RUNTIME_DEFAULT_CLICK_DELAY_MIN_MS;
+    }
+    if (!hasFiniteNumberSetting(settingsOverrides['clickDelayMax'])) {
+      settingsOverrides['clickDelayMax'] = AMAZON_GOOGLE_RUNTIME_DEFAULT_CLICK_DELAY_MAX_MS;
+    }
+    if (!hasFiniteNumberSetting(settingsOverrides['inputDelayMin'])) {
+      settingsOverrides['inputDelayMin'] = AMAZON_GOOGLE_RUNTIME_DEFAULT_INPUT_DELAY_MIN_MS;
+    }
+    if (!hasFiniteNumberSetting(settingsOverrides['inputDelayMax'])) {
+      settingsOverrides['inputDelayMax'] = AMAZON_GOOGLE_RUNTIME_DEFAULT_INPUT_DELAY_MAX_MS;
+    }
+    if (!hasFiniteNumberSetting(settingsOverrides['actionDelayMin'])) {
+      settingsOverrides['actionDelayMin'] = AMAZON_GOOGLE_RUNTIME_DEFAULT_ACTION_DELAY_MIN_MS;
+    }
+    if (!hasFiniteNumberSetting(settingsOverrides['actionDelayMax'])) {
+      settingsOverrides['actionDelayMax'] = AMAZON_GOOGLE_RUNTIME_DEFAULT_ACTION_DELAY_MAX_MS;
+    }
+    if (settingsOverrides['proxyEnabled'] === true) {
+      if (typeof settingsOverrides['proxySessionAffinity'] !== 'boolean') {
+        settingsOverrides['proxySessionAffinity'] = true;
+      }
+      if (
+        settingsOverrides['proxySessionAffinity'] === true &&
+        settingsOverrides['proxySessionMode'] !== 'sticky' &&
+        settingsOverrides['proxySessionMode'] !== 'rotate'
+      ) {
+        settingsOverrides['proxySessionMode'] = 'sticky';
+      }
+    }
+  }
+
+  const userAgent = contextOptions['userAgent'];
+  if (
+    (typeof userAgent !== 'string' || userAgent.trim().length === 0) &&
+    shouldApplyGoogleFacingRuntimeDefaults === false
+  ) {
+    contextOptions['userAgent'] = AMAZON_SCAN_DEFAULT_USER_AGENT;
+  }
 
   return {
     ...(personaId !== null ? { personaId } : {}),
@@ -394,6 +457,29 @@ export const resolveAmazonImageSearchProviderHistory = (
   return Array.from(new Set([...history, current ?? currentProvider, currentProvider]));
 };
 
+const canUseAmazonImageSearchProvider = (input: {
+  provider: ProductScannerAmazonImageSearchProvider;
+  imageCandidates: ProductScanRecord['imageCandidates'] | null | undefined;
+}): boolean => {
+  if (input.provider !== 'google_images_url') {
+    return true;
+  }
+
+  return (input.imageCandidates ?? []).some((candidate) => {
+    const candidateUrl = readOptionalString(candidate.url, PRODUCT_SCAN_URL_MAX_LENGTH);
+    if (candidateUrl === null) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(candidateUrl);
+      return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  });
+};
+
 export const mergeAmazonCandidateEvaluatorConfig = (
   baseConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig | null | undefined,
   overrideConfig?: Partial<ProductScannerAmazonCandidateEvaluatorResolvedConfig> | null
@@ -475,18 +561,42 @@ export const resolveAmazonImageSearchFallbackProvider = (input: {
   rawResult: unknown;
   scannerSettings: ReturnType<typeof createDefaultProductScannerSettings>;
   currentProvider: ReturnType<typeof createDefaultProductScannerSettings>['amazonImageSearchProvider'];
+  imageCandidates?: ProductScanRecord['imageCandidates'] | null;
 }) => {
-  const fallbackProvider = normalizeAmazonImageSearchProvider(
-    input.scannerSettings.amazonImageSearchFallbackProvider
-  );
-  if (fallbackProvider === null || fallbackProvider === input.currentProvider) {
-    return null;
-  }
   const history = resolveAmazonImageSearchProviderHistory(
     input.rawResult,
     input.currentProvider
   );
-  return history.includes(fallbackProvider) ? null : fallbackProvider;
+  const configuredFallback = normalizeAmazonImageSearchProvider(
+    input.scannerSettings.amazonImageSearchFallbackProvider
+  );
+  const providerCandidates = Array.from(
+    new Set(
+      [configuredFallback, ...AMAZON_IMAGE_SEARCH_PROVIDER_FALLBACK_ORDER].filter(
+        (value): value is ProductScannerAmazonImageSearchProvider => value !== null
+      )
+    )
+  );
+
+  for (const provider of providerCandidates) {
+    if (provider === input.currentProvider) {
+      continue;
+    }
+    if (history.includes(provider)) {
+      continue;
+    }
+    if (
+      !canUseAmazonImageSearchProvider({
+        provider,
+        imageCandidates: input.imageCandidates,
+      })
+    ) {
+      continue;
+    }
+    return provider;
+  }
+
+  return null;
 };
 
 export const formatEvaluationConfidence = (confidence: number | null | undefined): string | null =>
@@ -936,118 +1046,102 @@ export const buildAmazonEvaluationStepDetails = (
   evaluation: ProductScanAmazonEvaluation | null | undefined,
   evaluatorConfig: ProductScannerAmazonCandidateEvaluatorResolvedConfig,
   stage: 'probe' | 'extraction'
-): Array<{ label: string; value: string | null }> => [
-  {
-    label: 'Evaluation stage',
-    value: stage === 'probe' ? 'Probe' : 'Extraction',
-  },
-  { label: 'Model', value: evaluation?.modelId ?? null },
-  {
-    label: 'Model source',
-    value: formatAmazonEvaluatorModelSource(evaluatorConfig.mode),
-  },
-  {
-    label: 'Threshold',
-    value: formatEvaluationConfidence(evaluatorConfig.threshold),
-  },
-  {
-    label: 'Evaluation scope',
-    value: evaluatorConfig.onlyForAmbiguousCandidates === true
-      ? 'Ambiguous Amazon candidates only'
-      : 'Every Amazon candidate',
-  },
-  {
-    label: 'Similarity decision',
-    value: formatAmazonEvaluatorSimilarityMode(evaluatorConfig.candidateSimilarityMode),
-  },
-  {
-    label: 'Allowed content language',
-    value: formatAmazonEvaluatorAllowedContentLanguage(evaluatorConfig.allowedContentLanguage),
-  },
-  {
-    label: 'Language policy',
-    value: evaluatorConfig.rejectNonEnglishContent !== false
-      ? 'Reject non-English content'
-      : 'Allow non-English content',
-  },
-  {
-    label: 'Language detection',
-    value: formatAmazonEvaluatorLanguageDetectionMode(evaluatorConfig.languageDetectionMode),
-  },
-  {
-    label: 'Rejection kind',
-    value: resolveAmazonEvaluationRejectionKindLabel(evaluation),
-  },
-  {
-    label: 'Confidence',
-    value: formatEvaluationConfidence(evaluation?.confidence),
-  },
-  {
-    label: 'Same product',
-    value:
-      typeof evaluation?.sameProduct === 'boolean' ? String(evaluation.sameProduct) : null,
-  },
-  {
-    label: 'Image match',
-    value:
-      typeof evaluation?.imageMatch === 'boolean' ? String(evaluation.imageMatch) : null,
-  },
-  {
-    label: 'Description match',
-    value:
-      typeof evaluation?.descriptionMatch === 'boolean'
-        ? String(evaluation.descriptionMatch)
-        : null,
-  },
-  {
-    label: 'Page language',
-    value: evaluation?.pageLanguage ?? null,
-  },
-  {
-    label: 'Language accepted',
-    value:
-      typeof evaluation?.languageAccepted === 'boolean'
-        ? String(evaluation.languageAccepted)
-        : null,
-  },
-  {
-    label: 'Language confidence',
-    value: formatEvaluationConfidence(evaluation?.languageConfidence),
-  },
-  {
-    label: 'Language reason',
-    value: evaluation?.languageReason ?? null,
-  },
-  {
-    label: 'Recommended action',
-    value: evaluation?.recommendedAction ?? null,
-  },
-  {
-    label: 'Rejection category',
-    value: evaluation?.rejectionCategory ?? null,
-  },
-  {
-    label: 'Mismatch labels',
-    value: evaluation?.mismatchLabels?.join(', ') ?? null,
-  },
-  {
-    label: 'Scrape allowed',
-    value:
-      typeof evaluation?.scrapeAllowed === 'boolean' ? String(evaluation.scrapeAllowed) : null,
-  },
-  {
-    label: 'Candidate URL',
-    value: evaluation?.evidence?.candidateUrl ?? null,
-  },
-  {
-    label: 'Reason',
-    value: evaluation?.reasons[0] ?? null,
-  },
-  {
-    label: 'Mismatch',
-    value: evaluation?.mismatches[0] ?? null,
-  },
-];
+): Array<{ label: string; value: string | null }> => {
+  const sourceAsin = readOptionalString(evaluation?.evidence?.sourceAsin);
+  const candidateAsin = readOptionalString(evaluation?.evidence?.candidateAsin);
+  const asinRelation =
+    sourceAsin !== null && candidateAsin !== null
+      ? (sourceAsin === candidateAsin ? 'Match' : 'Conflict')
+      : null;
+
+  return [
+    {
+      label: 'Evaluation stage',
+      value: stage === 'probe' ? 'Probe' : 'Extraction',
+    },
+    { label: 'Model', value: evaluation?.modelId ?? null },
+    {
+      label: 'Threshold',
+      value: formatEvaluationConfidence(evaluatorConfig.threshold),
+    },
+    {
+      label: 'Rejection kind',
+      value: resolveAmazonEvaluationRejectionKindLabel(evaluation),
+    },
+    {
+      label: 'Confidence',
+      value: formatEvaluationConfidence(evaluation?.confidence),
+    },
+    {
+      label: 'Same product',
+      value:
+        typeof evaluation?.sameProduct === 'boolean' ? String(evaluation.sameProduct) : null,
+    },
+    {
+      label: 'Image match',
+      value:
+        typeof evaluation?.imageMatch === 'boolean' ? String(evaluation.imageMatch) : null,
+    },
+    {
+      label: 'Description match',
+      value:
+        typeof evaluation?.descriptionMatch === 'boolean'
+          ? String(evaluation.descriptionMatch)
+          : null,
+    },
+    {
+      label: 'Page language',
+      value: evaluation?.pageLanguage ?? null,
+    },
+    {
+      label: 'Language accepted',
+      value:
+        typeof evaluation?.languageAccepted === 'boolean'
+          ? String(evaluation.languageAccepted)
+          : null,
+    },
+    {
+      label: 'Language confidence',
+      value: formatEvaluationConfidence(evaluation?.languageConfidence),
+    },
+    {
+      label: 'Language reason',
+      value: evaluation?.languageReason ?? null,
+    },
+    {
+      label: 'Recommended action',
+      value: evaluation?.recommendedAction ?? null,
+    },
+    {
+      label: 'Rejection category',
+      value: evaluation?.rejectionCategory ?? null,
+    },
+    {
+      label: 'Source ASIN',
+      value: sourceAsin,
+    },
+    {
+      label: 'Candidate ASIN',
+      value: candidateAsin,
+    },
+    {
+      label: 'ASIN relation',
+      value: asinRelation,
+    },
+    {
+      label: 'Candidate URL',
+      value: evaluation?.evidence?.candidateUrl ?? null,
+    },
+    {
+      label: 'Reason',
+      value: evaluation?.reasons[0] ?? null,
+    },
+    {
+      label: 'Mismatch',
+      value: evaluation?.mismatches[0] ?? null,
+    },
+  ].slice(0, 20);
+};
 
 export const buildAmazonCandidateTriageStepDetails = (
   evaluation: ProductScanCandidateTriageEvaluationResult,

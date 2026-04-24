@@ -1,4 +1,4 @@
-import { removePathRunQueueEntries } from '@/features/ai/ai-paths/server';
+import { removePathRunQueueEntries } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const cleanupRunQueueEntries = (runId: string): void => {

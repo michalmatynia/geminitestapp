@@ -16,6 +16,7 @@ describe('ProductScanAmazonCandidateSelectionPanel', () => {
             amazonDetails: null,
             asin: null,
             rawResult: {
+              candidateSelectionRequired: true,
               candidatePreviews: [
                 {
                   id: 'candidate-1',

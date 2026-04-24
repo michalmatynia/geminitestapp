@@ -379,7 +379,6 @@ export interface MongoAiPathRunDoc {
   retryCount?: number | null;
   maxAttempts?: number | null;
   nextRetryAt?: Date | string | null;
-  deadLetteredAt?: Date | string | null;
   startedAt?: Date | string | null;
   finishedAt?: Date | string | null;
   createdAt?: Date;

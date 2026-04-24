@@ -5,11 +5,6 @@ import {
   requireAiPathsAccess,
   requireAiPathsRunAccess,
 } from '@/features/ai/ai-paths/server';
-import {
-  recoverStaleRunningRuns,
-  resolveAiPathsStaleRunningCleanupIntervalMs,
-  resolveAiPathsStaleRunningMaxAgeMs,
-} from '@/features/ai/ai-paths/server';
 import { recoverStaleBaseExportRuns } from '@/features/integrations/services/base-export-run-recovery';
 import {
   BASE_EXPORT_RUN_PATH_ID,
@@ -31,19 +26,10 @@ import {
   TERMINAL_STATUSES,
 } from './query-schemas';
 
-let lastStaleRunningCleanupAt = 0;
-let staleRunningCleanupPromise: Promise<void> | null = null;
-
 const parseEnvNumber = (value: string | undefined, fallback: number): number => {
   const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
-
-const staleRunningCleanupIntervalMs = parseEnvNumber(
-  process.env['AI_PATHS_STALE_RUNNING_CLEANUP_INTERVAL_MS'],
-  resolveAiPathsStaleRunningCleanupIntervalMs()
-);
-const staleRunningMaxAgeMs = resolveAiPathsStaleRunningMaxAgeMs();
 const runsListResponseCacheTtlMs = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_TTL_MS'],
   3_000
@@ -75,29 +61,6 @@ const pruneRunsListResponseCache = (now: number): void => {
     removed += 1;
     if (removed >= overflow) break;
   }
-};
-
-const scheduleStaleRunningCleanup = (
-  repo: AiPathRunRepository
-): void => {
-  const now = Date.now();
-  if (staleRunningCleanupPromise !== null) return;
-  if (now - lastStaleRunningCleanupAt < staleRunningCleanupIntervalMs) return;
-  lastStaleRunningCleanupAt = now;
-
-  const runCleanup = async (): Promise<void> => {
-    try {
-      await recoverStaleRunningRuns({
-        repo,
-        source: 'ai-paths.runs.list',
-        maxAgeMs: staleRunningMaxAgeMs,
-      });
-    } finally {
-      staleRunningCleanupPromise = null;
-    }
-  };
-
-  staleRunningCleanupPromise = runCleanup();
 };
 
 const buildRunRepositoryHeaders = (
@@ -164,7 +127,6 @@ export async function getPathRunsHandler(req: NextRequest, _ctx: ApiHandlerConte
   
   const repoSelection = await resolvePathRunRepository();
   const repo = repoSelection.repo;
-  scheduleStaleRunningCleanup(repo);
 
   if ((pathId !== undefined && pathId === BASE_EXPORT_RUN_PATH_ID) || (source !== undefined && source === BASE_EXPORT_RUN_SOURCE)) {
     await recoverStaleBaseExportRuns({ repo, ...(visibility === 'scoped' ? { userId: access.userId } : {}) });

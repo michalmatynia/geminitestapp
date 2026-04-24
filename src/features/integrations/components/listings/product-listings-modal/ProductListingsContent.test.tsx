@@ -426,6 +426,47 @@ describe('ProductListingsContent', () => {
     expect(setRecoveryContextMock).toHaveBeenCalled();
   });
 
+  it('prefers the latest checked Tradera status in the scoped panel and rendered listing rows', () => {
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [
+            {
+              id: 'listing-tradera-check-status',
+              status: 'active',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'conn-tradera-1',
+              integration: {
+                id: 'integration-tradera-1',
+                slug: 'tradera',
+                name: 'Tradera',
+              },
+              marketplaceData: {
+                tradera: {
+                  lastExecution: {
+                    action: 'check_status',
+                    metadata: {
+                      checkedStatus: 'unknown',
+                    },
+                  },
+                },
+              },
+            } as never,
+          ],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Tradera status: unknown')).toBeInTheDocument();
+    expect(screen.getByTestId('listing-listing-tradera-check-status')).toHaveTextContent(
+      'unknown'
+    );
+    expect(screen.queryByText('Tradera status: active')).toBeNull();
+  });
+
   it('prefers the freshest failed Tradera listing when recovery ids are unavailable', async () => {
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: onStartListingMock,

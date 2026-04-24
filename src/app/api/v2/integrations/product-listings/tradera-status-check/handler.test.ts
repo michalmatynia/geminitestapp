@@ -141,11 +141,17 @@ describe('integrations product-listings tradera-status-check handler', () => {
       alreadyQueued: 1,
       skipped: 2,
       failed: 0,
+      reasonCounts: {
+        queued: 1,
+        already_queued: 1,
+        no_tradera_browser_listing: 2,
+      },
       results: [
         expect.objectContaining({
           productId: 'product-1',
           listingId: 'listing-browser-1',
           status: 'queued',
+          reason: 'queued',
           queue: expect.objectContaining({
             name: 'tradera-listings',
             jobId: 'job-tradera-batch-1',
@@ -155,16 +161,19 @@ describe('integrations product-listings tradera-status-check handler', () => {
           productId: 'product-2',
           listingId: null,
           status: 'skipped',
+          reason: 'no_tradera_browser_listing',
         }),
         expect.objectContaining({
           productId: 'product-3',
           listingId: 'listing-browser-3',
           status: 'already_queued',
+          reason: 'already_queued',
         }),
         expect.objectContaining({
           productId: 'product-4',
           listingId: null,
           status: 'skipped',
+          reason: 'no_tradera_browser_listing',
         }),
       ],
     });
@@ -223,11 +232,70 @@ describe('integrations product-listings tradera-status-check handler', () => {
       alreadyQueued: 0,
       skipped: 0,
       failed: 0,
+      reasonCounts: {
+        queued: 1,
+      },
       results: [
         expect.objectContaining({
           productId: 'product-1',
           listingId: 'listing-browser-target',
           status: 'queued',
+          reason: 'queued',
+        }),
+      ],
+    });
+  });
+
+  it('reports when an explicitly targeted listing is no longer available', async () => {
+    getListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-browser-old',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-browser',
+        connectionId: 'connection-tradera-1',
+        status: 'active',
+        listedAt: '2026-04-01T10:00:00.000Z',
+        marketplaceData: null,
+      },
+    ]);
+
+    const response = await postHandler(
+      new Request('http://localhost/api', {
+        method: 'POST',
+        body: JSON.stringify({
+          targets: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-missing',
+            },
+          ],
+        }),
+        headers: {
+          'content-type': 'application/json',
+        },
+      }) as never,
+      {} as never
+    );
+
+    const payload = await response.json();
+
+    expect(initializeQueuesMock).not.toHaveBeenCalled();
+    expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      total: 1,
+      queued: 0,
+      alreadyQueued: 0,
+      skipped: 1,
+      failed: 0,
+      reasonCounts: {
+        selected_listing_unavailable: 1,
+      },
+      results: [
+        expect.objectContaining({
+          productId: 'product-1',
+          listingId: 'listing-browser-missing',
+          status: 'skipped',
+          reason: 'selected_listing_unavailable',
         }),
       ],
     });
@@ -311,11 +379,15 @@ describe('integrations product-listings tradera-status-check handler', () => {
       alreadyQueued: 0,
       skipped: 0,
       failed: 1,
+      reasonCounts: {
+        queue_failed: 1,
+      },
       results: [
         expect.objectContaining({
           productId: 'product-1',
           listingId: 'listing-browser-1',
           status: 'error',
+          reason: 'queue_failed',
           message: 'Queue unavailable',
         }),
       ],
@@ -364,11 +436,15 @@ describe('integrations product-listings tradera-status-check handler', () => {
       alreadyQueued: 0,
       skipped: 0,
       failed: 1,
+      reasonCounts: {
+        auth_required: 1,
+      },
       results: [
         expect.objectContaining({
           productId: 'product-1',
           listingId: 'listing-browser-1',
           status: 'error',
+          reason: 'auth_required',
           message:
             'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.',
         }),

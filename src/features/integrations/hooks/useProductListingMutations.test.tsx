@@ -498,7 +498,7 @@ describe('useProductListingMutations', () => {
     });
   });
 
-  it('posts and patches selectorProfile overrides for queued Tradera sync jobs', async () => {
+  it('posts and patches selectorProfile overrides for queued fields-only Tradera sync jobs', async () => {
     const listingsQueryKey = QUERY_KEYS.integrations.listings('product-1');
     let cachedListings = [
       {
@@ -546,6 +546,7 @@ describe('useProductListingMutations', () => {
       config.mutationFn({
         listingId: 'listing-1',
         selectorProfile: 'profile-market-a',
+        skipImages: true,
       })
     ).resolves.toMatchObject({
       queued: true,
@@ -556,20 +557,57 @@ describe('useProductListingMutations', () => {
       '/api/v2/integrations/products/product-1/listings/listing-1/sync',
       {
         selectorProfile: 'profile-market-a',
+        skipImages: true,
       }
     );
 
     await config.onMutate({
       listingId: 'listing-1',
       selectorProfile: 'profile-market-a',
+      skipImages: true,
     });
 
     expect(cachedListings[0]).toMatchObject({
+      status: 'queued',
       marketplaceData: {
         tradera: {
           pendingExecution: {
             action: 'sync',
             requestedSelectorProfile: 'profile-market-a',
+            skipImages: true,
+          },
+        },
+      },
+    });
+
+    await config.invalidate(
+      queryClientMock,
+      {
+        queued: true,
+        listingId: 'listing-1',
+        queue: {
+          name: 'tradera-listings',
+          jobId: 'job-tradera-sync-2',
+          enqueuedAt: '2026-04-02T21:15:00.000Z',
+        },
+      },
+      {
+        listingId: 'listing-1',
+        selectorProfile: 'profile-market-a',
+        skipImages: true,
+      }
+    );
+
+    expect(cachedListings[0]).toMatchObject({
+      status: 'queued',
+      marketplaceData: {
+        tradera: {
+          pendingExecution: {
+            action: 'sync',
+            requestedSelectorProfile: 'profile-market-a',
+            skipImages: true,
+            requestId: 'job-tradera-sync-2',
+            queuedAt: '2026-04-02T21:15:00.000Z',
           },
         },
       },

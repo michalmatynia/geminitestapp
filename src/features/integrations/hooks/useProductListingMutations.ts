@@ -70,6 +70,11 @@ const toBadgeEntry = (value: unknown): MarketplaceBadgeEntry =>
 
 type ListingQueueBrowserMode = ProductListingRelistVariables['browserMode'];
 
+const resolveQueuedTraderaListingStatus = (
+  action: 'relist' | 'sync' | 'move_to_unsold'
+): ProductListingWithDetails['status'] =>
+  action === 'sync' ? 'queued' : 'queued_relist';
+
 const patchQueuedPlaywrightRelist = (
   listing: ProductListingWithDetails,
   options: {
@@ -100,12 +105,13 @@ const patchQueuedPlaywrightRelist = (
   };
 };
 
-const patchQueuedTraderaRelist = (
+const patchQueuedTraderaAction = (
   listing: ProductListingWithDetails,
   options: {
     action?: 'relist' | 'sync' | 'move_to_unsold';
     browserMode?: ListingQueueBrowserMode;
     selectorProfile?: string;
+    skipImages?: boolean;
     requestId?: string | null;
     queuedAt?: string | null;
   }
@@ -114,10 +120,11 @@ const patchQueuedTraderaRelist = (
   const previousTraderaData = toRecord(previousMarketplaceData['tradera']);
   const hasSelectorProfile =
     typeof options.selectorProfile === 'string' && options.selectorProfile.trim().length > 0;
+  const action = options.action ?? 'relist';
 
   return {
     ...listing,
-    status: 'queued_relist',
+    status: resolveQueuedTraderaListingStatus(action),
     failureReason: null,
     marketplaceData: {
       ...previousMarketplaceData,
@@ -125,11 +132,12 @@ const patchQueuedTraderaRelist = (
       tradera: {
         ...previousTraderaData,
         pendingExecution: {
-          action: options.action ?? 'relist',
+          action,
           requestedBrowserMode: options.browserMode ?? 'connection_default',
           ...(hasSelectorProfile
             ? { requestedSelectorProfile: options.selectorProfile }
             : {}),
+          ...(options.skipImages === true ? { skipImages: true } : {}),
           requestId: options.requestId ?? null,
           queuedAt: options.queuedAt ?? null,
         },
@@ -618,7 +626,7 @@ export function useCreateListingMutation(productId: string): CreateMutation<
     invalidate: async (queryClient, data) => {
       const queueName = data.queue?.name ?? null;
       if (queueName === 'tradera-listings') {
-        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
       }
       if (queueName === 'playwright-programmable-listings') {
         setListingBadgeStatus(queryClient, productId, 'playwrightProgrammable', 'queued');
@@ -704,7 +712,7 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
               return patchQueuedPlaywrightRelist(listing, { browserMode: vars.browserMode });
             }
             if (TRADERA_INTEGRATION_SLUGS.has(integrationSlug)) {
-              return patchQueuedTraderaRelist(listing, {
+              return patchQueuedTraderaAction(listing, {
                 browserMode: vars.browserMode,
                 selectorProfile: vars.selectorProfile,
               });
@@ -751,7 +759,7 @@ export function useRelistTraderaMutation(productId: string): UpdateMutation<
           (current) =>
             current?.map((listing) =>
               listing.id === vars.listingId
-                ? patchQueuedTraderaRelist(listing, {
+                ? patchQueuedTraderaAction(listing, {
                     browserMode: vars.browserMode,
                     selectorProfile: vars.selectorProfile,
                     requestId,
@@ -815,7 +823,7 @@ export function useMoveTraderaListingToUnsoldMutation(productId: string): Update
           listingQueryKey,
           previousListings.map((listing) =>
             listing.id === vars.listingId
-              ? patchQueuedTraderaRelist(listing, {
+              ? patchQueuedTraderaAction(listing, {
                   action: 'move_to_unsold',
                   browserMode: vars.browserMode,
                   selectorProfile: vars.selectorProfile,
@@ -844,7 +852,7 @@ export function useMoveTraderaListingToUnsoldMutation(productId: string): Update
           (current) =>
             current?.map((listing) =>
               listing.id === vars.listingId
-                ? patchQueuedTraderaRelist(listing, {
+                ? patchQueuedTraderaAction(listing, {
                     action: 'move_to_unsold',
                     browserMode: vars.browserMode,
                     selectorProfile: vars.selectorProfile,
@@ -854,7 +862,7 @@ export function useMoveTraderaListingToUnsoldMutation(productId: string): Update
                 : listing
             ) ?? current
         );
-        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);
@@ -904,10 +912,11 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
           listingQueryKey,
           previousListings.map((listing) =>
             listing.id === vars.listingId
-              ? patchQueuedTraderaRelist(listing, {
+              ? patchQueuedTraderaAction(listing, {
                   action: 'sync',
                   browserMode: vars.browserMode,
                   selectorProfile: vars.selectorProfile,
+                  skipImages: vars.skipImages,
                 })
               : listing
           )
@@ -933,17 +942,18 @@ export function useSyncTraderaMutation(productId: string): UpdateMutation<
           (current) =>
             current?.map((listing) =>
               listing.id === vars.listingId
-                ? patchQueuedTraderaRelist(listing, {
+                ? patchQueuedTraderaAction(listing, {
                     action: 'sync',
                     browserMode: vars.browserMode,
                     selectorProfile: vars.selectorProfile,
+                    skipImages: vars.skipImages,
                     requestId,
                     queuedAt,
                   })
                 : listing
             ) ?? current
         );
-        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued_relist');
+        setListingBadgeStatus(queryClient, productId, 'tradera', 'queued');
       }
       await invalidateProductListingsAndBadges(queryClient, productId);
       await invalidateProducts(queryClient);

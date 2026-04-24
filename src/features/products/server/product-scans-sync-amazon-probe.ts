@@ -149,9 +149,10 @@ export async function synchronizeAmazonProbeReady({
     });
   }
   const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(scan.rawResult);
-  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
-    resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
+  const amazonRuntimeKey = resolveAmazonProductScanRuntimeKey(
+    toRecord(scan.rawResult)?.['runtimeKey']
   );
+  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(amazonRuntimeKey);
 
   let amazonEvaluation = existingAmazonEvaluation;
   try {
@@ -230,6 +231,7 @@ export async function synchronizeAmazonProbeReady({
                 rawResult: scan.rawResult,
                 scannerSettings,
                 currentProvider: amazonImageSearchProvider,
+                imageCandidates: scan.imageCandidates,
               })
             : null;
         if (fallbackProvider) {
@@ -241,6 +243,7 @@ export async function synchronizeAmazonProbeReady({
               scannerEngineRequestOptions,
               actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
               actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+              runtimeKey: amazonRuntimeKey,
             });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);
@@ -415,6 +418,7 @@ export async function synchronizeAmazonProbeReady({
               scannerEngineRequestOptions,
               actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
               actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+              runtimeKey: amazonRuntimeKey,
             });
             const manualVerificationTimeoutMs =
               resolveScanManualVerificationTimeoutMs(scannerSettings);
@@ -634,6 +638,7 @@ export async function synchronizeAmazonProbeReady({
       scannerEngineRequestOptions,
       actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
       actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+      runtimeKey: amazonRuntimeKey,
     });
     const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
     const amazonImageSearchProvider = resolveAmazonImageSearchProvider(

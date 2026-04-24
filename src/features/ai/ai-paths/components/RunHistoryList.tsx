@@ -8,7 +8,6 @@ import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { buildHistoryNodeOptions } from './run-history-utils';
-import { resolveRunHistoryEntryAction } from './run-history-entry-actions';
 import { RunHistoryEntries } from './RunHistoryEntries';
 import { RunHistoryPillButton } from './RunHistoryPillButton';
 
@@ -25,12 +24,7 @@ interface RunHistoryListProps {
   expandedRunHistory: Record<string, boolean>;
   runHistorySelection: Record<string, string>;
   onSetRunHistorySelection: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-  onResumeRun: (id: string, mode: 'resume' | 'replay') => void;
-  onHandoffRun: (id: string) => void;
-  handoffStateByRunId: Record<string, 'pending' | 'success'>;
   onCancelRun: (id: string) => void;
-  onRequeueDeadLetter: (id: string) => void;
-  onRetryRunNode: (id: string, nodeId: string) => void;
 }
 
 export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
@@ -47,12 +41,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
     expandedRunHistory,
     runHistorySelection,
     onSetRunHistorySelection,
-    onResumeRun,
-    onHandoffRun,
-    handoffStateByRunId,
     onCancelRun,
-    onRequeueDeadLetter,
-    onRetryRunNode,
   } = props;
   if (runs.length === 0) {
     return (
@@ -111,20 +100,6 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                 <div className='mt-1 text-[11px] text-gray-400'>
                   {run.createdAt ? new Date(run.createdAt).toLocaleString() : '-'}
                 </div>
-                {typeof run.retryCount === 'number' && typeof run.maxAttempts === 'number' && (
-                  <div className='text-[10px] text-gray-500'>
-                    Retries: {run.retryCount}/{run.maxAttempts}
-                  </div>
-                )}
-                {run.nextRetryAt && (
-                  <div className='mt-1'>
-                    <StatusBadge
-                      status={`Retry at ${  new Date(run.nextRetryAt).toLocaleString()}`}
-                      variant='warning'
-                      size='sm'
-                    />
-                  </div>
-                )}
               </div>
               <div className='flex items-center gap-2'>
                 {compareMode && (
@@ -135,9 +110,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                       baseClassName='h-6 px-2'
                       activeClassName='border-emerald-500/60 bg-emerald-500/10 text-emerald-100'
                       inactiveClassName='border-border text-gray-300 hover:bg-muted/60'
-                      onClick={(): void =>
-                        onSetPrimaryRunId(isPrimary ? null : run.id)
-                      }
+                      onClick={(): void => onSetPrimaryRunId(isPrimary ? null : run.id)}
                     >
                       {isPrimary ? 'Primary (A)' : 'Set A'}
                     </RunHistoryPillButton>
@@ -147,9 +120,7 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                       baseClassName='h-6 px-2'
                       activeClassName='border-amber-500/60 bg-amber-500/10 text-amber-100'
                       inactiveClassName='border-border text-gray-300 hover:bg-muted/60'
-                      onClick={(): void =>
-                        onSetSecondaryRunId(isSecondary ? null : run.id)
-                      }
+                      onClick={(): void => onSetSecondaryRunId(isSecondary ? null : run.id)}
                       disabled={isPrimary}
                     >
                       {isSecondary ? 'Secondary (B)' : 'Set B'}
@@ -179,56 +150,12 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                 >
                   {historyOpen ? 'Hide history' : 'History'}
                 </RunHistoryPillButton>
-                {(run.status === 'failed' ||
-                  run.status === 'paused' ||
-                  run.status === 'handoff_ready') && (
-                  <RunHistoryPillButton
-                    onClick={(): void => onResumeRun(run.id, 'resume')}
-                    inactiveClassName='text-amber-200 hover:bg-amber-500/10'
-                  >
-                    Resume
-                  </RunHistoryPillButton>
-                )}
-                <RunHistoryPillButton
-                  onClick={(): void => onResumeRun(run.id, 'replay')}
-                  inactiveClassName='text-sky-200 hover:bg-sky-500/10'
-                >
-                  Replay
-                </RunHistoryPillButton>
-                {run.status === 'blocked_on_lease' && (
-                  <>
-                    <RunHistoryPillButton
-                      onClick={(): void => onHandoffRun(run.id)}
-                      disabled={handoffStateByRunId[run.id] === 'pending'}
-                      inactiveClassName='text-blue-200 hover:bg-blue-500/10'
-                    >
-                      {handoffStateByRunId[run.id] === 'pending'
-                        ? 'Marking...'
-                        : 'Mark handoff-ready'}
-                    </RunHistoryPillButton>
-                    {handoffStateByRunId[run.id] === 'success' ? (
-                      <span className='text-[10px] text-blue-200'>
-                        Handoff requested. Refreshing status...
-                      </span>
-                    ) : null}
-                  </>
-                )}
-                {(run.status === 'queued' ||
-                  run.status === 'running' ||
-                  run.status === 'blocked_on_lease') && (
+                {(run.status === 'queued' || run.status === 'running') && (
                   <RunHistoryPillButton
                     onClick={(): void => onCancelRun(run.id)}
                     inactiveClassName='text-rose-200 hover:bg-rose-500/10'
                   >
                     Cancel
-                  </RunHistoryPillButton>
-                )}
-                {run.status === 'dead_lettered' && (
-                  <RunHistoryPillButton
-                    onClick={(): void => onRequeueDeadLetter(run.id)}
-                    inactiveClassName='text-amber-200 hover:bg-amber-500/10'
-                  >
-                    Requeue
                   </RunHistoryPillButton>
                 )}
               </div>
@@ -258,38 +185,27 @@ export function RunHistoryList(props: RunHistoryListProps): React.JSX.Element {
                           }))
                         }
                         options={runHistorySelectOptions}
-                        triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                         placeholder='Select node'
+                        triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
                         ariaLabel='Select node'
                         title='Select node'
                       />
                     ) : (
-                      <div className='text-[11px] text-gray-400'>
-                        {runHistoryOptions[0]?.label ?? 'No nodes'}
-                      </div>
+                      <span className='text-[11px] text-gray-500'>
+                        {runHistoryOptions[0]?.label ?? 'No history nodes'}
+                      </span>
                     )
-                  ) : null}
+                  ) : (
+                    <span className='text-[11px] text-gray-500'>No history nodes</span>
+                  )}
                 </div>
-                {runHistory && selectedHistoryNodeId ? (
-                  <div className='mt-3'>
-                    <RunHistoryEntries
-                      entries={historyEntries}
-                      emptyMessage='No history for this node.'
-                      onReplayFromEntry={(entry): void => {
-                        const action = resolveRunHistoryEntryAction(entry);
-                        if (action.kind === 'retry_node') {
-                          onRetryRunNode(run.id, entry.nodeId);
-                          return;
-                        }
-                        onResumeRun(run.id, action.resumeMode ?? 'replay');
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className='mt-2 text-[11px] text-gray-500'>
-                    No history recorded for this run.
-                  </div>
-                )}
+                <div className='mt-2'>
+                  <RunHistoryEntries
+                    entries={historyEntries}
+                    emptyMessage='No history recorded for this node.'
+                    showNodeLabel
+                  />
+                </div>
               </Card>
             )}
           </Card>

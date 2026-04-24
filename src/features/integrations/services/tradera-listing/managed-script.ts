@@ -2,7 +2,7 @@ import { isTraderaIntegrationSlug } from '@/features/integrations/constants/slug
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from './default-script';
 
-export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v146';
+export const CURRENT_MANAGED_TRADERA_QUICKLIST_MARKER = 'tradera-quicklist-default:v147';
 
 const MANAGED_TRADERA_QUICKLIST_MARKER_PATTERN = /tradera-quicklist-default:v\d+/;
 const COMPATIBLE_LEGACY_MANAGED_TRADERA_QUICKLIST_MARKERS = new Set([

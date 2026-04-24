@@ -65,6 +65,13 @@ type SynchronizeAmazonStatusInput = {
   parsedResult: AmazonScanRuntimeResult;
 };
 
+const shouldAttemptAmazonCaptchaStealthRetry = (
+  settingsOverrides: Record<string, unknown> | null | undefined,
+  existingRawResult: Record<string, unknown>
+): boolean =>
+  existingRawResult['captchaStealthRetryStarted'] !== true &&
+  settingsOverrides?.['proxyEnabled'] === true;
+
 export async function synchronizeAmazonCaptchaRequired({
   scan,
   engineRunId,
@@ -75,7 +82,10 @@ export async function synchronizeAmazonCaptchaRequired({
   const existingRawResult = toRecord(scan.rawResult) ?? {};
   const nextSteps = resolvePersistedProductScanSteps(scan, parsedResult.steps);
 
-  if (existingRawResult['captchaRetryStarted'] === true) {
+  if (
+    existingRawResult['captchaRetryStarted'] === true ||
+    existingRawResult['captchaManualRetryStarted'] === true
+  ) {
     return await persistFailedSynchronization(
       scan,
       'Google Lens captcha verification was still required after reopening the browser.'
@@ -104,9 +114,162 @@ export async function synchronizeAmazonCaptchaRequired({
   }
 
   const manualVerificationTimeoutMs = resolveScanManualVerificationTimeoutMs(scannerSettings);
-  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(
-    resolveAmazonProductScanRuntimeKey(toRecord(scan.rawResult)?.['runtimeKey'])
+  const amazonRuntimeKey = resolveAmazonProductScanRuntimeKey(
+    toRecord(scan.rawResult)?.['runtimeKey']
   );
+  const amazonRuntimeAction = await resolveAmazonRuntimeActionDefinition(amazonRuntimeKey);
+  const scannerEngineRequestOptions =
+    buildProductScannerEngineRequestOptions(scannerSettings);
+  const baseScannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
+    scannerSettings,
+    scannerEngineRequestOptions,
+    actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
+    actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+    runtimeKey: amazonRuntimeKey,
+    forceHeadless: true,
+  });
+  const amazonImageSearchProvider = resolveAmazonImageSearchProvider(
+    scan.rawResult,
+    scannerSettings
+  );
+  const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
+    scan.rawResult,
+    scannerSettings
+  );
+  const amazonSelectorProfile =
+    readOptionalString(toRecord(scan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
+  const diagnosticCapture = resolveAmazonScanDiagnosticCapture(scan.rawResult);
+
+  if (
+    shouldAttemptAmazonCaptchaStealthRetry(
+      toRecord(baseScannerRuntimeOptions.settingsOverrides),
+      existingRawResult
+    )
+  ) {
+    const claimedScan = await persistSynchronizedScan(scan, {
+      engineRunId: null,
+      status: 'running',
+      steps: nextSteps,
+      rawResult: {
+        ...existingRawResult,
+        ...(toRecord(resultValue) ?? {}),
+        previousRunId: engineRunId,
+        captchaStealthRetryStarted: true,
+        captchaStealthRetryMode: 'rotate',
+        manualVerificationPending: false,
+        manualVerificationMessage: null,
+        manualVerificationTimeoutMs,
+      },
+      error: null,
+      asinUpdateStatus: 'pending',
+      asinUpdateMessage: null,
+      completedAt: null,
+    });
+    const requestedStepSequenceInput = resolveProductScanRequestSequenceInput(claimedScan.rawResult);
+
+    try {
+      const amazonCandidateEvaluatorEnabled = (
+        await resolveAmazonProbeEvaluatorConfig(scannerSettings)
+      ).enabled;
+      const amazonCandidateTriageEnabled = (
+        await resolveAmazonTriageEvaluatorConfig(scannerSettings)
+      ).enabled;
+      const stealthSettingsOverrides = {
+        ...(toRecord(baseScannerRuntimeOptions.settingsOverrides) ?? {}),
+        headless: true,
+        proxySessionAffinity: true,
+        proxySessionMode: 'rotate',
+      };
+      const runRetry = await startPlaywrightEngineTask({
+        request: {
+          runtimeKey: amazonScanRuntime.runtimeKey,
+          actionId: amazonRuntimeAction?.id ?? null,
+          actionName:
+            amazonRuntimeAction?.name ??
+            resolveAmazonRuntimeActionName(amazonScanRuntime.runtimeKey),
+          selectorProfile: amazonSelectorProfile,
+          input: amazonScanRuntime.buildRequestInput({
+            productId: product.id,
+            productName: claimedScan.productName,
+            existingAsin: product.asin,
+            imageCandidates: claimedScan.imageCandidates,
+            imageSearchProvider: amazonImageSearchProvider,
+            imageSearchPageUrl: amazonImageSearchPageUrl,
+            selectorProfile: amazonSelectorProfile,
+            allowManualVerification: false,
+            manualVerificationTimeoutMs,
+            triageOnlyOnAmazonCandidates: amazonCandidateTriageEnabled,
+            probeOnlyOnAmazonMatch: amazonCandidateEvaluatorEnabled,
+            ...requestedStepSequenceInput,
+          }),
+          timeoutMs: resolveAmazonScanRuntimeTimeoutMs({
+            allowManualVerification: false,
+            manualVerificationTimeoutMs,
+          }),
+          browserEngine: 'chromium',
+          ...baseScannerRuntimeOptions,
+          settingsOverrides: stealthSettingsOverrides,
+          capture: diagnosticCapture,
+          preventNewPages: true,
+        },
+        ownerUserId: claimedScan.updatedBy?.trim() || null,
+        instance: createCustomPlaywrightInstance({
+          family: 'scrape',
+          label: 'Amazon captcha stealth retry',
+          tags: ['product', 'amazon', 'scan', 'google-lens-candidate-search', 'captcha-stealth-retry'],
+        }),
+      });
+
+      const retryRunStatus = runRetry.status === 'running' ? 'running' : 'queued';
+      return await persistSynchronizedScan(claimedScan, {
+        engineRunId: runRetry.runId,
+        status: retryRunStatus,
+        steps: claimedScan.steps,
+        rawResult: {
+          ...toRecord(claimedScan.rawResult),
+          ...createProductScanStartedRawResult({
+            runId: runRetry.runId,
+            status: runRetry.status,
+            runtimeKey: amazonScanRuntime.runtimeKey,
+            actionId: amazonRuntimeAction?.id ?? null,
+            selectorProfile: amazonSelectorProfile,
+            imageSearchProvider: amazonImageSearchProvider,
+            imageSearchPageUrl: amazonImageSearchPageUrl,
+            imageSearchProviderHistory: resolveAmazonImageSearchProviderHistory(
+              claimedScan.rawResult,
+              amazonImageSearchProvider
+            ),
+            allowManualVerification: false,
+            manualVerificationTimeoutMs,
+            previousRunId: engineRunId,
+            previousResult: resultValue,
+            manualVerificationPending: false,
+            manualVerificationMessage: null,
+            recordDiagnostics: diagnosticCapture.trace === true,
+            ...requestedStepSequenceInput,
+          }),
+          captchaStealthRetryStarted: true,
+          captchaStealthRetryMode: 'rotate',
+          captchaStealthRetryRunId: runRetry.runId,
+          manualVerificationPending: false,
+          manualVerificationMessage: null,
+        },
+        error: null,
+        asinUpdateStatus: 'pending',
+        asinUpdateMessage: null,
+        completedAt: null,
+      });
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'product-scans.service',
+        action: 'synchronizeProductScan.startCaptchaStealthRetry',
+        scanId: claimedScan.id,
+        productId: claimedScan.productId,
+        engineRunId,
+      });
+    }
+  }
+
   if (!shouldAutoShowScannerCaptchaBrowser(scannerSettings)) {
     return await persistFailedSynchronization(
       scan,
@@ -141,26 +304,14 @@ export async function synchronizeAmazonCaptchaRequired({
     const amazonCandidateTriageEnabled = (
       await resolveAmazonTriageEvaluatorConfig(scannerSettings)
     ).enabled;
-    const scannerEngineRequestOptions =
-      buildProductScannerEngineRequestOptions(scannerSettings);
     const scannerRuntimeOptions = buildAmazonScannerRequestRuntimeOptions({
       scannerSettings,
       scannerEngineRequestOptions,
       actionExecutionSettings: amazonRuntimeAction?.executionSettings ?? null,
       actionPersonaId: amazonRuntimeAction?.personaId ?? null,
+      runtimeKey: amazonRuntimeKey,
       forceHeadless: false,
     });
-    const amazonImageSearchProvider = resolveAmazonImageSearchProvider(
-      claimedScan.rawResult,
-      scannerSettings
-    );
-    const amazonImageSearchPageUrl = resolveAmazonImageSearchPageUrl(
-      claimedScan.rawResult,
-      scannerSettings
-    );
-    const amazonSelectorProfile =
-      readOptionalString(toRecord(claimedScan.rawResult)?.['selectorProfile'], 120) ?? 'amazon';
-    const diagnosticCapture = resolveAmazonScanDiagnosticCapture(claimedScan.rawResult);
     const runRetry = await startPlaywrightEngineTask({
       request: {
         runtimeKey: amazonScanRuntime.runtimeKey,
@@ -233,6 +384,7 @@ export async function synchronizeAmazonCaptchaRequired({
           ...requestedStepSequenceInput,
         }),
         captchaRetryStarted: true,
+        captchaManualRetryStarted: true,
         ...(retryManualVerificationPending
           ? {
               manualVerificationPending: true,

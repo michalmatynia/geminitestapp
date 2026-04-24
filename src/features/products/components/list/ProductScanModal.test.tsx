@@ -1951,6 +1951,11 @@ describe('ProductScanModal', () => {
     );
 
     expect(await screen.findByText('Candidates for extraction')).toBeInTheDocument();
+    expect(screen.getByText('1 selected · 1 awaiting selection')).toBeInTheDocument();
+    expect(screen.getByText('Awaiting Selection')).toBeInTheDocument();
+    expect(
+      screen.getByText('Amazon candidates are ready for manual selection.')
+    ).toBeInTheDocument();
     expect(screen.getByText('Amazon candidate title')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Extract this candidate' }));
@@ -2482,6 +2487,77 @@ describe('ProductScanModal', () => {
       'Google Lens requested captcha verification. Solve it in the opened browser window and the scan will continue automatically.'
     );
     expect(screen.getByText('Captcha')).toBeInTheDocument();
+    expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
+  });
+
+  it('shows the automatic Google retry guidance before manual captcha fallback', async () => {
+    mocks.apiPost.mockResolvedValue({
+      queued: 1,
+      running: 0,
+      alreadyRunning: 0,
+      failed: 0,
+      results: [
+        {
+          productId: 'product-1',
+          scanId: 'scan-1',
+          runId: 'run-1',
+          status: 'queued',
+          message: 'Amazon candidate search queued.',
+        },
+      ],
+    });
+
+    mocks.apiGet.mockResolvedValue({
+      scans: [
+        {
+          id: 'scan-1',
+          productId: 'product-1',
+          provider: 'amazon',
+          scanType: 'google_reverse_image',
+          status: 'running',
+          productName: 'Product 1',
+          engineRunId: 'run-1',
+          imageCandidates: [],
+          matchedImageId: null,
+          asin: null,
+          title: null,
+          price: null,
+          url: null,
+          description: null,
+          rawResult: {
+            status: 'captcha_required',
+            captchaStealthRetryStarted: true,
+            manualVerificationPending: false,
+          },
+          error: null,
+          asinUpdateStatus: 'pending',
+          asinUpdateMessage: null,
+          createdBy: null,
+          updatedBy: null,
+          completedAt: null,
+          createdAt: '2026-04-11T03:59:00.000Z',
+          updatedAt: '2026-04-11T04:00:00.000Z',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ProductScanModal
+          isOpen
+          onClose={vi.fn()}
+          productIds={['product-1']}
+          products={[{ id: 'product-1', name_en: 'Product 1', images: [] } as never]}
+        />
+      </QueryClientProvider>
+    );
+
+    await screen.findByText(
+      'Retrying Google Lens automatically with a fresh proxy session before manual fallback.'
+    );
+    expect(screen.getByText('Retrying Google')).toBeInTheDocument();
     expect(screen.queryByText('Amazon candidate search queued.')).not.toBeInTheDocument();
   });
 

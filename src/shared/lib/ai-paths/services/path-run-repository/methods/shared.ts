@@ -79,7 +79,6 @@ export type RunDocument = {
   retryCount?: number;
   maxAttempts?: number;
   nextRetryAt?: Date | string | null;
-  deadLetteredAt?: Date | string | null;
   createdAt: Date | string;
   updatedAt?: Date | string;
   startedAt?: Date | string | null;
@@ -199,7 +198,6 @@ export const toRunRecord = (doc: RunDocument): AiPathRunRecord => ({
   retryCount: doc.retryCount ?? 0,
   maxAttempts: doc.maxAttempts ?? 3,
   nextRetryAt: toIsoString(doc.nextRetryAt),
-  deadLetteredAt: toIsoString(doc.deadLetteredAt),
   createdAt: toRequiredIsoString(doc.createdAt),
   updatedAt: toIsoString(doc.updatedAt),
   startedAt: toIsoString(doc.startedAt),

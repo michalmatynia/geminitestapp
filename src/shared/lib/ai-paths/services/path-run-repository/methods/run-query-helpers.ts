@@ -32,7 +32,6 @@ export const RUN_LIST_PROJECTION = {
   retryCount: 1,
   maxAttempts: 1,
   nextRetryAt: 1,
-  deadLetteredAt: 1,
   createdAt: 1,
   updatedAt: 1,
   startedAt: 1,

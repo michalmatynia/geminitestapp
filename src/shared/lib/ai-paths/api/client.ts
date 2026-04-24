@@ -452,56 +452,8 @@ export async function clearAiPathRuns(options?: {
   return apiDelete<{ deleted: number; scope: 'all' | 'terminal' }>(url);
 }
 
-export async function resumeAiPathRun(
-  runId: string,
-  mode?: 'resume' | 'replay'
-): Promise<HttpResult<{ run: unknown }>> {
-  return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/resume`, {
-    mode,
-  });
-}
-
-export async function retryAiPathRunNode(
-  runId: string,
-  nodeId: string
-): Promise<HttpResult<{ run: unknown }>> {
-  return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/retry-node`, {
-    nodeId,
-  });
-}
-
 export async function cancelAiPathRun(runId: string): Promise<HttpResult<{ run: unknown }>> {
   return apiPost<{ run: unknown }>(`/api/ai-paths/runs/${encodeURIComponent(runId)}/cancel`, {});
-}
-
-export async function handoffAiPathRun(
-  runId: string,
-  payload?: { reason?: string; checkpointLineageId?: string }
-): Promise<HttpResult<{ run: unknown; handoffReady?: boolean; runId?: string }>> {
-  return apiPost<{ run: unknown; handoffReady?: boolean; runId?: string }>(
-    `/api/ai-paths/runs/${encodeURIComponent(runId)}/handoff`,
-    payload ?? {}
-  );
-}
-
-export async function requeueAiPathDeadLetterRuns(payload: {
-  runIds?: string[];
-  pathId?: string | null;
-  query?: string | null;
-  mode?: 'resume' | 'replay';
-  limit?: number | null;
-}): Promise<
-  HttpResult<{
-    requeued: number;
-    runIds: string[];
-    errors?: Array<{ runId: string; error: string }>;
-  }>
-> {
-  return apiPost<{
-    requeued: number;
-    runIds: string[];
-    errors?: Array<{ runId: string; error: string }>;
-  }>('/api/ai-paths/runs/dead-letter/requeue', payload);
 }
 
 // ============================================================================
@@ -517,11 +469,7 @@ export const runsApi = {
   remove: removeAiPathRun,
   queueStatus: getAiPathQueueStatus,
   clear: clearAiPathRuns,
-  resume: resumeAiPathRun,
-  retryNode: retryAiPathRunNode,
   cancel: cancelAiPathRun,
-  handoff: handoffAiPathRun,
-  requeueDeadLetter: requeueAiPathDeadLetterRuns,
 };
 
 export const dbApi = {

@@ -12,11 +12,9 @@ const STATUS_FILTERS = [
   { value: 'all', label: 'All' },
   { value: 'queued', label: 'Queued' },
   { value: 'running', label: 'Running' },
-  { value: 'paused', label: 'Paused' },
   { value: 'completed', label: 'Completed' },
   { value: 'failed', label: 'Failed' },
   { value: 'canceled', label: 'Canceled' },
-  { value: 'dead_lettered', label: 'Dead-lettered' },
 ];
 
 export function JobQueueFilterPanel(): React.JSX.Element {

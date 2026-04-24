@@ -156,6 +156,7 @@ describe('playwright listing job helpers', () => {
         },
       })
     );
+    expect(repository.updateListing.mock.calls[0]?.[1]).not.toHaveProperty('lastStatusCheckAt');
     expect(repository.appendExportHistory).toHaveBeenCalledWith(
       'listing-4',
       expect.objectContaining({
@@ -217,6 +218,7 @@ describe('playwright listing job helpers', () => {
         status: 'failed',
       })
     );
+    expect(repository.updateListing.mock.calls[0]?.[1]).not.toHaveProperty('lastStatusCheckAt');
     expect(repository.appendExportHistory).toHaveBeenCalledWith(
       'listing-5',
       expect.objectContaining({

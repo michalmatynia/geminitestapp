@@ -75,7 +75,13 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { safeSetInterval, safeClearInterval, type SafeTimerId } from '@/shared/lib/timers';
-import { resolveProductScanRunFeedbackPresentation } from '@/features/products/lib/product-scan-run-feedback';
+import {
+  isProductScanCandidateSelectionRequired,
+  PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE,
+  isProductScanGoogleStealthRetrying,
+  PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE,
+  resolveProductScanRunFeedbackPresentation,
+} from '@/features/products/lib/product-scan-run-feedback';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { CopyButton } from '@/shared/ui/copy-button';
@@ -205,6 +211,8 @@ const resolveRowStatusLabel = (row: ScanModalRow): string => {
   return resolveProductScanRunFeedbackPresentation(row.status, {
     manualVerificationPending: isManualVerificationPending(row.scan),
     manualVerificationMessage: typeof manualVerificationMessage === 'string' && manualVerificationMessage !== '' ? manualVerificationMessage : null,
+    googleStealthRetrying: isProductScanGoogleStealthRetrying(row.scan),
+    candidateSelectionRequired: isProductScanCandidateSelectionRequired(row.scan),
     amazonEvaluationStatus: amazonEvaluationStatus ?? null,
     amazonEvaluationLanguageAccepted: typeof amazonEvaluationLanguageAccepted === 'boolean' ? amazonEvaluationLanguageAccepted : null,
     supplierEvaluationStatus: supplierEvaluationStatus ?? null,
@@ -224,6 +232,8 @@ const resolveRowStatusClassName = (row: ScanModalRow): string => {
   return resolveProductScanRunFeedbackPresentation(row.status, {
     manualVerificationPending: isManualVerificationPending(row.scan),
     manualVerificationMessage: typeof manualVerificationMessage === 'string' && manualVerificationMessage !== '' ? manualVerificationMessage : null,
+    googleStealthRetrying: isProductScanGoogleStealthRetrying(row.scan),
+    candidateSelectionRequired: isProductScanCandidateSelectionRequired(row.scan),
     amazonEvaluationStatus: amazonEvaluationStatus ?? null,
     amazonEvaluationLanguageAccepted: typeof amazonEvaluationLanguageAccepted === 'boolean' ? amazonEvaluationLanguageAccepted : null,
     supplierEvaluationStatus: supplierEvaluationStatus ?? null,
@@ -255,11 +265,16 @@ const formatSummary = (rows: ScanModalRow[]): string => {
     return 'No products selected';
   }
 
+  const awaitingSelectionCount = rows.filter((row) =>
+    isProductScanCandidateSelectionRequired(row.scan)
+  ).length;
   const counts = {
     enqueuing: rows.filter((row) => row.status === 'enqueuing').length,
     queued: rows.filter((row) => row.status === 'queued').length,
     running: rows.filter((row) => row.status === 'running').length,
-    completed: rows.filter((row) => row.status === 'completed').length,
+    completed: rows.filter(
+      (row) => row.status === 'completed' && !isProductScanCandidateSelectionRequired(row.scan)
+    ).length,
     noMatch: rows.filter((row) => row.status === 'no_match').length,
     conflict: rows.filter((row) => row.status === 'conflict').length,
     failed: rows.filter((row) => row.status === 'failed').length,
@@ -270,6 +285,7 @@ const formatSummary = (rows: ScanModalRow[]): string => {
     counts.enqueuing > 0 ? `${counts.enqueuing} enqueuing` : null,
     counts.queued > 0 ? `${counts.queued} queued` : null,
     counts.running > 0 ? `${counts.running} running` : null,
+    awaitingSelectionCount > 0 ? `${awaitingSelectionCount} awaiting selection` : null,
     counts.completed > 0 ? `${counts.completed} completed` : null,
     counts.noMatch > 0 ? `${counts.noMatch} no match` : null,
     counts.conflict > 0 ? `${counts.conflict} conflicts` : null,
@@ -284,10 +300,15 @@ const buildToastSummaryFromRows = (
   batchLabel: string,
   noQueuedMessage: string
 ): { message: string; variant: 'success' | 'warning' } => {
+  const awaitingSelectionCount = rows.filter((row) =>
+    isProductScanCandidateSelectionRequired(row.scan)
+  ).length;
   const counts = {
     queued: rows.filter((row) => row.status === 'queued').length,
     running: rows.filter((row) => row.status === 'running').length,
-    completed: rows.filter((row) => row.status === 'completed').length,
+    completed: rows.filter(
+      (row) => row.status === 'completed' && !isProductScanCandidateSelectionRequired(row.scan)
+    ).length,
     noMatch: rows.filter((row) => row.status === 'no_match').length,
     conflict: rows.filter((row) => row.status === 'conflict').length,
     failed: rows.filter((row) => row.status === 'failed').length,
@@ -296,6 +317,7 @@ const buildToastSummaryFromRows = (
   const summary = [
     counts.queued > 0 ? `${counts.queued} queued` : null,
     counts.running > 0 ? `${counts.running} running` : null,
+    awaitingSelectionCount > 0 ? `${awaitingSelectionCount} awaiting selection` : null,
     counts.completed > 0 ? `${counts.completed} completed` : null,
     counts.noMatch > 0 ? `${counts.noMatch} no match` : null,
     counts.conflict > 0 ? `${counts.conflict} conflicts` : null,
@@ -403,6 +425,13 @@ const resolveRowDisplayMessages = (
     return row.status === 'failed'
       ? { infoMessage: null, errorMessage: row.message }
       : { infoMessage: row.message, errorMessage: null };
+  }
+
+  if (isProductScanCandidateSelectionRequired(row.scan)) {
+    return {
+      infoMessage: PRODUCT_SCAN_CANDIDATE_SELECTION_MESSAGE,
+      errorMessage: null,
+    };
   }
 
   if (row.scan.status === 'completed') {
@@ -1692,8 +1721,16 @@ export function ProductScanModal(
           scan?.status === 'completed'
             ? (scan.asinUpdateMessage ?? null)
             : scan !== null && isProductScanActiveStatus(scan.status)
-                ? (scan.asinUpdateMessage ??
-                resolveActiveStatusMessage(modalConfig.resultStatusLabel, scan.status, row.message))
+                ? (
+                    scan.asinUpdateMessage ??
+                    (isProductScanGoogleStealthRetrying(scan)
+                      ? PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE
+                      : resolveActiveStatusMessage(
+                          modalConfig.resultStatusLabel,
+                          scan.status,
+                          row.message
+                        ))
+                  )
               : scan !== null && isProductScanTerminalStatus(scan.status)
               ? null
               : row.message,

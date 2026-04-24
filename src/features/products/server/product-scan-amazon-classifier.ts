@@ -40,9 +40,18 @@ const CAPTCHA_MESSAGE_PATTERNS = [
   'manual_verification',
   'solve the challenge',
   'cloudflare challenge',
+  'unusual traffic',
+  'verify you are human',
 ];
 
 const CAPTCHA_STEP_KEY_PATTERNS = ['captcha', 'verification_review'];
+
+const CAPTCHA_URL_PATTERNS = [
+  'sorry/index',
+  '/sorry/',
+  'recaptcha',
+  'challenge',
+];
 
 const LENS_EMPTY_MESSAGE_PATTERNS = [
   'no amazon candidates found',
@@ -56,19 +65,36 @@ const isCaptchaSignal = (scan: ProductScanRecord): boolean => {
   const raw = toRecord(scan.rawResult);
   if (raw?.['manualVerificationPending'] === true) return true;
   if (raw?.['captchaRetryStarted'] === true) return true;
-  const hasCaptchaStep = (scan.steps ?? []).some((step) => {
+  if (raw?.['captchaStealthRetryStarted'] === true) return true;
+  const hasConcreteCaptchaStep = (scan.steps ?? []).some((step) => {
     const key = step.key?.trim().toLowerCase() ?? '';
-    return CAPTCHA_STEP_KEY_PATTERNS.some((needle) => key.includes(needle));
+    if (!CAPTCHA_STEP_KEY_PATTERNS.some((needle) => key.includes(needle))) {
+      return false;
+    }
+    return (
+      step.status !== 'pending' ||
+      (step.resultCode?.trim().length ?? 0) > 0 ||
+      (step.message?.trim().length ?? 0) > 0 ||
+      (step.details?.length ?? 0) > 0
+    );
   });
-  if (hasCaptchaStep) return true;
+  if (hasConcreteCaptchaStep) return true;
   const joined = readLowerMessage(
     scan.error,
     scan.asinUpdateMessage,
+    typeof raw?.['message'] === 'string' ? (raw['message'] as string) : null,
     typeof raw?.['manualVerificationMessage'] === 'string'
       ? (raw['manualVerificationMessage'] as string)
       : null
   );
-  return CAPTCHA_MESSAGE_PATTERNS.some((needle) => joined.includes(needle));
+  if (CAPTCHA_MESSAGE_PATTERNS.some((needle) => joined.includes(needle))) {
+    return true;
+  }
+  const joinedUrl = readLowerMessage(
+    typeof raw?.['currentUrl'] === 'string' ? (raw['currentUrl'] as string) : null,
+    typeof raw?.['url'] === 'string' ? (raw['url'] as string) : null
+  );
+  return CAPTCHA_URL_PATTERNS.some((needle) => joinedUrl.includes(needle));
 };
 
 const isLensEmptySignal = (scan: ProductScanRecord): boolean => {
@@ -95,6 +121,10 @@ const isEvaluatorRejectSignal = (scan: ProductScanRecord): boolean => {
   if (evaluation.proceed === false && evaluation.rejectionCategory !== null) return true;
   return false;
 };
+
+const isCandidateSelectionRequiredSignal = (scan: ProductScanRecord): boolean =>
+  scan.status === 'completed' &&
+  toRecord(scan.rawResult)?.['candidateSelectionRequired'] === true;
 
 const isSelectorRotSignal = (scan: ProductScanRecord): boolean => {
   if (scan.status === 'completed' || scan.status === 'no_match') {
@@ -139,6 +169,7 @@ export function classifyAmazonScanFailure(
     asinUpdateStatus: scan.asinUpdateStatus,
     hasAsin: Boolean(scan.asin && scan.asin.trim().length > 0),
     hasTitle: Boolean(scan.title && scan.title.trim().length > 0),
+    candidateSelectionRequired: toRecord(scan.rawResult)?.['candidateSelectionRequired'] ?? null,
     imageCandidateCount: scan.imageCandidates?.length ?? 0,
     stepCount: scan.steps?.length ?? 0,
     evaluation: summariseEvaluation(scan.amazonEvaluation),
@@ -156,6 +187,8 @@ export function classifyAmazonScanFailure(
             (toRecord(scan.rawResult)?.['manualVerificationPending'] ?? null),
           captchaRetryStarted:
             (toRecord(scan.rawResult)?.['captchaRetryStarted'] ?? null),
+          captchaStealthRetryStarted:
+            (toRecord(scan.rawResult)?.['captchaStealthRetryStarted'] ?? null),
           captchaSteps: (scan.steps ?? [])
             .filter((step) =>
               CAPTCHA_STEP_KEY_PATTERNS.some((needle) =>
@@ -182,6 +215,16 @@ export function classifyAmazonScanFailure(
           scan.amazonEvaluation?.rejectionCategory
             ? `AI evaluator rejected candidate (${scan.amazonEvaluation.rejectionCategory}).`
             : 'AI evaluator rejected candidate.',
+        evidence,
+      },
+    };
+  }
+
+  if (isCandidateSelectionRequiredSignal(scan)) {
+    return {
+      kind: 'healthy',
+      details: {
+        reason: 'Amazon candidates were collected and are waiting for manual selection.',
         evidence,
       },
     };

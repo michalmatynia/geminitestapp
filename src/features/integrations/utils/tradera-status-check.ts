@@ -1,6 +1,9 @@
 import type {
   PlaywrightRelistBrowserMode,
 } from '@/shared/contracts/integrations/listings';
+import {
+  resolvePendingTraderaExecutionAction,
+} from '@/features/integrations/utils/tradera-listing-status';
 
 type TraderaStatusCheckListingCandidate = {
   status: string;
@@ -111,14 +114,6 @@ export const selectPreferredTraderaListingForStatusCheck = <
   return listings.reduce((best, current) =>
     compareTraderaListingsForStatusCheck(current, best) < 0 ? current : best
   );
-};
-
-export const resolvePendingTraderaExecutionAction = (
-  marketplaceData: unknown
-): string | null => {
-  const traderaData = toRecord(toRecord(marketplaceData)['tradera']);
-  const pendingExecution = toRecord(traderaData['pendingExecution']);
-  return normalizeStatus(readString(pendingExecution['action']));
 };
 
 const PENDING_CHECK_STATUS_STALE_MS = 5 * 60 * 1000; // 5 min — well above the 60 s Playwright timeout

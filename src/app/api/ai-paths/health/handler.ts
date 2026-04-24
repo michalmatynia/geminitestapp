@@ -24,13 +24,9 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
   'completed',
   'failed',
   'canceled',
-  'dead_lettered',
 ];
 
 const JOB_STATUSES: ProductAiJobStatus[] = [

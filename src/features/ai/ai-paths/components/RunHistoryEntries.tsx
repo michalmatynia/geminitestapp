@@ -187,19 +187,20 @@ export function RunHistoryEntries(props: RunHistoryEntriesProps): React.JSX.Elem
                   entry.delayMs > 0 && (
                   <span className='text-[10px] text-amber-300/80'>+{entry.delayMs}ms delay</span>
                 )}
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  className='h-6 px-2 text-[10px]'
-                  disabled={!onReplayFromEntry}
-                  onClick={(): void => {
-                    onReplayFromEntry?.(entry);
-                  }}
-                  title={runHistoryEntryActionTitle(entry, Boolean(onReplayFromEntry))}
-                >
-                  {entryAction.label}
-                </Button>
+                {onReplayFromEntry ? (
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    className='h-6 px-2 text-[10px]'
+                    onClick={(): void => {
+                      onReplayFromEntry(entry);
+                    }}
+                    title={runHistoryEntryActionTitle(entry, true)}
+                  >
+                    {entryAction.label}
+                  </Button>
+                ) : null}
               </div>
             </div>
             {onReplayFromEntry ? (

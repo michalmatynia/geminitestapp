@@ -94,7 +94,7 @@ type GetRunResponse = {
   };
 };
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled']);
 
 const POLL_INTERVAL_MS = 2_000;
 const POLL_MAX_MS = 120_000;

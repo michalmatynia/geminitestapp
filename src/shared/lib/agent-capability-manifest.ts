@@ -97,7 +97,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       heartbeatMs: 30000,
       staleAfterMs: 300000,
       recovery:
-        'If a worker cannot claim execution ownership, transition the run to blocked_on_lease and hand off instead of racing the active owner.',
+        'If a worker cannot claim execution ownership, fail the run and require a fresh forward-only retry instead of racing the active owner.',
       entrypoints: [
         'src/features/ai/ai-paths/workers/ai-path-run-queue/queue.ts',
         'src/features/ai/ai-paths/services/path-run-management-service.ts',
@@ -206,7 +206,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       concurrencyNotes: [
         'Provide scopeId for partitioned resources such as broker leaseKey, base import runId, and AI Paths runId.',
         'Base import leases are mutated through the shared service; Playwright broker state is currently exposed through a broker-file adapter.',
-        'AI Paths queue workers claim ai-paths.run.execution before processing and expose lease contention through blocked_on_lease.',
+        'AI Paths queue workers claim ai-paths.run.execution before processing and fail fast on lease contention.',
       ],
     },
     {
@@ -274,7 +274,7 @@ export const agentCapabilityManifest = AgentCapabilityManifestSchema.parse({
       resources: ['ai-paths.run.queue', 'ai-paths.run.execution'],
       concurrencyNotes: [
         'Prefer append-only run events and durable checkpoints to mutable singleton run state.',
-        'Use blocked_on_lease and handoff_ready to represent resource contention and agent handoff explicitly.',
+        'Treat AI Paths runs as forward-only: start fresh work instead of resuming blocked or handed-off execution.',
         'Queue workers must claim ai-paths.run.execution with scopeId=runId before processing a run.',
         'Operators can mark blocked runs handoff-ready from the run history list or run detail dialog, and other UI surfaces expose lease-blocked guidance.',
       ],

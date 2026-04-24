@@ -370,6 +370,39 @@ describe('useProductListingsActionsImpl', () => {
     expect(syncTraderaMutateAsyncMock).toHaveBeenCalledWith({ listingId: 'listing-1' });
   });
 
+  it('shows an already-queued toast when Tradera sync is already pending', async () => {
+    syncTraderaMutateAsyncMock.mockResolvedValueOnce({
+      queued: true,
+      alreadyQueued: true,
+      listingId: 'listing-1',
+      status: 'queued',
+    });
+
+    const { result } = renderHook(() =>
+      useProductListingsActionsImpl(
+        buildBaseParams({
+          listings: [
+            {
+              id: 'listing-1',
+              productId: 'product-1',
+              integrationId: 'integration-tradera-1',
+              connectionId: 'connection-tradera-1',
+              integration: { slug: 'tradera' },
+            },
+          ],
+        })
+      )
+    );
+
+    await act(async () => {
+      await result.current.handleSyncTradera('listing-1');
+    });
+
+    expect(toastMock).toHaveBeenCalledWith('Tradera sync already queued.', {
+      variant: 'success',
+    });
+  });
+
   it('passes selectorProfile overrides through to Tradera sync jobs', async () => {
     const { result } = renderHook(() =>
       useProductListingsActionsImpl(

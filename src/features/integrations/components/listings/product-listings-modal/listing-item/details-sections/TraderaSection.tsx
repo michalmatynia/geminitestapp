@@ -8,6 +8,9 @@ import { TraderaExecutionSteps } from '@/features/integrations/components/listin
 import { 
   formatTimestamp, 
   formatTraderaDuplicateMatchStrategy,
+  formatTraderaSyncImageMode,
+  formatTraderaSyncOutcome,
+  formatTraderaSyncTargetMatchStrategy,
   formatTraderaStatusVerificationSection,
   formatTraderaStatusVerificationStrategy,
   type resolveTraderaExecutionSummary,
@@ -201,6 +204,84 @@ export function TraderaSection({
           <MetadataItem
             label='Candidates inspected'
             value={String(execution.verificationCandidateCount)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncTargetMatchStrategy ?? '') !== '' && (
+          <MetadataItem
+            label='Sync target match'
+            value={formatTraderaSyncTargetMatchStrategy(execution.syncTargetMatchStrategy)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncTargetListingId ?? '') !== '' && (
+          <MetadataItem
+            label='Sync target ID'
+            value={execution.syncTargetListingId}
+            mono
+            variant='minimal'
+          />
+        )}
+        {(execution.syncTargetListingUrl ?? '') !== '' && (
+          <MetadataItem
+            label='Sync target URL'
+            value={execution.syncTargetListingUrl}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncImageMode ?? '') !== '' && (
+          <MetadataItem
+            label='Sync image mode'
+            value={formatTraderaSyncImageMode(execution.syncImageMode)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncTitleOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync title'
+            value={formatTraderaSyncOutcome(execution.syncTitleOutcome)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncDescriptionOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync description'
+            value={formatTraderaSyncOutcome(execution.syncDescriptionOutcome)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncPricingOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync pricing'
+            value={formatTraderaSyncOutcome(execution.syncPricingOutcome)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncCategoryOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync category'
+            value={formatTraderaSyncOutcome(execution.syncCategoryOutcome)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncAttributesOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync attributes'
+            value={formatTraderaSyncOutcome(execution.syncAttributesOutcome)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncShippingOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync shipping'
+            value={formatTraderaSyncOutcome(execution.syncShippingOutcome)}
+            variant='minimal'
+          />
+        )}
+        {(execution.syncImagesOutcome ?? '') !== '' && (
+          <MetadataItem
+            label='Sync images'
+            value={formatTraderaSyncOutcome(execution.syncImagesOutcome)}
             variant='minimal'
           />
         )}

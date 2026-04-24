@@ -41,6 +41,7 @@ import {
   createProductScanVerificationBarrierRuntime,
   createProductScanVerificationBarrierReviewLoopProfile,
   createProductScanVerificationBarrierAutoInjectionConfig,
+  createProductScanVerificationBarrierManualOnlyInjectionConfig,
   createProductScanVerificationState,
   createProductScanVerificationBarrierEvaluationInput,
   createProductScanVerificationBarrierEvaluationInputFromProfile,
@@ -1387,6 +1388,79 @@ describe('createProductScanVerificationBarrierAutoInjectionConfig', () => {
     expect(result.context).toContain('slider');
     expect(result.context).toContain('Drag to verify');
     expect(result.context).toContain('https://google.com/captcha');
+  });
+});
+
+describe('createProductScanVerificationBarrierManualOnlyInjectionConfig', () => {
+  const makeReview = (
+    overrides: Partial<ProductScanVerificationReview> = {}
+  ): ProductScanVerificationReview => ({
+    status: 'analyzed',
+    provider: 'google',
+    stage: 'google_captcha',
+    currentUrl: 'https://www.google.com/sorry/index',
+    pageTitle: 'Before you continue',
+    pageTextSnippet: 'Verify you are human',
+    challengeType: 'captcha',
+    visibleQuestion: 'Are you human?',
+    visibleInstructions: ['Complete the check to continue.'],
+    uiElements: ['checkbox'],
+    pageSummary: 'Google verification challenge.',
+    manualActionRequired: true,
+    confidence: 0.9,
+    screenshotArtifactName: null,
+    htmlArtifactName: null,
+    modelId: 'claude-sonnet-4-6',
+    brainApplied: null,
+    error: null,
+    evaluatedAt: '2026-04-24T10:00:00.000Z',
+    ...overrides,
+  });
+
+  const makeCapture = (
+    overrides: Partial<import('@/features/playwright/server/ai-step-service').PlaywrightCapturedPageObservation> = {}
+  ) => ({
+    currentUrl: 'https://www.google.com/sorry/index',
+    pageTitle: 'Before you continue',
+    pageTextSnippet: 'Verify you are human.',
+    screenshotBase64: null,
+    screenshotArtifactName: null,
+    htmlArtifactName: null,
+    fingerprint: 'fp::manual-only',
+    observedAt: '2026-04-24T10:00:00.000Z',
+    ...overrides,
+  });
+
+  it('never triggers injection even when manual action is required', () => {
+    const config = createProductScanVerificationBarrierManualOnlyInjectionConfig({
+      provider: 'Google',
+    });
+
+    expect(config.shouldInject(makeReview(), makeCapture())).toBe(false);
+    expect(
+      config.shouldInject(
+        makeReview({ manualActionRequired: false }),
+        makeCapture()
+      )
+    ).toBe(false);
+  });
+
+  it('uses a manual-only goal and disables iterative injection behavior', () => {
+    const config = createProductScanVerificationBarrierManualOnlyInjectionConfig({
+      provider: 'Google',
+    });
+    const goal =
+      typeof config.goal === 'function'
+        ? config.goal(makeReview(), makeCapture())
+        : config.goal;
+
+    expect(goal).toContain('manual-only');
+    expect(goal).toContain('Do not interact with the challenge UI.');
+    expect(goal).toContain('Google');
+    expect(config.maxIterations).toBe(0);
+    expect(config.reEvaluateAfterInjection).toBe(false);
+    expect(config.waitForNavigation).toBe(false);
+    expect(config.useConversationHistory).toBe(false);
   });
 });
 

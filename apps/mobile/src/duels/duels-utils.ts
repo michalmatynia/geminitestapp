@@ -2,6 +2,7 @@ import type { KangurDuelDifficulty, KangurDuelMode, KangurDuelOperation, KangurD
 import type { KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import type { Href } from 'expo-router';
 
+import { isStringNotEmpty } from './utils/duels-guards';
 import type {
   KangurMobileLocale,
   KangurMobileLocalizedValue,
@@ -151,10 +152,12 @@ export const DUEL_PLAYER_STATUS_LABELS: Record<
   },
 };
 
-export const MODE_FILTER_OPTIONS: Array<{
+export type DuelModeFilterOption = {
   value: 'all' | KangurDuelMode;
   label: KangurMobileLocalizedValue<string>;
-}> = [
+};
+
+export const MODE_FILTER_OPTIONS: DuelModeFilterOption[] = [
   {
     value: 'all',
     label: {
@@ -714,7 +717,7 @@ export function formatSeriesSummary(
 export function resolveSessionIdParam(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value;
   const normalized = typeof raw === 'string' ? raw.trim() : '';
-  return normalized || null;
+  return isStringNotEmpty(normalized) ? normalized : null;
 }
 
 export function resolveSpectateParam(value: string | string[] | undefined): boolean {

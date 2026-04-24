@@ -7,6 +7,7 @@ export const PART_5 = String.raw`
     ignoredNonExactCandidateCount: null,
     ignoredCandidateTitles: [],
   };
+  let syncTargetResolution = null;
 
   const ensureInitialImageCleanupSettled = async () => {
     let totalRemovedCount = 0;
@@ -118,8 +119,13 @@ export const PART_5 = String.raw`
       skipStep('sell_page_open', 'sync action');
       assertExecutionStepEnabled('sync_check', 'sync listing editor bootstrap');
       updateStep('sync_check', 'running');
-      await openExistingListingEditorForSync();
-      updateStep('sync_check', 'completed', { listingUrl: existingListingUrl || null });
+      syncTargetResolution = await openExistingListingEditorForSync();
+      updateStep('sync_check', 'completed', {
+        listingUrl:
+          syncTargetResolution?.listingUrl || existingListingUrl || null,
+        listingId: syncTargetResolution?.listingId || existingExternalListingId || null,
+        matchedBy: syncTargetResolution?.matchedBy || null,
+      });
     } else {
       skipStep('sync_check', 'not a sync action');
       if (duplicateCheckEnabled) {

@@ -64,8 +64,7 @@ export const finalizeAiPathRunQueueStatus = (
   const terminalRuns24h = runtimeAnalyticsSummary
     ? runtimeAnalyticsSummary.runs.completed +
       runtimeAnalyticsSummary.runs.failed +
-      runtimeAnalyticsSummary.runs.canceled +
-      runtimeAnalyticsSummary.runs.deadLettered
+      runtimeAnalyticsSummary.runs.canceled
     : 0;
   const brainTotalReports24h = brainAnalytics24h.totalReports;
   const brainErrorRate24h =
@@ -78,7 +77,7 @@ export const finalizeAiPathRunQueueStatus = (
     queueLagMs: baseStatus.queueLagMs,
     successRate24h: runtimeAnalyticsSummary?.runs.successRate ?? 0,
     terminalRuns24h,
-    deadLetterRate24h: runtimeAnalyticsSummary?.runs.deadLetterRate ?? 0,
+    failureRate24h: runtimeAnalyticsSummary?.runs.failureRate ?? 0,
     brainErrorRate24h,
     brainTotalReports24h,
   });

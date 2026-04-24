@@ -35,6 +35,9 @@ export const readBoolean = (value: unknown): boolean | null =>
 export const readNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+export const readStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
+
 export const resolveHistoryBrowserMode = (
   fields: string[] | null | undefined
 ): string | null => {
@@ -46,9 +49,46 @@ export const resolveHistoryBrowserMode = (
   return value || null;
 };
 
+export const resolveHistoryAction = (
+  fields: string[] | null | undefined
+): string | null => {
+  const match = (Array.isArray(fields) ? fields : []).find((field) =>
+    field.startsWith('action:')
+  );
+  if (!match) return null;
+  const value = match.slice('action:'.length).trim();
+  return value || null;
+};
+
+export const formatHistoryAction = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'sync':
+      return 'Sync';
+    case 'move_to_unsold':
+      return 'End listing';
+    case 'check_status':
+      return 'Status check';
+    case 'relist':
+      return 'Relist';
+    case 'list':
+      return 'List';
+    default:
+      return formatListValue(value);
+  }
+};
+
 export const resolveDisplayHistoryFields = (
   fields: string[] | null | undefined
-): string[] => (Array.isArray(fields) ? fields.filter((field) => !field.startsWith('browser_mode:')) : []);
+): string[] =>
+  Array.isArray(fields)
+    ? fields.filter(
+        (field) =>
+          !field.startsWith('browser_mode:') &&
+          !field.startsWith('action:')
+      )
+    : [];
 
 export const formatTraderaDuplicateMatchStrategy = (
   value: string | null | undefined
@@ -107,9 +147,257 @@ export const formatTraderaStatusVerificationStrategy = (
   }
 };
 
+export const formatTraderaSyncTargetMatchStrategy = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'direct_listing_url':
+      return 'Direct listing URL';
+    case 'active_listings_external_listing_id':
+      return 'Active listings + external ID';
+    case 'active_listings_exact_title':
+      return 'Active listings + exact title';
+    default:
+      return formatListValue(value);
+  }
+};
+
+export const formatTraderaSyncImageMode = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'fields_only':
+      return 'Fields only';
+    case 'full':
+      return 'Full update';
+    default:
+      return formatListValue(value);
+  }
+};
+
+export const formatTraderaSyncOutcome = (
+  value: string | null | undefined
+): string => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'updated':
+      return 'Updated';
+    case 'unchanged':
+      return 'Already matched';
+    case 'preserved':
+      return 'Preserved';
+    case 'locked':
+      return 'Locked on Tradera';
+    case 'unavailable':
+      return 'Unavailable in editor';
+    case 'omitted':
+      return 'Omitted by runtime manifest';
+    case 'skipped':
+      return 'Skipped';
+    case 'failed':
+      return 'Failed';
+    case 'running':
+      return 'Running';
+    case 'pending':
+      return 'Pending';
+    default:
+      return formatListValue(value);
+  }
+};
+
+const parseTraderaUserLogEvent = (
+  entry: string
+): { event: string | null; payload: Record<string, unknown> | null } => {
+  if (!entry.startsWith('[user] ')) {
+    return { event: null, payload: null };
+  }
+
+  const body = entry.slice('[user] '.length).trim();
+  if (!body) {
+    return { event: null, payload: null };
+  }
+
+  const firstSpace = body.indexOf(' ');
+  const event = firstSpace === -1 ? body : body.slice(0, firstSpace).trim();
+  const payloadText = firstSpace === -1 ? '' : body.slice(firstSpace + 1).trim();
+  if (!event) {
+    return { event: null, payload: null };
+  }
+
+  if (!payloadText.startsWith('{')) {
+    return { event, payload: null };
+  }
+
+  try {
+    return {
+      event,
+      payload: toRecord(JSON.parse(payloadText) as unknown),
+    };
+  } catch {
+    return { event, payload: null };
+  }
+};
+
+const findTraderaExecutionStep = (
+  steps: readonly TraderaExecutionStep[],
+  stepId: string
+): TraderaExecutionStep | null => steps.find((step) => step.id === stepId) ?? null;
+
+const matchesTraderaSyncField = ({
+  field,
+  fieldKeys,
+  fieldPrefixes,
+}: {
+  field: string | null;
+  fieldKeys: readonly string[];
+  fieldPrefixes: readonly string[];
+}): boolean => {
+  const normalizedField = (field ?? '').trim().toLowerCase();
+  if (!normalizedField) return false;
+  if (fieldKeys.some((candidate) => candidate.trim().toLowerCase() === normalizedField)) {
+    return true;
+  }
+  return fieldPrefixes.some((prefix) => normalizedField.startsWith(prefix.trim().toLowerCase()));
+};
+
+const mapTraderaSyncReasonToOutcome = (value: string | null | undefined): string | null => {
+  switch ((value ?? '').trim().toLowerCase()) {
+    case 'already-matched':
+    case 'default-value':
+      return 'unchanged';
+    case 'disabled-on-sync':
+      return 'locked';
+    case 'selector-missing':
+    case 'trigger-missing':
+      return 'unavailable';
+    case 'sync-skip-images':
+      return 'preserved';
+    case 'step omitted from runtime action manifest':
+    case 'manifest-omitted':
+      return 'omitted';
+    default:
+      return (value ?? '').trim() ? 'skipped' : null;
+  }
+};
+
+const resolveTraderaSyncOutcomeFromStep = (
+  step: TraderaExecutionStep | null,
+  successOutcome: string = 'updated'
+): string | null => {
+  if (!step) return null;
+
+  switch (step.status) {
+    case 'success':
+      return successOutcome;
+    case 'error':
+      return 'failed';
+    case 'running':
+      return 'running';
+    case 'pending':
+      return 'pending';
+    case 'skipped':
+      return mapTraderaSyncReasonToOutcome(step.message) ?? 'skipped';
+    default:
+      return null;
+  }
+};
+
+const resolveTraderaSyncFieldOutcome = ({
+  logs,
+  step,
+  fieldKeys,
+  fieldPrefixes = [],
+  successOutcome = 'updated',
+}: {
+  logs: readonly string[];
+  step: TraderaExecutionStep | null;
+  fieldKeys: readonly string[];
+  fieldPrefixes?: readonly string[];
+  successOutcome?: string;
+}): string | null => {
+  let latestSkipReason: string | null = null;
+
+  for (const entry of logs) {
+    const parsed = parseTraderaUserLogEvent(entry);
+    const field = readString(parsed.payload?.['field']);
+    if (
+      parsed.event === 'tradera.quicklist.field.verified' &&
+      matchesTraderaSyncField({ field, fieldKeys, fieldPrefixes })
+    ) {
+      return 'updated';
+    }
+    if (
+      parsed.event === 'tradera.quicklist.field.selected' &&
+      matchesTraderaSyncField({ field, fieldKeys, fieldPrefixes })
+    ) {
+      return 'updated';
+    }
+    if (
+      parsed.event === 'tradera.quicklist.field.skipped' &&
+      matchesTraderaSyncField({ field, fieldKeys, fieldPrefixes })
+    ) {
+      latestSkipReason = readString(parsed.payload?.['reason']);
+    }
+    if (
+      parsed.event === 'tradera.quicklist.listing_format.skipped' &&
+      fieldKeys.some((candidate) => candidate.trim().toLowerCase() === 'listing-format')
+    ) {
+      latestSkipReason = readString(parsed.payload?.['reason']);
+    }
+  }
+
+  const mappedSkipOutcome = mapTraderaSyncReasonToOutcome(latestSkipReason);
+  if (mappedSkipOutcome) {
+    return mappedSkipOutcome;
+  }
+
+  return resolveTraderaSyncOutcomeFromStep(step, successOutcome);
+};
+
+const resolveTraderaSyncCategoryOutcome = ({
+  step,
+  categorySource,
+}: {
+  step: TraderaExecutionStep | null;
+  categorySource: string | null;
+}): string | null => {
+  switch ((categorySource ?? '').trim().toLowerCase()) {
+    case 'categorymapper':
+    case 'fallback':
+      return 'updated';
+    case 'autofill':
+    case 'preserved':
+      return 'preserved';
+    default:
+      return resolveTraderaSyncOutcomeFromStep(step, 'updated');
+  }
+};
+
+const resolveTraderaSyncImagesOutcome = ({
+  step,
+  syncImageMode,
+  imageUploadSource,
+}: {
+  step: TraderaExecutionStep | null;
+  syncImageMode: string | null;
+  imageUploadSource: string | null;
+}): string | null => {
+  const normalizedSyncImageMode = (syncImageMode ?? '').trim().toLowerCase();
+  if (normalizedSyncImageMode === 'fields_only') {
+    return 'preserved';
+  }
+  if ((imageUploadSource ?? '').trim().toLowerCase() === 'preserved-relist') {
+    return 'preserved';
+  }
+  return resolveTraderaSyncOutcomeFromStep(step, 'updated');
+};
+
 export const resolveTraderaStatusBadge = (
   status: string | null | undefined,
-  duplicateLinked: boolean | null | undefined
+  duplicateLinked: boolean | null | undefined,
+  options?: {
+    checkedStatus?: string | null | undefined;
+    lastAction?: string | null | undefined;
+  }
 ): {
   status: string;
   label?: string;
@@ -118,6 +406,13 @@ export const resolveTraderaStatusBadge = (
     return {
       status: 'active',
       label: 'linked',
+    };
+  }
+
+  const checkedStatus = readString(options?.checkedStatus);
+  if (readString(options?.lastAction) === 'check_status' && checkedStatus) {
+    return {
+      status: checkedStatus,
     };
   }
 
@@ -187,6 +482,18 @@ export const resolveTraderaExecutionSummary = (
   verificationMatchedProductId: string | null;
   verificationSearchTitle: string | null;
   verificationCandidateCount: number | null;
+  syncTargetMatchStrategy: string | null;
+  syncTargetListingId: string | null;
+  syncTargetListingUrl: string | null;
+  syncImageMode: string | null;
+  syncFieldsOnly: boolean | null;
+  syncTitleOutcome: string | null;
+  syncDescriptionOutcome: string | null;
+  syncPricingOutcome: string | null;
+  syncCategoryOutcome: string | null;
+  syncAttributesOutcome: string | null;
+  syncShippingOutcome: string | null;
+  syncImagesOutcome: string | null;
   shippingCondition: string | null;
   shippingPriceEur: number | null;
   imageInputSource: string | null;
@@ -218,11 +525,88 @@ export const resolveTraderaExecutionSummary = (
   const rawResult = toRecord(metadata['rawResult']);
   const playwrightSettings = toRecord(metadata['playwrightSettings']);
   const traderaExecutionTrace = resolveTraderaExecutionStepsFromMarketplaceData(marketplaceData);
+  const executionSteps = traderaExecutionTrace.steps;
+  const logTailEntries = readStringArray(metadata['logTail']);
   const latestStage =
     readString(metadata['latestStage']) ?? readString(rawResult['stage']);
   const duplicateMatchStrategy =
     readString(metadata['duplicateMatchStrategy']) ??
     readString(rawResult['duplicateMatchStrategy']);
+  const syncImageMode =
+    readString(metadata['syncImageMode']) ??
+    readString(rawResult['syncImageMode']);
+  const imageUploadSource =
+    readString(metadata['imageUploadSource']) ??
+    readString(rawResult['imageUploadSource']);
+  const syncTitleOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncFieldOutcome({
+          logs: logTailEntries,
+          step: findTraderaExecutionStep(executionSteps, 'title_fill'),
+          fieldKeys: ['title'],
+        })
+      : null;
+  const syncDescriptionOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncFieldOutcome({
+          logs: logTailEntries,
+          step: findTraderaExecutionStep(executionSteps, 'description_fill'),
+          fieldKeys: ['description'],
+        })
+      : null;
+  const syncPricingOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncFieldOutcome({
+          logs: logTailEntries,
+          step:
+            findTraderaExecutionStep(executionSteps, 'price_set') ??
+            findTraderaExecutionStep(executionSteps, 'listing_format_select'),
+          fieldKeys: ['price', 'quantity', 'listing-format'],
+        })
+      : null;
+  const syncCategoryOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncCategoryOutcome({
+          step: findTraderaExecutionStep(executionSteps, 'category_select'),
+          categorySource:
+            readString(metadata['categorySource']) ??
+            readString(rawResult['categorySource']),
+        })
+      : null;
+  const syncAttributesOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncFieldOutcome({
+          logs: logTailEntries,
+          step: findTraderaExecutionStep(executionSteps, 'attribute_select'),
+          fieldKeys: [
+            'ean',
+            'brand',
+            'weight',
+            'width',
+            'length',
+            'height',
+            'condition',
+            'department',
+          ],
+        })
+      : null;
+  const syncShippingOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncFieldOutcome({
+          logs: logTailEntries,
+          step: findTraderaExecutionStep(executionSteps, 'shipping_set'),
+          fieldKeys: ['delivery'],
+          fieldPrefixes: ['delivery'],
+        })
+      : null;
+  const syncImagesOutcome =
+    traderaExecutionTrace.action === 'sync'
+      ? resolveTraderaSyncImagesOutcome({
+          step: findTraderaExecutionStep(executionSteps, 'image_upload'),
+          syncImageMode,
+          imageUploadSource,
+        })
+      : null;
 
   return {
     executedAt: readString(lastExecution['executedAt']),
@@ -322,12 +706,32 @@ export const resolveTraderaExecutionSummary = (
     verificationCandidateCount:
       readNumber(metadata['verificationCandidateCount']) ??
       readNumber(rawResult['verificationCandidateCount']),
+    syncTargetMatchStrategy:
+      readString(metadata['syncTargetMatchStrategy']) ??
+      readString(rawResult['syncTargetMatchStrategy']),
+    syncTargetListingId:
+      readString(metadata['syncTargetListingId']) ??
+      readString(rawResult['syncTargetListingId']),
+    syncTargetListingUrl:
+      readString(metadata['syncTargetListingUrl']) ??
+      readString(rawResult['syncTargetListingUrl']),
+    syncImageMode,
+    syncFieldsOnly:
+      readBoolean(metadata['syncFieldsOnly']) ??
+      (syncImageMode === 'fields_only'
+        ? true
+        : null),
+    syncTitleOutcome,
+    syncDescriptionOutcome,
+    syncPricingOutcome,
+    syncCategoryOutcome,
+    syncAttributesOutcome,
+    syncShippingOutcome,
+    syncImagesOutcome,
     shippingCondition: readString(metadata['shippingCondition']),
     shippingPriceEur: readNumber(metadata['shippingPriceEur']),
     imageInputSource: readString(metadata['imageInputSource']),
-    imageUploadSource:
-      readString(metadata['imageUploadSource']) ??
-      readString(rawResult['imageUploadSource']),
+    imageUploadSource,
     imageUploadFallbackUsed: readBoolean(metadata['imageUploadFallbackUsed']),
     failureCode: readString(metadata['failureCode']),
     staleDraftImages: readBoolean(metadata['staleDraftImages']),
@@ -352,7 +756,7 @@ export const resolveTraderaExecutionSummary = (
     rawResult: metadata['rawResult'] ?? null,
     lastSyncedAt: readString(traderaData['lastSyncedAt']),
     lastAction: traderaExecutionTrace.action,
-    executionSteps: traderaExecutionTrace.steps,
+    executionSteps,
   };
 };
 

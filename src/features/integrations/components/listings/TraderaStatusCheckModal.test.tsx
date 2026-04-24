@@ -231,11 +231,16 @@ describe('TraderaStatusCheckModal', () => {
           alreadyQueued: 1,
           skipped: 0,
           failed: 0,
+          reasonCounts: {
+            queued: 1,
+            already_queued: 1,
+          },
           results: [
             {
               productId: 'product-1',
               listingId: 'listing-browser-1',
               status: 'queued',
+              reason: 'queued',
               queue: {
                 name: 'tradera-listings',
                 jobId: 'job-1',
@@ -246,6 +251,7 @@ describe('TraderaStatusCheckModal', () => {
               productId: 'product-3',
               listingId: 'listing-browser-3',
               status: 'already_queued',
+              reason: 'already_queued',
               message: 'Live status check already queued for this listing.',
             },
           ],
@@ -328,11 +334,15 @@ describe('TraderaStatusCheckModal', () => {
           alreadyQueued: 0,
           skipped: 0,
           failed: 0,
+          reasonCounts: {
+            queued: 1,
+          },
           results: [
             {
               productId: 'product-1',
               listingId: 'listing-browser-1',
               status: 'queued',
+              reason: 'queued',
               queue: {
                 name: 'tradera-listings',
                 jobId: 'job-1',
@@ -391,11 +401,15 @@ describe('TraderaStatusCheckModal', () => {
           alreadyQueued: 0,
           skipped: 1,
           failed: 0,
+          reasonCounts: {
+            no_tradera_browser_listing: 1,
+          },
           results: [
             {
               productId: 'product-1',
               listingId: 'listing-browser-1',
               status: 'skipped',
+              reason: 'no_tradera_browser_listing',
               message: 'No Tradera browser listing available for live status check.',
             },
           ],
@@ -422,7 +436,97 @@ describe('TraderaStatusCheckModal', () => {
       ).toBeInTheDocument();
     });
     expect(toastMock).toHaveBeenCalledWith(
-      'Tradera live checks: 1 skipped.',
+      'Tradera live checks: 1 no live listing.',
+      { variant: 'success' }
+    );
+  });
+
+  it('uses the latest checked Tradera status in the modal subtitle summary', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+        status: 'active',
+        marketplaceData: {
+          tradera: {
+            lastExecution: {
+              action: 'check_status',
+              metadata: {
+                checkedStatus: 'unknown',
+              },
+            },
+          },
+        },
+      }),
+    ]);
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+    expect(screen.getByText('1 of 1 listed · 1 unknown')).toBeInTheDocument();
+  });
+
+  it('shows target-changed feedback returned by the batch API', async () => {
+    apiGetMock.mockResolvedValue([
+      makeListing({
+        id: 'listing-browser-1',
+        productId: 'product-1',
+      }),
+    ]);
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/product-listings/tradera-status-check') {
+        return Promise.resolve({
+          total: 1,
+          queued: 0,
+          alreadyQueued: 0,
+          skipped: 1,
+          failed: 0,
+          reasonCounts: {
+            selected_listing_unavailable: 1,
+          },
+          results: [
+            {
+              productId: 'product-1',
+              listingId: 'listing-browser-1',
+              status: 'skipped',
+              reason: 'selected_listing_unavailable',
+              message:
+                'The selected Tradera listing is no longer available for live status check.',
+            },
+          ],
+        });
+      }
+      return Promise.reject(new Error(`Unexpected api.post call: ${url}`));
+    });
+
+    render(
+      <TraderaStatusCheckModal
+        isOpen
+        onClose={() => {}}
+        productIds={['product-1']}
+        products={[{ id: 'product-1', name_en: 'Product One' } as never]}
+      />
+    );
+
+    await screen.findByText('Product One');
+    fireEvent.click(screen.getByRole('button', { name: 'Check All Live' }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          'The selected Tradera listing is no longer available for live status check.'
+        )
+      ).toBeInTheDocument();
+    });
+    expect(toastMock).toHaveBeenCalledWith(
+      'Tradera live checks: 1 target changed.',
       { variant: 'success' }
     );
   });
@@ -628,11 +732,15 @@ describe('TraderaStatusCheckModal', () => {
       alreadyQueued: 0,
       skipped: 0,
       failed: 1,
+      reasonCounts: {
+        auth_required: 1,
+      },
       results: [
         {
           productId: 'product-1',
           listingId: 'listing-browser-1',
           status: 'error',
+          reason: 'auth_required',
           message:
             'AUTH_REQUIRED: Stored Tradera session expired or is missing. Login to Tradera and retry the live check.',
         },

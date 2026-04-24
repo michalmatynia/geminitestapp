@@ -836,9 +836,10 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
   }
 
   private isAmazonHost(hostname: string): boolean {
-    return hostname === 'amazon.com' ||
-      hostname.endsWith('.amazon.com') ||
-      hostname.startsWith('amazon.');
+    const normalized = hostname.trim().toLowerCase();
+    return normalized === 'amazon.com' ||
+      normalized.startsWith('amazon.') ||
+      normalized.includes('.amazon.');
   }
 
   private isGoogleRedirectHost(hostname: string): boolean {

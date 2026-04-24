@@ -72,6 +72,15 @@ const CHROMIUM_RUNTIME_BEHAVIORS: Record<
   },
 };
 
+const HIGH_FRICTION_SEARCH_HOST_RUNTIME_BEHAVIOR: Omit<
+  ChromiumAntiDetectionRuntimeBehavior,
+  'prewarmUrl'
+> = {
+  prewarmWaitMs: 2200,
+  postStartUrlWaitMs: 1400,
+  launchCooldownMs: 3200,
+};
+
 const mergeUniqueStringEntries = (
   current: readonly string[],
   additions: readonly string[]
@@ -177,6 +186,19 @@ const isLocalHostname = (hostname: string): boolean => {
   );
 };
 
+const isGoogleOwnedHostname = (hostname: string): boolean => {
+  const normalized = hostname.trim().toLowerCase();
+  if (normalized.length === 0) {
+    return false;
+  }
+  return (
+    normalized === 'google.com' ||
+    normalized.endsWith('.google.com') ||
+    normalized.startsWith('google.') ||
+    normalized.includes('.google.')
+  );
+};
+
 export const resolveChromiumAntiDetectionRuntimeBehavior = ({
   identityProfile,
   startUrl,
@@ -191,7 +213,6 @@ export const resolveChromiumAntiDetectionRuntimeBehavior = ({
   };
 }): ChromiumAntiDetectionRuntimeBehavior => {
   const profile = identityProfile ?? 'default';
-  const baseBehavior = CHROMIUM_RUNTIME_BEHAVIORS[profile];
   const normalizedStartUrl = readOptionalTrimmedString(startUrl);
   const applyOverrides = (
     behavior: Omit<ChromiumAntiDetectionRuntimeBehavior, 'prewarmUrl'>
@@ -214,7 +235,7 @@ export const resolveChromiumAntiDetectionRuntimeBehavior = ({
   if (!normalizedStartUrl || profile === 'default') {
     return {
       prewarmUrl: null,
-      ...applyOverrides(baseBehavior),
+      ...applyOverrides(CHROMIUM_RUNTIME_BEHAVIORS[profile]),
     };
   }
 
@@ -226,9 +247,14 @@ export const resolveChromiumAntiDetectionRuntimeBehavior = ({
     ) {
       return {
         prewarmUrl: null,
-        ...applyOverrides(baseBehavior),
+        ...applyOverrides(CHROMIUM_RUNTIME_BEHAVIORS[profile]),
       };
     }
+
+    const baseBehavior =
+      profile === 'search' && isGoogleOwnedHostname(parsed.hostname)
+        ? HIGH_FRICTION_SEARCH_HOST_RUNTIME_BEHAVIOR
+        : CHROMIUM_RUNTIME_BEHAVIORS[profile];
 
     const shouldPrewarm =
       parsed.pathname !== '/' || parsed.search.length > 0 || parsed.hash.length > 0;

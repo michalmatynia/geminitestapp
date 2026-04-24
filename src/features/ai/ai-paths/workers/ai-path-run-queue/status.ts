@@ -37,9 +37,6 @@ let queueHotStatusCache: { value: AiPathRunQueueHotStatus; expiresAt: number } |
 let queueHotStatusInFlight: Promise<AiPathRunQueueHotStatus> | null = null;
 const ACTIVE_PERSISTED_RUN_STATUSES = [
   'running',
-  'blocked_on_lease',
-  'handoff_ready',
-  'paused',
 ] as const;
 
 const touchQueueStatusCacheEntry = (

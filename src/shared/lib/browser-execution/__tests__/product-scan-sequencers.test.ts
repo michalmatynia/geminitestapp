@@ -945,6 +945,27 @@ describe('AmazonScanSequencer', () => {
     expect(keys.has('amazon_open')).toBe(true);
   });
 
+  it('collects non-.com Amazon candidate urls from Google results', async () => {
+    const candidateLocator = {
+      evaluateAll: vi.fn().mockResolvedValue([
+        'https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6',
+        'https://www.amazon.de/dp/B00TEST123',
+        'https://example.com/not-amazon',
+      ]),
+    };
+    const ctx = makeContext({
+      locator: vi.fn().mockReturnValue(candidateLocator),
+    } as unknown as Partial<Page>);
+    const seq = new AmazonScanSequencer(ctx, {});
+
+    const urls = await (seq as any).extractAmazonCandidateUrls();
+
+    expect(urls).toEqual([
+      'https://www.amazon.co.jp/-/en/Fortnite-Leather-Capacity-Popular-Storage/dp/B0DGDDX6S6',
+      'https://www.amazon.de/dp/B00TEST123',
+    ]);
+  });
+
   it('google_lens_open step transitions running → failed on navigation error', async () => {
     const ctx = makeContext({
       goto: vi.fn().mockRejectedValue(new Error('failed')),

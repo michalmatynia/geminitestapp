@@ -250,6 +250,8 @@ export type ProductScanAmazonVariantAssessment = z.infer<
 export const productScanAmazonEvaluationEvidenceSchema = z.object({
   candidateUrl: optionalTrimmedString(4_000),
   pageTitle: optionalTrimmedString(1_000),
+  sourceAsin: optionalTrimmedString(40),
+  candidateAsin: optionalTrimmedString(40),
   heroImageSource: optionalTrimmedString(4_000),
   heroImageArtifactName: optionalTrimmedString(260),
   screenshotArtifactName: optionalTrimmedString(260),

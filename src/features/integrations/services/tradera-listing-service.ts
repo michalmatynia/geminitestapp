@@ -96,6 +96,48 @@ const toRecord = (value: unknown): Record<string, unknown> =>
     ? (value as Record<string, unknown>)
     : {};
 
+const TRUSTED_TRADERA_CHECK_STATUS_PERSISTED_STATUSES = new Set([
+  'active',
+  'sold',
+  'ended',
+  'unsold',
+  'removed',
+]);
+
+const normalizeTraderaListingStatus = (
+  value: string | null | undefined
+): string | null => {
+  const normalized = value?.trim().toLowerCase() ?? '';
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveTraderaStatusToPersistAfterCheck = ({
+  currentStatus,
+  checkedStatus,
+}: {
+  currentStatus: string | null | undefined;
+  checkedStatus: string | null | undefined;
+}): string | null => {
+  const normalizedCheckedStatus = normalizeTraderaListingStatus(checkedStatus);
+  if (!normalizedCheckedStatus) {
+    return null;
+  }
+
+  if (normalizedCheckedStatus !== 'unknown') {
+    return normalizedCheckedStatus;
+  }
+
+  const normalizedCurrentStatus = normalizeTraderaListingStatus(currentStatus);
+  if (
+    normalizedCurrentStatus &&
+    TRUSTED_TRADERA_CHECK_STATUS_PERSISTED_STATUSES.has(normalizedCurrentStatus)
+  ) {
+    return null;
+  }
+
+  return 'unknown';
+};
+
 const buildPendingTraderaRunMarketplaceData = ({
   existingMarketplaceData,
   action,
@@ -119,6 +161,7 @@ const buildPendingTraderaRunMarketplaceData = ({
     pendingExecution['requestedSelectorProfile'].trim().length > 0
       ? pendingExecution['requestedSelectorProfile'].trim()
       : null;
+  const pendingSkipImages = pendingExecution['skipImages'] === true;
 
   return {
     ...marketplaceData,
@@ -134,6 +177,7 @@ const buildPendingTraderaRunMarketplaceData = ({
                 requestedSelectorProfile ?? pendingSelectorProfile,
             }
           : {}),
+        ...(pendingSkipImages ? { skipImages: true } : {}),
         requestId,
         queuedAt:
           typeof pendingExecution['queuedAt'] === 'string' && pendingExecution['queuedAt'].trim().length > 0
@@ -198,6 +242,8 @@ export const runTraderaListing = async (
   const listingId = input.listingId;
   const source = input.source ?? 'manual';
   const action = input.action ?? 'list';
+  let resolvedRequestedBrowserMode: PlaywrightRelistBrowserMode | null =
+    input.browserMode ?? null;
 
   try {
     const integrationRepository = await getIntegrationRepository();
@@ -262,6 +308,7 @@ export const runTraderaListing = async (
       source,
       browserMode: connection.traderaBrowserMode,
     });
+    resolvedRequestedBrowserMode = requestedBrowserMode;
     const persistPendingRunId = async (runId: string): Promise<void> => {
       try {
         const nextMarketplaceData = buildPendingTraderaRunMarketplaceData({
@@ -433,7 +480,16 @@ export const runTraderaListing = async (
       error,
       errorMessage: userMessage,
       errorCategory: category,
-      ...(Object.keys(failureMetadata).length > 0 ? { metadata: failureMetadata } : {}),
+      ...((Object.keys(failureMetadata).length > 0 || resolvedRequestedBrowserMode)
+        ? {
+            metadata: {
+              ...(resolvedRequestedBrowserMode
+                ? { requestedBrowserMode: resolvedRequestedBrowserMode }
+                : {}),
+              ...failureMetadata,
+            },
+          }
+        : {}),
       extra: {
         expiresAt: null,
         nextRelistAt: null,
@@ -531,7 +587,10 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
         typeof result.metadata?.['checkedStatus'] === 'string' && result.metadata['checkedStatus'].trim()
           ? result.metadata['checkedStatus'].trim()
           : null;
-      const statusToWrite = checkedStatus ?? listing.status ?? 'unknown';
+      const statusToWrite = resolveTraderaStatusToPersistAfterCheck({
+        currentStatus: listing.status ?? null,
+        checkedStatus,
+      });
       await finalizePlaywrightListingStatusCheckOutcome({
         repository,
         listingId: input.listingId,
@@ -598,6 +657,9 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   }
 
   const failureStatus = resolvePlaywrightFailureListingStatus(result.errorCategory);
+  const failureReason = isSyncAction
+    ? 'Tradera sync failed.'
+    : 'Tradera listing failed.';
   await finalizePlaywrightStandardListingJobOutcome({
     repository,
     listingId: input.listingId,
@@ -621,7 +683,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
     },
     failure: {
       historyStatus: failureStatus,
-      failureReason: 'Tradera listing failed.',
+      failureReason,
       updateExtra: {
         status: failureStatus,
         nextRelistAt: null,

@@ -17,7 +17,6 @@ import {
   usePersistenceActions,
   usePresetsState,
   usePresetsActions,
-  useRunHistoryActions,
   useSelectionState,
   useSelectionActions,
   useRuntimeDataState,
@@ -25,7 +24,6 @@ import {
   useRuntimeActions,
 } from '../context';
 import {
-  CanvasRunControlNotice,
   CanvasSelectedWireDataPane,
   CanvasSelectedWireEndpointCard,
 } from './canvas-sidebar-primitives';
@@ -121,7 +119,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
   const { savePathConfig } = usePersistenceActions();
   const { runtimeRunStatus } = useRuntimeStatusState();
   const { runtimeState } = useRuntimeDataState();
-  const { handoffRun } = useRunHistoryActions();
   const {
     fireTrigger,
     fireTriggerPersistent,
@@ -143,10 +140,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
     ConfirmationModal,
   } = useCanvasSidebarActions();
   const runStatus = runtimeRunStatus;
-  const activeRunId =
-    runtimeState.currentRun && typeof runtimeState.currentRun === 'object'
-      ? (runtimeState.currentRun.id ?? null)
-      : null;
 
   // --- Derived ---
   const selectedNode = useMemo(
@@ -163,10 +156,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
     switch (runStatus) {
       case 'running':
         return 'Running';
-      case 'blocked_on_lease':
-        return 'Blocked On Lease';
-      case 'handoff_ready':
-        return 'Handoff Ready';
       case 'paused':
         return 'Paused';
       case 'stepping':
@@ -178,11 +167,9 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
   const runStatusVariant =
     runStatus === 'running' || runStatus === 'stepping'
       ? 'processing'
-      : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' || runStatus === 'paused'
+      : runStatus === 'paused'
         ? 'warning'
         : 'neutral';
-  const [isMarkingHandoff, setIsMarkingHandoff] = useState(false);
-  const [handoffRequested, setHandoffRequested] = useState(false);
   const [paletteMode, setPaletteMode] = useState<PaletteMode>('data');
   const [paletteSearch, setPaletteSearch] = useState('');
   const normalizedPaletteSearch = paletteSearch.trim().toLowerCase();
@@ -224,19 +211,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
       ),
     [filteredPaletteGroups]
   );
-  const handleMarkRunHandoffReady = (): void => {
-    if (!activeRunId) return;
-    setIsMarkingHandoff(true);
-    setHandoffRequested(false);
-    void handoffRun(activeRunId)
-      .then((ok: boolean) => {
-        setHandoffRequested(ok);
-      })
-      .finally(() => {
-        setIsMarkingHandoff(false);
-      });
-  };
-
   return (
     <>
       <div className='space-y-4'>
@@ -625,43 +599,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
                 className='font-bold'
               />
             </div>
-            {runStatus === 'blocked_on_lease'
-              ? (
-                <CanvasRunControlNotice
-                  variant='warning'
-                  title='Execution lease blocked'
-                  description='This run is waiting on another execution owner. Use the run history or run detail panel to inspect ownership and mark the run handoff-ready if work should change hands.'
-                >
-                  {activeRunId ? (
-                    <div className='flex flex-wrap items-center gap-2 pt-1'>
-                      <Button
-                        type='button'
-                        size='sm'
-                        variant='outline'
-                        onClick={handleMarkRunHandoffReady}
-                        disabled={isMarkingHandoff}
-                      >
-                        {isMarkingHandoff ? 'Marking...' : 'Mark handoff-ready'}
-                      </Button>
-                      {handoffRequested ? (
-                        <span className='text-[10px] text-current/80'>
-                          Handoff requested. Refreshing run status...
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </CanvasRunControlNotice>
-                )
-              : null}
-            {runStatus === 'handoff_ready'
-              ? (
-                <CanvasRunControlNotice
-                  variant='info'
-                  title='Ready for delegated continuation'
-                  description='This run has been prepared for another operator or agent to continue. Resume it from the run history once the next owner is ready.'
-                />
-                )
-              : null}
             <div className='grid grid-cols-2 gap-2'>
               {isRunControlActive ? (
                 <>
@@ -684,17 +621,6 @@ export function CanvasSidebar({ palette }: CanvasSidebarProps): React.JSX.Elemen
                   Cancel
                   </Button>
                 </>
-              ) : runStatus === 'blocked_on_lease' || runStatus === 'handoff_ready' ? (
-                <Button
-                  type='button'
-                  size='sm'
-                  className='col-span-2'
-                  variant='destructive'
-                  onClick={cancelRun}
-                  disabled={!cancelRun}
-                >
-                Cancel
-                </Button>
               ) : runStatus === 'paused' ? (
                 <>
                   <Button

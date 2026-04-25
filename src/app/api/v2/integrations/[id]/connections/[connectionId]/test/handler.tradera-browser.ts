@@ -7,6 +7,7 @@ import { createTraderaBrowserTestUtils } from '@/features/integrations/services/
 import {
   acceptTraderaCookies,
   readTraderaAuthState,
+  type TraderaAuthState,
 } from '@/features/integrations/services/tradera-listing/tradera-browser-auth';
 import {
   validateTraderaQuickListProductConfig,
@@ -15,8 +16,11 @@ import {
   LOGIN_BUTTON_SELECTORS,
   PASSWORD_SELECTORS,
   TITLE_SELECTORS,
+  TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS,
+  TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS,
   USERNAME_SELECTORS,
 } from '@/features/integrations/services/tradera-listing/config';
+import { resolveTraderaEmailVerificationCode } from '@/features/integrations/services/tradera-listing/tradera-auth-email-code';
 import { findVisibleLocator } from '@/features/integrations/services/tradera-listing/utils';
 import {
   createPlaywrightConnectionTestFailureResponse,
@@ -27,7 +31,7 @@ import {
 } from '@/features/playwright/server';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { internalError } from '@/shared/errors/app-error';
-import type { Page } from 'playwright';
+import type { Locator, Page } from 'playwright';
 
 const QUICKLIST_AUTH_REQUIRED_DETAIL =
   'AUTH_REQUIRED: Stored Tradera session expired or is missing. Open Tradera recovery options and refresh the session.';
@@ -56,18 +60,19 @@ export async function handleTraderaBrowserTest(
     fail,
   } = {
     ...ctx,
-    manualMode: ctx.manualMode || ctx.mode === 'manual',
-    manualSessionRefreshMode: ctx.manualSessionRefreshMode || ctx.mode === 'manual_session_refresh',
-    quicklistPreflightMode: ctx.quicklistPreflightMode || ctx.mode === 'quicklist_preflight',
+    manualMode: ctx.manualMode === true || ctx.mode === 'manual',
+    manualSessionRefreshMode:
+      ctx.manualSessionRefreshMode === true || ctx.mode === 'manual_session_refresh',
+    quicklistPreflightMode:
+      ctx.quicklistPreflightMode === true || ctx.mode === 'quicklist_preflight',
   };
 
   // In quicklist preflight mode, validate the product config before launching the browser.
-  if (quicklistPreflightMode && productId) {
+  const requestedProductId = typeof productId === 'string' ? productId.trim() : '';
+  if (quicklistPreflightMode && requestedProductId.length > 0) {
     const productRepo = await getProductRepository();
-    const product = await productRepo.getProductById(productId);
-    if (product) {
-      await validateTraderaQuickListProductConfig({ product, connection });
-    }
+    const product = await productRepo.getProductById(requestedProductId);
+    await validateTraderaQuickListProductConfig({ product, connection });
   }
 
   // Decrypt to ensure credentials are readable with the configured key.
@@ -76,26 +81,48 @@ export async function handleTraderaBrowserTest(
     'pending',
     'Validating encryption key and decrypting password'
   );
-  const encryptedPassword = connection.password;
-  if (!manualMode && !manualSessionRefreshMode && !quicklistPreflightMode && !encryptedPassword) {
+  const encryptedPassword = typeof connection.password === 'string' ? connection.password : '';
+  const hasEncryptedPassword = encryptedPassword.trim().length > 0;
+  const requiresStoredCredentials =
+    !manualMode && !manualSessionRefreshMode && !quicklistPreflightMode;
+  if (requiresStoredCredentials && !hasEncryptedPassword) {
     return fail('Decrypting credentials', 'No encrypted password configured for this connection.');
   }
-  const loginUsername = connection.username;
-  if (!manualMode && !manualSessionRefreshMode && !quicklistPreflightMode && !loginUsername) {
+  const loginUsername = connection.username?.trim() ?? '';
+  if (requiresStoredCredentials && loginUsername.length === 0) {
     return fail('Decrypting credentials', 'No username configured for this connection.');
   }
-  const resolvedLoginUsername: string = loginUsername ?? '';
-  const decryptedPassword: string =
-    manualMode || manualSessionRefreshMode || quicklistPreflightMode
-      ? ''
-      : decryptSecret(encryptedPassword as string);
-  pushStep(
-    'Decrypting credentials',
-    'ok',
-    manualMode || manualSessionRefreshMode || quicklistPreflightMode
-      ? 'Skipped in non-credential mode.'
-      : 'Password decrypted successfully'
-  );
+  let decryptedPassword = '';
+  let credentialsDecryptStatus = 'No stored credentials available for manual autofill.';
+  if (quicklistPreflightMode) {
+    credentialsDecryptStatus = 'Skipped during quicklist preflight.';
+  }
+  if (!quicklistPreflightMode && loginUsername.length > 0 && hasEncryptedPassword) {
+    try {
+      decryptedPassword = decryptSecret(encryptedPassword);
+      credentialsDecryptStatus = requiresStoredCredentials
+        ? 'Password decrypted successfully'
+        : 'Stored credentials ready for login autofill.';
+    } catch (error) {
+      if (requiresStoredCredentials) {
+        throw error;
+      }
+      credentialsDecryptStatus =
+        'Stored password could not be decrypted; credentials will need manual entry.';
+    }
+  }
+  let manualLoginCredentials: { username: string; password: string } | null = null;
+  if (
+    (manualMode || manualSessionRefreshMode) &&
+    loginUsername.length > 0 &&
+    decryptedPassword.length > 0
+  ) {
+    manualLoginCredentials = {
+      username: loginUsername,
+      password: decryptedPassword,
+    };
+  }
+  pushStep('Decrypting credentials', 'ok', credentialsDecryptStatus);
   let page: Page | null = null;
   let closeSession: (() => Promise<void>) | null = null;
 
@@ -110,11 +137,12 @@ export async function handleTraderaBrowserTest(
       },
     });
     const playwrightSettings = runtime.settings;
-    const effectiveHeadless = quicklistPreflightMode
-      ? true
-      : manualMode || manualSessionRefreshMode
-        ? false
-        : playwrightSettings.headless;
+    let effectiveHeadless = playwrightSettings.headless;
+    if (quicklistPreflightMode) {
+      effectiveHeadless = true;
+    } else if (manualMode || manualSessionRefreshMode) {
+      effectiveHeadless = false;
+    }
 
     const session = await openPlaywrightConnectionTestSession({
       connection,
@@ -177,7 +205,7 @@ export async function handleTraderaBrowserTest(
       await utils.acceptCookieConsent().catch(() => undefined);
       await acceptTraderaCookies(activePage).catch(() => undefined);
     };
-    const readAuthState = async () => await readTraderaAuthState(activePage);
+    const readAuthState = (): Promise<TraderaAuthState> => readTraderaAuthState(activePage);
     const isUserLoggedIn = async (): Promise<boolean> => (await readAuthState()).loggedIn;
     const waitForManualLogin = async (timeoutMs: number): Promise<boolean> => {
       const deadline = Date.now() + timeoutMs;
@@ -192,27 +220,149 @@ export async function handleTraderaBrowserTest(
 
       return false;
     };
-    const performLogin = async (username: string, password: string): Promise<void> => {
+    const findLoginControls = async (): Promise<{
+      usernameInput: Locator;
+      passwordInput: Locator;
+      submitButton: Locator;
+    } | null> => {
       const usernameInput = await findVisibleLocator(activePage, USERNAME_SELECTORS);
       const passwordInput = await findVisibleLocator(activePage, PASSWORD_SELECTORS);
       const submitButton = await findVisibleLocator(activePage, LOGIN_BUTTON_SELECTORS);
 
       if (!usernameInput || !passwordInput || !submitButton) {
-        throw internalError('Unable to locate Tradera login form controls.');
+        return null;
       }
 
-      await utils.humanizedFill(usernameInput, username);
-      await utils.humanizedFill(passwordInput, password);
+      return { usernameInput, passwordInput, submitButton };
+    };
+    const findEmailVerificationControls = async (
+      timeoutMs = 10_000
+    ): Promise<{
+      codeInput: Locator;
+      submitButton: Locator | null;
+    } | null> => {
+      const codeInput = activePage
+        .locator(TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS.join(', '))
+        .first();
+      await codeInput.waitFor({ state: 'visible', timeout: timeoutMs }).catch(() => undefined);
+      const codeInputVisible = await codeInput.isVisible().catch(() => false);
+      if (!codeInputVisible) {
+        return null;
+      }
+
+      return {
+        codeInput,
+        submitButton: await findVisibleLocator(
+          activePage,
+          TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS
+        ),
+      };
+    };
+    const fillAndSubmitLoginCredentials = async (
+      username: string,
+      password: string,
+      controls: {
+        usernameInput: Locator;
+        passwordInput: Locator;
+        submitButton: Locator;
+      }
+    ): Promise<string> => {
+      const credentialSubmittedAt = new Date().toISOString();
+      await utils.humanizedFill(controls.usernameInput, username);
+      await utils.humanizedFill(controls.passwordInput, password);
       await utils.humanizedPause();
       await Promise.allSettled([
         activePage.waitForNavigation({
           waitUntil: 'domcontentloaded',
           timeout: 20_000,
         }),
-        utils.humanizedClick(submitButton),
+        utils.humanizedClick(controls.submitButton),
       ]);
       await activePage.waitForTimeout(1500).catch(() => undefined);
       await acceptCookies();
+      return credentialSubmittedAt;
+    };
+    const performLogin = async (username: string, password: string): Promise<string> => {
+      const controls = await findLoginControls();
+      if (controls === null) {
+        throw internalError('Unable to locate Tradera login form controls.');
+      }
+
+      return fillAndSubmitLoginCredentials(username, password, controls);
+    };
+    const submitTraderaEmailVerificationCode = async (
+      stepLabel: string,
+      requestedAfter: string
+    ): Promise<boolean> => {
+      if (await isUserLoggedIn()) {
+        return true;
+      }
+
+      const verificationControls = await findEmailVerificationControls();
+      if (verificationControls === null || loginUsername.length === 0) {
+        return false;
+      }
+
+      pushStep(
+        stepLabel,
+        'pending',
+        'Waiting for Tradera verification code from email.'
+      );
+      const verificationCode = await resolveTraderaEmailVerificationCode({
+        emailAddress: loginUsername,
+        requestedAfter,
+        timeoutMs: Math.min(manualLoginTimeoutMs, 120_000),
+      });
+      if (verificationCode === null) {
+        pushStep(
+          stepLabel,
+          'pending',
+          'Tradera verification code was not found in email; waiting for manual entry.'
+        );
+        return false;
+      }
+
+      await utils.humanizedFill(verificationControls.codeInput, verificationCode.code);
+      if (verificationControls.submitButton !== null) {
+        await utils.humanizedClick(verificationControls.submitButton);
+      } else {
+        await activePage.keyboard.press('Enter');
+      }
+      await activePage.waitForTimeout(1500).catch(() => undefined);
+      await acceptCookies();
+      pushStep(
+        stepLabel,
+        'pending',
+        'Tradera verification code submitted from email.'
+      );
+      return true;
+    };
+    const autofillManualLoginCredentials = async (stepLabel: string): Promise<void> => {
+      if (!manualLoginCredentials) {
+        return;
+      }
+
+      const controls = await findLoginControls();
+      if (controls === null) {
+        pushStep(
+          stepLabel,
+          'pending',
+          'Stored credentials were ready, but Tradera login fields were not visible yet.'
+        );
+        return;
+      }
+
+      const credentialSubmittedAt = await fillAndSubmitLoginCredentials(
+        manualLoginCredentials.username,
+        manualLoginCredentials.password,
+        controls
+      );
+      pushStep(
+        stepLabel,
+        'pending',
+        'Stored credentials submitted; checking for Tradera email verification.'
+      );
+      await submitTraderaEmailVerificationCode(stepLabel, credentialSubmittedAt);
     };
     const isListingFormVisible = async (): Promise<boolean> => {
       for (const selector of TITLE_SELECTORS) {
@@ -280,6 +430,7 @@ export async function handleTraderaBrowserTest(
           timeout: 60_000,
         });
         await acceptCookies();
+        await autofillManualLoginCredentials(stepLabel);
 
         pushStep(
           stepLabel,
@@ -297,7 +448,7 @@ export async function handleTraderaBrowserTest(
       }
       pushStep(stepLabel, 'ok', sessionAlreadyActive ? 'Session already active' : 'Success');
     } else {
-      pushStep('Authentication', 'pending', `Attempting login as ${resolvedLoginUsername}...`);
+      pushStep('Authentication', 'pending', `Attempting login as ${loginUsername}...`);
       await activePage.goto('https://www.tradera.com/login', {
         waitUntil: 'domcontentloaded',
         timeout: 60_000,
@@ -308,7 +459,8 @@ export async function handleTraderaBrowserTest(
       if (isLoggedIn) {
         pushStep('Authentication', 'ok', 'Already logged in (session restored)');
       } else {
-        await performLogin(resolvedLoginUsername, decryptedPassword);
+        const credentialSubmittedAt = await performLogin(loginUsername, decryptedPassword);
+        await submitTraderaEmailVerificationCode('Authentication', credentialSubmittedAt);
         const postLoginOk = await isUserLoggedIn();
         if (!postLoginOk) {
           const authState = await readAuthState();
@@ -369,8 +521,8 @@ export async function handleTraderaBrowserTest(
       sessionReady: true,
     });
   } catch (error: unknown) {
-    if (manualMode || manualSessionRefreshMode) {
-      await page?.waitForTimeout?.(2000);
+    if ((manualMode || manualSessionRefreshMode) && page !== null) {
+      await page.waitForTimeout(2000).catch(() => undefined);
     }
 
     const errorMsg = error instanceof Error ? error.message : String(error);

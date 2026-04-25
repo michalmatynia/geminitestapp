@@ -27,6 +27,11 @@ import {
   readVisibleLocatorText,
 } from './utils';
 import { resolveTraderaEmailVerificationCode } from './tradera-auth-email-code';
+import {
+  clickWithTraderaHumanizedInput,
+  fillWithTraderaHumanizedInput,
+  type TraderaHumanizedInputBehavior,
+} from './tradera-humanized-input';
 
 const TRADERA_AUTH_RESOLUTION_TIMEOUT_MS = 15_000;
 const TRADERA_AUTH_RESOLUTION_POLL_MS = 500;
@@ -75,7 +80,10 @@ export type TraderaEnsureLoggedInStatusUpdate = {
 
 type EnsureLoggedInOptions = {
   onStatus?: (update: TraderaEnsureLoggedInStatusUpdate) => void;
+  inputBehavior?: TraderaAuthInputBehavior | null;
 };
+
+export type TraderaAuthInputBehavior = TraderaHumanizedInputBehavior;
 
 const isKnownAuthenticatedTraderaUrl = (normalizedUrl: string): boolean =>
   normalizedUrl.includes('/my/listings') ||
@@ -468,15 +476,14 @@ export const ensureLoggedIn = async (
 
         // No stored session — require credentials before attempting login
         if (!hasCredentials) {
-          const noCredentialsAuthState = authFlowState.currentAuthState ?? initialAuthState;
           emitStatus({
             status: 'stored_session_rejected',
             message: 'Tradera login requires credentials but none are configured.',
-            authState: noCredentialsAuthState,
+            authState: initialAuthState,
           });
           throw buildTraderaAuthRequiredError({
             hasStoredSession: false,
-            authState: noCredentialsAuthState,
+            authState: initialAuthState,
           });
         }
 
@@ -573,8 +580,18 @@ export const ensureLoggedIn = async (
           await waitForTraderaLoginControls(page);
 
         const decryptedPassword = decryptSecret(connection.password ?? '');
-        await usernameInput.fill(connection.username ?? '');
-        await passwordInput.fill(decryptedPassword);
+        await fillWithTraderaHumanizedInput({
+          page,
+          locator: usernameInput,
+          value: connection.username ?? '',
+          inputBehavior: options.inputBehavior,
+        });
+        await fillWithTraderaHumanizedInput({
+          page,
+          locator: passwordInput,
+          value: decryptedPassword,
+          inputBehavior: options.inputBehavior,
+        });
 
         emitStatus({
           status: 'submitting_login',
@@ -586,7 +603,11 @@ export const ensureLoggedIn = async (
             waitUntil: 'domcontentloaded',
             timeout: 20_000,
           }),
-          submitButton.click(),
+          clickWithTraderaHumanizedInput({
+            page,
+            locator: submitButton,
+            inputBehavior: options.inputBehavior,
+          }),
         ]);
         await waitOnPage(page, 1500);
         await acceptTraderaCookies(page);
@@ -618,7 +639,12 @@ export const ensureLoggedIn = async (
               requestedAfter: credentialSubmittedAt,
             });
             if (verificationCode !== null) {
-              await verificationControls.codeInput.fill(verificationCode.code);
+              await fillWithTraderaHumanizedInput({
+                page,
+                locator: verificationControls.codeInput,
+                value: verificationCode.code,
+                inputBehavior: options.inputBehavior,
+              });
               emitStatus({
                 status: 'submitting_email_verification_code',
                 message: 'Submitting Tradera email verification code.',
@@ -629,7 +655,13 @@ export const ensureLoggedIn = async (
                   waitUntil: 'domcontentloaded',
                   timeout: 20_000,
                 }),
-                verificationControls.submitButton?.click() ?? page.keyboard.press('Enter'),
+                verificationControls.submitButton
+                  ? clickWithTraderaHumanizedInput({
+                      page,
+                      locator: verificationControls.submitButton,
+                      inputBehavior: options.inputBehavior,
+                    })
+                  : page.keyboard.press('Enter'),
               ]);
               await waitOnPage(page, 1500);
               await acceptTraderaCookies(page);
@@ -643,7 +675,7 @@ export const ensureLoggedIn = async (
           }
         }
 
-        const finalPostLoginAuthState = authFlowState.currentAuthState ?? postLoginAuthState;
+        const finalPostLoginAuthState = authFlowState.currentAuthState;
         if (finalPostLoginAuthState.resolution !== 'authenticated') {
           throw buildTraderaAuthRequiredError({
             hasStoredSession: false,

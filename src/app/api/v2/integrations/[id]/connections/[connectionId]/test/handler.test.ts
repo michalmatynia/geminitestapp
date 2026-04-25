@@ -11,6 +11,9 @@ const {
   encryptSecretMock,
   resolvePlaywrightConnectionRuntimeMock,
   createTraderaBrowserTestUtilsMock,
+  resolveTraderaEmailVerificationCodeMock,
+  humanizedClickMock,
+  humanizedFillMock,
   validateTraderaQuickListProductConfigMock,
   chromiumLaunchMock,
   browserNewContextMock,
@@ -29,7 +32,9 @@ const {
   pageContextStorageStateMock,
   pageState,
   pageWaitForTimeoutMock,
+  pageWaitForNavigationMock,
   pageWaitForURLMock,
+  pageKeyboardPressMock,
   pageCloseMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
@@ -41,6 +46,9 @@ const {
   encryptSecretMock: vi.fn(),
   resolvePlaywrightConnectionRuntimeMock: vi.fn(),
   createTraderaBrowserTestUtilsMock: vi.fn(),
+  resolveTraderaEmailVerificationCodeMock: vi.fn(),
+  humanizedClickMock: vi.fn(),
+  humanizedFillMock: vi.fn(),
   validateTraderaQuickListProductConfigMock: vi.fn(),
   chromiumLaunchMock: vi.fn(),
   browserNewContextMock: vi.fn(),
@@ -59,7 +67,9 @@ const {
   pageContextStorageStateMock: vi.fn(),
   pageState: { currentUrl: 'about:blank' as string },
   pageWaitForTimeoutMock: vi.fn(),
+  pageWaitForNavigationMock: vi.fn(),
   pageWaitForURLMock: vi.fn(),
+  pageKeyboardPressMock: vi.fn(),
   pageCloseMock: vi.fn(),
 }));
 
@@ -124,6 +134,11 @@ vi.mock('@/features/playwright/server', async () => {
 
 vi.mock('@/features/integrations/services/tradera-browser-test-utils', () => ({
   createTraderaBrowserTestUtils: (...args: unknown[]) => createTraderaBrowserTestUtilsMock(...args),
+}));
+
+vi.mock('@/features/integrations/services/tradera-listing/tradera-auth-email-code', () => ({
+  resolveTraderaEmailVerificationCode: (...args: unknown[]) =>
+    resolveTraderaEmailVerificationCodeMock(...args),
 }));
 
 import { postTestConnectionHandler } from './handler';
@@ -226,8 +241,8 @@ describe('integration connection test handler', () => {
         throw new Error(detail);
       },
       humanizedPause: vi.fn(),
-      humanizedClick: vi.fn(),
-      humanizedFill: vi.fn(),
+      humanizedClick: (...args: unknown[]) => humanizedClickMock(...args),
+      humanizedFill: (...args: unknown[]) => humanizedFillMock(...args),
       acceptCookieConsent: vi.fn().mockResolvedValue(false),
       successSelector: '[data-tradera-success]',
       errorSelector: '[data-tradera-error]',
@@ -246,6 +261,8 @@ describe('integration connection test handler', () => {
       pageState.currentUrl = url;
     });
     pageWaitForTimeoutMock.mockResolvedValue(undefined);
+    pageWaitForNavigationMock.mockResolvedValue(undefined);
+    resolveTraderaEmailVerificationCodeMock.mockResolvedValue(null);
 
     const page = {
       locator: (...args: unknown[]) => pageLocatorMock(...args),
@@ -255,7 +272,11 @@ describe('integration connection test handler', () => {
         storageState: (...args: unknown[]) => pageContextStorageStateMock(...args),
       }),
       waitForTimeout: (...args: unknown[]) => pageWaitForTimeoutMock(...args),
+      waitForNavigation: (...args: unknown[]) => pageWaitForNavigationMock(...args),
       waitForURL: (...args: unknown[]) => pageWaitForURLMock(...args),
+      keyboard: {
+        press: (...args: unknown[]) => pageKeyboardPressMock(...args),
+      },
       close: (...args: unknown[]) => pageCloseMock(...args),
     };
 
@@ -365,33 +386,124 @@ describe('integration connection test handler', () => {
       },
     });
 
-    let currentPhase: 'login' | 'redirected_my' | 'authenticated' = 'login';
+    let currentPhase: 'login' | 'email-code' | 'authenticated' = 'login';
     pageGotoMock.mockImplementation(async (url: string) => {
       pageState.currentUrl = url;
       currentPhase = 'login';
     });
-    pageWaitForTimeoutMock.mockImplementation(async () => {
-      if (currentPhase === 'login') {
-        pageState.currentUrl = 'https://www.tradera.com/en/my/';
-        currentPhase = 'redirected_my';
+    pageWaitForTimeoutMock.mockImplementation(async (timeoutMs?: number) => {
+      if (timeoutMs !== 1000) {
         return;
       }
-      pageState.currentUrl = 'https://www.tradera.com/en/my/';
-      currentPhase = 'authenticated';
+      if (currentPhase === 'authenticated') return;
+    });
+    resolveTraderaEmailVerificationCodeMock.mockResolvedValue({
+      code: '343079',
+      accountId: 'mail-account-1',
+      messageId: 'message-1',
+      receivedAt: '2026-04-24T19:00:00.000Z',
+    });
+    const usernameInput = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'login',
+    };
+    const passwordInput = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'login',
+    };
+    const loginSubmitButton = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'login',
+    };
+    const codeInput = {
+      count: async () => 1,
+      isVisible: async () => currentPhase === 'email-code',
+      waitFor: async () => undefined,
+    };
+    const codeSubmitButton = {
+      count: async () => 1,
+      isVisible: async () => false,
+    };
+    pageKeyboardPressMock.mockImplementation(async (key: string) => {
+      if (key === 'Enter') {
+        currentPhase = 'authenticated';
+        pageState.currentUrl = 'https://www.tradera.com/en/my/';
+      }
+    });
+    humanizedClickMock.mockImplementation(async (locator: unknown) => {
+      if (locator === loginSubmitButton) {
+        currentPhase = 'email-code';
+        pageState.currentUrl = 'https://www.tradera.com/en/login/verify';
+        return;
+      }
+      if (locator === codeSubmitButton) {
+        currentPhase = 'authenticated';
+        pageState.currentUrl = 'https://www.tradera.com/en/my/';
+      }
     });
     pageLocatorMock.mockImplementation((selector: string) => ({
-      first: () => ({
-        count: async () => 1,
-        isVisible: async () => {
-          if (selector.includes('a[href*="logout"]')) {
-            return currentPhase === 'authenticated';
-          }
-          if (selector.includes('#sign-in-form') || selector.includes('form[action*="login"]')) {
-            return currentPhase === 'login';
-          }
-          return false;
-        },
-      }),
+      first: () => {
+        if (
+          selector === '#email' ||
+          selector === 'input[name="email"]' ||
+          selector === 'input[type="email"]'
+        ) {
+          return usernameInput;
+        }
+        if (
+          selector === '#password' ||
+          selector === 'input[name="password"]' ||
+          selector === 'input[type="password"]'
+        ) {
+          return passwordInput;
+        }
+        if (
+          selector === 'button[data-login-submit="true"]' ||
+          selector === '#sign-in-form button[type="submit"]' ||
+          selector === 'button:has-text("Sign in")' ||
+          selector === 'button:has-text("Logga in")'
+        ) {
+          return loginSubmitButton;
+        }
+        if (
+          selector.includes('input[autocomplete="one-time-code"]') ||
+          selector === 'input[autocomplete="one-time-code"]' ||
+          selector === 'input[name*="verification" i]' ||
+          selector === 'input[id*="verification" i]' ||
+          selector === 'input[name*="code" i]' ||
+          selector === 'input[id*="code" i]' ||
+          selector === 'input[inputmode="numeric"]' ||
+          selector === 'input[type="tel"]' ||
+          selector === 'input[type="text"][maxlength="6"]'
+        ) {
+          return codeInput;
+        }
+        if (
+          selector === 'button[type="submit"]' ||
+          selector === 'button:has-text("Verify")' ||
+          selector === 'button:has-text("Continue")' ||
+          selector === 'button:has-text("Confirm")' ||
+          selector === 'button:has-text("Submit")' ||
+          selector === 'button:has-text("Verifiera")' ||
+          selector === 'button:has-text("Fortsätt")' ||
+          selector === 'button:has-text("Bekräfta")' ||
+          selector === 'button:has-text("Skicka")'
+        ) {
+          return codeSubmitButton;
+        }
+        return {
+          count: async () => 1,
+          isVisible: async () => {
+            if (selector.includes('a[href*="logout"]')) {
+              return currentPhase === 'authenticated';
+            }
+            if (selector.includes('#sign-in-form') || selector.includes('form[action*="login"]')) {
+              return currentPhase === 'login';
+            }
+            return false;
+          },
+        };
+      },
     }));
 
     const response = await postTestConnectionHandler(
@@ -411,7 +523,18 @@ describe('integration connection test handler', () => {
       waitUntil: 'domcontentloaded',
       timeout: 60_000,
     });
-    expect(pageWaitForTimeoutMock).toHaveBeenCalledTimes(3);
+    expect(decryptSecretMock).toHaveBeenCalledWith('password-secret');
+    expect(humanizedFillMock).toHaveBeenNthCalledWith(1, usernameInput, 'user@example.com');
+    expect(humanizedFillMock).toHaveBeenNthCalledWith(2, passwordInput, 'decrypted-password');
+    expect(humanizedClickMock).toHaveBeenNthCalledWith(1, loginSubmitButton);
+    expect(resolveTraderaEmailVerificationCodeMock).toHaveBeenCalledWith({
+      emailAddress: 'user@example.com',
+      requestedAfter: expect.any(String),
+      timeoutMs: 120_000,
+    });
+    expect(humanizedFillMock).toHaveBeenNthCalledWith(3, codeInput, '343079');
+    expect(humanizedClickMock).toHaveBeenCalledTimes(1);
+    expect(pageKeyboardPressMock).toHaveBeenCalledWith('Enter');
     expect(safeGotoMock).not.toHaveBeenCalledWith(
       'https://www.tradera.com/en/my/listings?tab=active',
       expect.anything(),

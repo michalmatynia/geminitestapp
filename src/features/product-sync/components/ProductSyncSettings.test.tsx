@@ -20,6 +20,7 @@ const {
   useRelinkBaseProductsMutationMock,
   usePriceGroupsMock,
   useIntegrationsWithConnectionsMock,
+  useBaseInventoriesMock,
   useBaseWarehousesMock,
   useDefaultExportConnectionMock,
   useDefaultExportInventoryMock,
@@ -35,6 +36,7 @@ const {
   useRelinkBaseProductsMutationMock: vi.fn(),
   usePriceGroupsMock: vi.fn(),
   useIntegrationsWithConnectionsMock: vi.fn(),
+  useBaseInventoriesMock: vi.fn(),
   useBaseWarehousesMock: vi.fn(),
   useDefaultExportConnectionMock: vi.fn(),
   useDefaultExportInventoryMock: vi.fn(),
@@ -58,6 +60,7 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
 
 vi.mock('@/shared/hooks/useIntegrationQueries', () => ({
   useIntegrationsWithConnections: () => useIntegrationsWithConnectionsMock(),
+  useBaseInventories: (...args: unknown[]) => useBaseInventoriesMock(...args),
   useBaseWarehouses: (...args: unknown[]) => useBaseWarehousesMock(...args),
   useDefaultExportConnection: () => useDefaultExportConnectionMock(),
   useDefaultExportInventory: () => useDefaultExportInventoryMock(),
@@ -169,6 +172,10 @@ describe('ProductSyncSettings', () => {
       },
       isLoading: false,
     });
+    useBaseInventoriesMock.mockReturnValue({
+      data: [{ id: 'inventory-1', name: 'Main inventory', is_default: true }],
+      isLoading: false,
+    });
     useDefaultExportConnectionMock.mockReturnValue({
       data: { connectionId: 'connection-1' },
       refetch: vi.fn(),
@@ -231,6 +238,160 @@ describe('ProductSyncSettings', () => {
         })
       );
     });
+  });
+
+  it('creates a new profile instead of updating the selected existing profile', async () => {
+    useProductSyncProfilesMock.mockReturnValue({
+      data: [
+        {
+          id: 'profile-existing',
+          name: 'Existing Sync Profile',
+          isDefault: true,
+          enabled: true,
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-1',
+          catalogId: null,
+          scheduleIntervalMinutes: 30,
+          batchSize: 100,
+          conflictPolicy: 'skip',
+          fieldRules: [],
+          lastRunAt: null,
+          createdAt: '2026-04-11T12:00:00.000Z',
+          updatedAt: '2026-04-11T12:00:00.000Z',
+        },
+      ],
+      refetch: vi.fn(),
+    });
+
+    render(<ProductSyncSettings />);
+
+    await screen.findByRole('button', { name: /Existing Sync Profile/i });
+    await waitFor(() => {
+      expect(screen.getByLabelText('Name')).toHaveValue('Existing Sync Profile');
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'New Profile' }));
+    expect(await screen.findByRole('button', { name: /New sync profile/i })).toHaveTextContent(
+      'Draft'
+    );
+    expect(screen.getByLabelText('Name')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('Name'), {
+      target: { value: 'Second Sync Profile' },
+    });
+    expect(screen.getByRole('button', { name: /Second Sync Profile/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Second Sync Profile',
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-1',
+        })
+      );
+    });
+    expect(updateMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('uses the default Base.com inventory when no saved inventory preference exists', async () => {
+    useDefaultExportInventoryMock.mockReturnValue({
+      data: { inventoryId: null },
+    });
+    useBaseInventoriesMock.mockReturnValue({
+      data: [
+        { id: 'inventory-secondary', name: 'Secondary inventory', is_default: false },
+        { id: 'inventory-default', name: 'Default inventory', is_default: true },
+      ],
+      isLoading: false,
+    });
+
+    render(<ProductSyncSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('inventory-default')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-default',
+        })
+      );
+    });
+  });
+
+  it('uses the connection last inventory when inventory preferences are unavailable', async () => {
+    useDefaultExportInventoryMock.mockReturnValue({
+      data: { inventoryId: null },
+    });
+    useBaseInventoriesMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+    useIntegrationsWithConnectionsMock.mockReturnValue({
+      data: [
+        {
+          id: 'integration-1',
+          slug: 'base-com',
+          connections: [
+            {
+              id: 'connection-1',
+              name: 'Main Base Connection',
+              baseLastInventoryId: 'inventory-from-connection',
+            },
+          ],
+        },
+      ],
+    });
+
+    render(<ProductSyncSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('inventory-from-connection')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          connectionId: 'connection-1',
+          inventoryId: 'inventory-from-connection',
+        })
+      );
+    });
+  });
+
+  it('lets the API resolve inventory when the client has no inventory fallback', async () => {
+    useDefaultExportInventoryMock.mockReturnValue({
+      data: { inventoryId: null },
+    });
+    useBaseInventoriesMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    render(<ProductSyncSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Inventory ID')).toHaveValue('');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Profile' }));
+
+    await waitFor(() => {
+      expect(createMutateAsync).toHaveBeenCalledWith(
+        expect.not.objectContaining({
+          inventoryId: expect.any(String),
+        })
+      );
+    });
+    expect(toastMock).not.toHaveBeenCalledWith(
+      'Inventory ID is required.',
+      expect.objectContaining({ variant: 'error' })
+    );
   });
 
   it('shows labeled Base.com field options instead of a raw path input for standard rules', async () => {

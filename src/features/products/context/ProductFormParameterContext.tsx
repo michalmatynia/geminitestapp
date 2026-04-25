@@ -23,7 +23,8 @@ import {
   resolveStoredParameterValue,
 } from '@/shared/lib/products/utils/parameter-values';
 
-import { useParameters, useTitleTerms } from '../hooks/useProductMetadataQueries';
+import { useParameters, useSimpleParameters, useTitleTerms } from '../hooks/useProductMetadataQueries';
+import { mergeParameterDefinitions } from './ProductFormParameterDefinitions';
 
 export interface ProductFormParameterContextType {
   parameters: ProductParameter[];
@@ -300,12 +301,23 @@ export function ProductFormParameterProvider({
   const primaryCatalogId = selectedCatalogIds[0] || '';
   const formContext = useFormContext<ProductFormData>();
   const parametersQuery = useParameters(primaryCatalogId);
+  const simpleParametersQuery = useSimpleParameters(primaryCatalogId);
   const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
   const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
   const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
   const sourceParameterValues = useMemo(
     (): ProductParameterValue[] => normalizeSourceParameterValues(product?.parameters ?? draft?.parameters),
     [draft?.parameters, product?.parameters]
+  );
+  const parameterDefinitions = useMemo(
+    (): ProductParameter[] =>
+      mergeParameterDefinitions({
+        parameters: parametersQuery.data ?? [],
+        simpleParameters: simpleParametersQuery.data ?? [],
+        parameterValues: sourceParameterValues,
+        fallbackCatalogId: primaryCatalogId,
+      }),
+    [parametersQuery.data, primaryCatalogId, simpleParametersQuery.data, sourceParameterValues]
   );
   const sourceParameterValuesKey = useMemo(
     (): string => serializeParameterValues(sourceParameterValues),
@@ -340,10 +352,10 @@ export function ProductFormParameterProvider({
 
   const linkedParameters = useMemo(
     (): ProductParameter[] =>
-      (parametersQuery.data ?? []).filter(
+      parameterDefinitions.filter(
         (parameter: ProductParameter): boolean => Boolean(parameter.linkedTitleTermType)
       ),
-    [parametersQuery.data]
+    [parameterDefinitions]
   );
   const linkedParameterIds = useMemo(
     (): Set<string> => new Set(linkedParameters.map((parameter: ProductParameter) => parameter.id)),
@@ -522,8 +534,8 @@ export function ProductFormParameterProvider({
     };
 
     return {
-      parameters: parametersQuery.data || [],
-      parametersLoading: parametersQuery.isLoading,
+      parameters: parameterDefinitions,
+      parametersLoading: parametersQuery.isLoading || simpleParametersQuery.isLoading,
       parameterValues,
       addParameterValue,
       applyLocalizedParameterValues,
@@ -536,8 +548,9 @@ export function ProductFormParameterProvider({
     onInteraction,
     parameterValueIndexMap,
     parameterValues,
-    parametersQuery.data,
+    parameterDefinitions,
     parametersQuery.isLoading,
+    simpleParametersQuery.isLoading,
   ]);
 
   return (

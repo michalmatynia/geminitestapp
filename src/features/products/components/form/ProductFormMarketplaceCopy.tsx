@@ -165,7 +165,6 @@ function MarketplaceCopyDebrandTrigger(
   const [pendingRunId, setPendingRunId] = useState<string | null>(null);
   const [isTriggerPending, setIsTriggerPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const persistedProductId = product?.id ?? null;
 
   const getEntityJson = useCallback((): Record<string, unknown> => {
     const values = { ...getValues(), imageLinks };
@@ -296,24 +295,17 @@ function MarketplaceCopyDebrandTrigger(
       terminalHandled = true;
 
       void (async (): Promise<void> => {
-        if (snapshot.status !== 'completed') {
-          if (persistedProductId) {
-            if (!active) return;
-            setError(
-              snapshot.errorMessage ??
-                `Debrand failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
-            );
-            setPendingRunId((current) => (current === trackedRunId ? null : current));
-            return;
-          }
-        }
-
         let response: Awaited<ReturnType<typeof getAiPathRun>>;
         try {
           response = await getAiPathRun(trackedRunId, { timeoutMs: 60_000 });
         } catch {
           if (!active) return;
-          setError('Debrand failed: unable to load the completed AI Path run details.');
+          setError(
+            snapshot.status !== 'completed'
+              ? snapshot.errorMessage ??
+                  `Debrand failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
+              : 'Debrand failed: unable to load the completed AI Path run details.'
+          );
           setPendingRunId((current) => (current === trackedRunId ? null : current));
           return;
         }
@@ -371,7 +363,7 @@ function MarketplaceCopyDebrandTrigger(
       active = false;
       unsubscribe();
     };
-  }, [pendingRunId, persistedProductId, resolveCurrentRowIndex, rowId, setValue]);
+  }, [pendingRunId, resolveCurrentRowIndex, rowId, setValue]);
 
   return (
     <div className='flex min-w-0 flex-col items-end gap-2'>

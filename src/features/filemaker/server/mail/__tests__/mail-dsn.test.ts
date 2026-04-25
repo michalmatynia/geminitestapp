@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { MailparserParsedMail } from '../mail-types';
 import {
   isLikelyFilemakerMailBounceMessage,
+  isLikelyFilemakerMailComplaintMessage,
+  parseFilemakerMailComplaintReport,
   parseFilemakerMailDsnReport,
 } from '../mail-dsn';
 
@@ -125,5 +127,71 @@ describe('parseFilemakerMailDsnReport', () => {
     expect(report.bouncedAddresses).toContain('nope@acme.com');
     expect(report.status).toBe('5.0.0');
     expect(report.isPermanent).toBe(true);
+  });
+});
+
+describe('isLikelyFilemakerMailComplaintMessage', () => {
+  it('detects ARF reports by message/feedback-report attachment', () => {
+    expect(
+      isLikelyFilemakerMailComplaintMessage(
+        buildParsed({
+          attachments: [
+            {
+              contentType: 'message/feedback-report',
+              content: Buffer.from('Feedback-Type: abuse\n'),
+            },
+          ] as MailparserParsedMail['attachments'],
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('detects ARF by complaint subject + Feedback-Type header in body', () => {
+    expect(
+      isLikelyFilemakerMailComplaintMessage(
+        buildParsed({
+          subject: 'Email Feedback Report for IP 1.2.3.4',
+          text: 'Feedback-Type: abuse\nUser-Agent: SomeISP-FBL/1.0\n',
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('returns false for normal mail', () => {
+    expect(
+      isLikelyFilemakerMailComplaintMessage(
+        buildParsed({ subject: 'Hello there', text: 'Just saying hi' })
+      )
+    ).toBe(false);
+  });
+});
+
+describe('parseFilemakerMailComplaintReport', () => {
+  it('extracts complainant address, feedback type, and user agent', () => {
+    const report = parseFilemakerMailComplaintReport(
+      buildParsed({
+        attachments: [
+          {
+            contentType: 'message/feedback-report',
+            content: Buffer.from(
+              'Feedback-Type: abuse\nUser-Agent: SomeISP-FBL/1.0\nVersion: 1\nOriginal-Rcpt-To: complainer@yahoo.com\n'
+            ),
+          },
+        ] as MailparserParsedMail['attachments'],
+      })
+    );
+
+    expect(report.complainedAddresses).toContain('complainer@yahoo.com');
+    expect(report.feedbackType).toBe('abuse');
+    expect(report.userAgent).toBe('SomeISP-FBL/1.0');
+  });
+
+  it('falls back to Final-Recipient when Original-Rcpt-To is absent', () => {
+    const report = parseFilemakerMailComplaintReport(
+      buildParsed({
+        text: 'Feedback-Type: abuse\nFinal-Recipient: rfc822; user@example.com\n',
+      })
+    );
+    expect(report.complainedAddresses).toContain('user@example.com');
   });
 });

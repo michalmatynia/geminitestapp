@@ -1,6 +1,9 @@
 import { extractTraderaCategoryPageChildren } from '@/features/integrations/services/tradera-listing/category-scrape-script';
 import { type StepId } from '../step-registry';
 import { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
+import {
+  parseTraderaPublicCategoryChildItems,
+} from './tradera-listing-form-category-public-page';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -155,6 +158,30 @@ export class TraderaCategorySequencer extends PlaywrightSequencer {
       'cookie_accept',
       accepted ? 'Cookie consent was handled.' : 'No cookie banner detected.'
     );
+  }
+
+  private buildPublicCategoryUrl(categoryId: string): string {
+    try {
+      const currentUrl = new URL(this.context.page.url());
+      currentUrl.pathname = `/en/category/${categoryId}`;
+      currentUrl.search = '';
+      currentUrl.hash = '';
+      return currentUrl.toString();
+    } catch {
+      return `https://www.tradera.com/en/category/${categoryId}`;
+    }
+  }
+
+  private mapPublicPageChildren(
+    parentId: string,
+    html: string
+  ): PageExtractResult['children'] {
+    return parseTraderaPublicCategoryChildItems(html).map((item) => ({
+      id: item.id,
+      name: item.name,
+      parentId,
+      url: this.buildPublicCategoryUrl(item.id),
+    }));
   }
 
   private async stepSeedExtract(): Promise<void> {
@@ -411,12 +438,19 @@ export class TraderaCategorySequencer extends PlaywrightSequencer {
         blockedTextHints,
       })) as PageExtractResult;
 
+      const publicPageChildren = this.mapPublicPageChildren(
+        current.id,
+        await page.content().catch(() => '')
+      );
+      const childCategories =
+        publicPageChildren.length > 0 ? publicPageChildren : pageResult.children;
+
       if (pageResult.blocked) {
         this.pageErrors.push({ categoryId: current.id, categoryName: current.name, blocked: true });
         continue;
       }
 
-      if (pageResult.children.length === 0) {
+      if (childCategories.length === 0) {
         const emptyPageState = {
           categoryId: current.id,
           categoryName: current.name,
@@ -429,7 +463,7 @@ export class TraderaCategorySequencer extends PlaywrightSequencer {
         }
       }
 
-      for (const child of pageResult.children) {
+      for (const child of childCategories) {
         if (!this.categoriesById.has(child.id)) {
           this.categoriesById.set(child.id, { ...child });
           this.crawlQueue.push({

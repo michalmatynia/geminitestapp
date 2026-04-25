@@ -12,6 +12,7 @@ import { startCaseResolverOcrQueue } from '@/server/queues/case-resolver-ocr';
 import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filemaker';
 import { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
 import { startFilemakerMailIdleManager } from '@/features/filemaker/workers/filemakerMailIdleManager';
+import { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';
 import {
   startPlaywrightListingQueue,
   startTraderaListingQueue,
@@ -61,6 +62,7 @@ const SPECIALIZED_STARTERS = [
   startFilemakerEmailCampaignSchedulerQueue,
   startFilemakerMailSyncSchedulerQueue,
   startFilemakerMailIdleManager,
+  startFilemakerCampaignColdPruneSchedulerQueue,
 ] as const satisfies readonly QueueStarter[];
 const KANGUR_SOCIAL_STARTERS = [
   startKangurSocialSchedulerQueue,

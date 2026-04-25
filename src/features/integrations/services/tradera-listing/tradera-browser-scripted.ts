@@ -233,8 +233,11 @@ const refreshTraderaAuthenticatedConnectionForScriptedRun = async ({
       listingId: listing.id,
     }),
     requestedBrowserMode: browserMode,
-    execute: async ({ context, page }) => {
-      await ensureLoggedIn(page, connection, listingFormUrl);
+    execute: async (session) => {
+      const { context, page } = session;
+      await ensureLoggedIn(page, connection, listingFormUrl, {
+        inputBehavior: session.runtime.settings,
+      });
       const storageState = await context.storageState();
       const updatedAt = new Date().toISOString();
       const repo = await getIntegrationRepository();
@@ -335,10 +338,7 @@ const buildTraderaScriptInput = async ({
     });
   const mappedCategory = categoryMapping.mapping;
   const shippingGroup = shippingGroupResolution.shippingGroup;
-  const englishTitle = toTrimmedString(product.name_en);
-  const duplicateSearchTerms = buildDuplicateSearchTerms(
-    englishTitle.length > 0 ? [englishTitle] : [title]
-  );
+  const duplicateSearchTerms = buildDuplicateSearchTerms([title]);
   const username = toTrimmedString(connection.username);
   const password =
     typeof connection.password === 'string' && connection.password.trim().length > 0
@@ -804,8 +804,7 @@ export const runTraderaBrowserCheckStatus = async ({
       integrationId: listing.integrationId,
       preferredLocales: ['en', 'pl', 'de'],
     });
-    const englishTitle = toTrimmedString(product.name_en);
-    verificationSearchTerms = buildDuplicateSearchTerms(englishTitle ? [englishTitle] : [resolvedCopy.title]);
+    verificationSearchTerms = buildDuplicateSearchTerms([resolvedCopy.title]);
     verificationBaseProductId = product.baseProductId ?? product.id;
     verificationDescriptionEn = toTrimmedString(resolvedCopy.description) || null;
   }
@@ -924,10 +923,7 @@ export const runTraderaBrowserMoveToUnsold = async ({
       integrationId: listing.integrationId,
       preferredLocales: ['en', 'pl', 'de'],
     });
-    const englishTitle = toTrimmedString(product.name_en);
-    verificationSearchTerms = buildDuplicateSearchTerms(
-      englishTitle ? [englishTitle] : [resolvedCopy.title]
-    );
+    verificationSearchTerms = buildDuplicateSearchTerms([resolvedCopy.title]);
   }
 
   const selectorRuntimeResolution = await resolveTraderaSelectorRegistryRuntime({

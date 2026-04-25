@@ -96,6 +96,25 @@ export const assertCampaignReadyForDelivery = (
   }
 };
 
+export const FILEMAKER_CAMPAIGN_BOUNCE_CIRCUIT_BREAKER_MIN_SAMPLE_SIZE = 20;
+
+export const shouldPauseRunForBounceRate = (input: {
+  campaign: FilemakerEmailCampaign;
+  deliveries: FilemakerEmailCampaignDelivery[];
+  minSampleSize?: number;
+}): boolean => {
+  const threshold = input.campaign.launch.pauseOnBounceRatePercent;
+  if (threshold == null || threshold < 0) return false;
+  const minSampleSize =
+    input.minSampleSize ?? FILEMAKER_CAMPAIGN_BOUNCE_CIRCUIT_BREAKER_MIN_SAMPLE_SIZE;
+  const progress = buildProgressSummary(input.deliveries);
+  const decided = progress.sentCount + progress.bouncedCount + progress.failedCount;
+  if (decided < minSampleSize) return false;
+  if (decided === 0) return false;
+  const bounceRate = (progress.bouncedCount / decided) * 100;
+  return bounceRate >= threshold;
+};
+
 export const applyBounceThresholdToCampaign = (input: {
   campaign: FilemakerEmailCampaign;
   deliveries: FilemakerEmailCampaignDelivery[];

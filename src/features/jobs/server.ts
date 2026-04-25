@@ -54,6 +54,7 @@ export {
   startFilemakerMailSyncQueue,
   stopFilemakerMailSyncQueue,
   enqueueFilemakerMailSyncJob,
+  startFilemakerCampaignColdPruneSchedulerQueue,
 } from '@/server/queues/filemaker';
 
 export {

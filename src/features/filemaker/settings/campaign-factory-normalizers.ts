@@ -38,7 +38,7 @@ const FILEMAKER_CAMPAIGN_EVENT_TYPES: FilemakerEmailCampaignEvent['type'][] = [
   'reply_received',
 ];
 const FILEMAKER_CAMPAIGN_SUPPRESSION_REASONS: FilemakerEmailCampaignSuppressionEntry['reason'][] =
-  ['manual_block', 'unsubscribed', 'bounced'];
+  ['manual_block', 'unsubscribed', 'bounced', 'complaint', 'cold'];
 
 const isNullishOrEmptyString = (input: unknown): boolean =>
   input === null || input === undefined || input === '';

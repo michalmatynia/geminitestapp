@@ -15,14 +15,21 @@ import {
 } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductFormParameterProvider } from '@/features/products/context/ProductFormParameterContext';
 
-const { fireAiPathTriggerEventMock, useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
+const {
+  fireAiPathTriggerEventMock,
+  useParametersMock,
+  useSimpleParametersMock,
+  useTitleTermsMock,
+} = vi.hoisted(() => ({
   fireAiPathTriggerEventMock: vi.fn(),
   useParametersMock: vi.fn(),
+  useSimpleParametersMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
+  useSimpleParameters: useSimpleParametersMock,
   useTitleTerms: useTitleTermsMock,
 }));
 
@@ -330,6 +337,10 @@ describe('Structured title to parameter mapping integration', () => {
     vi.clearAllMocks();
     useParametersMock.mockReturnValue({
       data: [linkedMaterialParameter],
+      isLoading: false,
+    });
+    useSimpleParametersMock.mockReturnValue({
+      data: [],
       isLoading: false,
     });
     useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({

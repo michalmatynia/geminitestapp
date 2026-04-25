@@ -29,7 +29,13 @@ export {
   isFilemakerMailAddressSuppressed,
   loadFilemakerMailSuppressionEntries,
   recordFilemakerMailBounceSuppressions,
+  recordFilemakerMailComplaintSuppressions,
   removeFilemakerMailSuppressionEntry,
 } from './server/campaign-suppression';
+export {
+  findFilemakerCampaignColdRecipients,
+  pruneFilemakerCampaignColdRecipients,
+  type FilemakerCampaignColdRecipient,
+} from './server/campaign-engagement-pruning';
 export * from './settings';
 export * from './types';

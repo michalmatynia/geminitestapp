@@ -714,6 +714,67 @@ describe('runTraderaBrowserListing scripted mode', () => {
     );
   });
 
+  it('uses Target Integration alternate copy in Tradera duplicate search input', async () => {
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      sku: 'SKU-1',
+      baseProductId: 'BASE-1',
+      categoryId: 'internal-category-1',
+      catalogId: 'catalog-1',
+      catalogs: [{ catalogId: 'catalog-1' }],
+      name_en: 'Base English title',
+      description_en: 'Base English description',
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-1'],
+          title: 'Target override title',
+          description: 'Target override description',
+        },
+      ],
+      price: 123,
+      imageLinks: ['https://cdn.example.com/a.jpg'],
+      images: [
+        {
+          imageFile: {
+            filepath: '/uploads/products/SKU-1/example.png',
+          },
+        },
+      ],
+    });
+
+    await runTraderaBrowserListing({
+      listing: {
+        id: 'listing-target-copy',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    });
+
+    expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          title: 'Target override title',
+          description: 'Target override description | Product ID: BASE-1 | SKU: SKU-1',
+          duplicateSearchTitle: 'Target override title',
+          duplicateSearchTerms: ['Target override title'],
+          rawDescriptionEn: 'Target override description',
+        }),
+      })
+    );
+  });
+
   it('passes the persisted Tradera listing url into scripted sync input', async () => {
     runPlaywrightListingScriptMock.mockResolvedValue({
       runId: 'run-sync-123',

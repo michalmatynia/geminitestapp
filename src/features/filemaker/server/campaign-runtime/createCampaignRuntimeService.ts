@@ -81,6 +81,7 @@ import {
   resolveCampaignBodyText,
   isFilemakerEmailCampaignPermanentFailureCategory,
   resolveFailureStatus,
+  shouldPauseRunForBounceRate,
 } from './runtime-utils';
 
 type FilemakerCampaignProcessReason = 'manual' | 'retry';
@@ -604,6 +605,21 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
               updatedAt: nowIso,
             }),
           });
+        }
+
+        if (shouldPauseRunForBounceRate({ campaign, deliveries })) {
+          eventRegistry = appendEventsToRegistry(eventRegistry, [
+            createFilemakerEmailCampaignEvent({
+              campaignId: campaign.id,
+              runId: run.id,
+              type: 'paused',
+              message: `Run halted mid-flight: bounce rate exceeded ${campaign.launch.pauseOnBounceRatePercent}% threshold to protect sender reputation.`,
+              runStatus: 'queued',
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            }),
+          ]);
+          break;
         }
       }
     }

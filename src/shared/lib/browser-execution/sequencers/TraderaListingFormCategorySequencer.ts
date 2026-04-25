@@ -1,38 +1,25 @@
 import { type StepId } from '../step-registry';
 import { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
 import type { TraderaCategorySequencerResult } from './TraderaCategorySequencer';
-
-// ─── Constants ──────────────────────────────────────────────────────────────
-
-const COOKIE_ACCEPT_SELECTORS = [
-  '#onetrust-accept-btn-handler',
-  'button#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',
-  'button:has-text("Accept all cookies")',
-  'button:has-text("Accept all")',
-  'button:has-text("Acceptera alla cookies")',
-  'button:has-text("Acceptera alla kakor")',
-  'button:has-text("Godkänn alla cookies")',
-  'button:has-text("Tillåt alla cookies")',
-] as const;
-
-const CATEGORY_TRIGGER_LABELS = ['Category', 'Kategori'] as const;
-const PICKER_SELECTOR = '[data-test-category-chooser="true"]';
-const AUTH_FAIL_URL_HINTS = ['/login', '/captcha', '/challenge', '/verification', '/verify'] as const;
-const AUTH_FAIL_SELECTORS = [
-  'form[action*="login"]',
-  'input[type="password"]',
-] as const;
+import type { TraderaListingFormCategoryPickerItem } from './tradera-listing-form-category-picker';
+import {
+  acceptTraderaListingFormCategoryCookies,
+  closeTraderaListingFormCategoryPicker,
+  isOnTraderaListingFormAuthPage,
+  openTraderaListingFormCategoryPicker,
+  readTraderaListingFormCategoryPickerItems,
+  TRADERA_LISTING_FORM_CATEGORY_PICKER_DIAGNOSTIC_SELECTORS,
+} from './tradera-listing-form-category-picker-automation';
+import { drillAndReadTraderaListingFormCategoryPath } from './tradera-listing-form-category-drill';
+import {
+  enrichTraderaListingFormCategoryItemsFromPublicPage,
+  fetchTraderaPublicCategoryChildItemsForPath,
+} from './tradera-listing-form-category-public-page';
+import { crawlTraderaListingFormCategoryTree } from './tradera-listing-form-category-tree-crawl';
 
 const TOTAL_BUDGET_MS = 270_000;
-const PICKER_SETTLE_MS = 700;
-const ITEM_CLICK_SETTLE_MS = 500;
 
-// ─── Types ──────────────────────────────────────────────────────────────────
-
-type PickerItem = {
-  name: string;
-  id: string;
-};
+type PickerItem = TraderaListingFormCategoryPickerItem;
 
 type CategoryEntry = {
   id: string;
@@ -40,11 +27,14 @@ type CategoryEntry = {
   parentId: string;
 };
 
+type EmptyResultInput = {
+  diagnostics: Record<string, unknown>;
+  crawlStats: Record<string, unknown>;
+};
+
 export type TraderaListingFormCategorySequencerInput = {
   listingFormUrl: string;
 };
-
-// ─── Sequencer ──────────────────────────────────────────────────────────────
 
 export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   private readonly listingFormUrl: string;
@@ -54,6 +44,8 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   private crawlStartTime = 0;
   private pagesVisited = 0;
   private budgetExhausted = false;
+  private retryCount = 0;
+  private diagnostics: Record<string, unknown> | null = null;
 
   public result: TraderaCategorySequencerResult | null = null;
 
@@ -72,7 +64,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
       case 'cookie_accept': await this.stepCookieAccept(); return;
       case 'categories_seed_extract': await this.stepSeedExtract(); return;
       case 'categories_crawl': await this.stepCrawl(); return;
-      case 'categories_finalize': await this.stepFinalize(); return;
+      case 'categories_finalize': this.stepFinalize(); return;
       case 'browser_close': this.stepBrowserClose(); return;
       default: throw new Error(`TraderaListingFormCategorySequencer: unknown step "${String(stepId)}"`);
     }
@@ -90,108 +82,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     this.context.tracker.skip(stepId, message);
   }
 
-  // ─── Picker helpers ────────────────────────────────────────────────────────
-
-  private async isPickerVisible(): Promise<boolean> {
-    return this.context.page.locator(PICKER_SELECTOR).first().isVisible().catch(() => false);
-  }
-
-  private async openCategoryPicker(): Promise<boolean> {
-    const { page } = this.context;
-
-    // Try ARIA role first (button or combobox labeled "Category"/"Kategori")
-    for (const label of CATEGORY_TRIGGER_LABELS) {
-      for (const role of ['button', 'combobox'] as const) {
-        const trigger = page.getByRole(role, { name: label }).first();
-        if (await trigger.isVisible({ timeout: 1_000 }).catch(() => false)) {
-          await trigger.click();
-          await this.wait(PICKER_SETTLE_MS);
-          if (await this.isPickerVisible()) return true;
-        }
-      }
-    }
-
-    // Fallback: XPath by label text → adjacent trigger
-    for (const label of CATEGORY_TRIGGER_LABELS) {
-      const escaped = label.replace(/"/g, '\\"');
-      const trigger = page
-        .locator(
-          `xpath=//*[normalize-space(text())="${escaped}"]/following::*[self::button or @role="button" or @role="combobox"][1]`
-        )
-        .first();
-      if (await trigger.isVisible({ timeout: 1_000 }).catch(() => false)) {
-        await trigger.click();
-        await this.wait(PICKER_SETTLE_MS);
-        if (await this.isPickerVisible()) return true;
-      }
-    }
-
-    return false;
-  }
-
-  private async closePicker(): Promise<void> {
-    await this.context.page.keyboard.press('Escape').catch(() => undefined);
-    await this.wait(350);
-  }
-
-  private async readPickerItems(): Promise<PickerItem[]> {
-    const { page } = this.context;
-    return page
-      .evaluate((pickerSel) => {
-        const picker = document.querySelector(pickerSel);
-        if (!picker) return [] as Array<{ name: string; id: string }>;
-
-        const toText = (value: unknown): string =>
-          typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
-
-        const seen = new Set<string>();
-        const results: Array<{ name: string; id: string }> = [];
-
-        const candidates = picker.querySelectorAll('[role="menuitem"], [role="option"], [role="radio"]');
-        for (const el of candidates) {
-          const name = toText(el.textContent ?? '');
-          if (!name || seen.has(name.toLowerCase())) continue;
-          seen.add(name.toLowerCase());
-
-          const id =
-            el.getAttribute('data-id') ??
-            el.getAttribute('data-category-id') ??
-            el.getAttribute('data-value') ??
-            el.getAttribute('value') ??
-            el.getAttribute('id') ??
-            '';
-
-          results.push({ name, id });
-        }
-
-        return results;
-      }, PICKER_SELECTOR)
-      .catch(() => []);
-  }
-
-  private async clickPickerItemByName(name: string): Promise<boolean> {
-    const { page } = this.context;
-    const picker = page.locator(PICKER_SELECTOR).first();
-
-    // Exact name match via getByRole
-    const byRole = picker.getByRole('menuitem', { name, exact: true }).first();
-    if (await byRole.isVisible({ timeout: 800 }).catch(() => false)) {
-      await byRole.click();
-      await this.wait(ITEM_CLICK_SETTLE_MS);
-      return true;
-    }
-
-    // Partial / text match fallback
-    const byText = picker.locator('[role="menuitem"], [role="option"]').filter({ hasText: name }).first();
-    if (await byText.isVisible({ timeout: 500 }).catch(() => false)) {
-      await byText.scrollIntoViewIfNeeded().catch(() => undefined);
-      await byText.click();
-      await this.wait(ITEM_CLICK_SETTLE_MS);
-      return true;
-    }
-
-    return false;
-  }
+  private waitForPicker = (ms: number): Promise<void> => this.wait(ms);
 
   private isBudgetExhausted(): boolean {
     return Date.now() - this.crawlStartTime > TOTAL_BUDGET_MS;
@@ -204,7 +95,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
-    return parentId ? `${parentId}:${slug}` : `lf:${slug}`;
+    return parentId.length > 0 ? `${parentId}:${slug}` : `lf:${slug}`;
   }
 
   private resolveId(item: PickerItem, parentId: string): string {
@@ -217,22 +108,25 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     }
   }
 
-  // ─── Auth check ────────────────────────────────────────────────────────────
-
-  private async isOnAuthPage(): Promise<boolean> {
-    const { page } = this.context;
-    const url = page.url().toLowerCase();
-    if (AUTH_FAIL_URL_HINTS.some((hint) => url.includes(hint))) return true;
-
-    for (const sel of AUTH_FAIL_SELECTORS) {
-      const visible = await page.locator(sel).first().isVisible({ timeout: 500 }).catch(() => false);
-      if (visible) return true;
+  private addRootCategories(): void {
+    for (const item of this.rootItems) {
+      const id = this.resolveId(item, '0');
+      this.addCategory(id, item.name, '0');
     }
-
-    return false;
   }
 
-  // ─── Step implementations ──────────────────────────────────────────────────
+  private setEmptyResult({ diagnostics, crawlStats }: EmptyResultInput): void {
+    this.skip('categories_crawl', 'Skipped because category picker could not be scraped.');
+    this.skip('categories_finalize', 'Skipped because category picker could not be scraped.');
+    this.skip('browser_close', 'Browser scrape flow ended.');
+    this.result = {
+      categories: [],
+      categorySource: 'listing-form-picker',
+      scrapedFrom: this.context.page.url(),
+      diagnostics,
+      crawlStats,
+    };
+  }
 
   private async stepBrowserPreparation(): Promise<void> {
     const config = this.getStepConfig('browser_preparation');
@@ -242,7 +136,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
         width: config.viewportWidth ?? 1_280,
         height: config.viewportHeight ?? 900,
       });
-      if (config.settleDelayMs !== null && config.settleDelayMs !== undefined && config.settleDelayMs > 0) {
+      if (config.settleDelayMs > 0) {
         await this.wait(config.settleDelayMs);
       }
     }
@@ -250,81 +144,78 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   }
 
   private async stepBrowserOpen(): Promise<void> {
+    await this.openListingForm();
+    this.complete('browser_open', 'Tradera listing form opened.');
+  }
+
+  private async openListingForm(): Promise<void> {
     const { page } = this.context;
     await page.goto(this.listingFormUrl, { waitUntil: 'domcontentloaded', timeout: 30_000 });
     await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => undefined);
     await this.wait(1_500);
-    this.complete('browser_open', 'Tradera listing form opened.');
   }
 
   private async stepCookieAccept(): Promise<void> {
-    const { page } = this.context;
-    let accepted = false;
-    for (const selector of COOKIE_ACCEPT_SELECTORS) {
-      const locator = page.locator(selector).first();
-      if (await locator.isVisible().catch(() => false)) {
-        await locator.click().catch(() => undefined);
-        await this.wait(600);
-        accepted = true;
-        break;
-      }
-    }
+    const accepted = await this.acceptCookies();
     this.complete(
       'cookie_accept',
       accepted ? 'Cookie consent was handled.' : 'No cookie banner detected.'
     );
   }
 
+  private async acceptCookies(): Promise<boolean> {
+    return acceptTraderaListingFormCategoryCookies({
+      page: this.context.page,
+      wait: this.waitForPicker,
+    });
+  }
+
   private async stepSeedExtract(): Promise<void> {
     this.note('categories_seed_extract', 'Opening category picker to read top-level categories.');
 
-    if (await this.isOnAuthPage()) {
+    if (await isOnTraderaListingFormAuthPage(this.context.page)) {
       this.context.tracker.fail(
         'categories_seed_extract',
         'Tradera login is required before fetching listing form categories.'
       );
-      this.skip('categories_crawl', 'Skipped because authentication failed.');
-      this.skip('categories_finalize', 'Skipped because authentication failed.');
-      this.skip('browser_close', 'Browser scrape flow ended.');
-      this.result = {
-        categories: [],
-        categorySource: 'listing-form-picker',
-        scrapedFrom: this.context.page.url(),
+      this.setEmptyResult({
         diagnostics: { reason: 'auth_required', formUrl: this.listingFormUrl },
         crawlStats: { pagesVisited: 0, rootCount: 0 },
-      };
+      });
       return;
     }
 
-    const opened = await this.openCategoryPicker();
+    const opened = await openTraderaListingFormCategoryPicker({
+      page: this.context.page,
+      wait: this.waitForPicker,
+    });
     if (!opened) {
       this.context.tracker.fail(
         'categories_seed_extract',
         'Could not locate the category picker trigger on the listing form.'
       );
-      this.skip('categories_crawl', 'Skipped because category picker could not be opened.');
-      this.skip('categories_finalize', 'Skipped because category picker could not be opened.');
-      this.skip('browser_close', 'Browser scrape flow ended.');
-      this.result = {
-        categories: [],
-        categorySource: 'listing-form-picker',
-        scrapedFrom: this.context.page.url(),
+      this.setEmptyResult({
         diagnostics: { reason: 'picker_not_found', formUrl: this.listingFormUrl },
         crawlStats: { pagesVisited: 0, rootCount: 0 },
-      };
+      });
       return;
     }
 
-    this.rootItems = await this.readPickerItems();
-    await this.closePicker();
+    this.rootItems = await readTraderaListingFormCategoryPickerItems(this.context.page);
+    if (this.rootItems.length === 0) {
+      this.diagnostics = {
+        reason: 'picker_opened_without_items',
+        formUrl: this.listingFormUrl,
+        pickerRootSelectors: TRADERA_LISTING_FORM_CATEGORY_PICKER_DIAGNOSTIC_SELECTORS,
+      };
+    }
+    await closeTraderaListingFormCategoryPicker({
+      page: this.context.page,
+      wait: this.waitForPicker,
+    });
 
     this.crawlStartTime = Date.now();
-
-    for (const item of this.rootItems) {
-      const id = this.resolveId(item, '0');
-      this.addCategory(id, item.name, '0');
-    }
-
+    this.addRootCategories();
     this.complete(
       'categories_seed_extract',
       `Found ${String(this.rootItems.length)} top-level categories.`
@@ -337,122 +228,90 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
       `Drilling through ${String(this.rootItems.length)} top-level categories.`
     );
 
-    let totalVisited = 0;
-
-    for (const l1Item of this.rootItems) {
-      if (this.isBudgetExhausted()) {
-        this.budgetExhausted = true;
-        break;
-      }
-
-      const l1Id = this.resolveId(l1Item, '0');
-      const l2Items = await this.drillAndRead([l1Item]);
-      totalVisited += 1;
-
-      if (l2Items === null) {
-        continue;
-      }
-
-      for (const l2Item of l2Items) {
-        const l2Id = this.resolveId(l2Item, l1Id);
-        this.addCategory(l2Id, l2Item.name, l1Id);
-      }
-
-      if (this.isBudgetExhausted() || l2Items.length === 0) {
-        if (l2Items.length === 0) continue;
-        this.budgetExhausted = true;
-        break;
-      }
-
-      for (const l2Item of l2Items) {
-        if (this.isBudgetExhausted()) {
-          this.budgetExhausted = true;
-          break;
-        }
-
-        const l2Id = this.resolveId(l2Item, l1Id);
-        const l3Items = await this.drillAndRead([l1Item, l2Item]);
-        totalVisited += 1;
-
-        if (l3Items === null || l3Items.length === 0) {
-          continue;
-        }
-
-        for (const l3Item of l3Items) {
-          const l3Id = this.resolveId(l3Item, l2Id);
-          this.addCategory(l3Id, l3Item.name, l2Id);
-        }
-      }
-    }
-
-    this.pagesVisited = totalVisited;
+    const crawlResult = await crawlTraderaListingFormCategoryTree({
+      rootItems: this.rootItems,
+      isBudgetExhausted: () => this.isBudgetExhausted(),
+      resolveId: (item, parentId) => this.resolveId(item, parentId),
+      addCategory: (id, name, parentId) => this.addCategory(id, name, parentId),
+      drillAndRead: (path) => this.drillAndRead(path),
+    });
+    this.pagesVisited = crawlResult.pagesVisited;
+    this.budgetExhausted = crawlResult.budgetExhausted;
 
     const message = this.budgetExhausted
-      ? `Category crawl stopped at budget limit after ${String(totalVisited)} picker interactions.`
-      : `Category crawl completed across ${String(totalVisited)} picker interactions.`;
-
+      ? `Category crawl stopped at budget limit after ${String(this.pagesVisited)} picker interactions.`
+      : `Category crawl completed across ${String(this.pagesVisited)} picker interactions.`;
     this.complete('categories_crawl', message);
   }
 
-  /**
-   * Opens the picker fresh, navigates to `path` by clicking each level's item
-   * in sequence, then reads and returns all items visible at that level.
-   *
-   * Returns null when:
-   * - The picker could not be opened
-   * - An intermediate item could not be found
-   * - An item in the path committed the selection (leaf reached before end of path)
-   */
-  private async drillAndRead(path: PickerItem[]): Promise<PickerItem[] | null> {
-    const { page } = this.context;
+  private async drillAndReadOnce(path: PickerItem[]): Promise<PickerItem[] | null> {
+    const items = await drillAndReadTraderaListingFormCategoryPath({
+      page: this.context.page,
+      path,
+      wait: this.waitForPicker,
+    });
+    const parent = path.at(-1);
+    if (parent === undefined) return items;
 
-    const opened = await this.openCategoryPicker();
-    if (!opened) return null;
-
-    for (const item of path) {
-      const clicked = await this.clickPickerItemByName(item.name);
-      if (!clicked) {
-        await this.closePicker();
-        return null;
-      }
-
-      const pickerStillOpen = await this.isPickerVisible();
-      if (!pickerStillOpen) {
-        // Item was a leaf — picker committed and closed automatically
-        return null;
-      }
+    if (items === null || items.length === 0) {
+      const publicItems = await fetchTraderaPublicCategoryChildItemsForPath(path).catch(
+        () => []
+      );
+      return publicItems.length > 0 ? publicItems : items;
     }
 
-    const items = await this.readPickerItems();
-    await this.closePicker();
+    return enrichTraderaListingFormCategoryItemsFromPublicPage({
+      items,
+      parent,
+      path,
+    }).catch(() => items);
+  }
+
+  private async resetListingFormForCategoryRetry(path: PickerItem[]): Promise<void> {
+    this.retryCount += 1;
+    this.context.log?.('tradera.listing-form-category.retrying-from-clean-form', {
+      path: path.map((p) => p.name),
+      retryCount: this.retryCount,
+      url: this.context.page.url(),
+    });
+    await closeTraderaListingFormCategoryPicker({
+      page: this.context.page,
+      wait: this.waitForPicker,
+    });
+    await this.openListingForm();
+    await this.acceptCookies();
+  }
+
+  private async drillAndRead(path: PickerItem[]): Promise<PickerItem[] | null> {
+    let items = await this.drillAndReadOnce(path);
+    if (items === null && !this.isBudgetExhausted()) {
+      await this.resetListingFormForCategoryRetry(path);
+      items = await this.drillAndReadOnce(path);
+    }
+    if (items === null) return null;
 
     this.context.log?.('tradera.listing-form-category.drilled', {
       path: path.map((p) => p.name),
       found: items.length,
-      url: page.url(),
+      url: this.context.page.url(),
     });
-
     return items;
   }
 
-  private async stepFinalize(): Promise<void> {
-    const { page } = this.context;
+  private stepFinalize(): void {
     this.note('categories_finalize', 'Finalizing listing form category output.');
-
-    const categories = Array.from(this.categoriesById.values());
-
     this.result = {
-      categories,
+      categories: Array.from(this.categoriesById.values()),
       categorySource: 'listing-form-picker',
-      scrapedFrom: page.url(),
-      diagnostics: null,
+      scrapedFrom: this.context.page.url(),
+      diagnostics: this.diagnostics,
       crawlStats: {
         pagesVisited: this.pagesVisited,
         rootCount: this.rootItems.length,
         budgetExhausted: this.budgetExhausted,
+        retryCount: this.retryCount,
       },
     };
-
     this.complete('categories_finalize', 'Listing form category output was prepared.');
   }
 

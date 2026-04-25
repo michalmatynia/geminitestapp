@@ -4,6 +4,8 @@ import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/pl
 const {
   getProductByIdMock,
   runPlaywrightListingScriptMock,
+  runPlaywrightConnectionNativeTaskMock,
+  persistPlaywrightConnectionStorageStateMock,
   runPlaywrightScrapeScriptMock,
   updateConnectionMock,
   accessMock,
@@ -29,6 +31,8 @@ const {
     logs: [],
     rawResult: {},
   }),
+  runPlaywrightConnectionNativeTaskMock: vi.fn().mockResolvedValue(undefined),
+  persistPlaywrightConnectionStorageStateMock: vi.fn().mockResolvedValue(undefined),
   runPlaywrightScrapeScriptMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   accessMock: vi.fn(),
@@ -102,6 +106,10 @@ vi.mock('@/features/playwright/server', async () => {
     ...actual,
     runPlaywrightListingScript: (...args: unknown[]) =>
       runPlaywrightListingScriptMock(...args) as Promise<unknown>,
+    runPlaywrightConnectionNativeTask: (...args: unknown[]) =>
+      runPlaywrightConnectionNativeTaskMock(...args) as Promise<unknown>,
+    persistPlaywrightConnectionStorageState: (...args: unknown[]) =>
+      persistPlaywrightConnectionStorageStateMock(...args) as Promise<unknown>,
     runPlaywrightScrapeScript: (...args: unknown[]) =>
       runPlaywrightScrapeScriptMock(...args) as Promise<unknown>,
     createTraderaListingStatusScrapePlaywrightInstance: (
@@ -137,7 +145,12 @@ vi.mock('./tradera-auth-email-code', () => ({
     resolveTraderaEmailVerificationCodeMock(...args),
 }));
 
-import { ensureLoggedIn, runTraderaBrowserCheckStatus, runTraderaBrowserListing } from './browser';
+import {
+  ensureLoggedIn,
+  runTraderaBrowserCheckStatus,
+  runTraderaBrowserListing,
+  runTraderaBrowserMoveToUnsold,
+} from './browser';
 import {
   LOGIN_SUCCESS_SELECTOR,
   TRADERA_AUTH_ERROR_SELECTORS,
@@ -174,6 +187,8 @@ beforeEach(() => {
     logs: [],
     rawResult: {},
   });
+  runPlaywrightConnectionNativeTaskMock.mockResolvedValue(undefined);
+  persistPlaywrightConnectionStorageStateMock.mockResolvedValue(undefined);
   accessMock.mockResolvedValue(undefined);
   copyFileMock.mockResolvedValue(undefined);
   mkdtempMock.mockResolvedValue('/tmp/tradera-browser-test');
@@ -659,6 +674,154 @@ describe('runTraderaBrowserCheckStatus', () => {
       },
     });
   });
+
+  it('uses Target Integration alternate copy for Tradera status verification search input', async () => {
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      baseProductId: 'BASE-1',
+      name_en: 'Base English title',
+      description_en: 'Base English description',
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-1'],
+          title: 'Target override title',
+          description: 'Target override description',
+        },
+      ],
+    });
+
+    await runTraderaBrowserCheckStatus({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        externalListingId: 'listing-123',
+        marketplaceData: {
+          tradera: {
+            listingUrl: 'https://www.tradera.com/item/123',
+          },
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+      } as never,
+      browserMode: 'headed',
+    });
+
+    expect(runPlaywrightScrapeScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          searchTitle: 'Target override title',
+          duplicateSearchTitle: 'Target override title',
+          duplicateSearchTerms: ['Target override title'],
+          rawDescriptionEn: 'Target override description',
+          baseProductId: 'BASE-1',
+        }),
+      })
+    );
+  });
+});
+
+describe('runTraderaBrowserMoveToUnsold', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    getProductByIdMock.mockResolvedValue({
+      id: 'product-1',
+      baseProductId: 'BASE-1',
+      name_en: 'Base English title',
+      description_en: 'Base English description',
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-1'],
+          title: 'Target override title',
+          description: 'Target override description',
+        },
+      ],
+    });
+    runPlaywrightScrapeScriptMock.mockResolvedValue({
+      runId: 'run-move-to-unsold',
+      effectiveBrowserMode: 'headed',
+      personaId: null,
+      executionSettings: {
+        headless: false,
+        slowMo: 0,
+        timeout: 30_000,
+        navigationTimeout: 30_000,
+        humanizeMouse: false,
+        mouseJitter: 0,
+        clickDelayMin: 0,
+        clickDelayMax: 0,
+        inputDelayMin: 0,
+        inputDelayMax: 0,
+        actionDelayMin: 0,
+        actionDelayMax: 0,
+        proxyEnabled: false,
+        emulateDevice: false,
+        deviceName: 'Desktop Chrome',
+      },
+      outputs: {
+        result: {
+          externalListingId: 'listing-123',
+          listingUrl: 'https://www.tradera.com/item/123',
+          status: 'ended',
+        },
+      },
+      rawResult: {
+        externalListingId: 'listing-123',
+        listingUrl: 'https://www.tradera.com/item/123',
+        status: 'ended',
+      },
+      finalUrl: null,
+      logs: [],
+      run: {
+        runId: 'run-move-to-unsold',
+        status: 'completed',
+        logs: [],
+        artifacts: [],
+        result: {
+          outputs: {
+            result: {
+              externalListingId: 'listing-123',
+              listingUrl: 'https://www.tradera.com/item/123',
+              status: 'ended',
+            },
+          },
+        },
+      },
+    });
+  });
+
+  it('uses Target Integration alternate copy for Tradera move-to-unsold search input', async () => {
+    await runTraderaBrowserMoveToUnsold({
+      listing: {
+        id: 'listing-1',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+        externalListingId: 'listing-123',
+        marketplaceData: {
+          tradera: {
+            listingUrl: 'https://www.tradera.com/item/123',
+          },
+        },
+      } as never,
+      connection: {
+        id: 'connection-1',
+      } as never,
+      browserMode: 'headed',
+    });
+
+    expect(runPlaywrightScrapeScriptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        input: expect.objectContaining({
+          listingUrl: 'https://www.tradera.com/item/123',
+          externalListingId: 'listing-123',
+          searchTitle: 'Target override title',
+        }),
+      })
+    );
+  });
 });
 
 describe('ensureLoggedIn', () => {
@@ -822,7 +985,7 @@ describe('ensureLoggedIn', () => {
     expect(LOGIN_SUCCESS_SELECTOR).toContain('button[aria-label*="Account"]');
   });
 
-  it('requires manual verification instead of retrying credential login when a stored session is invalid', async () => {
+  it('requires manual refresh when a stored session is invalid and no credentials are configured', async () => {
     const gotoMock = vi.fn(async (url: string) => {
       currentUrl = url.includes('/my/listings')
         ? 'https://www.tradera.com/en/login'
@@ -846,8 +1009,6 @@ describe('ensureLoggedIn', () => {
       ensureLoggedIn(
         page as never,
         {
-          username: 'user@example.com',
-          password: 'encrypted-password',
           playwrightStorageState: 'stored-state',
         } as never,
         'https://www.tradera.com/en/selling/new'
@@ -857,6 +1018,117 @@ describe('ensureLoggedIn', () => {
     expect(gotoMock).toHaveBeenCalledTimes(1);
     expect(gotoMock).toHaveBeenCalledWith(
       'https://www.tradera.com/en/my/listings?tab=active',
+      expect.objectContaining({
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      })
+    );
+  });
+
+  it('falls back to credential login when a stored session is invalid and credentials are configured', async () => {
+    let currentUrl = 'about:blank';
+    let phase: 'session-check' | 'login' | 'authenticated' = 'session-check';
+
+    const usernameField = {
+      count: async () => 1,
+      isVisible: async () => phase === 'login' || phase === 'session-check',
+      fill: vi.fn(),
+      click: vi.fn(),
+      innerText: vi.fn(async () => ''),
+    };
+    const passwordField = {
+      count: async () => 1,
+      isVisible: async () => phase === 'login' || phase === 'session-check',
+      fill: vi.fn(),
+      click: vi.fn(),
+      innerText: vi.fn(async () => ''),
+    };
+    const loginButton = {
+      count: async () => 1,
+      isVisible: async () => phase === 'login' || phase === 'session-check',
+      fill: vi.fn(),
+      click: vi.fn(async () => {
+        phase = 'authenticated';
+        currentUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+      }),
+      innerText: vi.fn(async () => ''),
+    };
+
+    const buildLocator = (selector: string) => ({
+      first: () => {
+        if (selector === '#email' || selector === 'input[name="email"]' || selector === 'input[type="email"]') {
+          return usernameField;
+        }
+        if (selector === '#password' || selector === 'input[name="password"]' || selector === 'input[type="password"]') {
+          return passwordField;
+        }
+        if (
+          selector === 'button[data-login-submit="true"]' ||
+          selector === '#sign-in-form button[type="submit"]' ||
+          selector === 'button:has-text("Sign in")' ||
+          selector === 'button:has-text("Logga in")'
+        ) {
+          return loginButton;
+        }
+
+        return {
+          count: async () => 1,
+          isVisible: async () => {
+            if (selector === LOGIN_SUCCESS_SELECTOR) return phase === 'authenticated';
+            if (selector === '#sign-in-form' || selector === 'form[data-sign-in-form="true"]' || selector === 'form[action*="login"]') {
+              return phase === 'login';
+            }
+            return false;
+          },
+          fill: vi.fn(),
+          click: vi.fn(),
+          innerText: vi.fn(async () => ''),
+        };
+      },
+    });
+
+    const gotoMock = vi.fn(async (url: string) => {
+      currentUrl = url;
+      if (url.includes('/my/listings')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'session-check';
+        return;
+      }
+      if (url.includes('/login')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'login';
+        return;
+      }
+      if (url.includes('/selling/new')) {
+        currentUrl = url;
+        phase = 'authenticated';
+      }
+    });
+
+    const page = {
+      goto: gotoMock,
+      url: () => currentUrl,
+      locator: buildLocator,
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      waitForTimeout: vi.fn(async () => undefined),
+    };
+
+    await ensureLoggedIn(
+      page as never,
+      {
+        username: 'user@example.com',
+        password: 'encrypted-password',
+        playwrightStorageState: 'stored-state',
+      } as never,
+      'https://www.tradera.com/en/selling/new'
+    );
+
+    expect(usernameField.fill).toHaveBeenCalledWith('user@example.com');
+    expect(passwordField.fill).toHaveBeenCalledWith('decrypted:encrypted-password');
+    expect(loginButton.click).toHaveBeenCalledTimes(1);
+    expect(gotoMock).toHaveBeenLastCalledWith(
+      'https://www.tradera.com/en/selling/new',
       expect.objectContaining({
         waitUntil: 'domcontentloaded',
         timeout: 30_000,
@@ -1008,6 +1280,172 @@ describe('ensureLoggedIn', () => {
         timeout: 30_000,
       })
     );
+  });
+
+  it('uses Playwright persona timing for credentials and email verification input', async () => {
+    resolveTraderaEmailVerificationCodeMock.mockResolvedValue({
+      code: '343079',
+      accountId: 'mail-account-1',
+      messageId: 'mail-message-1',
+      receivedAt: '2026-04-24T10:00:00.000Z',
+    });
+
+    let currentUrl = 'about:blank';
+    let phase: 'session-check' | 'login' | 'email-code' | 'authenticated' = 'session-check';
+
+    const buildInteractiveLocator = (
+      x: number,
+      visible: () => boolean
+    ) => ({
+      count: async () => 1,
+      isVisible: async () => visible(),
+      fill: vi.fn(),
+      click: vi.fn(),
+      pressSequentially: vi.fn(),
+      scrollIntoViewIfNeeded: vi.fn(async () => undefined),
+      boundingBox: vi.fn(async () => ({ x, y: 10, width: 20, height: 20 })),
+      innerText: vi.fn(async () => ''),
+    });
+
+    const usernameField = buildInteractiveLocator(
+      10,
+      () => phase === 'login' || phase === 'session-check'
+    );
+    const passwordField = buildInteractiveLocator(
+      50,
+      () => phase === 'login' || phase === 'session-check'
+    );
+    const loginButton = buildInteractiveLocator(
+      200,
+      () => phase === 'login' || phase === 'session-check'
+    );
+    const codeField = buildInteractiveLocator(90, () => phase === 'email-code');
+    const codeSubmitButton = buildInteractiveLocator(300, () => phase === 'email-code');
+
+    const buildLocator = (selector: string) => ({
+      first: () => {
+        if (selector === '#email' || selector === 'input[name="email"]' || selector === 'input[type="email"]') {
+          return usernameField;
+        }
+        if (selector === '#password' || selector === 'input[name="password"]' || selector === 'input[type="password"]') {
+          return passwordField;
+        }
+        if (
+          selector === 'button[data-login-submit="true"]' ||
+          selector === '#sign-in-form button[type="submit"]' ||
+          selector === 'button:has-text("Sign in")' ||
+          selector === 'button:has-text("Logga in")'
+        ) {
+          return loginButton;
+        }
+        if (selector === 'input[autocomplete="one-time-code"]') {
+          return codeField;
+        }
+        if (
+          selector === 'button[type="submit"]' ||
+          selector === 'button:has-text("Verify")'
+        ) {
+          return codeSubmitButton;
+        }
+
+        return {
+          count: async () => 1,
+          isVisible: async () => {
+            if (selector === LOGIN_SUCCESS_SELECTOR) return phase === 'authenticated';
+            if (selector === '#sign-in-form' || selector === 'form[data-sign-in-form="true"]' || selector === 'form[action*="login"]') {
+              return phase === 'login';
+            }
+            return false;
+          },
+          fill: vi.fn(),
+          click: vi.fn(),
+          innerText: vi.fn(async () => ''),
+        };
+      },
+    });
+
+    const gotoMock = vi.fn(async (url: string) => {
+      currentUrl = url;
+      if (url.includes('/my/listings')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'session-check';
+        return;
+      }
+      if (url.includes('/login')) {
+        currentUrl = 'https://www.tradera.com/en/login';
+        phase = 'login';
+        return;
+      }
+      if (url.includes('/selling/new')) {
+        currentUrl = url;
+        phase = 'authenticated';
+      }
+    });
+    const mouseClickMock = vi.fn(async (x: number) => {
+      if (x === 210) {
+        phase = 'email-code';
+        currentUrl = 'https://www.tradera.com/en/verification';
+      }
+      if (x === 310) {
+        phase = 'authenticated';
+        currentUrl = 'https://www.tradera.com/en/my/listings?tab=active';
+      }
+    });
+
+    const page = {
+      goto: gotoMock,
+      url: () => currentUrl,
+      locator: buildLocator,
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      waitForTimeout: vi.fn(async () => undefined),
+      keyboard: { press: vi.fn() },
+      mouse: {
+        move: vi.fn(async () => undefined),
+        click: mouseClickMock,
+      },
+    };
+
+    await ensureLoggedIn(
+      page as never,
+      {
+        username: 'user@example.com',
+        password: 'encrypted-password',
+      } as never,
+      'https://www.tradera.com/en/selling/new',
+      {
+        inputBehavior: {
+          humanizeMouse: true,
+          mouseJitter: 0,
+          clickDelayMin: 7,
+          clickDelayMax: 7,
+          inputDelayMin: 12,
+          inputDelayMax: 12,
+          actionDelayMin: 0,
+          actionDelayMax: 0,
+        },
+      }
+    );
+
+    expect(usernameField.fill).toHaveBeenCalledWith('');
+    expect(usernameField.pressSequentially).toHaveBeenCalledWith('user@example.com', {
+      delay: 12,
+    });
+    expect(passwordField.fill).toHaveBeenCalledWith('');
+    expect(passwordField.pressSequentially).toHaveBeenCalledWith(
+      'decrypted:encrypted-password',
+      { delay: 12 }
+    );
+    expect(codeField.fill).toHaveBeenCalledWith('');
+    expect(codeField.pressSequentially).toHaveBeenCalledWith('343079', {
+      delay: 12,
+    });
+    expect(mouseClickMock).toHaveBeenCalledWith(210, 20, { delay: 7 });
+    expect(mouseClickMock).toHaveBeenCalledWith(310, 20, { delay: 7 });
+    expect(resolveTraderaEmailVerificationCodeMock).toHaveBeenCalledWith({
+      emailAddress: 'user@example.com',
+      requestedAfter: expect.any(String),
+    });
   });
 
   it('raises a captcha-specific auth_required error after submit when Tradera demands manual verification', async () => {

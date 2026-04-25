@@ -407,16 +407,21 @@ export function useSimpleParameters(
   catalogId?: string,
   options?: ProductMetadataQueryOptions
 ): ListQuery<ProductSimpleParameter> {
-  const queryKey = productMetadataKeys.simpleParameters(catalogId ?? null);
+  const normalizedCatalogId = catalogId?.trim() ?? '';
+  const queryCatalogId = normalizedCatalogId.length > 0 ? normalizedCatalogId : null;
+  const queryKey = productMetadataKeys.simpleParameters(queryCatalogId);
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductSimpleParameter[]> => {
-      if (!catalogId) return [];
-      return await api.get<ProductSimpleParameter[]>(
-        `/api/v2/products/simple-parameters?catalogId=${encodeURIComponent(catalogId)}`
-      );
+      if (normalizedCatalogId.length === 0) return [];
+      return await api.get<ProductSimpleParameter[]>('/api/v2/products/simple-parameters', {
+        params: {
+          catalogId: normalizedCatalogId,
+        },
+        cache: 'no-store',
+      });
     },
-    enabled: Boolean(catalogId) && (options?.enabled ?? true),
+    enabled: normalizedCatalogId.length > 0 && (options?.enabled ?? true),
     ...STABLE_METADATA_QUERY_OPTIONS,
     meta: {
       source: 'products.hooks.useSimpleParameters',

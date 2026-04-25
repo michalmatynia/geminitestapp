@@ -1,11 +1,26 @@
 import { MailPlus, RefreshCcw } from 'lucide-react';
-import React, { startTransition } from 'react';
+import React, { startTransition, useMemo } from 'react';
 
 import { Button, Checkbox, Input } from '@/shared/ui/primitives.public';
 import { FormField, FormSection } from '@/shared/ui/forms-and-actions.public';
 
+import {
+  evaluateFilemakerMailAccountDmarcAlignment,
+  type FilemakerMailDmarcAlignmentWarning,
+} from '../../mail-utils';
 import { useMailPageContext } from '../FilemakerMail.context';
 import { buildFilemakerMailComposeHref as buildComposeHref } from '../../components/FilemakerMailSidebar.helpers';
+
+const DMARC_WARNING_LABELS: Record<FilemakerMailDmarcAlignmentWarning, string> = {
+  dkim_disabled:
+    'DKIM is not configured. Mail sent from this account will not be signed — large receivers may flag it as unauthenticated.',
+  dkim_partially_configured:
+    'DKIM is partially configured. Domain, selector, and private key are all required for signing to work.',
+  dkim_domain_misaligned:
+    "DKIM domain doesn't share the From-address organisational domain — DMARC alignment will fail and receivers will treat the message as unsigned.",
+  reply_to_domain_misaligned:
+    "Reply-To address is on a different organisational domain than From — engagement signal harm and some receivers downgrade reputation.",
+};
 
 export function MailAccountSettingsSection(): React.JSX.Element {
   const {
@@ -21,6 +36,27 @@ export function MailAccountSettingsSection(): React.JSX.Element {
     isSavingAccount,
     router,
   } = useMailPageContext();
+
+  const dmarcAlignment = useMemo(
+    () =>
+      evaluateFilemakerMailAccountDmarcAlignment({
+        emailAddress: draft.emailAddress,
+        replyToEmail: draft.replyToEmail,
+        dkimDomain: draft.dkimDomain,
+        dkimKeySelector: draft.dkimKeySelector,
+        hasDkimPrivateKey:
+          (draft.dkimPrivateKey ?? '').trim().length > 0 ||
+          Boolean(selectedAccount?.dkimPrivateKeySettingKey),
+      }),
+    [
+      draft.emailAddress,
+      draft.replyToEmail,
+      draft.dkimDomain,
+      draft.dkimKeySelector,
+      draft.dkimPrivateKey,
+      selectedAccount?.dkimPrivateKeySettingKey,
+    ]
+  );
 
   return (
     <div className='space-y-6 rounded-lg border border-border/60 bg-card/25 p-4'>
@@ -258,6 +294,19 @@ export function MailAccountSettingsSection(): React.JSX.Element {
               autoComplete='off'
             />
           </FormField>
+          {dmarcAlignment.warnings.length > 0 && draft.emailAddress.trim().length > 0 ? (
+            <div
+              role='alert'
+              className='rounded border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200'
+            >
+              <div className='font-semibold'>DMARC alignment warnings</div>
+              <ul className='mt-1 list-disc space-y-1 pl-4'>
+                {dmarcAlignment.warnings.map((warning) => (
+                  <li key={warning}>{DMARC_WARNING_LABELS[warning]}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </FormSection>
         <div className='flex items-center gap-6'>
           <label

@@ -264,6 +264,7 @@ export const runTraderaBrowserListingStandard = async ({
       listingEditorUrl = buildListingFormUrlWithCategoryId(listingFormUrl, mappedCategoryExternalId);
 
       await ensureLoggedIn(page, connection, listingEditorUrl, {
+        inputBehavior: session.runtime.settings,
         onStatus: (update: TraderaEnsureLoggedInStatusUpdate) => {
           switch (update.status) {
             case 'opening_session_check':

@@ -30,6 +30,17 @@ const DIAGNOSTIC_LINE_PATTERNS = [
 const DIAGNOSTIC_CODE_PATTERN = /^diagnostic-code:\s*(.+)$/im;
 const STATUS_PATTERN = /^status:\s*([0-9.]+)/im;
 
+const ARF_FEEDBACK_TYPE_PATTERN = /^feedback-type:\s*(.+)$/im;
+const ARF_ORIGINAL_RCPT_PATTERN = /^original-rcpt-to:\s*(.+)$/im;
+const ARF_USER_AGENT_PATTERN = /^user-agent:\s*(.+)$/im;
+
+const COMPLAINT_SUBJECT_PATTERNS = [
+  /spam\s+report/i,
+  /abuse\s+report/i,
+  /feedback\s+report/i,
+  /complaint/i,
+];
+
 const EMAIL_REGEX = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 
 const normalizeAddress = (value: string | null | undefined): string =>
@@ -55,6 +66,7 @@ const collectReportText = (parsed: MailparserParsedMail): string => {
     const contentType = (attachment.contentType ?? '').toLowerCase();
     if (
       contentType.startsWith('message/delivery-status') ||
+      contentType.startsWith('message/feedback-report') ||
       contentType.startsWith('message/rfc822') ||
       contentType.startsWith('text/')
     ) {
@@ -67,6 +79,13 @@ const collectReportText = (parsed: MailparserParsedMail): string => {
     }
   }
   return parts.join('\n');
+};
+
+const hasFeedbackReportAttachment = (parsed: MailparserParsedMail): boolean => {
+  const attachments = Array.isArray(parsed.attachments) ? parsed.attachments : [];
+  return attachments.some((attachment) =>
+    (attachment.contentType ?? '').toLowerCase().startsWith('message/feedback-report')
+  );
 };
 
 const fromLocalPart = (address: string): string => {
@@ -137,5 +156,57 @@ export const parseFilemakerMailDsnReport = (
     diagnosticCode,
     status,
     isPermanent,
+  };
+};
+
+export type FilemakerMailComplaintReport = {
+  complainedAddresses: string[];
+  feedbackType: string | null;
+  userAgent: string | null;
+};
+
+export const isLikelyFilemakerMailComplaintMessage = (
+  parsed: MailparserParsedMail
+): boolean => {
+  if (hasFeedbackReportAttachment(parsed)) return true;
+  const subject = (parsed.subject ?? '').trim();
+  if (subject && COMPLAINT_SUBJECT_PATTERNS.some((pattern) => pattern.test(subject))) {
+    const report = collectReportText(parsed);
+    if (ARF_FEEDBACK_TYPE_PATTERN.test(report)) return true;
+  }
+  return false;
+};
+
+export const parseFilemakerMailComplaintReport = (
+  parsed: MailparserParsedMail
+): FilemakerMailComplaintReport => {
+  const report = collectReportText(parsed);
+  const complained = new Set<string>();
+
+  const rcptMatches = report.matchAll(
+    new RegExp(ARF_ORIGINAL_RCPT_PATTERN.source, 'gim')
+  );
+  for (const match of rcptMatches) {
+    const candidate = extractEmailFromLine(match[1] ?? '');
+    if (candidate) complained.add(candidate);
+  }
+
+  if (complained.size === 0) {
+    for (const pattern of DIAGNOSTIC_LINE_PATTERNS) {
+      const matches = report.matchAll(new RegExp(pattern.source, 'gim'));
+      for (const match of matches) {
+        const candidate = extractEmailFromLine(match[1] ?? '');
+        if (candidate) complained.add(candidate);
+      }
+    }
+  }
+
+  const feedbackTypeMatch = report.match(ARF_FEEDBACK_TYPE_PATTERN);
+  const userAgentMatch = report.match(ARF_USER_AGENT_PATTERN);
+
+  return {
+    complainedAddresses: Array.from(complained),
+    feedbackType: feedbackTypeMatch ? feedbackTypeMatch[1]!.trim() : null,
+    userAgent: userAgentMatch ? userAgentMatch[1]!.trim() : null,
   };
 };

@@ -100,6 +100,14 @@ describe('runTraderaBrowserListingStandard', () => {
       slowMo: 0,
       timeout: 30_000,
       navigationTimeout: 30_000,
+      humanizeMouse: true,
+      mouseJitter: 4,
+      clickDelayMin: 7,
+      clickDelayMax: 7,
+      inputDelayMin: 12,
+      inputDelayMax: 12,
+      actionDelayMin: 0,
+      actionDelayMax: 0,
       emulateDevice: false,
       deviceName: null,
       proxyEnabled: false,
@@ -219,7 +227,14 @@ describe('runTraderaBrowserListingStandard', () => {
       expect.anything(),
       expect.objectContaining({ id: 'connection-1' }),
       'https://www.tradera.com/en/selling/new?categoryId=292904',
-      expect.anything()
+      expect.objectContaining({
+        inputBehavior: expect.objectContaining({
+          humanizeMouse: true,
+          inputDelayMin: expect.any(Number),
+          inputDelayMax: expect.any(Number),
+        }),
+        onStatus: expect.any(Function),
+      })
     );
     expect(resolveTraderaCategoryMappingResolutionForProductMock).toHaveBeenCalledWith({
       connectionId: 'connection-1',

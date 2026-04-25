@@ -105,6 +105,61 @@ export const recordFilemakerMailBounceSuppressions = async (input: {
   return { addedCount, skippedCount };
 };
 
+export const recordFilemakerMailComplaintSuppressions = async (input: {
+  addresses: string[];
+  notes: string;
+  campaignId?: string | null;
+  runId?: string | null;
+  deliveryId?: string | null;
+}): Promise<{ addedCount: number; skippedCount: number }> => {
+  const targets = Array.from(
+    new Set(input.addresses.map(normalizeAddress).filter(Boolean))
+  );
+  if (targets.length === 0) return { addedCount: 0, skippedCount: 0 };
+
+  const raw = await readFilemakerCampaignSettingValue(
+    FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY
+  );
+  let registry = parseFilemakerEmailCampaignSuppressionRegistry(raw);
+  const nowIso = new Date().toISOString();
+  let addedCount = 0;
+  let skippedCount = 0;
+
+  for (const emailAddress of targets) {
+    const existing = registry.entries.find(
+      (entry) => normalizeAddress(entry.emailAddress) === emailAddress
+    );
+    if (existing) {
+      skippedCount += 1;
+      continue;
+    }
+    registry = upsertFilemakerEmailCampaignSuppressionEntry({
+      registry,
+      entry: createFilemakerEmailCampaignSuppressionEntry({
+        emailAddress,
+        reason: 'complaint',
+        actor: 'system',
+        campaignId: input.campaignId ?? null,
+        runId: input.runId ?? null,
+        deliveryId: input.deliveryId ?? null,
+        notes: input.notes,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      }),
+    });
+    addedCount += 1;
+  }
+
+  if (addedCount > 0) {
+    await upsertFilemakerCampaignSettingValue(
+      FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
+      JSON.stringify(toPersistedFilemakerEmailCampaignSuppressionRegistry(registry))
+    );
+  }
+
+  return { addedCount, skippedCount };
+};
+
 export const removeFilemakerMailSuppressionEntry = async (
   emailAddress: string
 ): Promise<{ removed: boolean; entry: FilemakerEmailCampaignSuppressionEntry | null }> => {

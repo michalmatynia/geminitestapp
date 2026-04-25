@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { Language } from '@/shared/contracts/internationalization';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import {
@@ -26,17 +26,20 @@ const {
   getAiPathRunMock,
   subscribeToTrackedAiPathRunMock,
   useParametersMock,
+  useSimpleParametersMock,
   useTitleTermsMock,
 } = vi.hoisted(() => ({
   fireAiPathTriggerEventMock: vi.fn(),
   getAiPathRunMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
   useParametersMock: vi.fn(),
+  useSimpleParametersMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
 }));
 
 vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
+  useSimpleParameters: useSimpleParametersMock,
   useTitleTerms: useTitleTermsMock,
 }));
 
@@ -359,18 +362,24 @@ const createProduct = ({
 function renderParameters({
   parameters,
   parameterDefinitions = [textParameter],
+  simpleParameterDefinitions = [],
   nameEn = 'Product 1',
   descriptionEn = '',
   imageLinks = [],
 }: {
   parameters: NonNullable<ProductWithImages['parameters']>;
   parameterDefinitions?: ProductParameter[];
+  simpleParameterDefinitions?: ProductSimpleParameter[];
   nameEn?: string;
   descriptionEn?: string;
   imageLinks?: string[];
 }) {
   useParametersMock.mockReturnValue({
     data: parameterDefinitions,
+    isLoading: false,
+  });
+  useSimpleParametersMock.mockReturnValue({
+    data: simpleParameterDefinitions,
     isLoading: false,
   });
 
@@ -429,6 +438,10 @@ describe('ProductFormParameters', () => {
     fireAiPathTriggerEventMock.mockResolvedValue(undefined);
     subscribeToTrackedAiPathRunMock.mockReturnValue(vi.fn());
     getAiPathRunMock.mockResolvedValue({ ok: true, data: {} });
+    useSimpleParametersMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
     useTitleTermsMock.mockImplementation(() => ({
       data: [],
       isLoading: false,
@@ -608,6 +621,46 @@ describe('ProductFormParameters', () => {
     expect(screen.getByPlaceholderText('Value (Polish)')).toHaveValue('Uzywany');
   });
 
+  it('renders saved legacy simple parameters when no synced parameter definitions exist', () => {
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Used',
+        },
+      ],
+      parameterDefinitions: [],
+      simpleParameterDefinitions: [
+        {
+          id: 'condition',
+          catalogId: 'catalog-1',
+          name_en: 'Condition',
+        },
+      ],
+    });
+
+    expect(screen.queryByText('No parameters')).not.toBeInTheDocument();
+    expect(screen.getByText('Condition')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Used');
+  });
+
+  it('renders saved legacy parameters when their metadata definition is gone', () => {
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'legacy_condition',
+          value: 'Used',
+        },
+      ],
+      parameterDefinitions: [],
+      simpleParameterDefinitions: [],
+    });
+
+    expect(screen.queryByText('No parameters')).not.toBeInTheDocument();
+    expect(screen.getByText('Legacy Condition')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Used');
+  });
+
   it('renders linked parameters as synced read-only values from English Title terms', () => {
     const linkedMaterialParameter = {
       id: 'material',
@@ -644,6 +697,55 @@ describe('ProductFormParameters', () => {
     expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Metal');
     expect(screen.getByPlaceholderText('Value (English)')).toBeDisabled();
     expect(screen.getByLabelText('Remove parameter')).toBeDisabled();
+  });
+
+  it('renders saved legacy simple parameters alongside synced title parameters', () => {
+    const linkedMaterialParameter = {
+      id: 'material',
+      name_en: 'Material',
+      name_pl: 'Materiał',
+      selectorType: 'text',
+      linkedTitleTermType: 'material',
+    } as Partial<ProductParameter> as ProductParameter;
+
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'material'
+          ? [
+              {
+                id: 'term-metal',
+                catalogId: 'catalog-1',
+                type: 'material',
+                name_en: 'Metal',
+                name_pl: 'Metal PL',
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Used',
+        },
+      ],
+      parameterDefinitions: [linkedMaterialParameter],
+      simpleParameterDefinitions: [
+        {
+          id: 'condition',
+          catalogId: 'catalog-1',
+          name_en: 'Condition',
+        },
+      ],
+      nameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+
+    expect(screen.getByText('Condition')).toBeInTheDocument();
+    expect(screen.getByText('Synced from English Title')).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText('Value (English)')[0]).toHaveValue('Used');
+    expect(screen.getAllByPlaceholderText('Value (English)')[1]).toHaveValue('Metal');
   });
 
   it('shows the English synced value on the Polish tab when no Polish term translation exists', async () => {

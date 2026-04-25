@@ -4,6 +4,8 @@ import { validatePlaywrightNodeScript } from '@/features/ai/ai-paths/services/pl
 const {
   getProductByIdMock,
   runPlaywrightListingScriptMock,
+  runPlaywrightConnectionNativeTaskMock,
+  persistPlaywrightConnectionStorageStateMock,
   runPlaywrightScrapeScriptMock,
   updateConnectionMock,
   accessMock,
@@ -28,6 +30,8 @@ const {
     logs: [],
     rawResult: {},
   }),
+  runPlaywrightConnectionNativeTaskMock: vi.fn().mockResolvedValue(undefined),
+  persistPlaywrightConnectionStorageStateMock: vi.fn().mockResolvedValue(undefined),
   runPlaywrightScrapeScriptMock: vi.fn(),
   updateConnectionMock: vi.fn(),
   accessMock: vi.fn(),
@@ -100,6 +104,10 @@ vi.mock('@/features/playwright/server', async () => {
     ...actual,
     runPlaywrightListingScript: (...args: unknown[]) =>
       runPlaywrightListingScriptMock(...args) as Promise<unknown>,
+    runPlaywrightConnectionNativeTask: (...args: unknown[]) =>
+      runPlaywrightConnectionNativeTaskMock(...args) as Promise<unknown>,
+    persistPlaywrightConnectionStorageState: (...args: unknown[]) =>
+      persistPlaywrightConnectionStorageStateMock(...args) as Promise<unknown>,
     runPlaywrightScrapeScript: (...args: unknown[]) =>
       runPlaywrightScrapeScriptMock(...args) as Promise<unknown>,
     createTraderaListingStatusScrapePlaywrightInstance: (

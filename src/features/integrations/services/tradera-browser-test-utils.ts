@@ -4,6 +4,11 @@ import {
   TRADERA_COOKIE_ACCEPT_SELECTORS,
   TRADERA_LOGIN_SUCCESS_SELECTORS,
 } from '@/features/integrations/services/tradera-listing/config';
+import {
+  clickWithTraderaHumanizedInput,
+  fillWithTraderaHumanizedInput,
+  waitForTraderaHumanizedPause,
+} from '@/features/integrations/services/tradera-listing/tradera-humanized-input';
 
 import type { Locator, Page } from 'playwright';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -22,6 +27,41 @@ export const TRADERA_ERROR_SELECTOR = [
 ].join(', ');
 
 type FailHandler = (step: string, detail: string, status?: number) => Promise<never>;
+type SafeWaitForSelectorResult = Awaited<ReturnType<Page['waitForSelector']>>;
+type SafeGotoResult = Awaited<ReturnType<Page['goto']>>;
+
+export type TraderaBrowserTestUtils = {
+  safeWaitForSelector: (
+    selector: string,
+    options: Parameters<Page['waitForSelector']>[1],
+    label: string
+  ) => Promise<SafeWaitForSelectorResult>;
+  safeWaitFor: (
+    locator: Locator,
+    options: Parameters<Locator['waitFor']>[0],
+    label: string
+  ) => Promise<void>;
+  safeCount: (locator: Locator, label: string) => Promise<number>;
+  safeIsVisible: (locator: Locator, label: string) => Promise<boolean>;
+  safeInnerText: (locator: Locator, label: string) => Promise<string>;
+  safeGoto: (
+    url: string,
+    options: Parameters<Page['goto']>[1],
+    label: string
+  ) => Promise<SafeGotoResult>;
+  safeWaitForLoadState: (
+    state: Parameters<Page['waitForLoadState']>[0],
+    options: Parameters<Page['waitForLoadState']>[1],
+    label: string
+  ) => Promise<void>;
+  failWithDebug: FailHandler;
+  humanizedPause: (min?: number, max?: number) => Promise<void>;
+  humanizedClick: (locator: Locator) => Promise<void>;
+  humanizedFill: (locator: Locator, value: string) => Promise<void>;
+  acceptCookieConsent: () => Promise<boolean>;
+  successSelector: string;
+  errorSelector: string;
+};
 
 export const createTraderaBrowserTestUtils = (input: {
   page: Page;
@@ -35,15 +75,12 @@ export const createTraderaBrowserTestUtils = (input: {
   inputDelayMax: number;
   actionDelayMin: number;
   actionDelayMax: number;
-}) => {
-  const randomBetween = (min: number, max: number): number =>
-    Math.floor(Math.random() * (max - min + 1)) + min;
-
+}): TraderaBrowserTestUtils => {
   const safeWaitForSelector = async (
     selector: string,
     options: Parameters<Page['waitForSelector']>[1],
     label: string
-  ) => {
+  ): Promise<SafeWaitForSelectorResult> => {
     try {
       return await input.page.waitForSelector(selector, options);
     } catch (error) {
@@ -97,7 +134,11 @@ export const createTraderaBrowserTestUtils = (input: {
     }
   };
 
-  const safeGoto = async (url: string, options: Parameters<Page['goto']>[1], label: string) => {
+  const safeGoto = async (
+    url: string,
+    options: Parameters<Page['goto']>[1],
+    label: string
+  ): Promise<SafeGotoResult> => {
     try {
       return await input.page.goto(url, options);
     } catch (error) {
@@ -132,47 +173,36 @@ export const createTraderaBrowserTestUtils = (input: {
     min = input.actionDelayMin,
     max = input.actionDelayMax
   ): Promise<void> => {
-    if (!input.humanizeMouse) return;
-    const delay = randomBetween(min, max);
-    if (delay > 0) {
-      await input.page.waitForTimeout(delay);
-    }
+    await waitForTraderaHumanizedPause({
+      page: input.page,
+      inputBehavior: input,
+      min,
+      max,
+    });
   };
 
   const humanizedClick = async (locator: Locator): Promise<void> => {
-    if (!input.humanizeMouse) {
-      await locator.click();
-      return;
-    }
-    const box = await locator.boundingBox();
-    if (!box) {
-      await locator.click();
-      return;
-    }
-    const offsetX = randomBetween(-input.mouseJitter, input.mouseJitter);
-    const offsetY = randomBetween(-input.mouseJitter, input.mouseJitter);
-    const targetX = box.x + box.width / 2 + offsetX;
-    const targetY = box.y + box.height / 2 + offsetY;
-    const steps = randomBetween(8, 18);
-    await input.page.mouse.move(targetX, targetY, { steps });
-    const delay = randomBetween(input.clickDelayMin, input.clickDelayMax);
-    await input.page.mouse.click(targetX, targetY, { delay });
+    await clickWithTraderaHumanizedInput({
+      page: input.page,
+      locator,
+      inputBehavior: input,
+    });
   };
 
   const humanizedFill = async (locator: Locator, value: string): Promise<void> => {
-    await locator.fill(value);
-    if (!input.humanizeMouse) return;
-    const delay = randomBetween(input.inputDelayMin, input.inputDelayMax);
-    if (delay > 0) {
-      await input.page.waitForTimeout(delay);
-    }
+    await fillWithTraderaHumanizedInput({
+      page: input.page,
+      locator,
+      value,
+      inputBehavior: input,
+    });
   };
 
   const acceptCookieConsent = async (): Promise<boolean> => {
     for (const selector of TRADERA_COOKIE_ACCEPT_SELECTORS) {
       const locator = input.page.locator(selector).first();
       const count = await safeCount(locator, `Cookie consent ${selector}`).catch(() => 0);
-      if (!count) continue;
+      if (count === 0) continue;
       const visible = await safeIsVisible(locator, `Cookie consent ${selector}`).catch(
         () => false
       );

@@ -2,24 +2,26 @@
 
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-const { apiPostMock, apiPutMock } = vi.hoisted(() => ({
+const { apiGetMock, apiPostMock, apiPutMock } = vi.hoisted(() => ({
+  apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
   apiPutMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
+    get: (...args: unknown[]) => apiGetMock(...args),
     post: (...args: unknown[]) => apiPostMock(...args),
     put: (...args: unknown[]) => apiPutMock(...args),
   },
 }));
 
-import { useSaveTitleTermMutation } from './useProductMetadataQueries';
+import { useSaveTitleTermMutation, useSimpleParameters } from './useProductMetadataQueries';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({
@@ -82,6 +84,42 @@ describe('useSaveTitleTermMutation', () => {
     });
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.products.metadata.all,
+    });
+  });
+});
+
+describe('useSimpleParameters', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does not request simple parameters without a concrete catalog id', () => {
+    const queryClient = createQueryClient();
+
+    renderHook(() => useSimpleParameters('   '), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    expect(apiGetMock).not.toHaveBeenCalled();
+  });
+
+  it('requests simple parameters with a normalized catalog id', async () => {
+    const queryClient = createQueryClient();
+    apiGetMock.mockResolvedValue([]);
+
+    const { result } = renderHook(() => useSimpleParameters(' catalog-1 '), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith('/api/v2/products/simple-parameters', {
+      params: {
+        catalogId: 'catalog-1',
+      },
+      cache: 'no-store',
     });
   });
 });

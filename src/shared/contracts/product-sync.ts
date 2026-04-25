@@ -572,7 +572,7 @@ export const productSyncProfileCreatePayloadSchema = z.object({
   isDefault: z.boolean().optional(),
   enabled: z.boolean().optional(),
   connectionId: z.string().trim().min(1),
-  inventoryId: z.string().trim().min(1),
+  inventoryId: z.string().trim().min(1).optional(),
   catalogId: z.string().trim().nullable().optional(),
   scheduleIntervalMinutes: z.number().int().min(1).max(24 * 60).optional(),
   batchSize: z.number().int().min(1).max(500).optional(),

@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, Users } from 'lucide-react';
+import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, ShieldOff, Users } from 'lucide-react';
 
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -15,6 +15,7 @@ type FilemakerPageKey =
   | 'events'
   | 'campaigns'
   | 'control-centre'
+  | 'suppressions'
   | 'manage';
 
 const NAV_ITEMS: Array<{
@@ -71,6 +72,13 @@ const NAV_ITEMS: Array<{
     label: 'Control Centre',
     href: '/admin/filemaker/campaigns/control-centre',
     icon: <ShieldAlert className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'suppressions',
+    label: 'Suppressions',
+    href: '/admin/filemaker/campaigns/suppressions',
+    icon: <ShieldOff className='size-4' />,
     variant: 'outline',
   },
   {

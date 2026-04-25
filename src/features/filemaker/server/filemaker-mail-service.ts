@@ -24,6 +24,7 @@ import {
   ensureFilemakerForwardSubject,
   ensureFilemakerMailPlainTextAlternative,
   ensureFilemakerReplySubject,
+  evaluateFilemakerMailAccountDmarcAlignment,
   normalizeFilemakerMailSubject,
   parseFilemakerMailboxAllowlistInput,
   resolveFilemakerReplyRecipients,
@@ -62,10 +63,13 @@ import {
 import {
   filterFilemakerMailSuppressionEntries,
   recordFilemakerMailBounceSuppressions,
+  recordFilemakerMailComplaintSuppressions,
 } from './campaign-suppression';
 import { createImapClient, listImapMailboxes } from './mail/mail-imap';
 import {
   isLikelyFilemakerMailBounceMessage,
+  isLikelyFilemakerMailComplaintMessage,
+  parseFilemakerMailComplaintReport,
   parseFilemakerMailDsnReport,
 } from './mail/mail-dsn';
 import { parseMailSource } from './mail/mail-processor';
@@ -707,6 +711,25 @@ const syncMailboxMessages = async (input: {
           }
         }
 
+        if (
+          !existingMessage &&
+          direction === 'inbound' &&
+          isLikelyFilemakerMailComplaintMessage(parsed)
+        ) {
+          const complaint = parseFilemakerMailComplaintReport(parsed);
+          if (complaint.complainedAddresses.length > 0) {
+            void recordFilemakerMailComplaintSuppressions({
+              addresses: complaint.complainedAddresses,
+              notes: `Auto-suppressed after ARF complaint${
+                complaint.feedbackType ? ` (${complaint.feedbackType})` : ''
+              }${complaint.userAgent ? ` via ${complaint.userAgent}` : '.'}`,
+              campaignId: campaignReplyContext?.campaignId ?? null,
+              runId: campaignReplyContext?.runId ?? null,
+              deliveryId: campaignReplyContext?.deliveryId ?? null,
+            }).catch(() => {});
+          }
+        }
+
         const wasUnread =
           existingMessage?.direction === 'inbound' && !existingMessage.flags.seen ? 1 : 0;
         const isUnread = nextMessage.direction === 'inbound' && !nextMessage.flags.seen ? 1 : 0;
@@ -888,6 +911,29 @@ export const upsertFilemakerMailAccount = async (
   }
 
   await storage.ensureMailIndexes();
+
+  const dmarcAlignment = evaluateFilemakerMailAccountDmarcAlignment({
+    emailAddress: nextAccount.emailAddress,
+    replyToEmail: nextAccount.replyToEmail,
+    dkimDomain: nextAccount.dkimDomain,
+    dkimKeySelector: nextAccount.dkimKeySelector,
+    hasDkimPrivateKey: Boolean(nextAccount.dkimPrivateKeySettingKey),
+  });
+  if (!dmarcAlignment.isAligned) {
+    await logSystemEvent({
+      level: 'warn',
+      source: 'filemaker-mail-account',
+      message: `Mail account ${nextAccount.emailAddress} saved with DMARC alignment warnings: ${dmarcAlignment.warnings.join(', ')}.`,
+      context: {
+        accountId: nextAccount.id,
+        warnings: dmarcAlignment.warnings,
+        fromDomain: dmarcAlignment.fromDomain,
+        replyToDomain: dmarcAlignment.replyToDomain,
+        dkimDomain: dmarcAlignment.dkimDomain,
+      },
+    }).catch(() => {});
+  }
+
   return nextAccount;
 };
 

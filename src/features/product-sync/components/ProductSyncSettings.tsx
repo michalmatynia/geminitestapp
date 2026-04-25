@@ -14,7 +14,7 @@ import {
 } from '@/features/product-sync/hooks/useProductSyncSettings';
 import { usePriceGroups } from '@/features/products/hooks/useProductSettingsQueries';
 import type { BaseDefaultConnectionPreferenceResponse } from '@/shared/contracts/integrations/preferences';
-import type { BaseWarehouse } from '@/shared/contracts/integrations/base-com';
+import type { BaseInventory, BaseWarehouse } from '@/shared/contracts/integrations/base-com';
 import type { PriceGroup } from '@/shared/contracts/products/catalogs';
 import {
   findDuplicateProductSyncAppField,
@@ -35,6 +35,7 @@ import type {
 } from '@/shared/contracts/product-sync';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import {
+  useBaseInventories,
   useBaseWarehouses,
   useDefaultExportConnection,
   useDefaultExportInventory,
@@ -67,6 +68,7 @@ type ProductSyncProfileDraft = {
 };
 
 type ProductSyncDraftDefaults = {
+  name?: string;
   isDefault?: boolean;
   connectionId?: string;
   inventoryId?: string;
@@ -89,11 +91,12 @@ const makeRuleId = (): string => {
 };
 
 const defaultDraft = ({
+  name = 'Base Product Sync',
   isDefault = false,
   connectionId = '',
   inventoryId = '',
 }: ProductSyncDraftDefaults = {}): ProductSyncProfileDraft => ({
-  name: 'Base Product Sync',
+  name,
   isDefault,
   enabled: true,
   connectionId,
@@ -139,6 +142,29 @@ const profileToDraft = (profile: ProductSyncProfile): ProductSyncProfileDraft =>
     direction: rule.direction,
   })),
 });
+
+const buildProfileSavePayload = (
+  draft: ProductSyncProfileDraft,
+  normalizedFieldRules: ProductSyncFieldRule[],
+  connectionId: string
+): ProductSyncProfileCreatePayload => {
+  const inventoryId = draft.inventoryId.trim();
+  const profileName = draft.name.trim();
+  const catalogId = draft.catalogId.trim();
+
+  return {
+    name: profileName.length > 0 ? profileName : 'Base Product Sync',
+    isDefault: draft.isDefault,
+    enabled: draft.enabled,
+    connectionId,
+    ...(inventoryId.length > 0 ? { inventoryId } : {}),
+    catalogId: catalogId.length > 0 ? catalogId : null,
+    scheduleIntervalMinutes: draft.scheduleIntervalMinutes,
+    batchSize: draft.batchSize,
+    fieldRules: normalizedFieldRules,
+    conflictPolicy: 'skip',
+  };
+};
 
 const appFieldLabel = (value: ProductSyncAppField): string => {
   if (value === 'name_en') return 'Name (EN)';
@@ -260,6 +286,30 @@ const buildBaseFieldOptions = (
   ];
 };
 
+const resolveFallbackInventoryId = (inventories: BaseInventory[]): string => {
+  const fallbackInventory =
+    inventories.find((inventory: BaseInventory): boolean => inventory.is_default) ??
+    inventories[0] ??
+    null;
+  return fallbackInventory?.id.trim() ?? '';
+};
+
+const resolvePreferredInventoryId = ({
+  configuredInventoryId,
+  connectionInventoryId,
+  inventories,
+}: {
+  configuredInventoryId: string | null | undefined;
+  connectionInventoryId: string | null | undefined;
+  inventories: BaseInventory[];
+}): string => {
+  const normalizedConfiguredInventoryId = (configuredInventoryId ?? '').trim();
+  if (normalizedConfiguredInventoryId.length > 0) return normalizedConfiguredInventoryId;
+  const normalizedConnectionInventoryId = (connectionInventoryId ?? '').trim();
+  if (normalizedConnectionInventoryId.length > 0) return normalizedConnectionInventoryId;
+  return resolveFallbackInventoryId(inventories);
+};
+
 export function ProductSyncSettings(): React.JSX.Element {
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
@@ -290,11 +340,17 @@ export function ProductSyncSettings(): React.JSX.Element {
     (): SelectSimpleOption[] => buildPriceGroupBaseFieldOptions(priceGroupsQuery.data ?? []),
     [priceGroupsQuery.data]
   );
+  const draftConnectionId = draft.connectionId.trim();
+  const draftInventoryId = draft.inventoryId.trim();
+  const baseInventoriesQuery = useBaseInventories(
+    draftConnectionId,
+    draftConnectionId.length > 0
+  );
   const warehousesQuery = useBaseWarehouses(
-    draft.connectionId.trim(),
-    draft.inventoryId.trim(),
+    draftConnectionId,
+    draftInventoryId,
     true,
-    Boolean(draft.connectionId.trim() && draft.inventoryId.trim())
+    draftConnectionId.length > 0 && draftInventoryId.length > 0
   );
   const warehouseBaseFieldOptions = useMemo((): SelectSimpleOption[] => {
     const response = warehousesQuery.data;
@@ -380,7 +436,7 @@ export function ProductSyncSettings(): React.JSX.Element {
   const preferredConnectionId = useMemo(() => {
     const preferredConnection = (defaultExportConnectionQuery.data?.connectionId ?? '').trim();
     if (
-      preferredConnection &&
+      preferredConnection.length > 0 &&
       baseConnections.some((connection) => connection.id === preferredConnection)
     ) {
       return preferredConnection;
@@ -388,9 +444,25 @@ export function ProductSyncSettings(): React.JSX.Element {
     return baseConnections[0]?.id ?? '';
   }, [defaultExportConnectionQuery.data?.connectionId, baseConnections]);
 
-  const preferredInventoryId = useMemo(() => {
-    return (defaultExportInventoryQuery.data?.inventoryId ?? '').trim();
-  }, [defaultExportInventoryQuery.data?.inventoryId]);
+  const connectionInventoryFallbackId = useMemo((): string => {
+    const targetConnectionId =
+      draftConnectionId.length > 0 ? draftConnectionId : preferredConnectionId;
+    if (targetConnectionId.length === 0) return '';
+    const connection = baseConnections.find((candidate) => candidate.id === targetConnectionId);
+    return connection?.baseLastInventoryId?.trim() ?? '';
+  }, [baseConnections, draftConnectionId, preferredConnectionId]);
+
+  const preferredInventoryId = useMemo((): string => {
+    return resolvePreferredInventoryId({
+      configuredInventoryId: defaultExportInventoryQuery.data?.inventoryId,
+      connectionInventoryId: connectionInventoryFallbackId,
+      inventories: baseInventoriesQuery.data ?? [],
+    });
+  }, [
+    baseInventoriesQuery.data,
+    connectionInventoryFallbackId,
+    defaultExportInventoryQuery.data?.inventoryId,
+  ]);
 
   const newProfileDefaults = useMemo<ProductSyncDraftDefaults>(
     () => ({
@@ -400,6 +472,40 @@ export function ProductSyncSettings(): React.JSX.Element {
     }),
     [preferredConnectionId, preferredInventoryId, profiles.length]
   );
+
+  useEffect(() => {
+    if (draft.connectionId.trim().length === 0) return;
+    if (draft.inventoryId.trim().length > 0) return;
+    if (preferredInventoryId.length === 0) return;
+
+    setDraft((prev: ProductSyncProfileDraft) => {
+      if (prev.inventoryId.trim().length > 0) return prev;
+      return {
+        ...prev,
+        inventoryId: preferredInventoryId,
+      };
+    });
+  }, [draft.connectionId, draft.inventoryId, preferredInventoryId]);
+
+  useEffect(() => {
+    if (!isCreatingNewProfile) return;
+    if (preferredConnectionId.length === 0 && preferredInventoryId.length === 0) return;
+
+    setDraft((prev: ProductSyncProfileDraft) => {
+      const nextConnectionId =
+        prev.connectionId.trim().length > 0 ? prev.connectionId : preferredConnectionId;
+      const nextInventoryId =
+        prev.inventoryId.trim().length > 0 ? prev.inventoryId : preferredInventoryId;
+      if (nextConnectionId === prev.connectionId && nextInventoryId === prev.inventoryId) {
+        return prev;
+      }
+      return {
+        ...prev,
+        connectionId: nextConnectionId,
+        inventoryId: nextInventoryId,
+      };
+    });
+  }, [isCreatingNewProfile, preferredConnectionId, preferredInventoryId]);
 
   useEffect(() => {
     if (isCreatingNewProfile) return;
@@ -441,20 +547,18 @@ export function ProductSyncSettings(): React.JSX.Element {
   }, [draft.fieldRules]);
 
   const isSaving = createProfileMutation.isPending || updateProfileMutation.isPending;
+  const draftProfileLabel = draft.name.trim() || 'New sync profile';
 
   const handleNewProfile = (): void => {
     setSelectedProfileId('');
     setIsCreatingNewProfile(true);
-    setDraft(defaultDraft(newProfileDefaults));
+    setDraft(defaultDraft({ ...newProfileDefaults, name: '' }));
   };
 
   const handleSave = async (): Promise<void> => {
-    if (!draft.connectionId.trim()) {
+    const connectionId = draft.connectionId.trim();
+    if (connectionId.length === 0) {
       toast('Select a Base connection.', { variant: 'error' });
-      return;
-    }
-    if (!draft.inventoryId.trim()) {
-      toast('Inventory ID is required.', { variant: 'error' });
       return;
     }
 
@@ -463,7 +567,7 @@ export function ProductSyncSettings(): React.JSX.Element {
       baseField: rule.baseField.trim(),
     }));
     const invalidRule = normalizedFieldRules.find(
-      (rule: ProductSyncFieldRule) => !rule.baseField
+      (rule: ProductSyncFieldRule) => rule.baseField.length === 0
     );
     if (invalidRule) {
       toast(`Base field is required for ${appFieldLabel(invalidRule.appField)}.`, {
@@ -472,28 +576,17 @@ export function ProductSyncSettings(): React.JSX.Element {
       return;
     }
     const duplicateAppField = findDuplicateProductSyncAppField(normalizedFieldRules);
-    if (duplicateAppField) {
+    if (duplicateAppField !== null) {
       toast(`Only one sync rule is allowed for ${appFieldLabel(duplicateAppField)}.`, {
         variant: 'error',
       });
       return;
     }
 
-    const payload: ProductSyncProfileCreatePayload = {
-      name: draft.name.trim() || 'Base Product Sync',
-      isDefault: draft.isDefault,
-      enabled: draft.enabled,
-      connectionId: draft.connectionId.trim(),
-      inventoryId: draft.inventoryId.trim(),
-      catalogId: draft.catalogId.trim() || null,
-      scheduleIntervalMinutes: draft.scheduleIntervalMinutes,
-      batchSize: draft.batchSize,
-      fieldRules: normalizedFieldRules,
-      conflictPolicy: 'skip',
-    };
+    const payload = buildProfileSavePayload(draft, normalizedFieldRules, connectionId);
 
     try {
-      if (selectedProfileId) {
+      if (selectedProfileId.length > 0) {
         const updated = await updateProfileMutation.mutateAsync({
           id: selectedProfileId,
           data: payload satisfies ProductSyncProfileUpdatePayload,
@@ -747,6 +840,23 @@ export function ProductSyncSettings(): React.JSX.Element {
                 )}
               </Button>
             ))}
+            {isCreatingNewProfile && (
+              <Button
+                size='xs'
+                type='button'
+                variant='ghost'
+                onClick={(): void => {
+                  setSelectedProfileId('');
+                  setIsCreatingNewProfile(true);
+                }}
+                className='w-full justify-start text-xs bg-gray-800 text-white hover:bg-gray-800'
+              >
+                <span className='truncate'>{draftProfileLabel}</span>
+                <Badge variant='outline' className='ml-auto text-[9px] uppercase h-4 px-1'>
+                  Draft
+                </Badge>
+              </Button>
+            )}
             <Button
               size='xs'
               type='button'

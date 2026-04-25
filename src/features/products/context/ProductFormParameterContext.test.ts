@@ -4,16 +4,18 @@ import React, { useMemo, type ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameter, ProductSimpleParameter } from '@/shared/contracts/products/parameters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
-const { useParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
+const { useParametersMock, useSimpleParametersMock, useTitleTermsMock } = vi.hoisted(() => ({
   useParametersMock: vi.fn(),
+  useSimpleParametersMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
 }));
 
 vi.mock('../hooks/useProductMetadataQueries', () => ({
   useParameters: useParametersMock,
+  useSimpleParameters: useSimpleParametersMock,
   useTitleTerms: useTitleTermsMock,
 }));
 
@@ -117,6 +119,10 @@ describe('resolvePrimaryParameterValue', () => {
 
 describe('ProductFormParameterProvider', () => {
   beforeEach(() => {
+    useSimpleParametersMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
     useTitleTermsMock.mockImplementation(() => ({
       data: [],
       isLoading: false,
@@ -149,6 +155,73 @@ describe('ProductFormParameterProvider', () => {
 
     expect(result.current.parameterValues).toEqual([{ parameterId: 'param-2', value: 'Steel' }]);
     expect(onInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('merges legacy simple parameter definitions with synced product parameter definitions', () => {
+    useParametersMock.mockReturnValue({
+      data: [
+        {
+          id: 'param-material',
+          name_en: 'Material',
+          selectorType: 'text',
+          linkedTitleTermType: 'material',
+        },
+      ] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+    useSimpleParametersMock.mockReturnValue({
+      data: [
+        {
+          id: 'param-condition',
+          catalogId: 'catalog-1',
+          name_en: 'Condition',
+        },
+      ] satisfies Partial<ProductSimpleParameter>[],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [{ parameterId: 'param-condition', value: 'Used' }],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = createWrapper({ product });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameters.map((parameter) => parameter.id)).toEqual([
+      'param-condition',
+      'param-material',
+    ]);
+    expect(result.current.parameterValues).toEqual([
+      { parameterId: 'param-condition', value: 'Used' },
+    ]);
+  });
+
+  it('keeps saved legacy parameters visible when their metadata definition is missing', () => {
+    useParametersMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+    useSimpleParametersMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [{ parameterId: 'legacy_condition', value: 'Used' }],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = createWrapper({ product });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameters).toEqual([
+      expect.objectContaining({
+        id: 'legacy_condition',
+        name_en: 'Legacy Condition',
+      }),
+    ]);
+    expect(result.current.parameterValues).toEqual([
+      { parameterId: 'legacy_condition', value: 'Used' },
+    ]);
   });
 
   it('keeps the parameter row when its localized value is cleared', () => {

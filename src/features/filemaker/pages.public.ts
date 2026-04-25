@@ -10,6 +10,7 @@ export * from './pages/AdminFilemakerMailComposePage';
 export * from './pages/AdminFilemakerMailThreadPage';
 export * from './pages/AdminFilemakerCampaignsPage';
 export * from './pages/AdminFilemakerCampaignControlCentrePage';
+export * from './pages/AdminFilemakerCampaignSuppressionsPage';
 export * from './pages/AdminFilemakerPersonEditPage';
 export * from './pages/AdminFilemakerOrganizationEditPage';
 export * from './pages/AdminFilemakerEventEditPage';

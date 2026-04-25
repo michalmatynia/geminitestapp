@@ -254,6 +254,8 @@ export const filemakerEmailCampaignSuppressionReasonSchema = z.enum([
   'manual_block',
   'unsubscribed',
   'bounced',
+  'complaint',
+  'cold',
 ]);
 export type FilemakerEmailCampaignSuppressionReasonDto = z.infer<
   typeof filemakerEmailCampaignSuppressionReasonSchema

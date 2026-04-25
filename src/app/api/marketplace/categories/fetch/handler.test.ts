@@ -71,7 +71,7 @@ describe('marketplace categories fetch handler', () => {
       selectorProfile: 'default',
       categoryFetchMethod: 'playwright_listing_form',
     });
-    getIntegrationRepositoryMock.mockResolvedValue({
+    getIntegrationRepositoryMock.mockReturnValue({
       getConnectionById: getConnectionByIdMock,
       getIntegrationById: getIntegrationByIdMock,
     });
@@ -195,6 +195,85 @@ describe('marketplace categories fetch handler', () => {
         withParentCount: 0,
         maxDepth: 0,
         depthHistogram: {},
+      },
+    });
+  });
+
+  it('syncs deep Tradera listing form categories and reports the fetched depth', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      name: 'Tradera',
+      slug: 'tradera',
+      createdAt: new Date(0).toISOString(),
+      updatedAt: null,
+    });
+    fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([
+      { id: '49', name: 'Collectibles', parentId: '0' },
+      { id: '2929', name: 'Pins & Needles', parentId: '49' },
+      { id: '292903', name: 'Pins', parentId: '2929' },
+      { id: '292904', name: 'Other pins & needles', parentId: '292903' },
+    ]);
+    syncFromBaseMock.mockResolvedValue(4);
+
+    const request = new NextRequest('http://localhost/api/marketplace/categories/fetch', {
+      method: 'POST',
+      body: JSON.stringify({
+        connectionId: 'conn-1',
+      }),
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    const response = await postHandler(request, createContext());
+
+    expect(response.status).toBe(200);
+    expect(fetchTraderaCategoriesFromListingFormForConnectionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'conn-1' }),
+      { listingFormUrl: 'https://www.tradera.com/en/selling/new' }
+    );
+    expect(syncFromBaseMock).toHaveBeenCalledWith('conn-1', [
+      {
+        id: '49',
+        name: 'Collectibles',
+        parentId: '0',
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+      },
+      {
+        id: '2929',
+        name: 'Pins & Needles',
+        parentId: '49',
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+      },
+      {
+        id: '292903',
+        name: 'Pins',
+        parentId: '2929',
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+      },
+      {
+        id: '292904',
+        name: 'Other pins & needles',
+        parentId: '292903',
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+      },
+    ]);
+    await expect(response.json()).resolves.toEqual({
+      fetched: 4,
+      total: 4,
+      message:
+        'Successfully synced 4 categories from Tradera listing form picker (roots: 1, max depth: 3).',
+      source: 'Tradera listing form picker',
+      categoryStats: {
+        rootCount: 1,
+        withParentCount: 3,
+        maxDepth: 3,
+        depthHistogram: {
+          '0': 1,
+          '1': 1,
+          '2': 1,
+          '3': 1,
+        },
       },
     });
   });
@@ -350,6 +429,91 @@ describe('marketplace categories fetch handler', () => {
       meta: {
         connectionId: 'conn-1',
         sourceName: 'Tradera public taxonomy pages',
+        existingTotal: 3,
+        existingMaxDepth: 2,
+        fetchedTotal: 2,
+        fetchedMaxDepth: 1,
+      },
+    });
+
+    expect(syncFromBaseMock).not.toHaveBeenCalled();
+  });
+
+  it('keeps existing deeper Tradera categories when listing form fetch returns a shallower tree', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      name: 'Tradera',
+      slug: 'tradera',
+      createdAt: new Date(0).toISOString(),
+      updatedAt: null,
+    });
+    fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([
+      { id: '49', name: 'Collectibles', parentId: '0' },
+      { id: '2929', name: 'Pins & needles', parentId: '49' },
+    ]);
+    listByConnectionMock.mockResolvedValue([
+      {
+        id: 'stored-root',
+        connectionId: 'conn-1',
+        externalId: '49',
+        name: 'Collectibles',
+        parentExternalId: null,
+        path: 'Collectibles',
+        depth: 0,
+        isLeaf: false,
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+      {
+        id: 'stored-parent',
+        connectionId: 'conn-1',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '49',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+      {
+        id: 'stored-leaf',
+        connectionId: 'conn-1',
+        externalId: '292904',
+        name: 'Other pins & needles',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Other pins & needles',
+        depth: 2,
+        isLeaf: true,
+        metadata: { categoryFetchSource: 'Tradera listing form picker' },
+        fetchedAt: '2026-04-08T00:00:00.000Z',
+        createdAt: '2026-04-08T00:00:00.000Z',
+        updatedAt: '2026-04-08T00:00:00.000Z',
+      },
+    ]);
+
+    const request = new NextRequest('http://localhost/api/marketplace/categories/fetch', {
+      method: 'POST',
+      body: JSON.stringify({
+        connectionId: 'conn-1',
+      }),
+      headers: {
+        'content-type': 'application/json',
+      },
+    });
+
+    await expect(postHandler(request, createContext())).rejects.toMatchObject({
+      message:
+        'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept. Ensure the connection session is authenticated, then retry category fetch.',
+      httpStatus: 422,
+      code: 'UNPROCESSABLE_ENTITY',
+      meta: {
+        connectionId: 'conn-1',
+        sourceName: 'Tradera listing form picker',
         existingTotal: 3,
         existingMaxDepth: 2,
         fetchedTotal: 2,

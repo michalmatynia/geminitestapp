@@ -5,6 +5,7 @@ import {
   materializeStarterWorkflowSeedBundle,
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
+import { resolveWriteTemplateGuardrail } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-write-guardrails';
 import { handleParser } from '@/shared/lib/ai-paths/core/runtime/handlers/transform/parser';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import {
@@ -123,6 +124,25 @@ describe('starter marketplace copy debrand workflow', () => {
     );
   });
 
+  it('instructs Debrand to preserve five-part marketplace title parameters', () => {
+    const entry = getStarterWorkflowTemplateById('starter_marketplace_copy_debrand');
+    if (!entry) throw new Error('Missing starter_marketplace_copy_debrand entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_marketplace_copy_debrand_title_format',
+    });
+    const promptNode = config.nodes.find((node) => node.type === 'prompt');
+    const promptTemplate = String(promptNode?.config?.prompt?.template ?? '');
+
+    expect(promptTemplate).toContain('exactly five pipe-separated parts');
+    expect(promptTemplate).toContain(
+      '<debranded name> | <same size> | <same material> | <same category> | <debranded lore or theme>'
+    );
+    expect(promptTemplate).toContain('only rewrite part 1 (name) and part 5 (lore/theme)');
+    expect(promptTemplate).toContain('Copy parts 2, 3, and 4 from the source title');
+    expect(promptTemplate).toContain('Do not collapse a five-part source title into fewer parts');
+  });
+
   it('parses embedded row-level trigger context into the model bundle', async () => {
     const entry = getStarterWorkflowTemplateById('starter_marketplace_copy_debrand');
     if (!entry) throw new Error('Missing starter_marketplace_copy_debrand entry');
@@ -221,12 +241,56 @@ describe('starter marketplace copy debrand workflow', () => {
       'marketplaceContentOverrides.$.description'
     );
     expect(databaseNode?.config?.database?.query?.queryTemplate).toContain(
-      'context.marketplaceCopyDebrandInput.targetRow.integrationIds'
+      'context.extras.marketplaceCopyDebrandInput.targetRow.integrationIds'
     );
     expect(entry.triggerButtonPresets?.[0]?.locations).toContain('product_marketplace_copy_row');
     expect(report.shouldBlock).toBe(false);
     expect(report.blockReason).toBeNull();
     expect(report.compileReport.errors).toBe(0);
     expect(report.dependencyReport?.errors ?? 0).toBe(0);
+  });
+
+  it('accepts the runtime trigger extras shape in the database persistence templates', () => {
+    const entry = getStarterWorkflowTemplateById('starter_marketplace_copy_debrand');
+    if (!entry) throw new Error('Missing starter_marketplace_copy_debrand entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_marketplace_copy_debrand_template_context',
+    });
+    const databaseNode = config.nodes.find((node) => node.type === 'database');
+    const databaseConfig = databaseNode?.config?.database;
+    const currentValue = {
+      debrandedTitle: 'Neutral title',
+      debrandedDescription: 'Neutral description',
+    };
+
+    const guardrail = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'queryTemplate',
+          template: databaseConfig?.query?.queryTemplate ?? '',
+        },
+        {
+          name: 'updateTemplate',
+          template: databaseConfig?.updateTemplate ?? '',
+        },
+      ],
+      templateContext: {
+        entityId: 'product-1',
+        value: currentValue,
+        context: {
+          extras: {
+            marketplaceCopyDebrandInput: {
+              targetRow: {
+                integrationIds: ['integration-tradera'],
+              },
+            },
+          },
+        },
+      },
+      currentValue,
+    });
+
+    expect(guardrail.ok).toBe(true);
   });
 });

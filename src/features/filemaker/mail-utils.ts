@@ -47,6 +47,80 @@ export const ensureFilemakerMailPlainTextAlternative = (
   return derived.length > 0 ? derived : FILEMAKER_MAIL_EMPTY_TEXT_FALLBACK;
 };
 
+export type FilemakerMailDmarcAlignmentInput = {
+  emailAddress: string | null | undefined;
+  replyToEmail?: string | null | undefined;
+  dkimDomain?: string | null | undefined;
+  dkimKeySelector?: string | null | undefined;
+  hasDkimPrivateKey?: boolean;
+};
+
+export type FilemakerMailDmarcAlignmentWarning =
+  | 'dkim_disabled'
+  | 'dkim_partially_configured'
+  | 'dkim_domain_misaligned'
+  | 'reply_to_domain_misaligned';
+
+export type FilemakerMailDmarcAlignmentResult = {
+  isAligned: boolean;
+  warnings: FilemakerMailDmarcAlignmentWarning[];
+  fromDomain: string | null;
+  replyToDomain: string | null;
+  dkimDomain: string | null;
+};
+
+const extractEmailDomain = (value: string | null | undefined): string | null => {
+  const normalized = (value ?? '').trim().toLowerCase();
+  const at = normalized.indexOf('@');
+  if (at < 0 || at === normalized.length - 1) return null;
+  return normalized.slice(at + 1);
+};
+
+const isOrganizationalDomainAligned = (left: string, right: string): boolean => {
+  if (left === right) return true;
+  const leftLabels = left.split('.');
+  const rightLabels = right.split('.');
+  if (leftLabels.length < 2 || rightLabels.length < 2) return false;
+  const leftRoot = leftLabels.slice(-2).join('.');
+  const rightRoot = rightLabels.slice(-2).join('.');
+  return leftRoot === rightRoot;
+};
+
+export const evaluateFilemakerMailAccountDmarcAlignment = (
+  input: FilemakerMailDmarcAlignmentInput
+): FilemakerMailDmarcAlignmentResult => {
+  const warnings: FilemakerMailDmarcAlignmentWarning[] = [];
+  const fromDomain = extractEmailDomain(input.emailAddress);
+  const replyToDomain = extractEmailDomain(input.replyToEmail);
+  const dkimDomain = (input.dkimDomain ?? '').trim().toLowerCase() || null;
+  const dkimKeySelector = (input.dkimKeySelector ?? '').trim() || null;
+  const hasDkimPrivateKey = Boolean(input.hasDkimPrivateKey);
+
+  if (!dkimDomain && !dkimKeySelector && !hasDkimPrivateKey) {
+    warnings.push('dkim_disabled');
+  } else if (!dkimDomain || !dkimKeySelector || !hasDkimPrivateKey) {
+    warnings.push('dkim_partially_configured');
+  } else if (fromDomain && !isOrganizationalDomainAligned(fromDomain, dkimDomain)) {
+    warnings.push('dkim_domain_misaligned');
+  }
+
+  if (
+    fromDomain &&
+    replyToDomain &&
+    !isOrganizationalDomainAligned(fromDomain, replyToDomain)
+  ) {
+    warnings.push('reply_to_domain_misaligned');
+  }
+
+  return {
+    isAligned: warnings.length === 0,
+    warnings,
+    fromDomain,
+    replyToDomain,
+    dkimDomain,
+  };
+};
+
 export const buildFilemakerMailSnippet = (
   textBody: string | null | undefined,
   htmlBody?: string | null | undefined

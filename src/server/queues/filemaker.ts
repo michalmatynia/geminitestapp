@@ -12,3 +12,4 @@ export {
   stopFilemakerMailSyncQueue,
 } from '@/features/filemaker/workers/filemakerMailSyncQueue';
 export { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
+export { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';

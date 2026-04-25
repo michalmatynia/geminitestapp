@@ -1,10 +1,10 @@
-import type { NextAuthConfig, Session } from 'next-auth';
+import type { NextAuthConfig, Session, User } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 
 const devFallbackSecret = 'dev-secret-change-me';
 const secret =
-  process.env['AUTH_SECRET'] ||
-  process.env['NEXTAUTH_SECRET'] ||
+  process.env['AUTH_SECRET'] ??
+  process.env['NEXTAUTH_SECRET'] ??
   (process.env['NODE_ENV'] === 'development' ? devFallbackSecret : undefined);
 const isProd = process.env['NODE_ENV'] === 'production';
 const securePrefix = isProd ? '__Secure-' : '';
@@ -12,10 +12,10 @@ const hostPrefix = isProd ? '__Host-' : '';
 
 if (
   process.env['NODE_ENV'] === 'development' &&
-  !process.env['AUTH_SECRET'] &&
-  !process.env['NEXTAUTH_SECRET']
+  process.env['AUTH_SECRET'] === undefined &&
+  process.env['NEXTAUTH_SECRET'] === undefined
 ) {
-  void (async () => {
+  void (async (): Promise<void> => {
     const { logger } = await import('@/shared/utils/logger');
     logger.warn('[AUTH] AUTH_SECRET/NEXTAUTH_SECRET not set. Using dev fallback secret.');
   })();
@@ -25,7 +25,8 @@ if (
 const adminOnlyPrefixes = ['/admin/auth', '/admin/products'];
 const elevatedRoles = new Set(['admin', 'super_admin', 'superuser']);
 const isPlaywrightRuntime = Boolean(
-  process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] || process.env['PLAYWRIGHT_RUNTIME_AGENT_ID']
+  (process.env['PLAYWRIGHT_RUNTIME_LEASE_KEY'] ?? '') !== '' ||
+    (process.env['PLAYWRIGHT_RUNTIME_AGENT_ID'] ?? '') !== ''
 );
 
 const permissionRules: Array<{ prefix: string; permissions: string[] }> = [
@@ -59,13 +60,122 @@ const resolveRequiredPermissions = (pathname: string): string[] => {
   return [];
 };
 
+interface AuthUserInfo {
+  role?: string;
+  isElevated?: boolean;
+  accountDisabled?: boolean;
+  accountBanned?: boolean;
+  roleAssigned?: boolean;
+  permissions?: string[];
+}
+
+const checkAccountStatus = (
+  authUser: AuthUserInfo
+): { redirect: string; error: string } | undefined => {
+  if (authUser.accountBanned === true || authUser.accountDisabled === true) {
+    return { redirect: '/auth/signin', error: 'AccountDisabled' };
+  }
+  return undefined;
+};
+
+const isElevatedUser = (authUser: AuthUserInfo): boolean => {
+  const role = authUser.role ?? 'unknown';
+  return (authUser.isElevated ?? false) || elevatedRoles.has(role) || isPlaywrightRuntime;
+};
+
+const checkElevatedAccess = (
+  pathname: string,
+  authUser: AuthUserInfo
+): { redirect: string; denied: boolean } | undefined => {
+  if (adminOnlyPrefixes.some((prefix: string) => pathname.startsWith(prefix))) {
+    if (!isElevatedUser(authUser)) {
+      return { redirect: '/admin', denied: true };
+    }
+  }
+  return undefined;
+};
+
+const checkPermissions = (
+  pathname: string,
+  authUser: AuthUserInfo
+): { redirect: string; denied: boolean } | undefined => {
+  const requiredPermissions = resolveRequiredPermissions(pathname);
+  if (requiredPermissions.length === 0) return undefined;
+
+  const permissions = authUser.permissions ?? [];
+  const hasAccess =
+    isElevatedUser(authUser) ||
+    requiredPermissions.some((permission: string) => permissions.includes(permission));
+
+  return hasAccess ? undefined : { redirect: '/admin', denied: true };
+};
+
+const checkAdminAccess = (
+  pathname: string,
+  authUser: AuthUserInfo
+): boolean | { redirect: string; error?: string; denied?: boolean } => {
+  const statusError = checkAccountStatus(authUser);
+  if (statusError !== undefined) return statusError;
+
+  const hasRoleAssigned = (authUser.roleAssigned ?? false) || isPlaywrightRuntime;
+  if (!hasRoleAssigned) {
+    return { redirect: '/auth/signin', error: 'AccessDenied' };
+  }
+
+  const elevatedError = checkElevatedAccess(pathname, authUser);
+  if (elevatedError !== undefined) return elevatedError;
+
+  const permissionsError = checkPermissions(pathname, authUser);
+  if (permissionsError !== undefined) return permissionsError;
+
+  return true;
+};
+
+interface TokenData {
+  role?: string;
+  permissions?: string[];
+  roleLevel?: number;
+  isElevated?: boolean;
+  roleAssigned?: boolean;
+  accountDisabled?: boolean;
+  accountBanned?: boolean;
+}
+
+const getCoreUserData = (token: JWT, fallbackId: string): Partial<User> => {
+  const t = token as TokenData;
+  return {
+    id: token.sub ?? fallbackId,
+    role: t.role ?? null,
+    permissions: t.permissions ?? [],
+    roleLevel: t.roleLevel ?? null,
+  };
+};
+
+const getUserStatusData = (token: JWT): Partial<User> => {
+  const t = token as TokenData;
+  return {
+    isElevated: t.isElevated ?? false,
+    roleAssigned: t.roleAssigned ?? false,
+    accountDisabled: t.accountDisabled ?? false,
+    accountBanned: t.accountBanned ?? false,
+  };
+};
+
+const getUpdatedUser = (user: User, token: JWT): User => {
+  return {
+    ...user,
+    ...getCoreUserData(token, user.id),
+    ...getUserStatusData(token),
+  };
+};
+
 export const authConfig = {
-  providers: [], // Providers will be added in the main auth.ts or passed here
+  providers: [],
   pages: {
     signIn: '/auth/signin',
   },
   trustHost: true,
-  ...(secret ? { secret } : {}),
+  ...(secret !== undefined ? { secret } : {}),
   cookies: {
     sessionToken: {
       name: `${securePrefix}authjs.session-token`,
@@ -131,68 +241,30 @@ export const authConfig = {
       auth: Session | null;
       request: { nextUrl: URL };
     }): boolean | Response | Promise<boolean | Response> {
-      const isLoggedIn = Boolean(auth?.user);
-      const isOnAdmin = nextUrl.pathname.startsWith('/admin');
-      if (isOnAdmin) {
-        if (!isLoggedIn) return false;
-        const authUser = auth?.user as {
-          role?: string;
-          isElevated?: boolean;
-          accountDisabled?: boolean;
-          accountBanned?: boolean;
-          roleAssigned?: boolean;
-        };
-        const role = authUser?.role ?? 'unknown';
-        const isElevated =
-          Boolean(authUser?.isElevated) || elevatedRoles.has(role) || isPlaywrightRuntime;
-        const hasRoleAssigned = Boolean(authUser?.roleAssigned) || isPlaywrightRuntime;
-        if (authUser?.accountBanned || authUser?.accountDisabled) {
-          const redirectUrl = new URL('/auth/signin', nextUrl);
-          redirectUrl.searchParams.set('error', 'AccountDisabled');
-          return Response.redirect(redirectUrl);
-        }
-        if (!hasRoleAssigned) {
-          const redirectUrl = new URL('/auth/signin', nextUrl);
-          redirectUrl.searchParams.set('error', 'AccessDenied');
-          return Response.redirect(redirectUrl);
-        }
-        if (adminOnlyPrefixes.some((prefix: string) => nextUrl.pathname.startsWith(prefix))) {
-          if (!isElevated) {
-            const redirectUrl = new URL('/admin', nextUrl);
-            redirectUrl.searchParams.set('denied', '1');
-            return Response.redirect(redirectUrl);
-          }
-          return true;
-        }
+      const { pathname } = nextUrl;
+      if (!pathname.startsWith('/admin')) return true;
+      if (auth?.user === undefined) return false;
 
-        const requiredPermissions = resolveRequiredPermissions(nextUrl.pathname);
-        if (requiredPermissions.length === 0) return true;
-        const permissions = (auth?.user as { permissions?: string[] })?.permissions ?? [];
-        const hasAccess =
-          isElevated ||
-          requiredPermissions.some((permission: string) => permissions.includes(permission));
-        if (hasAccess) return true;
-        const redirectUrl = new URL('/admin', nextUrl);
-        redirectUrl.searchParams.set('denied', '1');
-        return Response.redirect(redirectUrl);
+      const result = checkAdminAccess(pathname, auth.user as AuthUserInfo);
+
+      if (result === true) return true;
+      if (result === false) return false;
+
+      const redirectUrl = new URL(result.redirect, nextUrl);
+      if (result.error !== undefined) {
+        redirectUrl.searchParams.set('error', result.error);
       }
-      return true;
+      if (result.denied === true) {
+        redirectUrl.searchParams.set('denied', '1');
+      }
+      return Response.redirect(redirectUrl);
     },
     session({ session, token }: { session: Session; token: JWT }): Session {
-      if (session.user) {
-        if (token.sub) {
-          session.user.id = token.sub;
-        }
-        session.user.role = (token as { role?: string }).role ?? null;
-        session.user.permissions = (token as { permissions?: string[] }).permissions ?? [];
-        session.user.roleLevel = (token as { roleLevel?: number }).roleLevel ?? null;
-        session.user.isElevated = (token as { isElevated?: boolean }).isElevated ?? false;
-        session.user.roleAssigned = (token as { roleAssigned?: boolean }).roleAssigned ?? false;
-        session.user.accountDisabled =
-          (token as { accountDisabled?: boolean }).accountDisabled ?? false;
-        session.user.accountBanned = (token as { accountBanned?: boolean }).accountBanned ?? false;
-      }
-      return session;
+      if (session.user === undefined) return session;
+      return {
+        ...session,
+        user: getUpdatedUser(session.user, token),
+      };
     },
   },
 } satisfies NextAuthConfig;

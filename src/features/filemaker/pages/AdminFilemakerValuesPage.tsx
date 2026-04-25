@@ -20,6 +20,7 @@ import { buildFilemakerValueMasterNodes } from '../entity-master-tree';
 import {
   FILEMAKER_DATABASE_KEY,
   importFilemakerLegacyValuesExport,
+  importFilemakerLegacyValuesWorkbook,
   parseFilemakerDatabase,
   toPersistedFilemakerDatabase,
 } from '../settings';
@@ -27,7 +28,31 @@ import type { FilemakerDatabase, FilemakerValue } from '../types';
 import { filterFilemakerValuesWithHierarchy } from './AdminFilemakerValuesPage.helpers';
 
 const FILEMAKER_VALUE_TREE_INSTANCE: FolderTreeInstance = 'filemaker_values';
-const VALUE_IMPORT_ACCEPT = '.csv,text/csv,text/tab-separated-values,.tsv';
+const VALUE_IMPORT_ACCEPT = [
+  '.csv',
+  '.tsv',
+  '.xlsx',
+  '.xls',
+  'text/csv',
+  'text/tab-separated-values',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+].join(',');
+
+const isWorkbookImportFile = (file: File): boolean => {
+  if (/\.(csv|tsv)$/i.test(file.name)) return false;
+  if (/\.(xlsx|xls)$/i.test(file.name)) return true;
+  return (
+    file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    file.type === 'application/vnd.ms-excel'
+  );
+};
+
+type ImportValueFileButtonProps = {
+  disabled: boolean;
+  onError: (error: unknown) => void;
+  onFilesSelected: (files: File[], helpers?: FileUploadHelpers) => Promise<void>;
+};
 
 function useFilteredFilemakerValues(values: FilemakerValue[], query: string): FilemakerValue[] {
   return useMemo(
@@ -98,7 +123,26 @@ function useValueActions(router: ReturnType<typeof useRouter>): {
   return { actions, openValue };
 }
 
-function useImportValueCsvAction(input: {
+function ImportValueFileButton(props: ImportValueFileButtonProps): React.JSX.Element {
+  return (
+    <FileUploadButton
+      variant='outline'
+      size='sm'
+      className='h-8'
+      accept={VALUE_IMPORT_ACCEPT}
+      multiple={false}
+      showProgress={false}
+      disabled={props.disabled}
+      onFilesSelected={props.onFilesSelected}
+      onError={props.onError}
+    >
+      <Upload className='mr-1 size-4' />
+      Import CSV/XLSX
+    </FileUploadButton>
+  );
+}
+
+function useImportValueFileAction(input: {
   database: FilemakerDatabase;
   refetchSettings: () => void;
 }): {
@@ -115,9 +159,10 @@ function useImportValueCsvAction(input: {
       if (!file) return;
 
       helpers?.setProgress(10);
-      const text = await file.text();
+      const result = isWorkbookImportFile(file)
+        ? await importFilemakerLegacyValuesWorkbook(database, await file.arrayBuffer())
+        : importFilemakerLegacyValuesExport(database, await file.text());
       helpers?.setProgress(40);
-      const result = importFilemakerLegacyValuesExport(database, text);
       helpers?.setProgress(70);
 
       await updateSetting.mutateAsync({
@@ -145,20 +190,11 @@ function useImportValueCsvAction(input: {
 
   return {
     importActions: (
-      <FileUploadButton
-        variant='outline'
-        size='sm'
-        className='h-8'
-        accept={VALUE_IMPORT_ACCEPT}
-        multiple={false}
-        showProgress={false}
+      <ImportValueFileButton
         disabled={updateSetting.isPending}
-        onFilesSelected={handleFilesSelected}
         onError={handleImportError}
-      >
-        <Upload className='mr-1 size-4' />
-        Import CSV
-      </FileUploadButton>
+        onFilesSelected={handleFilesSelected}
+      />
     ),
     isImporting: updateSetting.isPending,
   };
@@ -174,7 +210,7 @@ export function AdminFilemakerValuesPage(): React.JSX.Element {
   const values = useFilteredFilemakerValues(database.values, deferredQuery);
   const { defaultExpandedNodeIds, treeNodes } = useFilemakerValueNodes(values);
   const { actions, openValue } = useValueActions(router);
-  const { importActions, isImporting } = useImportValueCsvAction({
+  const { importActions, isImporting } = useImportValueFileAction({
     database,
     refetchSettings: settingsStore.refetch,
   });

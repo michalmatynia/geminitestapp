@@ -90,4 +90,31 @@ describe('useDatabaseBackupsState', () => {
 
     expect(mocks.routerPush).toHaveBeenCalledWith('/admin/databases/preview?mode=current&type=mongodb');
   });
+
+  it('deletes the selected backup after confirmation', async () => {
+    mocks.deleteBackupMutateAsync.mockResolvedValue({
+      ok: true,
+      payload: { success: true, message: 'Backup deleted' },
+    });
+    const { result } = renderHook(() => useDatabaseBackupsState());
+
+    act(() => {
+      result.current.handleDeleteRequest('old-local.archive');
+    });
+
+    expect(result.current.backupToDelete).toBe('old-local.archive');
+
+    await act(async () => {
+      await result.current.handleConfirmDelete();
+    });
+
+    expect(mocks.deleteBackupMutateAsync).toHaveBeenCalledWith({
+      dbType: 'mongodb',
+      backupName: 'old-local.archive',
+    });
+    expect(mocks.toast).toHaveBeenCalledWith('Backup deleted successfully.', {
+      variant: 'success',
+    });
+    expect(result.current.backupToDelete).toBeNull();
+  });
 });

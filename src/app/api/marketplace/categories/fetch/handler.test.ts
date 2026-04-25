@@ -180,6 +180,13 @@ describe('marketplace categories fetch handler', () => {
 
     expect(response.status).toBe(200);
     expect(fetchBaseCategoriesMock).not.toHaveBeenCalled();
+    expect(fetchTraderaCategoriesFromListingFormForConnectionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'conn-1' }),
+      {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        browserMode: 'headed',
+      }
+    );
     expect(syncFromBaseMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toEqual({
       fetched: 0,
@@ -215,6 +222,7 @@ describe('marketplace categories fetch handler', () => {
       method: 'POST',
       body: JSON.stringify({
         connectionId: 'conn-1',
+        browserMode: 'headless',
       }),
       headers: {
         'content-type': 'application/json',
@@ -226,7 +234,10 @@ describe('marketplace categories fetch handler', () => {
     expect(response.status).toBe(200);
     expect(fetchTraderaCategoriesFromListingFormForConnectionMock).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'conn-1' }),
-      { listingFormUrl: 'https://www.tradera.com/en/selling/new' }
+      {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        browserMode: 'headless',
+      }
     );
     expect(syncFromBaseMock).toHaveBeenCalledWith('conn-1', [
       {

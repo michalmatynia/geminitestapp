@@ -13,6 +13,55 @@ const normalizeOptionalString = (value: unknown): string | undefined => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
+const ORGANIZATION_OPTIONAL_STRING_FIELDS = [
+  'cooperationStatus',
+  'defaultBankAccountId',
+  'displayAddressId',
+  'displayBankAccountId',
+  'establishedDate',
+  'krs',
+  'legacyDefaultAddressUuid',
+  'legacyDefaultBankAccountUuid',
+  'legacyDisplayAddressUuid',
+  'legacyDisplayBankAccountUuid',
+  'legacyParentUuid',
+  'legacyUuid',
+  'parentOrganizationId',
+  'taxId',
+  'tradingName',
+  'updatedBy',
+] as const;
+
+type OrganizationOptionalStringField = (typeof ORGANIZATION_OPTIONAL_STRING_FIELDS)[number];
+
+type FilemakerOrganizationInput = {
+  id: string;
+  name: unknown;
+  addressId?: unknown;
+  street?: unknown;
+  streetNumber?: unknown;
+  city?: unknown;
+  postalCode?: unknown;
+  country?: unknown;
+  countryId?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+} & Partial<Record<OrganizationOptionalStringField, unknown>>;
+
+const normalizeOptionalStringFields = <T extends string>(
+  input: Partial<Record<T, unknown>>,
+  fields: readonly T[]
+): Partial<Record<T, string>> => {
+  const output: Partial<Record<T, string>> = {};
+  fields.forEach((field: T): void => {
+    const normalized = normalizeOptionalString(input[field]);
+    if (normalized !== undefined) {
+      output[field] = normalized;
+    }
+  });
+  return output;
+};
+
 const normalizePhoneNumbers = (value: unknown): string[] => {
   const unique = new Set<string>();
 
@@ -149,22 +198,9 @@ export const createFilemakerPerson = (input: {
   };
 };
 
-export const createFilemakerOrganization = (input: {
-  id: string;
-  name: unknown;
-  addressId?: unknown;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  taxId?: unknown;
-  krs?: unknown;
-  tradingName?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerOrganization => {
+export const createFilemakerOrganization = (
+  input: FilemakerOrganizationInput
+): FilemakerOrganization => {
   const now = new Date().toISOString();
   const address = normalizeAddressFields({
     street: input.street,
@@ -184,9 +220,7 @@ export const createFilemakerOrganization = (input: {
     postalCode: address.postalCode,
     country: address.country,
     countryId: address.countryId,
-    taxId: normalizeOptionalString(input.taxId),
-    krs: normalizeOptionalString(input.krs),
-    tradingName: normalizeOptionalString(input.tradingName),
+    ...normalizeOptionalStringFields(input, ORGANIZATION_OPTIONAL_STRING_FIELDS),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

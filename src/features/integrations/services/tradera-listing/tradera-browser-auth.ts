@@ -88,6 +88,8 @@ export type TraderaAuthInputBehavior = TraderaHumanizedInputBehavior;
 const isKnownAuthenticatedTraderaUrl = (normalizedUrl: string): boolean =>
   normalizedUrl.includes('/my/listings') ||
   normalizedUrl.includes('/selling/new') ||
+  normalizedUrl.includes('/selling/draft/') ||
+  normalizedUrl.includes('/sell/new') ||
   normalizedUrl.includes('/selling/edit');
 
 const waitOnPage = async (page: Page, timeoutMs: number): Promise<void> => {

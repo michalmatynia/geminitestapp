@@ -38,6 +38,11 @@ const readNumber = (value: unknown): number | null =>
 const readStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 
+const normalizeQuicklistAction = (
+  value: string | null
+): TraderaListingAction | null =>
+  value === 'list' || value === 'relist' || value === 'sync' ? value : null;
+
 const normalizeExecutionStepStatus = (value: string | null): TraderaExecutionStep['status'] | null => {
   if (value === 'completed') return 'success';
   if (value === 'failed') return 'error';
@@ -1040,19 +1045,43 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
   const traderaData = toRecord(marketplaceRecord['tradera']);
   const lastExecution = toRecord(traderaData['lastExecution']);
   const metadata = toRecord(lastExecution['metadata']);
-  const action = readString(lastExecution['action']);
-  const persistedSteps = readTraderaExecutionSteps(metadata['executionSteps']);
   const rawResult = toRecord(metadata['rawResult']);
+  const action =
+    readString(lastExecution['action']) ??
+    readString(metadata['action']) ??
+    readString(rawResult['listingAction']) ??
+    readString(rawResult['action']);
+  const quicklistAction = normalizeQuicklistAction(action);
+  const persistedSteps = readTraderaExecutionSteps(metadata['executionSteps']);
   const rawExecutionSteps = readTraderaExecutionSteps(rawResult['executionSteps']);
   const logs = readStringArray(metadata['logTail']);
   const errorMessage = readString(lastExecution['error']);
   const ok = typeof lastExecution['ok'] === 'boolean' ? lastExecution['ok'] : null;
+  const metadataLatestStage = readString(metadata['latestStage']);
+  const metadataDuplicateMatchStrategy = readString(metadata['duplicateMatchStrategy']);
+  const metadataDuplicateLinked = readBoolean(metadata['duplicateLinked']);
+  const rawStage = readString(rawResult['stage']);
+  const rawDuplicateMatchStrategy = readString(rawResult['duplicateMatchStrategy']);
+  const rawDuplicateLinked = readBoolean(rawResult['duplicateLinked']);
+  const effectiveRawResult: Record<string, unknown> = { ...rawResult };
+  const effectiveStage = metadataLatestStage ?? rawStage;
+  if (effectiveStage !== null) {
+    effectiveRawResult['stage'] = effectiveStage;
+  }
+  const effectiveDuplicateMatchStrategy =
+    metadataDuplicateMatchStrategy ?? rawDuplicateMatchStrategy;
+  if (effectiveDuplicateMatchStrategy !== null) {
+    effectiveRawResult['duplicateMatchStrategy'] = effectiveDuplicateMatchStrategy;
+  }
+  if (rawDuplicateLinked !== null || metadataDuplicateLinked !== null) {
+    effectiveRawResult['duplicateLinked'] = metadataDuplicateLinked ?? rawDuplicateLinked;
+  }
 
   let derivedSteps: TraderaExecutionStep[] = [];
-  if (action === 'list' || action === 'relist' || action === 'sync') {
+  if (quicklistAction !== null) {
     derivedSteps = buildTraderaQuicklistExecutionSteps({
-      action,
-      rawResult,
+      action: quicklistAction,
+      rawResult: effectiveRawResult,
       logs,
       errorMessage,
     });
@@ -1064,14 +1093,16 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
     derivedSteps = rawExecutionSteps;
   }
 
-  const steps =
-    ok === false && (action === 'list' || action === 'relist' || action === 'sync')
-      ? pickMostInformativeExecutionSteps([persistedSteps, rawExecutionSteps, derivedSteps])
-      : persistedSteps.length > 0
-        ? persistedSteps
-        : rawExecutionSteps.length > 0
-          ? rawExecutionSteps
-          : derivedSteps;
+  let steps: TraderaExecutionStep[];
+  if (quicklistAction !== null) {
+    steps = pickMostInformativeExecutionSteps([persistedSteps, rawExecutionSteps, derivedSteps]);
+  } else if (persistedSteps.length > 0) {
+    steps = persistedSteps;
+  } else if (rawExecutionSteps.length > 0) {
+    steps = rawExecutionSteps;
+  } else {
+    steps = derivedSteps;
+  }
 
   return {
     action,

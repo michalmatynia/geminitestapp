@@ -130,6 +130,7 @@ describe('marketplace categories fetch helpers', () => {
       connectionId: 'conn-1',
       sourceName: 'Tradera',
       responseSourceName: 'Tradera listing form picker',
+      browserMode: 'headed',
       mode: 'tradera-listing-form',
     });
     fetchTraderaCategoriesFromListingFormForConnectionMock.mockResolvedValue([
@@ -138,6 +139,23 @@ describe('marketplace categories fetch helpers', () => {
     await expect(fetchMarketplaceCategories(traderaContext)).resolves.toEqual([
       { id: 'cat-2', name: 'Category 2', parentId: '0' },
     ]);
+    expect(fetchTraderaCategoriesFromListingFormForConnectionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'conn-1' }),
+      {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        browserMode: 'headed',
+      }
+    );
+
+    const headlessTraderaContext = await resolveMarketplaceCategoryFetchContext(
+      traderaRepo,
+      'conn-1',
+      'headless'
+    );
+    expect(headlessTraderaContext).toMatchObject({
+      browserMode: 'headless',
+      mode: 'tradera-listing-form',
+    });
 
     const unsupportedRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),

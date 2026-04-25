@@ -10,6 +10,7 @@ import type {
   MarketplaceCategoryStats,
   MarketplaceConnectionRequest,
   MarketplaceFetchResponse,
+  TraderaCategoryFetchBrowserMode,
 } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -97,6 +98,7 @@ export type MarketplaceCategoryFetchContext =
       sourceName: 'Tradera';
       responseSourceName: 'Tradera listing form picker';
       listingFormUrl: string;
+      browserMode: TraderaCategoryFetchBrowserMode;
       mode: 'tradera-listing-form';
     };
 
@@ -111,7 +113,8 @@ export const requireMarketplaceConnectionId = (
 
 export const resolveMarketplaceCategoryFetchContext = async (
   integrationRepo: IntegrationLookupRepository,
-  connectionId: string
+  connectionId: string,
+  browserMode: TraderaCategoryFetchBrowserMode = 'headed'
 ): Promise<MarketplaceCategoryFetchContext> => {
   const connection = await integrationRepo.getConnectionById(connectionId);
   if (!connection) {
@@ -157,6 +160,7 @@ export const resolveMarketplaceCategoryFetchContext = async (
       sourceName: 'Tradera',
       responseSourceName: 'Tradera listing form picker',
       listingFormUrl: systemSettings.listingFormUrl,
+      browserMode,
       mode: 'tradera-listing-form',
     };
   }
@@ -175,6 +179,7 @@ export const fetchMarketplaceCategories = async (
 
   return fetchTraderaCategoriesFromListingFormForConnection(context.connection, {
     listingFormUrl: context.listingFormUrl,
+    browserMode: context.browserMode,
   });
 };
 

@@ -8,6 +8,7 @@ import {
   type FilemakerEmailLink,
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
+  type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
@@ -189,12 +190,16 @@ export const createFilemakerValue = (input: {
   legacyUuid?: unknown;
   legacyParentUuids?: unknown;
   legacyListUuids?: unknown;
+  createdBy?: unknown;
+  updatedBy?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerValue => {
   const now = new Date().toISOString();
   const sortOrder = Number(input.sortOrder);
   const legacyUuid = normalizeString(input.legacyUuid);
+  const createdBy = normalizeString(input.createdBy);
+  const updatedBy = normalizeString(input.updatedBy);
   const legacyParentUuids = Array.isArray(input.legacyParentUuids)
     ? input.legacyParentUuids
         .map(normalizeString)
@@ -215,6 +220,8 @@ export const createFilemakerValue = (input: {
     ...(legacyUuid.length > 0 ? { legacyUuid } : {}),
     ...(legacyParentUuids.length > 0 ? { legacyParentUuids } : {}),
     ...(legacyListUuids.length > 0 ? { legacyListUuids } : {}),
+    ...(createdBy.length > 0 ? { createdBy } : {}),
+    ...(updatedBy.length > 0 ? { updatedBy } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };
@@ -258,6 +265,35 @@ export const createFilemakerValueParameterLink = (input: {
     parameterId: normalizeString(input.parameterId),
     ...(legacyValueUuid.length > 0 ? { legacyValueUuid } : {}),
     ...(legacyParameterUuid.length > 0 ? { legacyParameterUuid } : {}),
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createFilemakerOrganizationLegacyDemand = (input: {
+  id: string;
+  organizationId: unknown;
+  valueIds?: unknown;
+  legacyUuid?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerOrganizationLegacyDemand => {
+  const now = new Date().toISOString();
+  const legacyUuid = normalizeString(input.legacyUuid);
+  const valueIds = Array.isArray(input.valueIds)
+    ? input.valueIds
+        .map(normalizeString)
+        .filter((valueId: string, index: number, values: string[]): boolean => {
+          return valueId.length > 0 && values.indexOf(valueId) === index;
+        })
+        .slice(0, 4)
+    : [];
+
+  return {
+    id: normalizeString(input.id),
+    organizationId: normalizeString(input.organizationId),
+    valueIds,
+    ...(legacyUuid.length > 0 ? { legacyUuid } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

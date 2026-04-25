@@ -22,6 +22,7 @@ import {
   buildBlockedSyncPreview,
   buildLinkedProductSyncPlan,
   fetchBaseDetailsMap,
+  resolveBaseParameterSyncValues,
   resolveBaseConnectionContext,
   resolveBaseFieldPresentationMetadata,
   resolveManualBaseSyncTarget,
@@ -114,6 +115,14 @@ export const getProductBaseSyncPreview = async (
     connectionContext,
     rules: buildEffectiveProductSyncFieldRules(profile.fieldRules),
   });
+  const resolvedBaseParameterValues = await resolveBaseParameterSyncValues({
+    product,
+    profile,
+    baseRecord,
+    connectionId: connectionContext.connectionId,
+    inventoryId: connectionContext.inventoryId,
+    persistLinkMap: false,
+  });
   const plan = buildLinkedProductSyncPlan({
     product,
     baseRecord,
@@ -122,6 +131,7 @@ export const getProductBaseSyncPreview = async (
     persistBaseProductId:
       resolvedTarget.linkedVia === 'listing' || resolvedTarget.linkedVia === 'sku_backfill',
     baseFieldPresentationMetadata,
+    resolvedBaseParameterValues,
   });
   const hasActiveRun = await hasActiveProductSyncRun(profile.id);
 

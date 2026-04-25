@@ -11,6 +11,9 @@ const mocks = vi.hoisted(() => ({
   fetchBaseWarehousesMock: vi.fn(),
   checkBaseSkuExistsMock: vi.fn(),
   getProductRepositoryMock: vi.fn(),
+  getParameterRepositoryMock: vi.fn(),
+  getCatalogParameterLinksMock: vi.fn(),
+  mergeCatalogParameterLinksMock: vi.fn(),
   getMongoDbMock: vi.fn(),
   getDefaultProductSyncProfileMock: vi.fn(),
   getProductSyncProfileMock: vi.fn(),
@@ -37,6 +40,16 @@ vi.mock('@/server/integrations', () => ({
 
 vi.mock('@/shared/lib/products/services/product-repository', () => ({
   getProductRepository: () => mocks.getProductRepositoryMock(),
+}));
+
+vi.mock('@/shared/lib/products/services/parameter-repository', () => ({
+  getParameterRepository: () => mocks.getParameterRepositoryMock(),
+}));
+
+vi.mock('@/features/integrations/services/imports/parameter-import/link-map-repository', () => ({
+  getCatalogParameterLinks: (...args: unknown[]) => mocks.getCatalogParameterLinksMock(...args),
+  mergeCatalogParameterLinks: (...args: unknown[]) =>
+    mocks.mergeCatalogParameterLinksMock(...args),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -69,6 +82,70 @@ const buildListingRepository = () => ({
   updateListingStatus: vi.fn().mockResolvedValue(undefined),
   updateListing: vi.fn().mockResolvedValue(undefined),
 });
+
+const useParameterSyncProfile = (
+  direction: 'app_to_base' | 'base_to_app' = 'base_to_app'
+): void => {
+  mocks.getDefaultProductSyncProfileMock.mockResolvedValue({
+    id: 'profile-1',
+    name: 'Base Product Sync',
+    isDefault: true,
+    enabled: true,
+    connectionId: 'connection-1',
+    inventoryId: 'inventory-1',
+    catalogId: null,
+    scheduleIntervalMinutes: 30,
+    batchSize: 100,
+    conflictPolicy: 'skip',
+    fieldRules: [
+        {
+          id: 'rule-parameters',
+          appField: 'parameters',
+          baseField: 'parameters',
+          direction,
+        },
+    ],
+    lastRunAt: null,
+    createdAt: '2026-04-11T10:00:00.000Z',
+    updatedAt: '2026-04-11T10:00:00.000Z',
+  });
+};
+
+const useProductParameterRepository = (
+  syncedParameters: Array<{
+    parameterId: string;
+    value: string;
+    valuesByLanguage?: Record<string, string>;
+  }>
+): ReturnType<typeof vi.fn> => {
+  const updateProduct = vi.fn().mockResolvedValue({ id: 'product-1' });
+  const productBase = {
+    id: 'product-1',
+    name_en: 'App title',
+    stock: 5,
+    price: 123,
+    sku: 'AXESTO001',
+    baseProductId: 'base-123',
+    importSource: 'base',
+    catalogId: 'catalog-1',
+  };
+
+  mocks.getProductRepositoryMock.mockResolvedValue({
+    getProductById: vi
+      .fn()
+      .mockResolvedValueOnce({
+        ...productBase,
+        parameters: [],
+      })
+      .mockResolvedValueOnce({
+        ...productBase,
+        parameters: syncedParameters,
+      }),
+    updateProduct,
+  });
+
+  return updateProduct;
+};
 
 describe('product-sync-service', () => {
   beforeEach(() => {
@@ -131,10 +208,16 @@ describe('product-sync-service', () => {
       updatedAt: '2026-04-11T10:00:00.000Z',
     });
     mocks.hasActiveProductSyncRunMock.mockResolvedValue(false);
+    mocks.getCatalogParameterLinksMock.mockResolvedValue({});
+    mocks.mergeCatalogParameterLinksMock.mockResolvedValue(undefined);
     mocks.findProductListingByProductAndConnectionAcrossProvidersMock.mockResolvedValue(null);
     mocks.checkBaseSkuExistsMock.mockResolvedValue({
       exists: true,
       productId: 'base-123',
+    });
+    mocks.getParameterRepositoryMock.mockResolvedValue({
+      listParameters: vi.fn().mockResolvedValue([]),
+      createParameter: vi.fn(),
     });
     mocks.getProductRepositoryMock.mockResolvedValue({
       getProducts: vi.fn().mockResolvedValue([
@@ -461,6 +544,354 @@ describe('product-sync-service', () => {
       baseFieldDescription: 'Price for Base.com price group Retail EUR (EUR_RETAIL) [EUR].',
     });
     expect(mocks.fetchBaseWarehousesMock).toHaveBeenCalledWith('resolved-token', 'inventory-1');
+  });
+
+  it('syncs Base parameters into product parameter values and clears the refreshed preview difference', async () => {
+    const syncedParameters = [
+      { parameterId: 'Color', value: 'Black' },
+      { parameterId: 'Material', value: 'Steel' },
+    ];
+    const updateProduct = useProductParameterRepository(syncedParameters);
+    useParameterSyncProfile();
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        parameters: {
+          Material: 'Steel',
+          Color: 'Black',
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).toHaveBeenCalledWith('product-1', {
+      parameters: syncedParameters,
+    });
+    expect(response?.result.localChanges).toContain('parameters');
+    expect(
+      response?.preview.fields.find((field) => field.appField === 'parameters')
+    ).toMatchObject({
+      appValue: JSON.stringify(syncedParameters),
+      baseValue: JSON.stringify(syncedParameters),
+      hasDifference: false,
+      willWriteToApp: false,
+      willWriteToBase: false,
+    });
+  });
+
+  it('normalizes nested Base parameter records before syncing them into product parameters', async () => {
+    const syncedParameters = [
+      { parameterId: 'Color', value: 'Black' },
+      { parameterId: 'Material', value: 'Steel' },
+      { parameterId: 'Style', value: 'Vintage, Retro' },
+    ];
+    const updateProduct = useProductParameterRepository(syncedParameters);
+    useParameterSyncProfile();
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        parameters: {
+          Material: { value: 'Steel' },
+          Color: { label: 'Black' },
+          Style: { values: ['Vintage', 'Retro'] },
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).toHaveBeenCalledWith('product-1', {
+      parameters: syncedParameters,
+    });
+    expect(
+      response?.preview.fields.find((field) => field.appField === 'parameters')
+    ).toMatchObject({
+      appValue: JSON.stringify(syncedParameters),
+      baseValue: JSON.stringify(syncedParameters),
+      hasDifference: false,
+    });
+  });
+
+  it('syncs localized Base parameter arrays from text fields into product parameters', async () => {
+    const syncedParameters = [
+      { parameterId: 'Color', value: 'Black', valuesByLanguage: { en: 'Black' } },
+      { parameterId: 'Material', value: 'Steel', valuesByLanguage: { en: 'Steel' } },
+    ];
+    const updateProduct = useProductParameterRepository(syncedParameters);
+    useParameterSyncProfile();
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        text_fields: {
+          'parameters|en': [
+            { id: 'base-material', name: 'Material', value: 'Steel' },
+            { id: 'base-color', name: 'Color', value: 'Black' },
+          ],
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).toHaveBeenCalledWith('product-1', {
+      parameters: syncedParameters,
+    });
+    expect(
+      response?.preview.fields.find((field) => field.appField === 'parameters')
+    ).toMatchObject({
+      appValue: JSON.stringify(syncedParameters),
+      baseValue: JSON.stringify(syncedParameters),
+      hasDifference: false,
+    });
+  });
+
+  it('keeps Polish-only Base parameters localized instead of syncing them as English values', async () => {
+    const syncedParameters = [
+      {
+        parameterId: 'base-material',
+        value: 'Stal',
+        valuesByLanguage: { pl: 'Stal' },
+      },
+    ];
+    const updateProduct = useProductParameterRepository(syncedParameters);
+    useParameterSyncProfile();
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        text_fields: {
+          'parameters|pl': [
+            { id: 'base-material', name: 'Materiał', value: 'Stal' },
+          ],
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).toHaveBeenCalledWith('product-1', {
+      parameters: syncedParameters,
+    });
+    expect(
+      response?.preview.fields.find((field) => field.appField === 'parameters')
+    ).toMatchObject({
+      appValue: JSON.stringify(syncedParameters),
+      baseValue: JSON.stringify(syncedParameters),
+      hasDifference: false,
+    });
+  });
+
+  it('merges English and Polish Base parameter buckets by Base parameter id', async () => {
+    const syncedParameters = [
+      {
+        parameterId: 'Material',
+        value: 'Steel',
+        valuesByLanguage: { en: 'Steel', pl: 'Stal' },
+      },
+    ];
+    const updateProduct = useProductParameterRepository(syncedParameters);
+    useParameterSyncProfile();
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        text_fields: {
+          'parameters|en': [
+            { id: 'base-material', name: 'Material', value: 'Steel' },
+          ],
+          'parameters|pl': [
+            { id: 'base-material', name: 'Materiał', value: 'Stal' },
+          ],
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).toHaveBeenCalledWith('product-1', {
+      parameters: syncedParameters,
+    });
+    expect(
+      response?.preview.fields.find((field) => field.appField === 'parameters')
+    ).toMatchObject({
+      appValue: JSON.stringify(syncedParameters),
+      baseValue: JSON.stringify(syncedParameters),
+      hasDifference: false,
+    });
+  });
+
+  it('maps localized Base parameters onto existing app parameter definitions', async () => {
+    const syncedParameters = [
+      {
+        parameterId: 'param-material',
+        value: 'Steel',
+        valuesByLanguage: { en: 'Steel', pl: 'Stal' },
+      },
+    ];
+    const updateProduct = useProductParameterRepository(syncedParameters);
+    useParameterSyncProfile();
+    mocks.getParameterRepositoryMock.mockResolvedValue({
+      listParameters: vi.fn().mockResolvedValue([
+        {
+          id: 'param-material',
+          catalogId: 'catalog-1',
+          name: 'Material',
+          name_en: 'Material',
+          name_pl: 'Materiał',
+          name_de: null,
+          selectorType: 'text',
+          optionLabels: [],
+          linkedTitleTermType: null,
+          createdAt: '2026-04-09T00:00:00.000Z',
+          updatedAt: '2026-04-09T00:00:00.000Z',
+        },
+      ]),
+      createParameter: vi.fn(),
+    });
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        text_fields: {
+          'parameters|en': [
+            { id: 'base-material', name: 'Material', value: 'Steel' },
+          ],
+          'parameters|pl': [
+            { id: 'base-material', name: 'Materiał', value: 'Stal' },
+          ],
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).toHaveBeenCalledWith('product-1', {
+      parameters: syncedParameters,
+    });
+    expect(mocks.mergeCatalogParameterLinksMock).toHaveBeenCalledWith({
+      catalogId: 'catalog-1',
+      connectionId: 'connection-1',
+      inventoryId: 'inventory-1',
+      links: { 'base-material': 'param-material' },
+    });
+    expect(
+      response?.preview.fields.find((field) => field.appField === 'parameters')
+    ).toMatchObject({
+      appValue: JSON.stringify(syncedParameters),
+      baseValue: JSON.stringify(syncedParameters),
+      hasDifference: false,
+    });
+  });
+
+  it('does not preserve app-only parameters when comparing app-to-base parameter sync', async () => {
+    const appParameters = [{ parameterId: 'Material', value: 'Steel' }];
+    useParameterSyncProfile('app_to_base');
+    mocks.getProductRepositoryMock.mockResolvedValue({
+      getProductById: vi.fn().mockResolvedValue({
+        id: 'product-1',
+        name_en: 'App title',
+        stock: 5,
+        price: 123,
+        sku: 'AXESTO001',
+        baseProductId: 'base-123',
+        importSource: 'base',
+        catalogId: 'catalog-1',
+        parameters: appParameters,
+      }),
+      updateProduct: vi.fn(),
+    });
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        parameters: [],
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(mocks.callBaseApiMock).toHaveBeenCalledWith(
+      'resolved-token',
+      'addInventoryProduct',
+      expect.objectContaining({
+        inventory_id: 'inventory-1',
+        product_id: 'base-123',
+        parameters: appParameters,
+      })
+    );
+    expect(response?.result.baseChanges).toContain('parameters');
+  });
+
+  it('does not overwrite linked title-term parameters with Base parameter values', async () => {
+    const existingParameters = [
+      {
+        parameterId: 'param-material',
+        value: 'Metal',
+        valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+      },
+    ];
+    const updateProduct = vi.fn();
+    const listingRepository = buildListingRepository();
+
+    useParameterSyncProfile();
+    mocks.findProductListingByProductAndConnectionAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-1',
+        externalListingId: 'base-123',
+        inventoryId: 'inventory-1',
+        status: 'active',
+        marketplaceData: {},
+      },
+      repository: listingRepository,
+    });
+    mocks.getProductRepositoryMock.mockResolvedValue({
+      getProductById: vi.fn().mockResolvedValue({
+        id: 'product-1',
+        name_en: 'App title',
+        stock: 5,
+        price: 123,
+        sku: 'AXESTO001',
+        baseProductId: 'base-123',
+        importSource: 'base',
+        catalogId: 'catalog-1',
+        parameters: existingParameters,
+      }),
+      updateProduct,
+    });
+    mocks.getParameterRepositoryMock.mockResolvedValue({
+      listParameters: vi.fn().mockResolvedValue([
+        {
+          id: 'param-material',
+          catalogId: 'catalog-1',
+          name: 'Material',
+          name_en: 'Material',
+          name_pl: 'Materiał',
+          name_de: null,
+          selectorType: 'text',
+          optionLabels: [],
+          linkedTitleTermType: 'material',
+          createdAt: '2026-04-09T00:00:00.000Z',
+          updatedAt: '2026-04-09T00:00:00.000Z',
+        },
+      ]),
+      createParameter: vi.fn(),
+    });
+    mocks.fetchBaseProductDetailsMock.mockResolvedValue([
+      {
+        product_id: 'base-123',
+        text_fields: {
+          'parameters|en': [
+            { id: 'base-material', name: 'Material', value: 'Plastic' },
+          ],
+          'parameters|pl': [
+            { id: 'base-material', name: 'Materiał', value: 'Plastik' },
+          ],
+        },
+      },
+    ]);
+
+    const response = await runProductBaseSync('product-1');
+
+    expect(updateProduct).not.toHaveBeenCalled();
+    expect(response?.result.localChanges).not.toContain('parameters');
+    expect(response?.result.status).toBe('skipped');
   });
 
   it('builds a manual Base sync preview from Base import SKU when no direct link exists yet', async () => {

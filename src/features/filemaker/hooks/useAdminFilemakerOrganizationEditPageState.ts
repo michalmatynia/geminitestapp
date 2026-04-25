@@ -17,6 +17,7 @@ import {
   createFilemakerAddress,
   createFilemakerAddressLink,
   createFilemakerOrganization,
+  createFilemakerOrganizationLegacyDemand,
   getFilemakerAddressById,
   getFilemakerAddressLinksForOwner,
   getFilemakerEmailsForParty,
@@ -32,6 +33,7 @@ import {
 import type {
   FilemakerEmail,
   FilemakerOrganization,
+  FilemakerOrganizationLegacyDemand,
   FilemakerPhoneNumber,
   FilemakerDatabase,
 } from '../types';
@@ -90,6 +92,45 @@ const applyOrganizationAddresses = (
   });
 };
 
+const getLegacyDemandRowsForOrganization = (
+  database: FilemakerDatabase,
+  organizationId: string
+): FilemakerOrganizationLegacyDemand[] =>
+  database.organizationLegacyDemands.filter(
+    (demand: FilemakerOrganizationLegacyDemand): boolean =>
+      demand.organizationId === organizationId
+  );
+
+const applyOrganizationLegacyDemands = (
+  database: FilemakerDatabase,
+  organizationId: string,
+  rows: FilemakerOrganizationLegacyDemand[]
+): FilemakerDatabase => {
+  const now = new Date().toISOString();
+  const nextRows = rows
+    .filter((row: FilemakerOrganizationLegacyDemand): boolean => row.valueIds.length > 0)
+    .map((row: FilemakerOrganizationLegacyDemand): FilemakerOrganizationLegacyDemand =>
+      createFilemakerOrganizationLegacyDemand({
+        id: row.id,
+        organizationId,
+        valueIds: row.valueIds,
+        legacyUuid: row.legacyUuid,
+        createdAt: row.createdAt ?? now,
+        updatedAt: now,
+      })
+    );
+
+  return normalizeFilemakerDatabase({
+    ...database,
+    organizationLegacyDemands: [
+      ...database.organizationLegacyDemands.filter(
+        (row: FilemakerOrganizationLegacyDemand): boolean =>
+          row.organizationId !== organizationId
+      ),
+      ...nextRows,
+    ],
+  });
+};
 
 export type AdminFilemakerOrganizationEditPageContextValue = {
   isCreateMode: boolean;
@@ -104,6 +145,10 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
   setPhoneNumberExtractionText: (value: React.SetStateAction<string>) => void;
   linkedEventIds: string[];
   setLinkedEventIds: (value: React.SetStateAction<string[]>) => void;
+  legacyDemandRows: FilemakerOrganizationLegacyDemand[];
+  setLegacyDemandRows: (
+    value: React.SetStateAction<FilemakerOrganizationLegacyDemand[]>
+  ) => void;
   emails: FilemakerEmail[];
   phoneNumbers: FilemakerPhoneNumber[];
   countries: CountryOption[];
@@ -150,6 +195,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const [emailExtractionText, setEmailExtractionText] = useState('');
   const [phoneNumberExtractionText, setPhoneNumberExtractionText] = useState('');
   const [linkedEventIds, setLinkedEventIds] = useState<string[]>([]);
+  const [legacyDemandRows, setLegacyDemandRows] = useState<FilemakerOrganizationLegacyDemand[]>([]);
 
   useEffect(() => {
     if (isCreateMode) {
@@ -161,6 +207,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       });
       setEditableAddresses([]);
       setLinkedEventIds([]);
+      setLegacyDemandRows([]);
       return;
     }
     if (organization) {
@@ -193,6 +240,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
       const events = getFilemakerEventsForOrganization(database, organization.id);
       setLinkedEventIds(events.map((e) => e.id));
+      setLegacyDemandRows(getLegacyDemandRowsForOrganization(database, organization.id));
     }
   }, [countriesKey, isCreateMode, organization, database]);
 
@@ -277,9 +325,9 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
     if (isCreateMode) {
       const now = new Date().toISOString();
-      const organizationId = createClientFilemakerId('organization');
+      const newOrganizationId = createClientFilemakerId('organization');
       const newOrganization = createFilemakerOrganization({
-        id: organizationId,
+        id: newOrganizationId,
         name: nextName,
         addressId: defaultAddress?.addressId ?? '',
         street: defaultAddress?.street ?? '',
@@ -291,6 +339,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         tradingName: orgDraft.tradingName ?? '',
         taxId: orgDraft.taxId ?? '',
         krs: orgDraft.krs ?? '',
+        cooperationStatus: orgDraft.cooperationStatus ?? '',
+        establishedDate: orgDraft.establishedDate ?? '',
         createdAt: now,
         updatedAt: now,
       });
@@ -298,7 +348,16 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         ...nextDatabase,
         organizations: [...nextDatabase.organizations, newOrganization],
       };
-      nextDatabase = applyOrganizationAddresses(nextDatabase, organizationId, normalizedAddresses);
+      nextDatabase = applyOrganizationAddresses(
+        nextDatabase,
+        newOrganizationId,
+        normalizedAddresses
+      );
+      nextDatabase = applyOrganizationLegacyDemands(
+        nextDatabase,
+        newOrganizationId,
+        legacyDemandRows
+      );
 
       await persistDatabase(nextDatabase, 'Organization created.');
       router.push('/admin/filemaker/organizations');
@@ -327,6 +386,11 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
           : o
       ),
     };
+    nextDatabase = applyOrganizationLegacyDemands(
+      nextDatabase,
+      organization.id,
+      legacyDemandRows
+    );
 
     await persistDatabase(nextDatabase, 'Organization updated.');
     router.push('/admin/filemaker/organizations');
@@ -335,6 +399,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     database,
     editableAddresses,
     isCreateMode,
+    legacyDemandRows,
     organization,
     orgDraft,
     persistDatabase,
@@ -379,6 +444,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     setPhoneNumberExtractionText,
     linkedEventIds,
     setLinkedEventIds,
+    legacyDemandRows,
+    setLegacyDemandRows,
     emails,
     phoneNumbers,
     countries,

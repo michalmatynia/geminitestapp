@@ -2,7 +2,10 @@ import type {
   CategoryMappingWithDetails,
   ExternalCategory,
 } from '@/shared/contracts/integrations/listings';
-import type { MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
+import type {
+  MarketplaceFetchResponse,
+  TraderaCategoryFetchBrowserMode,
+} from '@/shared/contracts/integrations/marketplace';
 import { ApiError } from '@/shared/lib/api-client';
 
 import { isMissingExternalCategoryName, isRootExternalCategory } from './CategoryMapperContext.utils';
@@ -36,6 +39,8 @@ export interface CategoryMapperUIState {
   toggleExpand: (categoryId: string) => void;
   lastFetchResult: MarketplaceFetchResponse | null;
   lastFetchWarning: CategoryMapperFetchWarning | null;
+  traderaCategoryFetchBrowserMode: TraderaCategoryFetchBrowserMode;
+  setTraderaCategoryFetchBrowserMode: (mode: TraderaCategoryFetchBrowserMode) => void;
   staleMappings: CategoryMapperIssueRow[];
   nonLeafMappings: CategoryMapperIssueRow[];
   stats: {

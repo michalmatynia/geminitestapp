@@ -9,7 +9,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
 import type { FilemakerValue } from '../types';
-import { ValueEditFields } from './AdminFilemakerValueEditPage.fields';
+import { ValueEditFields, ValueMetadataFields } from './AdminFilemakerValueEditPage.fields';
 import { getValueItemName, buildParentOptions } from './AdminFilemakerValueEditPage.helpers';
 import { ValueParametersSection } from './AdminFilemakerValueEditPage.parameters';
 import {
@@ -61,6 +61,7 @@ export function AdminFilemakerValueEditPage(): React.JSX.Element {
       }}
       isSaving={isSaving}
     >
+      <ValueMetadataFields value={value} />
       <ValueEditFields draft={draft} parentOptions={parentOptions} setDraft={setDraft} />
       <ValueParametersSection
         linkedParameterIds={parameterState.linkedParameterIds}

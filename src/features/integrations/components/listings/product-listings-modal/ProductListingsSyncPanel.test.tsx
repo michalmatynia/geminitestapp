@@ -140,8 +140,8 @@ const createPreviewData = (
       baseFieldDescription: 'SKU identifier.',
       direction: 'disabled',
       appValue: 'SKU-1',
-      baseValue: 'SKU-1',
-      hasDifference: false,
+      baseValue: 'SKU-OLD',
+      hasDifference: true,
       willWriteToApp: false,
       willWriteToBase: false,
     },
@@ -315,19 +315,19 @@ describe('ProductListingsSyncPanel', () => {
     });
   });
 
-  it('reveals live out-of-sync fields only after Check and then runs the Base sync action', async () => {
+  it('reveals only fields that will sync after Check and then runs the Base sync action', async () => {
     render(<ProductListingsSyncPanel />);
 
     expect(useProductBaseSyncPreviewMock).toHaveBeenCalledWith('product-1', { enabled: false });
     expect(
       screen.getByText(
-        'Click Check to load the live Base.com status for this product and reveal the fields that are currently out of sync.'
+        'Click Check to load the live Base.com status for this product and preview only the fields this profile is about to sync.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('Configured Directions')).toBeInTheDocument();
     expect(
       screen.getByText(
-        'These are the saved field directions. Click Check to load the live out-of-sync fields.'
+        'These are the saved field directions. Click Check to preview the fields this profile will sync now.'
       )
     ).toBeInTheDocument();
     expect(screen.getByText('Main Base Connection')).toBeInTheDocument();
@@ -335,10 +335,10 @@ describe('ProductListingsSyncPanel', () => {
     expect(screen.getByText('Main Inventory')).toBeInTheDocument();
     expect(screen.getByText('inventory-1')).toBeInTheDocument();
     expect(screen.getByText('Never')).toBeInTheDocument();
-    expect(screen.getByText('1 App -> Base, 1 Base -> App, 5 Disabled')).toBeInTheDocument();
+    expect(screen.getByText('1 App -> Base, 1 Base -> App')).toBeInTheDocument();
     expect(screen.getByText('Target: Product name (text_fields.name)')).toBeInTheDocument();
     expect(screen.getByText('Target: Main Warehouse (bl_1)')).toBeInTheDocument();
-    expect(screen.getByText('Target: Retail EUR (EUR_RETAIL)')).toBeInTheDocument();
+    expect(screen.queryByText('Target: Retail EUR (EUR_RETAIL)')).not.toBeInTheDocument();
     expect(screen.queryByText('Base.com field: Product name (text_fields.name)')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sync' })).not.toBeInTheDocument();
 
@@ -365,7 +365,7 @@ describe('ProductListingsSyncPanel', () => {
     expect(screen.getByText('Name inside text_fields object.')).toBeInTheDocument();
     expect(screen.queryByText('Base.com field: Weight (weight)')).not.toBeInTheDocument();
     expect(screen.queryByText('Base.com field: SKU (sku)')).not.toBeInTheDocument();
-    expect(screen.getByText('2 field(s) currently out of sync')).toBeInTheDocument();
+    expect(screen.getByText('2 field(s) will sync')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Sync' }));
 
@@ -380,6 +380,107 @@ describe('ProductListingsSyncPanel', () => {
     expect(screen.getByText('App updated')).toBeInTheDocument();
     expect(screen.getByText('Base.com updated')).toBeInTheDocument();
     expect(screen.getByText('Base product link')).toBeInTheDocument();
+  });
+
+  it('refreshes configured directions when the BL modal sync profile changes after a preview was checked', async () => {
+    let profiles = [
+      {
+        id: 'profile-1',
+        name: 'Base Product Sync',
+        isDefault: true,
+        enabled: true,
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: null,
+        scheduleIntervalMinutes: 30,
+        batchSize: 100,
+        conflictPolicy: 'skip',
+        fieldRules: [
+          {
+            id: 'rule-1',
+            appField: 'name_en',
+            baseField: 'text_fields.name',
+            direction: 'app_to_base',
+          },
+        ],
+        lastRunAt: null,
+        createdAt: '2026-04-11T12:00:00.000Z',
+        updatedAt: '2026-04-11T12:00:00.000Z',
+      },
+    ];
+    useProductSyncProfilesMock.mockImplementation(() => ({
+      data: profiles,
+      isLoading: false,
+      error: null,
+    }));
+
+    const { rerender } = render(<ProductListingsSyncPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Base Product Sync' })).toBeInTheDocument();
+    });
+
+    profiles = [
+      {
+        ...profiles[0],
+        isDefault: false,
+      },
+      {
+        id: 'profile-2',
+        name: 'EAN ASIN and Params',
+        isDefault: true,
+        enabled: true,
+        connectionId: 'connection-1',
+        inventoryId: 'inventory-1',
+        catalogId: null,
+        scheduleIntervalMinutes: 30,
+        batchSize: 100,
+        conflictPolicy: 'skip',
+        fieldRules: [
+          {
+            id: 'rule-ean',
+            appField: 'ean',
+            baseField: 'ean',
+            direction: 'app_to_base',
+          },
+          {
+            id: 'rule-asin',
+            appField: 'asin',
+            baseField: 'features.asin',
+            direction: 'app_to_base',
+          },
+          {
+            id: 'rule-parameters',
+            appField: 'parameters',
+            baseField: 'attributes',
+            direction: 'base_to_app',
+          },
+        ],
+        lastRunAt: null,
+        createdAt: '2026-04-11T12:05:00.000Z',
+        updatedAt: '2026-04-11T12:05:00.000Z',
+      },
+    ];
+
+    rerender(<ProductListingsSyncPanel />);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('link', { name: 'Base Product Sync' })).not.toBeInTheDocument();
+    });
+
+    expect(screen.getByRole('link', { name: 'Sync Settings' })).toHaveAttribute(
+      'title',
+      'Open sync settings — EAN ASIN and Params'
+    );
+    expect(screen.getByText('Target: ASIN feature (features.asin)')).toBeInTheDocument();
+    expect(screen.getByText('Target: Attributes (attributes)')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Click Check to load the live Base.com status for this product and preview only the fields this profile is about to sync.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('explains when the next sync will clear stale values after Check', async () => {

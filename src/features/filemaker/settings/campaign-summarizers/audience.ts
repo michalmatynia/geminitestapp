@@ -93,7 +93,7 @@ const collectEventIdValuesFromGroup = (
       collectEventIdValuesFromGroup(child, collected);
       return;
     }
-    const condition = child as FilemakerAudienceCondition;
+    const condition = child;
     if (condition.field === 'eventId' && condition.value) {
       collected.add(condition.value);
     }

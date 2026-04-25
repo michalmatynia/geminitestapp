@@ -25,6 +25,7 @@ export const filemakerEntityKindSchema = z.enum([
   'value',
   'value_parameter',
   'value_parameter_link',
+  'organization_legacy_demand',
   'email_campaign',
   'email_campaign_run',
   'email_campaign_delivery',
@@ -91,6 +92,7 @@ export type FilemakerPerson = FilemakerPersonDto;
 export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   name: z.string(),
   addressId: z.string(),
+  displayAddressId: z.string().nullable().optional(),
   street: z.string(),
   streetNumber: z.string(),
   city: z.string(),
@@ -100,6 +102,18 @@ export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   taxId: z.string().optional(),
   krs: z.string().optional(),
   tradingName: z.string().optional(),
+  cooperationStatus: z.string().optional(),
+  establishedDate: z.string().nullable().optional(),
+  parentOrganizationId: z.string().nullable().optional(),
+  defaultBankAccountId: z.string().nullable().optional(),
+  displayBankAccountId: z.string().nullable().optional(),
+  legacyUuid: z.string().optional(),
+  legacyParentUuid: z.string().optional(),
+  legacyDefaultAddressUuid: z.string().optional(),
+  legacyDisplayAddressUuid: z.string().optional(),
+  legacyDefaultBankAccountUuid: z.string().optional(),
+  legacyDisplayBankAccountUuid: z.string().optional(),
+  updatedBy: z.string().optional(),
 });
 
 export type FilemakerOrganizationDto = z.infer<typeof filemakerOrganizationSchema>;
@@ -175,6 +189,8 @@ export const filemakerValueSchema = dtoBaseSchema.extend({
   legacyUuid: z.string().optional(),
   legacyParentUuids: z.array(z.string()).optional(),
   legacyListUuids: z.array(z.string()).optional(),
+  createdBy: z.string().optional(),
+  updatedBy: z.string().optional(),
 });
 
 export type FilemakerValueDto = z.infer<typeof filemakerValueSchema>;
@@ -200,6 +216,17 @@ export type FilemakerValueParameterLinkDto = z.infer<
   typeof filemakerValueParameterLinkSchema
 >;
 export type FilemakerValueParameterLink = FilemakerValueParameterLinkDto;
+
+export const filemakerOrganizationLegacyDemandSchema = dtoBaseSchema.extend({
+  organizationId: z.string(),
+  valueIds: z.array(z.string()).max(4).default([]),
+  legacyUuid: z.string().optional(),
+});
+
+export type FilemakerOrganizationLegacyDemandDto = z.infer<
+  typeof filemakerOrganizationLegacyDemandSchema
+>;
+export type FilemakerOrganizationLegacyDemand = FilemakerOrganizationLegacyDemandDto;
 
 export const filemakerEmailCampaignLifecycleStatusSchema = z.enum([
   'draft',
@@ -793,6 +820,7 @@ export const filemakerDatabaseSchema = z.object({
   values: z.array(filemakerValueSchema).default([]),
   valueParameters: z.array(filemakerValueParameterSchema).default([]),
   valueParameterLinks: z.array(filemakerValueParameterLinkSchema).default([]),
+  organizationLegacyDemands: z.array(filemakerOrganizationLegacyDemandSchema).default([]),
 });
 
 export type FilemakerDatabaseDto = z.infer<typeof filemakerDatabaseSchema>;

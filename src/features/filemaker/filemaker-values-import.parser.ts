@@ -11,8 +11,11 @@ const FIELDS = {
   parentUuid: 'UUID_Parent',
   uuid: 'UUID',
   modificationTimestamp: 'modificationTimestamp',
+  modificationAccountName: 'modificationAccountName',
   english: 'english',
   creationTimestamp: 'creationTimestamp',
+  creationHostTimestamp: 'creationHostTimestamp',
+  creationAccountName: 'creationAccountName',
   serialValue: 'SerialValue',
   sortValue: 'SortValue',
   uuidList: 'UUID_List',
@@ -22,17 +25,22 @@ const FIELDS = {
   listEnglish: 'iValues Builder List::English',
   listUuid: 'iValues Builder List::UUID',
 } as const;
+const XLSX_HEADER_SCAN_LIMIT = 25;
+
+type LegacyValueRowsFormat = 'CSV/TSV' | 'XLSX';
 
 export type LegacyValueRow = Record<string, string>;
 
 export type ParsedLegacyValue = {
   createdAt?: string;
+  createdBy?: string;
   label: string;
   legacyListUuids: string[];
   legacyParentUuids: string[];
   legacyUuid: string;
   sortOrder: number;
   updatedAt?: string;
+  updatedBy?: string;
 };
 
 export type ParsedLegacyParameter = {
@@ -112,6 +120,14 @@ const parseLegacyTimestamp = (value: unknown): string | undefined => {
   return match === null ? parseNativeTimestamp(normalized) : parseFilemakerTimestampMatch(match);
 };
 
+const isTimestampLike = (value: string): boolean =>
+  FILEMAKER_TIMESTAMP_PATTERN.test(value) || !Number.isNaN(Date.parse(value));
+
+const parseLegacyAccountName = (...values: unknown[]): string | undefined =>
+  values
+    .map((value: unknown): string => normalizeString(value))
+    .find((value: string): boolean => value.length > 0 && !isTimestampLike(value));
+
 const inferDelimiter = (line: string): ',' | '\t' => {
   const tabCount = line.split('\t').length - 1;
   const commaCount = line.split(',').length - 1;
@@ -122,6 +138,41 @@ const resolveLegacyValueLabel = (englishLabel: string, childLabel: string, legac
   if (englishLabel.length > 0) return englishLabel;
   if (childLabel.length > 0) return childLabel;
   return legacyUuid;
+};
+
+const normalizeMatrixCell = (value: unknown): string => normalizeString(value);
+
+const findHeaderRowIndex = (rows: string[][], scanForHeader: boolean): number => {
+  if (!scanForHeader) return 0;
+  return rows.findIndex((row: string[], index: number): boolean => {
+    if (index >= XLSX_HEADER_SCAN_LIMIT) return false;
+    return row.map((field: string): string => normalizeString(field)).includes(FIELDS.uuid);
+  });
+};
+
+const buildMissingUuidHeaderError = (format: LegacyValueRowsFormat): Error =>
+  new Error(
+    `FileMaker value ${format} export is missing the UUID header. CSV/TSV imports must include a header row; for Excel workbooks, import the .xlsx or .xls file directly.`
+  );
+
+const rowsToLegacyValueRows = (
+  matrix: unknown[][],
+  input: { format: LegacyValueRowsFormat; scanForHeader?: boolean }
+): LegacyValueRow[] => {
+  const rows = matrix
+    .map((row: unknown[]): string[] => row.map(normalizeMatrixCell))
+    .filter((row: string[]): boolean => row.some((value: string): boolean => value.length > 0));
+  const headerRowIndex = findHeaderRowIndex(rows, input.scanForHeader ?? false);
+  const header = rows[headerRowIndex]?.map((field: string): string => normalizeString(field)) ?? [];
+  if (!header.includes(FIELDS.uuid)) {
+    throw buildMissingUuidHeaderError(input.format);
+  }
+
+  return rows.slice(headerRowIndex + 1).map((row: string[]): LegacyValueRow =>
+    Object.fromEntries(
+      header.map((fieldName: string, index: number) => [fieldName, row[index] ?? ''])
+    )
+  );
 };
 
 export const parseFilemakerLegacyValueRows = (text: string): LegacyValueRow[] => {
@@ -136,17 +187,39 @@ export const parseFilemakerLegacyValueRows = (text: string): LegacyValueRow[] =>
     throw new Error(`Invalid FileMaker value export: ${firstError}`);
   }
 
-  const rows = parsed.data;
-  const header = rows.shift()?.map((field: string): string => normalizeString(field)) ?? [];
-  if (!header.includes(FIELDS.uuid)) {
-    throw new Error('FileMaker value export is missing the UUID header.');
-  }
+  return rowsToLegacyValueRows(parsed.data, { format: 'CSV/TSV' });
+};
 
-  return rows.map((row: string[]): LegacyValueRow =>
-    Object.fromEntries(
-      header.map((fieldName: string, index: number) => [fieldName, row[index] ?? ''])
-    )
-  );
+const toArrayBuffer = (input: ArrayBuffer | Uint8Array): ArrayBuffer => {
+  if (input instanceof ArrayBuffer) return input;
+  const copy = new Uint8Array(input.byteLength);
+  copy.set(input);
+  return copy.buffer;
+};
+
+export const parseFilemakerLegacyValueWorkbookRows = async (
+  input: ArrayBuffer | Uint8Array
+): Promise<LegacyValueRow[]> => {
+  const XLSX = await import('xlsx');
+  const workbook = XLSX.read(toArrayBuffer(input), {
+    type: 'array',
+    cellDates: false,
+  });
+  const sheetName = workbook.SheetNames[0];
+  if (sheetName === undefined) {
+    throw new Error('FileMaker value XLSX export does not contain any worksheets.');
+  }
+  const sheet = workbook.Sheets[sheetName];
+  if (!sheet) {
+    throw new Error(`FileMaker value XLSX export is missing worksheet "${sheetName}".`);
+  }
+  const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+    header: 1,
+    raw: false,
+    defval: '',
+    blankrows: false,
+  });
+  return rowsToLegacyValueRows(matrix, { format: 'XLSX', scanForHeader: true });
 };
 
 export const parseValueFromRow = (
@@ -160,6 +233,10 @@ export const parseValueFromRow = (
 
   return {
     createdAt: parseLegacyTimestamp(row[FIELDS.creationTimestamp]),
+    createdBy: parseLegacyAccountName(
+      row[FIELDS.creationAccountName],
+      row[FIELDS.creationHostTimestamp]
+    ),
     label: resolveLegacyValueLabel(englishLabel, childLabel, legacyUuid),
     legacyListUuids: extractLegacyUuids(row[FIELDS.uuidList]),
     legacyParentUuids: extractLegacyUuids(row[FIELDS.parentUuid]),
@@ -169,6 +246,7 @@ export const parseValueFromRow = (
       parseInteger(row[FIELDS.serialValue]) ??
       fallbackSortOrder,
     updatedAt: parseLegacyTimestamp(row[FIELDS.modificationTimestamp]),
+    updatedBy: parseLegacyAccountName(row[FIELDS.modificationAccountName]),
   };
 };
 

@@ -74,6 +74,93 @@ const databaseFixture = {
   values: [],
 };
 
+const databaseWithLegacyDemandFixture = {
+  ...databaseFixture,
+  values: [
+    {
+      id: 'value-root',
+      parentId: null,
+      label: 'Production',
+      value: 'Production',
+      sortOrder: 0,
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+    {
+      id: 'value-child',
+      parentId: 'value-root',
+      label: 'Lighting',
+      value: 'Lighting',
+      sortOrder: 0,
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+    {
+      id: 'value-grandchild',
+      parentId: 'value-child',
+      label: 'LED wall',
+      value: 'LED wall',
+      sortOrder: 0,
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+  ],
+  organizationLegacyDemands: [
+    {
+      id: 'demand-1',
+      organizationId: 'org-1',
+      valueIds: ['value-root', 'value-child'],
+      legacyUuid: 'legacy-demand-uuid',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+  ],
+};
+
+const databaseWithSharedEmailFixture = {
+  ...databaseFixture,
+  persons: [
+    {
+      id: 'person-1',
+      firstName: 'Jane',
+      lastName: 'Smith',
+      addressId: '',
+      street: '',
+      streetNumber: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      countryId: '',
+      nip: '',
+      regon: '',
+      phoneNumbers: [],
+    },
+  ],
+  emails: [
+    {
+      id: 'email-shared',
+      email: 'shared@example.com',
+      status: 'active',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+  ],
+  emailLinks: [
+    {
+      id: 'email-link-person',
+      emailId: 'email-shared',
+      partyKind: 'person',
+      partyId: 'person-1',
+    },
+    {
+      id: 'email-link-organization',
+      emailId: 'email-shared',
+      partyKind: 'organization',
+      partyId: 'org-1',
+    },
+  ],
+};
+
 describe('useAdminFilemakerOrganizationEditPageState', () => {
   beforeEach(() => {
     mocks.routerPush.mockReset();
@@ -98,6 +185,73 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
     expect(result.current.orgDraft.name).toBe('Acme Inc');
   });
 
+  it('resolves linked emails through emailLinks without duplicating the email record', async () => {
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY ? JSON.stringify(databaseWithSharedEmailFixture) : null
+    );
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.emails.map((email) => email.email)).toEqual(['shared@example.com']);
+    });
+  });
+
+  it('hydrates legacy demand rows for the organization', async () => {
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY ? JSON.stringify(databaseWithLegacyDemandFixture) : null
+    );
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.legacyDemandRows).toEqual([
+        expect.objectContaining({
+          id: 'demand-1',
+          organizationId: 'org-1',
+          valueIds: ['value-root', 'value-child'],
+          legacyUuid: 'legacy-demand-uuid',
+        }),
+      ]);
+    });
+  });
+
+  it('persists legacy demand rows with value hierarchy paths', async () => {
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY ? JSON.stringify(databaseWithLegacyDemandFixture) : null
+    );
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.legacyDemandRows).toHaveLength(1);
+    });
+
+    act(() => {
+      result.current.setLegacyDemandRows((current) =>
+        current.map((row) => ({
+          ...row,
+          valueIds: ['value-root', 'value-child', 'value-grandchild'],
+        }))
+      );
+    });
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const [persistCall] = mocks.updateSettingMutateAsync.mock.calls[0] ?? [];
+    const persistedDatabase = JSON.parse(String(persistCall?.value ?? '{}'));
+    expect(persistedDatabase.organizationLegacyDemands).toEqual([
+      expect.objectContaining({
+        id: 'demand-1',
+        organizationId: 'org-1',
+        valueIds: ['value-root', 'value-child', 'value-grandchild'],
+        legacyUuid: 'legacy-demand-uuid',
+      }),
+    ]);
+  });
+
   it('creates a new organization from the new route', async () => {
     mocks.routeParams = { organizationId: 'new' };
 
@@ -112,6 +266,8 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
         ...current,
         name: 'New Org',
         tradingName: 'New Trading',
+        cooperationStatus: 'Prospect',
+        establishedDate: '2024-01-02',
       }));
     });
 
@@ -130,6 +286,8 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
         expect.objectContaining({
           name: 'New Org',
           tradingName: 'New Trading',
+          cooperationStatus: 'Prospect',
+          establishedDate: '2024-01-02',
         }),
       ])
     );

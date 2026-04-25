@@ -4,8 +4,14 @@ import { z } from 'zod';
  * Marketplace sync DTOs
  */
 
+export const traderaCategoryFetchBrowserModeSchema = z.enum(['headed', 'headless']);
+export type TraderaCategoryFetchBrowserMode = z.infer<
+  typeof traderaCategoryFetchBrowserModeSchema
+>;
+
 export const marketplaceConnectionRequestSchema = z.object({
   connectionId: z.string().trim().min(1),
+  browserMode: traderaCategoryFetchBrowserModeSchema.optional(),
 });
 
 export type MarketplaceConnectionRequestDto = z.infer<typeof marketplaceConnectionRequestSchema>;

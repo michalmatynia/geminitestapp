@@ -22,7 +22,12 @@ const CATEGORY_TRIGGER_LABELS = [
 ] as const;
 const CATEGORY_TRIGGER_LABEL_PATTERN =
   /category|kategori|choose category|select category|välj kategori/i;
-const CATEGORY_TRIGGER_FALLBACK_SELECTOR = [
+const CATEGORY_TRIGGER_FORM_SELECTORS = [
+  '[data-verify-test-category-picker-trigger-syi="true"]',
+  '[data-test-category-chooser="true"] [aria-haspopup="menu"]',
+  '[data-validation-error-anchor="category"] [aria-haspopup="menu"]',
+] as const;
+const CATEGORY_TRIGGER_FALLBACK_SELECTORS = [
   'button:has-text("Category")',
   'button:has-text("Kategori")',
   'button[aria-haspopup="dialog"]',
@@ -30,10 +35,12 @@ const CATEGORY_TRIGGER_FALLBACK_SELECTOR = [
   '[role="button"][aria-haspopup="dialog"]',
   '[role="button"][aria-haspopup="menu"]',
   '[role="combobox"]',
-].join(', ');
+] as const;
 
-const PICKER_SETTLE_MS = 700;
-const ITEM_CLICK_SETTLE_MS = 500;
+const PICKER_SETTLE_MS = 450;
+const PICKER_OPEN_TIMEOUT_MS = 5_000;
+const PICKER_OPEN_POLL_MS = 250;
+const ITEM_CLICK_SETTLE_MS = 250;
 const PICKER_NAVIGATION_CHROME_SELECTOR = [
   'nav[aria-label="Breadcrumb"]',
   'nav[aria-label="Brödsmulor"]',
@@ -56,6 +63,19 @@ type PageAutomationInput = {
   wait: WaitFn;
 };
 
+const waitForVisibleCategoryPicker = async (
+  input: PageAutomationInput,
+  timeoutMs = PICKER_OPEN_TIMEOUT_MS
+): Promise<boolean> => {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (await isTraderaListingFormCategoryPickerVisible(input.page)) return true;
+    await input.wait(PICKER_OPEN_POLL_MS);
+  }
+
+  return isTraderaListingFormCategoryPickerVisible(input.page);
+};
+
 export const TRADERA_LISTING_FORM_CATEGORY_PICKER_DIAGNOSTIC_SELECTORS = [
   ...TRADERA_LISTING_FORM_CATEGORY_PICKER_ROOT_SELECTORS,
 ];
@@ -68,9 +88,14 @@ const clickTriggerCandidate = async (
   const visible = await locator.isVisible({ timeout: 1_000 }).catch(() => false);
   if (!visible) return false;
 
-  await locator.click();
+  await locator.click().catch(() => undefined);
   await input.wait(PICKER_SETTLE_MS);
-  return isTraderaListingFormCategoryPickerVisible(input.page);
+  if (await waitForVisibleCategoryPicker(input, 1_500)) return true;
+
+  await locator.scrollIntoViewIfNeeded().catch(() => undefined);
+  await locator.click({ force: true, timeout: 2_000 }).catch(() => undefined);
+  await input.wait(PICKER_SETTLE_MS);
+  return waitForVisibleCategoryPicker(input);
 };
 
 export const openTraderaListingFormCategoryPicker = async (
@@ -78,6 +103,11 @@ export const openTraderaListingFormCategoryPicker = async (
 ): Promise<boolean> => {
   const existingRoot = await findVisibleTraderaListingFormCategoryPickerRoot(input.page);
   if (existingRoot !== null) return true;
+
+  for (const selector of CATEGORY_TRIGGER_FORM_SELECTORS) {
+    const trigger = input.page.locator(selector).first();
+    if (await clickTriggerCandidate(trigger, input)) return true;
+  }
 
   for (const role of ['button', 'combobox'] as const) {
     const trigger = input.page
@@ -96,8 +126,12 @@ export const openTraderaListingFormCategoryPicker = async (
     if (await clickTriggerCandidate(trigger, input)) return true;
   }
 
-  const fallbackTrigger = input.page.locator(CATEGORY_TRIGGER_FALLBACK_SELECTOR).first();
-  return clickTriggerCandidate(fallbackTrigger, input);
+  for (const selector of CATEGORY_TRIGGER_FALLBACK_SELECTORS) {
+    const fallbackTrigger = input.page.locator(selector).first();
+    if (await clickTriggerCandidate(fallbackTrigger, input)) return true;
+  }
+
+  return false;
 };
 
 export const closeTraderaListingFormCategoryPicker = async (

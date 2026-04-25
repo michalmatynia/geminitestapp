@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { logger } from '@/shared/utils/logger';
-import { getIntegrationRepository } from '@/features/integrations/server';
+import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
 import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { type TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
@@ -12,11 +12,18 @@ import { TraderaListingFormCategorySequencer } from '@/shared/lib/browser-execut
 import type { PlaywrightSequencerContext } from '@/shared/lib/browser-execution/sequencers/PlaywrightSequencer';
 import {
   createTraderaStandardListingPlaywrightInstance,
+} from '@/features/playwright/server/instances';
+import {
   type OpenPlaywrightConnectionNativeTaskSessionResult,
+} from '@/features/playwright/server/browser-session';
+import {
   persistPlaywrightConnectionStorageState,
+} from '@/features/playwright/server/storage-state';
+import {
   runPlaywrightConnectionNativeTask,
-} from '@/features/playwright/server';
+} from '@/features/playwright/server/native-task';
 import type { TraderaSystemSettings } from '@/features/integrations/constants/tradera';
+import type { TraderaCategoryFetchBrowserMode } from '@/shared/contracts/integrations/marketplace';
 import { ensureLoggedIn } from './tradera-browser-auth';
 
 type CategoryFetchSequencer = {
@@ -32,6 +39,7 @@ type CategoryFetchResultConfig = {
   recoveryMessage: string;
   failOnDrillFailures?: boolean;
   drillFailureMessage?: string;
+  minCategoryCount?: number;
 };
 
 type CategoryFetchEmptyAssertionInput = {
@@ -40,6 +48,8 @@ type CategoryFetchEmptyAssertionInput = {
   config: CategoryFetchResultConfig;
   result: TraderaCategorySequencerResult;
 };
+
+const TRADERA_LISTING_FORM_MIN_CATEGORY_COUNT = 643;
 
 const LISTING_FORM_CATEGORY_FETCH_CONFIG: CategoryFetchResultConfig = {
   logLabel: '[tradera-listing-form-category-fetch]',
@@ -51,6 +61,7 @@ const LISTING_FORM_CATEGORY_FETCH_CONFIG: CategoryFetchResultConfig = {
   failOnDrillFailures: true,
   drillFailureMessage:
     'Tradera listing form category picker stopped responding mid-crawl, so the category tree is incomplete. Re-authenticate the Tradera connection session, then retry category fetch.',
+  minCategoryCount: TRADERA_LISTING_FORM_MIN_CATEGORY_COUNT,
 };
 
 const extractTrimmedString = (value: unknown): string | null =>
@@ -189,7 +200,7 @@ const readDrillFailureCount = (
   crawlStats: TraderaCategorySequencerResult['crawlStats']
 ): number => {
   if (crawlStats === null || typeof crawlStats !== 'object') return 0;
-  const value = (crawlStats as Record<string, unknown>)['drillFailureCount'];
+  const value = (crawlStats)['drillFailureCount'];
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 };
 
@@ -221,6 +232,40 @@ const assertNoDrillFailures = (
   );
 };
 
+const assertMinimumCategoryCount = ({
+  categories,
+  connection,
+  config,
+  result,
+}: CategoryFetchEmptyAssertionInput): void => {
+  const minCategoryCount = config.minCategoryCount;
+  if (minCategoryCount === undefined || categories.length >= minCategoryCount) return;
+
+  throw new AppError(
+    `Tradera listing form category fetch returned only ${String(
+      categories.length
+    )} categories; expected at least ${String(
+      minCategoryCount
+    )}. The category tree is incomplete. Re-authenticate the Tradera connection session, then retry category fetch.`,
+    {
+      code: AppErrorCodes.operationFailed,
+      httpStatus: 422,
+      meta: {
+        connectionId: connection.id,
+        scrapedFrom: result.scrapedFrom,
+        categorySource: result.categorySource,
+        categoryCount: categories.length,
+        minCategoryCount,
+        diagnostics: result.diagnostics,
+        crawlStats: result.crawlStats,
+        recoveryAction: config.recoveryAction,
+        recoveryMessage: config.recoveryMessage,
+      },
+      expected: true,
+    }
+  );
+};
+
 const runCategoryFetchSequencer = async ({
   connection,
   config,
@@ -238,6 +283,7 @@ const runCategoryFetchSequencer = async ({
   logCategoryFetchResult(result, categories, config);
   assertCategoriesWereScraped({ categories, connection, config, result });
   assertNoDrillFailures(result, connection, config);
+  assertMinimumCategoryCount({ categories, connection, config, result });
 
   return categories;
 };
@@ -299,7 +345,9 @@ const fetchListingFormCategoriesInSession = async (
 
 export const fetchTraderaCategoriesFromListingFormForConnection = async (
   connection: IntegrationConnectionRecord,
-  systemSettings: Pick<TraderaSystemSettings, 'listingFormUrl'>
+  systemSettings: Pick<TraderaSystemSettings, 'listingFormUrl'> & {
+    browserMode?: TraderaCategoryFetchBrowserMode;
+  }
 ): Promise<TraderaCategoryRecord[]> => {
   return runPlaywrightConnectionNativeTask<TraderaCategoryRecord[]>({
     connection,
@@ -308,6 +356,7 @@ export const fetchTraderaCategoriesFromListingFormForConnection = async (
       integrationId: connection.integrationId,
     }),
     runtimeActionKey: 'tradera_fetch_categories',
+    requestedBrowserMode: systemSettings.browserMode,
     execute: (session) =>
       fetchListingFormCategoriesInSession(connection, systemSettings, session),
     getErrorMessage: (error) =>

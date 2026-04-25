@@ -9,18 +9,27 @@ const {
   persistPlaywrightConnectionStorageStateMock,
   runPlaywrightConnectionNativeTaskMock,
   listingFormSequencerConstructorMock,
+  buildCategoryFixtures,
   setMockSequencerError,
   setMockListingFormSequencerResult,
   updateConnectionMock,
 } = vi.hoisted(() => {
+  const buildCategoryFixtures = (count = 643) =>
+    Array.from({ length: count }, (_, index) => {
+      if (index === 0) return { id: '100', name: 'Accessories', parentId: null };
+      if (index === 1) return { id: '101', name: 'Patches & pins', parentId: '100' };
+      if (index === 2) return { id: '102', name: 'Pins', parentId: '101' };
+      if (index === 3) return { id: '200', name: 'Antiques & Design', parentId: '0' };
+
+      return {
+        id: `fixture-${String(index)}`,
+        name: `Fixture category ${String(index)}`,
+        parentId: index < 33 ? null : '100',
+      };
+    });
+
   const defaultResult = {
-    categories: [
-      { id: '100', name: 'Accessories', parentId: null },
-      { id: '101', name: 'Patches & pins', parentId: '100' },
-      { id: '102', name: 'Pins', parentId: '101' },
-      { id: '200', name: 'Antiques & Design', parentId: '0' },
-      { id: '102', name: 'Pins duplicate', parentId: '101' },
-    ],
+    categories: buildCategoryFixtures(),
     categorySource: 'listing-form-picker',
     scrapedFrom: 'https://www.tradera.com/en/selling/new',
     diagnostics: null,
@@ -112,6 +121,7 @@ const {
     persistPlaywrightConnectionStorageStateMock,
     runPlaywrightConnectionNativeTaskMock,
     listingFormSequencerConstructorMock,
+    buildCategoryFixtures,
     setMockSequencerError: (error: Error | null) => {
       state.error = error;
     },
@@ -131,7 +141,7 @@ vi.mock('@/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySeq
   TraderaListingFormCategorySequencer: MockTraderaListingFormCategorySequencer,
 }));
 
-vi.mock('@/features/integrations/server', () => ({
+vi.mock('@/features/integrations/services/integration-repository', () => ({
   getIntegrationRepository: () => ({
     updateConnection: updateConnectionMock,
   }),
@@ -141,21 +151,20 @@ vi.mock('./tradera-browser-auth', () => ({
   ensureLoggedIn: (...args: unknown[]) => ensureLoggedInMock(...args),
 }));
 
-vi.mock('@/features/playwright/server', async () => {
-  const actual =
-    await vi.importActual<typeof import('@/features/playwright/server')>(
-      '@/features/playwright/server'
-    );
-  return {
-    ...actual,
-    createTraderaStandardListingPlaywrightInstance: (input: Record<string, unknown> = {}) =>
-      createTraderaStandardListingPlaywrightInstanceMock(input),
-    persistPlaywrightConnectionStorageState: (...args: unknown[]) =>
-      persistPlaywrightConnectionStorageStateMock(...args),
-    runPlaywrightConnectionNativeTask: (input: Record<string, unknown>) =>
-      runPlaywrightConnectionNativeTaskMock(input),
-  };
-});
+vi.mock('@/features/playwright/server/instances', () => ({
+  createTraderaStandardListingPlaywrightInstance: (input: Record<string, unknown> = {}) =>
+    createTraderaStandardListingPlaywrightInstanceMock(input),
+}));
+
+vi.mock('@/features/playwright/server/storage-state', () => ({
+  persistPlaywrightConnectionStorageState: (...args: unknown[]) =>
+    persistPlaywrightConnectionStorageStateMock(...args),
+}));
+
+vi.mock('@/features/playwright/server/native-task', () => ({
+  runPlaywrightConnectionNativeTask: (input: Record<string, unknown>) =>
+    runPlaywrightConnectionNativeTaskMock(input),
+}));
 
 import { fetchTraderaCategoriesFromListingFormForConnection } from './categories';
 
@@ -168,13 +177,7 @@ const makeSequencerResult = (
     crawlStats: Record<string, unknown> | null;
   }>
 ) => ({
-  categories: overrides?.categories ?? [
-    { id: '100', name: 'Accessories', parentId: null },
-    { id: '101', name: 'Patches & pins', parentId: '100' },
-    { id: '102', name: 'Pins', parentId: '101' },
-    { id: '200', name: 'Antiques & Design', parentId: '0' },
-    { id: '102', name: 'Pins duplicate', parentId: '101' },
-  ],
+  categories: overrides?.categories ?? buildCategoryFixtures(),
   categorySource: overrides?.categorySource ?? 'listing-form-picker',
   scrapedFrom: overrides?.scrapedFrom ?? 'https://www.tradera.com/en/selling/new',
   diagnostics: overrides?.diagnostics ?? null,
@@ -194,10 +197,6 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
     setMockSequencerError(null);
     setMockListingFormSequencerResult(
       makeSequencerResult({
-        categories: [
-          { id: '100', name: 'Accessories', parentId: null },
-          { id: '101', name: 'Patches & pins', parentId: '100' },
-        ],
         categorySource: 'listing-form-picker',
         scrapedFrom: 'https://www.tradera.com/en/selling/new',
       })
@@ -218,7 +217,8 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
       }
     );
 
-    expect(result).toEqual([
+    expect(result).toHaveLength(643);
+    expect(result.slice(0, 2)).toEqual([
       { id: '100', name: 'Accessories', parentId: '0' },
       { id: '101', name: 'Patches & pins', parentId: '100' },
     ]);
@@ -226,6 +226,12 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
       connectionId: 'connection-1',
       integrationId: 'integration-1',
     });
+    expect(runPlaywrightConnectionNativeTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeActionKey: 'tradera_fetch_categories',
+        requestedBrowserMode: undefined,
+      })
+    );
     expect(ensureLoggedInMock).toHaveBeenCalledWith(
       {},
       expect.objectContaining({ id: 'connection-1' }),
@@ -257,6 +263,28 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
           listingFormUrl: 'https://www.tradera.com/en/selling/new',
           reauthenticate: expect.any(Function),
         }),
+      })
+    );
+  });
+
+  it('passes the requested browser mode through to the native category fetch task', async () => {
+    await fetchTraderaCategoriesFromListingFormForConnection(
+      {
+        id: 'connection-1',
+        integrationId: 'integration-1',
+        username: 'user@example.com',
+        password: 'encrypted-password',
+      } as never,
+      {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        browserMode: 'headed',
+      }
+    );
+
+    expect(runPlaywrightConnectionNativeTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeActionKey: 'tradera_fetch_categories',
+        requestedBrowserMode: 'headed',
       })
     );
   });
@@ -328,6 +356,46 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
 
     const result = await reauthenticate();
     expect(result).toBe(false);
+  });
+
+  it('rejects listing form fetches below the required Tradera taxonomy size', async () => {
+    setMockListingFormSequencerResult(
+      makeSequencerResult({
+        categories: Array.from({ length: 33 }, (_, index) => ({
+          id: `root-${String(index + 1)}`,
+          name: `Root category ${String(index + 1)}`,
+          parentId: null,
+        })),
+        categorySource: 'listing-form-picker',
+        scrapedFrom: 'https://www.tradera.com/en/selling/new',
+        crawlStats: {
+          pagesVisited: 33,
+          rootCount: 33,
+          drillFailureCount: 0,
+          rootsSeededFromPublic: false,
+        },
+      })
+    );
+
+    await expect(
+      fetchTraderaCategoriesFromListingFormForConnection(
+        {
+          id: 'connection-1',
+          integrationId: 'integration-1',
+          playwrightStorageState: 'expired-storage-state',
+        } as never,
+        {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        }
+      )
+    ).rejects.toMatchObject({
+      message: expect.stringMatching(/only 33 categories; expected at least 643/i),
+      meta: expect.objectContaining({
+        connectionId: 'connection-1',
+        categoryCount: 33,
+        minCategoryCount: 643,
+      }),
+    });
   });
 
   it('rejects listing form fetches whose crawl reported drill failures', async () => {

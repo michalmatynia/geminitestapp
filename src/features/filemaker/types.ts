@@ -113,6 +113,8 @@ export type {
   FilemakerEntityKindDto,
   FilemakerOrganization,
   FilemakerOrganizationDto,
+  FilemakerOrganizationLegacyDemand,
+  FilemakerOrganizationLegacyDemandDto,
   FilemakerPartyKind,
   FilemakerPartyKindDto,
   FilemakerPartyOption,

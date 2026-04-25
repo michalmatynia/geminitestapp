@@ -71,7 +71,7 @@ describe('tradera listing form category picker extraction', () => {
           <button type="button">Accessories</button>
         </nav>
         <button type="button" aria-label="Back">Back</button>
-        <button type="button" role="menuitemradio" data-category-id="100">
+        <button type="button" role="menuitemradio" data-test-category-id="100">
           Accessories
         </button>
         <button type="button" role="option" data-value="101">

@@ -212,5 +212,43 @@ describe('product-sync-repository', () => {
       ) as Array<{ id: string; isDefault?: boolean }>;
       expect(writtenValue.find((profile) => profile.id === 'profile-2')?.isDefault).toBe(true);
     });
+
+    it('promotes an existing profile to the BL modal default and demotes the previous default', async () => {
+      mockFindOne.mockResolvedValue({
+        key: PRODUCT_SYNC_PROFILE_SETTINGS_KEY,
+        value: JSON.stringify([
+          {
+            id: 'profile-1',
+            isDefault: true,
+            enabled: true,
+            name: 'Base Product Sync',
+            connectionId: 'conn-1',
+            inventoryId: 'inv-1',
+            updatedAt: '2026-04-10T10:00:00.000Z',
+          },
+          {
+            id: 'profile-2',
+            isDefault: false,
+            enabled: true,
+            name: 'EAN ASIN and Params',
+            connectionId: 'conn-1',
+            inventoryId: 'inv-1',
+            updatedAt: '2026-04-10T09:00:00.000Z',
+          },
+        ]),
+      });
+      mockUpdateOne.mockResolvedValue({ acknowledged: true });
+
+      const updated = await updateProductSyncProfile('profile-2', { isDefault: true } as any);
+
+      expect(updated?.id).toBe('profile-2');
+      expect(updated?.isDefault).toBe(true);
+      const writtenValue = JSON.parse(
+        mockUpdateOne.mock.calls[0]?.[1]?.$set?.value ?? '[]'
+      ) as Array<{ id: string; isDefault?: boolean }>;
+      expect(writtenValue.filter((profile) => profile.isDefault)).toHaveLength(1);
+      expect(writtenValue.find((profile) => profile.id === 'profile-1')?.isDefault).toBe(false);
+      expect(writtenValue.find((profile) => profile.id === 'profile-2')?.isDefault).toBe(true);
+    });
   });
 });

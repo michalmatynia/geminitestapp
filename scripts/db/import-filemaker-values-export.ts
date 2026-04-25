@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { FILEMAKER_DATABASE_KEY } from '@/features/filemaker/settings-constants';
 import { toPersistedFilemakerDatabase } from '@/features/filemaker/filemaker-settings.database';
 import { importFilemakerLegacyValuesExport } from '@/features/filemaker/filemaker-values-import';
+import { importFilemakerLegacyValuesWorkbook } from '@/features/filemaker/filemaker-values-import.workbook';
 import { parseFilemakerDatabase } from '@/features/filemaker/settings/database-getters';
 import { decodeSettingValue, encodeSettingValue } from '@/shared/lib/settings/settings-compression';
 
@@ -26,9 +27,10 @@ let mongoTouched = false;
 const printUsage = (): void => {
   console.log(
     [
-      'Usage: node --import tsx scripts/db/import-filemaker-values-export.ts --input=/path/values.tsv [--write]',
-      '       NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/import-filemaker-values-export.ts --input=/path/values.tsv --write',
+      'Usage: node --import tsx scripts/db/import-filemaker-values-export.ts --input=/path/values.csv [--write]',
+      '       NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/import-filemaker-values-export.ts --input=/path/values.xlsx --write',
       '',
+      'Imports .csv, .tsv, .xlsx, and .xls value exports.',
       'By default the script performs a dry run and prints import counts.',
       'Pass --write to update the filemaker_database_v1 setting.',
     ].join('\n')
@@ -93,6 +95,8 @@ const writeDatabaseSetting = async (value: string): Promise<void> => {
   );
 };
 
+const isWorkbookInputPath = (inputPath: string): boolean => /\.(xlsx|xls)$/i.test(inputPath);
+
 export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
   const options = parseArgs(argv);
   if (!options.inputPath) {
@@ -101,10 +105,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     return;
   }
 
-  const exportText = await readFile(options.inputPath, 'utf8');
   const currentSettingValue = await readCurrentDatabaseSetting();
   const currentDatabase = parseFilemakerDatabase(currentSettingValue);
-  const result = importFilemakerLegacyValuesExport(currentDatabase, exportText);
+  const result = isWorkbookInputPath(options.inputPath)
+    ? await importFilemakerLegacyValuesWorkbook(currentDatabase, await readFile(options.inputPath))
+    : importFilemakerLegacyValuesExport(currentDatabase, await readFile(options.inputPath, 'utf8'));
   const persistedDatabase = JSON.stringify(toPersistedFilemakerDatabase(result.database));
 
   console.log(

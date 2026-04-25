@@ -14,7 +14,7 @@ const normalizeUserId = (userId: string): string => {
     throw new Error('Missing user id.');
   }
   const trimmed = userId.trim();
-  if (!trimmed) {
+  if (trimmed === '') {
     throw new Error('Missing user id.');
   }
   return encodeURIComponent(trimmed);
@@ -40,9 +40,10 @@ export const updateAuthUser = async (
     return { ok: true, payload };
   } catch (_error: unknown) {
     logClientError(_error);
+    const fallbackPayload: AuthUserSummary = { id: userId, email: input.email ?? '' };
     return {
       ok: false,
-      payload: { id: userId, email: input.email ?? '' } as AuthUserSummary,
+      payload: fallbackPayload,
     };
   }
 };

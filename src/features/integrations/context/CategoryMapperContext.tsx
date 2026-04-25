@@ -20,7 +20,10 @@ import {
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
-import type { MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
+import type {
+  MarketplaceFetchResponse,
+  TraderaCategoryFetchBrowserMode,
+} from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import { useToast } from '@/shared/ui/primitives.public';
@@ -44,6 +47,18 @@ import {
 
 const createCategoryMapperScopedContext = <T,>(displayName: string, errorMessage: string) =>
   createStrictContext<T>({ displayName, errorMessage });
+
+const TRADERA_CATEGORY_FETCH_BROWSER_MODE_STORAGE_KEY =
+  'tradera.categoryMapper.fetchBrowserMode';
+
+const readInitialTraderaCategoryFetchBrowserMode = (): TraderaCategoryFetchBrowserMode => {
+  if (typeof window === 'undefined') {
+    return 'headed';
+  }
+
+  const stored = window.localStorage.getItem(TRADERA_CATEGORY_FETCH_BROWSER_MODE_STORAGE_KEY);
+  return stored === 'headless' ? 'headless' : 'headed';
+};
 
 export const { Context: ConfigContext, useValue: useCategoryMapperConfig } =
   createCategoryMapperScopedContext<CategoryMapperConfig>(
@@ -157,7 +172,21 @@ export function CategoryMapperProvider({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [lastFetchResult, setLastFetchResult] = useState<MarketplaceFetchResponse | null>(null);
   const [lastFetchWarning, setLastFetchWarning] = useState<CategoryMapperFetchWarning | null>(null);
+  const [
+    traderaCategoryFetchBrowserMode,
+    setTraderaCategoryFetchBrowserModeState,
+  ] = useState<TraderaCategoryFetchBrowserMode>(readInitialTraderaCategoryFetchBrowserMode);
   const hasInitializedExpansion = useRef(false);
+
+  const setTraderaCategoryFetchBrowserMode = useCallback(
+    (mode: TraderaCategoryFetchBrowserMode): void => {
+      setTraderaCategoryFetchBrowserModeState(mode);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(TRADERA_CATEGORY_FETCH_BROWSER_MODE_STORAGE_KEY, mode);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     setLastFetchResult(null);
@@ -193,7 +222,10 @@ export function CategoryMapperProvider({
 
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {
     try {
-      const result = await fetchMutation.mutateAsync({ connectionId });
+      const result = await fetchMutation.mutateAsync({
+        connectionId,
+        ...(isTraderaConnection ? { browserMode: traderaCategoryFetchBrowserMode } : {}),
+      });
       setLastFetchResult(result);
       const shallowDepth =
         isTraderaConnection &&
@@ -226,7 +258,14 @@ export function CategoryMapperProvider({
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
     }
-  }, [connectionId, fetchMutation, integrationId, isTraderaConnection, toast]);
+  }, [
+    connectionId,
+    fetchMutation,
+    integrationId,
+    isTraderaConnection,
+    toast,
+    traderaCategoryFetchBrowserMode,
+  ]);
 
   const getMappingForExternal = useCallback(
     (externalCategoryId: string): string | null => {
@@ -452,6 +491,8 @@ export function CategoryMapperProvider({
       toggleExpand,
       lastFetchResult,
       lastFetchWarning,
+      traderaCategoryFetchBrowserMode,
+      setTraderaCategoryFetchBrowserMode,
       staleMappings,
       nonLeafMappings,
       stats,
@@ -462,6 +503,8 @@ export function CategoryMapperProvider({
       toggleExpand,
       lastFetchResult,
       lastFetchWarning,
+      traderaCategoryFetchBrowserMode,
+      setTraderaCategoryFetchBrowserMode,
       staleMappings,
       nonLeafMappings,
       stats,

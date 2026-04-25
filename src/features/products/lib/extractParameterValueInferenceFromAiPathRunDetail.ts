@@ -7,7 +7,25 @@ export type ParameterValueInferenceAiPathResult = {
 const VALUE_KEYS = ['value', 'inferredValue', 'parameterValue', 'answer'] as const;
 const PARAMETER_ID_KEYS = ['parameterId', 'targetParameterId', 'id'] as const;
 const NESTED_RESULT_KEYS = ['bundle', 'result', 'value', 'payload', 'data', 'output'] as const;
+const PREFERRED_RESULT_KEYS = [
+  'value',
+  'result',
+  'extracted',
+  'payload',
+  'data',
+  'output',
+  'bundle',
+] as const;
 const NON_RESULT_NODE_TYPES = new Set(['trigger', 'fetcher', 'parser', 'prompt', 'viewer']);
+const RUNTIME_CONTEXT_OUTPUT_KEYS = new Set([
+  'context',
+  'entityJson',
+  'entityId',
+  'entityType',
+  'prompt',
+  'trigger',
+  'triggerName',
+]);
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
@@ -107,6 +125,19 @@ const resolveDirectParameterValueResult = (
   };
 };
 
+const hasAnyOwnKey = (record: Record<string, unknown>, keys: Iterable<string>): boolean => {
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(record, key)) return true;
+  }
+  return false;
+};
+
+const resolvePreferredParameterValueResult = (
+  record: Record<string, unknown>
+): ParameterValueInferenceAiPathResult | null =>
+  resolveDirectParameterValueResult(record) ??
+  resolveNestedParameterValueResult(record, PREFERRED_RESULT_KEYS, new WeakSet<object>());
+
 const resolveParameterValueResultFromRecord = (
   record: Record<string, unknown>,
   seen: WeakSet<object>
@@ -145,6 +176,21 @@ const resolveNodeType = (nodeRecord: Record<string, unknown>): string => {
   return typeof nodeTypeValue === 'string' ? nodeTypeValue.trim().toLowerCase() : '';
 };
 
+const resolveParameterValueResultFromNodeRecord = (
+  nodeRecord: Record<string, unknown>
+): ParameterValueInferenceAiPathResult | null => {
+  const nodeType = resolveNodeType(nodeRecord);
+  if (NON_RESULT_NODE_TYPES.has(nodeType)) return null;
+
+  const outputs = asRecord(nodeRecord['outputs']);
+  return (
+    (outputs ? resolvePreferredParameterValueResult(outputs) : null) ??
+    resolveParameterValueResultPayload(outputs) ??
+    resolvePreferredParameterValueResult(nodeRecord) ??
+    resolveParameterValueResultPayload(nodeRecord)
+  );
+};
+
 const resolveParameterValueResultFromNodes = (
   nodes: unknown
 ): ParameterValueInferenceAiPathResult | null => {
@@ -153,17 +199,26 @@ const resolveParameterValueResultFromNodes = (
   for (let index = nodes.length - 1; index >= 0; index -= 1) {
     const nodeRecord = asRecord(nodes[index]);
     if (nodeRecord === null) continue;
-    const nodeType = resolveNodeType(nodeRecord);
-    if (NON_RESULT_NODE_TYPES.has(nodeType)) continue;
 
-    const outputs = asRecord(nodeRecord['outputs']);
-    const resolved =
-      resolveParameterValueResultPayload(outputs) ??
-      resolveParameterValueResultPayload(nodeRecord);
+    const resolved = resolveParameterValueResultFromNodeRecord(nodeRecord);
     if (resolved !== null) return resolved;
   }
 
   return null;
+};
+
+const resolveParameterValueResultFromRuntimeOutput = (
+  output: unknown
+): ParameterValueInferenceAiPathResult | null => {
+  const outputRecord = asRecord(output);
+  const isContextOutput =
+    outputRecord !== null && hasAnyOwnKey(outputRecord, RUNTIME_CONTEXT_OUTPUT_KEYS);
+  if (isContextOutput) return null;
+
+  return (
+    (outputRecord ? resolvePreferredParameterValueResult(outputRecord) : null) ??
+    resolveParameterValueResultPayload(output)
+  );
 };
 
 const resolveParameterValueResultFromRuntimeState = (
@@ -177,12 +232,17 @@ const resolveParameterValueResultFromRuntimeState = (
 
   const outputValues = Object.values(nodeOutputs);
   for (let index = outputValues.length - 1; index >= 0; index -= 1) {
-    const resolved = resolveParameterValueResultPayload(outputValues[index]);
+    const resolved = resolveParameterValueResultFromRuntimeOutput(outputValues[index]);
     if (resolved !== null) return resolved;
   }
 
   return null;
 };
+
+const resolveParameterValueResultFromDetailPayload = (
+  detailRecord: Record<string, unknown>
+): ParameterValueInferenceAiPathResult | null =>
+  resolvePreferredParameterValueResult(detailRecord);
 
 export const extractParameterValueInferenceResultFromAiPathRunDetail = (
   detail: unknown
@@ -193,6 +253,6 @@ export const extractParameterValueInferenceResultFromAiPathRunDetail = (
   return (
     resolveParameterValueResultFromNodes(detailRecord['nodes']) ??
     resolveParameterValueResultFromRuntimeState(asRecord(detailRecord['run'])?.['runtimeState']) ??
-    resolveParameterValueResultPayload(detailRecord)
+    resolveParameterValueResultFromDetailPayload(detailRecord)
   );
 };

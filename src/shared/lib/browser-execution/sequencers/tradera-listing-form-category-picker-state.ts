@@ -9,8 +9,8 @@ import {
 import { extractTraderaListingFormPostSelectionTextCategoryItems } from './tradera-listing-form-category-post-selection-text';
 
 const PICKER_UPDATE_TIMEOUT_MS = 8_000;
-const PICKER_UPDATE_POLL_MS = 250;
-const PICKER_CLOSED_CONFIRMATION_MS = 700;
+const PICKER_UPDATE_POLL_MS = 150;
+const PICKER_CLOSED_CONFIRMATION_MS = 350;
 const PICKER_BREADCRUMB_SELECTOR = [
   'nav[aria-label="Breadcrumb"] button',
   'nav[aria-label="Breadcrumb"] li',
@@ -32,9 +32,18 @@ const POST_SELECTION_CATEGORY_ITEM_SELECTOR = [
   '[role="option"]',
   '[role="radio"]',
   '[data-category-id]',
+  '[data-test-category-id]',
   '[data-id]',
   '[data-value]',
 ].join(', ');
+const POST_SELECTION_CATEGORY_SCOPE_SELECTORS = [
+  '[data-test-category-chooser="true"]',
+  '[data-validation-error-anchor="category"]',
+  '[data-testid*="category" i]',
+  '[data-test*="category" i]',
+  '[aria-label*="category" i]',
+  '[aria-label*="kategori" i]',
+] as const;
 
 type WaitFn = (ms: number) => Promise<void>;
 
@@ -137,25 +146,18 @@ const buildClosedUpdateResult = (): TraderaListingFormCategoryPickerUpdateResult
   breadcrumbs: [],
 });
 
-const isVisiblePickerTextElement = (element: Element): element is HTMLElement => {
-  if (!(element instanceof HTMLElement)) return false;
-  if (element.hidden || element.getAttribute('aria-hidden') === 'true') return false;
-
-  const style = window.getComputedStyle(element);
-  return style.visibility !== 'hidden' && style.display !== 'none';
-};
-
-const getVisiblePickerElementText = (element: HTMLElement): string =>
-  element.textContent.replace(/\s+/g, ' ').trim();
-
-const readVisiblePickerText = (elements: Element[]): string[] => {
+function readVisiblePickerText(elements: Element[]): string[] {
   const seen = new Set<string>();
   const results: string[] = [];
 
   for (const element of elements) {
-    if (!isVisiblePickerTextElement(element)) continue;
+    if (!(element instanceof HTMLElement)) continue;
+    if (element.hidden || element.getAttribute('aria-hidden') === 'true') continue;
 
-    const text = getVisiblePickerElementText(element);
+    const style = window.getComputedStyle(element);
+    if (style.visibility === 'hidden' || style.display === 'none') continue;
+
+    const text = (element.textContent ?? '').replace(/\s+/g, ' ').trim();
     const normalized = text.toLowerCase();
     if (text.length === 0 || seen.has(normalized)) continue;
 
@@ -164,16 +166,29 @@ const readVisiblePickerText = (elements: Element[]): string[] => {
   }
 
   return results;
-};
+}
+
+const pickerRootHasVisibleCategoryItems = async (root: Locator): Promise<boolean> =>
+  root
+    .locator(TRADERA_LISTING_FORM_CATEGORY_PICKER_ITEM_SELECTOR)
+    .evaluateAll(extractTraderaListingFormCategoryPickerItems)
+    .then((items) => items.length > 0)
+    .catch(() => false);
 
 /* eslint-disable no-await-in-loop -- Picker state is observed serially because each click may re-render or close the active picker. */
 export const findVisibleTraderaListingFormCategoryPickerRoot = async (
   page: Page
 ): Promise<Locator | null> => {
   for (const selector of TRADERA_LISTING_FORM_CATEGORY_PICKER_ROOT_SELECTORS) {
-    const root = page.locator(selector).first();
-    const visible = await root.isVisible({ timeout: 500 }).catch(() => false);
-    if (visible) return root;
+    const roots = page.locator(selector);
+    const rootCount = await roots.count().catch(() => 0);
+    const maxRootCount = Math.min(rootCount, 20);
+    for (let index = 0; index < maxRootCount; index += 1) {
+      const root = roots.nth(index);
+      const visible = await root.isVisible({ timeout: 500 }).catch(() => false);
+      if (!visible) continue;
+      if (await pickerRootHasVisibleCategoryItems(root)) return root;
+    }
   }
 
   return null;
@@ -224,22 +239,33 @@ export const readTraderaListingFormPostSelectionCategoryItems = async ({
   page: Page;
   path: TraderaListingFormCategoryPickerItem[];
 }): Promise<TraderaListingFormCategoryPickerItem[]> => {
-  const main = page.locator('main').first();
-  const scope = (await main.isVisible({ timeout: 500 }).catch(() => false))
-    ? main
-    : page.locator('body').first();
-  const items = await scope
-    .locator(POST_SELECTION_CATEGORY_ITEM_SELECTOR)
-    .evaluateAll(extractTraderaListingFormCategoryPickerItems)
-    .catch(() => []);
-  const text = await scope
-    .evaluate((element) =>
-      element instanceof HTMLElement ? element.innerText : element.textContent
-    )
-    .catch(() => '');
+  const scopedItems: TraderaListingFormCategoryPickerItem[] = [];
+  let text = '';
+
+  for (const selector of POST_SELECTION_CATEGORY_SCOPE_SELECTORS) {
+    const scopes = page.locator(selector);
+    const scopeCount = Math.min(await scopes.count().catch(() => 0), 10);
+    for (let index = 0; index < scopeCount; index += 1) {
+      const scope = scopes.nth(index);
+      const visible = await scope.isVisible({ timeout: 300 }).catch(() => false);
+      if (!visible) continue;
+
+      const items = await scope
+        .locator(POST_SELECTION_CATEGORY_ITEM_SELECTOR)
+        .evaluateAll(extractTraderaListingFormCategoryPickerItems)
+        .catch(() => []);
+      scopedItems.push(...items);
+      text += await scope
+        .evaluate((element) =>
+          element instanceof HTMLElement ? element.innerText : element.textContent
+        )
+        .catch(() => '');
+      text += '\n';
+    }
+  }
 
   const elementItems = filterTraderaListingFormPostSelectionCategoryItems({
-    items,
+    items: scopedItems,
     nextName,
     optionsBefore,
     pathNames: path.map((item) => item.name),

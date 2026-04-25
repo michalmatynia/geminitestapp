@@ -89,6 +89,14 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
         lastAction: traderaExecution.lastAction,
       })
     : null;
+  const listingHasListedAt =
+    typeof listing.listedAt === 'string' && listing.listedAt.trim().length > 0;
+  const displayedListedAt =
+    isTraderaListing &&
+    displayedTraderaDuplicateSummary.duplicateLinked === true &&
+    !listingHasListedAt
+      ? traderaExecution.executedAt
+      : listing.listedAt;
 
   const getExportFieldsLabel = (): string => {
     const fields: string[] = [];
@@ -134,7 +142,7 @@ export function ProductListingDetails(props: ProductListingDetailsProps): React.
         <div className='mt-1 pt-2 border-t border-white/5 space-y-1'>
           <MetadataItem
             label='Last export'
-            value={formatTimestamp(listing.listedAt)}
+            value={formatTimestamp(displayedListedAt)}
             variant='subtle'
           />
           {isTraderaListing && (

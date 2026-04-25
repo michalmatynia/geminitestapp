@@ -104,6 +104,44 @@ describe('ProductListingDetails.utils', () => {
     expect(summary.duplicateIgnoredCandidateTitles).toEqual(['Primary One', 'Primary Two']);
   });
 
+  it('treats duplicate-linked publish verification as not applicable', () => {
+    const summary = resolveTraderaExecutionSummary({
+      tradera: {
+        lastExecution: {
+          action: 'list',
+          ok: true,
+          metadata: {
+            latestStage: 'duplicate_linked',
+            publishVerified: false,
+            duplicateLinked: true,
+            duplicateMatchStrategy: 'existing-linked-record',
+            executionSteps: [
+              {
+                id: 'duplicate_check',
+                label: 'Search for duplicate listings',
+                status: 'pending',
+              },
+              {
+                id: 'publish_verify',
+                label: 'Verify published listing',
+                status: 'pending',
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    expect(summary.duplicateLinked).toBe(true);
+    expect(summary.publishVerified).toBeNull();
+    expect(summary.executionSteps.find((step) => step.id === 'duplicate_check')).toMatchObject({
+      status: 'success',
+    });
+    expect(summary.executionSteps.find((step) => step.id === 'publish_verify')).toMatchObject({
+      status: 'skipped',
+    });
+  });
+
   it('normalizes duplicate-linked Tradera rows to a linked status badge', () => {
     expect(resolveTraderaStatusBadge('failed', true)).toEqual({
       status: 'active',

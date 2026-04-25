@@ -10,9 +10,10 @@ import {
   useAdminFilemakerPersonEditPageActionsContext,
   useAdminFilemakerPersonEditPageStateContext,
 } from '../../context/AdminFilemakerPersonEditPageContext';
+import { FilemakerLinkedEmailsField } from '../shared/FilemakerLinkedEmailsField';
 
 export function PersonBasicInfoSection(): React.JSX.Element {
-  const { personDraft } = useAdminFilemakerPersonEditPageStateContext();
+  const { emails, personDraft } = useAdminFilemakerPersonEditPageStateContext();
   const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
 
   return (
@@ -46,6 +47,7 @@ export function PersonBasicInfoSection(): React.JSX.Element {
             placeholder='Business Registry Number'
            aria-label='Business Registry Number' title='Business Registry Number'/>
         </FormField>
+        <FilemakerLinkedEmailsField emails={emails} className='md:col-span-2' />
       </div>
     </FormSection>
   );

@@ -32,6 +32,8 @@ export function useProductSyncProfiles(): ListQuery<ProductSyncProfile> {
       );
       return data.profiles ?? [];
     },
+    staleTime: 0,
+    refetchOnMount: 'always',
     meta: {
       source: 'products.hooks.useProductSyncProfiles',
       operation: 'list',

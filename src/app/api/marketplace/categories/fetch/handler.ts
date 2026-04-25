@@ -187,7 +187,11 @@ export async function postHandler(
   const connectionId = requireMarketplaceConnectionId(body);
 
   const integrationRepo = getIntegrationRepository();
-  const context = await resolveMarketplaceCategoryFetchContext(integrationRepo, connectionId);
+  const context = await resolveMarketplaceCategoryFetchContext(
+    integrationRepo,
+    connectionId,
+    body.browserMode
+  );
   const categories = await fetchMarketplaceCategoriesWithContext(context, connectionId);
 
   if (categories.length === 0) {

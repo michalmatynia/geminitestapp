@@ -1,7 +1,8 @@
 'use client';
 
 import { type ColumnDef } from '@tanstack/react-table';
-import React, { useMemo } from 'react';
+import { Search, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 
 import {
   useCategoryMapperActions,
@@ -11,13 +12,56 @@ import {
 } from '@/features/integrations/context/CategoryMapperContext';
 import { StandardDataTablePanel, GenericMapperStats } from '@/shared/ui/templates.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
-import { Alert } from '@/shared/ui/primitives.public';
+import { Alert, Button, Input } from '@/shared/ui/primitives.public';
 
 import { CategoryMapperNameCell } from './category-table/CategoryMapperNameCell';
 import { CategoryMapperSelectCell } from './category-table/CategoryMapperSelectCell';
 import { CategoryMapperTableHeaderActions } from './category-table/CategoryMapperTableHeaderActions';
 import { type CategoryRow } from './category-table/utils';
 import { CategoryMapperCatalogSelector } from './CategoryMapperCatalogSelector';
+
+const normalizeCategorySearchValue = (value: string): string =>
+  value.trim().toLowerCase().replace(/\s+/g, ' ');
+
+const buildCategorySearchHaystack = (row: CategoryRow): string =>
+  normalizeCategorySearchValue(
+    [row.name, row.path, row.externalId].filter(Boolean).join(' ')
+  );
+
+const getCategorySearchTerms = (query: string): string[] =>
+  normalizeCategorySearchValue(query).split(' ').filter(Boolean);
+
+const filterCategoryTree = (rows: CategoryRow[], terms: string[]): CategoryRow[] => {
+  if (terms.length === 0) {
+    return rows;
+  }
+
+  return rows.flatMap((row: CategoryRow): CategoryRow[] => {
+    const filteredSubRows = row.subRows ? filterCategoryTree(row.subRows, terms) : undefined;
+    const matches = terms.every((term: string) => buildCategorySearchHaystack(row).includes(term));
+
+    if (!matches && (!filteredSubRows || filteredSubRows.length === 0)) {
+      return [];
+    }
+
+    return [
+      {
+        ...row,
+        subRows: filteredSubRows && filteredSubRows.length > 0 ? filteredSubRows : undefined,
+      },
+    ];
+  });
+};
+
+const collectExpandedCategoryIds = (rows: CategoryRow[], ids = new Set<string>()): Set<string> => {
+  for (const row of rows) {
+    if (row.subRows && row.subRows.length > 0) {
+      ids.add(row.id);
+      collectExpandedCategoryIds(row.subRows, ids);
+    }
+  }
+  return ids;
+};
 
 export function CategoryMapperTable(): React.JSX.Element {
   const { connectionName, integrationSlug } = useCategoryMapperConfig();
@@ -36,6 +80,8 @@ export function CategoryMapperTable(): React.JSX.Element {
     toggleExpand,
     lastFetchResult,
     lastFetchWarning,
+    traderaCategoryFetchBrowserMode,
+    setTraderaCategoryFetchBrowserMode,
     staleMappings,
     nonLeafMappings,
     stats,
@@ -50,6 +96,7 @@ export function CategoryMapperTable(): React.JSX.Element {
     saveMutation,
   } = useCategoryMapperActions();
 
+  const [externalCategorySearchQuery, setExternalCategorySearchQuery] = useState('');
   const isFetchPending = fetchMutation.isPending;
   const isSavePending = saveMutation.isPending;
   const pendingCount = pendingMappings.size;
@@ -193,10 +240,48 @@ export function CategoryMapperTable(): React.JSX.Element {
   );
 
   const isLoading = externalCategoriesLoading || mappingsLoading;
-  const expandedState = useMemo(
-    () => Object.fromEntries(Array.from(expandedIds).map((id) => [id, true])),
-    [expandedIds]
+  const isExternalCategorySearchInputFilled = externalCategorySearchQuery.trim().length > 0;
+  const externalCategorySearchTerms = useMemo(
+    () => getCategorySearchTerms(externalCategorySearchQuery),
+    [externalCategorySearchQuery]
   );
+  const isExternalCategorySearchActive = externalCategorySearchTerms.length > 0;
+  const filteredCategoryTree = useMemo(
+    () => filterCategoryTree(categoryTree, externalCategorySearchTerms),
+    [categoryTree, externalCategorySearchTerms]
+  );
+  const expandedState = useMemo(
+    () =>
+      Object.fromEntries(
+        Array.from(
+          isExternalCategorySearchActive
+            ? collectExpandedCategoryIds(filteredCategoryTree)
+            : expandedIds
+        ).map((id) => [id, true])
+      ),
+    [expandedIds, filteredCategoryTree, isExternalCategorySearchActive]
+  );
+  const shouldShowSearchEmptyState =
+    !isLoading && isExternalCategorySearchActive && filteredCategoryTree.length === 0;
+  const shouldShowUnfetchedEmptyState = !isLoading && externalCategories.length === 0;
+  let emptyState: React.ReactNode | undefined;
+  if (shouldShowSearchEmptyState) {
+    emptyState = (
+      <CompactEmptyState
+        title='No matching external categories'
+        description='Try another external category search.'
+        className='py-8'
+      />
+    );
+  } else if (shouldShowUnfetchedEmptyState) {
+    emptyState = (
+      <CompactEmptyState
+        title='No external categories found'
+        description={`Click "Fetch Categories" to load categories from ${connectionName}.`}
+        className='py-8'
+      />
+    );
+  }
 
   return (
     <StandardDataTablePanel
@@ -206,6 +291,9 @@ export function CategoryMapperTable(): React.JSX.Element {
         <CategoryMapperTableHeaderActions
           onFetch={() => void handleFetchExternalCategories()}
           isFetching={isFetchPending}
+          showBrowserModeControl={isTraderaConnection}
+          browserMode={traderaCategoryFetchBrowserMode}
+          onBrowserModeChange={setTraderaCategoryFetchBrowserMode}
           onAutoMatchByName={handleAutoMatchByName}
           autoMatchDisabled={isAutoMatchDisabled}
           onSave={() => void handleSave()}
@@ -214,8 +302,39 @@ export function CategoryMapperTable(): React.JSX.Element {
         />
       }
       filters={
-        <div className='mb-2'>
-          <CategoryMapperCatalogSelector />
+        <div className='mb-2 flex flex-col gap-2 sm:flex-row sm:items-center'>
+          <div className='min-w-0 sm:w-72'>
+            <CategoryMapperCatalogSelector />
+          </div>
+          <div className='relative min-w-0 flex-1'>
+            <Search
+              className='pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground'
+              aria-hidden='true'
+            />
+            <Input
+              value={externalCategorySearchQuery}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setExternalCategorySearchQuery(event.target.value)
+              }
+              placeholder='Search external categories...'
+              aria-label='Search external categories'
+              size='sm'
+              className='h-8 pl-8 pr-9'
+            />
+            {isExternalCategorySearchInputFilled ? (
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                className='absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 rounded-md'
+                aria-label='Clear external category search'
+                title='Clear external category search'
+                onClick={() => setExternalCategorySearchQuery('')}
+              >
+                <X className='h-3.5 w-3.5' aria-hidden='true' />
+              </Button>
+            ) : null}
+          </div>
         </div>
       }
       alerts={
@@ -322,18 +441,10 @@ export function CategoryMapperTable(): React.JSX.Element {
         </div>
       }
       isLoading={isLoading}
-      emptyState={
-        !isLoading && externalCategories.length === 0 ? (
-          <CompactEmptyState
-            title='No external categories found'
-            description={`Click "Fetch Categories" to load categories from ${connectionName}.`}
-            className='py-8'
-          />
-        ) : undefined
-      }
+      emptyState={emptyState}
       variant='flat'
       columns={columns}
-      data={categoryTree}
+      data={filteredCategoryTree}
       expanded={expandedState}
       onExpandedChange={() => {}}
       getRowId={(row: CategoryRow) => row.id}

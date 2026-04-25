@@ -383,6 +383,101 @@ describe('ProductListingDetails', () => {
     ).toBeInTheDocument();
   });
 
+  it('reconstructs duplicate-linked Tradera details from stale pending execution steps', () => {
+    render(
+      <ProductListingDetails
+        listing={
+          {
+            id: 'listing-tradera-duplicate-linked-stale-steps',
+            productId: 'product-1',
+            integrationId: 'integration-tradera',
+            connectionId: 'connection-tradera',
+            externalListingId: '728588663',
+            inventoryId: null,
+            status: 'active',
+            listedAt: null,
+            expiresAt: null,
+            nextRelistAt: null,
+            relistPolicy: null,
+            relistAttempts: 0,
+            lastRelistedAt: null,
+            lastStatusCheckAt: null,
+            failureReason: null,
+            exportHistory: null,
+            createdAt: '2026-04-25T14:10:00.000Z',
+            updatedAt: '2026-04-25T14:24:47.000Z',
+            integration: {
+              id: 'integration-tradera',
+              name: 'Tradera',
+              slug: 'tradera',
+            },
+            connection: {
+              id: 'connection-tradera',
+              name: 'Main Tradera',
+            },
+            marketplaceData: {
+              listingUrl:
+                'https://www.tradera.com/en/item/1001025/728588663/military-emblem-7-cm-metal-gaming-keychain-grimdark-future',
+              tradera: {
+                lastExecution: {
+                  action: 'list',
+                  executedAt: '2026-04-25T14:24:47.000Z',
+                  requestId:
+                    'list__b78ad491-b348-4244-a27c-5929ee0adec0__connection_default__default__59237564',
+                  ok: true,
+                  metadata: {
+                    latestStage: 'duplicate_linked',
+                    latestStageUrl:
+                      'https://www.tradera.com/en/item/1001025/728588663/military-emblem-7-cm-metal-gaming-keychain-grimdark-future',
+                    duplicateLinked: true,
+                    duplicateMatchStrategy: 'existing-linked-record',
+                    publishVerified: false,
+                    executionSteps: [
+                      {
+                        id: 'browser_preparation',
+                        label: 'Browser preparation',
+                        status: 'pending',
+                      },
+                      {
+                        id: 'duplicate_check',
+                        label: 'Search for duplicate listings',
+                        status: 'pending',
+                      },
+                      {
+                        id: 'publish_verify',
+                        label: 'Verify published listing',
+                        status: 'pending',
+                      },
+                    ],
+                  },
+                },
+              },
+            } as never,
+          } as never
+        }
+      />
+    );
+
+    const lastExportRow = screen.getByText('Last export:').closest('div');
+    expect(lastExportRow?.textContent).toContain('2026');
+    expect(screen.queryByText('Publish verified:')).not.toBeInTheDocument();
+    expect(screen.getByText('Last stage:')).toBeInTheDocument();
+    expect(screen.getByText('duplicate_linked')).toBeInTheDocument();
+    expect(screen.getByText('Existing listing linked:')).toBeInTheDocument();
+    expect(screen.getByText('Duplicate match strategy:')).toBeInTheDocument();
+    expect(screen.getByText('Previously linked record')).toBeInTheDocument();
+    expect(screen.getByText('duplicate_check')).toBeInTheDocument();
+    expect(screen.getByText('publish_verify')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'A previously linked Tradera listing record was reused instead of creating a duplicate.'
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByText('Skipped because an existing linked Tradera listing was reused.').length
+    ).toBeGreaterThan(0);
+  });
+
   it('renders Tradera sync target metadata from the persisted sequencer result', () => {
     render(
       <ProductListingDetails

@@ -875,6 +875,46 @@ describe('ensureLoggedIn', () => {
     expect(gotoMock).toHaveBeenCalledTimes(2);
   });
 
+  it('accepts Tradera listing draft redirects as authenticated listing form access', async () => {
+    const gotoMock = vi.fn(async (url: string) => {
+      currentUrl = url.includes('/my/listings')
+        ? 'https://www.tradera.com/en/my/listings?tab=active'
+        : 'https://www.tradera.com/en/selling/draft/69eca86abc86c900015e9302';
+    });
+    let currentUrl = 'about:blank';
+    const page = {
+      goto: gotoMock,
+      url: () => currentUrl,
+      locator: (_selector: string) => ({
+        first: () => ({
+          isVisible: async () => false,
+        }),
+      }),
+      waitForSelector: vi.fn(),
+      waitForNavigation: vi.fn(),
+      waitForTimeout: vi.fn(async () => undefined),
+    };
+
+    await ensureLoggedIn(
+      page as never,
+      {
+        username: 'user@example.com',
+        password: 'encrypted-password',
+        playwrightStorageState: 'stored-state',
+      } as never,
+      'https://www.tradera.com/en/selling/new'
+    );
+
+    expect(gotoMock).toHaveBeenCalledTimes(2);
+    expect(gotoMock).toHaveBeenLastCalledWith(
+      'https://www.tradera.com/en/selling/new',
+      expect.objectContaining({
+        waitUntil: 'domcontentloaded',
+        timeout: 30_000,
+      })
+    );
+  });
+
   it('waits for delayed session-check resolution before accepting a stored Tradera session', async () => {
     let currentUrl = 'about:blank';
     let pollCount = 0;

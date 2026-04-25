@@ -22,6 +22,24 @@ const normalizeLanguageCode = (value: string | null | undefined): string | null 
 
 const normalizeNameKey = (value: string): string => value.trim().toLowerCase();
 
+const formatExternalParameterIdLabel = (value: string | null): string | null => {
+  const normalized = toTrimmedString(value);
+  if (!normalized) return null;
+  const words = normalized
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-zA-Z0-9 ]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter((part: string): boolean => part.length > 0);
+  if (words.length === 0) return null;
+  return words
+    .map((word: string): string => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
+const resolveNeutralEnglishParameterName = (extracted: ExtractedBaseParameter): string =>
+  formatExternalParameterIdLabel(extracted.baseParameterId) ?? 'Imported parameter';
+
 const hasExistingValue = (entry: ProductParameterValue | undefined): boolean => {
   if (!entry) return false;
   const scalar = toTrimmedString(entry.value);
@@ -34,16 +52,15 @@ const hasExistingValue = (entry: ProductParameterValue | undefined): boolean => 
 const buildParameterNames = (
   extracted: ExtractedBaseParameter
 ): { name_en: string; name_pl?: string | null; name_de?: string | null } | null => {
-  const nameEn =
-    toTrimmedString(extracted.namesByLanguage['en']) ??
-    toTrimmedString(extracted.namesByLanguage['default']) ??
-    Object.values(extracted.namesByLanguage)
-      .map((name: string) => toTrimmedString(name))
-      .find((name): name is string => Boolean(name)) ??
-    null;
-  if (!nameEn) return null;
   const namePl = toTrimmedString(extracted.namesByLanguage['pl']);
   const nameDe = toTrimmedString(extracted.namesByLanguage['de']);
+  const unlocalizedName =
+    !namePl && !nameDe ? toTrimmedString(extracted.namesByLanguage['default']) : null;
+  const nameEn =
+    toTrimmedString(extracted.namesByLanguage['en']) ??
+    unlocalizedName ??
+    resolveNeutralEnglishParameterName(extracted);
+  if (!nameEn) return null;
   return {
     name_en: nameEn,
     ...(namePl !== null ? { name_pl: namePl } : {}),
@@ -77,6 +94,10 @@ const buildParameterValuePayload = (input: {
     },
     {}
   );
+  const hasDefaultValue = Boolean(normalizedExtractedEntries['default']);
+  const explicitLocalizedEntries = Object.entries(normalizedExtractedEntries).filter(
+    ([code]: [string, string]): boolean => code !== 'default'
+  );
 
   const defaultValue =
     normalizedExtractedEntries['default'] ??
@@ -86,11 +107,18 @@ const buildParameterValuePayload = (input: {
   if (!defaultValue) return null;
 
   if (input.settingsLanguageScope === 'default_only') {
-    const targetCode = normalizedDefault ?? normalizedCatalogCodes[0] ?? 'en';
-    valueMap[targetCode] = normalizedExtractedEntries[targetCode] ?? defaultValue;
+    if (normalizedDefault && normalizedExtractedEntries[normalizedDefault]) {
+      valueMap[normalizedDefault] = normalizedExtractedEntries[normalizedDefault];
+    } else if (hasDefaultValue) {
+      const targetCode = normalizedDefault ?? normalizedCatalogCodes[0] ?? 'en';
+      valueMap[targetCode] = defaultValue;
+    } else if (explicitLocalizedEntries.length > 0) {
+      const [code, value] = explicitLocalizedEntries[0] ?? [];
+      if (code && value) valueMap[code] = value;
+    }
   } else if (normalizedCatalogCodes.length > 0) {
     normalizedCatalogCodes.forEach((code: string) => {
-      const value = normalizedExtractedEntries[code] ?? defaultValue;
+      const value = normalizedExtractedEntries[code] ?? (hasDefaultValue ? defaultValue : null);
       if (value) valueMap[code] = value;
     });
   } else {

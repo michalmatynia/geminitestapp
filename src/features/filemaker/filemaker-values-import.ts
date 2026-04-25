@@ -4,6 +4,7 @@ import {
   createFilemakerValueParameterLink,
 } from './filemaker-settings.entities';
 import { normalizeFilemakerDatabase } from './filemaker-settings.database';
+import { resolveImportedValueAuditFields } from './filemaker-values-import.audit';
 import { mergeImportedFilemakerValueRows } from './filemaker-values-import.merge';
 import {
   normalizeLegacyUuid,
@@ -22,10 +23,7 @@ import type {
 } from './types';
 export { parseFilemakerLegacyValueRows } from './filemaker-values-import.parser';
 
-export type FilemakerLegacyValueImportIdKind =
-  | 'value'
-  | 'value-parameter'
-  | 'value-parameter-link';
+export type FilemakerLegacyValueImportIdKind = 'value' | 'value-parameter' | 'value-parameter-link';
 
 export type FilemakerLegacyValueImportOptions = {
   createId?: (kind: FilemakerLegacyValueImportIdKind, legacyKey: string) => string;
@@ -170,6 +168,7 @@ const toImportedValues = (
   values.map((value: ParsedLegacyValue): FilemakerValue => {
     const id = valueIdByLegacyUuid.get(value.legacyUuid) ?? '';
     const existingValue = normalizedDatabase.values.find((entry) => entry.id === id);
+    const auditFields = resolveImportedValueAuditFields(value, existingValue);
     return createFilemakerValue({
       id,
       parentId: resolveParentId(value, valueIdByLegacyUuid),
@@ -179,8 +178,7 @@ const toImportedValues = (
       legacyUuid: value.legacyUuid,
       legacyParentUuids: value.legacyParentUuids,
       legacyListUuids: value.legacyListUuids,
-      createdAt: existingValue?.createdAt ?? value.createdAt,
-      updatedAt: value.updatedAt ?? existingValue?.updatedAt,
+      ...auditFields,
     });
   });
 

@@ -3,16 +3,52 @@
 import React from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
-import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Input, Textarea } from '@/shared/ui/primitives.public';
 
+import type { FilemakerValue } from '../types';
 import type { ValueDraft } from './AdminFilemakerValueEditPage.helpers';
+import { formatTimestamp } from './filemaker-page-utils';
 
 type ValueEditFieldsProps = {
   draft: ValueDraft;
   parentOptions: Array<LabeledOptionWithDescriptionDto<string>>;
   setDraft: React.Dispatch<React.SetStateAction<ValueDraft>>;
 };
+
+const missingMetadataValue = 'Not imported';
+
+function MetadataInput(props: { label: string; value: string }): React.JSX.Element {
+  return (
+    <FormField label={props.label}>
+      <Input
+        value={props.value}
+        readOnly
+        className='font-mono text-xs'
+        aria-label={props.label}
+        title={props.value}
+      />
+    </FormField>
+  );
+}
+
+export function ValueMetadataFields(props: {
+  value: FilemakerValue | null;
+}): React.JSX.Element | null {
+  if (props.value === null) return null;
+  return (
+    <FormSection title='Record Metadata' className='space-y-4 p-4'>
+      <div className='grid gap-3 md:grid-cols-2'>
+        <MetadataInput label='Legacy UUID' value={props.value.legacyUuid ?? missingMetadataValue} />
+        <MetadataInput label='New ID' value={props.value.id} />
+        <MetadataInput label='Created' value={formatTimestamp(props.value.createdAt)} />
+        <MetadataInput label='Modified' value={formatTimestamp(props.value.updatedAt)} />
+        <MetadataInput label='Created By' value={props.value.createdBy ?? missingMetadataValue} />
+        <MetadataInput label='Modified By' value={props.value.updatedBy ?? missingMetadataValue} />
+      </div>
+    </FormSection>
+  );
+}
 
 function ValueIdentityFields(props: {
   draft: ValueDraft;

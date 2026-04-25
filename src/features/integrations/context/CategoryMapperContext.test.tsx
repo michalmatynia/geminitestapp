@@ -151,6 +151,8 @@ function Harness(): React.JSX.Element {
   const {
     pendingMappings,
     lastFetchWarning,
+    traderaCategoryFetchBrowserMode,
+    setTraderaCategoryFetchBrowserMode,
     staleMappings,
     stats,
   } = useCategoryMapperUIState();
@@ -167,6 +169,7 @@ function Harness(): React.JSX.Element {
       <div data-testid='selected-catalog'>{selectedCatalogId ?? 'none'}</div>
       <div data-testid='pending-count'>{String(pendingMappings.size)}</div>
       <div data-testid='fetch-warning'>{lastFetchWarning?.message ?? 'none'}</div>
+      <div data-testid='fetch-browser-mode'>{traderaCategoryFetchBrowserMode}</div>
       <div data-testid='stale-count'>{String(stats.stale)}</div>
       <div data-testid='unmapped-count'>{String(stats.unmapped)}</div>
       <div data-testid='stale-summary'>
@@ -192,6 +195,9 @@ function Harness(): React.JSX.Element {
       <button type='button' onClick={() => void handleFetchExternalCategories()}>
         Fetch external categories
       </button>
+      <button type='button' onClick={() => setTraderaCategoryFetchBrowserMode('headless')}>
+        Use headless category fetch
+      </button>
       <button type='button' onClick={() => handleMappingChange('market-nonleaf', 'int-office')}>
         Set non-leaf mapping
       </button>
@@ -208,6 +214,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
     mocks.fetchMutateAsync.mockReset();
     mocks.saveMutateAsync.mockReset();
     mocks.settingsMap = new Map();
+    window.localStorage.clear();
 
     const deskLamps = createInternalCategory({ id: 'int-desk', name: 'Desk Lamps' });
 
@@ -276,7 +283,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
     );
   });
 
-  it('fetches Tradera categories without a fetch-method override', async () => {
+  it('fetches Tradera categories in headed browser mode by default', async () => {
     const user = userEvent.setup();
     mocks.fetchMutateAsync.mockResolvedValue({
       fetched: 0,
@@ -306,7 +313,49 @@ describe('CategoryMapperProvider auto-match by name', () => {
     await waitFor(() =>
       expect(mocks.fetchMutateAsync).toHaveBeenCalledWith({
         connectionId: 'conn-1',
+        browserMode: 'headed',
       })
+    );
+  });
+
+  it('lets Tradera category fetch switch to headless browser mode', async () => {
+    const user = userEvent.setup();
+    mocks.fetchMutateAsync.mockResolvedValue({
+      fetched: 0,
+      total: 0,
+      source: 'Tradera listing form picker',
+      message: 'No categories found in Tradera listing form picker.',
+      categoryStats: {
+        rootCount: 0,
+        withParentCount: 0,
+        maxDepth: 0,
+        depthHistogram: {},
+      },
+    });
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    expect(screen.getByTestId('fetch-browser-mode')).toHaveTextContent('headed');
+
+    await user.click(screen.getByRole('button', { name: 'Use headless category fetch' }));
+    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
+
+    await waitFor(() =>
+      expect(mocks.fetchMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-1',
+        browserMode: 'headless',
+      })
+    );
+    expect(window.localStorage.getItem('tradera.categoryMapper.fetchBrowserMode')).toBe(
+      'headless'
     );
   });
 

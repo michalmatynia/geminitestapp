@@ -94,6 +94,10 @@ const ensurePickerCanContinueAfterCategoryClick = async ({
       return { canContinue: true, postSelectionItems };
     }
 
+    if (nextItem === null) {
+      return { canContinue: true, postSelectionItems: [] };
+    }
+
     const reopened = await reopenPickerAfterClosedCategorySelection({
       clickedItem,
       nextItem,
@@ -216,6 +220,25 @@ const findCurrentPostSelectionContinuation = async ({
 };
 /* eslint-enable no-await-in-loop */
 
+const findPickerContinuationStartIndex = async ({
+  page,
+  path,
+}: {
+  page: Page;
+  path: TraderaListingFormCategoryPickerItem[];
+}): Promise<number | null> => {
+  const visibleItems = await readTraderaListingFormCategoryPickerItems(page);
+  for (let index = path.length - 1; index >= 0; index -= 1) {
+    const item = path[index];
+    if (item === undefined) continue;
+    if (visibleItems.some((candidate) => categoryItemMatches(candidate, item))) {
+      return index;
+    }
+  }
+
+  return null;
+};
+
 const prepareCategoryDrillStart = async ({
   page,
   path,
@@ -227,7 +250,10 @@ const prepareCategoryDrillStart = async ({
   if (currentContinuation !== null) return currentContinuation;
 
   const opened = await openTraderaListingFormCategoryPicker({ page, wait });
-  return opened ? { startIndex: 0, postSelectionItems: [] } : null;
+  if (!opened) return null;
+
+  const currentPickerStartIndex = await findPickerContinuationStartIndex({ page, path });
+  return { startIndex: currentPickerStartIndex ?? 0, postSelectionItems: [] };
 };
 
 /* eslint-disable no-await-in-loop -- Category path traversal is serial because each click changes the active picker or page-level category surface. */

@@ -27,15 +27,43 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     onClick,
     disabled,
     'aria-label': ariaLabel,
+    type,
+    title,
   }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
     'aria-label'?: string;
+    type?: 'button' | 'submit' | 'reset';
+    title?: string;
   }) => (
-    <button type='button' onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
+    <button
+      type={type ?? 'button'}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      title={title}
+    >
       {children}
     </button>
+  ),
+  Input: ({
+    value,
+    onChange,
+    placeholder,
+    'aria-label': ariaLabel,
+  }: {
+    value?: string;
+    onChange?: React.ChangeEventHandler<HTMLInputElement>;
+    placeholder?: string;
+    'aria-label'?: string;
+  }) => (
+    <input
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+    />
   ),
   Alert: ({
     children,
@@ -49,6 +77,30 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 }));
 
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  SegmentedControl: ({
+    value,
+    onChange,
+    options,
+    ariaLabel,
+  }: {
+    value: string;
+    onChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    ariaLabel?: string;
+  }) => (
+    <div role='group' aria-label={ariaLabel}>
+      {options.map((option) => (
+        <button
+          key={option.value}
+          type='button'
+          aria-pressed={value === option.value}
+          onClick={() => onChange(option.value)}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  ),
   SelectSimple: ({
     value,
     onValueChange,
@@ -339,6 +391,66 @@ describe('CategoryMapperTable', () => {
       expect(screen.getByText('Anime Pins')).toBeInTheDocument();
       expect(screen.getByText('Gaming Pins')).toBeInTheDocument();
       expect(screen.getByText('Movie Pins')).toBeInTheDocument();
+    });
+  });
+
+  it('filters external categories by search and expands matching branches', async () => {
+    const user = userEvent.setup();
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'collectibles',
+        externalId: '29',
+        name: 'Collectibles',
+        path: 'Collectibles',
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'pins',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '29',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'advertising',
+        externalId: '292908',
+        name: 'Advertising',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Advertising',
+        depth: 2,
+      }),
+      createExternalCategory({
+        id: 'books',
+        externalId: '11',
+        name: 'Books & Magazines',
+        path: 'Books & Magazines',
+      }),
+    ];
+
+    render(
+      <CategoryMapperProvider connectionId='conn-1' connectionName='Base'>
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'Search external categories' }),
+      'advertising'
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Collectibles')).toBeInTheDocument();
+      expect(screen.getByText('Pins & needles')).toBeInTheDocument();
+      expect(screen.getByText('Advertising')).toBeInTheDocument();
+      expect(screen.queryByText('Books & Magazines')).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Clear external category search' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Books & Magazines')).toBeInTheDocument();
     });
   });
 

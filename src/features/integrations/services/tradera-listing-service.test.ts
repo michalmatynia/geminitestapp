@@ -156,7 +156,7 @@ describe('processTraderaListingJob', () => {
       expect.objectContaining({
         status: 'active',
         externalListingId: '721891408',
-        listedAt: null,
+        listedAt: expect.any(Date),
         expiresAt: null,
         nextRelistAt: null,
         failureReason: null,
@@ -1707,7 +1707,7 @@ describe('processTraderaListingJob', () => {
       expect.objectContaining({
         status: 'active',
         externalListingId: '725447805',
-        listedAt: null,
+        listedAt: expect.any(Date),
         expiresAt: null,
         nextRelistAt: null,
         failureReason: null,

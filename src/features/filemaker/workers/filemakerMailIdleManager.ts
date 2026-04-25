@@ -194,7 +194,7 @@ const ensureAccount = async (account: FilemakerMailAccount): Promise<void> => {
   const existing = managerState.accountsById.get(account.id);
   const refreshKey = buildRefreshKey(account);
 
-  if (existing && existing.refreshKey === refreshKey && existing.client) return;
+  if (existing?.refreshKey === refreshKey && existing.client) return;
 
   if (existing) {
     existing.stopped = true;

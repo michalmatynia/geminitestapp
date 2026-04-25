@@ -98,6 +98,19 @@ export const normalizeDraft = (draft: ValueDraft): ValueDraft => ({
   value: draft.value.trim(),
 });
 
+const getExistingValueCompatibilityFields = (
+  value: FilemakerValue | undefined
+): Pick<
+  Partial<FilemakerValue>,
+  'createdBy' | 'legacyListUuids' | 'legacyParentUuids' | 'legacyUuid' | 'updatedBy'
+> => ({
+  createdBy: value?.createdBy,
+  legacyListUuids: value?.legacyListUuids,
+  legacyParentUuids: value?.legacyParentUuids,
+  legacyUuid: value?.legacyUuid,
+  updatedBy: value?.updatedBy,
+});
+
 export const buildNextValue = (input: {
   draft: ValueDraft;
   existingValue?: FilemakerValue;
@@ -110,6 +123,7 @@ export const buildNextValue = (input: {
     parentId: input.draft.parentId.length > 0 ? input.draft.parentId : null,
     description: input.draft.description.length > 0 ? input.draft.description : undefined,
     sortOrder: parseSortOrder(input.draft.sortOrder),
+    ...getExistingValueCompatibilityFields(input.existingValue),
     createdAt: input.existingValue?.createdAt,
     updatedAt: new Date().toISOString(),
   });

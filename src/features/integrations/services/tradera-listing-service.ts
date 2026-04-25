@@ -559,7 +559,7 @@ export const processTraderaListingJob = async (input: TraderaListingJobInput): P
   const isSyncAction = action === 'sync';
   const isMoveToUnsoldAction = action === 'move_to_unsold';
   const persistedListedAt = duplicateLinked
-    ? listing.listedAt ?? null
+    ? listing.listedAt ?? (action === 'list' ? now : null)
     : isSyncAction || isMoveToUnsoldAction
       ? listing.listedAt ?? null
       : now;

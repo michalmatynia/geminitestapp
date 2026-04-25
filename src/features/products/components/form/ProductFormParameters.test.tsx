@@ -59,6 +59,10 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
 }));
 
 vi.mock('lucide-react', () => ({
+  Ban: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid='skip-sequence' />,
+  RotateCcw: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg {...props} data-testid='include-sequence' />
+  ),
   X: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} data-testid='remove-parameter' />,
 }));
 
@@ -307,6 +311,25 @@ const textParameter = {
   selectorType: 'text',
 } as Partial<ProductParameter> as ProductParameter;
 
+const materialParameter = {
+  id: 'material',
+  name_en: 'Material',
+  name_pl: 'Materiał',
+  selectorType: 'text',
+} as Partial<ProductParameter> as ProductParameter;
+
+type ParameterTriggerCallArgs = {
+  onSuccess?: (runId: string) => void;
+  getEntityJson?: () => Record<string, unknown>;
+  extras?: {
+    parameterValueInferenceInput?: {
+      targetParameter?: {
+        id?: string;
+      };
+    };
+  };
+};
+
 const createProduct = ({
   parameters,
   nameEn = 'Product 1',
@@ -523,9 +546,11 @@ describe('ProductFormParameters', () => {
 
   it('applies a completed row-level parameter inference result to the active language value', async () => {
     const user = userEvent.setup();
-    fireAiPathTriggerEventMock.mockImplementation(async (args: { onSuccess?: (runId: string) => void }) => {
-      args.onSuccess?.('run-parameter-value-1');
-    });
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: { onSuccess?: (runId: string) => void }) => {
+        args.onSuccess?.('run-parameter-value-1');
+      }
+    );
     subscribeToTrackedAiPathRunMock.mockImplementation(
       (_runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
         listener({
@@ -539,18 +564,50 @@ describe('ProductFormParameters', () => {
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
-        nodes: [
-          {
-            type: 'regex',
-            outputs: {
-              value: {
-                parameterId: 'condition',
-                value: 'Soft plush',
-                confidence: 0.91,
+        run: {
+          runtimeState: {
+            nodeOutputs: {
+              'node-trigger': {
+                trigger: 'Parameter Value Inference',
+                entityJson: {
+                  parameters: [
+                    {
+                      parameterId: 'material',
+                      value: 'Metal',
+                    },
+                  ],
+                },
+              },
+              'node-regex': {
+                value: {
+                  parameterId: 'condition',
+                  value: 'Soft plush',
+                  confidence: 0.91,
+                },
+              },
+              'node-viewer': {
+                context: {
+                  product: {
+                    parameters: [
+                      {
+                        parameterId: 'material',
+                        value: 'Metal',
+                      },
+                    ],
+                  },
+                },
+                bundle: {
+                  parameters: [
+                    {
+                      parameterId: 'material',
+                      value: 'Metal',
+                    },
+                  ],
+                },
               },
             },
           },
-        ],
+        },
       },
     });
 
@@ -572,6 +629,293 @@ describe('ProductFormParameters', () => {
     await waitFor(() => {
       expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Soft plush');
     });
+  });
+
+  it('runs parameter inference for eligible parameters one by one in sequence', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+    let runIndex = 0;
+
+    fireAiPathTriggerEventMock.mockImplementation(async (args: ParameterTriggerCallArgs) => {
+      runIndex += 1;
+      args.onSuccess?.(`run-parameter-sequence-${runIndex}`);
+    });
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, listener);
+        return vi.fn();
+      }
+    );
+    getAiPathRunMock.mockImplementation(async (runId: string) => {
+      const parameterId =
+        runId === 'run-parameter-sequence-1' ? 'condition' : 'material';
+      const value = parameterId === 'condition' ? 'Soft plush' : 'Metal';
+      return {
+        ok: true,
+        data: {
+          nodes: [
+            {
+              type: 'regex',
+              outputs: {
+                value: {
+                  parameterId,
+                  value,
+                  confidence: 0.91,
+                },
+              },
+            },
+          ],
+        },
+      };
+    });
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: '',
+        },
+        {
+          parameterId: 'material',
+          value: '',
+        },
+      ],
+      parameterDefinitions: [textParameter, materialParameter],
+      nameEn: 'Soft plush keychain',
+      descriptionEn: 'Small plush keychain with metal ring.',
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Run parameter sequence' }));
+
+    await waitFor(() => {
+      expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(1);
+    });
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[0]?.[0] as ParameterTriggerCallArgs).extras
+        ?.parameterValueInferenceInput?.targetParameter?.id
+    ).toBe('condition');
+
+    trackedCallbacks.get('run-parameter-sequence-1')?.({
+      trackingState: 'stopped',
+      status: 'completed',
+      errorMessage: null,
+    });
+
+    await waitFor(() => {
+      expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(2);
+    });
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[1]?.[0] as ParameterTriggerCallArgs).extras
+        ?.parameterValueInferenceInput?.targetParameter?.id
+    ).toBe('material');
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[1]?.[0] as ParameterTriggerCallArgs)
+        .getEntityJson?.()['parameters']
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          parameterId: 'condition',
+          value: 'Soft plush',
+          valuesByLanguage: {
+            en: 'Soft plush',
+          },
+        },
+      ])
+    );
+
+    trackedCallbacks.get('run-parameter-sequence-2')?.({
+      trackingState: 'stopped',
+      status: 'completed',
+      errorMessage: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Soft plush')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Metal')).toBeInTheDocument();
+      expect(
+        screen.getByText('Parameter sequence completed for 2 parameters.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('skips parameters excluded from the parameter sequence', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+
+    fireAiPathTriggerEventMock.mockImplementation(async (args: ParameterTriggerCallArgs) => {
+      args.onSuccess?.('run-parameter-sequence-material-only');
+    });
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, listener);
+        return vi.fn();
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            type: 'regex',
+            outputs: {
+              value: {
+                parameterId: 'material',
+                value: 'Metal',
+                confidence: 0.91,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Soft plush',
+          valuesByLanguage: { en: 'Soft plush' },
+        },
+        {
+          parameterId: 'material',
+          value: '',
+        },
+      ],
+      parameterDefinitions: [textParameter, materialParameter],
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Skip Condition in parameter sequence' })
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Include Condition in parameter sequence' })
+    ).toHaveAttribute('aria-pressed', 'true');
+    expect(
+      screen.getByRole('button', { name: 'Trigger parameter inference for Condition' })
+    ).toBeDisabled();
+
+    await user.click(screen.getByRole('button', { name: 'Run parameter sequence' }));
+
+    await waitFor(() => {
+      expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(1);
+    });
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[0]?.[0] as ParameterTriggerCallArgs).extras
+        ?.parameterValueInferenceInput?.targetParameter?.id
+    ).toBe('material');
+
+    trackedCallbacks.get('run-parameter-sequence-material-only')?.({
+      trackingState: 'stopped',
+      status: 'completed',
+      errorMessage: null,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Soft plush')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Metal')).toBeInTheDocument();
+      expect(
+        screen.getByText('Parameter sequence completed for 1 parameter.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('skips blank rows and synced linked parameters when running the parameter sequence', async () => {
+    const user = userEvent.setup();
+    const linkedMaterialParameter = {
+      id: 'material',
+      name_en: 'Material',
+      name_pl: 'Materiał',
+      selectorType: 'text',
+      linkedTitleTermType: 'material',
+    } as Partial<ProductParameter> as ProductParameter;
+
+    useTitleTermsMock.mockImplementation((_catalogId: string, type: string) => ({
+      data:
+        type === 'material'
+          ? [
+              {
+                id: 'term-metal',
+                catalogId: 'catalog-1',
+                type: 'material',
+                name_en: 'Metal',
+                name_pl: 'Metal PL',
+              },
+            ]
+          : [],
+      isLoading: false,
+    }));
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: '',
+          value: '',
+        },
+        {
+          parameterId: 'condition',
+          value: '',
+        },
+      ],
+      parameterDefinitions: [textParameter, linkedMaterialParameter],
+      nameEn: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Run parameter sequence' }));
+
+    await waitFor(() => {
+      expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(1);
+    });
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[0]?.[0] as ParameterTriggerCallArgs).extras
+        ?.parameterValueInferenceInput?.targetParameter?.id
+    ).toBe('condition');
+  });
+
+  it('stops the parameter sequence when a parameter inference run fails', async () => {
+    const user = userEvent.setup();
+    const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
+
+    fireAiPathTriggerEventMock.mockImplementation(async (args: ParameterTriggerCallArgs) => {
+      args.onSuccess?.('run-parameter-sequence-failed');
+    });
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        trackedCallbacks.set(runId, listener);
+        return vi.fn();
+      }
+    );
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: '',
+        },
+        {
+          parameterId: 'material',
+          value: '',
+        },
+      ],
+      parameterDefinitions: [textParameter, materialParameter],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Run parameter sequence' }));
+
+    await waitFor(() => {
+      expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(1);
+    });
+
+    trackedCallbacks.get('run-parameter-sequence-failed')?.({
+      trackingState: 'stopped',
+      status: 'failed',
+      errorMessage: 'Model failed',
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Condition: Model failed')).toBeInTheDocument();
+    });
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps Polish separate when English is cleared in the UI', async () => {
@@ -619,6 +963,62 @@ describe('ProductFormParameters', () => {
     await user.click(screen.getByRole('tab', { name: 'Polish' }));
 
     expect(screen.getByPlaceholderText('Value (Polish)')).toHaveValue('Uzywany');
+  });
+
+  it('uses the active language tab for parameter names', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'model-name',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ],
+      parameterDefinitions: [
+        {
+          id: 'model-name',
+          name_en: 'Base Model Name',
+          name_pl: 'Nazwa Modelu',
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+    });
+
+    expect(screen.getByText('Base Model Name')).toBeInTheDocument();
+    expect(screen.queryByText('Nazwa Modelu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByText('Nazwa Modelu')).toBeInTheDocument();
+  });
+
+  it('does not show legacy Polish-only parameter names on the English tab', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'base-model-name',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ],
+      parameterDefinitions: [
+        {
+          id: 'base-model-name',
+          name_en: 'Nazwa Modelu',
+          name_pl: null,
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+    });
+
+    expect(screen.getByText('Base Model Name')).toBeInTheDocument();
+    expect(screen.queryByText('Nazwa Modelu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByText('Nazwa Modelu')).toBeInTheDocument();
   });
 
   it('renders saved legacy simple parameters when no synced parameter definitions exist', () => {

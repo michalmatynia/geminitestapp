@@ -321,14 +321,14 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
     hasChecked && !preview && (previewQuery.isLoading === true || isCheckingPreview);
   const outOfSyncFields =
     preview?.fields.filter((field: ProductSyncFieldPreview) => field.hasDifference) ?? [];
-  const visibleFields = preview?.fields ?? [];
+  const visibleFields =
+    preview?.fields.filter(
+      (field: ProductSyncFieldPreview) => field.willWriteToApp || field.willWriteToBase
+    ) ?? [];
   const activeFieldCount =
     preview?.fields.filter((field: ProductSyncFieldPreview) => field.direction !== 'disabled')
       .length ?? 0;
-  const syncableFieldCount =
-    preview?.fields.filter(
-      (field: ProductSyncFieldPreview) => field.willWriteToApp || field.willWriteToBase
-    ).length ?? 0;
+  const syncableFieldCount = visibleFields.length;
   const imageLinkCount = Array.isArray(product.imageLinks) ? product.imageLinks.length : 0;
   const uploadCount = Array.isArray(product.images) ? product.images.length : 0;
   const connectionLabel = preview?.profile
@@ -348,23 +348,29 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
     const profiles = profilesQuery.data ?? [];
     if (profiles.length === 0) return null;
 
-    const previewProfileId = preview?.profile?.id ?? '';
-    if (previewProfileId) {
-      return (
-        profiles.find((profile: ProductSyncProfile) => profile.id === previewProfileId) ?? null
-      );
-    }
-
     return (
       profiles.find((profile: ProductSyncProfile) => profile.isDefault) ??
       profiles[0] ??
       null
     );
-  }, [preview?.profile?.id, profilesQuery.data]);
+  }, [profilesQuery.data]);
+  const configuredProfileId = configuredProfile?.id ?? '';
+  React.useEffect(() => {
+    setHasChecked(false);
+    setCheckedPreview(null);
+    setLastRunSummary(null);
+  }, [configuredProfileId]);
   const configuredDirectionRules = React.useMemo(
     (): ProductSyncFieldRule[] =>
       configuredProfile ? buildEffectiveProductSyncFieldRules(configuredProfile.fieldRules) : [],
     [configuredProfile]
+  );
+  const activeConfiguredDirectionRules = React.useMemo(
+    (): ProductSyncFieldRule[] =>
+      configuredDirectionRules.filter(
+        (rule: ProductSyncFieldRule) => rule.direction !== 'disabled'
+      ),
+    [configuredDirectionRules]
   );
   const configuredConnectionId = configuredProfile?.connectionId?.trim() ?? '';
   const configuredInventoryId = configuredProfile?.inventoryId?.trim() ?? '';
@@ -417,22 +423,18 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
     [previewInventoriesQuery.data, previewInventoryId]
   );
   const configuredRuleSummary = React.useMemo(() => {
-    const appToBaseCount = configuredDirectionRules.filter(
+    const appToBaseCount = activeConfiguredDirectionRules.filter(
       (rule: ProductSyncFieldRule) => rule.direction === 'app_to_base'
     ).length;
-    const baseToAppCount = configuredDirectionRules.filter(
+    const baseToAppCount = activeConfiguredDirectionRules.filter(
       (rule: ProductSyncFieldRule) => rule.direction === 'base_to_app'
-    ).length;
-    const disabledCount = configuredDirectionRules.filter(
-      (rule: ProductSyncFieldRule) => rule.direction === 'disabled'
     ).length;
 
     return {
       appToBaseCount,
       baseToAppCount,
-      disabledCount,
     };
-  }, [configuredDirectionRules]);
+  }, [activeConfiguredDirectionRules]);
 
   const handleCheckPreview = async (): Promise<void> => {
     setHasChecked(true);
@@ -549,8 +551,8 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
                 Configured Directions
               </div>
               <div className='text-[11px] text-gray-300'>
-                These are the saved field directions. Click Check to load the live out-of-sync
-                fields.
+                These are the saved field directions. Click Check to preview the fields this
+                profile will sync now.
               </div>
             </div>
             <Button asChild variant='outline' size='sm' className='h-7 px-3 text-[10px]'>
@@ -591,46 +593,51 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
           </div>
           <div className='text-[10px] text-gray-400'>
             {configuredRuleSummary.appToBaseCount} {'App -> Base'},{' '}
-            {configuredRuleSummary.baseToAppCount} {'Base -> App'},{' '}
-            {configuredRuleSummary.disabledCount} Disabled
+            {configuredRuleSummary.baseToAppCount} {'Base -> App'}
           </div>
-          <div className='grid gap-2 md:grid-cols-2'>
-            {configuredDirectionRules.map((rule: ProductSyncFieldRule) => {
-              return (
-                <div
-                  key={rule.appField}
-                  className='rounded-md border border-white/5 bg-black/10 px-2 py-2'
-                >
-                  <div className='flex items-start justify-between gap-2'>
-                    <div className='min-w-0 text-[11px] text-gray-200'>
-                      {getProductSyncAppFieldLabel(rule.appField)}
+          {activeConfiguredDirectionRules.length > 0 ? (
+            <div className='grid gap-2 md:grid-cols-2'>
+              {activeConfiguredDirectionRules.map((rule: ProductSyncFieldRule) => {
+                return (
+                  <div
+                    key={rule.appField}
+                    className='rounded-md border border-white/5 bg-black/10 px-2 py-2'
+                  >
+                    <div className='flex items-start justify-between gap-2'>
+                      <div className='min-w-0 text-[11px] text-gray-200'>
+                        {getProductSyncAppFieldLabel(rule.appField)}
+                      </div>
+                      <Badge
+                        variant='outline'
+                        className={cn(
+                          'shrink-0 text-[10px] gap-1',
+                          rule.direction === 'app_to_base' &&
+                            'text-blue-300 border-blue-500/30',
+                          rule.direction === 'base_to_app' &&
+                            'text-purple-300 border-purple-500/30'
+                        )}
+                      >
+                        {directionIcon(rule.direction)}
+                        {directionLabel(rule.direction)}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant='outline'
-                      className={cn(
-                        'shrink-0 text-[10px] gap-1',
-                        rule.direction === 'app_to_base' &&
-                          'text-blue-300 border-blue-500/30',
-                        rule.direction === 'base_to_app' &&
-                          'text-purple-300 border-purple-500/30'
+                    <div className='mt-1 text-[10px] text-gray-500 break-words'>
+                      Target:{' '}
+                      {resolveConfiguredBaseFieldLabel(
+                        rule,
+                        configuredWarehouseLabels,
+                        configuredPriceGroupLabels
                       )}
-                    >
-                      {directionIcon(rule.direction)}
-                      {directionLabel(rule.direction)}
-                    </Badge>
+                    </div>
                   </div>
-                  <div className='mt-1 text-[10px] text-gray-500 break-words'>
-                    Target:{' '}
-                    {resolveConfiguredBaseFieldLabel(
-                      rule,
-                      configuredWarehouseLabels,
-                      configuredPriceGroupLabels
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className='rounded-md border border-white/5 bg-black/10 px-2 py-2 text-[11px] text-gray-400'>
+              This profile has no active field directions.
+            </div>
+          )}
         </Card>
       ) : (
         <Card variant='glass' padding='md' className='bg-white/5 text-[12px] text-gray-400'>
@@ -641,8 +648,8 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
 
       {!hasChecked ? (
         <Card variant='glass' padding='md' className='bg-white/5 text-[12px] text-gray-400'>
-          Click Check to load the live Base.com status for this product and reveal the fields that
-          are currently out of sync.
+          Click Check to load the live Base.com status for this product and preview only the fields
+          this profile is about to sync.
         </Card>
       ) : isLoadingPreview ? (
         <Card variant='glass' padding='md' className='bg-white/5 text-[12px] text-gray-400'>
@@ -834,7 +841,7 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
               <div className={cn(UI_CENTER_ROW_SPACED_CLASSNAME, 'text-[10px] text-gray-500')}>
                 <div className='flex items-center gap-1'>
                   <Check className='size-3 text-emerald-400' />
-                  <span>{outOfSyncFields.length} field(s) currently out of sync</span>
+                  <span>{syncableFieldCount} field(s) will sync</span>
                 </div>
               </div>
             </div>

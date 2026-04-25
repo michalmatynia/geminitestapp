@@ -74,6 +74,46 @@ const databaseFixture = {
   values: [],
 };
 
+const databaseWithSharedEmailFixture = {
+  ...databaseFixture,
+  organizations: [
+    {
+      id: 'org-1',
+      name: 'Shared Org',
+      addressId: '',
+      street: '',
+      streetNumber: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      countryId: '',
+    },
+  ],
+  emails: [
+    {
+      id: 'email-shared',
+      email: 'shared@example.com',
+      status: 'active',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    },
+  ],
+  emailLinks: [
+    {
+      id: 'email-link-person',
+      emailId: 'email-shared',
+      partyKind: 'person',
+      partyId: 'person-1',
+    },
+    {
+      id: 'email-link-organization',
+      emailId: 'email-shared',
+      partyKind: 'organization',
+      partyId: 'org-1',
+    },
+  ],
+};
+
 describe('useAdminFilemakerPersonEditPageState', () => {
   beforeEach(() => {
     mocks.routerPush.mockReset();
@@ -127,6 +167,18 @@ describe('useAdminFilemakerPersonEditPageState', () => {
 
     const persistedDatabase = JSON.parse(String(persistCall?.value ?? '{}'));
     expect(persistedDatabase.persons[0]?.lastName).toBe('Kowalska');
+  });
+
+  it('resolves linked emails through emailLinks without duplicating the email record', async () => {
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY ? JSON.stringify(databaseWithSharedEmailFixture) : null
+    );
+
+    const { result } = renderHook(() => useAdminFilemakerPersonEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.emails.map((email) => email.email)).toEqual(['shared@example.com']);
+    });
   });
 
   it('creates a new person from the new route', async () => {

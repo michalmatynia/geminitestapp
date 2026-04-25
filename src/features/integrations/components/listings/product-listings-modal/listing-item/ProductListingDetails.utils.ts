@@ -532,6 +532,11 @@ export const resolveTraderaExecutionSummary = (
   const duplicateMatchStrategy =
     readString(metadata['duplicateMatchStrategy']) ??
     readString(rawResult['duplicateMatchStrategy']);
+  const duplicateLinked =
+    readBoolean(metadata['duplicateLinked']) ??
+    readBoolean(rawResult['duplicateLinked']) ??
+    (latestStage === 'duplicate_linked' ? true : null) ??
+    (duplicateMatchStrategy ? true : null);
   const syncImageMode =
     readString(metadata['syncImageMode']) ??
     readString(rawResult['syncImageMode']);
@@ -627,7 +632,7 @@ export const resolveTraderaExecutionSummary = (
     runId: readString(metadata['runId']) ?? readString(pendingExecution['runId']),
     errorCategory: readString(lastExecution['errorCategory']) ?? readString(traderaData['lastErrorCategory']),
     requestId: readString(lastExecution['requestId']),
-    publishVerified: readBoolean(metadata['publishVerified']),
+    publishVerified: duplicateLinked === true ? null : readBoolean(metadata['publishVerified']),
     listingUrl: readString(marketplaceRecord['listingUrl']),
     latestStage,
     latestStageUrl:
@@ -657,11 +662,7 @@ export const resolveTraderaExecutionSummary = (
       metadata['categoryMappingRecoveredFromAnotherConnection']
     ),
     categoryMappingSourceConnectionId: readString(metadata['categoryMappingSourceConnectionId']),
-    duplicateLinked:
-      readBoolean(metadata['duplicateLinked']) ??
-      readBoolean(rawResult['duplicateLinked']) ??
-      (latestStage === 'duplicate_linked' ? true : null) ??
-      (duplicateMatchStrategy ? true : null),
+    duplicateLinked,
     duplicateMatchStrategy,
     duplicateMatchedProductId:
       readString(metadata['duplicateMatchedProductId']) ??

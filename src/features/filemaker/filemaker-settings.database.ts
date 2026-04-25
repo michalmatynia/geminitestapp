@@ -8,6 +8,7 @@ import {
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
   createFilemakerOrganization,
+  createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
   createFilemakerPhoneNumber,
   createFilemakerPhoneNumberLink,
@@ -32,6 +33,7 @@ import {
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
   type FilemakerOrganization,
+  type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
@@ -77,6 +79,7 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   values: [],
   valueParameters: [],
   valueParameterLinks: [],
+  organizationLegacyDemands: [],
 });
 
 const defaultAddressLinkIdForValues = (
@@ -130,6 +133,14 @@ const defaultValueParameterLinkIdForValues = (
 ): string => {
   const joined = `${valueId}-${parameterId}`;
   return `filemaker-value-parameter-link-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultOrganizationLegacyDemandIdForValues = (
+  organizationId: string,
+  valueIds: string[]
+): string => {
+  const joined = `${organizationId}-${valueIds.join('-')}`;
+  return `filemaker-organization-legacy-demand-${toIdToken(joined) || 'entry'}`;
 };
 
 const hasAnyAddressData = (value: {
@@ -295,6 +306,10 @@ export const normalizeFilemakerDatabase = (
     'valueParameterLinks',
     valueRecord['valueParameterLinks']
   );
+  const rawOrganizationLegacyDemands = getRecordList(
+    'organizationLegacyDemands',
+    valueRecord['organizationLegacyDemands']
+  );
   const rawEventOrganizationLinks = getRecordList(
     'eventOrganizationLinks',
     valueRecord['eventOrganizationLinks']
@@ -352,10 +367,17 @@ export const normalizeFilemakerDatabase = (
       const id = normalizeString(entry['id']);
       if (!id || organizationIds.has(id)) return null;
       organizationIds.add(id);
+      const legacyUuid = normalizeString(entry['legacyUuid']);
+      const legacyParentUuid = normalizeString(entry['legacyParentUuid']);
+      const legacyDefaultAddressUuid = normalizeString(entry['legacyDefaultAddressUuid']);
+      const legacyDisplayAddressUuid = normalizeString(entry['legacyDisplayAddressUuid']);
+      const legacyDefaultBankAccountUuid = normalizeString(entry['legacyDefaultBankAccountUuid']);
+      const legacyDisplayBankAccountUuid = normalizeString(entry['legacyDisplayBankAccountUuid']);
       return createFilemakerOrganization({
         id,
         name: normalizeString(entry['name']),
         addressId: normalizeString(entry['addressId']),
+        displayAddressId: normalizeString(entry['displayAddressId']),
         street: '',
         streetNumber: '',
         city: '',
@@ -365,6 +387,22 @@ export const normalizeFilemakerDatabase = (
         taxId: normalizeString(entry['taxId']),
         krs: normalizeString(entry['krs']),
         tradingName: normalizeString(entry['tradingName']),
+        cooperationStatus: normalizeString(entry['cooperationStatus']),
+        establishedDate: normalizeString(entry['establishedDate']),
+        parentOrganizationId: normalizeString(entry['parentOrganizationId']),
+        defaultBankAccountId: normalizeString(entry['defaultBankAccountId']),
+        displayBankAccountId: normalizeString(entry['displayBankAccountId']),
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        legacyParentUuid: legacyParentUuid.length > 0 ? legacyParentUuid : undefined,
+        legacyDefaultAddressUuid:
+          legacyDefaultAddressUuid.length > 0 ? legacyDefaultAddressUuid : undefined,
+        legacyDisplayAddressUuid:
+          legacyDisplayAddressUuid.length > 0 ? legacyDisplayAddressUuid : undefined,
+        legacyDefaultBankAccountUuid:
+          legacyDefaultBankAccountUuid.length > 0 ? legacyDefaultBankAccountUuid : undefined,
+        legacyDisplayBankAccountUuid:
+          legacyDisplayBankAccountUuid.length > 0 ? legacyDisplayBankAccountUuid : undefined,
+        updatedBy: normalizeString(entry['updatedBy']) || undefined,
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -372,6 +410,14 @@ export const normalizeFilemakerDatabase = (
     .filter((entry: FilemakerOrganization | null): entry is FilemakerOrganization =>
       Boolean(entry)
     );
+  const organizationIdByLegacyUuid = new Map<string, string>(
+    organizations
+      .map((organization: FilemakerOrganization): [string, string] => [
+        normalizeString(organization.legacyUuid),
+        organization.id,
+      ])
+      .filter(([legacyUuid]: [string, string]): boolean => legacyUuid.length > 0)
+  );
 
   const eventIds = new Set<string>();
   const events: FilemakerEvent[] = rawEvents
@@ -506,10 +552,16 @@ export const normalizeFilemakerDatabase = (
     (organization: FilemakerOrganization): FilemakerOrganization => {
       const defaultAddressId = defaultAddressIdByOwner.get(`organization:${organization.id}`) ?? '';
       const resolvedAddress = addressesById.get(defaultAddressId);
+      const resolvedParentOrganizationId =
+        organization.parentOrganizationId ??
+        organizationIdByLegacyUuid.get(organization.legacyParentUuid ?? '');
       if (!resolvedAddress) {
         return {
           ...organization,
           addressId: defaultAddressId,
+          ...(resolvedParentOrganizationId !== undefined
+            ? { parentOrganizationId: resolvedParentOrganizationId }
+            : {}),
           street: '',
           streetNumber: '',
           city: '',
@@ -521,6 +573,9 @@ export const normalizeFilemakerDatabase = (
       return {
         ...organization,
         addressId: resolvedAddress.id,
+        ...(resolvedParentOrganizationId !== undefined
+          ? { parentOrganizationId: resolvedParentOrganizationId }
+          : {}),
         street: resolvedAddress.street,
         streetNumber: resolvedAddress.streetNumber,
         city: resolvedAddress.city,
@@ -811,6 +866,8 @@ export const normalizeFilemakerDatabase = (
           ? entry['legacyParentUuids']
           : [],
         legacyListUuids: Array.isArray(entry['legacyListUuids']) ? entry['legacyListUuids'] : [],
+        createdBy: normalizeString(entry['createdBy']) || undefined,
+        updatedBy: normalizeString(entry['updatedBy']) || undefined,
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })
@@ -893,6 +950,82 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
+  const valueParentIdById = new Map<string, string | null>(
+    normalizedValues.map((normalizedValue: FilemakerValue): [string, string | null] => [
+      normalizedValue.id,
+      normalizedValue.parentId ?? null,
+    ])
+  );
+  const normalizeOrganizationLegacyDemandValueIds = (input: unknown): string[] => {
+    const rawValueIds = Array.isArray(input) ? input : [];
+    const normalizedValueIds: string[] = [];
+    let expectedParentId: string | null = null;
+
+    for (const rawValueId of rawValueIds.slice(0, 4)) {
+      const valueId = normalizeString(rawValueId);
+      if (valueId.length === 0 || !valueIds.has(valueId)) break;
+
+      const parentId = valueParentIdById.get(valueId) ?? null;
+      if (parentId !== expectedParentId) break;
+
+      normalizedValueIds.push(valueId);
+      expectedParentId = valueId;
+    }
+
+    return normalizedValueIds;
+  };
+  const getOrganizationLegacyDemandRawValueIds = (
+    entry: Record<string, unknown>
+  ): unknown[] => {
+    if (Array.isArray(entry['valueIds'])) return entry['valueIds'];
+    return [
+      entry['level1ValueId'],
+      entry['level2ValueId'],
+      entry['level3ValueId'],
+      entry['level4ValueId'],
+    ];
+  };
+  const organizationLegacyDemandIds = new Set<string>();
+  const organizationLegacyDemandRelationKeys = new Set<string>();
+  const organizationLegacyDemands: FilemakerOrganizationLegacyDemand[] = [];
+  const isKnownOrganizationId = (organizationId: string): boolean =>
+    organizationId.length > 0 && organizationIds.has(organizationId);
+  rawOrganizationLegacyDemands.forEach((entry: Record<string, unknown>) => {
+    const organizationId = normalizeString(entry['organizationId']);
+    if (!isKnownOrganizationId(organizationId)) return;
+
+    const demandValueIds = normalizeOrganizationLegacyDemandValueIds(
+      getOrganizationLegacyDemandRawValueIds(entry)
+    );
+    if (demandValueIds.length === 0) return;
+
+    const relationKey = `${organizationId}:${demandValueIds.join('>')}`;
+    if (organizationLegacyDemandRelationKeys.has(relationKey)) return;
+
+    const baseId = defaultOrganizationLegacyDemandIdForValues(organizationId, demandValueIds);
+    const requestedId = normalizeString(entry['id']);
+    const legacyUuid = normalizeString(entry['legacyUuid']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      organizationLegacyDemandIds,
+      baseId
+    );
+    organizationLegacyDemandIds.add(id);
+    organizationLegacyDemandRelationKeys.add(relationKey);
+    organizationLegacyDemands.push(
+      createFilemakerOrganizationLegacyDemand({
+        id,
+        organizationId,
+        valueIds: demandValueIds,
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
 
   return {
@@ -910,6 +1043,7 @@ export const normalizeFilemakerDatabase = (
     values: normalizedValues,
     valueParameters,
     valueParameterLinks,
+    organizationLegacyDemands,
   };
 };
 

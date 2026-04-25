@@ -115,6 +115,7 @@ const createDatabase = (): FilemakerDatabase => ({
   values: [],
   valueParameters: [],
   valueParameterLinks: [],
+  organizationLegacyDemands: [],
 });
 
 const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerEmailCampaign =>

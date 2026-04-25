@@ -10,6 +10,11 @@ import {
   updateProductSyncRun,
   updateProductSyncRunStatus,
 } from '@/features/product-sync/services/product-sync-repository';
+import { extractBaseParameters } from '@/features/integrations/services/imports/parameter-import/extractor';
+import {
+  getCatalogParameterLinks,
+  mergeCatalogParameterLinks,
+} from '@/features/integrations/services/imports/parameter-import/link-map-repository';
 import {
   checkBaseSkuExists,
   getExportDefaultConnectionId,
@@ -39,11 +44,15 @@ import type {
 } from '@/shared/contracts/product-sync';
 import { getProductSyncBaseFieldPresentation } from '@/shared/contracts/product-sync';
 import type { BaseWarehouse } from '@/shared/contracts/integrations/base-com';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ExtractedBaseParameter } from '@/shared/contracts/integrations/parameter-import';
+import type { ProductParameter } from '@/shared/contracts/products/parameters';
+import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
 import type { UpdateProductInput } from '@/shared/contracts/products/io';
 import type { MongoPriceGroupDoc } from '@/shared/lib/db/services/database-sync-types';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getParameterRepository } from '@/shared/lib/products/services/parameter-repository';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
+import { normalizeParameterValuesByLanguage } from '@/shared/lib/products/utils/parameter-values';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const BASE_INTEGRATION_SLUGS = new Set(['base', 'base-com', 'baselinker']);
@@ -155,19 +164,475 @@ const serializeArrayField = (value: unknown): string | null => {
   }
 };
 
+const PARAMETER_NAME_KEYS = [
+  'parameterId',
+  'name',
+  'parameter',
+  'code',
+  'title',
+  'parameter_id',
+  'param_id',
+  'id',
+  'attribute_id',
+] as const;
+
+const PARAMETER_VALUE_KEYS = ['value', 'values', 'value_id', 'text', 'label'] as const;
+const PARAMETER_COLLECTION_KEYS = ['parameters', 'params', 'attributes', 'features'] as const;
+
+const normalizeScalarParameterValue = (value: unknown): string => {
+  const direct = toTrimmedString(value);
+  if (direct) return direct;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  if (Array.isArray(value)) {
+    return value
+      .map((entry: unknown) => normalizeScalarParameterValue(entry))
+      .filter((entry: string): boolean => entry.length > 0)
+      .join(', ');
+  }
+  if (value && typeof value === 'object') {
+    try {
+      const serialized = JSON.stringify(value);
+      return serialized !== '{}' ? serialized : '';
+    } catch {
+      return '';
+    }
+  }
+  return '';
+};
+
+const firstParameterRecordString = (
+  record: Record<string, unknown>,
+  keys: readonly string[]
+): string => {
+  const entry = firstParameterRecordEntry(record, keys);
+  return entry?.value ?? '';
+};
+
+const firstParameterRecordEntry = (
+  record: Record<string, unknown>,
+  keys: readonly string[]
+): { key: string; value: string } | null => {
+  for (const key of keys) {
+    const normalized = normalizeScalarParameterValue(record[key]);
+    if (normalized) return { key, value: normalized };
+  }
+  return null;
+};
+
+const normalizeLanguageCode = (value: unknown): string => {
+  const normalized = toTrimmedString(value).toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  return normalized || 'default';
+};
+
+const normalizeParameterSyncEntry = (
+  entry: unknown,
+  fallbackId: string,
+  languageCode: string = 'default'
+): ProductParameterValue | null => {
+  const normalizedLanguageCode = normalizeLanguageCode(languageCode);
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+    const value = normalizeScalarParameterValue(entry);
+    if (!fallbackId || !value) return null;
+    return {
+      parameterId: fallbackId,
+      value,
+      ...(normalizedLanguageCode !== 'default'
+        ? { valuesByLanguage: { [normalizedLanguageCode]: value } }
+        : {}),
+    };
+  }
+
+  const record = entry as Record<string, unknown>;
+  const valueEntry = firstParameterRecordEntry(record, PARAMETER_VALUE_KEYS);
+  const valuesByLanguage = normalizeParameterValuesByLanguage(record['valuesByLanguage']);
+  const localizedFallbackValue =
+    valuesByLanguage[normalizedLanguageCode] ??
+    valuesByLanguage['default'] ??
+    valuesByLanguage['en'] ??
+    Object.values(valuesByLanguage)[0] ??
+    '';
+  const labelAsName =
+    valueEntry?.key !== 'label' ? normalizeScalarParameterValue(record['label']) : '';
+  const parameterId =
+    firstParameterRecordString(record, PARAMETER_NAME_KEYS) || labelAsName || fallbackId.trim();
+  const value = valueEntry?.value ?? localizedFallbackValue;
+  if (!parameterId || !value) return null;
+  if (normalizedLanguageCode !== 'default') {
+    valuesByLanguage[normalizedLanguageCode] = value;
+  }
+  return {
+    parameterId,
+    value,
+    ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+  };
+};
+
+const normalizeParameterSyncValues = (
+  value: unknown,
+  languageCode: string = 'default'
+): ProductParameterValue[] => {
+  const byParameterId = new Map<string, ProductParameterValue>();
+  const pushEntry = (entry: ProductParameterValue | null): void => {
+    if (!entry) return;
+    const parameterId = entry.parameterId.trim();
+    const parameterValue = toTrimmedString(entry.value);
+    const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
+    if (!parameterId || (!parameterValue && Object.keys(valuesByLanguage).length === 0)) return;
+    const existing = byParameterId.get(parameterId);
+    const nextValuesByLanguage = {
+      ...normalizeParameterValuesByLanguage(existing?.valuesByLanguage),
+      ...valuesByLanguage,
+    };
+    const nextValue = parameterValue || toTrimmedString(existing?.value);
+    byParameterId.set(parameterId, {
+      parameterId,
+      value: nextValue,
+      ...(Object.keys(nextValuesByLanguage).length > 0
+        ? { valuesByLanguage: nextValuesByLanguage }
+        : {}),
+    });
+  };
+
+  if (Array.isArray(value)) {
+    value.forEach((entry: unknown, index: number) => {
+      pushEntry(normalizeParameterSyncEntry(entry, `parameter_${index + 1}`, languageCode));
+    });
+  } else if (value && typeof value === 'object') {
+    Object.entries(value as Record<string, unknown>).forEach(
+      ([key, entry]: [string, unknown]) => {
+        pushEntry(normalizeParameterSyncEntry(entry, key.trim(), languageCode));
+      }
+    );
+  } else {
+    pushEntry(normalizeParameterSyncEntry(value, 'parameters', languageCode));
+  }
+
+  return Array.from(byParameterId.values()).sort((left, right) =>
+    left.parameterId.localeCompare(right.parameterId)
+  );
+};
+
+const resolveExtractedParameterId = (entry: ExtractedBaseParameter): string => {
+  const namesByLanguage = entry.namesByLanguage ?? {};
+  return (
+    toTrimmedString(namesByLanguage['en']) ||
+    toTrimmedString(entry.baseParameterId) ||
+    toTrimmedString(namesByLanguage['default']) ||
+    toTrimmedString(namesByLanguage['pl']) ||
+    toTrimmedString(namesByLanguage['de'])
+  );
+};
+
+const toNameLookupKey = (value: string): string => value.trim().toLowerCase();
+
+const buildParameterLookupMaps = (
+  parameters: ProductParameter[]
+): {
+  byId: Map<string, ProductParameter>;
+  byName: Map<string, ProductParameter>;
+} => {
+  const byId = new Map<string, ProductParameter>();
+  const byName = new Map<string, ProductParameter>();
+
+  parameters.forEach((parameter: ProductParameter) => {
+    const id = toTrimmedString(parameter.id);
+    if (id) byId.set(id, parameter);
+    [parameter.name_en, parameter.name_pl, parameter.name_de]
+      .map(toTrimmedString)
+      .filter((name: string): boolean => name.length > 0)
+      .forEach((name: string) => {
+        const key = toNameLookupKey(name);
+        if (!byName.has(key)) {
+          byName.set(key, parameter);
+        }
+      });
+  });
+
+  return { byId, byName };
+};
+
+const resolveMatchedParameter = (input: {
+  entry: ExtractedBaseParameter;
+  byId: Map<string, ProductParameter>;
+  byName: Map<string, ProductParameter>;
+  linkMap: Record<string, string>;
+}): ProductParameter | null => {
+  const baseParameterId = toTrimmedString(input.entry.baseParameterId);
+  if (baseParameterId) {
+    const linkedId = input.linkMap[baseParameterId];
+    if (linkedId && input.byId.has(linkedId)) {
+      return input.byId.get(linkedId) ?? null;
+    }
+  }
+
+  const names = Object.values(input.entry.namesByLanguage ?? {})
+    .map(toTrimmedString)
+    .filter((name: string): boolean => name.length > 0);
+  for (const name of names) {
+    const matched = input.byName.get(toNameLookupKey(name));
+    if (matched) return matched;
+  }
+
+  return null;
+};
+
+const toParameterSyncValueFromExtracted = (
+  entry: ExtractedBaseParameter,
+  parameterIdOverride?: string | null
+): ProductParameterValue | null => {
+  const parameterId = toTrimmedString(parameterIdOverride) || resolveExtractedParameterId(entry);
+  const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
+  const value =
+    valuesByLanguage['default'] ??
+    valuesByLanguage['en'] ??
+    Object.values(valuesByLanguage)[0] ??
+    '';
+  const localizedValuesByLanguage = Object.fromEntries(
+    Object.entries(valuesByLanguage).filter(([languageCode]: [string, string]) =>
+      languageCode !== 'default'
+    )
+  );
+  if (!parameterId || !value) return null;
+
+  return {
+    parameterId,
+    value,
+    ...(Object.keys(localizedValuesByLanguage).length > 0
+      ? { valuesByLanguage: localizedValuesByLanguage }
+      : {}),
+  };
+};
+
+const normalizeExistingParameterSyncValues = (
+  values: ProductWithImages['parameters']
+): Map<string, ProductParameterValue> => {
+  const byParameterId = new Map<string, ProductParameterValue>();
+  if (!Array.isArray(values)) return byParameterId;
+
+  values.forEach((entry: ProductParameterValue) => {
+    const parameterId = toTrimmedString(entry.parameterId);
+    if (!parameterId) return;
+    const value = toTrimmedString(entry.value);
+    const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
+    byParameterId.set(parameterId, {
+      parameterId,
+      value,
+      ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+    });
+  });
+
+  return byParameterId;
+};
+
+const extractBaseRecordParameterSyncValues = (
+  record: Record<string, unknown>
+): ProductParameterValue[] => {
+  const extracted = extractBaseParameters({
+    record,
+    settings: {
+      enabled: true,
+      mode: 'all',
+      languageScope: 'catalog_languages',
+      createMissingParameters: false,
+      overwriteExistingValues: true,
+      matchBy: 'base_id_then_name',
+    },
+    templateMappings: [],
+  });
+
+  return extracted
+    .map(toParameterSyncValueFromExtracted)
+    .filter((entry: ProductParameterValue | null): entry is ProductParameterValue =>
+      entry !== null
+    );
+};
+
+export const resolveBaseParameterSyncValues = async (input: {
+  product: ProductWithImages;
+  profile: ProductSyncProfile;
+  baseRecord: Record<string, unknown> | null;
+  connectionId: string;
+  inventoryId: string;
+  persistLinkMap: boolean;
+}): Promise<ProductParameterValue[] | null> => {
+  if (!input.baseRecord) return null;
+  const rules = buildEffectiveProductSyncFieldRules(input.profile.fieldRules);
+  const shouldResolveParameters = rules.some(
+    (rule: ProductSyncFieldRule): boolean =>
+      rule.appField === 'parameters' && rule.direction !== 'disabled'
+  );
+  if (!shouldResolveParameters) return null;
+  const parameterRule =
+    rules.find((rule: ProductSyncFieldRule): boolean => rule.appField === 'parameters') ?? null;
+  const preserveExistingValues = parameterRule?.direction === 'base_to_app';
+
+  const useLocalizedExtractor = hasLocalizedParameterTextFieldBuckets(input.baseRecord);
+  if (!useLocalizedExtractor) {
+    const rawParameters = resolveRawBaseParameterCollection(input.baseRecord);
+    if (rawParameters === undefined || rawParameters === null) return null;
+    const nextByParameterId = preserveExistingValues
+      ? normalizeExistingParameterSyncValues(input.product.parameters)
+      : new Map<string, ProductParameterValue>();
+    normalizeParameterSyncValues(rawParameters).forEach((entry: ProductParameterValue) => {
+      nextByParameterId.set(entry.parameterId, entry);
+    });
+    return Array.from(nextByParameterId.values());
+  }
+
+  const extracted = extractBaseParameters({
+    record: input.baseRecord,
+    settings: {
+      enabled: true,
+      mode: 'all',
+      languageScope: 'catalog_languages',
+      createMissingParameters: false,
+      overwriteExistingValues: true,
+      matchBy: 'base_id_then_name',
+    },
+    templateMappings: [],
+  });
+  if (extracted.length === 0) return null;
+
+  const catalogId =
+    toTrimmedString(input.profile.catalogId) || toTrimmedString(input.product.catalogId);
+  const nextByParameterId = preserveExistingValues
+    ? normalizeExistingParameterSyncValues(input.product.parameters)
+    : new Map<string, ProductParameterValue>();
+
+  if (!catalogId) {
+    extracted.forEach((entry: ExtractedBaseParameter) => {
+      const value = toParameterSyncValueFromExtracted(entry);
+      if (value) nextByParameterId.set(value.parameterId, value);
+    });
+    return Array.from(nextByParameterId.values());
+  }
+
+  try {
+    const parameterRepository = await getParameterRepository();
+    const [parameters, linkMap] = await Promise.all([
+      parameterRepository.listParameters({ catalogId }),
+      getCatalogParameterLinks({
+        catalogId,
+        connectionId: input.connectionId,
+        inventoryId: input.inventoryId,
+      }),
+    ]);
+    const { byId, byName } = buildParameterLookupMaps(parameters);
+    const linkUpdates: Record<string, string> = {};
+
+    extracted.forEach((entry: ExtractedBaseParameter) => {
+      const matched = resolveMatchedParameter({
+        entry,
+        byId,
+        byName,
+        linkMap,
+      });
+      if (matched?.linkedTitleTermType) return;
+
+      const value = toParameterSyncValueFromExtracted(entry, matched?.id ?? null);
+      if (!value) return;
+      nextByParameterId.set(value.parameterId, value);
+
+      const baseParameterId = toTrimmedString(entry.baseParameterId);
+      if (
+        input.persistLinkMap &&
+        matched &&
+        baseParameterId &&
+        linkMap[baseParameterId] !== matched.id
+      ) {
+        linkUpdates[baseParameterId] = matched.id;
+        linkMap[baseParameterId] = matched.id;
+      }
+    });
+
+    if (Object.keys(linkUpdates).length > 0) {
+      await mergeCatalogParameterLinks({
+        catalogId,
+        connectionId: input.connectionId,
+        inventoryId: input.inventoryId,
+        links: linkUpdates,
+      });
+    }
+
+    return Array.from(nextByParameterId.values());
+  } catch (error) {
+    void ErrorSystem.captureException(error);
+    extracted.forEach((entry: ExtractedBaseParameter) => {
+      const value = toParameterSyncValueFromExtracted(entry);
+      if (value) nextByParameterId.set(value.parameterId, value);
+    });
+    return Array.from(nextByParameterId.values());
+  }
+};
+
+const extractLanguageFromBaseFieldPath = (path: string): string | null => {
+  const lastSegment = path.split('.').pop() ?? path;
+  const separatorIndex = lastSegment.lastIndexOf('|');
+  if (separatorIndex < 0) return null;
+  const languageCode = normalizeLanguageCode(lastSegment.slice(separatorIndex + 1));
+  return languageCode === 'default' ? null : languageCode;
+};
+
+const normalizeBaseFieldCollectionKey = (path: string): string => {
+  const lastSegment = path.split('.').pop() ?? path;
+  const [namePart] = lastSegment.split('|');
+  return namePart.trim().toLowerCase();
+};
+
+const isParameterCollectionBaseField = (path: string): boolean => {
+  const collectionKey = normalizeBaseFieldCollectionKey(path);
+  return PARAMETER_COLLECTION_KEYS.some((key: string): boolean => key === collectionKey);
+};
+
+const hasLocalizedParameterTextFieldBuckets = (record: Record<string, unknown>): boolean => {
+  const textFields = record['text_fields'];
+  if (!textFields || typeof textFields !== 'object' || Array.isArray(textFields)) return false;
+  return Object.keys(textFields as Record<string, unknown>).some((key: string): boolean => {
+    if (!key.includes('|')) return false;
+    return isParameterCollectionBaseField(key);
+  });
+};
+
+const resolveRawBaseParameterCollection = (record: Record<string, unknown>): unknown =>
+  resolvePathValue(record, 'parameters') ??
+  resolvePathValue(record, 'features') ??
+  resolvePathValue(record, 'attributes') ??
+  resolvePathValue(record, 'params');
 
 export const normalizeFieldValue = (
   appField: ProductSyncAppField,
   value: unknown
 ): string | number | null => {
-  if (appField === 'stock' || appField === 'price' || appField === 'weight' || appField === 'length' || appField === 'width') {
+  if (
+    appField === 'stock' ||
+    appField === 'price' ||
+    appField === 'weight' ||
+    appField === 'length' ||
+    appField === 'width'
+  ) {
     return coerceNumber(value);
   }
   if (appField === 'parameters' || appField === 'custom_fields') {
+    if (appField === 'parameters') {
+      const parameters = normalizeParameterSyncValues(value);
+      return parameters.length > 0 ? serializeArrayField(parameters) : null;
+    }
     return serializeArrayField(value);
   }
   const stringValue = toTrimmedString(value);
   return stringValue || null;
+};
+
+const buildLocalPatchValue = (
+  appField: ProductSyncAppField,
+  rawBaseValue: unknown,
+  normalizedBaseValue: string | number | null
+): unknown => {
+  if (normalizedBaseValue === null) return null;
+  if (appField === 'parameters') return normalizeParameterSyncValues(rawBaseValue);
+  if (appField === 'custom_fields') return rawBaseValue;
+  return normalizedBaseValue;
 };
 
 export const valuesEqual = (appField: ProductSyncAppField, left: unknown, right: unknown): boolean => {
@@ -325,12 +790,9 @@ export const resolveDefaultBaseValue = (
     );
   }
   if (appField === 'parameters') {
-    return (
-      resolvePathValue(record, 'parameters') ??
-      resolvePathValue(record, 'features') ??
-      resolvePathValue(record, 'attributes') ??
-      resolvePathValue(record, 'params')
-    );
+    const extracted = extractBaseRecordParameterSyncValues(record);
+    if (extracted.length > 0) return extracted;
+    return undefined;
   }
   if (appField === 'custom_fields') {
     return (
@@ -345,6 +807,25 @@ export const resolveBaseValueByRule = (
   rule: ProductSyncFieldRule,
   record: Record<string, unknown>
 ): unknown => {
+  if (rule.appField === 'parameters') {
+    const normalizedBaseField = toTrimmedString(rule.baseField);
+    const byPath = resolvePathValue(record, normalizedBaseField);
+    if (byPath !== undefined && byPath !== null) {
+      const languageCode = extractLanguageFromBaseFieldPath(normalizedBaseField);
+      if (languageCode) {
+        return normalizeParameterSyncValues(byPath, languageCode);
+      }
+      if (isParameterCollectionBaseField(normalizedBaseField)) {
+        if (hasLocalizedParameterTextFieldBuckets(record)) {
+          const extracted = extractBaseRecordParameterSyncValues(record);
+          if (extracted.length > 0) return extracted;
+        }
+      }
+      return normalizeParameterSyncValues(byPath);
+    }
+    return resolveDefaultBaseValue(rule.appField, record);
+  }
+
   const byPath = resolvePathValue(record, rule.baseField);
   if (byPath !== undefined && byPath !== null) {
     return byPath;
@@ -627,6 +1108,7 @@ export const buildLinkedProductSyncPlan = (input: {
   baseProductId: string;
   persistBaseProductId: boolean;
   baseFieldPresentationMetadata?: ProductSyncBaseFieldPresentationMetadata;
+  resolvedBaseParameterValues?: ProductParameterValue[] | null;
 }): LinkedProductSyncPlan => {
   const rules = buildEffectiveProductSyncFieldRules(input.profile.fieldRules);
   const localPatch: Record<string, unknown> = {};
@@ -636,9 +1118,12 @@ export const buildLinkedProductSyncPlan = (input: {
 
   const fields = rules.map((rule: ProductSyncFieldRule): ProductSyncFieldPreview => {
     const rawAppValue = getProductFieldValue(input.product, rule.appField);
-    const rawBaseValue = input.baseRecord
-      ? resolveBaseValueByRule(rule, input.baseRecord)
-      : null;
+    const rawBaseValue =
+      rule.appField === 'parameters' && input.resolvedBaseParameterValues
+        ? input.resolvedBaseParameterValues
+        : input.baseRecord
+          ? resolveBaseValueByRule(rule, input.baseRecord)
+          : null;
     const appValue = normalizeFieldValue(rule.appField, rawAppValue);
     const baseValue = input.baseRecord
       ? normalizeFieldValue(rule.appField, rawBaseValue)
@@ -659,7 +1144,7 @@ export const buildLinkedProductSyncPlan = (input: {
       hasDifference;
 
     if (willWriteToApp) {
-      localPatch[rule.appField] = rawBaseValue;
+      localPatch[rule.appField] = buildLocalPatchValue(rule.appField, rawBaseValue, baseValue);
       localChanges.push(rule.appField);
     }
 
@@ -1006,12 +1491,21 @@ export const syncSingleLinkedProduct = async (input: {
     };
   }
 
+  const resolvedBaseParameterValues = await resolveBaseParameterSyncValues({
+    product: input.product,
+    profile: input.profile,
+    baseRecord: input.baseRecord,
+    connectionId: input.connectionId,
+    inventoryId: input.inventoryId,
+    persistLinkMap: true,
+  });
   const plan = buildLinkedProductSyncPlan({
     product: input.product,
     baseRecord: input.baseRecord,
     profile: input.profile,
     baseProductId,
     persistBaseProductId: !toTrimmedString(input.product.baseProductId),
+    resolvedBaseParameterValues,
   });
   const { localPatch, basePayload, localChanges, baseChanges } = plan;
 

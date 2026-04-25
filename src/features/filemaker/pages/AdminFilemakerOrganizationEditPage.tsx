@@ -6,6 +6,8 @@ import { OrganizationAddressesSection } from '../components/page/OrganizationAdd
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
 import { OrganizationEmailLogSection } from '../components/page/OrganizationEmailLogSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
+import { OrganizationLegacyDemandSection } from '../components/page/OrganizationLegacyDemandSection';
+import { OrganizationLegacyMetadataSection } from '../components/page/OrganizationLegacyMetadataSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerOrganizationEditPageActionsContext,
@@ -33,6 +35,8 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
       <OrganizationAddressesSection />
       {isCreateMode ? null : (
         <>
+          <OrganizationLegacyMetadataSection />
+          <OrganizationLegacyDemandSection />
           <OrganizationEmailsSection />
           <OrganizationEmailLogSection />
         </>

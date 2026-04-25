@@ -3,7 +3,7 @@
 // Renders parameter mapping controls and binds to product form metadata.
 // Designed for dynamic parameter schemas per catalog and handles i18n.
 
-import { X } from 'lucide-react';
+import { Ban, RotateCcw, X } from 'lucide-react';
 import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
@@ -21,7 +21,10 @@ import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
-import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
+import {
+  subscribeToTrackedAiPathRun,
+  type TrackedAiPathRunSnapshot,
+} from '@/shared/lib/ai-paths/client-run-tracker';
 import { useAiPathTriggerEvent } from '@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent';
 import {
   PARAMETER_VALUE_INFERENCE_PATH_ID,
@@ -45,13 +48,45 @@ import { Textarea } from '@/shared/ui/textarea';
 import { ToggleRow } from '@/shared/ui/toggle-row';
 
 const getParameterLabel = (
-  parameter: { name_en: string; name_pl?: string | null; name_de?: string | null },
+  parameter: {
+    id?: string | null;
+    name_en: string;
+    name_pl?: string | null;
+    name_de?: string | null;
+  },
   preferredLocale?: string
 ): string => {
   const preferred = preferredLocale?.toLowerCase();
   if (preferred === 'pl' && parameter.name_pl) return parameter.name_pl;
   if (preferred === 'de' && parameter.name_de) return parameter.name_de;
+  if (
+    (preferred === 'en' || preferred === 'default' || !preferred) &&
+    !parameter.name_pl &&
+    isLikelyPolishParameterLabel(parameter.name_en)
+  ) {
+    return formatParameterIdFallbackLabel(parameter.id) ?? 'Imported parameter';
+  }
   return parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
+};
+
+const POLISH_PARAMETER_LABEL_PATTERN =
+  /(?:[ąćęłńóśźż]|\b(?:cecha|cechy|długość|kolor|materiał|modelu|nazwa|numer|producent|rodzaj|rozmiar|szerokość|stan|waga|wysokość)\b)/i;
+
+const isLikelyPolishParameterLabel = (value: unknown): boolean =>
+  typeof value === 'string' && POLISH_PARAMETER_LABEL_PATTERN.test(value.trim());
+
+const formatParameterIdFallbackLabel = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const words = value
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-zA-Z0-9 ]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter((part: string): boolean => part.length > 0);
+  if (words.length === 0) return null;
+  return words
+    .map((word: string): string => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 const buildParameterOptions = (
@@ -138,16 +173,50 @@ type ParameterValueInferTriggerProps = {
   currentValue: string;
   optionLabels: string[];
   disabled: boolean;
-  resolveCurrentRowIndex: (parameterId: string) => number | null;
-  updateParameterValueByLanguage: (index: number, languageCode: string, value: string) => void;
+  runParameterValueInference: RunParameterValueInference;
 };
 
-type PendingParameterValueRun = {
+type ParameterSequenceInferenceToggleProps = {
+  selectedParameter: ProductParameter | null;
+  isExcluded: boolean;
+  disabled: boolean;
+  onToggle: (parameterId: string) => void;
+};
+
+type ParameterValueInferenceRunRow = {
+  rowIndex: number;
+  parameter: ProductParameter;
+  languageCode: string;
+  languageLabel: string;
+  currentValue: string;
+  optionLabels: string[];
+};
+
+type ParameterValueInferenceTrackedRun = {
   runId: string;
   parameterId: string;
   languageCode: string;
   selectorType: ProductParameter['selectorType'];
   optionLabels: string[];
+};
+
+type ParameterValueInferenceAppliedResult = {
+  runId: string;
+  parameterId: string;
+  rowIndex: number;
+  value: string;
+};
+
+type RunParameterValueInference = (
+  row: ParameterValueInferenceRunRow
+) => Promise<ParameterValueInferenceAppliedResult>;
+
+type ParameterSequenceState = {
+  status: 'idle' | 'running' | 'completed' | 'failed';
+  current: number;
+  total: number;
+  currentLabel: string | null;
+  error: string | null;
 };
 
 const FALLBACK_PARAMETER_VALUE_INFERENCE_BUTTON: AiTriggerButtonRecord = {
@@ -254,6 +323,200 @@ const normalizeInferredParameterValue = (args: {
   return trimmedValue;
 };
 
+const resolveParameterValueInferenceErrorMessage = (error: unknown): string => {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+  if (typeof error === 'string' && error.trim().length > 0) {
+    return error.trim();
+  }
+  return 'Parameter inference failed: unexpected error.';
+};
+
+const resolveRawLaunchErrorMessage = (launchError: unknown): string | null => {
+  if (typeof launchError === 'string') return launchError;
+  if (launchError instanceof Error) return launchError.message;
+  return null;
+};
+
+const buildNormalizedParameterOptionLabels = (
+  parameter: ProductParameter,
+  currentValue: string
+): string[] => {
+  const selectorType = parameter.selectorType ?? 'text';
+  const optionLabels = Array.isArray(parameter.optionLabels) ? parameter.optionLabels : [];
+  const normalizedOptionLabels = Array.from(
+    new Set(
+      optionLabels
+        .map((value: string) => value.trim())
+        .filter((value: string) => value.length > 0)
+    )
+  );
+
+  if (
+    currentValue.length > 0 &&
+    SELECTOR_TYPES_REQUIRING_OPTIONS.has(selectorType) &&
+    !normalizedOptionLabels.includes(currentValue)
+  ) {
+    normalizedOptionLabels.unshift(currentValue);
+  }
+
+  return normalizedOptionLabels;
+};
+
+const applyParameterValueToSnapshot = (
+  values: ProductParameterValue[],
+  update: { parameterId: string; languageCode: string; value: string }
+): ProductParameterValue[] =>
+  values.map((entry: ProductParameterValue): ProductParameterValue => {
+    if (entry.parameterId !== update.parameterId) return entry;
+
+    const currentValuesByLanguage = entry.valuesByLanguage ?? {};
+    const nextValuesByLanguage =
+      update.value.length > 0
+        ? {
+            ...currentValuesByLanguage,
+            [update.languageCode]: update.value,
+          }
+        : Object.fromEntries(
+            Object.entries(currentValuesByLanguage).filter(
+              ([languageCode]: [string, string]): boolean => languageCode !== update.languageCode
+            )
+          );
+
+    const nextEntry: ProductParameterValue = {
+      ...entry,
+      value: update.value,
+    };
+
+    if (Object.keys(nextValuesByLanguage).length > 0) {
+      return {
+        ...nextEntry,
+        valuesByLanguage: nextValuesByLanguage,
+      };
+    }
+
+    return {
+      parameterId: nextEntry.parameterId,
+      value: nextEntry.value,
+    };
+  });
+
+const waitForParameterValueInferenceRun = (
+  trackedRun: ParameterValueInferenceTrackedRun
+): Promise<string> =>
+  new Promise<string>((resolve, reject): void => {
+    let unsubscribe: (() => void) | null = null;
+    let cleanupAfterSubscribe = false;
+    let terminalHandled = false;
+
+    const cleanup = (): void => {
+      if (unsubscribe) {
+        unsubscribe();
+        unsubscribe = null;
+        return;
+      }
+      cleanupAfterSubscribe = true;
+    };
+
+    const handleTerminalSnapshot = async (
+      snapshot: TrackedAiPathRunSnapshot
+    ): Promise<void> => {
+      try {
+        if (snapshot.status !== 'completed') {
+          throw new Error(
+            snapshot.errorMessage ??
+              `Parameter inference failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
+          );
+        }
+
+        let response: Awaited<ReturnType<typeof getAiPathRun>>;
+        try {
+          response = await getAiPathRun(trackedRun.runId, { timeoutMs: 60_000 });
+        } catch {
+          throw new Error(
+            'Parameter inference failed: unable to load the completed AI Path run details.'
+          );
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            response.error ||
+              'Parameter inference failed: unable to load the completed AI Path run details.'
+          );
+        }
+
+        const result = extractParameterValueInferenceResultFromAiPathRunDetail(response.data);
+        if (!result) {
+          throw new Error('Parameter inference failed: the AI Path did not return a parameter value.');
+        }
+
+        if (result.parameterId && result.parameterId !== trackedRun.parameterId) {
+          throw new Error(
+            'Parameter inference failed: the AI Path returned a value for a different parameter.'
+          );
+        }
+
+        const normalizedValue = normalizeInferredParameterValue({
+          value: result.value,
+          selectorType: trackedRun.selectorType,
+          optionLabels: trackedRun.optionLabels,
+        });
+        if (normalizedValue === null) {
+          throw new Error(
+            'Parameter inference failed: the AI Path returned a value outside the allowed options.'
+          );
+        }
+
+        resolve(normalizedValue);
+      } catch (error) {
+        reject(error);
+      } finally {
+        cleanup();
+      }
+    };
+
+    unsubscribe = subscribeToTrackedAiPathRun(trackedRun.runId, (snapshot) => {
+      if (terminalHandled || snapshot.trackingState !== 'stopped') return;
+      terminalHandled = true;
+      void handleTerminalSnapshot(snapshot);
+    });
+
+    if (cleanupAfterSubscribe) {
+      cleanup();
+    }
+  });
+
+function ParameterSequenceInferenceToggle(
+  props: ParameterSequenceInferenceToggleProps
+): React.JSX.Element {
+  const { selectedParameter, isExcluded, disabled, onToggle } = props;
+  const parameterLabel = selectedParameter ? getParameterLabel(selectedParameter) : 'parameter';
+  const ariaLabel = isExcluded
+    ? `Include ${parameterLabel} in parameter sequence`
+    : `Skip ${parameterLabel} in parameter sequence`;
+  const Icon = isExcluded ? RotateCcw : Ban;
+
+  return (
+    <Button
+      type='button'
+      variant={isExcluded ? 'warning' : 'outline'}
+      size='icon'
+      onClick={(): void => {
+        if (!selectedParameter) return;
+        onToggle(selectedParameter.id);
+      }}
+      disabled={disabled || selectedParameter === null}
+      aria-label={ariaLabel}
+      aria-pressed={selectedParameter ? isExcluded : undefined}
+      title={ariaLabel}
+      className='h-9 w-9 shrink-0'
+    >
+      <Icon className='h-4 w-4' aria-hidden='true' />
+    </Button>
+  );
+}
+
 function ParameterValueInferTrigger(
   props: ParameterValueInferTriggerProps
 ): React.JSX.Element {
@@ -265,45 +528,10 @@ function ParameterValueInferTrigger(
     currentValue,
     optionLabels,
     disabled,
-    resolveCurrentRowIndex,
-    updateParameterValueByLanguage,
+    runParameterValueInference,
   } = props;
-  const formContext = useFormContext<ProductFormData>();
-  const coreState = useContext(ProductFormCoreStateContext);
-  const imageContext = useContext(ProductFormImageContext);
-  const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
-  const [pendingRun, setPendingRun] = useState<PendingParameterValueRun | null>(null);
   const [isTriggerPending, setIsTriggerPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const buildCurrentInput = useCallback(() => {
-    if (!selectedParameter) return null;
-    const values = {
-      ...((coreState?.getValues ?? formContext.getValues)() as ProductFormData),
-      imageLinks: imageContext?.imageLinks ?? [],
-    } as ProductFormData & Record<string, unknown>;
-
-    return buildParameterValueInferenceTriggerInput({
-      values,
-      imageLinks: imageContext?.imageLinks ?? [],
-      row: {
-        index: rowIndex,
-        parameter: selectedParameter,
-        languageCode,
-        languageLabel,
-        currentValue,
-      },
-    });
-  }, [
-    coreState,
-    currentValue,
-    formContext.getValues,
-    imageContext?.imageLinks,
-    languageCode,
-    languageLabel,
-    rowIndex,
-    selectedParameter,
-  ]);
 
   const handleParameterValueTrigger = useCallback(async (): Promise<void> => {
     setError(null);
@@ -312,176 +540,31 @@ function ParameterValueInferTrigger(
       return;
     }
 
-    const triggerInput = buildCurrentInput();
-    if (!triggerInput) {
-      setError('Parameter inference failed: select a parameter first.');
-      return;
-    }
-
     setIsTriggerPending(true);
     try {
-      await fireAiPathTriggerEvent({
-        triggerEventId: PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
-        triggerLabel: FALLBACK_PARAMETER_VALUE_INFERENCE_BUTTON.name,
-        preferredPathId: PARAMETER_VALUE_INFERENCE_PATH_ID,
-        entityType: 'product',
-        entityId: coreState?.product?.id ?? null,
-        getEntityJson: () => {
-          const values = {
-            ...((coreState?.getValues ?? formContext.getValues)() as ProductFormData),
-            imageLinks: imageContext?.imageLinks ?? [],
-          } as ProductFormData & Record<string, unknown>;
-          const entityJson = buildTriggeredProductEntityJson({
-            product: coreState?.product,
-            draft: coreState?.draft,
-            values,
-          });
-          entityJson['parameterValueInferenceInput'] = triggerInput;
-          return entityJson;
-        },
-        source: {
-          tab: 'product',
-          location: PARAMETER_VALUE_INFERENCE_TRIGGER_LOCATION,
-        },
-        extras: {
-          parameterValueInferenceInput: triggerInput,
-          mode: 'click',
-        },
-        onError: (launchError): void => {
-          setError(
-            resolveParameterValueLaunchErrorMessage({
-              message: launchError,
-            })
-          );
-        },
-        onSuccess: (runId: string): void => {
-          setPendingRun({
-            runId,
-            parameterId: selectedParameter.id,
-            languageCode,
-            selectorType: selectedParameter.selectorType,
-            optionLabels,
-          });
-        },
+      await runParameterValueInference({
+        rowIndex,
+        parameter: selectedParameter,
+        languageCode,
+        languageLabel,
+        currentValue,
+        optionLabels,
       });
+      setError(null);
+    } catch (triggerError) {
+      setError(resolveParameterValueInferenceErrorMessage(triggerError));
     } finally {
       setIsTriggerPending(false);
     }
   }, [
-    buildCurrentInput,
-    coreState?.draft,
-    coreState?.getValues,
-    coreState?.product,
-    fireAiPathTriggerEvent,
-    formContext.getValues,
-    imageContext?.imageLinks,
+    currentValue,
     languageCode,
+    languageLabel,
     optionLabels,
+    rowIndex,
+    runParameterValueInference,
     selectedParameter,
   ]);
-
-  useEffect(() => {
-    if (!pendingRun) return;
-
-    let active = true;
-    let terminalHandled = false;
-    const trackedRun = pendingRun;
-
-    const unsubscribe = subscribeToTrackedAiPathRun(trackedRun.runId, (snapshot) => {
-      if (!active || terminalHandled || snapshot.trackingState !== 'stopped') return;
-      terminalHandled = true;
-
-      void (async (): Promise<void> => {
-        if (snapshot.status !== 'completed') {
-          if (!active) return;
-          setError(
-            snapshot.errorMessage ??
-              `Parameter inference failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
-          );
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-
-        let response: Awaited<ReturnType<typeof getAiPathRun>>;
-        try {
-          response = await getAiPathRun(trackedRun.runId, { timeoutMs: 60_000 });
-        } catch {
-          if (!active) return;
-          setError('Parameter inference failed: unable to load the completed AI Path run details.');
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-        if (!active) return;
-        if (!response.ok) {
-          setError(
-            response.error ||
-              'Parameter inference failed: unable to load the completed AI Path run details.'
-          );
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-
-        const result = extractParameterValueInferenceResultFromAiPathRunDetail(response.data);
-        if (!result) {
-          setError('Parameter inference failed: the AI Path did not return a parameter value.');
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-
-        if (result.parameterId && result.parameterId !== trackedRun.parameterId) {
-          setError('Parameter inference failed: the AI Path returned a value for a different parameter.');
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-
-        const normalizedValue = normalizeInferredParameterValue({
-          value: result.value,
-          selectorType: trackedRun.selectorType,
-          optionLabels: trackedRun.optionLabels,
-        });
-        if (normalizedValue === null) {
-          setError('Parameter inference failed: the AI Path returned a value outside the allowed options.');
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-
-        const currentRowIndex = resolveCurrentRowIndex(trackedRun.parameterId);
-        if (currentRowIndex === null) {
-          setPendingRun((current) =>
-            current?.runId === trackedRun.runId ? null : current
-          );
-          return;
-        }
-
-        updateParameterValueByLanguage(
-          currentRowIndex,
-          trackedRun.languageCode,
-          normalizedValue
-        );
-        setError(null);
-        setPendingRun((current) =>
-          current?.runId === trackedRun.runId ? null : current
-        );
-      })();
-    });
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [pendingRun, resolveCurrentRowIndex, updateParameterValueByLanguage]);
 
   return (
     <div className='flex shrink-0 flex-col items-start gap-1'>
@@ -492,7 +575,7 @@ function ParameterValueInferTrigger(
         onClick={(): void => {
           void handleParameterValueTrigger();
         }}
-        disabled={disabled || isTriggerPending || pendingRun !== null}
+        disabled={disabled || isTriggerPending}
         aria-label={
           selectedParameter
             ? `Trigger parameter inference for ${getParameterLabel(selectedParameter)}`
@@ -519,6 +602,21 @@ export default function ProductFormParameters(): React.JSX.Element {
   } = useProductFormParameters();
 
   const { selectedCatalogIds, filteredLanguages } = useProductFormMetadata();
+  const formContext = useFormContext<ProductFormData>();
+  const coreState = useContext(ProductFormCoreStateContext);
+  const imageContext = useContext(ProductFormImageContext);
+  const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
+  const [sequenceState, setSequenceState] = useState<ParameterSequenceState>({
+    status: 'idle',
+    current: 0,
+    total: 0,
+    currentLabel: null,
+    error: null,
+  });
+  const [sequenceExcludedParameterIds, setSequenceExcludedParameterIds] = useState<Set<string>>(
+    () => new Set<string>()
+  );
+  const sequenceRunTokenRef = useRef(0);
 
   const catalogLanguages = useMemo((): CatalogLanguageOption[] => {
     const byCode = new Map<string, CatalogLanguageOption>();
@@ -560,11 +658,27 @@ export default function ProductFormParameters(): React.JSX.Element {
     (language: CatalogLanguageOption) => language.code === resolvedActiveParameterLanguageTab
   ) ??
     catalogLanguages[0] ?? { code: 'default', label: 'Default' };
-  const preferredLocale = primaryLanguageCode;
+  const preferredLocale = activeParameterLanguage.code;
   const selectedIds = useMemo(
     () => parameterValues.map((entry: ProductParameterValue) => entry.parameterId).filter(Boolean),
     [parameterValues]
   );
+  useEffect(() => {
+    const currentParameterIds = new Set(
+      parameterValues
+        .map((entry: ProductParameterValue): string => entry.parameterId)
+        .filter((parameterId: string): boolean => parameterId.length > 0)
+    );
+    setSequenceExcludedParameterIds((current: Set<string>): Set<string> => {
+      const next = new Set<string>();
+      current.forEach((parameterId: string): void => {
+        if (currentParameterIds.has(parameterId)) {
+          next.add(parameterId);
+        }
+      });
+      return next.size === current.size ? current : next;
+    });
+  }, [parameterValues]);
   const hasParameterValueByLanguage = useMemo((): Record<string, boolean> => {
     const result: Record<string, boolean> = {};
     languageTabValues.forEach((languageCode: string) => {
@@ -593,6 +707,253 @@ export default function ProductFormParameters(): React.JSX.Element {
       parameterValueIndexByParameterIdRef.current.get(parameterId) ?? null,
     []
   );
+  const parameterValuesSnapshotRef = useRef<ProductParameterValue[]>(parameterValues);
+  if (sequenceState.status !== 'running') {
+    parameterValuesSnapshotRef.current = parameterValues;
+  }
+  const getFormValuesWithImages = useCallback((): ProductFormData & Record<string, unknown> => {
+    const values: ProductFormData & Record<string, unknown> = {
+      ...((coreState?.getValues ?? formContext.getValues)()),
+      imageLinks: imageContext?.imageLinks ?? [],
+      parameters: parameterValuesSnapshotRef.current,
+    };
+    return values;
+  }, [coreState?.getValues, formContext.getValues, imageContext?.imageLinks]);
+  const runParameterValueInference = useCallback<RunParameterValueInference>(
+    async (row: ParameterValueInferenceRunRow): Promise<ParameterValueInferenceAppliedResult> => {
+      const triggerInput = buildParameterValueInferenceTriggerInput({
+        values: getFormValuesWithImages(),
+        imageLinks: imageContext?.imageLinks ?? [],
+        row: {
+          index: row.rowIndex,
+          parameter: row.parameter,
+          languageCode: row.languageCode,
+          languageLabel: row.languageLabel,
+          currentValue: row.currentValue,
+        },
+      });
+
+      const runId = await new Promise<string>((resolve, reject): void => {
+        let settled = false;
+        const resolveRun = (nextRunId: string): void => {
+          if (settled) return;
+          const normalizedRunId = nextRunId.trim();
+          if (!normalizedRunId) {
+            settled = true;
+            reject(new Error('Parameter inference failed: unable to start the AI Path run.'));
+            return;
+          }
+          settled = true;
+          resolve(normalizedRunId);
+        };
+        const rejectLaunch = (launchError: unknown): void => {
+          if (settled) return;
+          settled = true;
+          reject(
+            new Error(
+              resolveParameterValueLaunchErrorMessage({
+                message: resolveRawLaunchErrorMessage(launchError),
+              })
+            )
+          );
+        };
+
+        void (async (): Promise<void> => {
+          try {
+            await fireAiPathTriggerEvent({
+              triggerEventId: PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
+              triggerLabel: FALLBACK_PARAMETER_VALUE_INFERENCE_BUTTON.name,
+              preferredPathId: PARAMETER_VALUE_INFERENCE_PATH_ID,
+              entityType: 'product',
+              entityId: coreState?.product?.id ?? null,
+              getEntityJson: () => {
+                const entityJson = buildTriggeredProductEntityJson({
+                  product: coreState?.product,
+                  draft: coreState?.draft,
+                  values: getFormValuesWithImages(),
+                });
+                entityJson['parameterValueInferenceInput'] = triggerInput;
+                return entityJson;
+              },
+              source: {
+                tab: 'product',
+                location: PARAMETER_VALUE_INFERENCE_TRIGGER_LOCATION,
+              },
+              extras: {
+                parameterValueInferenceInput: triggerInput,
+                mode: 'click',
+              },
+              onError: rejectLaunch,
+              onSuccess: resolveRun,
+            });
+          } catch (error) {
+            rejectLaunch(error);
+            return;
+          }
+
+          if (!settled) {
+            rejectLaunch('unable to start the AI Path run.');
+          }
+        })();
+      });
+
+      const normalizedValue = await waitForParameterValueInferenceRun({
+        runId,
+        parameterId: row.parameter.id,
+        languageCode: row.languageCode,
+        selectorType: row.parameter.selectorType,
+        optionLabels: row.optionLabels,
+      });
+      const currentRowIndex = resolveCurrentParameterValueRowIndex(row.parameter.id);
+      if (currentRowIndex === null) {
+        throw new Error('Parameter inference failed: the parameter row is no longer available.');
+      }
+
+      updateParameterValueByLanguage(currentRowIndex, row.languageCode, normalizedValue);
+      parameterValuesSnapshotRef.current = applyParameterValueToSnapshot(
+        parameterValuesSnapshotRef.current,
+        {
+          parameterId: row.parameter.id,
+          languageCode: row.languageCode,
+          value: normalizedValue,
+        }
+      );
+
+      return {
+        runId,
+        parameterId: row.parameter.id,
+        rowIndex: currentRowIndex,
+        value: normalizedValue,
+      };
+    },
+    [
+      coreState?.draft,
+      coreState?.product,
+      fireAiPathTriggerEvent,
+      getFormValuesWithImages,
+      imageContext?.imageLinks,
+      resolveCurrentParameterValueRowIndex,
+      updateParameterValueByLanguage,
+    ]
+  );
+  const toggleParameterSequenceExclusion = useCallback((parameterId: string): void => {
+    setSequenceExcludedParameterIds((current: Set<string>): Set<string> => {
+      const next = new Set(current);
+      if (next.has(parameterId)) {
+        next.delete(parameterId);
+      } else {
+        next.add(parameterId);
+      }
+      return next;
+    });
+  }, []);
+  const eligibleSequenceRows = useMemo(
+    (): ParameterValueInferenceRunRow[] =>
+      parameterValues.flatMap((entry: ProductParameterValue, index: number) => {
+        if (entry.parameterId.length === 0) return [];
+        if (sequenceExcludedParameterIds.has(entry.parameterId)) return [];
+        const parameter = parameterById.get(entry.parameterId);
+        const hasLinkedTitleTerm =
+          parameter?.linkedTitleTermType !== null &&
+          parameter?.linkedTitleTermType !== undefined;
+        if (parameter === undefined || hasLinkedTitleTerm) return [];
+        const currentValue = getParameterLanguageValue(
+          entry,
+          activeParameterLanguage.code,
+          primaryLanguageCode
+        );
+        return [
+          {
+            rowIndex: index,
+            parameter,
+            languageCode: activeParameterLanguage.code,
+            languageLabel: activeParameterLanguage.label,
+            currentValue,
+            optionLabels: buildNormalizedParameterOptionLabels(parameter, currentValue),
+          },
+        ];
+      }),
+    [
+      activeParameterLanguage.code,
+      activeParameterLanguage.label,
+      parameterById,
+      parameterValues,
+      primaryLanguageCode,
+      sequenceExcludedParameterIds,
+    ]
+  );
+  const isSequenceRunning = sequenceState.status === 'running';
+  const sequenceStatusMessage = useMemo((): string | null => {
+    if (sequenceState.status === 'running') {
+      const label =
+        sequenceState.currentLabel !== null && sequenceState.currentLabel.length > 0
+          ? `: ${sequenceState.currentLabel}`
+          : '';
+      return `Running ${sequenceState.current}/${sequenceState.total}${label}`;
+    }
+    if (sequenceState.status === 'completed') {
+      return `Parameter sequence completed for ${sequenceState.total} parameter${sequenceState.total === 1 ? '' : 's'}.`;
+    }
+    if (sequenceState.status === 'failed') {
+      return sequenceState.error;
+    }
+    return null;
+  }, [sequenceState]);
+  const handleRunParameterSequence = useCallback(async (): Promise<void> => {
+    if (eligibleSequenceRows.length === 0) {
+      setSequenceState({
+        status: 'failed',
+        current: 0,
+        total: 0,
+        currentLabel: null,
+        error: 'Parameter sequence failed: no eligible parameters to run.',
+      });
+      return;
+    }
+
+    const runToken = sequenceRunTokenRef.current + 1;
+    sequenceRunTokenRef.current = runToken;
+    const total = eligibleSequenceRows.length;
+
+    for (let index = 0; index < eligibleSequenceRows.length; index += 1) {
+      const row = eligibleSequenceRows[index];
+      if (row === undefined) continue;
+      const parameterLabel = getParameterLabel(row.parameter, preferredLocale);
+      setSequenceState({
+        status: 'running',
+        current: index + 1,
+        total,
+        currentLabel: parameterLabel,
+        error: null,
+      });
+
+      try {
+        // eslint-disable-next-line no-await-in-loop -- the sequence must apply each value before launching the next run.
+        await runParameterValueInference(row);
+      } catch (error) {
+        if (sequenceRunTokenRef.current !== runToken) return;
+        const message = resolveParameterValueInferenceErrorMessage(error);
+        setSequenceState({
+          status: 'failed',
+          current: index + 1,
+          total,
+          currentLabel: parameterLabel,
+          error: `${parameterLabel}: ${message}`,
+        });
+        return;
+      }
+
+      if (sequenceRunTokenRef.current !== runToken) return;
+    }
+
+    setSequenceState({
+      status: 'completed',
+      current: total,
+      total,
+      currentLabel: null,
+      error: null,
+    });
+  }, [eligibleSequenceRows, preferredLocale, runParameterValueInference]);
 
   if (selectedCatalogIds.length === 0) {
     return (
@@ -608,16 +969,45 @@ export default function ProductFormParameters(): React.JSX.Element {
         title='Parameters'
         description='Choose parameters and provide values for this product.'
       >
-        <div className='mb-2 flex justify-end'>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={addParameterValue}
-            disabled={parametersLoading || parameters.length === 0}
-          >
-            Add parameter
-          </Button>
+        <div className='mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+          <div className='min-h-4 text-xs text-muted-foreground'>
+            {sequenceStatusMessage !== null ? (
+              <span
+                className={
+                  sequenceState.status === 'failed' ? 'text-destructive' : undefined
+                }
+              >
+                {sequenceStatusMessage}
+              </span>
+            ) : null}
+          </div>
+          <div className='flex justify-end gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={(): void => {
+                void handleRunParameterSequence();
+              }}
+              disabled={
+                parametersLoading ||
+                parameters.length === 0 ||
+                eligibleSequenceRows.length === 0 ||
+                isSequenceRunning
+              }
+            >
+              Run parameter sequence
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={addParameterValue}
+              disabled={parametersLoading || parameters.length === 0 || isSequenceRunning}
+            >
+              Add parameter
+            </Button>
+          </div>
         </div>
 
         {parametersLoading ? (
@@ -667,34 +1057,21 @@ export default function ProductFormParameters(): React.JSX.Element {
               const selectedParameter = entry.parameterId
                 ? (parameterById.get(entry.parameterId) ?? null)
                 : null;
+              const isSequenceExcluded =
+                entry.parameterId.length > 0 && sequenceExcludedParameterIds.has(entry.parameterId);
               const isLinkedParameter = Boolean(selectedParameter?.linkedTitleTermType);
               const linkedTitleTermLabel = getLinkedTitleTermLabel(
                 selectedParameter?.linkedTitleTermType ?? null
               );
               const selectorType = selectedParameter?.selectorType ?? 'text';
-              const optionLabels = Array.isArray(selectedParameter?.optionLabels)
-                ? selectedParameter.optionLabels
-                : [];
               const needsOptions = SELECTOR_TYPES_REQUIRING_OPTIONS.has(selectorType);
-              const normalizedOptionLabels = Array.from(
-                new Set(
-                  optionLabels
-                    .map((value: string) => value.trim())
-                    .filter((value: string) => value.length > 0)
-                )
-              );
               const getLanguageValue = (languageCode: string): string => {
                 return getParameterLanguageValue(entry, languageCode, primaryLanguageCode);
               };
               const activeLanguageValue = getLanguageValue(activeParameterLanguage.code);
-
-              if (
-                activeLanguageValue &&
-                needsOptions &&
-                !normalizedOptionLabels.includes(activeLanguageValue)
-              ) {
-                normalizedOptionLabels.unshift(activeLanguageValue);
-              }
+              const normalizedOptionLabels = selectedParameter
+                ? buildNormalizedParameterOptionLabels(selectedParameter, activeLanguageValue)
+                : [];
               const handleLanguageValueChange = (languageCode: string, nextValue: string): void => {
                 updateParameterValueByLanguage(index, languageCode, nextValue);
               };
@@ -736,7 +1113,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                         placeholder='Select parameter'
                         ariaLabel='Parameter'
                         triggerClassName='h-9 bg-gray-900 border-border/50'
-                        disabled={isLinkedParameter}
+                        disabled={isLinkedParameter || isSequenceRunning}
                        title='Select parameter'/>
                     </div>
                     <div className='flex-1 space-y-3'>
@@ -753,6 +1130,12 @@ export default function ProductFormParameters(): React.JSX.Element {
                           {activeParameterLanguage.label}
                         </Label>
                         <div className='flex items-start gap-2'>
+                          <ParameterSequenceInferenceToggle
+                            selectedParameter={selectedParameter}
+                            isExcluded={isSequenceExcluded}
+                            disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
+                            onToggle={toggleParameterSequenceExclusion}
+                          />
                           <ParameterValueInferTrigger
                             rowIndex={index}
                             selectedParameter={selectedParameter}
@@ -760,9 +1143,13 @@ export default function ProductFormParameters(): React.JSX.Element {
                             languageLabel={activeParameterLanguage.label}
                             currentValue={getLanguageValue(activeParameterLanguage.code)}
                             optionLabels={normalizedOptionLabels}
-                            disabled={!entry.parameterId || isLinkedParameter}
-                            resolveCurrentRowIndex={resolveCurrentParameterValueRowIndex}
-                            updateParameterValueByLanguage={updateParameterValueByLanguage}
+                            disabled={
+                              !entry.parameterId ||
+                              isLinkedParameter ||
+                              isSequenceExcluded ||
+                              isSequenceRunning
+                            }
+                            runParameterValueInference={runParameterValueInference}
                           />
                           <div className='min-w-0 flex-1'>
                             {selectorType === 'textarea' ? (
@@ -776,7 +1163,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 }
                                 aria-label={`Value (${activeParameterLanguage.label})`}
                                 placeholder={`Value (${activeParameterLanguage.label})`}
-                                disabled={!entry.parameterId || isLinkedParameter}
+                                disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
                                 className='min-h-[84px] bg-gray-900'
                                title={`Value (${activeParameterLanguage.label})`}/>
                             ) : selectorType === 'radio' ? (
@@ -787,7 +1174,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                     handleLanguageValueChange(activeParameterLanguage.code, value)
                                   }
                                   className='gap-2'
-                                  disabled={!entry.parameterId || isLinkedParameter}
+                                  disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
                                 >
                                   {normalizedOptionLabels.map((optionLabel: string) => {
                                     const radioId = `product-param-${index}-${activeParameterLanguage.code}-${optionLabel}`;
@@ -825,7 +1212,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                     checked ? (normalizedOptionLabels[0] ?? 'true') : ''
                                   )
                                 }
-                                disabled={!entry.parameterId || isLinkedParameter}
+                                disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
                                 className='bg-gray-900/50'
                               />
                             ) : selectorType === 'checklist' ? (
@@ -859,7 +1246,11 @@ export default function ProductFormParameters(): React.JSX.Element {
                                             )
                                           );
                                         }}
-                                        disabled={!entry.parameterId || isLinkedParameter}
+                                        disabled={
+                                          !entry.parameterId ||
+                                          isLinkedParameter ||
+                                          isSequenceRunning
+                                        }
                                         className='border-none bg-transparent p-0 hover:bg-transparent'
                                       />
                                     );
@@ -877,7 +1268,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 ariaLabel={`Value (${activeParameterLanguage.label})`}
                                 placeholder={`Select value (${activeParameterLanguage.label})`}
                                 triggerClassName='h-9 bg-gray-900 border-border/50'
-                                disabled={!entry.parameterId || isLinkedParameter}
+                                disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
                                title={`Select value (${activeParameterLanguage.label})`}/>
                             ) : (
                               <Input
@@ -890,7 +1281,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                                 }
                                 aria-label={`Value (${activeParameterLanguage.label})`}
                                 placeholder={`Value (${activeParameterLanguage.label})`}
-                                disabled={!entry.parameterId || isLinkedParameter}
+                                disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
                                 className='h-9'
                                title={`Value (${activeParameterLanguage.label})`}/>
                             )}
@@ -905,7 +1296,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                       className='h-9 w-9 text-gray-500 hover:text-red-400'
                       aria-label='Remove parameter'
                       onClick={() => removeParameterValue(index)}
-                      disabled={isLinkedParameter}
+                      disabled={isLinkedParameter || isSequenceRunning}
                       title={
                         isLinkedParameter
                           ? 'Linked parameters are synced from English Title'

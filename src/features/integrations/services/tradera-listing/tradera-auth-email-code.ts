@@ -4,7 +4,7 @@ import {
   getFilemakerMailThreadDetail,
   listFilemakerMailAccounts,
   searchFilemakerMailMessages,
-} from '@/features/filemaker/server';
+} from '@/features/filemaker/server/filemaker-mail-service';
 import type {
   FilemakerMailAccount,
   FilemakerMailMessage,
@@ -12,7 +12,7 @@ import type {
 import {
   enqueueFilemakerMailSyncJob,
   startFilemakerMailSyncQueue,
-} from '@/server/queues/filemaker';
+} from '@/features/filemaker/workers/filemakerMailSyncQueue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 
 type TraderaEmailVerificationCodeResolution = {

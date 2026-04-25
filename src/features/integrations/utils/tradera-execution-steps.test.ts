@@ -632,6 +632,44 @@ describe('tradera-execution-steps', () => {
     });
   });
 
+  it('prefers reconstructed duplicate-linked quicklist steps over stale persisted pending metadata', () => {
+    const execution = resolveTraderaExecutionStepsFromMarketplaceData({
+      tradera: {
+        lastExecution: {
+          action: 'list',
+          ok: true,
+          metadata: {
+            latestStage: 'duplicate_linked',
+            duplicateLinked: true,
+            duplicateMatchStrategy: 'existing-linked-record',
+            executionSteps: QUICKLIST_STEP_IDS.map((stepId) => ({
+              id: stepId,
+              label: stepId,
+              status: 'pending',
+            })),
+          },
+        },
+      },
+    });
+
+    expect(execution.action).toBe('list');
+    expect(execution.ok).toBe(true);
+    expect(execution.steps.find((step) => step.id === 'duplicate_check')).toMatchObject({
+      status: 'success',
+      message:
+        'A previously linked Tradera listing record was reused instead of creating a duplicate.',
+    });
+    expect(execution.steps.find((step) => step.id === 'deep_duplicate_check')).toMatchObject({
+      status: 'skipped',
+      message:
+        'Skipped because the duplicate was resolved directly from an existing linked Tradera listing.',
+    });
+    expect(execution.steps.find((step) => step.id === 'publish_verify')).toMatchObject({
+      status: 'skipped',
+      message: 'Skipped because an existing linked Tradera listing was reused.',
+    });
+  });
+
   it('derives exact-title duplicate-ignore messaging from persisted marketplace metadata', () => {
     const execution = resolveTraderaExecutionStepsFromMarketplaceData({
       tradera: {

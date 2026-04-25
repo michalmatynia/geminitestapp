@@ -13,7 +13,7 @@ import {
 import { drillAndReadTraderaListingFormCategoryPath } from './tradera-listing-form-category-drill';
 import {
   enrichTraderaListingFormCategoryItemsFromPublicPage,
-  fetchTraderaPublicRootCategoryItems,
+  fetchTraderaPublicCategoryChildItemsForPath,
 } from './tradera-listing-form-category-public-page';
 import { crawlTraderaListingFormCategoryTree } from './tradera-listing-form-category-tree-crawl';
 
@@ -287,11 +287,23 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
         formUrl: this.listingFormUrl,
         pickerRootSelectors: TRADERA_LISTING_FORM_CATEGORY_PICKER_DIAGNOSTIC_SELECTORS,
       };
-      const publicRoots = await fetchTraderaPublicRootCategoryItems().catch(() => []);
-      if (publicRoots.length > 0) {
-        this.rootItems = publicRoots;
-        this.rootsSeededFromPublic = true;
-      }
+      this.context.tracker.fail(
+        'categories_seed_extract',
+        'Category picker opened but did not expose top-level categories.'
+      );
+      await closeTraderaListingFormCategoryPicker({
+        page: this.context.page,
+        wait: this.waitForPicker,
+      });
+      this.setEmptyResult({
+        diagnostics: this.diagnostics,
+        crawlStats: {
+          pagesVisited: 0,
+          rootCount: 0,
+          rootsSeededFromPublic: false,
+        },
+      });
+      return;
     }
     await closeTraderaListingFormCategoryPicker({
       page: this.context.page,
@@ -330,6 +342,13 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   }
 
   private async drillAndReadOnce(path: PickerItem[]): Promise<PickerItem[] | null> {
+    const publicItems = await fetchTraderaPublicCategoryChildItemsForPath(path).catch(
+      () => null
+    );
+    if (publicItems !== null) {
+      return publicItems;
+    }
+
     const items = await drillAndReadTraderaListingFormCategoryPath({
       page: this.context.page,
       path,

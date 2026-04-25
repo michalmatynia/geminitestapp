@@ -147,7 +147,7 @@ export function AnimationPreviewIcon({
 
   useEffect(() => {
     const root = ref.current;
-    if (root === null) return;
+    if (root === null) return undefined;
 
     const ctx = gsap.context(() => {
       const dots = root.querySelectorAll<HTMLElement>('[data-dot]');
@@ -161,7 +161,6 @@ export function AnimationPreviewIcon({
           }
         }
       }
-      return undefined;
     }, root);
 
     return (): void => ctx.revert();

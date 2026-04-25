@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createDefaultFilemakerDatabase,
   importFilemakerLegacyValuesExport,
+  importFilemakerLegacyValuesWorkbook,
   parseFilemakerLegacyValueRows,
 } from '../settings';
 import type { FilemakerLegacyValueImportIdKind } from '../settings';
@@ -177,6 +178,45 @@ describe('FileMaker legacy value import', () => {
     expect(child?.legacyListUuids).toEqual([DATE_YEARS_UUID, THEME_UUID]);
   });
 
+  it('imports XLSX workbooks by reading the first worksheet headers', async () => {
+    const XLSX = await import('xlsx');
+    const workbook = XLSX.utils.book_new();
+    const sheet = XLSX.utils.aoa_to_sheet([
+      ['Legacy FileMaker Values'],
+      [
+        'UUID_Parent',
+        'UUID',
+        'english',
+        'SerialValue',
+        'UUID_List',
+        'iValues Builder List::English',
+        'iValues Builder List::UUID',
+      ],
+      [
+        '',
+        YEAR_1980_UUID,
+        '1980',
+        '1',
+        DATE_YEARS_UUID,
+        'date.years',
+        DATE_YEARS_UUID,
+      ],
+    ]);
+    XLSX.utils.book_append_sheet(workbook, sheet, 'Values');
+    const data = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+
+    const result = await importFilemakerLegacyValuesWorkbook(
+      createDefaultFilemakerDatabase(),
+      data,
+      { createId: makeModernId }
+    );
+
+    expect(result.importedValueCount).toBe(1);
+    expect(result.importedParameterCount).toBe(1);
+    expect(result.database.values[0]?.legacyUuid).toBe(YEAR_1980_UUID);
+    expect(result.database.values[0]?.id).toBe(makeModernId('value', YEAR_1980_UUID));
+  });
+
   it('imports values with modern ids and retains legacy UUIDs for compatibility', () => {
     const result = importFilemakerLegacyValuesExport(createDefaultFilemakerDatabase(), exportText, {
       createId: makeModernId,
@@ -192,6 +232,8 @@ describe('FileMaker legacy value import', () => {
     expect(year1980?.id).toBe(makeModernId('value', YEAR_1980_UUID));
     expect(year1980?.id).not.toBe(YEAR_1980_UUID);
     expect(year1980?.label).toBe('1980');
+    expect(year1980?.createdBy).toBe('Admin');
+    expect(year1980?.updatedBy).toBe('Admin');
     expect(year1980?.legacyParentUuids).toEqual([
       '9DFEF355-6315-4435-9057-149A8A000AA0',
       'AB005EE7-8842-4D8C-8184-171365F4EA7B',

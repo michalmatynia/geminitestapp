@@ -256,6 +256,50 @@ describe('ProductFormParameterProvider', () => {
     ]);
   });
 
+  it('persists parameter inference skip state on parameter values', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+    const onInteraction = vi.fn();
+
+    const product = {
+      parameters: [
+        {
+          parameterId: 'param-1',
+          value: 'Used',
+        },
+      ],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = createWrapper({ product, onInteraction });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    act(() => {
+      result.current.updateParameterInferenceSkip(0, true);
+    });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Used',
+        skipParameterInference: true,
+      },
+    ]);
+    expect(onInteraction).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      result.current.updateParameterInferenceSkip(0, false);
+    });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Used',
+      },
+    ]);
+  });
+
   it('updates English without removing the sibling Polish value', () => {
     useParametersMock.mockReturnValue({
       data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],

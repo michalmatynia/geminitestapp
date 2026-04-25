@@ -232,16 +232,20 @@ const resolveConfiguredBaseFieldLabel = (
 const resolveSyncDisabledHint = (
   preview: ProductSyncPreview,
   syncableFieldCount: number,
-  outOfSyncFieldCount: number
+  enabledOutOfSyncFieldCount: number,
+  disabledOutOfSyncFieldCount: number
 ): string | null => {
   if (!preview.canSync) {
     return preview.disabledReason ?? 'Base.com sync is not available for this product.';
   }
-  if (outOfSyncFieldCount === 0) {
-    return 'No fields are currently out of sync.';
+  if (enabledOutOfSyncFieldCount === 0) {
+    if (disabledOutOfSyncFieldCount > 0) {
+      return 'No enabled fields are currently out of sync. Disabled field differences are ignored by this profile.';
+    }
+    return 'No enabled fields are currently out of sync.';
   }
   if (syncableFieldCount === 0) {
-    return 'The out-of-sync fields are disabled in the active sync profile.';
+    return 'No enabled out-of-sync fields can be synced with the active sync profile.';
   }
   return null;
 };
@@ -321,6 +325,12 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
     hasChecked && !preview && (previewQuery.isLoading === true || isCheckingPreview);
   const outOfSyncFields =
     preview?.fields.filter((field: ProductSyncFieldPreview) => field.hasDifference) ?? [];
+  const enabledOutOfSyncFields = outOfSyncFields.filter(
+    (field: ProductSyncFieldPreview) => field.direction !== 'disabled'
+  );
+  const disabledOutOfSyncFields = outOfSyncFields.filter(
+    (field: ProductSyncFieldPreview) => field.direction === 'disabled'
+  );
   const visibleFields =
     preview?.fields.filter(
       (field: ProductSyncFieldPreview) => field.willWriteToApp || field.willWriteToBase
@@ -337,7 +347,12 @@ export function ProductListingsSyncPanel(): React.JSX.Element {
   const targetSourceLabel = preview ? resolveTargetSourceLabel(preview.resolvedTargetSource) : null;
   const targetSourceHint = preview ? renderTargetSourceHint(preview.resolvedTargetSource) : null;
   const syncDisabledHint = preview
-    ? resolveSyncDisabledHint(preview, syncableFieldCount, outOfSyncFields.length)
+    ? resolveSyncDisabledHint(
+        preview,
+        syncableFieldCount,
+        enabledOutOfSyncFields.length,
+        disabledOutOfSyncFields.length
+      )
     : null;
   const canRunSync =
     Boolean(preview?.canSync) &&

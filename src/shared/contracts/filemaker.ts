@@ -52,6 +52,10 @@ export const filemakerAddressSchema = dtoBaseSchema.extend({
   postalCode: z.string(),
   country: z.string(),
   countryId: z.string(),
+  countryValueId: z.string().optional(),
+  countryValueLabel: z.string().optional(),
+  legacyCountryUuid: z.string().optional(),
+  legacyUuid: z.string().optional(),
 });
 
 export type FilemakerAddressDto = z.infer<typeof filemakerAddressSchema>;
@@ -843,6 +847,10 @@ export type FilemakerAddressFields = {
   postalCode: string;
   country: string;
   countryId: string;
+  countryValueId?: string;
+  countryValueLabel?: string;
+  legacyCountryUuid?: string;
+  legacyUuid?: string;
 };
 
 export type FilemakerEditableAddressDto = FilemakerAddressFields & {

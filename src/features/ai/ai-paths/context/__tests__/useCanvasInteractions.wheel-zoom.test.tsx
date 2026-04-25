@@ -149,6 +149,78 @@ describe('useCanvasInteractionsNavigation wheel zoom', () => {
     unmount();
   });
 
+  it('does not dispatch a view update when clamped view is unchanged', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const updateView = vi.fn((next: { x: number; y: number; scale: number }): void => {
+      latestViewRef.current = next;
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView,
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      expect(result.current.setViewClamped({ x: 0, y: 0, scale: 1 })).toBe(false);
+    });
+
+    expect(updateView).not.toHaveBeenCalled();
+    unmount();
+  });
+
+  it('cancels an active wheel zoom frame on unmount', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((): number => 42);
+    const cancelAnimationFrameSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation((): void => undefined);
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView: (next): void => {
+          latestViewRef.current = next;
+        },
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      result.current.applyWheelZoom(0.4, 300, 220, { deltaMode: 0 });
+    });
+
+    expect(requestAnimationFrameSpy).toHaveBeenCalled();
+
+    unmount();
+
+    expect(cancelAnimationFrameSpy).toHaveBeenCalledWith(42);
+  });
+
   it('allows higher upward pan when nodes exist above canvas origin', () => {
     const viewportElement = document.createElement('div');
     Object.defineProperty(viewportElement, 'getBoundingClientRect', {

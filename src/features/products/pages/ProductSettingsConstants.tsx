@@ -6,6 +6,7 @@ export const settingSections = [
   'Parameters',
   'Price Groups',
   'Catalogs',
+  'Defaults',
   'Sync Settings',
   'Images & Studio',
   'Validator',

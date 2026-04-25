@@ -74,4 +74,86 @@ describe('mergeParameterDefinitions', () => {
       }),
     ]);
   });
+
+  it('uses translated fallback labels for missing legacy definitions with known Polish parameter ids', () => {
+    const merged = mergeParameterDefinitions({
+      parameters: [],
+      simpleParameters: [],
+      parameterValues: [
+        {
+          parameterId: 'nazwa-modelu',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ],
+      fallbackCatalogId: 'catalog-1',
+    });
+
+    expect(merged).toEqual([
+      expect.objectContaining({
+        id: 'nazwa-modelu',
+        name_en: 'Model Name',
+        name_pl: 'Nazwa modelu',
+        selectorType: 'text',
+        optionLabels: [],
+      }),
+    ]);
+  });
+
+  it('uses translated fallback labels for legacy tags and unbranded attributes ids', () => {
+    const merged = mergeParameterDefinitions({
+      parameters: [],
+      simpleParameters: [],
+      parameterValues: [
+        {
+          parameterId: 'Tagi',
+          value: 'gaming',
+          valuesByLanguage: { en: 'gaming', pl: 'gaming' },
+        },
+        {
+          parameterId: 'Atrybuty Niemarkowe (Amazon)',
+          value: 'unbranded',
+          valuesByLanguage: { en: 'unbranded', pl: 'unbranded' },
+        },
+      ],
+      fallbackCatalogId: 'catalog-1',
+    });
+
+    expect(merged).toEqual([
+      expect.objectContaining({
+        id: 'Atrybuty Niemarkowe (Amazon)',
+        name_en: 'Attributes unbranded (Amazon)',
+        name_pl: 'Atrybuty Niemarkowe (Amazon)',
+      }),
+      expect.objectContaining({
+        id: 'Tagi',
+        name_en: 'Tags',
+        name_pl: 'Tagi',
+      }),
+    ]);
+  });
+
+  it('uses a neutral fallback for missing unknown legacy definitions with Polish parameter ids', () => {
+    const merged = mergeParameterDefinitions({
+      parameters: [],
+      simpleParameters: [],
+      parameterValues: [
+        {
+          parameterId: 'nieznany-parametr',
+          value: 'Value',
+        },
+      ],
+      fallbackCatalogId: 'catalog-1',
+    });
+
+    expect(merged).toEqual([
+      expect.objectContaining({
+        id: 'nieznany-parametr',
+        name_en: 'Imported parameter',
+        name_pl: null,
+        selectorType: 'text',
+        optionLabels: [],
+      }),
+    ]);
+  });
 });

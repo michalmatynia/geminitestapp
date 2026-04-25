@@ -143,6 +143,7 @@ const headerlessOrganiserCsvTextWithPreamble = [
   'Legacy FileMaker Organisers',
   headerlessOrganiserCsvText,
 ].join('\n');
+const classicMacHeaderlessOrganiserCsvText = headerlessOrganiserCsvText.replaceAll('\n', '\r');
 const semicolonHeaderlessOrganiserCsvText = headerlessOrganiserCsvText.replaceAll('","', '";"');
 
 describe('FileMaker legacy organiser import', () => {
@@ -175,6 +176,14 @@ describe('FileMaker legacy organiser import', () => {
 
   it('parses semicolon-delimited headerless organiser CSV exports', () => {
     const rows = parseFilemakerLegacyOrganiserRows(semicolonHeaderlessOrganiserCsvText);
+
+    expect(rows).toHaveLength(3);
+    expect(rows[0]?.['Name']).toBe('Permanent Tsb');
+    expect(rows[1]?.['UUID']).toBe(CHILD_UUID);
+  });
+
+  it('parses CR-delimited headerless organiser CSV exports', () => {
+    const rows = parseFilemakerLegacyOrganiserRows(classicMacHeaderlessOrganiserCsvText);
 
     expect(rows).toHaveLength(3);
     expect(rows[0]?.['Name']).toBe('Permanent Tsb');

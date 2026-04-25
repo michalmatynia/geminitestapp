@@ -108,11 +108,12 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       80,
       260,
       240,
-      WheelEvent.DOM_DELTA_PIXEL,
-      false,
-      false,
-      0,
-      undefined
+      {
+        deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+        ctrlKey: false,
+        metaKey: false,
+        deltaX: 0,
+      }
     );
 
     unmount();
@@ -231,11 +232,13 @@ describe('useCanvasEventHandlers wheel capture boundaries', () => {
       48,
       260,
       220,
-      WheelEvent.DOM_DELTA_PIXEL,
-      false,
-      false,
-      0,
-      { immediate: true }
+      {
+        deltaMode: WheelEvent.DOM_DELTA_PIXEL,
+        ctrlKey: false,
+        metaKey: false,
+        deltaX: 0,
+        immediate: true,
+      }
     );
     expect(rebasePanStateFromClient).toHaveBeenCalledTimes(1);
     expect(rebasePanStateFromClient).toHaveBeenCalledWith(260, 220);

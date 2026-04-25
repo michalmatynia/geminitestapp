@@ -118,4 +118,22 @@ describe('normalizeProductParametersForSubmission', () => {
       },
     ]);
   });
+
+  it('preserves disabled parameter inference status in the submitted parameter payload', () => {
+    const input: ProductParameterValue[] = [
+      {
+        parameterId: 'condition',
+        value: 'Used',
+        skipParameterInference: true,
+      },
+    ];
+
+    expect(normalizeProductParametersForSubmission(input)).toEqual([
+      {
+        parameterId: 'condition',
+        value: 'Used',
+        skipParameterInference: true,
+      },
+    ]);
+  });
 });

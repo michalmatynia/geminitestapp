@@ -46,7 +46,11 @@ const toEditableAddress = (address: FilemakerAddress, isDefault: boolean): Edita
   postalCode: address.postalCode,
   countryId: address.countryId,
   country: address.country,
+  countryValueId: address.countryValueId,
+  countryValueLabel: address.countryValueLabel,
   isDefault,
+  legacyCountryUuid: address.legacyCountryUuid,
+  legacyUuid: address.legacyUuid,
 });
 
 const createBlankEditableAddress = (

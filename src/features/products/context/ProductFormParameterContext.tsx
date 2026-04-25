@@ -37,6 +37,7 @@ export interface ProductFormParameterContextType {
   updateParameterId: (index: number, parameterId: string) => void;
   updateParameterValue: (index: number, value: string) => void;
   updateParameterValueByLanguage: (index: number, languageCode: string, value: string) => void;
+  updateParameterInferenceSkip: (index: number, skip: boolean) => void;
   removeParameterValue: (index: number) => void;
 }
 
@@ -52,6 +53,7 @@ export type ProductFormParameterActionsContextType = Pick<
   | 'updateParameterId'
   | 'updateParameterValue'
   | 'updateParameterValueByLanguage'
+  | 'updateParameterInferenceSkip'
   | 'removeParameterValue'
 >;
 
@@ -80,6 +82,7 @@ const normalizeSourceParameterValues = (
       ),
       value: fallbackValue,
       ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+      ...(entry?.skipParameterInference === true ? { skipParameterInference: true } : {}),
     };
   });
 };
@@ -193,6 +196,7 @@ const resolveEditableLocalizedParameterEntry = ({
   return {
     parameterId: nextEntry.parameterId,
     value: nextEntry.value,
+    ...(nextEntry.skipParameterInference === true ? { skipParameterInference: true } : {}),
   };
 };
 
@@ -524,6 +528,27 @@ export function ProductFormParameterProvider({
       });
     };
 
+    const updateParameterInferenceSkip = (index: number, skip: boolean): void => {
+      onInteraction?.();
+      setBaseParameterValues((prev: ProductParameterValue[]): ProductParameterValue[] => {
+        const baseIndex = parameterValueIndexMap[index] ?? index;
+        if (baseIndex < 0) return prev;
+        const next = [...prev];
+        const current = next[baseIndex];
+        if (current === undefined || current.skipParameterInference === skip) return prev;
+
+        if (skip) {
+          next[baseIndex] = { ...current, skipParameterInference: true };
+        } else {
+          const nextEntry = { ...current };
+          delete nextEntry.skipParameterInference;
+          next[baseIndex] = nextEntry;
+        }
+
+        return next;
+      });
+    };
+
     const removeParameterValue = (index: number): void => {
       onInteraction?.();
       const baseIndex = parameterValueIndexMap[index] ?? index;
@@ -542,6 +567,7 @@ export function ProductFormParameterProvider({
       updateParameterId,
       updateParameterValue,
       updateParameterValueByLanguage,
+      updateParameterInferenceSkip,
       removeParameterValue,
     };
   }, [

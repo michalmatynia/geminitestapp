@@ -83,6 +83,7 @@ export const normalizeProductParametersForSubmission = (
         }
 
         const existingEntry = byParameterId.get(normalizedParameterId);
+        const skipParameterInference = entry.skipParameterInference === true;
         byParameterId.set(
           normalizedParameterId,
           hasLocalizedValues
@@ -90,10 +91,12 @@ export const normalizeProductParametersForSubmission = (
               parameterId: normalizedParameterId,
               value: directValue,
               valuesByLanguage,
+              skipParameterInference,
             })
             : {
               parameterId: normalizedParameterId,
               value: resolveStoredParameterValue({}, directValue),
+              ...(skipParameterInference ? { skipParameterInference: true } : {}),
             }
         );
         return byParameterId;

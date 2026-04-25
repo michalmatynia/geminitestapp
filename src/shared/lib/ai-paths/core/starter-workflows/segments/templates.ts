@@ -101,7 +101,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'parameter_value_inference',
-      templateVersion: 1,
+      templateVersion: 2,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

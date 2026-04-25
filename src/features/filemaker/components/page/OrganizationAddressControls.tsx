@@ -182,6 +182,41 @@ function AddressCountryField(props: {
   );
 }
 
+const metadataValue = (value: string | undefined): string => value?.trim() ?? '';
+
+const resolveAddressCountryValue = (address: EditableAddress): string => {
+  const countryValueLabel = metadataValue(address.countryValueLabel);
+  if (countryValueLabel.length > 0) return countryValueLabel;
+  const country = metadataValue(address.country);
+  const countryId = metadataValue(address.countryId);
+  return country.length > 0 && countryId.length === 0 ? country : '';
+};
+
+function AddressLegacyMetadata(props: {
+  selectedAddress: EditableAddress | null;
+}): React.JSX.Element | null {
+  const address = props.selectedAddress;
+  if (address === null) return null;
+  const countryValue = resolveAddressCountryValue(address);
+  const items = [
+    { label: 'Legacy UUID', value: metadataValue(address.legacyUuid) },
+    { label: 'Country UUID', value: metadataValue(address.legacyCountryUuid) },
+    { label: 'Country Value', value: countryValue },
+  ].filter((item): boolean => item.value.length > 0);
+  if (items.length === 0) return null;
+
+  return (
+    <div className='flex flex-wrap gap-2'>
+      {items.map((item) => (
+        <Badge key={item.label} variant='outline' className='max-w-full text-[10px]'>
+          <span className='mr-1 text-gray-500'>{item.label}</span>
+          <span className='break-all font-mono'>{item.value}</span>
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
 const getAddressInputValue = (
   address: EditableAddress | null,
   field: 'city' | 'postalCode' | 'street' | 'streetNumber'
@@ -236,6 +271,9 @@ function AddressEditorFields(props: {
         selectedAddress={address}
         updateSelectedAddress={props.updateSelectedAddress}
       />
+      <div className='md:col-span-2'>
+        <AddressLegacyMetadata selectedAddress={address} />
+      </div>
     </div>
   );
 }

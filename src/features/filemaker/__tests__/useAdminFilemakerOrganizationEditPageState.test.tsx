@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useAdminFilemakerOrganizationEditPageState } from '@/features/filemaker/hooks/useAdminFilemakerOrganizationEditPageState';
 import { FILEMAKER_DATABASE_KEY } from '@/features/filemaker/settings';
@@ -21,7 +21,9 @@ vi.mock('nextjs-toploader/app', () => ({
 }));
 
 vi.mock('@/shared/hooks/use-i18n-queries', () => ({
-  useCountries: () => ({ data: [] }),
+  useCountries: () => ({
+    data: [{ code: 'PL', id: 'PL', name: 'Poland' }],
+  }),
 }));
 
 vi.mock('@/shared/hooks/use-settings', () => ({
@@ -162,6 +164,10 @@ const databaseWithSharedEmailFixture = {
 };
 
 describe('useAdminFilemakerOrganizationEditPageState', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     mocks.routerPush.mockReset();
     mocks.updateSettingMutateAsync.mockReset();
@@ -194,6 +200,94 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
 
     await waitFor(() => {
       expect(result.current.emails.map((email) => email.email)).toEqual(['shared@example.com']);
+    });
+  });
+
+  it('hydrates linked emails from the Mongo organization detail response', async () => {
+    mocks.routeParams = { organizationId: 'mongo-org-1' };
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY
+        ? JSON.stringify({ ...databaseFixture, organizations: [] })
+        : null
+    );
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            linkedAddresses: [
+              {
+                id: 'mongo-address-1',
+                street: 'Fioletowa',
+                streetNumber: '71',
+                city: 'Szczecin',
+                postalCode: '70-781',
+                country: 'Poland',
+                countryId: 'PL',
+                countryValueId: 'filemaker-value-poland',
+                countryValueLabel: 'Poland',
+                createdAt: '2026-03-01T10:00:00.000Z',
+                legacyCountryUuid: '889CD8F7-6E4E-4074-8CA1-AF684038B7D1',
+                legacyUuid: '99968074-1E6E-4092-86F7-92A2C9B62E8A',
+                updatedAt: '2026-03-01T10:00:00.000Z',
+              },
+            ],
+            linkedEmails: [
+              {
+                id: 'email-mongo',
+                email: 'mongo-linked@example.com',
+                status: 'active',
+                createdAt: '2026-03-01T10:00:00.000Z',
+                updatedAt: '2026-03-01T10:00:00.000Z',
+              },
+            ],
+            organization: {
+              id: 'mongo-org-1',
+              name: 'Mongo Org',
+              legacyUuid: 'LEGACY-ORG-UUID',
+              addressId: 'mongo-address-1',
+              street: '',
+              streetNumber: '',
+              city: '',
+              postalCode: '',
+              country: '',
+              countryId: '',
+              taxId: '',
+              krs: '',
+              createdAt: '2026-03-01T10:00:00.000Z',
+              updatedAt: '2026-03-01T10:00:00.000Z',
+            },
+          }),
+          { status: 200 }
+        )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.organizationSource).toBe('mongo');
+      expect(result.current.emails.map((email) => email.email)).toEqual([
+        'mongo-linked@example.com',
+      ]);
+      expect(result.current.editableAddresses).toEqual([
+        expect.objectContaining({
+          addressId: 'mongo-address-1',
+          city: 'Szczecin',
+          country: 'Poland',
+          countryId: 'PL',
+          countryValueId: 'filemaker-value-poland',
+          countryValueLabel: 'Poland',
+          isDefault: true,
+          legacyCountryUuid: '889CD8F7-6E4E-4074-8CA1-AF684038B7D1',
+          legacyUuid: '99968074-1E6E-4092-86F7-92A2C9B62E8A',
+          postalCode: '70-781',
+          street: 'Fioletowa',
+          streetNumber: '71',
+        }),
+      ]);
+    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/filemaker/organizations/mongo-org-1', {
+      signal: expect.any(AbortSignal),
     });
   });
 

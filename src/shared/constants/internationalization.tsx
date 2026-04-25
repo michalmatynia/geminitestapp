@@ -1,12 +1,6 @@
 import type { ReactNode } from 'react';
 
-export const countryCodeOptions = [
-  { code: 'PL', name: 'Poland' },
-  { code: 'DE', name: 'Germany' },
-  { code: 'GB', name: 'United Kingdom' },
-  { code: 'SE', name: 'Sweden' },
-  { code: 'US', name: 'United States' },
-];
+export { countryCodeOptions } from './countries';
 
 export const countryFlagMap: Record<string, ReactNode> = {
   PL: (

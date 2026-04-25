@@ -64,4 +64,22 @@ describe('mongo normalizeProductParameterValues', () => {
       },
     ]);
   });
+
+  it('preserves disabled parameter inference status', () => {
+    const normalized = normalizeProductParameterValues([
+      {
+        parameterId: 'condition',
+        value: 'Used',
+        skipParameterInference: true,
+      },
+    ]);
+
+    expect(normalized).toEqual([
+      {
+        parameterId: 'condition',
+        value: 'Used',
+        skipParameterInference: true,
+      },
+    ]);
+  });
 });

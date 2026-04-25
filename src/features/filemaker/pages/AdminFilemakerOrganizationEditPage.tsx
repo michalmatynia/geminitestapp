@@ -16,13 +16,17 @@ import {
 } from '../context/AdminFilemakerOrganizationEditPageContext';
 
 function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
-  const { isCreateMode, organization, updateSetting, router } =
+  const { isCreateMode, isLoading, organization, updateSetting, router } =
     useAdminFilemakerOrganizationEditPageStateContext();
   const { handleSave } = useAdminFilemakerOrganizationEditPageActionsContext();
 
   return (
     <FilemakerPartyEditPageLayout
-      itemName={isCreateMode ? 'Create Organization' : (organization?.name ?? null)}
+      itemName={
+        isCreateMode
+          ? 'Create Organization'
+          : (organization?.name ?? (isLoading ? 'Loading...' : null))
+      }
       notFoundMessage='Organization not found.'
       parent={{ label: 'Organizations', href: '/admin/filemaker/organizations' }}
       onSave={() => {
@@ -31,14 +35,18 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
       onCancel={() => startTransition(() => { router.push('/admin/filemaker/organizations'); })}
       isSaving={updateSetting.isPending}
     >
-      <OrganizationBasicInfoSection />
-      <OrganizationAddressesSection />
-      {isCreateMode ? null : (
+      {isLoading ? null : (
         <>
-          <OrganizationLegacyMetadataSection />
-          <OrganizationLegacyDemandSection />
-          <OrganizationEmailsSection />
-          <OrganizationEmailLogSection />
+          <OrganizationBasicInfoSection />
+          <OrganizationAddressesSection />
+          {isCreateMode ? null : (
+            <>
+              <OrganizationLegacyMetadataSection />
+              <OrganizationLegacyDemandSection />
+              <OrganizationEmailsSection />
+              <OrganizationEmailLogSection />
+            </>
+          )}
         </>
       )}
       {/* More sections will be added here */}

@@ -132,6 +132,32 @@ export const buildFilemakerOrganizationMasterNodes = (
   });
 };
 
+export const buildFilemakerOrganizationListNodes = (
+  organizations: FilemakerOrganization[]
+): MasterTreeNode[] =>
+  organizations.map((organization: FilemakerOrganization, index): MasterTreeNode => {
+    const normalizedName = organization.name.trim();
+    const label = normalizedName.length > 0 ? normalizedName : organization.id;
+    return {
+      id: toFilemakerOrganizationNodeId(organization.id),
+      type: 'file',
+      kind: 'filemaker_organization',
+      parentId: null,
+      name: label,
+      path: `organizations/${label}`,
+      sortOrder: index,
+      metadata: {
+        entity: 'filemaker_organization',
+        rawId: organization.id,
+        address: formatFilemakerAddress(organization),
+        taxId: organization.taxId ?? '',
+        krs: organization.krs ?? '',
+        tradingName: organization.tradingName ?? '',
+        updatedAt: organization.updatedAt,
+      },
+    };
+  });
+
 export const buildFilemakerPersonMasterNodes = (persons: FilemakerPerson[]): MasterTreeNode[] => {
   const grouped = new Map<string, FilemakerPerson[]>();
   persons.forEach((person: FilemakerPerson): void => {

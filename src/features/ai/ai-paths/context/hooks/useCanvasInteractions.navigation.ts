@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import { CANVAS_HEIGHT, CANVAS_WIDTH, NODE_MIN_HEIGHT, NODE_WIDTH, VIEW_MARGIN } from '@/shared/lib/ai-paths/core/constants';
@@ -15,11 +15,22 @@ import {
   TOUCH_PAN_INERTIA_STOP_SPEED,
 } from './useCanvasInteractions.helpers';
 
+const VIEW_POSITION_EPSILON = 0.01;
+const VIEW_SCALE_EPSILON = 0.000001;
+
+const areViewsNearlyEqual = (
+  a: { x: number; y: number; scale: number },
+  b: { x: number; y: number; scale: number }
+): boolean =>
+  Math.abs(a.x - b.x) <= VIEW_POSITION_EPSILON &&
+  Math.abs(a.y - b.y) <= VIEW_POSITION_EPSILON &&
+  Math.abs(a.scale - b.scale) <= VIEW_SCALE_EPSILON;
+
 export interface UseCanvasInteractionsNavigationValue {
   stopViewAnimation: () => void;
   stopPanInertia: () => void;
   stopProgrammaticViewAnimation: () => void;
-  setViewClamped: (view: { x: number; y: number; scale: number }) => void;
+  setViewClamped: (view: { x: number; y: number; scale: number }) => boolean;
   startPanInertia: (vx: number, vy: number) => void;
   getZoomTargetView: (
     targetScale: number,
@@ -143,13 +154,17 @@ export function useCanvasInteractionsNavigation({
   }, []);
 
   const setViewClamped = useCallback(
-    (next: { x: number; y: number; scale: number }): void => {
+    (next: { x: number; y: number; scale: number }): boolean => {
       const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
       const clampedScale = clampScale(next.scale);
       const clamped = clampTranslateToContent(next.x, next.y, clampedScale, viewport);
       const resolved = { x: clamped.x, y: clamped.y, scale: clampedScale };
+      if (areViewsNearlyEqual(latestViewRef.current, resolved)) {
+        return false;
+      }
       latestViewRef.current = resolved;
       updateView(resolved);
+      return true;
     },
     [clampTranslateToContent, viewportRef, updateView, latestViewRef]
   );
@@ -254,11 +269,26 @@ export function useCanvasInteractionsNavigation({
       }
       const steppedScale = currentView.scale + remainingScale * WHEEL_ZOOM_EASING;
       const steppedView = getZoomTargetView(steppedScale, target.anchorClientPos);
-      setViewClamped(steppedView);
+      const didUpdate = setViewClamped(steppedView);
+      const remainingAfterStep = Math.abs(target.scale - latestViewRef.current.scale);
+      const madeProgress = remainingAfterStep < Math.abs(remainingScale) - VIEW_SCALE_EPSILON;
+      if (!didUpdate || !madeProgress) {
+        const finalView = getZoomTargetView(target.scale, target.anchorClientPos);
+        setViewClamped(finalView);
+        wheelZoomTargetRef.current = null;
+        return;
+      }
       wheelZoomRafRef.current = requestAnimationFrame(tick);
     };
     wheelZoomRafRef.current = requestAnimationFrame(tick);
   }, [getZoomTargetView, setViewClamped, latestViewRef]);
+
+  useEffect(
+    () => (): void => {
+      stopViewAnimation();
+    },
+    [stopViewAnimation]
+  );
 
   const animateViewTo = useCallback(
     (

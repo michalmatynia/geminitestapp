@@ -33,6 +33,21 @@ describe('starter parameter value inference workflow', () => {
     expect(parserConfig).toContain('$.parameterValueInferenceInput.currentValue');
   });
 
+  it('guides model-name inference to use structured product titles instead of empty output', () => {
+    const entry = getStarterWorkflowTemplateById(PARAMETER_VALUE_INFERENCE_STARTER_TEMPLATE_ID);
+    if (!entry) throw new Error('Missing starter_parameter_value_inference entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_parameter_value_inference_prompt',
+    });
+    const promptNode = config.nodes.find((node) => node.type === 'prompt');
+    const promptTemplate = JSON.stringify(promptNode?.config?.prompt ?? {});
+
+    expect(promptTemplate).toContain('Model name');
+    expect(promptTemplate).toContain('first segment before the first |');
+    expect(promptTemplate).toContain('Do not return an empty value for text or textarea');
+  });
+
   it('ships a canonical parameter-row trigger button bound to the starter path', () => {
     const bundle = materializeStarterWorkflowSeedBundle('canonical_seed');
     const triggerButton = bundle.triggerButtons.find(

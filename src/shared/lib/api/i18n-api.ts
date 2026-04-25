@@ -12,13 +12,16 @@ const I18N_METADATA_BASE = '/api/v2/metadata';
 const CURRENCIES_ENDPOINT = `${I18N_METADATA_BASE}/currencies`;
 const COUNTRIES_ENDPOINT = `${I18N_METADATA_BASE}/countries`;
 const LANGUAGES_ENDPOINT = `${I18N_METADATA_BASE}/languages`;
+const FULL_COUNTRY_LIST_PAGE_SIZE = 500;
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
   return api.get<CurrencyOption[]>(CURRENCIES_ENDPOINT);
 }
 
 export async function getCountries(): Promise<CountryOption[]> {
-  return api.get<CountryOption[]>(COUNTRIES_ENDPOINT);
+  return api.get<CountryOption[]>(COUNTRIES_ENDPOINT, {
+    params: { pageSize: FULL_COUNTRY_LIST_PAGE_SIZE },
+  });
 }
 
 export async function getLanguages(): Promise<Language[]> {

@@ -105,6 +105,7 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
     const valuesByLanguage = normalizeParameterValuesByLanguage(record['valuesByLanguage']);
     const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
     const existingEntry = byParameterId.get(parameterId);
+    const skipParameterInference = record['skipParameterInference'] === true;
     byParameterId.set(
       parameterId,
       hasLocalizedValues
@@ -112,10 +113,12 @@ export const normalizeProductParameterValues = (input: unknown): ProductParamete
           parameterId,
           value,
           valuesByLanguage,
+          skipParameterInference,
         })
         : {
           parameterId,
           value: resolveStoredParameterValue({}, value),
+          ...(skipParameterInference ? { skipParameterInference: true } : {}),
         }
     );
   });

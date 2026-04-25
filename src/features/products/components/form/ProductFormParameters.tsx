@@ -57,16 +57,28 @@ const getParameterLabel = (
   preferredLocale?: string
 ): string => {
   const preferred = preferredLocale?.toLowerCase();
-  if (preferred === 'pl' && parameter.name_pl) return parameter.name_pl;
-  if (preferred === 'de' && parameter.name_de) return parameter.name_de;
+  const namePl =
+    typeof parameter.name_pl === 'string' && parameter.name_pl.trim().length > 0
+      ? parameter.name_pl
+      : null;
+  const nameDe =
+    typeof parameter.name_de === 'string' && parameter.name_de.trim().length > 0
+      ? parameter.name_de
+      : null;
+  const nameEn = parameter.name_en.trim().length > 0 ? parameter.name_en : null;
+
+  if (preferred === 'pl' && namePl !== null) return namePl;
+  if (preferred === 'de' && nameDe !== null) return nameDe;
   if (
-    (preferred === 'en' || preferred === 'default' || !preferred) &&
-    !parameter.name_pl &&
+    (preferred === 'en' || preferred === 'default' || preferred === undefined) &&
     isLikelyPolishParameterLabel(parameter.name_en)
   ) {
-    return formatParameterIdFallbackLabel(parameter.id) ?? 'Imported parameter';
+    const fallbackLabel = formatParameterIdFallbackLabel(parameter.id);
+    return fallbackLabel !== null && !isLikelyPolishParameterLabel(fallbackLabel)
+      ? fallbackLabel
+      : 'Imported parameter';
   }
-  return parameter.name_en || parameter.name_pl || parameter.name_de || 'Unnamed parameter';
+  return nameEn ?? namePl ?? nameDe ?? 'Unnamed parameter';
 };
 
 const POLISH_PARAMETER_LABEL_PATTERN =
@@ -166,21 +178,18 @@ const getLinkedTitleTermLabel = (
 };
 
 type ParameterValueInferTriggerProps = {
-  rowIndex: number;
   selectedParameter: ProductParameter | null;
-  languageCode: string;
-  languageLabel: string;
-  currentValue: string;
-  optionLabels: string[];
+  inferenceRows: ParameterValueInferenceRunRow[];
   disabled: boolean;
   runParameterValueInference: RunParameterValueInference;
 };
 
 type ParameterSequenceInferenceToggleProps = {
+  rowIndex: number;
   selectedParameter: ProductParameter | null;
   isExcluded: boolean;
   disabled: boolean;
-  onToggle: (parameterId: string) => void;
+  onToggle: (rowIndex: number, isExcluded: boolean) => void;
 };
 
 type ParameterValueInferenceRunRow = {
@@ -198,6 +207,7 @@ type ParameterValueInferenceTrackedRun = {
   languageCode: string;
   selectorType: ProductParameter['selectorType'];
   optionLabels: string[];
+  fallbackValue: string | null;
 };
 
 type ParameterValueInferenceAppliedResult = {
@@ -218,6 +228,8 @@ type ParameterSequenceState = {
   currentLabel: string | null;
   error: string | null;
 };
+
+const ROW_TRIGGER_LANGUAGE_CODES = new Set(['en', 'pl']);
 
 const FALLBACK_PARAMETER_VALUE_INFERENCE_BUTTON: AiTriggerButtonRecord = {
   id: PARAMETER_VALUE_INFERENCE_TRIGGER_BUTTON_ID,
@@ -364,6 +376,116 @@ const buildNormalizedParameterOptionLabels = (
   return normalizedOptionLabels;
 };
 
+const dedupeCatalogLanguages = (
+  languages: CatalogLanguageOption[]
+): CatalogLanguageOption[] => {
+  const seen = new Set<string>();
+  return languages.filter((language: CatalogLanguageOption): boolean => {
+    if (seen.has(language.code)) return false;
+    seen.add(language.code);
+    return true;
+  });
+};
+
+const resolveRowTriggerLanguages = (args: {
+  catalogLanguages: CatalogLanguageOption[];
+  activeLanguage: CatalogLanguageOption;
+}): CatalogLanguageOption[] => {
+  const targetLanguages = args.catalogLanguages.filter(
+    (language: CatalogLanguageOption): boolean => ROW_TRIGGER_LANGUAGE_CODES.has(language.code)
+  );
+  if (targetLanguages.length === 0) {
+    return [args.activeLanguage];
+  }
+  const activeTargetLanguage = ROW_TRIGGER_LANGUAGE_CODES.has(args.activeLanguage.code)
+    ? [args.activeLanguage]
+    : [];
+  return dedupeCatalogLanguages([...activeTargetLanguage, ...targetLanguages]);
+};
+
+const buildRowTriggerInferenceRows = (args: {
+  rowIndex: number;
+  parameter: ProductParameter | null;
+  catalogLanguages: CatalogLanguageOption[];
+  activeLanguage: CatalogLanguageOption;
+  getLanguageValue: (languageCode: string) => string;
+}): ParameterValueInferenceRunRow[] => {
+  const parameter = args.parameter;
+  if (parameter === null) return [];
+  return resolveRowTriggerLanguages({
+    catalogLanguages: args.catalogLanguages,
+    activeLanguage: args.activeLanguage,
+  }).map((language: CatalogLanguageOption): ParameterValueInferenceRunRow => {
+    const currentValue = args.getLanguageValue(language.code);
+    return {
+      rowIndex: args.rowIndex,
+      parameter,
+      languageCode: language.code,
+      languageLabel: language.label,
+      currentValue,
+      optionLabels: buildNormalizedParameterOptionLabels(parameter, currentValue),
+    };
+  });
+};
+
+const normalizeParameterInferenceLabel = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ');
+};
+
+const isModelNameParameter = (parameter: ProductParameter): boolean => {
+  const labels = [
+    parameter.id,
+    parameter.name_en,
+    parameter.name_pl,
+    parameter.name_de,
+  ].map(normalizeParameterInferenceLabel);
+
+  return labels.some(
+    (label: string): boolean =>
+      label === 'model' ||
+      label.includes('model name') ||
+      label.includes('nazwa modelu') ||
+      label.includes('modelu')
+  );
+};
+
+const extractStructuredTitleLeadSegment = (title: string): string | null => {
+  const leadSegment = title.split('|')[0] ?? '';
+  const normalized = leadSegment.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveParameterInferenceFallbackValue = (args: {
+  parameter: ProductParameter;
+  productTitle: string;
+}): string | null => {
+  if (args.parameter.selectorType !== 'text' && args.parameter.selectorType !== 'textarea') {
+    return null;
+  }
+  if (!isModelNameParameter(args.parameter)) return null;
+  return extractStructuredTitleLeadSegment(args.productTitle);
+};
+
+const allowsEmptyInferenceValue = (
+  selectorType: ProductParameter['selectorType']
+): boolean => selectorType === 'checkbox';
+
+const resolveAppliedInferredValue = (args: {
+  normalizedValue: string;
+  selectorType: ProductParameter['selectorType'];
+  fallbackValue: string | null;
+}): string => {
+  if (args.normalizedValue.length > 0) return args.normalizedValue;
+  if (args.fallbackValue !== null) return args.fallbackValue;
+  if (allowsEmptyInferenceValue(args.selectorType)) return args.normalizedValue;
+  throw new Error('Parameter inference failed: the AI Path returned an empty parameter value.');
+};
+
 const applyParameterValueToSnapshot = (
   values: ProductParameterValue[],
   update: { parameterId: string; languageCode: string; value: string }
@@ -468,7 +590,13 @@ const waitForParameterValueInferenceRun = (
           );
         }
 
-        resolve(normalizedValue);
+        resolve(
+          resolveAppliedInferredValue({
+            normalizedValue,
+            selectorType: trackedRun.selectorType,
+            fallbackValue: trackedRun.fallbackValue,
+          })
+        );
       } catch (error) {
         reject(error);
       } finally {
@@ -490,7 +618,7 @@ const waitForParameterValueInferenceRun = (
 function ParameterSequenceInferenceToggle(
   props: ParameterSequenceInferenceToggleProps
 ): React.JSX.Element {
-  const { selectedParameter, isExcluded, disabled, onToggle } = props;
+  const { rowIndex, selectedParameter, isExcluded, disabled, onToggle } = props;
   const parameterLabel = selectedParameter ? getParameterLabel(selectedParameter) : 'parameter';
   const ariaLabel = isExcluded
     ? `Include ${parameterLabel} in parameter sequence`
@@ -504,7 +632,7 @@ function ParameterSequenceInferenceToggle(
       size='icon'
       onClick={(): void => {
         if (!selectedParameter) return;
-        onToggle(selectedParameter.id);
+        onToggle(rowIndex, !isExcluded);
       }}
       disabled={disabled || selectedParameter === null}
       aria-label={ariaLabel}
@@ -521,12 +649,8 @@ function ParameterValueInferTrigger(
   props: ParameterValueInferTriggerProps
 ): React.JSX.Element {
   const {
-    rowIndex,
     selectedParameter,
-    languageCode,
-    languageLabel,
-    currentValue,
-    optionLabels,
+    inferenceRows,
     disabled,
     runParameterValueInference,
   } = props;
@@ -542,14 +666,9 @@ function ParameterValueInferTrigger(
 
     setIsTriggerPending(true);
     try {
-      await runParameterValueInference({
-        rowIndex,
-        parameter: selectedParameter,
-        languageCode,
-        languageLabel,
-        currentValue,
-        optionLabels,
-      });
+      for (const inferenceRow of inferenceRows) {
+        await runParameterValueInference(inferenceRow);
+      }
       setError(null);
     } catch (triggerError) {
       setError(resolveParameterValueInferenceErrorMessage(triggerError));
@@ -557,11 +676,7 @@ function ParameterValueInferTrigger(
       setIsTriggerPending(false);
     }
   }, [
-    currentValue,
-    languageCode,
-    languageLabel,
-    optionLabels,
-    rowIndex,
+    inferenceRows,
     runParameterValueInference,
     selectedParameter,
   ]);
@@ -598,6 +713,7 @@ export default function ProductFormParameters(): React.JSX.Element {
     addParameterValue,
     updateParameterId,
     updateParameterValueByLanguage,
+    updateParameterInferenceSkip,
     removeParameterValue,
   } = useProductFormParameters();
 
@@ -613,9 +729,6 @@ export default function ProductFormParameters(): React.JSX.Element {
     currentLabel: null,
     error: null,
   });
-  const [sequenceExcludedParameterIds, setSequenceExcludedParameterIds] = useState<Set<string>>(
-    () => new Set<string>()
-  );
   const sequenceRunTokenRef = useRef(0);
 
   const catalogLanguages = useMemo((): CatalogLanguageOption[] => {
@@ -663,22 +776,6 @@ export default function ProductFormParameters(): React.JSX.Element {
     () => parameterValues.map((entry: ProductParameterValue) => entry.parameterId).filter(Boolean),
     [parameterValues]
   );
-  useEffect(() => {
-    const currentParameterIds = new Set(
-      parameterValues
-        .map((entry: ProductParameterValue): string => entry.parameterId)
-        .filter((parameterId: string): boolean => parameterId.length > 0)
-    );
-    setSequenceExcludedParameterIds((current: Set<string>): Set<string> => {
-      const next = new Set<string>();
-      current.forEach((parameterId: string): void => {
-        if (currentParameterIds.has(parameterId)) {
-          next.add(parameterId);
-        }
-      });
-      return next.size === current.size ? current : next;
-    });
-  }, [parameterValues]);
   const hasParameterValueByLanguage = useMemo((): Record<string, boolean> => {
     const result: Record<string, boolean> = {};
     languageTabValues.forEach((languageCode: string) => {
@@ -731,6 +828,10 @@ export default function ProductFormParameters(): React.JSX.Element {
           languageLabel: row.languageLabel,
           currentValue: row.currentValue,
         },
+      });
+      const fallbackValue = resolveParameterInferenceFallbackValue({
+        parameter: row.parameter,
+        productTitle: triggerInput.product.title,
       });
 
       const runId = await new Promise<string>((resolve, reject): void => {
@@ -803,6 +904,7 @@ export default function ProductFormParameters(): React.JSX.Element {
         languageCode: row.languageCode,
         selectorType: row.parameter.selectorType,
         optionLabels: row.optionLabels,
+        fallbackValue,
       });
       const currentRowIndex = resolveCurrentParameterValueRowIndex(row.parameter.id);
       if (currentRowIndex === null) {
@@ -836,22 +938,17 @@ export default function ProductFormParameters(): React.JSX.Element {
       updateParameterValueByLanguage,
     ]
   );
-  const toggleParameterSequenceExclusion = useCallback((parameterId: string): void => {
-    setSequenceExcludedParameterIds((current: Set<string>): Set<string> => {
-      const next = new Set(current);
-      if (next.has(parameterId)) {
-        next.delete(parameterId);
-      } else {
-        next.add(parameterId);
-      }
-      return next;
-    });
-  }, []);
+  const toggleParameterSequenceExclusion = useCallback(
+    (rowIndex: number, isExcluded: boolean): void => {
+      updateParameterInferenceSkip(rowIndex, isExcluded);
+    },
+    [updateParameterInferenceSkip]
+  );
   const eligibleSequenceRows = useMemo(
     (): ParameterValueInferenceRunRow[] =>
       parameterValues.flatMap((entry: ProductParameterValue, index: number) => {
         if (entry.parameterId.length === 0) return [];
-        if (sequenceExcludedParameterIds.has(entry.parameterId)) return [];
+        if (entry.skipParameterInference === true) return [];
         const parameter = parameterById.get(entry.parameterId);
         const hasLinkedTitleTerm =
           parameter?.linkedTitleTermType !== null &&
@@ -879,7 +976,6 @@ export default function ProductFormParameters(): React.JSX.Element {
       parameterById,
       parameterValues,
       primaryLanguageCode,
-      sequenceExcludedParameterIds,
     ]
   );
   const isSequenceRunning = sequenceState.status === 'running';
@@ -1058,7 +1154,7 @@ export default function ProductFormParameters(): React.JSX.Element {
                 ? (parameterById.get(entry.parameterId) ?? null)
                 : null;
               const isSequenceExcluded =
-                entry.parameterId.length > 0 && sequenceExcludedParameterIds.has(entry.parameterId);
+                entry.parameterId.length > 0 && entry.skipParameterInference === true;
               const isLinkedParameter = Boolean(selectedParameter?.linkedTitleTermType);
               const linkedTitleTermLabel = getLinkedTitleTermLabel(
                 selectedParameter?.linkedTitleTermType ?? null
@@ -1072,6 +1168,13 @@ export default function ProductFormParameters(): React.JSX.Element {
               const normalizedOptionLabels = selectedParameter
                 ? buildNormalizedParameterOptionLabels(selectedParameter, activeLanguageValue)
                 : [];
+              const rowTriggerInferenceRows = buildRowTriggerInferenceRows({
+                rowIndex: index,
+                parameter: selectedParameter,
+                catalogLanguages,
+                activeLanguage: activeParameterLanguage,
+                getLanguageValue,
+              });
               const handleLanguageValueChange = (languageCode: string, nextValue: string): void => {
                 updateParameterValueByLanguage(index, languageCode, nextValue);
               };
@@ -1131,18 +1234,15 @@ export default function ProductFormParameters(): React.JSX.Element {
                         </Label>
                         <div className='flex items-start gap-2'>
                           <ParameterSequenceInferenceToggle
+                            rowIndex={index}
                             selectedParameter={selectedParameter}
                             isExcluded={isSequenceExcluded}
                             disabled={!entry.parameterId || isLinkedParameter || isSequenceRunning}
                             onToggle={toggleParameterSequenceExclusion}
                           />
                           <ParameterValueInferTrigger
-                            rowIndex={index}
                             selectedParameter={selectedParameter}
-                            languageCode={activeParameterLanguage.code}
-                            languageLabel={activeParameterLanguage.label}
-                            currentValue={getLanguageValue(activeParameterLanguage.code)}
-                            optionLabels={normalizedOptionLabels}
+                            inferenceRows={rowTriggerInferenceRows}
                             disabled={
                               !entry.parameterId ||
                               isLinkedParameter ||

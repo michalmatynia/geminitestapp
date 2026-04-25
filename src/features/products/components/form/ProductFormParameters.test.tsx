@@ -318,6 +318,14 @@ const materialParameter = {
   selectorType: 'text',
 } as Partial<ProductParameter> as ProductParameter;
 
+const modelNameParameter = {
+  id: 'model-name',
+  name_en: 'Model name',
+  name_pl: 'Nazwa modelu',
+  selectorType: 'text',
+  optionLabels: [],
+} as Partial<ProductParameter> as ProductParameter;
+
 type ParameterTriggerCallArgs = {
   onSuccess?: (runId: string) => void;
   getEntityJson?: () => Record<string, unknown>;
@@ -325,6 +333,7 @@ type ParameterTriggerCallArgs = {
     parameterValueInferenceInput?: {
       targetParameter?: {
         id?: string;
+        languageCode?: string;
       };
     };
   };
@@ -333,12 +342,16 @@ type ParameterTriggerCallArgs = {
 const createProduct = ({
   parameters,
   nameEn = 'Product 1',
+  namePl = null,
   descriptionEn = '',
+  descriptionPl = null,
   imageLinks = [],
 }: {
   parameters: NonNullable<ProductWithImages['parameters']>;
   nameEn?: string;
+  namePl?: string | null;
   descriptionEn?: string;
+  descriptionPl?: string | null;
   imageLinks?: string[];
 }
 ): ProductWithImages =>
@@ -350,13 +363,13 @@ const createProduct = ({
     ean: null,
     gtin: null,
     asin: null,
-    name: { en: nameEn, pl: null, de: null },
-    description: { en: descriptionEn, pl: null, de: null },
+    name: { en: nameEn, pl: namePl, de: null },
+    description: { en: descriptionEn, pl: descriptionPl, de: null },
     name_en: nameEn,
-    name_pl: null,
+    name_pl: namePl,
     name_de: null,
     description_en: descriptionEn,
-    description_pl: null,
+    description_pl: descriptionPl,
     description_de: null,
     supplierName: null,
     supplierLink: null,
@@ -387,15 +400,21 @@ function renderParameters({
   parameterDefinitions = [textParameter],
   simpleParameterDefinitions = [],
   nameEn = 'Product 1',
+  namePl = null,
   descriptionEn = '',
+  descriptionPl = null,
   imageLinks = [],
+  languages = catalogLanguages,
 }: {
   parameters: NonNullable<ProductWithImages['parameters']>;
   parameterDefinitions?: ProductParameter[];
   simpleParameterDefinitions?: ProductSimpleParameter[];
   nameEn?: string;
+  namePl?: string | null;
   descriptionEn?: string;
+  descriptionPl?: string | null;
   imageLinks?: string[];
+  languages?: Language[];
 }) {
   useParametersMock.mockReturnValue({
     data: parameterDefinitions,
@@ -410,7 +429,9 @@ function renderParameters({
     const methods = useForm<ProductFormData>({
       defaultValues: {
         name_en: nameEn,
+        name_pl: namePl,
         description_en: descriptionEn,
+        description_pl: descriptionPl,
       } as ProductFormData,
     });
 
@@ -441,10 +462,17 @@ function renderParameters({
 
   return render(
     <Wrapper>
-      <ProductFormMetadataContext.Provider value={metadataValue}>
+      <ProductFormMetadataContext.Provider value={{ ...metadataValue, filteredLanguages: languages }}>
         <ProductFormImageContext.Provider value={imageContextValue}>
           <ProductFormParameterProvider
-            product={createProduct({ parameters, nameEn, descriptionEn, imageLinks })}
+            product={createProduct({
+              parameters,
+              nameEn,
+              namePl,
+              descriptionEn,
+              descriptionPl,
+              imageLinks,
+            })}
             selectedCatalogIds={['catalog-1']}
           >
             <ProductFormParameters />
@@ -631,6 +659,138 @@ describe('ProductFormParameters', () => {
     });
   });
 
+  it('falls back to the structured title lead segment for empty model-name inference results', async () => {
+    const user = userEvent.setup();
+    let launchIndex = 0;
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: { onSuccess?: (runId: string) => void }) => {
+        launchIndex += 1;
+        args.onSuccess?.(`run-parameter-value-empty-model-name-${launchIndex}`);
+      }
+    );
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (_runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        listener({
+          trackingState: 'stopped',
+          status: 'completed',
+          errorMessage: null,
+        });
+        return vi.fn();
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            type: 'regex',
+            outputs: {
+              value: {
+                parameterId: 'model-name',
+                value: '',
+                confidence: 0,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'model-name',
+          value: '',
+        },
+      ],
+      parameterDefinitions: [modelNameParameter],
+      nameEn: 'Crow Hunter Badge | 4 cm | Metal | Gaming Pendant | Bloodborne',
+      namePl: 'Odznaka Łowcy Kruków | 4 cm | Metal | Zawieszka Gamingowa | Bloodborne',
+      descriptionEn: 'A metal gaming pendant inspired by hunter insignia.',
+      descriptionPl: 'Metalowa zawieszka gamingowa inspirowana odznaką łowcy.',
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Trigger parameter inference for Model name' })
+    );
+
+    await waitFor(() => {
+      expect(fireAiPathTriggerEventMock).toHaveBeenCalledTimes(2);
+      expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Crow Hunter Badge');
+    });
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[0]?.[0] as ParameterTriggerCallArgs).extras
+        ?.parameterValueInferenceInput?.targetParameter?.languageCode
+    ).toBe('en');
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[1]?.[0] as ParameterTriggerCallArgs).extras
+        ?.parameterValueInferenceInput?.targetParameter?.languageCode
+    ).toBe('pl');
+
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByPlaceholderText('Value (Polish)')).toHaveValue('Odznaka Łowcy Kruków');
+  });
+
+  it('does not silently apply empty inference results for regular text parameters', async () => {
+    const user = userEvent.setup();
+    fireAiPathTriggerEventMock.mockImplementation(
+      async (args: { onSuccess?: (runId: string) => void }) => {
+        args.onSuccess?.('run-parameter-value-empty-condition');
+      }
+    );
+    subscribeToTrackedAiPathRunMock.mockImplementation(
+      (_runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        listener({
+          trackingState: 'stopped',
+          status: 'completed',
+          errorMessage: null,
+        });
+        return vi.fn();
+      }
+    );
+    getAiPathRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        nodes: [
+          {
+            type: 'regex',
+            outputs: {
+              value: {
+                parameterId: 'condition',
+                value: '',
+                confidence: 0,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'condition',
+          value: 'Existing value',
+          valuesByLanguage: { en: 'Existing value' },
+        },
+      ],
+      nameEn: 'Soft plush keychain',
+      descriptionEn: 'Small plush keychain with metal ring.',
+    });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Trigger parameter inference for Condition' })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Parameter inference failed: the AI Path returned an empty parameter value.')
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Existing value');
+  });
+
   it('runs parameter inference for eligible parameters one by one in sequence', async () => {
     const user = userEvent.setup();
     const trackedCallbacks = new Map<string, (snapshot: Record<string, unknown>) => void>();
@@ -804,6 +964,21 @@ describe('ProductFormParameters', () => {
       (fireAiPathTriggerEventMock.mock.calls[0]?.[0] as ParameterTriggerCallArgs).extras
         ?.parameterValueInferenceInput?.targetParameter?.id
     ).toBe('material');
+    expect(
+      (fireAiPathTriggerEventMock.mock.calls[0]?.[0] as ParameterTriggerCallArgs)
+        .getEntityJson?.()['parameters']
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          parameterId: 'condition',
+          value: 'Soft plush',
+          valuesByLanguage: {
+            en: 'Soft plush',
+          },
+          skipParameterInference: true,
+        },
+      ])
+    );
 
     trackedCallbacks.get('run-parameter-sequence-material-only')?.({
       trackingState: 'stopped',
@@ -993,6 +1168,38 @@ describe('ProductFormParameters', () => {
     expect(screen.getByText('Nazwa Modelu')).toBeInTheDocument();
   });
 
+  it('uses English parameter names after switching away from a Polish default tab', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      languages: [
+        { ...catalogLanguages[1], isDefault: true } as Language,
+        { ...catalogLanguages[0], isDefault: false } as Language,
+      ],
+      parameters: [
+        {
+          parameterId: 'model-name',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ],
+      parameterDefinitions: [
+        {
+          id: 'model-name',
+          name_en: 'Base Model Name',
+          name_pl: 'Nazwa Modelu',
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+    });
+
+    expect(screen.getByText('Nazwa Modelu')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'English' }));
+
+    expect(screen.getByText('Base Model Name')).toBeInTheDocument();
+    expect(screen.queryByText('Nazwa Modelu')).not.toBeInTheDocument();
+  });
+
   it('does not show legacy Polish-only parameter names on the English tab', async () => {
     const user = userEvent.setup();
     renderParameters({
@@ -1014,6 +1221,62 @@ describe('ProductFormParameters', () => {
     });
 
     expect(screen.getByText('Base Model Name')).toBeInTheDocument();
+    expect(screen.queryByText('Nazwa Modelu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByText('Nazwa Modelu')).toBeInTheDocument();
+  });
+
+  it('does not show duplicated legacy Polish parameter names on the English tab', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'base-model-name',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ],
+      parameterDefinitions: [
+        {
+          id: 'base-model-name',
+          name_en: 'Nazwa Modelu',
+          name_pl: 'Nazwa Modelu',
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+    });
+
+    expect(screen.getByText('Base Model Name')).toBeInTheDocument();
+    expect(screen.queryByText('Nazwa Modelu')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('tab', { name: 'Polish' }));
+
+    expect(screen.getByText('Nazwa Modelu')).toBeInTheDocument();
+  });
+
+  it('does not recreate Polish labels from legacy Polish parameter ids on the English tab', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [
+        {
+          parameterId: 'nazwa-modelu',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ],
+      parameterDefinitions: [
+        {
+          id: 'nazwa-modelu',
+          name_en: 'Nazwa Modelu',
+          name_pl: 'Nazwa Modelu',
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+    });
+
+    expect(screen.getByText('Imported parameter')).toBeInTheDocument();
     expect(screen.queryByText('Nazwa Modelu')).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('tab', { name: 'Polish' }));

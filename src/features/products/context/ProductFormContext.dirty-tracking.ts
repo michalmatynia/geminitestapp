@@ -10,6 +10,7 @@ type ComparableParameterValue = {
   parameterId: string;
   value: string;
   valuesByLanguage?: Record<string, string>;
+  skipParameterInference?: boolean;
 };
 
 type ComparableCustomFieldValue = {
@@ -65,6 +66,7 @@ export const normalizeComparableParameterValues = (
         parameterId: normalizedParameterId || '',
         value: resolveStoredParameterValue(valuesByLanguage, directValue),
         ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+        ...(entry.skipParameterInference === true ? { skipParameterInference: true } : {}),
       };
     })
     .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);

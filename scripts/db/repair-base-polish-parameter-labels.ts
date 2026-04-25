@@ -36,8 +36,9 @@ type ProductValueRepair = {
   _id: ObjectId | string;
   id: string;
   parameterId: string;
-  action: 'move_en_to_pl' | 'remove_duplicate_en';
-  previousEn: string;
+  action: 'move_en_to_pl' | 'move_scalar_to_pl' | 'remove_duplicate_en';
+  previousEn: string | null;
+  previousValue: string | null;
   previousPl: string | null;
   nextPl: string | null;
 };
@@ -62,7 +63,7 @@ const printUsage = (): void => {
     [
       'Usage: NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/repair-base-polish-parameter-labels.ts [--write] [--limit=100]',
       '',
-      'Dry-run by default. Moves likely Polish-only parameter labels from name_en to name_pl and removes copied English values for those parameters.',
+      'Dry-run by default. Replaces likely Polish labels stored in name_en and moves copied English/scalar values to Polish for those parameters.',
     ].join('\n')
   );
 };
@@ -151,7 +152,7 @@ const resolveNeutralEnglishName = (
   const parameterId = toTrimmedString(parameter.id);
   const baseParameterId = parameterId ? baseParameterIdByParameterId.get(parameterId) : null;
   const fromBaseId = baseParameterId ? formatIdLabel(baseParameterId) : null;
-  if (fromBaseId) return fromBaseId;
+  if (fromBaseId && !isLikelyPolishParameterLabel(fromBaseId)) return fromBaseId;
   return 'Imported parameter';
 };
 
@@ -190,19 +191,22 @@ const repairProductParameterValuesForDoc = (input: {
 
     const valuesByLanguage = normalizeValuesByLanguage(record.valuesByLanguage);
     const previousEn = toTrimmedString(valuesByLanguage['en']);
-    if (!previousEn) return entry;
+    const previousValue = toTrimmedString(record.value);
 
     const previousPl = toTrimmedString(valuesByLanguage['pl']);
     const nextValuesByLanguage = { ...valuesByLanguage };
     let action: ProductValueRepair['action'] | null = null;
 
-    if (!previousPl) {
+    if (previousEn && !previousPl) {
       nextValuesByLanguage['pl'] = previousEn;
       delete nextValuesByLanguage['en'];
       action = 'move_en_to_pl';
-    } else if (previousPl === previousEn) {
+    } else if (previousEn && previousPl === previousEn) {
       delete nextValuesByLanguage['en'];
       action = 'remove_duplicate_en';
+    } else if (!previousEn && !previousPl && previousValue) {
+      nextValuesByLanguage['pl'] = previousValue;
+      action = 'move_scalar_to_pl';
     }
 
     if (!action) return entry;
@@ -214,7 +218,8 @@ const repairProductParameterValuesForDoc = (input: {
       id: input.doc.id ?? String(input.doc._id),
       parameterId,
       action,
-      previousEn,
+      previousEn: previousEn || null,
+      previousValue: previousValue || null,
       previousPl: previousPl || null,
       nextPl: nextValuesByLanguage['pl'] ?? null,
     });
@@ -247,7 +252,10 @@ const repairProductParameterValues = async (input: {
     const docs = await collection
       .find({
         'parameters.parameterId': { $in: repairedIds },
-        'parameters.valuesByLanguage.en': { $type: 'string' },
+        $or: [
+          { 'parameters.valuesByLanguage.en': { $type: 'string' } },
+          { 'parameters.value': { $type: 'string' } },
+        ],
       })
       .toArray();
 
@@ -287,16 +295,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   let cursor = mongo
     .collection<ProductParameterDoc>('product_parameters')
     .find({
-      $and: [
-        { name_en: { $type: 'string' } },
-        {
-          $or: [
-            { name_pl: { $exists: false } },
-            { name_pl: null },
-            { name_pl: '' },
-          ],
-        },
-      ],
+      name_en: { $type: 'string' },
     })
     .sort({ updatedAt: -1 });
 
@@ -306,17 +305,26 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
   const candidates = (await cursor.toArray()).filter((parameter: ProductParameterDoc): boolean => {
     const englishName = toTrimmedString(parameter.name_en);
-    return englishName.length > 0 && isLikelyPolishParameterLabel(englishName);
+    const polishName = toTrimmedString(parameter.name_pl);
+    const missingPolishName = polishName.length === 0;
+    const duplicatedPolishName =
+      polishName.length > 0 && polishName.toLowerCase() === englishName.toLowerCase();
+    return (
+      englishName.length > 0 &&
+      isLikelyPolishParameterLabel(englishName) &&
+      (missingPolishName || duplicatedPolishName)
+    );
   });
 
   const repairs = candidates.map((parameter: ProductParameterDoc) => {
     const previousNameEn = toTrimmedString(parameter.name_en);
+    const previousNamePl = toTrimmedString(parameter.name_pl);
     return {
       _id: parameter._id,
       id: parameter.id ?? String(parameter._id),
       previousNameEn,
       nextNameEn: resolveNeutralEnglishName(parameter, baseParameterIdByParameterId),
-      nextNamePl: previousNameEn,
+      nextNamePl: previousNamePl || previousNameEn,
     };
   });
   const repairedParameterIds = new Set(

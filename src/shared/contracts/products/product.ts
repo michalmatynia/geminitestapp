@@ -126,6 +126,7 @@ export const productParameterValueSchema = z.object({
   parameterId: z.string(),
   value: z.string().nullable().optional(),
   valuesByLanguage: z.record(z.string(), z.string()).optional(),
+  skipParameterInference: z.boolean().optional(),
 });
 
 export type ProductParameterValue = z.infer<typeof productParameterValueSchema>;

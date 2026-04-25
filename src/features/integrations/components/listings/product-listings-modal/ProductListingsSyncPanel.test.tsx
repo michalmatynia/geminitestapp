@@ -542,6 +542,60 @@ describe('ProductListingsSyncPanel', () => {
     expect(screen.getByText('EAN barcode.')).toBeInTheDocument();
   });
 
+  it('does not report disabled fields as blocking sync when enabled fields are already aligned', async () => {
+    refetchPreviewMock.mockResolvedValue({
+      data: createPreviewData({
+        fields: [
+          {
+            appField: 'stock',
+            appFieldLabel: 'Stock',
+            baseField: 'stock',
+            baseFieldLabel: 'Inventory stock (stock)',
+            baseFieldDescription: 'Inventory-level stock (no warehouse).',
+            direction: 'base_to_app',
+            appValue: 8,
+            baseValue: 8,
+            hasDifference: false,
+            willWriteToApp: false,
+            willWriteToBase: false,
+          },
+          {
+            appField: 'sku',
+            appFieldLabel: 'SKU',
+            baseField: 'sku',
+            baseFieldLabel: 'SKU (sku)',
+            baseFieldDescription: 'SKU identifier.',
+            direction: 'disabled',
+            appValue: 'APP-SKU',
+            baseValue: 'BASE-SKU',
+            hasDifference: true,
+            willWriteToApp: false,
+            willWriteToBase: false,
+          },
+        ],
+      }),
+      error: null,
+    });
+
+    render(<ProductListingsSyncPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('0 field(s) will sync')).toBeInTheDocument();
+    });
+
+    expect(
+      screen.queryByText('The out-of-sync fields are disabled in the active sync profile.')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'No enabled fields are currently out of sync. Disabled field differences are ignored by this profile.'
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Sync' })).toBeDisabled();
+  });
+
   it('shows the disabled reason and blocks sync when the checked preview cannot sync', async () => {
     refetchPreviewMock.mockResolvedValue({
       data: createPreviewData({

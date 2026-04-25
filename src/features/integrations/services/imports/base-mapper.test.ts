@@ -321,6 +321,56 @@ describe('mapBaseProduct', () => {
       expect(result.price).toBe(5100);
     });
 
+    it('maps localized parameter template sources without copying Polish into English', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-PARAM-PL',
+        text_fields: {
+          'parameters|pl': {
+            'Nazwa Modelu': 'Model X',
+          },
+        },
+      };
+
+      const result = mapBaseProduct(record, [
+        {
+          sourceKey: 'text_fields.parameters|pl.Nazwa Modelu',
+          targetField: 'parameter:base-model-name',
+        },
+      ]);
+
+      expect(result.parameters).toEqual([
+        {
+          parameterId: 'base-model-name',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ]);
+    });
+
+    it('supports explicit language suffixes on parameter template targets', () => {
+      const record = {
+        product_id: 'p1',
+        sku: 'SKU-PARAM-TARGET-PL',
+        model_name: 'Model X',
+      };
+
+      const result = mapBaseProduct(record, [
+        {
+          sourceKey: 'model_name',
+          targetField: 'parameter:base-model-name|pl',
+        },
+      ]);
+
+      expect(result.parameters).toEqual([
+        {
+          parameterId: 'base-model-name',
+          value: 'Model X',
+          valuesByLanguage: { pl: 'Model X' },
+        },
+      ]);
+    });
+
     it('generates a BASE- prefixed SKU when record has no sku', () => {
       const record = { product_id: 'abc123', name: 'Test' };
 

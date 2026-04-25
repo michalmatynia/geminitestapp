@@ -31,6 +31,7 @@ import {
 } from '../settings';
 
 import type {
+  FilemakerAddress,
   FilemakerEmail,
   FilemakerOrganization,
   FilemakerOrganizationLegacyDemand,
@@ -43,8 +44,30 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { hasAddressFields, resolveCountryId } from '../pages/filemaker-page-utils';
 
 type PreparedOrganizationAddress = EditableAddress;
+type OrganizationRecordSource = 'mongo' | 'settings' | 'none';
+
+type MongoFilemakerOrganizationState = {
+  error: string | null;
+  isLoading: boolean;
+  linkedAddresses: FilemakerAddress[];
+  linkedEmails: FilemakerEmail[];
+  organization: FilemakerOrganization | null;
+};
+
+type MongoFilemakerOrganizationResponse = {
+  linkedAddresses?: FilemakerAddress[];
+  linkedEmails?: FilemakerEmail[];
+  organization: FilemakerOrganization;
+};
 
 const EMPTY_COUNTRIES: CountryOption[] = [];
+const EMPTY_MONGO_ORGANIZATION_STATE: MongoFilemakerOrganizationState = {
+  error: null,
+  isLoading: false,
+  linkedAddresses: [],
+  linkedEmails: [],
+  organization: null,
+};
 
 const applyOrganizationAddresses = (
   database: FilemakerDatabase,
@@ -99,7 +122,34 @@ const getLegacyDemandRowsForOrganization = (
   database.organizationLegacyDemands.filter(
     (demand: FilemakerOrganizationLegacyDemand): boolean =>
       demand.organizationId === organizationId
-  );
+    );
+
+const toEditableAddress = (
+  address: FilemakerAddress,
+  input: {
+    countries: CountryOption[];
+    countryById: Map<string, CountryOption>;
+    isDefault: boolean;
+  }
+): EditableAddress => ({
+  addressId: address.id,
+  street: address.street,
+  streetNumber: address.streetNumber,
+  city: address.city,
+  postalCode: address.postalCode,
+  countryId: resolveCountryId(
+    address.countryId,
+    address.country,
+    input.countries,
+    input.countryById
+  ),
+  country: address.country,
+  countryValueId: address.countryValueId,
+  countryValueLabel: address.countryValueLabel,
+  isDefault: input.isDefault,
+  legacyCountryUuid: address.legacyCountryUuid,
+  legacyUuid: address.legacyUuid,
+});
 
 const applyOrganizationLegacyDemands = (
   database: FilemakerDatabase,
@@ -132,6 +182,25 @@ const applyOrganizationLegacyDemands = (
   });
 };
 
+const parseMongoFilemakerOrganizationResponse = async (
+  response: Response
+): Promise<MongoFilemakerOrganizationResponse> => {
+  if (!response.ok) {
+    throw new Error(`Failed to load Mongo organization (${response.status}).`);
+  }
+  return (await response.json()) as MongoFilemakerOrganizationResponse;
+};
+
+const toLoadedMongoOrganizationState = (
+  response: MongoFilemakerOrganizationResponse
+): MongoFilemakerOrganizationState => ({
+  error: null,
+  isLoading: false,
+  linkedAddresses: response.linkedAddresses ?? [],
+  linkedEmails: response.linkedEmails ?? [],
+  organization: response.organization,
+});
+
 export type AdminFilemakerOrganizationEditPageContextValue = {
   isCreateMode: boolean;
   organization: FilemakerOrganization | null;
@@ -157,6 +226,73 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
   handleExtractEmails: () => Promise<void>;
   updateSetting: { isPending: boolean };
   router: AppRouterInstance;
+  isLoading: boolean;
+  organizationSource: OrganizationRecordSource;
+};
+
+function useMongoFilemakerOrganization(
+  organizationId: string,
+  enabled: boolean
+): MongoFilemakerOrganizationState {
+  const [state, setState] = useState<MongoFilemakerOrganizationState>(
+    EMPTY_MONGO_ORGANIZATION_STATE
+  );
+
+  useEffect(() => {
+    if (!enabled) {
+      setState(EMPTY_MONGO_ORGANIZATION_STATE);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setState((current: MongoFilemakerOrganizationState) => ({
+      ...current,
+      error: null,
+      isLoading: true,
+    }));
+    fetch(`/api/filemaker/organizations/${encodeURIComponent(organizationId)}`, {
+      signal: controller.signal,
+    })
+      .then(parseMongoFilemakerOrganizationResponse)
+      .then((response: MongoFilemakerOrganizationResponse): void => {
+        setState(toLoadedMongoOrganizationState(response));
+      })
+      .catch((error: unknown): void => {
+        if (controller.signal.aborted) return;
+        setState({
+          error: error instanceof Error ? error.message : 'Failed to load Mongo organization.',
+          isLoading: false,
+          linkedAddresses: [],
+          linkedEmails: [],
+          organization: null,
+        });
+      });
+
+    return () => {
+      controller.abort();
+    };
+  }, [enabled, organizationId]);
+
+  return state;
+}
+
+const resolveOrganizationSource = (input: {
+  mongoOrganization: FilemakerOrganization | null;
+  settingsOrganization: FilemakerOrganization | null;
+}): OrganizationRecordSource => {
+  if (input.settingsOrganization !== null) return 'settings';
+  if (input.mongoOrganization !== null) return 'mongo';
+  return 'none';
+};
+
+const resolveOrganizationEmails = (input: {
+  database: FilemakerDatabase;
+  linkedMongoEmails: FilemakerEmail[];
+  organization: FilemakerOrganization | null;
+  source: OrganizationRecordSource;
+}): FilemakerEmail[] => {
+  if (input.source === 'mongo') return input.linkedMongoEmails;
+  if (input.organization === null) return [];
+  return getFilemakerEmailsForParty(input.database, 'organization', input.organization.id);
 };
 
 export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrganizationEditPageContextValue {
@@ -170,25 +306,38 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const isCreateMode = organizationId === 'new';
 
   const countriesQuery = useCountries();
-  const countries = countriesQuery.data ?? EMPTY_COUNTRIES;
-  const countriesKey = countries
+  const rawCountries = countriesQuery.data ?? EMPTY_COUNTRIES;
+  const countriesKey = rawCountries
     .map((country: CountryOption): string => `${country.id}:${country.name}:${country.code}`)
     .join('|');
+  const countries = useMemo(() => rawCountries, [countriesKey]);
   const countryById = useMemo(
     () => new Map(countries.map((country: CountryOption) => [country.id, country])),
-    [countriesKey]
+    [countries]
   );
 
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
 
-  const organization = useMemo(
+  const settingsOrganization = useMemo(
     () =>
       isCreateMode
         ? null
         : (database.organizations.find((o) => o.id === organizationId) ?? null),
     [database.organizations, isCreateMode, organizationId]
   );
+  const mongoOrganizationState = useMongoFilemakerOrganization(
+    organizationId,
+    !isCreateMode && settingsOrganization === null
+  );
+  const organization = settingsOrganization ?? mongoOrganizationState.organization;
+  const organizationSource = resolveOrganizationSource({
+    mongoOrganization: mongoOrganizationState.organization,
+    settingsOrganization,
+  });
+  const isLoading =
+    settingsStore.isLoading ||
+    (!isCreateMode && settingsOrganization === null && mongoOrganizationState.isLoading);
 
   const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
   const [editableAddresses, setEditableAddresses] = useState<EditableAddress[]>([]);
@@ -218,7 +367,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         'organization',
         organization.id
       );
-      const addresses = addressLinks.map((link) => {
+      const settingsAddresses = addressLinks.map((link) => {
         const addr = getFilemakerAddressById(database, link.addressId);
         return {
           addressId: link.addressId,
@@ -236,18 +385,55 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
           isDefault: link.isDefault,
         };
       });
-      setEditableAddresses(addresses);
+      if (settingsAddresses.length > 0 || organizationSource !== 'mongo') {
+        setEditableAddresses(settingsAddresses);
+      } else {
+        const mongoDefaultAddressId = organization.addressId;
+        const mongoAddresses = mongoOrganizationState.linkedAddresses.map(
+          (address: FilemakerAddress): EditableAddress =>
+            toEditableAddress(address, {
+              countries,
+              countryById,
+              isDefault: address.id === mongoDefaultAddressId,
+            })
+        );
+        const hasDefaultAddress = mongoAddresses.some(
+          (address: EditableAddress): boolean => address.isDefault
+        );
+        setEditableAddresses(
+          hasDefaultAddress
+            ? mongoAddresses
+            : mongoAddresses.map((address: EditableAddress, index: number) => ({
+                ...address,
+                isDefault: index === 0,
+              }))
+        );
+      }
 
       const events = getFilemakerEventsForOrganization(database, organization.id);
       setLinkedEventIds(events.map((e) => e.id));
       setLegacyDemandRows(getLegacyDemandRowsForOrganization(database, organization.id));
     }
-  }, [countriesKey, isCreateMode, organization, database]);
+  }, [
+    countries,
+    countriesKey,
+    countryById,
+    isCreateMode,
+    mongoOrganizationState.linkedAddresses,
+    organization,
+    organizationSource,
+    database,
+  ]);
 
   const emails = useMemo(
     () =>
-      organization ? getFilemakerEmailsForParty(database, 'organization', organization.id) : [],
-    [database, organization]
+      resolveOrganizationEmails({
+        database,
+        linkedMongoEmails: mongoOrganizationState.linkedEmails,
+        organization,
+        source: organizationSource,
+      }),
+    [database, mongoOrganizationState.linkedEmails, organization, organizationSource]
   );
 
   const phoneNumbers = useMemo(
@@ -366,6 +552,41 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
     if (organization === null) return;
 
+    if (organizationSource === 'mongo') {
+      try {
+        const response = await fetch(
+          `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
+          {
+            body: JSON.stringify({
+              city: defaultAddress?.city ?? orgDraft.city ?? '',
+              cooperationStatus: orgDraft.cooperationStatus,
+              country: defaultAddress?.country ?? orgDraft.country ?? '',
+              countryId: defaultAddress?.countryId ?? orgDraft.countryId ?? '',
+              establishedDate: orgDraft.establishedDate,
+              krs: orgDraft.krs,
+              name: nextName,
+              postalCode: defaultAddress?.postalCode ?? orgDraft.postalCode ?? '',
+              street: defaultAddress?.street ?? orgDraft.street ?? '',
+              streetNumber: defaultAddress?.streetNumber ?? orgDraft.streetNumber ?? '',
+              taxId: orgDraft.taxId,
+              tradingName: orgDraft.tradingName,
+            }),
+            headers: { 'Content-Type': 'application/json' },
+            method: 'PATCH',
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to save Mongo organization (${response.status}).`);
+        }
+        toast('Organization updated.', { variant: 'success' });
+        router.push('/admin/filemaker/organizations');
+      } catch (error: unknown) {
+        logClientError(error);
+        toast('Failed to save changes.', { variant: 'error' });
+      }
+      return;
+    }
+
     nextDatabase = applyOrganizationAddresses(nextDatabase, organization.id, normalizedAddresses);
     nextDatabase = {
       ...nextDatabase,
@@ -401,6 +622,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     isCreateMode,
     legacyDemandRows,
     organization,
+    organizationSource,
     orgDraft,
     persistDatabase,
     router,
@@ -454,5 +676,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     handleExtractEmails,
     updateSetting,
     router,
+    isLoading,
+    organizationSource,
   };
 }

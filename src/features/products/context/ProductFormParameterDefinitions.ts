@@ -64,11 +64,62 @@ const normalizeSimpleParameterLinkedTitleTermType = (
 const normalizeSimpleParameterTimestamp = (value: string | undefined): string =>
   value ?? EMPTY_PARAMETER_TIMESTAMP;
 
+const POLISH_PARAMETER_LABEL_PATTERN =
+  /(?:[ąćęłńóśźż]|\b(?:cecha|cechy|długość|kolor|materiał|modelu|nazwa|numer|parametr|producent|rodzaj|rozmiar|szerokość|stan|waga|wysokość)\b)/i;
+
+const isLikelyPolishParameterLabel = (value: string): boolean =>
+  POLISH_PARAMETER_LABEL_PATTERN.test(value.trim());
+
+const LEGACY_POLISH_PARAMETER_LABELS = new Map<string, { nameEn: string; namePl: string }>([
+  [
+    'atrybuty niemarkowe amazon',
+    {
+      nameEn: 'Attributes unbranded (Amazon)',
+      namePl: 'Atrybuty Niemarkowe (Amazon)',
+    },
+  ],
+  ['bohater', { nameEn: 'Character', namePl: 'Bohater' }],
+  ['dlugosc calkowita', { nameEn: 'Overall Length', namePl: 'Długość całkowita' }],
+  ['kolor', { nameEn: 'Colour', namePl: 'Kolor' }],
+  ['marka', { nameEn: 'Brand', namePl: 'Marka' }],
+  ['material', { nameEn: 'Material', namePl: 'Materiał' }],
+  ['nazwa modelu', { nameEn: 'Model Name', namePl: 'Nazwa modelu' }],
+  ['numer modelu', { nameEn: 'Model Number', namePl: 'Numer modelu' }],
+  ['okazje', { nameEn: 'Occasion', namePl: 'Okazje' }],
+  ['postac', { nameEn: 'Character', namePl: 'Postać' }],
+  ['rodzaj gadzetu', { nameEn: 'Gadget Type', namePl: 'Rodzaj gadżetu' }],
+  ['rozmiar', { nameEn: 'Size', namePl: 'Rozmiar' }],
+  ['stan', { nameEn: 'Condition', namePl: 'Stan' }],
+  ['stan opakowania', { nameEn: 'Packaging Condition', namePl: 'Stan opakowania' }],
+  ['tagi', { nameEn: 'Tags', namePl: 'Tagi' }],
+  ['tematyka motyw', { nameEn: 'Theme / Motif', namePl: 'Tematyka, motyw' }],
+  ['wysokosc produktu', { nameEn: 'Product Height', namePl: 'Wysokość produktu' }],
+]);
+
+const normalizeFallbackLabelLookupKey = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/[^a-z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const resolveLegacyFallbackParameterNames = (
+  parameterId: string
+): { nameEn: string; namePl: string | null } | null => {
+  const names = LEGACY_POLISH_PARAMETER_LABELS.get(normalizeFallbackLabelLookupKey(parameterId));
+  return names ? { nameEn: names.nameEn, namePl: names.namePl } : null;
+};
+
 const normalizeFallbackParameterLabel = (parameterId: string): string => {
   const normalizedId = parameterId.trim();
   const spaced = normalizedId.replace(/[_-]+/g, ' ').trim();
   if (spaced.length === 0) return 'Unknown parameter';
-  return spaced.replace(/\b[a-z]/g, (letter: string): string => letter.toUpperCase());
+  const label = spaced.replace(/\b[a-z]/g, (letter: string): string => letter.toUpperCase());
+  return isLikelyPolishParameterLabel(label) ? 'Imported parameter' : label;
 };
 
 const toProductParameterFromSimple = (
@@ -96,12 +147,13 @@ const toProductParameterFromSavedValue = (
   parameterId: string,
   fallbackCatalogId: string
 ): ProductParameter => {
-  const nameEn = normalizeFallbackParameterLabel(parameterId);
+  const legacyNames = resolveLegacyFallbackParameterNames(parameterId);
+  const nameEn = legacyNames?.nameEn ?? normalizeFallbackParameterLabel(parameterId);
   return {
     id: parameterId,
     name: nameEn,
     name_en: nameEn,
-    name_pl: null,
+    name_pl: legacyNames?.namePl ?? null,
     name_de: null,
     catalogId: fallbackCatalogId,
     selectorType: 'text',

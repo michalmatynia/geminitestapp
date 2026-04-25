@@ -1,4 +1,4 @@
-import * as Papa from 'papaparse';
+import Papa from 'papaparse';
 
 import { normalizeString } from './filemaker-settings.helpers';
 

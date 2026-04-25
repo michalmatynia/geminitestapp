@@ -8,6 +8,7 @@ import type {
   ProductCustomFieldValue,
 } from '@/shared/contracts/products/custom-fields';
 import type { ProductCreateInput } from '@/shared/contracts/products/io';
+import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import {
   normalizeProductCustomFieldValues,
 } from '@/shared/lib/products/utils/custom-field-values';
@@ -99,6 +100,81 @@ const collectTemplateParameterBuckets = (record: BaseProductRecord): unknown[] =
   });
 
   return buckets;
+};
+
+const normalizeLanguageCode = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') ?? '';
+  if (normalized.length === 0 || !/^[a-z0-9_-]{2,10}$/.test(normalized)) return null;
+  return normalized;
+};
+
+const parseParameterTargetField = (
+  targetField: string
+): { parameterId: string; languageCode: string | null } | null => {
+  const trimmed = targetField.trim();
+  if (!trimmed.toLowerCase().startsWith('parameter:')) return null;
+  const rawPayload = trimmed.slice('parameter:'.length).trim();
+  if (rawPayload.length === 0) return null;
+
+  const languageDelimiterIndex = rawPayload.indexOf('|');
+  if (languageDelimiterIndex < 0) {
+    return { parameterId: rawPayload, languageCode: null };
+  }
+
+  const parameterId = rawPayload.slice(0, languageDelimiterIndex).trim();
+  if (parameterId.length === 0) return null;
+
+  return {
+    parameterId,
+    languageCode: normalizeLanguageCode(rawPayload.slice(languageDelimiterIndex + 1)),
+  };
+};
+
+const inferLanguageCodeFromSourceKey = (sourceKey: string): string | null => {
+  const match = sourceKey.match(/\|([a-z0-9_-]{2,10})(?:$|[.[\]])/i);
+  return normalizeLanguageCode(match?.[1]);
+};
+
+const normalizeValuesByLanguage = (value: unknown): Record<string, string> => {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  Object.entries(value as Record<string, unknown>).forEach(
+    ([languageCode, languageValue]: [string, unknown]) => {
+      const normalizedLanguageCode = normalizeLanguageCode(languageCode);
+      const stringValue = toStringValue(languageValue);
+      if (normalizedLanguageCode === null || stringValue === null) return;
+      result[normalizedLanguageCode] = stringValue;
+    }
+  );
+  return result;
+};
+
+const setTemplateParameterValue = (
+  valuesById: Map<string, ProductParameterValue>,
+  parameterId: string,
+  value: string,
+  languageCode: string | null
+): void => {
+  const existing = valuesById.get(parameterId);
+  if (!languageCode) {
+    valuesById.set(parameterId, {
+      parameterId,
+      value,
+      ...(existing?.valuesByLanguage ? { valuesByLanguage: existing.valuesByLanguage } : {}),
+    });
+    return;
+  }
+
+  valuesById.set(parameterId, {
+    parameterId,
+    value: existing?.value ?? value,
+    valuesByLanguage: {
+      ...(existing?.valuesByLanguage ?? {}),
+      [languageCode]: value,
+    },
+  });
 };
 
 const normalizeLookupKey = (value: string): string => {
@@ -668,14 +744,24 @@ const applyTemplateMappings = (
     return !sourceContainsPreferredPriceIdentifier(sourceKey);
   };
 
-  const parameterValuesById = new Map<string, { parameterId: string; value: string }>();
+  const parameterValuesById = new Map<string, ProductParameterValue>();
   const customFieldValuesById = new Map<string, ProductCustomFieldValue>();
   if (Array.isArray(mapped.parameters)) {
     mapped.parameters.forEach((entry) => {
-      const parameterId = toStringValue(entry?.parameterId);
-      const value = toStringValue(entry?.value);
-      if (!parameterId || !value) return;
-      parameterValuesById.set(parameterId, { parameterId, value });
+      const parameterId = toStringValue(entry.parameterId);
+      const value = toStringValue(entry.value);
+      const valuesByLanguage = normalizeValuesByLanguage(entry.valuesByLanguage);
+      if (
+        parameterId === null ||
+        (value === null && Object.keys(valuesByLanguage).length === 0)
+      ) {
+        return;
+      }
+      parameterValuesById.set(parameterId, {
+        parameterId,
+        value: value ?? Object.values(valuesByLanguage)[0] ?? '',
+        ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
+      });
     });
   }
   if (Array.isArray(mapped.customFields)) {
@@ -730,15 +816,16 @@ const applyTemplateMappings = (
       }
       continue;
     }
-    if (normalizedTargetField.startsWith('parameter:')) {
-      const parameterId = targetField.slice('parameter:'.length).trim();
-      if (!parameterId) continue;
+    const parameterTarget = parseParameterTargetField(targetField);
+    if (parameterTarget) {
       const parameterValue = toStringValue(rawValue);
       if (!parameterValue) continue;
-      parameterValuesById.set(parameterId, {
-        parameterId,
-        value: parameterValue,
-      });
+      setTemplateParameterValue(
+        parameterValuesById,
+        parameterTarget.parameterId,
+        parameterValue,
+        parameterTarget.languageCode ?? inferLanguageCodeFromSourceKey(sourceKey)
+      );
       continue;
     }
     if (NUMBER_FIELDS.has(targetField)) {

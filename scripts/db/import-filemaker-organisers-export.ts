@@ -23,6 +23,11 @@ type SettingDocument = {
 };
 
 let mongoTouched = false;
+const SINGLE_SETTING_WRITE_MAX_BYTES = 12 * 1024 * 1024;
+
+const getByteLength = (value: string): number => Buffer.byteLength(value, 'utf8');
+
+const formatMegabytes = (bytes: number): string => (bytes / 1024 / 1024).toFixed(2);
 
 const printUsage = (): void => {
   console.log(
@@ -117,6 +122,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
         await readFile(options.inputPath, 'utf8')
       );
   const persistedDatabase = JSON.stringify(toPersistedFilemakerDatabase(result.database));
+  const persistedDatabaseSizeBytes = getByteLength(persistedDatabase);
 
   console.log(
     JSON.stringify(
@@ -125,7 +131,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
         settingKey: FILEMAKER_DATABASE_KEY,
         ignoredColumnNames: result.ignoredColumnNames,
         importedOrganizationCount: result.importedOrganizationCount,
+        persistedDatabaseSizeBytes,
+        persistedDatabaseSizeMegabytes: formatMegabytes(persistedDatabaseSizeBytes),
         skippedRowCount: result.skippedRowCount,
+        singleSettingWriteLimitMegabytes: formatMegabytes(SINGLE_SETTING_WRITE_MAX_BYTES),
+        singleSettingWriteSafe: persistedDatabaseSizeBytes <= SINGLE_SETTING_WRITE_MAX_BYTES,
       },
       null,
       2
@@ -133,6 +143,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
   );
 
   if (options.dryRun) return;
+  if (persistedDatabaseSizeBytes > SINGLE_SETTING_WRITE_MAX_BYTES) {
+    throw new Error(
+      `Imported FileMaker database is ${formatMegabytes(persistedDatabaseSizeBytes)} MB, which is too large for the current single settings-record storage path. Move this import to chunked or collection-backed FileMaker storage before writing.`
+    );
+  }
   await writeDatabaseSetting(persistedDatabase);
 }
 

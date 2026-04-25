@@ -1,10 +1,11 @@
-import * as Papa from 'papaparse';
+import Papa from 'papaparse';
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { normalizeLegacyUuid } from './filemaker-values-import.parser';
 
 const FILEMAKER_TIMESTAMP_PATTERN =
   /^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?)?$/i;
+const FILEMAKER_LINE_BREAK_PATTERN = /\r\n|\n|\r/;
 const XLSX_HEADER_SCAN_LIMIT = 25;
 
 const FIELDS = {
@@ -78,7 +79,7 @@ const countDelimiter = (line: string, delimiter: Delimiter): number =>
 
 const inferDelimiter = (text: string): Delimiter => {
   const lines = text
-    .split(/\r?\n/)
+    .split(FILEMAKER_LINE_BREAK_PATTERN)
     .filter((line: string): boolean => line.trim().length > 0)
     .slice(0, XLSX_HEADER_SCAN_LIMIT);
   const delimiterScores = DELIMITER_CANDIDATES.map((delimiter: Delimiter) => ({

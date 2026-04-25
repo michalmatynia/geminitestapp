@@ -328,6 +328,19 @@ describe('shared contract runtime coverage for schema catalogs', () => {
             sortOrder: 0,
           },
         ],
+        valueParameters: [
+          {
+            id: 'value-parameter-1',
+            label: 'Colour',
+          },
+        ],
+        valueParameterLinks: [
+          {
+            id: 'value-parameter-link-1',
+            valueId: 'value-1',
+            parameterId: 'value-parameter-1',
+          },
+        ],
       })
     ).toEqual(
       expect.objectContaining({

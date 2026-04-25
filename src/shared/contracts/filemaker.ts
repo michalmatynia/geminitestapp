@@ -172,6 +172,9 @@ export const filemakerValueSchema = dtoBaseSchema.extend({
   value: z.string(),
   description: z.string().optional(),
   sortOrder: z.number().int().nonnegative().default(0),
+  legacyUuid: z.string().optional(),
+  legacyParentUuids: z.array(z.string()).optional(),
+  legacyListUuids: z.array(z.string()).optional(),
 });
 
 export type FilemakerValueDto = z.infer<typeof filemakerValueSchema>;
@@ -180,6 +183,7 @@ export type FilemakerValue = FilemakerValueDto;
 export const filemakerValueParameterSchema = dtoBaseSchema.extend({
   label: z.string(),
   description: z.string().optional(),
+  legacyUuid: z.string().optional(),
 });
 
 export type FilemakerValueParameterDto = z.infer<typeof filemakerValueParameterSchema>;
@@ -188,6 +192,8 @@ export type FilemakerValueParameter = FilemakerValueParameterDto;
 export const filemakerValueParameterLinkSchema = dtoBaseSchema.extend({
   valueId: z.string(),
   parameterId: z.string(),
+  legacyValueUuid: z.string().optional(),
+  legacyParameterUuid: z.string().optional(),
 });
 
 export type FilemakerValueParameterLinkDto = z.infer<

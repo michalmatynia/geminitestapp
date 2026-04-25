@@ -66,8 +66,8 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
       runId: data.runId,
       reason: data.reason === 'launch' ? 'manual' : data.reason,
     });
-    
-    if (context !== null && context !== undefined && typeof context.updateProgress === 'function') {
+
+    if (context !== undefined && typeof context.updateProgress === 'function') {
       await context.updateProgress({
         totalCount: result.progress.totalCount,
         processedCount: result.progress.processedCount,
@@ -87,6 +87,9 @@ const queue = createManagedQueue<FilemakerEmailCampaignQueueJobData>({
       jobId,
       progress: result.progress,
       status: result.run.status,
+      retryableDeliveryCount: result.retryableDeliveryCount,
+      retryExhaustedCount: result.retryExhaustedCount,
+      suggestedRetryDelayMs: result.suggestedRetryDelayMs,
     };
   },
   onCompleted: async (jobId, result, data) => {

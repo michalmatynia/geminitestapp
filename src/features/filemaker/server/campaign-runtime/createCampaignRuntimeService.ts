@@ -298,6 +298,15 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             deliveries,
             attemptRegistry,
             maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
+            nowMs,
+          })
+        : null;
+    const pendingRetrySummaryBeforeRun =
+      reason === 'retry'
+        ? resolveFilemakerEmailCampaignRetryableDeliveries({
+            deliveries,
+            attemptRegistry,
+            maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
           })
         : null;
     const deliveriesToProcess =
@@ -316,6 +325,15 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
     }
 
     if (deliveriesToProcess.length === 0) {
+      const suggestedRetryDelayMs =
+        reason === 'retry'
+          ? resolveFilemakerEmailCampaignRetryDelayMs({
+              deliveries,
+              attemptRegistry,
+              maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
+              nowMs,
+            })
+          : null;
       const syncedRun = syncFilemakerEmailCampaignRunWithDeliveries({
         run,
         deliveries,
@@ -325,9 +343,9 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         run: syncedRun,
         deliveries,
         progress: buildProgressSummary(deliveries),
-        retryableDeliveryCount: 0,
-        retryExhaustedCount: 0,
-        suggestedRetryDelayMs: null,
+        retryableDeliveryCount: pendingRetrySummaryBeforeRun?.retryableDeliveries.length ?? 0,
+        retryExhaustedCount: pendingRetrySummaryBeforeRun?.exhaustedDeliveries.length ?? 0,
+        suggestedRetryDelayMs,
       };
     }
 
@@ -675,6 +693,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       deliveries,
       attemptRegistry,
       maxAttempts: FILEMAKER_EMAIL_CAMPAIGN_MAX_DELIVERY_ATTEMPTS,
+      nowMs,
     });
     const nextRun = syncFilemakerEmailCampaignRunWithDeliveries({
       run: runningRun,

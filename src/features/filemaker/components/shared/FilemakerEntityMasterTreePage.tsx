@@ -21,6 +21,7 @@ export interface FilemakerEntityMasterTreePageProps {
   description: string;
   icon: React.ReactNode;
   actions: PanelAction[];
+  customActions?: React.ReactNode;
   badges: React.ReactNode;
   query: string;
   onQueryChange: (value: string) => void;
@@ -77,11 +78,17 @@ function renderFilemakerEntityTreeFilters({
 export function FilemakerEntityMasterTreePage(
   props: FilemakerEntityMasterTreePageProps
 ): React.JSX.Element {
-  const { title, description, icon, actions } = props;
+  const { title, description, icon, actions, customActions } = props;
 
   return (
     <div className='page-section-compact space-y-6'>
-      <PanelHeader title={title} description={description} icon={icon} actions={actions} />
+      <PanelHeader
+        title={title}
+        description={description}
+        icon={icon}
+        actions={actions}
+        customActions={customActions}
+      />
       <FilemakerEntityMasterTreePanel {...props} />
     </div>
   );

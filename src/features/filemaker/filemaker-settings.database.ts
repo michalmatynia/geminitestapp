@@ -795,7 +795,8 @@ export const normalizeFilemakerDatabase = (
   rawValues.forEach((entry: Record<string, unknown>) => {
     const id = normalizeString(entry['id']);
     const label = normalizeString(entry['label']);
-    if (!id || !label || valueIds.has(id)) return;
+    const legacyUuid = normalizeString(entry['legacyUuid']);
+    if (id.length === 0 || label.length === 0 || valueIds.has(id)) return;
     valueIds.add(id);
     values.push(
       createFilemakerValue({
@@ -805,6 +806,11 @@ export const normalizeFilemakerDatabase = (
         value: normalizeString(entry['value']),
         description: normalizeString(entry['description']) || undefined,
         sortOrder: Number(entry['sortOrder']),
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
+        legacyParentUuids: Array.isArray(entry['legacyParentUuids'])
+          ? entry['legacyParentUuids']
+          : [],
+        legacyListUuids: Array.isArray(entry['legacyListUuids']) ? entry['legacyListUuids'] : [],
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })
@@ -817,22 +823,36 @@ export const normalizeFilemakerDatabase = (
   });
 
   const valueParameterIds = new Set<string>();
-  const valueParameterLabels = new Set<string>();
+  const valueParameterLegacyUuidByLabel = new Map<string, string | null>();
   const valueParameters: FilemakerValueParameter[] = [];
   rawValueParameters.forEach((entry: Record<string, unknown>) => {
     const id = normalizeString(entry['id']);
     const label = normalizeString(entry['label']);
     const normalizedLabel = label.toLowerCase();
-    if (!id || !label || valueParameterIds.has(id) || valueParameterLabels.has(normalizedLabel)) {
+    const legacyUuid = normalizeString(entry['legacyUuid']);
+    const existingLegacyUuid = valueParameterLegacyUuidByLabel.get(normalizedLabel);
+    const isDuplicateLabel =
+      existingLegacyUuid !== undefined &&
+      (legacyUuid.length === 0 || existingLegacyUuid === legacyUuid);
+    if (
+      id.length === 0 ||
+      label.length === 0 ||
+      valueParameterIds.has(id) ||
+      isDuplicateLabel
+    ) {
       return;
     }
     valueParameterIds.add(id);
-    valueParameterLabels.add(normalizedLabel);
+    valueParameterLegacyUuidByLabel.set(
+      normalizedLabel,
+      legacyUuid.length > 0 ? legacyUuid : null
+    );
     valueParameters.push(
       createFilemakerValueParameter({
         id,
         label,
         description: normalizeString(entry['description']) || undefined,
+        legacyUuid: legacyUuid.length > 0 ? legacyUuid : undefined,
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })
@@ -845,7 +865,9 @@ export const normalizeFilemakerDatabase = (
   rawValueParameterLinks.forEach((entry: Record<string, unknown>) => {
     const valueId = normalizeString(entry['valueId']);
     const parameterId = normalizeString(entry['parameterId']);
-    if (!valueId || !parameterId) return;
+    const legacyValueUuid = normalizeString(entry['legacyValueUuid']);
+    const legacyParameterUuid = normalizeString(entry['legacyParameterUuid']);
+    if (valueId.length === 0 || parameterId.length === 0) return;
     if (!valueIds.has(valueId) || !valueParameterIds.has(parameterId)) return;
 
     const relationKey = `${valueId}:${parameterId}`;
@@ -863,6 +885,8 @@ export const normalizeFilemakerDatabase = (
         id,
         valueId,
         parameterId,
+        legacyValueUuid: legacyValueUuid.length > 0 ? legacyValueUuid : undefined,
+        legacyParameterUuid: legacyParameterUuid.length > 0 ? legacyParameterUuid : undefined,
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })

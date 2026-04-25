@@ -87,4 +87,47 @@ describe('createFilemakerCampaignDomainThrottle', () => {
 
     expect(sleepCalls).toEqual([1000]);
   });
+
+  it('throttles major mailbox provider aliases as one bucket', async () => {
+    const sleepCalls: number[] = [];
+    let current = 0;
+    const throttle = createFilemakerCampaignDomainThrottle({
+      minIntervalMs: 1000,
+      now: () => current,
+      sleep: async (ms) => {
+        sleepCalls.push(ms);
+        current += ms;
+      },
+    });
+
+    await throttle.wait('a@outlook.com');
+    current += 200;
+    await throttle.wait('b@hotmail.com');
+    current += 200;
+    await throttle.wait('c@live.com');
+
+    expect(sleepCalls).toEqual([800, 800]);
+  });
+
+  it('throttles legacy Gmail, Yahoo, and Apple alias domains as provider buckets', async () => {
+    const sleepCalls: number[] = [];
+    let current = 0;
+    const throttle = createFilemakerCampaignDomainThrottle({
+      minIntervalMs: 500,
+      now: () => current,
+      sleep: async (ms) => {
+        sleepCalls.push(ms);
+        current += ms;
+      },
+    });
+
+    await throttle.wait('a@gmail.com');
+    await throttle.wait('b@googlemail.com');
+    await throttle.wait('c@yahoo.com');
+    await throttle.wait('d@ymail.com');
+    await throttle.wait('e@icloud.com');
+    await throttle.wait('f@me.com');
+
+    expect(sleepCalls).toEqual([500, 500, 500]);
+  });
 });

@@ -19,6 +19,16 @@ export {
   toPersistedFilemakerDatabase,
 } from './filemaker-settings.database';
 export {
+  importFilemakerLegacyValueRows,
+  importFilemakerLegacyValuesExport,
+  parseFilemakerLegacyValueRows,
+} from './filemaker-values-import';
+export type {
+  FilemakerLegacyValueImportIdKind,
+  FilemakerLegacyValueImportOptions,
+  FilemakerLegacyValuesImportResult,
+} from './filemaker-values-import';
+export {
   extractFilemakerEmailsFromText,
   parseFilemakerEmailParserRulesFromPromptSettings,
   validateFilemakerPhoneNumber,

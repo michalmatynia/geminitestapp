@@ -180,6 +180,51 @@ describe('shouldDeferDeliveryForDomainHealth', () => {
     ).toBe(false);
   });
 
+  it('defers across major mailbox provider alias domains', () => {
+    const delivery = createFilemakerEmailCampaignDelivery({
+      campaignId: 'campaign-cb',
+      runId: 'run-1',
+      emailAddress: 'next@hotmail.com',
+      partyKind: 'person',
+      partyId: 'person-next',
+      status: 'queued',
+    });
+    const previousDeliveries = [
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        emailAddress: 'sent@outlook.com',
+        partyKind: 'person',
+        partyId: 'person-sent',
+        status: 'sent',
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        emailAddress: 'bounce@live.com',
+        partyKind: 'person',
+        partyId: 'person-bounce',
+        status: 'bounced',
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        emailAddress: 'fail@msn.com',
+        partyKind: 'person',
+        partyId: 'person-fail',
+        status: 'failed',
+      }),
+      delivery,
+    ];
+
+    expect(
+      shouldDeferDeliveryForDomainHealth({
+        delivery,
+        deliveries: previousDeliveries,
+      })
+    ).toBe(true);
+  });
+
   it('uses recent same-run delivery attempts during retry passes', () => {
     const delivery = createFilemakerEmailCampaignDelivery({
       campaignId: 'campaign-cb',

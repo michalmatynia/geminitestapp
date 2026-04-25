@@ -186,11 +186,25 @@ export const createFilemakerValue = (input: {
   parentId?: unknown;
   description?: unknown;
   sortOrder?: unknown;
+  legacyUuid?: unknown;
+  legacyParentUuids?: unknown;
+  legacyListUuids?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerValue => {
   const now = new Date().toISOString();
   const sortOrder = Number(input.sortOrder);
+  const legacyUuid = normalizeString(input.legacyUuid);
+  const legacyParentUuids = Array.isArray(input.legacyParentUuids)
+    ? input.legacyParentUuids
+        .map(normalizeString)
+        .filter((value: string): boolean => value.length > 0)
+    : [];
+  const legacyListUuids = Array.isArray(input.legacyListUuids)
+    ? input.legacyListUuids
+        .map(normalizeString)
+        .filter((value: string): boolean => value.length > 0)
+    : [];
   return {
     id: normalizeString(input.id),
     parentId: normalizeString(input.parentId) || null,
@@ -198,6 +212,9 @@ export const createFilemakerValue = (input: {
     value: normalizeString(input.value),
     description: normalizeString(input.description) || undefined,
     sortOrder: Number.isInteger(sortOrder) && sortOrder >= 0 ? sortOrder : 0,
+    ...(legacyUuid.length > 0 ? { legacyUuid } : {}),
+    ...(legacyParentUuids.length > 0 ? { legacyParentUuids } : {}),
+    ...(legacyListUuids.length > 0 ? { legacyListUuids } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };
@@ -207,14 +224,17 @@ export const createFilemakerValueParameter = (input: {
   id: string;
   label: unknown;
   description?: unknown;
+  legacyUuid?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerValueParameter => {
   const now = new Date().toISOString();
+  const legacyUuid = normalizeString(input.legacyUuid);
   return {
     id: normalizeString(input.id),
     label: normalizeString(input.label),
     description: normalizeString(input.description) || undefined,
+    ...(legacyUuid.length > 0 ? { legacyUuid } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };
@@ -224,14 +244,20 @@ export const createFilemakerValueParameterLink = (input: {
   id: string;
   valueId: unknown;
   parameterId: unknown;
+  legacyValueUuid?: unknown;
+  legacyParameterUuid?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerValueParameterLink => {
   const now = new Date().toISOString();
+  const legacyValueUuid = normalizeString(input.legacyValueUuid);
+  const legacyParameterUuid = normalizeString(input.legacyParameterUuid);
   return {
     id: normalizeString(input.id),
     valueId: normalizeString(input.valueId),
     parameterId: normalizeString(input.parameterId),
+    ...(legacyValueUuid.length > 0 ? { legacyValueUuid } : {}),
+    ...(legacyParameterUuid.length > 0 ? { legacyParameterUuid } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

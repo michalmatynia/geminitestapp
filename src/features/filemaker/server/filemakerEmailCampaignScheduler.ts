@@ -3,6 +3,8 @@ import 'server-only';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   evaluateFilemakerEmailCampaignLaunch,
@@ -19,6 +21,10 @@ import {
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
 import { createFilemakerCampaignRuntimeService } from './campaign-runtime';
+import {
+  resolveDueFilemakerEmailCampaignRetryRuns,
+  type FilemakerEmailCampaignSchedulerDueRetryRun,
+} from './campaign-retry-scheduler';
 import {
   type FilemakerEmailCampaignSchedulerLaunchFailure,
   type FilemakerEmailCampaignSchedulerSkipReason,
@@ -62,6 +68,7 @@ export type FilemakerEmailCampaignSchedulerTickResult = {
     queuedDeliveryCount: number;
     launchMode: FilemakerEmailCampaignSchedulerDueCampaign['launchMode'];
   }>;
+  dueRetryRuns: FilemakerEmailCampaignSchedulerDueRetryRun[];
   skippedByReason: FilemakerEmailCampaignSchedulerSkipReason[];
   launchFailures: FilemakerEmailCampaignSchedulerLaunchFailure[];
 };
@@ -263,11 +270,20 @@ export const createFilemakerEmailCampaignSchedulerService = (
     runTick: async (): Promise<FilemakerEmailCampaignSchedulerTickResult> => {
       const now = deps.now();
       const nowIso = now.toISOString();
-      const [databaseRaw, campaignsRaw, runsRaw, suppressionsRaw] = await Promise.all([
+      const [
+        databaseRaw,
+        campaignsRaw,
+        runsRaw,
+        suppressionsRaw,
+        deliveriesRaw,
+        attemptsRaw,
+      ] = await Promise.all([
         deps.readSettingValue(FILEMAKER_DATABASE_KEY),
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
       ]);
       const campaignRegistry = parseFilemakerEmailCampaignRegistry(campaignsRaw);
 
@@ -301,6 +317,12 @@ export const createFilemakerEmailCampaignSchedulerService = (
 
       const launchedRuns: FilemakerEmailCampaignSchedulerTickResult['launchedRuns'] = [];
       const launchFailures: FilemakerEmailCampaignSchedulerTickResult['launchFailures'] = [];
+      const dueRetryRuns = resolveDueFilemakerEmailCampaignRetryRuns({
+        deliveriesRaw,
+        attemptsRaw,
+        runsRaw,
+        now,
+      });
 
       for (const dueCampaign of resolution.dueCampaigns) {
         try {
@@ -331,6 +353,7 @@ export const createFilemakerEmailCampaignSchedulerService = (
         evaluatedCampaignCount: resolution.evaluatedCampaignCount,
         dueCampaignCount: resolution.dueCampaigns.length,
         launchedRuns,
+        dueRetryRuns,
         skippedByReason: resolution.skippedByReason,
         launchFailures,
       };

@@ -9,6 +9,10 @@ export {
   type FilemakerEmailCampaignSchedulerDueCampaign,
   type FilemakerEmailCampaignSchedulerTickResult,
 } from './server/filemakerEmailCampaignScheduler';
+export {
+  resolveDueFilemakerEmailCampaignRetryRuns,
+  type FilemakerEmailCampaignSchedulerDueRetryRun,
+} from './server/campaign-retry-scheduler';
 export * from './server/filemaker-email-campaign-test-send';
 export {
   readFilemakerCampaignSettingValue,

@@ -113,6 +113,8 @@ const createDatabase = (): FilemakerDatabase => ({
   ],
   eventOrganizationLinks: [],
   values: [],
+  valueParameters: [],
+  valueParameterLinks: [],
 });
 
 const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerEmailCampaign =>
@@ -155,6 +157,7 @@ const createRuntimeHarness = (input?: {
   campaign?: FilemakerEmailCampaign;
   sendCampaignEmail?: ReturnType<typeof vi.fn>;
   suppressions?: FilemakerEmailCampaignSuppressionRegistry;
+  now?: () => Date;
 }) => {
   const store = new Map<string, string>([
     [
@@ -199,7 +202,7 @@ const createRuntimeHarness = (input?: {
       return true;
     },
     sendCampaignEmail,
-    now: () => new Date(iso),
+    now: input?.now ?? (() => new Date(iso)),
     throttleBeforeSend: async () => {},
     reserveWarmupSlot: async () => ({ ok: true }),
   });
@@ -640,8 +643,10 @@ describe('filemaker campaign runtime service', () => {
         providerMessage: 'Sent after retry.',
         sentAt: iso,
       });
+    let currentNow = new Date(iso);
     const { service, store } = createRuntimeHarness({
       sendCampaignEmail,
+      now: () => currentNow,
     });
     const launched = await service.launchRun({
       campaignId: 'campaign-1',
@@ -666,6 +671,16 @@ describe('filemaker campaign runtime service', () => {
       )?.nextRetryAt
     ).toBe('2026-03-27T10:01:00.000Z');
 
+    const earlyRetry = await service.processRun({
+      runId: launched.run.id,
+      reason: 'retry',
+    });
+
+    expect(sendCampaignEmail).toHaveBeenCalledTimes(2);
+    expect(earlyRetry.retryableDeliveryCount).toBe(1);
+    expect(earlyRetry.suggestedRetryDelayMs).toBe(60_000);
+
+    currentNow = new Date('2026-03-27T10:01:00.000Z');
     const retriedProcessed = await service.processRun({
       runId: launched.run.id,
       reason: 'retry',

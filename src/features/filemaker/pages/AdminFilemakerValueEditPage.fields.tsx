@@ -6,7 +6,7 @@ import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Input, Textarea } from '@/shared/ui/primitives.public';
 
-import type { ValueDraft } from './AdminFilemakerValueEditPage';
+import type { ValueDraft } from './AdminFilemakerValueEditPage.helpers';
 
 type ValueEditFieldsProps = {
   draft: ValueDraft;

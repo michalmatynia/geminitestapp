@@ -8,6 +8,7 @@ import type {
 import { buildFilemakerMailPlainText } from '../../mail-utils';
 import { buildProgressSummary } from '../campaign-runtime.helpers';
 import { buildFilemakerCampaignClickTrackingUrl } from '../campaign-unsubscribe-token';
+import { resolveRecipientDomainProviderBucket } from './recipient-domain';
 
 export const resolveFailureStatus = (
   failureCategory: 'soft_bounce' | 'hard_bounce' | 'invalid_recipient' | 'provider_rejected' | 'rate_limited' | 'timeout' | 'unknown'
@@ -110,12 +111,6 @@ export const applyCampaignRecipientTemplateTokens = (
     );
 };
 
-const extractDeliveryDomain = (emailAddress: string): string => {
-  const atIndex = emailAddress.lastIndexOf('@');
-  if (atIndex < 0) return '';
-  return emailAddress.slice(atIndex + 1).trim().toLowerCase();
-};
-
 export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_MIN_DECIDED = 3;
 export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_FAILURE_RATE_PERCENT = 50;
 export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_ATTEMPT_WINDOW_MS = 60 * 60_000;
@@ -169,7 +164,9 @@ const collectDomainGuardAttemptStatuses = (input: {
   input.attempts
     ?.filter((attempt) => {
       if (attempt.runId !== input.delivery.runId) return false;
-      if (extractDeliveryDomain(attempt.emailAddress) !== input.domain) return false;
+      if (resolveRecipientDomainProviderBucket(attempt.emailAddress) !== input.domain) {
+        return false;
+      }
       if (
         !isWithinDomainGuardAttemptWindow({
           attempt,
@@ -196,7 +193,9 @@ const collectDomainGuardDeliveryStatuses = (input: {
     .filter((delivery) => {
       if (delivery.runId !== input.delivery.runId) return false;
       if (input.attemptedDeliveryIds.has(delivery.id)) return false;
-      if (extractDeliveryDomain(delivery.emailAddress) !== input.domain) return false;
+      if (resolveRecipientDomainProviderBucket(delivery.emailAddress) !== input.domain) {
+        return false;
+      }
       if (
         !isWithinDomainGuardDeliveryWindow({
           delivery,
@@ -219,7 +218,7 @@ export const shouldDeferDeliveryForDomainHealth = (input: {
   failureRatePercent?: number;
   attemptWindowMs?: number;
 }): boolean => {
-  const domain = extractDeliveryDomain(input.delivery.emailAddress);
+  const domain = resolveRecipientDomainProviderBucket(input.delivery.emailAddress);
   if (domain.length === 0) return false;
   const attemptWindowMs =
     input.attemptWindowMs ?? FILEMAKER_CAMPAIGN_DOMAIN_GUARD_ATTEMPT_WINDOW_MS;

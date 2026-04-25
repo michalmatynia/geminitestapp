@@ -161,4 +161,7 @@ export const createDatabase = (): FilemakerDatabase => ({
       updatedAt: iso,
     },
   ],
+  values: [],
+  valueParameters: [],
+  valueParameterLinks: [],
 });

@@ -83,6 +83,7 @@ const logSchedulerTick = async (
 ): Promise<void> => {
   if (
     result.launchedRuns.length > 0 ||
+    result.dueRetryRuns.length > 0 ||
     result.launchFailures.length > 0 ||
     result.skippedByReason.length > 0
   ) {
@@ -92,6 +93,8 @@ const logSchedulerTick = async (
       dueCampaignCount: result.dueCampaignCount,
       launchedRunCount: result.launchedRuns.length,
       launchedRunIds: result.launchedRuns.map((run) => run.runId),
+      dueRetryRunCount: result.dueRetryRuns.length,
+      dueRetryRunIds: result.dueRetryRuns.map((run) => run.runId),
       launchFailures: result.launchFailures,
       skippedByReason: result.skippedByReason,
       queuedDispatchCount: dispatchModes.queued,
@@ -114,20 +117,35 @@ const queue = createManagedQueue<ScheduledTickJobData>({
     const startedAt = new Date().toISOString();
     const result = await runFilemakerEmailCampaignSchedulerTick();
 
-    if (result.launchedRuns.some((run) => run.queuedDeliveryCount > 0)) {
+    if (
+      result.launchedRuns.some((run) => run.queuedDeliveryCount > 0) ||
+      result.dueRetryRuns.length > 0
+    ) {
       startFilemakerEmailCampaignQueue();
     }
 
     const dispatchModes: DispatchModes = { queued: 0, inline: 0 };
-    const dispatchPromises = result.launchedRuns
+    const launchDispatchPromises = result.launchedRuns
       .filter((run) => run.queuedDeliveryCount > 0)
-      .map((run) => enqueueFilemakerEmailCampaignRunJob({
+      .map((run) =>
+        enqueueFilemakerEmailCampaignRunJob({
+          campaignId: run.campaignId,
+          runId: run.runId,
+          reason: 'launch',
+        })
+      );
+    const retryDispatchPromises = result.dueRetryRuns.map((run) =>
+      enqueueFilemakerEmailCampaignRunJob({
         campaignId: run.campaignId,
         runId: run.runId,
-        reason: 'launch',
-      }));
+        reason: 'retry',
+      })
+    );
 
-    const dispatches = await Promise.all(dispatchPromises);
+    const dispatches = await Promise.all([
+      ...launchDispatchPromises,
+      ...retryDispatchPromises,
+    ]);
     dispatches.forEach((d) => {
       dispatchModes[d.dispatchMode] += 1;
     });

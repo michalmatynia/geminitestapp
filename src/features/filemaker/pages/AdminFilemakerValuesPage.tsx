@@ -1,13 +1,15 @@
 'use client';
 
-import { Plus, Tags } from 'lucide-react';
+import { Plus, Tags, Upload } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { startTransition, useCallback, useDeferredValue, useMemo, useState } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge } from '@/shared/ui/primitives.public';
+import { FileUploadButton, type FileUploadHelpers } from '@/shared/ui/forms-and-actions.public';
+import { Badge, useToast } from '@/shared/ui/primitives.public';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -15,27 +17,21 @@ import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-act
 import { FilemakerEntityMasterTreePage } from '../components/shared/FilemakerEntityMasterTreePage';
 import { FilemakerValueMasterTreeNode } from '../components/shared/FilemakerValueMasterTreeNode';
 import { buildFilemakerValueMasterNodes } from '../entity-master-tree';
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
-import type { FilemakerValue } from '../types';
-import { includeQuery } from './filemaker-page-utils';
+import {
+  FILEMAKER_DATABASE_KEY,
+  importFilemakerLegacyValuesExport,
+  parseFilemakerDatabase,
+  toPersistedFilemakerDatabase,
+} from '../settings';
+import type { FilemakerDatabase, FilemakerValue } from '../types';
+import { filterFilemakerValuesWithHierarchy } from './AdminFilemakerValuesPage.helpers';
 
 const FILEMAKER_VALUE_TREE_INSTANCE: FolderTreeInstance = 'filemaker_values';
-
-const buildValueSearchValues = (value: FilemakerValue): string[] => [
-  value.label,
-  value.value,
-  value.description ?? '',
-];
+const VALUE_IMPORT_ACCEPT = '.csv,text/csv,text/tab-separated-values,.tsv';
 
 function useFilteredFilemakerValues(values: FilemakerValue[], query: string): FilemakerValue[] {
   return useMemo(
-    () =>
-      values
-        .filter((value: FilemakerValue) => includeQuery(buildValueSearchValues(value), query))
-        .sort((left: FilemakerValue, right: FilemakerValue) => {
-          if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
-          return left.label.localeCompare(right.label);
-        }),
+    () => filterFilemakerValuesWithHierarchy(values, query),
     [query, values]
   );
 }
@@ -102,6 +98,72 @@ function useValueActions(router: ReturnType<typeof useRouter>): {
   return { actions, openValue };
 }
 
+function useImportValueCsvAction(input: {
+  database: FilemakerDatabase;
+  refetchSettings: () => void;
+}): {
+  importActions: React.ReactNode;
+  isImporting: boolean;
+} {
+  const { database, refetchSettings } = input;
+  const updateSetting = useUpdateSetting();
+  const { toast } = useToast();
+
+  const handleFilesSelected = useCallback(
+    async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
+      const file = files[0];
+      if (!file) return;
+
+      helpers?.setProgress(10);
+      const text = await file.text();
+      helpers?.setProgress(40);
+      const result = importFilemakerLegacyValuesExport(database, text);
+      helpers?.setProgress(70);
+
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_DATABASE_KEY,
+        value: JSON.stringify(toPersistedFilemakerDatabase(result.database)),
+      });
+      refetchSettings();
+      helpers?.setProgress(100);
+      toast(
+        `Imported ${result.importedValueCount} values, ${result.importedParameterCount} lists, and ${result.importedLinkCount} links from ${file.name}.`,
+        { variant: 'success' }
+      );
+    },
+    [database, refetchSettings, toast, updateSetting]
+  );
+
+  const handleImportError = useCallback(
+    (error: unknown): void => {
+      toast(error instanceof Error ? error.message : 'Failed to import value CSV.', {
+        variant: 'error',
+      });
+    },
+    [toast]
+  );
+
+  return {
+    importActions: (
+      <FileUploadButton
+        variant='outline'
+        size='sm'
+        className='h-8'
+        accept={VALUE_IMPORT_ACCEPT}
+        multiple={false}
+        showProgress={false}
+        disabled={updateSetting.isPending}
+        onFilesSelected={handleFilesSelected}
+        onError={handleImportError}
+      >
+        <Upload className='mr-1 size-4' />
+        Import CSV
+      </FileUploadButton>
+    ),
+    isImporting: updateSetting.isPending,
+  };
+}
+
 export function AdminFilemakerValuesPage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();
@@ -112,6 +174,10 @@ export function AdminFilemakerValuesPage(): React.JSX.Element {
   const values = useFilteredFilemakerValues(database.values, deferredQuery);
   const { defaultExpandedNodeIds, treeNodes } = useFilemakerValueNodes(values);
   const { actions, openValue } = useValueActions(router);
+  const { importActions, isImporting } = useImportValueCsvAction({
+    database,
+    refetchSettings: settingsStore.refetch,
+  });
   const renderNode = useValueRenderNode(values, openValue);
 
   return (
@@ -121,6 +187,7 @@ export function AdminFilemakerValuesPage(): React.JSX.Element {
       description='Search and browse hierarchical Filemaker values in a master folder tree.'
       icon={<Tags className='size-4' />}
       actions={actions}
+      customActions={importActions}
       badges={
         <Badge variant='outline' className='text-[10px]'>
           Values: {values.length}
@@ -131,7 +198,7 @@ export function AdminFilemakerValuesPage(): React.JSX.Element {
       queryPlaceholder='Search values...'
       nodes={treeNodes}
       defaultExpandedNodeIds={defaultExpandedNodeIds}
-      isLoading={settingsStore.isLoading}
+      isLoading={settingsStore.isLoading || isImporting}
       emptyLabel={query.trim().length > 0 ? 'No values found' : 'No values found in database'}
       renderNode={renderNode}
     />

@@ -294,6 +294,46 @@ describe('CategoryMapperProvider auto-match by name', () => {
     );
   });
 
+  it('does not let an old saved public Tradera setting override the listing form default', async () => {
+    const user = userEvent.setup();
+    mocks.settingsMap = new Map([['tradera_category_fetch_method', 'playwright']]);
+    mocks.fetchMutateAsync.mockResolvedValue({
+      fetched: 0,
+      total: 0,
+      source: 'Tradera listing form picker',
+      message: 'No categories found in Tradera listing form picker.',
+      categoryStats: {
+        rootCount: 0,
+        withParentCount: 0,
+        maxDepth: 0,
+        depthHistogram: {},
+      },
+    });
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <Harness />
+      </CategoryMapperProvider>
+    );
+
+    await waitFor(() =>
+      expect(screen.getByTestId('fetch-method')).toHaveTextContent('playwright_listing_form')
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
+
+    await waitFor(() =>
+      expect(mocks.fetchMutateAsync).toHaveBeenCalledWith({
+        connectionId: 'conn-1',
+        categoryFetchMethod: 'playwright_listing_form',
+      })
+    );
+  });
+
   it('builds a nested tree from parent external ids instead of returning only roots', async () => {
     mocks.internalCategories = [];
     mocks.externalCategories = [
@@ -397,15 +437,15 @@ describe('CategoryMapperProvider auto-match by name', () => {
     mocks.fetchMutateAsync
       .mockRejectedValueOnce(shallowFetchError)
       .mockResolvedValueOnce({
-        fetched: 3,
-        total: 3,
+        fetched: 4,
+        total: 4,
         source: 'Tradera listing form picker',
-        message: 'Successfully synced 3 categories from Tradera listing form picker (roots: 1, max depth: 2).',
+        message: 'Successfully synced 4 categories from Tradera listing form picker (roots: 1, max depth: 3).',
         categoryStats: {
           rootCount: 1,
-          withParentCount: 2,
-          maxDepth: 2,
-          depthHistogram: { '0': 1, '1': 1, '2': 1 },
+          withParentCount: 3,
+          maxDepth: 3,
+          depthHistogram: { '0': 1, '1': 1, '2': 1, '3': 1 },
         },
       });
 

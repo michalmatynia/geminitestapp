@@ -553,21 +553,22 @@ describe('CategoryMapperTable', () => {
 
     await waitFor(() => {
       expect(mocks.toast).toHaveBeenCalledWith(
-        'Successfully synced 12 categories from Tradera public taxonomy pages (roots: 4, max depth: 1).',
-        { variant: 'success' }
+        expect.stringContaining('shallow tree'),
+        { variant: 'error' }
       );
     });
 
     const alerts = screen.getAllByTestId('mapper-alert');
-    expect(alerts[0]).toHaveTextContent(
-      'Category source: Tradera public taxonomy pages. Loaded 12 categories.'
-    );
-    expect(alerts[0]).toHaveTextContent(
-      'Roots: 4. Categories with parents: 8. Max depth: 1.'
-    );
-    expect(alerts[0]).toHaveTextContent(
-      'Tradera is using the public taxonomy-page fallback and only reached shallow levels. Switch to Listing form picker for deeper category coverage.'
-    );
+    const alertTexts = alerts.map((alert) => alert.textContent ?? '');
+    expect(alertTexts.some((t) => t.includes('shallow tree'))).toBe(true);
+    expect(
+      alertTexts.some((t) =>
+        t.includes('Category source: Tradera public taxonomy pages. Loaded 12 categories.')
+      )
+    ).toBe(true);
+    expect(
+      alertTexts.some((t) => t.includes('Roots: 4. Categories with parents: 8. Max depth: 1.'))
+    ).toBe(true);
   });
 
   it('shows persisted fetch diagnostics from loaded external category metadata after reload', async () => {

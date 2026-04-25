@@ -118,4 +118,36 @@ describe('useProductMetadata', () => {
 
     expect(result.current.filteredPriceGroups.map((group) => group.id)).toEqual(['group-pln']);
   });
+
+  it('seeds edit-product catalog selection from product catalog links', () => {
+    const { result } = renderHook(() =>
+      useProductMetadata({
+        product: {
+          id: 'product-1',
+          categoryId: null,
+          catalogId: null,
+          catalogs: [{ catalogId: 'catalog-1' }],
+        } as never,
+      })
+    );
+
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-1']);
+    expect(mocks.useParameters).toHaveBeenCalledWith('catalog-1');
+  });
+
+  it('falls back to product.catalogId when edit-product catalog links are missing', () => {
+    const { result } = renderHook(() =>
+      useProductMetadata({
+        product: {
+          id: 'product-1',
+          categoryId: null,
+          catalogId: ' catalog-1 ',
+          catalogs: [],
+        } as never,
+      })
+    );
+
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-1']);
+    expect(mocks.useParameters).toHaveBeenCalledWith('catalog-1');
+  });
 });

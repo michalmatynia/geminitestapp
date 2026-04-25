@@ -22,6 +22,9 @@ export const filemakerEntityKindSchema = z.enum([
   'email',
   'email_link',
   'event_organization_link',
+  'value',
+  'value_parameter',
+  'value_parameter_link',
   'email_campaign',
   'email_campaign_run',
   'email_campaign_delivery',
@@ -162,6 +165,35 @@ export type FilemakerEventOrganizationLinkDto = z.infer<
   typeof filemakerEventOrganizationLinkSchema
 >;
 export type FilemakerEventOrganizationLink = FilemakerEventOrganizationLinkDto;
+
+export const filemakerValueSchema = dtoBaseSchema.extend({
+  parentId: z.string().nullable().optional(),
+  label: z.string(),
+  value: z.string(),
+  description: z.string().optional(),
+  sortOrder: z.number().int().nonnegative().default(0),
+});
+
+export type FilemakerValueDto = z.infer<typeof filemakerValueSchema>;
+export type FilemakerValue = FilemakerValueDto;
+
+export const filemakerValueParameterSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  description: z.string().optional(),
+});
+
+export type FilemakerValueParameterDto = z.infer<typeof filemakerValueParameterSchema>;
+export type FilemakerValueParameter = FilemakerValueParameterDto;
+
+export const filemakerValueParameterLinkSchema = dtoBaseSchema.extend({
+  valueId: z.string(),
+  parameterId: z.string(),
+});
+
+export type FilemakerValueParameterLinkDto = z.infer<
+  typeof filemakerValueParameterLinkSchema
+>;
+export type FilemakerValueParameterLink = FilemakerValueParameterLinkDto;
 
 export const filemakerEmailCampaignLifecycleStatusSchema = z.enum([
   'draft',
@@ -752,6 +784,9 @@ export const filemakerDatabaseSchema = z.object({
   emails: z.array(filemakerEmailSchema),
   emailLinks: z.array(filemakerEmailLinkSchema),
   eventOrganizationLinks: z.array(filemakerEventOrganizationLinkSchema),
+  values: z.array(filemakerValueSchema).default([]),
+  valueParameters: z.array(filemakerValueParameterSchema).default([]),
+  valueParameterLinks: z.array(filemakerValueParameterLinkSchema).default([]),
 });
 
 export type FilemakerDatabaseDto = z.infer<typeof filemakerDatabaseSchema>;

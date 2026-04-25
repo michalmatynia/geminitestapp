@@ -14,21 +14,15 @@ import {
   useExternalCategories,
   useCategoryMappings,
 } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { TRADERA_SETTINGS_KEYS } from '@/features/integrations/constants/tradera';
 import {
   autoMatchCategoryMappingsByName,
   formatAutoMatchCategoryMappingsByNameMessage,
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
-import {
-  TRADERA_CATEGORY_FETCH_METHODS,
-  type MarketplaceFetchResponse,
-  type TraderaCategoryFetchMethod,
-} from '@/shared/contracts/integrations/marketplace';
+import { type MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui/primitives.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { createStrictContext } from './createStrictContext';
@@ -75,34 +69,6 @@ export const { Context: ActionsContext, useValue: useCategoryMapperActions } =
     'useCategoryMapperActions must be used within CategoryMapperProvider'
   );
 
-const isSupportedTraderaCategoryFetchMethod = (
-  value: string | null | undefined
-): value is TraderaCategoryFetchMethod =>
-  typeof value === 'string' &&
-  TRADERA_CATEGORY_FETCH_METHODS.some((method) => method === value);
-
-const resolveInitialCategoryFetchMethod = ({
-  integrationSlug,
-  settingsMap,
-}: {
-  integrationSlug: string;
-  settingsMap: Map<string, string> | null | undefined;
-}): TraderaCategoryFetchMethod => {
-  const storedMethod = settingsMap?.get(TRADERA_SETTINGS_KEYS.categoryFetchMethod)?.trim() ?? '';
-  if (
-    isSupportedTraderaCategoryFetchMethod(storedMethod) &&
-    (integrationSlug === 'tradera' || storedMethod !== 'playwright_listing_form')
-  ) {
-    return storedMethod;
-  }
-
-  if (integrationSlug === 'tradera') {
-    return 'playwright_listing_form';
-  }
-
-  return 'playwright';
-};
-
 export function CategoryMapperProvider({
   connectionId,
   connectionName,
@@ -127,7 +93,6 @@ export function CategoryMapperProvider({
   const hasInitializedCatalog = useRef(false);
   const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
   const isTraderaConnection = normalizedIntegrationSlug === 'tradera';
-  const settingsMapQuery = useSettingsMap({ enabled: isTraderaConnection });
 
   // Auto-select default catalog
   useEffect(() => {
@@ -192,32 +157,12 @@ export function CategoryMapperProvider({
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [lastFetchResult, setLastFetchResult] = useState<MarketplaceFetchResponse | null>(null);
   const [lastFetchWarning, setLastFetchWarning] = useState<CategoryMapperFetchWarning | null>(null);
-  const [categoryFetchMethod, setCategoryFetchMethod] = useState<TraderaCategoryFetchMethod>(() =>
-    resolveInitialCategoryFetchMethod({
-      integrationSlug: normalizedIntegrationSlug,
-      settingsMap: settingsMapQuery.data,
-    })
-  );
   const hasInitializedExpansion = useRef(false);
 
   useEffect(() => {
     setLastFetchResult(null);
     setLastFetchWarning(null);
   }, [connectionId]);
-
-  useEffect(() => {
-    if (!isTraderaConnection) {
-      setCategoryFetchMethod('playwright');
-      return;
-    }
-
-    setCategoryFetchMethod(
-      resolveInitialCategoryFetchMethod({
-        integrationSlug: normalizedIntegrationSlug,
-        settingsMap: settingsMapQuery.data,
-      })
-    );
-  }, [connectionId, isTraderaConnection, normalizedIntegrationSlug, settingsMapQuery.data]);
 
   // Initialize expansion state
   useEffect(() => {
@@ -248,13 +193,28 @@ export function CategoryMapperProvider({
 
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {
     try {
-      const result = await fetchMutation.mutateAsync({
-        connectionId,
-        ...(isTraderaConnection ? { categoryFetchMethod } : {}),
-      });
+      const result = await fetchMutation.mutateAsync({ connectionId });
       setLastFetchResult(result);
-      setLastFetchWarning(null);
-      toast(result.message, { variant: 'success' });
+      const shallowDepth =
+        isTraderaConnection &&
+        result.fetched > 0 &&
+        (result.categoryStats?.maxDepth ?? 0) < 3;
+      if (shallowDepth) {
+        const message =
+          'Tradera category fetch returned a shallow tree (depth < 3). Re-authenticate the Tradera browser session and retry to capture the full picker depth.';
+        setLastFetchWarning({
+          message,
+          sourceName: result.source ?? null,
+          existingTotal: null,
+          existingMaxDepth: null,
+          fetchedTotal: result.fetched,
+          fetchedMaxDepth: result.categoryStats?.maxDepth ?? null,
+        });
+        toast(message, { variant: 'error' });
+      } else {
+        setLastFetchWarning(null);
+        toast(result.message, { variant: 'success' });
+      }
     } catch (error: unknown) {
       setLastFetchWarning(extractTraderaFetchWarning(error));
       logClientCatch(error, {
@@ -266,7 +226,7 @@ export function CategoryMapperProvider({
       const message = error instanceof Error ? error.message : 'Failed to fetch categories';
       toast(message, { variant: 'error' });
     }
-  }, [categoryFetchMethod, connectionId, fetchMutation, integrationId, isTraderaConnection, toast]);
+  }, [connectionId, fetchMutation, integrationId, isTraderaConnection, toast]);
 
   const getMappingForExternal = useCallback(
     (externalCategoryId: string): string | null => {
@@ -492,8 +452,6 @@ export function CategoryMapperProvider({
       toggleExpand,
       lastFetchResult,
       lastFetchWarning,
-      categoryFetchMethod,
-      setCategoryFetchMethod,
       staleMappings,
       nonLeafMappings,
       stats,
@@ -504,7 +462,6 @@ export function CategoryMapperProvider({
       toggleExpand,
       lastFetchResult,
       lastFetchWarning,
-      categoryFetchMethod,
       staleMappings,
       nonLeafMappings,
       stats,

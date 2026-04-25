@@ -2,6 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { FilemakerMailAccount } from '../types';
 
+const originalEnv = {
+  NEXT_PUBLIC_APP_URL: process.env['NEXT_PUBLIC_APP_URL'],
+  NEXTAUTH_URL: process.env['NEXTAUTH_URL'],
+};
+
 const {
   readSecretSettingValuesMock,
   getFilemakerMailAccountMock,
@@ -77,6 +82,8 @@ const createMailAccount = (overrides?: Partial<FilemakerMailAccount>): Filemaker
 
 describe('sendFilemakerCampaignEmail', () => {
   beforeEach(() => {
+    process.env['NEXT_PUBLIC_APP_URL'] = 'https://app.example.com';
+    delete process.env['NEXTAUTH_URL'];
     createTransportMock.mockReturnValue({
       sendMail: sendMailMock,
     });
@@ -94,6 +101,17 @@ describe('sendFilemakerCampaignEmail', () => {
 
   afterEach(async () => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    if (originalEnv.NEXT_PUBLIC_APP_URL === undefined) {
+      delete process.env['NEXT_PUBLIC_APP_URL'];
+    } else {
+      process.env['NEXT_PUBLIC_APP_URL'] = originalEnv.NEXT_PUBLIC_APP_URL;
+    }
+    if (originalEnv.NEXTAUTH_URL === undefined) {
+      delete process.env['NEXTAUTH_URL'];
+    } else {
+      process.env['NEXTAUTH_URL'] = originalEnv.NEXTAUTH_URL;
+    }
     const module = await import('./campaign-email-delivery');
     module.__resetDeliveredFilemakerCampaignEmails();
   });
@@ -129,6 +147,10 @@ describe('sendFilemakerCampaignEmail', () => {
       expect.objectContaining({
         from: '"Sales Team" <sales@example.com>',
         to: 'recipient@example.com',
+        envelope: {
+          from: 'sales@example.com',
+          to: 'recipient@example.com',
+        },
         replyTo: 'reply@example.com',
         subject: 'Welcome',
       })
@@ -172,6 +194,61 @@ describe('sendFilemakerCampaignEmail', () => {
       }),
     ]);
     expect(logSystemEventMock).not.toHaveBeenCalled();
+  });
+
+  it('passes deliverability headers through webhook payloads', async () => {
+    const module = await import('./campaign-email-delivery');
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 202 }));
+    vi.stubGlobal('fetch', fetchMock);
+    readSecretSettingValuesMock.mockResolvedValue({
+      filemaker_campaign_email_webhook_url: 'https://webhook.example.com/send',
+      filemaker_campaign_email_webhook_secret: 'webhook-secret',
+    });
+
+    const result = await module.sendFilemakerCampaignEmail({
+      to: 'Recipient@Example.com',
+      subject: 'Webhook send',
+      text: 'Hello from campaign',
+      campaignId: 'Campaign One',
+      runId: 'Run One',
+      deliveryId: 'Delivery One',
+    });
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        provider: 'webhook',
+        providerMessage: 'Accepted by the Filemaker campaign webhook.',
+      })
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://webhook.example.com/send',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'Idempotency-Key': 'filemaker-campaign:campaign-one:run-one:delivery-one',
+          'x-filemaker-campaign-secret': 'webhook-secret',
+          'x-filemaker-campaign-id': 'Campaign One',
+          'x-filemaker-run-id': 'Run One',
+          'x-filemaker-delivery-id': 'Delivery One',
+        }),
+      })
+    );
+    const payload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body)) as {
+      to?: string;
+      headers?: Record<string, string>;
+    };
+    expect(payload.to).toBe('recipient@example.com');
+    expect(payload.headers?.['List-Unsubscribe']).toMatch(
+      /^<https:\/\/app\.example\.com\/api\/filemaker\/campaigns\/unsubscribe\?token=.+>$/
+    );
+    expect(payload.headers?.['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
+    expect(payload.headers?.['Feedback-ID']).toBe(
+      'campaign-one:run-one:delivery-one:filemaker'
+    );
+    expect(payload.headers?.['List-Id']).toBe(
+      'Filemaker campaign campaign-one <campaign-campaign-one.app.example.com>'
+    );
   });
 
   it('reports mail filing failures without failing the campaign send', async () => {
@@ -238,13 +315,20 @@ describe('sendFilemakerCampaignEmail', () => {
       | undefined;
     expect(sendMailArgs?.headers).toBeDefined();
     expect(sendMailArgs?.headers?.['List-Unsubscribe']).toMatch(
-      /^<mailto:sales@example\.com\?subject=unsubscribe>, <https?:\/\/.+\/unsubscribe\?token=.+>$/
+      /^<https?:\/\/.+\/api\/filemaker\/campaigns\/unsubscribe\?token=.+>, <mailto:sales@example\.com\?subject=unsubscribe>$/
     );
     expect(sendMailArgs?.headers?.['List-Unsubscribe-Post']).toBe(
       'List-Unsubscribe=One-Click'
     );
+    expect(sendMailArgs?.headers?.['Feedback-ID']).toBe(
+      'campaign-1:run-1:delivery-1:filemaker'
+    );
+    expect(sendMailArgs?.headers?.['List-Id']).toBe(
+      'Filemaker campaign campaign-1 <campaign-campaign-1.app.example.com>'
+    );
     expect(sendMailArgs?.headers?.['X-Campaign-ID']).toBe('campaign-1');
     expect(sendMailArgs?.headers?.['X-Entity-Ref-ID']).toBe('delivery-1');
     expect(sendMailArgs?.headers?.['Precedence']).toBe('bulk');
+    expect(sendMailArgs?.headers?.['X-Auto-Response-Suppress']).toBe('All');
   });
 });

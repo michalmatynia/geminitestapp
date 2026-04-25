@@ -46,6 +46,34 @@ export function OrganizationBasicInfoSection(): React.JSX.Element {
             title='Trading name or title used in campaign audience filters'
           />
         </FormField>
+        <FormField label='NIP / Tax ID'>
+          <Input
+            value={orgDraft.taxId ?? ''}
+            onChange={(e) =>
+              setOrgDraft((prev: Partial<FilemakerOrganization>) => ({
+                ...prev,
+                taxId: e.target.value,
+              }))
+            }
+            placeholder='Tax identification number'
+            aria-label='Tax identification number'
+            title='Tax identification number'
+          />
+        </FormField>
+        <FormField label='KRS'>
+          <Input
+            value={orgDraft.krs ?? ''}
+            onChange={(e) =>
+              setOrgDraft((prev: Partial<FilemakerOrganization>) => ({
+                ...prev,
+                krs: e.target.value,
+              }))
+            }
+            placeholder='Court register number'
+            aria-label='Court register number'
+            title='Court register number'
+          />
+        </FormField>
       </div>
     </FormSection>
   );

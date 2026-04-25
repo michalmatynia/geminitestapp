@@ -211,6 +211,7 @@ const createDatabaseJson = (): string =>
     emails: [],
     emailLinks: [],
     eventOrganizationLinks: [],
+    values: [],
   });
 
 describe('filemaker mail service - drafts', () => {

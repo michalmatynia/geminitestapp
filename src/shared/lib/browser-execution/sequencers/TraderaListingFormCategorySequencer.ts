@@ -1,6 +1,6 @@
 import { type StepId } from '../step-registry';
 import { PlaywrightSequencer, type PlaywrightSequencerContext } from './PlaywrightSequencer';
-import type { TraderaCategorySequencerResult } from './TraderaCategorySequencer';
+import type { TraderaCategorySequencerResult } from './tradera-category-sequencer-types';
 import type { TraderaListingFormCategoryPickerItem } from './tradera-listing-form-category-picker';
 import {
   acceptTraderaListingFormCategoryCookies,
@@ -13,11 +13,12 @@ import {
 import { drillAndReadTraderaListingFormCategoryPath } from './tradera-listing-form-category-drill';
 import {
   enrichTraderaListingFormCategoryItemsFromPublicPage,
-  fetchTraderaPublicCategoryChildItemsForPath,
+  fetchTraderaPublicRootCategoryItems,
 } from './tradera-listing-form-category-public-page';
 import { crawlTraderaListingFormCategoryTree } from './tradera-listing-form-category-tree-crawl';
 
-const TOTAL_BUDGET_MS = 270_000;
+const TOTAL_BUDGET_MS = 900_000;
+const MAX_CONSECUTIVE_DRILL_FAILURES = 2;
 
 type PickerItem = TraderaListingFormCategoryPickerItem;
 
@@ -34,10 +35,19 @@ type EmptyResultInput = {
 
 export type TraderaListingFormCategorySequencerInput = {
   listingFormUrl: string;
+  /**
+   * Optional callback invoked when the listing form lands on Tradera's auth surface mid-fetch.
+   * Should run the standard Tradera auth flow (ensureLoggedIn + storage-state persistence).
+   * Returns `true` when the session is now authenticated and the sequencer can retry.
+   */
+  reauthenticate?: () => Promise<boolean>;
 };
 
 export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   private readonly listingFormUrl: string;
+  private readonly reauthenticate: (() => Promise<boolean>) | null;
+  private reauthAttempted = false;
+  private reauthSucceeded = false;
 
   private rootItems: PickerItem[] = [];
   private categoriesById = new Map<string, CategoryEntry>();
@@ -46,6 +56,11 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   private budgetExhausted = false;
   private retryCount = 0;
   private diagnostics: Record<string, unknown> | null = null;
+  private rootsSeededFromPublic = false;
+  private drillFailureCount = 0;
+  private consecutiveDrillFailures = 0;
+  private lastFailedPath: string[] | null = null;
+  private drillSessionAborted = false;
 
   public result: TraderaCategorySequencerResult | null = null;
 
@@ -55,6 +70,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   ) {
     super(context);
     this.listingFormUrl = input.listingFormUrl;
+    this.reauthenticate = input.reauthenticate ?? null;
   }
 
   protected async executeStep(stepId: StepId): Promise<void> {
@@ -170,20 +186,83 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     });
   }
 
-  private async stepSeedExtract(): Promise<void> {
-    this.note('categories_seed_extract', 'Opening category picker to read top-level categories.');
+  private async resolveAuthBlockOrFail(): Promise<boolean> {
+    if (!(await isOnTraderaListingFormAuthPage(this.context.page))) return true;
 
-    if (await isOnTraderaListingFormAuthPage(this.context.page)) {
+    if (this.reauthenticate === null || this.reauthAttempted) {
       this.context.tracker.fail(
         'categories_seed_extract',
         'Tradera login is required before fetching listing form categories.'
       );
       this.setEmptyResult({
-        diagnostics: { reason: 'auth_required', formUrl: this.listingFormUrl },
+        diagnostics: {
+          reason: 'auth_required',
+          formUrl: this.listingFormUrl,
+          reauthAttempted: this.reauthAttempted,
+        },
         crawlStats: { pagesVisited: 0, rootCount: 0 },
       });
-      return;
+      return false;
     }
+
+    this.reauthAttempted = true;
+    this.context.log?.('tradera.listing-form-category.reauth-start', {
+      formUrl: this.listingFormUrl,
+    });
+    const ok = await this.reauthenticate().catch((error: unknown) => {
+      this.context.log?.('tradera.listing-form-category.reauth-error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    });
+    this.reauthSucceeded = ok;
+    if (!ok) {
+      this.context.tracker.fail(
+        'categories_seed_extract',
+        'Tradera reauthentication did not restore the listing form session.'
+      );
+      this.setEmptyResult({
+        diagnostics: {
+          reason: 'auth_required',
+          formUrl: this.listingFormUrl,
+          reauthAttempted: true,
+          reauthSucceeded: false,
+        },
+        crawlStats: { pagesVisited: 0, rootCount: 0 },
+      });
+      return false;
+    }
+
+    await this.openListingForm();
+    await this.acceptCookies();
+
+    if (await isOnTraderaListingFormAuthPage(this.context.page)) {
+      this.context.tracker.fail(
+        'categories_seed_extract',
+        'Tradera listing form remained on the auth surface after reauthentication.'
+      );
+      this.setEmptyResult({
+        diagnostics: {
+          reason: 'auth_required_after_reauth',
+          formUrl: this.listingFormUrl,
+          reauthAttempted: true,
+          reauthSucceeded: true,
+        },
+        crawlStats: { pagesVisited: 0, rootCount: 0 },
+      });
+      return false;
+    }
+
+    this.context.log?.('tradera.listing-form-category.reauth-success', {
+      formUrl: this.listingFormUrl,
+    });
+    return true;
+  }
+
+  private async stepSeedExtract(): Promise<void> {
+    this.note('categories_seed_extract', 'Opening category picker to read top-level categories.');
+
+    if (!(await this.resolveAuthBlockOrFail())) return;
 
     const opened = await openTraderaListingFormCategoryPicker({
       page: this.context.page,
@@ -208,6 +287,11 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
         formUrl: this.listingFormUrl,
         pickerRootSelectors: TRADERA_LISTING_FORM_CATEGORY_PICKER_DIAGNOSTIC_SELECTORS,
       };
+      const publicRoots = await fetchTraderaPublicRootCategoryItems().catch(() => []);
+      if (publicRoots.length > 0) {
+        this.rootItems = publicRoots;
+        this.rootsSeededFromPublic = true;
+      }
     }
     await closeTraderaListingFormCategoryPicker({
       page: this.context.page,
@@ -216,9 +300,10 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
 
     this.crawlStartTime = Date.now();
     this.addRootCategories();
+    const seedNote = this.rootsSeededFromPublic ? ' (seeded from public taxonomy)' : '';
     this.complete(
       'categories_seed_extract',
-      `Found ${String(this.rootItems.length)} top-level categories.`
+      `Found ${String(this.rootItems.length)} top-level categories${seedNote}.`
     );
   }
 
@@ -254,10 +339,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     if (parent === undefined) return items;
 
     if (items === null || items.length === 0) {
-      const publicItems = await fetchTraderaPublicCategoryChildItemsForPath(path).catch(
-        () => []
-      );
-      return publicItems.length > 0 ? publicItems : items;
+      return items;
     }
 
     return enrichTraderaListingFormCategoryItemsFromPublicPage({
@@ -283,13 +365,28 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   }
 
   private async drillAndRead(path: PickerItem[]): Promise<PickerItem[] | null> {
+    if (this.drillSessionAborted) return null;
+
     let items = await this.drillAndReadOnce(path);
     if (items === null && !this.isBudgetExhausted()) {
       await this.resetListingFormForCategoryRetry(path);
       items = await this.drillAndReadOnce(path);
     }
-    if (items === null) return null;
+    if (items === null) {
+      this.drillFailureCount += 1;
+      this.consecutiveDrillFailures += 1;
+      this.lastFailedPath = path.map((p) => p.name);
+      if (this.consecutiveDrillFailures >= MAX_CONSECUTIVE_DRILL_FAILURES) {
+        this.drillSessionAborted = true;
+        this.context.log?.('tradera.listing-form-category.drill-session-aborted', {
+          drillFailureCount: this.drillFailureCount,
+          lastFailedPath: this.lastFailedPath,
+        });
+      }
+      return null;
+    }
 
+    this.consecutiveDrillFailures = 0;
     this.context.log?.('tradera.listing-form-category.drilled', {
       path: path.map((p) => p.name),
       found: items.length,
@@ -310,6 +407,12 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
         rootCount: this.rootItems.length,
         budgetExhausted: this.budgetExhausted,
         retryCount: this.retryCount,
+        rootsSeededFromPublic: this.rootsSeededFromPublic,
+        drillFailureCount: this.drillFailureCount,
+        drillSessionAborted: this.drillSessionAborted,
+        lastFailedPath: this.lastFailedPath,
+        reauthAttempted: this.reauthAttempted,
+        reauthSucceeded: this.reauthSucceeded,
       },
     };
     this.complete('categories_finalize', 'Listing form category output was prepared.');

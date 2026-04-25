@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import { playwrightRelistBrowserModeSchema } from './listings';
-import { traderaCategoryFetchMethodSchema } from './marketplace';
 
 export const traderaApiCredentialsSchema = z.object({
   appId: z.number(),
@@ -55,7 +54,6 @@ export const traderaSystemSettingsSchema = z.object({
   allowSimulatedSuccess: z.boolean(),
   listingFormUrl: z.string(),
   selectorProfile: z.string(),
-  categoryFetchMethod: traderaCategoryFetchMethodSchema,
 });
 
 export type TraderaSystemSettings = z.infer<typeof traderaSystemSettingsSchema>;

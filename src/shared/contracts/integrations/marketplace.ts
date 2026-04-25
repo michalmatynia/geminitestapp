@@ -4,14 +4,8 @@ import { z } from 'zod';
  * Marketplace sync DTOs
  */
 
-export const TRADERA_CATEGORY_FETCH_METHODS = ['playwright', 'playwright_listing_form'] as const;
-export type TraderaCategoryFetchMethod = (typeof TRADERA_CATEGORY_FETCH_METHODS)[number];
-export const traderaCategoryFetchMethodSchema = z.enum(TRADERA_CATEGORY_FETCH_METHODS);
-
 export const marketplaceConnectionRequestSchema = z.object({
   connectionId: z.string().trim().min(1),
-  /** Tradera only: override which fetch method to use for category sync */
-  categoryFetchMethod: traderaCategoryFetchMethodSchema.optional(),
 });
 
 export type MarketplaceConnectionRequestDto = z.infer<typeof marketplaceConnectionRequestSchema>;

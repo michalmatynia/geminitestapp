@@ -38,6 +38,7 @@ import {
   toSortedOldestTimestamp,
 } from './utils';
 import { summarizeFilemakerEmailCampaignAnalytics } from './analytics';
+import { summarizeFilemakerEmailCampaignSuppressionSignals } from './deliverability-suppression-signals';
 
 export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
   database: FilemakerDatabase;
@@ -82,6 +83,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
         skippedCount: analytics.skippedCount,
         pendingRetryCount: 0,
         overdueRetryCount: 0,
+        rateLimitedRetryCount: 0,
         deliveryRatePercent: analytics.deliveryRatePercent,
         failureRatePercent: analytics.failureRatePercent,
         bounceRatePercent: analytics.bounceRatePercent,
@@ -185,6 +187,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
         skippedCount: entry.skippedCount,
         pendingRetryCount: 0,
         overdueRetryCount: 0,
+        rateLimitedRetryCount: 0,
         suppressionCount: suppressionCountByDomain.get(entry.domain) ?? 0,
         deliveryRatePercent: roundPercentage(entry.sentCount, entry.totalDeliveries),
         failureRatePercent,
@@ -333,6 +336,16 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     map.set(retry.campaignId, (map.get(retry.campaignId) ?? 0) + 1);
     return map;
   }, new Map());
+  const rateLimitedRetries = scheduledRetries.filter(
+    (retry) => retry.failureCategory === 'rate_limited'
+  );
+  const rateLimitedRetryCountByCampaign = rateLimitedRetries.reduce<Map<string, number>>(
+    (map, retry) => {
+      map.set(retry.campaignId, (map.get(retry.campaignId) ?? 0) + 1);
+      return map;
+    },
+    new Map()
+  );
   const overdueRetryCountByCampaign = scheduledRetries.reduce<Map<string, number>>((map, retry) => {
     if (Date.parse(retry.nextRetryAt) > nowMs) return map;
     map.set(retry.campaignId, (map.get(retry.campaignId) ?? 0) + 1);
@@ -357,6 +370,13 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     map.set(retry.domain, (map.get(retry.domain) ?? 0) + 1);
     return map;
   }, new Map());
+  const rateLimitedRetryCountByDomain = rateLimitedRetries.reduce<Map<string, number>>(
+    (map, retry) => {
+      map.set(retry.domain, (map.get(retry.domain) ?? 0) + 1);
+      return map;
+    },
+    new Map()
+  );
   const overdueRetryCountByDomain = scheduledRetries.reduce<Map<string, number>>((map, retry) => {
     if (Date.parse(retry.nextRetryAt) > nowMs) return map;
     map.set(retry.domain, (map.get(retry.domain) ?? 0) + 1);
@@ -393,6 +413,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     ...campaign,
     pendingRetryCount: scheduledRetryCountByCampaign.get(campaign.campaignId) ?? 0,
     overdueRetryCount: overdueRetryCountByCampaign.get(campaign.campaignId) ?? 0,
+    rateLimitedRetryCount: rateLimitedRetryCountByCampaign.get(campaign.campaignId) ?? 0,
     nextScheduledRetryAt: scheduledRetryNextAtByCampaign.get(campaign.campaignId) ?? null,
     oldestOverdueRetryAt: oldestOverdueRetryAtByCampaign.get(campaign.campaignId) ?? null,
   }));
@@ -400,6 +421,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     ...domain,
     pendingRetryCount: scheduledRetryCountByDomain.get(domain.domain) ?? 0,
     overdueRetryCount: overdueRetryCountByDomain.get(domain.domain) ?? 0,
+    rateLimitedRetryCount: rateLimitedRetryCountByDomain.get(domain.domain) ?? 0,
     nextScheduledRetryAt: scheduledRetryNextAtByDomain.get(domain.domain) ?? null,
     oldestOverdueRetryAt: oldestOverdueRetryAtByDomain.get(domain.domain) ?? null,
   }));
@@ -518,6 +540,13 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
   const globalFailureRatePercent = roundPercentage(failedCount + bouncedCount, totalRecipients);
   const suppressionCount = suppressionRegistry.entries.length;
   const suppressionRatePercent = roundPercentage(suppressionCount, input.database.emails.length);
+  const suppressionReasonBreakdown = summarizeFilemakerEmailCampaignSuppressionSignals({
+    knownAddressCount: input.database.emails.length,
+    suppressionRegistry,
+  });
+  const complaintSuppressionSummary = suppressionReasonBreakdown.find(
+    (summary) => summary.reason === 'complaint'
+  );
 
   if (globalBounceRatePercent >= 3) {
     pushAlert({
@@ -578,6 +607,20 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     });
   }
 
+  if (rateLimitedRetries.length > 0) {
+    pushAlert({
+      id: 'deliverability-alert-rate-limited-retries',
+      level: rateLimitedRetries.length >= 10 ? 'critical' : 'warning',
+      code: 'rate_limited_retries',
+      title: 'Rate-limit backoff is active',
+      message: `${rateLimitedRetries.length} scheduled retries are rate-limited or domain-backoff protected.`,
+      campaignId: null,
+      campaignName: null,
+      domain: null,
+      value: rateLimitedRetries.length,
+    });
+  }
+
   if (suppressionRatePercent >= 10) {
     pushAlert({
       id: 'deliverability-alert-suppression-pressure',
@@ -589,6 +632,20 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
       campaignName: null,
       domain: null,
       value: suppressionRatePercent,
+    });
+  }
+
+  if (complaintSuppressionSummary && complaintSuppressionSummary.count > 0) {
+    pushAlert({
+      id: 'deliverability-alert-complaint-pressure',
+      level: complaintSuppressionSummary.count >= 3 ? 'critical' : 'warning',
+      code: 'complaint_pressure',
+      title: 'Spam complaints were recorded',
+      message: `${complaintSuppressionSummary.count} addresses are suppressed from ARF complaint feedback, or ${complaintSuppressionSummary.ratePercent}% of known Filemaker email addresses.`,
+      campaignId: null,
+      campaignName: null,
+      domain: null,
+      value: complaintSuppressionSummary.count,
     });
   }
 
@@ -637,6 +694,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     retryExhaustedCount: retrySummary.exhaustedDeliveries.length,
     pendingRetryCount: scheduledRetries.length,
     overdueRetryCount,
+    rateLimitedRetryCount: rateLimitedRetries.length,
     processedCount,
     acceptedCount,
     failedCount,
@@ -650,6 +708,7 @@ export const summarizeFilemakerEmailCampaignDeliverabilityOverview = (input: {
     bounceRatePercent: globalBounceRatePercent,
     suppressionCount,
     suppressionRatePercent,
+    suppressionReasonBreakdown,
     latestDeliveryAt,
     oldestQueuedAt,
     oldestQueuedAgeMinutes,

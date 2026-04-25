@@ -442,9 +442,10 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
           actionKey: 'tradera_fetch_categories',
           page: {},
         }),
-        input: {
+        input: expect.objectContaining({
           listingFormUrl: 'https://www.tradera.com/en/selling/new',
-        },
+          reauthenticate: expect.any(Function),
+        }),
       })
     );
   });
@@ -470,5 +471,84 @@ describe('fetchTraderaCategoriesFromListingFormForConnection', () => {
     expect(listingFormSequencerConstructorMock).not.toHaveBeenCalled();
     expect(contextStorageStateMock).not.toHaveBeenCalled();
     expect(persistPlaywrightConnectionStorageStateMock).not.toHaveBeenCalled();
+  });
+
+  it('passes a reauthenticate callback that re-runs the Tradera auth flow', async () => {
+    await fetchTraderaCategoriesFromListingFormForConnection(
+      {
+        id: 'connection-1',
+        integrationId: 'integration-1',
+        username: 'user@example.com',
+        password: 'encrypted-password',
+        playwrightStorageState: 'storage-state',
+      } as never,
+      { listingFormUrl: 'https://www.tradera.com/en/selling/new' }
+    );
+
+    expect(ensureLoggedInMock).toHaveBeenCalledTimes(1);
+
+    const constructorCall = listingFormSequencerConstructorMock.mock.calls[0]?.[0] as {
+      input: { reauthenticate: () => Promise<boolean> };
+    };
+    const reauthenticate = constructorCall.input.reauthenticate;
+
+    const result = await reauthenticate();
+
+    expect(result).toBe(true);
+    expect(ensureLoggedInMock).toHaveBeenCalledTimes(2);
+    expect(persistPlaywrightConnectionStorageStateMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports reauthenticate failure when ensureLoggedIn throws during reauth', async () => {
+    await fetchTraderaCategoriesFromListingFormForConnection(
+      {
+        id: 'connection-1',
+        integrationId: 'integration-1',
+        playwrightStorageState: 'storage-state',
+      } as never,
+      { listingFormUrl: 'https://www.tradera.com/en/selling/new' }
+    );
+
+    const constructorCall = listingFormSequencerConstructorMock.mock.calls[0]?.[0] as {
+      input: { reauthenticate: () => Promise<boolean> };
+    };
+    const reauthenticate = constructorCall.input.reauthenticate;
+    ensureLoggedInMock.mockRejectedValueOnce(new Error('auth blew up'));
+
+    const result = await reauthenticate();
+    expect(result).toBe(false);
+  });
+
+  it('rejects listing form fetches whose crawl reported drill failures', async () => {
+    setMockListingFormSequencerResult(
+      makeSequencerResult({
+        categories: [
+          { id: '100', name: 'Accessories', parentId: null },
+          { id: '101', name: 'Patches & pins', parentId: '100' },
+        ],
+        categorySource: 'listing-form-picker',
+        scrapedFrom: 'https://www.tradera.com/en/selling/new',
+        crawlStats: {
+          pagesVisited: 5,
+          rootCount: 2,
+          drillFailureCount: 2,
+          drillSessionAborted: true,
+          lastFailedPath: ['Collectibles', 'Pins & Needles'],
+        },
+      })
+    );
+
+    await expect(
+      fetchTraderaCategoriesFromListingFormForConnection(
+        {
+          id: 'connection-1',
+          integrationId: 'integration-1',
+          playwrightStorageState: 'expired-storage-state',
+        } as never,
+        {
+          listingFormUrl: 'https://www.tradera.com/en/selling/new',
+        }
+      )
+    ).rejects.toThrow(/stopped responding mid-crawl/i);
   });
 });

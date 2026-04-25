@@ -2,7 +2,9 @@
 
 import React, { startTransition } from 'react';
 
+import { OrganizationAddressesSection } from '../components/page/OrganizationAddressesSection';
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
+import { OrganizationEmailLogSection } from '../components/page/OrganizationEmailLogSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
@@ -12,23 +14,29 @@ import {
 } from '../context/AdminFilemakerOrganizationEditPageContext';
 
 function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
-  const { organization, updateSetting, router } =
+  const { isCreateMode, organization, updateSetting, router } =
     useAdminFilemakerOrganizationEditPageStateContext();
   const { handleSave } = useAdminFilemakerOrganizationEditPageActionsContext();
 
   return (
     <FilemakerPartyEditPageLayout
-      itemName={organization?.name ?? null}
+      itemName={isCreateMode ? 'Create Organization' : (organization?.name ?? null)}
       notFoundMessage='Organization not found.'
       parent={{ label: 'Organizations', href: '/admin/filemaker/organizations' }}
       onSave={() => {
         void handleSave();
       }}
-      onCancel={() => startTransition(() => { router.push('/admin/filemaker'); })}
+      onCancel={() => startTransition(() => { router.push('/admin/filemaker/organizations'); })}
       isSaving={updateSetting.isPending}
     >
       <OrganizationBasicInfoSection />
-      <OrganizationEmailsSection />
+      <OrganizationAddressesSection />
+      {isCreateMode ? null : (
+        <>
+          <OrganizationEmailsSection />
+          <OrganizationEmailLogSection />
+        </>
+      )}
       {/* More sections will be added here */}
     </FilemakerPartyEditPageLayout>
   );

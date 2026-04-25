@@ -18,6 +18,7 @@ export {
   createFilemakerCampaignUnsubscribeToken,
   parseFilemakerCampaignUnsubscribeToken,
   buildFilemakerCampaignUnsubscribeUrl,
+  buildFilemakerCampaignOneClickUnsubscribeUrl,
   buildFilemakerCampaignPreferencesUrl,
   buildFilemakerCampaignManageAllPreferencesUrl,
   buildFilemakerCampaignOpenTrackingUrl,

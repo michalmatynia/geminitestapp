@@ -4,10 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   assertSettingsManageAccessMock,
   loadFilemakerMailSuppressionEntriesMock,
+  pruneFilemakerCampaignColdRecipientsMock,
   removeFilemakerMailSuppressionEntryMock,
 } = vi.hoisted(() => ({
   assertSettingsManageAccessMock: vi.fn(),
   loadFilemakerMailSuppressionEntriesMock: vi.fn(),
+  pruneFilemakerCampaignColdRecipientsMock: vi.fn(),
   removeFilemakerMailSuppressionEntryMock: vi.fn(),
 }));
 
@@ -17,10 +19,11 @@ vi.mock('@/features/auth/server', () => ({
 
 vi.mock('@/features/filemaker/server', () => ({
   loadFilemakerMailSuppressionEntries: loadFilemakerMailSuppressionEntriesMock,
+  pruneFilemakerCampaignColdRecipients: pruneFilemakerCampaignColdRecipientsMock,
   removeFilemakerMailSuppressionEntry: removeFilemakerMailSuppressionEntryMock,
 }));
 
-import { deleteHandler, getHandler } from './handler';
+import { deleteHandler, getHandler, postHandler } from './handler';
 
 describe('filemaker campaign suppressions handler', () => {
   beforeEach(() => {
@@ -84,5 +87,31 @@ describe('filemaker campaign suppressions handler', () => {
         {} as Parameters<typeof deleteHandler>[1]
       )
     ).rejects.toThrow(/No suppression entry found/);
+  });
+
+  it('POST runs cold-recipient pruning', async () => {
+    pruneFilemakerCampaignColdRecipientsMock.mockResolvedValue({
+      candidates: [{ emailAddress: 'cold@example.com', sentCount: 7, lastSentAt: null }],
+      addedCount: 1,
+      skippedCount: 0,
+    });
+
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/filemaker/campaigns/suppressions', {
+        method: 'POST',
+        body: JSON.stringify({ minSendsWithoutEngagement: 7 }),
+      }),
+      {} as Parameters<typeof postHandler>[1]
+    );
+
+    expect(pruneFilemakerCampaignColdRecipientsMock).toHaveBeenCalledWith({
+      actor: 'admin-manual-cold-prune',
+      minSendsWithoutEngagement: 7,
+    });
+    await expect(response.json()).resolves.toEqual({
+      candidates: [{ emailAddress: 'cold@example.com', sentCount: 7, lastSentAt: null }],
+      addedCount: 1,
+      skippedCount: 0,
+    });
   });
 });

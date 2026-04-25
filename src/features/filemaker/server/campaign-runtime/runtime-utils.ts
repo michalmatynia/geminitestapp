@@ -37,6 +37,30 @@ export const resolveCampaignBodyText = (campaign: FilemakerEmailCampaign): strin
   return '';
 };
 
+const CAMPAIGN_PREFERENCE_LINK_TOKENS = [
+  '{{unsubscribe_url}}',
+  '{{preferences_url}}',
+  '{{manage_all_preferences_url}}',
+];
+
+const hasCampaignPreferenceLinkToken = (value: string): boolean =>
+  CAMPAIGN_PREFERENCE_LINK_TOKENS.some((token) => value.includes(token));
+
+export const appendManagedCampaignPreferenceFooter = (
+  value: string,
+  input: {
+    unsubscribeUrl: string;
+    preferencesUrl: string;
+    htmlMode: boolean;
+  }
+): string => {
+  if (hasCampaignPreferenceLinkToken(value)) return value;
+  if (input.htmlMode) {
+    return `${value.trimEnd()}\n<p style="font-size:12px;line-height:1.5;color:#6b7280">Manage your campaign email preferences: <a href="${input.preferencesUrl}">preferences</a> or <a href="${input.unsubscribeUrl}">unsubscribe</a>.</p>`;
+  }
+  return `${value.trimEnd()}\n\nManage campaign email preferences: ${input.preferencesUrl}\nUnsubscribe: ${input.unsubscribeUrl}`;
+};
+
 export const applyCampaignRecipientTemplateTokens = (
   value: string | null | undefined,
   input: {
@@ -52,11 +76,11 @@ export const applyCampaignRecipientTemplateTokens = (
     htmlMode: boolean;
   }
 ): string | null => {
-  if (!value) return null;
+  if (value === null || value === undefined || value.length === 0) return null;
   const openTrackingPixel = input.htmlMode
     ? `<img src="${input.openTrackingUrl}" alt="" width="1" height="1" style="display:none" />`
     : '';
-  return value
+  return appendManagedCampaignPreferenceFooter(value, input)
     .split('{{unsubscribe_url}}')
     .join(input.unsubscribeUrl)
     .split('{{preferences_url}}')
@@ -69,18 +93,161 @@ export const applyCampaignRecipientTemplateTokens = (
     .join(openTrackingPixel)
     .split('{{email}}')
     .join(input.emailAddress)
-    .replace(/\{\{click_tracking_url:([^}]+)\}\}/g, (_match: string, destination: string): string => {
-      const normalizedDestination = destination.trim();
-      if (!normalizedDestination) return '';
-      return buildFilemakerCampaignClickTrackingUrl({
-        emailAddress: input.emailAddress,
-        campaignId: input.campaignId,
-        runId: input.runId,
-        deliveryId: input.deliveryId,
-        redirectTo: normalizedDestination,
-        now: input.nowMs,
-      });
-    });
+    .replace(
+      /\{\{click_tracking_url:([^}]+)\}\}/g,
+      (_match: string, destination: string): string => {
+        const normalizedDestination = destination.trim();
+        if (normalizedDestination.length === 0) return '';
+        return buildFilemakerCampaignClickTrackingUrl({
+          emailAddress: input.emailAddress,
+          campaignId: input.campaignId,
+          runId: input.runId,
+          deliveryId: input.deliveryId,
+          redirectTo: normalizedDestination,
+          now: input.nowMs,
+        });
+      }
+    );
+};
+
+const extractDeliveryDomain = (emailAddress: string): string => {
+  const atIndex = emailAddress.lastIndexOf('@');
+  if (atIndex < 0) return '';
+  return emailAddress.slice(atIndex + 1).trim().toLowerCase();
+};
+
+export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_MIN_DECIDED = 3;
+export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_FAILURE_RATE_PERCENT = 50;
+export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_ATTEMPT_WINDOW_MS = 60 * 60_000;
+export const FILEMAKER_CAMPAIGN_DOMAIN_GUARD_RETRY_DELAY_MS = 15 * 60_000;
+
+type DomainGuardDecisionStatus = 'sent' | 'failed' | 'bounced';
+
+const isDomainGuardDecidedStatus = (
+  status:
+    | FilemakerEmailCampaignDelivery['status']
+    | FilemakerEmailCampaignDeliveryAttempt['status']
+): status is DomainGuardDecisionStatus =>
+  status === 'sent' || status === 'failed' || status === 'bounced';
+
+const isDomainGuardFailedStatus = (status: DomainGuardDecisionStatus): boolean =>
+  status === 'failed' || status === 'bounced';
+
+const isWithinDomainGuardAttemptWindow = (input: {
+  attempt: FilemakerEmailCampaignDeliveryAttempt;
+  nowMs: number | undefined;
+  attemptWindowMs: number;
+}): boolean => {
+  if (input.nowMs === undefined) return true;
+  const attemptedAt = input.attempt.attemptedAt ?? input.attempt.createdAt;
+  const attemptedAtMs = Date.parse(attemptedAt);
+  if (!Number.isFinite(attemptedAtMs)) return true;
+  return input.nowMs - attemptedAtMs <= input.attemptWindowMs;
+};
+
+const isWithinDomainGuardDeliveryWindow = (input: {
+  delivery: FilemakerEmailCampaignDelivery;
+  nowMs: number | undefined;
+  attemptWindowMs: number;
+}): boolean => {
+  if (input.nowMs === undefined) return true;
+  const decidedAt =
+    input.delivery.sentAt ?? input.delivery.updatedAt ?? input.delivery.createdAt;
+  const decidedAtMs = Date.parse(decidedAt);
+  if (!Number.isFinite(decidedAtMs)) return true;
+  return input.nowMs - decidedAtMs <= input.attemptWindowMs;
+};
+
+const collectDomainGuardAttemptStatuses = (input: {
+  attempts: FilemakerEmailCampaignDeliveryAttempt[] | undefined;
+  delivery: FilemakerEmailCampaignDelivery;
+  domain: string;
+  nowMs: number | undefined;
+  attemptWindowMs: number;
+  attemptedDeliveryIds: Set<string>;
+}): DomainGuardDecisionStatus[] =>
+  input.attempts
+    ?.filter((attempt) => {
+      if (attempt.runId !== input.delivery.runId) return false;
+      if (extractDeliveryDomain(attempt.emailAddress) !== input.domain) return false;
+      if (
+        !isWithinDomainGuardAttemptWindow({
+          attempt,
+          nowMs: input.nowMs,
+          attemptWindowMs: input.attemptWindowMs,
+        })
+      ) {
+        return false;
+      }
+      input.attemptedDeliveryIds.add(attempt.deliveryId);
+      return isDomainGuardDecidedStatus(attempt.status);
+    })
+    .map((attempt) => attempt.status as DomainGuardDecisionStatus) ?? [];
+
+const collectDomainGuardDeliveryStatuses = (input: {
+  deliveries: FilemakerEmailCampaignDelivery[];
+  delivery: FilemakerEmailCampaignDelivery;
+  domain: string;
+  attemptedDeliveryIds: Set<string>;
+  nowMs: number | undefined;
+  attemptWindowMs: number;
+}): DomainGuardDecisionStatus[] =>
+  input.deliveries
+    .filter((delivery) => {
+      if (delivery.runId !== input.delivery.runId) return false;
+      if (input.attemptedDeliveryIds.has(delivery.id)) return false;
+      if (extractDeliveryDomain(delivery.emailAddress) !== input.domain) return false;
+      if (
+        !isWithinDomainGuardDeliveryWindow({
+          delivery,
+          nowMs: input.nowMs,
+          attemptWindowMs: input.attemptWindowMs,
+        })
+      ) {
+        return false;
+      }
+      return isDomainGuardDecidedStatus(delivery.status);
+    })
+    .map((delivery) => delivery.status as DomainGuardDecisionStatus);
+
+export const shouldDeferDeliveryForDomainHealth = (input: {
+  delivery: FilemakerEmailCampaignDelivery;
+  deliveries: FilemakerEmailCampaignDelivery[];
+  attempts?: FilemakerEmailCampaignDeliveryAttempt[];
+  nowMs?: number;
+  minDecided?: number;
+  failureRatePercent?: number;
+  attemptWindowMs?: number;
+}): boolean => {
+  const domain = extractDeliveryDomain(input.delivery.emailAddress);
+  if (domain.length === 0) return false;
+  const attemptWindowMs =
+    input.attemptWindowMs ?? FILEMAKER_CAMPAIGN_DOMAIN_GUARD_ATTEMPT_WINDOW_MS;
+  const attemptedDeliveryIds = new Set<string>();
+  const attemptStatuses = collectDomainGuardAttemptStatuses({
+    attempts: input.attempts,
+    delivery: input.delivery,
+    domain,
+    nowMs: input.nowMs,
+    attemptWindowMs,
+    attemptedDeliveryIds,
+  });
+  const deliveryStatuses = collectDomainGuardDeliveryStatuses({
+    deliveries: input.deliveries,
+    delivery: input.delivery,
+    domain,
+    attemptedDeliveryIds,
+    nowMs: input.nowMs,
+    attemptWindowMs,
+  });
+  const decidedStatuses = attemptStatuses.concat(deliveryStatuses);
+  const minDecided = input.minDecided ?? FILEMAKER_CAMPAIGN_DOMAIN_GUARD_MIN_DECIDED;
+  if (decidedStatuses.length < minDecided) return false;
+  const failedCount = decidedStatuses.filter(isDomainGuardFailedStatus).length;
+  const failureRate = (failedCount / decidedStatuses.length) * 100;
+  const threshold =
+    input.failureRatePercent ?? FILEMAKER_CAMPAIGN_DOMAIN_GUARD_FAILURE_RATE_PERCENT;
+  return failedCount > 0 && failureRate >= threshold;
 };
 
 export const assertCampaignReadyForDelivery = (
@@ -88,10 +255,10 @@ export const assertCampaignReadyForDelivery = (
   mode: FilemakerEmailCampaignRunMode
 ): void => {
   if (mode !== 'live') return;
-  if (!campaign.subject.trim()) {
+  if (campaign.subject.trim().length === 0) {
     throw badRequestError('Campaign subject is required before launching a live send.');
   }
-  if (!resolveCampaignBodyText(campaign)) {
+  if (resolveCampaignBodyText(campaign).length === 0) {
     throw badRequestError('Campaign body text or HTML is required before launching a live send.');
   }
 };
@@ -104,7 +271,7 @@ export const shouldPauseRunForBounceRate = (input: {
   minSampleSize?: number;
 }): boolean => {
   const threshold = input.campaign.launch.pauseOnBounceRatePercent;
-  if (threshold == null || threshold < 0) return false;
+  if (threshold === null || threshold === undefined || threshold < 0) return false;
   const minSampleSize =
     input.minSampleSize ?? FILEMAKER_CAMPAIGN_BOUNCE_CIRCUIT_BREAKER_MIN_SAMPLE_SIZE;
   const progress = buildProgressSummary(input.deliveries);
@@ -121,7 +288,7 @@ export const applyBounceThresholdToCampaign = (input: {
   nowIso: string;
 }): FilemakerEmailCampaign => {
   const threshold = input.campaign.launch.pauseOnBounceRatePercent;
-  if (threshold == null || threshold < 0) {
+  if (threshold === null || threshold === undefined || threshold < 0) {
     return input.campaign;
   }
   const progress = buildProgressSummary(input.deliveries);

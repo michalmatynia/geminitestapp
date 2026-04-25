@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { startTransition } from 'react';
 
 import {
   useAdminFilemakerPageActionsContext,
@@ -10,10 +10,14 @@ import { FilemakerEntityCardsSection } from '../shared/FilemakerEntityCardsSecti
 
 import type { FilemakerPerson } from '../../types';
 
+const formatOptionalPersonField = (value: string | null | undefined): string => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : 'n/a';
+};
+
 export function FilemakerPersonsSection(): React.JSX.Element {
-  const { database, updateSetting } = useAdminFilemakerPageStateContext();
-  const { openCreatePerson, handleStartEditPerson, handleDeletePerson } =
-    useAdminFilemakerPageActionsContext();
+  const { database, updateSetting, router } = useAdminFilemakerPageStateContext();
+  const { handleDeletePerson } = useAdminFilemakerPageActionsContext();
 
   return (
     <FilemakerEntityCardsSection
@@ -33,7 +37,8 @@ export function FilemakerPersonsSection(): React.JSX.Element {
       renderMeta={(person: FilemakerPerson) => (
         <>
           <div className='text-[11px] text-gray-500'>
-            NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
+            NIP: {formatOptionalPersonField(person.nip)} | REGON:{' '}
+            {formatOptionalPersonField(person.regon)}
           </div>
           <div className='text-[11px] text-gray-500'>
             Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
@@ -43,8 +48,16 @@ export function FilemakerPersonsSection(): React.JSX.Element {
           </div>
         </>
       )}
-      onAdd={openCreatePerson}
-      onEdit={handleStartEditPerson}
+      onAdd={() => {
+        startTransition(() => {
+          router.push('/admin/filemaker/persons/new');
+        });
+      }}
+      onEdit={(person: FilemakerPerson): void => {
+        startTransition(() => {
+          router.push(`/admin/filemaker/persons/${encodeURIComponent(person.id)}`);
+        });
+      }}
       onDelete={(person: FilemakerPerson): void => {
         void handleDeletePerson(person.id);
       }}

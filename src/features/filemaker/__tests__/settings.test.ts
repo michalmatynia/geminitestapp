@@ -151,6 +151,7 @@ describe('filemaker settings', () => {
       emails: [],
       emailLinks: [],
       eventOrganizationLinks: [],
+      values: [],
     });
 
     const database = parseFilemakerDatabase(raw);
@@ -218,6 +219,7 @@ describe('filemaker settings', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+        values: [],
       })
     );
 
@@ -347,6 +349,7 @@ describe('filemaker settings', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+      values: [],
       })
     );
 
@@ -372,6 +375,7 @@ describe('filemaker settings', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+      values: [],
       })
     );
 
@@ -453,6 +457,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported fullAddress fields\./);
@@ -477,6 +482,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
@@ -506,6 +512,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
@@ -548,6 +555,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker payload includes unsupported inline address fields\./);
@@ -578,6 +586,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline phoneNumbers field\./);
@@ -604,6 +613,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline phoneNumbers field\./);
@@ -628,6 +638,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline email fields\./);
@@ -652,6 +663,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'org@example.com', status: 'active' }],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker organization payload includes unsupported inline email fields\./);
@@ -672,6 +684,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Invalid Filemaker phoneNumbers entry payload/);
@@ -696,6 +709,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
           emailLinks: [{ id: 'el-1', emailId: 'e-1', partyKind: 'person', partyId: 'p-1' }],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker person payload includes unsupported inline email fields\./);
@@ -720,6 +734,7 @@ describe('filemaker settings', () => {
           emails: [{ id: 'e-1', email: 'org@example.com', status: 'active' }],
           emailLinks: [{ id: 'el-1', emailId: 'e-1', partyKind: 'organization', partyId: 'o-1' }],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Filemaker organization payload includes unsupported inline email fields\./);
@@ -746,6 +761,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(
@@ -768,6 +784,7 @@ describe('filemaker settings', () => {
           emails: [],
           emailLinks: [],
           eventOrganizationLinks: [],
+      values: [],
         })
       )
     ).toThrowError(/Invalid Filemaker phoneNumbers payload/);

@@ -9,6 +9,7 @@ import type {
 } from '../types';
 import { sendFilemakerCampaignEmail } from './campaign-email-delivery';
 import {
+  appendManagedCampaignPreferenceFooter,
   assertCampaignReadyForDelivery,
   resolveCampaignBodyText,
 } from './campaign-runtime/runtime-utils';
@@ -38,10 +39,15 @@ const applyCampaignTestTemplateTokens = (
     preferencesUrl: string;
     manageAllPreferencesUrl: string;
     openTrackingUrl: string;
+    htmlMode: boolean;
   }
 ): string | null => {
   if (!value) return null;
-  return value
+  return appendManagedCampaignPreferenceFooter(value, {
+    unsubscribeUrl: input.unsubscribeUrl,
+    preferencesUrl: input.preferencesUrl,
+    htmlMode: input.htmlMode,
+  })
     .split('{{unsubscribe_url}}')
     .join(input.unsubscribeUrl)
     .split('{{preferences_url}}')
@@ -96,6 +102,7 @@ export const sendFilemakerEmailCampaignTest = async (input: {
     preferencesUrl,
     manageAllPreferencesUrl,
     openTrackingUrl,
+    htmlMode: false,
   });
   const html = applyCampaignTestTemplateTokens(campaign.bodyHtml ?? null, {
     recipientEmail,
@@ -103,6 +110,7 @@ export const sendFilemakerEmailCampaignTest = async (input: {
     preferencesUrl,
     manageAllPreferencesUrl,
     openTrackingUrl,
+    htmlMode: true,
   });
 
   const result = await sendFilemakerCampaignEmail({

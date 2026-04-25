@@ -1,6 +1,4 @@
 import type { TraderaSystemSettings } from '@/shared/contracts/integrations/tradera';
-import { TRADERA_CATEGORY_FETCH_METHODS } from '@/shared/contracts/integrations/marketplace';
-import type { TraderaCategoryFetchMethod } from '@/shared/contracts/integrations/marketplace';
 
 export type { TraderaSystemSettings };
 
@@ -13,11 +11,9 @@ export const TRADERA_SETTINGS_KEYS = {
   allowSimulatedSuccess: 'tradera_allow_simulated_success',
   listingFormUrl: 'tradera_listing_form_url',
   selectorProfile: 'tradera_selector_profile',
-  categoryFetchMethod: 'tradera_category_fetch_method',
 } as const;
 
 export const TRADERA_DIRECT_LISTING_FORM_URL = 'https://www.tradera.com/en/selling/new';
-export const TRADERA_PUBLIC_CATEGORIES_URL = 'https://www.tradera.com/en/categories';
 
 const TRADERA_ALLOWED_HOSTS = new Set(['www.tradera.com', 'tradera.com']);
 const TRADERA_NEW_LISTING_PATH_PATTERN =
@@ -55,7 +51,6 @@ export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   allowSimulatedSuccess: false,
   listingFormUrl: TRADERA_DIRECT_LISTING_FORM_URL,
   selectorProfile: 'default',
-  categoryFetchMethod: 'playwright_listing_form',
 };
 
 const toBoolean = (value: string | null | undefined, fallback: boolean): boolean => {
@@ -83,14 +78,6 @@ const toInt = (
 
 type SettingLookup = {
   get: (key: string) => string | null | undefined;
-};
-
-const normalizeTraderaCategoryFetchMethod = (
-  value: string | null | undefined
-): TraderaCategoryFetchMethod => {
-  const trimmed = value?.trim() ?? '';
-  const found = TRADERA_CATEGORY_FETCH_METHODS.find((m) => m === trimmed);
-  return found ?? DEFAULT_TRADERA_SYSTEM_SETTINGS.categoryFetchMethod;
 };
 
 export const resolveTraderaSystemSettings = (lookup: SettingLookup): TraderaSystemSettings => {
@@ -128,8 +115,5 @@ export const resolveTraderaSystemSettings = (lookup: SettingLookup): TraderaSyst
     ),
     selectorProfile:
       lookup.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() || defaults.selectorProfile,
-    categoryFetchMethod: normalizeTraderaCategoryFetchMethod(
-      lookup.get(TRADERA_SETTINGS_KEYS.categoryFetchMethod)
-    ),
   };
 };

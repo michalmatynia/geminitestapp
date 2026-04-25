@@ -154,6 +154,24 @@ export const folderTreeSettingsMetaByInstance: Record<
     folderHint:
       'Example: mail_attention, mail_new_account, mail_account, mail_account_compose, mail_account_sync, mail_account_status_toggle, mail_account_recent, mail_account_settings, mail_folder',
   },
+  filemaker_organizations: {
+    title: 'Filemaker Organizations',
+    description: 'Controls the organization master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_organization',
+    folderHint: 'Example: filemaker_organization_group',
+  },
+  filemaker_persons: {
+    title: 'Filemaker Persons',
+    description: 'Controls the person master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_person',
+    folderHint: 'Example: filemaker_person_group',
+  },
+  filemaker_values: {
+    title: 'Filemaker Values',
+    description: 'Controls the hierarchical value master tree shown in Filemaker.',
+    fileHint: 'Not used (values render as folder-type entries).',
+    folderHint: 'Example: filemaker_value',
+  },
   kangur_lessons_manager: {
     title: 'StudiQ Lessons Manager',
     description: 'Controls drag/drop ordering for StudiQ lessons in admin.',
@@ -293,6 +311,21 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Mail tree updated.',
+  },
+  filemaker_organizations: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Organization tree updated.',
+  },
+  filemaker_persons: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Person tree updated.',
+  },
+  filemaker_values: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Values tree updated.',
   },
   kangur_lessons_manager: {
     notifySuccess: false,

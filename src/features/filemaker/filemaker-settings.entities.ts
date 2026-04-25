@@ -1,6 +1,4 @@
-import {
-  normalizeAddressFields,
-} from '@/shared/lib/filemaker/entity-builders';
+import { normalizeAddressFields } from '@/shared/lib/filemaker/entity-builders';
 
 import { normalizeString } from './filemaker-settings.helpers';
 import {
@@ -13,6 +11,9 @@ import {
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
+  type FilemakerValue,
+  type FilemakerValueParameter,
+  type FilemakerValueParameterLink,
 } from './types';
 
 export {
@@ -173,6 +174,64 @@ export const createFilemakerEventOrganizationLink = (input: {
     id: normalizeString(input.id),
     eventId: normalizeString(input.eventId),
     organizationId: normalizeString(input.organizationId),
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createFilemakerValue = (input: {
+  id: string;
+  label: unknown;
+  value?: unknown;
+  parentId?: unknown;
+  description?: unknown;
+  sortOrder?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerValue => {
+  const now = new Date().toISOString();
+  const sortOrder = Number(input.sortOrder);
+  return {
+    id: normalizeString(input.id),
+    parentId: normalizeString(input.parentId) || null,
+    label: normalizeString(input.label),
+    value: normalizeString(input.value),
+    description: normalizeString(input.description) || undefined,
+    sortOrder: Number.isInteger(sortOrder) && sortOrder >= 0 ? sortOrder : 0,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createFilemakerValueParameter = (input: {
+  id: string;
+  label: unknown;
+  description?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerValueParameter => {
+  const now = new Date().toISOString();
+  return {
+    id: normalizeString(input.id),
+    label: normalizeString(input.label),
+    description: normalizeString(input.description) || undefined,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createFilemakerValueParameterLink = (input: {
+  id: string;
+  valueId: unknown;
+  parameterId: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerValueParameterLink => {
+  const now = new Date().toISOString();
+  return {
+    id: normalizeString(input.id),
+    valueId: normalizeString(input.valueId),
+    parameterId: normalizeString(input.parameterId),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

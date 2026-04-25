@@ -9,6 +9,7 @@ import type {
   FilemakerEmailCampaignDeliveryProvider,
   FilemakerEmailCampaignDeliveryFailureCategory,
   FilemakerEmailCampaignDeliveryAttemptStatus,
+  FilemakerEmailCampaignSuppressionReason,
 } from '../types';
 
 export type FilemakerEmailCampaignAudienceRecipient = {
@@ -108,7 +109,9 @@ export type FilemakerEmailCampaignDeliverabilityAlert = {
   code:
     | 'global_bounce_rate'
     | 'global_failure_rate'
+    | 'complaint_pressure'
     | 'queue_backlog'
+    | 'rate_limited_retries'
     | 'retry_backlog'
     | 'suppression_pressure'
     | 'campaign_health'
@@ -131,6 +134,7 @@ export type FilemakerEmailCampaignDomainDeliverability = {
   skippedCount: number;
   pendingRetryCount: number;
   overdueRetryCount: number;
+  rateLimitedRetryCount: number;
   suppressionCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
@@ -155,6 +159,7 @@ export type FilemakerEmailCampaignDeliverabilityCampaignHealth = {
   skippedCount: number;
   pendingRetryCount: number;
   overdueRetryCount: number;
+  rateLimitedRetryCount: number;
   deliveryRatePercent: number;
   failureRatePercent: number;
   bounceRatePercent: number;
@@ -207,6 +212,13 @@ export type FilemakerEmailCampaignDeliveryProviderSummary = {
   bouncedCount: number;
 };
 
+export type FilemakerEmailCampaignSuppressionReasonSummary = {
+  reason: FilemakerEmailCampaignSuppressionReason;
+  count: number;
+  ratePercent: number;
+  latestSuppressedAt: string | null;
+};
+
 export type FilemakerEmailCampaignScheduledRetryItem = {
   deliveryId: string;
   campaignId: string;
@@ -229,6 +241,7 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   retryExhaustedCount: number;
   pendingRetryCount: number;
   overdueRetryCount: number;
+  rateLimitedRetryCount: number;
   processedCount: number;
   acceptedCount: number;
   failedCount: number;
@@ -242,6 +255,7 @@ export type FilemakerEmailCampaignDeliverabilityOverview = {
   bounceRatePercent: number;
   suppressionCount: number;
   suppressionRatePercent: number;
+  suppressionReasonBreakdown: FilemakerEmailCampaignSuppressionReasonSummary[];
   latestDeliveryAt: string | null;
   oldestQueuedAt: string | null;
   oldestQueuedAgeMinutes: number | null;

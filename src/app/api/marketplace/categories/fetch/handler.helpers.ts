@@ -1,12 +1,8 @@
-import { DEFAULT_TRADERA_SYSTEM_SETTINGS } from '@/features/integrations/constants/tradera';
 import {
   fetchBaseCategories,
   resolveBaseConnectionToken,
 } from '@/features/integrations/server';
-import {
-  fetchTraderaCategoriesForConnection,
-  fetchTraderaCategoriesFromListingFormForConnection,
-} from '@/features/integrations/services/tradera-listing/categories';
+import { fetchTraderaCategoriesFromListingFormForConnection } from '@/features/integrations/services/tradera-listing/categories';
 import { loadTraderaSystemSettings } from '@/features/integrations/services/tradera-system-settings';
 import type { BaseCategory } from '@/shared/contracts/integrations/listings';
 import type { IntegrationConnectionRecord, IntegrationLookupRepository } from '@/shared/contracts/integrations/repositories';
@@ -14,7 +10,6 @@ import type {
   MarketplaceCategoryStats,
   MarketplaceConnectionRequest,
   MarketplaceFetchResponse,
-  TraderaCategoryFetchMethod,
 } from '@/shared/contracts/integrations/marketplace';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -100,14 +95,6 @@ export type MarketplaceCategoryFetchContext =
       connectionId: string;
       connection: IntegrationConnectionRecord;
       sourceName: 'Tradera';
-      responseSourceName: 'Tradera public taxonomy pages';
-      supportsListingForm: boolean;
-      mode: 'tradera';
-    }
-  | {
-      connectionId: string;
-      connection: IntegrationConnectionRecord;
-      sourceName: 'Tradera';
       responseSourceName: 'Tradera listing form picker';
       listingFormUrl: string;
       mode: 'tradera-listing-form';
@@ -124,8 +111,7 @@ export const requireMarketplaceConnectionId = (
 
 export const resolveMarketplaceCategoryFetchContext = async (
   integrationRepo: IntegrationLookupRepository,
-  connectionId: string,
-  categoryFetchMethod?: TraderaCategoryFetchMethod
+  connectionId: string
 ): Promise<MarketplaceCategoryFetchContext> => {
   const connection = await integrationRepo.getConnectionById(connectionId);
   if (!connection) {
@@ -165,43 +151,14 @@ export const resolveMarketplaceCategoryFetchContext = async (
 
   if (TRADERA_MARKETPLACE_SLUGS.has(integrationSlug)) {
     const systemSettings = await loadTraderaSystemSettings();
-
-    // Resolve the effective method.
-    // - Explicit request param always wins.
-    // - A stored setting that differs from the current system default acts as an override.
-    // - Browser Tradera defaults to the listing form picker.
-    // - Explicit overrides can still fall back to the public taxonomy pages.
-    const storedOverride =
-      systemSettings.categoryFetchMethod !== DEFAULT_TRADERA_SYSTEM_SETTINGS.categoryFetchMethod
-        ? systemSettings.categoryFetchMethod
-        : undefined;
-    let effectiveMethod = categoryFetchMethod ?? storedOverride;
-
-    if (!effectiveMethod) {
-      effectiveMethod = DEFAULT_TRADERA_SYSTEM_SETTINGS.categoryFetchMethod;
-    }
-
-    if (effectiveMethod === 'playwright_listing_form') {
-      return {
-        connectionId,
-        connection,
-        sourceName: 'Tradera',
-        responseSourceName: 'Tradera listing form picker',
-        listingFormUrl: systemSettings.listingFormUrl,
-        mode: 'tradera-listing-form',
-      };
-    }
-
-    if (effectiveMethod === 'playwright') {
-      return {
-        connectionId,
-        connection,
-        sourceName: 'Tradera',
-        responseSourceName: 'Tradera public taxonomy pages',
-        supportsListingForm: integrationSlug === 'tradera',
-        mode: 'tradera',
-      };
-    }
+    return {
+      connectionId,
+      connection,
+      sourceName: 'Tradera',
+      responseSourceName: 'Tradera listing form picker',
+      listingFormUrl: systemSettings.listingFormUrl,
+      mode: 'tradera-listing-form',
+    };
   }
 
   throw badRequestError(`${integration.name} is not yet supported for category fetch`);
@@ -216,13 +173,9 @@ export const fetchMarketplaceCategories = async (
     });
   }
 
-  if (context.mode === 'tradera-listing-form') {
-    return fetchTraderaCategoriesFromListingFormForConnection(context.connection, {
-      listingFormUrl: context.listingFormUrl,
-    });
-  }
-
-  return fetchTraderaCategoriesForConnection(context.connection);
+  return fetchTraderaCategoriesFromListingFormForConnection(context.connection, {
+    listingFormUrl: context.listingFormUrl,
+  });
 };
 
 export const buildEmptyMarketplaceCategoryFetchResponse = (

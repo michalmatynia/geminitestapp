@@ -644,6 +644,34 @@ describe('ProductFormParameters', () => {
     expect(screen.getByPlaceholderText('Value (English)')).toHaveValue('Used');
   });
 
+  it('offers legacy simple parameters when adding a new parameter value', async () => {
+    const user = userEvent.setup();
+    renderParameters({
+      parameters: [],
+      parameterDefinitions: [
+        {
+          id: 'synced-condition',
+          name_en: 'Synced Condition',
+          selectorType: 'text',
+        } as Partial<ProductParameter> as ProductParameter,
+      ],
+      simpleParameterDefinitions: [
+        {
+          id: 'legacy-material',
+          catalogId: 'catalog-1',
+          name_en: 'Legacy Material',
+          options: ['Metal', 'Plastic'],
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Add parameter' }));
+
+    const parameterSelect = screen.getByLabelText('Select parameter');
+    expect(parameterSelect).toHaveTextContent('Legacy Material');
+    expect(parameterSelect).toHaveTextContent('Synced Condition');
+  });
+
   it('renders saved legacy parameters when their metadata definition is gone', () => {
     renderParameters({
       parameters: [

@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
   createFilemakerEmailCampaign,
   createFilemakerEmailCampaignDelivery,
+  createFilemakerEmailCampaignDeliveryAttempt,
 } from '../../../settings/campaign-factories';
 
 import {
   FILEMAKER_CAMPAIGN_BOUNCE_CIRCUIT_BREAKER_MIN_SAMPLE_SIZE,
+  shouldDeferDeliveryForDomainHealth,
   shouldPauseRunForBounceRate,
 } from '../runtime-utils';
 
@@ -131,5 +133,150 @@ describe('shouldPauseRunForBounceRate', () => {
         minSampleSize: 5,
       })
     ).toBe(true);
+  });
+});
+
+describe('shouldDeferDeliveryForDomainHealth', () => {
+  it('defers same-domain deliveries after the run-level failure rate crosses the guard', () => {
+    const campaign = buildCampaignWithThreshold(null);
+    const previousDeliveries = [
+      ...buildDeliveries({ sent: 1, bounced: 2 }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: campaign.id,
+        runId: 'run-1',
+        emailAddress: 'next@example.com',
+        partyKind: 'person',
+        partyId: 'person-next',
+        status: 'queued',
+      }),
+    ];
+
+    expect(
+      shouldDeferDeliveryForDomainHealth({
+        delivery: previousDeliveries[3]!,
+        deliveries: previousDeliveries,
+      })
+    ).toBe(true);
+  });
+
+  it('does not defer other recipient domains', () => {
+    const previousDeliveries = [
+      ...buildDeliveries({ sent: 1, bounced: 2 }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        emailAddress: 'next@elsewhere.test',
+        partyKind: 'person',
+        partyId: 'person-next',
+        status: 'queued',
+      }),
+    ];
+
+    expect(
+      shouldDeferDeliveryForDomainHealth({
+        delivery: previousDeliveries[3]!,
+        deliveries: previousDeliveries,
+      })
+    ).toBe(false);
+  });
+
+  it('uses recent same-run delivery attempts during retry passes', () => {
+    const delivery = createFilemakerEmailCampaignDelivery({
+      campaignId: 'campaign-cb',
+      runId: 'run-1',
+      emailAddress: 'retry@example.com',
+      partyKind: 'person',
+      partyId: 'person-retry',
+      status: 'queued',
+    });
+    const attempts = ['sent', 'bounced', 'bounced'].map((status, index) =>
+      createFilemakerEmailCampaignDeliveryAttempt({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        deliveryId: `delivery-${index}`,
+        emailAddress: `attempt-${index}@example.com`,
+        partyKind: 'person',
+        partyId: `person-attempt-${index}`,
+        attemptNumber: 1,
+        status: status as 'sent' | 'bounced',
+        createdAt: '2026-03-27T10:00:00.000Z',
+      })
+    );
+
+    expect(
+      shouldDeferDeliveryForDomainHealth({
+        delivery,
+        deliveries: [delivery],
+        attempts,
+        nowMs: Date.parse('2026-03-27T10:05:00.000Z'),
+      })
+    ).toBe(true);
+  });
+
+  it('ignores stale delivery attempts outside the cooldown window', () => {
+    const delivery = createFilemakerEmailCampaignDelivery({
+      campaignId: 'campaign-cb',
+      runId: 'run-1',
+      emailAddress: 'retry@example.com',
+      partyKind: 'person',
+      partyId: 'person-retry',
+      status: 'queued',
+    });
+    const attempts = [0, 1, 2].map((index) =>
+      createFilemakerEmailCampaignDeliveryAttempt({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        deliveryId: `delivery-${index}`,
+        emailAddress: `attempt-${index}@example.com`,
+        partyKind: 'person',
+        partyId: `person-attempt-${index}`,
+        attemptNumber: 1,
+        status: 'bounced',
+        createdAt: '2026-03-27T08:00:00.000Z',
+      })
+    );
+
+    expect(
+      shouldDeferDeliveryForDomainHealth({
+        delivery,
+        deliveries: [delivery],
+        attempts,
+        nowMs: Date.parse('2026-03-27T10:05:00.000Z'),
+      })
+    ).toBe(false);
+  });
+
+  it('ignores stale delivery statuses outside the cooldown window', () => {
+    const delivery = createFilemakerEmailCampaignDelivery({
+      campaignId: 'campaign-cb',
+      runId: 'run-1',
+      emailAddress: 'retry@example.com',
+      partyKind: 'person',
+      partyId: 'person-retry',
+      status: 'queued',
+      createdAt: '2026-03-27T10:05:00.000Z',
+      updatedAt: '2026-03-27T10:05:00.000Z',
+    });
+    const staleFailures = [0, 1, 2].map((index) =>
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-cb',
+        runId: 'run-1',
+        emailAddress: `stale-${index}@example.com`,
+        partyKind: 'person',
+        partyId: `person-stale-${index}`,
+        status: 'failed',
+        failureCategory: 'rate_limited',
+        createdAt: '2026-03-27T08:00:00.000Z',
+        updatedAt: '2026-03-27T08:00:00.000Z',
+      })
+    );
+
+    expect(
+      shouldDeferDeliveryForDomainHealth({
+        delivery,
+        deliveries: staleFailures.concat(delivery),
+        nowMs: Date.parse('2026-03-27T10:05:00.000Z'),
+      })
+    ).toBe(false);
   });
 });

@@ -240,7 +240,7 @@ describe('marketplace categories fetch helpers', () => {
     });
   });
 
-  it('honors an explicit public taxonomy pages override for browser Tradera', async () => {
+  it('ignores stored public taxonomy settings unless the request explicitly asks for them', async () => {
     loadTraderaSystemSettingsMock.mockResolvedValue({
       defaultDurationHours: 72,
       autoRelistEnabled: true,
@@ -260,7 +260,20 @@ describe('marketplace categories fetch helpers', () => {
       ),
     };
 
-    const traderaContext = await resolveMarketplaceCategoryFetchContext(traderaRepo, 'conn-1');
+    const defaultContext = await resolveMarketplaceCategoryFetchContext(traderaRepo, 'conn-1');
+
+    expect(defaultContext).toMatchObject({
+      connectionId: 'conn-1',
+      sourceName: 'Tradera',
+      responseSourceName: 'Tradera listing form picker',
+      mode: 'tradera-listing-form',
+    });
+
+    const traderaContext = await resolveMarketplaceCategoryFetchContext(
+      traderaRepo,
+      'conn-1',
+      'playwright'
+    );
 
     expect(traderaContext).toMatchObject({
       connectionId: 'conn-1',

@@ -31,7 +31,10 @@ import {
 } from '../mail-utils';
 import { normalizeFilemakerDatabase } from '../filemaker-settings.database';
 import { normalizeString, toIdToken } from '../filemaker-settings.helpers';
-import { getFilemakerPartiesForEmail } from '../settings/database-getters';
+import {
+  getFilemakerEmailsForParty,
+  getFilemakerPartiesForEmail,
+} from '../settings/database-getters';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 
 import type {
@@ -80,11 +83,13 @@ import * as mailServerUtils from './mail/mail-utils';
 import type {
   MailparserAttachment,
   MailparserParsedMail,
+  FilemakerMailMessageDocument,
   FilemakerMailThreadDocument,
 } from './mail/mail-types';
 
 const SETTINGS_COLLECTION = 'settings';
 const MAIL_THREADS_COLLECTION = 'filemaker_mail_threads';
+const MAIL_MESSAGES_COLLECTION = 'filemaker_mail_messages';
 
 const invalidateSettingsCaches = (): void => {
   clearSettingsCache();
@@ -1803,5 +1808,88 @@ export const searchFilemakerMailMessages = async (input: {
     query,
     totalHits: messages.length,
     groups,
+  };
+};
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+export const listFilemakerOrganizationEmailLog = async (input: {
+  organizationId: string;
+  limit?: number;
+}): Promise<FilemakerMailSearchResponse> => {
+  const organizationId = normalizeString(input.organizationId);
+  if (organizationId.length === 0) {
+    return { query: '', totalHits: 0, groups: [] };
+  }
+
+  const database = await loadFilemakerDatabase();
+  const linkedEmailAddresses = Array.from(
+    new Set(
+      getFilemakerEmailsForParty(database, 'organization', organizationId)
+        .map((email) => normalizeString(email.email).toLowerCase())
+        .filter((emailAddress) => emailAddress.length > 0)
+    )
+  );
+  if (linkedEmailAddresses.length === 0) {
+    return { query: organizationId, totalHits: 0, groups: [] };
+  }
+
+  const fromAddressFilters = linkedEmailAddresses.map((emailAddress) => ({
+    'from.address': { $regex: `^${escapeRegex(emailAddress)}$`, $options: 'i' },
+  }));
+  const mongo = await getMongoDb();
+  const messages = await mongo
+    .collection<FilemakerMailMessageDocument>(MAIL_MESSAGES_COLLECTION)
+    .find({
+      direction: 'inbound',
+      $or: fromAddressFilters,
+    })
+    .sort({ receivedAt: -1, sentAt: -1 })
+    .limit(input.limit ?? 500)
+    .toArray();
+  const threadIds = [...new Set(messages.map((message) => message.threadId))];
+  const threadDocs = await Promise.all(threadIds.map((id) => storage.getMailThreadById(id)));
+  const threadMap = new Map(threadDocs.filter(Boolean).map((thread) => [thread!.id, thread!]));
+  const groupMap = new Map<string, FilemakerMailSearchResultGroup>();
+
+  messages.forEach((message: FilemakerMailMessage): void => {
+    const thread = threadMap.get(message.threadId);
+    const hit: FilemakerMailSearchHit = {
+      messageId: message.id,
+      threadId: message.threadId,
+      accountId: message.accountId,
+      mailboxPath: message.mailboxPath,
+      subject: message.subject,
+      from: message.from ?? null,
+      to: message.to,
+      direction: message.direction,
+      sentAt: message.sentAt ?? null,
+      receivedAt: message.receivedAt ?? null,
+      matchSnippet:
+        message.snippet ?? buildSearchMatchSnippet(buildSearchableText(message), organizationId),
+      matchField: 'from',
+    };
+    const existing = groupMap.get(message.threadId);
+    if (existing !== undefined) {
+      existing.hits.push(hit);
+      return;
+    }
+    groupMap.set(message.threadId, {
+      threadId: message.threadId,
+      threadSubject: thread?.subject ?? message.subject,
+      accountId: message.accountId,
+      mailboxPath: thread?.mailboxPath ?? message.mailboxPath,
+      lastMessageAt:
+        thread?.lastMessageAt ?? message.receivedAt ?? message.sentAt ?? message.createdAt ?? '',
+      hits: [hit],
+    });
+  });
+
+  return {
+    query: organizationId,
+    totalHits: messages.length,
+    groups: Array.from(groupMap.values()).sort(
+      (left, right) => Date.parse(right.lastMessageAt || '') - Date.parse(left.lastMessageAt || '')
+    ),
   };
 };

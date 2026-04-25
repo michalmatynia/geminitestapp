@@ -1,21 +1,16 @@
 import 'server-only';
 
 import { logger } from '@/shared/utils/logger';
-import { TRADERA_PUBLIC_CATEGORIES_URL } from '@/features/integrations/constants/tradera';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { type IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import { type TraderaCategoryRecord } from '@/shared/contracts/integrations/tradera';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 import { buildResolvedActionSteps } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { StepTracker } from '@/shared/lib/browser-execution/step-tracker';
-import {
-  TraderaCategorySequencer,
-  type TraderaCategorySequencerResult,
-} from '@/shared/lib/browser-execution/sequencers/TraderaCategorySequencer';
+import { type TraderaCategorySequencerResult } from '@/shared/lib/browser-execution/sequencers/tradera-category-sequencer-types';
 import { TraderaListingFormCategorySequencer } from '@/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer';
 import type { PlaywrightSequencerContext } from '@/shared/lib/browser-execution/sequencers/PlaywrightSequencer';
 import {
-  createTraderaCategoryScrapePlaywrightInstance,
   createTraderaStandardListingPlaywrightInstance,
   type OpenPlaywrightConnectionNativeTaskSessionResult,
   persistPlaywrightConnectionStorageState,
@@ -35,6 +30,8 @@ type CategoryFetchResultConfig = {
   emptyMessage: string;
   recoveryAction: string;
   recoveryMessage: string;
+  failOnDrillFailures?: boolean;
+  drillFailureMessage?: string;
 };
 
 type CategoryFetchEmptyAssertionInput = {
@@ -44,16 +41,6 @@ type CategoryFetchEmptyAssertionInput = {
   result: TraderaCategorySequencerResult;
 };
 
-const PUBLIC_CATEGORY_FETCH_CONFIG: CategoryFetchResultConfig = {
-  logLabel: '[tradera-category-fetch]',
-  noResultMessage: 'Tradera category sequencer produced no result.',
-  emptyMessage:
-    'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed. Retry category fetch using Listing form picker if it is available for this connection.',
-  recoveryAction: 'tradera_retry_alternate_category_fetch',
-  recoveryMessage:
-    'Retry category fetch using Listing form picker if it is available for this connection.',
-};
-
 const LISTING_FORM_CATEGORY_FETCH_CONFIG: CategoryFetchResultConfig = {
   logLabel: '[tradera-listing-form-category-fetch]',
   noResultMessage: 'Tradera listing form category sequencer produced no result.',
@@ -61,6 +48,9 @@ const LISTING_FORM_CATEGORY_FETCH_CONFIG: CategoryFetchResultConfig = {
     'No categories could be scraped from the Tradera listing form category picker. Ensure the connection session is authenticated and the listing form is accessible.',
   recoveryAction: 'tradera_configure_api_credentials',
   recoveryMessage: 'Authenticate the Tradera connection session, then retry category fetch.',
+  failOnDrillFailures: true,
+  drillFailureMessage:
+    'Tradera listing form category picker stopped responding mid-crawl, so the category tree is incomplete. Re-authenticate the Tradera connection session, then retry category fetch.',
 };
 
 const extractTrimmedString = (value: unknown): string | null =>
@@ -195,6 +185,42 @@ const assertCategoriesWereScraped = ({
   });
 };
 
+const readDrillFailureCount = (
+  crawlStats: TraderaCategorySequencerResult['crawlStats']
+): number => {
+  if (crawlStats === null || typeof crawlStats !== 'object') return 0;
+  const value = (crawlStats as Record<string, unknown>)['drillFailureCount'];
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+};
+
+const assertNoDrillFailures = (
+  result: TraderaCategorySequencerResult,
+  connection: IntegrationConnectionRecord,
+  config: CategoryFetchResultConfig
+): void => {
+  if (!config.failOnDrillFailures) return;
+  const drillFailureCount = readDrillFailureCount(result.crawlStats);
+  if (drillFailureCount === 0) return;
+
+  throw new AppError(
+    config.drillFailureMessage ?? config.emptyMessage,
+    {
+      code: AppErrorCodes.operationFailed,
+      httpStatus: 422,
+      meta: {
+        connectionId: connection.id,
+        scrapedFrom: result.scrapedFrom,
+        categorySource: result.categorySource,
+        diagnostics: result.diagnostics,
+        crawlStats: result.crawlStats,
+        recoveryAction: config.recoveryAction,
+        recoveryMessage: config.recoveryMessage,
+      },
+      expected: true,
+    }
+  );
+};
+
 const runCategoryFetchSequencer = async ({
   connection,
   config,
@@ -211,25 +237,9 @@ const runCategoryFetchSequencer = async ({
   const categories = normalizeCategories(result.categories);
   logCategoryFetchResult(result, categories, config);
   assertCategoriesWereScraped({ categories, connection, config, result });
+  assertNoDrillFailures(result, connection, config);
 
   return categories;
-};
-
-const fetchPublicCategoriesInSession = async (
-  connection: IntegrationConnectionRecord,
-  session: OpenPlaywrightConnectionNativeTaskSessionResult
-): Promise<TraderaCategoryRecord[]> => {
-  const tracker = await buildCategoryFetchTracker();
-  const sequencer = new TraderaCategorySequencer(
-    buildCategorySequencerContext(session, tracker),
-    { categoriesUrl: TRADERA_PUBLIC_CATEGORIES_URL }
-  );
-
-  return runCategoryFetchSequencer({
-    connection,
-    config: PUBLIC_CATEGORY_FETCH_CONFIG,
-    sequencer,
-  });
 };
 
 const persistListingFormCategorySession = async (
@@ -259,31 +269,31 @@ const fetchListingFormCategoriesInSession = async (
     session,
     systemSettings.listingFormUrl
   );
+  const reauthenticate = async (): Promise<boolean> => {
+    try {
+      await persistListingFormCategorySession(
+        connection,
+        session,
+        systemSettings.listingFormUrl
+      );
+      return true;
+    } catch (error: unknown) {
+      logger.warn('[tradera-listing-form-category-fetch] reauthentication failed', {
+        connectionId: connection.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return false;
+    }
+  };
   const sequencer = new TraderaListingFormCategorySequencer(
     buildCategorySequencerContext(session, tracker),
-    { listingFormUrl: systemSettings.listingFormUrl }
+    { listingFormUrl: systemSettings.listingFormUrl, reauthenticate }
   );
 
   return runCategoryFetchSequencer({
     connection,
     config: LISTING_FORM_CATEGORY_FETCH_CONFIG,
     sequencer,
-  });
-};
-
-export const fetchTraderaCategoriesForConnection = async (
-  connection: IntegrationConnectionRecord
-): Promise<TraderaCategoryRecord[]> => {
-  return runPlaywrightConnectionNativeTask<TraderaCategoryRecord[]>({
-    connection,
-    instance: createTraderaCategoryScrapePlaywrightInstance({
-      connectionId: connection.id,
-      integrationId: connection.integrationId,
-    }),
-    runtimeActionKey: 'tradera_fetch_categories',
-    execute: (session) => fetchPublicCategoriesInSession(connection, session),
-    getErrorMessage: (error) =>
-      error instanceof Error ? error.message : 'Tradera category fetch failed',
   });
 };
 

@@ -11,6 +11,7 @@ import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.publi
 import { SearchInput } from '@/shared/ui/forms-and-actions.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
+import { AdminFilemakerCampaignSuppressionSignalsPanel } from './AdminFilemakerCampaignSuppressionSignalsPanel';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
@@ -131,6 +132,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             campaign.latestRunStatus ?? '',
             String(campaign.pendingRetryCount),
             String(campaign.overdueRetryCount),
+            String(campaign.rateLimitedRetryCount),
             campaign.nextScheduledRetryAt ?? '',
             campaign.oldestOverdueRetryAt ?? '',
           ],
@@ -149,6 +151,7 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             domain.alertLevel,
             String(domain.pendingRetryCount),
             String(domain.overdueRetryCount),
+            String(domain.rateLimitedRetryCount),
             domain.nextScheduledRetryAt ?? '',
             domain.oldestOverdueRetryAt ?? '',
           ],
@@ -299,6 +302,11 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
           return (
             <div className='space-y-0.5'>
               <div>{domain.pendingRetryCount}</div>
+              {domain.rateLimitedRetryCount > 0 && (
+                <div className='text-[10px] text-amber-300'>
+                  {domain.rateLimitedRetryCount} rate-limited
+                </div>
+              )}
               {domain.overdueRetryCount > 0 && (
                 <div className='text-[10px] text-rose-400'>{domain.overdueRetryCount} overdue</div>
               )}
@@ -406,6 +414,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
             {' '}
             {overview.retryEligibleCount} retryable now, {overview.retryExhaustedCount} exhausted.
             {' '}
+            {overview.rateLimitedRetryCount > 0
+              ? `${overview.rateLimitedRetryCount} rate-limited. `
+              : ''}
             {overview.overdueRetryCount > 0
               ? `${overview.overdueRetryCount} overdue. `
               : ''}
@@ -448,6 +459,15 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
           </div>
         </InsetPanel>
       </div>
+
+      <AdminFilemakerCampaignSuppressionSignalsPanel
+        overview={overview}
+        onOpenSuppressions={(): void => {
+          startTransition(() => {
+            router.push('/admin/filemaker/campaigns/suppressions');
+          });
+        }}
+      />
 
       <InsetPanel padding='md' className='space-y-4'>
         <SectionHeader
@@ -780,6 +800,9 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
                       {campaign.pendingRetryCount}
                       {campaign.overdueRetryCount > 0
                         ? ` • ${campaign.overdueRetryCount} overdue`
+                        : ''}
+                      {campaign.rateLimitedRetryCount > 0
+                        ? ` • ${campaign.rateLimitedRetryCount} rate-limited`
                         : ''}
                       {campaign.oldestOverdueRetryAt
                         ? ` • oldest overdue ${formatTimestamp(campaign.oldestOverdueRetryAt)}`

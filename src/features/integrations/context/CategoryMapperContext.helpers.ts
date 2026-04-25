@@ -2,10 +2,7 @@ import type {
   CategoryMappingWithDetails,
   ExternalCategory,
 } from '@/shared/contracts/integrations/listings';
-import type {
-  MarketplaceFetchResponse,
-  TraderaCategoryFetchMethod,
-} from '@/shared/contracts/integrations/marketplace';
+import type { MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import { ApiError } from '@/shared/lib/api-client';
 
 import { isMissingExternalCategoryName, isRootExternalCategory } from './CategoryMapperContext.utils';

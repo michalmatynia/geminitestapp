@@ -75,12 +75,14 @@ import type {
   FilemakerCampaignRunProcessResult,
 } from './runtime-types';
 import {
+  FILEMAKER_CAMPAIGN_DOMAIN_GUARD_RETRY_DELAY_MS,
   applyBounceThresholdToCampaign,
   applyCampaignRecipientTemplateTokens,
   assertCampaignReadyForDelivery,
   resolveCampaignBodyText,
   isFilemakerEmailCampaignPermanentFailureCategory,
   resolveFailureStatus,
+  shouldDeferDeliveryForDomainHealth,
   shouldPauseRunForBounceRate,
 } from './runtime-utils';
 
@@ -433,9 +435,47 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         continue;
       }
 
+      if (
+        shouldDeferDeliveryForDomainHealth({
+          delivery,
+          deliveries,
+          attempts: attemptRegistry.attempts,
+          nowMs,
+        })
+      ) {
+        const nextRetryAt = new Date(
+          nowMs + FILEMAKER_CAMPAIGN_DOMAIN_GUARD_RETRY_DELAY_MS
+        ).toISOString();
+        const domain = delivery.emailAddress.split('@').at(-1)?.toLowerCase() ?? 'unknown';
+        const message = `Deferred ${delivery.emailAddress}: recipient domain ${domain} is already failing in this run.`;
+        deliveries = replaceDeliveryInCollection(deliveries, {
+          ...delivery,
+          status: 'failed',
+          failureCategory: 'rate_limited',
+          providerMessage: message,
+          lastError: message,
+          nextRetryAt,
+          updatedAt: nowIso,
+        });
+        eventRegistry = appendEventsToRegistry(eventRegistry, [
+          createFilemakerEmailCampaignEvent({
+            campaignId: campaign.id,
+            runId: run.id,
+            deliveryId: delivery.id,
+            type: 'status_changed',
+            message,
+            deliveryStatus: 'failed',
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          }),
+        ]);
+        continue;
+      }
+
       try {
         if (deps.reserveWarmupSlot) {
-          const senderKey = campaign.mailAccountId?.trim() || 'shared-smtp';
+          const senderAccountId = campaign.mailAccountId?.trim() ?? '';
+          const senderKey = senderAccountId.length > 0 ? senderAccountId : 'shared-smtp';
           const warmup = await deps.reserveWarmupSlot(senderKey);
           if (!warmup.ok) {
             deliveries = replaceDeliveryInCollection(deliveries, {

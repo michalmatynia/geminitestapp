@@ -11,23 +11,33 @@ import {
   useAdminFilemakerPersonEditPageStateContext,
 } from '../context/AdminFilemakerPersonEditPageContext';
 
+const resolvePersonEditPageItemName = (
+  isCreateMode: boolean,
+  person: { firstName: string; lastName: string } | null
+): string | null => {
+  if (isCreateMode) return 'Create Person';
+  if (person === null) return null;
+  return `${person.firstName} ${person.lastName}`;
+};
+
 function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
-  const { person, updateSetting, router } = useAdminFilemakerPersonEditPageStateContext();
+  const { isCreateMode, person, updateSetting, router } =
+    useAdminFilemakerPersonEditPageStateContext();
   const { handleSave } = useAdminFilemakerPersonEditPageActionsContext();
 
   return (
     <FilemakerPartyEditPageLayout
-      itemName={person ? `${person.firstName} ${person.lastName}` : null}
+      itemName={resolvePersonEditPageItemName(isCreateMode, person)}
       notFoundMessage='Person not found.'
       parent={{ label: 'Persons', href: '/admin/filemaker/persons' }}
       onSave={() => {
         void handleSave();
       }}
-      onCancel={() => startTransition(() => { router.push('/admin/filemaker'); })}
+      onCancel={() => startTransition(() => { router.push('/admin/filemaker/persons'); })}
       isSaving={updateSetting.isPending}
     >
       <PersonBasicInfoSection />
-      <PersonEmailsSection />
+      {isCreateMode ? null : <PersonEmailsSection />}
       {/* More sections will be added here */}
     </FilemakerPartyEditPageLayout>
   );

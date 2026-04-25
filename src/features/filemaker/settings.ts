@@ -45,6 +45,9 @@ export {
   createFilemakerPerson,
   createFilemakerPhoneNumber,
   createFilemakerPhoneNumberLink,
+  createFilemakerValue,
+  createFilemakerValueParameter,
+  createFilemakerValueParameterLink,
   formatFilemakerAddress,
 } from './filemaker-settings.entities';
 export * from './settings/campaign-factories';

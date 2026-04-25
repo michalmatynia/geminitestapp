@@ -8,13 +8,18 @@ import type {
 const normalizeString = (value: unknown, fallback = ''): string =>
   typeof value === 'string' ? value.trim() : fallback;
 
+const normalizeOptionalString = (value: unknown): string | undefined => {
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : undefined;
+};
+
 const normalizePhoneNumbers = (value: unknown): string[] => {
   const unique = new Set<string>();
 
   if (Array.isArray(value)) {
     value.forEach((entry: unknown) => {
       const normalized = normalizeString(entry);
-      if (!normalized) return;
+      if (normalized.length === 0) return;
       unique.add(normalized);
     });
     return Array.from(unique);
@@ -25,7 +30,7 @@ const normalizePhoneNumbers = (value: unknown): string[] => {
       .split(',')
       .map((entry: string) => entry.trim())
       .forEach((entry: string): void => {
-        if (!entry) return;
+        if (entry.length === 0) return;
         unique.add(entry);
       });
     return Array.from(unique);
@@ -154,6 +159,9 @@ export const createFilemakerOrganization = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
+  taxId?: unknown;
+  krs?: unknown;
+  tradingName?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerOrganization => {
@@ -176,6 +184,9 @@ export const createFilemakerOrganization = (input: {
     postalCode: address.postalCode,
     country: address.country,
     countryId: address.countryId,
+    taxId: normalizeOptionalString(input.taxId),
+    krs: normalizeOptionalString(input.krs),
+    tradingName: normalizeOptionalString(input.tradingName),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

@@ -1,5 +1,14 @@
-import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, ShieldOff, Users } from 'lucide-react';
-
+import {
+  Building2,
+  CalendarDays,
+  Database,
+  Mail,
+  Megaphone,
+  ShieldAlert,
+  ShieldOff,
+  Tags,
+  Users,
+} from 'lucide-react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 
@@ -13,6 +22,7 @@ type FilemakerPageKey =
   | 'emails'
   | 'mail'
   | 'events'
+  | 'values'
   | 'campaigns'
   | 'control-centre'
   | 'suppressions'
@@ -58,6 +68,13 @@ const NAV_ITEMS: Array<{
     label: 'Events',
     href: '/admin/filemaker/events',
     icon: <CalendarDays className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'values',
+    label: 'Values',
+    href: '/admin/filemaker/values',
+    icon: <Tags className='size-4' />,
     variant: 'outline',
   },
   {

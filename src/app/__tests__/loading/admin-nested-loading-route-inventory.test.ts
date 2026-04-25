@@ -54,6 +54,7 @@ const adminNestedRoutesWithDedicatedLoading = [
   'filemaker/mail-client',
   'filemaker/organizations',
   'filemaker/persons',
+  'filemaker/values',
   'image-studio/settings',
   'image-studio/ui-presets',
   'image-studio/validation-patterns',

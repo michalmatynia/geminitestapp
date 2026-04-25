@@ -86,6 +86,7 @@ const emptyCanonicalRelations = {
   emails: [],
   emailLinks: [],
   eventOrganizationLinks: [],
+  values: [],
 };
 
 describe('filemaker relations', () => {
@@ -288,6 +289,7 @@ describe('filemaker relations', () => {
         emails: [],
         emailLinks: [],
         eventOrganizationLinks: [],
+        values: [],
       })
     );
 
@@ -348,6 +350,7 @@ describe('filemaker relations', () => {
         ...emptyCanonicalRelations,
         events: [createEventRecord()],
         eventOrganizationLinks: [],
+        values: [],
       })
     );
 

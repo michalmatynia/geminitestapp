@@ -184,6 +184,98 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  filemaker_organizations: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to organization group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'building-2',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_organization: 'building-2',
+        filemaker_organization_group: 'folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_persons: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to person group',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'user',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_person: 'user',
+        filemaker_person_group: 'folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_values: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to value',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'tag',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_value: 'tag',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 
   validator_list_tree: {
     version: 2,

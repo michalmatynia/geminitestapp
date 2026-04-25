@@ -150,6 +150,7 @@ export const buildAdminNav = (handlers: {
         href: '/admin/filemaker/organizations',
       },
       { id: 'filemaker/events', label: 'Events', href: '/admin/filemaker/events' },
+      { id: 'filemaker/values', label: 'Values', href: '/admin/filemaker/values' },
       {
         id: 'filemaker/mail-client',
         label: 'Email Client',

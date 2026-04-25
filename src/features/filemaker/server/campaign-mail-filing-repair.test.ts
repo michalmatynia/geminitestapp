@@ -169,13 +169,17 @@ describe('repairFilemakerCampaignRunMailFiling', () => {
         providerMessageId: null,
         record: expect.objectContaining({
           to: 'missing@example.com',
-          text: 'Hello missing@example.com',
+          text: expect.stringContaining('Hello missing@example.com'),
           campaignId: 'campaign-1',
           runId: 'run-1',
           deliveryId: 'delivery-2',
         }),
       })
     );
+    const filedRecord = fileFilemakerCampaignEmailRecordAsMailMessageMock.mock.calls[0]?.[0]
+      ?.record as { text?: string } | undefined;
+    expect(filedRecord?.text).toContain('Manage campaign email preferences:');
+    expect(filedRecord?.text).toContain('Unsubscribe:');
     expect(upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledWith(
       FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
       expect.stringContaining('Repaired mail filing for missing@example.com.')

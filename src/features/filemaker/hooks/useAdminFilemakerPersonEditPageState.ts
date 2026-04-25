@@ -11,10 +11,11 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import { decodeRouteParam } from '../pages/filemaker-page-utils';
+import { createClientFilemakerId, decodeRouteParam } from '../pages/filemaker-page-utils';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY,
+  createFilemakerPerson,
   getFilemakerAddressById,
   getFilemakerAddressLinksForOwner,
   getFilemakerEmailsForParty,
@@ -37,6 +38,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 
 export type AdminFilemakerPersonEditPageContextValue = {
+  isCreateMode: boolean;
   person: FilemakerPerson | null;
   personDraft: Partial<FilemakerPerson>;
   setPersonDraft: (value: React.SetStateAction<Partial<FilemakerPerson>>) => void;
@@ -64,6 +66,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const { toast } = useToast();
 
   const personId = decodeRouteParam(params['personId']);
+  const isCreateMode = personId === 'new';
 
   const countriesQuery = useCountries();
   const countries = countriesQuery.data ?? [];
@@ -72,8 +75,8 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
 
   const person = useMemo(
-    () => database.persons.find((p) => p.id === personId) ?? null,
-    [database.persons, personId]
+    () => (isCreateMode ? null : (database.persons.find((p) => p.id === personId) ?? null)),
+    [database.persons, isCreateMode, personId]
   );
 
   const [personDraft, setPersonDraft] = useState<Partial<FilemakerPerson>>({});
@@ -82,6 +85,17 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const [phoneNumberExtractionText, setPhoneNumberExtractionText] = useState('');
 
   useEffect(() => {
+    if (isCreateMode) {
+      setPersonDraft({
+        firstName: '',
+        lastName: '',
+        nip: '',
+        regon: '',
+        phoneNumbers: [],
+      });
+      setEditableAddresses([]);
+      return;
+    }
     if (person) {
       setPersonDraft(person);
 
@@ -101,7 +115,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       });
       setEditableAddresses(addresses);
     }
-  }, [person, database]);
+  }, [isCreateMode, person, database]);
 
   const emails = useMemo(
     () => (person ? getFilemakerEmailsForParty(database, 'person', person.id) : []),
@@ -130,9 +144,47 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   );
 
   const handleSave = useCallback(async (): Promise<void> => {
-    if (!person || !personDraft.lastName) return;
+    const nextFirstName = personDraft.firstName?.trim() ?? '';
+    const nextLastName = personDraft.lastName?.trim() ?? '';
+    if (nextFirstName.length === 0 && nextLastName.length === 0) {
+      toast('First name or last name is required.', { variant: 'warning' });
+      return;
+    }
 
     let nextDatabase = database;
+
+    if (isCreateMode) {
+      const now = new Date().toISOString();
+      const newPerson = createFilemakerPerson({
+        id: createClientFilemakerId('person'),
+        firstName: nextFirstName,
+        lastName: nextLastName,
+        addressId: '',
+        street: personDraft.street ?? '',
+        streetNumber: personDraft.streetNumber ?? '',
+        city: personDraft.city ?? '',
+        postalCode: personDraft.postalCode ?? '',
+        country: personDraft.country ?? '',
+        countryId: personDraft.countryId ?? '',
+        nip: personDraft.nip ?? '',
+        regon: personDraft.regon ?? '',
+        phoneNumbers: personDraft.phoneNumbers ?? [],
+        createdAt: now,
+        updatedAt: now,
+      });
+      nextDatabase = {
+        ...nextDatabase,
+        persons: [...nextDatabase.persons, newPerson],
+      };
+
+      await persistDatabase(nextDatabase, 'Person created.');
+      startTransition(() => {
+        router.push('/admin/filemaker/persons');
+      });
+      return;
+    }
+
+    if (person === null) return;
 
     nextDatabase = {
       ...nextDatabase,
@@ -143,12 +195,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
 
     await persistDatabase(nextDatabase, 'Person updated.');
     startTransition(() => {
-      router.push('/admin/filemaker');
+      router.push('/admin/filemaker/persons');
     });
-  }, [database, person, personDraft, persistDatabase, router]);
+  }, [database, isCreateMode, person, personDraft, persistDatabase, router, toast]);
 
   const handleExtractEmails = useCallback(async (): Promise<void> => {
-    if (!person || !emailExtractionText.trim()) return;
+    if (person === null || emailExtractionText.trim().length === 0) return;
 
     const promptSettings = settingsStore.get(FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY);
     const rules = parseFilemakerEmailParserRulesFromPromptSettings(promptSettings);
@@ -172,6 +224,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   }, [database, person, emailExtractionText, persistDatabase, settingsStore]);
 
   return {
+    isCreateMode,
     person,
     personDraft,
     setPersonDraft,

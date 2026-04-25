@@ -37,12 +37,6 @@ export const PLAYWRIGHT_SEQUENCER_ACTION_SLOTS: SequencerActionSlot[] = [
           'Extracts categories from the dropdown on the Create Listing form. Requires an active authenticated session.',
         requiresAuth: true,
       },
-      {
-        key: 'playwright',
-        label: 'Public taxonomy pages',
-        description:
-          'Crawls tradera.com/en/categories with a headless browser. No auth required.',
-      },
     ],
   },
 ];

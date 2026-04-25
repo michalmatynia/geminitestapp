@@ -152,7 +152,7 @@ const fetchTraderaPublicCategoryChildItemsById = async (
   return cached;
 };
 
-const fetchTraderaPublicRootCategoryItems = async (): Promise<
+export const fetchTraderaPublicRootCategoryItems = async (): Promise<
   TraderaListingFormCategoryPickerItem[]
 > => {
   let cached = publicRootCategoryItemsCache.get(TRADERA_PUBLIC_HOME_URL);

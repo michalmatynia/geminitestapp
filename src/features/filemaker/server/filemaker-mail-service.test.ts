@@ -368,6 +368,7 @@ const createDatabaseJson = (): string =>
       },
     ],
     eventOrganizationLinks: [],
+    values: [],
   });
 
 describe('filemaker mail service - accounts and sending', () => {

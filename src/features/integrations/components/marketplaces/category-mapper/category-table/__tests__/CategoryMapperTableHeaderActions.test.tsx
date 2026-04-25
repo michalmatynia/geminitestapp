@@ -71,7 +71,7 @@ describe('CategoryMapperTableHeaderActions', () => {
     expect(onAutoMatchByName).toHaveBeenCalledTimes(1);
   });
 
-  it('shows the listing form picker option when a Tradera fetch selector is rendered', () => {
+  it('hides the fetch method selector when only the listing form picker option is available', () => {
     render(
       <CategoryMapperTableHeaderActions
         onFetch={() => {}}
@@ -86,10 +86,10 @@ describe('CategoryMapperTableHeaderActions', () => {
       />
     );
 
-    expect(screen.getByRole('option', { name: 'Listing form picker' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Category fetch method')).not.toBeInTheDocument();
   });
 
-  it('orders Tradera fetch methods with listing form picker first', () => {
+  it('renders the fetch method selector when callers supply multiple options', () => {
     render(
       <CategoryMapperTableHeaderActions
         onFetch={() => {}}
@@ -101,6 +101,10 @@ describe('CategoryMapperTableHeaderActions', () => {
         pendingCount={0}
         categoryFetchMethod='playwright_listing_form'
         onCategoryFetchMethodChange={() => {}}
+        categoryFetchMethodOptions={[
+          { value: 'playwright_listing_form', label: 'Listing form picker' },
+          { value: 'playwright', label: 'Public taxonomy pages' },
+        ]}
       />
     );
 

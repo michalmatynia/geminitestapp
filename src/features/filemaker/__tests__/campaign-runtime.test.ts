@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createFilemakerEmailCampaign,
+  createFilemakerEmailCampaignDelivery,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
@@ -111,6 +112,7 @@ const createDatabase = (): FilemakerDatabase => ({
     },
   ],
   eventOrganizationLinks: [],
+  values: [],
 });
 
 const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerEmailCampaign =>
@@ -897,5 +899,88 @@ describe('filemaker campaign runtime service', () => {
     );
     expect(suppressedDelivery?.status).toBe('skipped');
     expect(suppressedDelivery?.providerMessage).toContain('suppression list');
+  });
+
+  it('defers a queued recipient domain when the same run is already failing that domain', async () => {
+    const { service, store, sendCampaignEmail } = createRuntimeHarness();
+
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+    const seededDeliveries = [
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'sent@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-sent',
+        status: 'sent',
+        sentAt: iso,
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'bounce-1@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-bounce-1',
+        status: 'bounced',
+        failureCategory: 'soft_bounce',
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'bounce-2@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-bounce-2',
+        status: 'bounced',
+        failureCategory: 'soft_bounce',
+      }),
+      createFilemakerEmailCampaignDelivery({
+        campaignId: 'campaign-1',
+        runId: launched.run.id,
+        emailAddress: 'next@example.com',
+        partyKind: 'person',
+        partyId: 'person-domain-next',
+        status: 'queued',
+      }),
+    ];
+    store.set(
+      FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
+      JSON.stringify({ version: 1, deliveries: seededDeliveries })
+    );
+
+    const processed = await service.processRun({
+      runId: launched.run.id,
+    });
+
+    expect(sendCampaignEmail).not.toHaveBeenCalled();
+    expect(processed.retryableDeliveryCount).toBe(3);
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    const deferredDelivery = storedDeliveries.deliveries.find(
+      (delivery) => delivery.emailAddress === 'next@example.com'
+    );
+    expect(deferredDelivery).toEqual(
+      expect.objectContaining({
+        status: 'failed',
+        failureCategory: 'rate_limited',
+        nextRetryAt: '2026-03-27T10:15:00.000Z',
+      })
+    );
+    expect(deferredDelivery?.lastError).toContain('recipient domain example.com');
+
+    const storedEvents = parseFilemakerEmailCampaignEventRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY)
+    );
+    expect(
+      storedEvents.events.some(
+        (event) =>
+          event.type === 'status_changed' &&
+          event.message.includes('recipient domain example.com is already failing')
+      )
+    ).toBe(true);
   });
 });

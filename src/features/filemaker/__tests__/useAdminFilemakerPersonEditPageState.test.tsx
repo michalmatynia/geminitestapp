@@ -5,6 +5,7 @@ import { useAdminFilemakerPersonEditPageState } from '@/features/filemaker/hooks
 import { FILEMAKER_DATABASE_KEY } from '@/features/filemaker/settings';
 
 const mocks = vi.hoisted(() => ({
+  routeParams: { personId: 'person-1' },
   routerPush: vi.fn(),
   settingsGet: vi.fn(),
   updateSettingMutateAsync: vi.fn(),
@@ -12,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('next/navigation', () => ({
-  useParams: () => ({ personId: 'person-1' }),
+  useParams: () => mocks.routeParams,
 }));
 
 vi.mock('nextjs-toploader/app', () => ({
@@ -70,6 +71,7 @@ const databaseFixture = {
   emails: [],
   emailLinks: [],
   eventOrganizationLinks: [],
+  values: [],
 };
 
 describe('useAdminFilemakerPersonEditPageState', () => {
@@ -78,6 +80,7 @@ describe('useAdminFilemakerPersonEditPageState', () => {
     mocks.updateSettingMutateAsync.mockReset();
     mocks.updateSettingMutateAsync.mockResolvedValue({});
     mocks.toast.mockReset();
+    mocks.routeParams = { personId: 'person-1' };
     mocks.settingsGet.mockReset();
     mocks.settingsGet.mockImplementation((key: string) =>
       key === FILEMAKER_DATABASE_KEY ? JSON.stringify(databaseFixture) : null
@@ -95,7 +98,7 @@ describe('useAdminFilemakerPersonEditPageState', () => {
     expect(result.current.personDraft.lastName).toBe('Smith');
   });
 
-  it('persists the edited person and navigates back to the list page', async () => {
+  it('persists the edited person and navigates back to the persons page', async () => {
     const { result } = renderHook(() => useAdminFilemakerPersonEditPageState());
 
     await waitFor(() => {
@@ -114,7 +117,7 @@ describe('useAdminFilemakerPersonEditPageState', () => {
     });
 
     expect(mocks.updateSettingMutateAsync).toHaveBeenCalledTimes(1);
-    expect(mocks.routerPush).toHaveBeenCalledWith('/admin/filemaker');
+    expect(mocks.routerPush).toHaveBeenCalledWith('/admin/filemaker/persons');
     expect(mocks.toast).toHaveBeenCalledWith('Person updated.', { variant: 'success' });
 
     const [persistCall] = mocks.updateSettingMutateAsync.mock.calls[0] ?? [];
@@ -124,5 +127,42 @@ describe('useAdminFilemakerPersonEditPageState', () => {
 
     const persistedDatabase = JSON.parse(String(persistCall?.value ?? '{}'));
     expect(persistedDatabase.persons[0]?.lastName).toBe('Kowalska');
+  });
+
+  it('creates a new person from the new route', async () => {
+    mocks.routeParams = { personId: 'new' };
+
+    const { result } = renderHook(() => useAdminFilemakerPersonEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.isCreateMode).toBe(true);
+    });
+
+    act(() => {
+      result.current.setPersonDraft((current) => ({
+        ...current,
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+      }));
+    });
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    expect(mocks.updateSettingMutateAsync).toHaveBeenCalledTimes(1);
+    expect(mocks.routerPush).toHaveBeenCalledWith('/admin/filemaker/persons');
+    expect(mocks.toast).toHaveBeenCalledWith('Person created.', { variant: 'success' });
+
+    const [persistCall] = mocks.updateSettingMutateAsync.mock.calls[0] ?? [];
+    const persistedDatabase = JSON.parse(String(persistCall?.value ?? '{}'));
+    expect(persistedDatabase.persons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          firstName: 'Ada',
+          lastName: 'Lovelace',
+        }),
+      ])
+    );
   });
 });

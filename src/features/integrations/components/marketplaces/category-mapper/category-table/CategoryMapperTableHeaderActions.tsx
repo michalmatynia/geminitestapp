@@ -8,7 +8,6 @@ import type { GenericMapperHeaderActionsProps } from '@/shared/contracts/ui/api'
 
 const TRADERA_FETCH_METHOD_OPTIONS: { value: TraderaCategoryFetchMethod; label: string }[] = [
   { value: 'playwright_listing_form', label: 'Listing form picker' },
-  { value: 'playwright', label: 'Public taxonomy pages' },
 ];
 
 type CategoryMapperTableHeaderActionsProps = GenericMapperHeaderActionsProps & {
@@ -38,15 +37,21 @@ export function CategoryMapperTableHeaderActions(
     categoryFetchMethodOptions,
   } = props;
 
+  const fetchMethodOptions = categoryFetchMethodOptions ?? TRADERA_FETCH_METHOD_OPTIONS;
+  const showFetchMethodSelector =
+    categoryFetchMethod !== undefined &&
+    onCategoryFetchMethodChange !== undefined &&
+    fetchMethodOptions.length > 1;
+
   return (
     <div className='flex items-center gap-2'>
-      {categoryFetchMethod !== undefined && onCategoryFetchMethodChange ? (
+      {showFetchMethodSelector ? (
         <div className='w-[200px]'>
           <SelectSimple
             size='sm'
             value={categoryFetchMethod}
             onValueChange={(v) => onCategoryFetchMethodChange(v as TraderaCategoryFetchMethod)}
-            options={categoryFetchMethodOptions ?? TRADERA_FETCH_METHOD_OPTIONS}
+            options={fetchMethodOptions}
             disabled={isFetching}
             ariaLabel='Category fetch method'
             title='Category fetch method'

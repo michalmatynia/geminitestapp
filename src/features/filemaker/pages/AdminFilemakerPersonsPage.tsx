@@ -1,154 +1,185 @@
 'use client';
 
-import { Users } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
-import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
+import React, { startTransition, useCallback, useDeferredValue, useMemo, useState } from 'react';
 
+import type { PanelAction } from '@/shared/contracts/ui/panels';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Badge, DropdownMenuItem } from '@/shared/ui/primitives.public';
-import { ActionMenu } from '@/shared/ui/forms-and-actions.public';
+import { Badge } from '@/shared/ui/primitives.public';
+import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import {
-  FILEMAKER_DATABASE_KEY,
-  formatFilemakerAddress,
-  parseFilemakerDatabase,
-} from '../settings';
-import { formatTimestamp, includeQuery } from './filemaker-page-utils';
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
-import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
+import { FilemakerEntityMasterTreePage } from '../components/shared/FilemakerEntityMasterTreePage';
+import { FilemakerPersonMasterTreeNode } from '../components/shared/FilemakerPersonMasterTreeNode';
+import { buildFilemakerPersonMasterNodes } from '../entity-master-tree';
+import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
+import type { FilemakerDatabase, FilemakerPerson } from '../types';
+import { includeQuery } from './filemaker-page-utils';
 
-import type { FilemakerPerson } from '../types';
-import type { ColumnDef } from '@tanstack/react-table';
+type PersonPageState = {
+  actions: PanelAction[];
+  defaultExpandedNodeIds: string[];
+  emptyLabel: string;
+  isLoading: boolean;
+  personCount: number;
+  query: string;
+  renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
+  setQuery: (value: string) => void;
+  totalAddressCount: number;
+  treeNodes: MasterTreeNode[];
+};
 
-export function AdminFilemakerPersonsPage(): React.JSX.Element {
-  const router = useRouter();
-  const settingsStore = useSettingsStore();
-  const [query, setQuery] = useState('');
-  const deferredQuery = useDeferredValue(query.trim());
+const FILEMAKER_PERSON_TREE_INSTANCE: FolderTreeInstance = 'filemaker_persons';
 
-  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
-  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+const buildPersonSearchValues = (person: FilemakerPerson): string[] => [
+  person.firstName,
+  person.lastName,
+  person.street,
+  person.streetNumber,
+  person.city,
+  person.postalCode,
+  person.country,
+  person.countryId,
+  person.nip,
+  person.regon,
+  person.phoneNumbers.join(' '),
+];
 
-  const persons = useMemo(
+function useFilteredPersons(database: FilemakerDatabase, query: string): FilemakerPerson[] {
+  return useMemo(
     () =>
       [...database.persons]
-        .filter((person: FilemakerPerson) =>
-          includeQuery(
-            [
-              person.firstName,
-              person.lastName,
-              person.street,
-              person.streetNumber,
-              person.city,
-              person.postalCode,
-              person.country,
-              person.countryId,
-              person.nip,
-              person.regon,
-              person.phoneNumbers.join(' '),
-            ],
-            deferredQuery
-          )
-        )
+        .filter((person: FilemakerPerson) => includeQuery(buildPersonSearchValues(person), query))
         .sort((left: FilemakerPerson, right: FilemakerPerson) =>
           `${left.lastName} ${left.firstName}`.localeCompare(`${right.lastName} ${right.firstName}`)
         ),
-    [database.persons, deferredQuery]
+    [database.persons, query]
+  );
+}
+
+function usePersonTreeNodes(persons: FilemakerPerson[]): {
+  defaultExpandedNodeIds: string[];
+  treeNodes: MasterTreeNode[];
+} {
+  const treeNodes = useMemo(() => buildFilemakerPersonMasterNodes(persons), [persons]);
+  const defaultExpandedNodeIds = useMemo(
+    () => treeNodes.filter((node: MasterTreeNode) => node.type === 'folder').map((node) => node.id),
+    [treeNodes]
   );
 
-  const columns = useMemo<ColumnDef<FilemakerPerson>[]>(
+  return { defaultExpandedNodeIds, treeNodes };
+}
+
+function usePersonActions(router: ReturnType<typeof useRouter>): {
+  actions: PanelAction[];
+  openPerson: (personId: string) => void;
+} {
+  const openPerson = useCallback(
+    (personId: string): void => {
+      startTransition(() => {
+        router.push(`/admin/filemaker/persons/${encodeURIComponent(personId)}`);
+      });
+    },
+    [router]
+  );
+  const actions = useMemo(
     () => [
       {
-        id: 'person',
-        header: 'Person',
-        cell: ({ row }) => {
-          const person = row.original;
-          return (
-            <div className='min-w-0 flex-1 space-y-1'>
-              <div className='text-sm font-semibold text-white'>
-                {person.firstName} {person.lastName}
-              </div>
-              <div className='text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
-            </div>
-          );
+        key: 'create-person',
+        label: 'Create Person',
+        icon: <Plus className='size-4' />,
+        onClick: () => {
+          startTransition(() => {
+            router.push('/admin/filemaker/persons/new');
+          });
         },
       },
-      {
-        id: 'details',
-        header: 'Details',
-        cell: ({ row }) => {
-          const person = row.original;
-          return (
-            <div className='space-y-0.5'>
-              <div className='text-[11px] text-gray-500'>
-                NIP: {person.nip || 'n/a'} | REGON: {person.regon || 'n/a'}
-              </div>
-              <div className='text-[11px] text-gray-500'>
-                Phones: {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'}
-              </div>
-            </div>
-          );
-        },
-      },
-      {
-        accessorKey: 'updatedAt',
-        header: 'Updated',
-        cell: ({ row }) => (
-          <span className='text-[10px] text-gray-600'>
-            {formatTimestamp(row.original.updatedAt)}
-          </span>
-        ),
-      },
-      {
-        id: 'actions',
-        header: () => <div className='text-right'>Actions</div>,
-        cell: ({ row }) => (
-          <div className='flex justify-end'>
-            <ActionMenu
-              ariaLabel={`Actions for person ${row.original.firstName} ${row.original.lastName}`}
-            >
-              <DropdownMenuItem
-                onSelect={(event: Event): void => {
-                  event.preventDefault();
-                  startTransition(() => { router.push(`/admin/filemaker/persons/${encodeURIComponent(row.original.id)}`); });
-                }}
-              >
-                Edit Details
-              </DropdownMenuItem>
-            </ActionMenu>
-          </div>
-        ),
-      },
+      ...buildFilemakerNavActions(router, 'persons'),
     ],
     [router]
   );
 
+  return { actions, openPerson };
+}
+
+function usePersonRenderNode(
+  persons: FilemakerPerson[],
+  onOpenPerson: (personId: string) => void
+): (input: FolderTreeViewportRenderNodeInput) => React.ReactNode {
+  const personById = useMemo(
+    () => new Map<string, FilemakerPerson>(persons.map((person: FilemakerPerson) => [person.id, person])),
+    [persons]
+  );
+
+  return useCallback(
+    (input: FolderTreeViewportRenderNodeInput): React.ReactNode => (
+      <FilemakerPersonMasterTreeNode {...input} personById={personById} onOpenPerson={onOpenPerson} />
+    ),
+    [onOpenPerson, personById]
+  );
+}
+
+function usePersonPageState(): PersonPageState {
+  const router = useRouter();
+  const settingsStore = useSettingsStore();
+  const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query.trim());
+  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
+  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const persons = useFilteredPersons(database, deferredQuery);
+  const { defaultExpandedNodeIds, treeNodes } = usePersonTreeNodes(persons);
+  const { actions, openPerson } = usePersonActions(router);
+  const renderNode = usePersonRenderNode(persons, openPerson);
+
+  return {
+    actions,
+    defaultExpandedNodeIds,
+    emptyLabel: query.trim().length > 0 ? 'No persons found' : 'No persons found in database',
+    isLoading: settingsStore.isLoading,
+    personCount: persons.length,
+    query,
+    renderNode,
+    setQuery,
+    totalAddressCount: database.addresses.length,
+    treeNodes,
+  };
+}
+
+function renderPersonBadges(state: PersonPageState): React.JSX.Element {
   return (
-    <FilemakerEntityTablePage
+    <>
+      <Badge variant='outline' className='text-[10px]'>
+        Persons: {state.personCount}
+      </Badge>
+      <Badge variant='outline' className='text-[10px]'>
+        Total Addresses: {state.totalAddressCount}
+      </Badge>
+    </>
+  );
+}
+
+export function AdminFilemakerPersonsPage(): React.JSX.Element {
+  const state = usePersonPageState();
+
+  return (
+    <FilemakerEntityMasterTreePage
+      instance={FILEMAKER_PERSON_TREE_INSTANCE}
       title='Filemaker Persons'
-      description='Search and browse persons available for Case Resolver document addressing.'
+      description='Search and browse persons in a master folder tree.'
       icon={<Users className='size-4' />}
-      actions={buildFilemakerNavActions(router, 'persons')}
-      badges={
-        <>
-          <Badge variant='outline' className='text-[10px]'>
-            Persons: {persons.length}
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            Total Addresses: {database.addresses.length}
-          </Badge>
-        </>
-      }
-      query={query}
-      onQueryChange={setQuery}
+      actions={state.actions}
+      badges={renderPersonBadges(state)}
+      query={state.query}
+      onQueryChange={state.setQuery}
       queryPlaceholder='Search name, address, NIP, REGON, phone...'
-      columns={columns}
-      data={persons}
-      isLoading={settingsStore.isLoading}
-      emptyTitle={query ? 'No persons found' : 'No persons found in database.'}
-      emptyDescription={
-        query ? 'Try adjusting your search terms.' : 'Add your first person to the database.'
-      }
+      nodes={state.treeNodes}
+      defaultExpandedNodeIds={state.defaultExpandedNodeIds}
+      isLoading={state.isLoading}
+      emptyLabel={state.emptyLabel}
+      renderNode={state.renderNode}
     />
   );
 }

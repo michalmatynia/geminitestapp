@@ -11,6 +11,9 @@ import {
   createFilemakerPerson,
   createFilemakerPhoneNumber,
   createFilemakerPhoneNumberLink,
+  createFilemakerValue,
+  createFilemakerValueParameter,
+  createFilemakerValueParameterLink,
 } from './filemaker-settings.entities';
 import {
   ensureUniqueId,
@@ -33,6 +36,9 @@ import {
   type FilemakerPhoneNumber,
   type FilemakerPhoneNumberLink,
   type FilemakerPerson,
+  type FilemakerValue,
+  type FilemakerValueParameter,
+  type FilemakerValueParameterLink,
 } from './types';
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -68,6 +74,9 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   emails: [],
   emailLinks: [],
   eventOrganizationLinks: [],
+  values: [],
+  valueParameters: [],
+  valueParameterLinks: [],
 });
 
 const defaultAddressLinkIdForValues = (
@@ -113,6 +122,14 @@ const defaultEventOrganizationLinkIdForValues = (
 ): string => {
   const joined = `${eventId}-${organizationId}`;
   return `filemaker-event-organization-link-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultValueParameterLinkIdForValues = (
+  valueId: string,
+  parameterId: string
+): string => {
+  const joined = `${valueId}-${parameterId}`;
+  return `filemaker-value-parameter-link-${toIdToken(joined) || 'entry'}`;
 };
 
 const hasAnyAddressData = (value: {
@@ -272,6 +289,12 @@ export const normalizeFilemakerDatabase = (
   const rawPhoneNumberLinks = getRecordList('phoneNumberLinks', valueRecord['phoneNumberLinks']);
   const rawEmails = getRecordList('emails', valueRecord['emails']);
   const rawEmailLinks = getRecordList('emailLinks', valueRecord['emailLinks']);
+  const rawValues = getRecordList('values', valueRecord['values']);
+  const rawValueParameters = getRecordList('valueParameters', valueRecord['valueParameters']);
+  const rawValueParameterLinks = getRecordList(
+    'valueParameterLinks',
+    valueRecord['valueParameterLinks']
+  );
   const rawEventOrganizationLinks = getRecordList(
     'eventOrganizationLinks',
     valueRecord['eventOrganizationLinks']
@@ -339,6 +362,9 @@ export const normalizeFilemakerDatabase = (
         postalCode: '',
         country: '',
         countryId: '',
+        taxId: normalizeString(entry['taxId']),
+        krs: normalizeString(entry['krs']),
+        tradingName: normalizeString(entry['tradingName']),
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -764,6 +790,85 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
+  const valueIds = new Set<string>();
+  const values: FilemakerValue[] = [];
+  rawValues.forEach((entry: Record<string, unknown>) => {
+    const id = normalizeString(entry['id']);
+    const label = normalizeString(entry['label']);
+    if (!id || !label || valueIds.has(id)) return;
+    valueIds.add(id);
+    values.push(
+      createFilemakerValue({
+        id,
+        parentId: normalizeString(entry['parentId']) || null,
+        label,
+        value: normalizeString(entry['value']),
+        description: normalizeString(entry['description']) || undefined,
+        sortOrder: Number(entry['sortOrder']),
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
+
+  const normalizedValues = values.map((value: FilemakerValue): FilemakerValue => {
+    if (value.parentId === null || valueIds.has(value.parentId)) return value;
+    return { ...value, parentId: null };
+  });
+
+  const valueParameterIds = new Set<string>();
+  const valueParameterLabels = new Set<string>();
+  const valueParameters: FilemakerValueParameter[] = [];
+  rawValueParameters.forEach((entry: Record<string, unknown>) => {
+    const id = normalizeString(entry['id']);
+    const label = normalizeString(entry['label']);
+    const normalizedLabel = label.toLowerCase();
+    if (!id || !label || valueParameterIds.has(id) || valueParameterLabels.has(normalizedLabel)) {
+      return;
+    }
+    valueParameterIds.add(id);
+    valueParameterLabels.add(normalizedLabel);
+    valueParameters.push(
+      createFilemakerValueParameter({
+        id,
+        label,
+        description: normalizeString(entry['description']) || undefined,
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
+
+  const valueParameterLinkIds = new Set<string>();
+  const valueParameterRelationKeys = new Set<string>();
+  const valueParameterLinks: FilemakerValueParameterLink[] = [];
+  rawValueParameterLinks.forEach((entry: Record<string, unknown>) => {
+    const valueId = normalizeString(entry['valueId']);
+    const parameterId = normalizeString(entry['parameterId']);
+    if (!valueId || !parameterId) return;
+    if (!valueIds.has(valueId) || !valueParameterIds.has(parameterId)) return;
+
+    const relationKey = `${valueId}:${parameterId}`;
+    if (valueParameterRelationKeys.has(relationKey)) return;
+    const baseId = defaultValueParameterLinkIdForValues(valueId, parameterId);
+    const id = ensureUniqueId(
+      normalizeString(entry['id']) || baseId,
+      valueParameterLinkIds,
+      baseId
+    );
+    valueParameterLinkIds.add(id);
+    valueParameterRelationKeys.add(relationKey);
+    valueParameterLinks.push(
+      createFilemakerValueParameterLink({
+        id,
+        valueId,
+        parameterId,
+        createdAt: normalizeString(entry['createdAt']) || undefined,
+        updatedAt: normalizeString(entry['updatedAt']) || undefined,
+      })
+    );
+  });
+
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
 
   return {
@@ -778,6 +883,9 @@ export const normalizeFilemakerDatabase = (
     emails,
     emailLinks,
     eventOrganizationLinks,
+    values: normalizedValues,
+    valueParameters,
+    valueParameterLinks,
   };
 };
 

@@ -32,32 +32,27 @@ const shouldRejectShallowTraderaCategorySync = ({
   fetchedTotal: number;
   fetchedMaxDepth: number;
   fetchedWithParentCount: number;
-}): boolean =>
-  existingTotal > 0 &&
-  existingMaxDepth >= 2 &&
-  fetchedMaxDepth <= 1 &&
-  fetchedMaxDepth < existingMaxDepth &&
-  (fetchedTotal < existingTotal || fetchedWithParentCount < existingWithParentCount);
+}): boolean => {
+  if (existingTotal === 0 || fetchedMaxDepth >= existingMaxDepth) {
+    return false;
+  }
+
+  const lostMeaningfulDepth =
+    (existingMaxDepth >= 2 && fetchedMaxDepth <= 1) ||
+    (existingMaxDepth >= 3 && fetchedMaxDepth <= 2);
+  if (!lostMeaningfulDepth) return false;
+
+  return (
+    fetchedTotal < existingTotal || fetchedWithParentCount < existingWithParentCount
+  );
+};
 
 const shouldProtectExistingTraderaCategoryDepth = (
   context: MarketplaceCategoryFetchContext
-): boolean => context.mode === 'tradera' || context.mode === 'tradera-listing-form';
+): boolean => context.mode === 'tradera-listing-form';
 
-const buildShallowTraderaFetchRecoveryMessage = (
-  context: MarketplaceCategoryFetchContext
-): string => {
-  if (context.mode === 'tradera-listing-form') {
-    return 'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept. Ensure the connection session is authenticated, then retry category fetch.';
-  }
-
-  if (context.mode === 'tradera') {
-    return context.supportsListingForm
-      ? 'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.'
-      : 'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Public taxonomy pages are currently the only available Tradera category source for this integration.';
-  }
-
-  return '';
-};
+const buildShallowTraderaFetchRecoveryMessage = (): string =>
+  'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept. Ensure the connection session is authenticated, then retry category fetch.';
 
 const addCategoryFetchMetadata = (
   categories: BaseCategory[],
@@ -118,7 +113,7 @@ const assertTraderaFetchDoesNotDowngradeStoredDepth = async ({
   }
 
   throw unprocessableEntityError(
-    buildShallowTraderaFetchRecoveryMessage(context),
+    buildShallowTraderaFetchRecoveryMessage(),
     {
       connectionId,
       sourceName: context.responseSourceName,
@@ -193,11 +188,7 @@ export async function postHandler(
   const connectionId = requireMarketplaceConnectionId(body);
 
   const integrationRepo = getIntegrationRepository();
-  const context = await resolveMarketplaceCategoryFetchContext(
-    integrationRepo,
-    connectionId,
-    body.categoryFetchMethod
-  );
+  const context = await resolveMarketplaceCategoryFetchContext(integrationRepo, connectionId);
   const categories = await fetchMarketplaceCategoriesWithContext(context, connectionId);
 
   if (categories.length === 0) {

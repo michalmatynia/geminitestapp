@@ -153,7 +153,6 @@ function Harness(): React.JSX.Element {
     lastFetchWarning,
     staleMappings,
     stats,
-    categoryFetchMethod,
   } = useCategoryMapperUIState();
   const {
     handleAutoMatchByName,
@@ -167,7 +166,6 @@ function Harness(): React.JSX.Element {
     <div>
       <div data-testid='selected-catalog'>{selectedCatalogId ?? 'none'}</div>
       <div data-testid='pending-count'>{String(pendingMappings.size)}</div>
-      <div data-testid='fetch-method'>{categoryFetchMethod}</div>
       <div data-testid='fetch-warning'>{lastFetchWarning?.message ?? 'none'}</div>
       <div data-testid='stale-count'>{String(stats.stale)}</div>
       <div data-testid='unmapped-count'>{String(stats.unmapped)}</div>
@@ -278,25 +276,8 @@ describe('CategoryMapperProvider auto-match by name', () => {
     );
   });
 
-  it('defaults browser Tradera fetches to the listing form picker when no setting is saved', async () => {
-    render(
-      <CategoryMapperProvider
-        connectionId='conn-1'
-        connectionName='Tradera'
-        integrationSlug='tradera'
-      >
-        <Harness />
-      </CategoryMapperProvider>
-    );
-
-    await waitFor(() =>
-      expect(screen.getByTestId('fetch-method')).toHaveTextContent('playwright_listing_form')
-    );
-  });
-
-  it('does not let an old saved public Tradera setting override the listing form default', async () => {
+  it('fetches Tradera categories without a fetch-method override', async () => {
     const user = userEvent.setup();
-    mocks.settingsMap = new Map([['tradera_category_fetch_method', 'playwright']]);
     mocks.fetchMutateAsync.mockResolvedValue({
       fetched: 0,
       total: 0,
@@ -320,16 +301,11 @@ describe('CategoryMapperProvider auto-match by name', () => {
       </CategoryMapperProvider>
     );
 
-    await waitFor(() =>
-      expect(screen.getByTestId('fetch-method')).toHaveTextContent('playwright_listing_form')
-    );
-
     await user.click(screen.getByRole('button', { name: 'Fetch external categories' }));
 
     await waitFor(() =>
       expect(mocks.fetchMutateAsync).toHaveBeenCalledWith({
         connectionId: 'conn-1',
-        categoryFetchMethod: 'playwright_listing_form',
       })
     );
   });
@@ -390,7 +366,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
     const user = userEvent.setup();
     mocks.fetchMutateAsync.mockRejectedValue(
       new Error(
-        'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed.'
+        'No categories could be scraped from the Tradera listing form category picker. Ensure the connection session is authenticated and the listing form is accessible.'
       )
     );
 
@@ -409,7 +385,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
 
     await waitFor(() =>
       expect(mocks.toast).toHaveBeenCalledWith(
-        'Tradera categories could not be scraped from the public categories pages — the taxonomy page structure may have changed.',
+        'No categories could be scraped from the Tradera listing form category picker. Ensure the connection session is authenticated and the listing form is accessible.',
         { variant: 'error' }
       )
     );
@@ -418,7 +394,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
   it('stores and clears the shallow Tradera fetch warning around successive fetch attempts', async () => {
     const user = userEvent.setup();
     const shallowFetchError = new ApiError(
-      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.',
+      'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept. Ensure the connection session is authenticated, then retry category fetch.',
       422
     );
     shallowFetchError.payload = {
@@ -426,7 +402,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
       code: 'UNPROCESSABLE_ENTITY',
       httpStatus: 422,
       meta: {
-        sourceName: 'Tradera public taxonomy pages',
+        sourceName: 'Tradera listing form picker',
         existingTotal: 3,
         existingMaxDepth: 2,
         fetchedTotal: 2,
@@ -464,7 +440,7 @@ describe('CategoryMapperProvider auto-match by name', () => {
 
     await waitFor(() =>
       expect(screen.getByTestId('fetch-warning')).toHaveTextContent(
-        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept.'
+        'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept.'
       )
     );
 

@@ -141,10 +141,6 @@ describe('TraderaSettingsPage', () => {
             key: TRADERA_SETTINGS_KEYS.selectorProfile,
             value: 'profile-market-b',
           }),
-          expect.objectContaining({
-            key: TRADERA_SETTINGS_KEYS.categoryFetchMethod,
-            value: 'playwright_listing_form',
-          }),
         ])
       );
     });

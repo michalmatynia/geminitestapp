@@ -36,8 +36,6 @@ export interface CategoryMapperUIState {
   toggleExpand: (categoryId: string) => void;
   lastFetchResult: MarketplaceFetchResponse | null;
   lastFetchWarning: CategoryMapperFetchWarning | null;
-  categoryFetchMethod: TraderaCategoryFetchMethod;
-  setCategoryFetchMethod: (method: TraderaCategoryFetchMethod) => void;
   staleMappings: CategoryMapperIssueRow[];
   nonLeafMappings: CategoryMapperIssueRow[];
   stats: {
@@ -72,7 +70,7 @@ export const extractTraderaFetchWarning = (
 
   if (
     code !== 'UNPROCESSABLE_ENTITY' ||
-    sourceName !== 'Tradera public taxonomy pages' ||
+    sourceName !== 'Tradera listing form picker' ||
     existingMaxDepth === null ||
     fetchedMaxDepth === null ||
     existingMaxDepth <= fetchedMaxDepth

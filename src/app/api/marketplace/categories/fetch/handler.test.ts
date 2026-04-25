@@ -5,7 +5,6 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   fetchBaseCategoriesMock,
-  fetchTraderaCategoriesForConnectionMock,
   fetchTraderaCategoriesFromListingFormForConnectionMock,
   getExternalCategoryRepositoryMock,
   getIntegrationRepositoryMock,
@@ -17,7 +16,6 @@ const {
   loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
-  fetchTraderaCategoriesForConnectionMock: vi.fn(),
   fetchTraderaCategoriesFromListingFormForConnectionMock: vi.fn(),
   getExternalCategoryRepositoryMock: vi.fn(),
   getIntegrationRepositoryMock: vi.fn(),
@@ -37,7 +35,6 @@ vi.mock('@/features/integrations/server', () => ({
 }));
 
 vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
-  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
   fetchTraderaCategoriesFromListingFormForConnection:
     fetchTraderaCategoriesFromListingFormForConnectionMock,
 }));
@@ -69,7 +66,6 @@ describe('marketplace categories fetch handler', () => {
       allowSimulatedSuccess: false,
       listingFormUrl: 'https://www.tradera.com/en/selling/new',
       selectorProfile: 'default',
-      categoryFetchMethod: 'playwright_listing_form',
     });
     getIntegrationRepositoryMock.mockReturnValue({
       getConnectionById: getConnectionByIdMock,
@@ -302,7 +298,6 @@ describe('marketplace categories fetch handler', () => {
     );
 
     expect(fetchBaseCategoriesMock).not.toHaveBeenCalled();
-    expect(fetchTraderaCategoriesForConnectionMock).not.toHaveBeenCalled();
     expect(syncFromBaseMock).not.toHaveBeenCalled();
   });
 
@@ -351,92 +346,6 @@ describe('marketplace categories fetch handler', () => {
         },
       },
     ]);
-  });
-
-  it('keeps existing deeper Tradera categories when the public fallback returns a shallower tree', async () => {
-    getIntegrationByIdMock.mockResolvedValue({
-      id: 'integration-1',
-      name: 'Tradera',
-      slug: 'tradera',
-      createdAt: new Date(0).toISOString(),
-      updatedAt: null,
-    });
-    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
-      { id: '49', name: 'Collectibles', parentId: '0' },
-      { id: '2929', name: 'Pins & needles', parentId: '49' },
-    ]);
-    listByConnectionMock.mockResolvedValue([
-      {
-        id: 'stored-root',
-        connectionId: 'conn-1',
-        externalId: '49',
-        name: 'Collectibles',
-        parentExternalId: null,
-        path: 'Collectibles',
-        depth: 0,
-        isLeaf: false,
-        metadata: { categoryFetchSource: 'Tradera public taxonomy pages' },
-        fetchedAt: '2026-04-08T00:00:00.000Z',
-        createdAt: '2026-04-08T00:00:00.000Z',
-        updatedAt: '2026-04-08T00:00:00.000Z',
-      },
-      {
-        id: 'stored-parent',
-        connectionId: 'conn-1',
-        externalId: '2929',
-        name: 'Pins & needles',
-        parentExternalId: '49',
-        path: 'Collectibles > Pins & needles',
-        depth: 1,
-        isLeaf: false,
-        metadata: { categoryFetchSource: 'Tradera public taxonomy pages' },
-        fetchedAt: '2026-04-08T00:00:00.000Z',
-        createdAt: '2026-04-08T00:00:00.000Z',
-        updatedAt: '2026-04-08T00:00:00.000Z',
-      },
-      {
-        id: 'stored-leaf',
-        connectionId: 'conn-1',
-        externalId: '292904',
-        name: 'Other pins & needles',
-        parentExternalId: '2929',
-        path: 'Collectibles > Pins & needles > Other pins & needles',
-        depth: 2,
-        isLeaf: true,
-        metadata: { categoryFetchSource: 'Tradera public taxonomy pages' },
-        fetchedAt: '2026-04-08T00:00:00.000Z',
-        createdAt: '2026-04-08T00:00:00.000Z',
-        updatedAt: '2026-04-08T00:00:00.000Z',
-      },
-    ]);
-
-    const request = new NextRequest('http://localhost/api/marketplace/categories/fetch', {
-      method: 'POST',
-      body: JSON.stringify({
-        connectionId: 'conn-1',
-        categoryFetchMethod: 'playwright',
-      }),
-      headers: {
-        'content-type': 'application/json',
-      },
-    });
-
-    await expect(postHandler(request, createContext())).rejects.toMatchObject({
-      message:
-        'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.',
-      httpStatus: 422,
-      code: 'UNPROCESSABLE_ENTITY',
-      meta: {
-        connectionId: 'conn-1',
-        sourceName: 'Tradera public taxonomy pages',
-        existingTotal: 3,
-        existingMaxDepth: 2,
-        fetchedTotal: 2,
-        fetchedMaxDepth: 1,
-      },
-    });
-
-    expect(syncFromBaseMock).not.toHaveBeenCalled();
   });
 
   it('keeps existing deeper Tradera categories when listing form fetch returns a shallower tree', async () => {

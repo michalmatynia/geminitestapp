@@ -20,7 +20,7 @@ import {
 } from '@/features/integrations/components/marketplaces/category-mapper/category-table/auto-match-by-name';
 import { buildCategoryTree } from '@/features/integrations/components/marketplaces/category-mapper/category-table/utils';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations/listings';
-import { type MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
+import type { MarketplaceFetchResponse } from '@/shared/contracts/integrations/marketplace';
 import type { InternalCategoryOption, CategoryMapperData, CategoryMapperActions } from '@/shared/contracts/integrations/context';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import { useToast } from '@/shared/ui/primitives.public';

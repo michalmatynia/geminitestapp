@@ -1,16 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IntegrationConnectionRecord, IntegrationRecord } from '@/shared/contracts/integrations/repositories';
+import type {
+  IntegrationConnectionRecord,
+  IntegrationLookupRepository,
+  IntegrationRecord,
+} from '@/shared/contracts/integrations/repositories';
 
 const {
   fetchBaseCategoriesMock,
-  fetchTraderaCategoriesForConnectionMock,
   fetchTraderaCategoriesFromListingFormForConnectionMock,
   resolveBaseConnectionTokenMock,
   loadTraderaSystemSettingsMock,
 } = vi.hoisted(() => ({
   fetchBaseCategoriesMock: vi.fn(),
-  fetchTraderaCategoriesForConnectionMock: vi.fn(),
   fetchTraderaCategoriesFromListingFormForConnectionMock: vi.fn(),
   resolveBaseConnectionTokenMock: vi.fn(),
   loadTraderaSystemSettingsMock: vi.fn(),
@@ -22,7 +24,6 @@ vi.mock('@/features/integrations/server', () => ({
 }));
 
 vi.mock('@/features/integrations/services/tradera-listing/categories', () => ({
-  fetchTraderaCategoriesForConnection: fetchTraderaCategoriesForConnectionMock,
   fetchTraderaCategoriesFromListingFormForConnection:
     fetchTraderaCategoriesFromListingFormForConnectionMock,
 }));
@@ -38,7 +39,6 @@ import {
   fetchMarketplaceCategories,
   requireMarketplaceConnectionId,
   resolveMarketplaceCategoryFetchContext,
-  type CategoryFetchIntegrationRepository,
 } from './handler.helpers';
 
 const createConnection = (
@@ -80,7 +80,6 @@ describe('marketplace categories fetch helpers', () => {
       allowSimulatedSuccess: false,
       listingFormUrl: 'https://www.tradera.com/en/selling/new',
       selectorProfile: 'default',
-      categoryFetchMethod: 'playwright_listing_form',
     });
   });
 
@@ -92,7 +91,7 @@ describe('marketplace categories fetch helpers', () => {
   });
 
   it('resolves and fetches base marketplace categories', async () => {
-    const integrationRepo: CategoryFetchIntegrationRepository = {
+    const integrationRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(createIntegration()),
     };
@@ -120,16 +119,12 @@ describe('marketplace categories fetch helpers', () => {
 
   it('resolves tradera contexts, builds responses, and rejects unsupported integrations', async () => {
     // Browser connection defaults to the authenticated listing form picker
-    const traderaRepo: CategoryFetchIntegrationRepository = {
+    const traderaRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
         createIntegration({ name: 'Tradera', slug: 'tradera' })
       ),
     };
-    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
-      { id: 'cat-2', name: 'Category 2', parentId: '0' },
-    ]);
-
     const traderaContext = await resolveMarketplaceCategoryFetchContext(traderaRepo, 'conn-1');
     expect(traderaContext).toMatchObject({
       connectionId: 'conn-1',
@@ -144,7 +139,7 @@ describe('marketplace categories fetch helpers', () => {
       { id: 'cat-2', name: 'Category 2', parentId: '0' },
     ]);
 
-    const unsupportedRepo: CategoryFetchIntegrationRepository = {
+    const unsupportedRepo: IntegrationLookupRepository = {
       getConnectionById: vi.fn().mockResolvedValue(createConnection()),
       getIntegrationById: vi.fn().mockResolvedValue(
         createIntegration({ name: 'Other', slug: 'other' })
@@ -155,39 +150,11 @@ describe('marketplace categories fetch helpers', () => {
       'Other is not yet supported for category fetch'
     );
 
-    // Explicit browser fallback still allows the public taxonomy pages
-    fetchTraderaCategoriesForConnectionMock.mockResolvedValue([
-      { id: 'public-cat-1', name: 'Public Category 1', parentId: null },
-    ]);
-
-    const traderaPublicRepo: CategoryFetchIntegrationRepository = {
-      getConnectionById: vi.fn().mockResolvedValue(createConnection()),
-      getIntegrationById: vi.fn().mockResolvedValue(
-        createIntegration({ name: 'Tradera', slug: 'tradera' })
-      ),
-    };
-
-    const traderaPublicContext = await resolveMarketplaceCategoryFetchContext(
-      traderaPublicRepo,
-      'conn-1',
-      'playwright'
-    );
-    expect(traderaPublicContext).toMatchObject({
-      connectionId: 'conn-1',
-      sourceName: 'Tradera',
-      responseSourceName: 'Tradera public taxonomy pages',
-      supportsListingForm: true,
-      mode: 'tradera',
-    });
-    await expect(fetchMarketplaceCategories(traderaPublicContext)).resolves.toEqual([
-      { id: 'public-cat-1', name: 'Public Category 1', parentId: null },
-    ]);
-
-    expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera public taxonomy pages')).toEqual({
+    expect(buildEmptyMarketplaceCategoryFetchResponse('Tradera listing form picker')).toEqual({
       fetched: 0,
       total: 0,
-      message: 'No categories found in Tradera public taxonomy pages.',
-      source: 'Tradera public taxonomy pages',
+      message: 'No categories found in Tradera listing form picker.',
+      source: 'Tradera listing form picker',
       categoryStats: {
         rootCount: 0,
         withParentCount: 0,
@@ -240,47 +207,4 @@ describe('marketplace categories fetch helpers', () => {
     });
   });
 
-  it('ignores stored public taxonomy settings unless the request explicitly asks for them', async () => {
-    loadTraderaSystemSettingsMock.mockResolvedValue({
-      defaultDurationHours: 72,
-      autoRelistEnabled: true,
-      autoRelistLeadMinutes: 180,
-      schedulerEnabled: false,
-      schedulerIntervalMs: 300000,
-      allowSimulatedSuccess: false,
-      listingFormUrl: 'https://www.tradera.com/en/selling/new',
-      selectorProfile: 'default',
-      categoryFetchMethod: 'playwright',
-    });
-
-    const traderaRepo: CategoryFetchIntegrationRepository = {
-      getConnectionById: vi.fn().mockResolvedValue(createConnection()),
-      getIntegrationById: vi.fn().mockResolvedValue(
-        createIntegration({ name: 'Tradera', slug: 'tradera' })
-      ),
-    };
-
-    const defaultContext = await resolveMarketplaceCategoryFetchContext(traderaRepo, 'conn-1');
-
-    expect(defaultContext).toMatchObject({
-      connectionId: 'conn-1',
-      sourceName: 'Tradera',
-      responseSourceName: 'Tradera listing form picker',
-      mode: 'tradera-listing-form',
-    });
-
-    const traderaContext = await resolveMarketplaceCategoryFetchContext(
-      traderaRepo,
-      'conn-1',
-      'playwright'
-    );
-
-    expect(traderaContext).toMatchObject({
-      connectionId: 'conn-1',
-      sourceName: 'Tradera',
-      responseSourceName: 'Tradera public taxonomy pages',
-      supportsListingForm: true,
-      mode: 'tradera',
-    });
-  });
 });

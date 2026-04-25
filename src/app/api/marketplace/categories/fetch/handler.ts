@@ -170,8 +170,7 @@ const syncMarketplaceCategories = async ({
  * POST /api/marketplace/categories/fetch
  * Fetches marketplace categories and stores them locally.
  * Base.com uses the API.
- * Browser Tradera defaults to the authenticated listing form picker, while explicit
- * Tradera fetch-method overrides can still use the public taxonomy pages.
+ * Browser Tradera uses the authenticated listing form picker.
  */
 export async function postHandler(
   request: NextRequest,

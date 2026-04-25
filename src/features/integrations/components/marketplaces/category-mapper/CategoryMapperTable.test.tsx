@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -296,45 +296,6 @@ describe('CategoryMapperTable', () => {
     });
   });
 
-  it('shows the listing form picker method for browser Tradera connections', async () => {
-    render(
-      <CategoryMapperProvider
-        connectionId='conn-1'
-        connectionName='Tradera'
-        integrationSlug='tradera'
-      >
-        <CategoryMapperTable />
-      </CategoryMapperProvider>
-    );
-
-    expect(
-      screen.getByRole('option', { name: 'Listing form picker' })
-    ).toBeInTheDocument();
-  });
-
-  it('orders browser Tradera fetch methods with listing form picker first', async () => {
-    render(
-      <CategoryMapperProvider
-        connectionId='conn-1'
-        connectionName='Tradera'
-        integrationSlug='tradera'
-      >
-        <CategoryMapperTable />
-      </CategoryMapperProvider>
-    );
-
-    const fetchMethodSelect = screen.getByLabelText('Category fetch method');
-    const optionLabels = within(fetchMethodSelect)
-      .getAllByRole('option')
-      .map((option) => option.textContent?.trim() ?? '')
-      .filter((label) => label && label !== 'Select catalog');
-
-    expect(optionLabels).toEqual([
-      'Listing form picker',
-      'Public taxonomy pages',
-    ]);
-  });
-
   it('renders nested external categories in the left-column tree when parent-child links exist', async () => {
     mocks.externalCategories = [
       createExternalCategory({
@@ -520,14 +481,14 @@ describe('CategoryMapperTable', () => {
     });
   });
 
-  it('shows Tradera fetch diagnostics after fetching categories from the public fallback', async () => {
+  it('shows Tradera fetch diagnostics after a shallow listing-form category fetch', async () => {
     const user = userEvent.setup();
     mocks.fetchMutateAsync.mockResolvedValue({
       fetched: 12,
       total: 12,
-      source: 'Tradera public taxonomy pages',
+      source: 'Tradera listing form picker',
       message:
-        'Successfully synced 12 categories from Tradera public taxonomy pages (roots: 4, max depth: 1).',
+        'Successfully synced 12 categories from Tradera listing form picker (roots: 4, max depth: 1).',
       categoryStats: {
         rootCount: 4,
         withParentCount: 8,
@@ -563,7 +524,7 @@ describe('CategoryMapperTable', () => {
     expect(alertTexts.some((t) => t.includes('shallow tree'))).toBe(true);
     expect(
       alertTexts.some((t) =>
-        t.includes('Category source: Tradera public taxonomy pages. Loaded 12 categories.')
+        t.includes('Category source: Tradera listing form picker. Loaded 12 categories.')
       )
     ).toBe(true);
     expect(
@@ -627,11 +588,11 @@ describe('CategoryMapperTable', () => {
       'Roots: 1. Categories with parents: 2. Max depth: 2.'
     );
     expect(alerts[0]).not.toHaveTextContent(
-      'Tradera is using the public taxonomy-page fallback and only reached shallow levels.'
+      'These stored Tradera categories came from the retired public taxonomy-page fallback and only reached shallow levels.'
     );
   });
 
-  it('shows an inline warning when a shallow Tradera fallback fetch is rejected and existing categories are kept', async () => {
+  it('shows an inline warning when a shallow Tradera listing-form fetch is rejected and existing categories are kept', async () => {
     const user = userEvent.setup();
     mocks.externalCategories = [
       createExternalCategory({
@@ -662,7 +623,7 @@ describe('CategoryMapperTable', () => {
     ];
 
     const error = new ApiError(
-      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept. Retry the fetch using Listing form picker.',
+      'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept. Ensure the connection session is authenticated, then retry category fetch.',
       422
     );
     error.payload = {
@@ -670,7 +631,7 @@ describe('CategoryMapperTable', () => {
       code: 'UNPROCESSABLE_ENTITY',
       httpStatus: 422,
       meta: {
-        sourceName: 'Tradera public taxonomy pages',
+        sourceName: 'Tradera listing form picker',
         existingTotal: 3,
         existingMaxDepth: 2,
         fetchedTotal: 2,
@@ -697,7 +658,7 @@ describe('CategoryMapperTable', () => {
 
     const alerts = screen.getAllByTestId('mapper-alert');
     expect(alerts[0]).toHaveTextContent(
-      'Tradera public taxonomy pages returned a shallower category tree than the categories already stored. Existing categories were kept.'
+      'Tradera listing form picker returned a shallower category tree than the categories already stored. Existing categories were kept.'
     );
     expect(alerts[0]).toHaveTextContent(
       'Stored categories kept: 3. Current max depth: 2. Rejected fetch max depth: 1.'

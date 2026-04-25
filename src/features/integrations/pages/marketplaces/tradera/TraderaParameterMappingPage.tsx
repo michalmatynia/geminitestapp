@@ -616,7 +616,6 @@ export default function TraderaParameterMappingPage(): React.JSX.Element {
     try {
       const result = await syncExternalCategoriesMutation.mutateAsync({
         connectionId: selectedConnectionId,
-        categoryFetchMethod: 'playwright_listing_form',
       });
       toast(result.message, {
         variant: result.fetched > 0 ? 'success' : 'info',

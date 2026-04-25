@@ -7,15 +7,6 @@ import {
   normalizeTraderaListingFormUrl,
   TRADERA_SETTINGS_KEYS,
 } from '@/features/integrations/constants/tradera';
-import { TRADERA_CATEGORY_FETCH_METHODS } from '@/shared/contracts/integrations/marketplace';
-import type { TraderaCategoryFetchMethod } from '@/shared/contracts/integrations/marketplace';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/primitives.public';
 import { TraderaSelectorProfileOverrideSelect } from '@/features/integrations/components/listings/TraderaSelectorProfileOverrideSelect';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { Input, useToast } from '@/shared/ui/primitives.public';
@@ -51,9 +42,6 @@ export default function TraderaSettingsPage(): React.JSX.Element {
   );
   const [selectorProfile, setSelectorProfile] = useState<string>(
     DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile
-  );
-  const [categoryFetchMethod, setCategoryFetchMethod] = useState<TraderaCategoryFetchMethod>(
-    DEFAULT_TRADERA_SYSTEM_SETTINGS.categoryFetchMethod
   );
 
   useEffect(() => {
@@ -137,12 +125,6 @@ export default function TraderaSettingsPage(): React.JSX.Element {
       map.get(TRADERA_SETTINGS_KEYS.selectorProfile)?.trim() ||
         DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile
     );
-    const storedMethod = map.get(TRADERA_SETTINGS_KEYS.categoryFetchMethod)?.trim();
-    if (storedMethod && (TRADERA_CATEGORY_FETCH_METHODS as readonly string[]).includes(storedMethod)) {
-      setCategoryFetchMethod(storedMethod as TraderaCategoryFetchMethod);
-    } else {
-      setCategoryFetchMethod(DEFAULT_TRADERA_SYSTEM_SETTINGS.categoryFetchMethod);
-    }
   }, [settingsQuery.data]);
 
   const handleSave = async (): Promise<void> => {
@@ -181,10 +163,6 @@ export default function TraderaSettingsPage(): React.JSX.Element {
         {
           key: TRADERA_SETTINGS_KEYS.selectorProfile,
           value: selectorProfile.trim() || DEFAULT_TRADERA_SYSTEM_SETTINGS.selectorProfile,
-        },
-        {
-          key: TRADERA_SETTINGS_KEYS.categoryFetchMethod,
-          value: categoryFetchMethod,
         },
       ]);
       toast('Tradera settings saved successfully.', { variant: 'success' });
@@ -306,28 +284,6 @@ export default function TraderaSettingsPage(): React.JSX.Element {
               />
             </FormField>
 
-            <FormField
-              label='Category Fetch Method'
-              description='Default source used when syncing Tradera categories. Listing form picker is the recommended browser default, with public taxonomy pages available as a fallback.'
-            >
-              <Select
-                value={categoryFetchMethod}
-                onValueChange={(v) => setCategoryFetchMethod(v as TraderaCategoryFetchMethod)}
-                disabled={saveMutation.isPending}
-              >
-                <SelectTrigger className='w-full' aria-label='Category Fetch Method'>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='playwright_listing_form'>
-                    Listing form picker (Playwright, requires auth)
-                  </SelectItem>
-                  <SelectItem value='playwright'>
-                    Public taxonomy pages (Playwright)
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </FormField>
           </div>
         </FormSection>
 

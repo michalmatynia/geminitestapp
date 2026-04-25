@@ -740,7 +740,6 @@ describe('TraderaParameterMappingPage', () => {
     await waitFor(() => {
       expect(fetchExternalCategoriesMutateAsyncMock).toHaveBeenCalledWith({
         connectionId: 'connection-1',
-        categoryFetchMethod: 'playwright_listing_form',
       });
     });
 

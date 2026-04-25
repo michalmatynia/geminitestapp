@@ -9,7 +9,6 @@ import {
   useCategoryMapperData,
   useCategoryMapperUIState,
 } from '@/features/integrations/context/CategoryMapperContext';
-import type { TraderaCategoryFetchMethod } from '@/shared/contracts/integrations/marketplace';
 import { StandardDataTablePanel, GenericMapperStats } from '@/shared/ui/templates.public';
 import { CompactEmptyState } from '@/shared/ui/navigation-and-layout.public';
 import { Alert } from '@/shared/ui/primitives.public';
@@ -40,8 +39,6 @@ export function CategoryMapperTable(): React.JSX.Element {
     staleMappings,
     nonLeafMappings,
     stats,
-    categoryFetchMethod,
-    setCategoryFetchMethod,
   } = useCategoryMapperUIState();
   const {
     getMappingForExternal,
@@ -58,25 +55,6 @@ export function CategoryMapperTable(): React.JSX.Element {
   const pendingCount = pendingMappings.size;
   const normalizedIntegrationSlug = (integrationSlug ?? '').trim().toLowerCase();
   const isTraderaConnection = normalizedIntegrationSlug === 'tradera';
-  const categoryFetchMethodOptions = useMemo<
-    { value: TraderaCategoryFetchMethod; label: string }[] | undefined
-  >(() => {
-    if (!isTraderaConnection) {
-      return undefined;
-    }
-
-    const options: { value: TraderaCategoryFetchMethod; label: string }[] = [];
-
-    if (normalizedIntegrationSlug === 'tradera') {
-      options.push({
-        value: 'playwright_listing_form',
-        label: 'Listing form picker',
-      });
-    }
-
-    options.push({ value: 'playwright', label: 'Public taxonomy pages' });
-    return options;
-  }, [isTraderaConnection, normalizedIntegrationSlug]);
   const persistedFetchSource = useMemo(() => {
     for (const category of externalCategories) {
       const source =
@@ -131,7 +109,7 @@ export function CategoryMapperTable(): React.JSX.Element {
       return null;
     }
 
-    return 'Tradera is using the public taxonomy-page fallback and only reached shallow levels. Switch to Listing form picker for deeper category coverage.';
+    return 'These stored Tradera categories came from the retired public taxonomy-page fallback and only reached shallow levels. Refetch categories to replace them with the listing form picker tree.';
   }, [fetchedShallowTraderaTree, normalizedIntegrationSlug]);
   const preservedCategoryCount =
     externalCategories.length > 0
@@ -233,9 +211,6 @@ export function CategoryMapperTable(): React.JSX.Element {
           onSave={() => void handleSave()}
           isSaving={isSavePending}
           pendingCount={pendingCount}
-          categoryFetchMethod={isTraderaConnection ? categoryFetchMethod : undefined}
-          onCategoryFetchMethodChange={isTraderaConnection ? setCategoryFetchMethod : undefined}
-          categoryFetchMethodOptions={categoryFetchMethodOptions}
         />
       }
       filters={

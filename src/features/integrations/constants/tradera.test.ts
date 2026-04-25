@@ -8,10 +8,6 @@ import {
 } from './tradera';
 
 describe('tradera listing form url normalization', () => {
-  it('defaults category fetches to the authenticated listing form picker', () => {
-    expect(DEFAULT_TRADERA_SYSTEM_SETTINGS.categoryFetchMethod).toBe('playwright_listing_form');
-  });
-
   it('keeps official Tradera listing urls on the direct create-listing route', () => {
     expect(normalizeTraderaListingFormUrl(TRADERA_DIRECT_LISTING_FORM_URL)).toBe(
       TRADERA_DIRECT_LISTING_FORM_URL

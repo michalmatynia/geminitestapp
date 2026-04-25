@@ -14,7 +14,7 @@ export * from './tradera-listing/browser';
 // (chromium, devices) at the module level. Including it in this barrel would pull the
 // heavyweight playwright external into the BullMQ worker chunk, causing
 // "Unexpected token 'export'" at runtime (Turbopack ESM-external resolution issue).
-// Import fetchTraderaCategoriesForConnection directly from
+// Import fetchTraderaCategoriesFromListingFormForConnection directly from
 // '@/features/integrations/services/tradera-listing/categories' instead.
 
 import {

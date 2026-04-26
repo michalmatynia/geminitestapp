@@ -1,6 +1,7 @@
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { resolveFilemakerCountryId } from '../settings/filemaker-country-options';
 
 export const includeQuery = (values: string[], query: string): boolean => {
   if (!query) return true;
@@ -34,18 +35,7 @@ export const resolveCountryId = (
   countryName: string,
   countries: CountryOption[],
   countryById: Map<string, CountryOption>
-): string => {
-  const normalizedId = countryId.trim();
-  if (normalizedId && countryById.has(normalizedId)) return normalizedId;
-  const normalizedName = countryName.trim().toLowerCase();
-  if (!normalizedName) return '';
-  const byName = countries.find(
-    (country: CountryOption) =>
-      country.name.trim().toLowerCase() === normalizedName ||
-      country.code.trim().toLowerCase() === normalizedName
-  );
-  return byName?.id ?? '';
-};
+): string => resolveFilemakerCountryId(countryId, countryName, countries, countryById);
 
 export const decodeRouteParam = (value: string | string[] | undefined): string => {
   const raw = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');

@@ -458,6 +458,13 @@ export const PART_3B = String.raw`
             if (element.closest('nav[aria-label="Breadcrumb"]')) {
               return null;
             }
+            if (
+              element.closest(
+                '[data-verify-test-category-picker-trigger-syi="true"], [data-sentry-component="DropdownField"], [role="alert"]'
+              )
+            ) {
+              return null;
+            }
 
             const text = (
               element.getAttribute('aria-label') ||
@@ -542,7 +549,7 @@ export const PART_3B = String.raw`
 
     const expanded = await categoryTrigger.getAttribute('aria-expanded').catch(() => null);
     const visibleOptions = await readVisibleCategoryMenuOptions();
-    if (expanded === 'true' || visibleOptions.length > 0) {
+    if (expanded === 'true' || (expanded !== 'false' && visibleOptions.length > 0)) {
       return categoryTrigger;
     }
 

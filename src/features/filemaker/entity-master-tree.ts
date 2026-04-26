@@ -1,10 +1,11 @@
 import { formatFilemakerAddress } from './settings';
 
-import type { FilemakerOrganization, FilemakerPerson, FilemakerValue } from './types';
+import type { FilemakerEvent, FilemakerOrganization, FilemakerPerson, FilemakerValue } from './types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const ORGANIZATION_GROUP_NODE_PREFIX = 'filemaker-organization-group:';
 const ORGANIZATION_NODE_PREFIX = 'filemaker-organization:';
+const EVENT_NODE_PREFIX = 'filemaker-event:';
 const PERSON_GROUP_NODE_PREFIX = 'filemaker-person-group:';
 const PERSON_NODE_PREFIX = 'filemaker-person:';
 const VALUE_NODE_PREFIX = 'filemaker-value:';
@@ -67,6 +68,14 @@ export const toFilemakerPersonNodeId = (personId: string): string =>
 export const fromFilemakerPersonNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(PERSON_NODE_PREFIX)) return null;
   return decodeNodePart(nodeId.slice(PERSON_NODE_PREFIX.length));
+};
+
+export const toFilemakerEventNodeId = (eventId: string): string =>
+  `${EVENT_NODE_PREFIX}${encodeNodePart(eventId)}`;
+
+export const fromFilemakerEventNodeId = (nodeId: string): string | null => {
+  if (!nodeId.startsWith(EVENT_NODE_PREFIX)) return null;
+  return decodeNodePart(nodeId.slice(EVENT_NODE_PREFIX.length));
 };
 
 export const toFilemakerValueNodeId = (valueId: string): string =>
@@ -211,6 +220,51 @@ export const buildFilemakerPersonMasterNodes = (persons: FilemakerPerson[]): Mas
     ];
   });
 };
+
+export const buildFilemakerPersonListNodes = (persons: FilemakerPerson[]): MasterTreeNode[] =>
+  persons.map((person: FilemakerPerson, index): MasterTreeNode => {
+    const normalizedName = `${person.firstName} ${person.lastName}`.trim();
+    const label = normalizedName.length > 0 ? normalizedName : person.id;
+    return {
+      id: toFilemakerPersonNodeId(person.id),
+      type: 'file',
+      kind: 'filemaker_person',
+      parentId: null,
+      name: label,
+      path: `persons/${label}`,
+      sortOrder: index,
+      metadata: {
+        entity: 'filemaker_person',
+        rawId: person.id,
+        address: formatFilemakerAddress(person),
+        nip: person.nip,
+        regon: person.regon,
+        phoneNumbers: person.phoneNumbers.join(', '),
+        updatedAt: person.updatedAt,
+      },
+    };
+  });
+
+export const buildFilemakerEventListNodes = (events: FilemakerEvent[]): MasterTreeNode[] =>
+  events.map((event: FilemakerEvent, index): MasterTreeNode => {
+    const normalizedName = event.eventName.trim();
+    const label = normalizedName.length > 0 ? normalizedName : event.id;
+    return {
+      id: toFilemakerEventNodeId(event.id),
+      type: 'file',
+      kind: 'filemaker_event',
+      parentId: null,
+      name: label,
+      path: `events/${label}`,
+      sortOrder: index,
+      metadata: {
+        entity: 'filemaker_event',
+        rawId: event.id,
+        address: formatFilemakerAddress(event),
+        updatedAt: event.updatedAt,
+      },
+    };
+  });
 
 export const buildFilemakerValueMasterNodes = (values: FilemakerValue[]): MasterTreeNode[] => {
   const ids = new Set(values.map((value: FilemakerValue): string => value.id));

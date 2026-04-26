@@ -39,10 +39,64 @@ describe('CategoryMapperSelectCell', () => {
       />
     );
 
-    await user.click(screen.getByRole('button', { name: 'Search internal category...' }));
+    await user.click(screen.getByRole('button', { name: '— Not mapped —' }));
     await user.click(screen.getByRole('menuitemcheckbox', { name: 'Root / Child A' }));
 
     expect(onChange).toHaveBeenCalledWith('cat-1');
+  });
+
+  it('clears mapping when not mapped is selected', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(value: string | null) => void>();
+
+    render(
+      <CategoryMapperSelectCell
+        value='cat-1'
+        onChange={onChange}
+        options={OPTIONS}
+        disabled={false}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Root / Child A' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: '— Not mapped —' }));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('can clear when internal category options are disabled', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(value: string | null) => void>();
+    const disabledOptions = OPTIONS.map((option) => ({ ...option, disabled: true }));
+
+    render(
+      <CategoryMapperSelectCell
+        value='cat-1'
+        onChange={onChange}
+        options={disabledOptions}
+        disabled={false}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Root / Child A' }));
+    await user.click(screen.getByRole('menuitemcheckbox', { name: '— Not mapped —' }));
+
+    expect(onChange).toHaveBeenCalledWith(null);
+  });
+
+  it('shows not mapped for empty mappings', () => {
+    const onChange = vi.fn<(value: string | null) => void>();
+
+    render(
+      <CategoryMapperSelectCell
+        value={null}
+        onChange={onChange}
+        options={OPTIONS}
+        disabled={false}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: '— Not mapped —' })).toBeInTheDocument();
   });
 
   it('clears mapping when the selected option is toggled off', async () => {

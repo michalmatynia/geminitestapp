@@ -8,13 +8,25 @@ import { Badge, Button } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { fromFilemakerPersonNodeId } from '../../entity-master-tree';
-import { formatFilemakerAddress } from '../../settings';
 import type { FilemakerPerson } from '../../types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
+type FilemakerPersonOrganizationLinkPreview = {
+  legacyOrganizationUuid: string;
+  organizationId?: string;
+  organizationName?: string;
+};
+
+type FilemakerPersonWithLinks = FilemakerPerson & {
+  legacyUuid?: string;
+  linkedOrganizations?: FilemakerPersonOrganizationLinkPreview[];
+  organizationLinkCount?: number;
+  unresolvedOrganizationLinkCount?: number;
+};
+
 type FilemakerPersonTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   onOpenPerson: (personId: string) => void;
-  personById: Map<string, FilemakerPerson>;
+  personById: ReadonlyMap<string, FilemakerPersonWithLinks>;
 };
 
 type PersonGroupNodeProps = Pick<
@@ -26,7 +38,7 @@ type PersonGroupNodeProps = Pick<
 
 type PersonLeafNodeProps = Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'select'> & {
   onOpenPerson: (personId: string) => void;
-  person: FilemakerPerson;
+  person: FilemakerPersonWithLinks;
   stateClassName: string;
 };
 
@@ -121,18 +133,30 @@ function FilemakerPersonGroupNode(props: PersonGroupNodeProps): React.JSX.Elemen
   );
 }
 
-function FilemakerPersonLeafDetails(props: { person: FilemakerPerson }): React.JSX.Element {
+const formatOrganizationPreview = (person: FilemakerPersonWithLinks): string => {
+  const links = person.linkedOrganizations ?? [];
+  if (links.length === 0) return 'No linked organisations';
+  const labels = links
+    .slice(0, 3)
+    .map((link: FilemakerPersonOrganizationLinkPreview): string => {
+      const organizationName = link.organizationName?.trim() ?? '';
+      return organizationName.length > 0 ? organizationName : link.legacyOrganizationUuid;
+    });
+  const remainingCount = Math.max(0, links.length - labels.length);
+  return remainingCount > 0 ? `${labels.join(', ')} +${remainingCount}` : labels.join(', ');
+};
+
+function FilemakerPersonLeafDetails(props: { person: FilemakerPersonWithLinks }): React.JSX.Element {
   const { person } = props;
+  const organizationCount = person.organizationLinkCount ?? person.linkedOrganizations?.length ?? 0;
 
   return (
     <div className='min-w-0 flex-1'>
       <div className='truncate font-semibold text-white'>{getPersonDisplayName(person)}</div>
-      <div className='truncate text-xs text-gray-300'>{formatFilemakerAddress(person)}</div>
+      <div className='truncate text-xs text-gray-300'>{formatOrganizationPreview(person)}</div>
       <div className='truncate text-[10px] text-gray-600'>
-        NIP: {formatOptionalPersonField(person.nip)} | REGON:{' '}
-        {formatOptionalPersonField(person.regon)} | Phones:{' '}
-        {person.phoneNumbers.length > 0 ? person.phoneNumbers.join(', ') : 'n/a'} | Updated:{' '}
-        {formatTimestamp(person.updatedAt)}
+        Organisations: {organizationCount} | Legacy UUID:{' '}
+        {formatOptionalPersonField(person.legacyUuid)} | Updated: {formatTimestamp(person.updatedAt)}
       </div>
     </div>
   );

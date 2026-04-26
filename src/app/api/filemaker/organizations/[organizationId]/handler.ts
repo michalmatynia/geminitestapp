@@ -6,13 +6,40 @@ import { notFoundError } from '@/shared/errors/app-error';
 import {
   getMongoFilemakerOrganizationById,
   listMongoFilemakerEmailsForOrganization,
+  listMongoFilemakerEventsForOrganization,
+  listMongoFilemakerPersonsForOrganization,
+  listMongoFilemakerWebsitesForOrganization,
   requireFilemakerMailAdminSession,
   updateMongoFilemakerOrganization,
 } from '@/features/filemaker/server';
-import { listMongoFilemakerAddressesForOrganization } from '@/features/filemaker/server/filemaker-organizations-mongo';
+import {
+  listMongoFilemakerAddressesForOrganization,
+  updateMongoFilemakerAddressesForOrganization,
+} from '@/features/filemaker/server/filemaker-organizations-mongo';
+import {
+  listMongoFilemakerDemandsForOrganization,
+  listMongoFilemakerHarvestProfilesForOrganization,
+} from '@/features/filemaker/server/filemaker-organization-imported-metadata';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+const organizationAddressPatchSchema = z.object({
+  addressId: z.string(),
+  city: z.string(),
+  country: z.string().optional(),
+  countryId: z.string().optional(),
+  countryValueId: z.string().optional(),
+  countryValueLabel: z.string().optional(),
+  isDefault: z.boolean(),
+  legacyCountryUuid: z.string().optional(),
+  legacyUuid: z.string().optional(),
+  postalCode: z.string(),
+  street: z.string(),
+  streetNumber: z.string(),
+});
+
 const organizationPatchSchema = z.object({
+  addressId: z.string().optional(),
+  addresses: z.array(organizationAddressPatchSchema).optional(),
   city: z.string().optional(),
   cooperationStatus: z.string().optional(),
   country: z.string().optional(),
@@ -39,11 +66,34 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   if (!organization) {
     throw notFoundError('Filemaker organization was not found.');
   }
-  const [linkedAddresses, linkedEmails] = await Promise.all([
-    listMongoFilemakerAddressesForOrganization(organization),
-    listMongoFilemakerEmailsForOrganization(organization),
-  ]);
-  return Response.json({ linkedAddresses, linkedEmails, organization });
+  const [
+    harvestProfiles,
+    importedDemands,
+    linkedAddresses,
+    linkedEmails,
+    linkedEvents,
+    linkedPersons,
+    linkedWebsites,
+  ] =
+    await Promise.all([
+      listMongoFilemakerHarvestProfilesForOrganization(organization),
+      listMongoFilemakerDemandsForOrganization(organization),
+      listMongoFilemakerAddressesForOrganization(organization),
+      listMongoFilemakerEmailsForOrganization(organization),
+      listMongoFilemakerEventsForOrganization(organization),
+      listMongoFilemakerPersonsForOrganization(organization),
+      listMongoFilemakerWebsitesForOrganization(organization),
+    ]);
+  return Response.json({
+    harvestProfiles,
+    importedDemands,
+    linkedAddresses,
+    linkedEmails,
+    linkedEvents,
+    linkedPersons,
+    linkedWebsites,
+    organization,
+  });
 }
 
 export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
@@ -56,9 +106,14 @@ export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!result.ok) {
     return result.response;
   }
+  const { addresses, ...organizationPatch } = result.data;
   const organization = await updateMongoFilemakerOrganization(
     resolveOrganizationId(ctx),
-    result.data
+    organizationPatch
   );
-  return Response.json({ organization });
+  const linkedAddresses =
+    addresses === undefined
+      ? undefined
+      : await updateMongoFilemakerAddressesForOrganization(organization, addresses);
+  return Response.json({ linkedAddresses, organization });
 }

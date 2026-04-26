@@ -219,6 +219,7 @@ const buildMongoFilemakerOrganizationUpdate = (
   now: string
 ): Partial<FilemakerOrganizationMongoDocument> =>
   stripUndefinedFields({
+    addressId: patch.addressId ?? '',
     city: patch.city ?? '',
     cooperationStatus: patch.cooperationStatus,
     country: patch.country ?? '',

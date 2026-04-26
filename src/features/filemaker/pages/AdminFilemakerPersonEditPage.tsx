@@ -4,6 +4,7 @@ import React, { startTransition } from 'react';
 
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
 import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
+import { PersonWebsitesSection } from '../components/page/PersonWebsitesSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerPersonEditPageActionsContext,
@@ -38,6 +39,7 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
     >
       <PersonBasicInfoSection />
       {isCreateMode ? null : <PersonEmailsSection />}
+      {isCreateMode ? null : <PersonWebsitesSection />}
       {/* More sections will be added here */}
     </FilemakerPartyEditPageLayout>
   );

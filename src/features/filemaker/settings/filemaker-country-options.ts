@@ -9,12 +9,17 @@ const normalizeLookupToken = (value: string | null | undefined): string =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
+const normalizeCountryOptionId = (id: string | undefined, fallback: string): string => {
+  const normalizedId = id?.trim();
+  return normalizedId !== undefined && normalizedId.length > 0 ? normalizedId : fallback;
+};
+
 const toCountryOption = (country: {
   code: string;
   id?: string;
   name: string;
 }): CountryOption => ({
-  id: country.id?.trim() || country.code,
+  id: normalizeCountryOptionId(country.id, country.code),
   code: country.code.trim().toUpperCase(),
   name: country.name.trim(),
   isActive: true,
@@ -22,6 +27,24 @@ const toCountryOption = (country: {
 });
 
 const staticCountryOptions = countryCodeOptions.map(toCountryOption);
+
+const normalizeInternationalizationCountry = (country: CountryOption): CountryOption | null => {
+  const code = country.code.trim().toUpperCase();
+  const id = country.id.trim();
+  const name = country.name.trim();
+  if (code.length === 0 && id.length === 0) return null;
+  const normalizedCode = code.length > 0 ? code : id.toUpperCase();
+  const normalizedId = id.length > 0 ? id : normalizedCode;
+  const normalizedName = name.length > 0 ? name : normalizedCode;
+  return {
+    ...country,
+    id: normalizedId,
+    code: normalizedCode,
+    name: normalizedName,
+    isActive: country.isActive,
+    currencies: country.currencies,
+  };
+};
 
 export const buildFilemakerCountryList = (
   internationalizationCountries: readonly CountryOption[]
@@ -31,18 +54,8 @@ export const buildFilemakerCountryList = (
   );
 
   internationalizationCountries.forEach((country: CountryOption): void => {
-    const code = country.code.trim().toUpperCase();
-    const id = country.id.trim();
-    const name = country.name.trim();
-    if (code.length === 0 && id.length === 0) return;
-    const normalizedCountry: CountryOption = {
-      ...country,
-      id: id || code,
-      code: code || id.toUpperCase(),
-      name: name || code || id,
-      isActive: country.isActive ?? true,
-      currencies: country.currencies ?? [],
-    };
+    const normalizedCountry = normalizeInternationalizationCountry(country);
+    if (normalizedCountry === null) return;
     countriesByCode.set(normalizedCountry.code, normalizedCountry);
   });
 
@@ -64,6 +77,7 @@ export const buildFilemakerCountryLookup = (
       `country-${country.id.toLowerCase()}`,
     ];
     aliases.forEach((alias: string): void => {
+      if (alias.trim().length > 0) lookup.set(alias.trim(), country);
       const normalized = normalizeLookupToken(alias);
       if (normalized.length > 0) lookup.set(normalized, country);
     });
@@ -80,21 +94,22 @@ export const buildFilemakerCountryOptions = (
     description: country.code,
   }));
 
+const findCountryByToken = (
+  countryLookup: Map<string, CountryOption>,
+  value: string | null | undefined
+): CountryOption | undefined => {
+  const raw = value?.trim() ?? '';
+  if (raw.length === 0) return undefined;
+  return countryLookup.get(raw) ?? countryLookup.get(normalizeLookupToken(raw));
+};
+
 export const resolveFilemakerCountry = (
   countryId: string | null | undefined,
   countryName: string | null | undefined,
   countries: readonly CountryOption[],
   countryLookup = buildFilemakerCountryLookup(countries)
-): CountryOption | undefined => {
-  const normalizedId = normalizeLookupToken(countryId);
-  if (normalizedId.length > 0) {
-    const byId = countryLookup.get(normalizedId);
-    if (byId !== undefined) return byId;
-  }
-
-  const normalizedName = normalizeLookupToken(countryName);
-  return normalizedName.length > 0 ? countryLookup.get(normalizedName) : undefined;
-};
+): CountryOption | undefined =>
+  findCountryByToken(countryLookup, countryId) ?? findCountryByToken(countryLookup, countryName);
 
 export const resolveFilemakerCountryId = (
   countryId: string | null | undefined,

@@ -95,6 +95,10 @@ export const normalizeAddressFields = (value: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
+  countryValueId?: unknown;
+  countryValueLabel?: unknown;
+  legacyCountryUuid?: unknown;
+  legacyUuid?: unknown;
 }): FilemakerAddressFields => ({
   street: normalizeString(value.street),
   streetNumber: normalizeString(value.streetNumber),
@@ -102,6 +106,18 @@ export const normalizeAddressFields = (value: {
   postalCode: normalizeString(value.postalCode),
   country: normalizeString(value.country),
   countryId: normalizeString(value.countryId),
+  ...(normalizeOptionalString(value.countryValueId) !== undefined
+    ? { countryValueId: normalizeOptionalString(value.countryValueId) }
+    : {}),
+  ...(normalizeOptionalString(value.countryValueLabel) !== undefined
+    ? { countryValueLabel: normalizeOptionalString(value.countryValueLabel) }
+    : {}),
+  ...(normalizeOptionalString(value.legacyCountryUuid) !== undefined
+    ? { legacyCountryUuid: normalizeOptionalString(value.legacyCountryUuid) }
+    : {}),
+  ...(normalizeOptionalString(value.legacyUuid) !== undefined
+    ? { legacyUuid: normalizeOptionalString(value.legacyUuid) }
+    : {}),
 });
 
 export const formatFilemakerAddress = (
@@ -128,6 +144,10 @@ export const createFilemakerAddress = (input: {
   postalCode?: unknown;
   country?: unknown;
   countryId?: unknown;
+  countryValueId?: unknown;
+  countryValueLabel?: unknown;
+  legacyCountryUuid?: unknown;
+  legacyUuid?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerAddress => {
@@ -139,15 +159,14 @@ export const createFilemakerAddress = (input: {
     postalCode: input.postalCode,
     country: input.country,
     countryId: input.countryId,
+    countryValueId: input.countryValueId,
+    countryValueLabel: input.countryValueLabel,
+    legacyCountryUuid: input.legacyCountryUuid,
+    legacyUuid: input.legacyUuid,
   });
   return {
     id: normalizeString(input.id),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
+    ...address,
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

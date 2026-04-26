@@ -454,6 +454,82 @@ describe('CategoryMapperTable', () => {
     });
   });
 
+  it('filters external categories by saved mapping status and expands mapped branches', async () => {
+    const user = userEvent.setup();
+    mocks.externalCategories = [
+      createExternalCategory({
+        id: 'collectibles',
+        externalId: '29',
+        name: 'Collectibles',
+        path: 'Collectibles',
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'pins',
+        externalId: '2929',
+        name: 'Pins & needles',
+        parentExternalId: '29',
+        path: 'Collectibles > Pins & needles',
+        depth: 1,
+        isLeaf: false,
+      }),
+      createExternalCategory({
+        id: 'advertising',
+        externalId: '292908',
+        name: 'Advertising',
+        parentExternalId: '2929',
+        path: 'Collectibles > Pins & needles > Advertising',
+        depth: 2,
+      }),
+      createExternalCategory({
+        id: 'books',
+        externalId: '11',
+        name: 'Books & Magazines',
+        path: 'Books & Magazines',
+      }),
+    ];
+    mocks.mappings = [
+      {
+        id: 'mapping-advertising',
+        connectionId: 'conn-1',
+        externalCategoryId: '292908',
+        internalCategoryId: 'int-1',
+        catalogId: 'catalog-1',
+        isActive: true,
+        createdAt: '2026-03-22T00:00:00.000Z',
+        updatedAt: '2026-03-22T00:00:00.000Z',
+        externalCategory: createExternalCategory({
+          id: 'advertising',
+          externalId: '292908',
+          name: 'Advertising',
+          parentExternalId: '2929',
+          path: 'Collectibles > Pins & needles > Advertising',
+          depth: 2,
+        }),
+        internalCategory: createInternalCategory({ id: 'int-1', name: 'office chairs' }),
+      },
+    ];
+
+    render(
+      <CategoryMapperProvider
+        connectionId='conn-1'
+        connectionName='Tradera'
+        integrationSlug='tradera'
+      >
+        <CategoryMapperTable />
+      </CategoryMapperProvider>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Mapped' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Collectibles')).toBeInTheDocument();
+      expect(screen.getByText('Pins & needles')).toBeInTheDocument();
+      expect(screen.getByText('Advertising')).toBeInTheDocument();
+      expect(screen.queryByText('Books & Magazines')).not.toBeInTheDocument();
+    });
+  });
+
   it('shows a warning when saved mappings point to missing marketplace categories', async () => {
     mocks.mappings = [
       {

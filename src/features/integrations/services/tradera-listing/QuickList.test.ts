@@ -184,7 +184,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
   });
 
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v147');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v148');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
@@ -531,6 +531,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-test-category-chooser="true"] [role="menuitemradio"]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-test-category-chooser="true"] a[href]');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('element.closest(\'nav[aria-label="Breadcrumb"]\')');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('[data-verify-test-category-picker-trigger-syi="true"], [data-sentry-component="DropdownField"], [role="alert"]');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('expanded !== \'false\' && visibleOptions.length > 0');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const ensureCategoryOptionVisible = async ({');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('requireRoot = false,');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.category.repositioned\'');

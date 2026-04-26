@@ -16,6 +16,7 @@ import {
 import { FILEMAKER_DATABASE_KEY } from '@/features/filemaker/settings-constants';
 import { parseFilemakerDatabase } from '@/features/filemaker/settings/database-getters';
 import type { FilemakerValue } from '@/features/filemaker/types';
+import { countryCodeOptions } from '@/shared/constants/countries';
 import type { MongoSource } from '@/shared/contracts/database';
 import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 
@@ -25,6 +26,8 @@ loadDotenv({ path: '.env.local', override: true, quiet: true });
 const ADDRESSES_COLLECTION = 'filemaker_addresses';
 const ADDRESS_LINKS_COLLECTION = 'filemaker_address_links';
 const ORGANIZATIONS_COLLECTION = 'filemaker_organizations';
+const PERSONS_COLLECTION = 'filemaker_persons';
+const EVENTS_COLLECTION = 'filemaker_events';
 const COUNTRIES_COLLECTION = 'countries';
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_BATCH_SIZE = 1_000;
@@ -39,8 +42,11 @@ type CliOptions = {
   source: MongoSource | undefined;
 };
 
-type OrganizationLookupRecord = {
+type AddressOwnerKind = 'organization' | 'person' | 'event';
+
+type OwnerLookupRecord = {
   id: string;
+  kind: AddressOwnerKind;
   legacyDefaultAddressUuid?: string;
   legacyDisplayAddressUuid?: string;
   legacyUuid: string;
@@ -108,7 +114,7 @@ type FilemakerAddressLinkMongoDocument = Document & {
   legacyAddressUuid: string;
   legacyOwnerUuid: string;
   ownerId: string;
-  ownerKind: 'organization';
+  ownerKind: AddressOwnerKind;
   schemaVersion: 1;
 };
 
@@ -118,6 +124,7 @@ const printUsage = (): void => {
       'Usage: NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/import-filemaker-addresses-to-mongo.ts --input=csv/addressBook.xlsx --write',
       '',
       'Imports FileMaker AddressBook XLSX exports and headerless 12-column TAB/CSV exports into filemaker_addresses and filemaker_address_links.',
+      'Parent_UUID_FK is resolved against imported organizations, persons, and events.',
       'Country_UUID_FK is retained as legacyCountryUuid and linked to filemaker_database_v1 values when present.',
       'Pass --country-map=LEGACY_UUID:COUNTRY_ID to force internationalization country resolution.',
       'By default the script performs a dry run. Pass --write to upsert records.',
@@ -199,9 +206,12 @@ const collectAddresses = (rows: LegacyAddressRow[]): {
   return { addresses, duplicateLegacyUuidCount, skippedRowCount };
 };
 
-const buildOrganizationMap = async (db: Db): Promise<Map<string, OrganizationLookupRecord>> => {
+const buildOwnerMap = async (
+  db: Db,
+  input: { collectionName: string; kind: AddressOwnerKind }
+): Promise<Map<string, OwnerLookupRecord>> => {
   const documents = await db
-    .collection(ORGANIZATIONS_COLLECTION)
+    .collection(input.collectionName)
     .find(
       { legacyUuid: { $type: 'string' } },
       {
@@ -216,7 +226,7 @@ const buildOrganizationMap = async (db: Db): Promise<Map<string, OrganizationLoo
     .toArray();
   return new Map(
     documents
-      .map((document: Document): [string, OrganizationLookupRecord] | null => {
+      .map((document: Document): [string, OwnerLookupRecord] | null => {
         const id = typeof document['id'] === 'string' ? document['id'] : '';
         const legacyUuid = typeof document['legacyUuid'] === 'string' ? document['legacyUuid'] : '';
         if (!id || !legacyUuid) return null;
@@ -224,14 +234,32 @@ const buildOrganizationMap = async (db: Db): Promise<Map<string, OrganizationLoo
           legacyUuid,
           {
             id,
+            kind: input.kind,
             legacyDefaultAddressUuid: document['legacyDefaultAddressUuid'] as string | undefined,
             legacyDisplayAddressUuid: document['legacyDisplayAddressUuid'] as string | undefined,
             legacyUuid,
           },
         ];
       })
-      .filter((entry): entry is [string, OrganizationLookupRecord] => entry !== null)
+      .filter((entry): entry is [string, OwnerLookupRecord] => entry !== null)
   );
+};
+
+const combineOwnerMaps = (
+  maps: Array<Map<string, OwnerLookupRecord>>
+): { duplicateLegacyOwnerUuidCount: number; ownerByLegacyUuid: Map<string, OwnerLookupRecord> } => {
+  const ownerByLegacyUuid = new Map<string, OwnerLookupRecord>();
+  let duplicateLegacyOwnerUuidCount = 0;
+  maps.forEach((map: Map<string, OwnerLookupRecord>): void => {
+    map.forEach((owner: OwnerLookupRecord, legacyUuid: string): void => {
+      if (ownerByLegacyUuid.has(legacyUuid)) {
+        duplicateLegacyOwnerUuidCount += 1;
+        return;
+      }
+      ownerByLegacyUuid.set(legacyUuid, owner);
+    });
+  });
+  return { duplicateLegacyOwnerUuidCount, ownerByLegacyUuid };
 };
 
 const normalizeLookupToken = (value: unknown): string =>
@@ -280,8 +308,19 @@ const buildCountryResolutionMap = async (
   explicitMap: Map<string, string>
 ): Promise<Map<string, CountryResolutionRecord>> => {
   const countries = await db.collection(COUNTRIES_COLLECTION).find({}).toArray();
-  const countryById = new Map<string, CountryRecord>();
+  const countryById = new Map<string, CountryRecord>(
+    countryCodeOptions.map((country): [string, CountryRecord] => [
+      country.code,
+      { code: country.code, id: country.code, name: country.name },
+    ])
+  );
   const countryByLookupToken = new Map<string, CountryRecord>();
+  countryById.forEach((country: CountryRecord): void => {
+    [country.id, country.name, country.code ?? ''].forEach((alias: string): void => {
+      const token = normalizeLookupToken(alias);
+      if (token.length > 0) countryByLookupToken.set(token, country);
+    });
+  });
   countries.forEach((document: WithId<Document>): void => {
     const id = typeof document['id'] === 'string' ? document['id'] : String(document['_id']);
     const name = typeof document['name'] === 'string' ? document['name'] : id;
@@ -364,16 +403,16 @@ const toAddressDocument = (input: {
 
 const toAddressLinkDocument = (
   address: ParsedLegacyAddress,
-  organization: OrganizationLookupRecord,
+  owner: OwnerLookupRecord,
   importBatchId: string,
   importedAt: Date
 ): FilemakerAddressLinkMongoDocument => {
   const addressId = createModernId('address', address.legacyUuid);
-  const isDefault = organization.legacyDefaultAddressUuid
-    ? organization.legacyDefaultAddressUuid === address.legacyUuid
+  const isDefault = owner.legacyDefaultAddressUuid
+    ? owner.legacyDefaultAddressUuid === address.legacyUuid
     : isDefaultCategory(address.category);
-  const isDisplay = organization.legacyDisplayAddressUuid === address.legacyUuid;
-  const id = createModernId('address-link', `${organization.id}:${addressId}`);
+  const isDisplay = owner.legacyDisplayAddressUuid === address.legacyUuid;
+  const id = createModernId('address-link', `${owner.id}:${addressId}`);
   return {
     _id: id,
     addressId,
@@ -385,9 +424,9 @@ const toAddressLinkDocument = (
     isDefault,
     isDisplay,
     legacyAddressUuid: address.legacyUuid,
-    legacyOwnerUuid: organization.legacyUuid,
-    ownerId: organization.id,
-    ownerKind: 'organization',
+    legacyOwnerUuid: owner.legacyUuid,
+    ownerId: owner.id,
+    ownerKind: owner.kind,
     schemaVersion: 1,
   };
 };
@@ -489,15 +528,17 @@ const runInsertWrites = async <TDocument extends Document>(
   return { insertedCount, matchedCount: 0, modifiedCount: 0, upsertedCount: 0 };
 };
 
-const buildOrganizationAddressUpdates = (input: {
+const buildOwnerAddressUpdates = (input: {
   addressById: Map<string, FilemakerAddressMongoDocument>;
   links: FilemakerAddressLinkMongoDocument[];
+  ownerKind: AddressOwnerKind;
 }): Array<AnyBulkWriteOperation<Document>> => {
-  const updatesByOrganizationId = new Map<string, Record<string, string>>();
+  const updatesByOwnerId = new Map<string, Record<string, string>>();
   input.links.forEach((link: FilemakerAddressLinkMongoDocument): void => {
+    if (link.ownerKind !== input.ownerKind) return;
     const address = input.addressById.get(link.addressId);
     if (!address) return;
-    const update = updatesByOrganizationId.get(link.ownerId) ?? {};
+    const update = updatesByOwnerId.get(link.ownerId) ?? {};
     if (link.isDefault) {
       update['addressId'] = address.id;
       update['street'] = address.street;
@@ -508,20 +549,21 @@ const buildOrganizationAddressUpdates = (input: {
       update['countryId'] = address.countryId ?? '';
     }
     if (link.isDisplay) update['displayAddressId'] = address.id;
-    updatesByOrganizationId.set(link.ownerId, update);
+    updatesByOwnerId.set(link.ownerId, update);
   });
-  return Array.from(updatesByOrganizationId.entries())
+  return Array.from(updatesByOwnerId.entries())
     .filter(([, update]: [string, Record<string, string>]): boolean => Object.keys(update).length > 0)
-    .map(([organizationId, update]: [string, Record<string, string>]) => ({
+    .map(([ownerId, update]: [string, Record<string, string>]) => ({
       updateOne: {
-        filter: { _id: organizationId },
+        filter: { _id: ownerId },
         update: { $set: update },
       },
     }));
 };
 
-const runOrganizationUpdates = async (
+const runOwnerUpdates = async (
   db: Db,
+  collectionName: string,
   operations: Array<AnyBulkWriteOperation<Document>>,
   batchSize: number
 ): Promise<{ matchedCount: number; modifiedCount: number }> => {
@@ -530,7 +572,7 @@ const runOrganizationUpdates = async (
   let modifiedCount = 0;
   for (let index = 0; index < operations.length; index += batchSize) {
     const batch = operations.slice(index, index + batchSize);
-    const result = await db.collection(ORGANIZATIONS_COLLECTION).bulkWrite(batch, {
+    const result = await db.collection(collectionName).bulkWrite(batch, {
       ordered: false,
     });
     matchedCount += result.matchedCount;
@@ -538,6 +580,20 @@ const runOrganizationUpdates = async (
   }
   return { matchedCount, modifiedCount };
 };
+
+const countLinksByOwnerKind = (
+  links: FilemakerAddressLinkMongoDocument[]
+): Record<AddressOwnerKind, number> =>
+  links.reduce(
+    (
+      counts: Record<AddressOwnerKind, number>,
+      link: FilemakerAddressLinkMongoDocument
+    ): Record<AddressOwnerKind, number> => {
+      counts[link.ownerKind] += 1;
+      return counts;
+    },
+    { event: 0, organization: 0, person: 0 }
+  );
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
   const options = parseArgs(argv);
@@ -560,7 +616,16 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
           links: await dropCollectionIfExists(db.collection(ADDRESS_LINKS_COLLECTION)),
         }
       : { addresses: false, links: false };
-    const organizationByLegacyUuid = await buildOrganizationMap(db);
+    const [organizationByLegacyUuid, personByLegacyUuid, eventByLegacyUuid] = await Promise.all([
+      buildOwnerMap(db, { collectionName: ORGANIZATIONS_COLLECTION, kind: 'organization' }),
+      buildOwnerMap(db, { collectionName: PERSONS_COLLECTION, kind: 'person' }),
+      buildOwnerMap(db, { collectionName: EVENTS_COLLECTION, kind: 'event' }),
+    ]);
+    const { duplicateLegacyOwnerUuidCount, ownerByLegacyUuid } = combineOwnerMaps([
+      organizationByLegacyUuid,
+      personByLegacyUuid,
+      eventByLegacyUuid,
+    ]);
     const countryResolutionByLegacyUuid = await buildCountryResolutionMap(db, options.countryMap);
     const importBatchId = randomUUID();
     const importedAt = new Date();
@@ -577,16 +642,27 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
     );
     const linkDocuments = Array.from(collected.addresses.values()).flatMap(
       (address: ParsedLegacyAddress): FilemakerAddressLinkMongoDocument[] => {
-        const organization = organizationByLegacyUuid.get(address.legacyParentUuid);
-        return organization
-          ? [toAddressLinkDocument(address, organization, importBatchId, importedAt)]
+        const owner = ownerByLegacyUuid.get(address.legacyParentUuid);
+        return owner
+          ? [toAddressLinkDocument(address, owner, importBatchId, importedAt)]
           : [];
       }
     );
     const addressById = new Map(addressDocuments.map((address) => [address.id, address]));
-    const organizationUpdates = buildOrganizationAddressUpdates({
+    const organizationUpdates = buildOwnerAddressUpdates({
       addressById,
       links: linkDocuments,
+      ownerKind: 'organization',
+    });
+    const personUpdates = buildOwnerAddressUpdates({
+      addressById,
+      links: linkDocuments,
+      ownerKind: 'person',
+    });
+    const eventUpdates = buildOwnerAddressUpdates({
+      addressById,
+      links: linkDocuments,
+      ownerKind: 'event',
     });
     const addressCollection = db.collection<FilemakerAddressMongoDocument>(ADDRESSES_COLLECTION);
     const addressLinkCollection =
@@ -603,15 +679,25 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
         : await runBulkWrites(addressLinkCollection, linkDocuments, options.batchSize);
     const organizationWrite = options.dryRun
       ? { matchedCount: 0, modifiedCount: 0 }
-      : await runOrganizationUpdates(db, organizationUpdates, options.batchSize);
+      : await runOwnerUpdates(db, ORGANIZATIONS_COLLECTION, organizationUpdates, options.batchSize);
+    const personWrite = options.dryRun
+      ? { matchedCount: 0, modifiedCount: 0 }
+      : await runOwnerUpdates(db, PERSONS_COLLECTION, personUpdates, options.batchSize);
+    const eventWrite = options.dryRun
+      ? { matchedCount: 0, modifiedCount: 0 }
+      : await runOwnerUpdates(db, EVENTS_COLLECTION, eventUpdates, options.batchSize);
     if (!options.dryRun) await ensureIndexes(db);
+    const resolvedLinkCountByOwnerKind = countLinksByOwnerKind(linkDocuments);
 
     console.log(
       JSON.stringify(
         {
           addressWrite,
           countryResolutionLookupCount: countryResolutionByLegacyUuid.size,
+          duplicateLegacyOwnerUuidCount,
           duplicateLegacyUuidCount: collected.duplicateLegacyUuidCount,
+          eventLookupCount: eventByLegacyUuid.size,
+          eventWrite,
           importBatchId: options.dryRun ? null : importBatchId,
           inputFormat: isWorkbookInputPath(options.inputPath)
             ? extname(options.inputPath).slice(1) || 'workbook'
@@ -621,12 +707,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
           mode: options.dryRun ? 'dry-run' : 'write',
           organizationLookupCount: organizationByLegacyUuid.size,
           organizationWrite,
+          personLookupCount: personByLegacyUuid.size,
+          personWrite,
           parsedRowCount: parsedRows.length,
           replacedCollections,
           resolvedCountryCount: addressDocuments.filter((address) => address.countryId).length,
           resolvedCountryValueCount: addressDocuments.filter((address) => address.countryValueId)
             .length,
-          resolvedOrganizationLinkCount: linkDocuments.length,
+          resolvedLinkCount: linkDocuments.length,
+          resolvedLinkCountByOwnerKind,
           skippedRowCount: collected.skippedRowCount,
           source: options.source ?? process.env['MONGODB_ACTIVE_SOURCE'] ?? null,
           uniqueAddressCount: collected.addresses.size,

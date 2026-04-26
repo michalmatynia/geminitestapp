@@ -12,6 +12,12 @@ import {
 } from '../../context/AdminFilemakerOrganizationEditPageContext';
 import type { EditableAddress } from '../../hooks/editable-address';
 import { createClientFilemakerId } from '../../pages/filemaker-page-utils';
+import {
+  buildFilemakerCountryLookup,
+  buildFilemakerCountryOptions,
+  resolveFilemakerCountryId,
+  resolveFilemakerCountryName,
+} from '../../settings/filemaker-country-options';
 import { formatFilemakerAddress } from '../../settings';
 import type { FilemakerAddress } from '../../types';
 import { OrganizationAddressFormControls } from './OrganizationAddressControls';
@@ -38,17 +44,34 @@ const toAttachOption = (
   description: formatFilemakerAddress(address),
 });
 
-const toEditableAddress = (address: FilemakerAddress, isDefault: boolean): EditableAddress => ({
+const toEditableAddress = (
+  address: FilemakerAddress,
+  input: {
+    countries: CountryOption[];
+    countryById: Map<string, CountryOption>;
+    isDefault: boolean;
+  }
+): EditableAddress => ({
   addressId: address.id,
   street: address.street,
   streetNumber: address.streetNumber,
   city: address.city,
   postalCode: address.postalCode,
-  countryId: address.countryId,
-  country: address.country,
+  countryId: resolveFilemakerCountryId(
+    address.countryId,
+    address.country,
+    input.countries,
+    input.countryById
+  ),
+  country: resolveFilemakerCountryName(
+    address.countryId,
+    address.country,
+    input.countries,
+    input.countryById
+  ),
   countryValueId: address.countryValueId,
   countryValueLabel: address.countryValueLabel,
-  isDefault,
+  isDefault: input.isDefault,
   legacyCountryUuid: address.legacyCountryUuid,
   legacyUuid: address.legacyUuid,
 });
@@ -109,16 +132,11 @@ function useAddressOptions(input: {
     [input.databaseAddresses, linkedAddressIds]
   );
   const countryById = useMemo(
-    () => new Map(input.countries.map((country: CountryOption) => [country.id, country])),
+    () => buildFilemakerCountryLookup(input.countries),
     [input.countries]
   );
   const countryOptions = useMemo(
-    () =>
-      input.countries.map((country: CountryOption) => ({
-        value: country.id,
-        label: country.name,
-        description: country.code,
-      })),
+    () => buildFilemakerCountryOptions(input.countries),
     [input.countries]
   );
   const linkedOptions = useMemo(
@@ -147,6 +165,8 @@ const useSelectedAddressUpdater = (
 
 function useAddressCreationActions(input: {
   attachAddressId: string;
+  countries: CountryOption[];
+  countryById: Map<string, CountryOption>;
   databaseAddresses: FilemakerAddress[];
   setAttachAddressId: React.Dispatch<React.SetStateAction<string>>;
   setEditableAddresses: (value: React.SetStateAction<EditableAddress[]>) => void;
@@ -154,6 +174,8 @@ function useAddressCreationActions(input: {
 }): Pick<AddressActionHandlers, 'handleAddAddress' | 'handleAttachAddress'> {
   const {
     attachAddressId,
+    countries,
+    countryById,
     databaseAddresses,
     setAttachAddressId,
     setEditableAddresses,
@@ -172,12 +194,18 @@ function useAddressCreationActions(input: {
     if (address === undefined) return;
     setEditableAddresses((previous: EditableAddress[]) => [
       ...previous,
-      toEditableAddress(address, previous.length === 0),
+      toEditableAddress(address, {
+        countries,
+        countryById,
+        isDefault: previous.length === 0,
+      }),
     ]);
     setSelectedAddressId(address.id);
     setAttachAddressId('');
   }, [
     attachAddressId,
+    countries,
+    countryById,
     databaseAddresses,
     setAttachAddressId,
     setEditableAddresses,
@@ -216,6 +244,8 @@ function useSelectedAddressListActions(
 
 function useAddressActionHandlers(input: {
   attachAddressId: string;
+  countries: CountryOption[];
+  countryById: Map<string, CountryOption>;
   databaseAddresses: FilemakerAddress[];
   selectedAddress: EditableAddress | null;
   setAttachAddressId: React.Dispatch<React.SetStateAction<string>>;
@@ -249,8 +279,9 @@ export function OrganizationAddressesSection(): React.JSX.Element {
   });
   const actions = useAddressActionHandlers({
     attachAddressId,
+    countries,
+    countryById,
     databaseAddresses: database.addresses,
-    editableAddresses,
     selectedAddress,
     setAttachAddressId,
     setEditableAddresses,

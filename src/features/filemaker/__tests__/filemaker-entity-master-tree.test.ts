@@ -1,18 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildFilemakerEventListNodes,
   buildFilemakerOrganizationMasterNodes,
   buildFilemakerPersonMasterNodes,
   buildFilemakerValueMasterNodes,
+  fromFilemakerEventNodeId,
   fromFilemakerOrganizationNodeId,
   fromFilemakerPersonNodeId,
   fromFilemakerValueNodeId,
+  toFilemakerEventNodeId,
   toFilemakerOrganizationNodeId,
   toFilemakerPersonNodeId,
   toFilemakerValueNodeId,
 } from '@/features/filemaker/entity-master-tree';
 
-import type { FilemakerOrganization, FilemakerPerson, FilemakerValue } from '@/features/filemaker/types';
+import type {
+  FilemakerEvent,
+  FilemakerOrganization,
+  FilemakerPerson,
+  FilemakerValue,
+} from '@/features/filemaker/types';
 
 const timestamp = '2026-03-01T10:00:00.000Z';
 
@@ -95,6 +103,31 @@ describe('filemaker entity master tree', () => {
 
     expect(nodes.map((node) => node.name)).toEqual(['S', 'Jane Smith', 'Z', 'John Zimmer']);
     expect(fromFilemakerPersonNodeId(toFilemakerPersonNodeId('person-1'))).toBe('person-1');
+  });
+
+  it('creates flat decodable event nodes for imported event lists', () => {
+    const events: FilemakerEvent[] = [
+      {
+        id: 'event-1',
+        eventName: 'Festiwal Średniowieczny',
+        addressId: '',
+        street: '',
+        streetNumber: '',
+        city: 'Zwickau',
+        postalCode: '',
+        country: '',
+        countryId: '',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ];
+
+    const nodes = buildFilemakerEventListNodes(events);
+
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]?.parentId).toBeNull();
+    expect(nodes[0]?.name).toBe('Festiwal Średniowieczny');
+    expect(fromFilemakerEventNodeId(toFilemakerEventNodeId('event-1'))).toBe('event-1');
   });
 
   it('builds hierarchical value nodes using parent value records', () => {

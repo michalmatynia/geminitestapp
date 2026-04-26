@@ -6,8 +6,12 @@ import { OrganizationAddressesSection } from '../components/page/OrganizationAdd
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
 import { OrganizationEmailLogSection } from '../components/page/OrganizationEmailLogSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
+import { OrganizationEventsSection } from '../components/page/OrganizationEventsSection';
+import { OrganizationImportedMetadataSection } from '../components/page/OrganizationImportedMetadataSection';
 import { OrganizationLegacyDemandSection } from '../components/page/OrganizationLegacyDemandSection';
 import { OrganizationLegacyMetadataSection } from '../components/page/OrganizationLegacyMetadataSection';
+import { OrganizationPersonsSection } from '../components/page/OrganizationPersonsSection';
+import { OrganizationWebsitesSection } from '../components/page/OrganizationWebsitesSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerOrganizationEditPageActionsContext,
@@ -19,13 +23,20 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
   const { isCreateMode, isLoading, organization, updateSetting, router } =
     useAdminFilemakerOrganizationEditPageStateContext();
   const { handleSave } = useAdminFilemakerOrganizationEditPageActionsContext();
+  const [hasMounted, setHasMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const isPageLoading = !hasMounted || isLoading;
 
   return (
     <FilemakerPartyEditPageLayout
       itemName={
         isCreateMode
           ? 'Create Organization'
-          : (organization?.name ?? (isLoading ? 'Loading...' : null))
+          : (organization?.name ?? (isPageLoading ? 'Loading...' : null))
       }
       notFoundMessage='Organization not found.'
       parent={{ label: 'Organizations', href: '/admin/filemaker/organizations' }}
@@ -35,15 +46,19 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
       onCancel={() => startTransition(() => { router.push('/admin/filemaker/organizations'); })}
       isSaving={updateSetting.isPending}
     >
-      {isLoading ? null : (
+      {isPageLoading ? null : (
         <>
           <OrganizationBasicInfoSection />
           <OrganizationAddressesSection />
           {isCreateMode ? null : (
             <>
               <OrganizationLegacyMetadataSection />
+              <OrganizationImportedMetadataSection />
               <OrganizationLegacyDemandSection />
+              <OrganizationPersonsSection />
+              <OrganizationEventsSection />
               <OrganizationEmailsSection />
+              <OrganizationWebsitesSection />
               <OrganizationEmailLogSection />
             </>
           )}

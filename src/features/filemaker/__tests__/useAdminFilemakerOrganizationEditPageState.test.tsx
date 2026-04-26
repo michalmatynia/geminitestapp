@@ -214,6 +214,40 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
       async () =>
         new Response(
           JSON.stringify({
+            harvestProfiles: [
+              {
+                id: 'harvest-1',
+                legacyOrganizationUuid: 'LEGACY-ORG-UUID',
+                legacyUuid: 'LEGACY-HARVEST-UUID',
+                organizationId: 'mongo-org-1',
+                owner: 'Scraper Bot',
+                pageDescription: 'Imported page description',
+                pageKeywords: 'lighting, stage',
+                pageTitle: 'Imported Site Title',
+                updatedAt: '2026-03-03T10:00:00.000Z',
+                updatedBy: 'Importer',
+              },
+            ],
+            importedDemands: [
+              {
+                id: 'demand-mongo-1',
+                legacyOrganizationUuid: 'LEGACY-ORG-UUID',
+                legacyUuid: 'LEGACY-DEMAND-UUID',
+                legacyValueUuids: ['LEGACY-VALUE-ROOT'],
+                organizationId: 'mongo-org-1',
+                updatedAt: '2026-03-02T10:00:00.000Z',
+                updatedBy: 'Importer',
+                valueIds: ['value-root'],
+                values: [
+                  {
+                    label: 'Production',
+                    legacyValueUuid: 'LEGACY-VALUE-ROOT',
+                    level: 1,
+                    valueId: 'value-root',
+                  },
+                ],
+              },
+            ],
             linkedAddresses: [
               {
                 id: 'mongo-address-1',
@@ -285,9 +319,210 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
           streetNumber: '71',
         }),
       ]);
+      expect(result.current.importedDemands).toEqual([
+        expect.objectContaining({
+          id: 'demand-mongo-1',
+          valueIds: ['value-root'],
+        }),
+      ]);
+      expect(result.current.harvestProfiles).toEqual([
+        expect.objectContaining({
+          id: 'harvest-1',
+          pageTitle: 'Imported Site Title',
+        }),
+      ]);
+      expect(result.current.legacyDemandRows).toEqual([
+        expect.objectContaining({
+          id: 'demand-mongo-1',
+          valueIds: ['value-root'],
+        }),
+      ]);
     });
     expect(fetchMock).toHaveBeenCalledWith('/api/filemaker/organizations/mongo-org-1', {
       signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('loads imported metadata for settings-backed legacy organizations', async () => {
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY
+        ? JSON.stringify({
+            ...databaseFixture,
+            organizations: [
+              {
+                ...databaseFixture.organizations[0],
+                legacyUuid: 'LEGACY-ORG-UUID',
+              },
+            ],
+          })
+        : null
+    );
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            harvestProfiles: [
+              {
+                id: 'harvest-1',
+                legacyOrganizationUuid: 'LEGACY-ORG-UUID',
+                legacyUuid: 'LEGACY-HARVEST-UUID',
+                organizationId: 'org-1',
+                pageTitle: 'Imported Site Title',
+              },
+            ],
+            importedDemands: [
+              {
+                id: 'demand-mongo-1',
+                legacyOrganizationUuid: 'LEGACY-ORG-UUID',
+                legacyUuid: 'LEGACY-DEMAND-UUID',
+                legacyValueUuids: ['LEGACY-VALUE-ROOT'],
+                organizationId: 'org-1',
+                valueIds: ['value-root'],
+                values: [
+                  {
+                    label: 'Production',
+                    legacyValueUuid: 'LEGACY-VALUE-ROOT',
+                    level: 1,
+                    valueId: 'value-root',
+                  },
+                ],
+              },
+            ],
+            linkedAddresses: [],
+            linkedEmails: [],
+            organization: {
+              ...databaseFixture.organizations[0],
+              legacyUuid: 'LEGACY-ORG-UUID',
+            },
+          }),
+          { status: 200 }
+        )
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.organizationSource).toBe('settings');
+      expect(result.current.importedDemands).toEqual([
+        expect.objectContaining({ id: 'demand-mongo-1' }),
+      ]);
+      expect(result.current.harvestProfiles).toEqual([
+        expect.objectContaining({ id: 'harvest-1' }),
+      ]);
+      expect(result.current.legacyDemandRows).toEqual([
+        expect.objectContaining({
+          id: 'demand-mongo-1',
+          valueIds: ['value-root'],
+        }),
+      ]);
+    });
+    expect(fetchMock).toHaveBeenCalledWith('/api/filemaker/organizations/org-1', {
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('persists Mongo organization address country values to the detail endpoint', async () => {
+    mocks.routeParams = { organizationId: 'mongo-org-1' };
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY
+        ? JSON.stringify({ ...databaseFixture, organizations: [] })
+        : null
+    );
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.method === 'PATCH') {
+        return new Response(
+          JSON.stringify({
+            organization: {
+              id: 'mongo-org-1',
+              name: 'Mongo Org',
+              addressId: 'mongo-address-1',
+              street: 'Fioletowa',
+              streetNumber: '71',
+              city: 'Szczecin',
+              postalCode: '70-781',
+              country: 'Poland',
+              countryId: 'PL',
+              taxId: '',
+              krs: '',
+              createdAt: '2026-03-01T10:00:00.000Z',
+              updatedAt: '2026-03-01T10:00:00.000Z',
+            },
+          }),
+          { status: 200 }
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          linkedAddresses: [],
+          linkedEmails: [],
+          organization: {
+            id: 'mongo-org-1',
+            name: 'Mongo Org',
+            addressId: '',
+            street: '',
+            streetNumber: '',
+            city: '',
+            postalCode: '',
+            country: '',
+            countryId: '',
+            taxId: '',
+            krs: '',
+            createdAt: '2026-03-01T10:00:00.000Z',
+            updatedAt: '2026-03-01T10:00:00.000Z',
+          },
+        }),
+        { status: 200 }
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.organizationSource).toBe('mongo');
+    });
+
+    act(() => {
+      result.current.setEditableAddresses([
+        {
+          addressId: 'mongo-address-1',
+          city: 'Szczecin',
+          country: 'Poland',
+          countryId: 'PL',
+          countryValueId: 'filemaker-value-poland',
+          countryValueLabel: 'Poland',
+          isDefault: true,
+          legacyCountryUuid: '889CD8F7-6E4E-4074-8CA1-AF684038B7D1',
+          legacyUuid: '99968074-1E6E-4092-86F7-92A2C9B62E8A',
+          postalCode: '70-781',
+          street: 'Fioletowa',
+          streetNumber: '71',
+        },
+      ]);
+    });
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const patchCall = fetchMock.mock.calls.find(([, init]) => init?.method === 'PATCH');
+    expect(patchCall).toBeDefined();
+    const body = JSON.parse(String(patchCall?.[1]?.body ?? '{}'));
+    expect(body).toMatchObject({
+      addressId: 'mongo-address-1',
+      addresses: [
+        {
+          addressId: 'mongo-address-1',
+          country: 'Poland',
+          countryId: 'PL',
+          countryValueId: 'filemaker-value-poland',
+          isDefault: true,
+          legacyCountryUuid: '889CD8F7-6E4E-4074-8CA1-AF684038B7D1',
+        },
+      ],
+      country: 'Poland',
+      countryId: 'PL',
     });
   });
 

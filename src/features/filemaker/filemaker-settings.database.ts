@@ -329,7 +329,11 @@ export const normalizeFilemakerDatabase = (
         postalCode: normalizeString(entry['postalCode']),
         country: normalizeString(entry['country']),
         countryId: normalizeString(entry['countryId']),
+        countryValueId: normalizeString(entry['countryValueId']),
+        countryValueLabel: normalizeString(entry['countryValueLabel']),
         createdAt: normalizeString(entry['createdAt']) || undefined,
+        legacyCountryUuid: normalizeString(entry['legacyCountryUuid']),
+        legacyUuid: normalizeString(entry['legacyUuid']),
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       })
     );

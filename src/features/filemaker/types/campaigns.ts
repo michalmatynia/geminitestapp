@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type {
   FilemakerEmail,
   FilemakerPartyKind,
@@ -87,6 +88,12 @@ export type FilemakerEmailCampaignAnalytics = {
   latestUnsubscribeAt: string | null;
   latestResubscribeAt: string | null;
   topClickedLinks: FilemakerEmailCampaignLinkPerformance[];
+  languageSummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  contentVariantSummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  countrySummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  domainSummaries: FilemakerEmailCampaignSegmentAnalytics[];
+  fallbackContentCount: number;
+  fallbackContentRatePercent: number;
   eventCount: number;
 };
 
@@ -96,6 +103,32 @@ export type FilemakerEmailCampaignLinkPerformance = {
   uniqueDeliveryCount: number;
   clickRatePercent: number;
   latestClickAt: string | null;
+};
+
+export type FilemakerEmailCampaignSegmentAnalytics = {
+  key: string;
+  label: string;
+  totalRecipients: number;
+  sentCount: number;
+  failedCount: number;
+  bouncedCount: number;
+  skippedCount: number;
+  queuedCount: number;
+  deliveryRatePercent: number;
+  failureRatePercent: number;
+  bounceRatePercent: number;
+  openCount: number;
+  uniqueOpenCount: number;
+  uniqueOpenRatePercent: number;
+  clickCount: number;
+  uniqueClickCount: number;
+  uniqueClickRatePercent: number;
+  replyCount: number;
+  replyRatePercent: number;
+  unsubscribeCount: number;
+  unsubscribeRatePercent: number;
+  fallbackContentCount: number;
+  latestActivityAt: string | null;
 };
 
 export type FilemakerEmailCampaignDeliverabilityHealthLevel =

@@ -1,6 +1,8 @@
 import { normalizeString, toIdToken } from '../../filemaker-settings.helpers';
 
-export type EmailBlockKind = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer';
+export type EmailLeafBlockKind = 'text' | 'heading' | 'image' | 'button' | 'divider' | 'spacer';
+export type EmailContainerBlockKind = 'section' | 'columns' | 'row';
+export type EmailBlockKind = EmailLeafBlockKind | EmailContainerBlockKind;
 
 interface EmailBlockBase {
   id: string;
@@ -47,13 +49,72 @@ export interface EmailSpacerBlock extends EmailBlockBase {
   height: number;
 }
 
-export type EmailBlock =
+export interface EmailSectionBlock extends EmailBlockBase {
+  kind: 'section';
+  label: string;
+  background: string;
+  paddingY: number;
+  paddingX: number;
+  children: EmailBlock[];
+}
+
+export interface EmailColumnsBlock extends EmailBlockBase {
+  kind: 'columns';
+  label: string;
+  gap: number;
+  children: EmailRowBlock[];
+}
+
+export interface EmailRowBlock extends EmailBlockBase {
+  kind: 'row';
+  label: string;
+  background: string;
+  paddingY: number;
+  paddingX: number;
+  children: EmailLeafBlock[];
+}
+
+export type EmailLeafBlock =
   | EmailTextBlock
   | EmailHeadingBlock
   | EmailImageBlock
   | EmailButtonBlock
   | EmailDividerBlock
   | EmailSpacerBlock;
+
+export type EmailContainerBlock = EmailSectionBlock | EmailColumnsBlock | EmailRowBlock;
+
+export type EmailBlock = EmailLeafBlock | EmailContainerBlock;
+
+const LEAF_KINDS: ReadonlySet<EmailLeafBlockKind> = new Set([
+  'text',
+  'heading',
+  'image',
+  'button',
+  'divider',
+  'spacer',
+]);
+
+const CONTAINER_KINDS: ReadonlySet<EmailContainerBlockKind> = new Set(['section', 'columns', 'row']);
+
+export const isEmailLeafBlock = (block: EmailBlock): block is EmailLeafBlock =>
+  LEAF_KINDS.has(block.kind as EmailLeafBlockKind);
+
+export const isEmailContainerBlock = (block: EmailBlock): block is EmailContainerBlock =>
+  CONTAINER_KINDS.has(block.kind as EmailContainerBlockKind);
+
+export const getBlockChildren = (block: EmailBlock): EmailBlock[] =>
+  isEmailContainerBlock(block) ? (block.children as EmailBlock[]) : [];
+
+export const isContainerKindAcceptingChildKind = (
+  parentKind: EmailContainerBlockKind,
+  childKind: EmailBlockKind
+): boolean => {
+  if (parentKind === 'section') return childKind !== 'section'; // no nested sections
+  if (parentKind === 'columns') return childKind === 'row';
+  if (parentKind === 'row') return LEAF_KINDS.has(childKind as EmailLeafBlockKind);
+  return false;
+};
 
 const generateBlockId = (kind: EmailBlockKind): string =>
   `filemaker-email-block-${kind}-${toIdToken(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`) || 'entry'}`;
@@ -81,6 +142,18 @@ const normalizeNullablePositiveInt = (value: unknown): number | null => {
   const parsed = Math.trunc(Number(value));
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   return parsed;
+};
+
+const normalizePadding = (value: unknown, fallback: number): number => {
+  const parsed = Math.trunc(Number(value));
+  if (!Number.isFinite(parsed) || parsed < 0) return fallback;
+  return Math.min(parsed, 96);
+};
+
+const normalizeColumnsGap = (value: unknown): number => {
+  const parsed = Math.trunc(Number(value));
+  if (!Number.isFinite(parsed) || parsed < 0) return 16;
+  return Math.min(parsed, 64);
 };
 
 export const createEmailBlock = (kind: EmailBlockKind, overrides?: Partial<EmailBlock>): EmailBlock => {
@@ -135,6 +208,50 @@ export const createEmailBlock = (kind: EmailBlockKind, overrides?: Partial<Email
         height: Number.isFinite(height) && height > 0 ? Math.min(height, 200) : 24,
       };
     }
+    case 'section': {
+      const rawChildren = (overrides as Partial<EmailSectionBlock> | undefined)?.children;
+      return {
+        id,
+        kind: 'section',
+        label: normalizeString((overrides as Partial<EmailSectionBlock> | undefined)?.label) || 'Section',
+        background: normalizeColor((overrides as Partial<EmailSectionBlock> | undefined)?.background, '#ffffff'),
+        paddingY: normalizePadding((overrides as Partial<EmailSectionBlock> | undefined)?.paddingY, 24),
+        paddingX: normalizePadding((overrides as Partial<EmailSectionBlock> | undefined)?.paddingX, 24),
+        children: normalizeEmailBlocks(rawChildren).filter((child: EmailBlock): boolean =>
+          isContainerKindAcceptingChildKind('section', child.kind)
+        ),
+      };
+    }
+    case 'columns': {
+      const rawChildren = (overrides as Partial<EmailColumnsBlock> | undefined)?.children;
+      const normalizedChildren = normalizeEmailBlocks(rawChildren).filter(
+        (child: EmailBlock): child is EmailRowBlock => child.kind === 'row'
+      );
+      const childrenWithFallback = normalizedChildren.length > 0
+        ? normalizedChildren
+        : [createEmailBlock('row') as EmailRowBlock, createEmailBlock('row') as EmailRowBlock];
+      return {
+        id,
+        kind: 'columns',
+        label: normalizeString((overrides as Partial<EmailColumnsBlock> | undefined)?.label) || 'Columns',
+        gap: normalizeColumnsGap((overrides as Partial<EmailColumnsBlock> | undefined)?.gap),
+        children: childrenWithFallback,
+      };
+    }
+    case 'row': {
+      const rawChildren = (overrides as Partial<EmailRowBlock> | undefined)?.children;
+      return {
+        id,
+        kind: 'row',
+        label: normalizeString((overrides as Partial<EmailRowBlock> | undefined)?.label) || 'Row',
+        background: normalizeColor((overrides as Partial<EmailRowBlock> | undefined)?.background, '#ffffff'),
+        paddingY: normalizePadding((overrides as Partial<EmailRowBlock> | undefined)?.paddingY, 8),
+        paddingX: normalizePadding((overrides as Partial<EmailRowBlock> | undefined)?.paddingX, 8),
+        children: normalizeEmailBlocks(rawChildren).filter(
+          (child: EmailBlock): child is EmailLeafBlock => isEmailLeafBlock(child)
+        ),
+      };
+    }
   }
 };
 
@@ -143,16 +260,12 @@ export const normalizeEmailBlock = (input: unknown): EmailBlock | null => {
   const record = input as Record<string, unknown>;
   const kindRaw = normalizeString(record['kind']).toLowerCase();
   if (
-    kindRaw !== 'text' &&
-    kindRaw !== 'heading' &&
-    kindRaw !== 'image' &&
-    kindRaw !== 'button' &&
-    kindRaw !== 'divider' &&
-    kindRaw !== 'spacer'
+    !LEAF_KINDS.has(kindRaw as EmailLeafBlockKind) &&
+    !CONTAINER_KINDS.has(kindRaw as EmailContainerBlockKind)
   ) {
     return null;
   }
-  return createEmailBlock(kindRaw, record as Partial<EmailBlock>);
+  return createEmailBlock(kindRaw as EmailBlockKind, record as Partial<EmailBlock>);
 };
 
 export const normalizeEmailBlocks = (input: unknown): EmailBlock[] => {

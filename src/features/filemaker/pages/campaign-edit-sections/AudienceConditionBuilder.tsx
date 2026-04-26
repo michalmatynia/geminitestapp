@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { normalizeAudienceConditionGroup } from '../../settings/campaign-audience-conditions';
+import { normalizeAudienceConditionGroup } from '../../settings/campaign-audience-normalization.helpers';
 import type { FilemakerAudienceConditionGroup } from '@/shared/contracts/filemaker';
 
 import { AudienceGroupEditor } from './AudienceConditionBuilder.editor';

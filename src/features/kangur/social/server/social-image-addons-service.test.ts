@@ -96,6 +96,8 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_single',
+          label: 'Kangur social single capture',
+          tags: ['kangur', 'social', 'capture', 'single'],
         }),
         request: expect.objectContaining({
           input: expect.objectContaining({
@@ -158,6 +160,8 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_single',
+          label: 'Kangur social single capture',
+          tags: ['kangur', 'social', 'capture', 'single'],
         }),
         request: expect.objectContaining({
           contextOptions: {
@@ -188,6 +192,8 @@ describe('createKangurSocialImageAddonFromPlaywright', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_single',
+          label: 'Kangur social single capture',
+          tags: ['kangur', 'social', 'capture', 'single'],
         }),
         request: expect.objectContaining({
           policyAllowedHosts: ['localhost:3000'],

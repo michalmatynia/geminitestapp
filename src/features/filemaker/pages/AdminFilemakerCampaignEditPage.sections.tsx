@@ -5,13 +5,26 @@ import React from 'react';
 import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroup,
+  FilemakerEmailCampaignContentGroupRegistry,
+  FilemakerEmailCampaignContentVariant,
 } from '@/shared/contracts/filemaker';
-import { Badge, Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, Textarea } from '@/shared/ui/primitives.public';
-import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+import { Badge, Button, Checkbox, Input, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, useToast } from '@/shared/ui/primitives.public';
+import { FormField, FormSection, MultiSelect, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 
-import { EmailBuilder } from '../components/email-builder/EmailBuilder';
+import { EmailLayerPanel } from '../components/email-builder/EmailLayerPanel';
+import { EmailBlockPicker } from '../components/email-builder/EmailBlockPicker';
+import { EmailBlockSettingsPanel } from '../components/email-builder/EmailBlockSettingsPanel';
 import { compileBlocksToHtml, compileBlocksToPlainText } from '../components/email-builder/compile-blocks';
 import { normalizeEmailBlocks, type EmailBlock } from '../components/email-builder/block-model';
+import {
+  createFilemakerEmailCampaignContentGroup,
+  createFilemakerEmailCampaignContentGroupFromCampaign,
+  createFilemakerEmailCampaignContentVariant,
+  createCampaignContentVariantId,
+  resolveFilemakerCampaignContentForRecipient,
+  resolveFilemakerEmailCampaignDefaultContentVariant,
+} from '../settings';
 
 import { AudienceSourceSection } from './campaign-edit-sections/AudienceSourceSection';
 export { DeliveryGovernanceSection } from './campaign-edit-sections/DeliveryGovernanceSection';
@@ -45,6 +58,70 @@ const updateCampaignDraft = (
   update: (draft: FilemakerEmailCampaign) => FilemakerEmailCampaign
 ): void => {
   setDraft((current) => update(current));
+};
+
+const DIRECT_CAMPAIGN_CONTENT_VALUE = '__direct_campaign_content__';
+
+const upsertContentGroup = (
+  registry: FilemakerEmailCampaignContentGroupRegistry,
+  group: FilemakerEmailCampaignContentGroup
+): FilemakerEmailCampaignContentGroupRegistry => ({
+  version: registry.version,
+  groups: registry.groups
+    .filter((entry) => entry.id !== group.id)
+    .concat(group)
+    .sort((left, right) => left.name.localeCompare(right.name)),
+});
+
+const replaceGroupVariant = (
+  group: FilemakerEmailCampaignContentGroup,
+  variant: FilemakerEmailCampaignContentVariant
+): FilemakerEmailCampaignContentGroup =>
+  createFilemakerEmailCampaignContentGroup({
+    ...group,
+    variants: group.variants.map((entry) => (entry.id === variant.id ? variant : entry)),
+    defaultLanguageCode:
+      group.defaultVariantId === variant.id ? variant.languageCode : group.defaultLanguageCode,
+  });
+
+const removeGroupVariant = (
+  group: FilemakerEmailCampaignContentGroup,
+  variantId: string
+): FilemakerEmailCampaignContentGroup => {
+  const variants = group.variants.filter((variant) => variant.id !== variantId);
+  const defaultVariantId =
+    group.defaultVariantId === variantId
+      ? variants.find((variant) => variant.languageCode === group.defaultLanguageCode)?.id ??
+        variants[0]?.id ??
+        null
+      : group.defaultVariantId;
+  const defaultLanguageCode =
+    variants.find((variant) => variant.id === defaultVariantId)?.languageCode ??
+    group.defaultLanguageCode;
+  return createFilemakerEmailCampaignContentGroup({
+    ...group,
+    defaultVariantId,
+    defaultLanguageCode,
+    variants,
+  });
+};
+
+const resolveSelectedVariant = (
+  group: FilemakerEmailCampaignContentGroup | null,
+  selectedVariantId: string | null
+): FilemakerEmailCampaignContentVariant | null => {
+  if (!group) return null;
+  return (
+    group.variants.find((variant) => variant.id === selectedVariantId) ??
+    resolveFilemakerEmailCampaignDefaultContentVariant({
+      campaign: {
+        contentGroupId: group.id,
+        defaultContentVariantId: group.defaultVariantId,
+      } as FilemakerEmailCampaign,
+      group,
+    }) ??
+    null
+  );
 };
 
 export function CampaignDetailsSection(): React.JSX.Element {
@@ -184,31 +261,468 @@ export function CampaignDetailsSection(): React.JSX.Element {
 }
 
 export function ContentSection(): React.JSX.Element {
-  const { draft, setDraft } = useCampaignEditContext();
-  const blocks = React.useMemo<EmailBlock[]>(
-    () => normalizeEmailBlocks(draft.bodyBlocks),
-    [draft.bodyBlocks]
+  const {
+    draft,
+    setDraft,
+    database,
+    preview,
+    contentGroupRegistry,
+    persistContentGroupRegistry,
+    countries,
+    countryOptions,
+  } = useCampaignEditContext();
+  const { toast } = useToast();
+  const selectedPersistedGroup = React.useMemo(
+    () => contentGroupRegistry.groups.find((group) => group.id === draft.contentGroupId) ?? null,
+    [contentGroupRegistry.groups, draft.contentGroupId]
   );
-  const initialMode: 'builder' | 'html' = blocks.length > 0 || !draft.bodyHtml ? 'builder' : 'html';
+  const [groupDraft, setGroupDraft] =
+    React.useState<FilemakerEmailCampaignContentGroup | null>(selectedPersistedGroup);
+  const [selectedVariantId, setSelectedVariantId] = React.useState<string | null>(
+    selectedPersistedGroup?.defaultVariantId ?? null
+  );
+  const [isSavingGroup, setIsSavingGroup] = React.useState(false);
+
+  React.useEffect(() => {
+    setGroupDraft(selectedPersistedGroup);
+    setSelectedVariantId(
+      selectedPersistedGroup?.defaultVariantId ?? selectedPersistedGroup?.variants[0]?.id ?? null
+    );
+  }, [selectedPersistedGroup]);
+
+  const activeGroup = groupDraft;
+  const activeVariant = React.useMemo(
+    () => resolveSelectedVariant(activeGroup, selectedVariantId),
+    [activeGroup, selectedVariantId]
+  );
+  const editingGroupContent = Boolean(activeGroup && activeVariant);
+  const blocks = React.useMemo<EmailBlock[]>(
+    () => normalizeEmailBlocks(editingGroupContent ? activeVariant?.bodyBlocks : draft.bodyBlocks),
+    [activeVariant?.bodyBlocks, draft.bodyBlocks, editingGroupContent]
+  );
+  const activeBodyHtml = editingGroupContent ? activeVariant?.bodyHtml ?? null : draft.bodyHtml;
+  const activeBodyText = editingGroupContent ? activeVariant?.bodyText ?? null : draft.bodyText;
+  const initialMode: 'builder' | 'html' = blocks.length > 0 || !activeBodyHtml ? 'builder' : 'html';
   const [mode, setMode] = React.useState<'builder' | 'html'>(initialMode);
+  const [selectedBlockId, setSelectedBlockId] = React.useState<string | null>(null);
+
+  const updateActiveGroupVariant = React.useCallback(
+    (update: (variant: FilemakerEmailCampaignContentVariant) => FilemakerEmailCampaignContentVariant): void => {
+      setGroupDraft((current) => {
+        const currentVariant = resolveSelectedVariant(current, selectedVariantId);
+        if (!current || !currentVariant) return current;
+        return replaceGroupVariant(current, update(currentVariant));
+      });
+    },
+    [selectedVariantId]
+  );
 
   const handleBlocksChange = React.useCallback(
     (next: EmailBlock[]): void => {
       const compiledHtml = next.length > 0 ? compileBlocksToHtml(next) : null;
+      if (editingGroupContent) {
+        updateActiveGroupVariant((variant) =>
+          createFilemakerEmailCampaignContentVariant({
+            ...variant,
+            bodyBlocks: next.length > 0 ? next : null,
+            bodyHtml: compiledHtml,
+          })
+        );
+        return;
+      }
       updateCampaignDraft(setDraft, (current) => ({
         ...current,
         bodyBlocks: next.length > 0 ? next : null,
         bodyHtml: compiledHtml,
       }));
     },
-    [setDraft]
+    [editingGroupContent, setDraft, updateActiveGroupVariant]
   );
+
+  const previewHtml = React.useMemo(
+    () => (blocks.length > 0 ? compileBlocksToHtml(blocks) : ''),
+    [blocks]
+  );
+  const contentGroupOptions = React.useMemo(() => {
+    const options = contentGroupRegistry.groups.map((group) => ({
+      value: group.id,
+      label: group.name,
+    }));
+    return [
+      { value: DIRECT_CAMPAIGN_CONTENT_VALUE, label: 'Direct campaign content' },
+      ...options,
+    ];
+  }, [contentGroupRegistry.groups]);
+  const variantOptions = React.useMemo(
+    () =>
+      (activeGroup?.variants ?? []).map((variant) => ({
+        value: variant.id,
+        label: `${variant.label} (${variant.languageCode})`,
+      })),
+    [activeGroup?.variants]
+  );
+  const routingSummary = React.useMemo(() => {
+    if (!activeGroup) return [];
+    const registry = upsertContentGroup(contentGroupRegistry, activeGroup);
+    const counts = new Map<
+      string,
+      { label: string; count: number; fallbackCount: number; countryNames: Set<string> }
+    >();
+    preview.recipients.forEach((recipient) => {
+      const content = resolveFilemakerCampaignContentForRecipient({
+        campaign: draft,
+        contentGroupRegistry: registry,
+        database,
+        partyKind: recipient.partyKind,
+        partyId: recipient.partyId,
+        countries,
+      });
+      const key = content.contentVariantId ?? 'direct';
+      const label = content.languageCode ?? content.reason;
+      const entry =
+        counts.get(key) ?? {
+          label,
+          count: 0,
+          fallbackCount: 0,
+          countryNames: new Set<string>(),
+        };
+      entry.count += 1;
+      if (content.usedFallbackContent) entry.fallbackCount += 1;
+      if (content.resolvedCountryName) entry.countryNames.add(content.resolvedCountryName);
+      counts.set(key, entry);
+    });
+    return Array.from(counts.values()).sort((left, right) => right.count - left.count);
+  }, [activeGroup, contentGroupRegistry, countries, database, draft, preview.recipients]);
+
+  const handleCreateContentGroup = React.useCallback(async (): Promise<void> => {
+    const group = createFilemakerEmailCampaignContentGroupFromCampaign({
+      campaign: draft,
+      languageCode: 'en',
+    });
+    const registry = upsertContentGroup(contentGroupRegistry, group);
+    setIsSavingGroup(true);
+    try {
+      await persistContentGroupRegistry(registry);
+      setGroupDraft(group);
+      setSelectedVariantId(group.defaultVariantId);
+      updateCampaignDraft(setDraft, (current) => ({
+        ...current,
+        contentGroupId: group.id,
+        defaultContentVariantId: group.defaultVariantId,
+      }));
+      toast('Email content group created.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to create email content group.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsSavingGroup(false);
+    }
+  }, [contentGroupRegistry, draft, persistContentGroupRegistry, setDraft, toast]);
+
+  const handleSaveGroup = React.useCallback(async (): Promise<void> => {
+    if (!activeGroup) return;
+    const normalizedGroup = createFilemakerEmailCampaignContentGroup({
+      ...activeGroup,
+      updatedAt: new Date().toISOString(),
+    });
+    const registry = upsertContentGroup(contentGroupRegistry, normalizedGroup);
+    setIsSavingGroup(true);
+    try {
+      await persistContentGroupRegistry(registry);
+      setGroupDraft(normalizedGroup);
+      updateCampaignDraft(setDraft, (current) => ({
+        ...current,
+        contentGroupId: normalizedGroup.id,
+        defaultContentVariantId: normalizedGroup.defaultVariantId,
+      }));
+      toast('Email content group saved.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to save email content group.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsSavingGroup(false);
+    }
+  }, [activeGroup, contentGroupRegistry, persistContentGroupRegistry, setDraft, toast]);
 
   return (
     <FormSection title='Campaign Content' className='space-y-4 p-4'>
-      <div className='text-sm text-gray-400'>
-        Build a structured email with drag-and-drop blocks, or write raw HTML directly.
+      <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]'>
+        <div className='grid gap-3 md:grid-cols-2'>
+          <FormField label='Email group'>
+            <SelectSimple
+              ariaLabel='Email content group'
+              value={draft.contentGroupId ?? DIRECT_CAMPAIGN_CONTENT_VALUE}
+              onValueChange={(value) => {
+                const group =
+                  value === DIRECT_CAMPAIGN_CONTENT_VALUE
+                    ? null
+                    : contentGroupRegistry.groups.find((entry) => entry.id === value) ?? null;
+                setGroupDraft(group);
+                setSelectedVariantId(group?.defaultVariantId ?? group?.variants[0]?.id ?? null);
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
+                  contentGroupId: group?.id ?? null,
+                  defaultContentVariantId: group?.defaultVariantId ?? null,
+                  translatedSendingEnabled: group ? current.translatedSendingEnabled : false,
+                }));
+              }}
+              options={contentGroupOptions}
+            />
+          </FormField>
+          <FormField label='Active language variant'>
+            <SelectSimple
+              ariaLabel='Active email language variant'
+              value={activeVariant?.id ?? ''}
+              onValueChange={setSelectedVariantId}
+              options={variantOptions}
+              disabled={!activeGroup || variantOptions.length === 0}
+            />
+          </FormField>
+          <FormField label='Translated sending'>
+            <div className='flex min-h-10 items-center gap-2 rounded-md border border-border/60 px-3'>
+              <Checkbox
+                aria-label='Send translated emails by organiser country'
+                checked={draft.translatedSendingEnabled}
+                disabled={!activeGroup}
+                onCheckedChange={(checked) => {
+                  updateCampaignDraft(setDraft, (current) => ({
+                    ...current,
+                    translatedSendingEnabled: checked === true,
+                  }));
+                }}
+              />
+              <span className='text-sm'>Route by organiser country</span>
+            </div>
+          </FormField>
+          <FormField label='Default language'>
+            <SelectSimple
+              ariaLabel='Default email language'
+              value={activeGroup?.defaultVariantId ?? ''}
+              disabled={!activeGroup || variantOptions.length === 0}
+              onValueChange={(value) => {
+                setGroupDraft((current) => {
+                  const variant = current?.variants.find((entry) => entry.id === value);
+                  if (!current || !variant) return current;
+                  return createFilemakerEmailCampaignContentGroup({
+                    ...current,
+                    defaultVariantId: variant.id,
+                    defaultLanguageCode: variant.languageCode,
+                  });
+                });
+                updateCampaignDraft(setDraft, (current) => ({
+                  ...current,
+                  defaultContentVariantId: value,
+                }));
+              }}
+              options={variantOptions}
+            />
+          </FormField>
+        </div>
+        <div className='flex flex-wrap items-end justify-start gap-2 lg:justify-end'>
+          <Button
+            type='button'
+            variant='outline'
+            disabled={isSavingGroup}
+            onClick={() => {
+              void handleCreateContentGroup();
+            }}
+          >
+            Create Group From Campaign
+          </Button>
+          <Button
+            type='button'
+            disabled={!activeGroup || isSavingGroup}
+            onClick={() => {
+              void handleSaveGroup();
+            }}
+          >
+            {isSavingGroup ? 'Saving Group...' : 'Save Email Group'}
+          </Button>
+        </div>
       </div>
+      {activeGroup ? (
+        <div className='space-y-4 rounded-md border border-border/60 p-3'>
+          <div className='grid gap-3 md:grid-cols-2'>
+            <FormField label='Group name'>
+              <Input
+                value={activeGroup.name}
+                onChange={(event) => {
+                  setGroupDraft((current) =>
+                    current
+                      ? createFilemakerEmailCampaignContentGroup({
+                          ...current,
+                          name: event.target.value,
+                        })
+                      : current
+                  );
+                }}
+              />
+            </FormField>
+            <FormField label='Group description'>
+              <Input
+                value={activeGroup.description ?? ''}
+                onChange={(event) => {
+                  setGroupDraft((current) =>
+                    current
+                      ? createFilemakerEmailCampaignContentGroup({
+                          ...current,
+                          description: event.target.value || null,
+                        })
+                      : current
+                  );
+                }}
+              />
+            </FormField>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {activeGroup.variants.map((variant) => (
+              <Button
+                key={variant.id}
+                type='button'
+                variant={variant.id === activeVariant?.id ? 'default' : 'outline'}
+                size='sm'
+                onClick={() => {
+                  setSelectedVariantId(variant.id);
+                }}
+              >
+                {variant.label || variant.languageCode}
+              </Button>
+            ))}
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                setGroupDraft((current) => {
+                  if (!current) return current;
+                  const languageCode = `lang-${current.variants.length + 1}`;
+                  const variant = createFilemakerEmailCampaignContentVariant({
+                    id: createCampaignContentVariantId({
+                      groupId: current.id,
+                      languageCode,
+                      label: `Language ${current.variants.length + 1}`,
+                    }),
+                    groupId: current.id,
+                    languageCode,
+                    label: `Language ${current.variants.length + 1}`,
+                    subject: draft.subject,
+                    bodyHtml: draft.bodyHtml,
+                    bodyText: draft.bodyText,
+                    bodyBlocks: draft.bodyBlocks,
+                  });
+                  setSelectedVariantId(variant.id);
+                  return createFilemakerEmailCampaignContentGroup({
+                    ...current,
+                    variants: current.variants.concat(variant),
+                  });
+                });
+              }}
+            >
+              Add Language
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              disabled={!activeVariant || activeGroup.variants.length <= 1}
+              onClick={() => {
+                if (!activeVariant) return;
+                setGroupDraft((current) =>
+                  current ? removeGroupVariant(current, activeVariant.id) : current
+                );
+              }}
+            >
+              Remove Language
+            </Button>
+          </div>
+          {activeVariant ? (
+            <div className='grid gap-3 md:grid-cols-2'>
+              <FormField label='Language code'>
+                <Input
+                  value={activeVariant.languageCode}
+                  onChange={(event) => {
+                    updateActiveGroupVariant((variant) =>
+                      createFilemakerEmailCampaignContentVariant({
+                        ...variant,
+                        languageCode: event.target.value,
+                      })
+                    );
+                  }}
+                />
+              </FormField>
+              <FormField label='Variant label'>
+                <Input
+                  value={activeVariant.label}
+                  onChange={(event) => {
+                    updateActiveGroupVariant((variant) =>
+                      createFilemakerEmailCampaignContentVariant({
+                        ...variant,
+                        label: event.target.value,
+                      })
+                    );
+                  }}
+                />
+              </FormField>
+              <FormField label='Variant subject'>
+                <Input
+                  value={activeVariant.subject}
+                  onChange={(event) => {
+                    updateActiveGroupVariant((variant) =>
+                      createFilemakerEmailCampaignContentVariant({
+                        ...variant,
+                        subject: event.target.value,
+                      })
+                    );
+                  }}
+                />
+              </FormField>
+              <FormField label='Variant preview text'>
+                <Input
+                  value={activeVariant.previewText ?? ''}
+                  onChange={(event) => {
+                    updateActiveGroupVariant((variant) =>
+                      createFilemakerEmailCampaignContentVariant({
+                        ...variant,
+                        previewText: event.target.value || null,
+                      })
+                    );
+                  }}
+                />
+              </FormField>
+              <div className='md:col-span-2'>
+                <MultiSelect
+                  label='Directed countries'
+                  ariaLabel='Directed countries'
+                  options={countryOptions}
+                  selected={activeVariant.countryIds}
+                  onChange={(values) => {
+                    updateActiveGroupVariant((variant) =>
+                      createFilemakerEmailCampaignContentVariant({
+                        ...variant,
+                        countryIds: values,
+                      })
+                    );
+                  }}
+                  placeholder='Select countries'
+                  searchPlaceholder='Search countries...'
+                />
+              </div>
+            </div>
+          ) : null}
+          {routingSummary.length > 0 ? (
+            <div className='flex flex-wrap gap-2 text-[10px]'>
+              {routingSummary.map((row) => (
+                <Badge key={row.label} variant='outline'>
+                  {row.label}: {row.count}
+                  {row.fallbackCount > 0 ? ` (${row.fallbackCount} fallback)` : ''}
+                </Badge>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <Tabs
         value={mode}
         onValueChange={(value: string): void => {
@@ -220,13 +734,49 @@ export function ContentSection(): React.JSX.Element {
           <TabsTrigger value='html'>Raw HTML</TabsTrigger>
         </TabsList>
         <TabsContent value='builder' className='space-y-4'>
-          {blocks.length === 0 && draft.bodyHtml ? (
+          {blocks.length === 0 && activeBodyHtml ? (
             <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200'>
               This campaign has raw HTML that was not authored with the builder. Adding blocks
               will overwrite the current HTML on save.
             </div>
           ) : null}
-          <EmailBuilder blocks={blocks} onChange={handleBlocksChange} />
+          <EmailBlockPicker
+            blocks={blocks}
+            selectedBlockId={selectedBlockId}
+            onChange={handleBlocksChange}
+            onSelectBlock={setSelectedBlockId}
+          />
+          <div className='grid gap-3 lg:grid-cols-[260px_minmax(0,1fr)_320px]'>
+            <EmailLayerPanel
+              blocks={blocks}
+              onChange={handleBlocksChange}
+              selectedBlockId={selectedBlockId}
+              onSelectBlock={setSelectedBlockId}
+              className='rounded-md border border-border/60 bg-card/20 p-2'
+            />
+            <div className='rounded-md border border-border/60 bg-card/20 p-2'>
+              <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
+                Preview
+              </div>
+              {previewHtml ? (
+                <iframe
+                  title='Email preview'
+                  srcDoc={previewHtml}
+                  className='h-[640px] w-full rounded border border-border/40 bg-white'
+                />
+              ) : (
+                <div className='flex h-[640px] items-center justify-center rounded border border-dashed border-border/40 text-xs text-gray-500'>
+                  Add a section to start your email.
+                </div>
+              )}
+            </div>
+            <EmailBlockSettingsPanel
+              blocks={blocks}
+              selectedBlockId={selectedBlockId}
+              onChange={handleBlocksChange}
+              onSelectBlock={setSelectedBlockId}
+            />
+          </div>
         </TabsContent>
         <TabsContent value='html' className='space-y-4'>
           {blocks.length > 0 ? (
@@ -238,8 +788,17 @@ export function ContentSection(): React.JSX.Element {
           <DocumentWysiwygEditor
             engineInstance='filemaker_email'
             showBrand
-            value={draft.bodyHtml ?? ''}
+            value={activeBodyHtml ?? ''}
             onChange={(value) => {
+              if (editingGroupContent) {
+                updateActiveGroupVariant((variant) =>
+                  createFilemakerEmailCampaignContentVariant({
+                    ...variant,
+                    bodyHtml: value || null,
+                  })
+                );
+                return;
+              }
               updateCampaignDraft(setDraft, (current) => ({
                 ...current,
                 bodyHtml: value || null,
@@ -260,8 +819,17 @@ export function ContentSection(): React.JSX.Element {
         <Textarea
           rows={4}
           aria-label='Campaign plain-text override'
-          value={draft.bodyText ?? ''}
+          value={activeBodyText ?? ''}
           onChange={(event) => {
+            if (editingGroupContent) {
+              updateActiveGroupVariant((variant) =>
+                createFilemakerEmailCampaignContentVariant({
+                  ...variant,
+                  bodyText: event.target.value || null,
+                })
+              );
+              return;
+            }
             updateCampaignDraft(setDraft, (current) => ({
               ...current,
               bodyText: event.target.value || null,

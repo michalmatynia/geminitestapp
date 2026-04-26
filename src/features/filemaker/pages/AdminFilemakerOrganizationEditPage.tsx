@@ -4,6 +4,7 @@ import React, { startTransition } from 'react';
 
 import { OrganizationAddressesSection } from '../components/page/OrganizationAddressesSection';
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
+import { OrganizationCampaignDeliveriesSection } from '../components/page/OrganizationCampaignDeliveriesSection';
 import { OrganizationContactLogsSection } from '../components/page/OrganizationContactLogsSection';
 import { OrganizationEmailLogSection } from '../components/page/OrganizationEmailLogSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
@@ -64,6 +65,7 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
               <OrganizationEmailsSection />
               <OrganizationWebsitesSection />
               <OrganizationEmailLogSection />
+              <OrganizationCampaignDeliveriesSection />
             </>
           )}
         </>

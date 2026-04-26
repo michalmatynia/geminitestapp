@@ -1,204 +1,16 @@
-import type {
-  FilemakerAudienceCondition,
-  FilemakerAudienceConditionGroup,
-  FilemakerAudienceField,
-  FilemakerAudienceOperator,
-  FilemakerEmail,
-  FilemakerOrganization,
-  FilemakerPerson,
+import {
+  type FilemakerAudienceCondition,
+  type FilemakerAudienceConditionGroup,
+  type FilemakerAudienceField,
+  type FilemakerAudienceOperator,
+  type FilemakerEmail,
+  type FilemakerOrganization,
+  type FilemakerPerson,
 } from '@/shared/contracts/filemaker';
 
 import { normalizeString } from '../filemaker-settings.helpers';
 
-let audienceIdCounter = 0;
-const generateAudienceEntityId = (prefix: string): string => {
-  const cryptoRef = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
-  if (cryptoRef?.randomUUID) {
-    return `${prefix}-${cryptoRef.randomUUID()}`;
-  }
-  audienceIdCounter += 1;
-  return `${prefix}-${Date.now().toString(36)}-${audienceIdCounter}`;
-};
-
-const AUDIENCE_FIELDS: FilemakerAudienceField[] = [
-  'organization.name',
-  'organization.tradingName',
-  'organization.taxId',
-  'organization.krs',
-  'organization.city',
-  'organization.country',
-  'organization.postalCode',
-  'organization.street',
-  'organization.demandValueId',
-  'organization.demandLegacyValueUuid',
-  'organization.demandLabel',
-  'organization.demandPath',
-  'person.firstName',
-  'person.lastName',
-  'person.city',
-  'person.country',
-  'person.postalCode',
-  'person.street',
-  'person.nip',
-  'person.regon',
-  'person.phoneNumbers',
-  'email.address',
-  'email.status',
-  'organizationId',
-  'eventId',
-];
-
-const AUDIENCE_OPERATORS: FilemakerAudienceOperator[] = [
-  'equals',
-  'not_equals',
-  'contains',
-  'not_contains',
-  'starts_with',
-  'ends_with',
-  'is_empty',
-  'is_not_empty',
-];
-
-const isAudienceField = (value: unknown): value is FilemakerAudienceField =>
-  typeof value === 'string' && AUDIENCE_FIELDS.includes(value as FilemakerAudienceField);
-
-const isAudienceOperator = (value: unknown): value is FilemakerAudienceOperator =>
-  typeof value === 'string' && AUDIENCE_OPERATORS.includes(value as FilemakerAudienceOperator);
-
-export const buildDefaultAudienceConditionGroup = (): FilemakerAudienceConditionGroup => ({
-  id: generateAudienceEntityId('audience-group'),
-  type: 'group',
-  combinator: 'and',
-  children: [],
-});
-
-export const normalizeAudienceCondition = (
-  input: unknown
-): FilemakerAudienceCondition | null => {
-  if (!input || typeof input !== 'object') return null;
-  const record = input as Record<string, unknown>;
-  if (!isAudienceField(record['field'])) return null;
-  if (!isAudienceOperator(record['operator'])) return null;
-  return {
-    id: normalizeString(record['id']) || generateAudienceEntityId('audience-condition'),
-    type: 'condition',
-    field: record['field'],
-    operator: record['operator'],
-    value: normalizeString(record['value']),
-  };
-};
-
-export const normalizeAudienceConditionGroup = (
-  input: unknown
-): FilemakerAudienceConditionGroup => {
-  if (!input || typeof input !== 'object') return buildDefaultAudienceConditionGroup();
-  const record = input as Record<string, unknown>;
-  const combinator = record['combinator'] === 'or' ? 'or' : 'and';
-  const rawChildren = Array.isArray(record['children']) ? record['children'] : [];
-  const children: Array<FilemakerAudienceCondition | FilemakerAudienceConditionGroup> = [];
-  rawChildren.forEach((child) => {
-    if (!child || typeof child !== 'object') return;
-    const childRecord = child as Record<string, unknown>;
-    if (childRecord['type'] === 'group') {
-      children.push(normalizeAudienceConditionGroup(child));
-      return;
-    }
-    const condition = normalizeAudienceCondition(child);
-    if (condition) children.push(condition);
-  });
-  return {
-    id: normalizeString(record['id']) || generateAudienceEntityId('audience-group'),
-    type: 'group',
-    combinator,
-    children,
-  };
-};
-
-type LegacyInputs = {
-  organizationIds: string[];
-  eventIds: string[];
-  countries: string[];
-  cities: string[];
-};
-
-const hasLegacyEntries = (legacy: LegacyInputs): boolean =>
-  legacy.organizationIds.length > 0 ||
-  legacy.eventIds.length > 0 ||
-  legacy.countries.length > 0 ||
-  legacy.cities.length > 0;
-
-const buildEqualsCondition = (
-  field: FilemakerAudienceField,
-  value: string
-): FilemakerAudienceCondition => ({
-  id: generateAudienceEntityId('audience-condition'),
-  type: 'condition',
-  field,
-  operator: 'equals',
-  value,
-});
-
-const buildOrGroup = (
-  children: Array<FilemakerAudienceCondition | FilemakerAudienceConditionGroup>
-): FilemakerAudienceConditionGroup => ({
-  id: generateAudienceEntityId('audience-group'),
-  type: 'group',
-  combinator: 'or',
-  children,
-});
-
-export const foldLegacyFieldsIntoConditionGroup = (
-  currentGroup: FilemakerAudienceConditionGroup,
-  legacy: LegacyInputs
-): FilemakerAudienceConditionGroup => {
-  if (!hasLegacyEntries(legacy)) return currentGroup;
-
-  const legacyClauses: Array<FilemakerAudienceCondition | FilemakerAudienceConditionGroup> = [];
-  if (legacy.organizationIds.length > 0) {
-    legacyClauses.push(
-      legacy.organizationIds.length === 1
-        ? buildEqualsCondition('organizationId', legacy.organizationIds[0]!)
-        : buildOrGroup(
-            legacy.organizationIds.map((value) =>
-              buildEqualsCondition('organizationId', value)
-            )
-          )
-    );
-  }
-  if (legacy.eventIds.length > 0) {
-    legacyClauses.push(
-      legacy.eventIds.length === 1
-        ? buildEqualsCondition('eventId', legacy.eventIds[0]!)
-        : buildOrGroup(
-            legacy.eventIds.map((value) => buildEqualsCondition('eventId', value))
-          )
-    );
-  }
-  if (legacy.countries.length > 0) {
-    const countryClauses = legacy.countries.flatMap((value) => [
-      buildEqualsCondition('person.country', value),
-      buildEqualsCondition('organization.country', value),
-    ]);
-    legacyClauses.push(buildOrGroup(countryClauses));
-  }
-  if (legacy.cities.length > 0) {
-    const cityClauses = legacy.cities.flatMap((value) => [
-      buildEqualsCondition('person.city', value),
-      buildEqualsCondition('organization.city', value),
-    ]);
-    legacyClauses.push(buildOrGroup(cityClauses));
-  }
-
-  if (currentGroup.children.length === 0 && currentGroup.combinator === 'and') {
-    return { ...currentGroup, children: legacyClauses };
-  }
-  return {
-    ...currentGroup,
-    children: [...currentGroup.children, ...legacyClauses],
-  };
-};
-
-type ConditionContext = {
+export type ConditionContext = {
   person?: FilemakerPerson | null;
   organization?: FilemakerOrganization | null;
   email?: FilemakerEmail | null;
@@ -210,62 +22,164 @@ type ConditionContext = {
   organizationDemandPaths?: string[];
 };
 
+type OrgResolver = (org: FilemakerOrganization) => string | null;
+type PersonResolver = (person: FilemakerPerson) => string | string[] | null;
+
+const ORG_IDENTITY_RESOLVERS: Partial<Record<FilemakerAudienceField, OrgResolver>> = {
+  'organization.name': (org) => org.name,
+  'organization.tradingName': (org) => org.tradingName ?? null,
+  'organization.cooperationStatus': (org) => org.cooperationStatus ?? null,
+  'organization.taxId': (org) => org.taxId ?? null,
+  'organization.krs': (org) => org.krs ?? null,
+};
+
+const ORG_LOCATION_RESOLVERS: Partial<Record<FilemakerAudienceField, OrgResolver>> = {
+  'organization.city': (org) => org.city,
+  'organization.country': (org) => org.country,
+  'organization.postalCode': (org) => org.postalCode,
+  'organization.street': (org) => org.street,
+};
+
+const PERSON_IDENTITY_RESOLVERS: Partial<Record<FilemakerAudienceField, PersonResolver>> = {
+  'person.firstName': (person) => person.firstName,
+  'person.lastName': (person) => person.lastName,
+  'person.nip': (person) => person.nip,
+  'person.regon': (person) => person.regon,
+  'person.phoneNumbers': (person) => person.phoneNumbers,
+};
+
+const PERSON_LOCATION_RESOLVERS: Partial<Record<FilemakerAudienceField, PersonResolver>> = {
+  'person.city': (person) => person.city,
+  'person.country': (person) => person.country,
+  'person.postalCode': (person) => person.postalCode,
+  'person.street': (person) => person.street,
+};
+
+const resolveDemandValueId = (context: ConditionContext): string[] | null =>
+  context.organizationDemandValueIds ?? null;
+const resolveDemandLegacyUuid = (context: ConditionContext): string[] | null =>
+  context.organizationDemandLegacyValueUuids ?? null;
+const resolveDemandLabel = (context: ConditionContext): string[] | null =>
+  context.organizationDemandLabels ?? null;
+const resolveDemandPath = (context: ConditionContext): string[] | null =>
+  context.organizationDemandPaths ?? null;
+
+const resolveOrganizationDemandValue = (
+  field: FilemakerAudienceField,
+  context: ConditionContext
+): string[] | null => {
+  if (field === 'organization.demandValueId') return resolveDemandValueId(context);
+  if (field === 'organization.demandLegacyValueUuid') return resolveDemandLegacyUuid(context);
+  if (field === 'organization.demandLabel') return resolveDemandLabel(context);
+  if (field === 'organization.demandPath') return resolveDemandPath(context);
+  return null;
+};
+
+const resolveOrganizationFieldValue = (
+  field: FilemakerAudienceField,
+  org: FilemakerOrganization
+): string | string[] | null => {
+  const identity = ORG_IDENTITY_RESOLVERS[field];
+  if (identity !== undefined) return identity(org);
+  const location = ORG_LOCATION_RESOLVERS[field];
+  if (location !== undefined) return location(org);
+  return null;
+};
+
+const resolvePersonFieldValue = (
+  field: FilemakerAudienceField,
+  person: FilemakerPerson
+): string | string[] | null => {
+  const identity = PERSON_IDENTITY_RESOLVERS[field];
+  if (identity !== undefined) return identity(person);
+  const location = PERSON_LOCATION_RESOLVERS[field];
+  if (location !== undefined) return location(person);
+  return null;
+};
+
+const resolveEmailFieldValue = (
+  field: FilemakerAudienceField,
+  email: FilemakerEmail
+): string | null => {
+  if (field === 'email.address') return email.email;
+  if (field === 'email.status') return email.status;
+  return null;
+};
+
+const resolveOrgContextValue = (
+  field: FilemakerAudienceField,
+  context: ConditionContext
+): string | string[] | null => {
+  const org = context.organization;
+  if (org === null) return null;
+  if (org === undefined) return null;
+  const demand = resolveOrganizationDemandValue(field, context);
+  if (demand !== null) return demand;
+  return resolveOrganizationFieldValue(field, org);
+};
+
+const resolvePersonContextValue = (
+  field: FilemakerAudienceField,
+  context: ConditionContext
+): string | string[] | null => {
+  const person = context.person;
+  if (person === null) return null;
+  if (person === undefined) return null;
+  return resolvePersonFieldValue(field, person);
+};
+
+const resolveEmailContextValue = (
+  field: FilemakerAudienceField,
+  context: ConditionContext
+): string | string[] | null => {
+  const email = context.email;
+  if (email === null) return null;
+  if (email === undefined) return null;
+  return resolveEmailFieldValue(field, email);
+};
+
+const resolveGlobalContextValue = (
+  field: FilemakerAudienceField,
+  context: ConditionContext
+): string | string[] | null => {
+  if (field === 'organizationId') return context.organizationIds ?? null;
+  if (field === 'eventId') return context.eventIds ?? null;
+  return null;
+};
+
 const resolveFieldValue = (
   field: FilemakerAudienceField,
   context: ConditionContext
 ): string | string[] | null => {
-  switch (field) {
-    case 'organization.name':
-      return context.organization?.name ?? null;
-    case 'organization.tradingName':
-      return context.organization?.tradingName ?? null;
-    case 'organization.taxId':
-      return context.organization?.taxId ?? null;
-    case 'organization.krs':
-      return context.organization?.krs ?? null;
-    case 'organization.city':
-      return context.organization?.city ?? null;
-    case 'organization.country':
-      return context.organization?.country ?? null;
-    case 'organization.postalCode':
-      return context.organization?.postalCode ?? null;
-    case 'organization.street':
-      return context.organization?.street ?? null;
-    case 'organization.demandValueId':
-      return context.organizationDemandValueIds ?? null;
-    case 'organization.demandLegacyValueUuid':
-      return context.organizationDemandLegacyValueUuids ?? null;
-    case 'organization.demandLabel':
-      return context.organizationDemandLabels ?? null;
-    case 'organization.demandPath':
-      return context.organizationDemandPaths ?? null;
-    case 'person.firstName':
-      return context.person?.firstName ?? null;
-    case 'person.lastName':
-      return context.person?.lastName ?? null;
-    case 'person.city':
-      return context.person?.city ?? null;
-    case 'person.country':
-      return context.person?.country ?? null;
-    case 'person.postalCode':
-      return context.person?.postalCode ?? null;
-    case 'person.street':
-      return context.person?.street ?? null;
-    case 'person.nip':
-      return context.person?.nip ?? null;
-    case 'person.regon':
-      return context.person?.regon ?? null;
-    case 'person.phoneNumbers':
-      return context.person?.phoneNumbers ?? null;
-    case 'email.address':
-      return context.email?.email ?? null;
-    case 'email.status':
-      return context.email?.status ?? null;
-    case 'organizationId':
-      return context.organizationIds ?? null;
-    case 'eventId':
-      return context.eventIds ?? null;
-  }
+  const orgValue = resolveOrgContextValue(field, context);
+  if (orgValue !== null) return orgValue;
+  const personValue = resolvePersonContextValue(field, context);
+  if (personValue !== null) return personValue;
+  const emailValue = resolveEmailContextValue(field, context);
+  if (emailValue !== null) return emailValue;
+  return resolveGlobalContextValue(field, context);
+};
+
+const evaluateEqualityOperator = (
+  operator: FilemakerAudienceOperator,
+  cell: string,
+  target: string
+): boolean | null => {
+  if (operator === 'equals') return cell === target;
+  if (operator === 'not_equals') return cell !== target;
+  return null;
+};
+
+const evaluateContainmentOperator = (
+  operator: FilemakerAudienceOperator,
+  cell: string,
+  target: string
+): boolean | null => {
+  if (operator === 'contains') return cell.includes(target);
+  if (operator === 'not_contains') return !cell.includes(target);
+  if (operator === 'starts_with') return cell.startsWith(target);
+  if (operator === 'ends_with') return cell.endsWith(target);
+  return null;
 };
 
 const evaluateScalarOperator = (
@@ -275,24 +189,43 @@ const evaluateScalarOperator = (
 ): boolean => {
   const cell = cellValue.toLowerCase();
   const target = needle.toLowerCase();
-  switch (operator) {
-    case 'equals':
-      return cell === target;
-    case 'not_equals':
-      return cell !== target;
-    case 'contains':
-      return cell.includes(target);
-    case 'not_contains':
-      return !cell.includes(target);
-    case 'starts_with':
-      return cell.startsWith(target);
-    case 'ends_with':
-      return cell.endsWith(target);
-    case 'is_empty':
-      return cell === '';
-    case 'is_not_empty':
-      return cell !== '';
+  const eq = evaluateEqualityOperator(operator, cell, target);
+  if (eq !== null) return eq;
+  const cont = evaluateContainmentOperator(operator, cell, target);
+  if (cont !== null) return cont;
+  if (operator === 'is_empty') return cell === '';
+  if (operator === 'is_not_empty') return cell !== '';
+  return false;
+};
+
+const evaluateEmptyOperator = (
+  operator: 'is_empty' | 'is_not_empty',
+  raw: string | string[] | null | undefined
+): boolean => {
+  if (raw === null || raw === undefined) return operator === 'is_empty';
+  if (Array.isArray(raw)) {
+    const isEmpty = raw.every((entry) => normalizeString(entry) === '');
+    return operator === 'is_empty' ? isEmpty : !isEmpty;
   }
+  const normalized = normalizeString(raw);
+  return operator === 'is_empty' ? normalized === '' : normalized !== '';
+};
+
+const evaluateArrayCondition = (
+  operator: FilemakerAudienceOperator,
+  raw: string[],
+  needle: string
+): boolean => {
+  const isNegative = operator === 'not_equals' || operator === 'not_contains';
+  if (raw.length === 0) return isNegative;
+  if (isNegative) {
+    return raw.every((entry) =>
+      evaluateScalarOperator(operator, normalizeString(entry), needle)
+    );
+  }
+  return raw.some((entry) =>
+    evaluateScalarOperator(operator, normalizeString(entry), needle)
+  );
 };
 
 export const evaluateAudienceCondition = (
@@ -300,40 +233,14 @@ export const evaluateAudienceCondition = (
   context: ConditionContext
 ): boolean => {
   const raw = resolveFieldValue(condition.field, context);
-
-  if (condition.operator === 'is_empty') {
-    if (raw === null || raw === undefined) return true;
-    if (Array.isArray(raw)) return raw.every((entry) => normalizeString(entry) === '');
-    return normalizeString(raw) === '';
+  if (condition.operator === 'is_empty' || condition.operator === 'is_not_empty') {
+    return evaluateEmptyOperator(condition.operator, raw);
   }
-  if (condition.operator === 'is_not_empty') {
-    if (raw === null || raw === undefined) return false;
-    if (Array.isArray(raw)) return raw.some((entry) => normalizeString(entry) !== '');
-    return normalizeString(raw) !== '';
-  }
-
   const needle = condition.value;
-  // Empty-string operand for non-empty operators: impossible to match meaningfully.
   if (needle.length === 0) {
     return condition.operator === 'not_equals' || condition.operator === 'not_contains';
   }
-
-  if (Array.isArray(raw)) {
-    // Array semantics: positive operators pass if ANY element matches;
-    // negative operators pass if NO element matches.
-    const isNegative =
-      condition.operator === 'not_equals' || condition.operator === 'not_contains';
-    if (raw.length === 0) return isNegative;
-    if (isNegative) {
-      return raw.every((entry) =>
-        evaluateScalarOperator(condition.operator, normalizeString(entry), needle)
-      );
-    }
-    return raw.some((entry) =>
-      evaluateScalarOperator(condition.operator, normalizeString(entry), needle)
-    );
-  }
-
+  if (Array.isArray(raw)) return evaluateArrayCondition(condition.operator, raw, needle);
   return evaluateScalarOperator(
     condition.operator,
     normalizeString(raw ?? ''),
@@ -345,11 +252,13 @@ export const evaluateAudienceConditionGroup = (
   group: FilemakerAudienceConditionGroup,
   context: ConditionContext
 ): boolean => {
-  if (group.children.length === 0) return true;
+  if (group.children.length === 0) return group.not !== true;
   const results = group.children.map((child) =>
     child.type === 'group'
       ? evaluateAudienceConditionGroup(child, context)
       : evaluateAudienceCondition(child, context)
   );
-  return group.combinator === 'and' ? results.every(Boolean) : results.some(Boolean);
+  const matched =
+    group.combinator === 'and' ? results.every((result) => result) : results.some((result) => result);
+  return group.not === true ? !matched : matched;
 };

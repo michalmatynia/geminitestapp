@@ -211,6 +211,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           input: expect.objectContaining({
@@ -238,6 +240,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           contextOptions: {
@@ -278,6 +282,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           contextOptions: {
@@ -286,13 +292,15 @@ describe('createKangurSocialImageAddonsBatch', () => {
                 {
                   name: '__Host-next-auth.csrf-token',
                   value: 'csrf123',
-                  url: 'https://kangur.app',
+                  domain: 'kangur.app',
+                  path: '/',
                   secure: true,
                 },
                 {
                   name: '__Secure-next-auth.session-token',
                   value: 'session456',
-                  url: 'https://kangur.app',
+                  domain: 'kangur.app',
+                  path: '/',
                   secure: true,
                 },
               ],
@@ -318,6 +326,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           contextOptions: {
@@ -326,7 +336,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
                 {
                   name: 'session',
                   value: 'abc123',
-                  url: 'http://localhost:3000',
+                  domain: 'localhost',
+                  path: '/',
                 },
               ],
               origins: [],
@@ -350,6 +361,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           policyAllowedHosts: ['localhost:3000'],
@@ -373,6 +386,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           input: expect.objectContaining({
@@ -476,6 +491,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
         waitForResult: false,
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
       })
     );
@@ -522,6 +539,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           input: expect.objectContaining({
@@ -541,6 +560,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           script: expect.stringContaining('data-kangur-appearance-mode'),
@@ -551,6 +572,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           script: expect.stringContaining('const maxCaptureAttempts = 2;'),
@@ -700,6 +723,8 @@ describe('createKangurSocialImageAddonsBatch', () => {
       expect.objectContaining({
         instance: expect.objectContaining({
           kind: 'social_capture_batch',
+          label: 'Kangur social batch capture',
+          tags: ['kangur', 'social', 'capture', 'batch'],
         }),
         request: expect.objectContaining({
           personaId: 'persona-1',

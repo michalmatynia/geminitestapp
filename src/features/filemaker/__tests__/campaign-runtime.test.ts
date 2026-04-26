@@ -2,9 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createFilemakerEmailCampaign,
+  createFilemakerEmailCampaignContentGroup,
+  createFilemakerEmailCampaignContentVariant,
   createFilemakerEmailCampaignDelivery,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
@@ -25,6 +28,7 @@ import { createFilemakerCampaignRuntimeService } from '@/features/filemaker/serv
 import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignSuppressionRegistry,
 } from '@/features/filemaker/types';
 
@@ -73,8 +77,50 @@ const createDatabase = (): FilemakerDatabase => ({
     },
   ],
   events: [],
-  addresses: [],
-  addressLinks: [],
+  addresses: [
+    {
+      id: 'address-person-1',
+      street: '',
+      streetNumber: '',
+      city: 'Warsaw',
+      postalCode: '',
+      country: 'Poland',
+      countryId: 'PL',
+      createdAt: iso,
+      updatedAt: iso,
+    },
+    {
+      id: 'address-organization-1',
+      street: '',
+      streetNumber: '',
+      city: 'Berlin',
+      postalCode: '',
+      country: 'Germany',
+      countryId: 'DE',
+      createdAt: iso,
+      updatedAt: iso,
+    },
+  ],
+  addressLinks: [
+    {
+      id: 'address-link-person-1',
+      ownerKind: 'person',
+      ownerId: 'person-1',
+      addressId: 'address-person-1',
+      isDefault: true,
+      createdAt: iso,
+      updatedAt: iso,
+    },
+    {
+      id: 'address-link-organization-1',
+      ownerKind: 'organization',
+      ownerId: 'organization-1',
+      addressId: 'address-organization-1',
+      isDefault: true,
+      createdAt: iso,
+      updatedAt: iso,
+    },
+  ],
   phoneNumbers: [],
   phoneNumberLinks: [],
   emails: [
@@ -156,6 +202,7 @@ const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerE
 
 const createRuntimeHarness = (input?: {
   campaign?: FilemakerEmailCampaign;
+  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
   sendCampaignEmail?: ReturnType<typeof vi.fn>;
   suppressions?: FilemakerEmailCampaignSuppressionRegistry;
   now?: () => Date;
@@ -171,6 +218,10 @@ const createRuntimeHarness = (input?: {
         version: 1,
         campaigns: [input?.campaign ?? createCampaign()],
       }),
+    ],
+    [
+      FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
+      JSON.stringify(input?.contentGroupRegistry ?? { version: 1, groups: [] }),
     ],
     [FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY, JSON.stringify({ version: 1, runs: [] })],
     [
@@ -356,6 +407,87 @@ describe('filemaker campaign runtime service', () => {
       storedEvents.events.filter((event) => event.type === 'delivery_sent')
     ).toHaveLength(2);
     expect(storedEvents.events.some((event) => event.type === 'completed')).toBe(true);
+  });
+
+  it('routes translated campaign content by organization country', async () => {
+    const group = createFilemakerEmailCampaignContentGroup({
+      id: 'content-group-1',
+      name: 'Market invite',
+      defaultLanguageCode: 'en',
+      defaultVariantId: 'variant-en',
+      variants: [
+        createFilemakerEmailCampaignContentVariant({
+          id: 'variant-en',
+          groupId: 'content-group-1',
+          languageCode: 'en',
+          label: 'English',
+          subject: 'Hello',
+          bodyText: 'English body',
+          countryIds: ['US', 'GB'],
+        }),
+        createFilemakerEmailCampaignContentVariant({
+          id: 'variant-de',
+          groupId: 'content-group-1',
+          languageCode: 'de',
+          label: 'German',
+          subject: 'Hallo',
+          bodyText: 'German body',
+          countryIds: ['DE', 'AT', 'CH'],
+        }),
+      ],
+    });
+    const campaign = createCampaign({
+      subject: 'Legacy subject',
+      bodyText: 'Legacy body',
+      contentGroupId: group.id,
+      defaultContentVariantId: 'variant-en',
+      translatedSendingEnabled: true,
+      audience: {
+        partyKinds: ['organization'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+    const { service, store, sendCampaignEmail } = createRuntimeHarness({
+      campaign,
+      contentGroupRegistry: { version: 1, groups: [group] },
+    });
+
+    const launched = await service.launchRun({
+      campaignId: 'campaign-1',
+      mode: 'live',
+    });
+    await service.processRun({
+      runId: launched.run.id,
+    });
+
+    expect(sendCampaignEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'hello@acme.test',
+        subject: 'Hallo',
+        text: expect.stringContaining('German body'),
+      })
+    );
+
+    const storedDeliveries = parseFilemakerEmailCampaignDeliveryRegistry(
+      store.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY)
+    );
+    expect(storedDeliveries.deliveries[0]).toEqual(
+      expect.objectContaining({
+        contentGroupId: 'content-group-1',
+        contentVariantId: 'variant-de',
+        languageCode: 'de',
+        resolvedCountryId: 'DE',
+        usedFallbackContent: false,
+      })
+    );
   });
 
   it('carries mail filing links from campaign sends into delivery events', async () => {

@@ -9,12 +9,16 @@ import type {
 } from '@/shared/contracts/filemaker';
 
 import {
-  buildDefaultAudienceConditionGroup,
   evaluateAudienceCondition,
   evaluateAudienceConditionGroup,
-  foldLegacyFieldsIntoConditionGroup,
-  normalizeAudienceConditionGroup,
 } from '@/features/filemaker/settings/campaign-audience-conditions';
+import {
+  buildDefaultAudienceConditionGroup,
+  normalizeAudienceConditionGroup,
+} from '@/features/filemaker/settings/campaign-audience-normalization.helpers';
+import {
+  foldLegacyFieldsIntoConditionGroup,
+} from '@/features/filemaker/settings/campaign-audience-legacy.helpers';
 import { normalizeCampaignAudienceRule } from '@/features/filemaker/settings/campaign-factories';
 
 const orgFixture: FilemakerOrganization = {
@@ -32,6 +36,7 @@ const orgFixture: FilemakerOrganization = {
   taxId: '1234567890',
   krs: '0000987654',
   tradingName: 'Acme Widgets',
+  cooperationStatus: 'Partner',
 };
 
 const personFixture: FilemakerPerson = {
@@ -134,6 +139,29 @@ describe('evaluateAudienceCondition — operators', () => {
       evaluateAudienceCondition(
         buildCondition({ field: 'organization.tradingName', operator: 'is_empty', value: '' }),
         { organization: { ...orgFixture, tradingName: undefined } }
+      )
+    ).toBe(true);
+  });
+
+  it('filters by organization.cooperationStatus', () => {
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.cooperationStatus',
+          operator: 'equals',
+          value: 'partner',
+        }),
+        { organization: orgFixture }
+      )
+    ).toBe(true);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.cooperationStatus',
+          operator: 'is_empty',
+          value: '',
+        }),
+        { organization: { ...orgFixture, cooperationStatus: undefined } }
       )
     ).toBe(true);
   });
@@ -309,6 +337,24 @@ describe('evaluateAudienceConditionGroup — AND/OR nesting', () => {
     };
     expect(evaluateAudienceConditionGroup(nested, { person: personFixture })).toBe(true);
   });
+
+  it('negates a group when NOT is enabled', () => {
+    const negated: FilemakerAudienceConditionGroup = {
+      id: 'not-country',
+      type: 'group',
+      combinator: 'and',
+      not: true,
+      children: [
+        buildCondition({ field: 'organization.country', operator: 'equals', value: 'PL' }),
+      ],
+    };
+    expect(evaluateAudienceConditionGroup(negated, { organization: orgFixture })).toBe(false);
+    expect(
+      evaluateAudienceConditionGroup(negated, {
+        organization: { ...orgFixture, country: 'DE' },
+      })
+    ).toBe(true);
+  });
 });
 
 describe('normalizeAudienceConditionGroup', () => {
@@ -323,6 +369,7 @@ describe('normalizeAudienceConditionGroup', () => {
       id: 'g',
       type: 'group',
       combinator: 'or',
+      not: true,
       children: [
         { field: 'organization.name', operator: 'equals', value: 'A' },
         { field: 'BOGUS_FIELD', operator: 'equals', value: 'X' },
@@ -330,6 +377,7 @@ describe('normalizeAudienceConditionGroup', () => {
       ],
     });
     expect(group.combinator).toBe('or');
+    expect(group.not).toBe(true);
     expect(group.children).toHaveLength(1);
     expect((group.children[0] as FilemakerAudienceCondition).field).toBe('organization.name');
   });

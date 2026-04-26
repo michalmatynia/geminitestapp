@@ -1,9 +1,12 @@
 import type {
   EmailBlock,
   EmailButtonBlock,
+  EmailColumnsBlock,
   EmailDividerBlock,
   EmailHeadingBlock,
   EmailImageBlock,
+  EmailRowBlock,
+  EmailSectionBlock,
   EmailSpacerBlock,
   EmailTextBlock,
 } from './block-model';
@@ -58,6 +61,37 @@ const compileDivider = (block: EmailDividerBlock): string =>
 const compileSpacer = (block: EmailSpacerBlock): string =>
   `<tr><td style="height:${block.height}px;line-height:${block.height}px;font-size:0;">&nbsp;</td></tr>`;
 
+const compileBlocksAsRows = (children: EmailBlock[]): string =>
+  children.map(compileBlock).join('');
+
+const compileSection = (block: EmailSectionBlock): string => {
+  const inner = compileBlocksAsRows(block.children);
+  return `<tr><td style="background-color:${block.background};padding:${block.paddingY}px ${block.paddingX}px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">${inner}</table></td></tr>`;
+};
+
+const compileRow = (block: EmailRowBlock): string => {
+  const inner = compileBlocksAsRows(block.children as EmailBlock[]);
+  return `<tr><td style="background-color:${block.background};padding:${block.paddingY}px ${block.paddingX}px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">${inner}</table></td></tr>`;
+};
+
+const compileRowAsColumnCellContent = (row: EmailRowBlock): string => {
+  const inner = compileBlocksAsRows(row.children as EmailBlock[]);
+  return `<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:${row.background};"><tbody><tr><td style="padding:${row.paddingY}px ${row.paddingX}px;"><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">${inner}</table></td></tr></tbody></table>`;
+};
+
+const compileColumns = (block: EmailColumnsBlock): string => {
+  if (block.children.length === 0) return '';
+  const cellWidth = Math.floor(100 / block.children.length);
+  const halfGap = Math.round(block.gap / 2);
+  const cells = block.children
+    .map(
+      (row: EmailRowBlock): string =>
+        `<td valign="top" width="${cellWidth}%" style="padding:0 ${halfGap}px;">${compileRowAsColumnCellContent(row)}</td>`
+    )
+    .join('');
+  return `<tr><td><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tbody><tr>${cells}</tr></tbody></table></td></tr>`;
+};
+
 const compileBlock = (block: EmailBlock): string => {
   switch (block.kind) {
     case 'text': return compileText(block);
@@ -66,6 +100,9 @@ const compileBlock = (block: EmailBlock): string => {
     case 'button': return compileButton(block);
     case 'divider': return compileDivider(block);
     case 'spacer': return compileSpacer(block);
+    case 'section': return compileSection(block);
+    case 'columns': return compileColumns(block);
+    case 'row': return compileRow(block);
   }
 };
 
@@ -121,6 +158,15 @@ export const compileBlocksToPlainText = (blocks: EmailBlock[]): string => {
         break;
       case 'spacer':
         lines.push('');
+        break;
+      case 'section':
+      case 'row':
+        lines.push(compileBlocksToPlainText(block.children));
+        break;
+      case 'columns':
+        block.children.forEach((row: EmailRowBlock) => {
+          lines.push(compileBlocksToPlainText(row.children));
+        });
         break;
     }
   });

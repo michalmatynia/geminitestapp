@@ -3,12 +3,14 @@ import 'server-only';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY,
   evaluateFilemakerEmailCampaignLaunch,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignContentGroupRegistry,
   parseFilemakerEmailCampaignRegistry,
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSuppressionRegistry,
@@ -36,6 +38,7 @@ import type {
 import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignRegistry,
   FilemakerEmailCampaignRunRegistry,
   FilemakerEmailCampaignSuppressionRegistry,
@@ -146,6 +149,7 @@ const incrementReason = (reasons: Map<string, number>, reason: string): void => 
 
 export const resolveDueFilemakerEmailCampaigns = (input: {
   campaignRegistry: FilemakerEmailCampaignRegistry;
+  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry | null;
   runRegistry: FilemakerEmailCampaignRunRegistry;
   database: FilemakerDatabase;
   suppressionRegistry: FilemakerEmailCampaignSuppressionRegistry;
@@ -186,7 +190,12 @@ export const resolveDueFilemakerEmailCampaigns = (input: {
       campaign.audience,
       input.suppressionRegistry
     );
-    const evaluation = evaluateFilemakerEmailCampaignLaunch(campaign, preview, now);
+    const evaluation = evaluateFilemakerEmailCampaignLaunch(
+      campaign,
+      preview,
+      now,
+      input.contentGroupRegistry
+    );
 
     if (!evaluation.isEligible) {
       incrementReason(skippedReasons, evaluation.blockers[0] ?? 'launch-blocked');
@@ -272,6 +281,7 @@ export const createFilemakerEmailCampaignSchedulerService = (
       const nowIso = now.toISOString();
       const [
         databaseRaw,
+        contentGroupsRaw,
         campaignsRaw,
         runsRaw,
         suppressionsRaw,
@@ -279,6 +289,7 @@ export const createFilemakerEmailCampaignSchedulerService = (
         attemptsRaw,
       ] = await Promise.all([
         deps.readSettingValue(FILEMAKER_DATABASE_KEY),
+        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY),
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
@@ -286,9 +297,12 @@ export const createFilemakerEmailCampaignSchedulerService = (
         deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
       ]);
       const campaignRegistry = parseFilemakerEmailCampaignRegistry(campaignsRaw);
+      const contentGroupRegistry =
+        parseFilemakerEmailCampaignContentGroupRegistry(contentGroupsRaw);
 
       const resolution = resolveDueFilemakerEmailCampaigns({
         database: parseFilemakerDatabase(databaseRaw),
+        contentGroupRegistry,
         campaignRegistry,
         runRegistry: parseFilemakerEmailCampaignRunRegistry(runsRaw),
         suppressionRegistry: parseFilemakerEmailCampaignSuppressionRegistry(suppressionsRaw),

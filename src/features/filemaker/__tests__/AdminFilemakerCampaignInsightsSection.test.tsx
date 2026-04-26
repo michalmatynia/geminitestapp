@@ -71,6 +71,12 @@ const analytics: FilemakerEmailCampaignAnalytics = {
   latestUnsubscribeAt: null,
   latestResubscribeAt: null,
   topClickedLinks: [],
+  languageSummaries: [],
+  contentVariantSummaries: [],
+  countrySummaries: [],
+  domainSummaries: [],
+  fallbackContentCount: 0,
+  fallbackContentRatePercent: 0,
   eventCount: 8,
 };
 

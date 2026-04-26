@@ -130,11 +130,45 @@ vi.mock('../pages/AdminFilemakerCampaignEditPage.context', () => ({
   useCampaignEditContext: () => useCampaignEditContextMock(),
 }));
 
-function ContentSectionHarness(): React.JSX.Element {
-  const [draft, setDraft] = useState<FilemakerEmailCampaign>(createBlankCampaignDraft());
+function ContentSectionHarness({
+  initialBodyHtml,
+}: { initialBodyHtml?: string } = {}): React.JSX.Element {
+  const [draft, setDraft] = useState<FilemakerEmailCampaign>(() => {
+    const seed = createBlankCampaignDraft();
+    return initialBodyHtml ? { ...seed, bodyHtml: initialBodyHtml } : seed;
+  });
   useCampaignEditContextMock.mockReturnValue({
     draft,
     setDraft,
+    database: {
+      version: 2,
+      persons: [],
+      organizations: [],
+      events: [],
+      addresses: [],
+      addressLinks: [],
+      phoneNumbers: [],
+      phoneNumberLinks: [],
+      emails: [],
+      emailLinks: [],
+      eventOrganizationLinks: [],
+      values: [],
+      valueParameters: [],
+      valueParameterLinks: [],
+      organizationLegacyDemands: [],
+    },
+    preview: {
+      recipients: [],
+      excludedCount: 0,
+      suppressedCount: 0,
+      dedupedCount: 0,
+      totalLinkedEmailCount: 0,
+      sampleRecipients: [],
+    },
+    contentGroupRegistry: { version: 1, groups: [] },
+    persistContentGroupRegistry: vi.fn(),
+    countries: [],
+    countryOptions: [],
   });
 
   return (
@@ -148,11 +182,10 @@ function ContentSectionHarness(): React.JSX.Element {
 
 describe('ContentSection', () => {
   it('stores HTML body updates through the shared rich-text editor', () => {
-    render(<ContentSectionHarness />);
+    render(<ContentSectionHarness initialBodyHtml='<p>seed</p>' />);
 
-    expect(
-      screen.getByText('Write the primary campaign body with the shared rich-text editor.')
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Raw HTML' }));
+
     expect(
       screen.getByText('Optional. Leave blank to derive plain text from the HTML body during delivery.')
     ).toBeInTheDocument();

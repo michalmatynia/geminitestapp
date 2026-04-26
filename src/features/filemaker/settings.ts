@@ -8,6 +8,7 @@
 export * from './settings-constants';
 export * from './settings/database-getters';
 export * from './settings/party-getters';
+export * from './settings/filemaker-country-options';
 export * from './settings/upsert-logic';
 export * from './settings/removal-logic';
 export * from './settings/campaign-scheduling';

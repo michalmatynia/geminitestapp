@@ -37,32 +37,7 @@ const KangurDeferredSyncEffectsClient = dynamic(
     })),
   { ssr: false }
 );
-import {
-  KangurAuthProvider,
-  useKangurAuthActions,
-  useKangurAuthSessionState,
-  useKangurAuthStatusState,
-} from '@/features/kangur/ui/context/KangurAuthContext';
-import { KangurContextRegistryPageBoundary } from '@/features/kangur/ui/context/KangurContextRegistryPageBoundary';
-import { KangurGuestPlayerProvider } from '@/features/kangur/ui/context/KangurGuestPlayerContext';
-import {
-  KangurLoginModalProvider,
-  useKangurLoginModalState,
-} from '@/features/kangur/ui/context/KangurLoginModalContext';
-import {
-  KangurRouteTransitionProvider,
-  useKangurRouteTransitionState,
-} from '@/features/kangur/ui/context/KangurRouteTransitionContext';
-import { useKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
-import { KangurFocusProvider } from '@/features/kangur/ui/context/KangurFocusProvider';
-import {
-  KangurTopNavigationHost,
-  KangurTopNavigationProvider,
-} from '@/features/kangur/ui/context/KangurTopNavigationContext';
-import { createKangurPageTransitionMotionProps } from '@/features/kangur/ui/motion/page-transition';
-import { prefetchKangurPageContentStore } from '@/features/kangur/ui/hooks/useKangurPageContent';
-import { useKangurRouteNavigator } from '@/features/kangur/ui/hooks/useKangurRouteNavigator';
-import { useKangurDeferredStandaloneHomeReady } from '@/features/kangur/ui/hooks/useKangurDeferredStandaloneHomeReady';
+import { KangurAppProviders } from './app-shell';
 import type { KangurRouteTransitionSkeletonVariant } from '@/features/kangur/ui/routing/route-transition-skeletons';
 import {
   useKangurPendingRouteLoadingSnapshot,

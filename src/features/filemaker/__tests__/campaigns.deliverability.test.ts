@@ -81,6 +81,12 @@ describe('filemaker campaign settings', () => {
             partyKind: 'person',
             partyId: 'person-1',
             status: 'sent',
+            contentGroupId: 'content-group-1',
+            contentVariantId: 'variant-pl',
+            languageCode: 'pl',
+            resolvedCountryId: 'PL',
+            resolvedCountryName: 'Poland',
+            usedFallbackContent: false,
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:10:00.000Z',
           },
@@ -93,6 +99,12 @@ describe('filemaker campaign settings', () => {
             partyKind: 'organization',
             partyId: 'organization-1',
             status: 'bounced',
+            contentGroupId: 'content-group-1',
+            contentVariantId: 'variant-en',
+            languageCode: 'en',
+            resolvedCountryId: 'DE',
+            resolvedCountryName: 'Germany',
+            usedFallbackContent: true,
             createdAt: '2026-03-27T10:00:00.000Z',
             updatedAt: '2026-03-27T10:20:00.000Z',
           },
@@ -105,6 +117,12 @@ describe('filemaker campaign settings', () => {
             partyKind: 'person',
             partyId: 'person-1',
             status: 'skipped',
+            contentGroupId: 'content-group-1',
+            contentVariantId: 'variant-pl',
+            languageCode: 'pl',
+            resolvedCountryId: 'PL',
+            resolvedCountryName: 'Poland',
+            usedFallbackContent: false,
             createdAt: '2026-03-28T10:00:00.000Z',
             updatedAt: '2026-03-28T10:01:00.000Z',
           },
@@ -302,6 +320,52 @@ describe('filemaker campaign settings', () => {
         uniqueDeliveryCount: 1,
         clickRatePercent: 100,
         latestClickAt: '2026-03-28T13:07:00.000Z',
+      }),
+    ]);
+    expect(analytics.fallbackContentCount).toBe(1);
+    expect(analytics.fallbackContentRatePercent).toBe(33.3);
+    expect(analytics.languageSummaries).toEqual([
+      expect.objectContaining({
+        key: 'pl',
+        label: 'PL',
+        totalRecipients: 2,
+        sentCount: 1,
+        skippedCount: 1,
+        uniqueOpenCount: 1,
+        uniqueClickCount: 1,
+        replyCount: 1,
+        fallbackContentCount: 0,
+      }),
+      expect.objectContaining({
+        key: 'en',
+        label: 'EN',
+        totalRecipients: 1,
+        bouncedCount: 1,
+        fallbackContentCount: 1,
+      }),
+    ]);
+    expect(analytics.countrySummaries[0]).toEqual(
+      expect.objectContaining({
+        key: 'PL',
+        label: 'Poland',
+        totalRecipients: 2,
+      })
+    );
+    expect(analytics.contentVariantSummaries[0]).toEqual(
+      expect.objectContaining({
+        key: 'variant-pl',
+        label: 'PL • variant-pl',
+        totalRecipients: 2,
+      })
+    );
+    expect(analytics.domainSummaries).toEqual([
+      expect.objectContaining({
+        key: 'example.com',
+        totalRecipients: 2,
+      }),
+      expect.objectContaining({
+        key: 'acme.test',
+        bouncedCount: 1,
       }),
     ]);
   });

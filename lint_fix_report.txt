@@ -1,0 +1,4 @@
+
+> libapp2@0.1.0 lint:fix:features
+> eslint "src/features/**/*.{ts,tsx,js,jsx}" --fix --cache --cache-location .eslintcache --no-error-on-unmatched-pattern
+

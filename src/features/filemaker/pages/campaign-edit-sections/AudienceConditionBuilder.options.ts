@@ -1,4 +1,5 @@
 import type {
+  FilemakerAudienceCondition,
   FilemakerAudienceField,
   FilemakerAudienceOperator,
 } from '@/shared/contracts/filemaker';
@@ -11,6 +12,7 @@ export type AudienceConditionFieldOption = {
 export const AUDIENCE_FIELD_OPTIONS: AudienceConditionFieldOption[] = [
   { value: 'organization.name', label: 'Organisation -> Name' },
   { value: 'organization.tradingName', label: 'Organisation -> Trading name / Title' },
+  { value: 'organization.cooperationStatus', label: 'Organisation -> Cooperation status' },
   { value: 'organization.taxId', label: 'Organisation -> Tax ID' },
   { value: 'organization.krs', label: 'Organisation -> KRS' },
   { value: 'organization.city', label: 'Organisation -> City' },
@@ -52,6 +54,40 @@ export const AUDIENCE_OPERATOR_OPTIONS: AudienceConditionOperatorOption[] = [
   { value: 'is_not_empty', label: 'is not empty' },
 ];
 
+const TEXT_OPERATORS: FilemakerAudienceOperator[] = [
+  'contains',
+  'equals',
+  'not_equals',
+  'not_contains',
+  'starts_with',
+  'ends_with',
+  'is_empty',
+  'is_not_empty',
+];
+
+const EXACT_OPERATORS: FilemakerAudienceOperator[] = [
+  'equals',
+  'not_equals',
+  'contains',
+  'not_contains',
+  'is_empty',
+  'is_not_empty',
+];
+
+const OPERATOR_OPTIONS_BY_VALUE = new Map<FilemakerAudienceOperator, AudienceConditionOperatorOption>(
+  AUDIENCE_OPERATOR_OPTIONS.map((option) => [option.value, option])
+);
+
+const EXACT_FIELD_SET = new Set<FilemakerAudienceField>([
+  'email.status',
+  'eventId',
+  'organization.cooperationStatus',
+  'organization.demandLegacyValueUuid',
+  'organization.demandPath',
+  'organization.demandValueId',
+  'organizationId',
+]);
+
 export type AudienceConditionValueOption = {
   description?: string;
   group?: string;
@@ -65,6 +101,52 @@ export type AudienceConditionValueOptions = Partial<
 
 export const operatorTakesValue = (operator: FilemakerAudienceOperator): boolean =>
   operator !== 'is_empty' && operator !== 'is_not_empty';
+
+export const getAudienceOperatorsForField = (
+  field: FilemakerAudienceField
+): FilemakerAudienceOperator[] =>
+  EXACT_FIELD_SET.has(field) ? EXACT_OPERATORS : TEXT_OPERATORS;
+
+export const getAudienceOperatorOptionsForField = (
+  field: FilemakerAudienceField
+): AudienceConditionOperatorOption[] =>
+  getAudienceOperatorsForField(field)
+    .map((operator: FilemakerAudienceOperator): AudienceConditionOperatorOption | undefined =>
+      OPERATOR_OPTIONS_BY_VALUE.get(operator)
+    )
+    .filter(
+      (option: AudienceConditionOperatorOption | undefined): option is AudienceConditionOperatorOption =>
+        option !== undefined
+    );
+
+export const getDefaultAudienceOperatorForField = (
+  field: FilemakerAudienceField
+): FilemakerAudienceOperator => getAudienceOperatorsForField(field)[0] ?? 'contains';
+
+export const buildAudienceConditionForFieldChange = (
+  condition: FilemakerAudienceCondition,
+  field: FilemakerAudienceField
+): FilemakerAudienceCondition => {
+  const supportedOperators = getAudienceOperatorsForField(field);
+  const operator = supportedOperators.includes(condition.operator)
+    ? condition.operator
+    : getDefaultAudienceOperatorForField(field);
+  return {
+    ...condition,
+    field,
+    operator,
+    value: '',
+  };
+};
+
+export const buildAudienceConditionForOperatorChange = (
+  condition: FilemakerAudienceCondition,
+  operator: FilemakerAudienceOperator
+): FilemakerAudienceCondition => ({
+  ...condition,
+  operator,
+  value: operatorTakesValue(operator) ? condition.value : '',
+});
 
 export const resolveConditionValueOptions = (
   currentValue: string,

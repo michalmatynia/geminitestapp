@@ -2,16 +2,22 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { createFilemakerEmailCampaign } from '../settings';
+import {
+  createFilemakerEmailCampaign,
+  parseFilemakerDatabase,
+  resolveFilemakerCampaignContentBodyText,
+  resolveFilemakerCampaignContentForRecipient,
+  assertFilemakerCampaignContentReadyForDelivery,
+} from '../settings';
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignTestSendResponse,
 } from '../types';
 import { sendFilemakerCampaignEmail } from './campaign-email-delivery';
 import {
   appendManagedCampaignPreferenceFooter,
   assertCampaignReadyForDelivery,
-  resolveCampaignBodyText,
 } from './campaign-runtime/runtime-utils';
 
 const resolveTestSendBaseUrl = (): string => {
@@ -67,12 +73,29 @@ const applyCampaignTestTemplateTokens = (
 
 export const sendFilemakerEmailCampaignTest = async (input: {
   campaign: FilemakerEmailCampaign;
+  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
+  contentVariantId?: string | null;
   recipientEmail: string;
 }): Promise<FilemakerEmailCampaignTestSendResponse> => {
   const campaign = createFilemakerEmailCampaign(input.campaign);
   const recipientEmail = input.recipientEmail.trim().toLowerCase();
 
-  assertCampaignReadyForDelivery(campaign, 'live');
+  if (campaign.contentGroupId) {
+    assertFilemakerCampaignContentReadyForDelivery({
+      campaign,
+      contentGroupRegistry: input.contentGroupRegistry,
+    });
+  } else {
+    assertCampaignReadyForDelivery(campaign, 'live');
+  }
+  const content = resolveFilemakerCampaignContentForRecipient({
+    campaign,
+    contentGroupRegistry: input.contentGroupRegistry,
+    database: parseFilemakerDatabase(null),
+    partyKind: 'organization',
+    partyId: '',
+    contentVariantId: input.contentVariantId ?? null,
+  });
 
   const baseUrl = resolveTestSendBaseUrl();
   const unsubscribeUrl = buildCampaignTestPreviewUrl({
@@ -96,7 +119,7 @@ export const sendFilemakerEmailCampaignTest = async (input: {
     action: 'open_tracking',
   });
 
-  const text = applyCampaignTestTemplateTokens(resolveCampaignBodyText(campaign), {
+  const text = applyCampaignTestTemplateTokens(resolveFilemakerCampaignContentBodyText(content), {
     recipientEmail,
     unsubscribeUrl,
     preferencesUrl,
@@ -104,7 +127,7 @@ export const sendFilemakerEmailCampaignTest = async (input: {
     openTrackingUrl,
     htmlMode: false,
   });
-  const html = applyCampaignTestTemplateTokens(campaign.bodyHtml ?? null, {
+  const html = applyCampaignTestTemplateTokens(content.bodyHtml ?? null, {
     recipientEmail,
     unsubscribeUrl,
     preferencesUrl,
@@ -115,7 +138,7 @@ export const sendFilemakerEmailCampaignTest = async (input: {
 
   const result = await sendFilemakerCampaignEmail({
     to: recipientEmail,
-    subject: campaign.subject.trim(),
+    subject: content.subject.trim(),
     text: text ?? '',
     html,
     campaignId: campaign.id,

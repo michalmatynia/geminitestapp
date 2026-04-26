@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { normalizeString } from '../../filemaker-settings.helpers';
 import type {
   FilemakerEmailCampaignDelivery,
@@ -167,6 +168,14 @@ export const summarizeDeliveryTotals = (
     EMPTY_DELIVERY_TOTALS
   );
 
+export const getFilemakerEmailCampaignDeliveriesForRuns = (
+  runs: FilemakerEmailCampaignRun[],
+  deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry
+): FilemakerEmailCampaignDelivery[] =>
+  runs.flatMap((run: FilemakerEmailCampaignRun): FilemakerEmailCampaignDelivery[] =>
+    getFilemakerEmailCampaignDeliveriesForRun(deliveryRegistry, run.id)
+  );
+
 export const resolveLatestRun = (
   runs: FilemakerEmailCampaignRun[]
 ): FilemakerEmailCampaignRun | null =>
@@ -295,16 +304,15 @@ const resolveLatestRunStatus = (
   latestRun: FilemakerEmailCampaignRun | null
 ): FilemakerEmailCampaignAnalytics['latestRunStatus'] => {
   const status = latestRun?.status ?? null;
-  return (
-    status === 'pending' ||
-    status === 'queued' ||
-    status === 'running' ||
-    status === 'completed' ||
-    status === 'failed' ||
-    status === 'cancelled'
-  )
-    ? status
-    : null;
+  const knownStatuses = new Set<FilemakerEmailCampaignRun['status']>([
+    'pending',
+    'queued',
+    'running',
+    'completed',
+    'failed',
+    'cancelled',
+  ]);
+  return status !== null && knownStatuses.has(status) ? status : null;
 };
 
 const resolveLatestRunAt = (latestRun: FilemakerEmailCampaignRun | null): string | null =>

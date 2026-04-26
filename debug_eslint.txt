@@ -1,0 +1,146 @@
+2026-04-26T19:18:56.284Z eslint:cli CLI args: [ '--debug', 'src/features/admin/public.ts' ]
+2026-04-26T19:18:56.287Z eslint:cli Running on files
+2026-04-26T19:18:56.288Z eslint:eslint Using config loader ConfigLoader
+2026-04-26T19:18:56.288Z eslint:eslint Using file patterns: src/features/admin/public.ts
+2026-04-26T19:18:56.288Z eslint:eslint Deleting cache file at /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/.eslintcache
+2026-04-26T19:18:56.288Z eslint:config-loader Calculating config for file /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:18:56.289Z eslint:config-loader Searching for eslint.config.js
+2026-04-26T19:18:56.290Z eslint:config-loader Calculating config for directory /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:18:56.290Z eslint:config-loader Using config file /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/eslint.config.mjs and base path /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+2026-04-26T19:18:56.290Z eslint:config-loader Calculating config array from config file /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/eslint.config.mjs and base path /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
+2026-04-26T19:18:56.292Z eslint:config-loader Loading config file /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/eslint.config.mjs
+2026-04-26T19:18:56.292Z eslint:config-loader Loading config from /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/eslint.config.mjs
+2026-04-26T19:18:56.292Z eslint:config-loader Config file URL is file:///Users/michalmatynia/Desktop/NPM/2026/Gemini%20new%20Pull/geminitestapp/eslint.config.mjs
+2026-04-26T19:18:56.844Z eslint:rules Loading rule 'consistent-return' (remaining=291)
+2026-04-26T19:18:56.856Z eslint:rules Loading rule 'dot-notation' (remaining=290)
+2026-04-26T19:18:56.860Z eslint:rules Loading rule 'init-declarations' (remaining=289)
+2026-04-26T19:18:56.861Z eslint:rules Loading rule 'max-params' (remaining=288)
+2026-04-26T19:18:56.874Z eslint:rules Loading rule 'no-dupe-class-members' (remaining=287)
+2026-04-26T19:18:56.878Z eslint:rules Loading rule 'no-empty-function' (remaining=286)
+2026-04-26T19:18:56.885Z eslint:rules Loading rule 'no-invalid-this' (remaining=285)
+2026-04-26T19:18:56.887Z eslint:rules Loading rule 'no-loop-func' (remaining=284)
+2026-04-26T19:18:56.887Z eslint:rules Loading rule 'no-loss-of-precision' (remaining=283)
+2026-04-26T19:18:56.888Z eslint:rules Loading rule 'no-magic-numbers' (remaining=282)
+2026-04-26T19:18:56.904Z eslint:rules Loading rule 'no-restricted-imports' (remaining=281)
+2026-04-26T19:18:56.937Z eslint:rules Loading rule 'no-unused-expressions' (remaining=280)
+2026-04-26T19:18:56.940Z eslint:rules Loading rule 'no-useless-constructor' (remaining=279)
+2026-04-26T19:18:56.949Z eslint:rules Loading rule 'prefer-destructuring' (remaining=278)
+2026-04-26T19:18:56.989Z eslint:config-loader Config file /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/eslint.config.mjs is not empty
+2026-04-26T19:18:56.990Z eslint:eslint 1 file(s) found in 701 ms
+2026-04-26T19:18:56.990Z eslint:eslint Linting in single-thread mode.
+2026-04-26T19:18:56.990Z eslint:config-loader Looking up cached config for /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:18:56.990Z eslint:config-loader Looking up cached config for /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin
+2026-04-26T19:18:57.002Z eslint:rules Loading rule 'constructor-super' (remaining=277)
+2026-04-26T19:18:57.003Z eslint:rules Loading rule 'for-direction' (remaining=276)
+2026-04-26T19:18:57.004Z eslint:rules Loading rule 'getter-return' (remaining=275)
+2026-04-26T19:18:57.005Z eslint:rules Loading rule 'no-async-promise-executor' (remaining=274)
+2026-04-26T19:18:57.005Z eslint:rules Loading rule 'no-case-declarations' (remaining=273)
+2026-04-26T19:18:57.006Z eslint:rules Loading rule 'no-class-assign' (remaining=272)
+2026-04-26T19:18:57.006Z eslint:rules Loading rule 'no-compare-neg-zero' (remaining=271)
+2026-04-26T19:18:57.006Z eslint:rules Loading rule 'no-cond-assign' (remaining=270)
+2026-04-26T19:18:57.007Z eslint:rules Loading rule 'no-const-assign' (remaining=269)
+2026-04-26T19:18:57.007Z eslint:rules Loading rule 'no-constant-binary-expression' (remaining=268)
+2026-04-26T19:18:57.008Z eslint:rules Loading rule 'no-constant-condition' (remaining=267)
+2026-04-26T19:18:57.009Z eslint:rules Loading rule 'no-control-regex' (remaining=266)
+2026-04-26T19:18:57.009Z eslint:rules Loading rule 'no-debugger' (remaining=265)
+2026-04-26T19:18:57.009Z eslint:rules Loading rule 'no-delete-var' (remaining=264)
+2026-04-26T19:18:57.010Z eslint:rules Loading rule 'no-dupe-args' (remaining=263)
+2026-04-26T19:18:57.010Z eslint:rules Loading rule 'no-dupe-else-if' (remaining=262)
+2026-04-26T19:18:57.011Z eslint:rules Loading rule 'no-dupe-keys' (remaining=261)
+2026-04-26T19:18:57.011Z eslint:rules Loading rule 'no-duplicate-case' (remaining=260)
+2026-04-26T19:18:57.011Z eslint:rules Loading rule 'no-empty' (remaining=259)
+2026-04-26T19:18:57.012Z eslint:rules Loading rule 'no-empty-character-class' (remaining=258)
+2026-04-26T19:18:57.012Z eslint:rules Loading rule 'no-empty-pattern' (remaining=257)
+2026-04-26T19:18:57.013Z eslint:rules Loading rule 'no-empty-static-block' (remaining=256)
+2026-04-26T19:18:57.013Z eslint:rules Loading rule 'no-ex-assign' (remaining=255)
+2026-04-26T19:18:57.014Z eslint:rules Loading rule 'no-extra-boolean-cast' (remaining=254)
+2026-04-26T19:18:57.014Z eslint:rules Loading rule 'no-fallthrough' (remaining=253)
+2026-04-26T19:18:57.015Z eslint:rules Loading rule 'no-func-assign' (remaining=252)
+2026-04-26T19:18:57.015Z eslint:rules Loading rule 'no-global-assign' (remaining=251)
+2026-04-26T19:18:57.016Z eslint:rules Loading rule 'no-import-assign' (remaining=250)
+2026-04-26T19:18:57.016Z eslint:rules Loading rule 'no-invalid-regexp' (remaining=249)
+2026-04-26T19:18:57.018Z eslint:rules Loading rule 'no-irregular-whitespace' (remaining=248)
+2026-04-26T19:18:57.019Z eslint:rules Loading rule 'no-misleading-character-class' (remaining=247)
+2026-04-26T19:18:57.025Z eslint:rules Loading rule 'no-new-native-nonconstructor' (remaining=246)
+2026-04-26T19:18:57.025Z eslint:rules Loading rule 'no-nonoctal-decimal-escape' (remaining=245)
+2026-04-26T19:18:57.026Z eslint:rules Loading rule 'no-obj-calls' (remaining=244)
+2026-04-26T19:18:57.027Z eslint:rules Loading rule 'no-octal' (remaining=243)
+2026-04-26T19:18:57.027Z eslint:rules Loading rule 'no-prototype-builtins' (remaining=242)
+2026-04-26T19:18:57.027Z eslint:rules Loading rule 'no-redeclare' (remaining=241)
+2026-04-26T19:18:57.028Z eslint:rules Loading rule 'no-regex-spaces' (remaining=240)
+2026-04-26T19:18:57.028Z eslint:rules Loading rule 'no-self-assign' (remaining=239)
+2026-04-26T19:18:57.029Z eslint:rules Loading rule 'no-setter-return' (remaining=238)
+2026-04-26T19:18:57.029Z eslint:rules Loading rule 'no-shadow-restricted-names' (remaining=237)
+2026-04-26T19:18:57.030Z eslint:rules Loading rule 'no-sparse-arrays' (remaining=236)
+2026-04-26T19:18:57.030Z eslint:rules Loading rule 'no-this-before-super' (remaining=235)
+2026-04-26T19:18:57.030Z eslint:rules Loading rule 'no-unassigned-vars' (remaining=234)
+2026-04-26T19:18:57.031Z eslint:rules Loading rule 'no-undef' (remaining=233)
+2026-04-26T19:18:57.031Z eslint:rules Loading rule 'no-unexpected-multiline' (remaining=232)
+2026-04-26T19:18:57.031Z eslint:rules Loading rule 'no-unreachable' (remaining=231)
+2026-04-26T19:18:57.032Z eslint:rules Loading rule 'no-unsafe-finally' (remaining=230)
+2026-04-26T19:18:57.032Z eslint:rules Loading rule 'no-unsafe-negation' (remaining=229)
+2026-04-26T19:18:57.033Z eslint:rules Loading rule 'no-unsafe-optional-chaining' (remaining=228)
+2026-04-26T19:18:57.033Z eslint:rules Loading rule 'no-unused-labels' (remaining=227)
+2026-04-26T19:18:57.033Z eslint:rules Loading rule 'no-unused-private-class-members' (remaining=226)
+2026-04-26T19:18:57.034Z eslint:rules Loading rule 'no-unused-vars' (remaining=225)
+2026-04-26T19:18:57.034Z eslint:rules Loading rule 'no-useless-assignment' (remaining=224)
+2026-04-26T19:18:57.035Z eslint:rules Loading rule 'no-useless-backreference' (remaining=223)
+2026-04-26T19:18:57.035Z eslint:rules Loading rule 'no-useless-catch' (remaining=222)
+2026-04-26T19:18:57.036Z eslint:rules Loading rule 'no-useless-escape' (remaining=221)
+2026-04-26T19:18:57.036Z eslint:rules Loading rule 'no-with' (remaining=220)
+2026-04-26T19:18:57.037Z eslint:rules Loading rule 'preserve-caught-error' (remaining=219)
+2026-04-26T19:18:57.037Z eslint:rules Loading rule 'require-yield' (remaining=218)
+2026-04-26T19:18:57.037Z eslint:rules Loading rule 'use-isnan' (remaining=217)
+2026-04-26T19:18:57.038Z eslint:rules Loading rule 'valid-typeof' (remaining=216)
+2026-04-26T19:18:57.038Z eslint:rules Loading rule 'complexity' (remaining=215)
+2026-04-26T19:18:57.038Z eslint:rules Loading rule 'max-depth' (remaining=214)
+2026-04-26T19:18:57.039Z eslint:rules Loading rule 'max-lines-per-function' (remaining=213)
+2026-04-26T19:18:57.039Z eslint:rules Loading rule 'max-lines' (remaining=212)
+2026-04-26T19:18:57.040Z eslint:rules Loading rule 'indent' (remaining=211)
+2026-04-26T19:18:57.041Z eslint:rules Loading rule 'linebreak-style' (remaining=210)
+2026-04-26T19:18:57.041Z eslint:rules Loading rule 'quotes' (remaining=209)
+2026-04-26T19:18:57.041Z eslint:rules Loading rule 'jsx-quotes' (remaining=208)
+2026-04-26T19:18:57.042Z eslint:rules Loading rule 'semi' (remaining=207)
+2026-04-26T19:18:57.043Z eslint:rules Loading rule 'eqeqeq' (remaining=206)
+2026-04-26T19:18:57.043Z eslint:rules Loading rule 'no-var' (remaining=205)
+2026-04-26T19:18:57.044Z eslint:rules Loading rule 'prefer-const' (remaining=204)
+2026-04-26T19:18:57.044Z eslint:rules Loading rule 'no-console' (remaining=203)
+2026-04-26T19:18:57.045Z eslint:rules Loading rule 'no-shadow' (remaining=202)
+2026-04-26T19:18:57.045Z eslint:rules Loading rule 'no-throw-literal' (remaining=201)
+2026-04-26T19:18:57.046Z eslint:rules Loading rule 'no-else-return' (remaining=200)
+2026-04-26T19:18:57.046Z eslint:rules Loading rule 'no-nested-ternary' (remaining=199)
+2026-04-26T19:18:57.046Z eslint:rules Loading rule 'no-unneeded-ternary' (remaining=198)
+2026-04-26T19:18:57.047Z eslint:rules Loading rule 'no-implicit-coercion' (remaining=197)
+2026-04-26T19:18:57.048Z eslint:rules Loading rule 'object-shorthand' (remaining=196)
+2026-04-26T19:18:57.048Z eslint:rules Loading rule 'prefer-arrow-callback' (remaining=195)
+2026-04-26T19:18:57.049Z eslint:rules Loading rule 'prefer-template' (remaining=194)
+2026-04-26T19:18:57.049Z eslint:rules Loading rule 'no-param-reassign' (remaining=193)
+2026-04-26T19:18:57.050Z eslint:rules Loading rule 'no-return-assign' (remaining=192)
+2026-04-26T19:18:57.050Z eslint:rules Loading rule 'no-promise-executor-return' (remaining=191)
+2026-04-26T19:18:57.051Z eslint:rules Loading rule 'no-constructor-return' (remaining=190)
+2026-04-26T19:18:57.051Z eslint:rules Loading rule 'no-unreachable-loop' (remaining=189)
+2026-04-26T19:18:57.051Z eslint:rules Loading rule 'no-self-compare' (remaining=188)
+2026-04-26T19:18:57.052Z eslint:rules Loading rule 'no-template-curly-in-string' (remaining=187)
+2026-04-26T19:18:57.052Z eslint:rules Loading rule 'require-atomic-updates' (remaining=186)
+2026-04-26T19:18:57.053Z eslint:rules Loading rule 'no-await-in-loop' (remaining=185)
+2026-04-26T19:18:57.053Z eslint:rules Loading rule 'guard-for-in' (remaining=184)
+2026-04-26T19:18:57.053Z eslint:rules Loading rule 'no-extend-native' (remaining=183)
+2026-04-26T19:18:57.054Z eslint:rules Loading rule 'no-iterator' (remaining=182)
+2026-04-26T19:18:57.054Z eslint:rules Loading rule 'no-proto' (remaining=181)
+2026-04-26T19:18:57.054Z eslint:rules Loading rule 'no-sequences' (remaining=180)
+2026-04-26T19:18:57.055Z eslint:rules Loading rule 'no-void' (remaining=179)
+2026-04-26T19:18:57.055Z eslint:rules Loading rule 'prefer-object-spread' (remaining=178)
+2026-04-26T19:18:57.056Z eslint:rules Loading rule 'prefer-rest-params' (remaining=177)
+2026-04-26T19:18:57.056Z eslint:rules Loading rule 'prefer-spread' (remaining=176)
+2026-04-26T19:18:57.107Z eslint:eslint-helpers File "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts" read in 1 ms
+2026-04-26T19:18:57.107Z eslint:linter Linting code for /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts (pass 1)
+2026-04-26T19:18:57.107Z eslint:linter Verify
+2026-04-26T19:18:57.107Z eslint:linter With flat config: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:18:57.108Z eslint:languages:js Parsing: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:19:12.618Z eslint:languages:js Parsing successful: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:19:12.619Z eslint:languages:js Scope analysis: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:19:12.619Z eslint:languages:js Scope analysis successful: /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts
+2026-04-26T19:19:12.647Z eslint:linter Generating fixed text for /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts (pass 1)
+2026-04-26T19:19:12.647Z eslint:source-code-fixer Applying fixes
+2026-04-26T19:19:12.647Z eslint:source-code-fixer shouldFix parameter was false, not attempting fixes
+2026-04-26T19:19:12.647Z eslint:eslint-helpers File "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/public.ts" linted in 15540 ms

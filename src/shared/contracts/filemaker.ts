@@ -27,6 +27,8 @@ export const filemakerEntityKindSchema = z.enum([
   'value_parameter_link',
   'organization_legacy_demand',
   'email_campaign',
+  'email_campaign_content_group',
+  'email_campaign_content_variant',
   'email_campaign_run',
   'email_campaign_delivery',
   'email_campaign_delivery_attempt',
@@ -359,6 +361,7 @@ export type FilemakerEmailCampaignEventType = FilemakerEmailCampaignEventTypeDto
 export const filemakerAudienceFieldSchema = z.enum([
   'organization.name',
   'organization.tradingName',
+  'organization.cooperationStatus',
   'organization.taxId',
   'organization.krs',
   'organization.city',
@@ -413,6 +416,7 @@ export type FilemakerAudienceConditionGroup = {
   id: string;
   type: 'group';
   combinator: 'and' | 'or';
+  not?: boolean;
   children: Array<FilemakerAudienceCondition | FilemakerAudienceConditionGroup>;
 };
 
@@ -422,6 +426,7 @@ export const filemakerAudienceConditionGroupSchema: z.ZodType<FilemakerAudienceC
       id: z.string(),
       type: z.literal('group'),
       combinator: z.enum(['and', 'or']),
+      not: z.boolean().optional().default(false),
       children: z.array(
         z.union([filemakerAudienceConditionSchema, filemakerAudienceConditionGroupSchema])
       ),
@@ -478,12 +483,45 @@ export type FilemakerEmailCampaignLaunchRuleDto = z.infer<
 >;
 export type FilemakerEmailCampaignLaunchRule = FilemakerEmailCampaignLaunchRuleDto;
 
+export const filemakerEmailCampaignContentVariantSchema = dtoBaseSchema.extend({
+  groupId: z.string(),
+  languageCode: z.string(),
+  label: z.string(),
+  countryIds: z.array(z.string()).default([]),
+  subject: z.string(),
+  previewText: z.string().nullable().optional(),
+  bodyText: z.string().nullable().optional(),
+  bodyHtml: z.string().nullable().optional(),
+  bodyBlocks: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
+});
+export type FilemakerEmailCampaignContentVariantDto = z.infer<
+  typeof filemakerEmailCampaignContentVariantSchema
+>;
+export type FilemakerEmailCampaignContentVariant =
+  FilemakerEmailCampaignContentVariantDto;
+
+export const filemakerEmailCampaignContentGroupSchema = dtoBaseSchema.extend({
+  name: z.string(),
+  description: z.string().nullable().optional(),
+  defaultLanguageCode: z.string(),
+  defaultVariantId: z.string().nullable().optional(),
+  variants: z.array(filemakerEmailCampaignContentVariantSchema),
+});
+export type FilemakerEmailCampaignContentGroupDto = z.infer<
+  typeof filemakerEmailCampaignContentGroupSchema
+>;
+export type FilemakerEmailCampaignContentGroup =
+  FilemakerEmailCampaignContentGroupDto;
+
 export const filemakerEmailCampaignSchema = dtoBaseSchema.extend({
   name: z.string(),
   description: z.string().nullable().optional(),
   status: filemakerEmailCampaignLifecycleStatusSchema,
   subject: z.string(),
   previewText: z.string().nullable().optional(),
+  contentGroupId: z.string().nullable().optional(),
+  defaultContentVariantId: z.string().nullable().optional(),
+  translatedSendingEnabled: z.boolean().default(false),
   mailAccountId: z.string().nullable().optional(),
   fromName: z.string().nullable().optional(),
   replyToEmail: z.string().nullable().optional(),
@@ -529,6 +567,12 @@ export const filemakerEmailCampaignDeliverySchema = dtoBaseSchema.extend({
   lastError: z.string().nullable().optional(),
   sentAt: z.string().nullable().optional(),
   nextRetryAt: z.string().nullable().optional(),
+  contentGroupId: z.string().nullable().optional(),
+  contentVariantId: z.string().nullable().optional(),
+  languageCode: z.string().nullable().optional(),
+  resolvedCountryId: z.string().nullable().optional(),
+  resolvedCountryName: z.string().nullable().optional(),
+  usedFallbackContent: z.boolean().optional(),
 });
 export type FilemakerEmailCampaignDeliveryDto = z.infer<
   typeof filemakerEmailCampaignDeliverySchema
@@ -549,6 +593,12 @@ export const filemakerEmailCampaignDeliveryAttemptSchema = dtoBaseSchema.extend(
   providerMessage: z.string().nullable().optional(),
   errorMessage: z.string().nullable().optional(),
   attemptedAt: z.string().nullable().optional(),
+  contentGroupId: z.string().nullable().optional(),
+  contentVariantId: z.string().nullable().optional(),
+  languageCode: z.string().nullable().optional(),
+  resolvedCountryId: z.string().nullable().optional(),
+  resolvedCountryName: z.string().nullable().optional(),
+  usedFallbackContent: z.boolean().optional(),
 });
 export type FilemakerEmailCampaignDeliveryAttemptDto = z.infer<
   typeof filemakerEmailCampaignDeliveryAttemptSchema
@@ -615,6 +665,16 @@ export type FilemakerEmailCampaignRegistryDto = z.infer<
   typeof filemakerEmailCampaignRegistrySchema
 >;
 export type FilemakerEmailCampaignRegistry = FilemakerEmailCampaignRegistryDto;
+
+export const filemakerEmailCampaignContentGroupRegistrySchema = z.object({
+  version: z.number().int().nonnegative(),
+  groups: z.array(filemakerEmailCampaignContentGroupSchema),
+});
+export type FilemakerEmailCampaignContentGroupRegistryDto = z.infer<
+  typeof filemakerEmailCampaignContentGroupRegistrySchema
+>;
+export type FilemakerEmailCampaignContentGroupRegistry =
+  FilemakerEmailCampaignContentGroupRegistryDto;
 
 export const filemakerEmailCampaignRunRegistrySchema = z.object({
   version: z.number().int().nonnegative(),
@@ -717,6 +777,8 @@ export type FilemakerEmailCampaignCancelRunResponse =
 
 export const filemakerEmailCampaignTestSendRequestSchema = z.object({
   campaign: filemakerEmailCampaignSchema,
+  contentGroupRegistry: filemakerEmailCampaignContentGroupRegistrySchema.optional(),
+  contentVariantId: z.string().trim().min(1).nullable().optional(),
   recipientEmail: z.string().trim().email(),
 });
 export type FilemakerEmailCampaignTestSendRequestDto = z.infer<

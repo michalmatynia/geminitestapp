@@ -17,11 +17,13 @@ import {
   buildEngagementMetrics,
   buildLatestActivityMetrics,
   buildRunCountMetrics,
+  getFilemakerEmailCampaignDeliveriesForRuns,
   groupCampaignEvents,
   resolveLatestRun,
   summarizeDeliveryTotals,
   summarizeTopClickedLinks,
 } from './analytics-helpers';
+import { summarizeAdvancedCampaignSegments } from './analytics-segments';
 
 const getCampaignRuns = (
   runRegistry: FilemakerEmailCampaignRunRegistry,
@@ -54,6 +56,7 @@ export const summarizeFilemakerEmailCampaignAnalytics = (input: {
   );
   const eventGroups = groupCampaignEvents(campaignEvents);
   const deliveryTotals = summarizeDeliveryTotals(runs, input.deliveryRegistry);
+  const deliveries = getFilemakerEmailCampaignDeliveriesForRuns(runs, input.deliveryRegistry);
   const processedCount =
     deliveryTotals.sentCount +
     deliveryTotals.failedCount +
@@ -72,6 +75,10 @@ export const summarizeFilemakerEmailCampaignAnalytics = (input: {
     ...buildEngagementMetrics(eventGroups, deliveryTotals.sentCount),
     ...buildLatestActivityMetrics(latestRun, campaignEvents, eventGroups),
     topClickedLinks,
+    ...summarizeAdvancedCampaignSegments({
+      deliveries,
+      events: campaignEvents,
+    }),
     eventCount: campaignEvents.length,
   };
 };

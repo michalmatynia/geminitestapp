@@ -1,6 +1,7 @@
 import type {
   FilemakerDatabase,
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignDeliveryAttemptRegistry,
   FilemakerEmailCampaignDeliveryRegistry,
@@ -15,6 +16,7 @@ import type { FilemakerCampaignRunProcessProgress } from '../campaign-runtime.he
 
 export type FilemakerCampaignRuntimeState = {
   database: FilemakerDatabase;
+  contentGroupRegistry: FilemakerEmailCampaignContentGroupRegistry;
   campaignRegistry: FilemakerEmailCampaignRegistry;
   runRegistry: FilemakerEmailCampaignRunRegistry;
   deliveryRegistry: FilemakerEmailCampaignDeliveryRegistry;

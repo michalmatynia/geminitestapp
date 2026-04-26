@@ -10,6 +10,7 @@ import {
   evaluateFilemakerEmailCampaignLaunch,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY,
   FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY,
@@ -21,6 +22,7 @@ import {
   getFilemakerEmailCampaignSuppressionByAddress,
   isFilemakerEmailCampaignRetryableFailureCategory,
   parseFilemakerDatabase,
+  parseFilemakerEmailCampaignContentGroupRegistry,
   parseFilemakerEmailCampaignDeliveryAttemptRegistry,
   parseFilemakerEmailCampaignDeliveryRegistry,
   parseFilemakerEmailCampaignEventRegistry,
@@ -28,6 +30,8 @@ import {
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSuppressionRegistry,
   resolveFilemakerEmailCampaignAudiencePreview,
+  resolveFilemakerCampaignContentBodyText,
+  resolveFilemakerCampaignContentForRecipient,
   resolveFilemakerEmailCampaignRetryDelayMs,
   resolveFilemakerEmailCampaignRetryDelayForAttemptCount,
   resolveFilemakerEmailCampaignRetryableDeliveries,
@@ -40,9 +44,12 @@ import {
   toPersistedFilemakerEmailCampaignRunRegistry,
   toPersistedFilemakerEmailCampaignSuppressionRegistry,
   upsertFilemakerEmailCampaignSuppressionEntry,
+  assertFilemakerCampaignContentReadyForDelivery,
+  toFilemakerCampaignContentDeliveryMetadata,
 } from '../../settings';
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignDeliveryAttemptRegistry,
   FilemakerEmailCampaignDeliveryRegistry,
@@ -79,7 +86,6 @@ import {
   applyBounceThresholdToCampaign,
   applyCampaignRecipientTemplateTokens,
   assertCampaignReadyForDelivery,
-  resolveCampaignBodyText,
   isFilemakerEmailCampaignPermanentFailureCategory,
   resolveFailureStatus,
   shouldDeferDeliveryForDomainHealth,
@@ -96,21 +102,31 @@ const replaceDeliveryInCollection = (
 
 export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps) => {
   const readRuntimeState = async (): Promise<FilemakerCampaignRuntimeState> => {
-    const [eventsRaw, suppressionsRaw, databaseRaw, campaignsRaw, runsRaw, deliveriesRaw, attemptsRaw] =
-      await Promise.all([
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
-        deps.readSettingValue(FILEMAKER_DATABASE_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
-        deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
-      ]);
+    const [
+      eventsRaw,
+      suppressionsRaw,
+      databaseRaw,
+      contentGroupsRaw,
+      campaignsRaw,
+      runsRaw,
+      deliveriesRaw,
+      attemptsRaw,
+    ] = await Promise.all([
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_EVENTS_KEY),
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY),
+      deps.readSettingValue(FILEMAKER_DATABASE_KEY),
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY),
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGNS_KEY),
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_RUNS_KEY),
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY),
+      deps.readSettingValue(FILEMAKER_EMAIL_CAMPAIGN_DELIVERY_ATTEMPTS_KEY),
+    ]);
 
     return {
       eventRegistry: parseFilemakerEmailCampaignEventRegistry(eventsRaw),
       suppressionRegistry: parseFilemakerEmailCampaignSuppressionRegistry(suppressionsRaw),
       database: parseFilemakerDatabase(databaseRaw),
+      contentGroupRegistry: parseFilemakerEmailCampaignContentGroupRegistry(contentGroupsRaw),
       campaignRegistry: parseFilemakerEmailCampaignRegistry(campaignsRaw),
       runRegistry: parseFilemakerEmailCampaignRunRegistry(runsRaw),
       deliveryRegistry: parseFilemakerEmailCampaignDeliveryRegistry(deliveriesRaw),
@@ -120,6 +136,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
 
   const persistRuntimeState = async (input: {
     campaignRegistry?: FilemakerEmailCampaignRegistry;
+    contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
     runRegistry?: FilemakerEmailCampaignRunRegistry;
     deliveryRegistry?: FilemakerEmailCampaignDeliveryRegistry;
     attemptRegistry?: FilemakerEmailCampaignDeliveryAttemptRegistry;
@@ -141,6 +158,14 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         deps.upsertSettingValue(
           FILEMAKER_EMAIL_CAMPAIGNS_KEY,
           JSON.stringify(toPersistedFilemakerEmailCampaignRegistry(input.campaignRegistry))
+        )
+      );
+    }
+    if (input.contentGroupRegistry) {
+      writes.push(
+        deps.upsertSettingValue(
+          FILEMAKER_EMAIL_CAMPAIGN_CONTENT_GROUPS_KEY,
+          JSON.stringify(input.contentGroupRegistry)
         )
       );
     }
@@ -195,7 +220,14 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       throw notFoundError(`Campaign ${input.campaignId} not found.`);
     }
 
-    assertCampaignReadyForDelivery(campaign, input.mode);
+    if (input.mode === 'live') {
+      assertFilemakerCampaignContentReadyForDelivery({
+        campaign,
+        contentGroupRegistry: state.contentGroupRegistry,
+      });
+    } else {
+      assertCampaignReadyForDelivery(campaign, input.mode);
+    }
     const now = deps.now();
     const nowIso = now.toISOString();
     const preview = resolveFilemakerEmailCampaignAudiencePreview(
@@ -203,7 +235,12 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       campaign.audience,
       state.suppressionRegistry
     );
-    const evaluation = evaluateFilemakerEmailCampaignLaunch(campaign, preview, now);
+    const evaluation = evaluateFilemakerEmailCampaignLaunch(
+      campaign,
+      preview,
+      now,
+      state.contentGroupRegistry
+    );
 
     if (input.mode === 'live' && !evaluation.isEligible) {
       throw badRequestError(evaluation.blockers[0] ?? 'Campaign launch is blocked.');
@@ -224,6 +261,18 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       runId: baseRun.id,
       preview,
       mode: input.mode,
+    }).map((delivery) => {
+      const content = resolveFilemakerCampaignContentForRecipient({
+        campaign,
+        contentGroupRegistry: state.contentGroupRegistry,
+        database: state.database,
+        partyKind: delivery.partyKind,
+        partyId: delivery.partyId,
+      });
+      return {
+        ...delivery,
+        ...toFilemakerCampaignContentDeliveryMetadata(content),
+      };
     });
     const queuedDeliveryCount = deliveries.filter((delivery) => delivery.status === 'queued').length;
     const run = syncFilemakerEmailCampaignRunWithDeliveries({
@@ -371,6 +420,15 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
     for (const delivery of deliveriesToProcess) {
       const attemptNumber =
         getFilemakerEmailCampaignDeliveryAttemptsForDelivery(attemptRegistry, delivery.id).length + 1;
+      const content = resolveFilemakerCampaignContentForRecipient({
+        campaign,
+        contentGroupRegistry: state.contentGroupRegistry,
+        database: state.database,
+        partyKind: delivery.partyKind,
+        partyId: delivery.partyId,
+        contentVariantId: delivery.contentVariantId ?? null,
+      });
+      const contentMetadata = toFilemakerCampaignContentDeliveryMetadata(content);
       const unsubscribeUrl = buildFilemakerCampaignUnsubscribeUrl({
         emailAddress: delivery.emailAddress,
         campaignId: campaign.id,
@@ -400,7 +458,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         now: nowMs,
       });
       const text =
-        applyCampaignRecipientTemplateTokens(resolveCampaignBodyText(campaign), {
+        applyCampaignRecipientTemplateTokens(resolveFilemakerCampaignContentBodyText(content), {
           emailAddress: delivery.emailAddress,
           unsubscribeUrl,
           preferencesUrl,
@@ -412,7 +470,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
           nowMs,
           htmlMode: false,
         }) ?? '';
-      const html = applyCampaignRecipientTemplateTokens(campaign.bodyHtml ?? null, {
+      const html = applyCampaignRecipientTemplateTokens(content.bodyHtml ?? null, {
         emailAddress: delivery.emailAddress,
         unsubscribeUrl,
         preferencesUrl,
@@ -432,6 +490,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       if (currentSuppression) {
         deliveries = replaceDeliveryInCollection(deliveries, {
           ...delivery,
+          ...contentMetadata,
           status: 'skipped',
           providerMessage: `Recipient is on the suppression list (${currentSuppression.reason}).`,
           lastError: null,
@@ -468,6 +527,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         const message = `Deferred ${delivery.emailAddress}: recipient domain ${domain} is already failing in this run.`;
         deliveries = replaceDeliveryInCollection(deliveries, {
           ...delivery,
+          ...contentMetadata,
           status: 'failed',
           failureCategory: 'rate_limited',
           providerMessage: message,
@@ -498,6 +558,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
           if (!warmup.ok) {
             deliveries = replaceDeliveryInCollection(deliveries, {
               ...delivery,
+              ...contentMetadata,
               nextRetryAt: warmup.nextAvailableAt,
               updatedAt: nowIso,
             });
@@ -521,7 +582,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
         }
         const sendResult = await deps.sendCampaignEmail({
           to: delivery.emailAddress,
-          subject: campaign.subject,
+          subject: content.subject,
           text,
           html,
           campaignId: campaign.id,
@@ -534,6 +595,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
 
         deliveries = replaceDeliveryInCollection(deliveries, {
           ...delivery,
+          ...contentMetadata,
           status: 'sent',
           provider: sendResult.provider,
           failureCategory: null,
@@ -551,6 +613,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             emailAddress: delivery.emailAddress,
             partyKind: delivery.partyKind,
             partyId: delivery.partyId,
+            ...contentMetadata,
             attemptNumber,
             status: 'sent',
             provider: sendResult.provider,
@@ -606,6 +669,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
 
         deliveries = replaceDeliveryInCollection(deliveries, {
           ...delivery,
+          ...contentMetadata,
           status,
           provider: failure.provider,
           failureCategory: failure.failureCategory,
@@ -622,6 +686,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             emailAddress: delivery.emailAddress,
             partyKind: delivery.partyKind,
             partyId: delivery.partyId,
+            ...contentMetadata,
             attemptNumber,
             status,
             provider: failure.provider,

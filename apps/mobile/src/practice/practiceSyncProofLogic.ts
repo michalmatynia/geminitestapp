@@ -1,122 +1,65 @@
-import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import type { KangurPracticeOperation } from '@kangur/core';
+import type { KangurProgressState, KangurScore } from '@kangur/contracts/kangur';
 
-export type KangurPracticeSyncProofSurfaceStatus = 'missing' | 'ready';
-
-export interface KangurPracticeSyncProofSurface {
-  detail: string;
-  label: string;
-  status: KangurPracticeSyncProofSurfaceStatus;
-}
-
-export interface KangurPracticeSyncProofSnapshot {
-  matchedScoreId: string | null;
-  surfaces: KangurPracticeSyncProofSurface[];
-}
-
-export interface BuildKangurPracticeSyncProofInput {
+type PracticeSyncScoreMatchInput = {
   expectedCorrectAnswers: number;
   expectedTotalQuestions: number;
-  leaderboardItems: { id: string }[];
-  locale?: KangurMobileLocale;
-  operation: string;
-  progress: {
-    lessonMastery: Record<string, number>;
-    operationsPlayed: string[];
-  };
-  runStartedAt: string;
-  scores: { id: string }[];
-}
-
-export const buildKangurPracticeSyncProofSnapshot = ({
-  _locale = 'pl',
-  _operation,
-  _progress,
-}: BuildKangurPracticeSyncProofInput): KangurPracticeSyncProofSnapshot => {
-  return {
-    matchedScoreId: null,
-    surfaces: [],
-  };
+  operation: KangurPracticeOperation;
+  runStartedAt: number;
+  scores: KangurScore[];
 };
 
-export const PRACTICE_SYNC_PROOF_COPY = {
-  dailyPlan: {
-    de: 'Tagesplan',
-    en: 'Daily plan',
-    pl: 'Plan dnia',
-  },
-  leaderboard: {
-    de: 'Rangliste',
-    en: 'Leaderboard',
-    pl: 'Ranking',
-  },
-  profileProgress: {
-    de: 'Profilfortschritt',
-    en: 'Profile progress',
-    pl: 'Postęp profilu',
-  },
-  recentResults: {
-    de: 'Ergebniszentrale',
-    en: 'Results hub',
-    pl: 'Centrum wyników',
-  },
-  you: {
-    de: 'Du',
-    en: 'You',
-    pl: 'Ty',
-  },
-} as const;
-
-export const PRACTICE_SYNC_PROOF_READY_COPY = {
-  dailyPlan: {
-    de: 'Das frische Ergebnis ist bereits bei den letzten Ergebnissen im Tagesplan sichtbar.',
-    en: 'The fresh result is already visible in the recent results on the daily plan.',
-    pl: 'Świeży wynik jest już widoczny w ostatnich wynikach w planie dnia.',
-  },
-  localProgress: {
-    de: 'Modus lokal gespeichert · Spiele {gamesPlayed}',
-    en: 'Mode saved locally · games {gamesPlayed}',
-    pl: 'Tryb zapisany lokalnie · gier {gamesPlayed}',
-  },
-  mastery: {
-    de: 'Opanowanie {masteryPercent}% · Spiele {gamesPlayed}',
-    en: 'Mastery {masteryPercent}% · games {gamesPlayed}',
-    pl: 'Opanowanie {masteryPercent}% · gier {gamesPlayed}',
-  },
-} as const;
-
-export const PRACTICE_SYNC_PROOF_MISSING_COPY = {
-  dailyPlan: {
-    de: 'Das frische Ergebnis ist bei den letzten Ergebnissen im Tagesplan noch nicht angekommen.',
-    en: 'The fresh result has not appeared in the daily plan recent results yet.',
-    pl: 'Świeży wynik nie pojawił się jeszcze w ostatnich wynikach planu dnia.',
-  },
-  leaderboard: {
-    de: 'Das aktuelle Ergebnis ist in der Rangliste noch nicht sichtbar.',
-    en: 'The current result is not visible in the leaderboard yet.',
-    pl: 'Bieżący wynik nie jest jeszcze widoczny w rankingu.',
-  },
-  profileProgress: {
-    de: 'Der lokale Fortschritt zeigt diesen Modus noch nicht in der Lektionsbeherrschung.',
-    en: 'Local progress does not show this mode in lesson mastery yet.',
-    pl: 'Lokalny postęp nie pokazuje jeszcze tego trybu w opanowaniu lekcji.',
-  },
-  recentResults: {
-    de: 'Das frische Ergebnis ist im Verlauf der Lernenden noch nicht sichtbar.',
-    en: 'The fresh result is not visible in the learner history yet.',
-    pl: 'Świeży wynik nie jest jeszcze widoczny w historii ucznia.',
-  },
-} as const;
-
-export const localizePracticeSyncProofCopy = (
-  locale: KangurMobileLocale,
-  value: Record<KangurMobileLocale, string>,
-): string => value[locale];
-
-export const replacePracticeSyncProofTokens = (
-  value: string,
-  tokens: Record<string, string | number>,
-): string =>
-  Object.entries(tokens).reduce(
-    (detail, [token, replacement]) => detail.replace(`{${token}}`, String(replacement)),
-    value,
+export const findExactPracticeSyncScoreMatches = ({
+  expectedCorrectAnswers,
+  expectedTotalQuestions,
+  operation,
+  scores,
+}: Omit<PracticeSyncScoreMatchInput, 'runStartedAt'>): KangurScore[] =>
+  scores.filter(
+    (score) =>
+      score.operation === operation &&
+      score.correct_answers === expectedCorrectAnswers &&
+      score.total_questions === expectedTotalQuestions,
   );
+
+export const canUseRunStartedAt = (runStartedAt: number): boolean =>
+  Number.isFinite(runStartedAt) && runStartedAt > 0;
+
+export const wasScoreCreatedAfterRunStart = (
+  score: KangurScore,
+  runStartedAt: number,
+): boolean => {
+  const createdAt = Date.parse(score.created_date);
+  return Number.isFinite(createdAt) && createdAt >= runStartedAt;
+};
+
+export const findExactPracticeSyncScoreMatchCreatedAfterRunStart = (
+  scores: KangurScore[],
+  runStartedAt: number,
+): KangurScore | null =>
+  scores.find((score) => wasScoreCreatedAfterRunStart(score, runStartedAt)) ?? null;
+
+export const findMatchingKangurPracticeSyncScore = ({
+  expectedCorrectAnswers,
+  expectedTotalQuestions,
+  operation,
+  runStartedAt,
+  scores,
+}: PracticeSyncScoreMatchInput): KangurScore | null => {
+  const exactMatches = findExactPracticeSyncScoreMatches({
+    expectedCorrectAnswers,
+    expectedTotalQuestions,
+    operation,
+    scores,
+  });
+
+  if (exactMatches.length === 0) {
+    return null;
+  }
+
+  if (!canUseRunStartedAt(runStartedAt)) {
+    return exactMatches[0] ?? null;
+  }
+
+  return findExactPracticeSyncScoreMatchCreatedAfterRunStart(exactMatches, runStartedAt);
+};

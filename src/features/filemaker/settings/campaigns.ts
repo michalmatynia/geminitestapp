@@ -1,16 +1,21 @@
 import { normalizeString } from '../filemaker-settings.helpers';
 import type {
   FilemakerEmailCampaign,
+  FilemakerEmailCampaignContentGroupRegistry,
 } from '../types';
 
 export * from '../types/campaigns';
 export * from './campaign-factories';
+export * from './campaign-content-routing';
 export * from './campaign-summarizers';
 
 import {
   type FilemakerEmailCampaignAudiencePreview,
   type FilemakerEmailCampaignLaunchEvaluation,
 } from '../types/campaigns';
+import {
+  validateFilemakerCampaignContentReadiness,
+} from './campaign-content-routing';
 
 type CampaignRecurringRule = NonNullable<FilemakerEmailCampaign['launch']['recurring']>;
 type ScheduledLaunchEvaluation = Pick<
@@ -144,11 +149,13 @@ const evaluateRecurringCampaignLaunchBlockers = (
 export const evaluateFilemakerEmailCampaignLaunch = (
   campaign: FilemakerEmailCampaign,
   preview: FilemakerEmailCampaignAudiencePreview,
-  now: Date = new Date()
+  now: Date = new Date(),
+  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry | null
 ): FilemakerEmailCampaignLaunchEvaluation => {
   const scheduledEvaluation = evaluateScheduledCampaignLaunch(campaign, now);
   const blockers = [
     ...evaluateBaseCampaignLaunchBlockers(campaign, preview, now),
+    ...validateFilemakerCampaignContentReadiness({ campaign, contentGroupRegistry }),
     ...scheduledEvaluation.blockers,
     ...evaluateRecurringCampaignLaunchBlockers(campaign, now),
   ];

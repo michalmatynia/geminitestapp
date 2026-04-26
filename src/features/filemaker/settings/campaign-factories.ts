@@ -1,5 +1,7 @@
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { normalizeString, toIdToken } from '../filemaker-settings.helpers';
+import { normalizeEmailBlocks, type EmailBlock } from '../components/email-builder/block-model';
+import { compileBlocksToHtml } from '../components/email-builder/compile-blocks';
 import {
   isFilemakerEmailCampaignEventType,
   isFilemakerEmailCampaignSuppressionReason,
@@ -121,7 +123,19 @@ export const createFilemakerEmailCampaign = (input?: Partial<FilemakerEmailCampa
     fromName: normalizeString(input?.fromName) || null,
     replyToEmail: normalizeString(input?.replyToEmail).toLowerCase() || null,
     bodyText: normalizeString(input?.bodyText) || null,
-    bodyHtml: normalizeString(input?.bodyHtml) || null,
+    bodyHtml: (() => {
+      const blocks: EmailBlock[] = normalizeEmailBlocks(
+        (input as { bodyBlocks?: unknown } | undefined)?.bodyBlocks
+      );
+      if (blocks.length > 0) return compileBlocksToHtml(blocks);
+      return normalizeString(input?.bodyHtml) || null;
+    })(),
+    bodyBlocks: (() => {
+      const blocks: EmailBlock[] = normalizeEmailBlocks(
+        (input as { bodyBlocks?: unknown } | undefined)?.bodyBlocks
+      );
+      return blocks.length > 0 ? blocks : null;
+    })(),
     audience: normalizeCampaignAudienceRule(input?.audience),
     launch: normalizeCampaignLaunchRule(input?.launch),
     approvalGrantedAt: normalizeString(input?.approvalGrantedAt) || null,

@@ -111,6 +111,81 @@ describe('filemaker campaign settings', () => {
     );
   });
 
+  it('filters organization audiences by legacy demand value conditions', () => {
+    const database = {
+      ...createDatabase(),
+      values: [
+        {
+          id: 'value-market',
+          parentId: null,
+          label: 'Market',
+          value: 'market',
+          sortOrder: 1,
+          legacyUuid: 'LEGACY-MARKET',
+          createdAt: iso,
+          updatedAt: iso,
+        },
+        {
+          id: 'value-food',
+          parentId: 'value-market',
+          label: 'Food vendors',
+          value: 'food-vendors',
+          sortOrder: 2,
+          legacyUuid: 'LEGACY-FOOD',
+          createdAt: iso,
+          updatedAt: iso,
+        },
+      ],
+      organizationLegacyDemands: [
+        {
+          id: 'demand-1',
+          organizationId: 'organization-1',
+          valueIds: ['value-market', 'value-food'],
+          legacyUuid: 'LEGACY-DEMAND-1',
+          createdAt: iso,
+          updatedAt: iso,
+        },
+      ],
+    };
+    const campaign = createFilemakerEmailCampaign({
+      id: 'campaign-demand',
+      name: 'Demand targeting',
+      status: 'active',
+      subject: 'Food vendor outreach',
+      audience: {
+        partyKinds: ['organization'],
+        emailStatuses: ['active'],
+        includePartyReferences: [],
+        excludePartyReferences: [],
+        conditionGroup: {
+          id: 'group-demand',
+          type: 'group',
+          combinator: 'and',
+          children: [
+            {
+              id: 'condition-demand',
+              type: 'condition',
+              field: 'organization.demandValueId',
+              operator: 'equals',
+              value: 'value-food',
+            },
+          ],
+        },
+        organizationIds: [],
+        eventIds: [],
+        countries: [],
+        cities: [],
+        dedupeByEmail: true,
+        limit: null,
+      },
+    });
+
+    const preview = resolveFilemakerEmailCampaignAudiencePreview(database, campaign.audience);
+
+    expect(preview.recipients).toHaveLength(1);
+    expect(preview.recipients[0]?.partyId).toBe('organization-1');
+  });
+
   it('evaluates launch blockers for inactive, approval-gated, and future-scheduled campaigns', () => {
     const database = createDatabase();
     const campaign = createFilemakerEmailCampaign({

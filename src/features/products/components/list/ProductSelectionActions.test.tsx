@@ -108,7 +108,21 @@ vi.mock('@/shared/ui/ActionMenu', () => ({
 }));
 
 vi.mock('@/shared/ui/app-modal', () => ({
-  AppModal: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  AppModal: ({
+    children,
+    footer,
+    isOpen,
+  }: {
+    children?: React.ReactNode;
+    footer?: React.ReactNode;
+    isOpen?: boolean;
+  }) =>
+    isOpen ? (
+      <div role='dialog'>
+        <div>{children}</div>
+        <div>{footer}</div>
+      </div>
+    ) : null,
 }));
 
 vi.mock('@/shared/ui/button', () => ({
@@ -154,6 +168,55 @@ vi.mock('@/shared/ui/dropdown-menu', () => ({
 
 vi.mock('@/shared/ui/input', () => ({
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
+  SelectSimple: ({
+    value,
+    onValueChange,
+    options,
+    ariaLabel,
+  }: {
+    value?: string;
+    onValueChange?: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    ariaLabel?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel}
+      value={value ?? ''}
+      onChange={(event) => onValueChange?.(event.target.value)}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
+vi.mock('@/shared/ui/checkbox', () => ({
+  Checkbox: ({
+    checked,
+    onCheckedChange,
+    ...props
+  }: React.InputHTMLAttributes<HTMLInputElement> & {
+    onCheckedChange?: (checked: boolean) => void;
+  }) => (
+    <input
+      type='checkbox'
+      checked={checked === true}
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+      {...props}
+    />
+  ),
+}));
+
+vi.mock('@/shared/ui/label', () => ({
+  Label: ({ children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+    <label {...props}>{children}</label>
+  ),
 }));
 
 vi.mock('@/shared/ui/templates/modals/JSONImportModal', () => ({
@@ -405,6 +468,75 @@ describe('ProductSelectionActions', () => {
     await waitFor(() => {
       expect(setAdvancedFilterPresetsMock).toHaveBeenCalledWith([]);
       expect(setAdvancedFilterStateMock).toHaveBeenCalledWith('', null);
+    });
+  });
+
+  it('edits a saved advanced filter preset from the pen action', async () => {
+    const preset: ProductAdvancedFilterPreset = {
+      id: 'preset-1',
+      name: 'Pinned SKU',
+      filter: {
+        type: 'group',
+        id: 'group-1',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'condition-1',
+            field: 'sku',
+            operator: 'contains',
+            value: 'PIN',
+          },
+        ],
+      },
+      createdAt: '2026-04-26T00:00:00.000Z',
+      updatedAt: '2026-04-26T00:00:00.000Z',
+    };
+    const setAdvancedFilterPresetsMock = vi.fn().mockResolvedValue(undefined);
+    const setAdvancedFilterStateMock = vi.fn();
+
+    useProductListFiltersContextMock.mockReturnValue({
+      advancedFilter: JSON.stringify(preset.filter),
+      activeAdvancedFilterPresetId: preset.id,
+      advancedFilterPresets: [preset],
+      includeArchived: false,
+      setAdvancedFilterPresets: setAdvancedFilterPresetsMock,
+      setAdvancedFilterState: setAdvancedFilterStateMock,
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit preset Pinned SKU' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Preset name' }), {
+      target: { value: 'Updated SKU' },
+    });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Condition value' }), {
+      target: { value: 'WAL' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Update Preset' }));
+
+    await waitFor(() => {
+      expect(setAdvancedFilterPresetsMock).toHaveBeenCalledWith([
+        expect.objectContaining({
+          id: 'preset-1',
+          name: 'Updated SKU',
+          filter: expect.objectContaining({
+            rules: [
+              expect.objectContaining({
+                field: 'sku',
+                operator: 'contains',
+                value: 'WAL',
+              }),
+            ],
+          }),
+          updatedAt: expect.any(String),
+        }),
+      ]);
+      expect(setAdvancedFilterStateMock).toHaveBeenCalledWith(
+        expect.stringContaining('"value":"WAL"'),
+        'preset-1'
+      );
     });
   });
 });

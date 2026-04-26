@@ -1,4 +1,4 @@
-import { BookOpenIcon, ImageIcon, SparklesIcon, Plug, Brain, WorkflowIcon, GitBranchIcon, MessageCircleIcon, StickyNoteIcon, SettingsIcon, MapIcon, BarChart3Icon, ActivityIcon, ShieldIcon } from './icons';
+import { BookOpenIcon, ImageIcon, SparklesIcon } from './icons';
 import { type NavItem } from './admin-menu-utils';
 import React from 'react';
 

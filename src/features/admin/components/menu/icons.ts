@@ -1,4 +1,4 @@
-import {
+export {
   PackageIcon,
   BookOpenIcon,
   GraduationCapIcon,

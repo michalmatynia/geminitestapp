@@ -13,6 +13,31 @@ export interface KangurPracticeSyncProofSnapshot {
   surfaces: KangurPracticeSyncProofSurface[];
 }
 
+export interface BuildKangurPracticeSyncProofInput {
+  expectedCorrectAnswers: number;
+  expectedTotalQuestions: number;
+  leaderboardItems: { id: string }[];
+  locale?: KangurMobileLocale;
+  operation: string;
+  progress: {
+    lessonMastery: Record<string, number>;
+    operationsPlayed: string[];
+  };
+  runStartedAt: string;
+  scores: { id: string }[];
+}
+
+export const buildKangurPracticeSyncProofSnapshot = ({
+  _locale = 'pl',
+  _operation,
+  _progress,
+}: BuildKangurPracticeSyncProofInput): KangurPracticeSyncProofSnapshot => {
+  return {
+    matchedScoreId: null,
+    surfaces: [],
+  };
+};
+
 export const PRACTICE_SYNC_PROOF_COPY = {
   dailyPlan: {
     de: 'Tagesplan',

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ObjectId } from 'mongodb';
 
 const { getMongoDbMock } = vi.hoisted(() => ({
   getMongoDbMock: vi.fn(),
@@ -133,5 +134,161 @@ describe('mongo integration repository programmable browser persistence', () => 
     expect(updateDoc.$set).not.toHaveProperty('playwrightPersonaId');
     expect(updateDoc.$set).not.toHaveProperty('playwrightHeadless');
     expect(updateDoc.$set).not.toHaveProperty('resetPlaywrightOverrides');
+  });
+
+  it('deletes non-Base connection dependencies by connectionId', async () => {
+    const dependencyDeleteMocks = new Map<string, ReturnType<typeof vi.fn>>();
+    const getDependencyDeleteMock = (name: string) => {
+      const existing = dependencyDeleteMocks.get(name);
+      if (existing) return existing;
+      const created = vi.fn().mockResolvedValue({ deletedCount: 0 });
+      dependencyDeleteMocks.set(name, created);
+      return created;
+    };
+
+    const integrationConnectionFindOneMock = vi.fn().mockResolvedValue({
+      _id: 'conn-tradera-old',
+      integrationId: 'integration-tradera',
+      name: 'Old Tradera',
+      username: '',
+      password: '',
+      createdAt: new Date('2026-04-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+    });
+    const integrationConnectionDeleteManyMock = vi.fn().mockResolvedValue({ deletedCount: 1 });
+    const integrationFindOneMock = vi.fn().mockResolvedValue({
+      _id: 'integration-tradera',
+      slug: 'tradera',
+    });
+    const settingsFindOneMock = vi.fn().mockResolvedValue(null);
+    const settingsUpdateManyMock = vi.fn().mockResolvedValue({ modifiedCount: 0 });
+
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'integration_connections') {
+          return {
+            findOne: integrationConnectionFindOneMock,
+            deleteMany: integrationConnectionDeleteManyMock,
+          };
+        }
+        if (name === 'integrations') {
+          return { findOne: integrationFindOneMock };
+        }
+        if (name === 'settings') {
+          return {
+            findOne: settingsFindOneMock,
+            updateMany: settingsUpdateManyMock,
+          };
+        }
+        return { deleteMany: getDependencyDeleteMock(name) };
+      }),
+    });
+
+    const { getMongoIntegrationRepository } = await import('./mongo-impl');
+    const repo = getMongoIntegrationRepository();
+
+    await repo.deleteConnection('conn-tradera-old');
+
+    expect(dependencyDeleteMocks.get('category_mappings')).toHaveBeenCalledWith({
+      connectionId: { $in: ['conn-tradera-old'] },
+    });
+    expect(dependencyDeleteMocks.get('external_categories')).toHaveBeenCalledWith({
+      connectionId: { $in: ['conn-tradera-old'] },
+    });
+    expect(dependencyDeleteMocks.get('product_listings')).toHaveBeenCalledWith({
+      connectionId: { $in: ['conn-tradera-old'] },
+    });
+    expect(integrationConnectionDeleteManyMock).toHaveBeenCalledWith({
+      _id: { $in: ['conn-tradera-old'] },
+    });
+  });
+
+  it('counts and reassigns Base connection dependencies by connectionId', async () => {
+    const sourceConnectionId = '69a0b9cb23d98ffc7cc6afce';
+    const replacementConnectionId = 'conn-base-new';
+    const sourceConnectionReferenceFilter = {
+      connectionId: { $in: [sourceConnectionId, new ObjectId(sourceConnectionId)] },
+    };
+    const dependencyMocks = new Map<
+      string,
+      {
+        countDocuments: ReturnType<typeof vi.fn>;
+        updateMany: ReturnType<typeof vi.fn>;
+      }
+    >();
+    const getDependencyMock = (name: string) => {
+      const existing = dependencyMocks.get(name);
+      if (existing) return existing;
+      const created = {
+        countDocuments: vi.fn().mockResolvedValue(name === 'category_mappings' ? 1 : 0),
+        updateMany: vi.fn().mockResolvedValue({ modifiedCount: 0 }),
+      };
+      dependencyMocks.set(name, created);
+      return created;
+    };
+
+    const integrationConnectionFindOneMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        _id: sourceConnectionId,
+        integrationId: 'integration-base',
+        name: 'Old Base',
+        username: '',
+        password: '',
+        createdAt: new Date('2026-04-01T00:00:00.000Z'),
+        updatedAt: new Date('2026-04-01T00:00:00.000Z'),
+      })
+      .mockResolvedValueOnce({
+        _id: replacementConnectionId,
+        integrationId: 'integration-base',
+      });
+    const integrationConnectionDeleteManyMock = vi.fn().mockResolvedValue({ deletedCount: 1 });
+    const integrationFindOneMock = vi.fn().mockResolvedValue({
+      _id: 'integration-base',
+      slug: 'baselinker',
+    });
+    const settingsFindOneMock = vi.fn().mockResolvedValue(null);
+    const settingsUpdateManyMock = vi.fn().mockResolvedValue({ modifiedCount: 0 });
+
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'integration_connections') {
+          return {
+            findOne: integrationConnectionFindOneMock,
+            deleteMany: integrationConnectionDeleteManyMock,
+          };
+        }
+        if (name === 'integrations') {
+          return { findOne: integrationFindOneMock };
+        }
+        if (name === 'settings') {
+          return {
+            findOne: settingsFindOneMock,
+            updateMany: settingsUpdateManyMock,
+          };
+        }
+        return getDependencyMock(name);
+      }),
+    });
+
+    const { getMongoIntegrationRepository } = await import('./mongo-impl');
+    const repo = getMongoIntegrationRepository();
+
+    await repo.deleteConnection(sourceConnectionId, {
+      replacementConnectionId,
+    });
+
+    expect(dependencyMocks.get('category_mappings')?.countDocuments).toHaveBeenCalledWith(
+      sourceConnectionReferenceFilter
+    );
+    expect(dependencyMocks.get('category_mappings')?.updateMany).toHaveBeenCalledWith(
+      sourceConnectionReferenceFilter,
+      {
+        $set: {
+          connectionId: replacementConnectionId,
+          updatedAt: expect.any(Date),
+        },
+      }
+    );
   });
 });

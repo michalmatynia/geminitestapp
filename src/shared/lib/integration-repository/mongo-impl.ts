@@ -1,4 +1,4 @@
-import { type ObjectId, type WithId, type Filter, type Document } from 'mongodb';
+import { type ObjectId, type WithId } from 'mongodb';
 
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -11,11 +11,11 @@ import {
   ACTIVE_TEMPLATE_SETTING_KEY,
   PRODUCT_SYNC_PROFILE_SETTINGS_KEY,
   toDocumentIdCandidates,
-  toConnectionIdCandidates,
   stripActiveTemplateScopesForConnection,
   remapProductSyncProfilesSetting,
   withDependencyTotal,
   normalizeOptionalConnectionId,
+  buildConnectionReferenceFilter,
   stripProgrammableConnectionBrowserPersistenceFields,
   buildProgrammableConnectionBrowserFieldsUnsetDocument,
   toIntegrationRecord,
@@ -123,12 +123,7 @@ const countMongoConnectionDependencies = async (
   connectionId: string
 ): Promise<ConnectionDependencyCounts> => {
   const db = await getMongoDb();
-  const candidates = toConnectionIdCandidates(connectionId);
-  const filter = {
-    _id: {
-      $in: candidates.asDocumentIds,
-    },
-  } as Filter<Document>;
+  const filter = buildConnectionReferenceFilter(connectionId);
 
   const [
     productListings,
@@ -160,12 +155,7 @@ const countMongoConnectionDependencies = async (
 
 const cleanupMongoConnectionReferences = async (connectionId: string): Promise<void> => {
   const db = await getMongoDb();
-  const candidates = toConnectionIdCandidates(connectionId);
-  const filter = {
-    _id: {
-      $in: candidates.asDocumentIds,
-    },
-  } as Filter<Document>;
+  const filter = buildConnectionReferenceFilter(connectionId);
 
   await Promise.all([
     db.collection('product_listings').deleteMany(filter),
@@ -183,12 +173,7 @@ const reassignMongoConnectionReferences = async (
   replacementConnectionId: string
 ): Promise<void> => {
   const db = await getMongoDb();
-  const candidates = toConnectionIdCandidates(sourceConnectionId);
-  const filter = {
-    _id: {
-      $in: candidates.asDocumentIds,
-    },
-  } as Filter<Document>;
+  const filter = buildConnectionReferenceFilter(sourceConnectionId);
 
   await Promise.all([
     db.collection('product_listings').updateMany(filter, {

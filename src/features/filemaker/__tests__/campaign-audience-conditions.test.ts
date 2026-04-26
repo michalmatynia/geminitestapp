@@ -188,6 +188,67 @@ describe('evaluateAudienceCondition — operators', () => {
       )
     ).toBe(true);
   });
+
+  it('matches organization demand values, legacy UUIDs, labels, and paths', () => {
+    const demandContext = {
+      organization: orgFixture,
+      organizationDemandLabels: ['Market stalls', 'Food vendors'],
+      organizationDemandLegacyValueUuids: ['LEGACY-DEMAND-ROOT', 'LEGACY-DEMAND-CHILD'],
+      organizationDemandPaths: ['value-market>value-food', 'Market > Food vendors'],
+      organizationDemandValueIds: ['value-market', 'value-food'],
+    };
+
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.demandValueId',
+          operator: 'equals',
+          value: 'value-food',
+        }),
+        demandContext
+      )
+    ).toBe(true);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.demandLegacyValueUuid',
+          operator: 'equals',
+          value: 'LEGACY-DEMAND-CHILD',
+        }),
+        demandContext
+      )
+    ).toBe(true);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.demandLabel',
+          operator: 'contains',
+          value: 'vendors',
+        }),
+        demandContext
+      )
+    ).toBe(true);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.demandPath',
+          operator: 'equals',
+          value: 'value-market>value-food',
+        }),
+        demandContext
+      )
+    ).toBe(true);
+    expect(
+      evaluateAudienceCondition(
+        buildCondition({
+          field: 'organization.demandValueId',
+          operator: 'not_equals',
+          value: 'value-missing',
+        }),
+        demandContext
+      )
+    ).toBe(true);
+  });
 });
 
 describe('evaluateAudienceConditionGroup — AND/OR nesting', () => {

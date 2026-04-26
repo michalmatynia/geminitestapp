@@ -1,5 +1,7 @@
 'use client';
 
+import { useMemo } from 'react';
+
 import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Input } from '@/shared/ui/primitives.public';
 import {
@@ -7,16 +9,146 @@ import {
   formatCommaSeparatedValues as filemakerFormatCommaSeparatedValues,
   parseCommaSeparatedValues as filemakerParseCommaSeparatedValues,
 } from '../AdminFilemakerCampaignEditPage.utils';
-import type { FilemakerAudienceConditionGroup, FilemakerPartyKind } from '../../types';
+import type {
+  FilemakerAudienceConditionGroup,
+  FilemakerDatabase,
+  FilemakerOrganizationLegacyDemand,
+  FilemakerPartyKind,
+  FilemakerValue,
+} from '../../types';
 import { useCampaignEditContext } from '../AdminFilemakerCampaignEditPage.context';
-import { AudienceConditionBuilder } from './AudienceConditionBuilder';
+import {
+  AudienceConditionBuilder,
+  type AudienceConditionValueOption,
+  type AudienceConditionValueOptions,
+} from './AudienceConditionBuilder';
+
+const normalizeOptionText = (value: string | null | undefined): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const resolveValueLabel = (value: FilemakerValue | null | undefined, fallback: string): string => {
+  const label = normalizeOptionText(value?.label);
+  if (label.length > 0) return label;
+  const rawValue = normalizeOptionText(value?.value);
+  if (rawValue.length > 0) return rawValue;
+  return fallback;
+};
+
+const buildValuesById = (database: FilemakerDatabase): Map<string, FilemakerValue> =>
+  new Map(database.values.map((value: FilemakerValue): [string, FilemakerValue] => [value.id, value]));
+
+const collectDemandValueIds = (database: FilemakerDatabase): Set<string> => {
+  const valueIds = new Set<string>();
+  database.organizationLegacyDemands.forEach(
+    (demand: FilemakerOrganizationLegacyDemand): void => {
+      demand.valueIds.forEach((valueId: string): void => {
+        const normalizedValueId = normalizeOptionText(valueId);
+        if (normalizedValueId.length > 0) valueIds.add(normalizedValueId);
+      });
+    }
+  );
+  return valueIds;
+};
+
+const sortConditionOptions = (
+  options: AudienceConditionValueOption[]
+): AudienceConditionValueOption[] =>
+  options.sort((left, right) => left.label.localeCompare(right.label));
+
+const buildDemandValueOptions = (database: FilemakerDatabase): AudienceConditionValueOption[] => {
+  const valuesById = buildValuesById(database);
+  return sortConditionOptions(
+    Array.from(collectDemandValueIds(database)).map((valueId: string) => {
+      const value = valuesById.get(valueId);
+      return {
+        value: valueId,
+        label: resolveValueLabel(value, valueId),
+        description: value?.legacyUuid ? `Legacy UUID: ${value.legacyUuid}` : valueId,
+      };
+    })
+  );
+};
+
+const buildDemandLegacyUuidOptions = (
+  database: FilemakerDatabase
+): AudienceConditionValueOption[] => {
+  const valuesById = buildValuesById(database);
+  return sortConditionOptions(
+    Array.from(collectDemandValueIds(database)).reduce<AudienceConditionValueOption[]>(
+      (options: AudienceConditionValueOption[], valueId: string): AudienceConditionValueOption[] => {
+        const value = valuesById.get(valueId);
+        const legacyUuid = normalizeOptionText(value?.legacyUuid);
+        if (legacyUuid.length === 0) return options;
+        options.push({
+          value: legacyUuid,
+          label: resolveValueLabel(value, valueId),
+          description: legacyUuid,
+        });
+        return options;
+      },
+      []
+    )
+  );
+};
+
+const buildDemandLabelOptions = (database: FilemakerDatabase): AudienceConditionValueOption[] => {
+  const valuesById = buildValuesById(database);
+  const labels = new Map<string, AudienceConditionValueOption>();
+  collectDemandValueIds(database).forEach((valueId: string): void => {
+    const label = resolveValueLabel(valuesById.get(valueId), valueId);
+    if (!labels.has(label)) labels.set(label, { value: label, label });
+  });
+  return sortConditionOptions(Array.from(labels.values()));
+};
+
+const buildDemandPathOptions = (database: FilemakerDatabase): AudienceConditionValueOption[] => {
+  const valuesById = buildValuesById(database);
+  const paths = new Map<string, AudienceConditionValueOption>();
+  database.organizationLegacyDemands.forEach(
+    (demand: FilemakerOrganizationLegacyDemand): void => {
+      const valueIds = demand.valueIds
+        .map((valueId: string): string => normalizeOptionText(valueId))
+        .filter((valueId: string): boolean => valueId.length > 0);
+      if (valueIds.length === 0) return;
+      const pathValue = valueIds.join('>');
+      if (paths.has(pathValue)) return;
+      paths.set(pathValue, {
+        value: pathValue,
+        label: valueIds
+          .map((valueId: string): string => resolveValueLabel(valuesById.get(valueId), valueId))
+          .join(' > '),
+        description: `${valueIds.length} level${valueIds.length === 1 ? '' : 's'}`,
+      });
+    }
+  );
+  return sortConditionOptions(Array.from(paths.values()));
+};
+
+const buildAudienceConditionValueOptions = (
+  database: FilemakerDatabase
+): AudienceConditionValueOptions => ({
+  'email.status': [
+    { value: 'active', label: 'Active' },
+    { value: 'inactive', label: 'Inactive' },
+    { value: 'bounced', label: 'Bounced' },
+    { value: 'unverified', label: 'Unverified' },
+  ],
+  'organization.demandLabel': buildDemandLabelOptions(database),
+  'organization.demandLegacyValueUuid': buildDemandLegacyUuidOptions(database),
+  'organization.demandPath': buildDemandPathOptions(database),
+  'organization.demandValueId': buildDemandValueOptions(database),
+});
 
 export const AudienceSourceSection = () => {
-  const { draft, setDraft } = useCampaignEditContext();
+  const { database, draft, setDraft } = useCampaignEditContext();
   const primaryPartyKind = draft.audience.partyKinds[0] ?? 'person';
   const manualPartyIds = draft.audience.includePartyReferences
     .filter((reference) => reference.kind === primaryPartyKind)
     .map((reference) => reference.id);
+  const fieldValueOptions = useMemo(
+    () => buildAudienceConditionValueOptions(database),
+    [database]
+  );
   
   const setPartyKind = (val: FilemakerPartyKind) => {
     setDraft(prev => ({
@@ -86,6 +218,7 @@ export const AudienceSourceSection = () => {
           Field Conditions (organisation / person / email)
         </div>
         <AudienceConditionBuilder
+          fieldValueOptions={fieldValueOptions}
           value={draft.audience.conditionGroup}
           onChange={(next: FilemakerAudienceConditionGroup) =>
             setDraft((prev) => ({

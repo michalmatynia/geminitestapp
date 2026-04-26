@@ -21,6 +21,7 @@ import {
 import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
+  AdvancedFilterBuilder,
   findPresetById,
   parseAdvancedFilterPayload,
 } from '@/features/products/components/list/advanced-filter';
@@ -40,7 +41,11 @@ import { ProductScanModal } from '@/features/products/components/list/ProductSca
 import { ProductBulkSyncResultsModal } from '@/features/products/components/list/ProductBulkSyncResultsModal';
 import { ProductBulkSyncSetupModal } from '@/features/products/components/list/ProductBulkSyncSetupModal';
 import type { ProductSyncBulkResponse } from '@/shared/contracts/product-sync';
-import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+import {
+  productAdvancedFilterGroupSchema,
+  type ProductAdvancedFilterGroup,
+  type ProductAdvancedFilterPreset,
+} from '@/shared/contracts/products/filters';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ActionMenu } from '@/shared/ui/ActionMenu';
 import { AppModal } from '@/shared/ui/app-modal';
@@ -85,9 +90,12 @@ export const ProductSelectionActions = memo(() => {
   } = useProductListFiltersContext();
   const { toast } = useToast();
   const [isPresetDialogOpen, setIsPresetDialogOpen] = useState(false);
-  const [presetDialogMode, setPresetDialogMode] = useState<'create' | 'rename'>('create');
+  const [presetDialogMode, setPresetDialogMode] = useState<'create' | 'edit'>('create');
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
+  const [presetFilterDraft, setPresetFilterDraft] = useState<ProductAdvancedFilterGroup | null>(
+    null
+  );
   const [savingPreset, setSavingPreset] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [importingPresets, setImportingPresets] = useState(false);
@@ -120,6 +128,11 @@ export const ProductSelectionActions = memo(() => {
     if (!activeAdvancedFilterPresetId) return null;
     return findPresetById(advancedFilterPresets, activeAdvancedFilterPresetId);
   }, [activeAdvancedFilterPresetId, advancedFilterPresets]);
+  const presetDialogSubmitLabel = useMemo(() => {
+    if (savingPreset) return 'Saving...';
+    if (presetDialogMode === 'edit') return 'Update Preset';
+    return 'Save Preset';
+  }, [presetDialogMode, savingPreset]);
 
   const getRowId = useCallback((p: ProductWithImages) => p.id, []);
   const handleConvertSelected = useCallback(async (): Promise<void> => {
@@ -291,6 +304,7 @@ export const ProductSelectionActions = memo(() => {
     setIsPresetDialogOpen(false);
     setEditingPresetId(null);
     setPresetName('');
+    setPresetFilterDraft(null);
     setSavingPreset(false);
   };
 
@@ -302,13 +316,17 @@ export const ProductSelectionActions = memo(() => {
     setPresetDialogMode('create');
     setEditingPresetId(null);
     setPresetName('');
+    setPresetFilterDraft(null);
     setIsPresetDialogOpen(true);
   };
 
-  const openRenamePresetDialog = (preset: ProductAdvancedFilterPreset): void => {
-    setPresetDialogMode('rename');
+  const openEditPresetDialog = (preset: ProductAdvancedFilterPreset): void => {
+    setPresetDialogMode('edit');
     setEditingPresetId(preset.id);
     setPresetName(preset.name);
+    setPresetFilterDraft(
+      JSON.parse(JSON.stringify(preset.filter)) as ProductAdvancedFilterGroup
+    );
     setIsPresetDialogOpen(true);
   };
 
@@ -490,13 +508,17 @@ export const ProductSelectionActions = memo(() => {
         await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
         toast(`Saved preset "${trimmedName}".`, { variant: 'success' });
       } else {
-        if (!editingPresetId) {
-          toast('Preset to rename was not found.', { variant: 'error' });
+        if (editingPresetId === null || editingPresetId.trim().length === 0) {
+          toast('Preset to edit was not found.', { variant: 'error' });
           return;
         }
         const editingPreset = findPresetById(advancedFilterPresets, editingPresetId);
-        if (!editingPreset) {
-          toast('Preset to rename was not found.', { variant: 'error' });
+        if (editingPreset === null) {
+          toast('Preset to edit was not found.', { variant: 'error' });
+          return;
+        }
+        if (presetFilterDraft === null) {
+          toast('Preset filter is required.', { variant: 'error' });
           return;
         }
         if (hasPresetNameConflict(advancedFilterPresets, trimmedName, editingPresetId)) {
@@ -505,12 +527,25 @@ export const ProductSelectionActions = memo(() => {
           });
           return;
         }
+        const parsedFilter = productAdvancedFilterGroupSchema.safeParse(presetFilterDraft);
+        if (!parsedFilter.success) {
+          toast(
+            parsedFilter.error.issues[0]?.message ?? 'Preset filter has invalid rules.',
+            { variant: 'error' }
+          );
+          return;
+        }
         const now = new Date().toISOString();
         const nextPresets = advancedFilterPresets.map((preset: ProductAdvancedFilterPreset) =>
-          preset.id === editingPresetId ? { ...preset, name: trimmedName, updatedAt: now } : preset
+          preset.id === editingPresetId
+            ? { ...preset, name: trimmedName, filter: parsedFilter.data, updatedAt: now }
+            : preset
         );
         await setAdvancedFilterPresets(nextPresets);
-        toast(`Renamed preset to "${trimmedName}".`, { variant: 'success' });
+        if (activeAdvancedFilterPresetId === editingPresetId) {
+          setAdvancedFilterState(JSON.stringify(parsedFilter.data), editingPresetId);
+        }
+        toast(`Updated preset "${trimmedName}".`, { variant: 'success' });
       }
 
       closePresetDialog();
@@ -737,9 +772,9 @@ export const ProductSelectionActions = memo(() => {
                       <Copy className='h-3.5 w-3.5' aria-hidden='true' />
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      aria-label={`Rename preset ${preset.name}`}
-                      title='Rename preset'
-                      onClick={() => openRenamePresetDialog(preset)}
+                      aria-label={`Edit preset ${preset.name}`}
+                      title='Edit preset'
+                      onClick={() => openEditPresetDialog(preset)}
                       className='h-8 w-8 cursor-pointer justify-center p-0'
                     >
                       <Pencil className='h-3.5 w-3.5' aria-hidden='true' />
@@ -765,9 +800,13 @@ export const ProductSelectionActions = memo(() => {
       <AppModal
         isOpen={isPresetDialogOpen}
         onClose={closePresetDialog}
-        title={presetDialogMode === 'rename' ? 'Rename Preset' : 'Save Filter Preset'}
-        subtitle='Presets store advanced filter sequences.'
-        size='sm'
+        title={presetDialogMode === 'edit' ? 'Edit Filter Preset' : 'Save Filter Preset'}
+        subtitle={
+          presetDialogMode === 'edit'
+            ? 'Update the preset name and advanced filter rules.'
+            : 'Presets store advanced filter sequences.'
+        }
+        size={presetDialogMode === 'edit' ? 'xl' : 'sm'}
         footer={
           <>
             <Button type='button' variant='outline' onClick={closePresetDialog}>
@@ -780,19 +819,26 @@ export const ProductSelectionActions = memo(() => {
               }}
               disabled={savingPreset}
             >
-              {savingPreset ? 'Saving...' : 'Save'}
+              {presetDialogSubmitLabel}
             </Button>
           </>
         }
       >
-        <div className='space-y-2'>
+        <div className='space-y-4'>
           <Input
             value={presetName}
             onChange={(event) => setPresetName(event.target.value)}
             placeholder='Preset name'
             aria-label='Preset name'
             className='h-8'
-           title='Preset name'/>
+            title='Preset name'
+          />
+          {presetDialogMode === 'edit' && presetFilterDraft ? (
+            <AdvancedFilterBuilder
+              group={presetFilterDraft}
+              onChange={setPresetFilterDraft}
+            />
+          ) : null}
         </div>
       </AppModal>
 

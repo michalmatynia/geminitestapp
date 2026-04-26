@@ -67,9 +67,15 @@ describe('mongoCategoryMappingImpl canonical external ids', () => {
     const internalFindMock = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue([createInternalCategoryDoc()]),
     });
+    const connectionFindMock = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([{ _id: 'conn-1' }]),
+    });
 
     getMongoDbMock.mockResolvedValue({
       collection: vi.fn((name: string) => {
+        if (name === 'integration_connections') {
+          return { find: connectionFindMock };
+        }
         if (name === 'category_mappings') {
           return { find: mappingsFindMock };
         }
@@ -118,9 +124,15 @@ describe('mongoCategoryMappingImpl canonical external ids', () => {
     const externalFindMock = vi.fn().mockReturnValue({
       toArray: vi.fn().mockResolvedValue([createExternalCategoryDoc()]),
     });
+    const connectionFindMock = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([{ _id: 'conn-1' }]),
+    });
 
     getMongoDbMock.mockResolvedValue({
       collection: vi.fn((name: string) => {
+        if (name === 'integration_connections') {
+          return { find: connectionFindMock };
+        }
         if (name === 'category_mappings') {
           return {
             findOne: mappingFindOneMock,
@@ -168,5 +180,56 @@ describe('mongoCategoryMappingImpl canonical external ids', () => {
       externalCategoryId: 'base-category-42',
       internalCategoryId: 'internal-category-1',
     });
+  });
+
+  it('omits mappings whose integration connection no longer exists', async () => {
+    const activeMapping = createCategoryMappingDoc();
+    const orphanedMapping = createCategoryMappingDoc({
+      _id: 'mapping-deleted-connection',
+      connectionId: 'deleted-conn',
+      externalCategoryId: 'deleted-external-category',
+    });
+    const mappingsFindMock = vi.fn().mockReturnValue({
+      sort: vi.fn().mockReturnValue({
+        toArray: vi.fn().mockResolvedValue([activeMapping, orphanedMapping]),
+      }),
+    });
+    const connectionFindMock = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([{ _id: 'conn-1' }]),
+    });
+    const externalFindMock = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([createExternalCategoryDoc()]),
+    });
+    const internalFindMock = vi.fn().mockReturnValue({
+      toArray: vi.fn().mockResolvedValue([createInternalCategoryDoc()]),
+    });
+
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn((name: string) => {
+        if (name === 'integration_connections') {
+          return { find: connectionFindMock };
+        }
+        if (name === 'category_mappings') {
+          return { find: mappingsFindMock };
+        }
+        if (name === 'external_categories') {
+          return { find: externalFindMock };
+        }
+        if (name === 'product_categories') {
+          return { find: internalFindMock };
+        }
+        throw new Error(`Unexpected collection ${name}`);
+      }),
+    });
+
+    const { mongoCategoryMappingImpl } = await import('./mongo-impl');
+    const result = await mongoCategoryMappingImpl.listByInternalCategory(
+      'internal-category-1',
+      'catalog-1'
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.connectionId).toBe('conn-1');
+    expect(result[0]?.id).toBe('mapping-1');
   });
 });

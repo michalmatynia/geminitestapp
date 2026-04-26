@@ -6,8 +6,12 @@ import { DocumentWysiwygEditor } from '@/shared/lib/document-editor/public';
 import type {
   FilemakerEmailCampaign,
 } from '@/shared/contracts/filemaker';
-import { Badge, Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { Badge, Button, Input, Tabs, TabsContent, TabsList, TabsTrigger, Textarea } from '@/shared/ui/primitives.public';
 import { FormField, FormSection, SelectSimple } from '@/shared/ui/forms-and-actions.public';
+
+import { EmailBuilder } from '../components/email-builder/EmailBuilder';
+import { compileBlocksToHtml, compileBlocksToPlainText } from '../components/email-builder/compile-blocks';
+import { normalizeEmailBlocks, type EmailBlock } from '../components/email-builder/block-model';
 
 import { AudienceSourceSection } from './campaign-edit-sections/AudienceSourceSection';
 export { DeliveryGovernanceSection } from './campaign-edit-sections/DeliveryGovernanceSection';
@@ -181,26 +185,77 @@ export function CampaignDetailsSection(): React.JSX.Element {
 
 export function ContentSection(): React.JSX.Element {
   const { draft, setDraft } = useCampaignEditContext();
+  const blocks = React.useMemo<EmailBlock[]>(
+    () => normalizeEmailBlocks(draft.bodyBlocks),
+    [draft.bodyBlocks]
+  );
+  const initialMode: 'builder' | 'html' = blocks.length > 0 || !draft.bodyHtml ? 'builder' : 'html';
+  const [mode, setMode] = React.useState<'builder' | 'html'>(initialMode);
+
+  const handleBlocksChange = React.useCallback(
+    (next: EmailBlock[]): void => {
+      const compiledHtml = next.length > 0 ? compileBlocksToHtml(next) : null;
+      updateCampaignDraft(setDraft, (current) => ({
+        ...current,
+        bodyBlocks: next.length > 0 ? next : null,
+        bodyHtml: compiledHtml,
+      }));
+    },
+    [setDraft]
+  );
+
   return (
     <FormSection title='Campaign Content' className='space-y-4 p-4'>
       <div className='text-sm text-gray-400'>
-        Write the primary campaign body with the shared rich-text editor.
+        Build a structured email with drag-and-drop blocks, or write raw HTML directly.
       </div>
-      <DocumentWysiwygEditor
-        engineInstance='filemaker_email'
-        showBrand
-        value={draft.bodyHtml ?? ''}
-        onChange={(value) => {
-          updateCampaignDraft(setDraft, (current) => ({
-            ...current,
-            bodyHtml: value || null,
-          }));
+      <Tabs
+        value={mode}
+        onValueChange={(value: string): void => {
+          setMode(value === 'html' ? 'html' : 'builder');
         }}
-        placeholder='Write your campaign email...'
-      />
+      >
+        <TabsList>
+          <TabsTrigger value='builder'>Builder</TabsTrigger>
+          <TabsTrigger value='html'>Raw HTML</TabsTrigger>
+        </TabsList>
+        <TabsContent value='builder' className='space-y-4'>
+          {blocks.length === 0 && draft.bodyHtml ? (
+            <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200'>
+              This campaign has raw HTML that was not authored with the builder. Adding blocks
+              will overwrite the current HTML on save.
+            </div>
+          ) : null}
+          <EmailBuilder blocks={blocks} onChange={handleBlocksChange} />
+        </TabsContent>
+        <TabsContent value='html' className='space-y-4'>
+          {blocks.length > 0 ? (
+            <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200'>
+              Editing raw HTML while builder blocks exist will not affect the blocks. The
+              builder remains the source of truth and will recompile HTML on save.
+            </div>
+          ) : null}
+          <DocumentWysiwygEditor
+            engineInstance='filemaker_email'
+            showBrand
+            value={draft.bodyHtml ?? ''}
+            onChange={(value) => {
+              updateCampaignDraft(setDraft, (current) => ({
+                ...current,
+                bodyHtml: value || null,
+              }));
+            }}
+            placeholder='Write your campaign email...'
+          />
+        </TabsContent>
+      </Tabs>
       <FormField
         label='Campaign plain-text override'
-        description='Optional. Leave blank to derive plain text from the HTML body during delivery.'
+        description={
+          blocks.length > 0
+            ? 'Optional. Leave blank to derive plain text from the builder blocks during delivery.'
+            : 'Optional. Leave blank to derive plain text from the HTML body during delivery.'
+        }
       >
         <Textarea
           rows={4}
@@ -212,6 +267,9 @@ export function ContentSection(): React.JSX.Element {
               bodyText: event.target.value || null,
             }));
           }}
+          placeholder={
+            blocks.length > 0 ? compileBlocksToPlainText(blocks).slice(0, 200) : undefined
+          }
         />
       </FormField>
     </FormSection>

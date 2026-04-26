@@ -1,6 +1,6 @@
 import React from 'react';
 import { type NavItem } from './admin-menu-utils';
-import { HomeIcon, AppWindow, GraduationCapIcon, Plug } from './icons';
+import { AppWindow, GraduationCapIcon } from './icons';
 
 export const getWorkspaceNav = (): NavItem => ({
   id: 'workspace',

@@ -1,4 +1,4 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId, type Document, type Filter } from 'mongodb';
 
 import {
   type ConnectionDeleteOptions,
@@ -111,6 +111,20 @@ export const toConnectionIdCandidates = (
     asStrings: Array.from(asStrings),
     asDocumentIds,
   };
+};
+
+export const buildConnectionReferenceFilter = (connectionId: string): Filter<Document> => {
+  const candidates = toConnectionIdCandidates(connectionId);
+  const values = Array.from(
+    new Map(
+      [...candidates.asStrings, ...candidates.asDocumentIds].map((candidate) => [
+        `${candidate instanceof ObjectId ? 'objectId' : 'string'}:${candidate.toString()}`,
+        candidate,
+      ])
+    ).values()
+  );
+
+  return { connectionId: { $in: values } } as Filter<Document>;
 };
 
 export const stripActiveTemplateScopesForConnection = (

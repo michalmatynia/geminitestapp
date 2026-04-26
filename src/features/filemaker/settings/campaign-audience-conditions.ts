@@ -29,6 +29,10 @@ const AUDIENCE_FIELDS: FilemakerAudienceField[] = [
   'organization.country',
   'organization.postalCode',
   'organization.street',
+  'organization.demandValueId',
+  'organization.demandLegacyValueUuid',
+  'organization.demandLabel',
+  'organization.demandPath',
   'person.firstName',
   'person.lastName',
   'person.city',
@@ -200,6 +204,10 @@ type ConditionContext = {
   email?: FilemakerEmail | null;
   organizationIds?: string[];
   eventIds?: string[];
+  organizationDemandValueIds?: string[];
+  organizationDemandLegacyValueUuids?: string[];
+  organizationDemandLabels?: string[];
+  organizationDemandPaths?: string[];
 };
 
 const resolveFieldValue = (
@@ -223,6 +231,14 @@ const resolveFieldValue = (
       return context.organization?.postalCode ?? null;
     case 'organization.street':
       return context.organization?.street ?? null;
+    case 'organization.demandValueId':
+      return context.organizationDemandValueIds ?? null;
+    case 'organization.demandLegacyValueUuid':
+      return context.organizationDemandLegacyValueUuids ?? null;
+    case 'organization.demandLabel':
+      return context.organizationDemandLabels ?? null;
+    case 'organization.demandPath':
+      return context.organizationDemandPaths ?? null;
     case 'person.firstName':
       return context.person?.firstName ?? null;
     case 'person.lastName':

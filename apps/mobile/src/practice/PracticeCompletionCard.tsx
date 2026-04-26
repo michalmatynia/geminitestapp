@@ -48,7 +48,7 @@ function SyncPanel(props: {
   return (
     <>
       {props.scoreSyncState !== null && (
-        <View style={{ ...(props.scoreSyncAppearance as Record<string, any>), borderRadius: 18, borderWidth: 1, padding: 12 }}>
+        <View style={{ ...(props.scoreSyncAppearance as Record<string, string | number>), borderRadius: 18, borderWidth: 1, padding: 12 }}>
           <Text style={{ color: props.scoreSyncAppearance?.textColor ?? '#0f172a', fontSize: 13, lineHeight: 18, fontWeight: '600' }}>
             {props.scoreSyncState.message}
           </Text>
@@ -68,7 +68,7 @@ function NewBadgesPanel(props: {
 }): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      {props.completion.newBadges.map((badgeId: string) => (
+      {(props.completion.newBadges as string[]).map((badgeId: string) => (
         <View key={badgeId} style={{ borderRadius: 999, borderWidth: 1, borderColor: '#c7d2fe', backgroundColor: '#eef2ff', paddingHorizontal: 12, paddingVertical: 7 }}>
           <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
             {props.copy({ de: 'Neues Abzeichen', en: 'New badge', pl: 'Nowa odznaka' })}: {getLocalizedKangurMetadataBadgeName(badgeId, props.locale, badgeId) as string}

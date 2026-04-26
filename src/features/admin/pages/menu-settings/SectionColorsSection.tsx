@@ -17,7 +17,15 @@ const SECTION_COLOR_OPTIONS: Array<LabeledOptionDto<string>> = [
 ];
 
 export function SectionColorsSection(): React.JSX.Element {
-  const { sectionColors, handleSectionColorChange } = useAdminMenuSettings();
+  const {
+    sections,
+    sectionColors,
+    updateSectionColor,
+  } = useAdminMenuSettings() as {
+    sections: Array<LabeledOptionDto<string>>;
+    sectionColors: Record<string, string>;
+    updateSectionColor: (id: string, color: string) => void;
+  };
 
   return (
     <FormSection
@@ -28,11 +36,11 @@ export function SectionColorsSection(): React.JSX.Element {
       variant='subtle'
     >
       <div className='grid gap-4 sm:grid-cols-2'>
-        {sectionColors.map((config) => (
-          <FormField key={config.id} label={config.label}>
+        {sections.map((section) => (
+          <FormField key={section.value} label={section.label}>
             <SelectSimple
-              value={config.color}
-              onValueChange={(val) => handleSectionColorChange(config.id, val)}
+              value={sectionColors[section.value] ?? 'none'}
+              onValueChange={(val: string) => updateSectionColor(section.value, val)}
               options={SECTION_COLOR_OPTIONS}
               className='h-8 bg-gray-900/40 text-xs'
             />

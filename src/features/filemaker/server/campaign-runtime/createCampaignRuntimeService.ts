@@ -37,6 +37,8 @@ import {
   resolveFilemakerEmailCampaignRetryableDeliveries,
   syncFilemakerEmailCampaignRunWithDeliveries,
   applyFilemakerEmailCampaignRunStatusToDeliveries,
+  autoSuppressColdAddresses,
+  computeEngagementSnapshot,
   toPersistedFilemakerEmailCampaignDeliveryAttemptRegistry,
   toPersistedFilemakerEmailCampaignDeliveryRegistry,
   toPersistedFilemakerEmailCampaignEventRegistry,
@@ -540,7 +542,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             campaignId: campaign.id,
             runId: run.id,
             deliveryId: delivery.id,
-            type: 'status_changed',
+            type: 'delivery_deferred_domain',
             message,
             deliveryStatus: 'failed',
             createdAt: nowIso,
@@ -567,7 +569,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
                 campaignId: campaign.id,
                 runId: run.id,
                 deliveryId: delivery.id,
-                type: 'status_changed',
+                type: 'delivery_deferred_warmup',
                 message: `Warm-up daily cap reached for sender ${senderKey} (${warmup.used}/${warmup.dailyCap}). Deferred to ${warmup.nextAvailableAt}.`,
                 deliveryStatus: delivery.status,
                 createdAt: nowIso,
@@ -735,7 +737,7 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
             createFilemakerEmailCampaignEvent({
               campaignId: campaign.id,
               runId: run.id,
-              type: 'paused',
+              type: 'run_paused_circuit_breaker',
               message: `Run halted mid-flight: bounce rate exceeded ${campaign.launch.pauseOnBounceRatePercent}% threshold to protect sender reputation.`,
               runStatus: 'queued',
               createdAt: nowIso,
@@ -801,6 +803,37 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
           updatedAt: nowIso,
         }),
       ]);
+
+      // Auto-suppress recipients whose engagement counters are stale after this run.
+      const engagementSnapshot = computeEngagementSnapshot({
+        eventRegistry,
+        deliveryRegistry: state.deliveryRegistry,
+      });
+      const autoSuppressionResult = autoSuppressColdAddresses({
+        snapshot: engagementSnapshot,
+        suppressionRegistry,
+        campaignId: campaign.id,
+        runId: run.id,
+        actor: 'engagement-tracker',
+      });
+      if (autoSuppressionResult.addedEntries.length > 0) {
+        suppressionRegistry = autoSuppressionResult.nextRegistry;
+        eventRegistry = appendEventsToRegistry(
+          eventRegistry,
+          autoSuppressionResult.addedEntries.map((entry) =>
+            createFilemakerEmailCampaignEvent({
+              campaignId: campaign.id,
+              runId: run.id,
+              type: 'unsubscribed',
+              message: `Auto-suppressed ${entry.emailAddress} (cold) — ${entry.notes ?? 'no engagement after multiple sends.'}`,
+              actor: 'engagement-tracker',
+              runStatus: 'completed',
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            })
+          )
+        );
+      }
     }
 
     const updatedCampaign = applyBounceThresholdToCampaign({

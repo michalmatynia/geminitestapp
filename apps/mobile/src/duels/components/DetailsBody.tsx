@@ -1,4 +1,7 @@
 import React from 'react';
+import { type KangurDuelSession } from '@kangur/contracts/kangur-duels';
+import { type UseKangurMobileDuelSessionResult as DuelSessionState } from '../useKangurMobileDuelSession';
+import { type DuelCopy, type DuelLocale, type DuelRoundProgress } from '../duels-screen-session-view';
 import { MessageCard } from '../duels-primitives';
 import { DetailsHeader } from './DetailsHeader';
 import { DetailsPills } from './DetailsPills';
@@ -7,12 +10,12 @@ import { SessionTimeline } from './SessionTimeline';
 import { SpectatorMessage } from './SpectatorMessage';
 
 interface DetailsBodyProps {
-  copy: any;
-  duel: any;
+  copy: DuelCopy;
+  duel: DuelSessionState;
   hasWaitingSession: boolean;
-  locale: any;
-  roundProgress: any;
-  session: any;
+  locale: DuelLocale;
+  roundProgress: DuelRoundProgress;
+  session: KangurDuelSession;
   sessionTimelineItems: string[];
 }
 

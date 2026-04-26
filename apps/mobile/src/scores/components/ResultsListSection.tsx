@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { Card, KangurMobileActionButton as ActionButton, KangurMobileFilterChip, KangurMobileInsetPanel as InsetPanel, KangurMobileLinkButton as LinkButton, KangurMobilePill as Pill } from '../shared/KangurMobileUi';
+import { Card, KangurMobileActionButton as ActionButton, KangurMobileFilterChip, KangurMobileInsetPanel as InsetPanel, KangurMobileLinkButton as LinkButton, KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
 import { formatKangurMobileScoreOperation, formatKangurMobileScoreDateTime, formatKangurMobileScoreDuration } from '../scores/mobileScoreSummary';
 import { getAccuracyTone, getOperationTone, formatKangurMobileScoreFamily, getKangurMobileScoreAccuracyPercent, getKangurMobileScoreFamily } from './results-primitives';
 import { createKangurPracticeHref } from '../practice/practiceHref';

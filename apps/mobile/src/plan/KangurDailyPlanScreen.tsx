@@ -61,19 +61,22 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
   const duelPlan = useKangurMobileDailyPlanDuels();
   const weakestLesson = lessonMastery.weakest[0] ?? null;
   const strongestLesson = lessonMastery.strongest[0] ?? null;
-  const lessonFocusSummary = weakestLesson
-    ? copy({
-        de: `Fokus für heute: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du wieder Tempo aufnimmst.`,
-        en: `Focus for today: ${weakestLesson.title} still needs a short review before you build pace again.`,
-        pl: `Fokus na dziś: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim znowu wejdziesz w tempo.`,
-      })
-    : strongestLesson
-      ? copy({
-          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
-          en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short confident start.`,
-          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótki, pewny start.`,
-        })
-      : null;
+
+  let lessonFocusSummary: string | null = null;
+  if (weakestLesson !== null) {
+    lessonFocusSummary = copy({
+      de: `Fokus für heute: ${weakestLesson.title} braucht noch eine kurze Wiederholung, bevor du wieder Tempo aufnimmst.`,
+      en: `Focus for today: ${weakestLesson.title} still needs a short review before you build pace again.`,
+      pl: `Fokus na dziś: ${weakestLesson.title} potrzebuje jeszcze krótkiej powtórki, zanim znowu wejdziesz w tempo.`,
+    });
+  } else if (strongestLesson !== null) {
+    lessonFocusSummary = copy({
+      de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
+      en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short confident start.`,
+      pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótki, pewny start.`,
+    });
+  }
+
   const openDuelSession = (sessionId: string): void => {
     router.replace(createKangurDuelsHref({ sessionId }));
   };
@@ -205,47 +208,56 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               />
             </View>
 
-            {isLoadingAuth && !isAuthenticated ? (
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: 'Die Anmeldung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan Ergebnisse und Trainingshinweise.',
-                  en: 'Restoring sign-in. Once it is ready, the plan will load results and training guidance.',
-                  pl: 'Przywracamy logowanie. Gdy będzie gotowe, plan pobierze wyniki i wskazówki treningowe.',
-                })}
-              </Text>
-            ) : !isAuthenticated ? (
-              supportsLearnerCredentials ? (
-                <View style={{ gap: 10 }}>
+            {(() => {
+              if (isLoadingAuth && !isAuthenticated) {
+                return (
                   <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({
-                      de: 'Melde dich an, um Ergebnisse, Trainingsfokus und letzte Fortschritte zu laden.',
-                      en: 'Sign in to load results, training focus, and recent progress.',
-                      pl: 'Zaloguj się, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
+                      de: 'Die Anmeldung wird wiederhergestellt. Sobald sie bereit ist, lädt der Plan Ergebnisse und Trainingshinweise.',
+                      en: 'Restoring sign-in. Once it is ready, the plan will load results and training guidance.',
+                      pl: 'Przywracamy logowanie. Gdy będzie gotowe, plan pobierze wyniki i wskazówki treningowe.',
                     })}
                   </Text>
-                  <LinkButton
-                    href='/'
+                );
+              }
+              if (!isAuthenticated) {
+                if (supportsLearnerCredentials) {
+                  return (
+                    <View style={{ gap: 10 }}>
+                      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                        {copy({
+                          de: 'Melde dich an, um Ergebnisse, Trainingsfokus und letzte Fortschritte zu laden.',
+                          en: 'Sign in to load results, training focus, and recent progress.',
+                          pl: 'Zaloguj się, aby pobrać wyniki, fokus treningowy i ostatnie postępy.',
+                        })}
+                      </Text>
+                      <LinkButton
+                        href='/'
+                        label={copy({
+                          de: 'Zum Login',
+                          en: 'Go to sign in',
+                          pl: 'Przejdź do logowania',
+                        })}
+                      />
+                    </View>
+                  );
+                }
+                return (
+                  <ActionButton
                     label={copy({
-                      de: 'Zum Login',
-                      en: 'Go to sign in',
-                      pl: 'Przejdź do logowania',
+                      de: 'Demo starten',
+                      en: 'Start demo',
+                      pl: 'Uruchom demo',
                     })}
+                    onPress={() => signIn()}
+                    tone='brand'
                   />
-                </View>
-              ) : (
-                <ActionButton
-                  label={copy({
-                    de: 'Demo starten',
-                    en: 'Start demo',
-                    pl: 'Uruchom demo',
-                  })}
-                  onPress={() => signIn()}
-                  tone='brand'
-                />
-              )
-            ) : null}
+                );
+              }
+              return null;
+            })()}
 
-            {authError ? (
+            {authError !== null && authError !== '' ? (
               <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text>
             ) : null}
           </Card>
@@ -258,74 +270,88 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
                 pl: 'Fokus treningowy',
               })}
             </Text>
-            {isLoading ? (
-              <Text style={{ color: '#475569' }}>
-                {copy({
-                  de: 'Der ergebnisbasierte Fokus wird geladen...',
-                  en: 'Loading score-based focus...',
-                  pl: 'Ładujemy fokus oparty na wynikach...',
-                })}
-              </Text>
-            ) : scoreError ? (
-              <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
-            ) : !isAuthenticated ? (
-              <Text style={{ color: '#475569', lineHeight: 22 }}>
-                {copy({
-                  de: 'Melde dich an, um Hinweise für den stärksten und schwächsten Modus freizuschalten.',
-                  en: 'Sign in to unlock guidance for the strongest and weakest modes.',
-                  pl: 'Zaloguj się, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.',
-                })}
-              </Text>
-            ) : !weakestFocus && !strongestFocus ? (
-              <Text style={{ color: '#475569', lineHeight: 22 }}>
-                {copy({
-                  de: 'Schließe einen Lauf ab, um den ersten Trainingsfokus aufzubauen.',
-                  en: 'Finish one run to build the first training focus.',
-                  pl: 'Ukończ jedną serię, aby zbudować pierwszy fokus treningowy.',
-                })}
-              </Text>
-            ) : (
-              <View style={{ gap: 12 }}>
-                {weakestFocus ? (
-                  <FocusCard
-                    accentColor='#b91c1c'
-                    description={copy({
-                      de: 'Das ist aktuell der schwächste Bereich in deinen Ergebnissen. Starte mit einer kurzen gezielten Serie und kehre bei Bedarf zur passenden Lektion zurück.',
-                      en: 'This is currently the weakest area in your results. Start with a short targeted run and then return to the matching lesson if needed.',
-                      pl: 'To obecnie najsłabszy obszar w Twoich wynikach. Zacznij od krótkiej celowanej serii, a potem wróć do pasującej lekcji, jeśli będzie trzeba.',
+            {(() => {
+              if (isLoading) {
+                return (
+                  <Text style={{ color: '#475569' }}>
+                    {copy({
+                      de: 'Der ergebnisbasierte Fokus wird geladen...',
+                      en: 'Loading score-based focus...',
+                      pl: 'Ładujemy fokus oparty na wynikach...',
                     })}
-                    historyHref={weakestFocus.historyHref}
-                    lessonHref={weakestFocus.lessonHref}
-                    operation={weakestFocus.operation}
-                    practiceHref={weakestFocus.practiceHref}
-                    title={copy({
-                      de: 'Zum Wiederholen',
-                      en: 'Needs review',
-                      pl: 'Do powtórki',
+                  </Text>
+                );
+              }
+              if (scoreError !== null && scoreError !== '') {
+                return (
+                  <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{scoreError}</Text>
+                );
+              }
+              if (!isAuthenticated) {
+                return (
+                  <Text style={{ color: '#475569', lineHeight: 22 }}>
+                    {copy({
+                      de: 'Melde dich an, um Hinweise für den stärksten und schwächsten Modus freizuschalten.',
+                      en: 'Sign in to unlock guidance for the strongest and weakest modes.',
+                      pl: 'Zaloguj się, aby odblokować wskazówki dla najmocniejszego i najsłabszego trybu.',
                     })}
-                  />
-                ) : null}
-                {strongestFocus ? (
-                  <FocusCard
-                    accentColor='#047857'
-                    description={copy({
-                      de: 'Dieser Modus ist gerade am stabilsten. Nutze ihn für einen schnellen Selbstvertrauensschub oder ein kurzes Aufwärmen.',
-                      en: 'This mode is the most stable right now. Use it for a quick confidence boost or a light warm-up.',
-                      pl: 'Ten tryb jest teraz najbardziej stabilny. Użyj go do szybkiego podbicia pewności albo lekkiej rozgrzewki.',
+                  </Text>
+                );
+              }
+              if (weakestFocus === null && strongestFocus === null) {
+                return (
+                  <Text style={{ color: '#475569', lineHeight: 22 }}>
+                    {copy({
+                      de: 'Schließe einen Lauf ab, um den ersten Trainingsfokus aufzubauen.',
+                      en: 'Finish one run to build the first training focus.',
+                      pl: 'Ukończ jedną serię, aby zbudować pierwszy fokus treningowy.',
                     })}
-                    historyHref={strongestFocus.historyHref}
-                    lessonHref={strongestFocus.lessonHref}
-                    operation={strongestFocus.operation}
-                    practiceHref={strongestFocus.practiceHref}
-                    title={copy({
-                      de: 'Stärkster Modus',
-                      en: 'Strongest mode',
-                      pl: 'Najmocniejszy tryb',
-                    })}
-                  />
-                ) : null}
-              </View>
-            )}
+                  </Text>
+                );
+              }
+              return (
+                <View style={{ gap: 12 }}>
+                  {weakestFocus !== null ? (
+                    <FocusCard
+                      accentColor='#b91c1c'
+                      description={copy({
+                        de: 'Das ist aktuell der schwächste Bereich in deinen Ergebnissen. Zacznij od krótkiej celowanej serii, a potem wróć do pasującej lekcji, jeśli będzie trzeba.',
+                        en: 'This is currently the weakest area in your results. Start with a short targeted run and then return to the matching lesson if needed.',
+                        pl: 'To obecnie najsłabszy obszar w Twoich wynikach. Zacznij od krótkiej celowanej serii, a potem wróć do pasującej lekcji, jeśli będzie trzeba.',
+                      })}
+                      historyHref={weakestFocus.historyHref}
+                      lessonHref={weakestFocus.lessonHref}
+                      operation={weakestFocus.operation}
+                      practiceHref={weakestFocus.practiceHref}
+                      title={copy({
+                        de: 'Zum Wiederholen',
+                        en: 'Needs review',
+                        pl: 'Do powtórki',
+                      })}
+                    />
+                  ) : null}
+                  {strongestFocus !== null ? (
+                    <FocusCard
+                      accentColor='#047857'
+                      description={copy({
+                        de: 'Dieser Modus ist gerade am stabilsten. Nutze ihn für einen schnellen Selbstvertrauensschub oder ein kurzes Aufwärmen.',
+                        en: 'This mode is the most stable right now. Use it for a quick confidence boost or a light warm-up.',
+                        pl: 'Ten tryb jest teraz najbardziej stabilny. Użyj go do szybkiego podbicia pewności albo lekkiej rozgrzewki.',
+                      })}
+                      historyHref={strongestFocus.historyHref}
+                      lessonHref={strongestFocus.lessonHref}
+                      operation={strongestFocus.operation}
+                      practiceHref={strongestFocus.practiceHref}
+                      title={copy({
+                        de: 'Stärkster Modus',
+                        en: 'Strongest mode',
+                        pl: 'Najmocniejszy tryb',
+                      })}
+                    />
+                  ) : null}
+                </View>
+              );
+            })()}
           </Card>
 
           <Card>
@@ -455,7 +481,7 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               />
               <Pill
                 label={
-                  duelPlan.currentRank
+                  duelPlan.currentRank !== null && duelPlan.currentRank !== 0
                     ? copy({
                         de: `Deine Position #${duelPlan.currentRank}`,
                         en: `Your rank #${duelPlan.currentRank}`,
@@ -475,151 +501,203 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
               />
             </View>
 
-            {duelPlan.isRestoringAuth || duelPlan.isLoading ? (
-              <Text style={{ color: '#475569', lineHeight: 22 }}>
-                {copy({
-                  de: 'Der heutige Duellstand wird geladen...',
-                  en: 'Loading today’s duel standing...',
-                  pl: 'Ładujemy dzisiejszy stan pojedynków...',
-                })}
-              </Text>
-            ) : duelPlan.error ? (
-              <View style={{ gap: 10 }}>
-                <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelPlan.error}</Text>
-                <ActionButton
-                  label={copy({
-                    de: 'Duelle aktualisieren',
-                    en: 'Refresh duels',
-                    pl: 'Odśwież pojedynki',
-                  })}
-                  onPress={() => duelPlan.refresh()}
-                />
-              </View>
-            ) : !duelPlan.isAuthenticated ? (
-              <Text style={{ color: '#475569', lineHeight: 22 }}>
-                {copy({
-                  de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
-                  en: 'Sign in to see duel standing, recent rivals, and quick rematches here.',
-                  pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
-                })}
-              </Text>
-            ) : (
-              <View style={{ gap: 12 }}>
-                {duelPlan.currentEntry ? (
-                  <InsetPanel
-                    gap={8}
-                    style={{
-                      borderColor: '#bfdbfe',
-                      backgroundColor: '#eff6ff',
-                    }}
-                  >
-                    <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                      {copy({
-                        de: 'DEIN DUELLSTAND',
-                        en: 'YOUR DUEL SNAPSHOT',
-                        pl: 'TWÓJ WYNIK W POJEDYNKACH',
-                      })}
-                    </Text>
-                    <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                      #{duelPlan.currentRank} {duelPlan.currentEntry.displayName}
-                    </Text>
-                    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                      {copy({
-                        de: `Siege ${duelPlan.currentEntry.wins} • Niederlagen ${duelPlan.currentEntry.losses} • Unentschieden ${duelPlan.currentEntry.ties}`,
-                        en: `Wins ${duelPlan.currentEntry.wins} • Losses ${duelPlan.currentEntry.losses} • Ties ${duelPlan.currentEntry.ties}`,
-                        pl: `Wygrane ${duelPlan.currentEntry.wins} • Porażki ${duelPlan.currentEntry.losses} • Remisy ${duelPlan.currentEntry.ties}`,
-                      })}
-                    </Text>
-                  </InsetPanel>
-                ) : (
+            {(() => {
+              if (duelPlan.isRestoringAuth || duelPlan.isLoading) {
+                return (
                   <Text style={{ color: '#475569', lineHeight: 22 }}>
                     {copy({
-                      de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                      en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
-                      pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                      de: 'Der heutige Duellstand wird geladen...',
+                      en: 'Loading today’s duel standing...',
+                      pl: 'Ładujemy dzisiejszy stan pojedynków...',
                     })}
                   </Text>
-                )}
-
-                {duelPlan.actionError ? (
-                  <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelPlan.actionError}</Text>
-                ) : null}
-
-                {duelPlan.opponents.length === 0 ? (
-                  <Text style={{ color: '#475569', lineHeight: 22 }}>
-                    {copy({
-                      de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
-                      en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
-                      pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
-                    })}
-                  </Text>
-                ) : (
-                  <View style={{ gap: 12 }}>
-                    {duelPlan.opponents.map((opponent) => (
-                      <InsetPanel
-                        key={opponent.learnerId}
-                        gap={8}
-                      >
-                        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                          {opponent.displayName}
-                        </Text>
-                        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                          {copy({
-                            de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                            en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                            pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                          })}
-                        </Text>
-                        <KangurMobilePendingActionButton
-                          horizontalPadding={14}
-                          label={copy({
-                            de: 'Schneller Rückkampf',
-                            en: 'Quick rematch',
-                            pl: 'Szybki rewanż',
-                          })}
-                          onPress={() => {
-                            void duelPlan.createRematch(opponent.learnerId).then((sessionId) => {
-                              if (sessionId) {
-                                openDuelSession(sessionId);
-                              }
-                            });
-                          }}
-                          pending={duelPlan.pendingOpponentLearnerId === opponent.learnerId}
-                          pendingLabel={copy({
-                            de: 'Rückkampf wird gesendet...',
-                            en: 'Sending rematch...',
-                            pl: 'Wysyłanie rewanżu...',
-                          })}
-                        />
-                      </InsetPanel>
-                    ))}
+                );
+              }
+              if (duelPlan.error !== null && duelPlan.error !== '') {
+                return (
+                  <View style={{ gap: 10 }}>
+                    <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                      {duelPlan.error}
+                    </Text>
+                    <ActionButton
+                      label={copy({
+                        de: 'Duelle aktualisieren',
+                        en: 'Refresh duels',
+                        pl: 'Odśwież pojedynki',
+                      })}
+                      onPress={() => duelPlan.refresh()}
+                    />
                   </View>
-                )}
-
-                <View style={{ alignSelf: 'stretch', gap: 10 }}>
-                  <ActionButton
-                    label={copy({
-                      de: 'Duelle aktualisieren',
-                      en: 'Refresh duels',
-                      pl: 'Odśwież pojedynki',
+                );
+              }
+              if (!duelPlan.isAuthenticated) {
+                return (
+                  <Text style={{ color: '#475569', lineHeight: 22 }}>
+                    {copy({
+                      de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
+                      en: 'Sign in to see duel standing, recent rivals, and quick rematches here.',
+                      pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
                     })}
-                    onPress={() => duelPlan.refresh()}
-                    stretch
-                    tone='secondary'
-                  />
+                  </Text>
+                );
+              }
+              return (
+                <View style={{ gap: 12 }}>
+                  {duelPlan.currentEntry !== null ? (
+                    <InsetPanel
+                      gap={8}
+                      style={{
+                        borderColor: '#bfdbfe',
+                        backgroundColor: '#eff6ff',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: '#1d4ed8',
+                          fontSize: 12,
+                          fontWeight: '800',
+                        }}
+                      >
+                        {copy({
+                          de: 'DEIN DUELLSTAND',
+                          en: 'YOUR DUEL SNAPSHOT',
+                          pl: 'TWÓJ WYNIK W POJEDYNKACH',
+                        })}
+                      </Text>
+                      <Text
+                        style={{
+                          color: '#0f172a',
+                          fontSize: 18,
+                          fontWeight: '800',
+                        }}
+                      >
+                        #{duelPlan.currentRank} {duelPlan.currentEntry.displayName}
+                      </Text>
+                      <Text
+                        style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}
+                      >
+                        {copy({
+                          de: `Siege ${duelPlan.currentEntry.wins} • Niederlagen ${duelPlan.currentEntry.losses} • Unentschieden ${duelPlan.currentEntry.ties}`,
+                          en: `Wins ${duelPlan.currentEntry.wins} • Losses ${duelPlan.currentEntry.losses} • Ties ${duelPlan.currentEntry.ties}`,
+                          pl: `Wygrane ${duelPlan.currentEntry.wins} • Porażki ${duelPlan.currentEntry.losses} • Remisy ${duelPlan.currentEntry.ties}`,
+                        })}
+                      </Text>
+                    </InsetPanel>
+                  ) : (
+                    <Text style={{ color: '#475569', lineHeight: 22 }}>
+                      {copy({
+                        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+                        en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+                        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+                      })}
+                    </Text>
+                  )}
 
-                  <LinkButton
-                    href={DUELS_ROUTE}
-                    label={copy({
-                      de: 'Duelle öffnen',
-                      en: 'Open duels',
-                      pl: 'Otwórz pojedynki',
-                    })}
-                    stretch
-                  />
+                  {duelPlan.actionError !== null && duelPlan.actionError !== '' ? (
+                    <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
+                      {duelPlan.actionError}
+                    </Text>
+                  ) : null}
+
+                  {duelPlan.opponents.length === 0 ? (
+                    <Text style={{ color: '#475569', lineHeight: 22 }}>
+                      {copy({
+                        de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
+                        en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
+                        pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
+                      })}
+                    </Text>
+                  ) : (
+                    <View style={{ gap: 12 }}>
+                      {duelPlan.opponents.map((opponent) => (
+                        <InsetPanel key={opponent.learnerId} gap={8}>
+                          <Text
+                            style={{
+                              color: '#0f172a',
+                              fontSize: 16,
+                              fontWeight: '800',
+                            }}
+                          >
+                            {opponent.displayName}
+                          </Text>
+                          <Text
+                            style={{
+                              color: '#64748b',
+                              fontSize: 12,
+                              lineHeight: 18,
+                            }}
+                          >
+                            {copy({
+                              de: `Letztes Duell ${formatKangurMobileScoreDateTime(
+                                opponent.lastPlayedAt,
+                                locale,
+                              )}`,
+                              en: `Last duel ${formatKangurMobileScoreDateTime(
+                                opponent.lastPlayedAt,
+                                locale,
+                              )}`,
+                              pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(
+                                opponent.lastPlayedAt,
+                                locale,
+                              )}`,
+                            })}
+                          </Text>
+                          <KangurMobilePendingActionButton
+                            horizontalPadding={14}
+                            label={copy({
+                              de: 'Schneller Rückkampf',
+                              en: 'Quick rematch',
+                              pl: 'Szybki rewanż',
+                            })}
+                            onPress={() => {
+                              void duelPlan
+                                .createRematch(opponent.learnerId)
+                                .then((sessionId) => {
+                                  if (sessionId !== null && sessionId !== '') {
+                                    openDuelSession(sessionId);
+                                  }
+                                });
+                            }}
+                            pending={
+                              duelPlan.pendingOpponentLearnerId ===
+                              opponent.learnerId
+                            }
+                            pendingLabel={copy({
+                              de: 'Rückkampf wird gesendet...',
+                              en: 'Sending rematch...',
+                              pl: 'Wysyłanie rewanżu...',
+                            })}
+                          />
+                        </InsetPanel>
+                      ))}
+                    </View>
+                  )}
+
+                  <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                    <ActionButton
+                      label={copy({
+                        de: 'Duelle aktualisieren',
+                        en: 'Refresh duels',
+                        pl: 'Odśwież pojedynki',
+                      })}
+                      onPress={() => duelPlan.refresh()}
+                      stretch
+                      tone='secondary'
+                    />
+
+                    <LinkButton
+                      href={DUELS_ROUTE}
+                      label={copy({
+                        de: 'Duelle öffnen',
+                        en: 'Open duels',
+                        pl: 'Otwórz pojedynki',
+                      })}
+                      stretch
+                    />
+                  </View>
                 </View>
-              </View>
-            )}
+              );
+            })()}
           </Card>
 
           <Card>

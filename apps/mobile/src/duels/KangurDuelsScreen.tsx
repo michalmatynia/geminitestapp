@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { ActionButton, LinkButton } from './duels-primitives';
-import { HOME_ROUTE, LOBBY_CHAT_PREVIEW_LIMIT } from '../utils/duels-ui';
+import { HOME_ROUTE, LOBBY_CHAT_PREVIEW_LIMIT } from './utils/duels-ui';
 import { createKangurDuelsHref } from './duelsHref';
 import { useKangurDuelsScreenData } from './useKangurDuelsScreenData';
 import { DuelsScreenContent } from './DuelsScreenContent';

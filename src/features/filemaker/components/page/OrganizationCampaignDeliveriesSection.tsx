@@ -1,7 +1,8 @@
 'use client';
 
-import { Megaphone } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import { ExternalLink, Megaphone } from 'lucide-react';
+import { useRouter } from 'nextjs-toploader/app';
+import React, { startTransition, useCallback, useMemo, useState } from 'react';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Badge, Button } from '@/shared/ui/primitives.public';
@@ -53,9 +54,40 @@ const compareDeliveriesByDateDesc = (
 
 export function OrganizationCampaignDeliveriesSection(): React.JSX.Element | null {
   const { organization, emails } = useAdminFilemakerOrganizationEditPageStateContext();
+  const router = useRouter();
   const settingsStore = useSettingsStore();
   const [mode, setMode] = useState<ViewMode>('by_email');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+
+  const navigateToRun = useCallback(
+    (runId: string): void => {
+      if (!runId) return;
+      startTransition(() => {
+        router.push(`/admin/filemaker/campaigns/runs/${encodeURIComponent(runId)}`);
+      });
+    },
+    [router]
+  );
+
+  const navigateToCampaign = useCallback(
+    (campaignId: string): void => {
+      if (!campaignId) return;
+      startTransition(() => {
+        router.push(`/admin/filemaker/campaigns/${encodeURIComponent(campaignId)}`);
+      });
+    },
+    [router]
+  );
+
+  const navigateToEmail = useCallback(
+    (emailId: string): void => {
+      if (!emailId) return;
+      startTransition(() => {
+        router.push(`/admin/filemaker/emails/${encodeURIComponent(emailId)}`);
+      });
+    },
+    [router]
+  );
 
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawDeliveries = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGN_DELIVERIES_KEY);
@@ -197,6 +229,9 @@ export function OrganizationCampaignDeliveriesSection(): React.JSX.Element | nul
               onToggle={(): void => {
                 setExpandedKey((current) => (current === group.key ? null : group.key));
               }}
+              onNavigateToRun={navigateToRun}
+              onNavigateToCampaign={navigateToCampaign}
+              onNavigateToEmail={navigateToEmail}
             />
           ))}
         </ul>
@@ -211,13 +246,23 @@ function DeliveryGroupRow({
   campaignsById,
   expanded,
   onToggle,
+  onNavigateToRun,
+  onNavigateToCampaign,
+  onNavigateToEmail,
 }: {
   mode: ViewMode;
   group: DeliveryGroup<FilemakerEmail | FilemakerEmailCampaign | null>;
   campaignsById: Map<string, FilemakerEmailCampaign>;
   expanded: boolean;
   onToggle: () => void;
+  onNavigateToRun: (runId: string) => void;
+  onNavigateToCampaign: (campaignId: string) => void;
+  onNavigateToEmail: (emailId: string) => void;
 }): React.JSX.Element {
+  const headerCampaign =
+    mode === 'by_campaign' ? (group.entity as FilemakerEmailCampaign | null) : null;
+  const headerEmail =
+    mode === 'by_email' ? (group.entity as FilemakerEmail | null) : null;
   const lastDelivery = group.deliveries[0] ?? null;
   const headerLabel = mode === 'by_email'
     ? (group.entity as FilemakerEmail | null)?.email ?? '—'
@@ -241,6 +286,40 @@ function DeliveryGroupRow({
           ) : null}
         </div>
         <div className='flex shrink-0 items-center gap-2'>
+          {headerCampaign ? (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className='h-6 px-2 text-[10px]'
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                onNavigateToCampaign(headerCampaign.id);
+              }}
+              aria-label={`Open campaign ${headerCampaign.name}`}
+              title='Open campaign'
+            >
+              <ExternalLink className='h-3 w-3' aria-hidden='true' />
+              <span className='ml-1'>Open</span>
+            </Button>
+          ) : null}
+          {headerEmail ? (
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className='h-6 px-2 text-[10px]'
+              onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                event.stopPropagation();
+                onNavigateToEmail(headerEmail.id);
+              }}
+              aria-label={`Open email ${headerEmail.email}`}
+              title='Open email'
+            >
+              <ExternalLink className='h-3 w-3' aria-hidden='true' />
+              <span className='ml-1'>Open</span>
+            </Button>
+          ) : null}
           {lastDelivery ? (
             <Badge variant={DELIVERY_STATUS_VARIANT[lastDelivery.status]} className='text-[10px]'>
               {lastDelivery.status}
@@ -262,30 +341,42 @@ function DeliveryGroupRow({
             const detailSecondary = mode === 'by_email'
               ? campaign?.subject ?? null
               : null;
+            const runId = delivery.runId;
             return (
-              <li
-                key={delivery.id}
-                className='flex flex-wrap items-center justify-between gap-2 rounded border border-border/30 bg-card/20 px-2 py-1.5'
-              >
-                <div className='min-w-0'>
-                  <div className='truncate text-white'>{detailLabel}</div>
-                  {detailSecondary ? (
-                    <div className='truncate text-[10px] text-gray-500'>{detailSecondary}</div>
-                  ) : null}
-                </div>
-                <div className='flex items-center gap-2'>
-                  {delivery.failureCategory ? (
-                    <Badge variant='outline' className='text-[10px]'>
-                      {delivery.failureCategory}
+              <li key={delivery.id}>
+                <button
+                  type='button'
+                  onClick={(): void => {
+                    if (runId) onNavigateToRun(runId);
+                  }}
+                  disabled={!runId}
+                  className='flex w-full flex-wrap items-center justify-between gap-2 rounded border border-border/30 bg-card/20 px-2 py-1.5 text-left transition-colors hover:bg-card/40 disabled:cursor-not-allowed disabled:opacity-60'
+                  aria-label={runId ? `Open run for ${detailLabel}` : detailLabel}
+                  title={runId ? 'Open campaign run' : 'No run linked to this delivery'}
+                >
+                  <div className='min-w-0'>
+                    <div className='truncate text-white'>{detailLabel}</div>
+                    {detailSecondary ? (
+                      <div className='truncate text-[10px] text-gray-500'>{detailSecondary}</div>
+                    ) : null}
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    {delivery.failureCategory ? (
+                      <Badge variant='outline' className='text-[10px]'>
+                        {delivery.failureCategory}
+                      </Badge>
+                    ) : null}
+                    <Badge variant={DELIVERY_STATUS_VARIANT[delivery.status]} className='text-[10px]'>
+                      {delivery.status}
                     </Badge>
-                  ) : null}
-                  <Badge variant={DELIVERY_STATUS_VARIANT[delivery.status]} className='text-[10px]'>
-                    {delivery.status}
-                  </Badge>
-                  <span className='text-gray-500'>
-                    {formatTimestamp(delivery.sentAt ?? delivery.updatedAt ?? null)}
-                  </span>
-                </div>
+                    <span className='text-gray-500'>
+                      {formatTimestamp(delivery.sentAt ?? delivery.updatedAt ?? null)}
+                    </span>
+                    {runId ? (
+                      <ExternalLink className='h-3 w-3 text-gray-400' aria-hidden='true' />
+                    ) : null}
+                  </div>
+                </button>
               </li>
             );
           })}

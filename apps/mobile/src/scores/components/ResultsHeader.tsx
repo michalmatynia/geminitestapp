@@ -1,5 +1,5 @@
 import { Text } from 'react-native';
-import { Card, LinkButton } from '../shared/KangurMobileUi';
+import { Card, LinkButton } from '../../shared/KangurMobileUi';
 import { createKangurPlanHref } from '../plan/planHref';
 
 interface ResultsHeaderProps {

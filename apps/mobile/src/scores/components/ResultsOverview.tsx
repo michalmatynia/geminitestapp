@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { Card, Metric } from '../shared/KangurMobileUi';
+import { Card, Metric } from '../../shared/KangurMobileUi';
 
 interface ResultsOverviewProps {
   results: {

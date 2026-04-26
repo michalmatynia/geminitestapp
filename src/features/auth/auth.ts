@@ -166,12 +166,14 @@ const credentialsProvider = Credentials({
 const buildProviders = async (): Promise<Provider[]> => {
   const providers: Provider[] = [credentialsProvider];
   const secrets = await getAuthOAuthSecrets();
-  if (secrets.google.clientId && secrets.google.clientSecret) providers.push(Google({ clientId: secrets.google.clientId, clientSecret: secrets.google.clientSecret }));
-  if (secrets.facebook.clientId && secrets.facebook.clientSecret) providers.push(Facebook({ clientId: secrets.facebook.clientId, clientSecret: secrets.facebook.clientSecret }));
+  if (secrets.google.clientId !== undefined && secrets.google.clientSecret !== undefined) {
+    providers.push(Google({ clientId: secrets.google.clientId, clientSecret: secrets.google.clientSecret }));
+  }
+  if (secrets.facebook.clientId !== undefined && secrets.facebook.clientSecret !== undefined) {
+    providers.push(Facebook({ clientId: secrets.facebook.clientId, clientSecret: secrets.facebook.clientSecret }));
+  }
   return providers;
 };
-
-interface RefreshMeta { role?: string; roleAssigned?: boolean; authRefreshedAt?: number; }
 
 const checkRefreshRequired = (token: JWT): boolean => {
   const r = token['role'];
@@ -186,22 +188,31 @@ const checkRefreshRequired = (token: JWT): boolean => {
 const getUpdatedToken = async (uid: string, token: JWT): Promise<JWT> => {
   const [access, sec] = await Promise.all([getAuthAccessForUser(uid), getAuthSecurityProfile(uid)]);
   return {
-    ...token, role: access.roleId, permissions: access.permissions, roleLevel: access.level, isElevated: access.isElevated, roleAssigned: access.roleAssigned,
-    accountDisabled: sec.disabledAt !== null, accountBanned: sec.bannedAt !== null, authRefreshedAt: Date.now(),
+    ...token,
+    role: access.roleId,
+    permissions: access.permissions,
+    roleLevel: access.level,
+    isElevated: access.isElevated,
+    roleAssigned: access.roleAssigned,
+    accountDisabled: sec.disabledAt !== null,
+    accountBanned: sec.bannedAt !== null,
+    authRefreshedAt: Date.now(),
   };
 };
 
-const getSessionUser = (token: JWT, current: User): User => ({
-  ...current,
-  id: String(token['sub'] ?? current.id),
-  role: (token['role'] as string | null) ?? null,
-  permissions: (token['permissions'] as string[]) ?? [],
-  roleLevel: (token['roleLevel'] as number | null) ?? null,
-  isElevated: (token['isElevated'] as boolean) ?? false,
-  roleAssigned: (token['roleAssigned'] as boolean) ?? false,
-  accountDisabled: (token['accountDisabled'] as boolean) ?? false,
-  accountBanned: (token['accountBanned'] as boolean) ?? false,
-});
+const getSessionUser = (token: JWT, current: User): User => {
+  return {
+    ...current,
+    id: String(token['sub'] ?? current.id),
+    role: (token['role'] as string | null | undefined) ?? null,
+    permissions: (token['permissions'] as string[] | undefined) ?? [],
+    roleLevel: (token['roleLevel'] as number | null | undefined) ?? null,
+    isElevated: (token['isElevated'] as boolean | undefined) ?? false,
+    roleAssigned: (token['roleAssigned'] as boolean | undefined) ?? false,
+    accountDisabled: (token['accountDisabled'] as boolean | undefined) ?? false,
+    accountBanned: (token['accountBanned'] as boolean | undefined) ?? false,
+  };
+};
 
 const logSignInActivity = async (u: User): Promise<void> => {
   const uid = u.id;
@@ -209,34 +220,59 @@ const logSignInActivity = async (u: User): Promise<void> => {
   const authUser = u as User & { activitySurface?: string; authFlow?: string; loginMethod?: string };
   const surface = authUser.activitySurface ?? '';
   if (surface.trim() !== 'kangur') return;
-  await logActivity({ type: ActivityTypes.AUTH.LOGIN, description: `User logged in: ${u.email ?? 'unknown'}`, userId: uid, entityId: uid, entityType: 'user', metadata: { surface: 'kangur', actorType: 'parent', authFlow: authUser.authFlow ?? null, loginMethod: authUser.loginMethod ?? null } });
+  await logActivity({
+    type: ActivityTypes.AUTH.LOGIN,
+    description: `User logged in: ${u.email ?? 'unknown'}`,
+    userId: uid,
+    entityId: uid,
+    entityType: 'user',
+    metadata: {
+      surface: 'kangur',
+      actorType: 'parent',
+      authFlow: authUser.authFlow ?? null,
+      loginMethod: authUser.loginMethod ?? null,
+    },
+  });
 };
 
 const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   const providersPromise = buildProviders();
   const adapter = MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
   return {
-    ...authConfig, adapter, providers: await providersPromise,
+    ...authConfig,
+    adapter,
+    providers: await providersPromise,
     callbacks: {
       ...(authConfig.callbacks ?? {}),
       async jwt({ token, user }): Promise<JWT> {
-        const userId = user?.id ?? (token['sub']);
-        if (userId === undefined || (user === undefined && checkRefreshRequired(token) === false)) return token;
-        try { return await getUpdatedToken(userId, token); } catch (e: unknown) { await ErrorSystem.captureException(e, { service: 'auth', action: 'jwt_callback', userId }); return token; }
+        const userId = user?.id ?? (token['sub'] as string | undefined);
+        if (userId === undefined || (user === undefined && !checkRefreshRequired(token))) return token;
+        try {
+          return await getUpdatedToken(userId, token);
+        } catch (e: unknown) {
+          await ErrorSystem.captureException(e, { service: 'auth', action: 'jwt_callback', userId });
+          return token;
+        }
       },
       session({ session, token }): Session {
         const updated = { ...session };
-        if (updated.user !== undefined) updated.user = getSessionUser(token, updated.user);
+        if (updated.user !== undefined) {
+          updated.user = getSessionUser(token, updated.user);
+        }
         return updated;
       },
     },
     debug: process.env['AUTH_DEBUG'] === 'true',
     events: {
-      async signIn({ user }) { await logSignInActivity(user); },
+      async signIn({ user }) {
+        await logSignInActivity(user);
+      },
       async signOut(message) {
-        const token = 'token' in message ? message.token : null;
-        const sub = token ? (token['sub']) : undefined;
-        if (sub !== undefined && sub !== null) await logActivity({ type: ActivityTypes.AUTH.LOGOUT, description: 'User logged out', userId: sub });
+        const token = 'token' in message ? (message.token as JWT | null) : null;
+        const sub = token ? (token['sub'] as string | undefined) : undefined;
+        if (sub !== undefined && sub !== null) {
+          await logActivity({ type: ActivityTypes.AUTH.LOGOUT, description: 'User logged out', userId: sub });
+        }
       },
     },
   };

@@ -76,25 +76,6 @@ import {
 } from './home-screen-score-state';
 
 import { HomeLearnerCredentialsSignInSection } from './components';
-      />
-      <PrimaryButton
-        hint={copy({
-          de: 'Meldet mit den eingegebenen Daten an.',
-          en: 'Signs in with the entered credentials.',
-          pl: 'Loguje przy użyciu wpisanych danych.',
-        })}
-        label={copy({
-          de: 'Anmelden',
-          en: 'Sign in',
-          pl: 'Zaloguj',
-        })}
-        onPress={async () => {
-          await onSignIn(loginName, password);
-        }}
-      />
-    </View>
-  );
-}
 
 type HomeHeroSectionProps = {
   areDeferredHomeHeroIntroReady: boolean;
@@ -955,56 +936,57 @@ export function HomeScreenContent({
       );
     }
 
-    let heroContent: React.JSX.Element | null = null;
-    if (shouldRenderCombinedHomePrimaryStartupPlaceholder) {
-      heroContent = null;
-    } else if (shouldRenderCombinedHomeHeroPlaceholder) {
-      heroContent = (
-        <DeferredHomeHeroOverview
-          homeHeroLearnerName={homeHeroLearnerName}
-          isRestoringAuth={isLoadingAuth && session.status !== 'authenticated'}
-        />
-      );
-    } else {
-      heroContent = (
-        <HomeHeroSection
-          areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
-          areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
-          copy={copy}
-          homeHeroFocusHref={homeHeroFocusHref}
-          homeHeroFocusLabel={homeHeroFocusLabel}
-          homeHeroLearnerName={homeHeroLearnerName}
-          homeHeroRecentCheckpoint={homeHeroRecentCheckpoint}
-          homeHeroRecentCheckpointCount={homeHeroRecentCheckpointCount}
-          homeHeroRecentResult={homeHeroRecentResult}
-          isAuthenticated={session.status === 'authenticated'}
-          isLoadingAuth={isLoadingAuth}
-          recentResultsCount={recentResults.results.length}
-        />
-      );
-    }
-
     return (
       <HomeHeroLatestLessonCheckpointState
         initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
         isEnabled={areDeferredHomeHeroDetailsReady}
         isLiveProgressReady={isLiveHomeProgressReady}
       >
-        {({ homeHeroRecentCheckpoint: _homeHeroRecentCheckpoint, homeHeroRecentCheckpointCount: _homeHeroRecentCheckpointCount }) => (
-          <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>
-            <ScrollView
-              contentContainerStyle={{
-                gap: 16,
-                paddingHorizontal: 24,
-                paddingVertical: 28,
-              }}
-              keyboardShouldPersistTaps='handled'
-            >
-              <View style={{ gap: 10 }}>
-                {heroContent}
-              </View>
+        {({ homeHeroRecentCheckpoint, homeHeroRecentCheckpointCount }) => {
+          let heroContent: React.JSX.Element | null = null;
+          if (shouldRenderCombinedHomePrimaryStartupPlaceholder) {
+            heroContent = null;
+          } else if (shouldRenderCombinedHomeHeroPlaceholder) {
+            heroContent = (
+              <DeferredHomeHeroOverview
+                homeHeroLearnerName={homeHeroLearnerName}
+                isRestoringAuth={isLoadingAuth && session.status !== 'authenticated'}
+              />
+            );
+          } else {
+            heroContent = (
+              <HomeHeroSection
+                areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
+                areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
+                copy={copy}
+                homeHeroFocusHref={homeHeroFocusHref}
+                homeHeroFocusLabel={homeHeroFocusLabel}
+                homeHeroLearnerName={homeHeroLearnerName}
+                homeHeroRecentCheckpoint={homeHeroRecentCheckpoint}
+                homeHeroRecentCheckpointCount={homeHeroRecentCheckpointCount}
+                homeHeroRecentResult={homeHeroRecentResult}
+                isAuthenticated={session.status === 'authenticated'}
+                isLoadingAuth={isLoadingAuth}
+                recentResultsCount={recentResults.results.length}
+              />
+            );
+          }
 
-              {__DEV__ && homeDebugProof !== null ? (
+          return (
+            <SafeAreaView style={{ backgroundColor: '#fffaf2', flex: 1 }}>
+              <ScrollView
+                contentContainerStyle={{
+                  gap: 16,
+                  paddingHorizontal: 24,
+                  paddingVertical: 28,
+                }}
+                keyboardShouldPersistTaps='handled'
+              >
+                <View style={{ gap: 10 }}>
+                  {heroContent}
+                </View>
+
+                {__DEV__ && homeDebugProof !== null ? (
                 <SectionCard
                   title={copy({
                     de: 'Entwickler-Prüfung für Startdaten',
@@ -1112,7 +1094,7 @@ export function HomeScreenContent({
               
             </ScrollView>
           </SafeAreaView>
-        )}
+        )}}
       </HomeHeroLatestLessonCheckpointState>
     );
   };

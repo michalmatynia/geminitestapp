@@ -1,5 +1,16 @@
+import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
+import { type DuelCopy, type DuelLocale, type DuelRoundProgress } from './duels-screen-session-view';
 import { KangurMobileCard as Card } from '../shared/KangurMobileUi';
 import { DetailsBody } from './components/DetailsBody';
+
+export type DuelSessionDetailsCardProps = {
+  copy: DuelCopy;
+  duel: DuelSessionState;
+  hasWaitingSession: boolean;
+  locale: DuelLocale;
+  roundProgress: DuelRoundProgress;
+  sessionTimelineItems: string[];
+};
 
 export function DuelSessionDetailsCard({
   copy,

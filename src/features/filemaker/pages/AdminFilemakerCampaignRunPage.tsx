@@ -28,6 +28,7 @@ import { buildFilemakerMailThreadHref } from '../components/FilemakerMailSidebar
 import { formatTimestamp } from './filemaker-page-utils';
 import { fetchFilemakerMailJson } from '../mail-ui-helpers';
 import { useFilemakerCampaignRunActions } from './useFilemakerCampaignRunActions';
+import { CampaignRunDeliverabilityLogPanel } from './campaign-run-sections/CampaignRunDeliverabilityLogPanel';
 import type { FilemakerMailThread } from '../types';
 
 type CampaignMailThreadsResponse = {
@@ -445,6 +446,8 @@ export function AdminFilemakerCampaignRunPage(): React.JSX.Element {
           )}
         </div>
       </section>
+
+      <CampaignRunDeliverabilityLogPanel events={events} />
 
       <section className='rounded-xl border border-gray-200 bg-white p-5 shadow-sm'>
         <h2 className='text-sm font-semibold text-gray-900'>Event Timeline</h2>

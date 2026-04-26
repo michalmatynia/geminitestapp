@@ -2,17 +2,12 @@ import type { KangurDuelDifficulty, KangurDuelMode, KangurDuelOperation, KangurD
 import type { KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import type { Href } from 'expo-router';
 import { isStringNotEmpty } from './utils/duels-guards';
-import type { KangurMobileLocale, KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
-import type { KangurMobileTone as Tone } from '../shared/KangurMobileUi';
-import * as Constants from './utils/duels-constants';
-import * as Formatters from './utils/duels-formatters';
-import * as Status from './utils/duels-status';
 
 export const HOME_ROUTE = '/' as Href;
 export const LESSONS_ROUTE = '/lessons' as Href;
 export const PROFILE_ROUTE = '/profile' as Href;
 
-export const {
+export {
   DUEL_MODE_LABELS,
   DUEL_OPERATION_SYMBOLS,
   DUEL_OPERATION_LABELS,
@@ -29,9 +24,9 @@ export const {
   AUTO_REFRESH_INTERVAL_MS,
   DUEL_REACTION_EMOJIS,
   DUEL_REACTION_LABELS,
-} = Constants;
+} from './utils/duels-constants';
 
-export const {
+export {
   formatLobbyChatSenderLabel,
   formatPlayerStatusLabel,
   formatQuestionProgress,
@@ -49,20 +44,17 @@ export const {
   resolveSeriesWins,
   resolveWinnerSummary,
   formatRelativeAge,
-} = Formatters;
+  localizeDuelText,
+  normalizeSeriesBestOf,
+} from './utils/duels-formatters';
 
-export const {
+export {
   getLessonMasteryTone,
   getPlayerStatusTone,
   getStatusTone,
   isWaitingSessionStatus,
   resolveRoundProgress,
-} = Status;
-
-export const {
-  localizeDuelText,
-  normalizeSeriesBestOf,
-} = Formatters;
+} from './utils/duels-status';
 
 export function resolveSessionIdParam(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value;

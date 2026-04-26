@@ -8,6 +8,8 @@ export * from '../types/campaigns';
 export * from './campaign-factories';
 export * from './campaign-content-routing';
 export * from './campaign-summarizers';
+export * from './campaign-engagement';
+export * from './campaign-list-hygiene';
 
 import {
   type FilemakerEmailCampaignAudiencePreview,

@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { Card, KangurMobileSummaryChip, LinkButton } from '../shared/KangurMobileUi';
+import { Card, KangurMobileSummaryChip, LinkButton } from '../../shared/KangurMobileUi';
 import { LessonMasteryRow } from './results-primitives';
 
 interface ResultsLessonMasterySectionProps {

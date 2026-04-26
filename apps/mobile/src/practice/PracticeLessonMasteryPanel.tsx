@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 import { KangurMobileInsetPanel as InsetPanel } from '../shared/KangurMobileUi';
 import { KangurMobileLinkButton as LinkButton } from '../duels/duels-primitives/BaseComponents';
 
-import { LessonMasteryRow } from './practice-primitives';
+import { LessonMasteryRow } from './LessonMasteryRow';
 import type { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import type { useKangurMobilePracticeLessonMastery } from './useKangurMobilePracticeLessonMastery';
 

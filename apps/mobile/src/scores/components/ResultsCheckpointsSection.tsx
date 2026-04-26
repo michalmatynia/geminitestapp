@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { Card, LinkButton } from '../shared/KangurMobileUi';
+import { Card, LinkButton } from '../../shared/KangurMobileUi';
 import { LessonCheckpointRow } from './results-primitives';
 
 interface ResultsCheckpointsSectionProps {

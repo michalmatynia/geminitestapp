@@ -113,7 +113,17 @@ export function useLeaderboardQuery(apiClient: DuelApiClient, apiBaseUrl: string
   });
 }
 
-export function useSearchQuery(params: { apiClient: DuelApiClient, apiBaseUrl: string, learnerIdentity: string, isAuthenticated: boolean, query: string }): UseQueryResult<KangurDuelSearchResponse> {
+export interface UseSearchQueryParams {
+  apiClient: DuelApiClient;
+  apiBaseUrl: string;
+  learnerIdentity: string;
+  isAuthenticated: boolean;
+  query: string;
+}
+
+export function useSearchQuery(
+  params: UseSearchQueryParams
+): UseQueryResult<KangurDuelSearchResponse> {
   const { apiClient, apiBaseUrl, learnerIdentity, isAuthenticated, query } = params;
   return useQuery<KangurDuelSearchResponse>({
     enabled: isAuthenticated && query.length >= 2,

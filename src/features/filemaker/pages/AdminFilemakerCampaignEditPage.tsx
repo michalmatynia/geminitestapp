@@ -22,6 +22,7 @@ import {
   CampaignAnalyticsSection,
   RecentRunsSection,
 } from './AdminFilemakerCampaignEditPage.sections';
+import { CampaignDeliverabilityCheckSection } from './campaign-edit-sections/CampaignDeliverabilityCheckSection';
 
 function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
   const {
@@ -206,6 +207,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
       <LaunchSection />
       <DeliveryGovernanceSection />
       <AudiencePreviewSection />
+      <CampaignDeliverabilityCheckSection />
       <CampaignAnalyticsSection />
       <RecentRunsSection />
       <ConfirmationModal />

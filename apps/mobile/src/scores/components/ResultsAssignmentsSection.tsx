@@ -1,5 +1,5 @@
 import { View, Text } from 'react-native';
-import { Card } from '../shared/KangurMobileUi';
+import { Card } from '../../shared/KangurMobileUi';
 import { ResultsAssignmentRow } from './results-primitives';
 
 interface ResultsAssignmentsSectionProps {

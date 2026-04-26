@@ -1,82 +1,39 @@
-import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
+import 'server-only';
 import { getBrowserContextSummary } from '@/features/ai/agent-runtime/browsing/context';
 import { addAgentMemory } from '@/features/ai/agent-runtime/memory';
-import {
-  buildSelfImprovementReviewWithLLM,
-  verifyPlanWithLLM,
-} from '@/features/ai/agent-runtime/planning/llm';
+import { buildSelfImprovementReviewWithLLM, verifyPlanWithLLM } from '@/features/ai/agent-runtime/planning/llm';
 import { updateChatbotRunStatus } from './finalize/finalize-utils';
 import { type ImprovementReview, type FinalizeRunInput } from './finalize/finalize-types';
-import type { AgentExecutionContext } from '@/shared/contracts/agent-runtime';
+import type { AgentVerification, AgentExecutionContext } from '@/shared/contracts/agent-runtime';
+import { logAgentAudit } from '@/features/ai/agent-runtime/audit';
 
-async function processReview(runId: string, improvementReview: ImprovementReview): Promise<void> {
-  await logAgentAudit(runId, 'info', 'Self-improvement review completed.', {
-    type: 'self-improvement',
-    summary: improvementReview.summary,
-    mistakes: improvementReview.mistakes,
-    improvements: improvementReview.improvements,
-    guardrails: improvementReview.guardrails,
-    toolAdjustments: improvementReview.toolAdjustments,
-    confidence: improvementReview.confidence,
-  });
-  await addAgentMemory({
-    runId,
-    scope: 'session',
-    content: [
-      'Self-improvement review',
-      improvementReview.summary,
-      improvementReview.mistakes.length > 0 ? `Mistakes: ${  improvementReview.mistakes.join(' | ')}` : null,
-      improvementReview.improvements.length > 0 ? `Improvements: ${  improvementReview.improvements.join(' | ')}` : null,
-      improvementReview.guardrails.length > 0 ? `Guardrails: ${  improvementReview.guardrails.join(' | ')}` : null,
-      improvementReview.toolAdjustments.length > 0 ? `Tool adjustments: ${  improvementReview.toolAdjustments.join(' | ')}` : null,
-    ].filter((s): s is string => typeof s === 'string' && s.length > 0).join('\n'),
-    metadata: { type: 'self-improvement', confidence: improvementReview.confidence },
-  });
+async function processReview(runId: string, review: ImprovementReview): Promise<void> {
+  const { summary: s, mistakes: m, improvements: i, guardrails: g, toolAdjustments: t, confidence: c } = review;
+  await logAgentAudit(runId, 'info', 'Self-improvement completed.', { type: 'self-improvement', summary: s, mistakes: m, improvements: i, guardrails: g, toolAdjustments: t, confidence: c });
+  const content = ['Self-improvement review', s, m.length > 0 ? `Mistakes: ${m.join(' | ')}` : null, i.length > 0 ? `Improvements: ${i.join(' | ')}` : null, g.length > 0 ? `Guardrails: ${g.join(' | ')}` : null, t.length > 0 ? `Tool adjustments: ${t.join(' | ')}` : null].filter((v): v is string => typeof v === 'string' && v.length > 0).join('\n');
+  await addAgentMemory({ runId, scope: 'session', content, metadata: { type: 'self-improvement', confidence: c } });
 }
 
-export async function finalizeAgentRun(input: FinalizeRunInput): Promise<any> {
-  const { context, planSteps, taskType, overallOk, requiresHuman, lastError, summaryCheckpoint } = input;
-  const typedContext = context as AgentExecutionContext;
-  const { run, settings, preferences, contextRegistry, memoryContext, plannerModel, memorySummarizationModel } = typedContext;
+export interface FinalizeAgentRunResult { verificationContext: string | null; verification: AgentVerification; improvementReview: ImprovementReview | null; }
 
-  await updateChatbotRunStatus({
-    runId: run.id,
-    runPrompt: run.prompt,
-    settings,
-    preferences,
-    contextRegistry,
-    planSteps,
-    requiresHuman,
-    overallOk,
-    lastError,
-    summaryCheckpoint,
-  });
-
-  const verificationContext = await getBrowserContextSummary(run.id);
-  const verification = await verifyPlanWithLLM({
-    prompt: run.prompt,
-    model: plannerModel,
-    memory: memoryContext,
-    steps: planSteps,
-    browserContext: verificationContext,
-    runId: run.id,
-  });
+export async function finalizeAgentRun(input: FinalizeRunInput): Promise<FinalizeAgentRunResult> {
+  const { context: ctx, planSteps: steps, taskType, overallOk: ok, requiresHuman: human, lastError: err, summaryCheckpoint: cp } = input;
+  const typedCtx = ctx as AgentExecutionContext;
+  const { run, settings, preferences, contextRegistry: reg, memoryContext: mem, configs: cnf, plannerModel: pm, memorySummarizationModel: msm } = typedCtx;
   
-  const improvementReview: ImprovementReview | null = await buildSelfImprovementReviewWithLLM({
-    prompt: run.prompt,
-    model: memorySummarizationModel,
-    memory: memoryContext,
-    steps: planSteps,
-    verification,
-    ...(taskType !== null ? { taskType } : {}),
-    lastError,
-    browserContext: verificationContext,
-    runId: run.id,
-  });
+  await updateChatbotRunStatus({ runId: run.id, runPrompt: run.prompt, settings, preferences, contextRegistry: reg ?? null, planSteps: steps, requiresHuman: human, overallOk: ok, lastError: err, summaryCheckpoint: cp });
+  const vCtx = await getBrowserContextSummary(run.id);
   
-  if (improvementReview !== null) {
-    await processReview(run.id, improvementReview);
-  }
-
-  return { verificationContext, verification, improvementReview };
+  const plannerConfig = cnf?.['agent_runtime.planner'];
+  const plannerModel = (plannerConfig && typeof plannerConfig === 'object' && 'modelId' in plannerConfig) ? (plannerConfig.modelId as string) : pm;
+  
+  const v = await verifyPlanWithLLM({ prompt: run.prompt, model: plannerModel, memory: mem, steps, browserContext: vCtx, runId: run.id });
+  
+  const summarizerConfig = cnf?.['agent_runtime.memory_summarization'];
+  const summarizerModel = (summarizerConfig && typeof summarizerConfig === 'object' && 'modelId' in summarizerConfig) ? (summarizerConfig.modelId as string) : msm;
+  
+  const ir = await buildSelfImprovementReviewWithLLM({ prompt: run.prompt, model: summarizerModel, memory: mem, steps, verification: v, ...(taskType !== null ? { taskType } : {}), lastError: err, browserContext: vCtx, runId: run.id });
+  
+  if (ir !== null) await processReview(run.id, ir);
+  return { verificationContext: vCtx, verification: v, improvementReview: ir };
 }

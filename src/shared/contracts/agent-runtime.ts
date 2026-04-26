@@ -544,6 +544,7 @@ export const agentExecutionContextSchema = z.object({
       uiInventory: z.unknown().optional(),
     })
     .nullable(),
+  configs: z.record(z.string(), z.any()).optional(),
 });
 
 export type AgentExecutionContext = z.infer<typeof agentExecutionContextSchema>;

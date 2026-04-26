@@ -40,16 +40,7 @@ type UserPreferencesDocument = {
   aiPathsActivePathId: string | null;
   imageStudioLastProjectId: string | null;
   caseResolverCaseListViewMode: 'hierarchy' | 'list' | null;
-  caseResolverCaseListSortBy:
-    | 'updated'
-    | 'created'
-    | 'happeningDate'
-    | 'name'
-    | 'status'
-    | 'signature'
-    | 'locked'
-    | 'sent'
-    | null;
+  caseResolverCaseListSortBy: | 'updated' | 'created' | 'happeningDate' | 'name' | 'status' | 'signature' | 'locked' | 'sent' | null;
   caseResolverCaseListSortOrder: 'asc' | 'desc' | null;
   caseResolverCaseListSearchScope: 'all' | 'name' | 'folder' | 'content' | null;
   caseResolverCaseListFiltersCollapsedByDefault: boolean | null;
@@ -71,287 +62,124 @@ type UserPreferencesDocument = {
 };
 
 const USER_PREFERENCES_COLLECTION = 'user_preferences';
-const USER_PREFERENCES_CACHE_TTL_MS = parsePositiveInt(
-  process.env['USER_PREFERENCES_CACHE_TTL_MS'],
-  60_000
-);
-const IMMUTABLE_PREFERENCE_FIELDS = new Set(['id', '_id', 'userId', 'createdAt', 'updatedAt']);
+const USER_PREFERENCES_CACHE_TTL_MS = parsePositiveInt(process.env['USER_PREFERENCES_CACHE_TTL_MS'], 60_000);
+const IMMUTABLE_FIELDS = new Set(['id', '_id', 'userId', 'createdAt', 'updatedAt']);
 
-type CachedUserPreferences = {
-  value: UserPreferencesRecord;
-  fetchedAt: number;
-};
-
+type CachedUserPreferences = { value: UserPreferencesRecord; fetchedAt: number; };
 const userPreferencesCache = new Map<string, CachedUserPreferences>();
 const userPreferencesInflight = new Map<string, Promise<UserPreferencesRecord>>();
 
-const getCanonicalPreferencesId = (userId: string): ObjectId | string => toMongoId(userId);
+const getCacheKey = (userId: string): string => String(toMongoId(userId));
 
-const getUserPreferencesCacheKey = (userId: string): string =>
-  String(getCanonicalPreferencesId(userId));
-
-const getCachedUserPreferences = (cacheKey: string): UserPreferencesRecord | null => {
+const getCachedPrefs = (cacheKey: string): UserPreferencesRecord | null => {
   const cached = userPreferencesCache.get(cacheKey);
-  if (!cached) return null;
+  if (cached === undefined) return null;
   if (Date.now() - cached.fetchedAt > USER_PREFERENCES_CACHE_TTL_MS) {
-    userPreferencesCache.delete(cacheKey);
-    return null;
+    userPreferencesCache.delete(cacheKey); return null;
   }
   return cached.value;
 };
 
-const setCachedUserPreferences = (cacheKey: string, value: UserPreferencesRecord): void => {
-  userPreferencesCache.set(cacheKey, {
-    value,
-    fetchedAt: Date.now(),
-  });
+const setCachedPrefs = (cacheKey: string, value: UserPreferencesRecord): void => {
+  userPreferencesCache.set(cacheKey, { value, fetchedAt: Date.now() });
 };
 
-export const peekUserPreferencesCache = (
-  userId: string,
-  options?: { allowStale?: boolean }
-): UserPreferencesRecord | null => {
-  const cacheKey = getUserPreferencesCacheKey(userId);
-  if (options?.allowStale) {
-    return userPreferencesCache.get(cacheKey)?.value ?? null;
-  }
-  return getCachedUserPreferences(cacheKey);
+export const peekUserPreferencesCache = (userId: string, options?: { allowStale?: boolean }): UserPreferencesRecord | null => {
+  const key = getCacheKey(userId);
+  if (options?.allowStale === true) return userPreferencesCache.get(key)?.value ?? null;
+  return getCachedPrefs(key);
 };
 
 export const warmUserPreferencesCache = (userId: string): void => {
-  void getUserPreferences(userId).catch(() => {
-    // no-op; warm-up must never throw
-  });
+  void getUserPreferences(userId).catch(() => {});
 };
 
 export const invalidateUserPreferencesCache = (userId?: string): void => {
-  if (userId) {
-    const cacheKey = getUserPreferencesCacheKey(userId);
-    userPreferencesCache.delete(cacheKey);
-    userPreferencesInflight.delete(cacheKey);
+  if (userId !== undefined) {
+    const key = getCacheKey(userId); userPreferencesCache.delete(key); userPreferencesInflight.delete(key);
     return;
   }
-  userPreferencesCache.clear();
-  userPreferencesInflight.clear();
+  userPreferencesCache.clear(); userPreferencesInflight.clear();
 };
 
 const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord => ({
-  id: String(doc._id),
-  userId: doc.userId,
-  productListNameLocale: doc.productListNameLocale ?? 'name_en',
-  productListCatalogFilter: doc.productListCatalogFilter ?? 'all',
-  productListCurrencyCode: doc.productListCurrencyCode,
-  productListPageSize: doc.productListPageSize ?? 12,
-  productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
-  productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? true,
-  productListShowTriggerRunFeedback: doc.productListShowTriggerRunFeedback ?? true,
-  productListAdvancedFilterPresets: doc.productListAdvancedFilterPresets ?? [],
-  productListAppliedAdvancedFilter: doc.productListAppliedAdvancedFilter ?? null,
-  productListAppliedAdvancedFilterPresetId: doc.productListAppliedAdvancedFilterPresetId ?? null,
-  productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
-  productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
-  aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
-  imageStudioLastProjectId: doc.imageStudioLastProjectId ?? null,
-  caseResolverCaseListViewMode: doc.caseResolverCaseListViewMode ?? 'hierarchy',
-  caseResolverCaseListSortBy: doc.caseResolverCaseListSortBy ?? 'updated',
-  caseResolverCaseListSortOrder: doc.caseResolverCaseListSortOrder ?? 'desc',
-  caseResolverCaseListSearchScope: doc.caseResolverCaseListSearchScope ?? 'all',
-  caseResolverCaseListFiltersCollapsedByDefault:
-    doc.caseResolverCaseListFiltersCollapsedByDefault ?? true,
-  caseResolverCaseListShowNestedContent: doc.caseResolverCaseListShowNestedContent ?? true,
-  adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
-  adminMenuFavorites: doc.adminMenuFavorites ?? [],
-  adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
-  adminMenuCustomEnabled: doc.adminMenuCustomEnabled ?? false,
-  adminMenuCustomNav: doc.adminMenuCustomNav ?? [],
-  cmsLastPageId: doc.cmsLastPageId ?? null,
-  cmsActiveDomainId: doc.cmsActiveDomainId ?? null,
-  cmsThemeOpenSections: doc.cmsThemeOpenSections ?? [],
-  cmsThemeLogoWidth: doc.cmsThemeLogoWidth ?? null,
-  cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
-  cmsPreviewEnabled: doc.cmsPreviewEnabled ?? null,
-  cmsSlideshowPauseOnHoverInEditor: doc.cmsSlideshowPauseOnHoverInEditor ?? false,
-  createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt.toISOString(),
+  id: String(doc._id), userId: doc.userId,
+  productListNameLocale: doc.productListNameLocale ?? 'name_en', productListCatalogFilter: doc.productListCatalogFilter ?? 'all',
+  productListCurrencyCode: doc.productListCurrencyCode, productListPageSize: doc.productListPageSize ?? 12,
+  productListThumbnailSource: doc.productListThumbnailSource ?? 'file', productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? true,
+  productListShowTriggerRunFeedback: doc.productListShowTriggerRunFeedback ?? true, productListAdvancedFilterPresets: doc.productListAdvancedFilterPresets ?? [],
+  productListAppliedAdvancedFilter: doc.productListAppliedAdvancedFilter ?? null, productListAppliedAdvancedFilterPresetId: doc.productListAppliedAdvancedFilterPresetId ?? null,
+  productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme', productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
+  aiPathsActivePathId: doc.aiPathsActivePathId ?? null, imageStudioLastProjectId: doc.imageStudioLastProjectId ?? null,
+  caseResolverCaseListViewMode: doc.caseResolverCaseListViewMode ?? 'hierarchy', caseResolverCaseListSortBy: doc.caseResolverCaseListSortBy ?? 'updated',
+  caseResolverCaseListSortOrder: doc.caseResolverCaseListSortOrder ?? 'desc', caseResolverCaseListSearchScope: doc.caseResolverCaseListSearchScope ?? 'all',
+  caseResolverCaseListFiltersCollapsedByDefault: doc.caseResolverCaseListFiltersCollapsedByDefault ?? true, caseResolverCaseListShowNestedContent: doc.caseResolverCaseListShowNestedContent ?? true,
+  adminMenuCollapsed: doc.adminMenuCollapsed ?? false, adminMenuFavorites: doc.adminMenuFavorites ?? [],
+  adminMenuSectionColors: doc.adminMenuSectionColors ?? {}, adminMenuCustomEnabled: doc.adminMenuCustomEnabled ?? false,
+  adminMenuCustomNav: doc.adminMenuCustomNav ?? [], cmsLastPageId: doc.cmsLastPageId ?? null,
+  cmsActiveDomainId: doc.cmsActiveDomainId ?? null, cmsThemeOpenSections: doc.cmsThemeOpenSections ?? [],
+  cmsThemeLogoWidth: doc.cmsThemeLogoWidth ?? null, cmsThemeLogoUrl: doc.cmsThemeLogoUrl ?? null,
+  cmsPreviewEnabled: doc.cmsPreviewEnabled ?? null, cmsSlideshowPauseOnHoverInEditor: doc.cmsSlideshowPauseOnHoverInEditor ?? false,
+  createdAt: doc.createdAt.toISOString(), updatedAt: doc.updatedAt.toISOString(),
 });
 
-const defaultPreferences = (
-  userId: string
-): Omit<UserPreferencesRecord, 'id' | 'createdAt' | 'updatedAt'> => ({
-  userId,
-  productListNameLocale: 'name_en',
-  productListCatalogFilter: 'all',
-  productListCurrencyCode: 'PLN',
-  productListPageSize: 12,
-  productListThumbnailSource: 'file',
-  productListFiltersCollapsedByDefault: true,
-  productListShowTriggerRunFeedback: true,
-  productListAdvancedFilterPresets: [],
-  productListAppliedAdvancedFilter: null,
-  productListAppliedAdvancedFilterPresetId: null,
-  productListDraftIconColorMode: 'theme',
-  productListDraftIconColor: '#60a5fa',
-  aiPathsActivePathId: null,
-  imageStudioLastProjectId: null,
-  caseResolverCaseListViewMode: 'hierarchy',
-  caseResolverCaseListSortBy: 'updated',
-  caseResolverCaseListSortOrder: 'desc',
-  caseResolverCaseListSearchScope: 'all',
-  caseResolverCaseListFiltersCollapsedByDefault: true,
-  caseResolverCaseListShowNestedContent: true,
-  adminMenuCollapsed: false,
-  adminMenuFavorites: [],
-  adminMenuSectionColors: {},
-  adminMenuCustomEnabled: false,
-  adminMenuCustomNav: [],
-  cmsLastPageId: null,
-  cmsActiveDomainId: null,
-  cmsThemeOpenSections: [],
-  cmsThemeLogoWidth: null,
-  cmsThemeLogoUrl: null,
-  cmsPreviewEnabled: false,
-  cmsSlideshowPauseOnHoverInEditor: false,
+const defaultPreferences = (userId: string): Omit<UserPreferencesRecord, 'id' | 'createdAt' | 'updatedAt'> => ({
+  userId, productListNameLocale: 'name_en', productListCatalogFilter: 'all', productListCurrencyCode: 'PLN', productListPageSize: 12,
+  productListThumbnailSource: 'file', productListFiltersCollapsedByDefault: true, productListShowTriggerRunFeedback: true,
+  productListAdvancedFilterPresets: [], productListAppliedAdvancedFilter: null, productListAppliedAdvancedFilterPresetId: null,
+  productListDraftIconColorMode: 'theme', productListDraftIconColor: '#60a5fa', aiPathsActivePathId: null, imageStudioLastProjectId: null,
+  caseResolverCaseListViewMode: 'hierarchy', caseResolverCaseListSortBy: 'updated', caseResolverCaseListSortOrder: 'desc',
+  caseResolverCaseListSearchScope: 'all', caseResolverCaseListFiltersCollapsedByDefault: true, caseResolverCaseListShowNestedContent: true,
+  adminMenuCollapsed: false, adminMenuFavorites: [], adminMenuSectionColors: {}, adminMenuCustomEnabled: false, adminMenuCustomNav: [],
+  cmsLastPageId: null, cmsActiveDomainId: null, cmsThemeOpenSections: [], cmsThemeLogoWidth: null, cmsThemeLogoUrl: null,
+  cmsPreviewEnabled: false, cmsSlideshowPauseOnHoverInEditor: false,
 });
 
-const sanitizeUserPreferencesUpdateData = (
-  data: Partial<UserPreferencesData>
-): Record<string, unknown> => {
-  const sanitized: Record<string, unknown> = {};
-  Object.entries(data).forEach(([key, value]) => {
-    if (value === undefined) return;
-    if (IMMUTABLE_PREFERENCE_FIELDS.has(key)) return;
-    sanitized[key] = value;
-  });
-  return sanitized;
+const sanitizeUpdate = (data: Partial<UserPreferencesData>): Record<string, unknown> => {
+  const s: Record<string, unknown> = {};
+  Object.entries(data).forEach(([k, v]) => { if (v !== undefined && !IMMUTABLE_FIELDS.has(k)) s[k] = v; });
+  return s;
 };
 
-const isUserPreferencesDocument = (value: unknown): value is UserPreferencesDocument => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const record = value as Record<string, unknown>;
-  return (
-    '_id' in record &&
-    typeof record['userId'] === 'string' &&
-    record['createdAt'] instanceof Date &&
-    record['updatedAt'] instanceof Date
-  );
+const isPrefsDoc = (v: unknown): v is UserPreferencesDocument => {
+  if (v === null || typeof v !== 'object' || Array.isArray(v)) return false;
+  const r = v as Record<string, unknown>;
+  return '_id' in r && typeof r['userId'] === 'string' && r['createdAt'] instanceof Date && r['updatedAt'] instanceof Date;
 };
 
-/**
- * Get user preferences by user ID
- * Creates default preferences if they don't exist
- */
 export async function getUserPreferences(userId: string): Promise<UserPreferencesRecord> {
-  if (!process.env['MONGODB_URI']) {
-    throw operationFailedError('MongoDB is not configured.');
-  }
-  const canonicalId = getCanonicalPreferencesId(userId);
-  const cacheKey = getUserPreferencesCacheKey(userId);
-  const cached = getCachedUserPreferences(cacheKey);
-  if (cached) return cached;
+  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') throw operationFailedError('MongoDB is not configured.');
+  const id = toMongoId(userId); const key = getCacheKey(userId);
+  const cached = getCachedPrefs(key); if (cached !== null) return cached;
+  const inflight = userPreferencesInflight.get(key); if (inflight !== undefined) return inflight;
 
-  const inflight = userPreferencesInflight.get(cacheKey);
-  if (inflight) return inflight;
+  const promise = (async (): Promise<UserPreferencesRecord> => {
+    const db = await getMongoDb(); const col = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
+    const doc = await col.findOne({ _id: id });
+    if (doc) { const norm = toUserPreferences(doc); setCachedPrefs(key, norm); return norm; }
+    const now = new Date(); const document: UserPreferencesDocument = { _id: id, ...defaultPreferences(userId), createdAt: now, updatedAt: now };
+    await col.insertOne(document); const norm = toUserPreferences(document); setCachedPrefs(key, norm); return norm;
+  })().finally(() => { userPreferencesInflight.delete(key); });
 
-  const loadPromise = (async (): Promise<UserPreferencesRecord> => {
-    const db = await getMongoDb();
-    const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
-    const doc = await collection.findOne({ _id: canonicalId });
-
-    if (doc) {
-      const normalized = toUserPreferences(doc);
-      setCachedUserPreferences(cacheKey, normalized);
-      return normalized;
-    }
-
-    const now = new Date();
-    const document: UserPreferencesDocument = {
-      _id: canonicalId,
-      ...defaultPreferences(userId),
-      createdAt: now,
-      updatedAt: now,
-    };
-    await collection.insertOne(document);
-    const normalized = toUserPreferences(document);
-    setCachedUserPreferences(cacheKey, normalized);
-    return normalized;
-  })().finally(() => {
-    userPreferencesInflight.delete(cacheKey);
-  });
-
-  userPreferencesInflight.set(cacheKey, loadPromise);
-  return loadPromise;
+  userPreferencesInflight.set(key, promise); return promise;
 }
 
-/**
- * Update user preferences
- */
-export async function updateUserPreferences(
-  userId: string,
-  data: Partial<UserPreferencesData>
-): Promise<UserPreferencesRecord> {
-  if (!process.env['MONGODB_URI']) {
-    throw operationFailedError('MongoDB is not configured.');
-  }
-  const cacheKey = getUserPreferencesCacheKey(userId);
-  const db = await getMongoDb();
-  const collection = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
-  const canonicalId = getCanonicalPreferencesId(userId);
-  const now = new Date();
-  const setData = sanitizeUserPreferencesUpdateData(data);
-  const insertDefaults = {
-    _id: canonicalId,
-    ...defaultPreferences(userId),
-    createdAt: now,
-  } as Record<string, unknown>;
-  for (const key of Object.keys(setData)) {
-    delete insertDefaults[key];
-  }
-  const updateDoc: {
-    $set: Record<string, unknown>;
-    $setOnInsert?: Record<string, unknown>;
-  } = {
-    $set: {
-      ...setData,
-      updatedAt: now,
-    },
-  };
-  if (Object.keys(insertDefaults).length > 0) {
-    updateDoc.$setOnInsert = {
-      ...insertDefaults,
-    };
-  }
-  const result = await collection.findOneAndUpdate({ _id: canonicalId }, updateDoc, {
-    upsert: true,
-    returnDocument: 'after',
-  });
-
-  const updatedDocument =
-    result && typeof result === 'object' && 'value' in result
-      ? result.value
-      : result;
-
-  if (isUserPreferencesDocument(updatedDocument)) {
-    const normalized = toUserPreferences(updatedDocument);
-    setCachedUserPreferences(cacheKey, normalized);
-    return normalized;
-  }
-
-  const fallbackDoc = await collection.findOne({ _id: canonicalId });
-
-  if (!fallbackDoc) {
-    throw operationFailedError('Failed to update preferences', undefined, {
-      userId,
-    });
-  }
-
-  const normalized = toUserPreferences(fallbackDoc);
-  setCachedUserPreferences(cacheKey, normalized);
-  return normalized;
+export async function updateUserPreferences(userId: string, data: Partial<UserPreferencesData>): Promise<UserPreferencesRecord> {
+  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') throw operationFailedError('MongoDB is not configured.');
+  const key = getCacheKey(userId); const db = await getMongoDb(); const col = db.collection<UserPreferencesDocument>(USER_PREFERENCES_COLLECTION);
+  const id = toMongoId(userId); const now = new Date(); const setData = sanitizeUpdate(data);
+  const insertDefaults = { _id: id, ...defaultPreferences(userId), createdAt: now } as Record<string, unknown>;
+  for (const k of Object.keys(setData)) delete insertDefaults[k];
+  const updateDoc: { $set: Record<string, unknown>; $setOnInsert?: Record<string, unknown>; } = { $set: { ...setData, updatedAt: now } };
+  if (Object.keys(insertDefaults).length > 0) updateDoc.$setOnInsert = { ...insertDefaults };
+  const res = await col.findOneAndUpdate({ _id: id }, updateDoc, { upsert: true, returnDocument: 'after' });
+  const updated = res && typeof res === 'object' && 'value' in res ? res.value : res;
+  if (isPrefsDoc(updated)) { const norm = toUserPreferences(updated); setCachedPrefs(key, norm); return norm; }
+  const fallback = await col.findOne({ _id: id });
+  if (fallback === null) throw operationFailedError('Failed to update preferences', undefined, { userId });
+  const norm = toUserPreferences(fallback); setCachedPrefs(key, norm); return norm;
 }
 
-/**
- * Get or create preferences for user
- */
 export async function getOrCreatePreferences(userId: string): Promise<UserPreferencesRecord> {
   return getUserPreferences(userId);
 }

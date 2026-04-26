@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {

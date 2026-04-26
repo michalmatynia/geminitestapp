@@ -65,6 +65,7 @@ import {
 import { resolveTraderaListingPriceForProduct } from './price';
 import { buildTraderaPricingMetadata } from './pricing-metadata';
 import { buildTraderaListingDescription } from './description';
+import { assertTraderaListingTitleWithinLimit } from './title-validation';
 import {
   resolveTraderaProductImageUploadPlan,
   resolveScriptInputImageDiagnostics,
@@ -296,6 +297,12 @@ const buildTraderaScriptInput = async ({
     preferredLocales: ['en', 'pl', 'de'],
   });
   const title = resolvedCopy.title;
+  assertTraderaListingTitleWithinLimit({
+    title,
+    productId: product.id,
+    listingId: listing.id,
+    connectionId: listing.connectionId,
+  });
   const description = buildTraderaListingDescription({
     rawDescription: resolvedCopy.description,
     fallbackTitle: title,

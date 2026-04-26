@@ -2,9 +2,12 @@ export * from './server/filemaker-mail-service';
 export * from './server/filemaker-mail-access';
 export * from './server/filemaker-email-repository';
 export * from './server/filemaker-website-repository';
+export * from './server/filemaker-contact-log-repository';
+export * from './server/filemaker-values-repository';
 export * from './server/filemaker-organizations-repository';
 export * from './server/filemaker-persons-repository';
 export * from './server/filemaker-events-repository';
+export * from './server/filemaker-party-snapshot-repository';
 export {
   listMongoFilemakerAddressesForOrganization,
   listMongoFilemakerAddressesForOwner,

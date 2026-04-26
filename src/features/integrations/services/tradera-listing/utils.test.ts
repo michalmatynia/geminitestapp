@@ -145,9 +145,33 @@ describe('toUserFacingTraderaFailure', () => {
       'Tradera session validation did not resolve. Refresh the saved browser session and retry.'
     );
   });
+
+  it('maps generic title write failures to the Tradera title length limit', () => {
+    expect(
+      toUserFacingTraderaFailure(
+        'FORM',
+        'FAIL_PUBLISH_VALIDATION: Unable to set Tradera title field.'
+      )
+    ).toBe(
+      'Tradera title could not be written. Tradera allows at most 80 characters; shorten the marketplace title before retrying.'
+    );
+  });
 });
 
 describe('extractTraderaFailureMetadata', () => {
+  it('extracts Tradera title length metadata from preflight failures', () => {
+    expect(
+      extractTraderaFailureMetadata(
+        'FAIL_PUBLISH_VALIDATION: Tradera title is 91 characters, but Tradera allows at most 80. Shorten the marketplace title before retrying.'
+      )
+    ).toEqual({
+      failureCode: 'tradera_title_too_long',
+      titleTooLong: true,
+      titleMaxLength: 80,
+      titleLength: 91,
+    });
+  });
+
   it('extracts duplicate-risk image upload metadata from the serialized last state', () => {
     expect(
       extractTraderaFailureMetadata(

@@ -220,7 +220,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     callbacks: {
       ...(authConfig.callbacks ?? {}),
       async jwt({ token, user }): Promise<JWT> {
-        const userId = user?.id ?? (token['sub'] as string | undefined);
+        const userId = user?.id ?? (token['sub']);
         if (userId === undefined || (user === undefined && checkRefreshRequired(token) === false)) return token;
         try { return await getUpdatedToken(userId, token); } catch (e: unknown) { await ErrorSystem.captureException(e, { service: 'auth', action: 'jwt_callback', userId }); return token; }
       },
@@ -235,7 +235,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       async signIn({ user }) { await logSignInActivity(user); },
       async signOut(message) {
         const token = 'token' in message ? message.token : null;
-        const sub = token ? (token['sub'] as string | undefined) : undefined;
+        const sub = token ? (token['sub']) : undefined;
         if (sub !== undefined && sub !== null) await logActivity({ type: ActivityTypes.AUTH.LOGOUT, description: 'User logged out', userId: sub });
       },
     },

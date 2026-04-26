@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { shareKangurDuelInvite } from './duelInviteShare';
-import { normalizeSeriesBestOf } from './utils/duels-ui';
+import { normalizeSeriesBestOf } from '../utils/duels-ui';
 import type { UseKangurMobileDuelSessionResult } from './useKangurMobileDuelSession';
 import type { UseKangurMobileDuelsLobbyResult } from './useKangurMobileDuelsLobby';
 import type { KangurMobileLocale, KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';

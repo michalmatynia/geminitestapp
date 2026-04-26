@@ -14,8 +14,10 @@ import {
   resolveDuplicateLinkedFromListing,
   resolveDuplicateMatchStrategyFromFeedback,
   resolveDuplicateMatchStrategyFromListing,
+  resolveTraderaFailureReasonFromListing,
   resolveListingUrlFromListing,
   resolveTraderaRequestId,
+  resolveTraderaRunIdFromListing,
 } from '@/features/integrations/utils/tradera-listing-client-utils';
 import {
   SUCCESS_STATUSES,
@@ -33,23 +35,26 @@ import {
 
 export type { TraderaFeedbackOptions };
 
+const hasText = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
+
 export const findTrackedTraderaListing = (
   listings: ProductListingWithDetails[],
   feedback: PersistedTraderaQuickListFeedback
 ): ProductListingWithDetails | null => {
-  if (feedback.listingId) {
+  if (hasText(feedback.listingId)) {
     const byListingId = listings.find((listing) => listing.id === feedback.listingId);
     if (byListingId) return byListingId;
   }
 
-  if (feedback.requestId) {
+  if (hasText(feedback.requestId)) {
     const byRequestId = listings.find(
       (listing) => resolveTraderaRequestId(listing) === feedback.requestId
     );
     if (byRequestId) return byRequestId;
   }
 
-  if (feedback.externalListingId) {
+  if (hasText(feedback.externalListingId)) {
     const byExternalListingId = listings.find(
       (listing) => listing.externalListingId === feedback.externalListingId
     );
@@ -59,29 +64,47 @@ export const findTrackedTraderaListing = (
   return null;
 };
 
-export const buildTrackedTraderaFeedbackOptions = (
+const resolveTrackedTraderaDuplicateMetadata = (
   listing: ProductListingWithDetails,
   feedback: PersistedTraderaQuickListFeedback
-): TraderaFeedbackOptions => {
+): {
+  duplicateLinked: boolean;
+  duplicateMatchStrategy: string | null;
+} => {
   const duplicateMatchStrategy =
     resolveDuplicateMatchStrategyFromListing(listing) ??
     resolveDuplicateMatchStrategyFromFeedback(feedback);
 
   return {
-    completedAt: resolveCompletedAtFromListing(listing),
     duplicateLinked:
       resolveDuplicateLinkedFromListing(listing) || resolveDuplicateLinkedFromFeedback(feedback),
     duplicateMatchStrategy,
-    runId: feedback.runId ?? null,
+  };
+};
+
+export const buildTrackedTraderaFeedbackOptions = (
+  listing: ProductListingWithDetails,
+  feedback: PersistedTraderaQuickListFeedback
+): TraderaFeedbackOptions => {
+  const { duplicateLinked, duplicateMatchStrategy } =
+    resolveTrackedTraderaDuplicateMetadata(listing, feedback);
+
+  return {
+    completedAt: resolveCompletedAtFromListing(listing),
+    duplicateLinked,
+    duplicateMatchStrategy,
+    runId: feedback.runId ?? resolveTraderaRunIdFromListing(listing),
     requestId: feedback.requestId ?? resolveTraderaRequestId(listing),
-    integrationId: listing.integrationId ?? feedback.integrationId ?? null,
-    connectionId: listing.connectionId ?? feedback.connectionId ?? null,
+    integrationId: listing.integrationId,
+    connectionId: listing.connectionId,
+    failureReason:
+      feedback.failureReason ?? resolveTraderaFailureReasonFromListing(listing),
     listingId: listing.id,
     listingUrl: resolveListingUrlFromListing(listing),
     externalListingId: listing.externalListingId ?? feedback.externalListingId ?? null,
     metadata: {
       ...(feedback.metadata ?? {}),
-      ...(duplicateMatchStrategy ? { duplicateMatchStrategy } : {}),
+      ...(duplicateMatchStrategy !== null ? { duplicateMatchStrategy } : {}),
     },
   };
 };
@@ -90,7 +113,7 @@ export const isTrackedTraderaListingSuccess = (
   listing: ProductListingWithDetails,
   feedback: PersistedTraderaQuickListFeedback
 ): boolean =>
-  SUCCESS_STATUSES.has(normalizeMarketplaceStatus(listing.status ?? '')) ||
+  SUCCESS_STATUSES.has(normalizeMarketplaceStatus(listing.status)) ||
   resolveDuplicateLinkedFromListing(listing) ||
   resolveDuplicateLinkedFromFeedback(feedback);
 
@@ -111,15 +134,14 @@ export function useTraderaQuickExportFeedback(
   traderaStatus: string,
   showTraderaBadge: boolean
 ): UseTraderaQuickExportFeedbackResult {
-  const actions: MarketplaceQuickExportFeedbackActions = useMemo(
+  const actions = useMemo<MarketplaceQuickExportFeedbackActions>(
     () => ({
       readFeedback: readPersistedTraderaQuickListFeedback,
       persistFeedback: persistTraderaQuickListFeedback,
       clearFeedback: clearPersistedTraderaQuickListFeedback,
-      findTrackedListing: findTrackedTraderaListing as MarketplaceQuickExportFeedbackActions['findTrackedListing'],
-      buildFeedbackOptions: buildTrackedTraderaFeedbackOptions as MarketplaceQuickExportFeedbackActions['buildFeedbackOptions'],
-      isTrackedListingSuccess:
-        isTrackedTraderaListingSuccess as MarketplaceQuickExportFeedbackActions['isTrackedListingSuccess'],
+      findTrackedListing: findTrackedTraderaListing,
+      buildFeedbackOptions: buildTrackedTraderaFeedbackOptions,
+      isTrackedListingSuccess: isTrackedTraderaListingSuccess,
     }),
     []
   );
@@ -132,8 +154,10 @@ export function useTraderaQuickExportFeedback(
     'Tradera'
   );
 
-  return {
+  const response: UseTraderaQuickExportFeedbackResult = {
     ...result,
     normalizedTraderaStatus: result.normalizedStatus,
-  } as UseTraderaQuickExportFeedbackResult;
+  };
+
+  return response;
 }

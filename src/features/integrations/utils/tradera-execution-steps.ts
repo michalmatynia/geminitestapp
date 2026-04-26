@@ -125,6 +125,15 @@ const hasAnyEventPrefix = (
   return typeof parsed.event === 'string' && parsed.event.startsWith(prefix);
 });
 
+const hasRuntimeBrowserCleanupLog = (
+  logs: readonly string[] | null | undefined
+): boolean =>
+  (logs ?? []).some(
+    (entry) =>
+      entry.includes('[runtime] Browser context closed.') ||
+      entry.includes('[runtime] Browser disconnected.')
+  );
+
 const getEventPayload = (
   logs: readonly string[] | null | undefined,
   event: string
@@ -592,6 +601,7 @@ export const buildTraderaQuicklistExecutionSteps = ({
   const manualLoginWasNeeded = readBoolean(authInitialState?.['loggedIn']) === false;
   const manualLoginRecovered =
     manualLoginWasNeeded && readBoolean(authFinalState?.['loggedIn']) === true;
+  const browserCleanupCompleted = hasRuntimeBrowserCleanupLog(logs);
   const duplicateInspectionRan = hasEvent(logs, 'tradera.quicklist.duplicate.inspect');
   const duplicateSearchSkipped = hasEvent(logs, 'tradera.quicklist.duplicate.skipped');
   const duplicateNonExactIgnoredPayload = getLastEventPayload(
@@ -1003,6 +1013,13 @@ export const buildTraderaQuicklistExecutionSteps = ({
     markStep(steps, 'publish_verify', {
       status: 'running',
       message: 'Publish action was triggered and is awaiting verification.',
+    });
+  }
+
+  if (browserCleanupCompleted) {
+    markStep(steps, 'browser_close', {
+      status: 'success',
+      message: QUICKLIST_SUCCESS_MESSAGES['browser_close'],
     });
   }
 

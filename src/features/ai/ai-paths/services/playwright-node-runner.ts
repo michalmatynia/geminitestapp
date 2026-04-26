@@ -190,6 +190,15 @@ const withTimeout = async <T>(
     }
     };
 
+const shouldHoldBrowserOpenForFailure = (message: string): boolean => {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes('auth_required') ||
+    normalized.includes('manual verification') ||
+    normalized.includes('captcha')
+  );
+};
+
     const cleanupOldRuns = async (): Promise<void> => {
   try {
     await ensureRunRoot();
@@ -774,6 +783,9 @@ const buildContextOptions = (
 const readOptionalTrimmedString = (value: unknown): string | null =>
   typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 
+const isNodeErrorWithCode = (error: unknown, code: string): boolean =>
+  isObjectRecord(error) && error['code'] === code;
+
 const resolveBrowserLaunchLabel = (input: {
   browserEngine: 'chromium' | 'firefox' | 'webkit';
   launchOptions: LaunchOptions;
@@ -1238,6 +1250,73 @@ const executePlaywrightNodeRun = async (
     }
     runtimeLifecycle[key] = true;
     logs.push(message);
+  };
+  let stickySessionStatePersisted = false;
+  let videoArtifactPersisted = false;
+  let pageCleanupAttempted = false;
+  let runtimeCleanupAttempted = false;
+  const isRunnerPageOpen = (): boolean =>
+    page !== null &&
+    runtimeLifecycle.pageClosed === false &&
+    runtimeLifecycle.pageCrashed === false &&
+    (typeof page.isClosed !== 'function' || page.isClosed() === false);
+  const persistStickySessionStorageStateOnce = async (): Promise<void> => {
+    if (stickySessionStatePersisted) {
+      return;
+    }
+    stickySessionStatePersisted = true;
+    await persistStickySessionStorageState({
+      context,
+      descriptor: stickySessionDescriptor,
+      logs,
+    });
+  };
+  const persistVideoArtifactOnce = async (): Promise<boolean> => {
+    if (videoArtifactPersisted) {
+      return false;
+    }
+    videoArtifactPersisted = true;
+    return persistVideoArtifact({
+      artifacts,
+      logs,
+      page,
+      request,
+      runArtifactsDir,
+    });
+  };
+  const closeRunnerPageOnce = async (): Promise<void> => {
+    if (pageCleanupAttempted) {
+      return;
+    }
+    pageCleanupAttempted = true;
+    if (!isRunnerPageOpen()) {
+      return;
+    }
+    await page
+      ?.close({ runBeforeUnload: false })
+      .catch(() => undefined);
+    if (page !== null && typeof page.isClosed === 'function' && page.isClosed()) {
+      logRuntimeLifecycle('pageClosed', '[runtime] Runner page closed.');
+    }
+  };
+  const closePlaywrightRuntimeOnce = async (): Promise<void> => {
+    if (runtimeCleanupAttempted) {
+      return;
+    }
+    runtimeCleanupAttempted = true;
+    await closeRunnerPageOnce();
+    if (context) {
+      const contextClosed = await context.close().then(() => true).catch(() => false);
+      if (contextClosed) {
+        logRuntimeLifecycle('contextClosed', '[runtime] Browser context closed.');
+      }
+    }
+    if (browser) {
+      const browserClosed = await browser.close().then(() => true).catch(() => false);
+      if (browserClosed) {
+        logRuntimeLifecycle('browserDisconnected', '[runtime] Browser disconnected.');
+      }
+    }
   };
   try {
     await waitForChromiumRuntimePacing({
@@ -1820,6 +1899,12 @@ const executePlaywrightNodeRun = async (
       runId,
       startedAt,
     });
+    await persistStickySessionStorageStateOnce();
+    await closeRunnerPageOnce();
+    await persistVideoArtifactOnce();
+    await closePlaywrightRuntimeOnce();
+    finalState.artifacts = artifacts;
+    finalState.logs = logs;
     await writeRunState(finalState);
     return finalState;
   } catch (error) {
@@ -1846,6 +1931,7 @@ const executePlaywrightNodeRun = async (
         : 0;
     const shouldHoldBrowserOpenOnFailure =
       failureHoldOpenMs > 0 &&
+      shouldHoldBrowserOpenForFailure(message) &&
       effectiveSettings.headless === false &&
       browser !== null &&
       context !== null &&
@@ -1860,6 +1946,13 @@ const executePlaywrightNodeRun = async (
         `[runtime] Holding headed browser open for ${failureHoldOpenMs}ms after failure.`
       );
     }
+    if (shouldHoldBrowserOpenOnFailure) {
+      await sleep(failureHoldOpenMs);
+    }
+    await persistStickySessionStorageStateOnce();
+    await closeRunnerPageOnce();
+    await persistVideoArtifactOnce();
+    await closePlaywrightRuntimeOnce();
     const failedState = buildFailedRunState({
       artifacts,
       errorMessage: message,
@@ -1870,32 +1963,13 @@ const executePlaywrightNodeRun = async (
       startedAt,
     });
     await writeRunState(failedState);
-    if (shouldHoldBrowserOpenOnFailure) {
-      await sleep(failureHoldOpenMs);
-    }
     return failedState;
   } finally {
-    await persistStickySessionStorageState({
-      context,
-      descriptor: stickySessionDescriptor,
-      logs,
-    });
-    const shouldPersistArtifacts = await persistVideoArtifact({
-      artifacts,
-      logs,
-      page,
-      request,
-      runArtifactsDir,
-    });
-    if (shouldPersistArtifacts) {
-      await updateRunState(runId, { artifacts, logs }).catch(() => undefined);
-    }
-    if (context) {
-      await context.close().catch(() => undefined);
-    }
-    if (browser) {
-      await browser.close().catch(() => undefined);
-    }
+    await persistStickySessionStorageStateOnce();
+    await closeRunnerPageOnce();
+    await persistVideoArtifactOnce();
+    await closePlaywrightRuntimeOnce();
+    await updateRunState(runId, { artifacts, logs }).catch(() => undefined);
   }
 };
 
@@ -1955,6 +2029,9 @@ export const readPlaywrightNodeRun = async (
       ),
     };
   } catch (error) {
+    if (isNodeErrorWithCode(error, 'ENOENT')) {
+      return null;
+    }
     await ErrorSystem.captureException(error);
     return null;
   }

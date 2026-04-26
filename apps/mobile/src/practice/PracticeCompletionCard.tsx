@@ -13,7 +13,7 @@ import { PracticeLessonCheckpointsPanel } from './PracticeLessonCheckpointsPanel
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { createKangurPlanHref } from '../lessons/lessonHref';
 import { getLocalizedKangurMetadataBadgeName } from '../scores/mobileScoreSummary';
-import { type PracticeCompletionCardProps } from './completion-card-types';
+export { type PracticeCompletionCardProps } from './completion-card-types';
 
 function CompletionHeader(props: {
   copy: PracticeCompletionCardProps['copy'];

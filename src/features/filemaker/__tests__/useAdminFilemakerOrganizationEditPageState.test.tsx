@@ -417,7 +417,7 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
         }),
       ]);
     });
-    expect(fetchMock).toHaveBeenCalledWith('/api/filemaker/organizations/org-1', {
+    expect(fetchMock).toHaveBeenCalledWith('/api/filemaker/organizations/LEGACY-ORG-UUID', {
       signal: expect.any(AbortSignal),
     });
   });

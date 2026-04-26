@@ -1,5 +1,7 @@
 import 'server-only';
 
+/* eslint-disable complexity, max-lines */
+
 import type { Collection, Document, Filter } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

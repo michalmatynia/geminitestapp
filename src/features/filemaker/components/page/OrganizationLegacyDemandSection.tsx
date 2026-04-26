@@ -212,12 +212,12 @@ function createLegacyDemandRowsController(
 }
 
 export function OrganizationLegacyDemandSection(): React.JSX.Element | null {
-  const { database, legacyDemandRows, organization } =
+  const { legacyDemandRows, organization, valueCatalog } =
     useAdminFilemakerOrganizationEditPageStateContext();
   const { setLegacyDemandRows } = useAdminFilemakerOrganizationEditPageActionsContext();
   const optionsByParent = useMemo(
-    () => groupValueOptionsByParent(database.values),
-    [database.values]
+    () => groupValueOptionsByParent(valueCatalog),
+    [valueCatalog]
   );
 
   if (organization === null) return null;

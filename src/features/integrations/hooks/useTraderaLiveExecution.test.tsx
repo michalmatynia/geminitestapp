@@ -77,6 +77,67 @@ describe('useTraderaLiveExecution', () => {
     expect(fetchPlaywrightRunMock).not.toHaveBeenCalled();
   });
 
+  it('loads a recovery run directly by run id', async () => {
+    fetchPlaywrightRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          runId: 'run-recovery-123',
+          status: 'failed',
+          result: {
+            runtimePosture: {
+              browser: {
+                label: 'Brave',
+              },
+            },
+            outputs: {
+              result: {
+                stage: 'publish_verify',
+                currentUrl: 'https://www.tradera.com/en/my/active',
+              },
+            },
+          },
+          artifacts: [
+            {
+              name: 'final.png',
+              path: '/tmp/final.png',
+              kind: 'screenshot',
+              mimeType: 'image/png',
+            },
+          ],
+          logs: ['[user] tradera.quicklist.publish.verify.failed'],
+          error: 'FAIL_PUBLISH_VERIFICATION',
+        },
+      },
+    });
+
+    const { result } = renderHook(
+      () => useTraderaLiveExecution({ runId: 'run-recovery-123', action: 'relist' }),
+      {
+        wrapper: createWrapper(),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current?.runId).toBe('run-recovery-123');
+    });
+
+    expect(fetchPlaywrightRunMock).toHaveBeenCalledWith('run-recovery-123');
+    expect(result.current?.action).toBe('relist');
+    expect(result.current?.status).toBe('failed');
+    expect(result.current?.latestStage).toBe('publish_verify');
+    expect(result.current?.logTail).toEqual([
+      '[user] tradera.quicklist.publish.verify.failed',
+    ]);
+    expect(result.current?.failureArtifacts).toHaveLength(1);
+    expect(result.current?.runtimePosture).toMatchObject({
+      browser: {
+        label: 'Brave',
+      },
+    });
+    expect(result.current?.error).toBe('FAIL_PUBLISH_VERIFICATION');
+  });
+
   it('prefers live emitted steps from the active Playwright run', async () => {
     fetchPlaywrightRunMock.mockResolvedValue({
       ok: true,

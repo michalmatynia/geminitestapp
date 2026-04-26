@@ -632,6 +632,50 @@ describe('tradera-execution-steps', () => {
     });
   });
 
+  it('marks browser close complete when runtime cleanup finished after publish verification failed', () => {
+    const execution = resolveTraderaExecutionStepsFromMarketplaceData({
+      tradera: {
+        lastExecution: {
+          action: 'relist',
+          ok: false,
+          error:
+            'FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.',
+          metadata: {
+            rawResult: {
+              stage: 'publish_clicked',
+            },
+            logTail: [
+              '[user] tradera.quicklist.start {"listingAction":"relist"}',
+              '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+              '[user] tradera.quicklist.auth.final {"loggedIn":true}',
+              '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+              '[user] tradera.quicklist.image.upload_start {"fileCount":2}',
+              '[user] tradera.quicklist.field.verified {"field":"title"}',
+              '[user] tradera.quicklist.category.search_result {"path":"Collectibles > Pins"}',
+              '[user] tradera.quicklist.delivery.save.applied {"shippingCondition":"Buyer pays shipping"}',
+              '[user] tradera.quicklist.publish.click_result {"confirmed":true}',
+              '[runtime] Browser context closed.',
+              '[runtime] Browser disconnected.',
+            ],
+          },
+        },
+      },
+    });
+
+    expect(execution.steps.find((step) => step.id === 'publish')).toMatchObject({
+      status: 'success',
+    });
+    expect(execution.steps.find((step) => step.id === 'publish_verify')).toMatchObject({
+      status: 'error',
+      message:
+        'FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.',
+    });
+    expect(execution.steps.find((step) => step.id === 'browser_close')).toMatchObject({
+      status: 'success',
+      message: 'Browser was closed.',
+    });
+  });
+
   it('prefers reconstructed duplicate-linked quicklist steps over stale persisted pending metadata', () => {
     const execution = resolveTraderaExecutionStepsFromMarketplaceData({
       tradera: {

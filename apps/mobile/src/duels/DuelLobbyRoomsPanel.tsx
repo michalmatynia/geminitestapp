@@ -4,7 +4,7 @@ import { KangurMobileCard as Card, KangurMobileFilterChip } from '../shared/Kang
 import { ActionButton, AutoRefreshChip, LobbyEntryCard, MessageCard } from './duels-primitives';
 import { type KangurDuelLobbyEntry } from '@kangur/contracts/kangur-duels';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
-import { type DuelModeFilterOption, MODE_FILTER_OPTIONS, formatModeLabel, formatOperationLabel, formatStatusLabel, localizeDuelText } from './utils/duels-ui';
+import { type DuelModeFilterOption, MODE_FILTER_OPTIONS, formatModeLabel, formatOperationLabel, formatStatusLabel, localizeDuelText } from '../utils/duels-ui';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];

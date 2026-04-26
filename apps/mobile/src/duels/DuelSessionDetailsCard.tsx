@@ -21,7 +21,7 @@ import {
   formatSpectatorQuestionProgress,
   formatStatusLabel,
   getStatusTone,
-} from './utils/duels-ui';
+} from '../utils/duels-ui';
 import { 
     type UseKangurMobileDuelSessionResult
 } from './useKangurMobileDuelSession';

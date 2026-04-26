@@ -1,6 +1,8 @@
 'use client';
 
-import { Edit2, LayoutList, Users, Building2, CalendarDays, Database, Mail } from 'lucide-react';
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
+
+import { Edit2, LayoutList, Users, Building2, CalendarDays, Database, Globe, Mail } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { useDeferredValue, useMemo, useState, startTransition } from 'react';
 
@@ -298,6 +300,13 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             icon: <Mail className='size-4' />,
             variant: 'outline',
             onClick: () => startTransition(() => { router.push('/admin/filemaker/emails'); }),
+          },
+          {
+            key: 'websites',
+            label: 'Websites',
+            icon: <Globe className='size-4' />,
+            variant: 'outline',
+            onClick: () => startTransition(() => { router.push('/admin/filemaker/websites'); }),
           },
           {
             key: 'events',

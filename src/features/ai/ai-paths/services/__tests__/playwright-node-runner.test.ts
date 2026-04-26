@@ -291,6 +291,13 @@ const loadRunner = async () =>
   import('@/features/ai/ai-paths/services/playwright-node-runner');
 
 describe('enqueuePlaywrightNodeRun', () => {
+  it('treats missing run state files as absent runs without logging an exception', async () => {
+    const { readPlaywrightNodeRun } = await loadRunner();
+
+    await expect(readPlaywrightNodeRun('missing-run-id')).resolves.toBeNull();
+    expect(mocks.captureExceptionMock).not.toHaveBeenCalled();
+  });
+
   it('executes a successful run, captures artifacts, and removes stale run fixtures', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeArtifact, readPlaywrightNodeRun } =
       await loadRunner();
@@ -549,6 +556,7 @@ describe('enqueuePlaywrightNodeRun', () => {
     const persisted = await readPlaywrightNodeRun(run.runId);
     expect(persisted?.status).toBe('completed');
     expect(await fs.stat(staleFilePath).catch(() => null)).toBeNull();
+    expect(runtime.page.close).toHaveBeenCalledTimes(1);
     expect(runtime.context.close).toHaveBeenCalledTimes(1);
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
@@ -962,6 +970,51 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps background success runs running until browser cleanup completes', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    let resolvePageCloseStarted!: () => void;
+    let resolvePageClose!: () => void;
+    const pageCloseStarted = new Promise<void>((resolve) => {
+      resolvePageCloseStarted = resolve;
+    });
+    const pageCloseReleased = new Promise<void>((resolve) => {
+      resolvePageClose = resolve;
+    });
+    runtime.page.close.mockImplementation(async () => {
+      resolvePageCloseStarted();
+      await pageCloseReleased;
+      await runtime.emitPageEvent('close');
+    });
+
+    const queued = await enqueuePlaywrightNodeRun({
+      waitForResult: false,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+      },
+    });
+
+    await pageCloseStarted;
+
+    const duringCleanup = await readPlaywrightNodeRun(queued.runId);
+    expect(duringCleanup?.status).toBe('running');
+
+    resolvePageClose();
+
+    await expect
+      .poll(async () => {
+        const current = await readPlaywrightNodeRun(queued.runId);
+        return current?.status ?? null;
+      })
+      .toBe('completed');
+
+    expect(runtime.page.close).toHaveBeenCalledTimes(1);
+    expect(runtime.context.close).toHaveBeenCalledTimes(1);
+    expect(runtime.browser.close).toHaveBeenCalledTimes(1);
+  });
+
   it('captures failure screenshot, html, and state artifacts when a run throws after page creation', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeArtifact } = await loadRunner();
     const runtime = await createPlaywrightRuntime({
@@ -1020,6 +1073,40 @@ describe('enqueuePlaywrightNodeRun', () => {
       pageClosed: false,
       pageCrashed: false,
     });
+  });
+
+  it('does not hold headed browser open for publish verification failures', async () => {
+    const { enqueuePlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime({
+      pageUrl: 'https://www.tradera.com/en/my/listings',
+      pageTitle: 'Active listings',
+    });
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: `
+          export default async function run() {
+            throw new Error('FAIL_PUBLISH_VERIFICATION: Published listing could not be confirmed in Active listings.');
+          };
+        `,
+        failureHoldOpenMs: 5,
+        settingsOverrides: {
+          headless: false,
+        },
+      },
+    });
+
+    expect(run.status).toBe('failed');
+    expect(run.error).toContain('FAIL_PUBLISH_VERIFICATION');
+    expect(run.logs).not.toContain('[runtime] Holding headed browser open for 5ms after failure.');
+    expect(run.logs).toContain('[runtime] Runner page closed.');
+    expect(run.logs).toContain('[runtime] Browser context closed.');
+    expect(run.logs).toContain('[runtime] Browser disconnected.');
+    expect(runtime.page.close).toHaveBeenCalledTimes(1);
+    expect(runtime.context.close).toHaveBeenCalledTimes(1);
+    expect(runtime.browser.close).toHaveBeenCalledTimes(1);
   });
 
   it('records lifecycle close diagnostics in logs and failure-state artifacts', async () => {
@@ -1320,8 +1407,9 @@ describe('enqueuePlaywrightNodeRun', () => {
     expect(capturedPageListener).not.toBeNull();
 
     const closeMock = runtime.page.close;
+    const callsAfterCleanup = closeMock.mock.calls.length;
     await capturedPageListener!(runtime.page);
-    expect(closeMock).not.toHaveBeenCalled();
+    expect(closeMock).toHaveBeenCalledTimes(callsAfterCleanup);
   });
 
   it('does not register a page listener when preventNewPages is not set', async () => {

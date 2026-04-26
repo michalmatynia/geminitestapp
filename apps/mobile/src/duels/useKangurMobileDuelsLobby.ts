@@ -12,17 +12,16 @@ import type {
   KangurDuelMode,
   KangurDuelOperation,
 } from '@kangur/contracts/kangur-duels';
-import { 
+export { 
   useLobbyQuery, 
   usePresenceQuery, 
   useOpponentsQuery, 
   useLeaderboardQuery, 
   useSearchQuery,
-  type UseKangurMobileDuelsLobbyResult 
+  type UseKangurMobileDuelsLobbyResult,
+  type KangurMobileDuelModeFilter,
+  type KangurMobileDuelSeriesBestOf
 } from './useKangurMobileDuelsLobbyQueries';
-
-export type KangurMobileDuelModeFilter = 'all' | KangurDuelMode;
-export type KangurMobileDuelSeriesBestOf = 1 | 3 | 5 | 7 | 9;
 
 export function useKangurMobileDuelsLobby(): UseKangurMobileDuelsLobbyResult {
   const { copy } = useKangurMobileI18n();

@@ -294,6 +294,58 @@ beforeEach(() => {
   });
 });
 
+it('fails before launching the scripted runner when the Tradera title exceeds 80 characters', async () => {
+  getProductByIdMock.mockResolvedValue({
+    id: 'product-1',
+    sku: 'HANDMAD007',
+    baseProductId: 'HANDMAD007',
+    categoryId: 'internal-category-1',
+    catalogId: 'catalog-1',
+    catalogs: [{ catalogId: 'catalog-1' }],
+    name_en: 'A'.repeat(81),
+    description_en: 'Example description',
+    price: 123,
+    imageLinks: ['https://cdn.example.com/a.jpg'],
+    images: [],
+  });
+
+  await expect(
+    runTraderaBrowserListing({
+      listing: {
+        id: 'listing-title-too-long',
+        productId: 'product-1',
+        integrationId: 'integration-1',
+        connectionId: 'connection-1',
+      } as never,
+      connection: {
+        id: 'connection-1',
+        traderaBrowserMode: 'scripted',
+        playwrightListingScript: 'export default async function run() {}',
+      } as never,
+      systemSettings: {
+        listingFormUrl: 'https://www.tradera.com/en/selling/new',
+      } as never,
+      source: 'manual',
+      action: 'list',
+      browserMode: 'headed',
+    })
+  ).rejects.toMatchObject({
+    message:
+      'FAIL_PUBLISH_VALIDATION: Tradera title is 81 characters, but Tradera allows at most 80. Shorten the marketplace title before retrying.',
+    meta: expect.objectContaining({
+      failureCode: 'tradera_title_too_long',
+      productId: 'product-1',
+      listingId: 'listing-title-too-long',
+      connectionId: 'connection-1',
+      titleLength: 81,
+      titleMaxLength: 80,
+    }),
+  });
+
+  expect(resolveTraderaListingPriceForProductMock).not.toHaveBeenCalled();
+  expect(runPlaywrightListingScriptMock).not.toHaveBeenCalled();
+});
+
   it('keeps publish-verified modern Tradera item urls successful even when raw draft metadata still reports Loading', async () => {
     runPlaywrightListingScriptMock.mockResolvedValue({
       runId: 'run-modern-url-loading-draft',

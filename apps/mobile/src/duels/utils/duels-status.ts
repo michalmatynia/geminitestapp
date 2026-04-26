@@ -1,6 +1,26 @@
 import type { KangurDuelStatus, KangurDuelPlayerStatus } from '@kangur/contracts/kangur-duels';
 import type { KangurMobileTone as Tone } from '../../shared/KangurMobileUi';
 
+export function resolveRoundProgress(
+  session: KangurDuelSession,
+  player: KangurDuelPlayer | null,
+  isSpectating: boolean,
+): { total: number; current: number; percent: number } {
+  const total = session.questionCount;
+  const current = isSpectating
+    ? session.currentQuestionIndex ?? 0
+    : player?.currentQuestionIndex ?? 0;
+
+  const safeCurrent = Math.min(current, total);
+  const percent = total > 0 ? Math.round((safeCurrent / total) * 100) : 0;
+
+  return {
+    total,
+    current: safeCurrent,
+    percent,
+  };
+}
+
 export function isWaitingSessionStatus(status: KangurDuelStatus): boolean {
   return status === 'waiting' || status === 'ready' || status === 'created';
 }

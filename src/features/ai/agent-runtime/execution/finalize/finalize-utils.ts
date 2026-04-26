@@ -1,6 +1,6 @@
 import { getChatbotAgentRunDelegate } from '@/features/ai/agent-runtime/store-delegates';
 import { buildCheckpointState } from '@/features/ai/agent-runtime/memory/checkpoint';
-import type { PlanStep, PlannerMeta } from '@/shared/contracts/agent-runtime';
+import type { PlanStep } from '@/shared/contracts/agent-runtime';
 import type { InputJsonValue } from '@/shared/contracts/json';
 
 export interface FinalizeRunInput {
@@ -16,9 +16,9 @@ export interface FinalizeRunInput {
   summaryCheckpoint: number;
 }
 
-export async function updateChatbotRunStatus(input: FinalizeRunInput) {
+export async function updateChatbotRunStatus(input: FinalizeRunInput): Promise<void> {
   const chatbotAgentRun = getChatbotAgentRunDelegate();
-  if (!chatbotAgentRun) return;
+  if (chatbotAgentRun === null || chatbotAgentRun === undefined) return;
 
   const status = input.requiresHuman ? 'waiting_human' : (input.overallOk ? 'completed' : 'failed');
 

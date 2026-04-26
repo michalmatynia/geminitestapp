@@ -4,7 +4,7 @@ import type {
 } from '@/shared/contracts/integrations/listings';
 
 export const toRecord = (value: unknown): Record<string, unknown> =>
-  value && typeof value === 'object' && !Array.isArray(value)
+  value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {};
 
@@ -22,8 +22,8 @@ export const resolveListingUrlFromListing = (
 ): string | null => {
   const marketplaceData = toRecord(listing.marketplaceData);
   const directListingUrl = readString(marketplaceData['listingUrl']);
-  if (directListingUrl) return directListingUrl;
-  return listing.externalListingId
+  if (directListingUrl !== null) return directListingUrl;
+  return listing.externalListingId !== null
     ? buildCanonicalTraderaItemUrl(listing.externalListingId)
     : null;
 };
@@ -38,6 +38,32 @@ export const resolveTraderaRequestId = (
   return readString(pendingExecution['requestId']) ?? readString(lastExecution['requestId']);
 };
 
+export const resolveTraderaRunIdFromListing = (
+  listing: ProductListingWithDetails
+): string | null => {
+  const marketplaceData = toRecord(listing.marketplaceData);
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const pendingExecution = toRecord(traderaData['pendingExecution']);
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  const metadata = toRecord(lastExecution['metadata']);
+  const rawResult = toRecord(metadata['rawResult']);
+  return (
+    readString(pendingExecution['runId']) ??
+    readString(metadata['runId']) ??
+    readString(lastExecution['runId']) ??
+    readString(rawResult['runId'])
+  );
+};
+
+export const resolveTraderaFailureReasonFromListing = (
+  listing: ProductListingWithDetails
+): string | null => {
+  const marketplaceData = toRecord(listing.marketplaceData);
+  const traderaData = toRecord(marketplaceData['tradera']);
+  const lastExecution = toRecord(traderaData['lastExecution']);
+  return readString(listing.failureReason) ?? readString(lastExecution['error']);
+};
+
 export const resolveCompletedAtFromListing = (
   listing: ProductListingWithDetails
 ): number | null => {
@@ -48,7 +74,7 @@ export const resolveCompletedAtFromListing = (
     readString(metadata['completedAt']) ??
     readString(lastExecution['executedAt']) ??
     readString(listing.listedAt ?? null);
-  if (!rawCompletedAt) return null;
+  if (rawCompletedAt === null) return null;
   const parsed = Date.parse(rawCompletedAt);
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -106,10 +132,11 @@ export const resolveDuplicateLinkedFromFeedback = (
   const metadata = toRecord(feedback?.metadata);
   const rawResult = toRecord(metadata['rawResult']);
   const latestStage = readString(metadata['latestStage']);
-  const duplicateMatchStrategy =
-    readString(feedback?.duplicateMatchStrategy) ??
-    readString(metadata['duplicateMatchStrategy']) ??
-    resolveDuplicateMatchStrategyFromRunResult(rawResult);
+  const duplicateMatchStrategy = resolveDuplicateMatchStrategyFromFeedbackParts({
+    feedback,
+    metadata,
+    rawResult,
+  });
   return (
     readBoolean(feedback?.duplicateLinked) === true ||
     readBoolean(metadata['duplicateLinked']) === true ||
@@ -117,6 +144,19 @@ export const resolveDuplicateLinkedFromFeedback = (
     Boolean(duplicateMatchStrategy)
   );
 };
+
+const resolveDuplicateMatchStrategyFromFeedbackParts = ({
+  feedback,
+  metadata,
+  rawResult,
+}: {
+  feedback?: PersistedQuickExportFeedback | null | undefined;
+  metadata: Record<string, unknown>;
+  rawResult: Record<string, unknown>;
+}): string | null =>
+  readString(feedback?.duplicateMatchStrategy) ??
+  readString(metadata['duplicateMatchStrategy']) ??
+  resolveDuplicateMatchStrategyFromRunResult(rawResult);
 
 export const resolveDuplicateMatchStrategyFromFeedback = (
   feedback?: PersistedQuickExportFeedback | null | undefined
@@ -144,11 +184,11 @@ export const resolveListingUrl = (
 ): string | null => {
   const listingMarketplaceData = toRecord(listing?.marketplaceData);
   const directListingUrl =
-    readString(listingMarketplaceData['listingUrl']) ?? feedbackListingUrl ?? null;
-  if (directListingUrl) return directListingUrl;
+    readString(listingMarketplaceData['listingUrl']) ?? readString(feedbackListingUrl);
+  if (directListingUrl !== null) return directListingUrl;
   const externalListingId =
-    listing?.externalListingId ?? feedbackExternalListingId ?? null;
-  return externalListingId ? buildCanonicalTraderaItemUrl(externalListingId) : null;
+    readString(listing?.externalListingId) ?? readString(feedbackExternalListingId);
+  return externalListingId !== null ? buildCanonicalTraderaItemUrl(externalListingId) : null;
 };
 
 export const resolveCompletedAtFromFeedbackAndListing = (
@@ -156,8 +196,8 @@ export const resolveCompletedAtFromFeedbackAndListing = (
   listing?: ProductListingWithDetails | null | undefined
 ): string | null => {
   const formatted = formatCompletedAt(feedbackCompletedAt ?? null);
-  if (formatted) return formatted;
-  if (!listing) return null;
+  if (formatted !== null) return formatted;
+  if (listing === null || listing === undefined) return null;
   const fromListing = resolveCompletedAtFromListing(listing);
   return formatCompletedAt(fromListing);
 };

@@ -5,10 +5,17 @@ import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
   VALIDATOR_SCOPE_DESCRIPTIONS,
+  type ValidatorPatternList,
 } from '@/features/admin/pages/validator-scope';
 import type { GlobalValidatorView } from './types';
 
-export function useValidatorState() {
+export function useValidatorState(): {
+  activeView: GlobalValidatorView;
+  patternLists: ValidatorPatternList[];
+  activeList: ValidatorPatternList | null;
+  activeDescription: string;
+  currentBreadcrumbLabel: string;
+} {
   const searchParams = useSearchParams();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   
@@ -19,11 +26,12 @@ export function useValidatorState() {
   
   const activeList = useMemo(() => {
     const listParam = searchParams.get('list');
-    return (listParam && patternLists.find((l) => l.id === listParam)) || patternLists[0] || null;
+    const found = (listParam !== null && listParam !== '') ? patternLists.find((l) => l.id === listParam) : undefined;
+    return found ?? patternLists[0] ?? null;
   }, [patternLists, searchParams]);
 
   const activeDescription = useMemo(() => {
-    if (!activeList) return '';
+    if (activeList === null) return '';
     const desc = activeList.description.trim();
     return desc === VALIDATOR_SCOPE_DESCRIPTIONS[activeList.scope] ? '' : desc;
   }, [activeList]);

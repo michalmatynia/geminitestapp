@@ -4,7 +4,15 @@ import type {
   KangurDuelLobbyPresenceResponse, 
   KangurDuelOpponentsResponse, 
   KangurDuelLeaderboardResponse, 
-  KangurDuelSearchResponse 
+  KangurDuelSearchResponse,
+  KangurDuelDifficulty,
+  KangurDuelMode,
+  KangurDuelOperation,
+  KangurDuelLeaderboardEntry,
+  KangurDuelLobbyEntry,
+  KangurDuelOpponentEntry,
+  KangurDuelLobbyPresenceEntry,
+  KangurDuelSearchEntry
 } from '@kangur/contracts/kangur-duels';
 import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 
@@ -16,6 +24,50 @@ const MOBILE_DUEL_LEADERBOARD_LIMIT = 6;
 const MOBILE_DUEL_LEADERBOARD_LOOKBACK_DAYS = 14;
 const MOBILE_DUEL_LOBBY_POLL_MS = 15_000;
 const MOBILE_DUEL_PRESENCE_POLL_MS = 20_000;
+
+export type KangurMobileDuelModeFilter = 'all' | KangurDuelMode;
+export type KangurMobileDuelSeriesBestOf = 1 | 3 | 5 | 7 | 9;
+
+export interface UseKangurMobileDuelsLobbyResult {
+  actionError: string | null;
+  createPrivateChallenge: (opponentLearnerId: string) => Promise<string | null>;
+  createPublicChallenge: () => Promise<string | null>;
+  createQuickMatch: () => Promise<string | null>;
+  difficulty: KangurDuelDifficulty;
+  inviteEntries: KangurDuelLobbyEntry[];
+  isActionPending: boolean;
+  isAuthenticated: boolean;
+  isLoadingAuth: boolean;
+  isLobbyLoading: boolean;
+  isOpponentsLoading: boolean;
+  isPresenceLoading: boolean;
+  isRestoringAuth: boolean;
+  isSearchLoading: boolean;
+  joinDuel: (sessionId: string) => Promise<boolean>;
+  leaderboardEntries: KangurDuelLeaderboardEntry[];
+  leaderboardError: string | null;
+  lobbyError: string | null;
+  modeFilter: KangurMobileDuelModeFilter;
+  operation: KangurDuelOperation;
+  opponents: KangurDuelOpponentEntry[];
+  presenceEntries: KangurDuelLobbyPresenceEntry[];
+  presenceError: string | null;
+  publicEntries: KangurDuelLobbyEntry[];
+  refresh: () => Promise<void>;
+  searchError: string | null;
+  searchQuery: string;
+  searchResults: KangurDuelSearchEntry[];
+  searchSubmittedQuery: string;
+  seriesBestOf: KangurMobileDuelSeriesBestOf;
+  setDifficulty: (difficulty: KangurDuelDifficulty) => void;
+  setModeFilter: (mode: KangurMobileDuelModeFilter) => void;
+  setOperation: (operation: KangurDuelOperation) => void;
+  setSeriesBestOf: (seriesBestOf: KangurMobileDuelSeriesBestOf) => void;
+  setSearchQuery: (query: string) => void;
+  submitSearch: () => void;
+  clearSearch: () => void;
+  visiblePublicEntries: KangurDuelLobbyEntry[];
+}
 
 export interface DuelApiClient {
   listDuelLobby: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelLobbyResponse>;

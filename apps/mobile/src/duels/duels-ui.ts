@@ -5,7 +5,8 @@ import { isStringNotEmpty } from './utils/duels-guards';
 import type { KangurMobileLocale, KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 import type { KangurMobileTone as Tone } from '../shared/KangurMobileUi';
 import * as Constants from './utils/duels-constants';
-import * as Formatters from './duels-formatters';
+import * as Formatters from './utils/duels-formatters';
+import * as Status from './utils/duels-status';
 
 export const HOME_ROUTE = '/' as Href;
 export const LESSONS_ROUTE = '/lessons' as Href;
@@ -45,16 +46,22 @@ export const {
   formatDifficultyLabel,
   formatOperationLabel,
   formatModeLabel,
+  resolveSeriesWins,
+  resolveWinnerSummary,
+  formatRelativeAge,
+} = Formatters;
+
+export const {
   getLessonMasteryTone,
   getPlayerStatusTone,
   getStatusTone,
   isWaitingSessionStatus,
+  resolveRoundProgress,
+} = Status;
+
+export const {
   localizeDuelText,
   normalizeSeriesBestOf,
-  resolveRoundProgress,
-  resolveSeriesWins,
-  resolveWinnerSummary,
-  formatRelativeAge,
 } = Formatters;
 
 export function resolveSessionIdParam(value: string | string[] | undefined): string | null {

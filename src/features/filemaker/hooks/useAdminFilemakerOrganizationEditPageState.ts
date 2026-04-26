@@ -35,6 +35,7 @@ import type {
   FilemakerOrganizationHarvestProfile,
   FilemakerOrganizationImportedDemand,
 } from '../filemaker-organization-imported-metadata';
+import type { FilemakerPartySnapshot } from '../filemaker-party-snapshot.types';
 import type { MongoFilemakerEvent } from '../pages/AdminFilemakerEventsPage.types';
 import type { MongoFilemakerPerson } from '../pages/AdminFilemakerPersonsPage.types';
 import type {
@@ -44,6 +45,7 @@ import type {
   FilemakerOrganization,
   FilemakerOrganizationLegacyDemand,
   FilemakerPhoneNumber,
+  FilemakerValue,
   FilemakerDatabase,
 } from '../types';
 import type { MongoFilemakerWebsite } from '../filemaker-websites.types';
@@ -71,6 +73,8 @@ type MongoFilemakerOrganizationState = {
   linkedPersons: MongoFilemakerPerson[];
   linkedWebsites: MongoFilemakerWebsite[];
   organization: FilemakerOrganization | null;
+  relationshipSummary: FilemakerPartySnapshot | null;
+  valueCatalog: FilemakerValue[];
 };
 
 type MongoFilemakerOrganizationResponse = {
@@ -81,7 +85,11 @@ type MongoFilemakerOrganizationResponse = {
   linkedEvents?: MongoFilemakerEvent[];
   linkedPersons?: MongoFilemakerPerson[];
   linkedWebsites?: MongoFilemakerWebsite[];
+  relationshipSummary?: FilemakerPartySnapshot | null;
   organization: FilemakerOrganization;
+  valueCatalog?: {
+    values?: FilemakerValue[];
+  };
 };
 
 const EMPTY_COUNTRIES: CountryOption[] = [];
@@ -96,6 +104,8 @@ const EMPTY_MONGO_ORGANIZATION_STATE: MongoFilemakerOrganizationState = {
   linkedPersons: [],
   linkedWebsites: [],
   organization: null,
+  relationshipSummary: null,
+  valueCatalog: [],
 };
 
 const applyOrganizationAddresses = (
@@ -259,6 +269,8 @@ const toLoadedMongoOrganizationState = (
   linkedPersons: response.linkedPersons ?? [],
   linkedWebsites: response.linkedWebsites ?? [],
   organization: response.organization,
+  relationshipSummary: response.relationshipSummary ?? null,
+  valueCatalog: response.valueCatalog?.values ?? [],
 });
 
 export type AdminFilemakerOrganizationEditPageContextValue = {
@@ -284,6 +296,8 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
   linkedWebsites: MongoFilemakerWebsite[];
   harvestProfiles: FilemakerOrganizationHarvestProfile[];
   importedDemands: FilemakerOrganizationImportedDemand[];
+  relationshipSummary: FilemakerPartySnapshot | null;
+  valueCatalog: FilemakerValue[];
   phoneNumbers: FilemakerPhoneNumber[];
   countries: CountryOption[];
   database: FilemakerDatabase;
@@ -334,6 +348,8 @@ function useMongoFilemakerOrganization(
           linkedPersons: [],
           linkedWebsites: [],
           organization: null,
+          relationshipSummary: null,
+          valueCatalog: [],
         });
       });
 
@@ -547,6 +563,11 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const linkedWebsites = mongoOrganizationState.linkedWebsites;
   const harvestProfiles = mongoOrganizationState.harvestProfiles;
   const importedDemands = mongoOrganizationState.importedDemands;
+  const relationshipSummary = mongoOrganizationState.relationshipSummary;
+  const valueCatalog =
+    mongoOrganizationState.valueCatalog.length > 0
+      ? mongoOrganizationState.valueCatalog
+      : database.values;
 
   const phoneNumbers = useMemo(
     () =>
@@ -798,6 +819,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     linkedWebsites,
     harvestProfiles,
     importedDemands,
+    relationshipSummary,
+    valueCatalog,
     phoneNumbers,
     countries,
     database,

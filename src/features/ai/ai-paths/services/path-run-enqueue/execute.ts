@@ -1,12 +1,12 @@
 import { type EnqueueRunInput, type AiPathRunRecord } from '@/shared/contracts/ai-paths';
-import { resolvePathRunRepository } from './path-run-enqueue-service';
-import { ACTIVE_RUN_STATUS_FILTER } from './path-run-enqueue-service';
+import { resolvePathRunRepository } from '../path-run-enqueue-service';
+import { ACTIVE_RUN_STATUS_FILTER } from '../path-run-enqueue-service';
 import { validationError } from '@/shared/errors/app-error';
-import { findRemovedLegacyTriggerContextModes, formatRemovedLegacyTriggerContextModesMessage, normalizeNodes, assertCanonicalRunGraph } from './path-run-enqueue-service';
-import { toRecord } from './path-run-enqueue-service';
+import { findRemovedLegacyTriggerContextModes, formatRemovedLegacyTriggerContextModesMessage, normalizeNodes, assertCanonicalRunGraph } from '../path-run-enqueue-service';
+import { toRecord } from '../path-run-enqueue-service';
 import { parseRuntimeState } from '@/features/ai/ai-paths/services/path-run-executor.runtime-state';
 import { evaluateRunPreflight } from '@/features/ai/ai-paths/services/path-run-executor.logic';
-import { toSampleStateMap } from './path-run-enqueue-service';
+import { toSampleStateMap } from '../path-run-enqueue-service';
 
 export const executeEnqueue = async (
     input: EnqueueRunInput,

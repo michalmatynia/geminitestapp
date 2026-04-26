@@ -4,12 +4,14 @@ import React, { startTransition } from 'react';
 
 import { OrganizationAddressesSection } from '../components/page/OrganizationAddressesSection';
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
+import { OrganizationContactLogsSection } from '../components/page/OrganizationContactLogsSection';
 import { OrganizationEmailLogSection } from '../components/page/OrganizationEmailLogSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
 import { OrganizationEventsSection } from '../components/page/OrganizationEventsSection';
 import { OrganizationImportedMetadataSection } from '../components/page/OrganizationImportedMetadataSection';
 import { OrganizationLegacyDemandSection } from '../components/page/OrganizationLegacyDemandSection';
 import { OrganizationLegacyMetadataSection } from '../components/page/OrganizationLegacyMetadataSection';
+import { OrganizationMongoSummarySection } from '../components/page/OrganizationMongoSummarySection';
 import { OrganizationPersonsSection } from '../components/page/OrganizationPersonsSection';
 import { OrganizationWebsitesSection } from '../components/page/OrganizationWebsitesSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
@@ -53,10 +55,12 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
           {isCreateMode ? null : (
             <>
               <OrganizationLegacyMetadataSection />
+              <OrganizationMongoSummarySection />
               <OrganizationImportedMetadataSection />
               <OrganizationLegacyDemandSection />
               <OrganizationPersonsSection />
               <OrganizationEventsSection />
+              <OrganizationContactLogsSection />
               <OrganizationEmailsSection />
               <OrganizationWebsitesSection />
               <OrganizationEmailLogSection />

@@ -165,9 +165,9 @@ const findMatchingKangurPracticeSyncScore = ({
   return findExactPracticeSyncScoreMatchCreatedAfterRunStart(exactMatches, runStartedAt);
 };
 
-const localizePracticeSyncProofCopy = <T extends Record<KangurMobileLocale, string>>(
+const localizePracticeSyncProofCopy = (
   locale: KangurMobileLocale,
-  value: T,
+  value: Record<KangurMobileLocale, string>,
 ): string => value[locale];
 
 const replacePracticeSyncProofTokens = (
@@ -305,48 +305,4 @@ const buildLeaderboardSurface = (args: {
         status: 'missing',
       };
 
-export const buildKangurPracticeSyncProofSnapshot = ({
-  expectedCorrectAnswers,
-  expectedTotalQuestions,
-  leaderboardItems,
-  locale = 'pl',
-  operation,
-  progress,
-  runStartedAt,
-  scores,
-}: BuildKangurPracticeSyncProofInput): KangurPracticeSyncProofSnapshot => {
-  const matchedScore = findMatchingKangurPracticeSyncScore({
-    expectedCorrectAnswers,
-    expectedTotalQuestions,
-    operation,
-    runStartedAt,
-    scores,
-  });
-  const operationLabel = formatKangurMobileScoreOperation(operation, locale);
-  const lessonMastery = progress.lessonMastery[operation] ?? null;
-  const hasOperationProgress =
-    progress.operationsPlayed.includes(operation) || lessonMastery !== null;
-  const planRecentResults = scores.slice(0, 3);
-  const isVisibleInDailyPlan =
-    matchedScore !== null &&
-    planRecentResults.some((score) => score.id === matchedScore.id);
-  const leaderboardItem =
-    matchedScore !== null
-      ? leaderboardItems.find((item) => item.id === matchedScore.id)
-      : null;
-
-  return {
-    matchedScoreId: matchedScore?.id ?? null,
-    surfaces: [
-      buildRecentResultsSurface({ locale, matchedScore, operationLabel }),
-      buildProfileProgressSurface({
-        hasOperationProgress,
-        lessonMastery,
-        locale,
-        progress,
-      }),
-      buildDailyPlanSurface({ isVisibleInDailyPlan, locale }),
-      buildLeaderboardSurface({ leaderboardItem, locale }),
-    ],
-  };
-};
+// Placeholder for moved logic

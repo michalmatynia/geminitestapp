@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { ActionButton, LinkButton } from './duels-primitives';
-import { HOME_ROUTE, LOBBY_CHAT_PREVIEW_LIMIT, createKangurDuelsHref } from './utils/duels-ui';
+import { HOME_ROUTE, LOBBY_CHAT_PREVIEW_LIMIT } from '../utils/duels-ui';
+import { createKangurDuelsHref } from './duelsHref';
 import { useKangurDuelsScreenData } from './useKangurDuelsScreenData';
 import { DuelsScreenContent } from './DuelsScreenContent';
 
@@ -15,7 +16,7 @@ export function KangurDuelsScreen(): React.JSX.Element {
   const renderJoinAction = useCallback((id: string) => {
     const label = copy({ de: 'Duell beitreten', en: 'Join duel', pl: 'Dołącz do pojedynku' });
     if (lobby.isAuthenticated) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+       
       return <ActionButton label={label} onPress={() => joinDuelAction(id)} stretch />;
     }
     return createLoginCallToAction(copy({ de: 'Anmelden, um beizutreten', en: 'Sign in to join', pl: 'Zaloguj, aby dołączyć' }));

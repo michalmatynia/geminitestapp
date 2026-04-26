@@ -990,11 +990,12 @@ export const PART_5B = String.raw`
         });
       }
 
+      const hasDirectPublishIdentifier = Boolean(externalListingId || listingUrl);
       const canTrustDirectPublishSuccess =
-        listingAction === 'list' &&
+        (listingAction === 'list' ||
+          (listingAction === 'relist' && hasDirectPublishIdentifier)) &&
         Boolean(
-          externalListingId ||
-            listingUrl ||
+          hasDirectPublishIdentifier ||
             publishInteraction.activeListingsVisible ||
             publishInteraction.stillOnSellFlow === false
         );

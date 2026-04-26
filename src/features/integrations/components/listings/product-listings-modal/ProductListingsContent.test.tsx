@@ -141,6 +141,118 @@ describe('ProductListingsContent', () => {
     expect(onStartListingMock).not.toHaveBeenCalled();
   });
 
+  it('shows failed Tradera run logs and history from the recovery run id when no listing row is available', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: 'run-tradera-failed',
+        requestId: 'job-tradera-failed',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        failureReason: 'Published listing could not be confirmed in Active listings.',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+    useTraderaLiveExecutionMock.mockReturnValue({
+      runId: 'run-tradera-failed',
+      action: 'list',
+      status: 'failed',
+      latestStage: 'publish_verify',
+      latestStageUrl: 'https://www.tradera.com/en/my/active',
+      requestedSelectorProfile: null,
+      resolvedSelectorProfile: null,
+      executionSteps: [
+        {
+          id: 'publish_verify',
+          label: 'Verify published listing',
+          status: 'error',
+          message: 'Published listing could not be confirmed in Active listings.',
+        },
+      ],
+      rawResult: {
+        stage: 'publish_verify',
+      },
+      logTail: ['[user] tradera.quicklist.publish.verify.failed'],
+      failureArtifacts: [
+        {
+          name: 'final.png',
+          path: '/tmp/final.png',
+          kind: 'screenshot',
+          mimeType: 'image/png',
+        },
+      ],
+      runtimePosture: {
+        browser: {
+          label: 'Brave',
+        },
+      },
+      error: 'FAIL_PUBLISH_VERIFICATION',
+    });
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Browser run history')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open run history' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/action-runs?query=run-tradera-failed'
+    );
+    expect(screen.getByText('Failed run steps')).toBeInTheDocument();
+    expect(screen.getByText('Verify published listing')).toBeInTheDocument();
+    expect(screen.getByText('Tradera failure diagnostics')).toBeInTheDocument();
+    expect(
+      screen.getByText(/\[user\] tradera\.quicklist\.publish\.verify\.failed/)
+    ).toBeInTheDocument();
+    expect(screen.getByText(/FAIL_PUBLISH_VERIFICATION/)).toBeInTheDocument();
+  });
+
+  it('keeps the failed Tradera run history link visible while diagnostics are unavailable', () => {
+    useProductListingsModalsMock.mockReturnValue({
+      onStartListing: onStartListingMock,
+      recoveryContext: {
+        source: 'tradera_quick_export_failed',
+        integrationSlug: 'tradera',
+        status: 'failed',
+        runId: 'run-tradera-loading',
+        requestId: 'job-tradera-loading',
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        failureReason: 'Published listing could not be confirmed in Active listings.',
+      },
+      setRecoveryContext: setRecoveryContextMock,
+    });
+    useTraderaLiveExecutionMock.mockReturnValue(null);
+
+    render(
+      <ProductListingsViewProvider
+        value={{
+          ...baseViewContextValue,
+          filteredListings: [],
+        }}
+      >
+        <ProductListingsContent />
+      </ProductListingsViewProvider>
+    );
+
+    expect(screen.getByText('Browser run history')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open run history' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/action-runs?query=run-tradera-loading'
+    );
+    expect(screen.getByText(/Run diagnostics are loading or unavailable/)).toBeInTheDocument();
+  });
+
   it('renders a Base recovery banner in the listings content when a failed Base export is being recovered', () => {
     useProductListingsModalsMock.mockReturnValue({
       onStartListing: onStartListingMock,

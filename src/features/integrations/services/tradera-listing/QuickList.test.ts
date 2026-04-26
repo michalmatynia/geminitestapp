@@ -968,6 +968,8 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.publish.link_not_found\',');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await dismissPostPublishNotificationModal();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const extracted = await extractPostPublishListingLink();');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasDirectPublishIdentifier = Boolean(externalListingId || listingUrl);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("(listingAction === 'relist' && hasDirectPublishIdentifier)");
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const canTrustDirectPublishSuccess =');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('log?.(\'tradera.quicklist.publish.verified_direct\', {');
     // Removed functions should no longer be present

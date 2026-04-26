@@ -2,6 +2,7 @@ import {
   Building2,
   CalendarDays,
   Database,
+  Globe,
   Mail,
   Megaphone,
   ShieldAlert,
@@ -20,6 +21,7 @@ type FilemakerPageKey =
   | 'persons'
   | 'organizations'
   | 'emails'
+  | 'websites'
   | 'mail'
   | 'events'
   | 'values'
@@ -54,6 +56,13 @@ const NAV_ITEMS: Array<{
     label: 'Email Records',
     href: '/admin/filemaker/emails',
     icon: <Mail className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'websites',
+    label: 'Websites',
+    href: '/admin/filemaker/websites',
+    icon: <Globe className='size-4' />,
     variant: 'outline',
   },
   {

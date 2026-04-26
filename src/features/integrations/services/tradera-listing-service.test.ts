@@ -1299,6 +1299,77 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists Tradera title length failures as the listing failure reason', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-title-too-long',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        marketplaceData: null,
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserListingMock.mockRejectedValue(
+      internalError('FAIL_PUBLISH_VALIDATION: Unable to set Tradera title field.')
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-title-too-long',
+        action: 'list',
+        source: 'manual',
+        jobId: 'job-tradera-title-too-long',
+      })
+    ).rejects.toThrow(
+      'Tradera title could not be written. Tradera allows at most 80 characters; shorten the marketplace title before retrying.'
+    );
+
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-title-too-long',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera title could not be written. Tradera allows at most 80 characters; shorten the marketplace title before retrying.',
+        marketplaceData: expect.objectContaining({
+          tradera: expect.objectContaining({
+            lastErrorCategory: 'FORM',
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-tradera-title-too-long',
+              ok: false,
+              error:
+                'Tradera title could not be written. Tradera allows at most 80 characters; shorten the marketplace title before retrying.',
+              errorCategory: 'FORM',
+              metadata: expect.objectContaining({
+                failureCode: 'tradera_title_too_long',
+                titleTooLong: true,
+                titleMaxLength: 80,
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-title-too-long',
+      expect.objectContaining({
+        status: 'failed',
+        failureReason:
+          'Tradera title could not be written. Tradera allows at most 80 characters; shorten the marketplace title before retrying.',
+        requestId: 'job-tradera-title-too-long',
+      })
+    );
+  });
+
   it('persists image preview mismatches as form failures with a user-facing retry message', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();

@@ -5,9 +5,11 @@ import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/a
 import { notFoundError } from '@/shared/errors/app-error';
 import {
   getMongoFilemakerOrganizationById,
+  getMongoFilemakerPartySnapshot,
   listMongoFilemakerEmailsForOrganization,
   listMongoFilemakerEventsForOrganization,
   listMongoFilemakerPersonsForOrganization,
+  listMongoFilemakerValueCatalog,
   listMongoFilemakerWebsitesForOrganization,
   requireFilemakerMailAdminSession,
   updateMongoFilemakerOrganization,
@@ -74,16 +76,23 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     linkedEvents,
     linkedPersons,
     linkedWebsites,
-  ] =
-    await Promise.all([
-      listMongoFilemakerHarvestProfilesForOrganization(organization),
-      listMongoFilemakerDemandsForOrganization(organization),
-      listMongoFilemakerAddressesForOrganization(organization),
-      listMongoFilemakerEmailsForOrganization(organization),
-      listMongoFilemakerEventsForOrganization(organization),
-      listMongoFilemakerPersonsForOrganization(organization),
-      listMongoFilemakerWebsitesForOrganization(organization),
-    ]);
+    relationshipSummary,
+    valueCatalog,
+  ] = await Promise.all([
+    listMongoFilemakerHarvestProfilesForOrganization(organization),
+    listMongoFilemakerDemandsForOrganization(organization),
+    listMongoFilemakerAddressesForOrganization(organization),
+    listMongoFilemakerEmailsForOrganization(organization),
+    listMongoFilemakerEventsForOrganization(organization),
+    listMongoFilemakerPersonsForOrganization(organization),
+    listMongoFilemakerWebsitesForOrganization(organization),
+    getMongoFilemakerPartySnapshot({
+      legacyUuid: organization.legacyUuid,
+      partyId: organization.id,
+      partyKind: 'organization',
+    }),
+    listMongoFilemakerValueCatalog(),
+  ]);
   return Response.json({
     harvestProfiles,
     importedDemands,
@@ -93,6 +102,8 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     linkedPersons,
     linkedWebsites,
     organization,
+    relationshipSummary,
+    valueCatalog,
   });
 }
 

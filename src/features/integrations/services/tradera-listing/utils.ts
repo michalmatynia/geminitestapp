@@ -6,6 +6,7 @@ import { type Page } from 'playwright';
 import { type TraderaFailureCategory } from './config';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { TRADERA_TITLE_MAX_CHARACTERS } from './title-validation';
 
 export const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -101,6 +102,9 @@ export const toUserFacingTraderaFailure = (
   if (normalized.includes('fail_image_set_invalid')) {
     return 'Tradera image upload did not settle correctly. Review the listing images in Tradera and retry.';
   }
+  if (normalized.includes('unable to set tradera title field')) {
+    return `Tradera title could not be written. Tradera allows at most ${TRADERA_TITLE_MAX_CHARACTERS} characters; shorten the marketplace title before retrying.`;
+  }
   return message;
 };
 
@@ -123,9 +127,46 @@ const parseTraderaFailureLastState = (message: string): Record<string, unknown> 
 const toNullableNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+const parseTraderaTitleLength = (message: string): number | null => {
+  const match = /Tradera title is\s+(\d+)\s+characters/i.exec(message);
+  if (!match?.[1]) {
+    return null;
+  }
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const resolveTraderaFailureCode = ({
+  isTitleLengthFailure,
+  isStaleDraftImageState,
+  isImagePreviewMismatch,
+  isImagePreviewNotStable,
+  isDuplicateRisk,
+  isRetryCleanupUnsettled,
+}: {
+  isTitleLengthFailure: boolean;
+  isStaleDraftImageState: boolean;
+  isImagePreviewMismatch: boolean;
+  isImagePreviewNotStable: boolean;
+  isDuplicateRisk: boolean;
+  isRetryCleanupUnsettled: boolean;
+}): string | null => {
+  if (isTitleLengthFailure) return 'tradera_title_too_long';
+  if (isStaleDraftImageState) return 'image_stale_draft_state';
+  if (isImagePreviewMismatch) return 'image_preview_mismatch';
+  if (isImagePreviewNotStable) return 'image_preview_not_stable';
+  if (isDuplicateRisk) return 'image_duplicate_risk';
+  if (isRetryCleanupUnsettled) return 'image_retry_cleanup_unsettled';
+  return null;
+};
+
 export const extractTraderaFailureMetadata = (message: string): Record<string, unknown> => {
   const normalized = message.trim().toLowerCase();
   const lastState = parseTraderaFailureLastState(message);
+  const isTitleLengthFailure =
+    (normalized.includes('tradera title is') &&
+      normalized.includes('allows at most')) ||
+    normalized.includes('unable to set tradera title field');
   const isStaleDraftImageState =
     normalized.includes('draft image cleanup did not reach a clean zero state before upload') ||
     normalized.includes('draft already contained images before upload');
@@ -140,21 +181,26 @@ export const extractTraderaFailureMetadata = (message: string): Record<string, u
     'retry image cleanup did not clear the previous upload state'
   );
 
-  const failureCode = isStaleDraftImageState
-    ? 'image_stale_draft_state'
-    : isImagePreviewMismatch
-      ? 'image_preview_mismatch'
-      : isImagePreviewNotStable
-        ? 'image_preview_not_stable'
-      : isDuplicateRisk
-        ? 'image_duplicate_risk'
-        : isRetryCleanupUnsettled
-          ? 'image_retry_cleanup_unsettled'
-          : null;
+  const failureCode = resolveTraderaFailureCode({
+    isTitleLengthFailure,
+    isStaleDraftImageState,
+    isImagePreviewMismatch,
+    isImagePreviewNotStable,
+    isDuplicateRisk,
+    isRetryCleanupUnsettled,
+  });
 
   const metadata: Record<string, unknown> = {};
 
-  if (failureCode) {
+  if (isTitleLengthFailure) {
+    const titleLength = parseTraderaTitleLength(message);
+    metadata['failureCode'] = 'tradera_title_too_long';
+    metadata['titleTooLong'] = true;
+    metadata['titleMaxLength'] = TRADERA_TITLE_MAX_CHARACTERS;
+    if (titleLength !== null) {
+      metadata['titleLength'] = titleLength;
+    }
+  } else if (failureCode !== null) {
     metadata['failureCode'] = failureCode;
     metadata['staleDraftImages'] = isStaleDraftImageState;
     metadata['imagePreviewMismatch'] = isImagePreviewMismatch;

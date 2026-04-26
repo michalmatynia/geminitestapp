@@ -32,6 +32,7 @@ export const {
   getPlayerStatusTone,
   getStatusTone,
   localizeDuelText,
+  resolveRoundProgress,
   resolveSeriesWins,
   resolveWinnerSummary,
 } = Formatters;

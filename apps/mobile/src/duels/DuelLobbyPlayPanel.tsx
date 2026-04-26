@@ -20,7 +20,7 @@ import {
   formatDifficultyLabel,
   formatOperationLabel,
   formatSeriesBestOfLabel,
-} from './utils/duels-ui';
+} from '../utils/duels-ui';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];

@@ -151,6 +151,43 @@ describe('buildTrackedTraderaFeedbackOptions', () => {
       },
     });
   });
+
+  it('carries failed listing run metadata into persisted recovery feedback options', () => {
+    const options = buildTrackedTraderaFeedbackOptions(
+      {
+        id: 'listing-1',
+        status: 'failed',
+        failureReason: 'Published listing could not be confirmed in Active listings.',
+        externalListingId: null,
+        integrationId: 'integration-tradera-1',
+        connectionId: 'conn-tradera-1',
+        marketplaceData: {
+          tradera: {
+            lastExecution: {
+              requestId: 'job-tradera-failed',
+              error: 'FAIL_PUBLISH_VERIFICATION',
+              metadata: {
+                runId: 'run-tradera-failed',
+                logTail: ['[user] tradera.quicklist.publish.verify.failed'],
+              },
+            },
+          },
+        },
+      } as never,
+      {
+        productId: 'product-1',
+        status: 'queued',
+        expiresAt: Date.now() + 60_000,
+        requestId: 'job-tradera-failed',
+      }
+    );
+
+    expect(options.runId).toBe('run-tradera-failed');
+    expect(options.requestId).toBe('job-tradera-failed');
+    expect(options.failureReason).toBe(
+      'Published listing could not be confirmed in Active listings.'
+    );
+  });
 });
 
 describe('isTrackedTraderaListingSuccess', () => {

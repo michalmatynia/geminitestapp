@@ -264,6 +264,9 @@ export function useUserPreferences(): UserPreferencesHookResult {
   const [storedPreferences] = useState<ProductListPreferences | null>(() =>
     readStoredProductListPreferences()
   );
+  const [localPreferenceOverrides, setLocalPreferenceOverrides] = useState<
+    Partial<ProductListPreferences>
+  >({});
   const query = createSingleQueryV2<UserPreferencesResponse, ProductListPreferences>({
     id: 'current',
     queryKey: userPreferencesQueryKey,
@@ -285,7 +288,10 @@ export function useUserPreferences(): UserPreferencesHookResult {
   });
 
   const { data, isLoading } = query;
-  const preferences = data || storedPreferences || DEFAULT_PREFERENCES;
+  const preferences = {
+    ...(data ?? storedPreferences ?? DEFAULT_PREFERENCES),
+    ...localPreferenceOverrides,
+  };
 
   const { mutateAsync: updateBulk } = useUpdateUserPreferences();
 
@@ -295,6 +301,10 @@ export function useUserPreferences(): UserPreferencesHookResult {
       Object.entries(updates).forEach(([key, value]) => {
         updateLocalStorage(key as keyof ProductListPreferences, value);
       });
+      setLocalPreferenceOverrides((current) => ({
+        ...current,
+        ...updates,
+      }));
     },
     [updateBulk]
   );

@@ -46,7 +46,7 @@ import { ActionMenu } from '@/shared/ui/ActionMenu';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { Chip } from '@/shared/ui/chip';
-import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger } from '@/shared/ui/dropdown-menu';
+import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/shared/ui/dropdown-menu';
 import { Input } from '@/shared/ui/input';
 import { SelectionBar } from '@/shared/ui/selection-bar';
 import { JSONImportModal } from '@/shared/ui/templates/modals/JSONImportModal';
@@ -331,14 +331,21 @@ export const ProductSelectionActions = memo(() => {
 
   const handleDeletePreset = useCallback(
     async (preset: ProductAdvancedFilterPreset): Promise<void> => {
-      const nextPresets = advancedFilterPresets.filter(
-        (entry: ProductAdvancedFilterPreset) => entry.id !== preset.id
-      );
-      await setAdvancedFilterPresets(nextPresets);
-      if (activeAdvancedFilterPresetId === preset.id) {
-        setAdvancedFilterState('', null);
+      try {
+        const nextPresets = advancedFilterPresets.filter(
+          (entry: ProductAdvancedFilterPreset) => entry.id !== preset.id
+        );
+        await setAdvancedFilterPresets(nextPresets);
+        if (activeAdvancedFilterPresetId === preset.id) {
+          setAdvancedFilterState('', null);
+        }
+        toast(`Deleted preset "${preset.name}".`, { variant: 'success' });
+      } catch (error) {
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Failed to delete preset.', {
+          variant: 'error',
+        });
       }
-      toast(`Deleted preset "${preset.name}".`, { variant: 'success' });
     },
     [
       activeAdvancedFilterPresetId,
@@ -636,7 +643,7 @@ export const ProductSelectionActions = memo(() => {
             <ActionMenu
               triggerId='product-filter-presets-menu'
               align='end'
-              className='w-64'
+              className='w-80 max-w-[calc(100vw-2rem)]'
               trigger={
                 <div className='flex items-center gap-2'>
                   <SlidersHorizontal className='h-3.5 w-3.5' />
@@ -693,10 +700,16 @@ export const ProductSelectionActions = memo(() => {
                 <DropdownMenuItem disabled>No presets saved</DropdownMenuItem>
               ) : (
                 advancedFilterPresets.map((preset: ProductAdvancedFilterPreset) => (
-                  <DropdownMenuSub key={preset.id}>
-                    <DropdownMenuSubTrigger
-                      className='cursor-pointer'
-                      onClick={() => applyPreset(preset, false)}
+                  <div
+                    key={preset.id}
+                    role='group'
+                    aria-label={`Preset ${preset.name}`}
+                    className='flex items-center gap-1 rounded-sm px-1 py-0.5'
+                  >
+                    <DropdownMenuItem
+                      onClick={() => handleApplyPreset(preset)}
+                      className='min-w-0 flex-1 cursor-pointer gap-2 px-2'
+                      title={`Apply preset ${preset.name}`}
                     >
                       <span className='truncate'>{preset.name}</span>
                       {activeAdvancedFilterPresetId === preset.id ? (
@@ -704,48 +717,44 @@ export const ProductSelectionActions = memo(() => {
                           Applied
                         </span>
                       ) : null}
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className='w-56'>
-                      <DropdownMenuItem
-                        onClick={() => handleApplyPreset(preset)}
-                        className='cursor-pointer'
-                      >
-                        Apply
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleExportSinglePreset(preset)}
-                        className='cursor-pointer gap-2'
-                      >
-                        <Download className='h-3.5 w-3.5' />
-                        Export JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          void handleCopyPreset(preset);
-                        }}
-                        className='cursor-pointer gap-2'
-                      >
-                        <Copy className='h-3.5 w-3.5' />
-                        Copy JSON
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => openRenamePresetDialog(preset)}
-                        className='cursor-pointer gap-2'
-                      >
-                        <Pencil className='h-3.5 w-3.5' />
-                        Rename
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          void handleDeletePreset(preset);
-                        }}
-                        className='cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive'
-                      >
-                        <Trash2 className='h-3.5 w-3.5' />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      aria-label={`Export preset ${preset.name}`}
+                      title='Export JSON'
+                      onClick={() => handleExportSinglePreset(preset)}
+                      className='h-8 w-8 cursor-pointer justify-center p-0'
+                    >
+                      <Download className='h-3.5 w-3.5' aria-hidden='true' />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      aria-label={`Copy preset ${preset.name}`}
+                      title='Copy JSON'
+                      onClick={() => {
+                        void handleCopyPreset(preset);
+                      }}
+                      className='h-8 w-8 cursor-pointer justify-center p-0'
+                    >
+                      <Copy className='h-3.5 w-3.5' aria-hidden='true' />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      aria-label={`Rename preset ${preset.name}`}
+                      title='Rename preset'
+                      onClick={() => openRenamePresetDialog(preset)}
+                      className='h-8 w-8 cursor-pointer justify-center p-0'
+                    >
+                      <Pencil className='h-3.5 w-3.5' aria-hidden='true' />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      aria-label={`Delete preset ${preset.name}`}
+                      title='Delete preset'
+                      onClick={() => {
+                        void handleDeletePreset(preset);
+                      }}
+                      className='h-8 w-8 cursor-pointer justify-center p-0 text-destructive focus:bg-destructive/10 focus:text-destructive'
+                    >
+                      <Trash2 className='h-3.5 w-3.5' aria-hidden='true' />
+                    </DropdownMenuItem>
+                  </div>
                 ))
               )}
             </ActionMenu>

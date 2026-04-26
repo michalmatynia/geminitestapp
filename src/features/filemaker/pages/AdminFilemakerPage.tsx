@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, CalendarDays, Database, Mail, Megaphone, ShieldAlert, Tags, Users } from 'lucide-react';
+import { Building2, CalendarDays, Database, Globe, Mail, Megaphone, ShieldAlert, Tags, Users } from 'lucide-react';
 import React, { startTransition } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -37,6 +37,7 @@ const FILEMAKER_PAGE_ACTIONS = [
   { key: 'events', label: 'Events Page', href: '/admin/filemaker/events', Icon: CalendarDays },
   { key: 'values', label: 'Values Page', href: '/admin/filemaker/values', Icon: Tags },
   { key: 'emails', label: 'Email Records', href: '/admin/filemaker/emails', Icon: Mail },
+  { key: 'websites', label: 'Websites', href: '/admin/filemaker/websites', Icon: Globe },
 ] as const;
 
 const buildFilemakerPageActions = (router: FilemakerPageRouter): PanelAction[] =>

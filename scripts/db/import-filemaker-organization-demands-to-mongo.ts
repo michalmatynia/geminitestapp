@@ -24,6 +24,7 @@ loadDotenv({ path: '.env.local', override: true, quiet: true });
 
 const ORGANIZATION_DEMANDS_COLLECTION = 'filemaker_organization_demands';
 const ORGANIZATIONS_COLLECTION = 'filemaker_organizations';
+const VALUES_COLLECTION = 'filemaker_values';
 const SETTINGS_COLLECTION = 'settings';
 const DEFAULT_BATCH_SIZE = 5_000;
 const IMPORT_SOURCE_KIND = 'filemaker.organization_demand';
@@ -47,6 +48,13 @@ type ValueLookupRecord = {
   label: string;
   legacyUuid: string;
   parentId?: string | null;
+};
+
+type ValueCatalogDocument = Document & {
+  id?: unknown;
+  label?: unknown;
+  legacyUuid?: unknown;
+  parentId?: unknown;
 };
 
 type OrganizationDemandValueMongoDocument = {
@@ -193,6 +201,31 @@ const buildOrganizationMap = async (db: Db): Promise<Map<string, OrganizationLoo
 };
 
 const buildValueMap = async (db: Db): Promise<Map<string, ValueLookupRecord>> => {
+  const valueDocuments = await db
+    .collection<ValueCatalogDocument>(VALUES_COLLECTION)
+    .find(
+      { legacyUuid: { $type: 'string' } },
+      { projection: { id: 1, label: 1, legacyUuid: 1, parentId: 1 } }
+    )
+    .toArray();
+  const mongoValueMap = new Map(
+    valueDocuments
+      .map((document: ValueCatalogDocument): [string, ValueLookupRecord] | null => {
+        const id = typeof document.id === 'string' ? document.id : '';
+        const label = typeof document.label === 'string' ? document.label : '';
+        const legacyUuid =
+          typeof document.legacyUuid === 'string' ? document.legacyUuid.toUpperCase() : '';
+        const parentId =
+          typeof document.parentId === 'string' && document.parentId.length > 0
+            ? document.parentId
+            : null;
+        if (!id || !legacyUuid) return null;
+        return [legacyUuid, { id, label, legacyUuid, parentId }];
+      })
+      .filter((entry): entry is [string, ValueLookupRecord] => entry !== null)
+  );
+  if (mongoValueMap.size > 0) return mongoValueMap;
+
   const document = await db
     .collection(SETTINGS_COLLECTION)
     .findOne({ key: FILEMAKER_DATABASE_KEY }, { projection: { value: 1 } });

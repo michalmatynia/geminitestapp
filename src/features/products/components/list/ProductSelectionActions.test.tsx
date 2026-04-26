@@ -2,6 +2,8 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ProductAdvancedFilterPreset } from '@/shared/contracts/products/filters';
+
 const {
   setSelectedProductsArchivedStateMock,
   executeTraderaMassExportMock,
@@ -10,6 +12,7 @@ const {
   traderaStatusCheckModalMock,
   useBulkSetProductsArchivedStateMock,
   useBulkConvertImagesToBase64Mock,
+  useBulkProductBaseSyncMutationMock,
   useProductListFiltersContextMock,
   useProductListSelectionContextMock,
   useTraderaMassQuickExportMock,
@@ -22,6 +25,7 @@ const {
   traderaStatusCheckModalMock: vi.fn(),
   useBulkSetProductsArchivedStateMock: vi.fn(),
   useBulkConvertImagesToBase64Mock: vi.fn(),
+  useBulkProductBaseSyncMutationMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
   useTraderaMassQuickExportMock: vi.fn(),
@@ -43,6 +47,10 @@ vi.mock('@/features/products/hooks/useProductsMutations', () => ({
   useBulkConvertImagesToBase64: () => useBulkConvertImagesToBase64Mock(),
 }));
 
+vi.mock('@/features/product-sync/hooks/useProductBaseSync', () => ({
+  useBulkProductBaseSyncMutation: () => useBulkProductBaseSyncMutationMock(),
+}));
+
 vi.mock('@/features/products/hooks/product-list/useTraderaMassQuickExport', () => ({
   useTraderaMassQuickExport: () => useTraderaMassQuickExportMock(),
 }));
@@ -58,11 +66,26 @@ vi.mock('@/features/integrations/components/listings/TraderaStatusCheckModal', (
   },
 }));
 
+vi.mock('@/features/integrations/product-integrations-adapter', () => ({
+  TraderaStatusCheckModal: (props: unknown) => {
+    traderaStatusCheckModalMock(props);
+    return null;
+  },
+}));
+
 vi.mock('@/features/products/components/list/ProductScanModal', () => ({
   ProductScanModal: (props: unknown) => {
     productScanModalMock(props);
     return null;
   },
+}));
+
+vi.mock('@/features/products/components/list/ProductBulkSyncResultsModal', () => ({
+  ProductBulkSyncResultsModal: () => null,
+}));
+
+vi.mock('@/features/products/components/list/ProductBulkSyncSetupModal', () => ({
+  ProductBulkSyncSetupModal: () => null,
 }));
 
 vi.mock('@/shared/ui/selection-bar', () => ({
@@ -106,12 +129,9 @@ vi.mock('@/shared/ui/dropdown-menu', () => ({
     children,
     onClick,
     disabled,
-  }: {
-    children?: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button type='button' onClick={onClick} disabled={disabled}>
+    ...props
+  }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
+    <button type='button' onClick={onClick} disabled={disabled} {...props}>
       {children}
     </button>
   ),
@@ -178,6 +198,10 @@ describe('ProductSelectionActions', () => {
     });
     useBulkSetProductsArchivedStateMock.mockReturnValue({
       mutateAsync: setSelectedProductsArchivedStateMock,
+      isPending: false,
+    });
+    useBulkProductBaseSyncMutationMock.mockReturnValue({
+      mutateAsync: vi.fn(),
       isPending: false,
     });
     useTraderaMassQuickExportMock.mockReturnValue({
@@ -338,5 +362,49 @@ describe('ProductSelectionActions', () => {
         products: [{ id: 'product-1' }, { id: 'product-2' }],
       })
     );
+  });
+
+  it('deletes a saved advanced filter preset from the menu', async () => {
+    const preset: ProductAdvancedFilterPreset = {
+      id: 'preset-1',
+      name: 'Pinned SKU',
+      filter: {
+        type: 'group',
+        id: 'group-1',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'condition-1',
+            field: 'sku',
+            operator: 'contains',
+            value: 'PIN',
+          },
+        ],
+      },
+      createdAt: '2026-04-26T00:00:00.000Z',
+      updatedAt: '2026-04-26T00:00:00.000Z',
+    };
+    const setAdvancedFilterPresetsMock = vi.fn().mockResolvedValue(undefined);
+    const setAdvancedFilterStateMock = vi.fn();
+
+    useProductListFiltersContextMock.mockReturnValue({
+      advancedFilter: JSON.stringify(preset.filter),
+      activeAdvancedFilterPresetId: preset.id,
+      advancedFilterPresets: [preset],
+      includeArchived: false,
+      setAdvancedFilterPresets: setAdvancedFilterPresetsMock,
+      setAdvancedFilterState: setAdvancedFilterStateMock,
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete preset Pinned SKU' }));
+
+    await waitFor(() => {
+      expect(setAdvancedFilterPresetsMock).toHaveBeenCalledWith([]);
+      expect(setAdvancedFilterStateMock).toHaveBeenCalledWith('', null);
+    });
   });
 });

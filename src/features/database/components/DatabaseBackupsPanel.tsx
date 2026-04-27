@@ -44,7 +44,9 @@ function DatabaseBackupDialogs(): JSX.Element {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={(truncate) => handleRestoreConfirm(truncate).catch(() => {})}
+          onConfirm={(truncate) => {
+            handleRestoreConfirm(truncate).catch(() => {});
+          }}
         />
       )}
 

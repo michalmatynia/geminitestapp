@@ -313,6 +313,33 @@ const logDraftGenerationFailure = ({
   });
 };
 
+const createDraftFromResponse = (
+  rawResponse: string,
+  parsed: Partial<KangurSocialGeneratedDraft>
+): KangurSocialGeneratedDraft => {
+  let { titlePl, titleEn, bodyPl, bodyEn } = normalizeDraftFields(parsed);
+
+  if (bodyPl === '' && bodyEn === '' && rawResponse !== '') {
+    if (looksLikeSerializedKangurSocialDraft(rawResponse)) {
+      throw operationFailedError(
+        'The model returned an invalid JSON draft. Retry generation or use a different AI Brain model.'
+      );
+    }
+    bodyPl = rawResponse;
+    bodyEn = rawResponse;
+  }
+
+  assertDraftBodyExists({ bodyPl, bodyEn });
+
+  return {
+    titlePl,
+    titleEn,
+    bodyPl,
+    bodyEn,
+    combinedBody: buildKangurSocialPostCombinedBody(bodyPl, bodyEn),
+  };
+};
+
 export async function generateKangurSocialPostDraft(
   input: GenerationInput
 ): Promise<KangurSocialGeneratedDraft> {
@@ -320,7 +347,6 @@ export async function generateKangurSocialPostDraft(
   const generationContext = normalizeGenerationInput(input);
   const docs = resolveKangurDocReferences(generationContext.docReferences);
   const { summary, context: docsContext } = await buildKangurDocContext(docs);
-  let modelId = '';
 
   try {
     const overrideModelId = input.modelId?.trim() ?? '';
@@ -330,6 +356,7 @@ export async function generateKangurSocialPostDraft(
           context: generationContext,
           startedAt,
         });
+
     const brainConfig = await resolveBrainExecutionConfigForCapability(
       'kangur_social.post_generation',
       {
@@ -339,8 +366,9 @@ export async function generateKangurSocialPostDraft(
         runtimeKind: 'chat',
       }
     );
-    modelId = resolveRequestedModelId(overrideModelId, brainConfig.modelId);
-    if (!modelId) {
+
+    const modelId = resolveRequestedModelId(overrideModelId, brainConfig.modelId);
+    if (modelId === '') {
       throw configurationError(
         'StudiQ Social Post Generation model is missing. Configure it in AI Brain.'
       );
@@ -366,28 +394,8 @@ export async function generateKangurSocialPostDraft(
 
     const rawResponse = res.text.trim();
     const parsed = parseKangurSocialGeneratedDraftText(rawResponse);
-    let { titlePl, titleEn, bodyPl, bodyEn } = normalizeDraftFields(parsed);
-
-    if (!bodyPl && !bodyEn && rawResponse) {
-      if (looksLikeSerializedKangurSocialDraft(rawResponse)) {
-        throw operationFailedError(
-          'The model returned an invalid JSON draft. Retry generation or use a different AI Brain model.'
-        );
-      }
-      bodyPl = rawResponse;
-      bodyEn = rawResponse;
-    }
-
-    assertDraftBodyExists({ bodyPl, bodyEn });
-
-    const combinedBody = buildKangurSocialPostCombinedBody(bodyPl, bodyEn);
-
     const draft: KangurSocialGeneratedDraft = {
-      titlePl,
-      titleEn,
-      bodyPl,
-      bodyEn,
-      combinedBody,
+      ...draftContent,
       summary,
       docReferences:
         generationContext.docReferences.length > 0
@@ -411,10 +419,12 @@ export async function generateKangurSocialPostDraft(
     logDraftGenerationFailure({
       error,
       startedAt,
-      modelId,
+      modelId: '',
       context: generationContext,
       docs,
     });
     throw error;
   }
 }
+
+

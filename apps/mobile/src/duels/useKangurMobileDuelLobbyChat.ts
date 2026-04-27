@@ -24,10 +24,10 @@ export type UseKangurMobileDuelLobbyChatResult = {
   sendMessage: (message: string) => Promise<boolean>;
 };
 
-const appendMessage = (
+function appendMessage(
   current: KangurDuelLobbyChatListResponse | undefined,
   incoming: KangurDuelLobbyChatMessage,
-): KangurDuelLobbyChatListResponse => {
+): KangurDuelLobbyChatListResponse {
   const existingMessages = current?.messages ?? [];
   const deduped = existingMessages.filter((message) => message.id !== incoming.id);
 
@@ -38,9 +38,13 @@ const appendMessage = (
     nextCursor: current?.nextCursor ?? null,
     serverTime: current?.serverTime ?? incoming.createdAt,
   };
-};
+}
 
-function resolveChatError(error: unknown, copy: any) {
+import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
+
+type DuelCopy = (value: KangurMobileLocalizedValue<string>) => string;
+
+function resolveChatError(error: unknown, copy: DuelCopy): string | null {
   return resolveMobileDuelErrorMessage({
     error, copy,
     fallback: { de: 'Der Lobby-Chat konnte nicht geladen werden.', en: 'Could not load the lobby chat.', pl: 'Nie udało się pobrać czatu lobby.' },
@@ -49,23 +53,66 @@ function resolveChatError(error: unknown, copy: any) {
   });
 }
 
+import type { 
+} from '@kangur/contracts/kangur-duels-chat';
+
+function getLobbyChatList(apiClient: DuelApiClient, limit: number): Promise<KangurDuelLobbyChatListResponse> {
+  return apiClient.listDuelLobbyChat({ limit }, { cache: 'no-store' });
+}
+
+import type { UseQueryOptions } from '@tanstack/react-query';
+
+function getChatQueryConfig(
+  isAuthenticated: boolean, 
+  queryKey: readonly unknown[], 
+  apiClient: DuelApiClient
+): UseQueryOptions<KangurDuelLobbyChatListResponse, Error> {
+  return {
+    enabled: isAuthenticated,
+    queryKey,
+    queryFn: async (): Promise<KangurDuelLobbyChatListResponse> => 
+      await getLobbyChatList(apiClient, KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT),
+    refetchInterval: MOBILE_DUEL_CHAT_POLL_MS,
+    staleTime: 8_000,
+  };
+}
+
+import { 
+} from '@kangur/contracts/kangur-duels-chat';
+import type { DuelApiClient } from './useKangurMobileDuelsLobbyQueries';
+
+function getLobbyChatQueryKey(apiBaseUrl: string, learnerIdentity: string): readonly [string, string, string, string, string] {
+  return ['kangur-mobile', 'duels', 'lobby-chat', apiBaseUrl, learnerIdentity] as const;
+}
+
+function appendMessage(
+  current: KangurDuelLobbyChatListResponse | undefined,
+  incoming: KangurDuelLobbyChatMessage,
+): KangurDuelLobbyChatListResponse {
+  const existingMessages = current?.messages ?? [];
+  const deduped = existingMessages.filter((message) => message.id !== incoming.id);
+
+  return {
+    messages: [...deduped, incoming].sort((left, right) =>
+      left.createdAt.localeCompare(right.createdAt),
+    ),
+    nextCursor: current?.nextCursor ?? null,
+    serverTime: current?.serverTime ?? incoming.createdAt,
+  };
+}
+
 export const useKangurMobileDuelLobbyChat = (): UseKangurMobileDuelLobbyChatResult => {
     const { copy } = useKangurMobileI18n();
     const queryClient = useQueryClient();
-    const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+    const { apiBaseUrl, apiClient: rawApiClient } = useKangurMobileRuntime();
+    const apiClient = rawApiClient as unknown as DuelApiClient;
     const { isLoadingAuth, session } = useKangurMobileAuth();
     const [isSending, setIsSending] = useState(false);
     const learnerIdentity = session.user?.activeLearner?.id ?? session.user?.email ?? session.user?.id ?? 'guest';
     const isAuthenticated = session.status === 'authenticated';
-    const queryKey = ['kangur-mobile', 'duels', 'lobby-chat', apiBaseUrl, learnerIdentity] as const;
+    const queryKey = getLobbyChatQueryKey(apiBaseUrl, learnerIdentity);
 
-    const chatQuery = useQuery({
-      enabled: isAuthenticated,
-      queryKey,
-      queryFn: async () => apiClient.listDuelLobbyChat({ limit: KANGUR_DUELS_LOBBY_CHAT_DEFAULT_LIMIT }, { cache: 'no-store' }),
-      refetchInterval: MOBILE_DUEL_CHAT_POLL_MS,
-      staleTime: 8_000,
-    });
+    const chatQuery = useQuery(getChatQueryConfig(isAuthenticated, queryKey, apiClient));
 
     const sendMessage = async (message: string): Promise<boolean> => {
       const trimmed = message.trim();
@@ -73,10 +120,17 @@ export const useKangurMobileDuelLobbyChat = (): UseKangurMobileDuelLobbyChatResu
       setIsSending(true);
       try {
         const response = await apiClient.sendDuelLobbyChatMessage({ message: trimmed }, { cache: 'no-store' });
-        queryClient.setQueryData<KangurDuelLobbyChatListResponse>(queryKey, (cur) => appendMessage(cur, response.message));
+        queryClient.setQueryData<KangurDuelLobbyChatListResponse>(queryKey, (cur) => {
+          const currentData = cur ?? { messages: [], nextCursor: null, serverTime: new Date().toISOString() };
+          return appendMessage(currentData, response.message);
+        });
         return true;
-      } catch { await chatQuery.refetch(); return false; }
-      finally { setIsSending(false); }
+      } catch { 
+        await chatQuery.refetch(); 
+        return false; 
+      } finally { 
+        setIsSending(false); 
+      }
     };
 
     return {
@@ -87,7 +141,7 @@ export const useKangurMobileDuelLobbyChat = (): UseKangurMobileDuelLobbyChatResu
       isSending,
       maxMessageLength: KANGUR_DUELS_LOBBY_CHAT_MAX_MESSAGE_LENGTH,
       messages: chatQuery.data?.messages ?? [],
-      refresh: async () => { await chatQuery.refetch(); },
+      refresh: async (): Promise<void> => { await chatQuery.refetch(); },
       sendMessage,
     };
   };

@@ -47,17 +47,19 @@ export default function FileManager(props: FileManagerProps): React.JSX.Element 
   const runtime = React.useContext(FileManagerRuntimeContext);
   const resolvedOnSelectFile = onSelectFile ?? runtime?.onSelectFile;
 
-  const providerProps = React.useMemo(() => ({
-    ...(resolvedOnSelectFile !== undefined ? { onSelectFile: resolvedOnSelectFile } : {}),
-    ...(mode !== undefined ? { mode } : {}),
-    ...(selectionMode !== undefined ? { selectionMode } : {}),
-    ...(autoConfirmSelection !== undefined ? { autoConfirmSelection } : {}),
-    ...(showFolderFilter !== undefined ? { showFolderFilter } : {}),
-    ...(defaultFolder !== undefined ? { defaultFolder } : {}),
-    ...(showBulkActions !== undefined ? { showBulkActions } : {}),
-    ...(showTagSearch !== undefined ? { showTagSearch } : {}),
-    ...(filepathFilter !== undefined ? { filepathFilter } : {}),
-  }), [
+  const providerProps = React.useMemo(() => {
+    const config: Partial<React.ComponentProps<typeof FileManagerProvider>> = {};
+    if (resolvedOnSelectFile !== undefined) config.onSelectFile = resolvedOnSelectFile;
+    if (mode !== undefined) config.mode = mode;
+    if (selectionMode !== undefined) config.selectionMode = selectionMode;
+    if (autoConfirmSelection !== undefined) config.autoConfirmSelection = autoConfirmSelection;
+    if (showFolderFilter !== undefined) config.showFolderFilter = showFolderFilter;
+    if (defaultFolder !== undefined) config.defaultFolder = defaultFolder;
+    if (showBulkActions !== undefined) config.showBulkActions = showBulkActions;
+    if (showTagSearch !== undefined) config.showTagSearch = showTagSearch;
+    if (filepathFilter !== undefined) config.filepathFilter = filepathFilter;
+    return config;
+  }, [
     resolvedOnSelectFile,
     mode,
     selectionMode,
@@ -68,6 +70,7 @@ export default function FileManager(props: FileManagerProps): React.JSX.Element 
     showTagSearch,
     filepathFilter,
   ]);
+
 
   return (
     <FileManagerProvider {...providerProps}>

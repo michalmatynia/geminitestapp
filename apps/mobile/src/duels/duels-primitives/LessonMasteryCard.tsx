@@ -39,7 +39,7 @@ function LessonMasteryRow({ insight, title }: { insight: KangurMobileDuelsLesson
   );
 }
 
-function resolveLessonFocusSummary(copy: DuelCopy, context: 'lobby' | 'session', weakest: any, strongest: any): string {
+function resolveLessonFocusSummary(copy: DuelCopy, context: 'lobby' | 'session', weakest: KangurMobileDuelsLessonMasteryItem | null, strongest: KangurMobileDuelsLessonMasteryItem | null): string {
   if (weakest !== null) {
     return copy({
       de: context === 'session' ? `Fokus neben dem Duell: ${weakest.title} braucht noch eine kurze Wiederholung, sobald diese Sitzung endet.` : `Fokus aus der Lobby: ${weakest.title} braucht noch eine kurze Wiederholung, bevor du den nächsten Rivalen öffnest.`,
@@ -57,8 +57,16 @@ function resolveLessonFocusSummary(copy: DuelCopy, context: 'lobby' | 'session',
   return '';
 }
 
-function LessonMasteryList({ weakest, strongest, lessonFocusSummary }: { weakest: any; strongest: any; lessonFocusSummary: string }): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
+import type { KangurMobileLocalizedValue } from '../../i18n/kangurMobileI18n';
+
+interface LessonMasterySummaryProps {
+  weakest: KangurMobileDuelsLessonMasteryItem | null;
+  strongest: KangurMobileDuelsLessonMasteryItem | null;
+  lessonFocusSummary: string;
+  copy: DuelCopy;
+}
+
+function LessonMasteryList({ weakest, strongest, lessonFocusSummary, copy }: LessonMasterySummaryProps): React.JSX.Element {
   return (
     <View style={{ gap: 12 }}>
       {lessonFocusSummary !== '' && (<Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{lessonFocusSummary}</Text>)}

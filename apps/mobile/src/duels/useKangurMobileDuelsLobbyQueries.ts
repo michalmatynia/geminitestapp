@@ -70,6 +70,12 @@ export interface UseKangurMobileDuelsLobbyResult {
 }
 
 export interface DuelApiClient {
+  getDuelState: (sessionId: string, options: { cache: string }) => Promise<KangurDuelStateResponse>;
+  getDuelSpectatorState: (sessionId: string, params: { spectatorId: string }, options: { cache: string }) => Promise<KangurDuelSpectatorStateResponse>;
+  leaveDuel: (params: { reason: string; sessionId: string }, options: { cache: string }) => Promise<KangurDuelStateResponse>;
+  reactToDuel: (params: { sessionId: string; type: KangurDuelReactionType }, options: { cache: string }) => Promise<KangurDuelStateResponse>;
+  answerDuel: (params: { choice: KangurDuelChoice; clientTimestamp: string; questionId: string; sessionId: string }, options: { cache: string }) => Promise<KangurDuelStateResponse>;
+  heartbeatDuel: (params: { clientTimestamp: string; sessionId: string }, options: { cache: string }) => Promise<KangurDuelStateResponse>;
   listDuelLobby: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelLobbyResponse>;
   pingDuelLobbyPresence: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelLobbyPresenceResponse>;
   listDuelOpponents: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelOpponentsResponse>;

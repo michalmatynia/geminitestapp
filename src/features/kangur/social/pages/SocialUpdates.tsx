@@ -202,7 +202,7 @@ function SocialUpdatesArchive(props: {
       </div>
       <div className='grid gap-4 lg:grid-cols-2'>
         {archivePosts.map((post) => (
-          <SocialPostCard key={post.id} post={post} copy={copy} />
+          <SocialPostCard key={post.id} post={post} />
         ))}
       </div>
     </div>

@@ -40,21 +40,30 @@ function resolveLearnerRank(activeLearnerId: string | null, entries: KangurDuelL
   return { rank: index >= 0 ? index + 1 : null, entry: index >= 0 ? entries[index] ?? null : null };
 }
 
-async function performRematch(
-  apiClient: any, 
-  queryClient: any, 
-  queryKeyBase: any, 
-  opponentLearnerId: string,
-  copy: any,
-  setActionError: (err: string | null) => void,
-  setIsActionPending: (pending: boolean) => void,
-  setPendingOpponentLearnerId: (id: string | null) => void
-): Promise<string | null> {
+import type { QueryClient } from '@tanstack/react-query';
+import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
+import type { DuelApiClient } from './useKangurMobileDuelsLobbyQueries';
+
+type DuelCopy = (value: KangurMobileLocalizedValue<string>) => string;
+
+interface RematchOptions {
+  apiClient: DuelApiClient;
+  queryClient: QueryClient;
+  queryKeyBase: { leaderboard: readonly unknown[]; opponents: readonly unknown[] };
+  opponentLearnerId: string;
+  copy: DuelCopy;
+  setActionError: (err: string | null) => void;
+  setIsActionPending: (pending: boolean) => void;
+  setPendingOpponentLearnerId: (id: string | null) => void;
+}
+
+async function performRematch(options: RematchOptions): Promise<string | null> {
+  const { apiClient, queryClient, queryKeyBase, opponentLearnerId, copy, setActionError, setIsActionPending, setPendingOpponentLearnerId } = options;
   setActionError(null);
   setIsActionPending(true);
   setPendingOpponentLearnerId(opponentLearnerId);
   try {
-    const resp: any = await apiClient.createDuel({
+    const resp = await apiClient.createDuel({
       difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
       mode: 'challenge',
       operation: MOBILE_DUEL_DEFAULT_OPERATION,
@@ -67,7 +76,7 @@ async function performRematch(
       queryClient.invalidateQueries({ queryKey: queryKeyBase.leaderboard }),
       queryClient.invalidateQueries({ queryKey: queryKeyBase.opponents }),
     ]);
-    return (resp?.session?.id as string | undefined) ?? null;
+    return (resp as { session?: { id: string } })?.session?.id ?? null;
   } catch (err: unknown) {
     setActionError(toDuelsSummaryActionErrorMessage(err, copy));
     return null;
@@ -84,7 +93,8 @@ export const useKangurMobileLearnerDuelsSummary = ({
 }: UseKangurMobileLearnerDuelsSummaryOptions): UseKangurMobileLearnerDuelsSummaryResult => {
   const queryClient = useQueryClient();
   const { copy } = useKangurMobileI18n();
-  const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
+  const { apiBaseUrl, apiClient: rawApiClient } = useKangurMobileRuntime();
+  const apiClient = rawApiClient as unknown as DuelApiClient;
   const { isLoadingAuth, session: authSession } = useKangurMobileAuth();
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, setIsActionPending] = useState(false);
@@ -107,7 +117,7 @@ export const useKangurMobileLearnerDuelsSummary = ({
   const opponents = useMemo(() => [...(opponentsQuery.data?.entries ?? [])].sort((l, r) => Date.parse(r.lastPlayedAt) - Date.parse(l.lastPlayedAt)).slice(0, opponentsLimit), [opponentsLimit, opponentsQuery.data?.entries]);
 
   const createRematch = async (opponentLearnerId: string): Promise<string | null> => {
-    return performRematch(apiClient, queryClient, queryKeyBase, opponentLearnerId, copy, setActionError, setIsActionPending, setPendingOpponentLearnerId);
+    return performRematch({ apiClient, queryClient, queryKeyBase, opponentLearnerId, copy, setActionError, setIsActionPending, setPendingOpponentLearnerId });
   };
 
   return {
@@ -115,6 +125,6 @@ export const useKangurMobileLearnerDuelsSummary = ({
     error: toDuelsSummaryErrorMessage(opponentsQuery.error, copy) ?? toDuelsSummaryErrorMessage(leaderboardQuery.error, copy),
     isActionPending, isAuthenticated, isLoading: isRestoringAuth || leaderboardQuery.isLoading || opponentsQuery.isLoading,
     isRestoringAuth, opponents, pendingOpponentLearnerId,
-    refresh: async () => { await Promise.all([leaderboardQuery.refetch(), opponentsQuery.refetch()]); },
+    refresh: async (): Promise<void> => { await Promise.all([leaderboardQuery.refetch(), opponentsQuery.refetch()]); },
   };
 };

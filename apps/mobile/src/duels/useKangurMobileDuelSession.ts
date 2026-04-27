@@ -47,7 +47,7 @@ export type UseKangurMobileDuelSessionResult = {
   submitAnswer: (choice: KangurDuelChoice) => Promise<void>;
 };
 
-function useDuelQueries(options: {
+function useDuelSessionData(options: {
   hasSessionId: boolean;
   isAuthenticated: boolean;
   isSpectating: boolean;
@@ -62,24 +62,20 @@ function useDuelQueries(options: {
 } {
   const { hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, apiClient, playerQueryKey, spectatorQueryKey, spectatorId } = options;
 
-  const playerQuery = useQuery({
+  const playerQuery = useQuery<KangurDuelStateResponse>({
     enabled: hasSessionId && isAuthenticated && !isSpectating,
     queryKey: playerQueryKey,
-    queryFn: async () =>
+    queryFn: async (): Promise<KangurDuelStateResponse> =>
       apiClient.getDuelState(normalizedSessionId, { cache: 'no-store' }),
     refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
     staleTime: 2_000,
   });
 
-  const spectatorQuery = useQuery({
+  const spectatorQuery = useQuery<KangurDuelSpectatorStateResponse>({
     enabled: hasSessionId && isSpectating,
     queryKey: spectatorQueryKey,
-    queryFn: async () =>
-      apiClient.getDuelSpectatorState(
-        normalizedSessionId,
-        { spectatorId },
-        { cache: 'no-store' },
-      ),
+    queryFn: async (): Promise<KangurDuelSpectatorStateResponse> =>
+      apiClient.getDuelSpectatorState(normalizedSessionId, { spectatorId }, { cache: 'no-store' }),
     refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
     staleTime: 2_000,
   });
@@ -87,13 +83,52 @@ function useDuelQueries(options: {
   return { playerQuery, spectatorQuery };
 }
 
-function resolveSessionError(playerQuery: any, spectatorQuery: any, isSpectating: boolean, copy: any) {
+function resolveSessionError(
+  playerQuery: UseQueryResult<KangurDuelStateResponse>, 
+  spectatorQuery: UseQueryResult<KangurDuelSpectatorStateResponse>, 
+  isSpectating: boolean, 
+  copy: any
+): string | null {
   return toSessionErrorMessage(
     isSpectating ? spectatorQuery.error : playerQuery.error,
     isSpectating ? copy({ de: 'Das öffentliche Duell konnte nicht geladen werden.', en: 'Could not load the public duel.', pl: 'Nie udało się pobrać publicznego pojedynku.' })
                  : copy({ de: 'Der Duellstatus konnte nicht geladen werden.', en: 'Could not load the duel state.', pl: 'Nie udało się pobrać stanu pojedynku.' }),
     copy
   );
+}
+
+function useDuelHeartbeat(options: {
+  apiClient: DuelApiClient;
+  duelSession: KangurDuelSession | null;
+  hasSessionId: boolean;
+  isAuthenticated: boolean;
+  isSpectating: boolean;
+  normalizedSessionId: string;
+  playerQueryKey: readonly unknown[];
+  queryClient: any;
+}): void {
+  const { apiClient, duelSession, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerQueryKey, queryClient } = options;
+
+  useEffect(() => {
+    if (isSpectating || !hasSessionId || !isAuthenticated || duelSession === null || duelSession.status === 'completed' || duelSession.status === 'aborted') {
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      void apiClient.heartbeatDuel(
+        { clientTimestamp: new Date().toISOString(), sessionId: normalizedSessionId },
+        { cache: 'no-store' }
+      )
+      .then((resp: KangurDuelStateResponse) => {
+        queryClient.setQueryData<KangurDuelStateResponse>(playerQueryKey, resp);
+      })
+      .catch(() => {});
+    }, MOBILE_DUEL_HEARTBEAT_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [apiClient, duelSession, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerQueryKey, queryClient]);
 }
 
 export const useKangurMobileDuelSession = (
@@ -113,56 +148,80 @@ export const useKangurMobileDuelSession = (
   const isSpectating = options.spectate === true;
   const normalizedSessionId = sessionId?.trim() ?? '';
   const hasSessionId = normalizedSessionId.length > 0;
-  const playerQueryKey = ['kangur-mobile', 'duels', 'session', apiBaseUrl, learnerIdentity, normalizedSessionId] as const;
-  const spectatorQueryKey = ['kangur-mobile', 'duels', 'spectator-session', apiBaseUrl, normalizedSessionId, spectatorId] as const;
-  const { playerQuery, spectatorQuery } = useDuelQueries({ hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, apiClient, playerQueryKey, spectatorQueryKey, spectatorId });
-  const sessionState = playerQuery.data ?? null;
-  const spectatorState = spectatorQuery.data ?? null;
-  const duelSession = isSpectating ? spectatorState?.session ?? null : sessionState?.session ?? null;
-  const player = isSpectating ? null : sessionState?.player ?? null;
+  
+  const playerKey = ['kangur-mobile', 'duels', 'session', apiBaseUrl, learnerIdentity, normalizedSessionId] as const;
+  const spectatorKey = ['kangur-mobile', 'duels', 'spectator-session', apiBaseUrl, normalizedSessionId, spectatorId] as const;
+  
+  const { playerQuery, spectatorQuery } = useDuelSessionData({ 
+    hasSessionId, 
+    isAuthenticated, 
+    isSpectating, 
+    normalizedSessionId, 
+    apiClient, 
+    playerQueryKey: playerKey, 
+    spectatorQueryKey: spectatorKey, 
+    spectatorId 
+  });
+  
+  const pData = playerQuery.data;
+  const sData = spectatorQuery.data;
+  const duelSession = isSpectating ? sData?.session ?? null : pData?.session ?? null;
+  const player = isSpectating ? null : pData?.player ?? null;
   const currentQuestion = resolveCurrentQuestion(duelSession, isSpectating, player);
 
-  useEffect(() => {
-    if (isSpectating || !hasSessionId || !isAuthenticated || duelSession === null || duelSession.status === 'completed' || duelSession.status === 'aborted') return;
-    const intervalId = setInterval(() => {
-      void (apiClient as any).heartbeatDuel({ clientTimestamp: new Date().toISOString(), sessionId: normalizedSessionId }, { cache: 'no-store' })
-        .then((resp: KangurDuelStateResponse) => { queryClient.setQueryData(playerQueryKey, resp); }).catch(() => {});
-    }, MOBILE_DUEL_HEARTBEAT_MS);
-    return () => clearInterval(intervalId);
-  }, [apiClient, duelSession, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerQueryKey, queryClient]);
+  useDuelHeartbeat({ 
+    apiClient, 
+    duelSession, 
+    hasSessionId, 
+    isAuthenticated, 
+    isSpectating, 
+    normalizedSessionId, 
+    playerQueryKey: playerKey, 
+    queryClient 
+  });
 
-  const runMutation = useCallback(async <TResult>(action: () => Promise<TResult>, fallback: string): Promise<TResult | null> => {
-    setIsMutating(true); setActionError(null);
-    try { return await action(); } catch (err) { setActionError(toSessionErrorMessage(err, fallback, copy)); return null; }
-    finally { setIsMutating(false); }
+  const runMutation = useCallback(async <TResult>(
+    action: () => Promise<TResult>, 
+    fallback: string
+  ): Promise<TResult | null> => {
+    setIsMutating(true);
+    setActionError(null);
+    try { 
+      return await action(); 
+    } catch (err: unknown) { 
+      setActionError(toSessionErrorMessage(err, fallback, copy)); 
+      return null; 
+    } finally { 
+      setIsMutating(false); 
+    }
   }, [copy]);
 
   const leaveSession = async (): Promise<boolean> => {
     if (isSpectating) return false;
     const resp = await runMutation<KangurDuelStateResponse>(
-      () => (apiClient as DuelApiClient).leaveDuel({ reason: 'mobile_exit', sessionId: normalizedSessionId }, { cache: 'no-store' }),
+      () => apiClient.leaveDuel({ reason: 'mobile_exit', sessionId: normalizedSessionId }, { cache: 'no-store' }),
       copy({ de: 'Das Duell konnte nicht verlassen werden.', en: 'Could not leave the duel.', pl: 'Nie udało się opuścić pojedynku.' })
     );
     if (resp === null) return false;
-    queryClient.setQueryData<KangurDuelStateResponse>(playerQueryKey, resp);
+    queryClient.setQueryData<KangurDuelStateResponse>(playerKey, resp);
     return true;
   };
 
   const sendReaction = async (type: KangurDuelReactionType): Promise<void> => {
     const resp = await runMutation<KangurDuelStateResponse>(
-      () => (apiClient as DuelApiClient).reactToDuel({ sessionId: normalizedSessionId, type }, { cache: 'no-store' }),
+      () => apiClient.reactToDuel({ sessionId: normalizedSessionId, type }, { cache: 'no-store' }),
       copy({ de: 'Die Reaktion konnte nicht gesendet werden.', en: 'Could not send the reaction.', pl: 'Nie udało się wysłać reakcji.' })
     );
     if (resp === null) return;
-    const activeKey = isSpectating ? spectatorQueryKey : playerQueryKey;
+    const activeKey = isSpectating ? spectatorKey : playerKey;
     queryClient.setQueryData<KangurDuelStateResponse | KangurDuelSpectatorStateResponse>(activeKey, (cur) => {
       if (!cur || typeof cur !== 'object' || !('session' in cur)) return cur;
-      const currentState = cur as { session: KangurDuelSession };
+      const state = cur as { session: KangurDuelSession };
       return {
         ...cur,
         session: {
-          ...currentState.session,
-          recentReactions: [...(currentState.session.recentReactions ?? []), (resp as any).reaction].slice(-8),
+          ...state.session,
+          recentReactions: [...(state.session.recentReactions ?? []), (resp as any).reaction].slice(-8),
         },
       };
     });
@@ -171,29 +230,32 @@ export const useKangurMobileDuelSession = (
   const submitAnswer = async (choice: KangurDuelChoice): Promise<void> => {
     if (isSpectating || currentQuestion === null) return;
     const resp = await runMutation<KangurDuelStateResponse>(
-      () => (apiClient as DuelApiClient).answerDuel(
-        {
-          choice,
-          clientTimestamp: new Date().toISOString(),
-          questionId: currentQuestion.id,
-          sessionId: normalizedSessionId,
-        },
-        { cache: 'no-store' },
-      ),
-      copy({
-        de: 'Die Antwort konnte nicht gesendet werden.',
-        en: 'Could not send the answer.',
-        pl: 'Nie udało się wysłać odpowiedzi.',
-      }),
+      () => apiClient.answerDuel({ choice, clientTimestamp: new Date().toISOString(), questionId: currentQuestion.id, sessionId: normalizedSessionId }, { cache: 'no-store' }),
+      copy({ de: 'Die Antwort konnte nicht gesendet werden.', en: 'Could not send the answer.', pl: 'Nie udało się wysłać odpowiedzi.' })
     );
-    if (resp !== null) queryClient.setQueryData<KangurDuelStateResponse>(playerQueryKey, resp);
+    if (resp !== null) queryClient.setQueryData<KangurDuelStateResponse>(playerKey, resp);
   };
 
   return {
-    actionError, currentQuestion, error: resolveSessionError(playerQuery, spectatorQuery, isSpectating, copy),
-    isAuthenticated, isLoading: isSpectating ? spectatorQuery.isLoading : (isLoadingAuth && !isAuthenticated) || playerQuery.isLoading,
-    isMutating, isRestoringAuth: isLoadingAuth && !isAuthenticated, isSpectating,
-    leaveSession, player, refresh: async () => { if (isSpectating) await spectatorQuery.refetch(); else await playerQuery.refetch(); },
-    sendReaction, session: duelSession, spectatorCount: duelSession?.spectatorCount ?? 0, submitAnswer,
+    actionError,
+    currentQuestion,
+    error: resolveSessionError(playerQuery, spectatorQuery, isSpectating, copy),
+    isAuthenticated,
+    isLoading: isSpectating ? spectatorQuery.isLoading : (isLoadingAuth && !isAuthenticated) || playerQuery.isLoading,
+    isMutating,
+    isRestoringAuth: isLoadingAuth && !isAuthenticated,
+    isSpectating,
+    leaveSession,
+    player,
+    refresh: async (): Promise<void> => {
+      if (isSpectating) await spectatorQuery.refetch();
+      else await playerQuery.refetch();
+    },
+    sendReaction,
+    session: duelSession,
+    spectatorCount: duelSession?.spectatorCount ?? 0,
+    submitAnswer,
   };
 };
+
+export {};

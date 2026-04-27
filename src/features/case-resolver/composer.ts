@@ -29,22 +29,27 @@ const DOCUMENT_PLAINTEXT_CONTENT_PORT =
 const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
 const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
 
+// Refactored helper: resolveNodeMeta
 const resolveNodeMeta = (
   nodeId: string,
   nodeMeta: Record<string, CaseResolverNodeMeta>
-): CaseResolverNodeMeta => {
-  return {
-    ...DEFAULT_CASE_RESOLVER_NODE_META,
-    ...(nodeMeta[nodeId] ?? {}),
-  };
-};
+): CaseResolverNodeMeta => ({
+  ...DEFAULT_CASE_RESOLVER_NODE_META,
+  ...(nodeMeta[nodeId] ?? {}),
+});
 
+// Refactored helper: resolveEdgeMeta
 const resolveEdgeMeta = (
   edgeId: string,
   edgeMeta: Record<string, CaseResolverEdgeMeta>
-): CaseResolverEdgeMeta => {
-  return edgeMeta[edgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
+): CaseResolverEdgeMeta => edgeMeta[edgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
+
+// Helper: Node text processing logic
+const getNodeContent = (node: AiNode, output: 'plainText' | 'plaintextContent' | 'wysiwygText'): string => {
+  if (output === 'plainText' || output === 'plaintextContent') return resolveNodeText(node);
+  return resolveNodeWysiwygText(node);
 };
+
 
 const decodeBasicHtmlEntities = (value: string): string =>
   value

@@ -74,10 +74,12 @@ const buildUnmappedDomain = (hostHeader: string | null): CmsDomain => {
   };
 };
 
-const normalizeHost = (hostHeader: string | null): string => {
-  if (!hostHeader) return getFallbackDomain();
-  const raw = hostHeader.split(',')[0]?.trim() ?? '';
-  if (!raw) return getFallbackDomain();
+const normalizeHost = (hostHeader: string | null | undefined): string => {
+  if (hostHeader === null || hostHeader === undefined || hostHeader.trim() === '') {
+    return getFallbackDomain();
+  }
+  const raw = hostHeader.split(',')[0]?.trim();
+  if (raw === undefined || raw === '') return getFallbackDomain();
   try {
     return new URL(`http://${raw}`).hostname.toLowerCase();
   } catch (error) {
@@ -85,6 +87,7 @@ const normalizeHost = (hostHeader: string | null): string => {
     return raw.toLowerCase();
   }
 };
+
 
 const getHostFromRequest = (req: NextRequest): string | null =>
   req.headers.get('x-forwarded-host') ?? req.headers.get('host');

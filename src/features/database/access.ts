@@ -2,7 +2,7 @@ import 'server-only';
 
 import type { NextRequest } from 'next/server';
 
-import { isCollectionAllowed, isAiPathsInternalRequest } from '@/features/ai/server';
+import { isCollectionAllowed, isAiPathsInternalRequest } from '@/features/ai/ai-paths/server';
 import { assertSettingsManageAccess } from '@/features/auth/server';
 import { forbiddenError } from '@/shared/errors/app-error';
 
@@ -25,3 +25,4 @@ export async function assertDatabaseEngineManageAccessOrAiPathsInternal(
   await assertDatabaseEngineManageAccess();
   return { isInternal: false };
 }
+

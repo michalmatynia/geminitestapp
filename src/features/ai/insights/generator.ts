@@ -138,6 +138,77 @@ async function callChatModel(params: {
   throw lastError;
 }
 
+const buildAnalyticsPrompt = async (options?: { contextRegistry?: ContextRegistryConsumerEnvelope | null }) => {
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const summary = await getAnalyticsSummary({ from: oneDayAgo, to: now });
+  const eventsResult = await listAnalyticsEvents({ from: oneDayAgo, to: now, limit: 50, skip: 0 });
+  const events = eventsResult.events;
+  const systemPrompt = [
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem)) || DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
+    buildAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
+  ].filter(Boolean).join('\n\n');
+  const userPrompt = `Current Analytics Summary:
+${JSON.stringify(summary, null, 2)}
+
+Recent Events (Last 50):
+${JSON.stringify(sanitizeEvents(events), null, 2)}
+
+Analyze this data and provide actionable insights.`;
+  return { systemPrompt, userPrompt, name: `analytics Insight - ${now.toLocaleDateString()}` };
+};
+
+const buildLogsPrompt = async (options?: { contextRegistry?: ContextRegistryConsumerEnvelope | null }) => {
+  const logsResult = await listSystemLogs({ level: 'warn' });
+  const logs = logsResult.logs;
+  const metrics = await getSystemLogMetrics({ level: 'warn' });
+  const systemPrompt = [
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) || DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
+    buildSystemLogsContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
+  ].filter(Boolean).join('\n\n');
+  const userPrompt = `System Log Metrics (Last 24h):
+${JSON.stringify(metrics, null, 2)}
+
+Recent Warning/Error Logs (Last 100):
+${JSON.stringify(logs.map(sanitizeSystemLogForAi), null, 2)}
+
+Identify any patterns or critical issues.`;
+  return { systemPrompt, userPrompt, name: `logs Insight - ${new Date().toLocaleDateString()}` };
+};
+
+const buildRuntimeAnalyticsPrompt = async (range: AiPathRuntimeAnalyticsRange, options?: { contextRegistry?: ContextRegistryConsumerEnvelope | null }) => {
+  const now = new Date();
+  const window = resolveRuntimeAnalyticsRangeWindow(range);
+  const summary = await getRuntimeAnalyticsSummary(window);
+  const kernelParityAssessment = assessRuntimeKernelParityRisk(summary);
+  const kernelParityPrompt = buildRuntimeKernelParityPrompt(summary, kernelParityAssessment);
+  const insightMetadata = buildRuntimeKernelParityMetadata(summary, kernelParityAssessment);
+  const systemPrompt = [
+    (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem)) || DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
+    buildRuntimeAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
+  ].filter(Boolean).join('\n\n');
+  const userPrompt = `AI Path Runtime Analytics Summary (${range}):
+${JSON.stringify(summary, null, 2)}
+
+Kernel Runtime Parity Snapshot:
+${kernelParityPrompt}
+
+Analyze performance and success rates of AI Path executions. Include migration risk commentary using kernel parity distribution and the computed parity risk level. Recommend rollout/rollback actions when parity coverage or v3 share is weak.`;
+  return {
+    systemPrompt,
+    userPrompt,
+    name: `runtime_analytics Insight [${kernelParityAssessment.riskLevel.toUpperCase()} risk] - ${now.toLocaleDateString()}`,
+    metadata: insightMetadata,
+  };
+};
+
+const INSIGHT_BUILDERS: Record<string, (options?: any) => Promise<any>> = {
+  analytics: buildAnalyticsPrompt,
+  logs: buildLogsPrompt,
+  system_logs: buildLogsPrompt,
+  runtime_analytics: (options?: any) => buildRuntimeAnalyticsPrompt(options?.range ?? '24h', options),
+};
+
 export async function generateAiInsightByType(
   type: AiInsightType,
   options?: {
@@ -165,111 +236,36 @@ export async function generateAiInsightByType(
     throw new Error(`No enabled AI model assigned for ${capability} capability.`);
   }
 
-  const { modelId } = assignment;
-  let systemPrompt = '';
-  let userPrompt = '';
-  const source: AiInsightSource = options?.source ?? 'manual';
-  let insightName = `${type.replace('_', ' ')} Insight - ${new Date().toLocaleDateString()}`;
-  let insightMetadata: Record<string, unknown> | undefined;
+  const builder = INSIGHT_BUILDERS[type];
+  if (!builder) return null;
 
-  const now = new Date();
-  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-  if (type === 'analytics') {
-    const summary = await getAnalyticsSummary({ from: oneDayAgo, to: now });
-    const eventsResult = await listAnalyticsEvents({
-      from: oneDayAgo,
-      to: now,
-      limit: 50,
-      skip: 0,
-    });
-    const events = eventsResult.events;
-    systemPrompt =
-      [
-        (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.analyticsPromptSystem)) ||
-          DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-        buildAnalyticsInsightContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-      ]
-        .filter(Boolean)
-        .join('\n\n');
-    userPrompt = `Current Analytics Summary:
-${JSON.stringify(summary, null, 2)}
-
-Recent Events (Last 50):
-${JSON.stringify(sanitizeEvents(events), null, 2)}
-
-Analyze this data and provide actionable insights.`;
-  } else if (type === 'logs' || type === 'system_logs') {
-    const logsResult = await listSystemLogs({ level: 'warn' });
-    const logs = logsResult.logs;
-    const metrics = await getSystemLogMetrics({ level: 'warn' });
-    systemPrompt = [
-      (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.logsPromptSystem)) ||
-        DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
-      buildSystemLogsContextRegistrySystemPrompt(options?.contextRegistry?.resolved),
-    ]
-      .filter(Boolean)
-      .join('\n\n');
-    userPrompt = `System Log Metrics (Last 24h):
-${JSON.stringify(metrics, null, 2)}
-
-Recent Warning/Error Logs (Last 100):
-${JSON.stringify(logs.map(sanitizeSystemLogForAi), null, 2)}
-
-Identify any patterns or critical issues.`;
-  } else if (type === 'runtime_analytics') {
-    const range = options?.range ?? '24h';
-    const window = resolveRuntimeAnalyticsRangeWindow(range);
-    const summary = await getRuntimeAnalyticsSummary(window);
-    const kernelParityAssessment = assessRuntimeKernelParityRisk(summary);
-    const kernelParityPrompt = buildRuntimeKernelParityPrompt(summary, kernelParityAssessment);
-    insightName = `${type.replace('_', ' ')} Insight [${kernelParityAssessment.riskLevel.toUpperCase()} risk] - ${now.toLocaleDateString()}`;
-    insightMetadata = buildRuntimeKernelParityMetadata(summary, kernelParityAssessment);
-    systemPrompt =
-      [
-        (await readInsightSettingValue(AI_INSIGHTS_SETTINGS_KEYS.runtimeAnalyticsPromptSystem)) ||
-          DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-        buildRuntimeAnalyticsInsightContextRegistrySystemPrompt(
-          options?.contextRegistry?.resolved
-        ),
-      ]
-        .filter(Boolean)
-        .join('\n\n');
-    userPrompt = `AI Path Runtime Analytics Summary (${range}):
-${JSON.stringify(summary, null, 2)}
-
-Kernel Runtime Parity Snapshot:
-${kernelParityPrompt}
-
-Analyze performance and success rates of AI Path executions. Include migration risk commentary using kernel parity distribution and the computed parity risk level. Recommend rollout/rollback actions when parity coverage or v3 share is weak.`;
-  }
-
+  const prompt = await builder(options);
   const messages: ChatMessage[] = [
     {
       id: `sys_${Date.now()}`,
       sessionId: 'insights_gen',
       role: 'system',
-      content: systemPrompt,
+      content: prompt.systemPrompt,
       timestamp: new Date().toISOString(),
     },
     {
       id: `user_${Date.now()}`,
       sessionId: 'insights_gen',
       role: 'user',
-      content: userPrompt,
+      content: prompt.userPrompt,
       timestamp: new Date().toISOString(),
     },
   ];
 
   try {
-    const content = await callChatModel({ model: modelId, messages });
+    const content = await callChatModel({ model: assignment.modelId, messages });
     const insight = await appendAiInsight(type, {
-      name: insightName,
-      source,
+      name: prompt.name,
+      source: options?.source ?? 'manual',
       content: { text: stripCodeFence(content) },
       status: 'new',
       score: 0,
-      metadata: insightMetadata,
+      metadata: prompt.metadata,
     });
 
     if (type === 'runtime_analytics') {
@@ -282,7 +278,7 @@ Analyze performance and success rates of AI Path executions. Include migration r
 
     return insight;
   } catch (error) {
-    void ErrorSystem.captureException(error);
+    ErrorSystem.captureException(error);
     if (type === 'runtime_analytics') {
       await recordBrainInsightAnalytics({
         type: 'analytics',
@@ -293,6 +289,8 @@ Analyze performance and success rates of AI Path executions. Include migration r
     throw error;
   }
 }
+
+
 
 export async function generateAnalyticsInsight(options?: {
   source?: AiInsightSource;

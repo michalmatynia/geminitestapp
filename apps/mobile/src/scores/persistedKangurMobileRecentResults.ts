@@ -1,5 +1,6 @@
 import { kangurScoreSchema, type KangurScore } from '@kangur/contracts/kangur';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
+import { normalizeKangurScore } from './score-normalization';
 
 const KANGUR_MOBILE_RECENT_RESULTS_STORAGE_KEY = 'kangur.mobile.scores.recent';
 const KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT = 3;
@@ -25,15 +26,19 @@ const parsePersistedRecentResultsStore = (
 
     return Object.entries(parsedSnapshot).reduce<Record<string, KangurScore[]>>(
       (acc, [identityKey, value]) => {
-        const parsedResults = kangurScoreSchema
-          .array()
-          .max(KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT)
-          .safeParse(value);
-        if (parsedResults.success) {
-          return {
-            ...acc,
-            [identityKey]: parsedResults.data,
-          };
+        if (Array.isArray(value)) {
+            const normalized = value.map((v) => normalizeKangurScore(v));
+            const parsedResults = kangurScoreSchema
+              .array()
+              .max(KANGUR_MOBILE_RECENT_RESULTS_SNAPSHOT_LIMIT)
+              .safeParse(normalized);
+              
+            if (parsedResults.success) {
+              return {
+                ...acc,
+                [identityKey]: parsedResults.data,
+              };
+            }
         }
         return acc;
       },

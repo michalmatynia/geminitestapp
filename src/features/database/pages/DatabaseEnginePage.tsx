@@ -4,6 +4,7 @@ import type { JSX } from 'react';
 
 import type { DatabaseEngineWorkspaceView } from '@/shared/contracts/database';
 import { AdminDatabasePageLayout } from '@/shared/ui/admin.public';
+import Link from 'next/link';
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 
@@ -23,6 +24,9 @@ const DATABASE_ENGINE_VIEWS: Array<{
   { value: 'engine', label: 'Database Engine' },
   { value: 'backups', label: 'Backups' },
   { value: 'operations', label: 'Operations' },
+  { value: 'crud', label: 'CRUD Console' },
+  { value: 'preview', label: 'Database Preview' },
+  { value: 'redis', label: 'Redis' },
 ];
 
 const resolveViewLabel = (view: DatabaseEngineWorkspaceView): string =>
@@ -95,7 +99,22 @@ function DatabaseEngineActiveView({
     case 'backups':
       return <DatabaseBackupsPanel />;
     case 'operations':
+    case 'crud':
       return <DatabaseOperationsPanel />;
+    case 'preview':
+      return (
+        <div className='space-y-3'>
+          <p>
+            Use the dedicated preview workspace to inspect schema and table data for current or backed-up
+            databases.
+          </p>
+          <Button asChild variant='outline'>
+            <Link href='/admin/databases/preview'>Open Database Preview</Link>
+          </Button>
+        </div>
+      );
+    case 'redis':
+      return <DatabaseEngineRedisPanel />;
     default:
       return <DatabaseEngineSettingsTab />;
   }
@@ -143,6 +162,26 @@ function DatabaseEngineWorkspace(): JSX.Element {
         <DatabaseEngineActiveView activeView={activeView} />
       </div>
     </AdminDatabasePageLayout>
+  );
+}
+
+function DatabaseEngineRedisPanel(): JSX.Element {
+  const { redisOverview } = useDatabaseEngineStateContext();
+  if (!redisOverview) {
+    return <p>No Redis telemetry available for this environment yet.</p>;
+  }
+
+  return (
+    <div className='space-y-2 text-sm text-gray-200'>
+      <p>Connected: {redisOverview.connected ? 'Yes' : 'No'}</p>
+      <p>URL configured: {redisOverview.urlConfigured ? 'Yes' : 'No'}</p>
+      <p>Enabled: {redisOverview.enabled ? 'Yes' : 'No'}</p>
+      <p>Keys count: {redisOverview.keysCount ?? redisOverview.keyCount}</p>
+      <p>Database size: {redisOverview.dbSize}</p>
+      <p>Used memory: {redisOverview.memoryUsed ?? redisOverview.usedMemory ?? 'n/a'}</p>
+      <p>Uptime: {redisOverview.uptime ?? 'n/a'}</p>
+      <p>Clients: {redisOverview.clients ?? 'n/a'}</p>
+    </div>
   );
 }
 

@@ -1,8 +1,9 @@
 import type { KangurMobileLocale, KangurMobileLocalizedValue } from '../../i18n/kangurMobileI18n';
 import type { 
     KangurDuelMode, KangurDuelOperation, KangurDuelDifficulty, KangurDuelStatus, 
-    KangurDuelReactionType 
+    KangurDuelReactionType, KangurDuelSeries
 } from '@kangur/contracts/kangur-duels';
+import type { KangurLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import * as Constants from './duels-constants';
 import * as Formatters from './duels-formatters';
 
@@ -11,41 +12,13 @@ export const {
   DUEL_OPERATION_LABELS,
   DUEL_DIFFICULTY_LABELS,
   DUEL_DIFFICULTY_EMOJIS,
-  DUEL_MODE_LABELS,
   OPERATION_OPTIONS,
   DIFFICULTY_OPTIONS,
   SERIES_BEST_OF_OPTIONS,
-  DUEL_REACTION_OPTIONS,
-  AUTO_REFRESH_INTERVAL_MS,
-  HOME_ROUTE,
-  LOBBY_CHAT_PREVIEW_LIMIT,
+  DUEL_STATUS_LABELS,
 } = Constants;
 
-export const {
-  formatPlayerStatusLabel,
-  formatQuestionProgress,
-  formatRoundProgressLabel,
-  formatSeriesProgress,
-  formatSeriesSummary,
-  formatLobbySeriesSummary,
-  formatSeriesTitle,
-  formatSpectatorQuestionProgress,
-  getPlayerStatusTone,
-  getStatusTone,
-  localizeDuelText,
-  resolveRoundProgress,
-  resolveSeriesWins,
-  resolveWinnerSummary,
-} = Formatters;
-
-export type DuelModeFilterOption = {
-  value: 'all' | KangurDuelMode;
-  label: KangurMobileLocalizedValue<string>;
-};
-
-export const DUEL_STATUS_LABELS: Record<KangurDuelStatus, KangurMobileLocalizedValue<string>> = Constants.DUEL_STATUS_LABELS;
-
-export const MODE_FILTER_OPTIONS = Constants.MODE_FILTER_OPTIONS;
+export const MODE_FILTER_OPTIONS: readonly { value: string; label: any }[] = Constants.MODE_FILTER_OPTIONS;
 
 export function formatModeLabel(mode: KangurDuelMode, locale: KangurMobileLocale): string {
   return Formatters.localizeDuelText(Constants.DUEL_MODE_LABELS[mode], locale);
@@ -100,28 +73,35 @@ export function normalizeSeriesBestOf(bestOf: number | null | undefined): 1 | 3 
 export function resolveSessionIdParam(value: string | string[] | undefined): string | null {
   const raw = Array.isArray(value) ? value[0] : value;
   const normalized = typeof raw === 'string' ? raw.trim() : '';
-  return normalized !== '' ? normalized : null;
+  return normalized || null;
 }
 
 export function resolveSpectateParam(value: string | string[] | undefined): boolean {
-  const raw = Array.isArray(value) ? value[0] : value;
-  const normalized = (typeof raw === 'string' ? raw.trim() : '').toLowerCase();
+  const normalized = (typeof value === 'string' ? value.trim() : Array.isArray(value) ? value[0]?.trim() : '').toLowerCase();
   return normalized === '1' || normalized === 'true' || normalized === 'yes';
 }
 
 export function formatStatusLabel(status: KangurDuelStatus, locale: KangurMobileLocale): string {
-  const labels = DUEL_STATUS_LABELS[status];
-  return Formatters.localizeDuelText(labels, locale);
+  return Formatters.localizeDuelText(Constants.DUEL_STATUS_LABELS[status], locale);
 }
 
-export interface LocalLobbyChatMessage {
-  senderId: string;
-  senderName: string;
+export function formatLobbyChatSenderLabel(message: KangurLobbyChatMessage, activeLearnerId: string | null, locale: KangurMobileLocale): string {
+  return message.senderId === activeLearnerId ? Formatters.localizeDuelText({ de: 'Du', en: 'You', pl: 'Ty' }, locale) : message.senderName;
 }
 
-export function formatLobbyChatSenderLabel(message: LocalLobbyChatMessage, activeLearnerId: string | null, locale: KangurMobileLocale): string {
-  if (message.senderId === activeLearnerId) {
-    return Formatters.localizeDuelText({ de: 'Du', en: 'You', pl: 'Ty' }, locale);
-  }
-  return message.senderName;
-}
+export const {
+  formatPlayerStatusLabel,
+  formatQuestionProgress,
+  formatRoundProgressLabel,
+  formatSeriesProgress,
+  formatSeriesSummary,
+  formatLobbySeriesSummary,
+  formatSeriesTitle,
+  formatSpectatorQuestionProgress,
+  getPlayerStatusTone,
+  getStatusTone,
+  localizeDuelText,
+  resolveRoundProgress,
+  resolveSeriesWins,
+  resolveWinnerSummary,
+} = Formatters;

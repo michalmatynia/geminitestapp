@@ -15,20 +15,17 @@ export function LessonCheckpointRow({
   item: KangurMobileLessonCheckpointItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  let practiceAction: React.JSX.Element | null = null;
-
-  if (item.practiceHref !== null && item.practiceHref !== undefined) {
-    practiceAction = (
-      <LinkButton
-        href={item.practiceHref}
-        label={`${copy({
-          de: 'Danach trainieren',
-          en: 'Practice after',
-          pl: 'Potem trenuj',
-        })}: ${item.title}`}
-      />
-    );
-  }
+  
+  const practiceAction = item.practiceHref ? (
+    <LinkButton
+      href={item.practiceHref}
+      label={`${copy({
+        de: 'Danach trainieren',
+        en: 'Practice after',
+        pl: 'Potem trenuj',
+      })}: ${item.title}`}
+    />
+  ) : null;
 
   return (
     <InsetPanel gap={10}>

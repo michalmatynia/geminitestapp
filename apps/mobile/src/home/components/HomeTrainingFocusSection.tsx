@@ -10,7 +10,7 @@ import { FocusCard } from './FocusCard';
 import { createKangurLessonHref } from '../../lessons/lessonHref';
 import { createKangurPracticeHref } from '../../practice/practiceHref';
 import { type HomeScoreViewModel } from '../home-screen-score-state';
-import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 type HomeTrainingFocusSectionProps = {
   areDeferredHomePanelsReady: boolean;

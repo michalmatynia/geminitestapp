@@ -1,0 +1,1180 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelLobbySearchSection.tsx
+  25:3  error  'isActionPending' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  26:3  error  'onOpenSession' is defined but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionDetailsCard.tsx
+  32:24  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionFullContent.tsx
+  19:189  error  Unsafe object destructuring of a property with an error typed value  @typescript-eslint/no-unsafe-assignment
+  22:124  error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/DuelSessionReactionsCard.tsx
+  77:10  error  Unsafe call of a type that could not be resolved             @typescript-eslint/no-unsafe-call
+  77:32  error  Unsafe member access .map on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/KangurDuelsScreen.test-support.tsx
+   38:25  error  Arrow function has too many lines (63). Maximum allowed is 60                                      max-lines-per-function
+   77:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   78:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   79:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   80:15  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+   88:15  error  Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly        @typescript-eslint/strict-boolean-expressions
+  124:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  125:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  126:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  127:15  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  185:70  error  Missing return type on function                                                                    @typescript-eslint/explicit-function-return-type
+  233:38  error  Arrow function has too many lines (70). Maximum allowed is 60                                      max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/KangurDuelsScreen.tsx
+  13:52  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/components/DetailsBody.tsx
+  23:50  error  Unsafe object destructuring of a property with an error typed value  @typescript-eslint/no-unsafe-assignment
+  29:58  error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/components/DetailsHeader.tsx
+   9:11   error  Unexpected any. Specify a different type                                            @typescript-eslint/no-explicit-any
+  19:141  error  Unsafe argument of type `any` assigned to a parameter of type `KangurMobileLocale`  @typescript-eslint/no-unsafe-argument
+  21:143  error  Unsafe argument of type `any` assigned to a parameter of type `KangurMobileLocale`  @typescript-eslint/no-unsafe-argument
+  23:141  error  Unsafe argument of type `any` assigned to a parameter of type `KangurMobileLocale`  @typescript-eslint/no-unsafe-argument
+  31:40   error  Unsafe argument of type `any` assigned to a parameter of type `KangurMobileLocale`  @typescript-eslint/no-unsafe-argument
+  31:92   error  Unsafe argument of type `any` assigned to a parameter of type `KangurMobileLocale`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/components/RoundProgressBar.tsx
+   6:11  error  Unexpected any. Specify a different type                                                             @typescript-eslint/no-explicit-any
+  20:35  error  Unsafe argument of type `any` assigned to a parameter of type `{ current: number; total: number; }`  @typescript-eslint/no-unsafe-argument
+  20:52  error  Unexpected any. Specify a different type                                                             @typescript-eslint/no-explicit-any
+  20:57  error  Unsafe argument of type `any` assigned to a parameter of type `KangurMobileLocale`                   @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/BadgesCard.tsx
+  56:8  error  Function 'BadgesCard' has too many lines (87). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/LessonCheckpointsCard.tsx
+  15:1  error  Function 'LessonCheckpointRow' has too many lines (73). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/LessonMasteryCard.tsx
+   18:1  error  Function 'LessonMasteryRow' has too many lines (71). Maximum allowed is 60    max-lines-per-function
+   93:1  error  Function 'getLessonFocusSummary' has a complexity of 9. Maximum allowed is 8  complexity
+  130:1  error  Function 'LessonMasteryList' has too many lines (65). Maximum allowed is 60   max-lines-per-function
+  199:8  error  Function 'LessonMasteryCard' has too many lines (103). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-primitives/NextStepsCard.tsx
+  116:8  error  Function 'NextStepsCard' has too many lines (64). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-screen-lobby-view.tsx
+  76:27  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duels-ui.ts
+  1:15   error  'KangurDuelDifficulty' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+  1:37   error  'KangurDuelMode' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  1:53   error  'KangurDuelOperation' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  1:74   error  'KangurDuelPlayer' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  1:92   error  'KangurDuelPlayerStatus' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  1:116  error  'KangurDuelReactionType' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  1:140  error  'KangurDuelSeries' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  1:158  error  'KangurDuelSession' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  1:177  error  'KangurDuelStatus' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  2:15   error  'KangurDuelLobbyChatMessage' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/duelsHref.ts
+  11:9  error  Arrow function has a complexity of 9. Maximum allowed is 8                          complexity
+  16:7  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  26:7  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsAutoRefresh.ts
+   6:8   error  Missing return type on function                                                           @typescript-eslint/explicit-function-return-type
+  18:60  error  Unsafe argument of type error typed assigned to a parameter of type `number | undefined`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsLobbyActions.ts
+  7:8  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsRouteJoin.ts
+   7:8   error  Function 'useKangurDuelsRouteJoin' has too many parameters (6). Maximum allowed is 4  max-params
+   7:8   error  Missing return type on function                                                       @typescript-eslint/explicit-function-return-type
+  27:11  error  Unnecessary conditional, the types have no overlap                                    @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsScreenData.ts
+   2:10  error  'useCallback' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  15:10  error  'useKangurDuelsAutoRefresh' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  45:1   error  Function 'createDuelsScreenData' has too many parameters (11). Maximum allowed is 4          max-params
+  59:36  error  Missing return type on function                                                              @typescript-eslint/explicit-function-return-type
+  60:24  error  Missing return type on function                                                              @typescript-eslint/explicit-function-return-type
+  65:45  error  Missing return type on function                                                              @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsSessionActions.ts
+  10:8   error  Function 'useKangurDuelsSessionActions' has too many parameters (6). Maximum allowed is 4  max-params
+  10:8   error  Function 'useKangurDuelsSessionActions' has too many lines (61). Maximum allowed is 60     max-lines-per-function
+  10:8   error  Missing return type on function                                                            @typescript-eslint/explicit-function-return-type
+  20:49  error  Async arrow function has a complexity of 11. Maximum allowed is 8                          complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurDuelsSessionState.ts
+   86:8   error  Function 'useKangurDuelsSessionState' has a complexity of 22. Maximum allowed is 8          complexity
+   91:9   error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+   91:54  error  Unsafe call of a type that could not be resolved                                            @typescript-eslint/no-unsafe-call
+  115:7   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  123:5   error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelLobbyChat.ts
+   44:3   error  Arrow function has too many lines (82). Maximum allowed is 60                       max-lines-per-function
+   44:42  error  Arrow function has a complexity of 12. Maximum allowed is 8                         complexity
+  104:14  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelSession.errors.ts
+  42:8  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  54:8  error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelSession.helpers.ts
+   2:3  error  'KangurDuelChoice' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+  18:7  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileDuelSession.ts
+   49:43  error  Arrow function has too many lines (245). Maximum allowed is 60  max-lines-per-function
+   52:37  error  Arrow function has a complexity of 31. Maximum allowed is 8     complexity
+  146:5   error  Arrow function expected no return value                         consistent-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileLearnerDuelsSummary.errors.ts
+   8:18  error  Arrow function has a complexity of 10. Maximum allowed is 8                                 complexity
+   9:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  13:36  error  Unexpected object value in conditional. The condition is always true                        @typescript-eslint/strict-boolean-expressions
+  13:36  error  Unnecessary conditional, value is always truthy                                             @typescript-eslint/no-unnecessary-condition
+  34:8   error  Unexpected string value in conditional. An explicit empty string check is required          @typescript-eslint/strict-boolean-expressions
+  57:11  error  Arrow function has a complexity of 9. Maximum allowed is 8                                  complexity
+  79:8   error  Unexpected string value in conditional. An explicit empty string check is required          @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/useKangurMobileLearnerDuelsSummary.ts
+   38:51  error  Arrow function has too many lines (122). Maximum allowed is 60                                      max-lines-per-function
+   42:89  error  Arrow function has a complexity of 17. Maximum allowed is 8                                         complexity
+  104:23  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  124:25  error  Unexpected any. Specify a different type                                                            @typescript-eslint/no-explicit-any
+  136:15  error  'session' is already declared in the upper scope on line 46 column 26                               @typescript-eslint/no-shadow
+  136:35  error  Unsafe member access .session on an `any` value                                                     @typescript-eslint/no-unsafe-member-access
+  143:16  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  143:23  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/utils/duels-formatters.ts
+  146:25  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  167:7   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/utils/duels-status.ts
+   6:11  error  'KangurDuelPlayer' is an 'error' type that acts as 'any' and overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+   9:9   error  Unsafe assignment of an error typed value                                                                  @typescript-eslint/no-unsafe-assignment
+   9:25  error  Unsafe member access .questionCount on a type that cannot be resolved                                      @typescript-eslint/no-unsafe-member-access
+  10:9   error  Unsafe assignment of an error typed value                                                                  @typescript-eslint/no-unsafe-assignment
+  11:15  error  Unsafe member access .currentQuestionIndex on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  12:15  error  Unsafe member access .currentQuestionIndex on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  14:32  error  Unsafe argument of type error typed assigned to a parameter of type `number`                               @typescript-eslint/no-unsafe-argument
+  14:41  error  Unsafe argument of type error typed assigned to a parameter of type `number`                               @typescript-eslint/no-unsafe-argument
+  18:5   error  Unsafe assignment of an error typed value                                                                  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/duels/utils/duels-ui.ts
+   1:35   error  'KangurMobileLocalizedValue' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+   4:29   error  'KangurDuelSeries' is defined but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
+  21:68   error  Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  76:10   error  Unexpected string value in conditional. An explicit empty string check is required                            @typescript-eslint/strict-boolean-expressions
+  80:23   error  Do not nest ternary expressions                                                                               no-nested-ternary
+  80:89   error  Unsafe usage of optional chaining. If it short-circuits with 'undefined' the evaluation will throw TypeError  no-unsafe-optional-chaining
+  89:3    error  Unsafe return of a value of type error                                                                        @typescript-eslint/no-unsafe-return
+  89:18   error  Unsafe member access .senderId on a type that cannot be resolved                                              @typescript-eslint/no-unsafe-member-access
+  89:130  error  Unsafe member access .senderName on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/HomeDuelSections.tsx
+  66:1   error  Function 'getSharerDisplayName' has a complexity of 10. Maximum allowed is 8                        complexity
+  66:40  error  Unexpected any. Specify a different type                                                            @typescript-eslint/no-explicit-any
+  66:51  error  Unexpected any. Specify a different type                                                            @typescript-eslint/no-explicit-any
+  67:9   error  Unsafe assignment of an `any` value                                                                 @typescript-eslint/no-unsafe-assignment
+  67:36  error  Unsafe call of an `any` typed value                                                                 @typescript-eslint/no-unsafe-call
+  67:44  error  Unsafe member access .user on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  68:9   error  Unsafe assignment of an `any` value                                                                 @typescript-eslint/no-unsafe-assignment
+  68:24  error  Unsafe call of an `any` typed value                                                                 @typescript-eslint/no-unsafe-call
+  68:32  error  Unsafe member access .user on an `any` value                                                        @typescript-eslint/no-unsafe-member-access
+  75:3   error  Unsafe return of a value of type `any`                                                              @typescript-eslint/no-unsafe-return
+  75:10  error  Unsafe call of an `any` typed value                                                                 @typescript-eslint/no-unsafe-call
+  82:8   error  Function 'AuthenticatedHomePrivateDuelSectionGroup' has too many lines (97). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/HomeLoadingShell.tsx
+  73:8  error  Function 'HomeLoadingShell' has too many lines (109). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/KangurMobileHomeProgressSnapshotContext.tsx
+  42:76  error  Arrow function has a complexity of 9. Maximum allowed is 8  complexity
+  56:5   error  Do not nest ternary expressions                             no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/AssignmentCard.tsx
+   7:1   error  Missing return type on function                                    @typescript-eslint/explicit-function-return-type
+  26:28  error  Unexpected value in conditional. A boolean expression is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/FocusCard.tsx
+  8:8  error  Function 'FocusCard' has too many lines (86). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeAccountSection.tsx
+  30:8  error  Function 'HomeAccountSection' has too many lines (119). Maximum allowed is 60  max-lines-per-function
+  30:8  error  Function 'HomeAccountSection' has a complexity of 9. Maximum allowed is 8      complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeDuelLeaderboardSection.tsx
+  13:8   error  Function 'HomeDuelLeaderboardSection' has too many lines (72). Maximum allowed is 60               max-lines-per-function
+  14:3   error  'activeDuelLearnerId' is defined but never used. Allowed unused args must match /^_/u              @typescript-eslint/no-unused-vars
+  15:3   error  'isAuthenticated' is defined but never used. Allowed unused args must match /^_/u                  @typescript-eslint/no-unused-vars
+  30:8   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  38:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  38:11  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeDuelSectionsGroup.tsx
+  26:8  error  Function 'HomeDuelSectionsGroup' has too many lines (68). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeHeroSection.tsx
+  27:8  error  Function 'HomeHeroSection' has too many lines (171). Maximum allowed is 60  max-lines-per-function
+  27:8  error  Function 'HomeHeroSection' has a complexity of 13. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeLearnerCredentialsSignInSection.tsx
+  12:8  error  Function 'HomeLearnerCredentialsSignInSection' has too many lines (80). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeNavigationSection.tsx
+  32:8  error  Function 'HomeNavigationSection' has too many lines (163). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeResultsHubSection.tsx
+  36:8   error  Function 'HomeResultsHubSection' has too many lines (193). Maximum allowed is 60                   max-lines-per-function
+  36:8   error  Function 'HomeResultsHubSection' has a complexity of 15. Maximum allowed is 8                      complexity
+  68:8   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  76:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  84:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  84:11  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  88:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  96:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeSecondaryInsightsBadgesAndPlanSectionGroup.tsx
+   2:3   error  'DeferredHomeInsightsBadgesAndPlanCard' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   8:3   error  'DeferredHomeInsightsResultsHubCard' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  33:8   error  Do not nest ternary expressions                                                                          no-nested-ternary
+  40:8   error  Do not nest ternary expressions                                                                          no-nested-ternary
+  42:11  error  Do not nest ternary expressions                                                                          no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeSecondaryInsightsBadgesSectionGroup.tsx
+  13:8  error  Function 'HomeSecondaryInsightsBadgesSectionGroup' has too many lines (76). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeSecondaryLessonPlanSection.tsx
+  1:16  error  'View' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeSecondaryRecentLessonsSection.tsx
+  16:8  error  Function 'HomeSecondaryRecentLessonsSection' has too many lines (62). Maximum allowed is 60  max-lines-per-function
+  43:8  error  Do not nest ternary expressions                                                              no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/HomeTrainingFocusSection.tsx
+  22:8  error  Function 'HomeTrainingFocusSection' has too many lines (118). Maximum allowed is 60  max-lines-per-function
+  22:8  error  Function 'HomeTrainingFocusSection' has a complexity of 14. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/LessonCheckpointCard.tsx
+   7:8   error  Function 'LessonCheckpointCard' has too many lines (75). Maximum allowed is 60  max-lines-per-function
+  14:26  error  Unnecessary conditional, the types have no overlap                              @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/LessonMasteryCard.tsx
+   7:8   error  Function 'LessonMasteryCard' has too many lines (78). Maximum allowed is 60                        max-lines-per-function
+  15:27  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  23:26  error  Unnecessary conditional, the types have no overlap                                                 @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/LiveHomeSecondaryLessonPlanSection.tsx
+  10:8  error  Function 'LiveHomeSecondaryLessonPlanSection' has too many lines (74). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/AnonymousHomePrivateDuelSectionGroup.tsx
+  15:8  error  Function 'AnonymousHomePrivateDuelSectionGroup' has too many lines (131). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/AuthenticatedHomeActiveRivalsContent.tsx
+  21:8  error  Function 'AuthenticatedHomeActiveRivalsContent' has too many lines (131). Maximum allowed is 60  max-lines-per-function
+  21:8  error  Function 'AuthenticatedHomeActiveRivalsContent' has a complexity of 15. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/AuthenticatedHomeInvitesContent.tsx
+  20:8  error  Function 'AuthenticatedHomeInvitesContent' has too many lines (96). Maximum allowed is 60  max-lines-per-function
+  20:8  error  Function 'AuthenticatedHomeInvitesContent' has a complexity of 10. Maximum allowed is 8    complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/AuthenticatedHomeOutgoingChallengesContent.tsx
+  22:8  error  Function 'AuthenticatedHomeOutgoingChallengesContent' has too many lines (108). Maximum allowed is 60  max-lines-per-function
+  22:8  error  Function 'AuthenticatedHomeOutgoingChallengesContent' has a complexity of 12. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/AuthenticatedHomeRematchesSection.tsx
+  25:8  error  Function 'AuthenticatedHomeRematchesSection' has too many lines (138). Maximum allowed is 60  max-lines-per-function
+  25:8  error  Function 'AuthenticatedHomeRematchesSection' has a complexity of 10. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/HomeDuelLeaderboardSection.tsx
+  15:8   error  Function 'HomeDuelLeaderboardSection' has too many lines (132). Maximum allowed is 60  max-lines-per-function
+  15:8   error  Function 'HomeDuelLeaderboardSection' has a complexity of 11. Maximum allowed is 8     complexity
+  95:10  error  Do not nest ternary expressions                                                        no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/components/duels/HomeLiveDuelsSection.tsx
+  14:8  error  Function 'HomeLiveDuelsSection' has too many lines (91). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/home-duel-section-cards.tsx
+   20:8   error  Function 'DuelInviteCard' has too many lines (76). Maximum allowed is 60         max-lines-per-function
+   97:8   error  Function 'OutgoingChallengeCard' has too many lines (93). Maximum allowed is 60  max-lines-per-function
+  191:8   error  Function 'ActiveRivalCard' has too many lines (72). Maximum allowed is 60        max-lines-per-function
+  264:8   error  Function 'RecentOpponentCard' has too many lines (74). Maximum allowed is 60     max-lines-per-function
+  308:1   error  File has too many lines (545). Maximum allowed is 300                            max-lines
+  339:8   error  Function 'LiveDuelCard' has too many lines (115). Maximum allowed is 60          max-lines-per-function
+  351:23  error  Do not nest ternary expressions                                                  no-nested-ternary
+  361:23  error  Do not nest ternary expressions                                                  no-nested-ternary
+  378:24  error  Do not nest ternary expressions                                                  no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/home-screen-content.tsx
+    3:15  error  'Href' is defined but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
+   49:8   error  Function 'HomeScreenContent' has too many lines (292). Maximum allowed is 60                 max-lines-per-function
+   49:8   error  Function 'HomeScreenContent' has a complexity of 27. Maximum allowed is 8                    complexity
+  119:76  error  Unnecessary optional chain on a non-nullish value                                            @typescript-eslint/no-unnecessary-condition
+  120:47  error  Unnecessary optional chain on a non-nullish value                                            @typescript-eslint/no-unnecessary-condition
+  121:31  error  Do not nest ternary expressions                                                              no-nested-ternary
+  128:9   error  'authBoundaryView' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  157:35  error  Arrow function has too many lines (148). Maximum allowed is 60                               max-lines-per-function
+  208:10  error  Arrow function has too many lines (96). Maximum allowed is 60                                max-lines-per-function
+  322:1   error  File has too many lines (337). Maximum allowed is 300                                        max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/home-screen-deferred.tsx
+  336:1  error  File has too many lines (365). Maximum allowed is 300  max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/home-screen-insights.tsx
+  1:10  error  'View' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/home-screen-score-state.tsx
+  153:4  error  Missing return type on function                                                                    @typescript-eslint/explicit-function-return-type
+  154:3  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  212:8  error  Function 'LiveAuthenticatedHomeScoreState' has too many lines (73). Maximum allowed is 60          max-lines-per-function
+  212:8  error  Function 'LiveAuthenticatedHomeScoreState' has a complexity of 16. Maximum allowed is 8            complexity
+  232:6  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  324:1  error  File has too many lines (321). Maximum allowed is 300                                              max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/homeAuthBoundary.ts
+   63:51  error  Arrow function has too many lines (64). Maximum allowed is 60                                      max-lines-per-function
+   79:37  error  Arrow function has a complexity of 24. Maximum allowed is 8                                        complexity
+   83:5   error  Do not nest ternary expressions                                                                    no-nested-ternary
+   85:9   error  Do not nest ternary expressions                                                                    no-nested-ternary
+   93:5   error  Do not nest ternary expressions                                                                    no-nested-ternary
+   95:9   error  Do not nest ternary expressions                                                                    no-nested-ternary
+   97:9   error  Unnecessary conditional, comparison is always false, since `undefined === "admin"` is false        @typescript-eslint/no-unnecessary-condition
+   99:13  error  Unnecessary conditional, left-hand side of `??` operator is always `null` or `undefined`           @typescript-eslint/no-unnecessary-condition
+  102:31  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  104:9   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  106:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  107:13  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  109:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  121:16  error  Do not nest ternary expressions                                                                    no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/homeDebugProof.ts
+   34:10  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   37:51  error  Arrow function has too many lines (177). Maximum allowed is 60                                     max-lines-per-function
+   45:42  error  Arrow function has a complexity of 10. Maximum allowed is 8                                        complexity
+   46:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  155:7   error  Do not nest ternary expressions                                                                    no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/persistedKangurMobileHomeDuelInvites.ts
+  13:8   error  Unexpected string value in conditional. An explicit empty string check is required          @typescript-eslint/strict-boolean-expressions
+  20:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  34:11  error  Assignment to property of function parameter 'snapshot'                                     no-param-reassign
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/persistedKangurMobileHomeLessonCheckpoints.ts
+   40:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+   99:8   error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+  106:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+  115:14  error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+  124:13  error  Assignment to property of function parameter 'masterySnapshot'                                     no-param-reassign
+  129:9   error  Assignment to property of function parameter 'snapshot'                                            no-param-reassign
+  164:21  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  178:10  error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useHomeScreenDeferredPanels.ts
+   11:40  error  Missing return type on function                    @typescript-eslint/explicit-function-return-type
+   44:44  error  Unnecessary optional chain on a non-nullish value  @typescript-eslint/no-unnecessary-condition
+  146:5   error  Arrow function expected no return value            consistent-return
+  182:5   error  Arrow function expected no return value            consistent-return
+  221:5   error  Arrow function expected no return value            consistent-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeBadges.ts
+  27:25  error  Missing return type on function                                                                                 @typescript-eslint/explicit-function-return-type
+  28:3   error  Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeDuelsInvites.ts
+  36:48  error  Arrow function has too many lines (113). Maximum allowed is 60  max-lines-per-function
+  38:88  error  Arrow function has a complexity of 27. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeDuelsLeaderboard.ts
+  26:8  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  39:8  error  Unexpected string value in conditional. An explicit empty string check is required          @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeDuelsPresence.ts
+  37:49  error  Arrow function has too many lines (129). Maximum allowed is 60  max-lines-per-function
+  39:90  error  Arrow function has a complexity of 15. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeDuelsRematches.ts
+  34:50  error  Arrow function has too many lines (114). Maximum allowed is 60  max-lines-per-function
+  36:92  error  Arrow function has a complexity of 15. Maximum allowed is 8     complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeDuelsSpotlight.ts
+  40:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  53:8   error  Unexpected string value in conditional. An explicit empty string check is required          @typescript-eslint/strict-boolean-expressions
+  81:92  error  Arrow function has a complexity of 12. Maximum allowed is 8                                 complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileHomeLessonMastery.ts
+  39:19  error  Unexpected value in conditional. A boolean expression is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileRecentResults.ts
+  62:15  error  Unsafe return of a value of type error                       @typescript-eslint/no-unsafe-return
+  62:39  error  Unsafe call of a type that could not be resolved             @typescript-eslint/no-unsafe-call
+  66:39  error  Arrow function has a complexity of 11. Maximum allowed is 8  complexity
+  98:22  error  Forbidden non-null assertion                                 @typescript-eslint/no-non-null-assertion
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/home/useKangurMobileTrainingFocus.ts
+  38:3   error  Arrow function has too many lines (83). Maximum allowed is 60                                      max-lines-per-function
+  40:41  error  Arrow function has a complexity of 13. Maximum allowed is 8                                        complexity
+  55:9   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  75:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  81:12  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/leaderboard/KangurLeaderboardScreen.tsx
+   41:8   error  Function 'KangurLeaderboardScreen' has too many lines (618). Maximum allowed is 60                 max-lines-per-function
+   41:8   error  Function 'KangurLeaderboardScreen' has a complexity of 21. Maximum allowed is 8                    complexity
+   67:30  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  315:1   error  File has too many lines (656). Maximum allowed is 300                                              max-lines
+  332:10  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  348:13  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  348:13  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  378:24  error  Arrow function has too many lines (80). Maximum allowed is 60                                      max-lines-per-function
+  534:16  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/leaderboard/leaderboard-duels-section.tsx
+   30:8   error  Function 'LeaderboardDuelsSection' has too many lines (301). Maximum allowed is 60                    max-lines-per-function
+   30:8   error  Function 'LeaderboardDuelsSection' has a complexity of 10. Maximum allowed is 8                       complexity
+   98:13  error  Do not nest ternary expressions                                                                       no-nested-ternary
+   98:13  error  Unexpected nullable number value in conditional. Please handle the nullish/zero/NaN cases explicitly  @typescript-eslint/strict-boolean-expressions
+  122:8   error  Do not nest ternary expressions                                                                       no-nested-ternary
+  130:11  error  Do not nest ternary expressions                                                                       no-nested-ternary
+  130:11  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  157:12  error  Do not nest ternary expressions                                                                       no-nested-ternary
+  203:12  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  210:42  error  Arrow function has too many lines (94). Maximum allowed is 60                                         max-lines-per-function
+  290:31  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  314:1   error  File has too many lines (327). Maximum allowed is 300                                                 max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/leaderboard/leaderboard-primitives.tsx
+   35:8   error  Function 'LessonCheckpointRow' has too many lines (69). Maximum allowed is 60                      max-lines-per-function
+   41:26  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  108:8   error  Function 'LeaderboardAssignmentRow' has too many lines (79). Maximum allowed is 60                 max-lines-per-function
+  108:8   error  Function 'LeaderboardAssignmentRow' has a complexity of 10. Maximum allowed is 8                   complexity
+  115:5   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  133:28  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  151:13  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  157:13  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  163:13  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  237:8   error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  244:8   error  Function 'LessonMasteryRow' has too many lines (70). Maximum allowed is 60                         max-lines-per-function
+  253:28  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/leaderboard/useKangurMobileLeaderboard.ts
+  41:43  error  Arrow function has too many lines (87). Maximum allowed is 60  max-lines-per-function
+  43:37  error  Arrow function has a complexity of 11. Maximum allowed is 8    complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/leaderboard/useKangurMobileLeaderboardDuels.ts
+  33:11  error  Arrow function has a complexity of 9. Maximum allowed is 8                                         complexity
+  55:8   error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+  76:3   error  Arrow function has too many lines (63). Maximum allowed is 60                                      max-lines-per-function
+  76:45  error  Arrow function has a complexity of 9. Maximum allowed is 8                                         complexity
+  95:12  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/KangurLessonsScreen.tsx
+  249:25  error  Parsing error: ',' expected
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/LessonsCatalogPanel.tsx
+  10:26  error  'renderLessonPracticeLink' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  14:8   error  Function 'LessonsCatalogPanel' has too many lines (71). Maximum allowed is 60               max-lines-per-function
+  76:18  error  Unsafe call of a type that could not be resolved                                            @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/LessonsMasterySection.tsx
+  6:4  error  Parsing error: Declaration or statement expected
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsAssignmentsSection.tsx
+   9:4   error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  10:9   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  15:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  18:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  21:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  24:33  error  Unsafe member access .assignmentItems on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  26:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  30:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  30:41  error  Unsafe member access .assignmentItems on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  30:68  error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  31:52  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  31:57  error  Unsafe member access .assignment on an `any` value                                          @typescript-eslint/no-unsafe-member-access
+  31:78  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsBadgesSection.tsx
+  10:4   error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  11:9   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  16:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  19:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  22:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  27:28  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  27:28  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  28:60  error  Unsafe member access .unlockedBadges on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  28:91  error  Unsafe member access .totalBadges on an `any` value                                         @typescript-eslint/no-unsafe-member-access
+  29:54  error  Unsafe member access .unlockedBadges on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  29:85  error  Unsafe member access .totalBadges on an `any` value                                         @typescript-eslint/no-unsafe-member-access
+  30:57  error  Unsafe member access .unlockedBadges on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  30:88  error  Unsafe member access .totalBadges on an `any` value                                         @typescript-eslint/no-unsafe-member-access
+  35:28  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  35:28  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  36:51  error  Unsafe member access .remainingBadges on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  37:55  error  Unsafe member access .remainingBadges on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  38:57  error  Unsafe member access .remainingBadges on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  44:27  error  Unsafe member access .recentBadges on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  46:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  51:26  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  54:26  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  54:39  error  Unsafe member access .recentBadges on an `any` value                                        @typescript-eslint/no-unsafe-member-access
+  54:63  error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  55:51  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  55:56  error  Unsafe member access .id on an `any` value                                                  @typescript-eslint/no-unsafe-member-access
+  55:66  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  62:23  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  63:24  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  63:24  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsCatalogSection.tsx
+  57:30  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsCheckpointsSection.tsx
+   9:4   error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  10:9   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  15:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  18:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  21:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  24:32  error  Unsafe member access .recentCheckpoints on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  26:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  30:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  30:40  error  Unsafe member access .recentCheckpoints on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  30:69  error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  31:51  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  31:56  error  Unsafe member access .componentId on an `any` value                                         @typescript-eslint/no-unsafe-member-access
+  31:75  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  35:32  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  35:32  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsDuelsSection.tsx
+  219:27  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  219:27  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsMasterySection.tsx
+   5:8    error  Function 'LessonsMasterySection' has too many lines (78). Maximum allowed is 60             max-lines-per-function
+   5:8    error  Function 'LessonsMasterySection' has a complexity of 10. Maximum allowed is 8               complexity
+  10:4    error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  11:9    error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  12:11   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  12:41   error  Unsafe member access .weakest on an `any` value                                             @typescript-eslint/no-unsafe-member-access
+  13:11   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  13:43   error  Unsafe member access .strongest on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  18:18   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  21:18   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  24:18   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  29:28   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  29:28   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  29:65   error  Unsafe member access .trackedLessons on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  29:112  error  Unsafe member access .trackedLessons on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  29:160  error  Unsafe member access .trackedLessons on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  33:28   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  33:28   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  33:67   error  Unsafe member access .masteredLessons on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  33:116  error  Unsafe member access .masteredLessons on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  33:166  error  Unsafe member access .masteredLessons on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  37:28   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  37:28   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  37:72   error  Unsafe member access .lessonsNeedingPractice on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  37:132  error  Unsafe member access .lessonsNeedingPractice on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  37:191  error  Unsafe member access .lessonsNeedingPractice on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  42:28   error  Unsafe member access .trackedLessons on an `any` value                                      @typescript-eslint/no-unsafe-member-access
+  44:22   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  48:22   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  53:26   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  55:39   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  55:53   error  Unsafe member access .lessonHref on an `any` value                                          @typescript-eslint/no-unsafe-member-access
+  56:40   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  56:40   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  56:75   error  Unsafe member access .title on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  56:112  error  Unsafe member access .title on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  56:152  error  Unsafe member access .title on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  61:26   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  63:39   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  63:55   error  Unsafe member access .lessonHref on an `any` value                                          @typescript-eslint/no-unsafe-member-access
+  64:40   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  64:40   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  64:85   error  Unsafe member access .title on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  64:136  error  Unsafe member access .title on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  64:180  error  Unsafe member access .title on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  71:22   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  71:36   error  Unsafe member access .weakest on an `any` value                                             @typescript-eslint/no-unsafe-member-access
+  73:38   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  73:52   error  Unsafe member access .weakest on an `any` value                                             @typescript-eslint/no-unsafe-member-access
+  74:36   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  74:36   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  77:22   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  77:36   error  Unsafe member access .strongest on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  79:38   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  79:52   error  Unsafe member access .strongest on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  80:36   error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  80:36   error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsRecentResultsSection.tsx
+  11:4   error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  12:9   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  17:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  20:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  23:18  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  27:23  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  28:24  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  28:24  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  32:14  error  Do not nest ternary expressions                                                             no-nested-ternary
+  32:15  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  32:35  error  Unsafe member access .isLoading on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  32:48  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  32:68  error  Unsafe member access .isRestoringAuth on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  34:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  36:17  error  Do not nest ternary expressions                                                             no-nested-ternary
+  36:18  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  36:38  error  Unsafe member access .isEnabled on an `any` value                                           @typescript-eslint/no-unsafe-member-access
+  38:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  40:17  error  Do not nest ternary expressions                                                             no-nested-ternary
+  40:17  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  40:37  error  Unsafe member access .error on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  42:42  error  Unsafe member access .error on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  44:37  error  Unsafe member access .recentResultItems on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  46:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  50:22  error  Unsafe call of an `any` typed value                                                         @typescript-eslint/no-unsafe-call
+  50:42  error  Unsafe member access .recentResultItems on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  50:71  error  Unexpected any. Specify a different type                                                    @typescript-eslint/no-explicit-any
+  51:53  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+  51:58  error  Unsafe member access .result on an `any` value                                              @typescript-eslint/no-unsafe-member-access
+  51:75  error  Unsafe assignment of an `any` value                                                         @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/lesson-checkpoint-service.ts
+  19:38  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-explicit-any
+  24:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-assignment
+  27:7   error  Unsafe argument of type error typed assigned to a parameter of type `{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }`  @typescript-eslint/no-unsafe-argument
+  31:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  32:25  error  Unsafe member access .lessonsCompleted on a type that cannot be resolved                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  33:25  error  Unsafe member access .lessonsCompleted on a type that cannot be resolved                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  36:42  error  Unsafe argument of type error typed assigned to a parameter of type `{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }`  @typescript-eslint/no-unsafe-argument
+  37:19  error  Unsafe member access .badges on a type that cannot be resolved                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  37:48  error  Unsafe spread of an error typed value in an array                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
+  37:67  error  Unsafe member access .badges on a type that cannot be resolved                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/lesson-row-primitives.tsx
+  326:1  error  File has too many lines (394). Maximum allowed is 300  max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/lessonHref.ts
+  11:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  27:10  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useKangurMobileLessonCheckpoints.ts
+   45:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  129:25  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useKangurMobileLessons.ts
+  52:31  error  Unsafe member access .lessonMastery on a type that cannot be resolved                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  70:57  error  Unsafe argument of type error typed assigned to a parameter of type `Pick<{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }, "lessonMastery">`  @typescript-eslint/no-unsafe-argument
+  71:19  error  Unexpected value in conditional. A boolean expression is required                                                                                                                                                                                                                                                                                                       @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useKangurMobileLessonsDuels.ts
+  7:47  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/parent/components/ParentHeroCard.tsx
+  23:8   error  Function 'ParentHeroCard' has too many lines (90). Maximum allowed is 60                           max-lines-per-function
+  23:8   error  Missing return type on function                                                                    @typescript-eslint/explicit-function-return-type
+  64:15  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  82:10  error  Do not nest ternary expressions                                                                    no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/parent/components/ParentLearnerSection.tsx
+    8:13  error  Unexpected any. Specify a different type                                                           @typescript-eslint/no-explicit-any
+   15:8   error  Function 'ParentLearnerSection' has too many lines (118). Maximum allowed is 60                    max-lines-per-function
+   15:8   error  Missing return type on function                                                                    @typescript-eslint/explicit-function-return-type
+   57:25  error  Arrow function has too many lines (67). Maximum allowed is 60                                      max-lines-per-function
+   57:35  error  Arrow function has a complexity of 10. Maximum allowed is 8                                        complexity
+   58:38  error  Unsafe member access .id on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   59:39  error  Unsafe member access .id on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   65:22  error  Unsafe assignment of an `any` value                                                                @typescript-eslint/no-unsafe-assignment
+   65:30  error  Unsafe member access .id on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   67:33  error  Unsafe argument of type `any` assigned to a parameter of type `string`                             @typescript-eslint/no-unsafe-argument
+   67:41  error  Unsafe member access .id on an `any` value                                                         @typescript-eslint/no-unsafe-member-access
+   80:28  error  Unsafe member access .displayName on an `any` value                                                @typescript-eslint/no-unsafe-member-access
+   85:31  error  Unsafe member access .status on an `any` value                                                     @typescript-eslint/no-unsafe-member-access
+  101:23  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  128:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/parent/components/ParentTabsSection.tsx
+   3:10  error  'BASE_TONE' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   6:23  error  'Pill' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  13:23  error  Unexpected any. Specify a different type                                     @typescript-eslint/no-explicit-any
+  17:8   error  Function 'ParentTabsSection' has too many lines (81). Maximum allowed is 60  max-lines-per-function
+  17:8   error  Missing return type on function                                              @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/parent/useKangurMobileParentDashboard.ts
+   82:7   error  Unnecessary conditional, comparison is always true, since `"practice" === "practice"` is true      @typescript-eslint/no-unnecessary-condition
+  127:18  error  Unnecessary conditional, comparison is always true, since `"practice" === "practice"` is true      @typescript-eslint/no-unnecessary-condition
+  165:3   error  Arrow function has too many lines (212). Maximum allowed is 60                                     max-lines-per-function
+  165:44  error  Arrow function has a complexity of 28. Maximum allowed is 8                                        complexity
+  181:48  error  Unnecessary optional chain on a non-nullish value                                                  @typescript-eslint/no-unnecessary-condition
+  227:35  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  277:52  error  Unnecessary optional chain on a non-nullish value                                                  @typescript-eslint/no-unnecessary-condition
+  332:1   error  File has too many lines (357). Maximum allowed is 300                                              max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/KangurDailyPlanScreen.tsx
+   40:8   error  Function 'KangurDailyPlanScreen' has too many lines (929). Maximum allowed is 60                   max-lines-per-function
+   40:8   error  Function 'KangurDailyPlanScreen' has a complexity of 24. Maximum allowed is 8                      complexity
+  273:18  error  Arrow function has a complexity of 9. Maximum allowed is 8                                         complexity
+  312:1   error  File has too many lines (966). Maximum allowed is 300                                              max-lines
+  504:18  error  Arrow function has a complexity of 10. Maximum allowed is 8                                        complexity
+  612:47  error  Arrow function has too many lines (61). Maximum allowed is 60                                      max-lines-per-function
+  829:18  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  954:14  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  962:17  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  970:17  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  970:17  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/components/FocusCard.tsx
+  15:8  error  Function 'FocusCard' has too many lines (88). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/components/LessonCheckpointRow.tsx
+  15:8  error  Function 'LessonCheckpointRow' has too many lines (69). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/components/LessonMasteryRow.tsx
+  38:8  error  Function 'LessonMasteryRow' has too many lines (73). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/components/RecentResultRow.tsx
+  18:8   error  Function 'RecentResultRow' has too many lines (90). Maximum allowed is 60  max-lines-per-function
+  42:22  error  Missing return type on function                                            @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/useKangurMobileDailyPlan.ts
+  55:17  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/plan/useKangurMobileDailyPlanDuels.ts
+  7:49  error  Missing return type on function  @typescript-eslint/explicit-function-return-type
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/practice/PracticeCompletionCard.tsx
+   28:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   31:81   error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocale`              @typescript-eslint/no-unsafe-argument
+   34:36   error  Unsafe argument of type error typed assigned to a parameter of type `KangurPracticeCompletionResult`  @typescript-eslint/no-unsafe-argument
+   34:54   error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocale`              @typescript-eslint/no-unsafe-argument
+   53:35   error  Unsafe member access .message on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
+   58:39   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   58:59   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   58:92   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   71:8    error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   71:25   error  Unsafe member access .newBadges on a type that cannot be resolved                                     @typescript-eslint/no-unsafe-member-access
+   74:14   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   74:137  error  Unsafe argument of type error typed assigned to a parameter of type `string`                          @typescript-eslint/no-unsafe-argument
+   91:76   error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocale`              @typescript-eslint/no-unsafe-argument
+   91:100  error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   92:25   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   92:117  error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocale`              @typescript-eslint/no-unsafe-argument
+   94:25   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   94:25   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   94:108  error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocale`              @typescript-eslint/no-unsafe-argument
+   95:25   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+   95:103  error  Unsafe argument of type error typed assigned to a parameter of type `KangurMobileLocale`              @typescript-eslint/no-unsafe-argument
+  100:8    error  Function 'PracticeCompletionCard' has too many lines (68). Maximum allowed is 60                      max-lines-per-function
+  104:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  104:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  105:25   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  105:31   error  Unsafe member access .correctAnswers on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  106:26   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  106:32   error  Unsafe member access .questionsLength on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  107:21   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  107:27   error  Unsafe member access .completion on a type that cannot be resolved                                    @typescript-eslint/no-unsafe-member-access
+  108:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  108:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  111:25   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  111:31   error  Unsafe member access .scoreSyncState on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  112:30   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  112:36   error  Unsafe member access .scoreSyncAppearance on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  113:30   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  113:36   error  Unsafe member access .shouldShowSyncProof on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  114:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  114:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  115:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  115:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  116:28   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  116:34   error  Unsafe member access .practiceSyncProof on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  119:21   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  119:27   error  Unsafe member access .completion on a type that cannot be resolved                                    @typescript-eslint/no-unsafe-member-access
+  120:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  120:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  121:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  121:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  124:24   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  124:30   error  Unsafe member access .practiceDuels on a type that cannot be resolved                                 @typescript-eslint/no-unsafe-member-access
+  125:26   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  125:32   error  Unsafe member access .openDuelSession on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  126:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  126:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  127:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  127:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  130:24   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  130:30   error  Unsafe member access .lessonMastery on a type that cannot be resolved                                 @typescript-eslint/no-unsafe-member-access
+  131:29   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  131:35   error  Unsafe member access .lessonFocusSummary on a type that cannot be resolved                            @typescript-eslint/no-unsafe-member-access
+  132:26   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  132:32   error  Unsafe member access .strongestLesson on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  133:24   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  133:30   error  Unsafe member access .weakestLesson on a type that cannot be resolved                                 @typescript-eslint/no-unsafe-member-access
+  134:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  134:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  135:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  135:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  138:25   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  138:31   error  Unsafe member access .practiceBadges on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  139:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  139:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  140:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  140:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  143:32   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  143:38   error  Unsafe member access .practiceRecentResults on a type that cannot be resolved                         @typescript-eslint/no-unsafe-member-access
+  144:29   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  144:35   error  Unsafe member access .resultsHistoryHref on a type that cannot be resolved                            @typescript-eslint/no-unsafe-member-access
+  145:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  145:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  146:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  146:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  149:30   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  149:36   error  Unsafe member access .practiceAssignments on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  150:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  150:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  151:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  151:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  154:28   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  154:34   error  Unsafe member access .lessonCheckpoints on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  155:15   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  155:21   error  Unsafe member access .copy on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
+  156:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  156:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  159:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  159:23   error  Unsafe member access .locale on a type that cannot be resolved                                        @typescript-eslint/no-unsafe-member-access
+  160:18   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  160:24   error  Unsafe member access .restart on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
+  161:34   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  161:40   error  Unsafe member access .practiceModeHistoryHref on a type that cannot be resolved                       @typescript-eslint/no-unsafe-member-access
+  162:33   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  162:39   error  Unsafe member access .completionLessonAction on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  163:22   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  163:28   error  Unsafe member access .profileHref on a type that cannot be resolved                                   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/practice/PracticePreparationCard.tsx
+  60:54  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  60:54  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/practice/practiceSyncProofLogic.ts
+  2:15  error  'KangurProgressState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/practice/useKangurPracticeActions.ts
+  95:46  error  Unsafe argument of type error typed assigned to a parameter of type `PracticePlayerSession`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/practice/useKangurPracticeSyncProof.ts
+  107:9   error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  107:34  error  Unsafe return of a value of type error     @typescript-eslint/no-unsafe-return
+  141:5   error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileAssignmentsCard.tsx
+  52:33  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileBadgesCard.tsx
+  14:8  error  Function 'ProfileBadgesCard' has too many lines (120). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileHeroCard.tsx
+   20:8   error  Function 'ProfileHeroCard' has too many lines (98). Maximum allowed is 60                          max-lines-per-function
+   59:8   error  Do not nest ternary expressions                                                                    no-nested-ternary
+   67:11  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  101:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileLessonMasteryCard.tsx
+  35:42  error  Unsafe member access .length on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  45:12  error  Unsafe call of a type that could not be resolved                @typescript-eslint/no-unsafe-call
+  45:46  error  Unsafe member access .map on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  47:28  error  Unsafe member access .operation on an `any` value               @typescript-eslint/no-unsafe-member-access
+  47:46  error  Unsafe member access .difficulty on an `any` value              @typescript-eslint/no-unsafe-member-access
+  48:21  error  Unsafe assignment of an `any` value                             @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileMetricsSection.tsx
+  13:8   error  Function 'ProfileMetricsSection' has too many lines (70). Maximum allowed is 60  max-lines-per-function
+  34:28  error  Unsafe member access .averageAccuracy on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  36:44  error  Unsafe member access .bestAccuracy on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  37:40  error  Unsafe member access .bestAccuracy on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  38:44  error  Unsafe member access .bestAccuracy on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  47:28  error  Unsafe member access .currentStreakDays on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
+  49:36  error  Unsafe member access .longestStreakDays on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
+  50:36  error  Unsafe member access .longestStreakDays on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
+  51:39  error  Unsafe member access .longestStreakDays on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
+  60:28  error  Unsafe member access .todayGames on a type that cannot be resolved               @typescript-eslint/no-unsafe-member-access
+  60:51  error  Unsafe member access .dailyGoalGames on a type that cannot be resolved           @typescript-eslint/no-unsafe-member-access
+  62:38  error  Unsafe member access .dailyGoalPercent on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  63:39  error  Unsafe member access .dailyGoalPercent on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  64:40  error  Unsafe member access .dailyGoalPercent on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileRecentResultsCard.tsx
+  52:30  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileRecommendationsCard.tsx
+  22:8   error  Function 'ProfileRecommendationsCard' has too many lines (84). Maximum allowed is 60                                            max-lines-per-function
+  49:17  error  Unsafe member access .recommendations on a type that cannot be resolved                                                         @typescript-eslint/no-unsafe-member-access
+  59:12  error  Unsafe call of a type that could not be resolved                                                                                @typescript-eslint/no-unsafe-call
+  59:21  error  Unsafe member access .recommendations on a type that cannot be resolved                                                         @typescript-eslint/no-unsafe-member-access
+  60:61  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                          @typescript-eslint/no-unsafe-argument
+  60:76  error  Unsafe member access .action on an `any` value                                                                                  @typescript-eslint/no-unsafe-member-access
+  61:46  error  Unsafe argument of type `any` assigned to a parameter of type `{ page: string; params?: Record<string, string> | undefined; }`  @typescript-eslint/no-unsafe-argument
+  61:61  error  Unsafe member access .action on an `any` value                                                                                  @typescript-eslint/no-unsafe-member-access
+  64:32  error  Unsafe assignment of an `any` value                                                                                             @typescript-eslint/no-unsafe-assignment
+  64:47  error  Unsafe member access .id on an `any` value                                                                                      @typescript-eslint/no-unsafe-member-access
+  66:37  error  Unsafe argument of type `any` assigned to a parameter of type `KangurAssignmentPriority`                                        @typescript-eslint/no-unsafe-argument
+  66:52  error  Unsafe member access .priority on an `any` value                                                                                @typescript-eslint/no-unsafe-member-access
+  69:35  error  Unsafe member access .title on an `any` value                                                                                   @typescript-eslint/no-unsafe-member-access
+  72:35  error  Unsafe member access .description on an `any` value                                                                             @typescript-eslint/no-unsafe-member-access
+  75:33  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                               @typescript-eslint/strict-boolean-expressions
+  79:23  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                          @typescript-eslint/no-unsafe-argument
+  79:38  error  Unsafe member access .action on an `any` value                                                                                  @typescript-eslint/no-unsafe-member-access
+  87:23  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                          @typescript-eslint/no-unsafe-argument
+  87:38  error  Unsafe member access .action on an `any` value                                                                                  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileResultsHubCard.tsx
+   25:8   error  Function 'ProfileResultsHubCard' has too many lines (148). Maximum allowed is 60  max-lines-per-function
+   25:8   error  Function 'ProfileResultsHubCard' has a complexity of 16. Maximum allowed is 8     complexity
+   63:12  error  Do not nest ternary expressions                                                   no-nested-ternary
+   69:15  error  Do not nest ternary expressions                                                   no-nested-ternary
+  110:21  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+  110:21  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+  129:21  error  Unsafe assignment of an error typed value                                         @typescript-eslint/no-unsafe-assignment
+  129:21  error  Unsafe call of a type that could not be resolved                                  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/components/ProfileXpLevelCard.tsx
+  14:8   error  Function 'ProfileXpLevelCard' has too many lines (61). Maximum allowed is 60                max-lines-per-function
+  31:11  error  Unsafe argument of type error typed assigned to a parameter of type `number`                @typescript-eslint/no-unsafe-argument
+  31:20  error  Unsafe member access .level on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  32:11  error  Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  32:20  error  Unsafe member access .level on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  38:33  error  Unsafe member access .level on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  38:59  error  Unsafe member access .totalXp on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  39:33  error  Unsafe member access .level on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  39:59  error  Unsafe member access .totalXp on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  40:34  error  Unsafe member access .level on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  40:60  error  Unsafe member access .totalXp on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  53:32  error  Unsafe member access .levelProgressPercent on a type that cannot be resolved                @typescript-eslint/no-unsafe-member-access
+  60:10  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  60:19  error  Unsafe member access .nextLevel on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  62:41  error  Unsafe member access .nextLevel on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  63:40  error  Unsafe member access .nextLevel on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+  64:42  error  Unsafe member access .nextLevel on a type that cannot be resolved                           @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/mobileScoreScope.ts
+  12:44  error  Unnecessary optional chain on a non-nullish value                                                  @typescript-eslint/no-unnecessary-condition
+  13:7   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  23:7   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/profile-duels-card.tsx
+   44:30   error  Arrow function has a complexity of 22. Maximum allowed is 8                                           complexity
+   48:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   67:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   74:30   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   77:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   78:24   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   78:64   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   78:108  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   79:23   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   79:58   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   79:93   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   80:26   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   80:62   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   80:99   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   84:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+   85:26   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   85:75   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   85:151  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   86:26   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   86:78   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   86:150  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   87:24   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   87:76   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+   87:156  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+  106:4    error  Missing return type on function                                                                       @typescript-eslint/explicit-function-return-type
+  109:14   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+  112:14   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+  113:60   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+  114:56   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+  115:64   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+  121:17   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  122:23   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+  127:23   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+  134:67   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined    @typescript-eslint/no-unnecessary-condition
+  135:21   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  157:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+  169:10   error  Unsafe call of a type that could not be resolved                                                      @typescript-eslint/no-unsafe-call
+  181:19   error  Unsafe assignment of an error typed value                                                             @typescript-eslint/no-unsafe-assignment
+  189:8    error  Function 'ProfileDuelsCard' has too many lines (110). Maximum allowed is 60                           max-lines-per-function
+  233:13   error  Unexpected nullable number value in conditional. Please handle the nullish/zero/NaN cases explicitly  @typescript-eslint/strict-boolean-expressions
+  245:8    error  Do not nest ternary expressions                                                                       no-nested-ternary
+  253:11   error  Do not nest ternary expressions                                                                       no-nested-ternary
+  261:11   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  273:12   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/profile-primitives.tsx
+   36:8  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  226:8  error  Function 'LessonCheckpointRow' has too many lines (66). Maximum allowed is 60                      max-lines-per-function
+  235:7  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  298:8  error  Function 'SessionRow' has too many lines (105). Maximum allowed is 60                              max-lines-per-function
+  308:7  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+  325:1  error  File has too many lines (427). Maximum allowed is 300                                              max-lines
+  430:7  error  Unexpected value in conditional. A boolean expression is required                                  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/profile/useKangurMobileLearnerProfile.ts
+  40:7   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  45:10  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  50:16  error  Arrow function has a complexity of 12. Maximum allowed is 8                                                  complexity
+  53:12  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly            @typescript-eslint/strict-boolean-expressions
+  81:7   error  Unnecessary conditional, comparison is always true, since `"ParentDashboard" === "ParentDashboard"` is true  @typescript-eslint/no-unnecessary-condition
+  89:3   error  Arrow function has too many lines (72). Maximum allowed is 60                                                max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/providers/KangurRuntimeContext.runtime.ts
+   39:42  error  Unnecessary conditional, the types have no overlap                                                  @typescript-eslint/no-unnecessary-condition
+   49:10  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  103:19  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/KangurResultsScreen.tsx
+  23:8   error  Function 'KangurResultsScreen' has too many lines (80). Maximum allowed is 60  max-lines-per-function
+  34:29  error  Expected '!==' and instead saw '!='                                            eqeqeq
+  46:30  error  Do not nest ternary expressions                                                no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/LessonCheckpointRow.tsx
+  12:8   error  Function 'LessonCheckpointRow' has too many lines (69). Maximum allowed is 60               max-lines-per-function
+  19:26  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  19:31  error  Unsafe member access .practiceHref on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  21:13  error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  21:18  error  Unsafe member access .practiceHref on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  26:19  error  Unsafe member access .title on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  42:19  error  Unsafe member access .emoji on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  42:32  error  Unsafe member access .title on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+  46:44  error  Unsafe member access .lastScorePercent on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  46:85  error  Unsafe member access .masteryPercent on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  47:38  error  Unsafe member access .lastScorePercent on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  47:74  error  Unsafe member access .masteryPercent on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  48:41  error  Unsafe member access .lastScorePercent on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  48:80  error  Unsafe member access .masteryPercent on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  53:26  error  Unsafe member access .bestScorePercent on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  64:70  error  Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  64:75  error  Unsafe member access .lastCompletedAt on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  65:61  error  Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  65:66  error  Unsafe member access .lastCompletedAt on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  66:64  error  Unsafe argument of type error typed assigned to a parameter of type `string`                @typescript-eslint/no-unsafe-argument
+  66:69  error  Unsafe member access .lastCompletedAt on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  72:17  error  Unsafe assignment of an error typed value                                                   @typescript-eslint/no-unsafe-assignment
+  72:22  error  Unsafe member access .lessonHref on a type that cannot be resolved                          @typescript-eslint/no-unsafe-member-access
+  77:23  error  Unsafe member access .title on a type that cannot be resolved                               @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/LessonMasteryRow.tsx
+  14:8   error  Function 'LessonMasteryRow' has too many lines (73). Maximum allowed is 60  max-lines-per-function
+  24:41  error  Unnecessary conditional, the types have no overlap                          @typescript-eslint/no-unnecessary-condition
+  98:24  error  Unnecessary conditional, the types have no overlap                          @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/OperationInsightCard.tsx
+  18:8   error  Function 'OperationInsightCard' has too many lines (74). Maximum allowed is 60  max-lines-per-function
+  72:38  error  Unnecessary conditional, the types have no overlap                              @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsAssignmentRow.tsx
+  13:8   error  Function 'ResultsAssignmentRow' has too many lines (82). Maximum allowed is 60  max-lines-per-function
+  13:8   error  Function 'ResultsAssignmentRow' has a complexity of 11. Maximum allowed is 8    complexity
+  20:5   error  Do not nest ternary expressions                                                 no-nested-ternary
+  40:29  error  Unnecessary conditional, the types have no overlap                              @typescript-eslint/no-unnecessary-condition
+  60:13  error  Do not nest ternary expressions                                                 no-nested-ternary
+  66:13  error  Do not nest ternary expressions                                                 no-nested-ternary
+  72:13  error  Do not nest ternary expressions                                                 no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsBadgesSection.tsx
+  16:8  error  Function 'ResultsBadgesSection' has too many lines (72). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsCheckpointsSection.tsx
+   8:16  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:19  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsHeader.tsx
+  34:15  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  34:15  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsLessonMasterySection.tsx
+  17:8   error  Function 'ResultsLessonMasterySection' has too many lines (95). Maximum allowed is 60              max-lines-per-function
+  17:8   error  Function 'ResultsLessonMasterySection' has a complexity of 9. Maximum allowed is 8                 complexity
+  84:12  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsListSection.tsx
+  36:9   error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  36:22  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  42:62  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  43:43  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  55:27  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  55:27  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  57:29  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  77:17  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  77:17  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  80:18  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  80:18  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/components/ResultsOverview.tsx
+   1:16  error  'Text' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   2:10  error  'Card' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+  18:8   error  Function 'ResultsOverview' has too many lines (78). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/persistedKangurMobileRecentResults.ts
+  10:34  error  Arrow function has a complexity of 9. Maximum allowed is 8  complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/results-duels-card.tsx
+   45:8   error  Function 'ResultsDuelsCard' has too many lines (219). Maximum allowed is 60                           max-lines-per-function
+   95:13  error  Unexpected nullable number value in conditional. Please handle the nullish/zero/NaN cases explicitly  @typescript-eslint/strict-boolean-expressions
+  113:8   error  Do not nest ternary expressions                                                                       no-nested-ternary
+  121:11  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  180:12  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+  227:29  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly     @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/scores/useKangurMobileScoreHistory.ts
+  28:38  error  Arrow function has a complexity of 15. Maximum allowed is 8  complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/shared/KangurAssessmentUi.tsx
+   42:8  error  Function 'ChoiceCardButton' has too many lines (72). Maximum allowed is 60                         max-lines-per-function
+  107:8  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/shared/KangurMobileUiButtons.tsx
+  130:33  error  Always prefer const x: T = { ... }  @typescript-eslint/consistent-type-assertions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/shared/KangurMobileUiDisplay.tsx
+  185:8  error  Function 'KangurMobileFilterChip' has a complexity of 11. Maximum allowed is 8  complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/shared/resolveKangurMobileActionHref.ts
+  70:16  error  Arrow function has a complexity of 19. Maximum allowed is 8                              complexity
+  98:7   error  Unnecessary conditional, comparison is always true, since `"Duels" === "Duels"` is true  @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/storage/createMobileDevelopmentKangurStorage.ts
+   72:3   error  Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+  119:10  error  Unexpected string value in conditional. An explicit empty string check is required                              @typescript-eslint/strict-boolean-expressions
+  125:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                      @typescript-eslint/strict-boolean-expressions
+  135:11  error  Assignment to property of function parameter 'snapshot'                                                         no-param-reassign
+  146:45  error  Arrow function has too many lines (82). Maximum allowed is 60                                                   max-lines-per-function
+  238:42  error  Arrow function has too many lines (62). Maximum allowed is 60                                                   max-lines-per-function
+  321:5   error  Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+  328:3   error  Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read  @typescript-eslint/prefer-nullish-coalescing
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/tests/KangurTestsScreen.tsx
+  115:1  error  Function 'KangurMobileTestPlayer' has too many lines (85). Maximum allowed is 60  max-lines-per-function
+  115:1  error  Function 'KangurMobileTestPlayer' has a complexity of 12. Maximum allowed is 8    complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/tests/tests-primitives.tsx
+  132:16  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  133:7   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  144:20  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/tests/testsHref.ts
+  5:8  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/tests/useKangurMobileTests.ts
+  112:37  error  Arrow function has too many lines (82). Maximum allowed is 60  max-lines-per-function
+  131:13  error  Unsafe assignment of an `any` value                            @typescript-eslint/no-unsafe-assignment
+  140:24  error  Unsafe member access ['key'] on an `any` value                 @typescript-eslint/no-unsafe-member-access
+  141:24  error  Unsafe member access ['value'] on an `any` value               @typescript-eslint/no-unsafe-member-access
+
+✖ 875 problems (875 errors, 0 warnings)
+

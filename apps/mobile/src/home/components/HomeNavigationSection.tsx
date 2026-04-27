@@ -20,7 +20,7 @@ import {
   RESULTS_ROUTE,
   TESTS_ROUTE,
 } from '../home-screen-constants';
-import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 type HomeNavigationSectionProps = {
   areDeferredHomeNavigationSecondaryReady: boolean;

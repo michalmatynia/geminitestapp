@@ -2,7 +2,7 @@ import type { KangurDuelSession, KangurDuelPlayer } from '@kangur/contracts/kang
 import React from 'react';
 import { View } from 'react-native';
 import { KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
-import { formatStatusLabel, getStatusTone, formatSeriesTitle } from "../utils/duels-ui";
+import { formatStatusLabel, getStatusTone, formatSeriesTitle } from '../utils/duels-ui';
 import { ProgressPill } from './ProgressPill';
 
 interface DuelContext {

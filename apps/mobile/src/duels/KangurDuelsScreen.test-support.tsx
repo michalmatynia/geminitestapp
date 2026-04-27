@@ -36,59 +36,38 @@ export const {
 } = duelsScreenTestMocks;
 
 vi.mock('react-native', () => {
-  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
-    return ({
-      accessibilityHint: _accessibilityHint,
+  const getMappedProps = (props: Record<string, unknown>): Record<string, unknown> => {
+    const {
       accessibilityLabel,
       accessibilityLiveRegion,
       accessibilityRole,
-      children,
-      contentContainerStyle: _contentContainerStyle,
-      editable: _editable,
-      keyboardShouldPersistTaps: _keyboardShouldPersistTaps,
-      multiline: _multiline,
-      onChangeText,
       onPress,
+      onChangeText,
       secureTextEntry,
       testID,
-      textContentType: _textContentType,
-      ...props
-    }: React.PropsWithChildren<
-      Record<string, unknown> & {
-        accessibilityHint?: string;
-        accessibilityLabel?: string;
-        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
-        accessibilityRole?: string;
-        contentContainerStyle?: unknown;
-        editable?: boolean;
-        keyboardShouldPersistTaps?: string;
-        multiline?: boolean;
-        onChangeText?: (value: string) => void;
-        onPress?: () => void;
-        secureTextEntry?: boolean;
-        testID?: string;
-        textContentType?: string;
-      }
-    >) =>
-      React.createElement(
-        tagName,
-        {
-          ...props,
-          ...(testID ? { 'data-testid': testID } : {}),
-          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
-          ...(accessibilityRole ? { role: accessibilityRole } : {}),
-          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
-          ...(onPress ? { onClick: onPress } : {}),
-          ...(onChangeText
-            ? {
-                onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-                  onChangeText(event.target.value),
-              }
-            : {}),
-          ...(secureTextEntry ? { type: 'password' } : {}),
-        },
-        children
-      );
+      ...rest
+    } = props;
+
+    return {
+      ...rest,
+      ...(testID !== null && testID !== undefined ? { 'data-testid': String(testID) } : {}),
+      ...(accessibilityLabel !== null && accessibilityLabel !== undefined ? { 'aria-label': String(accessibilityLabel) } : {}),
+      ...(accessibilityRole !== null && accessibilityRole !== undefined ? { role: String(accessibilityRole) } : {}),
+      ...(accessibilityLiveRegion !== null && accessibilityLiveRegion !== undefined ? { 'aria-live': String(accessibilityLiveRegion) } : {}),
+      ...(typeof onPress === 'function' ? { onClick: onPress } : {}),
+      ...(typeof onChangeText === 'function'
+        ? {
+            onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              onChangeText(event.target.value),
+          }
+        : {}),
+      ...(secureTextEntry === true ? { type: 'password' } : {}),
+    };
+  };
+
+  const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
+    return ({ children, ...props }: React.PropsWithChildren<Record<string, unknown>>) =>
+      React.createElement(tagName, getMappedProps(props), children);
   };
 
   return {
@@ -237,6 +216,13 @@ export const resetDuelsScreenMocks = (): void => {
   useRouterMock.mockReturnValue({
     replace: replaceMock,
   });
+  resetAuthMocks();
+  resetLobbyMocks();
+  resetSessionMocks();
+  resetLessonMocks();
+};
+
+const resetAuthMocks = (): void => {
   useKangurMobileAuthMock.mockReturnValue({
     isLoadingAuth: false,
     session: {
@@ -251,6 +237,9 @@ export const resetDuelsScreenMocks = (): void => {
     signIn: vi.fn(),
     supportsLearnerCredentials: true,
   });
+};
+
+const resetLobbyMocks = (): void => {
   useKangurMobileDuelLobbyChatMock.mockReturnValue({
     error: null,
     isAuthenticated: true,
@@ -263,6 +252,9 @@ export const resetDuelsScreenMocks = (): void => {
     sendMessage: vi.fn(),
   });
   useKangurMobileDuelsLobbyMock.mockReturnValue(createDefaultDuelsLobbyMock());
+};
+
+const resetSessionMocks = (): void => {
   useKangurMobileDuelSessionMock.mockReturnValue({
     actionError: null,
     currentQuestion: null,
@@ -280,6 +272,9 @@ export const resetDuelsScreenMocks = (): void => {
     spectatorCount: 0,
     submitAnswer: vi.fn(),
   });
+};
+
+const resetLessonMocks = (): void => {
   useKangurMobileLessonCheckpointsMock.mockReturnValue({
     recentCheckpoints: [],
   });

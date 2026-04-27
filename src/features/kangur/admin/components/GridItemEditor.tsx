@@ -156,7 +156,7 @@ export function GridItemEditor(props: {
               });
             }}
             className='h-9'
-           aria-label='Auto' title='Auto'/>
+           aria-label='Column Start' title='Column Start'/>
         </FormField>
 
         <FormField label='Row Start'>
@@ -173,7 +173,7 @@ export function GridItemEditor(props: {
               });
             }}
             className='h-9'
-           aria-label='Auto' title='Auto'/>
+           aria-label='Row Start' title='Row Start'/>
         </FormField>
       </div>
 

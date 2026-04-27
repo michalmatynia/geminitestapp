@@ -1,10 +1,9 @@
-import { View, Text } from 'react-native';
-import { Card, LinkButton } from '../../shared/KangurMobileUi';
-import { ResultsDuelsCard } from './results-duels-card';
+import type { Href } from 'expo-router';
+import { ResultsDuelsCard, type ResultsDuelsState } from '../results-duels-card';
 
 interface ResultsDuelsSectionProps {
-  duelResults: any; // Using any as the original type was implicit
-  duelsHref: any;
+  duelResults: ResultsDuelsState;
+  duelsHref: Href;
   openDuelSession: (sessionId: string) => void;
 }
 

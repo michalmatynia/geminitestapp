@@ -1,5 +1,4 @@
 import type {
-  KangurDuelChoice,
   KangurDuelPlayer,
   KangurDuelQuestion,
   KangurDuelSession,
@@ -10,13 +9,13 @@ export const resolveCurrentQuestionIndex = (
   isSpectating: boolean,
   player: KangurDuelPlayer | null,
 ): number | null => {
-  if (!duelSession) {
+  if (duelSession === null) {
     return null;
   }
 
   const currentQuestionIndex = isSpectating
-    ? duelSession.currentQuestionIndex ?? 0
-    : player?.currentQuestionIndex ?? 0;
+    ? duelSession.currentQuestionIndex
+    : (player?.currentQuestionIndex ?? 0);
 
   return currentQuestionIndex >= duelSession.questionCount
     ? null

@@ -107,7 +107,7 @@ const CatalogItem: React.FC<CatalogItemProps> = ({ item, locale, copy, onOpenCat
     >
       <Link href={href} asChild>
         <Pressable
-          accessibilityRole="button"
+          accessibilityRole='button'
           onPress={onOpenCatalogLesson}
           style={{ gap: 10 }}
         >
@@ -138,7 +138,7 @@ const CatalogItem: React.FC<CatalogItemProps> = ({ item, locale, copy, onOpenCat
           onPress={onOpenCatalogLesson}
           stretch
           textStyle={{ textAlign: 'left' }}
-          tone="primary"
+          tone='primary'
         />
         {renderLessonPracticeLink({
           href: item.practiceHref,

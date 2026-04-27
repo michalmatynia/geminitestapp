@@ -52,8 +52,8 @@ const InviteEntriesList = ({ lobby, renderJoinAction, locale, copy }: Pick<DuelL
 );
 
 const PublicEntryRow = ({ entry, renderJoinAction, renderSpectateAction, locale, copy }: { entry: PublicEntry; renderJoinAction: (sessionId: string) => React.JSX.Element; renderSpectateAction: (sessionId: string) => React.JSX.Element; locale: DuelLocale; copy: DuelCopy }): React.JSX.Element => {
-  const modeLabel = formatModeLabel(entry.mode, locale) as string;
-  const statusLabel = (formatStatusLabel(entry.status, locale) as string).toLowerCase();
+  const modeLabel = formatModeLabel(entry.mode, locale);
+  const statusLabel = (formatStatusLabel(entry.status, locale)).toLowerCase();
   const desc = copy({ de: `${modeLabel} von ${entry.host.displayName}. Status: ${statusLabel}.`, en: `${modeLabel} hosted by ${entry.host.displayName}. Status: ${statusLabel}.`, pl: `${modeLabel} gospodarza ${entry.host.displayName}. Status: ${statusLabel}.` });
   return (
     <LobbyEntryCard action={<View style={{ gap: 8 }}>{renderJoinAction(entry.sessionId)}{renderSpectateAction(entry.sessionId)}</View>} actionLabel={copy({ de: 'Du kannst als Spieler beitreten oder den Raum im Zuschauermodus öffnen.', en: 'You can join as a player or open the room in spectator mode.', pl: 'Możesz dołączyć jako gracz albo otworzyć pokój w trybie obserwatora.' })} description={desc} entry={entry} locale={locale} />

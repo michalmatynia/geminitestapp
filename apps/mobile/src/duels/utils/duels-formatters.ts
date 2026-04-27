@@ -242,15 +242,14 @@ export function formatSeriesSummary(
     );
   }
 
-  return `${formatSeriesTitle(series, locale)} • ${formatSeriesProgress(series, locale)} • ${localizeSimpleDuelText(
-    `beendet: ${series.completedGames}`,
-    `completed: ${series.completedGames}`,
-    `ukończone: ${series.completedGames}`,
+  const progress = formatSeriesProgress(series, locale);
+  return `${progress}\u00A0·\u00A0${localizeSimpleDuelText(
+    `abgeschlossene Spiele: ${series.completedGames}`,
+    `completed games: ${series.completedGames}`,
+    `ukończone gry: ${series.completedGames}`,
     locale,
   )}`;
-}
-
-export function formatLobbySeriesSummary(
+  }export function formatLobbySeriesSummary(
   series: KangurDuelSeries | null | undefined,
   locale: KangurMobileLocale,
 ): string | null {

@@ -7,8 +7,8 @@ import {
   SectionCard,
 } from '../homeScreenPrimitives';
 import { HomeLearnerCredentialsSignInSection } from './HomeLearnerCredentialsSignInSection';
-import { getKangurHomeAuthBoundaryViewModel } from '../homeAuthBoundary';
-import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
+import { type getKangurHomeAuthBoundaryViewModel } from '../homeAuthBoundary';
+import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 type HomeAccountSectionProps = {
   areDeferredHomeAccountSummaryReady: boolean;

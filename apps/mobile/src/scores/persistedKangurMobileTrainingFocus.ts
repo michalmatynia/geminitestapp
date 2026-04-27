@@ -1,93 +1,42 @@
+import { z } from 'zod';
 import type { KangurClientStorageAdapter } from '@kangur/platform';
 
 import type {
-  KangurMobileOperationPerformance,
   KangurMobileTrainingFocus,
 } from './mobileScoreSummary';
 
 const KANGUR_MOBILE_TRAINING_FOCUS_STORAGE_KEY =
   'kangur.mobile.scores.trainingFocus';
 
-const isPersistedOperationPerformance = (
-  value: unknown,
-): value is KangurMobileOperationPerformance => {
-  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
-    return false;
-  }
+const operationPerformanceSchema = z.object({
+  averageAccuracyPercent: z.number().min(0).max(100),
+  bestAccuracyPercent: z.number().min(0).max(100),
+  family: z.enum(['arithmetic', 'logic', 'time']),
+  operation: z.string().min(1),
+  sessions: z.number().int().min(1),
+});
 
-  const candidate = value as Record<string, unknown>;
-  const operation = candidate['operation'];
-  return (
-    typeof operation === 'string' &&
-    operation.trim().length > 0 &&
-    (candidate['family'] === 'arithmetic' ||
-      candidate['family'] === 'logic' ||
-      candidate['family'] === 'time') &&
-    typeof candidate['averageAccuracyPercent'] === 'number' &&
-    Number.isFinite(candidate['averageAccuracyPercent']) &&
-    candidate['averageAccuracyPercent'] >= 0 &&
-    candidate['averageAccuracyPercent'] <= 100 &&
-    typeof candidate['bestAccuracyPercent'] === 'number' &&
-    Number.isFinite(candidate['bestAccuracyPercent']) &&
-    candidate['bestAccuracyPercent'] >= 0 &&
-    candidate['bestAccuracyPercent'] <= 100 &&
-    typeof candidate['sessions'] === 'number' &&
-    Number.isInteger(candidate['sessions']) &&
-    candidate['sessions'] >= 1
-  );
-};
+const trainingFocusSchema = z.object({
+  strongestOperation: operationPerformanceSchema.nullable(),
+  weakestOperation: operationPerformanceSchema.nullable(),
+});
 
 const parsePersistedTrainingFocus = (
   value: unknown,
 ): KangurMobileTrainingFocus | null => {
-  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
+  const result = trainingFocusSchema.safeParse(value);
+  return result.success ? result.data : null;
+};
 
-  const candidate = value as Record<string, unknown>;
-  let strongestOperation: KangurMobileOperationPerformance | null = null;
-  const strongestCandidate = candidate['strongestOperation'];
-  if (strongestCandidate !== null && strongestCandidate !== undefined) {
-    if (isPersistedOperationPerformance(strongestCandidate)) {
-      strongestOperation = strongestCandidate;
-    }
+const validateAndAddFocus = (
+  store: Record<string, KangurMobileTrainingFocus>,
+  [identityKey, value]: [string, unknown],
+): Record<string, KangurMobileTrainingFocus> => {
+  const parsedFocus = parsePersistedTrainingFocus(value);
+  if (parsedFocus !== null) {
+    return { ...store, [identityKey]: parsedFocus };
   }
-
-  let weakestOperation: KangurMobileOperationPerformance | null = null;
-  const weakestCandidate = candidate['weakestOperation'];
-  if (weakestCandidate !== null && weakestCandidate !== undefined) {
-    if (isPersistedOperationPerformance(weakestCandidate)) {
-      weakestOperation = weakestCandidate;
-    }
-  }
-
-  if (
-    !('strongestOperation' in candidate) ||
-    !('weakestOperation' in candidate)
-  ) {
-    return null;
-  }
-
-  if (
-    candidate['strongestOperation'] !== null &&
-    candidate['strongestOperation'] !== undefined &&
-    !isPersistedOperationPerformance(candidate['strongestOperation'])
-  ) {
-    return null;
-  }
-
-  if (
-    candidate['weakestOperation'] !== null &&
-    candidate['weakestOperation'] !== undefined &&
-    !isPersistedOperationPerformance(candidate['weakestOperation'])
-  ) {
-    return null;
-  }
-
-  return {
-    strongestOperation,
-    weakestOperation,
-  };
+  return store;
 };
 
 const parsePersistedTrainingFocusStore = (
@@ -100,26 +49,12 @@ const parsePersistedTrainingFocusStore = (
 
   try {
     const parsedSnapshot = JSON.parse(normalizedRawSnapshot) as unknown;
-    if (
-      parsedSnapshot === null ||
-      parsedSnapshot === undefined ||
-      typeof parsedSnapshot !== 'object' ||
-      Array.isArray(parsedSnapshot)
-    ) {
+    if (typeof parsedSnapshot !== 'object' || parsedSnapshot === null || Array.isArray(parsedSnapshot)) {
       return {};
     }
 
     return Object.entries(parsedSnapshot).reduce<Record<string, KangurMobileTrainingFocus>>(
-      (acc, [identityKey, value]) => {
-        const parsedFocus = parsePersistedTrainingFocus(value);
-        if (parsedFocus !== null) {
-          return {
-            ...acc,
-            [identityKey]: parsedFocus,
-          };
-        }
-        return acc;
-      },
+      validateAndAddFocus,
       {},
     );
   } catch {

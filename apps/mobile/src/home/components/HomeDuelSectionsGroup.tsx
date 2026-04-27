@@ -10,7 +10,7 @@ import {
 } from '../HomeDuelSections';
 import { SectionCard } from '../homeScreenPrimitives';
 import { DeferredHomeActivitySectionsCard } from '../home-screen-deferred';
-import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 type HomeDuelSectionsGroupProps = {
   areDeferredHomePanelsReady: boolean;

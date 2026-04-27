@@ -19,6 +19,35 @@ type DuelLobbySearchSectionProps = {
   searchStatusTone: Tone;
 };
 
+function SearchResultRow({
+  entry,
+  copy,
+  createPrivateChallenge,
+}: {
+  entry: DuelLobbyState['searchResults'][number];
+  copy: DuelCopy;
+  isActionPending: boolean;
+  onOpenSession: (sessionId: string) => void;
+  createPrivateChallenge: DuelLobbyState['createPrivateChallenge'];
+}): React.JSX.Element {
+  return (
+    <View style={{
+      backgroundColor: '#ffffff',
+      borderColor: '#e2e8f0',
+      borderRadius: 16,
+      borderWidth: 1,
+      padding: 14,
+      gap: 10,
+    }}>
+      <Text style={{ color: '#0f172a', fontWeight: '700' }}>{entry.displayName}</Text>
+      <ActionButton
+        label={copy({ de: 'Herausfordern', en: 'Challenge', pl: 'Wyzwanie' })}
+        onPress={() => createPrivateChallenge(entry.learnerId)}
+      />
+    </View>
+  );
+}
+
 function SearchResult({
   entry,
   copy,

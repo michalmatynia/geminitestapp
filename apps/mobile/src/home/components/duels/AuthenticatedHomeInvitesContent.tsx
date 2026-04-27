@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { PrimaryButton } from '../../homeScreenPrimitives';
-import { useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
-import { useKangurMobileHomeDuelsInvites } from '../../useKangurMobileHomeDuelsInvites';
+import { type useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
+import { type useKangurMobileHomeDuelsInvites } from '../../useKangurMobileHomeDuelsInvites';
 import { DuelInviteCard } from '../../home-duel-section-cards';
 import { createKangurDuelsHref } from '../../../duels/duelsHref';
 import { OutlineLink } from '../../homeScreenPrimitives';

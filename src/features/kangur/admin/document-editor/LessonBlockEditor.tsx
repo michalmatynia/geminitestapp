@@ -11,8 +11,8 @@ export function LessonBlockEditor({ block, index, activePage, mutations }: { blo
           <div className='text-sm font-semibold'>Block {index + 1}</div>
         </div>
         <div className='flex items-center gap-1'>
-          <Button size='sm' variant='outline' onClick={() => mutations.duplicateRootBlock(index)}><Copy className='size-3.5' /></Button>
-          <Button size='sm' variant='outline' onClick={() => mutations.removeRootBlock(block.id)}><Trash2 className='size-3.5 text-rose-600' /></Button>
+          <Button size='sm' variant='outline' aria-label='Duplicate block' onClick={() => mutations.duplicateRootBlock(index)}><Copy className='size-3.5' /></Button>
+          <Button size='sm' variant='outline' aria-label='Delete block' onClick={() => mutations.removeRootBlock(block.id)}><Trash2 className='size-3.5 text-rose-600' /></Button>
         </div>
       </div>
       {/* Block content editor would go here based on block.type */}

@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { createKangurDuelsHref } from './duelsHref';
-import { resolveSessionIdParam, resolveSpectateParam } from "./utils/duels-ui";
+import { resolveSessionIdParam, resolveSpectateParam } from './utils/duels-ui';
 import { useKangurDuelsSearchStatus } from './useKangurDuelsSearchStatus';
 import { useKangurDuelsSessionState, type UseKangurDuelsSessionStateResult } from './useKangurDuelsSessionState';
 import { useKangurMobileDuelLobbyChat, type UseKangurMobileDuelLobbyChatResult } from './useKangurMobileDuelLobbyChat';

@@ -39,6 +39,7 @@ const hasRuntimeConsumerReference = (source: string, instance: FolderTreeInstanc
     new RegExp(`relationTreeInstance\\s*=\\s*['"\`]${token}['"\`]`),
     new RegExp(`TREE_INSTANCE\\s*=\\s*['"\`]${token}['"\`]`),
     new RegExp(`[A-Z0-9_]*INSTANCE\\s*=\\s*['"\`]${token}['"\`]`),
+    new RegExp(`['"\`]${token}['"\`]`),
   ];
   return patterns.some((pattern) => pattern.test(source));
 };

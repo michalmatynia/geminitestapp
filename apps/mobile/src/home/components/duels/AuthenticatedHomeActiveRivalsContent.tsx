@@ -1,8 +1,8 @@
 import { Text, View } from 'react-native';
 import { PrimaryButton, OutlineLink } from '../../homeScreenPrimitives';
 import { useKangurMobileAuth } from '../../../auth/KangurMobileAuthContext';
-import { useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
-import { useKangurMobileHomeDuelsPresence } from '../../useKangurMobileHomeDuelsPresence';
+import { type useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
+import { type useKangurMobileHomeDuelsPresence } from '../../useKangurMobileHomeDuelsPresence';
 import { ActiveRivalCard } from '../../home-duel-section-cards';
 import { createKangurDuelsHref } from '../../../duels/duelsHref';
 import { DeferredDuelSectionPlaceholder, DeferredDuelAdvancedSectionPlaceholder } from '../../HomeDuelSections';

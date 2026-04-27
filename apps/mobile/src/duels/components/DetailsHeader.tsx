@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import type { KangurDuelSession } from '@kangur/contracts/kangur-duels';
-import { formatDifficultyLabel, formatModeLabel, formatOperationLabel } from "../utils/duels-ui";
+import { formatDifficultyLabel, formatModeLabel, formatOperationLabel } from '../utils/duels-ui';
 
 interface DetailsHeaderProps {
   session: KangurDuelSession;

@@ -28,7 +28,7 @@ type DuelOpponent = {
   learnerId: string;
 };
 
-type ResultsDuelsState = {
+export type ResultsDuelsState = {
   actionError: string | null;
   createRematch: (opponentLearnerId: string) => Promise<string | null>;
   currentEntry: DuelCurrentEntry | null;

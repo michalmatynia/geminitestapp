@@ -6,8 +6,8 @@ import {
 } from '../home-screen-deferred';
 import { OutlineLink } from '../homeScreenPrimitives';
 import { PLAN_ROUTE } from '../home-screen-constants';
-import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
-import { Href } from 'expo-router';
+import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
+import { type Href } from 'expo-router';
 
 type HomeHeroSectionProps = {
   areDeferredHomeHeroIntroReady: boolean;

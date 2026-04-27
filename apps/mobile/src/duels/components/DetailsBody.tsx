@@ -25,7 +25,7 @@ export function DetailsBody(props: DetailsBodyProps): React.JSX.Element {
     <>
       <DetailsHeader copy={copy} locale={locale} session={session} />
       <DetailsPills copy={copy} duel={duel} locale={locale} />
-      {roundProgress !== null && !hasWaitingSession ? (
+      {!hasWaitingSession ? (
         <RoundProgressBar locale={locale} roundProgress={roundProgress} status={session.status} />
       ) : null}
       {sessionTimelineItems.length > 0 ? (

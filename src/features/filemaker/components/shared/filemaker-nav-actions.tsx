@@ -5,6 +5,7 @@ import {
   Globe,
   Mail,
   Megaphone,
+  FileText,
   ShieldAlert,
   ShieldOff,
   Tags,
@@ -21,6 +22,7 @@ type FilemakerPageKey =
   | 'persons'
   | 'organizations'
   | 'emails'
+  | 'invoices'
   | 'websites'
   | 'mail'
   | 'events'
@@ -56,6 +58,13 @@ const NAV_ITEMS: Array<{
     label: 'Email Records',
     href: '/admin/filemaker/emails',
     icon: <Mail className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'invoices',
+    label: 'Invoices',
+    href: '/admin/filemaker/invoices',
+    icon: <FileText className='size-4' />,
     variant: 'outline',
   },
   {

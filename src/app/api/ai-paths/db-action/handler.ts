@@ -41,7 +41,9 @@ const resolveCollection = (requestedCollection: string, collectionMap: unknown):
 };
 
 const assertMongoConfigured = (): void => {
-  if ((process.env['MONGODB_URI'] ?? '') === '') throw internalError('MongoDB is not configured');
+  if (process.env['MONGODB_URI'] === undefined || process.env['MONGODB_URI'] === '') {
+    throw internalError('MongoDB is not configured');
+  }
 };
 
 const createMongoActionContext = (
@@ -96,14 +98,17 @@ const processAction = async (
   resolution: ReturnType<typeof resolveAiPathsCollectionName>
 ): Promise<Record<string, unknown>> => {
   const result = await executeAction(resolution.collection, data);
-  return {
+  const finalResult: Record<string, unknown> = {
     ...result,
     collection: resolution.collection,
     requestedCollection: data.collection.trim(),
-    ...(resolution.mappedFrom !== undefined && resolution.mappedFrom !== ''
-      ? { collectionMappedFrom: resolution.mappedFrom }
-      : {}),
   };
+
+  if (resolution.mappedFrom !== undefined && resolution.mappedFrom !== '') {
+    finalResult['collectionMappedFrom'] = resolution.mappedFrom;
+  }
+
+  return finalResult;
 };
 
 export async function postAiPathsDbActionHandler(

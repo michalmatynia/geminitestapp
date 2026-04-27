@@ -10,10 +10,9 @@ import { useKangurDuelsSessionState, type UseKangurDuelsSessionStateResult } fro
 import { useKangurMobileDuelLobbyChat, type UseKangurMobileDuelLobbyChatResult } from './useKangurMobileDuelLobbyChat';
 import { useKangurMobileDuelSession, type UseKangurMobileDuelSessionResult } from './useKangurMobileDuelSession';
 import { useKangurMobileDuelsLobby, type UseKangurMobileDuelsLobbyResult } from './useKangurMobileDuelsLobby';
-import { useKangurDuelsLobbyActions } from './useKangurDuelsLobbyActions';
-import { useKangurDuelsSessionActions } from './useKangurDuelsSessionActions';
-import { useKangurDuelsAutoRefresh } from './useKangurDuelsAutoRefresh';
-import { useKangurDuelsRouteJoin } from './useKangurDuelsRouteJoin';
+import { useKangurDuelsLobbyActions, type UseKangurDuelsLobbyActionsResult } from './useKangurDuelsLobbyActions';
+import { useKangurDuelsSessionActions, type UseKangurDuelsSessionActionsResult } from './useKangurDuelsSessionActions';
+import { useKangurDuelsRouteJoin, type UseKangurDuelsRouteJoinResult } from './useKangurDuelsRouteJoin';
 import type { KangurMobileTone } from '../shared/KangurMobileUi';
 
 export type KangurDuelsScreenData = {
@@ -33,39 +32,69 @@ export type KangurDuelsScreenData = {
   activeLearnerId: string | null;
   openSession: (nextSessionId: string) => void;
   openLobby: () => void;
-  lobbyActions: ReturnType<typeof useKangurDuelsLobbyActions>;
-  sessionActions: ReturnType<typeof useKangurDuelsSessionActions>;
-  routeJoin: ReturnType<typeof useKangurDuelsRouteJoin>;
+  lobbyActions: UseKangurDuelsLobbyActionsResult;
+  sessionActions: UseKangurDuelsSessionActionsResult;
+  routeJoin: UseKangurDuelsRouteJoinResult;
   joinDuelAction: (id: string) => Promise<void>;
   searchStatusLabel: string;
   searchStatusTone: KangurMobileTone;
   sessionState: UseKangurDuelsSessionStateResult;
 };
 
-function createDuelsScreenData(
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'],
-  locale: ReturnType<typeof useKangurMobileI18n>['locale'],
-  router: ReturnType<typeof useRouter>,
-  auth: ReturnType<typeof useKangurMobileAuth>,
-  lobby: UseKangurMobileDuelsLobbyResult,
-  chat: UseKangurMobileDuelLobbyChatResult,
-  duel: UseKangurMobileDuelSessionResult,
-  sessionState: UseKangurDuelsSessionStateResult,
-  routeSessionId: string | null,
-  joinSessionId: string | null,
-  isSpectatingRoute: boolean,
-): KangurDuelsScreenData {
+function resolveDuelsParams(params: { join?: string; spectate?: string; sessionId?: string }): {
+  routeSessionId: string | null;
+  joinSessionId: string | null;
+  isSpectatingRoute: boolean;
+} {
+  const routeSessionId = resolveSessionIdParam(params.sessionId ?? null);
+  const joinSessionId = routeSessionId !== null ? null : resolveSessionIdParam(params.join ?? null);
+  const isSpectatingRoute = resolveSpectateParam(params.spectate ?? null);
+  return { routeSessionId, joinSessionId, isSpectatingRoute };
+}
+
+export function useKangurDuelsScreenData(): KangurDuelsScreenData {
+  const { copy, locale } = useKangurMobileI18n();
+  const params = useLocalSearchParams<{ join?: string; spectate?: string; sessionId?: string }>();
+  const router = useRouter();
+  const auth = useKangurMobileAuth();
+  
+  const { routeSessionId, joinSessionId, isSpectatingRoute } = resolveDuelsParams(params);
+  
+  const lobby = useKangurMobileDuelsLobby();
+  const chat = useKangurMobileDuelLobbyChat();
+  const duel = useKangurMobileDuelSession(routeSessionId, { spectate: isSpectatingRoute });
+  const sessionState = useKangurDuelsSessionState(copy, locale, duel);
+
   const activeLearnerId = auth.session.user?.activeLearner?.id ?? auth.session.user?.id ?? null;
-  const openSession = (id: string) => router.replace(createKangurDuelsHref({ sessionId: id }));
-  const openLobby = () => router.replace(createKangurDuelsHref());
+  const openSession = useCallback((id: string) => router.replace(createKangurDuelsHref({ sessionId: id })), [router]);
+  const openLobby = useCallback(() => router.replace(createKangurDuelsHref()), [router]);
+  
   const lobbyActions = useKangurDuelsLobbyActions(chat, copy);
-  const sessionActions = useKangurDuelsSessionActions(duel, lobby, locale, copy, activeLearnerId, openSession);
-  const routeJoin = useKangurDuelsRouteJoin(lobby, joinSessionId, routeSessionId, isSpectatingRoute, copy, openSession);
+  const sessionActions = useKangurDuelsSessionActions({
+    duel,
+    lobby,
+    locale,
+    copy,
+    activeLearnerId,
+    openSession,
+  });
+  const routeJoin = useKangurDuelsRouteJoin({
+    lobby,
+    joinSessionId,
+    routeSessionId,
+    isSpectatingRoute,
+    copy,
+    openSession,
+  });
   const { searchStatusLabel, searchStatusTone } = useKangurDuelsSearchStatus(copy, lobby);
-  const joinDuelAction = async (id: string) => {
+  
+  const joinDuelAction = useCallback(async (id: string): Promise<void> => {
     const next = await lobby.joinDuel(id);
-    if (next) openSession(next);
-  };
+    if (next !== null) {
+      openSession(next);
+    }
+  }, [lobby, openSession]);
+
   return {
     copy, locale, router,
     isLoadingAuth: auth.isLoadingAuth,
@@ -76,25 +105,4 @@ function createDuelsScreenData(
     lobbyActions, sessionActions, routeJoin, joinDuelAction,
     searchStatusLabel, searchStatusTone, sessionState,
   };
-}
-
-export function useKangurDuelsScreenData(): KangurDuelsScreenData {
-  const { copy, locale } = useKangurMobileI18n();
-  const params = useLocalSearchParams<{ join?: string; spectate?: string; sessionId?: string }>();
-  const router = useRouter();
-  const auth = useKangurMobileAuth();
-  
-  const routeSessionId = resolveSessionIdParam(params.sessionId ?? null);
-  const joinSessionId = routeSessionId !== null ? null : resolveSessionIdParam(params.join ?? null);
-  const isSpectatingRoute = resolveSpectateParam(params.spectate ?? null);
-  
-  const lobby = useKangurMobileDuelsLobby();
-  const chat = useKangurMobileDuelLobbyChat();
-  const duel = useKangurMobileDuelSession(routeSessionId, { spectate: isSpectatingRoute });
-  const sessionState = useKangurDuelsSessionState(copy, locale, duel);
-
-  return createDuelsScreenData(
-    copy, locale, router, auth, lobby, chat, duel, sessionState,
-    routeSessionId, joinSessionId, isSpectatingRoute
-  );
 }

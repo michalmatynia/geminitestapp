@@ -1,3 +1,4 @@
+import React from 'react';
 import { Text, View } from 'react-native';
 
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
@@ -6,6 +7,8 @@ import { ActionButton, MessageCard } from './duels-primitives';
 import type { KangurDuelReactionType } from '@kangur/contracts/kangur-duels';
 import {
   DUEL_REACTION_OPTIONS,
+} from './utils/duels-constants';
+import {
   formatReactionLabel,
   formatRelativeAge,
 } from './utils/duels-ui';

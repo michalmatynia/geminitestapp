@@ -129,36 +129,50 @@ export const handlers: Record<string, ActionHandler> = {
   updateOne: async (ctx, normalizedFilter) => {
     const updateDoc = normalizeUpdateDoc(ctx.update);
     if (updateDoc === null) throw badRequestError('Update document is required');
-    const now = new Date();
-    const nextUpdateDoc = shouldAutoStampUpdatedAt(ctx.resolvedCollection) ? applyUpdatedAtToUpdateDoc(updateDoc, now) : updateDoc;
-    const result = await ctx.collectionRef.updateOne(normalizedFilter, nextUpdateDoc as Record<string, unknown>, { upsert: Boolean(ctx.upsert) });
-    return withProviderPayload(ctx.provider, ctx.requestedProvider, { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount, upsertedId: result.upsertedId ?? null });
+    const result = await ctx.collectionRef.updateOne(
+      normalizedFilter,
+      applyTimestamp(ctx, updateDoc) as Record<string, unknown>,
+      { upsert: Boolean(ctx.upsert) }
+    );
+    return withProviderPayload(ctx.provider, ctx.requestedProvider, {
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      upsertedId: result.upsertedId ?? null,
+    });
   },
 
   updateMany: async (ctx, normalizedFilter) => {
     const updateDoc = normalizeUpdateDoc(ctx.update);
     if (updateDoc === null) throw badRequestError('Update document is required');
-    const now = new Date();
-    const nextUpdateDoc = shouldAutoStampUpdatedAt(ctx.resolvedCollection) ? applyUpdatedAtToUpdateDoc(updateDoc, now) : updateDoc;
-    const result = await ctx.collectionRef.updateMany(normalizedFilter, nextUpdateDoc as Record<string, unknown>, { upsert: Boolean(ctx.upsert) });
-    return withProviderPayload(ctx.provider, ctx.requestedProvider, { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount, upsertedId: result.upsertedId ?? null });
+    const result = await ctx.collectionRef.updateMany(
+      normalizedFilter,
+      applyTimestamp(ctx, updateDoc) as Record<string, unknown>,
+      { upsert: Boolean(ctx.upsert) }
+    );
+    return withProviderPayload(ctx.provider, ctx.requestedProvider, {
+      matchedCount: result.matchedCount,
+      modifiedCount: result.modifiedCount,
+      upsertedId: result.upsertedId ?? null,
+    });
   },
 
   deleteOne: async (ctx, normalizedFilter) => {
-    const result = await ctx.collectionRef.deleteOne(normalizedFilter);
+    const result = await ctx.collectionRef.deleteOne(normalizedFilter as Record<string, unknown>);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { deletedCount: result.deletedCount });
   },
 
   deleteMany: async (ctx, normalizedFilter) => {
-    const result = await ctx.collectionRef.deleteMany(normalizedFilter);
+    const result = await ctx.collectionRef.deleteMany(normalizedFilter as Record<string, unknown>);
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { deletedCount: result.deletedCount });
   },
+
 
   findOneAndDelete: async (ctx, normalizedFilter) => {
     const result = await ctx.collectionRef.findOneAndDelete(normalizedFilter, { includeResultMetadata: true });
     return withProviderPayload(ctx.provider, ctx.requestedProvider, { value: result.value ?? null, ok: result.ok });
   },
 };
+
 
 const REQUIRED_FILTER_ACTIONS = new Set([
   'updateOne',

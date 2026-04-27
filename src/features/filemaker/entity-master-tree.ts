@@ -1,11 +1,15 @@
+/* eslint-disable complexity, max-lines */
+
 import { formatFilemakerAddress } from './settings';
 
+import type { MongoFilemakerInvoice } from './pages/AdminFilemakerInvoicesPage.types';
 import type { FilemakerEvent, FilemakerOrganization, FilemakerPerson, FilemakerValue } from './types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const ORGANIZATION_GROUP_NODE_PREFIX = 'filemaker-organization-group:';
 const ORGANIZATION_NODE_PREFIX = 'filemaker-organization:';
 const EVENT_NODE_PREFIX = 'filemaker-event:';
+const INVOICE_NODE_PREFIX = 'filemaker-invoice:';
 const PERSON_GROUP_NODE_PREFIX = 'filemaker-person-group:';
 const PERSON_NODE_PREFIX = 'filemaker-person:';
 const VALUE_NODE_PREFIX = 'filemaker-value:';
@@ -76,6 +80,14 @@ export const toFilemakerEventNodeId = (eventId: string): string =>
 export const fromFilemakerEventNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(EVENT_NODE_PREFIX)) return null;
   return decodeNodePart(nodeId.slice(EVENT_NODE_PREFIX.length));
+};
+
+export const toFilemakerInvoiceNodeId = (invoiceId: string): string =>
+  `${INVOICE_NODE_PREFIX}${encodeNodePart(invoiceId)}`;
+
+export const fromFilemakerInvoiceNodeId = (nodeId: string): string | null => {
+  if (!nodeId.startsWith(INVOICE_NODE_PREFIX)) return null;
+  return decodeNodePart(nodeId.slice(INVOICE_NODE_PREFIX.length));
 };
 
 export const toFilemakerValueNodeId = (valueId: string): string =>
@@ -262,6 +274,35 @@ export const buildFilemakerEventListNodes = (events: FilemakerEvent[]): MasterTr
         rawId: event.id,
         address: formatFilemakerAddress(event),
         updatedAt: event.updatedAt,
+      },
+    };
+  });
+
+export const buildFilemakerInvoiceListNodes = (
+  invoices: MongoFilemakerInvoice[]
+): MasterTreeNode[] =>
+  invoices.map((invoice: MongoFilemakerInvoice, index): MasterTreeNode => {
+    const invoiceNo = invoice.invoiceNo?.trim() ?? '';
+    const signature = invoice.signature?.trim() ?? '';
+    let label = invoice.id;
+    if (signature.length > 0) label = signature;
+    if (invoiceNo.length > 0) label = invoiceNo;
+    return {
+      id: toFilemakerInvoiceNodeId(invoice.id),
+      type: 'file',
+      kind: 'filemaker_invoice',
+      parentId: null,
+      name: label,
+      path: `invoices/${label}`,
+      sortOrder: index,
+      metadata: {
+        entity: 'filemaker_invoice',
+        rawId: invoice.id,
+        buyer: invoice.organizationBName ?? '',
+        seller: invoice.organizationSName ?? '',
+        issueDate: invoice.issueDate ?? '',
+        paymentDue: invoice.cPaymentDue ?? '',
+        sum: invoice.servicesSum ?? '',
       },
     };
   });

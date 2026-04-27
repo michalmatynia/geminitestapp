@@ -57,6 +57,21 @@ const FILTER_NORMALIZERS: Record<
   updatedBy: (value: string) => ({ updatedBy: value }),
 };
 
+function useDebouncedValue(value: string, delayMs: number): string {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedValue(value);
+    }, delayMs);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [delayMs, value]);
+
+  return debouncedValue;
+}
+
 const normalizeFilterValue = (key: string, value: unknown): Partial<OrganizationFilters> => {
   const normalizer = FILTER_NORMALIZERS[key];
   return normalizer ? normalizer(typeof value === 'string' ? value : '') : {};
@@ -184,11 +199,12 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const [pageSize, setPageSize] = useState(DEFAULT_ORGANIZATION_PAGE_SIZE);
   const [filters, setFilters] = useState<OrganizationFilters>(createDefaultOrganizationFilters);
   const deferredQuery = useDeferredValue(query.trim());
+  const debouncedQuery = useDebouncedValue(deferredQuery, 250);
   const mongoOrganizations = useMongoFilemakerOrganizations({
     filters,
     page,
     pageSize,
-    query: deferredQuery,
+    query: debouncedQuery,
   });
   const { actions, openOrganization } = useOrganizationActions(router);
   const organizations = mongoOrganizations.organizations;
@@ -230,6 +246,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     renderNode,
     shownCount: organizations.length,
     totalCount: mongoOrganizations.totalCount,
+    totalCountIsExact: mongoOrganizations.totalCountIsExact,
     totalPages: mongoOrganizations.totalPages,
   };
 }

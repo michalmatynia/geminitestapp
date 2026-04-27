@@ -102,7 +102,7 @@ const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
     pageContent: reduced,
   });
   const evalCompletedAt = stamp();
-  const evalOk = !!evaluation && !evaluation.error && !!evaluation.listing?.title;
+  const evalOk = !!evaluation && !evaluation.error && !!evaluation.listing?.['title'];
   steps.push(
     buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
       message: evaluation?.error ?? `confidence=${evaluation?.confidence ?? 'n/a'}`,

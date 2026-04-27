@@ -41,6 +41,7 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
     'Manage persons, organizations, events, and emails used as addresser/addressee data in Case Resolver documents.',
   '/admin/filemaker/persons': 'Search and review Filemaker persons.',
   '/admin/filemaker/organizations': 'Search and review Filemaker organizations.',
+  '/admin/filemaker/invoices': 'Search imported Filemaker invoices and export PDF invoices.',
   '/admin/filemaker/events': 'Search and review Filemaker events with linked organizations.',
   '/admin/filemaker/values': 'Search and review hierarchical Filemaker values.',
   '/admin/filemaker/mail-client':
@@ -63,6 +64,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',
   '/admin/settings': 'System settings overview and quick access cards.',
   '/admin/settings/menu': 'Customize the admin menu structure and favorites.',
+  '/admin/settings/filemaker-invoice-pdf':
+    'Edit Filemaker invoice PDF labels and default PDF language.',
 };
 
 type DescriptionRule = {

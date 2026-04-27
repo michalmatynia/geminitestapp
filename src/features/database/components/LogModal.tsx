@@ -9,31 +9,24 @@ interface LogModalProps extends EntityModalProps<string> {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export const LogModal = (props: LogModalProps): React.JSX.Element | null => {
-  const { isOpen, onClose, item: content, title = 'Operation Log', size = 'md' } = props;
-
-  if (!isOpen || content === undefined) return null;
+export const LogModal = ({
+  isOpen,
+  onClose,
+  item,
+  title = 'Operation Log',
+  size = 'md',
+}: LogModalProps): React.JSX.Element | null => {
+  if (!isOpen || item === undefined) return null;
 
   return (
-    <AppModal
-      open={isOpen}
-      onOpenChange={(open: boolean): void => {
-        if (!open) onClose();
-      }}
-      title={title}
-      size={size}
-    >
+    <AppModal open={isOpen} onOpenChange={(open) => !open && onClose()} title={title} size={size}>
       <div className='max-h-[60vh] overflow-y-auto'>
         <SyntaxHighlighter
           language='bash'
           style={atomDark}
-          customStyle={{
-            margin: 0,
-            borderRadius: '0.5rem',
-            fontSize: '0.875rem',
-          }}
+          customStyle={{ margin: 0, borderRadius: '0.5rem', fontSize: '0.875rem' }}
         >
-          {content || ''}
+          {item ?? ''}
         </SyntaxHighlighter>
       </div>
     </AppModal>

@@ -98,15 +98,54 @@ function getEntries<T>(data: { entries?: T[] } | undefined): T[] {
   return data?.entries ?? [];
 }
 
+import type { UseQueryResult } from '@tanstack/react-query';
+import type { 
+  KangurDuelLobbyResponse, 
+  KangurDuelLobbyPresenceResponse, 
+  KangurDuelOpponentsResponse, 
+  KangurDuelLeaderboardResponse, 
+  KangurDuelSearchResponse 
+} from '@kangur/contracts/kangur-duels';
+
+type LobbyQueries = {
+  lobby: UseQueryResult<KangurDuelLobbyResponse>;
+  presence: UseQueryResult<KangurDuelLobbyPresenceResponse>;
+  opponents: UseQueryResult<KangurDuelOpponentsResponse>;
+  leaderboard: UseQueryResult<KangurDuelLeaderboardResponse>;
+  search: UseQueryResult<KangurDuelSearchResponse>;
+};
+
+import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
+
+type DuelCopy = (value: KangurMobileLocalizedValue<string>) => string;
+
+// ...
+
+function resolveLobbyState(copy: DuelCopy, queries: LobbyQueries): Omit<UseKangurMobileDuelsLobbyResult, keyof DuelLobbyFilters | keyof DuelLobbySearchState | 'actionError' | 'createPrivateChallenge' | 'createPublicChallenge' | 'createQuickMatch' | 'inviteEntries' | 'isActionPending' | 'isAuthenticated' | 'isLoadingAuth' | 'isRestoringAuth' | 'joinDuel' | 'publicEntries' | 'refresh' | 'visiblePublicEntries'> {
+  const { lobby, presence, opponents, leaderboard, search } = queries;
+  return {
+    isLobbyLoading: lobby.isLoading,
+    isOpponentsLoading: opponents.isLoading,
+    isPresenceLoading: presence.isLoading,
+    isSearchLoading: search.isLoading,
+    leaderboardEntries: getEntries(leaderboard.data),
+    leaderboardError: toQueryErrorMessage(leaderboard.error, 'Leaderboard error', copy),
+    lobbyError: toQueryErrorMessage(lobby.error, 'Lobby error', copy),
+    opponents: getEntries(opponents.data),
+    presenceEntries: getEntries(presence.data),
+    presenceError: toQueryErrorMessage(presence.error, 'Presence error', copy),
+    searchError: toQueryErrorMessage(search.error, 'Search error', copy),
+    searchResults: getEntries(search.data),
+  };
+}
+
 export function useKangurMobileDuelsLobby(): UseKangurMobileDuelsLobbyResult {
   const { copy } = useKangurMobileI18n();
   const { apiBaseUrl, apiClient: rawApiClient } = useKangurMobileRuntime();
   const { isLoadingAuth, session } = useKangurMobileAuth();
-  
   const apiClient = rawApiClient as unknown as DuelApiClient;
   const filters = useDuelLobbyFilters();
   const search = useDuelLobbySearchState();
-  
   const learnerIdentity = useMemo(() => getLearnerIdentity(session), [session]);
   const isAuthenticated = session.status === 'authenticated';
   
@@ -114,28 +153,20 @@ export function useKangurMobileDuelsLobby(): UseKangurMobileDuelsLobbyResult {
   const presenceQuery = usePresenceQuery(apiClient, apiBaseUrl, learnerIdentity, isAuthenticated);
   const opponentsQuery = useOpponentsQuery(apiClient, apiBaseUrl, learnerIdentity, isAuthenticated);
   const leaderboardQuery = useLeaderboardQuery(apiClient, apiBaseUrl);
-  const searchQueryState = useSearchQuery(apiClient, apiBaseUrl, learnerIdentity, isAuthenticated, search.searchSubmittedQuery.trim());
+  const searchQueryState = useSearchQuery({ apiClient, apiBaseUrl, learnerIdentity, isAuthenticated, query: search.searchSubmittedQuery.trim() });
 
   const lobbyEntries = useMemo(() => getEntries(lobbyQuery.data), [lobbyQuery.data]);
   const publicEntries = useMemo(() => lobbyEntries.filter((e) => e.visibility === 'public'), [lobbyEntries]);
   const inviteEntries = useMemo(() => lobbyEntries.filter((e) => e.visibility === 'private'), [lobbyEntries]);
-  const visiblePublicEntries = useMemo(() => {
-    const { modeFilter } = filters;
-    return publicEntries.filter((e) => modeFilter === 'all' ? true : e.mode === modeFilter);
-  }, [filters.modeFilter, publicEntries]);
+  const visiblePublicEntries = useMemo(() => publicEntries.filter((e) => filters.modeFilter === 'all' ? true : e.mode === filters.modeFilter), [filters.modeFilter, publicEntries]);
 
   const refresh = useCallback(async () => {
-    await Promise.all([
-      lobbyQuery.refetch(),
-      presenceQuery.refetch(),
-      opponentsQuery.refetch(),
-      leaderboardQuery.refetch()
-    ]);
+    await Promise.all([lobbyQuery.refetch(), presenceQuery.refetch(), opponentsQuery.refetch(), leaderboardQuery.refetch()]);
   }, [leaderboardQuery, lobbyQuery, opponentsQuery, presenceQuery]);
 
   return {
-    ...filters,
-    ...search,
+    ...filters, ...search,
+    ...resolveLobbyState(copy, { lobby: lobbyQuery, presence: presenceQuery, opponents: opponentsQuery, leaderboard: leaderboardQuery, search: searchQueryState }),
     actionError: null,
     createPrivateChallenge: () => Promise.resolve(null),
     createPublicChallenge: () => Promise.resolve(null),
@@ -144,22 +175,10 @@ export function useKangurMobileDuelsLobby(): UseKangurMobileDuelsLobbyResult {
     isActionPending: false,
     isAuthenticated,
     isLoadingAuth,
-    isLobbyLoading: lobbyQuery.isLoading,
-    isOpponentsLoading: opponentsQuery.isLoading,
-    isPresenceLoading: presenceQuery.isLoading,
     isRestoringAuth: isLoadingAuth && !isAuthenticated,
-    isSearchLoading: searchQueryState.isLoading,
-    joinDuel: () => Promise.resolve(false),
-    leaderboardEntries: getEntries(leaderboardQuery.data),
-    leaderboardError: toQueryErrorMessage(leaderboardQuery.error, 'Leaderboard error', copy),
-    lobbyError: toQueryErrorMessage(lobbyQuery.error, 'Lobby error', copy),
-    opponents: getEntries(opponentsQuery.data),
-    presenceEntries: getEntries(presenceQuery.data),
-    presenceError: toQueryErrorMessage(presenceQuery.error, 'Presence error', copy),
+    joinDuel: () => Promise.resolve(null),
     publicEntries,
     refresh,
-    searchError: toQueryErrorMessage(searchQueryState.error, 'Search error', copy),
-    searchResults: getEntries(searchQueryState.data),
     visiblePublicEntries,
   };
 }

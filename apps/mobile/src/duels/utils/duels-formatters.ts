@@ -122,7 +122,8 @@ export function resolveSeriesWins(
   series: KangurDuelSeries,
   learnerId: string,
 ): number {
-  return series.winsByPlayer[learnerId] ?? 0;
+  const wins = series.winsByPlayer[learnerId];
+  return typeof wins === 'number' ? wins : 0;
 }
 
 export function formatQuestionProgress(
@@ -130,7 +131,7 @@ export function formatQuestionProgress(
   player: KangurDuelPlayer,
   locale: KangurMobileLocale,
 ): string {
-  const completed = Math.min(player.currentQuestionIndex ?? 0, session.questionCount);
+  const completed = Math.min(player.currentQuestionIndex, session.questionCount);
   return localizeSimpleDuelText(
     `${completed}/${session.questionCount} Fragen`,
     `${completed}/${session.questionCount} questions`,

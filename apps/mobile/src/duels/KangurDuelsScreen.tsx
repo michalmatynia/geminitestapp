@@ -7,54 +7,54 @@ import { DuelsScreenContent } from './DuelsScreenContent';
 
 export function KangurDuelsScreen(): React.JSX.Element {
   const data = useKangurDuelsScreenData();
-  const { copy, lobby, signIn, supportsLearnerCredentials, chat, lobbyActions, sessionActions, routeJoin, sessionState, joinDuelAction } = data;
 
   const createLoginCallToAction = useCallback((label: string) => (
-    supportsLearnerCredentials ? <LinkButton href={HOME_ROUTE} label={label} stretch tone='primary' /> : <ActionButton label={label} onPress={signIn} stretch />
-  ), [signIn, supportsLearnerCredentials]);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    data.supportsLearnerCredentials ? <LinkButton href={HOME_ROUTE} label={label} stretch tone='primary' /> : <ActionButton label={label} onPress={data.signIn} stretch />
+  ), [data.signIn, data.supportsLearnerCredentials]);
 
   const renderJoinAction = useCallback((id: string) => {
-    const label = copy({ de: 'Duell beitreten', en: 'Join duel', pl: 'Dołącz do pojedynku' });
-    if (lobby.isAuthenticated) {
+    const label = data.copy({ de: 'Duell beitreten', en: 'Join duel', pl: 'Dołącz do pojedynku' });
+    if (data.lobby.isAuthenticated) {
        
-      return <ActionButton label={label} onPress={() => joinDuelAction(id)} stretch />;
+      return <ActionButton label={label} onPress={() => data.joinDuelAction(id)} stretch />;
     }
-    return createLoginCallToAction(copy({ de: 'Anmelden, um beizutreten', en: 'Sign in to join', pl: 'Zaloguj, aby dołączyć' }));
-  }, [copy, createLoginCallToAction, lobby, joinDuelAction]);
+    return createLoginCallToAction(data.copy({ de: 'Anmelden, um beizutreten', en: 'Sign in to join', pl: 'Zaloguj, aby dołączyć' }));
+  }, [data.copy, createLoginCallToAction, data.lobby.isAuthenticated, data.joinDuelAction]);
 
 
   const renderSpectateAction = useCallback((id: string) => (
-    <LinkButton href={createKangurDuelsHref({ sessionId: id, spectate: true })} label={copy({ de: 'Duell beobachten', en: 'Watch duel', pl: 'Obserwuj pojedynek' })} stretch tone='secondary' />
-  ), [copy]);
+    <LinkButton href={createKangurDuelsHref({ sessionId: id, spectate: true })} label={data.copy({ de: 'Duell beobachten', en: 'Watch duel', pl: 'Obserwuj pojedynek' })} stretch tone='secondary' />
+  ), [data.copy]);
 
-  const autoRefreshChipLabel = lobbyActions.autoRefreshEnabled
-    ? copy({ de: 'Auto-Refresh (Ein)', en: 'Auto refresh (On)', pl: 'Auto odświeżanie (Włączone)' })
-    : copy({ de: 'Auto-Refresh (Aus)', en: 'Auto refresh (Off)', pl: 'Auto odświeżanie (Wyłączone)' });
+  const autoRefreshChipLabel = data.lobbyActions.autoRefreshEnabled
+    ? data.copy({ de: 'Auto-Refresh (Ein)', en: 'Auto refresh (On)', pl: 'Auto odświeżanie (Włączone)' })
+    : data.copy({ de: 'Auto-Refresh (Aus)', en: 'Auto refresh (Off)', pl: 'Auto odświeżanie (Wyłączone)' });
 
-  const canSend = chat.isAuthenticated && !chat.isSending && lobbyActions.chatDraft.trim().length > 0 && lobbyActions.chatDraft.trim().length <= chat.maxMessageLength;
+  const canSend = data.chat.isAuthenticated && !data.chat.isSending && data.lobbyActions.chatDraft.trim().length > 0 && data.lobbyActions.chatDraft.trim().length <= data.chat.maxMessageLength;
 
   return (
     <DuelsScreenContent
       {...data}
       autoRefreshChipLabel={autoRefreshChipLabel}
-      autoRefreshEnabled={lobbyActions.autoRefreshEnabled}
+      autoRefreshEnabled={data.lobbyActions.autoRefreshEnabled}
       canSendChatMessage={canSend}
-      chatActionError={lobbyActions.chatActionError}
-      chatDraft={lobbyActions.chatDraft}
-      chatRemainingChars={Math.max(0, chat.maxMessageLength - lobbyActions.chatDraft.length)}
+      chatActionError={data.lobbyActions.chatActionError}
+      chatDraft={data.lobbyActions.chatDraft}
+      chatRemainingChars={Math.max(0, data.chat.maxMessageLength - data.lobbyActions.chatDraft.length)}
       createLoginCallToAction={createLoginCallToAction}
-      handleInviteShare={sessionActions.handleInviteShare}
-      handleLobbyChatSend={lobbyActions.handleLobbyChatSend}
-      handleRematch={sessionActions.handleRematch}
-      isJoiningFromRoute={routeJoin.isJoiningFromRoute}
-      joinSessionFromRoute={routeJoin.joinSessionFromRoute}
-      lobbyChatPreview={chat.messages.slice(-LOBBY_CHAT_PREVIEW_LIMIT)}
-      onChatDraftChange={(v) => { lobbyActions.setChatDraft(v); if (lobbyActions.chatActionError !== null) lobbyActions.setChatActionError(null); }}
-      onToggleAutoRefresh={() => lobbyActions.setAutoRefreshEnabled((p) => !p)}
+      handleInviteShare={data.sessionActions.handleInviteShare}
+      handleLobbyChatSend={data.lobbyActions.handleLobbyChatSend}
+      handleRematch={data.sessionActions.handleRematch}
+      isJoiningFromRoute={data.routeJoin.isJoiningFromRoute}
+      joinSessionFromRoute={data.routeJoin.joinSessionFromRoute}
+      lobbyChatPreview={data.chat.messages.slice(-LOBBY_CHAT_PREVIEW_LIMIT)}
+      onChatDraftChange={(v) => { data.lobbyActions.setChatDraft(v); if (data.lobbyActions.chatActionError !== null) data.lobbyActions.setChatActionError(null); }}
+      onToggleAutoRefresh={() => data.lobbyActions.setAutoRefreshEnabled((p) => !p)}
       renderJoinAction={renderJoinAction}
       renderSpectateAction={renderSpectateAction}
-      routeJoinError={routeJoin.routeJoinError}
-      sessionState={{ ...sessionState, inviteShareError: sessionActions.inviteShareError }}
+      routeJoinError={data.routeJoin.routeJoinError}
+      sessionState={{ ...data.sessionState, inviteShareError: data.sessionActions.inviteShareError }}
     />
   );
 }

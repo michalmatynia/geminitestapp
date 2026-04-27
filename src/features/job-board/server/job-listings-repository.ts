@@ -71,6 +71,36 @@ export async function findJobListingBySourceUrl(sourceUrl: string): Promise<JobL
   return doc ? toRecord(doc) : null;
 }
 
+export async function listJobListings(input: {
+  companyId?: string | null;
+  limit?: number | null;
+} = {}): Promise<JobListing[]> {
+  const limit = input.limit != null ? Math.max(1, Math.trunc(input.limit)) : 100;
+  const companyId = input.companyId?.trim() || null;
+
+  if (useMemory()) {
+    const filtered = companyId ? inMemory.filter((j) => j.companyId === companyId) : inMemory;
+    return [...filtered]
+      .sort((a, b) => {
+        const aTs = a.createdAt ? Date.parse(a.createdAt) : 0;
+        const bTs = b.createdAt ? Date.parse(b.createdAt) : 0;
+        return bTs - aTs;
+      })
+      .slice(0, limit);
+  }
+
+  await ensureIndexes();
+  const db = await getMongoDb();
+  const filter = companyId ? { companyId } : {};
+  const docs = await db
+    .collection<JobListingDoc>(JOB_LISTINGS_COLLECTION)
+    .find(filter)
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .toArray();
+  return docs.map(toRecord);
+}
+
 export async function listJobListingsByCompany(companyId: string): Promise<JobListing[]> {
   const id = companyId.trim();
   if (!id) return [];

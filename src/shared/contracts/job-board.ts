@@ -123,8 +123,8 @@ export type JobScanStep = z.infer<typeof jobScanStepSchema>;
 
 export const jobScanEvaluationSchema = z
   .object({
-    company: companySchema.partial().nullable().default(null),
-    listing: jobListingSchema.partial().nullable().default(null),
+    company: z.record(z.string(), z.unknown()).nullable().default(null),
+    listing: z.record(z.string(), z.unknown()).nullable().default(null),
     confidence: z.number().min(0).max(1).nullable().default(null),
     modelId: optStr(200),
     error: optStr(2_000),
@@ -176,3 +176,13 @@ export const jobScanCreateResponseSchema = z.object({
   scan: jobScanRecordSchema,
 });
 export type JobScanCreateResponse = z.infer<typeof jobScanCreateResponseSchema>;
+
+export const companyListResponseSchema = z.object({
+  companies: z.array(companySchema).default([]),
+});
+export type CompanyListResponse = z.infer<typeof companyListResponseSchema>;
+
+export const jobListingListResponseSchema = z.object({
+  listings: z.array(jobListingSchema).default([]),
+});
+export type JobListingListResponse = z.infer<typeof jobListingListResponseSchema>;

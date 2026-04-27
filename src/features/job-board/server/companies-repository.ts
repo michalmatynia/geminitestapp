@@ -110,6 +110,30 @@ export async function findCompanyMatch(input: {
   return null;
 }
 
+export async function listCompanies(input: { limit?: number | null } = {}): Promise<Company[]> {
+  const limit = input.limit != null ? Math.max(1, Math.trunc(input.limit)) : 100;
+
+  if (useMemory()) {
+    return [...inMemory]
+      .sort((a, b) => {
+        const aTs = a.createdAt ? Date.parse(a.createdAt) : 0;
+        const bTs = b.createdAt ? Date.parse(b.createdAt) : 0;
+        return bTs - aTs;
+      })
+      .slice(0, limit);
+  }
+
+  await ensureIndexes();
+  const db = await getMongoDb();
+  const docs = await db
+    .collection<CompanyDoc>(COMPANIES_COLLECTION)
+    .find({})
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .toArray();
+  return docs.map(toRecord);
+}
+
 export async function getCompanyById(id: string): Promise<Company | null> {
   const trimmedId = id.trim();
   if (!trimmedId) return null;

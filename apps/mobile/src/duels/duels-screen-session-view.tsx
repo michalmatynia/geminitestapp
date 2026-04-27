@@ -2,7 +2,7 @@ import { View } from 'react-native';
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { KangurMobileCard as Card, KangurMobileScrollScreen, KangurMobileSectionTitle } from '../shared/KangurMobileUi';
 import { ActionButton, MessageCard } from './duels-primitives';
-import { type resolveRoundProgress } from '../utils/duels-ui';
+import { type resolveRoundProgress } from './duels-ui';
 import { DuelSessionFullContent } from './DuelSessionFullContent';
 import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
 

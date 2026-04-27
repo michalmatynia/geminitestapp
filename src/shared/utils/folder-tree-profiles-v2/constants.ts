@@ -1,4 +1,5 @@
- 
+/* eslint-disable max-lines */
+
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 
 import {
@@ -166,6 +167,18 @@ export const folderTreeSettingsMetaByInstance: Record<
     fileHint: 'Example: filemaker_person',
     folderHint: 'Example: filemaker_person_group',
   },
+  filemaker_events: {
+    title: 'Filemaker Events',
+    description: 'Controls the event master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_event',
+    folderHint: 'Not used (events render as flat entries).',
+  },
+  filemaker_invoices: {
+    title: 'Filemaker Invoices',
+    description: 'Controls the invoice master tree shown in Filemaker.',
+    fileHint: 'Example: filemaker_invoice',
+    folderHint: 'Not used (invoices render as flat entries).',
+  },
   filemaker_values: {
     title: 'Filemaker Values',
     description: 'Controls the hierarchical value master tree shown in Filemaker.',
@@ -321,6 +334,16 @@ export const folderTreePersistFeedbackByInstance: Record<
     notifySuccess: false,
     notifyError: true,
     successMessage: 'Person tree updated.',
+  },
+  filemaker_events: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Event tree updated.',
+  },
+  filemaker_invoices: {
+    notifySuccess: false,
+    notifyError: true,
+    successMessage: 'Invoice tree updated.',
   },
   filemaker_values: {
     notifySuccess: false,

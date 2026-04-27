@@ -1,4 +1,4 @@
-import type { KangurDuelStatus, KangurDuelPlayerStatus } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelStatus, KangurDuelPlayerStatus, KangurDuelSession, KangurDuelPlayer } from '@kangur/contracts/kangur-duels';
 import type { KangurMobileTone as Tone } from '../../shared/KangurMobileUi';
 
 export function resolveRoundProgress(
@@ -8,8 +8,8 @@ export function resolveRoundProgress(
 ): { total: number; current: number; percent: number } {
   const total = session.questionCount;
   const current = isSpectating
-    ? session.currentQuestionIndex ?? 0
-    : player?.currentQuestionIndex ?? 0;
+    ? session.currentQuestionIndex
+    : (player?.currentQuestionIndex ?? 0);
 
   const safeCurrent = Math.min(current, total);
   const percent = total > 0 ? Math.round((safeCurrent / total) * 100) : 0;

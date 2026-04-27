@@ -12,6 +12,7 @@ import {
   Folder,
   FileText,
   HardDrive,
+  ReceiptText,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -147,6 +148,15 @@ const settings: SettingsOption[] = [
     description: 'Switch file source between local uploads and FastComet.',
     color: 'cyan',
     bgColor: 'bg-cyan-500/10',
+  },
+  {
+    id: 'filemaker-invoice-pdf',
+    href: '/admin/settings/filemaker-invoice-pdf',
+    icon: ReceiptText,
+    title: 'Filemaker Invoice PDF',
+    description: 'Edit invoice PDF labels and default language.',
+    color: 'blue',
+    bgColor: 'bg-blue-500/10',
   },
 ];
 

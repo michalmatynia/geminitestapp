@@ -1,11 +1,13 @@
+import type { KangurDuelStatus } from '@kangur/contracts/kangur-duels';
 import React from 'react';
 import { View, Text } from 'react-native';
+import type { KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 import { formatRoundProgressLabel } from '../utils/duels-ui';
 
 interface RoundProgressBarProps {
-  locale: any;
-  roundProgress: { percent: number };
-  status: string;
+  locale: KangurMobileLocale;
+  roundProgress: { current: number; total: number; percent: number };
+  status: KangurDuelStatus;
 }
 
 export function RoundProgressBar({
@@ -17,7 +19,7 @@ export function RoundProgressBar({
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {formatRoundProgressLabel(roundProgress as any, locale)}
+        {formatRoundProgressLabel(roundProgress, locale)}
       </Text>
       <View
         style={{

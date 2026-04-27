@@ -69,193 +69,182 @@ const toIso = (value?: Date | string | null): string | null => {
   return date.toISOString();
 };
 
+
+
+
+interface HealthStatus {
+  slo: { overall: 'ok' | 'critical' };
+  running: number;
+  healthy: number;
+  activeRuns: number;
+  queuedCount: number;
+  queueLagMs: number;
+}
+
+interface RuntimeSummary {
+  [key: string]: unknown;
+}
+
+async function getAiPathsHealth(): Promise<{ provider: string; routeMode: string; collection: string; total: number | null; byStatus: Record<AiPathRunStatus, number>; latest: { id: string; status: AiPathRunStatus; createdAt: string | null } | null; error?: string }> {
+  try {
+    const repoSelection = await resolvePathRunRepository();
+    const repo = repoSelection.repo;
+    const byStatusEntries = await Promise.all(
+      AI_PATH_STATUSES.map(async (status) => {
+        const result = await repo.listRuns({ status, limit: 1, offset: 0 });
+        return [status, result.total] as const;
+      })
+    );
+    const byStatus: Record<AiPathRunStatus, number> = Object.fromEntries(byStatusEntries);
+    const all = await repo.listRuns({ limit: 1, offset: 0 });
+    const latestRun = all.runs[0];
+    const latest = latestRun
+      ? {
+        id: String((latestRun as Record<string, unknown>)['id']),
+        status: (latestRun as Record<string, unknown>)['status'] as AiPathRunStatus,
+        createdAt: toIso((latestRun as Record<string, unknown>)['createdAt'] as string),
+      }
+      : null;
+    return {
+      provider: repoSelection.provider,
+      routeMode: repoSelection.routeMode,
+      collection: repoSelection.collection,
+      total: all.total,
+      byStatus,
+      latest,
+    };
+  } catch (error) {
+    ErrorSystem.captureException(error).catch(() => { /* ignore */ });
+    return {
+      provider: 'unknown',
+      routeMode: 'fallback',
+      collection: 'ai_path_runs',
+      total: null,
+      byStatus: {},
+      latest: null,
+      error: error instanceof Error ? error.message : 'Failed to load AI Paths counts.',
+    };
+  }
+}
+
+async function getAiJobsHealth(): Promise<{ provider: string; total: number | null; byStatus: Record<ProductAiJobStatus, number>; latest: { id: string; status: ProductAiJobStatus; createdAt: string | null; productId: string | null; type: string | null } | null; error?: string }> {
+  try {
+    await getProductAiJobRepository();
+    const provider = getProductAiJobProvider() ?? 'unknown';
+
+    if (provider !== 'mongodb') {
+      return { provider, total: null, byStatus: {}, latest: null };
+    }
+
+    const db = await getMongoDb();
+    const collection = db.collection('product_ai_jobs');
+    const totals = await Promise.all(
+      JOB_STATUSES.map(async (status) => [status, await collection.countDocuments({ status })] as const)
+    );
+    const total = await collection.countDocuments({});
+    const latest = await collection
+      .find({}, { projection: { _id: 1, id: 1, status: 1, createdAt: 1, productId: 1, type: 1 } })
+      .sort({ createdAt: -1 })
+      .limit(1)
+      .next();
+    
+    const byStatus: Record<ProductAiJobStatus, number> = Object.fromEntries(totals);
+    const latestRecord = asRecord(latest);
+    const latestId = latestRecord ? resolveRecordId(latestRecord) : null;
+    
+    let latestInfo = null;
+    if (latestRecord !== null && latestId !== null) {
+      latestInfo = {
+        id: latestId,
+        status: latestRecord['status'] as ProductAiJobStatus,
+        createdAt: toIso(latestRecord['createdAt'] as Date | string | null),
+        productId: toOptionalString(latestRecord['productId']),
+        type: toOptionalString(latestRecord['type']),
+      };
+    }
+    
+    return { provider, total, byStatus, latest: latestInfo };
+  } catch (error) {
+    ErrorSystem.captureException(error).catch(() => { /* ignore */ });
+    return {
+      provider: getProductAiJobProvider() ?? 'unknown',
+      total: null,
+      byStatus: {},
+      latest: null,
+      error: error instanceof Error ? error.message : 'Failed to load AI Jobs counts.',
+    };
+  }
+}
+
+async function getQueueStatus(): Promise<{ status: HealthStatus | null; error?: string }> {
+  try {
+    const status = await getAiPathRunQueueStatus();
+    return { status: status as HealthStatus | null };
+  } catch (error) {
+    ErrorSystem.captureException(error).catch(() => { /* ignore */ });
+    return { status: null, error: error instanceof Error ? error.message : 'Failed to load queue health.' };
+  }
+}
+
+async function getRuntimeHealth(): Promise<{ summary: RuntimeSummary | null; error?: string }> {
+  try {
+    const { from, to } = resolveRuntimeAnalyticsRangeWindow('24h');
+    const summary = await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
+    return { summary: summary as RuntimeSummary };
+  } catch (error) {
+    ErrorSystem.captureException(error).catch(() => { /* ignore */ });
+    return { summary: null, error: error instanceof Error ? error.message : 'Failed to load runtime analytics summary.' };
+  }
+}
+
+let globalCriticalSloSinceMs: number | null = null;
+
 export async function getHealthHandler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireAiPathsAccess();
   startAiPathRunQueue();
   startAiInsightsQueue();
 
   const errors: Record<string, string> = {};
+  const [aiPaths, aiJobs, queueResult, runtimeResult] = await Promise.all([
+    getAiPathsHealth(),
+    getAiJobsHealth(),
+    getQueueStatus(),
+    getRuntimeHealth(),
+  ]);
 
-  const aiPaths = await (async () => {
-    try {
-      const repoSelection = await resolvePathRunRepository();
-      const repo = repoSelection.repo;
-      const byStatusEntries = await Promise.all(
-        AI_PATH_STATUSES.map(async (status) => {
-          const result = await repo.listRuns({ status, limit: 1, offset: 0 });
-          return [status, result.total] as const;
-        })
-      );
-      const byStatus: Record<AiPathRunStatus, number> = Object.fromEntries(byStatusEntries);
+  if (aiPaths.error) errors['aiPaths'] = aiPaths.error;
+  if (aiJobs.error) errors['aiJobs'] = aiJobs.error;
+  if (queueResult.error) errors['queue'] = queueResult.error;
+  if (runtimeResult.error) errors['runtime24h'] = runtimeResult.error;
 
-      const all = await repo.listRuns({ limit: 1, offset: 0 });
-      const latest = all.runs[0]
-        ? {
-          id: String((all.runs[0] as Record<string, unknown>)['id']),
-          status: (all.runs[0] as Record<string, unknown>)['status'] as AiPathRunStatus,
-          createdAt: toIso((all.runs[0] as Record<string, unknown>)['createdAt'] as string),
-        }
-        : null;
-      return {
-        provider: repoSelection.provider,
-        routeMode: repoSelection.routeMode,
-        collection: repoSelection.collection,
-        total: all.total,
-        byStatus,
-        latest,
-      };
-    } catch (error) {
-      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
-      errors['aiPaths'] =
-        error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
-      const byStatus: Record<AiPathRunStatus, number> = {};
-      return {
-        provider: 'unknown',
-        routeMode: 'fallback',
-        collection: 'ai_path_runs',
-        total: null,
-        byStatus,
-        latest: null,
-      };
-    }
-  })();
-
-  const aiJobs = await (async () => {
-    try {
-      await getProductAiJobRepository();
-      const provider = getProductAiJobProvider() ?? 'unknown';
-
-      if (provider === 'mongodb') {
-        const db = await getMongoDb();
-        const collection = db.collection('product_ai_jobs');
-        const totals = await Promise.all(
-          JOB_STATUSES.map(
-            async (status) => [status, await collection.countDocuments({ status })] as const
-          )
-        );
-        const total = await collection.countDocuments({});
-        const latest = await collection
-          .find(
-            {},
-            {
-              projection: {
-                _id: 1,
-                id: 1,
-                status: 1,
-                createdAt: 1,
-                productId: 1,
-                type: 1,
-              },
-            }
-          )
-          .sort({ createdAt: -1 })
-          .limit(1)
-          .next();
-        const byStatus: Record<ProductAiJobStatus, number> = Object.fromEntries(totals);
-        return {
-          provider,
-          total,
-          byStatus,
-          latest: (() => {
-            const latestRecord = asRecord(latest);
-            const latestId = latestRecord ? resolveRecordId(latestRecord) : null;
-            if (latestRecord === null || latestId === null) return null;
-            return {
-              id: latestId,
-              status: latestRecord['status'] as ProductAiJobStatus,
-              createdAt: toIso(latestRecord['createdAt'] as Date | string | null),
-              productId: toOptionalString(latestRecord['productId']),
-              type: toOptionalString(latestRecord['type']),
-            };
-          })(),
-        };
-      }
-
-      const byStatus: Record<ProductAiJobStatus, number> = {};
-      return {
-        provider,
-        total: null,
-        byStatus,
-        latest: null,
-      };
-    } catch (error) {
-      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
-      errors['aiJobs'] = error instanceof Error ? error.message : 'Failed to load AI Jobs counts.';
-      const byStatus: Record<ProductAiJobStatus, number> = {};
-      return {
-        provider: getProductAiJobProvider() ?? 'unknown',
-        total: null,
-        byStatus,
-        latest: null,
-      };
-    }
-  })();
-
-  const queue = await (async () => {
-    try {
-      return await getAiPathRunQueueStatus();
-    } catch (error) {
-      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
-      errors['queue'] = error instanceof Error ? error.message : 'Failed to load queue health.';
-      return null;
-    }
-  })();
-
-  const runtime24h = await (async () => {
-    try {
-      const { from, to } = resolveRuntimeAnalyticsRangeWindow('24h');
-      return await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
-    } catch (error) {
-      ErrorSystem.captureException(error).catch(() => { /* ignore */ });
-      errors['runtime24h'] =
-        error instanceof Error ? error.message : 'Failed to load runtime analytics summary.';
-      return null;
-    }
-  })();
-
-  const sloNotification = await (async () => {
-    if (queue === null || queue.slo.overall === 'ok') return null;
-    return notifyAiPathsSloBreach({
-      status: queue.slo,
-      queue: {
-        running: queue.running,
-        healthy: queue.healthy,
-        activeRuns: queue.activeRuns,
-        queuedCount: queue.queuedCount,
-        queueLagMs: queue.queueLagMs,
-      },
+  const queue = queueResult.status;
+  let sloNotification = null;
+  if (queue !== null && queue.slo.overall !== 'ok') {
+    sloNotification = await notifyAiPathsSloBreach({
+        status: queue.slo,
+        queue: { running: queue.running, healthy: queue.healthy, activeRuns: queue.activeRuns, queuedCount: queue.queuedCount, queueLagMs: queue.queueLagMs },
     });
-  })();
+  }
 
   const nowMs = Date.now();
-  const criticalGraceMs = parsePositiveInt(
-    process.env['AI_PATHS_HEALTH_CRITICAL_GRACE_MS'],
-    DEFAULT_HEALTH_CRITICAL_GRACE_MS
-  );
+  const criticalGraceMs = parsePositiveInt(process.env['AI_PATHS_HEALTH_CRITICAL_GRACE_MS'], DEFAULT_HEALTH_CRITICAL_GRACE_MS);
   const isCriticalNow = queue !== null && queue.slo.overall === 'critical';
-  if (isCriticalNow) {
-    criticalSloSinceMs = criticalSloSinceMs ?? nowMs;
-  } else {
-    criticalSloSinceMs = null;
-  }
-  const criticalForMs = criticalSloSinceMs !== null ? Math.max(0, nowMs - criticalSloSinceMs) : 0;
+  
+  globalCriticalSloSinceMs = isCriticalNow ? (globalCriticalSloSinceMs ?? nowMs) : null;
+  const criticalForMs = globalCriticalSloSinceMs !== null ? Math.max(0, nowMs - globalCriticalSloSinceMs) : 0;
   const hasCriticalSlo = isCriticalNow && criticalForMs >= criticalGraceMs;
   const ok = Object.keys(errors).length === 0 && !hasCriticalSlo;
 
   let responseErrors: Record<string, string> | undefined = undefined;
-  if (!ok) {
-    if (Object.keys(errors).length > 0) {
-      responseErrors = errors;
-    } else {
-      responseErrors = {
-        slo: `Critical AI Paths SLO breach detected for ${Math.round(criticalForMs / 1000)}s.`,
-      };
-    }
+  if (Object.keys(errors).length > 0) {
+    responseErrors = errors;
+  } else if (hasCriticalSlo) {
+    responseErrors = { slo: `Critical AI Paths SLO breach detected for ${Math.round(criticalForMs / 1000)}s.` };
   }
 
-  let responseStatus = 200;
+  let status = 200;
   if (!ok) {
-    responseStatus = hasCriticalSlo ? 503 : 500;
+    status = hasCriticalSlo ? 503 : 500;
   }
 
   return NextResponse.json(
@@ -265,16 +254,14 @@ export async function getHealthHandler(_req: NextRequest, _ctx: ApiHandlerContex
       aiPaths,
       aiJobs,
       queue,
-      runtime24h,
-      sloGate: {
-        graceMs: criticalGraceMs,
-        criticalSince:
-          criticalSloSinceMs !== null ? new Date(criticalSloSinceMs).toISOString() : null,
-        criticalForMs,
-      },
+      runtime24h: runtimeResult.summary,
+      sloGate: { graceMs: criticalGraceMs, criticalSince: globalCriticalSloSinceMs !== null ? new Date(globalCriticalSloSinceMs).toISOString() : null, criticalForMs },
       sloNotification,
       errors: responseErrors,
     },
-    { status: responseStatus }
+    { status }
   );
 }
+
+
+

@@ -1,5 +1,5 @@
-import type { KangurDuelDifficulty, KangurDuelMode, KangurDuelOperation, KangurDuelPlayer, KangurDuelPlayerStatus, KangurDuelReactionType, KangurDuelSeries, KangurDuelSession, KangurDuelStatus } from '@kangur/contracts/kangur-duels';
-import type { KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
+export type { KangurDuelDifficulty, KangurDuelMode, KangurDuelOperation, KangurDuelPlayer, KangurDuelPlayerStatus, KangurDuelReactionType, KangurDuelSeries, KangurDuelSession, KangurDuelStatus } from '@kangur/contracts/kangur-duels';
+export type { KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import type { Href } from 'expo-router';
 import { isStringNotEmpty } from './utils/duels-guards';
 

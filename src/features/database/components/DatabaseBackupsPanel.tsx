@@ -34,27 +34,23 @@ function DatabaseBackupDialogs(): JSX.Element {
 
   return (
     <>
-      {isLogModalOpen ? (
-        <LogModal isOpen={true} item={logModalContent} onClose={closeLogModal} />
-      ) : null}
+      <LogModal isOpen={isLogModalOpen} item={logModalContent} onClose={closeLogModal} />
 
-      {isRestoreModalOpen && selectedBackupForRestore !== null ? (
+      {selectedBackupForRestore !== null && (
         <RestoreModal
-          isOpen={true}
+          isOpen={isRestoreModalOpen}
           backupName={selectedBackupForRestore}
-          onClose={(): void => {
+          onClose={() => {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={(truncate: boolean): void => {
-            handleRestoreConfirm(truncate).catch(() => {});
-          }}
+          onConfirm={(truncate) => handleRestoreConfirm(truncate).catch(() => {})}
         />
-      ) : null}
+      )}
 
       <ConfirmModal
         isOpen={backupToDelete !== null}
-        onClose={(): void => setBackupToDelete(null)}
+        onClose={() => setBackupToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Backup'
         message={`Are you sure you want to delete backup "${backupToDelete ?? ''}"? This cannot be undone.`}

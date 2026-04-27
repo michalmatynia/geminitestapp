@@ -2,6 +2,8 @@ export * from './pages/AdminFilemakerPage';
 export * from './pages/AdminFilemakerListPage';
 export * from './pages/AdminFilemakerPersonsPage';
 export * from './pages/AdminFilemakerOrganizationsPage';
+export * from './pages/AdminFilemakerInvoicesPage';
+export * from './pages/AdminFilemakerInvoicePdfSettingsPage';
 export * from './pages/AdminFilemakerValuesPage';
 export * from './pages/AdminFilemakerValueEditPage';
 export * from './pages/AdminFilemakerEventsPage';

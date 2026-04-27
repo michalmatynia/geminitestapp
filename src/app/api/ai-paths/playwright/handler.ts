@@ -40,12 +40,56 @@ const normalizeCaptureConfig = (
   return Object.keys(normalized).length > 0 ? normalized : undefined;
 };
 
+interface EngineRequest {
+  script: string;
+  input?: unknown;
+  startUrl?: string;
+  timeoutMs?: number;
+  browserEngine?: string;
+  personaId?: string;
+  settingsOverrides?: Record<string, unknown>;
+  launchOptions?: Record<string, unknown>;
+  contextOptions?: Record<string, unknown>;
+  contextRegistry?: unknown;
+  capture?: CapturePayload;
+}
+
 const toPublicRun = (
   run: PlaywrightEngineRunRecord
 ): Omit<PlaywrightEngineRunRecord, 'ownerUserId'> => {
-   
-  const { ownerUserId: _unused, ...rest } = run;
+  const { ownerUserId: unused, ...rest } = run;
   return rest;
+};
+
+const addEngineOptions = (request: EngineRequest, payload: z.infer<typeof aiPathsPlaywrightEnqueueRequestSchema>) => {
+  if (payload.timeoutMs !== undefined) request.timeoutMs = payload.timeoutMs;
+  if (payload.browserEngine !== undefined) request.browserEngine = payload.browserEngine;
+  if (payload.settingsOverrides !== undefined) request.settingsOverrides = payload.settingsOverrides as Record<string, unknown>;
+  if (payload.launchOptions !== undefined) request.launchOptions = payload.launchOptions as Record<string, unknown>;
+  if (payload.contextOptions !== undefined) request.contextOptions = payload.contextOptions as Record<string, unknown>;
+};
+
+const buildEngineRequest = (
+  payload: z.infer<typeof aiPathsPlaywrightEnqueueRequestSchema>,
+  contextRegistry: unknown,
+  capture: CapturePayload | undefined
+): EngineRequest => {
+  const request: EngineRequest = { script: payload.script };
+  
+  if (payload.input !== undefined) request.input = payload.input;
+  
+  const startUrl = payload.startUrl?.trim();
+  if (typeof startUrl === 'string' && startUrl.length > 0) request.startUrl = startUrl;
+  
+  addEngineOptions(request, payload);
+  
+  const personaId = payload.personaId?.trim();
+  if (typeof personaId === 'string' && personaId.length > 0) request.personaId = personaId;
+  
+  if (contextRegistry !== undefined && contextRegistry !== null) request.contextRegistry = contextRegistry;
+  if (capture !== undefined) request.capture = capture;
+  
+  return request;
 };
 
 export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
@@ -60,24 +104,11 @@ export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerCo
   if (!parsed.ok) return parsed.response;
 
   const payload = parsed.data;
-  const startUrl = payload.startUrl?.trim();
-  const personaId = payload.personaId?.trim();
   const capture = normalizeCaptureConfig(payload.capture);
   const contextRegistry = await resolveAiPathsContextRegistryEnvelope(payload.contextRegistry);
+  
   const run = await enqueuePlaywrightEngineRun({
-    request: {
-      script: payload.script,
-      ...(payload.input !== undefined ? { input: payload.input } : {}),
-      ...(typeof startUrl === 'string' && startUrl.length > 0 ? { startUrl } : {}),
-      ...(payload.timeoutMs !== undefined ? { timeoutMs: payload.timeoutMs } : {}),
-      ...(payload.browserEngine !== undefined ? { browserEngine: payload.browserEngine } : {}),
-      ...(typeof personaId === 'string' && personaId.length > 0 ? { personaId } : {}),
-      ...(payload.settingsOverrides !== undefined ? { settingsOverrides: payload.settingsOverrides } : {}),
-      ...(payload.launchOptions !== undefined ? { launchOptions: payload.launchOptions } : {}),
-      ...(payload.contextOptions !== undefined ? { contextOptions: payload.contextOptions } : {}),
-      ...(contextRegistry !== null ? { contextRegistry } : {}),
-      ...(capture !== undefined ? { capture } : {}),
-    },
+    request: buildEngineRequest(payload, contextRegistry, capture),
     waitForResult: payload.waitForResult ?? true,
     ownerUserId: isInternal ? 'system' : access.userId,
     instance: createAiPathNodePlaywrightInstance(),
@@ -85,3 +116,6 @@ export async function postPlaywrightHandler(req: NextRequest, _ctx: ApiHandlerCo
 
   return NextResponse.json({ run: toPublicRun(run) });
 }
+
+
+

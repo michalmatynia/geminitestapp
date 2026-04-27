@@ -11,6 +11,7 @@ export const getFilemakerNav = (): NavItem => ({
     { id: 'filemaker/database', label: 'Database', href: '/admin/filemaker', exact: true },
     { id: 'filemaker/persons', label: 'Persons', href: '/admin/filemaker/persons' },
     { id: 'filemaker/organizations', label: 'Organizations', href: '/admin/filemaker/organizations' },
+    { id: 'filemaker/invoices', label: 'Invoices', href: '/admin/filemaker/invoices' },
     { id: 'filemaker/events', label: 'Events', href: '/admin/filemaker/events' },
     { id: 'filemaker/values', label: 'Values', href: '/admin/filemaker/values' },
     { id: 'filemaker/mail-client', label: 'Email Client', href: '/admin/filemaker/mail-client' },

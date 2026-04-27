@@ -178,6 +178,10 @@ const ensureIndexes = async (
       }
     ),
     collection.createIndex({ name: 1 }, { name: 'filemaker_organizations_name' }),
+    collection.createIndex(
+      { name: 1, _id: 1 },
+      { name: 'filemaker_organizations_name_id_list' }
+    ),
   ]);
 };
 

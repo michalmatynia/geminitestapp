@@ -6,16 +6,16 @@ import type { UseKangurMobileDuelsLobbyResult } from './useKangurMobileDuelsLobb
 export function useKangurDuelsAutoRefresh(
   lobby: UseKangurMobileDuelsLobbyResult,
   enabled: boolean,
-) {
+): void {
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!enabled) return;
 
     const handleLobbyRefresh = (): void => {
       void lobby.refresh();
     };
 
     handleLobbyRefresh();
-    const intervalId = safeSetInterval(handleLobbyRefresh, AUTO_REFRESH_INTERVAL_MS);
+    const intervalId = safeSetInterval(handleLobbyRefresh, AUTO_REFRESH_INTERVAL_MS as number);
 
     return () => {
       safeClearInterval(intervalId);

@@ -1,4 +1,5 @@
- 
+/* eslint-disable max-lines */
+
 import { caseResolverProfiles } from './defaults-case-resolver';
 import { imageStudioProfiles } from './defaults-image-studio';
 import { type FolderTreeProfilesV2Map, type FolderTreeProfileV2 } from './types';
@@ -235,6 +236,66 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       byKind: {
         filemaker_person: 'user',
         filemaker_person_group: 'folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_events: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to event',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'calendar-days',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_event: 'calendar-days',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
+  filemaker_invoices: {
+    version: 2,
+    placeholders: {
+      preset: 'sublime',
+      style: 'ghost',
+      emphasis: 'subtle',
+      rootDropLabel: 'Drop to Root',
+      inlineDropLabel: 'Drop to invoice',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'folder',
+        folderOpen: 'folder-open',
+        file: 'file-text',
+        root: 'folder',
+        dragHandle: 'grip-vertical',
+      },
+      byKind: {
+        filemaker_invoice: 'file-text',
       },
     },
     nesting: {

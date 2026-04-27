@@ -13,6 +13,8 @@ export * from './server/filemaker-values-repository';
 export * from './server/filemaker-organizations-repository';
 export * from './server/filemaker-persons-repository';
 export * from './server/filemaker-events-repository';
+export * from './server/filemaker-invoices-repository';
+export * from './server/filemaker-invoice-pdf';
 export * from './server/filemaker-party-snapshot-repository';
 export {
   listMongoFilemakerAddressesForOrganization,

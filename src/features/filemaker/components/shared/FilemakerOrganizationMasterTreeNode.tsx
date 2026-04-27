@@ -88,7 +88,10 @@ function FilemakerOrganizationGroupNode(props: OrganizationGroupNodeProps): Reac
 
   return (
     <div
-      className={cn('flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+      className={cn(
+        'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+        stateClassName
+      )}
       style={createTreeIndentStyle(depth)}
       role='button'
       tabIndex={0}
@@ -143,7 +146,10 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
 
   return (
     <div
-      className={cn('flex items-center gap-2 rounded px-2 py-2 text-sm transition', stateClassName)}
+      className={cn(
+        'flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm transition',
+        stateClassName
+      )}
       style={createTreeIndentStyle(depth)}
       role='button'
       tabIndex={0}
@@ -164,7 +170,7 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
         type='button'
         variant='outline'
         size='icon'
-        className='size-7'
+        className='size-7 cursor-pointer'
         aria-label={`Edit organization ${organization.name}`}
         title={`Edit organization ${organization.name}`}
         onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {

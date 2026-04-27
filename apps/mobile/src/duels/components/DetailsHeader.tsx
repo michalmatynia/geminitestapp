@@ -2,11 +2,12 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import type { KangurDuelSession } from '@kangur/contracts/kangur-duels';
 import { formatDifficultyLabel, formatModeLabel, formatOperationLabel } from '../utils/duels-ui';
+import type { DuelCopy, DuelLocale } from '../duels-screen-session-view';
 
 interface DetailsHeaderProps {
   session: KangurDuelSession;
-  copy: (v: Record<string, string>) => string;
-  locale: any;
+  copy: DuelCopy;
+  locale: DuelLocale;
 }
 
 export function DetailsHeader({

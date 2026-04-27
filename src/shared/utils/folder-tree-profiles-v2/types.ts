@@ -49,6 +49,8 @@ export const folderTreeInstanceValues = [
   'filemaker_mail',
   'filemaker_organizations',
   'filemaker_persons',
+  'filemaker_events',
+  'filemaker_invoices',
   'filemaker_values',
   'kangur_lessons_manager',
   'kangur_lessons_manager_catalog',

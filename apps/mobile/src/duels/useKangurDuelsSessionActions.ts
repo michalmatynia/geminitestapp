@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState } from 'react';
 import { shareKangurDuelInvite } from './duelInviteShare';
 import { normalizeSeriesBestOf } from './utils/duels-ui';
@@ -7,72 +8,68 @@ import type { KangurMobileLocale, KangurMobileLocalizedValue } from '../i18n/kan
 
 type DuelCopy = (value: KangurMobileLocalizedValue<string>) => string;
 
-export function useKangurDuelsSessionActions(
-  duel: UseKangurMobileDuelSessionResult,
-  lobby: UseKangurMobileDuelsLobbyResult,
-  locale: KangurMobileLocale,
-  copy: DuelCopy,
-  activeLearnerId: string | null,
-  openSession: (id: string) => void,
-) {
+export type UseKangurDuelsSessionActionsResult = {
+  inviteShareError: string | null;
+  setInviteShareError: React.Dispatch<React.SetStateAction<string | null>>;
+  handleRematch: () => Promise<void>;
+  handleInviteShare: () => Promise<void>;
+};
+
+export interface UseKangurDuelsSessionActionsOptions {
+  duel: UseKangurMobileDuelSessionResult;
+  lobby: UseKangurMobileDuelsLobbyResult;
+  locale: KangurMobileLocale;
+  copy: DuelCopy;
+  activeLearnerId: string | null;
+  openSession: (id: string) => void;
+}
+
+function resolveRematchOverrides(session: any) {
+  return {
+    difficulty: session.difficulty,
+    operation: session.operation,
+    seriesBestOf: normalizeSeriesBestOf(session.series?.bestOf),
+  } as const;
+}
+
+export function useKangurDuelsSessionActions({
+  duel,
+  lobby,
+  locale,
+  copy,
+  activeLearnerId,
+  openSession,
+}: UseKangurDuelsSessionActionsOptions): UseKangurDuelsSessionActionsResult {
   const [inviteShareError, setInviteShareError] = useState<string | null>(null);
 
   const handleRematch = async (): Promise<void> => {
     if (duel.session === null || duel.isSpectating) return;
-
-    const nextSeriesBestOf = normalizeSeriesBestOf(duel.session.series?.bestOf);
-    const overrides = {
-      difficulty: duel.session.difficulty,
-      operation: duel.session.operation,
-      seriesBestOf: nextSeriesBestOf,
-    } as const;
+    const overrides = resolveRematchOverrides(duel.session);
 
     if (duel.session.visibility === 'private') {
-      const opponentLearnerId =
-        duel.session.players.find((player) => player.learnerId !== activeLearnerId)
-          ?.learnerId ?? null;
-
-      if (opponentLearnerId !== null) {
-        const nextSessionId = await lobby.createPrivateChallenge(opponentLearnerId, overrides);
-        if (nextSessionId !== null) openSession(nextSessionId);
+      const opponentId = duel.session.players.find((p) => p.learnerId !== activeLearnerId)?.learnerId ?? null;
+      if (opponentId !== null) {
+        const next = await lobby.createPrivateChallenge(opponentId, overrides);
+        if (next !== null) openSession(next);
       }
       return;
     }
 
-    const nextSessionId =
-      duel.session.mode === 'quick_match'
+    const next = duel.session.mode === 'quick_match'
         ? await lobby.createQuickMatch(overrides)
         : await lobby.createPublicChallenge(overrides);
-    if (nextSessionId !== null) openSession(nextSessionId);
+    if (next !== null) openSession(next);
   };
 
   const handleInviteShare = async (): Promise<void> => {
     if (duel.session === null || duel.player === null || duel.isSpectating) return;
-
     setInviteShareError(null);
     try {
-      await shareKangurDuelInvite({
-        locale,
-        sessionId: duel.session.id,
-        sharerDisplayName: duel.player.displayName,
-      });
-    } catch (error) {
-      setInviteShareError(
-        error instanceof Error && error.message.trim().length > 0
-          ? error.message
-          : copy({
-              de: 'Der Einladungslink konnte nicht geteilt werden.',
-              en: 'Could not share the invite link.',
-              pl: 'Nie udało się udostępnić linku do zaproszenia.',
-            }),
-      );
+      await shareKangurDuelInvite({ locale, sessionId: duel.session.id, sharerDisplayName: duel.player.displayName });
+    } catch (err) {
+      setInviteShareError(err instanceof Error && err.message.trim() !== '' ? err.message : copy({ de: 'Der Einladungslink konnte nicht geteilt werden.', en: 'Could not share the invite link.', pl: 'Nie udało się udostępnić linku do zaproszenia.' }));
     }
   };
 
-  return {
-    inviteShareError,
-    setInviteShareError,
-    handleRematch,
-    handleInviteShare,
-  };
+  return { inviteShareError, setInviteShareError, handleRematch, handleInviteShare };
 }

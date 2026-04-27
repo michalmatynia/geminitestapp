@@ -48,5 +48,10 @@ export const getCommerceNav = (): NavItem => ({
         { id: 'commerce/assets/3d-list', label: '3D Asset List', href: '/admin/3d-assets/list' },
       ],
     },
+    {
+      id: 'commerce/job-board',
+      label: 'Job Board',
+      href: '/admin/job-board',
+    },
   ],
 });

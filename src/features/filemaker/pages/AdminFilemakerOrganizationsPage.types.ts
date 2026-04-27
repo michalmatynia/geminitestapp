@@ -26,6 +26,7 @@ export type MongoFilemakerOrganizationsResponse = {
   pageSize: number;
   query: string;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 };
 
@@ -52,6 +53,7 @@ export type OrganizationListState = {
   renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
   shownCount: number;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 };
 
@@ -74,5 +76,6 @@ export const EMPTY_ORGANIZATIONS_RESPONSE: MongoFilemakerOrganizationsResponse =
   pageSize: DEFAULT_ORGANIZATION_PAGE_SIZE,
   query: '',
   totalCount: 0,
+  totalCountIsExact: true,
   totalPages: 1,
 };

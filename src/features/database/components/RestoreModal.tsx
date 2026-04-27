@@ -17,20 +17,18 @@ type RestoreFormState = {
   truncate: boolean;
 };
 
-export const RestoreModal = (props: RestoreModalProps): React.JSX.Element | null => {
-  const {
-    isOpen,
-    onClose,
-    onSuccess,
-    backupName,
-    onConfirm,
-    title = 'Restore Database',
-    size = 'sm',
-  } = props;
-
+export const RestoreModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  backupName,
+  onConfirm,
+  title = 'Restore Database',
+  size = 'sm',
+}: RestoreModalProps): React.JSX.Element | null => {
   const [values, setValues] = useState<RestoreFormState>({ truncate: true });
 
-  const fields: SettingsPanelField<RestoreFormState>[] = useMemo(
+  const fields = useMemo<SettingsPanelField<RestoreFormState>[]>(
     () => [
       {
         key: 'truncate',
@@ -63,10 +61,11 @@ export const RestoreModal = (props: RestoreModalProps): React.JSX.Element | null
       title={title}
       fields={fields}
       values={values}
-      onChange={(vals: Partial<RestoreFormState>) => setValues((prev) => ({ ...prev, ...vals }))}
+      onChange={(vals) => setValues((prev) => ({ ...prev, ...vals }))}
       onSave={handleSave}
       saveText='Restore'
       size={size}
     />
   );
 };
+

@@ -1,10 +1,11 @@
+import { type KangurDuelSession, type KangurDuelPlayer } from '@kangur/contracts/kangur-duels';
 import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
 import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
 import {
   isWaitingSessionStatus,
   resolveRoundProgress
-} from './utils/duels-ui';
+} from './utils/duels-status';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
@@ -66,6 +67,56 @@ function getSessionTimelineItems(
   return items;
 }
 
+function resolveIsInvitedLearnerMissing(session: KangurDuelSession | null): boolean {
+  if (session?.invitedLearnerId === null || session?.invitedLearnerId === undefined) {
+    return false;
+  }
+  const invitedId = session.invitedLearnerId;
+  return !session.players.some(
+    (p) => p.learnerId === invitedId && p.status !== 'left',
+  );
+}
+
+function resolveActivePlayersCount(session: KangurDuelSession | null): number {
+  return session?.players.filter((player) => player.status !== 'left').length ?? 0;
+}
+
+function resolveHasPendingInvitedPlayer(session: KangurDuelSession | null): boolean {
+  return session?.players.some((player) => player.status === 'invited') ?? false;
+}
+
+function resolveCanShareInvite(options: {
+  session: KangurDuelSession | null;
+  player: KangurDuelPlayer | null;
+  isSpectating: boolean;
+  hasWaitingSession: boolean;
+  hasPendingInvitedPlayer: boolean;
+  isInvitedLearnerMissing: boolean;
+  needsMorePlayersToStart: boolean;
+}): boolean {
+  const { session, player, isSpectating, hasWaitingSession, hasPendingInvitedPlayer, isInvitedLearnerMissing, needsMorePlayersToStart } = options;
+  return (
+    session !== null &&
+    player !== null &&
+    !isSpectating &&
+    session.visibility === 'private' &&
+    hasWaitingSession &&
+    (hasPendingInvitedPlayer || isInvitedLearnerMissing || needsMorePlayersToStart)
+  );
+}
+
+function resolveHasWaitingSession(session: KangurDuelSession | null): boolean {
+  return session !== null && isWaitingSessionStatus(session.status);
+}
+
+function resolveIsFinishedSession(session: KangurDuelSession | null): boolean {
+  return session !== null && (session.status === 'completed' || session.status === 'aborted');
+}
+
+function resolveNeedsMorePlayersToStart(session: KangurDuelSession | null, activePlayersCount: number): boolean {
+  return session !== null && activePlayersCount < (session.minPlayersToStart ?? 2);
+}
+
 export type UseKangurDuelsSessionStateResult = {
   activePlayersCount: number;
   canShareInvite: boolean;
@@ -88,33 +139,27 @@ export function useKangurDuelsSessionState(
   locale: DuelLocale,
   duel: DuelSessionState,
 ): UseKangurDuelsSessionStateResult {
-  const hasWaitingSession = duel.session !== null && isWaitingSessionStatus(duel.session.status);
-  const isFinishedSession = duel.session !== null && (duel.session.status === 'completed' || duel.session.status === 'aborted');
-  const roundProgress = duel.session !== null
-    ? resolveRoundProgress(duel.session, duel.player, duel.isSpectating)
+  const session = duel.session;
+  const hasWaitingSession = resolveHasWaitingSession(session);
+  const isFinishedSession = resolveIsFinishedSession(session);
+  const roundProgress = session !== null
+    ? resolveRoundProgress(session, duel.player, duel.isSpectating)
     : null;
-  const activePlayersCount =
-    duel.session?.players.filter((player) => player.status !== 'left').length ?? 0;
-  const hasPendingInvitedPlayer =
-    duel.session?.players.some((player) => player.status === 'invited') ?? false;
-
-  let isInvitedLearnerMissing = false;
-  if (duel.session?.invitedLearnerId !== null && duel.session?.invitedLearnerId !== undefined) {
-    const invitedId = duel.session.invitedLearnerId;
-    isInvitedLearnerMissing = !duel.session.players.some(
-      (p) => p.learnerId === invitedId && p.status !== 'left',
-    );
-  }
-
-  const needsMorePlayersToStart = duel.session !== null && activePlayersCount < (duel.session.minPlayersToStart ?? 2);
-  const canShareInvite = Boolean(
-    duel.session !== null &&
-      duel.player !== null &&
-      !duel.isSpectating &&
-      duel.session.visibility === 'private' &&
-      hasWaitingSession &&
-      (hasPendingInvitedPlayer || isInvitedLearnerMissing || needsMorePlayersToStart),
-  );
+  
+  const activePlayersCount = resolveActivePlayersCount(session);
+  const hasPendingInvitedPlayer = resolveHasPendingInvitedPlayer(session);
+  const isInvitedLearnerMissing = resolveIsInvitedLearnerMissing(session);
+  const needsMorePlayersToStart = resolveNeedsMorePlayersToStart(session, activePlayersCount);
+  
+  const canShareInvite = resolveCanShareInvite({
+    session,
+    player: duel.player,
+    isSpectating: duel.isSpectating,
+    hasWaitingSession,
+    hasPendingInvitedPlayer,
+    isInvitedLearnerMissing,
+    needsMorePlayersToStart,
+  });
 
   return {
     activePlayersCount,

@@ -34,10 +34,42 @@ export type FilemakerOrganizationsListResult = {
   pageSize: number;
   query: string;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 };
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const ORGANIZATION_LIST_PROJECTION = {
+  _id: 1,
+  addressId: 1,
+  city: 1,
+  cooperationStatus: 1,
+  country: 1,
+  countryId: 1,
+  createdAt: 1,
+  defaultBankAccountId: 1,
+  displayAddressId: 1,
+  displayBankAccountId: 1,
+  establishedDate: 1,
+  id: 1,
+  krs: 1,
+  legacyDefaultAddressUuid: 1,
+  legacyDefaultBankAccountUuid: 1,
+  legacyDisplayAddressUuid: 1,
+  legacyDisplayBankAccountUuid: 1,
+  legacyParentUuid: 1,
+  legacyUuid: 1,
+  name: 1,
+  parentOrganizationId: 1,
+  postalCode: 1,
+  street: 1,
+  streetNumber: 1,
+  taxId: 1,
+  tradingName: 1,
+  updatedAt: 1,
+  updatedBy: 1,
+} as const;
 
 const hasFieldValueFilter = (
   field: keyof FilemakerOrganizationMongoDocument
@@ -139,6 +171,7 @@ const buildListResult = (input: {
   options: FilemakerOrganizationsListOptions;
   page: number;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 }): FilemakerOrganizationsListResult => ({
   collectionCount: input.collectionCount,
@@ -154,6 +187,7 @@ const buildListResult = (input: {
   pageSize: input.options.pageSize,
   query: input.options.query,
   totalCount: input.totalCount,
+  totalCountIsExact: input.totalCountIsExact,
   totalPages: input.totalPages,
 });
 
@@ -169,18 +203,27 @@ export const listMongoFilemakerOrganizations = async (
     updatedBy: options.updatedBy,
   });
   const collection = await getFilemakerOrganizationsCollection();
-  const [collectionCount, totalCount] = await Promise.all([
-    collection.estimatedDocumentCount(),
-    collection.countDocuments(filter),
-  ]);
-  const totalPages = Math.max(1, Math.ceil(totalCount / options.pageSize));
-  const page = normalizeOrganizationPage(options.requestedPage, totalPages);
-  const documents = await collection
-    .find(filter)
+  const hasActiveFilter = Object.keys(filter).length > 0;
+  const collectionCount = await collection.estimatedDocumentCount();
+  const exactTotalPages = Math.max(1, Math.ceil(collectionCount / options.pageSize));
+  const page = hasActiveFilter
+    ? normalizeOrganizationPage(options.requestedPage, Number.MAX_SAFE_INTEGER)
+    : normalizeOrganizationPage(options.requestedPage, exactTotalPages);
+  const requestedLimit = hasActiveFilter ? options.pageSize + 1 : options.pageSize;
+  const rawDocuments = await collection
+    .find(filter, { projection: ORGANIZATION_LIST_PROJECTION })
     .sort({ name: 1, _id: 1 })
     .skip((page - 1) * options.pageSize)
-    .limit(options.pageSize)
+    .limit(requestedLimit)
     .toArray();
+  const hasNextPage = hasActiveFilter && rawDocuments.length > options.pageSize;
+  const documents = hasActiveFilter ? rawDocuments.slice(0, options.pageSize) : rawDocuments;
+  const totalCount = hasActiveFilter
+    ? (page - 1) * options.pageSize + documents.length + (hasNextPage ? 1 : 0)
+    : collectionCount;
+  const totalPages = hasActiveFilter
+    ? Math.max(1, page + (hasNextPage ? 1 : 0))
+    : exactTotalPages;
 
   return buildListResult({
     collectionCount,
@@ -188,6 +231,7 @@ export const listMongoFilemakerOrganizations = async (
     options,
     page,
     totalCount,
+    totalCountIsExact: !hasActiveFilter,
     totalPages,
   });
 };

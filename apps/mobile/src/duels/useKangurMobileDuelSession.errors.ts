@@ -39,7 +39,7 @@ export const resolveSessionMessageWithFallback = (
   message: string | null,
   fallback: string,
 ): string => {
-  if (!message || isFallbackSessionErrorMessage(message)) {
+  if (message === null || message === '' || isFallbackSessionErrorMessage(message)) {
     return fallback;
   }
 
@@ -51,7 +51,7 @@ export const toSessionErrorMessage = (
   fallback: string,
   copy: (value: KangurMobileLocalizedValue<string>) => string,
 ): string | null => {
-  if (!error) {
+  if (error === null || error === undefined) {
     return null;
   }
 

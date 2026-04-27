@@ -43,7 +43,7 @@ export interface UseKangurMobileDuelsLobbyResult {
   isPresenceLoading: boolean;
   isRestoringAuth: boolean;
   isSearchLoading: boolean;
-  joinDuel: (sessionId: string) => Promise<boolean>;
+  joinDuel: (sessionId: string) => Promise<string | null>;
   leaderboardEntries: KangurDuelLeaderboardEntry[];
   leaderboardError: string | null;
   lobbyError: string | null;

@@ -54,8 +54,9 @@ const createDataColumns = (keys: string[]): ColumnDef<RowData>[] => {
   }));
 };
 
+import { useCrudPanelStateContext, useCrudPanelActionsContext } from '../context/CrudPanelContext';
+
 const DataTable = ({
-  selectedTable,
   columnDefs,
   rows,
   isLoadingRows,
@@ -64,10 +65,7 @@ const DataTable = ({
   page,
   pageSize,
   totalRows,
-  setPage,
-  setPageSize,
 }: {
-  selectedTable: string;
   columnDefs: ColumnDef<RowData>[];
   rows: RowData[];
   isLoadingRows: boolean;
@@ -76,9 +74,10 @@ const DataTable = ({
   page: number;
   pageSize: number;
   totalRows: number;
-  setPage: (page: number) => void;
-  setPageSize: (size: number) => void;
 }): React.JSX.Element => {
+  const { selectedTable } = useCrudPanelStateContext();
+  const { setPage, setPageSize } = useCrudPanelActionsContext();
+
   if (selectedTable === '') {
     return (
       <div className='space-y-4'>
@@ -165,7 +164,6 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
     >
       <div className='space-y-4'>
         <DataTable
-            selectedTable={selectedTable}
             columnDefs={columnDefs}
             rows={rows}
             isLoadingRows={isLoadingRows}
@@ -174,8 +172,6 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
             page={page}
             pageSize={pageSize}
             totalRows={totalRows}
-            setPage={setPage}
-            setPageSize={setPageSize}
         />
         {showAddModal && tableDetail && <RowFormModal columns={tableDetail.columns} mode='add' onSubmit={handleAdd} onClose={() => setShowAddModal(false)} isPending={crudMutation.isPending} />}
         {editingRow && tableDetail && <RowFormModal columns={tableDetail.columns} initialData={editingRow} mode='edit' onSubmit={handleEdit} onClose={() => setEditingRow(null)} isPending={crudMutation.isPending} />}
@@ -184,3 +180,5 @@ export function CrudPanel(props: CrudPanelProps): React.JSX.Element {
     </CrudPanelProvider>
   );
 }
+
+

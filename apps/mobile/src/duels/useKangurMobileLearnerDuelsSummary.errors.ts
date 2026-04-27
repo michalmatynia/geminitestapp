@@ -6,11 +6,11 @@ export const toDuelsSummaryErrorMessage = (
   error: unknown,
   copy: DuelCopy,
 ): string | null => {
-  if (!error) {
+  if (error === null || error === undefined) {
     return null;
   }
 
-  if (typeof error === 'object' && error && 'status' in error) {
+  if (typeof error === 'object' && 'status' in error) {
     const status = (error as { status?: number }).status;
 
     if (status === 401) {
@@ -31,7 +31,7 @@ export const toDuelsSummaryErrorMessage = (
   }
 
   const message = error.message.trim();
-  if (!message) {
+  if (message === '') {
     return copy({
       de: 'Die Duellstatistiken konnten nicht geladen werden.',
       en: 'Could not load duel stats.',
@@ -55,7 +55,7 @@ export const toDuelsSummaryActionErrorMessage = (
   error: unknown,
   copy: DuelCopy,
 ): string => {
-  if (typeof error === 'object' && error && 'status' in error) {
+  if (typeof error === 'object' && error !== null && 'status' in error) {
     const status = (error as { status?: number }).status;
 
     if (status === 401) {
@@ -76,7 +76,7 @@ export const toDuelsSummaryActionErrorMessage = (
   }
 
   const message = error.message.trim();
-  if (!message) {
+  if (message === '') {
     return copy({
       de: 'Das private Rückspiel konnte nicht erstellt werden.',
       en: 'Could not create the private rematch.',

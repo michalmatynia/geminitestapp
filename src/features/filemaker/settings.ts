@@ -13,6 +13,7 @@ export * from './settings/upsert-logic';
 export * from './settings/removal-logic';
 export * from './settings/campaign-scheduling';
 export * from './settings/campaigns';
+export * from './filemaker-invoice-pdf-settings';
 
 export {
   normalizeFilemakerDatabase,

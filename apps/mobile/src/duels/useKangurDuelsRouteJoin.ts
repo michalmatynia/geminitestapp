@@ -4,14 +4,29 @@ import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 
 type DuelCopy = (value: KangurMobileLocalizedValue<string>) => string;
 
-export function useKangurDuelsRouteJoin(
-  lobby: UseKangurMobileDuelsLobbyResult,
-  joinSessionId: string | null,
-  routeSessionId: string | null,
-  isSpectatingRoute: boolean,
-  copy: DuelCopy,
-  openSession: (id: string) => void,
-) {
+export type UseKangurDuelsRouteJoinResult = {
+  routeJoinError: string | null;
+  isJoiningFromRoute: boolean;
+  joinSessionFromRoute: () => Promise<void>;
+};
+
+export interface UseKangurDuelsRouteJoinOptions {
+  lobby: UseKangurMobileDuelsLobbyResult;
+  joinSessionId: string | null;
+  routeSessionId: string | null;
+  isSpectatingRoute: boolean;
+  copy: DuelCopy;
+  openSession: (id: string) => void;
+}
+
+export function useKangurDuelsRouteJoin({
+  lobby,
+  joinSessionId,
+  routeSessionId,
+  isSpectatingRoute,
+  copy,
+  openSession,
+}: UseKangurDuelsRouteJoinOptions): UseKangurDuelsRouteJoinResult {
   const [routeJoinError, setRouteJoinError] = useState<string | null>(null);
   const [isJoiningFromRoute, setIsJoiningFromRoute] = useState(false);
   const attemptedJoinSessionIdRef = useRef<string | null>(null);

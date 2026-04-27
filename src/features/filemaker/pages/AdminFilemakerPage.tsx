@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, CalendarDays, Database, Globe, Mail, Megaphone, ShieldAlert, Tags, Users } from 'lucide-react';
+import { Building2, CalendarDays, Database, FileText, Globe, Mail, Megaphone, ShieldAlert, Tags, Users } from 'lucide-react';
 import React, { startTransition } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -27,6 +27,7 @@ const FILEMAKER_PAGE_ACTIONS = [
     Icon: Building2,
   },
   { key: 'mail', label: 'Email Client', href: '/admin/filemaker/mail-client', Icon: Mail },
+  { key: 'invoices', label: 'Invoices Page', href: '/admin/filemaker/invoices', Icon: FileText },
   { key: 'campaigns', label: 'Campaigns Page', href: '/admin/filemaker/campaigns', Icon: Megaphone },
   {
     key: 'control-centre',
@@ -56,7 +57,7 @@ function AdminFilemakerPageInner(): React.JSX.Element {
     <div className='page-section-compact space-y-6'>
       <PanelHeader
         title='Filemaker'
-        description='Manage persons, organizations, events, and emails used in Case Resolver document addressing.'
+        description='Manage persons, organizations, events, invoices, and emails used in FileMaker workflows.'
         icon={<Database className='size-4' />}
         actions={buildFilemakerPageActions(router)}
       />

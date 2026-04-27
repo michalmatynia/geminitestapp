@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { formatRoundProgressLabel } from '../../utils/duels-ui';
+import { formatRoundProgressLabel } from "../utils/duels-ui";
 
 interface RoundProgressBarProps {
   locale: any;

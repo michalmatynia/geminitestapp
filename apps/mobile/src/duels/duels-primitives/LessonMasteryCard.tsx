@@ -10,7 +10,7 @@ import {
 } from '../../shared/KangurMobileUi';
 import {
   getLessonMasteryTone,
-} from '../duels-utils';
+} from '../duels-ui';
 import { LinkButton, renderOptionalLinkButton } from './BaseComponents';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];

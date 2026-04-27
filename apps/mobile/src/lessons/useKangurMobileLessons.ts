@@ -7,7 +7,7 @@ import {
   getKangurPracticeOperationForLessonComponent,
   type KangurProgressState,
 } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { createDefaultKangurProgressState, type KangurLessonMasteryEntry } from '@kangur/contracts/kangur';
 import type { Href } from 'expo-router';
 import { useMemo, useState, useSyncExternalStore, useCallback } from 'react';
 
@@ -49,19 +49,22 @@ const transformLesson = (
   locale: KangurMobileLocale,
   selectedLessonId: string | null
 ): KangurMobileLessonItem => {
-  const checkpoint = progress.lessonMastery[lesson.componentId];
+  const checkpoint = progress.lessonMastery[lesson.componentId] as KangurLessonMasteryEntry | undefined;
   const practiceOperation = getKangurPracticeOperationForLessonComponent(lesson.componentId);
 
+  let checkpointSummary: KangurMobileLessonItem['checkpointSummary'] = null;
+  if (checkpoint && typeof checkpoint.lastCompletedAt === 'string') {
+    checkpointSummary = {
+      attempts: checkpoint.attempts,
+      bestScorePercent: checkpoint.bestScorePercent,
+      lastCompletedAt: checkpoint.lastCompletedAt,
+      lastScorePercent: checkpoint.lastScorePercent,
+      masteryPercent: checkpoint.masteryPercent,
+    };
+  }
+
   return {
-    checkpointSummary: checkpoint !== undefined && typeof checkpoint.lastCompletedAt === 'string'
-      ? {
-          attempts: checkpoint.attempts,
-          bestScorePercent: checkpoint.bestScorePercent,
-          lastCompletedAt: checkpoint.lastCompletedAt,
-          lastScorePercent: checkpoint.lastScorePercent,
-          masteryPercent: checkpoint.masteryPercent,
-        }
-      : null,
+    checkpointSummary,
     isFocused: lesson.id === selectedLessonId,
     lesson,
     mastery: getKangurLessonMasteryPresentation(lesson, progress, locale),

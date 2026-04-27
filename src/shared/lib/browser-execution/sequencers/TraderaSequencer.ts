@@ -90,7 +90,7 @@ export class TraderaSequencer extends PlaywrightSequencer {
     super(context);
   }
 
-  protected async executeStep(stepId: StepId): Promise<void> {
+  protected override async executeStep(stepId: StepId): Promise<void> {
     const helpers = this.helpers;
 
     switch (stepId) {

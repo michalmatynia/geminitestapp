@@ -1,7 +1,7 @@
 import type { KangurDuelSession, KangurDuelPlayer } from '@kangur/contracts/kangur-duels';
 import React from 'react';
 import { KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
-import { formatQuestionProgress, formatSpectatorQuestionProgress } from '../../utils/duels-ui';
+import { formatQuestionProgress, formatSpectatorQuestionProgress } from "../utils/duels-ui";
 
 interface ProgressPillProps {
   duel: { player?: KangurDuelPlayer };

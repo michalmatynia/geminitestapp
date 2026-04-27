@@ -20,7 +20,7 @@ export class VintedSequencer extends PlaywrightSequencer {
     super(context);
   }
 
-  protected async executeStep(stepId: StepId): Promise<void> {
+  protected override async executeStep(stepId: StepId): Promise<void> {
     const { page } = this.context;
 
     switch (stepId) {

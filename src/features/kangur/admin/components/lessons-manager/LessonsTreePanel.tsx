@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View } from '@/shared/ui/react-native-web-shim';
 import { AdminKangurLessonSectionsPanel } from '../AdminKangurLessonSectionsPanel';
 import { AdminKangurLessonsManagerTreePanel } from '../AdminKangurLessonsManagerTreePanel';
 

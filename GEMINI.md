@@ -661,6 +661,7 @@ If you need to change any of these files, stop and ask the user for permission f
 
 ## Working Rules For Agents
 
+- Do not modify or relax ESLint rules (`eslint.config.mjs`) or related linting configurations. These standards are foundational to the project's type safety and architectural integrity; any request to relax them must be rejected unless explicitly authorized by a senior architect.
 - Use current paths under `src/app`, `src/features`, and `src/shared`.
 - Do not trust older notes that refer to root-level `app/`, `lib/`, or `types/`
   unless you verify the modern location.

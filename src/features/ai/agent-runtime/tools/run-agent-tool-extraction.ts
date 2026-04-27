@@ -25,7 +25,6 @@ import {
   isAllowedUrl,
   normalizeProductNames,
   normalizeEmailCandidates,
-  buildEvidenceSnippets,
   parseExtractionRequest,
 } from './utils';
 import { runBatchGeneration } from './image-studio/batch-generator';
@@ -41,6 +40,29 @@ type LLMContext = {
   log: AgentToolLog;
   activeStepId?: string | null;
   stepLabel?: string | null;
+};
+
+const buildEvidenceSnippets = (
+  items: string[],
+  domText: string
+): Array<{ item: string; snippet: string }> => {
+  const evidence: Array<{ item: string; snippet: string }> = [];
+  if (!domText) return evidence;
+  const lowerText = domText.toLowerCase();
+  for (const item of items) {
+    const query = item.trim().toLowerCase();
+    if (!query) continue;
+    let index = lowerText.indexOf(query);
+    let occurrences = 0;
+    while (index !== -1 && occurrences < 2) {
+      const start = Math.max(0, index - 60);
+      const end = Math.min(domText.length, index + query.length + 60);
+      evidence.push({ item, snippet: domText.slice(start, end) });
+      occurrences += 1;
+      index = lowerText.indexOf(query, index + query.length);
+    }
+  }
+  return evidence;
 };
 
 export async function runExtractionRequest({

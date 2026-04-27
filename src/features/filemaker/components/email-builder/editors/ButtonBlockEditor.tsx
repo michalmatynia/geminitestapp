@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text, TextInput } from '@/shared/ui/react-native-web-shim';
 
 interface EditorProps<T> {
   block: T;

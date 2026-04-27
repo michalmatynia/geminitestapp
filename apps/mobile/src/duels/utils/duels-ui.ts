@@ -27,6 +27,7 @@ export const {
   formatRoundProgressLabel,
   formatSeriesProgress,
   formatSeriesSummary,
+  formatLobbySeriesSummary,
   formatSeriesTitle,
   formatSpectatorQuestionProgress,
   getPlayerStatusTone,

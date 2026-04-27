@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { Card, KangurMobileLinkButton as LinkButton } from '@/features/kangur/ui/components';
+import { Text } from '@/shared/ui/react-native-web-shim';
+import { KangurInfoCard } from '@/features/kangur/ui/design/primitives';
 import { formatDate, getPostTitle, getPostExcerpt } from '../utils/social-post-formatters';
 import type { KangurSocialPost } from '@/shared/contracts/kangur-social-posts';
 
@@ -11,7 +11,7 @@ interface SocialPostCardProps {
 
 export function SocialPostCard({ post, copy }: SocialPostCardProps): React.JSX.Element {
   return (
-    <Card>
+    <KangurInfoCard padding='md' className='flex flex-col gap-2'>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
         {formatDate(post.createdAt)}
       </Text>
@@ -22,11 +22,15 @@ export function SocialPostCard({ post, copy }: SocialPostCardProps): React.JSX.E
         {getPostExcerpt(post)}
       </Text>
       {post.linkedinUrl ? (
-        <LinkButton
+        <a
           href={post.linkedinUrl}
-          label={copy({ de: 'Auf LinkedIn ansehen', en: 'View on LinkedIn', pl: 'Zobacz na LinkedIn' })}
-        />
+          target='_blank'
+          rel='noopener noreferrer'
+          className='text-sm font-semibold [color:var(--kangur-page-text)] hover:underline'
+        >
+          {copy({ de: 'Auf LinkedIn ansehen', en: 'View on LinkedIn', pl: 'Zobacz na LinkedIn' })}
+        </a>
       ) : null}
-    </Card>
+    </KangurInfoCard>
   );
 }

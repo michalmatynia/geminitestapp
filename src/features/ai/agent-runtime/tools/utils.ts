@@ -1,8 +1,189 @@
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+export const toDataUrl = (buffer: Buffer): string => `data:image/png;base64,${buffer.toString('base64')}`;
+
+export const safeText = (value: string | null | undefined): string => value ?? '';
+
+export const extractTargetUrl = (prompt?: string): string | null => {
+  if (!prompt) return null;
+  const urlMatch = prompt.match(/https?:\/\/[^\s)]+/i);
+  if (urlMatch) return urlMatch[0];
+  const domainMatch = prompt.match(/\b([a-z0-9-]+\.)+[a-z]{2,}\b/i);
+  if (domainMatch) {
+    return `https://${domainMatch[0]}`;
+  }
+  if (/base\.com/i.test(prompt)) {
+    return 'https://base.com';
+  }
+  return null;
+};
+
+export const hasExplicitUrl = (prompt?: string): boolean =>
+  Boolean(prompt?.match(/https?:\/\/[^\s)]+/i));
+
+export const getTargetHostname = (prompt?: string): string | null => {
+  const url = extractTargetUrl(prompt);
+  if (!url) return null;
+  try {
+    return new URL(url).hostname.replace(/^www\./i, '');
+  } catch (error) {
+    logClientError(error);
+    return null;
+  }
+};
+
+export const isAllowedUrl = (url: string, targetHostname: string | null): boolean => {
+  if (!targetHostname) return true;
+  try {
+    const hostname = new URL(url).hostname.replace(/^www\./i, '');
+    return hostname === targetHostname || hostname.endsWith(`.${targetHostname}`);
+  } catch (error) {
+    logClientError(error);
+    return false;
+  }
+};
+
+export const normalizeProductNames = (items: string[]): string[] => {
+  const seen = new Set<string>();
+  const uiNoise =
+    /^(add to cart|quick view|view details|view product|choose options|select options|in stock|out of stock|sold out|sale|new|buy now|learn more|load more|show more|filters?|sort by)$/i;
+  return items
+    .map((item: string) => item.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .filter((item: string) => /[a-z]/i.test(item))
+    .filter((item: string) => !/^[a-f0-9]{16,}$/i.test(item))
+    .filter((item: string) => !/^[a-f0-9]{32,}$/i.test(item))
+    .filter((item: string) => !/^\$?\d+(?:\.\d+)?$/.test(item))
+    .filter((item: string) => !uiNoise.test(item))
+    .filter((item: string) => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+};
+
+export const normalizeEmailCandidates = (items: string[]): string[] => {
+  const seen = new Set<string>();
+  const cleaned = items
+    .map((item: string) => item.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((item: string) => /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(item));
+  return cleaned.filter((item: string) => {
+    if (seen.has(item)) return false;
+    seen.add(item);
+    return true;
+  });
+};
+
+export const loadRobotsTxt = async (
+  url: string
+): Promise<{ ok: boolean; status: number | null; content: string; error?: string }> => {
+  try {
+    const target = new URL(url);
+    const robotsUrl = `${target.origin}/robots.txt`;
+    const response = await fetch(robotsUrl, { method: 'GET' });
+    if (!response.ok) {
+      return { ok: false, status: response.status, content: '' };
+    }
+    const content = await response.text();
+    return { ok: true, status: response.status, content };
+  } catch (error) {
+    logClientError(error);
+    return {
+      ok: false,
+      status: null,
+      content: '',
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+};
+
+export const parseRobotsRules = (
+  robotsTxt: string
+): Map<string, Array<{ type: 'allow' | 'disallow'; path: string }>> => {
+  const rules = new Map<string, Array<{ type: 'allow' | 'disallow'; path: string }>>();
+  let currentAgents: string[] = [];
+  const lines = robotsTxt.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.split('#')[0]?.trim();
+    if (!line) continue;
+    const [rawKey, ...rest] = line.split(':');
+    const key = rawKey?.trim().toLowerCase();
+    const value = rest.join(':').trim();
+    if (!key) continue;
+    if (key === 'user-agent') {
+      const agent = value.toLowerCase();
+      currentAgents = agent ? [agent] : [];
+      for (const entry of currentAgents) {
+        if (!rules.has(entry)) {
+          rules.set(entry, []);
+        }
+      }
+      continue;
+    }
+    if (key === 'allow' || key === 'disallow') {
+      if (currentAgents.length === 0) continue;
+      for (const agent of currentAgents) {
+        const list = rules.get(agent) ?? [];
+        list.push({ type: key, path: value });
+        rules.set(agent, list);
+      }
+    }
+  }
+  return rules;
+};
+
+export const evaluateRobotsRules = (
+  rules: Array<{ type: 'allow' | 'disallow'; path: string }>,
+  path: string
+): { allowed: boolean; matchedRule: { type: 'allow' | 'disallow'; path: string } | null } => {
+  let bestMatch: { type: 'allow' | 'disallow'; path: string } | null = null;
+  for (const rule of rules) {
+    if (!rule.path) {
+      if (rule.type === 'allow' && !bestMatch) {
+        bestMatch = rule;
+      }
+      continue;
+    }
+    if (path.startsWith(rule.path)) {
+      if (!bestMatch || rule.path.length > bestMatch.path.length) {
+        bestMatch = rule;
+      } else if (rule.path.length === bestMatch?.path.length && rule.type === 'allow') {
+        bestMatch = rule;
+      }
+    }
+  }
+  if (!bestMatch) return { allowed: true, matchedRule: null };
+  return {
+    allowed: bestMatch.type !== 'disallow',
+    matchedRule: bestMatch,
+  };
+};
+
+export const parseCredentials = (
+  prompt?: string
+): { email?: string; username?: string; password?: string } | null => {
+  if (!prompt) return null;
+  const emailMatch = prompt.match(/email\s*[:=]\s*([^\s]+)/i);
+  const userMatch = prompt.match(/(?:username|user|login)\s*[:=]\s*([^\s]+)/i);
+  const passMatch = prompt.match(/(?:password|pass|pwd)\s*[:=]\s*([^\s]+)/i);
+  const email = emailMatch?.[1];
+  const username = userMatch?.[1];
+  const password = passMatch?.[1];
+  if (!password || (!email && !username)) return null;
+  return {
+    ...(email ? { email } : {}),
+    ...(username ? { username } : {}),
+    password,
+  };
+};
+
 export const parseExtractionRequest = (
   prompt?: string
 ): { type: 'product_names' | 'emails' | 'batch_image'; count: number | null } | null => {
   if (!prompt) return null;
-  
+
   if (/generate\s+images/i.test(prompt)) {
     const countMatch = prompt.match(/(\d+)\s*images/i);
     return { type: 'batch_image', count: countMatch ? Number(countMatch[1]) : 1 };
@@ -26,4 +207,41 @@ export const parseExtractionRequest = (
     return { type: 'emails', count };
   }
   return null;
+};
+
+export const buildEvidenceSnippets = (
+  items: string[],
+  domText: string
+): Array<{ item: string; snippet: string }> => {
+  const evidence: Array<{ item: string; snippet: string }> = [];
+  if (!domText) return evidence;
+  const lowerText = domText.toLowerCase();
+  for (const item of items) {
+    const query = item.trim().toLowerCase();
+    if (!query) continue;
+    let index = lowerText.indexOf(query);
+    let occurrences = 0;
+    while (index !== -1 && occurrences < 2) {
+      const start = Math.max(0, index - 60);
+      const end = Math.min(domText.length, index + query.length + 60);
+      evidence.push({ item, snippet: domText.slice(start, end) });
+      occurrences += 1;
+      index = lowerText.indexOf(query, index + query.length);
+    }
+  }
+  return evidence;
+};
+
+export const resolveIgnoreRobotsTxt = (planState?: unknown): boolean => {
+  if (!planState) return false;
+  try {
+    const parsed = (typeof planState === 'string' ? JSON.parse(planState) : planState) as {
+      config?: { ignoreRobotsTxt?: boolean };
+      ignoreRobotsTxt?: boolean;
+    } | null;
+    return Boolean(parsed?.config?.ignoreRobotsTxt || parsed?.ignoreRobotsTxt);
+  } catch (error) {
+    logClientError(error);
+    return false;
+  }
 };

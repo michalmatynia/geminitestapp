@@ -8,7 +8,7 @@ import {
 } from '../../shared/KangurMobileUi';
 import {
   PROFILE_ROUTE,
-} from '../duels-utils';
+} from '../duels-ui';
 import { LinkButton } from './BaseComponents';
 
 function DuelsBadgeChip({

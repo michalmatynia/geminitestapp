@@ -1,0 +1,20 @@
+Audit for: src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts
+Audit for: src/shared/lib/browser-execution/sequencers/product-scan-scraped-items.ts
+Audit for: src/shared/lib/browser-execution/sequencers/ProductScanSequencer.ts
+  [MISSING OVERRIDE]: protected async captureArtifacts(key: string): Promise<void> {
+  [MISSING OVERRIDE]: protected async wait(ms: number): Promise<void> {
+Audit for: src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-category-sequencer-types.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-drill.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker-automation.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker-state.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker.test.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-picker.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-post-selection-text.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-post-selection.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-public-page.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-session.ts
+Audit for: src/shared/lib/browser-execution/sequencers/tradera-listing-form-category-tree-crawl.ts
+Audit for: src/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer.ts
+Audit for: src/shared/lib/browser-execution/sequencers/TraderaSequencer.ts
+Audit for: src/shared/lib/browser-execution/sequencers/VintedSequencer.ts

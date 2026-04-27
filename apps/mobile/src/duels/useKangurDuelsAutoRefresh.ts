@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AUTO_REFRESH_INTERVAL_MS } from '../utils/duels-ui';
+import { AUTO_REFRESH_INTERVAL_MS } from "./utils/duels-ui";
 import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 import type { UseKangurMobileDuelsLobbyResult } from './useKangurMobileDuelsLobby';
 

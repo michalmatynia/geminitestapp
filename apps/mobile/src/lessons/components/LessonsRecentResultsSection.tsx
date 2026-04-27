@@ -1,53 +1,57 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../shared/KangurMobileUi';
-import { LessonRecentResultRow } from './lesson-row-primitives';
+import { Text } from 'react-native';
+import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
+import { LessonRecentResultRow } from '../lesson-row-primitives';
+import { View } from 'react-native';
 
-interface LessonsRecentResultsSectionProps {
-  lessonRecentResults: any;
-  copy: (v: Record<string, string>) => string;
-  resultsHref: any;
-}
+export function LessonsRecentResultsSection({ 
+    isPreparingLessonsView, 
+    copy, 
+    resultsHref, 
+    lessonRecentResults 
+}: any): React.JSX.Element | null {
+    if (isPreparingLessonsView) return null;
 
-export function LessonsRecentResultsSection({
-  lessonRecentResults,
-  copy,
-  resultsHref,
-}: LessonsRecentResultsSectionProps): React.JSX.Element {
-  return (
-    <Card>
-      <View style={{ gap: 4 }}>
-        <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-          {copy({ de: 'Ergebniszentrale', en: 'Results hub', pl: 'Centrum wyników' })}
-        </Text>
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Die letzten Ergebnisse bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.',
-            en: 'The latest results stay close here so you can jump right back into practice, the matching lesson, or the mode history.',
-            pl: 'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.',
-          })}
-        </Text>
-      </View>
+    return (
+        <Card>
+            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({ de: 'Nach den Lektionen', en: 'After lessons', pl: 'Po lekcjach' })}
+            </Text>
+            <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({ de: 'Ergebniszentrale', en: 'Results hub', pl: 'Centrum wyników' })}
+            </Text>
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({ de: 'Die letzten Ergebnisse bleiben hier griffbereit, damit du direkt wieder ins Training, die passende Lektion oder die Modus-Historie springen kannst.', en: 'The latest results stay close here so you can jump right back into practice, the matching lesson, or the mode history.', pl: 'Ostatnie wyniki są tutaj pod ręką, aby można było od razu wrócić do treningu, pasującej lekcji albo historii trybu.' })}
+            </Text>
 
-      {lessonRecentResults.entries.length === 0 ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Hier sind noch keine Ergebnisse.',
-            en: 'No results here yet.',
-            pl: 'Brak wyników.',
-          })}
-        </Text>
-      ) : (
-        <View style={{ gap: 10 }}>
-          {lessonRecentResults.entries.map((item: any) => (
-            <LessonRecentResultRow key={item.id} item={item} />
-          ))}
-          <LinkButton
-            href={resultsHref}
-            label={copy({ de: 'Alle Ergebnisse', en: 'All results', pl: 'Wszystkie wyniki' })}
-          />
-        </View>
-      )}
-    </Card>
-  );
+            <LinkButton
+                href={resultsHref}
+                label={copy({ de: 'Vollständigen Verlauf öffnen', en: 'Open full history', pl: 'Otwórz pełną historię' })}
+                tone='secondary'
+            />
+
+            {(lessonRecentResults.isLoading || lessonRecentResults.isRestoringAuth) ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Die letzten Ergebnisse werden geladen.', en: 'Loading recent results.', pl: 'Ładujemy ostatnie wyniki.' })}
+                </Text>
+            ) : !lessonRecentResults.isEnabled ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Melde dich an, um hier Ergebnisse zu sehen.', en: 'Sign in to see results here.', pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.' })}
+                </Text>
+            ) : lessonRecentResults.error ? (
+                <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                    {lessonRecentResults.error}
+                </Text>
+            ) : lessonRecentResults.recentResultItems.length === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Es gibt hier noch keine Ergebnisse. Beende einen Lauf, um diesen Bereich zu füllen.', en: 'There are no results here yet. Finish a run to fill this section.', pl: 'Nie ma tu jeszcze wyników. Ukończ serię, aby wypełnić tę sekcję.' })}
+                </Text>
+            ) : (
+                <View style={{ gap: 10 }}>
+                    {lessonRecentResults.recentResultItems.map((item: any) => (
+                        <LessonRecentResultRow key={item.result.id} item={item} />
+                    ))}
+                </View>
+            )}
+        </Card>
+    );
 }

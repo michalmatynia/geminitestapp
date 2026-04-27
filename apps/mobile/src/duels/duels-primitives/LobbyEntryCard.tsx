@@ -13,7 +13,7 @@ import {
   formatRelativeAge,
   formatSeriesTitle,
   getStatusTone,
-} from '../duels-utils';
+} from '../duels-ui';
 
 type LobbyEntryCardProps = {
   action: React.ReactNode;

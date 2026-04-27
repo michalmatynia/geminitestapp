@@ -86,7 +86,7 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
   areDeferredHomePanelsReady,
 }: HomePrivateDuelSectionGroupProps): React.JSX.Element {
   const { session } = useKangurMobileAuth();
-  const { copy } = useKangurMobileI18n();
+  const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const [duelInviteShareError, setDuelInviteShareError] = useState<string | null>(null);
   const [sharingDuelSessionId, setSharingDuelSessionId] = useState<string | null>(null);
@@ -140,7 +140,7 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
           areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
           invites={duelInvites}
           copy={copy}
-          locale={copy.locale}
+          locale={locale}
         />
       </SectionCard>
       <SectionCard
@@ -155,7 +155,7 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
           areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
           invites={duelInvites}
           copy={copy}
-          locale={copy.locale}
+          locale={locale}
           duelInviteShareError={duelInviteShareError}
           sharingDuelSessionId={sharingDuelSessionId}
           onShare={handleShareOutgoingChallenge}
@@ -173,7 +173,7 @@ export function AuthenticatedHomePrivateDuelSectionGroup({
           areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
           presence={duelPresence}
           copy={copy}
-          locale={copy.locale}
+          locale={locale}
           onChallenge={openDuelSession}
         />
       </SectionCard>

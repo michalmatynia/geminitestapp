@@ -229,6 +229,35 @@ export function formatSeriesProgress(
   );
 }
 
+export function formatSeriesSummary(
+  series: KangurDuelSeries,
+  locale: KangurMobileLocale,
+): string {
+  if (series.isComplete) {
+    return localizeSimpleDuelText(
+      `Serie BO${series.bestOf} beendet nach ${series.completedGames} Spielen`,
+      `BO${series.bestOf} series completed after ${series.completedGames} games`,
+      `Seria BO${series.bestOf} zakończona po ${series.completedGames} grach`,
+      locale,
+    );
+  }
+
+  return `${formatSeriesTitle(series, locale)} • ${formatSeriesProgress(series, locale)} • ${localizeSimpleDuelText(
+    `beendet: ${series.completedGames}`,
+    `completed: ${series.completedGames}`,
+    `ukończone: ${series.completedGames}`,
+    locale,
+  )}`;
+}
+
+export function formatLobbySeriesSummary(
+  series: KangurDuelSeries | null | undefined,
+  locale: KangurMobileLocale,
+): string | null {
+  if (!series) return null;
+  return formatSeriesTitle(series, locale);
+}
+
 export function resolveWinnerSummary(
   players: KangurDuelPlayer[],
   locale: KangurMobileLocale,

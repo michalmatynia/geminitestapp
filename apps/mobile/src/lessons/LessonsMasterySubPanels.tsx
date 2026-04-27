@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { KangurMobilePill as Pill } from '../shared/KangurMobileUi';
 import { LinkButton } from './duels-primitives';
 import { LessonMasteryRow } from './practice-primitives';
 import type { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
-import { type UseKangurMobileLessonsLessonMasteryResult } from './useKangurMobileLessonsLessonMastery';
+import { type KangurMobileLessonsLessonMasteryItem, type UseKangurMobileLessonsLessonMasteryResult } from './useKangurMobileLessonsLessonMastery';
 
 type LessonsCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 
@@ -18,7 +18,7 @@ export function MasteryStatsPanel({ copy, lessonMastery }: { copy: LessonsCopy; 
   );
 }
 
-export function MasteryFocusPanel({ copy, weakest, strongest }: { copy: LessonsCopy; weakest: any | null; strongest: any | null }): React.JSX.Element {
+export function MasteryFocusPanel({ copy, weakest, strongest }: { copy: LessonsCopy; weakest: KangurMobileLessonsLessonMasteryItem | null; strongest: KangurMobileLessonsLessonMasteryItem | null }): React.JSX.Element {
   return (
     <View style={{ alignSelf: 'stretch', gap: 10 }}>
       {weakest !== null && <LinkButton href={weakest.lessonHref} label={copy({ de: `Fokus: ${weakest.title}`, en: `Focus: ${weakest.title}`, pl: `Skup się: ${weakest.title}` })} stretch tone='primary' />}

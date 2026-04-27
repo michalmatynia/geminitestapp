@@ -14,11 +14,18 @@ describe('createProductListingsViewContextValue', () => {
           id: 'listing-tradera-1',
           integration: { slug: 'tradera' },
         } as never,
+        {
+          id: 'listing-playwright-1',
+          integration: { slug: 'playwright-programmable' },
+        } as never,
       ],
       filterIntegrationSlug: 'tradera',
     });
 
-    expect(value.filteredListings.map((listing) => listing.id)).toEqual(['listing-tradera-1']);
+    expect(value.filteredListings.map((listing) => listing.id)).toEqual([
+      'listing-tradera-1',
+      'listing-playwright-1',
+    ]);
     expect(value.integrationScopeLabel).toBe('Tradera');
     expect(value.statusTargetLabel).toBe('Tradera');
     expect(value.filterIntegrationSlug).toBe('tradera');

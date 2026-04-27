@@ -244,7 +244,12 @@ const nextConfig = {
     root: __dirname,
     resolveAlias: {
       '@docs': path.resolve(__dirname, 'docs'),
+      // Explicitly remap React Native entry variants to avoid bundling Metro/Flow
+      // sources in the web/Turbopack pipeline.
       'react-native': reactNativeWebShimPath,
+      'react-native/index': reactNativeWebShimPath,
+      'react-native/index.js': reactNativeWebShimPath,
+      'react-native/index.ts': reactNativeWebShimPath,
       // Force a single three.js runtime even when transitive deps (e.g. stats-gl) ship nested copies.
       'stats-gl/node_modules/three': path.resolve(__dirname, 'node_modules/three'),
     },
@@ -284,7 +289,11 @@ const nextConfig = {
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');
+    // Keep web bundlers on the shim for all React Native entry patterns.
     config.resolve.alias['react-native'] = reactNativeWebShimPath;
+    config.resolve.alias['react-native/index'] = reactNativeWebShimPath;
+    config.resolve.alias['react-native/index.js'] = reactNativeWebShimPath;
+    config.resolve.alias['react-native/index.ts'] = reactNativeWebShimPath;
     config.resolve.alias['three'] = path.resolve(__dirname, 'node_modules/three');
     config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(
       __dirname,

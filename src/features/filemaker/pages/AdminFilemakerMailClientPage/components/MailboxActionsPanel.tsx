@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View } from '@/shared/ui/react-native-web-shim';
 import { AdminFilemakerMailClientPageMailboxActions } from '../AdminFilemakerMailClientPage.mailbox-actions';
 
 interface MailboxActionsPanelProps {

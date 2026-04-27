@@ -1,187 +1,87 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../shared/KangurMobileUi';
-import { LessonMasteryRow } from './lesson-row-primitives';
-
-interface LessonMasteryStats {
-  trackedLessons: number;
-  masteredLessons: number;
-  lessonsNeedingPractice: number;
-}
-
-interface LessonInsight {
-  lessonHref: string;
-  title: string;
-}
-
-interface LessonsMasterySectionProps {
-  lessonMastery: LessonMasteryStats;
-  lessonFocusSummary: string | null;
-  weakestLesson: LessonInsight | null;
-  strongestLesson: LessonInsight | null;
-  copy: (v: Record<string, string>) => string;
-}
-
-function LessonMasteryStatsView({
-  lessonMastery,
-  copy,
-}: {
-  lessonMastery: LessonMasteryStats;
-  copy: (v: Record<string, string>) => string;
-}): React.JSX.Element {
-  return (
-    <View style={{ flexDirection: 'column', gap: 8 }}>
-      <Pill
-        label={copy({
-          de: `Verfolgt ${lessonMastery.trackedLessons}`,
-          en: `Tracked ${lessonMastery.trackedLessons}`,
-          pl: `Śledzone ${lessonMastery.trackedLessons}`,
-        })}
-        tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
-      />
-      <Pill
-        label={copy({
-          de: `Beherrscht ${lessonMastery.masteredLessons}`,
-          en: `Mastered ${lessonMastery.masteredLessons}`,
-          pl: `Opanowane ${lessonMastery.masteredLessons}`,
-        })}
-        tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }}
-      />
-      <Pill
-        label={copy({
-          de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
-          en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
-          pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
-        })}
-        tone={{ backgroundColor: '#fffbeb', borderColor: '#fde68a', textColor: '#b45309' }}
-      />
-    </View>
-  );
-}
-
-function LessonMasteryActions({
-  weakestLesson,
-  strongestLesson,
-  copy,
-}: {
-  weakestLesson: LessonInsight | null;
-  strongestLesson: LessonInsight | null;
-  copy: (v: Record<string, string>) => string;
-}): React.JSX.Element | null {
-  if (weakestLesson === null && strongestLesson === null) return null;
-
-  return (
-    <View style={{ alignSelf: 'stretch', gap: 10 }}>
-      {weakestLesson !== null && (
-        <LinkButton
-          href={weakestLesson.lessonHref}
-          label={copy({
-            de: `Fokus: ${weakestLesson.title}`,
-            en: `Focus: ${weakestLesson.title}`,
-            pl: `Skup się: ${weakestLesson.title}`,
-          })}
-          stretch
-          tone='primary'
-        />
-      )}
-      {strongestLesson !== null && (
-        <LinkButton
-          href={strongestLesson.lessonHref}
-          label={copy({
-            de: `Stärke halten: ${strongestLesson.title}`,
-            en: `Maintain strength: ${strongestLesson.title}`,
-            pl: `Podtrzymaj: ${strongestLesson.title}`,
-          })}
-          stretch
-          tone='secondary'
-        />
-      )}
-    </View>
-  );
-}
-
-function LessonMasteryRows({
-  weakestLesson,
-  strongestLesson,
-  copy,
-}: {
-  weakestLesson: LessonInsight | null;
-  strongestLesson: LessonInsight | null;
-  copy: (v: Record<string, string>) => string;
-}): React.JSX.Element {
-  return (
-    <View style={{ gap: 10 }}>
-      {weakestLesson !== null && (
-        <LessonMasteryRow
-          insight={weakestLesson}
-          title={copy({ de: 'Zum Wiederholen', en: 'Needs review', pl: 'Do powtórki' })}
-        />
-      )}
-      {strongestLesson !== null && (
-        <LessonMasteryRow
-          insight={strongestLesson}
-          title={copy({ de: 'Stärkste Lektion', en: 'Strongest lesson', pl: 'Najmocniejsza lekcja' })}
-        />
-      )}
-    </View>
-  );
-}
+import { Text, View } from 'react-native';
+import { KangurMobileCard as Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
+import { LessonMasteryRow } from '../lesson-row-primitives';
 
 export function LessonsMasterySection({
-  lessonMastery,
-  lessonFocusSummary,
-  weakestLesson,
-  strongestLesson,
-  copy,
-}: LessonsMasterySectionProps): React.JSX.Element {
-  const isListEmpty = lessonMastery.trackedLessons === 0;
+    isPreparingLessonsView,
+    copy,
+    lessonMastery,
+    lessonFocusSummary,
+}: any): React.JSX.Element | null {
+    if (isPreparingLessonsView) return null;
+    const weakestLesson = lessonMastery.weakest[0] ?? null;
+    const strongestLesson = lessonMastery.strongest[0] ?? null;
 
-  return (
-    <Card>
-      <View style={{ gap: 4 }}>
-        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-          {copy({ de: 'Lektionsbeherrschung', en: 'Lesson mastery', pl: 'Opanowanie lekcji' })}
-        </Text>
-        <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-          {copy({ de: 'Lektionsplan nach dem Lesen', en: 'Post-reading lesson plan', pl: 'Plan lekcji po czytaniu' })}
-        </Text>
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Verbinde den Katalog und die letzten Checkpoints direkt mit lokal gespeichertem Beherrschungsstand und entscheide sofort, was wiederholt und was nur gehalten werden soll.',
-            en: 'Connect the catalog and recent checkpoints directly with saved mastery and decide right away what needs review and what only needs maintaining.',
-            pl: 'Na ekranie lekcji możesz od razu połączyć katalog i ostatnie checkpointy z lokalnie zapisanym poziomem opanowania, aby szybciej wybrać powtórkę.',
-          })}
-        </Text>
-      </View>
+    return (
+        <Card>
+            <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
+                {copy({ de: 'Lektionsbeherrschung', en: 'Lesson mastery', pl: 'Opanowanie lekcji' })}
+            </Text>
+            <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
+                {copy({ de: 'Lektionsplan nach dem Lesen', en: 'Post-reading lesson plan', pl: 'Plan lekcji po czytaniu' })}
+            </Text>
+            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                {copy({ de: 'Verbinde den Katalog und die letzten Checkpoints direkt mit lokal gespeichertem Beherrschungsstand und entscheide sofort, was wiederholt und was nur gehalten werden soll.', en: 'Connect the catalog and recent checkpoints directly with saved mastery and decide right away what needs review and what only needs maintaining.', pl: 'Na ekranie lekcji możesz od razu połączyć katalog i ostatnie checkpointy z lokalnie zapisanym poziomem opanowania, aby szybciej wybrać powtórkę.' })}
+            </Text>
 
-      <LessonMasteryStatsView lessonMastery={lessonMastery} copy={copy} />
+            <View style={{ flexDirection: 'column', gap: 8 }}>
+                <Pill
+                    label={copy({ de: `Verfolgt ${lessonMastery.trackedLessons}`, en: `Tracked ${lessonMastery.trackedLessons}`, pl: `Śledzone ${lessonMastery.trackedLessons}` })}
+                    tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
+                />
+                <Pill
+                    label={copy({ de: `Beherrscht ${lessonMastery.masteredLessons}`, en: `Mastered ${lessonMastery.masteredLessons}`, pl: `Opanowane ${lessonMastery.masteredLessons}` })}
+                    tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }}
+                />
+                <Pill
+                    label={copy({ de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`, en: `Needs review ${lessonMastery.lessonsNeedingPractice}`, pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}` })}
+                    tone={{ backgroundColor: '#fffbeb', borderColor: '#fde68a', textColor: '#b45309' }}
+                />
+            </View>
 
-      {isListEmpty ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
-            en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.',
-            pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.',
-          })}
-        </Text>
-      ) : (
-        <View style={{ gap: 10 }}>
-          {lessonFocusSummary !== null && lessonFocusSummary.length > 0 && (
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{lessonFocusSummary}</Text>
-          )}
+            {lessonMastery.trackedLessons === 0 ? (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.', en: 'There are no lesson checkpoints yet. Open a lesson and save the first checkpoint to unlock strengths and review suggestions here.', pl: 'Nie ma jeszcze checkpointów lekcji. Otwórz lekcję i zapisz pierwszy checkpoint, aby odblokować tutaj mocne strony i powtórki.' })}
+                </Text>
+            ) : (
+                <View style={{ gap: 10 }}>
+                    {lessonFocusSummary ? (
+                        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{lessonFocusSummary}</Text>
+                    ) : null}
 
-          <LessonMasteryActions
-            weakestLesson={weakestLesson}
-            strongestLesson={strongestLesson}
-            copy={copy}
-          />
-          <LessonMasteryRows
-            weakestLesson={weakestLesson}
-            strongestLesson={strongestLesson}
-            copy={copy}
-          />
-        </View>
-      )}
-    </Card>
-  );
+                    <View style={{ alignSelf: 'stretch', gap: 10 }}>
+                        {weakestLesson ? (
+                            <LinkButton
+                                href={weakestLesson.lessonHref}
+                                label={copy({ de: `Fokus: ${weakestLesson.title}`, en: `Focus: ${weakestLesson.title}`, pl: `Skup się: ${weakestLesson.title}` })}
+                                stretch
+                                tone='primary'
+                            />
+                        ) : null}
+                        {strongestLesson ? (
+                            <LinkButton
+                                href={strongestLesson.lessonHref}
+                                label={copy({ de: `Stärke halten: ${strongestLesson.title}`, en: `Maintain strength: ${strongestLesson.title}`, pl: `Podtrzymaj: ${strongestLesson.title}` })}
+                                stretch
+                                tone='secondary'
+                            />
+                        ) : null}
+                    </View>
+
+                    {lessonMastery.weakest[0] ? (
+                        <LessonMasteryRow
+                            insight={lessonMastery.weakest[0]}
+                            title={copy({ de: 'Zum Wiederholen', en: 'Needs review', pl: 'Do powtórki' })}
+                        />
+                    ) : null}
+                    {lessonMastery.strongest[0] ? (
+                        <LessonMasteryRow
+                            insight={lessonMastery.strongest[0]}
+                            title={copy({ de: 'Stärkste Lektion', en: 'Strongest lesson', pl: 'Najmocniejsza lekcja' })}
+                        />
+                    ) : null}
+                </View>
+            )}
+        </Card>
+    );
 }

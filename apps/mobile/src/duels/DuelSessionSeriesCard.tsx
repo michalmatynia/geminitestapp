@@ -6,8 +6,8 @@ import {
 } from '../shared/KangurMobileUi';
 import {
   formatSeriesProgress,
-  formatSeriesSummary,
-} from '../utils/duels-ui';
+  formatSeriesSummary
+} from './utils/duels-ui';
 import { type UseKangurMobileDuelSessionResult as DuelSessionState } from './useKangurMobileDuelSession';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];

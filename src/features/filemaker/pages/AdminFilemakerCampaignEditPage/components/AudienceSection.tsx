@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text } from '@/shared/ui/react-native-web-shim';
 import { Card } from '@/features/kangur/ui/components';
 import { AudienceSourceSection } from '../campaign-edit-sections/AudienceSourceSection';
 

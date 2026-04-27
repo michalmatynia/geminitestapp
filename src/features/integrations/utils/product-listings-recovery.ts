@@ -2,7 +2,6 @@ import {
   BASE_INTEGRATION_SLUGS,
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
-  isTraderaBrowserIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import type { ProductListingWithDetails, ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
@@ -40,6 +39,16 @@ export const readProductListingsRecoveryString = (value: unknown): string | null
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+const isTraderaRecoveryIntegrationSlug = (
+  value: string | null | undefined
+): boolean => {
+  const normalized = normalizeProductListingsIntegrationScope(value)?.toLowerCase();
+  return (
+    TRADERA_INTEGRATION_SLUGS.has(normalized ?? '') ||
+    normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG
+  );
+};
 
 const readOptionalDate = (value: unknown): number | null => {
   const normalized = readProductListingsRecoveryString(value);
@@ -372,7 +381,7 @@ export const findTraderaRecoveryListing = (
   recoveryRunId: string | null
 ): ProductListingWithDetails | null => {
   const traderaListings = listings.filter((listing) =>
-    isTraderaBrowserIntegrationSlug(listing.integration?.slug)
+    isTraderaRecoveryIntegrationSlug(listing.integration?.slug)
   );
   if (traderaListings.length === 0) return null;
 
@@ -473,7 +482,7 @@ export const matchesProductListingsIntegrationScope = (
     return BASE_INTEGRATION_SLUGS.has(listing);
   }
   if (TRADERA_INTEGRATION_SLUGS.has(filter)) {
-    return TRADERA_INTEGRATION_SLUGS.has(listing);
+    return isTraderaRecoveryIntegrationSlug(listing);
   }
   return listing === filter;
 };

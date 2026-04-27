@@ -1706,7 +1706,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     }
   }
 
-  private resolveGoogleLensOpenUrl(): string {
+  protected override resolveGoogleLensOpenUrl(): string {
     const configuredUrl = this.resolveConfiguredImageSearchPageUrl();
     if (configuredUrl !== null) {
       return configuredUrl;
@@ -1715,7 +1715,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     return GOOGLE_LENS_DIRECT_UPLOAD_URL;
   }
 
-  private resolveGoogleLensOpenAttemptUrls(): string[] {
+  protected override resolveGoogleLensOpenAttemptUrls(): string[] {
     const urls: string[] = [];
     const configuredUrl = this.resolveConfiguredImageSearchPageUrl();
     const candidates = [
@@ -1733,7 +1733,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     return urls;
   }
 
-  private async openGoogleLensAttemptUrl(url: string): Promise<{ resolved: boolean }> {
+  protected override async openGoogleLensAttemptUrl(url: string): Promise<{ resolved: boolean }> {
     await this.page.goto(url, {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
@@ -1745,7 +1745,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     return consentState;
   }
 
-  private async readGoogleLensOpenReadinessState(
+  protected override async readGoogleLensOpenReadinessState(
     requestedUrl: string
   ): Promise<GoogleLensOpenReadinessState> {
     const inputState = await this.resolveGoogleLensFileInput();

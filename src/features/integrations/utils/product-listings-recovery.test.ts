@@ -54,6 +54,7 @@ describe('product-listings-recovery', () => {
   it('matches grouped marketplace aliases consistently', () => {
     expect(matchesProductListingsIntegrationScope('baselinker', 'base')).toBe(true);
     expect(matchesProductListingsIntegrationScope('tradera', 'tradera')).toBe(true);
+    expect(matchesProductListingsIntegrationScope('playwright-programmable', 'tradera')).toBe(true);
     expect(matchesProductListingsIntegrationScope('baselinker', 'tradera')).toBe(false);
     expect(
       matchesProductListingsIntegrationScope(
@@ -601,6 +602,29 @@ describe('product-listings-recovery', () => {
         null
       )
     ).toBeNull();
+  });
+
+  it('finds a Playwright-programmable recovery listing when it matches the queue job id', () => {
+    expect(
+      findTraderaRecoveryListing(
+        [
+          {
+            id: 'listing-1',
+            status: 'failed',
+            integration: { slug: 'playwright-programmable' },
+            marketplaceData: {
+              tradera: {
+                lastExecution: {
+                  requestId: 'job-target',
+                },
+              },
+            },
+          } as never,
+        ],
+        'job-target',
+        null
+      )?.id
+    ).toBe('listing-1');
   });
 
   it('extracts Tradera recovery metadata from listing execution details', () => {

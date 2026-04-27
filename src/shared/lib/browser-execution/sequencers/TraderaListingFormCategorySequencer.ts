@@ -73,7 +73,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     this.reauthenticate = input.reauthenticate ?? null;
   }
 
-  protected async executeStep(stepId: StepId): Promise<void> {
+  protected override async executeStep(stepId: StepId): Promise<void> {
     switch (stepId) {
       case 'browser_preparation': await this.stepBrowserPreparation(); return;
       case 'browser_open': await this.stepBrowserOpen(); return;

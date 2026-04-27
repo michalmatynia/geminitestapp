@@ -9,7 +9,7 @@ import {
 } from '../../shared/KangurMobileUi';
 import {
   LESSONS_ROUTE,
-} from '../duels-utils';
+} from "../duels-ui";
 import { LinkButton, renderOptionalLinkButton } from './BaseComponents';
 
 function LessonCheckpointRow({

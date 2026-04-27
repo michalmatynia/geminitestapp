@@ -1783,6 +1783,7 @@ const createEvaluationResult = (
     evaluatedAt?: string | null;
   }
 ): ProductScanAmazonEvaluationResult => ({
+  status: input.status,
   stage: input.stage ?? null,
   sameProduct: input.sameProduct ?? null,
   imageMatch: input.imageMatch ?? null,
@@ -1806,7 +1807,6 @@ const createEvaluationResult = (
   brainApplied: input.brainApplied ?? null,
   evidence: input.evidence ?? null,
   error: input.error ?? null,
-  status: input.status,
   evaluatedAt: input.evaluatedAt ?? new Date().toISOString(),
 });
 

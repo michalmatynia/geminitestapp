@@ -58,6 +58,12 @@ describe('filemaker campaign test send handler', () => {
               emailStatuses: ['active'],
               includePartyReferences: [],
               excludePartyReferences: [],
+              conditionGroup: {
+                id: 'campaign-audience-root',
+                type: 'group',
+                combinator: 'and',
+                children: [],
+              },
               organizationIds: [],
               eventIds: [],
               countries: [],

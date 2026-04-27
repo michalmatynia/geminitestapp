@@ -27,7 +27,8 @@ vi.mock('@/features/kangur/social/hooks/useKangurSocialImageAddons', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useSocialEditorSync } from './useSocialEditorSync';
 

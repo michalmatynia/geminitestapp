@@ -32,7 +32,8 @@ vi.mock('@/features/kangur/services/kangur-platform', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientError: withKangurClientErrorMock,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
   ErrorSystem: {

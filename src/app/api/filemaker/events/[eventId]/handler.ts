@@ -6,6 +6,11 @@ import { notFoundError } from '@/shared/errors/app-error';
 import {
   getMongoFilemakerEventById,
   listMongoFilemakerAddressesForOwner,
+  listMongoFilemakerAnyParamsForEvent,
+  listMongoFilemakerAnyTextsForEvent,
+  listMongoFilemakerBankAccountsForEvent,
+  listMongoFilemakerContractsForEvent,
+  listMongoFilemakerDocumentsForEvent,
   listMongoFilemakerWebsitesForEvent,
   requireFilemakerMailAdminSession,
   updateMongoFilemakerEvent,
@@ -34,11 +39,33 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   if (!event) {
     throw notFoundError('Filemaker event was not found.');
   }
-  const [linkedAddresses, linkedWebsites] = await Promise.all([
+  const [
+    linkedAddresses,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedWebsites,
+  ] = await Promise.all([
     listMongoFilemakerAddressesForOwner('event', event.id),
+    listMongoFilemakerAnyParamsForEvent(event),
+    listMongoFilemakerAnyTextsForEvent(event),
+    listMongoFilemakerBankAccountsForEvent(event),
+    listMongoFilemakerContractsForEvent(event),
+    listMongoFilemakerDocumentsForEvent(event),
     listMongoFilemakerWebsitesForEvent(event),
   ]);
-  return Response.json({ event, linkedAddresses, linkedWebsites });
+  return Response.json({
+    event,
+    linkedAddresses,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedWebsites,
+  });
 }
 
 export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

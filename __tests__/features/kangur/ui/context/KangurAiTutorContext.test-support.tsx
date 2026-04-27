@@ -70,7 +70,8 @@ vi.mock('@/features/kangur/observability/client', () => {
     withKangurClientError,
     withKangurClientErrorSync,
   };
-});
+,
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
 
 vi.mock('@/features/kangur/shared/utils/observability/error-system-client', () => ({
   ErrorSystem: {

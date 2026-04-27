@@ -507,15 +507,17 @@ export function useDatabaseNodeConfigState() {
     []
   );
 
-  useEffect(() => {
-    if (!isDatabaseSelected || !selectedNodeId) return;
-    const runtimeInputs = runtimeState.inputs?.[selectedNodeId] ?? {};
-    const detectedId = (
+  const detectedId = useMemo(() => {
+    const runtimeInputs = runtimeState.inputs?.[selectedNodeId ?? ''] ?? {};
+    return (
       (runtimeInputs['entityId'] as string) ||
       (runtimeInputs['productId'] as string) ||
       (runtimeInputs['value'] as string)
     )?.trim?.();
-    if (!detectedId) return;
+  }, [runtimeState.inputs, selectedNodeId]);
+
+  useEffect(() => {
+    if (!isDatabaseSelected || !selectedNodeId || !detectedId) return;
 
     const queryCollection = databaseConfig.query?.collection ?? 'products';
     const fetchKey = `${queryCollection}:${detectedId}`;
@@ -530,7 +532,7 @@ export function useDatabaseNodeConfigState() {
     selectedNodeId,
     isDatabaseSelected,
     databaseConfig.query?.collection,
-    runtimeState,
+    detectedId,
     updaterSamples,
     handleFetchUpdaterSample,
   ]);

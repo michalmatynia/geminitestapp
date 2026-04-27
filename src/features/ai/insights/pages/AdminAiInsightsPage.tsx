@@ -17,6 +17,7 @@ import { CompactEmptyState, LoadingState, SectionHeader, UI_GRID_ROOMY_CLASSNAME
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 import { InsightCard } from '../components/InsightCard';
+import { SessionInsightsPanel } from '../components/SessionInsightsPanel';
 import {
   InsightsProvider,
   useInsightsActions,
@@ -186,6 +187,7 @@ function AdminAiInsightsPageContent(): React.JSX.Element {
         <AnalyticsInsightsPanel />
         <RuntimeAnalyticsInsightsPanel />
         <LogInsightsPanel />
+        <SessionInsightsPanel />
       </div>
     </div>
   );

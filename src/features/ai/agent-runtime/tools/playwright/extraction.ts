@@ -1,6 +1,22 @@
 import type { Page } from 'playwright';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+export const extractDocumentContent = async (page: Page): Promise<string> => {
+  if (!page) return '';
+  return page.evaluate(() => {
+    const cleanNode = (node: Element): string => {
+      const clone = node.cloneNode(true) as HTMLElement;
+      const selectors = ['script', 'style', 'nav', 'footer', 'header', 'aside', 'noscript', 'svg'];
+      selectors.forEach((sel) => clone.querySelectorAll(sel).forEach((n) => n.remove()));
+      return clone.innerText || '';
+    };
+
+    const article = document.querySelector('article') ?? document.querySelector('main');
+    if (article) return cleanNode(article);
+    
+    return cleanNode(document.body);
+  });
+};
 
 export const extractProductNames = async (page: Page): Promise<string[]> => {
   if (!page) return [];

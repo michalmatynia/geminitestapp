@@ -7,6 +7,7 @@ import {
   createFilemakerEmailLink,
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
+  createFilemakerJobListing,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
@@ -32,6 +33,7 @@ import {
   type FilemakerEmailLink,
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
+  type FilemakerJobListing,
   type FilemakerOrganization,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
@@ -80,6 +82,7 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   valueParameters: [],
   valueParameterLinks: [],
   organizationLegacyDemands: [],
+  jobListings: [],
 });
 
 const defaultAddressLinkIdForValues = (
@@ -141,6 +144,11 @@ const defaultOrganizationLegacyDemandIdForValues = (
 ): string => {
   const joined = `${organizationId}-${valueIds.join('-')}`;
   return `filemaker-organization-legacy-demand-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultJobListingIdForValues = (organizationId: string, title: string): string => {
+  const joined = `${organizationId}-${title}`;
+  return `filemaker-job-listing-${toIdToken(joined) || 'entry'}`;
 };
 
 const hasAnyAddressData = (value: {
@@ -310,6 +318,7 @@ export const normalizeFilemakerDatabase = (
     'organizationLegacyDemands',
     valueRecord['organizationLegacyDemands']
   );
+  const rawJobListings = getRecordList('jobListings', valueRecord['jobListings']);
   const rawEventOrganizationLinks = getRecordList(
     'eventOrganizationLinks',
     valueRecord['eventOrganizationLinks']
@@ -1030,6 +1039,44 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
+  const jobListingIds = new Set<string>();
+  const jobListings: FilemakerJobListing[] = [];
+  rawJobListings.forEach((entry: Record<string, unknown>): void => {
+    const organizationId = normalizeString(entry['organizationId']);
+    const title = normalizeString(entry['title']);
+    if (organizationId.length === 0 || title.length === 0) return;
+
+    const baseId = defaultJobListingIdForValues(organizationId, title);
+    const requestedId = normalizeString(entry['id']);
+    const lastTargetedAt = normalizeString(entry['lastTargetedAt']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      jobListingIds,
+      baseId
+    );
+    jobListingIds.add(id);
+    jobListings.push(
+      createFilemakerJobListing({
+        id,
+        organizationId,
+        title,
+        description: normalizeString(entry['description']),
+        location: normalizeString(entry['location']),
+        salaryMin: entry['salaryMin'],
+        salaryMax: entry['salaryMax'],
+        salaryCurrency: normalizeString(entry['salaryCurrency']),
+        salaryPeriod: normalizeString(entry['salaryPeriod']),
+        status: normalizeString(entry['status']),
+        targetedCampaignIds: entry['targetedCampaignIds'],
+        lastTargetedAt: lastTargetedAt.length > 0 ? lastTargetedAt : undefined,
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
   const addresses: FilemakerAddress[] = Array.from(addressesById.values());
 
   return {
@@ -1048,6 +1095,7 @@ export const normalizeFilemakerDatabase = (
     valueParameters,
     valueParameterLinks,
     organizationLegacyDemands,
+    jobListings,
   };
 };
 

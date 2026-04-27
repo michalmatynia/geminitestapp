@@ -78,7 +78,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
         : options.fallback;
     }
   },
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/services/kangur-platform', () => ({
   getKangurPlatform: () => ({

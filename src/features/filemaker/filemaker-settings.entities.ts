@@ -8,6 +8,9 @@ import {
   type FilemakerEmailLink,
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
+  type FilemakerJobListing,
+  type FilemakerJobListingSalaryPeriod,
+  type FilemakerJobListingStatus,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
@@ -16,6 +19,55 @@ import {
   type FilemakerValueParameter,
   type FilemakerValueParameterLink,
 } from './types';
+
+const FILEMAKER_JOB_LISTING_STATUSES: FilemakerJobListingStatus[] = [
+  'draft',
+  'open',
+  'paused',
+  'closed',
+];
+
+const FILEMAKER_JOB_LISTING_SALARY_PERIODS: FilemakerJobListingSalaryPeriod[] = [
+  'hourly',
+  'monthly',
+  'yearly',
+  'fixed',
+];
+
+const normalizeOptionalNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+};
+
+const normalizeStringList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return Array.from(
+    new Set(
+      value
+        .map((entry: unknown): string => normalizeString(entry))
+        .filter((entry: string): boolean => entry.length > 0)
+    )
+  );
+};
+
+const normalizeJobListingStatus = (value: unknown): FilemakerJobListingStatus => {
+  const normalized = normalizeString(value).toLowerCase();
+  return (
+    FILEMAKER_JOB_LISTING_STATUSES.find(
+      (status: FilemakerJobListingStatus): boolean => status === normalized
+    ) ?? 'draft'
+  );
+};
+
+const normalizeJobListingSalaryPeriod = (value: unknown): FilemakerJobListingSalaryPeriod => {
+  const normalized = normalizeString(value).toLowerCase();
+  return (
+    FILEMAKER_JOB_LISTING_SALARY_PERIODS.find(
+      (period: FilemakerJobListingSalaryPeriod): boolean => period === normalized
+    ) ?? 'monthly'
+  );
+};
 
 export {
   createFilemakerAddress,
@@ -294,6 +346,46 @@ export const createFilemakerOrganizationLegacyDemand = (input: {
     organizationId: normalizeString(input.organizationId),
     valueIds,
     ...(legacyUuid.length > 0 ? { legacyUuid } : {}),
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createFilemakerJobListing = (input: {
+  id: string;
+  organizationId: unknown;
+  title: unknown;
+  description?: unknown;
+  location?: unknown;
+  salaryMin?: unknown;
+  salaryMax?: unknown;
+  salaryCurrency?: unknown;
+  salaryPeriod?: unknown;
+  status?: unknown;
+  targetedCampaignIds?: unknown;
+  lastTargetedAt?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerJobListing => {
+  const now = new Date().toISOString();
+  const salaryMin = normalizeOptionalNumber(input.salaryMin);
+  const salaryMax = normalizeOptionalNumber(input.salaryMax);
+  const lastTargetedAt = normalizeString(input.lastTargetedAt);
+  const location = normalizeString(input.location);
+  const salaryCurrency = normalizeString(input.salaryCurrency).toUpperCase();
+  return {
+    id: normalizeString(input.id),
+    organizationId: normalizeString(input.organizationId),
+    title: normalizeString(input.title),
+    description: normalizeString(input.description),
+    ...(location.length > 0 ? { location } : {}),
+    salaryMin,
+    salaryMax,
+    ...(salaryCurrency.length > 0 ? { salaryCurrency } : {}),
+    salaryPeriod: normalizeJobListingSalaryPeriod(input.salaryPeriod),
+    status: normalizeJobListingStatus(input.status),
+    targetedCampaignIds: normalizeStringList(input.targetedCampaignIds),
+    ...(lastTargetedAt.length > 0 ? { lastTargetedAt } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

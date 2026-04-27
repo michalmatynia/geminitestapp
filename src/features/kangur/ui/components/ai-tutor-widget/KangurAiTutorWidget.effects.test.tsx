@@ -15,7 +15,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 const buildInput = (
   overrides: Partial<Parameters<typeof useKangurAiTutorGuidanceCompletionEffects>[0]> = {}

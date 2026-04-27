@@ -4,7 +4,8 @@ import { KangurMobileCard as Card, KangurMobileFilterChip } from '../shared/Kang
 import { ActionButton, AutoRefreshChip, LobbyEntryCard, MessageCard } from './duels-primitives';
 import { type KangurDuelLobbyEntry } from '@kangur/contracts/kangur-duels';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
-import { type DuelModeFilterOption, MODE_FILTER_OPTIONS, formatModeLabel, formatOperationLabel, formatStatusLabel, localizeDuelText } from './duels-ui';
+import { MODE_FILTER_OPTIONS, formatModeLabel, formatOperationLabel, formatStatusLabel, localizeDuelText } from './duels-ui';
+import { type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
@@ -45,8 +46,8 @@ const InviteEntriesList = ({ lobby, renderJoinAction, locale, copy }: Pick<DuelL
 );
 
 const PublicEntryRow = ({ entry, renderJoinAction, renderSpectateAction, locale, copy }: { entry: PublicEntry; renderJoinAction: (sessionId: string) => React.JSX.Element; renderSpectateAction: (sessionId: string) => React.JSX.Element; locale: DuelLocale; copy: DuelCopy }): React.JSX.Element => {
-  const modeLabel = formatModeLabel(entry.mode, locale);
-  const statusLabel = formatStatusLabel(entry.status, locale).toLowerCase();
+  const modeLabel = formatModeLabel(entry.mode, locale) as string;
+  const statusLabel = (formatStatusLabel(entry.status, locale) as string).toLowerCase();
   const desc = copy({ de: `${modeLabel} von ${entry.host.displayName}. Status: ${statusLabel}.`, en: `${modeLabel} hosted by ${entry.host.displayName}. Status: ${statusLabel}.`, pl: `${modeLabel} gospodarza ${entry.host.displayName}. Status: ${statusLabel}.` });
   return (
     <LobbyEntryCard action={<View style={{ gap: 8 }}>{renderJoinAction(entry.sessionId)}{renderSpectateAction(entry.sessionId)}</View>} actionLabel={copy({ de: 'Du kannst als Spieler beitreten oder den Raum im Zuschauermodus öffnen.', en: 'You can join as a player or open the room in spectator mode.', pl: 'Możesz dołączyć jako gracz albo otworzyć pokój w trybie obserwatora.' })} description={desc} entry={entry} locale={locale} />
@@ -71,7 +72,7 @@ const RoomsContent = ({ lobby, copy, locale, renderJoinAction, renderSpectateAct
 
 export function DuelLobbyRoomsPanel({ autoRefreshChipLabel, autoRefreshEnabled, copy, lobby, locale, onToggleAutoRefresh, renderJoinAction, renderSpectateAction }: DuelLobbyRoomsPanelProps): React.JSX.Element {
   const renderLobbyStatus = (currentLobby: DuelLobbyState): React.JSX.Element | null => {
-    if (currentLobby.lobbyError !== null) return <MessageCard title={copy({ de: 'Lobby ist nicht verfügbar', en: 'Lobby is unavailable', pl: 'Lobby jest niedostępne' })} description={currentLobby.lobbyError} tone='error' />;
+    if (typeof currentLobby.lobbyError === 'string') return <MessageCard title={copy({ de: 'Lobby ist nicht verfügbar', en: 'Lobby is unavailable', pl: 'Lobby jest niedostępne' })} description={currentLobby.lobbyError} tone='error' />;
     if (currentLobby.isLobbyLoading) return <MessageCard title={copy({ de: 'Lobby wird geladen', en: 'Loading lobby', pl: 'Ładujemy lobby' })} description={currentLobby.isRestoringAuth ? copy({ de: 'Die Anmeldung wird wiederhergestellt und verfügbare Duelle werden geladen.', en: 'Restoring sign-in and loading available duels.', pl: 'Przywracamy logowanie i pobieramy dostępne pojedynki.' }) : copy({ de: 'Verfügbare öffentliche und private Räume werden geladen.', en: 'Loading available public and private rooms.', pl: 'Pobieramy dostępne publiczne i prywatne pokoje.' })} />;
     return null;
   };
@@ -81,7 +82,7 @@ export function DuelLobbyRoomsPanel({ autoRefreshChipLabel, autoRefreshEnabled, 
     <Card>
       <LobbyHeader autoRefreshChipLabel={autoRefreshChipLabel} autoRefreshEnabled={autoRefreshEnabled} copy={copy} lobby={lobby} onToggleAutoRefresh={onToggleAutoRefresh} />
       <View style={{ flexDirection: 'column', gap: 8 }}>
-        {MODE_FILTER_OPTIONS.map((option: DuelModeFilterOption) => (
+        {MODE_FILTER_OPTIONS.map((option: { value: 'all' | 'challenge' | 'quick_match'; label: KangurMobileLocalizedValue<string> }) => (
           <KangurMobileFilterChip
             fullWidth
             key={option.value}

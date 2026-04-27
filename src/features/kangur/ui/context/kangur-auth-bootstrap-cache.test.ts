@@ -19,7 +19,8 @@ vi.mock('@/features/kangur/services/kangur-shell-session-client', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientErrorSync: <T,>(_: unknown, task: () => T) => task(),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 const AUTHENTICATED_USER = {
   id: 'parent-1',

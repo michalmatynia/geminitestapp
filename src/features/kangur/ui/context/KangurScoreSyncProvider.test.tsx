@@ -16,6 +16,7 @@ const {
   trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  isRecoverableKangurClientFetchError,
   useKangurAuthMock,
   scoreCreateMock,
 } = vi.hoisted(() => ({
@@ -24,6 +25,7 @@ const {
   trackKangurClientEventMock: globalThis.__kangurClientErrorMocks().trackKangurClientEventMock,
   withKangurClientError: globalThis.__kangurClientErrorMocks().withKangurClientError,
   withKangurClientErrorSync: globalThis.__kangurClientErrorMocks().withKangurClientErrorSync,
+  isRecoverableKangurClientFetchError: globalThis.__kangurClientErrorMocks().isRecoverableKangurClientFetchError,
   useKangurAuthMock: vi.fn(),
   scoreCreateMock: vi.fn(),
 }));
@@ -65,6 +67,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  isRecoverableKangurClientFetchError,
 }));
 
 import { KangurScoreSyncProvider } from './KangurScoreSyncProvider';

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { FilemakerEmailCampaign } from '../types';
+
 const {
   sendFilemakerCampaignEmailMock,
 } = vi.hoisted(() => ({
@@ -11,6 +13,61 @@ vi.mock('./campaign-email-delivery', () => ({
 }));
 
 import { sendFilemakerEmailCampaignTest } from './filemaker-email-campaign-test-send';
+
+const createTestCampaign = (
+  overrides?: Partial<FilemakerEmailCampaign>
+): FilemakerEmailCampaign => ({
+  id: 'campaign-1',
+  createdAt: '2026-04-02T11:00:00.000Z',
+  updatedAt: '2026-04-02T11:00:00.000Z',
+  name: 'Preview launch',
+  description: null,
+  status: 'draft',
+  subject: 'Hello from Filemaker',
+  previewText: null,
+  mailAccountId: 'mail-account-sales',
+  fromName: 'Campaign Owner',
+  replyToEmail: 'replies@example.com',
+  bodyText:
+    'Hi {{email}}. Manage: {{preferences_url}}. Opt out: {{unsubscribe_url}}. Open: {{open_tracking_url}}. CTA: {{click_tracking_url:https://destination.example.com/offer}}',
+  bodyHtml:
+    '<p>Hi {{email}}</p><p><a href="{{preferences_url}}">preferences</a></p><p><a href="{{unsubscribe_url}}">unsubscribe</a></p><p><a href="{{click_tracking_url:https://destination.example.com/offer}}">CTA</a></p><div>{{open_tracking_pixel}}</div>',
+  audience: {
+    partyKinds: ['person'],
+    emailStatuses: ['active'],
+    includePartyReferences: [],
+    excludePartyReferences: [],
+    conditionGroup: {
+      id: 'campaign-audience-root',
+      type: 'group',
+      combinator: 'and',
+      children: [],
+    },
+    organizationIds: [],
+    eventIds: [],
+    countries: [],
+    cities: [],
+    dedupeByEmail: true,
+    limit: null,
+  },
+  launch: {
+    mode: 'manual',
+    scheduledAt: null,
+    recurring: null,
+    minAudienceSize: 0,
+    requireApproval: false,
+    onlyWeekdays: false,
+    allowedHourStart: null,
+    allowedHourEnd: null,
+    pauseOnBounceRatePercent: null,
+    timezone: 'UTC',
+  },
+  approvalGrantedAt: null,
+  approvedBy: null,
+  lastLaunchedAt: null,
+  lastEvaluatedAt: null,
+  ...overrides,
+});
 
 describe('sendFilemakerEmailCampaignTest', () => {
   const originalAppUrl = process.env['NEXT_PUBLIC_APP_URL'];
@@ -35,51 +92,7 @@ describe('sendFilemakerEmailCampaignTest', () => {
 
   it('renders preview-safe tokens and sends the draft through the current campaign route', async () => {
     const result = await sendFilemakerEmailCampaignTest({
-      campaign: {
-        id: 'campaign-1',
-        createdAt: '2026-04-02T11:00:00.000Z',
-        updatedAt: '2026-04-02T11:00:00.000Z',
-        name: 'Preview launch',
-        description: null,
-        status: 'draft',
-        subject: 'Hello from Filemaker',
-        previewText: null,
-        mailAccountId: 'mail-account-sales',
-        fromName: 'Campaign Owner',
-        replyToEmail: 'replies@example.com',
-        bodyText:
-          'Hi {{email}}. Manage: {{preferences_url}}. Opt out: {{unsubscribe_url}}. Open: {{open_tracking_url}}. CTA: {{click_tracking_url:https://destination.example.com/offer}}',
-        bodyHtml:
-          '<p>Hi {{email}}</p><p><a href="{{preferences_url}}">preferences</a></p><p><a href="{{unsubscribe_url}}">unsubscribe</a></p><p><a href="{{click_tracking_url:https://destination.example.com/offer}}">CTA</a></p><div>{{open_tracking_pixel}}</div>',
-        audience: {
-          partyKinds: ['person'],
-          emailStatuses: ['active'],
-          includePartyReferences: [],
-          excludePartyReferences: [],
-          organizationIds: [],
-          eventIds: [],
-          countries: [],
-          cities: [],
-          dedupeByEmail: true,
-          limit: null,
-        },
-        launch: {
-          mode: 'manual',
-          scheduledAt: null,
-          recurring: null,
-          minAudienceSize: 0,
-          requireApproval: false,
-          onlyWeekdays: false,
-          allowedHourStart: null,
-          allowedHourEnd: null,
-          pauseOnBounceRatePercent: null,
-          timezone: 'UTC',
-        },
-        approvalGrantedAt: null,
-        approvedBy: null,
-        lastLaunchedAt: null,
-        lastEvaluatedAt: null,
-      },
+      campaign: createTestCampaign(),
       recipientEmail: 'QA@Example.com',
     });
 
@@ -121,5 +134,16 @@ describe('sendFilemakerEmailCampaignTest', () => {
       providerMessage: 'Sent through the Filemaker mail account "Sales".',
       sentAt: '2026-04-02T12:00:00.000Z',
     });
+  });
+
+  it('rejects test sends when the campaign has no assigned email account', async () => {
+    await expect(
+      sendFilemakerEmailCampaignTest({
+        campaign: createTestCampaign({ mailAccountId: null }),
+        recipientEmail: 'QA@Example.com',
+      })
+    ).rejects.toThrow('Campaign must have an email account assigned before sending a test.');
+
+    expect(sendFilemakerCampaignEmailMock).not.toHaveBeenCalled();
   });
 });

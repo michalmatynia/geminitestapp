@@ -1,12 +1,34 @@
 import React from 'react';
 import { View, Text } from 'react-native';
-import { Card, KangurMobileInsetPanel as InsetPanel, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../shared/KangurMobileUi';
+import { Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../shared/KangurMobileUi';
 import { LessonBadgeChip } from './lesson-row-primitives';
+import { type KangurMobileLessonsBadgeItem } from '../useKangurMobileLessonsBadges';
 
 interface LessonsBadgesSectionProps {
-  lessonBadges: any;
+  lessonBadges: {
+    recentBadges: KangurMobileLessonsBadgeItem[];
+    remainingBadges: number;
+    totalBadges: number;
+    unlockedBadges: number;
+  };
   copy: (v: Record<string, string>) => string;
-  profileHref: any;
+  profileHref: string;
+}
+
+function BadgesList({ recentBadges, copy }: { recentBadges: KangurMobileLessonsBadgeItem[], copy: (v: Record<string, string>) => string }): React.JSX.Element | null {
+  if (recentBadges.length === 0) return null;
+  return (
+    <View style={{ gap: 10 }}>
+      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+        {copy({ de: 'Zuletzt freigeschaltet', en: 'Recently unlocked', pl: 'Ostatnio odblokowane' })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {recentBadges.map((item) => (
+          <LessonBadgeChip key={item.id} item={item} />
+        ))}
+      </View>
+    </View>
+  );
 }
 
 export function LessonsBadgesSection({
@@ -58,16 +80,7 @@ export function LessonsBadgesSection({
           })}
         </Text>
       ) : (
-        <View style={{ gap: 10 }}>
-          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-            {copy({ de: 'Zuletzt freigeschaltet', en: 'Recently unlocked', pl: 'Ostatnio odblokowane' })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {lessonBadges.recentBadges.map((item: any) => (
-              <LessonBadgeChip key={item.id} item={item} />
-            ))}
-          </View>
-        </View>
+        <BadgesList recentBadges={lessonBadges.recentBadges} copy={copy} />
       )}
 
       <LinkButton

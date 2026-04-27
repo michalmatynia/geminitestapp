@@ -2,14 +2,19 @@
 
 import React, { startTransition } from 'react';
 
+import { OrganizationAnyParamsSection } from '../components/page/OrganizationAnyParamsSection';
+import { OrganizationAnyTextsSection } from '../components/page/OrganizationAnyTextsSection';
 import { OrganizationAddressesSection } from '../components/page/OrganizationAddressesSection';
+import { OrganizationBankAccountsSection } from '../components/page/OrganizationBankAccountsSection';
 import { OrganizationBasicInfoSection } from '../components/page/OrganizationBasicInfoSection';
 import { OrganizationCampaignDeliveriesSection } from '../components/page/OrganizationCampaignDeliveriesSection';
 import { OrganizationContactLogsSection } from '../components/page/OrganizationContactLogsSection';
+import { OrganizationDocumentsSection } from '../components/page/OrganizationDocumentsSection';
 import { OrganizationEmailLogSection } from '../components/page/OrganizationEmailLogSection';
 import { OrganizationEmailsSection } from '../components/page/OrganizationEmailsSection';
 import { OrganizationEventsSection } from '../components/page/OrganizationEventsSection';
 import { OrganizationImportedMetadataSection } from '../components/page/OrganizationImportedMetadataSection';
+import { OrganizationJobListingsSection } from '../components/page/OrganizationJobListingsSection';
 import { OrganizationLegacyDemandSection } from '../components/page/OrganizationLegacyDemandSection';
 import { OrganizationLegacyMetadataSection } from '../components/page/OrganizationLegacyMetadataSection';
 import { OrganizationMongoSummarySection } from '../components/page/OrganizationMongoSummarySection';
@@ -58,10 +63,15 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
               <OrganizationLegacyMetadataSection />
               <OrganizationMongoSummarySection />
               <OrganizationImportedMetadataSection />
+              <OrganizationBankAccountsSection />
+              <OrganizationDocumentsSection />
               <OrganizationLegacyDemandSection />
+              <OrganizationJobListingsSection />
               <OrganizationPersonsSection />
               <OrganizationEventsSection />
               <OrganizationContactLogsSection />
+              <OrganizationAnyTextsSection />
+              <OrganizationAnyParamsSection />
               <OrganizationEmailsSection />
               <OrganizationWebsitesSection />
               <OrganizationEmailLogSection />

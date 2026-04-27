@@ -3,12 +3,128 @@ import { View, Text } from 'react-native';
 import { Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../shared/KangurMobileUi';
 import { LessonMasteryRow } from './lesson-row-primitives';
 
+interface LessonMasteryStats {
+  trackedLessons: number;
+  masteredLessons: number;
+  lessonsNeedingPractice: number;
+}
+
+interface LessonInsight {
+  lessonHref: string;
+  title: string;
+}
+
 interface LessonsMasterySectionProps {
-  lessonMastery: any;
+  lessonMastery: LessonMasteryStats;
   lessonFocusSummary: string | null;
-  weakestLesson: any;
-  strongestLesson: any;
+  weakestLesson: LessonInsight | null;
+  strongestLesson: LessonInsight | null;
   copy: (v: Record<string, string>) => string;
+}
+
+function LessonMasteryStatsView({
+  lessonMastery,
+  copy,
+}: {
+  lessonMastery: LessonMasteryStats;
+  copy: (v: Record<string, string>) => string;
+}): React.JSX.Element {
+  return (
+    <View style={{ flexDirection: 'column', gap: 8 }}>
+      <Pill
+        label={copy({
+          de: `Verfolgt ${lessonMastery.trackedLessons}`,
+          en: `Tracked ${lessonMastery.trackedLessons}`,
+          pl: `Śledzone ${lessonMastery.trackedLessons}`,
+        })}
+        tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
+      />
+      <Pill
+        label={copy({
+          de: `Beherrscht ${lessonMastery.masteredLessons}`,
+          en: `Mastered ${lessonMastery.masteredLessons}`,
+          pl: `Opanowane ${lessonMastery.masteredLessons}`,
+        })}
+        tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }}
+      />
+      <Pill
+        label={copy({
+          de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
+          en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
+          pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
+        })}
+        tone={{ backgroundColor: '#fffbeb', borderColor: '#fde68a', textColor: '#b45309' }}
+      />
+    </View>
+  );
+}
+
+function LessonMasteryActions({
+  weakestLesson,
+  strongestLesson,
+  copy,
+}: {
+  weakestLesson: LessonInsight | null;
+  strongestLesson: LessonInsight | null;
+  copy: (v: Record<string, string>) => string;
+}): React.JSX.Element | null {
+  if (weakestLesson === null && strongestLesson === null) return null;
+
+  return (
+    <View style={{ alignSelf: 'stretch', gap: 10 }}>
+      {weakestLesson !== null && (
+        <LinkButton
+          href={weakestLesson.lessonHref}
+          label={copy({
+            de: `Fokus: ${weakestLesson.title}`,
+            en: `Focus: ${weakestLesson.title}`,
+            pl: `Skup się: ${weakestLesson.title}`,
+          })}
+          stretch
+          tone='primary'
+        />
+      )}
+      {strongestLesson !== null && (
+        <LinkButton
+          href={strongestLesson.lessonHref}
+          label={copy({
+            de: `Stärke halten: ${strongestLesson.title}`,
+            en: `Maintain strength: ${strongestLesson.title}`,
+            pl: `Podtrzymaj: ${strongestLesson.title}`,
+          })}
+          stretch
+          tone='secondary'
+        />
+      )}
+    </View>
+  );
+}
+
+function LessonMasteryRows({
+  weakestLesson,
+  strongestLesson,
+  copy,
+}: {
+  weakestLesson: LessonInsight | null;
+  strongestLesson: LessonInsight | null;
+  copy: (v: Record<string, string>) => string;
+}): React.JSX.Element {
+  return (
+    <View style={{ gap: 10 }}>
+      {weakestLesson !== null && (
+        <LessonMasteryRow
+          insight={weakestLesson}
+          title={copy({ de: 'Zum Wiederholen', en: 'Needs review', pl: 'Do powtórki' })}
+        />
+      )}
+      {strongestLesson !== null && (
+        <LessonMasteryRow
+          insight={strongestLesson}
+          title={copy({ de: 'Stärkste Lektion', en: 'Strongest lesson', pl: 'Najmocniejsza lekcja' })}
+        />
+      )}
+    </View>
+  );
 }
 
 export function LessonsMasterySection({
@@ -18,6 +134,8 @@ export function LessonsMasterySection({
   strongestLesson,
   copy,
 }: LessonsMasterySectionProps): React.JSX.Element {
+  const isListEmpty = lessonMastery.trackedLessons === 0;
+
   return (
     <Card>
       <View style={{ gap: 4 }}>
@@ -36,34 +154,9 @@ export function LessonsMasterySection({
         </Text>
       </View>
 
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <Pill
-          label={copy({
-            de: `Verfolgt ${lessonMastery.trackedLessons}`,
-            en: `Tracked ${lessonMastery.trackedLessons}`,
-            pl: `Śledzone ${lessonMastery.trackedLessons}`,
-          })}
-          tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
-        />
-        <Pill
-          label={copy({
-            de: `Beherrscht ${lessonMastery.masteredLessons}`,
-            en: `Mastered ${lessonMastery.masteredLessons}`,
-            pl: `Opanowane ${lessonMastery.masteredLessons}`,
-          })}
-          tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }}
-        />
-        <Pill
-          label={copy({
-            de: `Zum Wiederholen ${lessonMastery.lessonsNeedingPractice}`,
-            en: `Needs review ${lessonMastery.lessonsNeedingPractice}`,
-            pl: `Do powtórki ${lessonMastery.lessonsNeedingPractice}`,
-          })}
-          tone={{ backgroundColor: '#fffbeb', borderColor: '#fde68a', textColor: '#b45309' }}
-        />
-      </View>
+      <LessonMasteryStatsView lessonMastery={lessonMastery} copy={copy} />
 
-      {lessonMastery.trackedLessons === 0 ? (
+      {isListEmpty ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({
             de: 'Es gibt noch keine Lektions-Checkpoints. Öffne eine Lektion und speichere den ersten Checkpoint, damit hier Stärken und Wiederholungen erscheinen.',
@@ -73,35 +166,20 @@ export function LessonsMasterySection({
         </Text>
       ) : (
         <View style={{ gap: 10 }}>
-          {lessonFocusSummary ? (
+          {lessonFocusSummary !== null && lessonFocusSummary.length > 0 && (
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{lessonFocusSummary}</Text>
-          ) : null}
+          )}
 
-          <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            {weakestLesson ? (
-              <LinkButton
-                href={weakestLesson.lessonHref}
-                label={copy({ de: `Fokus: ${weakestLesson.title}`, en: `Focus: ${weakestLesson.title}`, pl: `Skup się: ${weakestLesson.title}` })}
-                stretch
-                tone='primary'
-              />
-            ) : null}
-            {strongestLesson ? (
-              <LinkButton
-                href={strongestLesson.lessonHref}
-                label={copy({ de: `Stärke halten: ${strongestLesson.title}`, en: `Maintain strength: ${strongestLesson.title}`, pl: `Podtrzymaj: ${strongestLesson.title}` })}
-                stretch
-                tone='secondary'
-              />
-            ) : null}
-          </View>
-
-          {weakestLesson ? (
-            <LessonMasteryRow insight={weakestLesson} title={copy({ de: 'Zum Wiederholen', en: 'Needs review', pl: 'Do powtórki' })} />
-          ) : null}
-          {strongestLesson ? (
-            <LessonMasteryRow insight={strongestLesson} title={copy({ de: 'Stärkste Lektion', en: 'Strongest lesson', pl: 'Najmocniejsza lekcja' })} />
-          ) : null}
+          <LessonMasteryActions
+            weakestLesson={weakestLesson}
+            strongestLesson={strongestLesson}
+            copy={copy}
+          />
+          <LessonMasteryRows
+            weakestLesson={weakestLesson}
+            strongestLesson={strongestLesson}
+            copy={copy}
+          />
         </View>
       )}
     </Card>

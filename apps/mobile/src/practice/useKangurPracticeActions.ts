@@ -21,6 +21,23 @@ export interface SyncInput {
   totalQuestions: number;
 }
 
+export interface ProgressStore {
+  loadProgress: () => unknown;
+  saveProgress: (p: unknown) => void;
+}
+
+export interface ApiClient {
+  createScore: (data: {
+    player_name: string;
+    score: number;
+    operation: KangurPracticeOperation;
+    subject: 'maths';
+    total_questions: number;
+    correct_answers: number;
+    time_taken: number;
+  }) => Promise<void>;
+}
+
 export interface PracticeActionData {
   currentIndex: number;
   selectedChoice: KangurQuestionChoice | null;
@@ -29,8 +46,8 @@ export interface PracticeActionData {
   runId: number;
   correctAnswers: number;
   runStartedAt: React.MutableRefObject<number>;
-  progressStore: { loadProgress: () => any; saveProgress: (p: any) => void };
-  apiClient: { createScore: (data: any) => Promise<void> };
+  progressStore: ProgressStore;
+  apiClient: ApiClient;
   queryClient: QueryClient;
   session: KangurAuthSession;
   isLoadingAuth: boolean;
@@ -42,58 +59,71 @@ export interface PracticeActionData {
   setScoreSyncState: (val: PracticeScoreSyncState | null) => void;
 }
 
-export function useKangurPracticeActions(data: PracticeActionData): { 
-  handleNext: () => void; 
-  syncScoreRecord: (input: SyncInput) => Promise<void> 
-} {
-  const { 
-    setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, 
-    setScoreSyncState, runId, questions, operation, runStartedAt,
-    progressStore, apiClient, queryClient, session, isLoadingAuth, locale, correctAnswers
-  } = data;
-  
-  const pendingScoreSyncRef = useRef<SyncInput | null>(null);
+interface KangurPracticeActionsResult {
+  handleNext: () => void;
+  syncScoreRecord: (input: SyncInput) => Promise<void>;
+}
 
-  const syncScoreRecord = useCallback(async (input: SyncInput): Promise<void> => {
-    if (session.status !== 'authenticated') {
-      if (isLoadingAuth) {
-        pendingScoreSyncRef.current = input;
-        setScoreSyncState(buildAwaitingAuthRetryState(locale));
-        return;
-      }
-      setScoreSyncState(buildLocalOnlySyncState('auth', locale));
+async function performSync(
+  input: SyncInput,
+  data: PracticeActionData,
+  pendingScoreSync: { current: SyncInput | null }
+): Promise<void> {
+  const { 
+    apiClient, session, isLoadingAuth, locale, runStartedAt,
+    setScoreSyncState, queryClient 
+  } = data;
+
+  if (session.status !== 'authenticated') {
+    if (isLoadingAuth) {
+      const ref = pendingScoreSync;
+      ref.current = input;
+      setScoreSyncState(buildAwaitingAuthRetryState(locale));
       return;
     }
+    setScoreSyncState(buildLocalOnlySyncState('auth', locale));
+    return;
+  }
 
-    pendingScoreSyncRef.current = null;
-    setScoreSyncState(buildSyncingState(locale));
+  const ref = pendingScoreSync;
+  ref.current = null;
+  setScoreSyncState(buildSyncingState(locale));
 
-    const timeTakenSeconds = Math.max(0, Math.round((Date.now() - runStartedAt.current) / 1000));
-    try {
-      await apiClient.createScore({
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        player_name: resolvePracticePlayerName(session as unknown as PracticePlayerSession, locale),
-        score: input.correctAnswers,
-        operation: input.operation,
-        subject: 'maths',
-        total_questions: input.totalQuestions,
-        correct_answers: input.correctAnswers,
-        time_taken: timeTakenSeconds,
-      });
-      setScoreSyncState(buildSyncedState(locale));
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
-        queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
-      ]);
-    } catch (error) {
-      const status = (error as { status?: number }).status;
-      if (status === 401 || status === 403 || error instanceof TypeError) {
-        setScoreSyncState(buildLocalOnlySyncState('expected-error', locale));
-      } else {
-        setScoreSyncState(buildUnexpectedSyncFailureState(locale));
-      }
+  const timeTakenSeconds = Math.max(0, Math.round((Date.now() - runStartedAt.current) / 1000));
+  try {
+    await apiClient.createScore({
+      player_name: resolvePracticePlayerName(session as unknown as PracticePlayerSession, locale),
+      score: input.correctAnswers,
+      operation: input.operation,
+      subject: 'maths',
+      total_questions: input.totalQuestions,
+      correct_answers: input.correctAnswers,
+      time_taken: timeTakenSeconds,
+    });
+    setScoreSyncState(buildSyncedState(locale));
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'leaderboard'] }),
+      queryClient.invalidateQueries({ queryKey: ['kangur-mobile', 'scores'] }),
+    ]);
+  } catch (error) {
+    const err = error as { status?: number };
+    const status = err.status;
+    if (status === 401 || status === 403 || error instanceof TypeError) {
+      setScoreSyncState(buildLocalOnlySyncState('expected-error', locale));
+    } else {
+      setScoreSyncState(buildUnexpectedSyncFailureState(locale));
     }
-  }, [apiClient, isLoadingAuth, locale, queryClient, session, setScoreSyncState, runStartedAt]);
+  }
+}
+
+export function useKangurPracticeActions(data: PracticeActionData): KangurPracticeActionsResult {
+  const { 
+    setCorrectAnswers, setCurrentIndex, setSelectedChoice, setCompletion, 
+    runId, questions, operation, progressStore, correctAnswers
+  } = data;
+  
+  const pendingScoreSync = useRef<SyncInput | null>(null);
+  const syncScoreRecord = useCallback(async (input: SyncInput) => performSync(input, data, pendingScoreSync), [data]);
 
   const handleNext = useCallback((): void => {
     const currentQuestion = questions[data.currentIndex];

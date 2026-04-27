@@ -5,6 +5,7 @@ import {
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
 import { sendFilemakerCampaignEmail } from './campaign-email-delivery';
+import { listFilemakerMailAccounts } from './filemaker-mail-service';
 import { createCampaignRuntimeService } from './campaign-runtime/createCampaignRuntimeService';
 import { createFilemakerCampaignDomainThrottle } from './campaign-runtime/domain-throttle';
 import {
@@ -45,6 +46,7 @@ const defaultDeps: FilemakerCampaignRuntimeDeps = {
   upsertSettingValue: upsertFilemakerCampaignSettingValue,
   sendCampaignEmail: sendFilemakerCampaignEmail,
   now: () => new Date(),
+  listMailAccounts: listFilemakerMailAccounts,
   throttleBeforeSend: (emailAddress: string) => defaultDomainThrottle.wait(emailAddress),
   reserveWarmupSlot: (senderKey: string) => defaultWarmupTracker.reserve(senderKey),
 };

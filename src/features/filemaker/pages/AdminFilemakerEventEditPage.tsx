@@ -44,7 +44,17 @@ import {
 import type { EditableAddress } from '../hooks/editable-address';
 import type { MongoFilemakerEvent } from './AdminFilemakerEventsPage.types';
 import type { FilemakerAddress, FilemakerEvent, FilemakerOrganization } from '../types';
+import type { FilemakerAnyParam } from '../filemaker-anyparam.types';
+import type { FilemakerAnyText } from '../filemaker-anytext.types';
+import type { FilemakerBankAccount } from '../filemaker-bank-account.types';
+import type { FilemakerContract } from '../filemaker-contract.types';
+import type { FilemakerDocument } from '../filemaker-document.types';
 import type { MongoFilemakerWebsite } from '../filemaker-websites.types';
+import { FilemakerAnyParamsSection } from '../components/shared/FilemakerAnyParamsSection';
+import { FilemakerAnyTextsSection } from '../components/shared/FilemakerAnyTextsSection';
+import { FilemakerBankAccountsSection } from '../components/shared/FilemakerBankAccountsSection';
+import { FilemakerContractsSection } from '../components/shared/FilemakerContractsSection';
+import { FilemakerDocumentsSection } from '../components/shared/FilemakerDocumentsSection';
 import { FilemakerLinkedWebsitesSection } from '../components/shared/FilemakerLinkedWebsitesSection';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -70,16 +80,36 @@ type ImportedEventState = {
   event: MongoFilemakerEvent | null;
   isLoading: boolean;
   linkedAddresses: FilemakerAddress[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedContracts: FilemakerContract[];
+  linkedDocuments: FilemakerDocument[];
   linkedWebsites: MongoFilemakerWebsite[];
 };
 
 function ImportedEventDetails(props: {
   event: MongoFilemakerEvent;
   linkedAddresses: FilemakerAddress[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedContracts: FilemakerContract[];
+  linkedDocuments: FilemakerDocument[];
   linkedWebsites: MongoFilemakerWebsite[];
   onBack: () => void;
 }): React.JSX.Element {
-  const { event, linkedAddresses, linkedWebsites, onBack } = props;
+  const {
+    event,
+    linkedAddresses,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedWebsites,
+    onBack,
+  } = props;
   return (
     <div className='page-section-compact space-y-6'>
       <SectionHeader
@@ -157,6 +187,16 @@ function ImportedEventDetails(props: {
           <div className='text-sm text-gray-500'>No linked addresses.</div>
         )}
       </FormSection>
+
+      <FilemakerBankAccountsSection bankAccounts={linkedBankAccounts} />
+
+      <FilemakerContractsSection contracts={linkedContracts} />
+
+      <FilemakerDocumentsSection documents={linkedDocuments} />
+
+      <FilemakerAnyTextsSection anyTexts={linkedAnyTexts} />
+
+      <FilemakerAnyParamsSection anyParams={linkedAnyParams} />
 
       <FilemakerLinkedWebsitesSection websites={linkedWebsites} />
 
@@ -236,6 +276,11 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
     event: null,
     isLoading: false,
     linkedAddresses: [],
+    linkedAnyParams: [],
+    linkedAnyTexts: [],
+    linkedBankAccounts: [],
+    linkedContracts: [],
+    linkedDocuments: [],
     linkedWebsites: [],
   });
 
@@ -247,6 +292,11 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       event: null,
       isLoading: true,
       linkedAddresses: [],
+      linkedAnyParams: [],
+      linkedAnyTexts: [],
+      linkedBankAccounts: [],
+      linkedContracts: [],
+      linkedDocuments: [],
       linkedWebsites: [],
     });
     fetch(`/api/filemaker/events/${encodeURIComponent(eventId)}`, { signal: controller.signal })
@@ -255,12 +305,22 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
       ): Promise<{
         event: MongoFilemakerEvent;
         linkedAddresses?: FilemakerAddress[];
+        linkedAnyParams?: FilemakerAnyParam[];
+        linkedAnyTexts?: FilemakerAnyText[];
+        linkedBankAccounts?: FilemakerBankAccount[];
+        linkedContracts?: FilemakerContract[];
+        linkedDocuments?: FilemakerDocument[];
         linkedWebsites?: MongoFilemakerWebsite[];
       }> => {
         if (!response.ok) throw new Error(`Failed to load event (${response.status}).`);
         return (await response.json()) as {
           event: MongoFilemakerEvent;
           linkedAddresses?: FilemakerAddress[];
+          linkedAnyParams?: FilemakerAnyParam[];
+          linkedAnyTexts?: FilemakerAnyText[];
+          linkedBankAccounts?: FilemakerBankAccount[];
+          linkedContracts?: FilemakerContract[];
+          linkedDocuments?: FilemakerDocument[];
           linkedWebsites?: MongoFilemakerWebsite[];
         };
       })
@@ -270,6 +330,11 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           event: response.event,
           isLoading: false,
           linkedAddresses: response.linkedAddresses ?? [],
+          linkedAnyParams: response.linkedAnyParams ?? [],
+          linkedAnyTexts: response.linkedAnyTexts ?? [],
+          linkedBankAccounts: response.linkedBankAccounts ?? [],
+          linkedContracts: response.linkedContracts ?? [],
+          linkedDocuments: response.linkedDocuments ?? [],
           linkedWebsites: response.linkedWebsites ?? [],
         });
       })
@@ -280,6 +345,11 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
           event: null,
           isLoading: false,
           linkedAddresses: [],
+          linkedAnyParams: [],
+          linkedAnyTexts: [],
+          linkedBankAccounts: [],
+          linkedContracts: [],
+          linkedDocuments: [],
           linkedWebsites: [],
         });
       });
@@ -656,6 +726,11 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
         <ImportedEventDetails
           event={importedEventState.event}
           linkedAddresses={importedEventState.linkedAddresses}
+          linkedAnyParams={importedEventState.linkedAnyParams}
+          linkedAnyTexts={importedEventState.linkedAnyTexts}
+          linkedBankAccounts={importedEventState.linkedBankAccounts}
+          linkedContracts={importedEventState.linkedContracts}
+          linkedDocuments={importedEventState.linkedDocuments}
           linkedWebsites={importedEventState.linkedWebsites}
           onBack={(): void => {
             startTransition(() => { router.push('/admin/filemaker/events'); });

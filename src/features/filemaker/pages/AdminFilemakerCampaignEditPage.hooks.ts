@@ -229,7 +229,7 @@ export function useAdminFilemakerCampaignEditState() {
     return [
       {
         value: '__shared__',
-        label: 'Shared Filemaker campaign delivery provider',
+        label: 'Select an email account (required)',
       },
       ...options,
     ];
@@ -240,8 +240,16 @@ export function useAdminFilemakerCampaignEditState() {
     [database, draft.audience, suppressionRegistry]
   );
   const launchEvaluation = useMemo(
-    () => evaluateFilemakerEmailCampaignLaunch(draft, preview, new Date(), contentGroupRegistry),
-    [contentGroupRegistry, draft, preview]
+    () =>
+      evaluateFilemakerEmailCampaignLaunch(draft, preview, {
+        now: new Date(),
+        contentGroupRegistry,
+        senderAssignment: {
+          mailAccounts,
+          requireAssignedMailAccount: true,
+        },
+      }),
+    [contentGroupRegistry, draft, mailAccounts, preview]
   );
   const recentRuns = useMemo(
     () =>
@@ -491,6 +499,12 @@ export function useAdminFilemakerCampaignEditState() {
       });
       return;
     }
+    if ((draft.mailAccountId ?? '').trim().length === 0) {
+      toast('Assign an email account before sending a test delivery.', {
+        variant: 'error',
+      });
+      return;
+    }
 
     setIsTestSendPending(true);
     try {
@@ -515,7 +529,7 @@ export function useAdminFilemakerCampaignEditState() {
     } finally {
       setIsTestSendPending(false);
     }
-  }, [buildPersistedCampaign, contentGroupRegistry, testRecipientEmailDraft, toast]);
+  }, [buildPersistedCampaign, contentGroupRegistry, draft.mailAccountId, testRecipientEmailDraft, toast]);
 
   const handleDuplicateCampaign = useCallback(async (): Promise<void> => {
     if (isCreateMode) return;

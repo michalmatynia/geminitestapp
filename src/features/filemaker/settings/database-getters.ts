@@ -16,6 +16,7 @@ import {
   type FilemakerEmailLink,
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
+  type FilemakerJobListing,
   type FilemakerOrganization,
   type FilemakerPerson,
 } from '../types';
@@ -283,4 +284,16 @@ export const getFilemakerEventsForOrganization = (
   });
   if (eventIds.size === 0) return [];
   return database.events.filter((event: FilemakerEvent): boolean => eventIds.has(event.id));
+};
+
+export const getFilemakerJobListingsForOrganization = (
+  database: FilemakerDatabase,
+  organizationId: string
+): FilemakerJobListing[] => {
+  const normalizedOrganizationId = normalizeString(organizationId);
+  if (normalizedOrganizationId.length === 0) return [];
+  return database.jobListings.filter(
+    (listing: FilemakerJobListing): boolean =>
+      listing.organizationId === normalizedOrganizationId
+  );
 };

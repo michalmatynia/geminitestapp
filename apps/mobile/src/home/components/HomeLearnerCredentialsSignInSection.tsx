@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
-import { DeferredHomeAccountSignInForm, PrimaryButton, LabeledTextField } from '../homeScreenPrimitives';
+import { PrimaryButton, LabeledTextField } from '../homeScreenPrimitives';
+import { DeferredHomeAccountSignInForm } from '../home-screen-deferred';
 
 interface HomeLearnerCredentialsSignInSectionProps {
   isDeferredReady: boolean;
@@ -73,12 +74,19 @@ export function HomeLearnerCredentialsSignInSection({
         value={password}
       />
       <PrimaryButton
+        hint={copy({
+          de: 'Meldet dich mit den eingegebenen Daten an.',
+          en: 'Signs you in with the entered credentials.',
+          pl: 'Loguje Cię za pomocą wpisanych danych.',
+        })}
         label={copy({
           de: 'Anmelden',
           en: 'Sign in',
-          pl: 'Zaloguj się',
+          pl: 'Zaloguj',
         })}
-        onPress={() => onSignIn(loginName, password)}
+        onPress={() => {
+          void onSignIn(loginName, password);
+        }}
       />
     </View>
   );

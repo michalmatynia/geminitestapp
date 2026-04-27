@@ -36,6 +36,12 @@ import type {
   FilemakerPhoneNumber,
 } from '../types';
 import type { MongoFilemakerWebsite } from '../filemaker-websites.types';
+import type { FilemakerAnyParam } from '../filemaker-anyparam.types';
+import type { FilemakerAnyText } from '../filemaker-anytext.types';
+import type { FilemakerBankAccount } from '../filemaker-bank-account.types';
+import type { FilemakerContract } from '../filemaker-contract.types';
+import type { FilemakerDocument } from '../filemaker-document.types';
+import type { FilemakerPersonOccupation } from '../filemaker-person-occupation.types';
 import type { MongoFilemakerPerson } from '../pages/AdminFilemakerPersonsPage.types';
 import type { EditableAddress } from './editable-address';
 import type { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
@@ -49,6 +55,12 @@ import {
 
 type MongoFilemakerPersonResponse = {
   linkedAddresses?: FilemakerAddress[];
+  linkedAnyParams?: FilemakerAnyParam[];
+  linkedAnyTexts?: FilemakerAnyText[];
+  linkedBankAccounts?: FilemakerBankAccount[];
+  linkedContracts?: FilemakerContract[];
+  linkedDocuments?: FilemakerDocument[];
+  linkedOccupations?: FilemakerPersonOccupation[];
   linkedWebsites?: MongoFilemakerWebsite[];
   person: MongoFilemakerPerson;
 };
@@ -85,7 +97,6 @@ const toEditableAddress = (
   legacyUuid: address.legacyUuid,
 });
 
-
 export type AdminFilemakerPersonEditPageContextValue = {
   isCreateMode: boolean;
   person: (FilemakerPerson | MongoFilemakerPerson) | null;
@@ -98,6 +109,12 @@ export type AdminFilemakerPersonEditPageContextValue = {
   phoneNumberExtractionText: string;
   setPhoneNumberExtractionText: (value: React.SetStateAction<string>) => void;
   emails: FilemakerEmail[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedContracts: FilemakerContract[];
+  linkedDocuments: FilemakerDocument[];
+  linkedOccupations: FilemakerPersonOccupation[];
   websites: MongoFilemakerWebsite[];
   phoneNumbers: FilemakerPhoneNumber[];
   countries: CountryOption[];
@@ -131,6 +148,14 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
   const [mongoPerson, setMongoPerson] = useState<MongoFilemakerPerson | null>(null);
+  const [mongoLinkedAnyParams, setMongoLinkedAnyParams] = useState<FilemakerAnyParam[]>([]);
+  const [mongoLinkedAnyTexts, setMongoLinkedAnyTexts] = useState<FilemakerAnyText[]>([]);
+  const [mongoLinkedBankAccounts, setMongoLinkedBankAccounts] = useState<FilemakerBankAccount[]>([]);
+  const [mongoLinkedContracts, setMongoLinkedContracts] = useState<FilemakerContract[]>([]);
+  const [mongoLinkedDocuments, setMongoLinkedDocuments] = useState<FilemakerDocument[]>([]);
+  const [mongoLinkedOccupations, setMongoLinkedOccupations] = useState<
+    FilemakerPersonOccupation[]
+  >([]);
   const [mongoLinkedAddresses, setMongoLinkedAddresses] = useState<FilemakerAddress[]>([]);
   const [mongoLinkedWebsites, setMongoLinkedWebsites] = useState<MongoFilemakerWebsite[]>([]);
   const [isMongoPersonLoading, setIsMongoPersonLoading] = useState(false);
@@ -152,6 +177,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   useEffect(() => {
     if (isCreateMode) {
       setMongoPerson(null);
+      setMongoLinkedAnyParams([]);
+      setMongoLinkedAnyTexts([]);
+      setMongoLinkedBankAccounts([]);
+      setMongoLinkedContracts([]);
+      setMongoLinkedDocuments([]);
+      setMongoLinkedOccupations([]);
       setMongoLinkedAddresses([]);
       setMongoLinkedWebsites([]);
       setIsMongoPersonLoading(false);
@@ -166,6 +197,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       })
       .then((response: MongoFilemakerPersonResponse): void => {
         setMongoPerson(response.person);
+        setMongoLinkedAnyParams(response.linkedAnyParams ?? []);
+        setMongoLinkedAnyTexts(response.linkedAnyTexts ?? []);
+        setMongoLinkedBankAccounts(response.linkedBankAccounts ?? []);
+        setMongoLinkedContracts(response.linkedContracts ?? []);
+        setMongoLinkedDocuments(response.linkedDocuments ?? []);
+        setMongoLinkedOccupations(response.linkedOccupations ?? []);
         setMongoLinkedAddresses(response.linkedAddresses ?? []);
         setMongoLinkedWebsites(response.linkedWebsites ?? []);
         setIsMongoPersonLoading(false);
@@ -174,6 +211,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         if (controller.signal.aborted) return;
         logClientError(error);
         setMongoPerson(null);
+        setMongoLinkedAnyParams([]);
+        setMongoLinkedAnyTexts([]);
+        setMongoLinkedBankAccounts([]);
+        setMongoLinkedContracts([]);
+        setMongoLinkedDocuments([]);
+        setMongoLinkedOccupations([]);
         setMongoLinkedAddresses([]);
         setMongoLinkedWebsites([]);
         setIsMongoPersonLoading(false);
@@ -257,6 +300,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     [database, person]
   );
   const websites = mongoLinkedWebsites;
+  const linkedAnyParams = mongoLinkedAnyParams;
+  const linkedAnyTexts = mongoLinkedAnyTexts;
+  const linkedBankAccounts = mongoLinkedBankAccounts;
+  const linkedContracts = mongoLinkedContracts;
+  const linkedDocuments = mongoLinkedDocuments;
+  const linkedOccupations = mongoLinkedOccupations;
 
   const phoneNumbers = useMemo(
     () => (person ? getFilemakerPhoneNumbersForParty(database, 'person', person.id) : []),
@@ -398,6 +447,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     phoneNumberExtractionText,
     setPhoneNumberExtractionText,
     emails,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
     websites,
     phoneNumbers,
     countries,

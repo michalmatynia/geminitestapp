@@ -132,7 +132,18 @@ export async function evaluateGraphInternal(
 
   state.skippedNodes.forEach((id: string) => {
     if (nodeById.has(id)) {
-      state.finishedNodes.add(id);
+      // If we have a seed for this node, we don't mark it as finished immediately.
+      // This allows the runNode loop to pick it up, see the seed match,
+      // and generate a 'cached' status with 'seed' decision trace span.
+      // We also verify that we haven't already marked it as an error node
+      // in case of a partially failed/skipped run.
+      if (!executionOptions.seedOutputs?.[id] || state.errorNodes.has(id)) {
+        state.finishedNodes.add(id);
+      } else {
+        // We still populate the output so that downstream nodes see it as ready
+        // if they are evaluated before runNode picks this up.
+        state.outputs[id] = cloneValue(executionOptions.seedOutputs[id]);
+      }
     }
   });
 

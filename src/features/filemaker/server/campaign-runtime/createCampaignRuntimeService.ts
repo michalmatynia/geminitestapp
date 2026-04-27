@@ -237,11 +237,24 @@ export const createCampaignRuntimeService = (deps: FilemakerCampaignRuntimeDeps)
       campaign.audience,
       state.suppressionRegistry
     );
+    const senderAccounts =
+      input.mode === 'live' && deps.listMailAccounts !== undefined
+        ? await deps.listMailAccounts()
+        : null;
     const evaluation = evaluateFilemakerEmailCampaignLaunch(
       campaign,
       preview,
-      now,
-      state.contentGroupRegistry
+      {
+        now,
+        contentGroupRegistry: state.contentGroupRegistry,
+        senderAssignment:
+          input.mode === 'live'
+            ? {
+                mailAccounts: senderAccounts,
+                requireAssignedMailAccount: true,
+              }
+            : null,
+      }
     );
 
     if (input.mode === 'live' && !evaluation.isEligible) {

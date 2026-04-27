@@ -44,7 +44,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useKangurLeaderboardState } from '@/features/kangur/ui/hooks/useKangurLeaderboardState';
 

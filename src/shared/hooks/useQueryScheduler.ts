@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
 
 interface QuerySchedulerConfig {
   priority: 'high' | 'medium' | 'low';
@@ -30,7 +31,7 @@ export function useQueryScheduler(): {
         queryKey: readonly unknown[];
         queryFn: () => Promise<unknown>;
         config: QuerySchedulerConfig;
-        timeout?: NodeJS.Timeout;
+        timeout?: SafeTimeout;
           }
           >
           >(new Map());
@@ -68,7 +69,7 @@ export function useQueryScheduler(): {
           })();
         }
         scheduledQueries.current.delete(id);
-      }, delay);
+      }, delay) as SafeTimeout;
 
       scheduledQueries.current.set(id, {
         queryKey,

@@ -67,7 +67,8 @@ const {
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
   logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/shared/ui', () => ({
   useToast: () => ({ toast: toastMock }),

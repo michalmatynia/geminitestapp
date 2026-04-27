@@ -36,7 +36,7 @@ vi.mock('@/features/ai/ai-paths/context/GraphContext', () => ({
   useGraphActions: () => mockState.graphActions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/validation-engine', () => ({
   normalizeAiPathsValidationConfig: (...args: unknown[]) =>
     mockState.normalizeAiPathsValidationConfig(...args),
 }));

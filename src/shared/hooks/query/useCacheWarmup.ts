@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
+import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface CacheWarmupConfig {
@@ -19,7 +20,7 @@ export function useCacheWarmup(
   options?: { domain?: TanstackFactoryDomain }
 ): void {
   const queryClient = useQueryClient();
-  const warmupTimeouts = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const warmupTimeouts = useRef<Map<string, SafeTimeout>>(new Map());
   const domain = options?.domain ?? 'global';
 
   const warmupQuery = useCallback(
@@ -49,7 +50,7 @@ export function useCacheWarmup(
             description: 'Loads cache warmup.'},
         })();
         warmupTimeouts.current.delete(key);
-      }, delay);
+      }, delay) as SafeTimeout;
 
       warmupTimeouts.current.set(key, timeout);
     },
@@ -62,7 +63,7 @@ export function useCacheWarmup(
     const currentTimeouts = warmupTimeouts.current;
     return (): void => {
       // Cleanup timeouts
-      currentTimeouts.forEach((timeout: NodeJS.Timeout) => clearTimeout(timeout));
+      currentTimeouts.forEach((timeout: SafeTimeout) => clearTimeout(timeout));
       currentTimeouts.clear();
     };
   }, [configs, warmupQuery]);

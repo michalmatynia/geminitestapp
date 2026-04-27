@@ -34,7 +34,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   reportKangurClientError: reportKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/services/learner-profile-scores', () => ({
   loadScopedKangurScores: loadScopedKangurScoresMock,

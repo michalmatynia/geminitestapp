@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-depth, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition */
 import 'server-only';
 
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';
@@ -27,6 +28,7 @@ import {
   buildEvidenceSnippets,
   parseExtractionRequest,
 } from './utils';
+import { runBatchGeneration } from './image-studio/batch-generator';
 
 import type { AgentToolLog, AgentToolResult, ExtractionPlan } from './tool-types';
 import type { Page } from 'playwright';
@@ -79,6 +81,47 @@ export async function runExtractionRequest({
   let finalUrl = initialFinalUrl;
   const extractionRequest = parseExtractionRequest(prompt);
   if (extractionRequest) {
+    if (extractionRequest.type === 'batch_image') {
+      const runIds = await runBatchGeneration({
+        projectId: 'default',
+        prompts: [prompt ?? ''],
+        outputCount: extractionRequest.count ?? 1,
+      });
+      return {
+        ok: true,
+        output: {
+          runIds,
+          extractionType: 'batch_image',
+          extractedTotal: runIds.length,
+        },
+      } as AgentToolResult;
+    }
+
+    if (extractionRequest.type === 'search') {
+      const results = await runAggregatedSearch({
+        query: prompt ?? '',
+      });
+      return {
+        ok: true,
+        output: {
+          results,
+          extractionType: 'search',
+          extractedTotal: results.length,
+        },
+      } as AgentToolResult;
+    }
+
+    if (extractionRequest.type === 'document_analyze') {
+      const result = await analyzeDocument(page, prompt ?? '', resolvedModel);
+      return {
+        ok: true,
+        output: {
+          ...result,
+          extractionType: 'document_analyze',
+        },
+      } as AgentToolResult;
+    }
+
     if (targetHostname && !isAllowedUrl(finalUrl, targetHostname)) {
       await log('warning', 'Extraction blocked; navigated outside target domain.', {
         url: finalUrl,

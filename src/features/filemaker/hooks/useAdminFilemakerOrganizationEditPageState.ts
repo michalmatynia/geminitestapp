@@ -17,12 +17,14 @@ import {
   FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY,
   createFilemakerAddress,
   createFilemakerAddressLink,
+  createFilemakerJobListing,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   getFilemakerAddressById,
   getFilemakerAddressLinksForOwner,
   getFilemakerEmailsForParty,
   getFilemakerEventsForOrganization,
+  getFilemakerJobListingsForOrganization,
   getFilemakerPhoneNumbersForParty,
   normalizeFilemakerDatabase,
   parseAndUpsertFilemakerEmailsForParty,
@@ -35,6 +37,10 @@ import type {
   FilemakerOrganizationHarvestProfile,
   FilemakerOrganizationImportedDemand,
 } from '../filemaker-organization-imported-metadata';
+import type { FilemakerAnyParam } from '../filemaker-anyparam.types';
+import type { FilemakerAnyText } from '../filemaker-anytext.types';
+import type { FilemakerBankAccount } from '../filemaker-bank-account.types';
+import type { FilemakerDocument } from '../filemaker-document.types';
 import type { FilemakerPartySnapshot } from '../filemaker-party-snapshot.types';
 import type { MongoFilemakerEvent } from '../pages/AdminFilemakerEventsPage.types';
 import type { MongoFilemakerPerson } from '../pages/AdminFilemakerPersonsPage.types';
@@ -42,6 +48,7 @@ import type {
   FilemakerAddress,
   FilemakerEmail,
   FilemakerEvent,
+  FilemakerJobListing,
   FilemakerOrganization,
   FilemakerOrganizationLegacyDemand,
   FilemakerPhoneNumber,
@@ -68,6 +75,10 @@ type MongoFilemakerOrganizationState = {
   importedDemands: FilemakerOrganizationImportedDemand[];
   isLoading: boolean;
   linkedAddresses: FilemakerAddress[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedDocuments: FilemakerDocument[];
   linkedEmails: FilemakerEmail[];
   linkedEvents: MongoFilemakerEvent[];
   linkedPersons: MongoFilemakerPerson[];
@@ -81,6 +92,10 @@ type MongoFilemakerOrganizationResponse = {
   harvestProfiles?: FilemakerOrganizationHarvestProfile[];
   importedDemands?: FilemakerOrganizationImportedDemand[];
   linkedAddresses?: FilemakerAddress[];
+  linkedAnyParams?: FilemakerAnyParam[];
+  linkedAnyTexts?: FilemakerAnyText[];
+  linkedBankAccounts?: FilemakerBankAccount[];
+  linkedDocuments?: FilemakerDocument[];
   linkedEmails?: FilemakerEmail[];
   linkedEvents?: MongoFilemakerEvent[];
   linkedPersons?: MongoFilemakerPerson[];
@@ -99,6 +114,10 @@ const EMPTY_MONGO_ORGANIZATION_STATE: MongoFilemakerOrganizationState = {
   importedDemands: [],
   isLoading: false,
   linkedAddresses: [],
+  linkedAnyParams: [],
+  linkedAnyTexts: [],
+  linkedBankAccounts: [],
+  linkedDocuments: [],
   linkedEmails: [],
   linkedEvents: [],
   linkedPersons: [],
@@ -247,6 +266,38 @@ const applyOrganizationLegacyDemands = (
   });
 };
 
+const applyOrganizationJobListings = (
+  database: FilemakerDatabase,
+  organizationId: string,
+  listings: FilemakerJobListing[]
+): FilemakerDatabase => {
+  const now = new Date().toISOString();
+  const nextListings = listings
+    .filter((listing: FilemakerJobListing): boolean => listing.title.trim().length > 0)
+    .map((listing: FilemakerJobListing): FilemakerJobListing =>
+      createFilemakerJobListing({
+        ...listing,
+        id:
+          listing.id.trim().length > 0
+            ? listing.id.trim()
+            : createClientFilemakerId('filemaker-job-listing'),
+        organizationId,
+        createdAt: listing.createdAt ?? now,
+        updatedAt: now,
+      })
+    );
+
+  return normalizeFilemakerDatabase({
+    ...database,
+    jobListings: [
+      ...database.jobListings.filter(
+        (listing: FilemakerJobListing): boolean => listing.organizationId !== organizationId
+      ),
+      ...nextListings,
+    ],
+  });
+};
+
 const parseMongoFilemakerOrganizationResponse = async (
   response: Response
 ): Promise<MongoFilemakerOrganizationResponse> => {
@@ -264,6 +315,10 @@ const toLoadedMongoOrganizationState = (
   importedDemands: response.importedDemands ?? [],
   isLoading: false,
   linkedAddresses: response.linkedAddresses ?? [],
+  linkedAnyParams: response.linkedAnyParams ?? [],
+  linkedAnyTexts: response.linkedAnyTexts ?? [],
+  linkedBankAccounts: response.linkedBankAccounts ?? [],
+  linkedDocuments: response.linkedDocuments ?? [],
   linkedEmails: response.linkedEmails ?? [],
   linkedEvents: response.linkedEvents ?? [],
   linkedPersons: response.linkedPersons ?? [],
@@ -290,8 +345,14 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
   setLegacyDemandRows: (
     value: React.SetStateAction<FilemakerOrganizationLegacyDemand[]>
   ) => void;
+  jobListings: FilemakerJobListing[];
+  setJobListings: (value: React.SetStateAction<FilemakerJobListing[]>) => void;
   emails: FilemakerEmail[];
   linkedEvents: FilemakerEvent[];
+  linkedAnyParams: FilemakerAnyParam[];
+  linkedAnyTexts: FilemakerAnyText[];
+  linkedBankAccounts: FilemakerBankAccount[];
+  linkedDocuments: FilemakerDocument[];
   linkedPersons: MongoFilemakerPerson[];
   linkedWebsites: MongoFilemakerWebsite[];
   harvestProfiles: FilemakerOrganizationHarvestProfile[];
@@ -343,6 +404,10 @@ function useMongoFilemakerOrganization(
           importedDemands: [],
           isLoading: false,
           linkedAddresses: [],
+          linkedAnyParams: [],
+          linkedAnyTexts: [],
+          linkedBankAccounts: [],
+          linkedDocuments: [],
           linkedEmails: [],
           linkedEvents: [],
           linkedPersons: [],
@@ -440,6 +505,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const [phoneNumberExtractionText, setPhoneNumberExtractionText] = useState('');
   const [linkedEventIds, setLinkedEventIds] = useState<string[]>([]);
   const [legacyDemandRows, setLegacyDemandRows] = useState<FilemakerOrganizationLegacyDemand[]>([]);
+  const [jobListings, setJobListings] = useState<FilemakerJobListing[]>([]);
 
   useEffect(() => {
     if (isCreateMode) {
@@ -452,6 +518,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       setEditableAddresses([]);
       setLinkedEventIds([]);
       setLegacyDemandRows([]);
+      setJobListings([]);
       return;
     }
     if (organization) {
@@ -526,6 +593,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
           ? settingsDemandRows
           : toLegacyDemandRows(organization.id, mongoOrganizationState.importedDemands)
       );
+      setJobListings(getFilemakerJobListingsForOrganization(database, organization.id));
     }
   }, [
     countries,
@@ -559,6 +627,10 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     },
     [database, mongoOrganizationState.linkedEvents, organization]
   );
+  const linkedAnyParams = mongoOrganizationState.linkedAnyParams;
+  const linkedAnyTexts = mongoOrganizationState.linkedAnyTexts;
+  const linkedBankAccounts = mongoOrganizationState.linkedBankAccounts;
+  const linkedDocuments = mongoOrganizationState.linkedDocuments;
   const linkedPersons = mongoOrganizationState.linkedPersons;
   const linkedWebsites = mongoOrganizationState.linkedWebsites;
   const harvestProfiles = mongoOrganizationState.harvestProfiles;
@@ -686,6 +758,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         newOrganizationId,
         legacyDemandRows
       );
+      nextDatabase = applyOrganizationJobListings(nextDatabase, newOrganizationId, jobListings);
 
       await persistDatabase(nextDatabase, 'Organization created.');
       router.push('/admin/filemaker/organizations');
@@ -696,6 +769,11 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
     if (organizationSource === 'mongo') {
       try {
+        const nextSettingsDatabase = applyOrganizationJobListings(
+          database,
+          organization.id,
+          jobListings
+        );
         const response = await fetch(
           `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
           {
@@ -722,6 +800,10 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
         if (!response.ok) {
           throw new Error(`Failed to save Mongo organization (${response.status}).`);
         }
+        await updateSetting.mutateAsync({
+          key: FILEMAKER_DATABASE_KEY,
+          value: JSON.stringify(toPersistedFilemakerDatabase(nextSettingsDatabase)),
+        });
         toast('Organization updated.', { variant: 'success' });
         router.push('/admin/filemaker/organizations');
       } catch (error: unknown) {
@@ -756,6 +838,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       organization.id,
       legacyDemandRows
     );
+    nextDatabase = applyOrganizationJobListings(nextDatabase, organization.id, jobListings);
 
     await persistDatabase(nextDatabase, 'Organization updated.');
     router.push('/admin/filemaker/organizations');
@@ -765,6 +848,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     database,
     editableAddresses,
     isCreateMode,
+    jobListings,
     legacyDemandRows,
     organization,
     organizationSource,
@@ -772,6 +856,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     persistDatabase,
     router,
     toast,
+    updateSetting,
   ]);
 
   const handleExtractEmails = useCallback(async (): Promise<void> => {
@@ -813,8 +898,14 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     setLinkedEventIds,
     legacyDemandRows,
     setLegacyDemandRows,
+    jobListings,
+    setJobListings,
     emails,
     linkedEvents,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedDocuments,
     linkedPersons,
     linkedWebsites,
     harvestProfiles,

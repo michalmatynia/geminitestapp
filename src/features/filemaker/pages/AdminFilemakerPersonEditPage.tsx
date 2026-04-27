@@ -2,9 +2,15 @@
 
 import React, { startTransition } from 'react';
 
+import { PersonAnyParamsSection } from '../components/page/PersonAnyParamsSection';
+import { PersonAnyTextsSection } from '../components/page/PersonAnyTextsSection';
+import { PersonBankAccountsSection } from '../components/page/PersonBankAccountsSection';
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
+import { PersonContractsSection } from '../components/page/PersonContractsSection';
+import { PersonDocumentsSection } from '../components/page/PersonDocumentsSection';
 import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
 import { PersonWebsitesSection } from '../components/page/PersonWebsitesSection';
+import { PersonOccupationsSection } from '../components/page/PersonOccupationsSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerPersonEditPageActionsContext,
@@ -38,8 +44,18 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
       isSaving={updateSetting.isPending}
     >
       <PersonBasicInfoSection />
-      {isCreateMode ? null : <PersonEmailsSection />}
-      {isCreateMode ? null : <PersonWebsitesSection />}
+      {isCreateMode ? null : (
+        <>
+          <PersonBankAccountsSection />
+          <PersonContractsSection />
+          <PersonDocumentsSection />
+          <PersonOccupationsSection />
+          <PersonAnyTextsSection />
+          <PersonAnyParamsSection />
+          <PersonEmailsSection />
+          <PersonWebsitesSection />
+        </>
+      )}
       {/* More sections will be added here */}
     </FilemakerPartyEditPageLayout>
   );

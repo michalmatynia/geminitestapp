@@ -144,6 +144,24 @@ export const executePathRun = async (
   const runtimeState = parseRuntimeState(run.runtimeState);
   const runMetaRecord = normalizeAiPathRunRuntimeKernelMetadataForRuntimeRead(run.meta).meta;
 
+  const seedOutputs: Record<string, RuntimePortValues> = {};
+  const seedHashes: Record<string, string> = {};
+  const seedHistory: Record<string, RuntimeHistoryEntry[]> = runtimeState.history ?? {};
+  const skipNodeIds: string[] = [];
+
+  Object.entries(runtimeState.nodeStatuses ?? {}).forEach(([nodeId, status]) => {
+    if (nodeId === triggerNodeId) return;
+    if (status === 'completed' || status === 'cached') {
+      const hash = runtimeState.hashes?.[nodeId];
+      const outputs = runtimeState.nodeOutputs?.[nodeId];
+      if (hash && outputs) {
+        seedHashes[nodeId] = hash;
+        seedOutputs[nodeId] = outputs;
+        skipNodeIds.push(nodeId);
+      }
+    }
+  });
+
   const {
     nodeTypes: runtimeKernelNodeTypesRaw,
     resolverIds: runtimeKernelCodeObjectResolverIdsRaw,
@@ -334,6 +352,10 @@ export const executePathRun = async (
       runId: run.id,
       runStartedAt,
       runMeta: run.meta as Record<string, unknown>,
+      skipNodeIds,
+      seedOutputs,
+      seedHashes,
+      seedHistory,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),

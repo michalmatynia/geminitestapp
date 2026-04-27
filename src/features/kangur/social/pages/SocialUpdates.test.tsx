@@ -130,7 +130,8 @@ vi.mock('@/features/kangur/ui/design/tokens', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import SocialUpdates from '@/features/kangur/social/pages/SocialUpdates';
 

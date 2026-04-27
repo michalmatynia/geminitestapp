@@ -255,7 +255,8 @@ vi.mock('@/features/kangur/observability/client', () => {
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
   };
-});
+,
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),});
 
 let KangurAiTutorWidget: any;
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, type ViewStyle } from 'react-native';
 import { KangurMobileCard as Card } from '../shared/KangurMobileUi';
 import { ActionButton, LinkButton } from '../duels/duels-primitives/BaseComponents';
 import { formatPracticeResultLabel, formatPracticeSummaryMeta } from './practice-utils';
@@ -12,7 +12,7 @@ import { PracticeAssignmentsPanel } from './PracticeAssignmentsPanel';
 import { PracticeLessonCheckpointsPanel } from './PracticeLessonCheckpointsPanel';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
 import { createKangurPlanHref } from '../lessons/lessonHref';
-import { getLocalizedKangurMetadataBadgeName } from '../scores/mobileScoreSummary';
+import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
 export { type PracticeCompletionCardProps } from './completion-card-types';
 
 function CompletionHeader(props: {
@@ -47,9 +47,9 @@ function SyncPanel(props: {
 }): React.JSX.Element {
   return (
     <>
-      {props.scoreSyncState !== null && (
-        <View style={{ ...(props.scoreSyncAppearance as Record<string, string | number>), borderRadius: 18, borderWidth: 1, padding: 12 }}>
-          <Text style={{ color: props.scoreSyncAppearance?.textColor ?? '#0f172a', fontSize: 13, lineHeight: 18, fontWeight: '600' }}>
+      {props.scoreSyncState !== null && props.scoreSyncAppearance !== null && (
+        <View style={[props.scoreSyncAppearance as ViewStyle, { borderRadius: 18, borderWidth: 1, padding: 12 }]}>
+          <Text style={{ color: '#0f172a', fontSize: 13, lineHeight: 18, fontWeight: '600' }}>
             {props.scoreSyncState.message}
           </Text>
         </View>
@@ -68,10 +68,10 @@ function NewBadgesPanel(props: {
 }): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      {(props.completion.newBadges as string[]).map((badgeId: string) => (
+      {props.completion.newBadges.map((badgeId: string) => (
         <View key={badgeId} style={{ borderRadius: 999, borderWidth: 1, borderColor: '#c7d2fe', backgroundColor: '#eef2ff', paddingHorizontal: 12, paddingVertical: 7 }}>
           <Text style={{ color: '#4338ca', fontSize: 12, fontWeight: '700' }}>
-            {props.copy({ de: 'Neues Abzeichen', en: 'New badge', pl: 'Nowa odznaka' })}: {getLocalizedKangurMetadataBadgeName(badgeId, props.locale, badgeId) as string}
+            {props.copy({ de: 'Neues Abzeichen', en: 'New badge', pl: 'Nowa odznaka' })}: {getLocalizedKangurMetadataBadgeName(badgeId, props.locale, badgeId)}
           </Text>
         </View>
       ))}
@@ -100,16 +100,68 @@ function CompletionActions(props: {
 export function PracticeCompletionCard(props: PracticeCompletionCardProps): React.JSX.Element {
   return (
     <Card>
-      <CompletionHeader {...props} />
-      <SyncPanel {...props} />
-      <NewBadgesPanel {...props} />
-      <PracticeDuelsPanel {...props} />
-      <PracticeLessonMasteryPanel {...props} />
-      <PracticeBadgesPanel {...props} />
-      <PracticeResultsPanel {...props} />
-      <PracticeAssignmentsPanel {...props} />
-      <PracticeLessonCheckpointsPanel {...props} />
-      <CompletionActions {...props} />
+      <CompletionHeader
+        copy={props.copy}
+        correctAnswers={props.correctAnswers}
+        questionsLength={props.questionsLength}
+        completion={props.completion}
+        locale={props.locale}
+      />
+      <SyncPanel
+        scoreSyncState={props.scoreSyncState}
+        scoreSyncAppearance={props.scoreSyncAppearance}
+        shouldShowSyncProof={props.shouldShowSyncProof}
+        copy={props.copy}
+        locale={props.locale}
+        practiceSyncProof={props.practiceSyncProof}
+      />
+      <NewBadgesPanel
+        completion={props.completion}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeDuelsPanel
+        practiceDuels={props.practiceDuels}
+        openDuelSession={props.openDuelSession}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeLessonMasteryPanel
+        lessonMastery={props.lessonMastery}
+        lessonFocusSummary={props.lessonFocusSummary}
+        strongestLesson={props.strongestLesson}
+        weakestLesson={props.weakestLesson}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeBadgesPanel
+        practiceBadges={props.practiceBadges}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeResultsPanel
+        practiceRecentResults={props.practiceRecentResults}
+        resultsHistoryHref={props.resultsHistoryHref}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeAssignmentsPanel
+        practiceAssignments={props.practiceAssignments}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeLessonCheckpointsPanel
+        lessonCheckpoints={props.lessonCheckpoints}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <CompletionActions
+        locale={props.locale}
+        restart={props.restart}
+        practiceModeHistoryHref={props.practiceModeHistoryHref}
+        completionLessonAction={props.completionLessonAction}
+        profileHref={props.profileHref}
+      />
     </Card>
   );
 }

@@ -42,7 +42,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
       withKangurClientErrorSync,
     };
   })(),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/hooks/useKangurPageContent', () => ({
   useKangurPageContentEntry: (...args: Parameters<typeof useKangurPageContentEntryMock>) =>

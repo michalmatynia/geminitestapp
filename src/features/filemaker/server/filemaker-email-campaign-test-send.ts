@@ -2,6 +2,8 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { badRequestError } from '@/shared/errors/app-error';
+
 import {
   createFilemakerEmailCampaign,
   parseFilemakerDatabase,
@@ -79,6 +81,9 @@ export const sendFilemakerEmailCampaignTest = async (input: {
 }): Promise<FilemakerEmailCampaignTestSendResponse> => {
   const campaign = createFilemakerEmailCampaign(input.campaign);
   const recipientEmail = input.recipientEmail.trim().toLowerCase();
+  if ((campaign.mailAccountId ?? '').trim().length === 0) {
+    throw badRequestError('Campaign must have an email account assigned before sending a test.');
+  }
 
   if (campaign.contentGroupId) {
     assertFilemakerCampaignContentReadyForDelivery({

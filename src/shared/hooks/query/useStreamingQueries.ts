@@ -4,6 +4,7 @@ import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
 
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 import { logClientCatch, logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -61,7 +62,7 @@ export function useStreamingQuery<T>(
             connect();
           },
           reconnectDelay * Math.pow(2, reconnectAttemptsRef.current)
-        );
+        ) as SafeTimeout;
       }
     };
   }, [config, queryKey, queryClient, maxReconnectAttempts, reconnectDelay]);
@@ -139,7 +140,7 @@ export function useWebSocketQuery<T>(
       if (options?.reconnect !== false) {
         reconnectTimeoutRef.current = setTimeout((): void => {
           connect();
-        }, 3000);
+        }, 3000) as SafeTimeout;
       }
     };
   }, [wsUrl, queryKey, queryClient, options]);

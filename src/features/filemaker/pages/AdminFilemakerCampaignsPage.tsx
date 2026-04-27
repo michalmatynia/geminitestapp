@@ -32,6 +32,7 @@ import {
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSchedulerStatus,
   parseFilemakerEmailCampaignSuppressionRegistry,
+  isFilemakerEmailCampaignDeliverabilityDecisionEvent,
   resolveFilemakerEmailCampaignNextAutomationAt,
   resolveFilemakerEmailCampaignAudiencePreview,
   summarizeFilemakerEmailCampaignAnalytics,
@@ -60,6 +61,13 @@ type CampaignRow = {
   analytics: ReturnType<typeof summarizeFilemakerEmailCampaignAnalytics>;
   nextAutomationAt: string | null;
   schedulerFailureMessage: string | null;
+  deliverabilityDecisionCount: number;
+  coldSuppressionCount: number;
+};
+
+const formatCampaignSenderAccountLabel = (mailAccountId: string | null | undefined): string => {
+  const normalized = mailAccountId?.trim() ?? '';
+  return normalized.length > 0 ? normalized : 'Not assigned';
 };
 
 export function AdminFilemakerCampaignsPage(): React.JSX.Element {
@@ -273,6 +281,26 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
     });
   };
 
+  const decisionCountByCampaignId = useMemo<Map<string, number>>(() => {
+    const map = new Map<string, number>();
+    eventRegistry.events.forEach((event) => {
+      if (isFilemakerEmailCampaignDeliverabilityDecisionEvent(event)) {
+        map.set(event.campaignId, (map.get(event.campaignId) ?? 0) + 1);
+      }
+    });
+    return map;
+  }, [eventRegistry.events]);
+
+  const coldCountByCampaignId = useMemo<Map<string, number>>(() => {
+    const map = new Map<string, number>();
+    suppressionRegistry.entries.forEach((entry) => {
+      if (entry.reason === 'cold' && entry.campaignId) {
+        map.set(entry.campaignId, (map.get(entry.campaignId) ?? 0) + 1);
+      }
+    });
+    return map;
+  }, [suppressionRegistry.entries]);
+
   const rows = useMemo<CampaignRow[]>(
     () =>
       campaignRegistry.campaigns
@@ -282,7 +310,11 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             campaign.audience,
             suppressionRegistry
           );
-          const launch = evaluateFilemakerEmailCampaignLaunch(campaign, preview);
+          const launch = evaluateFilemakerEmailCampaignLaunch(campaign, preview, {
+            senderAssignment: {
+              requireAssignedMailAccount: true,
+            },
+          });
           return {
             campaign,
             previewCount: preview.recipients.length,
@@ -298,6 +330,8 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             }),
             nextAutomationAt: resolveFilemakerEmailCampaignNextAutomationAt(campaign),
             schedulerFailureMessage: latestSchedulerFailureByCampaignId.get(campaign.id) ?? null,
+            deliverabilityDecisionCount: decisionCountByCampaignId.get(campaign.id) ?? 0,
+            coldSuppressionCount: coldCountByCampaignId.get(campaign.id) ?? 0,
           };
         })
         .filter((row: CampaignRow): boolean =>
@@ -319,7 +353,9 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
         ),
     [
       campaignRegistry.campaigns,
+      coldCountByCampaignId,
       database,
+      decisionCountByCampaignId,
       deferredQuery,
       deliveryRegistry,
       eventRegistry,
@@ -352,6 +388,9 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
             </Badge>
             <div className='text-[11px] text-gray-500'>
               {row.original.isLaunchReady ? 'Ready to launch' : 'Blocked by launch conditions'}
+            </div>
+            <div className='text-[11px] text-gray-500'>
+              Sender: {formatCampaignSenderAccountLabel(row.original.campaign.mailAccountId)}
             </div>
             <div className='text-[11px] text-gray-500 capitalize'>
               Automation: {row.original.campaign.launch.mode}
@@ -412,9 +451,28 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
                 Top link: {row.original.analytics.topClickedLinks[0].clickCount} clicks
               </div>
             ) : null}
-            <div className='text-[11px] text-gray-500'>
+            <div
+              className={
+                row.original.analytics.bounceRatePercent > 5
+                  ? 'text-[11px] font-medium text-red-300'
+                  : row.original.analytics.bounceRatePercent > 1
+                  ? 'text-[11px] text-amber-300'
+                  : 'text-[11px] text-gray-500'
+              }
+            >
               Bounce rate: {row.original.analytics.bounceRatePercent}%
+              {row.original.analytics.bounceRatePercent > 5 ? ' (deliverability risk)' : ''}
             </div>
+            {row.original.deliverabilityDecisionCount > 0 ? (
+              <div className='text-[11px] text-amber-300'>
+                Deliverability decisions: {row.original.deliverabilityDecisionCount} (defers, throttles, circuit breaker)
+              </div>
+            ) : null}
+            {row.original.coldSuppressionCount > 0 ? (
+              <div className='text-[11px] text-gray-400'>
+                Auto-suppressed (cold): {row.original.coldSuppressionCount}
+              </div>
+            ) : null}
             <div className='text-[11px] text-gray-500'>
               Opt-outs: {row.original.analytics.unsubscribeCount} ({row.original.analytics.unsubscribeRatePercent}%)
             </div>
@@ -543,6 +601,57 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
 
   const launchReadyCount = rows.filter((row: CampaignRow): boolean => row.isLaunchReady).length;
 
+  const deliverabilitySummary = useMemo(() => {
+    const highBounceCampaigns = rows.filter(
+      (row) => row.analytics.bounceRatePercent > 5
+    );
+    const totalDecisions = rows.reduce(
+      (sum, row) => sum + row.deliverabilityDecisionCount,
+      0
+    );
+    const totalCold = rows.reduce((sum, row) => sum + row.coldSuppressionCount, 0);
+
+    const activeRowsWithSendHistory = rows.filter(
+      (row) =>
+        row.campaign.status === 'active' && row.analytics.sentCount + row.analytics.bouncedCount > 0
+    );
+    const sumBounceRate = activeRowsWithSendHistory.reduce(
+      (sum, row) => sum + row.analytics.bounceRatePercent,
+      0
+    );
+    const sumOpenRate = activeRowsWithSendHistory.reduce(
+      (sum, row) => sum + row.analytics.openRatePercent,
+      0
+    );
+    const avgBounceRatePercent =
+      activeRowsWithSendHistory.length === 0
+        ? null
+        : Math.round((sumBounceRate * 10) / activeRowsWithSendHistory.length) / 10;
+    const avgOpenRatePercent =
+      activeRowsWithSendHistory.length === 0
+        ? null
+        : Math.round((sumOpenRate * 10) / activeRowsWithSendHistory.length) / 10;
+
+    return {
+      highBounceCampaigns,
+      totalDecisions,
+      totalCold,
+      avgBounceRatePercent,
+      avgOpenRatePercent,
+      activeWithHistoryCount: activeRowsWithSendHistory.length,
+    };
+  }, [rows]);
+
+  const showDeliverabilityBanner =
+    deliverabilitySummary.highBounceCampaigns.length > 0 ||
+    deliverabilitySummary.totalDecisions > 0 ||
+    deliverabilitySummary.totalCold > 0 ||
+    deliverabilitySummary.activeWithHistoryCount > 0;
+  const bannerSeverityIsError = deliverabilitySummary.highBounceCampaigns.length > 0;
+  const bannerSeverityIsAmber =
+    !bannerSeverityIsError &&
+    (deliverabilitySummary.totalDecisions > 0 || deliverabilitySummary.totalCold > 0);
+
   return (
     <>
       <FilemakerEntityTablePage
@@ -584,6 +693,79 @@ export function AdminFilemakerCampaignsPage(): React.JSX.Element {
           query
             ? 'Try adjusting your search terms.'
             : 'Create your first Filemaker email campaign to start previewing audiences and monitoring runs.'
+        }
+        headerSlot={
+          showDeliverabilityBanner ? (
+            <div
+              role='status'
+              className={
+                bannerSeverityIsError
+                  ? 'rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200'
+                  : bannerSeverityIsAmber
+                  ? 'rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200'
+                  : 'rounded-md border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200'
+              }
+            >
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <span className='font-medium'>
+                  {bannerSeverityIsError
+                    ? 'Deliverability watch — action recommended'
+                    : bannerSeverityIsAmber
+                    ? 'Deliverability watch'
+                    : 'Deliverability summary'}
+                </span>
+                {deliverabilitySummary.activeWithHistoryCount > 0 ? (
+                  <span className='text-[10px] opacity-80'>
+                    Across {deliverabilitySummary.activeWithHistoryCount} active campaign
+                    {deliverabilitySummary.activeWithHistoryCount === 1 ? '' : 's'} with send history:{' '}
+                    avg open {deliverabilitySummary.avgOpenRatePercent ?? 0}% • avg bounce{' '}
+                    {deliverabilitySummary.avgBounceRatePercent ?? 0}%
+                  </span>
+                ) : null}
+              </div>
+              <ul className='mt-1 list-disc pl-4'>
+                {deliverabilitySummary.highBounceCampaigns.length > 0 ? (
+                  <li>
+                    {deliverabilitySummary.highBounceCampaigns.length} campaign
+                    {deliverabilitySummary.highBounceCampaigns.length === 1 ? '' : 's'} over 5% bounce rate:{' '}
+                    {deliverabilitySummary.highBounceCampaigns.slice(0, 3).map((row, index) => (
+                      <React.Fragment key={row.campaign.id}>
+                        {index > 0 ? ', ' : null}
+                        <button
+                          type='button'
+                          onClick={(): void => {
+                            startTransition(() => {
+                              router.push(
+                                `/admin/filemaker/campaigns/${encodeURIComponent(row.campaign.id)}`
+                              );
+                            });
+                          }}
+                          className='underline-offset-2 hover:underline focus:underline focus:outline-none'
+                        >
+                          {row.campaign.name} ({row.analytics.bounceRatePercent}%)
+                        </button>
+                      </React.Fragment>
+                    ))}
+                    {deliverabilitySummary.highBounceCampaigns.length > 3 ? ', …' : ''}
+                  </li>
+                ) : null}
+                {deliverabilitySummary.totalDecisions > 0 ? (
+                  <li>
+                    {deliverabilitySummary.totalDecisions} runtime deliverability decision
+                    {deliverabilitySummary.totalDecisions === 1 ? '' : 's'} (defers, throttles, circuit
+                    breaker) — open the run page to investigate.
+                  </li>
+                ) : null}
+                {deliverabilitySummary.totalCold > 0 ? (
+                  <li>
+                    {deliverabilitySummary.totalCold} address
+                    {deliverabilitySummary.totalCold === 1 ? '' : 'es'} auto-suppressed for low engagement
+                    (cold).
+                  </li>
+                ) : null}
+              </ul>
+            </div>
+          ) : null
         }
       />
       <ConfirmationModal />

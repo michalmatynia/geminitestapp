@@ -252,6 +252,7 @@ vi.mock('@/features/kangur/observability/client', () => {
     trackKangurClientEvent: mocks.trackKangurClientEventMock,
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    isRecoverableKangurClientFetchError: mocks.isRecoverableKangurClientFetchError,
   };
 });
 

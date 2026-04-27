@@ -34,6 +34,7 @@ const createKangurClientErrorMocks = () => {
   const reportKangurClientErrorMock = vi.fn();
   const setKangurClientObservabilityContextMock = vi.fn();
   const clearKangurClientObservabilityContextMock = vi.fn();
+  const isRecoverableKangurClientFetchError = vi.fn().mockReturnValue(false);
 
   const withKangurClientError = async <T>(
     _report: unknown,
@@ -83,6 +84,7 @@ const createKangurClientErrorMocks = () => {
     reportKangurClientErrorMock,
     setKangurClientObservabilityContextMock,
     clearKangurClientObservabilityContextMock,
+    isRecoverableKangurClientFetchError,
     withKangurClientError,
     withKangurClientErrorSync,
   };

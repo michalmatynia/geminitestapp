@@ -64,6 +64,7 @@ export {
   createFilemakerEmailLink,
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
+  createFilemakerJobListing,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,

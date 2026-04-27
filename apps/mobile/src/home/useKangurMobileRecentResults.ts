@@ -1,4 +1,5 @@
 import type { KangurScore } from '@kangur/contracts/kangur';
+import type { KangurClientStorageAdapter } from '@kangur/platform';
 import { useEffect, useMemo } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
@@ -25,6 +26,41 @@ type UseKangurMobileRecentResultsResult = {
   results: KangurScore[];
 };
 
+const getPersistedResults = (
+  identityKey: string,
+  limit: number,
+  storage: KangurClientStorageAdapter,
+): KangurScore[] => {
+  return resolvePersistedKangurMobileRecentResults({
+    identityKey,
+    limit,
+    storage,
+  });
+};
+
+const getErrorMessage = (
+  copy: (params: { de: string; en: string; pl: string }) => string,
+): string => {
+  return copy({
+    de: 'Die letzten Ergebnisse konnten nicht geladen werden.',
+    en: 'Could not load the recent results.',
+    pl: 'Nie udało się pobrać ostatnich wyników.',
+  });
+};
+
+type ResultsQuery = {
+  isEnabled: boolean;
+  isLoading: boolean;
+  isPlaceholderData: boolean;
+  isRestoringAuth: boolean;
+  error: unknown;
+};
+
+const canPersist = (
+  identityKey: string | null,
+  resultsQuery: ResultsQuery,
+): boolean => identityKey !== null && shouldPersist(identityKey, resultsQuery);
+
 export const useKangurMobileRecentResults = (
   options: UseKangurMobileRecentResultsOptions = {},
 ): UseKangurMobileRecentResultsResult => {
@@ -38,14 +74,11 @@ export const useKangurMobileRecentResults = (
   const isQueryEnabled = options.enabled ?? true;
   const scoreScope = resolveKangurMobileScoreScope(session.user);
   const scoreScopeIdentityKey = scoreScope?.identityKey ?? null;
+
   const persistedResults = useMemo(
     () =>
-      scoreScopeIdentityKey
-        ? resolvePersistedKangurMobileRecentResults({
-            identityKey: scoreScopeIdentityKey,
-            limit,
-            storage,
-          })
+      scoreScopeIdentityKey !== null
+        ? getPersistedResults(scoreScopeIdentityKey, limit, storage)
         : null,
     [limit, scoreScopeIdentityKey, storage],
   );
@@ -60,22 +93,13 @@ export const useKangurMobileRecentResults = (
   ).slice(0, limit);
 
   useEffect(() => {
-    if (
-      !scoreScopeIdentityKey ||
-      !resultsQuery.isEnabled ||
-      resultsQuery.isLoading ||
-      resultsQuery.isPlaceholderData ||
-      resultsQuery.isRestoringAuth ||
-      resultsQuery.error
-    ) {
-      return;
+    if (canPersist(scoreScopeIdentityKey, resultsQuery)) {
+      persistKangurMobileRecentResults({
+        identityKey: scoreScopeIdentityKey!,
+        results,
+        storage,
+      });
     }
-
-    persistKangurMobileRecentResults({
-      identityKey: scoreScopeIdentityKey,
-      results,
-      storage,
-    });
   }, [
     results,
     resultsQuery.error,
@@ -88,23 +112,14 @@ export const useKangurMobileRecentResults = (
   ]);
 
   return {
-    error:
-      resultsQuery.error instanceof Error
-        ? copy({
-            de: 'Die letzten Ergebnisse konnten nicht geladen werden.',
-            en: 'Could not load the recent results.',
-            pl: 'Nie udało się pobrać ostatnich wyników.',
-          })
-        : null,
+    error: resultsQuery.error instanceof Error ? getErrorMessage(copy) : null,
     isEnabled: resultsQuery.isEnabled,
     isLoading: resultsQuery.isLoading,
     isRestoringAuth: resultsQuery.isRestoringAuth,
     refresh: async () => {
-      if (!resultsQuery.isEnabled) {
-        return;
+      if (resultsQuery.isEnabled) {
+        await resultsQuery.refresh();
       }
-
-      await resultsQuery.refresh();
     },
     results,
   };

@@ -5,6 +5,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const reactNativeWebShimPath = path.resolve(__dirname, 'src/shared/ui/react-native-web-shim.tsx');
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
@@ -243,6 +244,7 @@ const nextConfig = {
     root: __dirname,
     resolveAlias: {
       '@docs': path.resolve(__dirname, 'docs'),
+      'react-native': reactNativeWebShimPath,
       // Force a single three.js runtime even when transitive deps (e.g. stats-gl) ship nested copies.
       'stats-gl/node_modules/three': path.resolve(__dirname, 'node_modules/three'),
     },
@@ -282,6 +284,7 @@ const nextConfig = {
     config.resolve ??= {};
     config.resolve.alias ??= {};
     config.resolve.alias['@docs'] = path.resolve(__dirname, 'docs');
+    config.resolve.alias['react-native'] = reactNativeWebShimPath;
     config.resolve.alias['three'] = path.resolve(__dirname, 'node_modules/three');
     config.resolve.alias['stats-gl/node_modules/three'] = path.resolve(
       __dirname,

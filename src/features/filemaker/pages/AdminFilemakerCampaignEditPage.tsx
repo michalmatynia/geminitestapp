@@ -23,6 +23,7 @@ import {
   RecentRunsSection,
 } from './AdminFilemakerCampaignEditPage.sections';
 import { CampaignDeliverabilityCheckSection } from './campaign-edit-sections/CampaignDeliverabilityCheckSection';
+import { CampaignEngagementTrendSection } from './campaign-edit-sections/CampaignEngagementTrendSection';
 
 function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
   const {
@@ -33,6 +34,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
     ConfirmationModal,
     isTestSendPending,
     selectedMailAccount,
+    launchEvaluation,
     preview,
     recentRuns,
     nextAutomationAt,
@@ -77,7 +79,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
     <div className='page-section-compact space-y-6'>
       <SectionHeader
         title={isCreateMode ? 'Create Campaign' : 'Edit Campaign'}
-        description='Configure campaign content, audience rules, launch conditions, and recent run monitoring.'
+        description='Configure sender account, campaign content, audience rules, launch conditions, and recent run monitoring.'
         eyebrow={
           <AdminFilemakerBreadcrumbs
             parent={{ label: 'Campaigns', href: '/admin/filemaker/campaigns' }}
@@ -148,7 +150,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
             <Button
               type='button'
               size='sm'
-              disabled={isUpdatePending || launchingMode !== null}
+              disabled={isUpdatePending || launchingMode !== null || !launchEvaluation.isEligible}
               onClick={(): void => {
                 void handleLaunch('live');
               }}
@@ -184,7 +186,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
             ? `${selectedMailAccount.name}${selectedMailAccount.status === 'active' ? '' : ' (paused)'}`
             : draft.mailAccountId
               ? `Missing account (${draft.mailAccountId})`
-              : 'Shared provider'}
+              : 'No sender account assigned'}
         </Badge>
         <Badge variant='outline' className='text-[10px]'>
           Next Due: {nextAutomationAt ? formatTimestamp(nextAutomationAt) : 'Manual only'}
@@ -209,6 +211,7 @@ function AdminFilemakerCampaignEditPageContent(): React.JSX.Element {
       <AudiencePreviewSection />
       <CampaignDeliverabilityCheckSection />
       <CampaignAnalyticsSection />
+      <CampaignEngagementTrendSection />
       <RecentRunsSection />
       <ConfirmationModal />
     </div>

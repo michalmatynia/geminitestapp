@@ -23,6 +23,7 @@ export interface FilemakerEntityTablePageProps<TData> {
   isLoading: boolean;
   emptyTitle: string;
   emptyDescription: string;
+  headerSlot?: React.ReactNode | undefined;
 }
 
 type FilemakerEntityTableRuntimeValue = {
@@ -81,11 +82,14 @@ export function FilemakerEntityTablePage<TData>(
     isLoading,
     emptyTitle,
     emptyDescription,
+    headerSlot,
   } = props;
 
   return (
     <div className='page-section-compact space-y-6'>
       <PanelHeader title={title} description={description} icon={icon} actions={actions} />
+
+      {headerSlot ? <div>{headerSlot}</div> : null}
 
       <StandardDataTablePanel
         filters={renderFilemakerEntityTableFilters({

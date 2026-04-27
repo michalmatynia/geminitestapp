@@ -29,12 +29,18 @@ import {
   parseFilemakerEmailCampaignRunRegistry,
   parseFilemakerEmailCampaignSchedulerStatus,
   parseFilemakerEmailCampaignSuppressionRegistry,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERABILITY_DECISION_EVENT_LABEL,
+  isFilemakerEmailCampaignDeliverabilityDecisionEvent,
   resolveFilemakerEmailCampaignNextAutomationAt,
   summarizeFilemakerEmailCampaignDeliverabilityOverview,
   type FilemakerEmailCampaignDomainDeliverability,
 } from '../settings';
 import { formatTimestamp, includeQuery } from './filemaker-page-utils';
 import type { ColumnDef } from '@tanstack/react-table';
+import type {
+  FilemakerEmailCampaignEvent,
+  FilemakerEmailCampaignEventRegistry,
+} from '../types';
 
 export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
   const router = useRouter();
@@ -80,6 +86,14 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
     () => parseFilemakerEmailCampaignSchedulerStatus(rawSchedulerStatus),
     [rawSchedulerStatus]
   );
+
+  const campaignNameById = useMemo<Map<string, string>>(() => {
+    const map = new Map<string, string>();
+    campaignRegistry.campaigns.forEach((campaign) => {
+      map.set(campaign.id, campaign.name);
+    });
+    return map;
+  }, [campaignRegistry.campaigns]);
 
   const overview = useMemo(
     () =>
@@ -465,6 +479,16 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
         onOpenSuppressions={(): void => {
           startTransition(() => {
             router.push('/admin/filemaker/campaigns/suppressions');
+          });
+        }}
+      />
+
+      <RuntimeDecisionsPanel
+        eventRegistry={eventRegistry}
+        campaignNameById={campaignNameById}
+        onOpenRun={(runId: string): void => {
+          startTransition(() => {
+            router.push(`/admin/filemaker/campaigns/runs/${encodeURIComponent(runId)}`);
           });
         }}
       />
@@ -947,5 +971,170 @@ export function AdminFilemakerCampaignControlCentrePage(): React.JSX.Element {
         )}
       </InsetPanel>
     </div>
+  );
+}
+
+function RuntimeDecisionsPanel({
+  eventRegistry,
+  campaignNameById,
+  onOpenRun,
+}: {
+  eventRegistry: FilemakerEmailCampaignEventRegistry;
+  campaignNameById: Map<string, string>;
+  onOpenRun: (runId: string) => void;
+}): React.JSX.Element {
+  const decisionEvents = useMemo<FilemakerEmailCampaignEvent[]>(
+    () => eventRegistry.events.filter(isFilemakerEmailCampaignDeliverabilityDecisionEvent),
+    [eventRegistry.events]
+  );
+
+  const totalsByType = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = {
+      delivery_deferred_domain: 0,
+      delivery_deferred_warmup: 0,
+      run_paused_circuit_breaker: 0,
+    };
+    decisionEvents.forEach((event) => {
+      counts[event.type] = (counts[event.type] ?? 0) + 1;
+    });
+    return counts;
+  }, [decisionEvents]);
+
+  const topCampaigns = useMemo<Array<{ campaignId: string; name: string; count: number }>>(() => {
+    const counts = new Map<string, number>();
+    decisionEvents.forEach((event) => {
+      counts.set(event.campaignId, (counts.get(event.campaignId) ?? 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .map(([campaignId, count]) => ({
+        campaignId,
+        name: campaignNameById.get(campaignId) ?? `Deleted campaign (${campaignId})`,
+        count,
+      }))
+      .sort((left, right) => right.count - left.count)
+      .slice(0, 5);
+  }, [decisionEvents, campaignNameById]);
+
+  const recent = useMemo<FilemakerEmailCampaignEvent[]>(
+    () =>
+      decisionEvents
+        .slice()
+        .sort((left, right) => {
+          const leftAt = Date.parse(left.createdAt ?? '');
+          const rightAt = Date.parse(right.createdAt ?? '');
+          const safeLeft = Number.isFinite(leftAt) ? leftAt : 0;
+          const safeRight = Number.isFinite(rightAt) ? rightAt : 0;
+          return safeRight - safeLeft;
+        })
+        .slice(0, 6),
+    [decisionEvents]
+  );
+
+  return (
+    <InsetPanel padding='md' className='space-y-4'>
+      <SectionHeader
+        title='Runtime deliverability decisions'
+        description='Defers, throttles, and circuit-breaker pauses applied automatically to protect sender reputation.'
+        size='sm'
+      />
+      <div className='grid gap-3 md:grid-cols-3'>
+        <InsetPanel padding='md' className='space-y-2'>
+          <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Domain throttle</div>
+          <div className='text-2xl font-semibold text-white'>
+            {totalsByType['delivery_deferred_domain'] ?? 0}
+          </div>
+          <div className='text-sm text-gray-400'>
+            Deliveries deferred because the recipient domain was already failing in this run.
+          </div>
+        </InsetPanel>
+        <InsetPanel padding='md' className='space-y-2'>
+          <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Warm-up cap</div>
+          <div className='text-2xl font-semibold text-white'>
+            {totalsByType['delivery_deferred_warmup'] ?? 0}
+          </div>
+          <div className='text-sm text-gray-400'>
+            Deliveries deferred because the sender hit the daily warm-up cap.
+          </div>
+        </InsetPanel>
+        <InsetPanel padding='md' className='space-y-2'>
+          <div className='text-[11px] uppercase tracking-[0.24em] text-gray-500'>Circuit breaker</div>
+          <div className='text-2xl font-semibold text-white'>
+            {totalsByType['run_paused_circuit_breaker'] ?? 0}
+          </div>
+          <div className='text-sm text-gray-400'>
+            Runs halted mid-flight because the bounce-rate threshold was exceeded.
+          </div>
+        </InsetPanel>
+      </div>
+
+      {topCampaigns.length > 0 ? (
+        <div>
+          <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
+            Most affected campaigns
+          </div>
+          <ul className='space-y-1 text-xs text-gray-300'>
+            {topCampaigns.map((entry) => (
+              <li
+                key={entry.campaignId}
+                className='flex items-center justify-between gap-2 rounded border border-border/40 bg-card/20 px-2 py-1.5'
+              >
+                <span className='truncate'>{entry.name}</span>
+                <Badge variant='outline' className='text-[10px]'>
+                  {entry.count} decision{entry.count === 1 ? '' : 's'}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {recent.length > 0 ? (
+        <div>
+          <div className='mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
+            Most recent decisions
+          </div>
+          <ul className='space-y-1 text-xs text-gray-300'>
+            {recent.map((event) => (
+              <li
+                key={event.id}
+                className='flex flex-wrap items-center justify-between gap-2 rounded border border-border/40 bg-card/20 px-2 py-1.5'
+              >
+                <div className='min-w-0'>
+                  <div className='flex items-center gap-2'>
+                    <Badge variant='outline' className='text-[10px]'>
+                      {FILEMAKER_EMAIL_CAMPAIGN_DELIVERABILITY_DECISION_EVENT_LABEL[event.type] ?? event.type}
+                    </Badge>
+                    <span className='text-[10px] text-gray-500'>
+                      {formatTimestamp(event.createdAt)}
+                    </span>
+                  </div>
+                  <div className='mt-1 truncate text-[11px] text-gray-400'>{event.message}</div>
+                </div>
+                {event.runId ? (
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='ghost'
+                    className='h-6 px-2 text-[10px]'
+                    onClick={(): void => {
+                      const runId = event.runId;
+                      if (runId) onOpenRun(runId);
+                    }}
+                  >
+                    Open run
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {decisionEvents.length === 0 ? (
+        <div className='rounded-md border border-dashed border-border/40 p-3 text-xs text-gray-500'>
+          No runtime deliverability decisions logged yet.
+        </div>
+      ) : null}
+    </InsetPanel>
   );
 }

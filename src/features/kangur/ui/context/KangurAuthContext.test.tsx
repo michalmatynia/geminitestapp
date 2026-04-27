@@ -112,7 +112,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: logKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { getKangurLoginHref } from '@/features/kangur/config/routing';
 import { KangurRoutingProvider } from '@/features/kangur/ui/context/KangurRoutingContext';

@@ -66,7 +66,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   clearKangurClientObservabilityContext: clearKangurClientObservabilityContextMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/hooks/useOptionalNextAuthSession', () => ({
   useOptionalNextAuthSession: () => sessionMock(),

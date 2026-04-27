@@ -40,7 +40,8 @@ vi.mock('@/features/kangur/social/hooks/useKangurSocialPosts', () => ({
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useSocialGeneration } from './useSocialGeneration';
 

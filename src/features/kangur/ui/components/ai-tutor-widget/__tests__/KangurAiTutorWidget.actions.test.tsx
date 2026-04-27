@@ -34,6 +34,7 @@ const {
   clearSelectionGlowMock,
   trackKangurClientEventMock,
   useKangurPageContentEntryMock,
+  isRecoverableKangurClientFetchError,
   withKangurClientError,
   withKangurClientErrorSync,
 } = vi.hoisted(() => ({
@@ -313,6 +314,7 @@ vi.mock('../KangurAiTutorWidget.coordinator.helpers', async (importOriginal) => 
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
+  isRecoverableKangurClientFetchError,
   withKangurClientError,
   withKangurClientErrorSync,
 }));

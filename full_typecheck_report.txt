@@ -1,0 +1,313 @@
+
+> libapp2@0.1.0 typecheck
+> node scripts/testing/run-segmented-typecheck.mjs
+
+[typecheck] shared
+src/features/ai/ai-paths/services/playwright-node-runner.ts(182,9): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/features/cms/components/frontend/CmsMenu.tsx(30,33): error TS6133: 'colorSchemes' is declared but its value is never read.
+src/features/cms/components/frontend/CmsMenu.tsx(30,47): error TS6133: 'animationsEnabled' is declared but its value is never read.
+src/features/cms/components/frontend/CmsPageShell.tsx(44,10): error TS2686: 'React' refers to a UMD global, but the current file is a module. Consider adding an import instead.
+src/features/cms/components/frontend/home/home-fallback-content.collections.tsx(4,15): error TS2724: '"next-intl"' has no exported member named 'Translation'. Did you mean '_Translator'?
+src/features/cms/components/frontend/home/home-fallback-content.highlights.tsx(64,20): error TS2322: Type 'string' is not assignable to type 'never'.
+src/features/cms/components/frontend/home/home-fallback-content.products.tsx(41,15): error TS2724: '"next-intl"' has no exported member named 'Translation'. Did you mean '_Translator'?
+src/features/cms/components/page-builder/context/InspectorAiContext.tsx(82,59): error TS2554: Expected 1 arguments, but got 6.
+src/features/cms/components/page-builder/menu-settings/useMenuSettingsController.ts(17,11): error TS6133: 'domains' is declared but its value is never read.
+src/features/cms/components/page-builder/MenuSettingsPanel.tsx(38,57): error TS2345: Argument of type '(prev: { showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "sticky" | "static"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null) => { ...; }' is not assignable to parameter of type 'SetStateAction<{ showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "sticky" | "static"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null>'.
+  Type '(prev: { showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "sticky" | "static"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null) => { ...; }' is not assignable to type '(prevState: { showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "sticky" | "static"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null) => { ...; } | null'.
+    Call signature return types '{ items: ({ id: string; label: string; url: string; imageUrl: string; } | { id: string; label: string; url: string; })[]; showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "sticky" | "static"; ... 46 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; }' and '{ showMenu: boolean; menuPlacement: "left" | "top" | "right"; positionMode: "sticky" | "static"; collapsible: boolean; collapsedByDefault: boolean; sideWidth: number; collapsedWidth: number; ... 43 more ...; menuHoverAnimation: "none" | ... 39 more ... | "skew"; } | null' are incompatible.
+      The types of 'items' are incompatible between these types.
+        Type '({ id: string; label: string; url: string; imageUrl: string; } | { id: string; label: string; url: string; })[]' is not assignable to type '{ id: string; label: string; url: string; imageUrl: string; }[]'.
+          Type '{ id: string; label: string; url: string; imageUrl: string; } | { id: string; label: string; url: string; }' is not assignable to type '{ id: string; label: string; url: string; imageUrl: string; }'.
+            Property 'imageUrl' is missing in type '{ id: string; label: string; url: string; }' but required in type '{ id: string; label: string; url: string; imageUrl: string; }'.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(3,1): error TS6133: 'Suspense' is declared but its value is never read.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(4,1): error TS6133: 'AdminDatabasePageLayout' is declared but its value is never read.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(6,1): error TS6133: 'ViewportController' is declared but its value is never read.
+src/features/cms/components/page-builder/PagePreviewPanel.tsx(9,1): error TS6133: 'LoadingState' is declared but its value is never read.
+src/features/cms/components/page-builder/preview-panel/PreviewToolbar.tsx(1,18): error TS6133: 'Badge' is declared but its value is never read.
+src/features/cms/components/page-builder/preview-panel/usePreviewPanelController.ts(1,42): error TS6133: 'useRef' is declared but its value is never read.
+src/features/cms/components/page-builder/preview-panel/usePreviewPanelController.ts(19,10): error TS6133: 'hoveredNodeId' is declared but its value is never read.
+src/features/cms/components/page-builder/preview-panel/ViewportController.tsx(1,21): error TS6133: 'useState' is declared but its value is never read.
+src/features/cms/components/page-builder/preview-panel/ViewportController.tsx(3,60): error TS6133: 'canvasScale' is declared but its value is never read.
+src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(692,27): error TS2339: Property 'authError' does not exist on type 'KangurAuthSessionContextValue'.
+src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(694,27): error TS2339: Property 'isLoadingAuth' does not exist on type 'KangurAuthSessionContextValue'.
+src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(697,11): error TS2339: Property 'authError' does not exist on type 'KangurAuthSessionContextValue'.
+src/features/kangur/cms-builder/KangurCmsRuntimeDataProvider.tsx(697,55): error TS2339: Property 'isLoadingAuth' does not exist on type 'KangurAuthSessionContextValue'.
+src/features/kangur/social/components/SocialPostCard.tsx(2,10): error TS6133: 'View' is declared but its value is never read.
+src/features/kangur/social/components/SocialPostCard.tsx(3,10): error TS2305: Module '"@/features/kangur/ui/components"' has no exported member 'Card'.
+src/features/kangur/social/components/SocialPostCard.tsx(3,16): error TS2305: Module '"@/features/kangur/ui/components"' has no exported member 'KangurMobileLinkButton'.
+src/features/kangur/social/pages/SocialUpdates.tsx(32,3): error TS6133: 'KANGUR_SOCIAL_BILINGUAL_SEPARATOR' is declared but its value is never read.
+src/features/kangur/social/pages/SocialUpdates.tsx(113,20): error TS2304: Cannot find name 'resolvePostSections'.
+src/features/kangur/social/pages/SocialUpdates.tsx(120,23): error TS7006: Parameter 'section' implicitly has an 'any' type.
+src/features/kangur/social/pages/SocialUpdates.tsx(120,32): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/features/kangur/social/pages/SocialUpdates.tsx(120,39): error TS7006: Parameter 'all' implicitly has an 'any' type.
+src/features/kangur/social/pages/SocialUpdates.tsx(158,10): error TS6133: 'SocialUpdatesArchiveCard' is declared but its value is never read.
+src/features/kangur/social/pages/SocialUpdates.tsx(205,59): error TS2304: Cannot find name 'copy'.
+src/features/kangur/ui/app-shell/KangurAppProviders.tsx(4,3): error TS2724: '"@/features/kangur/ui/context"' has no exported member named 'KangurGuestPlayerProvider'. Did you mean 'KangurGameProvider'?
+src/features/kangur/ui/app-shell/KangurAppProviders.tsx(5,3): error TS2305: Module '"@/features/kangur/ui/context"' has no exported member 'KangurLoginModalProvider'.
+src/features/kangur/ui/app-shell/KangurAppProviders.tsx(7,3): error TS2724: '"@/features/kangur/ui/context"' has no exported member named 'KangurTopNavigationProvider'. Did you mean 'KangurLessonNavigationProvider'?
+src/features/kangur/ui/app-shell/KangurAppProviders.tsx(8,3): error TS2724: '"@/features/kangur/ui/context"' has no exported member named 'KangurFocusProvider'. Did you mean 'KangurAuthProvider'?
+src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.coordinator.ts(354,5): error TS2719: Type 'AuthState' is not assignable to type 'AuthState'. Two different types with this name exist, but they are unrelated.
+  Type '{ isAuthenticated?: boolean | undefined; isLoadingAuth?: boolean | undefined; user?: { ownerEmailVerified?: boolean | undefined; } | null | undefined; }' is not assignable to type 'AuthState'.
+    Types of property 'isAuthenticated' are incompatible.
+      Type 'boolean | undefined' is not assignable to type 'boolean'.
+        Type 'undefined' is not assignable to type 'boolean'.
+src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.tsx(73,5): error TS2322: Type 'KangurAiTutorHomeOnboardingMode' is not assignable to type '"first_visit" | "every_visit"'.
+  Type '"off"' is not assignable to type '"first_visit" | "every_visit"'.
+src/features/kangur/ui/components/ai-tutor-widget/KangurAiTutorWidget.tsx(139,5): error TS2322: Type 'boolean | null' is not assignable to type 'boolean | undefined'.
+  Type 'null' is not assignable to type 'boolean | undefined'.
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(124,21): error TS4111: Property 'initial' comes from an index signature, so it must be accessed with ['initial'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(125,21): error TS4111: Property 'animate' comes from an index signature, so it must be accessed with ['animate'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(126,21): error TS4111: Property 'exit' comes from an index signature, so it must be accessed with ['exit'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(127,21): error TS4111: Property 'transition' comes from an index signature, so it must be accessed with ['transition'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(128,21): error TS4111: Property 'whileHover' comes from an index signature, so it must be accessed with ['whileHover'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(129,21): error TS4111: Property 'whileTap' comes from an index signature, so it must be accessed with ['whileTap'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(130,21): error TS4111: Property 'whileFocus' comes from an index signature, so it must be accessed with ['whileFocus'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(131,21): error TS4111: Property 'whileInView' comes from an index signature, so it must be accessed with ['whileInView'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(132,21): error TS4111: Property 'whileDrag' comes from an index signature, so it must be accessed with ['whileDrag'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(133,21): error TS4111: Property 'variants' comes from an index signature, so it must be accessed with ['variants'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(134,21): error TS4111: Property 'layout' comes from an index signature, so it must be accessed with ['layout'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(135,21): error TS4111: Property 'layoutId' comes from an index signature, so it must be accessed with ['layoutId'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(136,21): error TS4111: Property 'onAnimationStart' comes from an index signature, so it must be accessed with ['onAnimationStart'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(137,21): error TS4111: Property 'onAnimationComplete' comes from an index signature, so it must be accessed with ['onAnimationComplete'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(161,22): error TS4111: Property 'initial' comes from an index signature, so it must be accessed with ['initial'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(162,22): error TS4111: Property 'animate' comes from an index signature, so it must be accessed with ['animate'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(163,22): error TS4111: Property 'exit' comes from an index signature, so it must be accessed with ['exit'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(164,22): error TS4111: Property 'transition' comes from an index signature, so it must be accessed with ['transition'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(165,22): error TS4111: Property 'whileHover' comes from an index signature, so it must be accessed with ['whileHover'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(166,22): error TS4111: Property 'whileTap' comes from an index signature, so it must be accessed with ['whileTap'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(167,22): error TS4111: Property 'whileFocus' comes from an index signature, so it must be accessed with ['whileFocus'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(168,22): error TS4111: Property 'whileInView' comes from an index signature, so it must be accessed with ['whileInView'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(169,22): error TS4111: Property 'whileDrag' comes from an index signature, so it must be accessed with ['whileDrag'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(170,22): error TS4111: Property 'variants' comes from an index signature, so it must be accessed with ['variants'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(171,22): error TS4111: Property 'layout' comes from an index signature, so it must be accessed with ['layout'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(172,22): error TS4111: Property 'layoutId' comes from an index signature, so it must be accessed with ['layoutId'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(173,22): error TS4111: Property 'onAnimationStart' comes from an index signature, so it must be accessed with ['onAnimationStart'].
+src/features/kangur/ui/components/LazyAnimatePresence.tsx(174,22): error TS4111: Property 'onAnimationComplete' comes from an index signature, so it must be accessed with ['onAnimationComplete'].
+src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.hooks.ts(146,9): error TS6198: All destructured elements are unused.
+src/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.runtime.tsx(20,1): error TS6133: 'useKangurPrimaryNavigationState' is declared but its value is never read.
+src/features/kangur/ui/context/KangurAuthContext.tsx(232,13): error TS7030: Not all code paths return a value.
+src/features/kangur/ui/KangurFeatureApp.tsx(40,1): error TS6133: 'KangurAppProviders' is declared but its value is never read.
+src/features/kangur/ui/KangurFeatureApp.tsx(126,27): error TS2552: Cannot find name 'useKangurLoginModalState'. Did you mean 'KangurLoginModal'?
+src/features/kangur/ui/KangurFeatureApp.tsx(136,33): error TS2304: Cannot find name 'useKangurDeferredStandaloneHomeReady'.
+src/features/kangur/ui/KangurFeatureApp.tsx(185,46): error TS2304: Cannot find name 'createKangurPageTransitionMotionProps'.
+src/features/kangur/ui/KangurFeatureApp.tsx(229,11): error TS2304: Cannot find name 'KangurTopNavigationHost'.
+src/features/kangur/ui/KangurFeatureApp.tsx(283,6): error TS2322: Type '{ children: Element; animate: Record<string, unknown>; exit: Record<string, unknown>; initial: Record<string, unknown>; transition: Record<string, unknown>; key: string; className: string; "data-testid": string; loadMotion: boolean; }' is not assignable to type 'Omit<LazyMotionDivProps, "ref">'.
+  Types of property 'initial' are incompatible.
+    Type 'Record<string, unknown>' is not assignable to type 'boolean | TargetAndTransition | VariantLabels | undefined'.
+      Type 'Record<string, unknown>' is not assignable to type 'TargetAndTransition'.
+        Type 'Record<string, unknown>' is not assignable to type 'Target'.
+          Type 'Record<string, unknown>' is not assignable to type 'VariableKeyframesDefinition'.
+            'string' and '`--${string}`' index signatures are incompatible.
+              Type 'unknown' is not assignable to type 'ValueKeyframesDefinition'.
+src/features/kangur/ui/KangurFeatureApp.tsx(335,31): error TS2304: Cannot find name 'useKangurAuthActions'.
+src/features/kangur/ui/KangurFeatureApp.tsx(336,55): error TS2304: Cannot find name 'useKangurAuthSessionState'.
+src/features/kangur/ui/KangurFeatureApp.tsx(337,65): error TS2304: Cannot find name 'useKangurAuthStatusState'.
+src/features/kangur/ui/KangurFeatureApp.tsx(352,7): error TS2304: Cannot find name 'useKangurRouteTransitionState'.
+src/features/kangur/ui/KangurFeatureApp.tsx(353,26): error TS2304: Cannot find name 'useKangurRouteNavigator'.
+src/features/kangur/ui/KangurFeatureApp.tsx(354,33): error TS2304: Cannot find name 'useKangurDeferredStandaloneHomeReady'.
+src/features/kangur/ui/KangurFeatureApp.tsx(355,73): error TS2304: Cannot find name 'useKangurRouting'.
+src/features/kangur/ui/KangurFeatureApp.tsx(373,11): error TS2304: Cannot find name 'createKangurPageTransitionMotionProps'.
+src/features/kangur/ui/KangurFeatureApp.tsx(687,12): error TS2304: Cannot find name 'prefetchKangurPageContentStore'.
+src/features/kangur/ui/KangurFeatureApp.tsx(687,75): error TS7006: Parameter 'didPrefetch' implicitly has an 'any' type.
+src/features/kangur/ui/KangurFeatureApp.tsx(993,6): error TS2304: Cannot find name 'KangurRouteTransitionProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(994,8): error TS2304: Cannot find name 'KangurAuthProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(995,10): error TS2304: Cannot find name 'KangurFocusProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(997,12): error TS2304: Cannot find name 'KangurLoginModalProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(998,14): error TS2304: Cannot find name 'KangurContextRegistryPageBoundary'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1000,18): error TS2304: Cannot find name 'KangurGuestPlayerProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1001,20): error TS2304: Cannot find name 'KangurTopNavigationProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1003,21): error TS2304: Cannot find name 'KangurTopNavigationProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1004,19): error TS2304: Cannot find name 'KangurGuestPlayerProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1007,15): error TS2304: Cannot find name 'KangurContextRegistryPageBoundary'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1009,13): error TS2304: Cannot find name 'KangurLoginModalProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1010,11): error TS2304: Cannot find name 'KangurFocusProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1011,9): error TS2304: Cannot find name 'KangurAuthProvider'.
+src/features/kangur/ui/KangurFeatureApp.tsx(1012,7): error TS2304: Cannot find name 'KangurRouteTransitionProvider'.
+src/features/kangur/ui/KangurFeaturePage.tsx(50,7): error TS6133: 'resolveKangurFeaturePageShellBrowserPathname' is declared but its value is never read.
+src/features/kangur/ui/login-page/use-login-logic.ts(125,66): error TS2339: Property 'checkAppState' does not exist on type 'KangurAuthActionsContextValue | null'.
+src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(3,1): error TS6192: All imports in import declaration are unused.
+src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(4,1): error TS6133: 'withKangurClientError' is declared but its value is never read.
+src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(8,1): error TS6133: 'KANGUR_DUELS_DEFAULT_LOBBY_LIMIT' is declared but its value is never read.
+src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(11,1): error TS6192: All imports in import declaration are unused.
+src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(15,1): error TS6133: 'isAbortLikeError' is declared but its value is never read.
+src/features/kangur/ui/pages/duels/useDuelsLobbyActions.ts(17,7): error TS6133: 'kangurPlatform' is declared but its value is never read.
+src/features/kangur/ui/pages/Game.launchable-runtime.ts(13,8): error TS6133: 'KangurLaunchableGameScreen' is declared but its value is never read.
+src/features/kangur/ui/pages/Game.screen-components.tsx(16,3): error TS6133: 'KANGUR_PANEL_GAP_CLASSNAME' is declared but its value is never read.
+src/features/kangur/ui/pages/GameDeferredHomeEnhancements.tsx(40,9): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: { activeGameAssignmentId?: string | null | undefined; canAccessParentAssignments: boolean; enabled?: boolean | undefined; refs: GameTutorAnchorRefs; screen: "playing" | ... 42 more ... | "kangur_setup"; translations: Translator<...>; tutorActivityContentId: string; }, context?: any): string | ... 8 more ... | undefined', gave the following error.
+    Type 'GameHomeScreenRefs' is not assignable to type 'GameTutorAnchorRefs'.
+      Type 'GameHomeScreenRefs' is missing the following properties from type 'GameSessionScreenRefs': kangurSessionRef, kangurSetupRef, operationSelectorRef, resultLeaderboardRef, and 2 more.
+  Overload 2 of 2, '(props: { activeGameAssignmentId?: string | null | undefined; canAccessParentAssignments: boolean; enabled?: boolean | undefined; refs: GameTutorAnchorRefs; screen: "playing" | ... 42 more ... | "kangur_setup"; translations: Translator<...>; tutorActivityContentId: string; }): string | ... 8 more ... | undefined', gave the following error.
+    Type 'GameHomeScreenRefs' is not assignable to type 'GameTutorAnchorRefs'.
+      Type 'GameHomeScreenRefs' is missing the following properties from type 'GameSessionScreenRefs': kangurSessionRef, kangurSetupRef, operationSelectorRef, resultLeaderboardRef, and 2 more.
+src/features/kangur/ui/pages/GameDeferredNonHomeScreen.tsx(265,7): error TS2322: Type '"kangur" | "music_piano_roll_free_play_quiz" | "music_melody_repeat_quiz" | "agentic_approval_gate_quiz" | "agentic_prompt_trim_quiz" | "agentic_reasoning_router_quiz" | ... 32 more ... | "kangur_setup"' is not assignable to type '"kangur" | "kangur_setup"'.
+  Type '"music_piano_roll_free_play_quiz"' is not assignable to type '"kangur" | "kangur_setup"'.
+src/features/kangur/ui/pages/GameDeferredRoutedContent.tsx(17,8): error TS6133: 'GameSessionScreenRefs' is declared but its value is never read.
+src/features/kangur/ui/pages/GameDeferredRoutedScreen.tsx(11,8): error TS6133: 'KangurLaunchableGameScreen' is declared but its value is never read.
+src/features/playwright/server/ai-step-service.ts(518,12): error TS2552: Cannot find name 'PlaywrightInjectionResult'. Did you mean 'PlaywrightInjectionAttemptResult'?
+src/features/playwright/server/ai-step-service.ts(580,9): error TS6133: 'goal' is declared but its value is never read.
+src/features/playwright/server/ai-step-service.ts(679,11): error TS7022: 'result' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+src/features/playwright/server/ai-step-service.ts(748,32): error TS2339: Property 'iterationDelayMs' does not exist on type 'PlaywrightVerificationInjectionConfig<TReview>'.
+src/features/playwright/server/ai-step-service.ts(1365,9): error TS2352: Conversion of type 'TReview & TExtra & { iteration: number; observedAt: string; loopDecision: string; stableForMs: number | null; fingerprint: string; }' to type 'TObservation' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  'TReview & TExtra & { iteration: number; observedAt: string; loopDecision: string; stableForMs: number | null; fingerprint: string; }' is assignable to the constraint of type 'TObservation', but 'TObservation' could be instantiated with a different subtype of constraint 'PlaywrightVerificationObservationLike'.
+src/features/playwright/server/ai-step-service.ts(1379,76): error TS2551: Property 'artifactKey' does not exist on type 'RunPlaywrightVerificationReviewCaptureOptions<TParams, TReview, TObservation, TExtra>'. Did you mean 'artifacts'?
+src/features/playwright/server/ai-step-service.ts(2147,5): error TS2741: Property 'userMessageText' is missing in type '{ code: string; done: boolean; reasoning: string; modelId: string; rawText: string; }' but required in type 'PlaywrightStepInjectResult'.
+src/features/playwright/server/ai-step-service.ts(2155,5): error TS2741: Property 'userMessageText' is missing in type '{ code: string; done: true; reasoning: string; modelId: string; rawText: string; }' but required in type 'PlaywrightStepInjectResult'.
+src/features/products/security/file-upload.ts(309,42): error TS2339: Property 'entries' does not exist on type 'FormData'.
+src/features/products/server/product-scan-ai-evaluator.ts(13,8): error TS6133: 'PlaywrightObservationLoopSnapshot' is declared but its value is never read.
+src/features/products/server/product-scan-ai-evaluator.ts(18,3): error TS6133: 'evaluateStepWithAI' is declared but its value is never read.
+src/features/products/server/product-scan-ai-evaluator.ts(301,25): error TS2322: Type 'PlaywrightVerificationReviewProfile<TParams & PlaywrightVerificationCaptureParamsBase, TReview, Record<never, never>>' is not assignable to type 'Pick<PlaywrightVerificationReviewProfile<TParams, TReview>, "evaluation">'.
+  Types of property 'evaluation' are incompatible.
+    Type 'PlaywrightVerificationReviewEvaluationConfig<TParams & PlaywrightVerificationCaptureParamsBase>' is not assignable to type 'PlaywrightVerificationReviewEvaluationConfig<TParams>'.
+      Type 'TParams' is not assignable to type 'TParams & PlaywrightVerificationCaptureParamsBase'.
+        Type 'TParams' is not assignable to type 'PlaywrightVerificationCaptureParamsBase'.
+src/features/products/server/product-scan-ai-evaluator.ts(702,9): error TS2739: Type '{ profile: PlaywrightVerificationReviewLoopProfile<TState, TBaseParams, TParams, TObservation, TExtra>; createState: () => ProductScanVerificationState<...>; buildDiagnosticsPayload: (state: ProductScanVerificationState<...>) => Record<...>; captureWithState: (captureOptions: ProductScanVerificationBarrierCaptureWit...' is missing the following properties from type 'ProductScanVerificationBarrierRuntime<TState, TBaseParams, TParams, TObservation, TExtra>': observeLoopWithPage, createPageSession
+src/features/products/server/product-scan-ai-evaluator.ts(788,21): error TS2352: Conversion of type 'TBaseParams & Omit<TParams, keyof TBaseParams>' to type 'TParams' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  'TParams' could be instantiated with an arbitrary type which could be unrelated to 'TBaseParams & Omit<TParams, keyof TBaseParams>'.
+src/features/products/server/product-scan-ai-evaluator.ts(2258,35): error TS2345: Argument of type '{ status: "rejected"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; pageLanguage: string | null; languageConfidence: number | null; languageAccepted: false; ... 15 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "rejected"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; pageLanguage: string | null; languageConfidence: number | null; languageAccepted: false; ... 15 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2295,35): error TS2345: Argument of type '{ status: "skipped"; sameProduct: true; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: true; pageLanguage: string | null; languageConfidence: number | null; languageAccepted: boolean | null; ... 15 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "skipped"; sameProduct: true; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: true; pageLanguage: string | null; languageConfidence: number | null; languageAccepted: boolean | null; ... 15 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2327,35): error TS2345: Argument of type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2344,35): error TS2345: Argument of type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2371,35): error TS2345: Argument of type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2424,35): error TS2345: Argument of type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2553,24): error TS2304: Cannot find name 'ChatCompletionContentPart'.
+src/features/products/server/product-scan-ai-evaluator.ts(2602,37): error TS2345: Argument of type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2708,35): error TS2345: Argument of type '{ status: "approved" | "rejected"; sameProduct: boolean; imageMatch: boolean | null; descriptionMatch: boolean | null; pageRepresentsSameProduct: boolean; pageLanguage: string | null; ... 17 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "approved" | "rejected"; sameProduct: boolean; imageMatch: boolean | null; descriptionMatch: boolean | null; pageRepresentsSameProduct: boolean; pageLanguage: string | null; ... 17 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/features/products/server/product-scan-ai-evaluator.ts(2734,35): error TS2345: Argument of type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to parameter of type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt"> & Pick<...> & { ...; }'.
+  Type '{ status: "failed"; sameProduct: null; imageMatch: null; descriptionMatch: null; pageRepresentsSameProduct: null; confidence: null; proceed: false; reasons: never[]; mismatches: never[]; mismatchLabels: never[]; ... 6 more ...; evidence: { ...; }; }' is not assignable to type 'Omit<Partial<{ status: "failed" | "approved" | "rejected" | "skipped"; stage: "candidate_triage" | "probe_evaluate" | "extraction_evaluate" | null; sameProduct: boolean | null; imageMatch: boolean | null; ... 20 more ...; scrapeAllowed?: boolean | undefined; }>, "evaluatedAt">'.
+    The types of 'evidence.sourceAsin' are incompatible between these types.
+      Type 'string | undefined' is not assignable to type 'string | null'.
+        Type 'undefined' is not assignable to type 'string | null'.
+src/shared/hooks/query/useCacheWarmup.ts(54,39): error TS2345: Argument of type 'number' is not assignable to parameter of type 'Timeout'.
+src/shared/hooks/query/useCacheWarmup.ts(96,11): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/shared/hooks/query/useQueryBatching.ts(132,11): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/shared/hooks/query/useStreamingQueries.ts(140,9): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/shared/hooks/useQueryScheduler.ts(77,9): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/shared/lib/ai-paths/core/runtime/execution-helpers.ts(58,7): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/shared/lib/ai-paths/services/path-run-repository/methods/update-run.ts(20,18): error TS2352: Conversion of type 'ModifyResult<Document> & Document & { _id: ObjectId; }' to type 'RunDocument | null' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'ModifyResult<Document> & Document & { _id: ObjectId; }' is missing the following properties from type 'RunDocument': pathId, status, createdAt
+src/shared/lib/ai-paths/services/path-run-repository/methods/update-run.ts(21,15): error TS2769: No overload matches this call.
+  Overload 1 of 4, '(filter: Filter<Document>, update: Document[] | UpdateFilter<Document>, options: FindOneAndUpdateOptions & { ...; }): Promise<...>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId> | undefined'.
+  Overload 2 of 4, '(filter: Filter<Document>, update: Document[] | UpdateFilter<Document>, options: FindOneAndUpdateOptions & { ...; }): Promise<...>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId> | undefined'.
+  Overload 3 of 4, '(filter: Filter<Document>, update: Document[] | UpdateFilter<Document>, options: FindOneAndUpdateOptions): Promise<...>', gave the following error.
+    Type 'string' is not assignable to type 'Condition<ObjectId> | undefined'.
+src/shared/lib/ai-paths/services/path-run-repository/test-utils/in-memory-mongo.ts(365,68): error TS18048: 'operation.updateOne' is possibly 'undefined'.
+src/shared/lib/ai-paths/services/runtime-analytics/utils.ts(83,9): error TS2322: Type 'number' is not assignable to type 'Timeout'.
+src/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates.tsx(75,62): error TS2345: Argument of type 'SelectorRegistryProbeSuggestionCandidateInput' is not assignable to parameter of type 'SelectorRegistryProbeSuggestionFormattingInput'.
+  Type 'SelectorRegistryProbeSuggestionCandidateInput' is missing the following properties from type 'SelectorRegistryProbeSuggestionFormattingInput': textPreview, pageTitle, pageUrl, evidence
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1709,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1709,11): error TS6133: 'resolveGoogleLensOpenUrl' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1718,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1718,11): error TS6133: 'resolveGoogleLensOpenAttemptUrls' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1736,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1736,17): error TS6133: 'openGoogleLensAttemptUrl' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1748,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1748,17): error TS6133: 'readGoogleLensOpenReadinessState' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1771,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1800,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1800,11): error TS6133: 'buildGoogleLensOpenDetails' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1818,22): error TS2416: Property 'resolveImageSearchProvider' in type 'AmazonScanSequencer' is not assignable to the same property in base type 'GoogleLensSearchSequencer<AmazonScanInput>'.
+  Type '() => GoogleLensSearchProvider | undefined' is not assignable to type '() => GoogleLensSearchProvider'.
+    Type 'GoogleLensSearchProvider | undefined' is not assignable to type 'GoogleLensSearchProvider'.
+      Type 'undefined' is not assignable to type 'GoogleLensSearchProvider'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1825,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1842,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1842,11): error TS6133: 'canUseGoogleReverseImageUrl' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1855,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1860,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1860,11): error TS6133: 'shouldReopenImageSearchPageAfterConsent' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1898,19): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1912,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1921,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1937,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(1989,19): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2012,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2021,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2064,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2076,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2089,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2101,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2130,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2130,17): error TS6133: 'waitForGoogleLensFileInput' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2167,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2171,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2235,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2235,17): error TS6133: 'attachImageToGoogleLensInput' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2257,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2257,17): error TS6133: 'clickGoogleLensSearchSubmitIfPresent' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2268,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2298,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2321,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2321,17): error TS6133: 'waitForGoogleLensResultState' is declared but its value is never read.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2458,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2469,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2481,11): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/AmazonScanSequencer.ts(2488,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'GoogleLensSearchSequencer<AmazonScanInput>'.
+src/shared/lib/browser-execution/sequencers/GoogleLensSearchSequencer.ts(306,7): error TS2345: Argument of type 'ProductScanVerificationBarrierRuntime<CaptchaState, GoogleVerificationLoopBaseParams, GoogleVerificationObservationCaptureParams, GoogleVerificationObservation, Record<...>>' is not assignable to parameter of type 'ProductScanPageSessionRuntime<ProductScanVerificationBarrierPageSession<CaptchaState, GoogleVerificationLoopBaseParams, GoogleVerificationObservationCaptureParams, GoogleVerificationObservation, Record<...>>>'.
+  Types of property 'createPageSession' are incompatible.
+    Type '(options: ProductScanVerificationBarrierPageSessionContext<CaptchaState, GoogleVerificationLoopBaseParams, GoogleVerificationObservationCaptureParams, GoogleVerificationObservation, Record<...>>) => ProductScanVerificationBarrierPageSession<...>' is not assignable to type '(context: ProductScanPageSessionFactoryContext) => ProductScanVerificationBarrierPageSession<CaptchaState, GoogleVerificationLoopBaseParams, GoogleVerificationObservationCaptureParams, GoogleVerificationObservation, Record<...>>'.
+      Types of parameters 'options' and 'context' are incompatible.
+        Type 'ProductScanPageSessionFactoryContext' is not assignable to type 'ProductScanVerificationBarrierPageSessionContext<CaptchaState, GoogleVerificationLoopBaseParams, GoogleVerificationObservationCaptureParams, GoogleVerificationObservation, Record<...>>'.
+          Types of property 'upsertStep' are incompatible.
+            Type '(step: ScanStepUpsertInput) => void' is not assignable to type '(step: { key: string; status: "failed" | "running" | "completed"; candidateId: string; candidateRank: number; message: string; url: string | null; resultCode?: string | undefined; warning?: string | ... 1 more ... | undefined; details?: { ...; }[] | undefined; group?: string | undefined; label?: string | undefined; ...'.
+              Types of parameters 'step' and 'step' are incompatible.
+                Type '{ key: string; status: "failed" | "running" | "completed"; candidateId: string; candidateRank: number; message: string; url: string | null; resultCode?: string | undefined; warning?: string | null | undefined; details?: { ...; }[] | undefined; group?: string | undefined; label?: string | undefined; }' is not assignable to type 'ScanStepUpsertInput'.
+                  Types of property 'group' are incompatible.
+                    Type 'string | undefined' is not assignable to type '"input" | "product" | "amazon" | "google_lens" | "supplier" | null | undefined'.
+                      Type 'string' is not assignable to type '"input" | "product" | "amazon" | "google_lens" | "supplier" | null | undefined'.
+src/shared/lib/browser-execution/sequencers/Supplier1688ScanSequencer.ts(318,7): error TS2345: Argument of type 'ProductScanVerificationBarrierRuntime<Supplier1688VerificationSnapshotState, SupplierVerificationLoopBaseParams, SupplierVerificationObservationCaptureParams, Supplier1688VerificationObservation, Record<...>>' is not assignable to parameter of type 'ProductScanPageSessionRuntime<ProductScanVerificationBarrierPageSession<Supplier1688VerificationSnapshotState, SupplierVerificationLoopBaseParams, SupplierVerificationObservationCaptureParams, Supplier1688VerificationObservation, Record<...>>>'.
+  Types of property 'createPageSession' are incompatible.
+    Type '(options: ProductScanVerificationBarrierPageSessionContext<Supplier1688VerificationSnapshotState, SupplierVerificationLoopBaseParams, SupplierVerificationObservationCaptureParams, Supplier1688VerificationObservation, Record<...>>) => ProductScanVerificationBarrierPageSession<...>' is not assignable to type '(context: ProductScanPageSessionFactoryContext) => ProductScanVerificationBarrierPageSession<Supplier1688VerificationSnapshotState, SupplierVerificationLoopBaseParams, SupplierVerificationObservationCaptureParams, Supplier1688VerificationObservation, Record<...>>'.
+      Types of parameters 'options' and 'context' are incompatible.
+        Type 'ProductScanPageSessionFactoryContext' is not assignable to type 'ProductScanVerificationBarrierPageSessionContext<Supplier1688VerificationSnapshotState, SupplierVerificationLoopBaseParams, SupplierVerificationObservationCaptureParams, Supplier1688VerificationObservation, Record<...>>'.
+          Types of property 'upsertStep' are incompatible.
+            Type '(step: ScanStepUpsertInput) => void' is not assignable to type '(step: { key: string; status: "failed" | "running" | "completed"; candidateId: string; candidateRank: number; message: string; url: string | null; resultCode?: string | undefined; warning?: string | ... 1 more ... | undefined; details?: { ...; }[] | undefined; group?: string | undefined; label?: string | undefined; ...'.
+              Types of parameters 'step' and 'step' are incompatible.
+                Type '{ key: string; status: "failed" | "running" | "completed"; candidateId: string; candidateRank: number; message: string; url: string | null; resultCode?: string | undefined; warning?: string | null | undefined; details?: { ...; }[] | undefined; group?: string | undefined; label?: string | undefined; }' is not assignable to type 'ScanStepUpsertInput'.
+                  Types of property 'group' are incompatible.
+                    Type 'string | undefined' is not assignable to type '"input" | "product" | "amazon" | "google_lens" | "supplier" | null | undefined'.
+                      Type 'string' is not assignable to type '"input" | "product" | "amazon" | "google_lens" | "supplier" | null | undefined'.
+src/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer.ts(155,11): error TS18047: 'config.settleDelayMs' is possibly 'null'.
+src/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer.ts(156,25): error TS2345: Argument of type 'number | null' is not assignable to parameter of type 'number'.
+  Type 'null' is not assignable to type 'number'.
+src/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer.ts(182,17): error TS2416: Property 'acceptCookies' in type 'TraderaListingFormCategorySequencer' is not assignable to the same property in base type 'PlaywrightSequencer'.
+  Type '() => Promise<boolean>' is not assignable to type '(selectors: readonly string[]) => Promise<void>'.
+    Type 'Promise<boolean>' is not assignable to type 'Promise<void>'.
+      Type 'boolean' is not assignable to type 'void'.
+src/shared/lib/browser-execution/sequencers/TraderaListingFormCategorySequencer.ts(182,17): error TS4114: This member must have an 'override' modifier because it overrides a member in the base class 'PlaywrightSequencer'.
+src/shared/lib/playwright/anti-detection.ts(269,25): error TS2304: Cannot find name 'baseBehavior'.
+src/shared/lib/products/services/shipping-group-repository/mongo-shipping-group-repository.ts(156,11): error TS2740: Type '{ _id: ObjectId; }' is missing the following properties from type 'ProductShippingGroupDoc': name, description, catalogId, traderaShippingCondition, and 5 more.

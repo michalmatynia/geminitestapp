@@ -46,7 +46,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
         : options.fallback;
     }
   },
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 const PRESENCE_RESPONSE = {
   entries: [

@@ -26,6 +26,7 @@ export const filemakerEntityKindSchema = z.enum([
   'value_parameter',
   'value_parameter_link',
   'organization_legacy_demand',
+  'job_listing',
   'email_campaign',
   'email_campaign_content_group',
   'email_campaign_content_variant',
@@ -233,6 +234,38 @@ export type FilemakerOrganizationLegacyDemandDto = z.infer<
   typeof filemakerOrganizationLegacyDemandSchema
 >;
 export type FilemakerOrganizationLegacyDemand = FilemakerOrganizationLegacyDemandDto;
+
+export const filemakerJobListingStatusSchema = z.enum(['draft', 'open', 'paused', 'closed']);
+export type FilemakerJobListingStatusDto = z.infer<typeof filemakerJobListingStatusSchema>;
+export type FilemakerJobListingStatus = FilemakerJobListingStatusDto;
+
+export const filemakerJobListingSalaryPeriodSchema = z.enum([
+  'hourly',
+  'monthly',
+  'yearly',
+  'fixed',
+]);
+export type FilemakerJobListingSalaryPeriodDto = z.infer<
+  typeof filemakerJobListingSalaryPeriodSchema
+>;
+export type FilemakerJobListingSalaryPeriod = FilemakerJobListingSalaryPeriodDto;
+
+export const filemakerJobListingSchema = dtoBaseSchema.extend({
+  organizationId: z.string(),
+  title: z.string(),
+  description: z.string(),
+  location: z.string().optional(),
+  salaryMin: z.number().nonnegative().nullable().optional(),
+  salaryMax: z.number().nonnegative().nullable().optional(),
+  salaryCurrency: z.string().optional(),
+  salaryPeriod: filemakerJobListingSalaryPeriodSchema.default('monthly'),
+  status: filemakerJobListingStatusSchema.default('draft'),
+  targetedCampaignIds: z.array(z.string()).default([]),
+  lastTargetedAt: z.string().nullable().optional(),
+});
+
+export type FilemakerJobListingDto = z.infer<typeof filemakerJobListingSchema>;
+export type FilemakerJobListing = FilemakerJobListingDto;
 
 export const filemakerEmailCampaignLifecycleStatusSchema = z.enum([
   'draft',
@@ -895,6 +928,7 @@ export const filemakerDatabaseSchema = z.object({
   valueParameters: z.array(filemakerValueParameterSchema).default([]),
   valueParameterLinks: z.array(filemakerValueParameterLinkSchema).default([]),
   organizationLegacyDemands: z.array(filemakerOrganizationLegacyDemandSchema).default([]),
+  jobListings: z.array(filemakerJobListingSchema).default([]),
 });
 
 export type FilemakerDatabaseDto = z.infer<typeof filemakerDatabaseSchema>;

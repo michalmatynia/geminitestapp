@@ -10,6 +10,7 @@ import type {
   FilemakerEmailCampaignRunRegistry,
   FilemakerEmailCampaignRegistry,
   FilemakerEmailCampaignSuppressionRegistry,
+  FilemakerMailAccount,
 } from '../../types';
 import type { FilemakerCampaignEmailSendResult } from '../campaign-email-delivery';
 import type { FilemakerCampaignRunProcessProgress } from '../campaign-runtime.helpers';
@@ -41,6 +42,7 @@ export type FilemakerCampaignRuntimeDeps = {
     fromName?: string | null;
   }) => Promise<FilemakerCampaignEmailSendResult>;
   now: () => Date;
+  listMailAccounts?: () => Promise<FilemakerMailAccount[]>;
   throttleBeforeSend?: (emailAddress: string) => Promise<void>;
   reserveWarmupSlot?: (senderKey: string) => Promise<
     { ok: true } | { ok: false; nextAvailableAt: string; dailyCap: number; used: number }

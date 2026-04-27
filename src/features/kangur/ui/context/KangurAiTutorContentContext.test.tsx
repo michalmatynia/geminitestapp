@@ -50,7 +50,8 @@ const { withKangurClientErrorMock } = vi.hoisted(() => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   withKangurClientError: withKangurClientErrorMock,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import {
   DEFAULT_KANGUR_AI_TUTOR_CONTENT,

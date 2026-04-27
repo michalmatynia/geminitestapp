@@ -30,6 +30,7 @@ import type {
   FilemakerEmailCampaign,
   FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignSuppressionRegistry,
+  FilemakerMailAccount,
 } from '@/features/filemaker/types';
 
 const iso = '2026-03-27T10:00:00.000Z';
@@ -162,6 +163,7 @@ const createDatabase = (): FilemakerDatabase => ({
   valueParameters: [],
   valueParameterLinks: [],
   organizationLegacyDemands: [],
+  jobListings: [],
 });
 
 const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerEmailCampaign =>
@@ -170,6 +172,7 @@ const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerE
     name: 'Expo outreach',
     status: 'active',
     subject: 'Hello from Filemaker',
+    mailAccountId: 'mail-account-sales',
     bodyText: 'We would like to invite you.',
     audience: {
       partyKinds: ['person', 'organization'],
@@ -200,9 +203,42 @@ const createCampaign = (overrides?: Partial<FilemakerEmailCampaign>): FilemakerE
     ...overrides,
   });
 
+const createMailAccount = (overrides?: Partial<FilemakerMailAccount>): FilemakerMailAccount => ({
+  id: 'mail-account-sales',
+  name: 'Sales Mailbox',
+  emailAddress: 'sales@example.com',
+  provider: 'imap_smtp',
+  status: 'active',
+  imapHost: 'imap.example.com',
+  imapPort: 993,
+  imapSecure: true,
+  imapUser: 'sales@example.com',
+  imapPasswordSettingKey: 'filemaker_mail_account_mail-account-sales_imap_password',
+  smtpHost: 'smtp.example.com',
+  smtpPort: 587,
+  smtpSecure: true,
+  smtpUser: 'sales@example.com',
+  smtpPasswordSettingKey: 'filemaker_mail_account_mail-account-sales_smtp_password',
+  fromName: 'Sales',
+  replyToEmail: 'reply@example.com',
+  folderAllowlist: [],
+  initialSyncLookbackDays: 30,
+  maxMessagesPerSync: 100,
+  pushEnabled: true,
+  lastSyncedAt: null,
+  lastSyncError: null,
+  dkimDomain: null,
+  dkimKeySelector: null,
+  dkimPrivateKeySettingKey: null,
+  createdAt: iso,
+  updatedAt: iso,
+  ...overrides,
+});
+
 const createRuntimeHarness = (input?: {
   campaign?: FilemakerEmailCampaign;
   contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
+  mailAccounts?: FilemakerMailAccount[];
   sendCampaignEmail?: ReturnType<typeof vi.fn>;
   suppressions?: FilemakerEmailCampaignSuppressionRegistry;
   now?: () => Date;
@@ -255,6 +291,7 @@ const createRuntimeHarness = (input?: {
     },
     sendCampaignEmail,
     now: input?.now ?? (() => new Date(iso)),
+    listMailAccounts: async () => input?.mailAccounts ?? [createMailAccount()],
     throttleBeforeSend: async () => {},
     reserveWarmupSlot: async () => ({ ok: true }),
   });
@@ -320,6 +357,30 @@ describe('filemaker campaign runtime service', () => {
         runStatus: 'queued',
       })
     );
+  });
+
+  it('blocks live runs until a campaign has an active assigned email account', async () => {
+    const missingAssignment = createRuntimeHarness({
+      campaign: createCampaign({ mailAccountId: null }),
+    });
+
+    await expect(
+      missingAssignment.service.launchRun({
+        campaignId: 'campaign-1',
+        mode: 'live',
+      })
+    ).rejects.toThrow('Campaign must have an email account assigned before it can launch.');
+
+    const pausedAccount = createRuntimeHarness({
+      mailAccounts: [createMailAccount({ status: 'paused' })],
+    });
+
+    await expect(
+      pausedAccount.service.launchRun({
+        campaignId: 'campaign-1',
+        mode: 'live',
+      })
+    ).rejects.toThrow('Assigned email account Sales Mailbox <sales@example.com> is paused.');
   });
 
   it('cancels queued runs and marks queued deliveries as skipped', async () => {

@@ -16,14 +16,14 @@ export const updateRun = async (runId: string, data: AiPathRunUpdate): Promise<A
     }
   }
 
-  const collection = db.collection(RUNS_COLLECTION);
+  const collection = db.collection<RunDocument>(RUNS_COLLECTION);
   const result = await collection.findOneAndUpdate(
     { $or: [{ _id: runId }, { id: runId }] },
     { $set: updateData },
     { returnDocument: 'after' }
-  ) as RunDocument | null;
+  );
 
-  if (result === null) {
+  if (!result) {
     throw new Error('Run not found');
   }
   return toRunRecord(result);

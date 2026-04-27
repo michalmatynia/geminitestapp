@@ -165,4 +165,5 @@ export const createDatabase = (): FilemakerDatabase => ({
   valueParameters: [],
   valueParameterLinks: [],
   organizationLegacyDemands: [],
+  jobListings: [],
 });

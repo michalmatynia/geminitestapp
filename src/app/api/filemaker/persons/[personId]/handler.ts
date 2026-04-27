@@ -6,6 +6,12 @@ import { notFoundError } from '@/shared/errors/app-error';
 import {
   getMongoFilemakerPersonById,
   listMongoFilemakerAddressesForOwner,
+  listMongoFilemakerAnyParamsForPerson,
+  listMongoFilemakerAnyTextsForPerson,
+  listMongoFilemakerBankAccountsForPerson,
+  listMongoFilemakerContractsForPerson,
+  listMongoFilemakerDocumentsForPerson,
+  listMongoFilemakerPersonOccupationsForPerson,
   listMongoFilemakerWebsitesForPerson,
   requireFilemakerMailAdminSession,
   updateMongoFilemakerPerson,
@@ -29,11 +35,36 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   if (!person) {
     throw notFoundError('Filemaker person was not found.');
   }
-  const [linkedAddresses, linkedWebsites] = await Promise.all([
+  const [
+    linkedAddresses,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
+    linkedWebsites,
+  ] = await Promise.all([
     listMongoFilemakerAddressesForOwner('person', person.id),
+    listMongoFilemakerAnyParamsForPerson(person),
+    listMongoFilemakerAnyTextsForPerson(person),
+    listMongoFilemakerBankAccountsForPerson(person),
+    listMongoFilemakerContractsForPerson(person),
+    listMongoFilemakerDocumentsForPerson(person),
+    listMongoFilemakerPersonOccupationsForPerson(person),
     listMongoFilemakerWebsitesForPerson(person),
   ]);
-  return Response.json({ linkedAddresses, linkedWebsites, person });
+  return Response.json({
+    linkedAddresses,
+    linkedAnyParams,
+    linkedAnyTexts,
+    linkedBankAccounts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
+    linkedWebsites,
+    person,
+  });
 }
 
 export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {

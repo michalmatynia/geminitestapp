@@ -75,7 +75,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: trackKangurClientEventMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { KangurProgressSyncProvider } from './KangurProgressSyncProvider';
 import { clearKangurProgressHydrationCache } from './KangurProgressSyncProvider';

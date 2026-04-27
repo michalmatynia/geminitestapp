@@ -156,6 +156,7 @@ function ContentSectionHarness({
       valueParameters: [],
       valueParameterLinks: [],
       organizationLegacyDemands: [],
+      jobListings: [],
     },
     preview: {
       recipients: [],

@@ -42,7 +42,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   reportKangurClientError: reportKangurClientErrorMock,
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { useKangurAssignments } from '@/features/kangur/ui/hooks/useKangurAssignments';
 

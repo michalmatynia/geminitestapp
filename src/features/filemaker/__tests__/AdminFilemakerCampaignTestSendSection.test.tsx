@@ -151,6 +151,6 @@ describe('CampaignTestSendSection', () => {
     render(<CampaignTestSendHarness selectedMailAccount={null} />);
 
     expect(screen.getByRole('button', { name: 'Send Test Email' })).toBeDisabled();
-    expect(screen.getByText(/Sender route: Shared provider/)).toBeInTheDocument();
+    expect(screen.getByText(/Sender route: No sender account assigned/)).toBeInTheDocument();
   });
 });

@@ -93,7 +93,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: vi.fn(),
   withKangurClientError,
   withKangurClientErrorSync,
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import {
   KangurGameRuntimeProvider,

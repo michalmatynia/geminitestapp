@@ -20,9 +20,12 @@ vi.mock('nextjs-toploader/app', () => ({
   useRouter: () => ({ push: mocks.routerPush }),
 }));
 
-vi.mock('@/shared/hooks/use-i18n-queries', () => ({
-  useCountries: () => ({ data: [] }),
-}));
+vi.mock('@/shared/hooks/use-i18n-queries', () => {
+  const countriesData = { data: [] };
+  return {
+    useCountries: () => countriesData,
+  };
+});
 
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: () => ({

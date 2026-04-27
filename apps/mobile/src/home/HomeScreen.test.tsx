@@ -670,6 +670,7 @@ it('renders authenticated focus cards and recent results after the shell settles
   expect(screen.getByText('Zaproszenia do pojedynków')).toBeTruthy();
   expect(screen.getByText('Leo Mentor')).toBeTruthy();
   expect(screen.getByText('Dołącz: Leo Mentor')).toBeTruthy();
+  screen.debug();
   expect(
     screen.getAllByText('Seria BO3 • gra 2 z 3 • ukończone: 1').length,
   ).toBeGreaterThanOrEqual(2);

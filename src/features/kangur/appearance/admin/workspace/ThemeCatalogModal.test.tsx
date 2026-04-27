@@ -111,7 +111,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
     _metadata: unknown,
     action: () => Promise<unknown>
   ): Promise<unknown> => action(),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 import { KANGUR_DEFAULT_DAILY_THEME } from '@/features/kangur/appearance/theme-settings';
 import { ThemeCatalogModal } from './ThemeCatalogModal';

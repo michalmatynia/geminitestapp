@@ -66,7 +66,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
         : options.fallback;
     }
   },
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 describe('subject-focus remote API client integration', () => {
   beforeEach(() => {

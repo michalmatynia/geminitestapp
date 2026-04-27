@@ -126,11 +126,13 @@ const resolveSelectedVariant = (
 
 export function CampaignDetailsSection(): React.JSX.Element {
   const { draft, setDraft, mailAccountOptions, selectedMailAccount } = useCampaignEditContext();
+  const mailAccountId = draft.mailAccountId ?? '';
   
-  const selectedMailAccountSummary = selectedMailAccount
+  const selectedMailAccountSummary = selectedMailAccount !== null
     ? `${selectedMailAccount.name} <${selectedMailAccount.emailAddress}>`
     : null;
-  const isMissingMailAccount = Boolean(draft.mailAccountId) && !selectedMailAccount;
+  const isMissingMailAccount = mailAccountId.length > 0 && selectedMailAccount === null;
+  const isMailAccountUnassigned = mailAccountId.length === 0;
 
   return (
     <FormSection title='Campaign Details' className='space-y-4 p-4'>
@@ -182,15 +184,15 @@ export function CampaignDetailsSection(): React.JSX.Element {
           />
         </FormField>
         <FormField
-          label='Mail account'
+          label='Sender email account'
           description={
             isMissingMailAccount
-              ? `This campaign references a missing mail account (${draft.mailAccountId}). Select a valid account or switch back to shared delivery.`
-              : selectedMailAccount
+              ? `This campaign references a missing mail account (${draft.mailAccountId}). Select a valid account before launch.`
+              : selectedMailAccount !== null
               ? selectedMailAccount.status === 'active'
                 ? `Campaign delivery uses ${selectedMailAccountSummary} for SMTP and sender defaults.`
                 : `${selectedMailAccountSummary} is paused. Live sends will fail until this account is reactivated.`
-              : 'Optional. Leave blank to use the shared Filemaker campaign delivery provider.'
+              : 'Required. Select the mailbox that will send this campaign and receive replies.'
           }
         >
           <SelectSimple
@@ -205,12 +207,17 @@ export function CampaignDetailsSection(): React.JSX.Element {
             options={mailAccountOptions}
           />
         </FormField>
+        {isMailAccountUnassigned ? (
+          <div className='rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200 md:col-span-2'>
+            Assign an email account before sending tests or launching this campaign.
+          </div>
+        ) : null}
         <FormField
           label='From name override'
           description={
-            selectedMailAccount
+            selectedMailAccount !== null
               ? 'Optional. Leave blank to use the selected mail account default sender name.'
-              : 'Optional. Override the shared campaign sender display name.'
+              : 'Optional. Override the campaign sender display name.'
           }
         >
           <Input
@@ -227,7 +234,7 @@ export function CampaignDetailsSection(): React.JSX.Element {
         <FormField
           label='Reply-to override'
           description={
-            selectedMailAccount
+            selectedMailAccount !== null
               ? 'Optional. Leave blank to use the selected mail account reply-to address.'
               : 'Optional. Override the reply-to address used for campaign deliveries.'
           }
@@ -868,11 +875,13 @@ export function CampaignTestSendSection(): React.JSX.Element {
       <div className='flex flex-wrap gap-2 text-[10px]'>
         <Badge variant='outline'>
           Sender route:{' '}
-          {selectedMailAccount ? `${selectedMailAccount.name} <${selectedMailAccount.emailAddress}>` : 'Shared provider'}
+          {selectedMailAccount !== null
+            ? `${selectedMailAccount.name} <${selectedMailAccount.emailAddress}>`
+            : 'No sender account assigned'}
         </Badge>
         <Badge variant='outline'>
           Reply-to default:{' '}
-          {selectedMailAccount?.replyToEmail ?? 'Campaign override / shared provider'}
+          {selectedMailAccount?.replyToEmail ?? 'Campaign override / selected account'}
         </Badge>
       </div>
       <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'>
@@ -891,7 +900,11 @@ export function CampaignTestSendSection(): React.JSX.Element {
         <Button
           type='button'
           className='md:mb-1'
-          disabled={isTestSendPending || !testRecipientEmailDraft.trim()}
+          disabled={
+            isTestSendPending ||
+            testRecipientEmailDraft.trim().length === 0 ||
+            selectedMailAccount === null
+          }
           onClick={(): void => {
             void handleSendTestEmail();
           }}

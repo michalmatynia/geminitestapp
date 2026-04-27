@@ -5,6 +5,10 @@ import React, { useMemo } from 'react';
 
 import { Badge } from '@/shared/ui/primitives.public';
 
+import {
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERABILITY_DECISION_EVENT_LABEL,
+  FILEMAKER_EMAIL_CAMPAIGN_DELIVERABILITY_DECISION_EVENT_TYPES,
+} from '../../settings';
 import type { FilemakerEmailCampaignEvent, FilemakerEmailCampaignEventType } from '../../types';
 import { formatTimestamp } from '../filemaker-page-utils';
 
@@ -13,16 +17,12 @@ interface CampaignRunDeliverabilityLogPanelProps {
 }
 
 const DELIVERABILITY_EVENT_TYPES: ReadonlySet<FilemakerEmailCampaignEventType> = new Set([
-  'delivery_deferred_domain',
-  'delivery_deferred_warmup',
-  'run_paused_circuit_breaker',
-  'paused',
+  ...FILEMAKER_EMAIL_CAMPAIGN_DELIVERABILITY_DECISION_EVENT_TYPES,
+  'paused' as const,
 ]);
 
 const EVENT_LABEL: Partial<Record<FilemakerEmailCampaignEventType, string>> = {
-  delivery_deferred_domain: 'Domain throttle',
-  delivery_deferred_warmup: 'Warm-up cap',
-  run_paused_circuit_breaker: 'Circuit breaker',
+  ...FILEMAKER_EMAIL_CAMPAIGN_DELIVERABILITY_DECISION_EVENT_LABEL,
   paused: 'Campaign paused',
 };
 

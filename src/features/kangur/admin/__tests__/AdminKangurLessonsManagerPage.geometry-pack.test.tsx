@@ -160,7 +160,8 @@ vi.mock('@/features/kangur/observability/client', () => ({
       globalThis.__kangurClientErrorMocks();
     return { withKangurClientError, withKangurClientErrorSync };
   })(),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/admin/components/KangurAdminContentShell', () => ({
   KangurAdminContentShell: ({

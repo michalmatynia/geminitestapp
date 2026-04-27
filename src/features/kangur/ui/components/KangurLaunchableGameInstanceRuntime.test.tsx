@@ -32,7 +32,8 @@ vi.mock('@/features/kangur/ui/hooks/useKangurGameContentSets', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   trackKangurClientEvent: (...args: unknown[]) => trackKangurClientEventMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/features/kangur/ui/components/KangurLaunchableGameRuntime', () => ({
   __esModule: true,

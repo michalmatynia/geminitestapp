@@ -11,6 +11,7 @@ const {
   clearKangurClientObservabilityContextMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  isRecoverableKangurClientFetchError,
 } = vi.hoisted(() => {
   const mocks = globalThis.__kangurClientErrorMocks();
   return {
@@ -18,6 +19,7 @@ const {
     clearKangurClientObservabilityContextMock: mocks.clearKangurClientObservabilityContextMock,
     withKangurClientError: mocks.withKangurClientError,
     withKangurClientErrorSync: mocks.withKangurClientErrorSync,
+    isRecoverableKangurClientFetchError: mocks.isRecoverableKangurClientFetchError,
   };
 });
 
@@ -70,6 +72,7 @@ vi.mock('@/features/kangur/observability/client', () => ({
   clearKangurClientObservabilityContext: clearKangurClientObservabilityContextMock,
   withKangurClientError,
   withKangurClientErrorSync,
+  isRecoverableKangurClientFetchError,
 }));
 
 vi.mock('next-auth/react', async (importOriginal) => {

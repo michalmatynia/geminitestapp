@@ -104,7 +104,7 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
   useBrainModelOptions: () => mockState.brainModelOptions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
   AI_PATHS_REGEX_TEMPLATES_KEY: 'ai_paths_regex_templates',
   buildRegexTemplatesStore: (templates: RegexTemplate[]) => ({ templates }),
   createRegexTemplateId: () => mockState.createRegexTemplateId(),
@@ -114,6 +114,17 @@ vi.mock('@/shared/lib/ai-paths', () => ({
     return { templates: parsed.templates ?? [] };
   },
   renderTemplate: (...args: unknown[]) => mockState.renderTemplate(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/regex-templates', () => ({
+  AI_PATHS_REGEX_TEMPLATES_KEY: 'ai_paths_regex_templates',
+  buildRegexTemplatesStore: (templates: RegexTemplate[]) => ({ templates }),
+  createRegexTemplateId: () => mockState.createRegexTemplateId(),
+  parseRegexTemplatesStore: (raw: string | null) => {
+    if (!raw) return { templates: [] };
+    const parsed = JSON.parse(raw) as { templates?: RegexTemplate[] };
+    return { templates: parsed.templates ?? [] };
+  },
 }));
 
 vi.mock('@/shared/lib/ai-paths/settings-store-client', () => ({

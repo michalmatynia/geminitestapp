@@ -10,6 +10,7 @@ import {
   buildKangurPracticeSyncProofSnapshot,
   type KangurPracticeSyncProofSnapshot,
 } from './practiceSyncProof';
+import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
 
 type UseKangurPracticeSyncProofOptions = {
   enabled: boolean;
@@ -31,6 +32,53 @@ const EMPTY_SNAPSHOT: KangurPracticeSyncProofSnapshot = {
   matchedScoreId: null,
   surfaces: [],
 };
+
+interface SnapshotParams {
+  enabled: boolean;
+  expectedCorrectAnswers: number;
+  expectedTotalQuestions: number;
+  leaderboardItems: unknown[];
+  locale: KangurMobileLocale;
+  operation: KangurPracticeOperation;
+  progress: unknown;
+  runStartedAt: number;
+  scores: unknown[];
+}
+
+function calculateSnapshot(params: SnapshotParams): KangurPracticeSyncProofSnapshot {
+  if (!params.enabled) {
+    return EMPTY_SNAPSHOT;
+  }
+
+  return buildKangurPracticeSyncProofSnapshot({
+    expectedCorrectAnswers: params.expectedCorrectAnswers,
+    expectedTotalQuestions: params.expectedTotalQuestions,
+    leaderboardItems: params.leaderboardItems,
+    locale: params.locale,
+    operation: params.operation,
+    progress: params.progress,
+    runStartedAt: params.runStartedAt,
+    scores: params.scores,
+  });
+}
+
+function getSyncError(
+  leaderboardError: string | null,
+  scoresQueryError: unknown,
+  copy: (v: Record<string, string>) => string
+): string | null {
+  if (leaderboardError !== null) {
+    return leaderboardError;
+  }
+  if (scoresQueryError instanceof Error) {
+    return copy({
+      de: 'Die Synchronisierungsvorschau konnte nicht aktualisiert werden.',
+      en: 'Could not refresh the sync proof.',
+      pl: 'Nie udało się odświeżyć podglądu synchronizacji.',
+    });
+  }
+  return null;
+}
 
 export const useKangurPracticeSyncProof = ({
   enabled,
@@ -56,22 +104,17 @@ export const useKangurPracticeSyncProof = ({
     limit: 100,
   });
 
-  const snapshot = useMemo(() => {
-    if (!enabled) {
-      return EMPTY_SNAPSHOT;
-    }
-
-    return buildKangurPracticeSyncProofSnapshot({
-      expectedCorrectAnswers,
-      expectedTotalQuestions,
-      leaderboardItems: leaderboard.items,
-      locale,
-      operation,
-      progress,
-      runStartedAt,
-      scores: scoresQuery.scores,
-    });
-  }, [
+  const snapshot = useMemo(() => calculateSnapshot({
+    enabled,
+    expectedCorrectAnswers,
+    expectedTotalQuestions,
+    leaderboardItems: leaderboard.items,
+    locale,
+    operation,
+    progress,
+    runStartedAt,
+    scores: scoresQuery.scores,
+  }), [
     enabled,
     expectedCorrectAnswers,
     expectedTotalQuestions,
@@ -83,16 +126,13 @@ export const useKangurPracticeSyncProof = ({
     scoresQuery.scores,
   ]);
 
+  const error = useMemo(
+    () => getSyncError(leaderboard.error, scoresQuery.error, copy),
+    [leaderboard.error, scoresQuery.error, copy]
+  );
+
   return {
-    error:
-      leaderboard.error ??
-      (scoresQuery.error instanceof Error
-        ? copy({
-            de: 'Die Synchronisierungsvorschau konnte nicht aktualisiert werden.',
-            en: 'Could not refresh the sync proof.',
-            pl: 'Nie udało się odświeżyć podglądu synchronizacji.',
-          })
-        : null),
+    error,
     isEnabled: enabled,
     isLoading: enabled && (scoresQuery.isLoading || leaderboard.isLoading),
     refresh: async () => {

@@ -1815,7 +1815,7 @@ export class AmazonScanSequencer extends GoogleLensSearchSequencer<AmazonScanInp
     ];
   }
 
-  private resolveImageSearchProvider(): AmazonImageSearchProvider {
+  protected override resolveImageSearchProvider(): AmazonImageSearchProvider {
     return this.input.imageSearchProvider === 'google_images_url' ||
       this.input.imageSearchProvider === 'google_lens_upload'
       ? this.input.imageSearchProvider

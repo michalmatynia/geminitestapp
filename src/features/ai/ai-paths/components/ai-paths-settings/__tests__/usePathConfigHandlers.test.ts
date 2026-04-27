@@ -35,7 +35,7 @@ vi.mock('@/features/ai/ai-paths/context', () => ({
   useGraphActions: () => mockState.graphActions,
 }));
 
-vi.mock('@/shared/lib/ai-paths', () => ({
+vi.mock('@/shared/lib/ai-paths/core/utils', () => ({
   createDefaultPathConfig: mockState.createDefaultPathConfig,
 }));
 

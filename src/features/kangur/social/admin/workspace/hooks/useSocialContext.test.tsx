@@ -29,7 +29,8 @@ vi.mock('@/features/kangur/social/hooks/useKangurSocialPosts', () => ({
 
 vi.mock('@/features/kangur/observability/client', () => ({
   logKangurClientError: (...args: unknown[]) => logKangurClientErrorMock(...args),
-}));
+
+  isRecoverableKangurClientFetchError: vi.fn().mockReturnValue(false),}));
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {

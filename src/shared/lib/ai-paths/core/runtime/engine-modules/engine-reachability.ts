@@ -32,5 +32,11 @@ export function resolveScopedNodeIds(args: {
       }
     });
   }
+
+  // Include seeded nodes
+  Object.keys(args.seedHashes).forEach((nodeId) => {
+    reachable.add(nodeId);
+  });
+
   return reachable;
 }

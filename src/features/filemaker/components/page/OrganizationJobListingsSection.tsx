@@ -49,7 +49,6 @@ const SALARY_PERIOD_OPTIONS: Array<{ value: FilemakerJobListingSalaryPeriod; lab
 const toCampaignOption = (campaign: FilemakerEmailCampaign): MultiSelectOption => ({
   value: campaign.id,
   label: campaign.name.trim().length > 0 ? campaign.name : campaign.id,
-  description: campaign.status,
 });
 
 const addMissingCampaignOptions = (
@@ -140,6 +139,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
 
   return (
     <FormSection
+      id='organization-job-listings'
       title={
         <span className='flex items-center gap-2'>
           <BriefcaseBusiness className='h-3.5 w-3.5 text-gray-400' aria-hidden='true' />
@@ -174,6 +174,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
             return (
               <div
                 key={listing.id}
+                id={`job-listing-${encodeURIComponent(listing.id)}`}
                 className='space-y-4 rounded-md border border-border/60 bg-card/20 p-4'
               >
                 <div className='flex flex-wrap items-center justify-between gap-2'>

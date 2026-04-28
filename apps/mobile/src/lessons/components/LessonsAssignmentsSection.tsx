@@ -1,12 +1,20 @@
 import { Text, View } from 'react-native';
 import { KangurMobileCard as Card } from '../../shared/KangurMobileUi';
 import { LessonsAssignmentRow } from '../lesson-row-primitives';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type UseKangurMobileLessonsAssignmentsResult, type KangurMobileLessonsAssignmentItem } from '../useKangurMobileLessonsAssignments';
+
+interface LessonsAssignmentsSectionProps {
+    isPreparingLessonsView: boolean;
+    copy: KangurMobileCopy;
+    lessonsAssignments: UseKangurMobileLessonsAssignmentsResult;
+}
 
 export function LessonsAssignmentsSection({
     isPreparingLessonsView,
     copy,
     lessonsAssignments,
-}: any): React.JSX.Element | null {
+}: LessonsAssignmentsSectionProps): React.JSX.Element | null {
     if (isPreparingLessonsView) return null;
 
     return (
@@ -23,11 +31,11 @@ export function LessonsAssignmentsSection({
 
             {lessonsAssignments.assignmentItems.length === 0 ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {copy({ de: 'Es gibt noch keine nächsten Schritte. Öffne weitere Lektionen oder absolviere weitere Trainings, um den nächsten Plan aufzubauen.', en: 'There are no next steps yet. Open more lessons or complete more practice to build the next plan.', pl: 'Nie ma jeszcze kolejnych kroków. Otwórz kolejne lekcje albo wykonaj więcej treningów, aby zbudować następny plan.' })}
+                    {copy({ de: 'Es gibt noch keine nächsten Schritte. Öffne weitere Lektionen oder absolviere weitere Trainings, um den nächsten plan aufzubauen.', en: 'There are no next steps yet. Open more lessons or complete more practice to build the next plan.', pl: 'Nie ma jeszcze kolejnych kroków. Otwórz kolejne lekcje albo wykonaj więcej treningów, aby zbudować następny plan.' })}
                 </Text>
             ) : (
                 <View style={{ gap: 10 }}>
-                    {lessonsAssignments.assignmentItems.map((item: any) => (
+                    {lessonsAssignments.assignmentItems.map((item: KangurMobileLessonsAssignmentItem) => (
                         <LessonsAssignmentRow key={item.assignment.id} item={item} />
                     ))}
                 </View>

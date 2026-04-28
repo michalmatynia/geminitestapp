@@ -2,10 +2,11 @@ import { Pressable, Text, View } from 'react-native';
 
 import { BASE_TONE, INDIGO_TONE, SUCCESS_TONE } from '../../shared/KangurAssessmentUi';
 import { KangurMobileCard as Card, KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
+import { type KangurLearnerProfile } from '@kangur/contracts/kangur';
 
 interface ParentLearnerSectionProps {
   copy: (text: Record<string, string>) => string;
-  learners: any[];
+  learners: KangurLearnerProfile[];
   selectedLearnerId: string | null;
   switchingLearnerId: string | null;
   selectLearner: (id: string) => void;
@@ -19,7 +20,7 @@ export function ParentLearnerSection({
   switchingLearnerId,
   selectLearner,
   selectionError,
-}: ParentLearnerSectionProps) {
+}: ParentLearnerSectionProps): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -125,11 +126,11 @@ export function ParentLearnerSection({
         </View>
       )}
 
-      {selectionError ? (
+      {Boolean(selectionError) && (
         <Text style={{ color: '#b91c1c', fontSize: 13, lineHeight: 18 }}>
           {selectionError}
         </Text>
-      ) : null}
+      )}
     </Card>
   );
 }

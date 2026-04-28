@@ -58,6 +58,7 @@ export const mongoProductWriteImpl = {
       archived: data.archived ?? false,
       categoryId: data.categoryId || null,
       shippingGroupId: data.shippingGroupId || null,
+      studioProjectId: data.studioProjectId ?? null,
       catalogId: storageInput.catalogId || 'default',
       createdAt: now,
       updatedAt: now,
@@ -142,6 +143,9 @@ export const mongoProductWriteImpl = {
     }
     if (data.shippingGroupId !== undefined) {
       set['shippingGroupId'] = data.shippingGroupId;
+    }
+    if (data.studioProjectId !== undefined) {
+      set['studioProjectId'] = data.studioProjectId;
     }
     if (data.customFields !== undefined) {
       set['customFields'] = normalizeProductCustomFieldValues(data.customFields);

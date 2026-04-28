@@ -48,21 +48,36 @@ vi.mock('react-native', () => {
       ...rest
     } = props;
 
-    return {
-      ...rest,
-      ...(testID !== null && testID !== undefined ? { 'data-testid': String(testID) } : {}),
-      ...(accessibilityLabel !== null && accessibilityLabel !== undefined ? { 'aria-label': String(accessibilityLabel) } : {}),
-      ...(accessibilityRole !== null && accessibilityRole !== undefined ? { role: String(accessibilityRole) } : {}),
-      ...(accessibilityLiveRegion !== null && accessibilityLiveRegion !== undefined ? { 'aria-live': String(accessibilityLiveRegion) } : {}),
-      ...(typeof onPress === 'function' ? { onClick: onPress } : {}),
-      ...(typeof onChangeText === 'function'
-        ? {
-            onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-              onChangeText(event.target.value),
-          }
-        : {}),
-      ...(secureTextEntry === true ? { type: 'password' } : {}),
-    };
+    const mapped: Record<string, unknown> = { ...rest };
+
+    if (typeof testID === 'string' && testID.length > 0) {
+      mapped['data-testid'] = testID;
+    }
+    if (typeof accessibilityLabel === 'string' && accessibilityLabel.length > 0) {
+      mapped['aria-label'] = accessibilityLabel;
+    }
+    if (typeof accessibilityRole === 'string' && accessibilityRole.length > 0) {
+      mapped['role'] = accessibilityRole;
+    }
+    if (typeof accessibilityLiveRegion === 'string' && accessibilityLiveRegion.length > 0) {
+      mapped['aria-live'] = accessibilityLiveRegion;
+    }
+
+    if (typeof onPress === 'function') {
+      mapped.onClick = onPress;
+    }
+
+    if (typeof onChangeText === 'function') {
+      mapped.onChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        (onChangeText as (text: string) => void)(event.target.value);
+      };
+    }
+
+    if (secureTextEntry === true) {
+      mapped.type = 'password';
+    }
+
+    return mapped;
   };
 
   const createPrimitive = (tagName: keyof React.JSX.IntrinsicElements) => {
@@ -95,18 +110,23 @@ vi.mock('react-native-safe-area-context', () => {
         accessibilityRole?: string;
         testID?: string;
       }
-    >) =>
-      React.createElement(
-        tagName,
-        {
-          ...props,
-          ...(testID ? { 'data-testid': testID } : {}),
-          ...(accessibilityLabel ? { 'aria-label': accessibilityLabel } : {}),
-          ...(accessibilityRole ? { role: accessibilityRole } : {}),
-          ...(accessibilityLiveRegion ? { 'aria-live': accessibilityLiveRegion } : {}),
-        },
-        children
-      );
+    >) => {
+      const elementProps: Record<string, unknown> = { ...props };
+      if (typeof testID === 'string' && testID.length > 0) {
+        elementProps['data-testid'] = testID;
+      }
+      if (typeof accessibilityLabel === 'string' && accessibilityLabel.length > 0) {
+        elementProps['aria-label'] = accessibilityLabel;
+      }
+      if (typeof accessibilityRole === 'string' && accessibilityRole.length > 0) {
+        elementProps['role'] = accessibilityRole;
+      }
+      if (typeof accessibilityLiveRegion === 'string' && accessibilityLiveRegion.length > 0) {
+        elementProps['aria-live'] = accessibilityLiveRegion;
+      }
+
+      return React.createElement(tagName, elementProps, children);
+    };
   };
 
   return {
@@ -115,7 +135,8 @@ vi.mock('react-native-safe-area-context', () => {
 });
 
 vi.mock('expo-router', () => ({
-  Link: ({ children }: React.PropsWithChildren) => children,
+  Link: ({ children }: React.PropsWithChildren): React.JSX.Element | null =>
+    (children as React.JSX.Element) ?? null,
   useLocalSearchParams: duelsScreenTestMocks.useLocalSearchParamsMock,
   useRouter: duelsScreenTestMocks.useRouterMock,
 }));

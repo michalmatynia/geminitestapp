@@ -1,4 +1,5 @@
 export * from './base';
+export * from './batch-edit';
 export * from './catalogs';
 export * from './categories';
 export * from './custom-fields';

@@ -45,7 +45,7 @@ const TutorGuide = ({ guideEntry, responseMessage, isLoading, copy }: {
   guideEntry: KangurAiTutorNativeGuideEntry | null;
   responseMessage: string | null;
   isLoading: boolean;
-  copy: (v: Record<string, string>) => string;
+  copy: (v: KangurMobileLocalizedValue<string>) => string;
 }): React.JSX.Element => {
   if (guideEntry !== null) {
     return (
@@ -88,7 +88,7 @@ type AvailabilityInfo = {
 
 const resolveAvailabilityInfo = (
   state: string,
-  copy: (v: Record<string, string>) => string,
+  copy: (v: KangurMobileLocalizedValue<string>) => string,
 ): AvailabilityInfo => {
   if (state === 'available') {
     return {

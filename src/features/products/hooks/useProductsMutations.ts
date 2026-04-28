@@ -4,16 +4,19 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
+  batchEditProducts,
   bulkSetProductsArchivedState,
   createProduct,
   updateProduct,
   deleteProduct,
 } from '@/features/products/api/products';
 import type {
+  ProductBatchEditRequest,
+  ProductBatchEditResponse,
   ProductBulkArchiveResponse,
   ProductBulkImagesBase64Response,
   ProductWithImages,
-} from '@/shared/contracts/products/product';
+} from '@/shared/contracts/products';
 import type { ProductPatchInput } from '@/shared/contracts/products/io';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
@@ -268,6 +271,36 @@ export function useBulkConvertImagesToBase64(): UpdateMutation<
       description: 'Converts product images to base64 in bulk.',
     },
     invalidateKeys: [QUERY_KEYS.products.lists()],
+  });
+}
+
+export function useBulkEditProductFields(): UpdateMutation<
+  ProductBatchEditResponse,
+  ProductBatchEditRequest
+> {
+  return createUpdateMutationV2({
+    mutationFn: async (request: ProductBatchEditRequest): Promise<ProductBatchEditResponse> =>
+      batchEditProducts(request),
+    mutationKey: QUERY_KEYS.products.all,
+    meta: {
+      source: 'products.hooks.useBulkEditProductFields',
+      operation: 'update',
+      resource: 'products.fields.bulk',
+      domain: 'products',
+      mutationKey: QUERY_KEYS.products.all,
+      tags: ['products', 'fields', 'bulk-edit'],
+      description: 'Applies product field batch edit operations.',
+    },
+    invalidate: async (queryClient, response) => {
+      if (response?.dryRun) return;
+      await Promise.all([
+        invalidateProductsAndCounts(queryClient),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.products.details(),
+          refetchType: 'none',
+        }),
+      ]);
+    },
   });
 }
 

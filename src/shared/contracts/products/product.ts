@@ -364,6 +364,7 @@ export const productSchema = dtoBaseSchema.extend({
   archived: z.boolean().default(false),
   categoryId: z.string().nullable(),
   shippingGroupId: z.string().nullable().optional(),
+  studioProjectId: z.string().nullable().optional(),
   catalogId: z.string(),
   category: productCategorySchema.optional(),
   shippingGroup: productShippingGroupSchema.optional(),

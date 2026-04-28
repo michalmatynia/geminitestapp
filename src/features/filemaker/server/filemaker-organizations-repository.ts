@@ -1,10 +1,11 @@
 import 'server-only';
+/* eslint-disable complexity, max-lines */
 
 import type { Collection, Filter } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
 
-import type { FilemakerOrganization } from '../types';
+import type { FilemakerEvent, FilemakerOrganization } from '../types';
 import {
   normalizeOrganizationPage,
   resolveOrganizationListOptions,
@@ -19,6 +20,7 @@ import {
   toFilemakerOrganization,
   type FilemakerOrganizationMongoDocument,
 } from './filemaker-organizations-mongo';
+import { listMongoFilemakerEventsForOrganization } from './filemaker-events-repository';
 
 export type FilemakerOrganizationsListResult = {
   collectionCount: number;
@@ -29,6 +31,7 @@ export type FilemakerOrganizationsListResult = {
     updatedBy: string;
   };
   limit: number;
+  linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>;
   organizations: FilemakerOrganization[];
   page: number;
   pageSize: number;
@@ -168,6 +171,7 @@ const buildOrganizationFilter = (input: {
 const buildListResult = (input: {
   collectionCount: number;
   documents: FilemakerOrganizationMongoDocument[];
+  linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>;
   options: FilemakerOrganizationsListOptions;
   page: number;
   totalCount: number;
@@ -182,6 +186,7 @@ const buildListResult = (input: {
     updatedBy: input.options.updatedBy,
   },
   limit: input.options.pageSize,
+  linkedEventsByOrganizationId: input.linkedEventsByOrganizationId,
   organizations: input.documents.map(toFilemakerOrganization),
   page: input.page,
   pageSize: input.options.pageSize,
@@ -224,16 +229,52 @@ export const listMongoFilemakerOrganizations = async (
   const totalPages = hasActiveFilter
     ? Math.max(1, page + (hasNextPage ? 1 : 0))
     : exactTotalPages;
+  const organizations = documents.map(toFilemakerOrganization);
+  const linkedEventEntries = await Promise.all(
+    organizations.map(
+      async (organization: FilemakerOrganization): Promise<[string, FilemakerEvent[]]> => [
+        organization.id,
+        await listMongoFilemakerEventsForOrganization(organization),
+      ]
+    )
+  );
+  const linkedEventsByOrganizationId = Object.fromEntries(
+    linkedEventEntries.filter(
+      (entry: [string, FilemakerEvent[]]): boolean => entry[1].length > 0
+    )
+  );
 
   return buildListResult({
     collectionCount,
     documents,
+    linkedEventsByOrganizationId,
     options,
     page,
     totalCount,
     totalCountIsExact: !hasActiveFilter,
     totalPages,
   });
+};
+
+export const listMongoFilemakerOrganizationIds = async (
+  input: FilemakerOrganizationsListInput
+): Promise<string[]> => {
+  const options = resolveOrganizationListOptions(input);
+  const filter = buildOrganizationFilter({
+    addressFilter: options.addressFilter,
+    bankFilter: options.bankFilter,
+    parentFilter: options.parentFilter,
+    query: options.query,
+    updatedBy: options.updatedBy,
+  });
+  const collection = await getFilemakerOrganizationsCollection();
+  const documents = await collection
+    .find(filter, { projection: { _id: 0, id: 1 } })
+    .sort({ name: 1, _id: 1 })
+    .toArray();
+  return documents
+    .map((document: FilemakerOrganizationMongoDocument): string => document.id)
+    .filter((id: string): boolean => id.length > 0);
 };
 
 export const getMongoFilemakerOrganizationById = async (

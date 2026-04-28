@@ -15,7 +15,7 @@ export type KangurMobileProfileRecentResultItem = {
   result: KangurScore;
 };
 
-type UseKangurMobileProfileRecentResultsResult = {
+export type UseKangurMobileProfileRecentResultsResult = {
   error: string | null;
   isEnabled: boolean;
   isLoading: boolean;

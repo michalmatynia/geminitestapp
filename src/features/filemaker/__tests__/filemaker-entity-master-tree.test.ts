@@ -2,14 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildFilemakerEventListNodes,
+  buildFilemakerOrganizationListNodes,
   buildFilemakerOrganizationMasterNodes,
   buildFilemakerPersonMasterNodes,
   buildFilemakerValueMasterNodes,
   fromFilemakerEventNodeId,
+  fromFilemakerOrganizationEventNodeId,
+  fromFilemakerOrganizationJobListingNodeId,
   fromFilemakerOrganizationNodeId,
   fromFilemakerPersonNodeId,
   fromFilemakerValueNodeId,
   toFilemakerEventNodeId,
+  toFilemakerOrganizationEventNodeId,
+  toFilemakerOrganizationJobListingNodeId,
   toFilemakerOrganizationNodeId,
   toFilemakerPersonNodeId,
   toFilemakerValueNodeId,
@@ -17,6 +22,7 @@ import {
 
 import type {
   FilemakerEvent,
+  FilemakerJobListing,
   FilemakerOrganization,
   FilemakerPerson,
   FilemakerValue,
@@ -59,6 +65,87 @@ describe('filemaker entity master tree', () => {
 
     expect(nodes.map((node) => node.name)).toEqual(['A', 'Acme Inc', 'B', 'Beta LLC']);
     expect(fromFilemakerOrganizationNodeId(toFilemakerOrganizationNodeId('org-1'))).toBe('org-1');
+  });
+
+  it('adds expandable event and job folders under organization list nodes', () => {
+    const organizations: FilemakerOrganization[] = [
+      {
+        id: 'org-1',
+        name: 'Acme Inc',
+        addressId: '',
+        street: '',
+        streetNumber: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        countryId: '',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ];
+    const events: FilemakerEvent[] = [
+      {
+        id: 'event-1',
+        eventName: 'Spring Fair',
+        addressId: '',
+        street: '',
+        streetNumber: '',
+        city: 'Warsaw',
+        postalCode: '',
+        country: '',
+        countryId: '',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ];
+    const jobListings: FilemakerJobListing[] = [
+      {
+        id: 'job-1',
+        organizationId: 'org-1',
+        title: 'Coordinator',
+        description: '',
+        location: 'Remote',
+        salaryMin: null,
+        salaryMax: null,
+        salaryCurrency: '',
+        salaryPeriod: 'monthly',
+        status: 'open',
+        targetedCampaignIds: [],
+        lastTargetedAt: null,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ];
+
+    const nodes = buildFilemakerOrganizationListNodes(organizations, {
+      eventsByOrganizationId: new Map([['org-1', events]]),
+      jobListingsByOrganizationId: new Map([['org-1', jobListings]]),
+    });
+
+    expect(nodes.map((node) => node.name)).toEqual([
+      'Acme Inc',
+      'Events',
+      'Spring Fair',
+      'Jobs',
+      'Coordinator',
+    ]);
+    expect(nodes[0]?.type).toBe('folder');
+    expect(nodes[0]?.metadata?.['eventCount']).toBe(1);
+    expect(nodes[0]?.metadata?.['jobListingCount']).toBe(1);
+    expect(nodes[1]?.parentId).toBe(toFilemakerOrganizationNodeId('org-1'));
+    expect(nodes[2]?.parentId).toBe(nodes[1]?.id);
+    expect(nodes[3]?.parentId).toBe(toFilemakerOrganizationNodeId('org-1'));
+    expect(nodes[4]?.parentId).toBe(nodes[3]?.id);
+    expect(
+      fromFilemakerOrganizationEventNodeId(
+        toFilemakerOrganizationEventNodeId('org-1', 'event-1')
+      )
+    ).toEqual({ eventId: 'event-1', organizationId: 'org-1' });
+    expect(
+      fromFilemakerOrganizationJobListingNodeId(
+        toFilemakerOrganizationJobListingNodeId('org-1', 'job-1')
+      )
+    ).toEqual({ jobListingId: 'job-1', organizationId: 'org-1' });
   });
 
   it('groups persons by last-name initial and creates decodable person nodes', () => {

@@ -33,13 +33,19 @@ import { TraderaStatusCheckModal } from '@/features/integrations/product-integra
 import {
   useBulkSetProductsArchivedState,
   useBulkConvertImagesToBase64,
+  useBulkEditProductFields,
 } from '@/features/products/hooks/useProductsMutations';
 import { useBulkProductBaseSyncMutation } from '@/features/product-sync/hooks/useProductBaseSync';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
 import { ProductScanModal } from '@/features/products/components/list/ProductScanModal';
+import { ProductBatchEditModal } from '@/features/products/components/list/ProductBatchEditModal';
 import { ProductBulkSyncResultsModal } from '@/features/products/components/list/ProductBulkSyncResultsModal';
 import { ProductBulkSyncSetupModal } from '@/features/products/components/list/ProductBulkSyncSetupModal';
+import type {
+  ProductBatchEditRequest,
+  ProductBatchEditResponse,
+} from '@/shared/contracts/products/batch-edit';
 import type { ProductSyncBulkResponse } from '@/shared/contracts/product-sync';
 import {
   productAdvancedFilterGroupSchema,
@@ -104,6 +110,8 @@ export const ProductSelectionActions = memo(() => {
     useBulkConvertImagesToBase64();
   const { mutateAsync: setSelectedProductsArchivedState, isPending: isSettingSelectedArchivedState } =
     useBulkSetProductsArchivedState();
+  const { mutateAsync: batchEditProductFields, isPending: isBatchEditingProductFields } =
+    useBulkEditProductFields();
   const { mutateAsync: runBulkBaseSync, isPending: isRunningBulkBaseSync } =
     useBulkProductBaseSyncMutation();
   const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
@@ -114,6 +122,8 @@ export const ProductSelectionActions = memo(() => {
   const [statusCheckProductIds, setStatusCheckProductIds] = useState<string[]>([]);
   const [isProductScanOpen, setIsProductScanOpen] = useState(false);
   const [productScanProductIds, setProductScanProductIds] = useState<string[]>([]);
+  const [isBatchEditOpen, setIsBatchEditOpen] = useState(false);
+  const [batchEditProductIds, setBatchEditProductIds] = useState<string[]>([]);
   const [bulkSyncResults, setBulkSyncResults] = useState<ProductSyncBulkResponse | null>(null);
   const [bulkSyncResultProducts, setBulkSyncResultProducts] = useState<typeof data>([]);
   const [isBulkSyncResultsOpen, setIsBulkSyncResultsOpen] = useState(false);
@@ -278,6 +288,32 @@ export const ProductSelectionActions = memo(() => {
     setProductScanProducts(data.filter((product) => selectedSet.has(product.id)));
     setIsProductScanOpen(true);
   }, [data, rowSelection, toast]);
+
+  const handleOpenBatchEdit = useCallback((): void => {
+    const selectedProductIds = Object.keys(rowSelection).filter((id: string) => rowSelection[id]);
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to edit.', { variant: 'error' });
+      return;
+    }
+    setBatchEditProductIds(selectedProductIds);
+    setIsBatchEditOpen(true);
+  }, [rowSelection, toast]);
+
+  const handleSubmitBatchEdit = useCallback(
+    async (request: ProductBatchEditRequest): Promise<ProductBatchEditResponse> =>
+      batchEditProductFields(request),
+    [batchEditProductFields]
+  );
+
+  const handleBatchEditApplied = useCallback(
+    (response: ProductBatchEditResponse): void => {
+      if (response.failed === 0) {
+        setRowSelection({});
+        setIsBatchEditOpen(false);
+      }
+    },
+    [setRowSelection]
+  );
 
   const selectedCount = useMemo(
     () => Object.keys(rowSelection).filter((key) => rowSelection[key]).length,
@@ -643,6 +679,14 @@ export const ProductSelectionActions = memo(() => {
               Scan Amazon ASIN
             </DropdownMenuItem>
             <DropdownMenuItem
+              onClick={handleOpenBatchEdit}
+              className='cursor-pointer gap-2'
+              disabled={isBatchEditingProductFields || selectedCount === 0}
+            >
+              <Pencil className='h-4 w-4' />
+              {isBatchEditingProductFields ? 'Editing product fields...' : 'Edit Product Fields'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 void handleBulkBaseSync();
               }}
@@ -875,6 +919,17 @@ export const ProductSelectionActions = memo(() => {
         onClose={() => setIsProductScanOpen(false)}
         productIds={productScanProductIds}
         products={productScanProducts}
+      />
+      <ProductBatchEditModal
+        isOpen={isBatchEditOpen}
+        onClose={() => {
+          if (isBatchEditingProductFields) return;
+          setIsBatchEditOpen(false);
+        }}
+        productIds={batchEditProductIds}
+        isSubmitting={isBatchEditingProductFields}
+        onSubmit={handleSubmitBatchEdit}
+        onApplied={handleBatchEditApplied}
       />
       <ProductBulkSyncSetupModal
         isOpen={isBulkSyncSetupOpen}

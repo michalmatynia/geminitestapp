@@ -81,6 +81,7 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       catalogId: 'catalog-1',
       published: true,
       categoryId: 'category-1',
+      studioProjectId: ' studio-1 ',
       category: {
         id: 'category-1',
         name_en: 'Keychains',
@@ -106,6 +107,8 @@ describe('mongo product repository mappers shared-lib coverage', () => {
       updatedAt: '2026-01-02T00:00:00.000Z',
     });
     expect(base.category).toEqual(response.category);
+    expect(response.studioProjectId).toBe('studio-1');
+    expect(base.studioProjectId).toBe('studio-1');
   });
 
   it('maps canonical tags, producers, note ids, and default images through toProductBase', () => {

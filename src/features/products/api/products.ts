@@ -3,10 +3,12 @@
 // getProductsWithCount() for paged requests when possible.
 import { type ProductFilter } from '@/shared/contracts/products/filters';
 import {
+  type ProductBatchEditRequest,
+  type ProductBatchEditResponse,
   type ProductBulkArchiveResponse,
   type ProductWithImages,
   type ProductsPagedResult,
-} from '@/shared/contracts/products/product';
+} from '@/shared/contracts/products';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
@@ -113,6 +115,14 @@ export async function bulkSetProductsArchivedState(
     productIds,
     archived,
   }, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function batchEditProducts(
+  request: ProductBatchEditRequest
+): Promise<ProductBatchEditResponse> {
+  return api.post<ProductBatchEditResponse>('/api/v2/products/batch-edit', request, {
     timeout: PRODUCT_WRITE_TIMEOUT_MS,
   });
 }

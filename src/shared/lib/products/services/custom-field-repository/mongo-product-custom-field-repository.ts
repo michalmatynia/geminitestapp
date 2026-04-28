@@ -12,11 +12,14 @@ import type {
   ProductCustomFieldDefinition,
   ProductCustomFieldOption,
   ProductCustomFieldType,
+  ProductCustomFieldValue,
 } from '@/shared/contracts/products/custom-fields';
 import { internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type { ProductDocument } from '@/shared/lib/products/services/product-repository/mongo-product-repository-mappers';
+import { productCollectionName } from '@/shared/lib/products/services/product-repository/mongo-product-repository.helpers';
 
-import type { Document, Filter, UpdateFilter } from 'mongodb';
+import type { Db, Document, Filter, UpdateFilter } from 'mongodb';
 
 const COLLECTION = 'product_custom_fields';
 
@@ -79,6 +82,56 @@ const toCustomFieldDomain = (
   updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
 });
 
+const buildDefaultProductCustomFieldValue = (
+  field: ProductCustomFieldDefinition
+): ProductCustomFieldValue =>
+  field.type === 'checkbox_set'
+    ? { fieldId: field.id, selectedOptionIds: [] }
+    : { fieldId: field.id, textValue: '' };
+
+const addCustomFieldToAllProducts = async (
+  db: Db,
+  field: ProductCustomFieldDefinition
+): Promise<void> => {
+  const defaultValue = buildDefaultProductCustomFieldValue(field);
+  await db.collection<ProductDocument>(productCollectionName).updateMany(
+    { 'customFields.fieldId': { $ne: field.id } },
+    [
+      {
+        $set: {
+          customFields: {
+            $concatArrays: [
+              { $cond: [{ $isArray: '$customFields' }, '$customFields', []] },
+              [defaultValue],
+            ],
+          },
+          updatedAt: new Date(),
+        },
+      },
+    ] as Document[]
+  );
+};
+
+const removeCustomFieldFromAllProducts = async (db: Db, fieldId: string): Promise<void> => {
+  await db.collection<ProductDocument>(productCollectionName).updateMany(
+    { 'customFields.fieldId': fieldId },
+    [
+      {
+        $set: {
+          customFields: {
+            $filter: {
+              input: { $cond: [{ $isArray: '$customFields' }, '$customFields', []] },
+              as: 'entry',
+              cond: { $ne: ['$$entry.fieldId', fieldId] },
+            },
+          },
+          updatedAt: new Date(),
+        },
+      },
+    ] as Document[]
+  );
+};
+
 const buildCustomFieldIdFilter = (id: string): Filter<ProductCustomFieldDoc> => {
   const trimmed = id.trim();
   const filters: Filter<ProductCustomFieldDoc>[] = [
@@ -135,7 +188,9 @@ export const mongoProductCustomFieldRepository: CustomFieldRepository = {
     const result = await db
       .collection<Omit<ProductCustomFieldDoc, '_id'>>(COLLECTION)
       .insertOne(doc);
-    return toCustomFieldDomain({ ...doc, _id: result.insertedId } as ProductCustomFieldDoc);
+    const field = toCustomFieldDomain({ ...doc, _id: result.insertedId } as ProductCustomFieldDoc);
+    await addCustomFieldToAllProducts(db, field);
+    return field;
   },
 
   async updateCustomField(
@@ -168,7 +223,11 @@ export const mongoProductCustomFieldRepository: CustomFieldRepository = {
 
   async deleteCustomField(id: string): Promise<void> {
     const db = await getMongoDb();
-    await db.collection<ProductCustomFieldDoc>(COLLECTION).deleteOne(buildCustomFieldIdFilter(id));
+    const fieldId = id.trim();
+    await db
+      .collection<ProductCustomFieldDoc>(COLLECTION)
+      .deleteOne(buildCustomFieldIdFilter(fieldId));
+    await removeCustomFieldFromAllProducts(db, fieldId);
   },
 
   async findByName(name: string): Promise<ProductCustomFieldDefinition | null> {

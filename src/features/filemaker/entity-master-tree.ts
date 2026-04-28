@@ -3,11 +3,21 @@
 import { formatFilemakerAddress } from './settings';
 
 import type { MongoFilemakerInvoice } from './pages/AdminFilemakerInvoicesPage.types';
-import type { FilemakerEvent, FilemakerOrganization, FilemakerPerson, FilemakerValue } from './types';
+import type {
+  FilemakerEvent,
+  FilemakerJobListing,
+  FilemakerOrganization,
+  FilemakerPerson,
+  FilemakerValue,
+} from './types';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const ORGANIZATION_GROUP_NODE_PREFIX = 'filemaker-organization-group:';
 const ORGANIZATION_NODE_PREFIX = 'filemaker-organization:';
+const ORGANIZATION_EVENTS_FOLDER_NODE_PREFIX = 'filemaker-organization-events-folder:';
+const ORGANIZATION_JOBS_FOLDER_NODE_PREFIX = 'filemaker-organization-jobs-folder:';
+const ORGANIZATION_EVENT_NODE_PREFIX = 'filemaker-organization-event:';
+const ORGANIZATION_JOB_LISTING_NODE_PREFIX = 'filemaker-organization-job-listing:';
 const EVENT_NODE_PREFIX = 'filemaker-event:';
 const INVOICE_NODE_PREFIX = 'filemaker-invoice:';
 const PERSON_GROUP_NODE_PREFIX = 'filemaker-person-group:';
@@ -61,6 +71,62 @@ export const toFilemakerOrganizationNodeId = (organizationId: string): string =>
 export const fromFilemakerOrganizationNodeId = (nodeId: string): string | null => {
   if (!nodeId.startsWith(ORGANIZATION_NODE_PREFIX)) return null;
   return decodeNodePart(nodeId.slice(ORGANIZATION_NODE_PREFIX.length));
+};
+
+export const toFilemakerOrganizationEventsFolderNodeId = (organizationId: string): string =>
+  `${ORGANIZATION_EVENTS_FOLDER_NODE_PREFIX}${encodeNodePart(organizationId)}`;
+
+export const toFilemakerOrganizationJobsFolderNodeId = (organizationId: string): string =>
+  `${ORGANIZATION_JOBS_FOLDER_NODE_PREFIX}${encodeNodePart(organizationId)}`;
+
+export const toFilemakerOrganizationEventNodeId = (
+  organizationId: string,
+  eventId: string
+): string =>
+  `${ORGANIZATION_EVENT_NODE_PREFIX}${encodeNodePart(organizationId)}:${encodeNodePart(eventId)}`;
+
+export const fromFilemakerOrganizationEventNodeId = (
+  nodeId: string
+): { organizationId: string; eventId: string } | null => {
+  if (!nodeId.startsWith(ORGANIZATION_EVENT_NODE_PREFIX)) return null;
+  const [organizationId, eventId] = nodeId
+    .slice(ORGANIZATION_EVENT_NODE_PREFIX.length)
+    .split(':')
+    .map(decodeNodePart);
+  if (
+    organizationId === undefined ||
+    organizationId.length === 0 ||
+    eventId === undefined ||
+    eventId.length === 0
+  ) {
+    return null;
+  }
+  return { eventId, organizationId };
+};
+
+export const toFilemakerOrganizationJobListingNodeId = (
+  organizationId: string,
+  jobListingId: string
+): string =>
+  `${ORGANIZATION_JOB_LISTING_NODE_PREFIX}${encodeNodePart(organizationId)}:${encodeNodePart(jobListingId)}`;
+
+export const fromFilemakerOrganizationJobListingNodeId = (
+  nodeId: string
+): { organizationId: string; jobListingId: string } | null => {
+  if (!nodeId.startsWith(ORGANIZATION_JOB_LISTING_NODE_PREFIX)) return null;
+  const [organizationId, jobListingId] = nodeId
+    .slice(ORGANIZATION_JOB_LISTING_NODE_PREFIX.length)
+    .split(':')
+    .map(decodeNodePart);
+  if (
+    organizationId === undefined ||
+    organizationId.length === 0 ||
+    jobListingId === undefined ||
+    jobListingId.length === 0
+  ) {
+    return null;
+  }
+  return { jobListingId, organizationId };
 };
 
 export const toFilemakerPersonGroupNodeId = (group: string): string =>
@@ -153,30 +219,188 @@ export const buildFilemakerOrganizationMasterNodes = (
   });
 };
 
+export type FilemakerOrganizationTreeRelations = {
+  eventsByOrganizationId?: ReadonlyMap<string, readonly FilemakerEvent[]>;
+  jobListingsByOrganizationId?: ReadonlyMap<string, readonly FilemakerJobListing[]>;
+};
+
+const buildOrganizationRelationFolderNode = (input: {
+  count: number;
+  id: string;
+  name: string;
+  organizationNodeId: string;
+  path: string;
+  sortOrder: number;
+  entity: string;
+}): MasterTreeNode => ({
+  id: input.id,
+  type: 'folder',
+  kind: input.entity,
+  parentId: input.organizationNodeId,
+  name: input.name,
+  path: input.path,
+  sortOrder: input.sortOrder,
+  metadata: {
+    count: input.count,
+    entity: input.entity,
+  },
+});
+
+const buildOrganizationEventNodes = (input: {
+  events: readonly FilemakerEvent[];
+  eventsFolderNodeId: string;
+  organizationId: string;
+  organizationPath: string;
+}): MasterTreeNode[] =>
+  input.events
+    .slice()
+    .sort((left: FilemakerEvent, right: FilemakerEvent): number =>
+      left.eventName.localeCompare(right.eventName)
+    )
+    .map((event: FilemakerEvent, index: number): MasterTreeNode => {
+      const label = event.eventName.trim().length > 0 ? event.eventName : event.id;
+      return {
+        id: toFilemakerOrganizationEventNodeId(input.organizationId, event.id),
+        type: 'file',
+        kind: 'filemaker_organization_event_link',
+        parentId: input.eventsFolderNodeId,
+        name: label,
+        path: `${input.organizationPath}/events/${label}`,
+        sortOrder: index,
+        metadata: {
+          city: event.city,
+          entity: 'filemaker_organization_event_link',
+          organizationId: input.organizationId,
+          rawId: event.id,
+          updatedAt: event.updatedAt,
+        },
+      };
+    });
+
+const buildOrganizationJobListingNodes = (input: {
+  jobListings: readonly FilemakerJobListing[];
+  jobsFolderNodeId: string;
+  organizationId: string;
+  organizationPath: string;
+}): MasterTreeNode[] =>
+  input.jobListings
+    .slice()
+    .sort((left: FilemakerJobListing, right: FilemakerJobListing): number =>
+      left.title.localeCompare(right.title)
+    )
+    .map((listing: FilemakerJobListing, index: number): MasterTreeNode => {
+      const label = listing.title.trim().length > 0 ? listing.title : listing.id;
+      return {
+        id: toFilemakerOrganizationJobListingNodeId(input.organizationId, listing.id),
+        type: 'file',
+        kind: 'filemaker_organization_job_listing_link',
+        parentId: input.jobsFolderNodeId,
+        name: label,
+        path: `${input.organizationPath}/jobs/${label}`,
+        sortOrder: index,
+        metadata: {
+          entity: 'filemaker_organization_job_listing_link',
+          location: listing.location ?? '',
+          organizationId: input.organizationId,
+          rawId: listing.id,
+          status: listing.status,
+          updatedAt: listing.updatedAt,
+        },
+      };
+    });
+
+const buildOrganizationRelationNodes = (input: {
+  events: readonly FilemakerEvent[];
+  jobListings: readonly FilemakerJobListing[];
+  organizationId: string;
+  organizationNodeId: string;
+  organizationPath: string;
+}): MasterTreeNode[] => {
+  const relationNodes: MasterTreeNode[] = [];
+  if (input.events.length > 0) {
+    const eventsFolderNodeId = toFilemakerOrganizationEventsFolderNodeId(input.organizationId);
+    relationNodes.push(
+      buildOrganizationRelationFolderNode({
+        count: input.events.length,
+        entity: 'filemaker_organization_events_folder',
+        id: eventsFolderNodeId,
+        name: 'Events',
+        organizationNodeId: input.organizationNodeId,
+        path: `${input.organizationPath}/events`,
+        sortOrder: 0,
+      }),
+      ...buildOrganizationEventNodes({
+        events: input.events,
+        eventsFolderNodeId,
+        organizationId: input.organizationId,
+        organizationPath: input.organizationPath,
+      })
+    );
+  }
+  if (input.jobListings.length > 0) {
+    const jobsFolderNodeId = toFilemakerOrganizationJobsFolderNodeId(input.organizationId);
+    relationNodes.push(
+      buildOrganizationRelationFolderNode({
+        count: input.jobListings.length,
+        entity: 'filemaker_organization_jobs_folder',
+        id: jobsFolderNodeId,
+        name: 'Jobs',
+        organizationNodeId: input.organizationNodeId,
+        path: `${input.organizationPath}/jobs`,
+        sortOrder: 1,
+      }),
+      ...buildOrganizationJobListingNodes({
+        jobListings: input.jobListings,
+        jobsFolderNodeId,
+        organizationId: input.organizationId,
+        organizationPath: input.organizationPath,
+      })
+    );
+  }
+  return relationNodes;
+};
+
 export const buildFilemakerOrganizationListNodes = (
-  organizations: FilemakerOrganization[]
+  organizations: FilemakerOrganization[],
+  relations: FilemakerOrganizationTreeRelations = {}
 ): MasterTreeNode[] =>
-  organizations.map((organization: FilemakerOrganization, index): MasterTreeNode => {
+  organizations.flatMap((organization: FilemakerOrganization, index): MasterTreeNode[] => {
     const normalizedName = organization.name.trim();
     const label = normalizedName.length > 0 ? normalizedName : organization.id;
-    return {
-      id: toFilemakerOrganizationNodeId(organization.id),
-      type: 'file',
-      kind: 'filemaker_organization',
-      parentId: null,
-      name: label,
-      path: `organizations/${label}`,
-      sortOrder: index,
-      metadata: {
-        entity: 'filemaker_organization',
-        rawId: organization.id,
-        address: formatFilemakerAddress(organization),
-        taxId: organization.taxId ?? '',
-        krs: organization.krs ?? '',
-        tradingName: organization.tradingName ?? '',
-        updatedAt: organization.updatedAt,
+    const organizationNodeId = toFilemakerOrganizationNodeId(organization.id);
+    const events = relations.eventsByOrganizationId?.get(organization.id) ?? [];
+    const jobListings = relations.jobListingsByOrganizationId?.get(organization.id) ?? [];
+    const hasRelations = events.length > 0 || jobListings.length > 0;
+    const organizationPath = `organizations/${label}`;
+    return [
+      {
+        id: organizationNodeId,
+        type: hasRelations ? 'folder' : 'file',
+        kind: 'filemaker_organization',
+        parentId: null,
+        name: label,
+        path: organizationPath,
+        sortOrder: index,
+        metadata: {
+          entity: 'filemaker_organization',
+          rawId: organization.id,
+          address: formatFilemakerAddress(organization),
+          eventCount: events.length,
+          jobListingCount: jobListings.length,
+          taxId: organization.taxId ?? '',
+          krs: organization.krs ?? '',
+          tradingName: organization.tradingName ?? '',
+          updatedAt: organization.updatedAt,
+        },
       },
-    };
+      ...buildOrganizationRelationNodes({
+        events,
+        jobListings,
+        organizationId: organization.id,
+        organizationNodeId,
+        organizationPath,
+      }),
+    ];
   });
 
 export const buildFilemakerPersonMasterNodes = (persons: FilemakerPerson[]): MasterTreeNode[] => {

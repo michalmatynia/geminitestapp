@@ -4,7 +4,10 @@ import { translateKangurMobileActionLabel } from '../../shared/translateKangurMo
 import type { KangurMobileHomeAssignmentItem } from '../useKangurMobileHomeAssignments';
 import { OutlineLink, SummaryChip } from '../homeScreenPrimitives';
 
-function getPriorityConfig(priority: string, copy: (args: Record<string, string>) => string) {
+function getPriorityConfig(
+  priority: string,
+  copy: (args: Record<string, string>) => string,
+): { accent: 'rose' | 'amber' | 'blue'; label: string } {
   if (priority === 'high') {
     return { accent: 'rose' as const, label: copy({ de: 'Hohe Priorität', en: 'High priority', pl: 'Priorytet wysoki' }) };
   }
@@ -23,7 +26,7 @@ export function AssignmentCard({
   const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
   const { accent, label } = getPriorityConfig(item.assignment.priority, copy);
   
-  const assignmentAction = item.href ? (
+  const assignmentAction = item.href !== undefined && item.href !== '' ? (
     <OutlineLink href={item.href} hint={item.assignment.description} label={actionLabel} />
   ) : (
     <View

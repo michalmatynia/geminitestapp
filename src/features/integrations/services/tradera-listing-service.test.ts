@@ -10,6 +10,7 @@ const {
   loadTraderaSystemSettingsMock,
   runTraderaBrowserListingMock,
   runTraderaBrowserCheckStatusMock,
+  runTraderaBrowserMoveToUnsoldMock,
   resolveEffectiveListingSettingsMock,
   buildRelistPolicyMock,
   captureExceptionMock,
@@ -21,6 +22,7 @@ const {
   loadTraderaSystemSettingsMock: vi.fn(),
   runTraderaBrowserListingMock: vi.fn(),
   runTraderaBrowserCheckStatusMock: vi.fn(),
+  runTraderaBrowserMoveToUnsoldMock: vi.fn(),
   resolveEffectiveListingSettingsMock: vi.fn(),
   buildRelistPolicyMock: vi.fn(),
   captureExceptionMock: vi.fn(),
@@ -52,6 +54,8 @@ vi.mock('./tradera-listing/browser', () => ({
     runTraderaBrowserListingMock(...args) as Promise<unknown>,
   runTraderaBrowserCheckStatus: (...args: unknown[]) =>
     runTraderaBrowserCheckStatusMock(...args) as Promise<unknown>,
+  runTraderaBrowserMoveToUnsold: (...args: unknown[]) =>
+    runTraderaBrowserMoveToUnsoldMock(...args) as Promise<unknown>,
 }));
 
 vi.mock('./tradera-listing/settings', () => ({
@@ -817,6 +821,143 @@ describe('processTraderaListingJob', () => {
       })
     );
     expect(appendExportHistoryMock).not.toHaveBeenCalled();
+  });
+
+  it('persists end-listing results from the sequencer-backed move-to-unsold browser action', async () => {
+    const updateListingStatusMock = vi.fn();
+    const updateListingMock = vi.fn();
+    const appendExportHistoryMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-move-to-unsold',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-1',
+        listedAt: new Date('2026-04-10T08:00:00.000Z'),
+        expiresAt: new Date('2026-04-20T08:00:00.000Z'),
+        nextRelistAt: new Date('2026-04-20T07:30:00.000Z'),
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-1',
+          tradera: {
+            pendingExecution: {
+              action: 'move_to_unsold',
+              requestId: 'job-move-to-unsold',
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: updateListingStatusMock,
+        updateListing: updateListingMock,
+        appendExportHistory: appendExportHistoryMock,
+      },
+    });
+    runTraderaBrowserMoveToUnsoldMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/external-1',
+      metadata: {
+        checkedStatus: 'ended',
+        requestedBrowserMode: 'headed',
+        runId: 'run-move-to-unsold',
+        verificationMethod: 'ended-fallback',
+        verifiedInUnsold: false,
+        executionSteps: [
+          {
+            id: 'end_listing_verify',
+            label: 'Verify ended listing',
+            status: 'success',
+            message: 'Listing was treated as ended after the Tradera end-listing action.',
+          },
+        ],
+      },
+    });
+    runTraderaBrowserCheckStatusMock.mockResolvedValue({
+      externalListingId: 'external-1',
+      listingUrl: 'https://www.tradera.com/item/external-1',
+      metadata: {
+        checkedStatus: 'unsold',
+        requestedBrowserMode: 'headed',
+        runId: 'run-post-move-check',
+        verificationMethod: 'unsold-overview',
+        executionSteps: [
+          {
+            id: 'resolve_status',
+            label: 'Resolve Status',
+            status: 'success',
+            message: 'Resolved Tradera status as unsold from Unsold items.',
+          },
+        ],
+      },
+    });
+
+    await processTraderaListingJob({
+      listingId: 'listing-move-to-unsold',
+      action: 'move_to_unsold',
+      source: 'manual',
+      jobId: 'job-move-to-unsold',
+      browserMode: 'headed',
+    });
+
+    expect(runTraderaBrowserMoveToUnsoldMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
+        systemSettings: expect.any(Object),
+      }),
+      expect.objectContaining({
+        onRunStarted: expect.any(Function),
+      })
+    );
+    expect(runTraderaBrowserCheckStatusMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        browserMode: 'headed',
+        systemSettings: expect.any(Object),
+      })
+    );
+    expect(runTraderaBrowserListingMock).not.toHaveBeenCalled();
+    expect(updateListingStatusMock).not.toHaveBeenCalled();
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-move-to-unsold',
+      expect.objectContaining({
+        status: 'unsold',
+        listedAt: new Date('2026-04-10T08:00:00.000Z'),
+        expiresAt: null,
+        nextRelistAt: null,
+        lastStatusCheckAt: expect.any(Date),
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/external-1',
+          externalListingId: 'external-1',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastStatusCheckAt: expect.any(String),
+            lastExecution: expect.objectContaining({
+              requestId: 'job-move-to-unsold',
+              action: 'move_to_unsold',
+              ok: true,
+              metadata: expect.objectContaining({
+                checkedStatus: 'unsold',
+                moveToUnsoldRunId: 'run-move-to-unsold',
+                moveToUnsoldVerificationMethod: 'ended-fallback',
+                moveToUnsoldVerifiedInUnsold: false,
+                runId: 'run-post-move-check',
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(appendExportHistoryMock).toHaveBeenCalledWith(
+      'listing-move-to-unsold',
+      expect.objectContaining({
+        status: 'unsold',
+        externalListingId: 'external-1',
+        requestId: 'job-move-to-unsold',
+        fields: ['browser_mode:headed', 'action:move_to_unsold'],
+      })
+    );
   });
 
   it('preserves a trusted persisted status when Tradera cannot confirm removal from seller sections', async () => {

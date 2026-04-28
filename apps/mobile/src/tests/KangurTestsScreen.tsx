@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import React, { useState, useMemo } from 'react';
 
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import {
   BASE_TONE,
   INDIGO_TONE,
@@ -40,7 +40,7 @@ const TestPlayerResultsView = ({
   scorePercent: number;
   summaryTone: { backgroundColor: string; borderColor: string; textColor: string };
   onBackToCatalog: () => void;
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
 }): React.JSX.Element => (
   <SectionCard title={copy({ de: 'Testergebnis', en: 'Test result', pl: 'Wynik testu' })}>
     <View style={{ alignItems: 'center', gap: 12, paddingVertical: 12 }}>
@@ -77,7 +77,7 @@ const TestExplanationView = ({
   currentQuestion: KangurMobileTestSuiteItem['questions'][number];
   selectedChoice: KangurMobileTestSuiteItem['questions'][number]['choices'][number] | null;
   correctChoice: KangurMobileTestSuiteItem['questions'][number]['choices'][number] | null;
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
 }): React.JSX.Element => (
   <View
     style={{
@@ -211,7 +211,7 @@ function KangurMobileTestPlayer({
 const TestSuiteCard = ({ item, onOpen, copy, locale }: {
   item: KangurMobileTestSuiteItem;
   onOpen: (id: string) => void;
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
   locale: 'de' | 'en' | 'pl';
 }): React.JSX.Element => (
   <SectionCard title={item.suite.title}>

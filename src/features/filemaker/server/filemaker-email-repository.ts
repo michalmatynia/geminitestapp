@@ -17,6 +17,7 @@ export type MongoFilemakerEmailDocument = Document & {
   email: string;
   id: string;
   importBatchId?: string;
+  importSourceKind?: string;
   importedAt?: Date;
   legacyStatusRaw?: string;
   legacyStatusUuid?: string;
@@ -34,6 +35,7 @@ export type MongoFilemakerEmailLinkDocument = Document & {
   emailId: string;
   id: string;
   importBatchId?: string;
+  importSourceKind?: string;
   importedAt?: Date;
   legacyEmailAddress?: string;
   legacyEmailUuid?: string;

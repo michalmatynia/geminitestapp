@@ -32,6 +32,7 @@ const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithI
     length: null,
     published: false,
     categoryId: 'category-1',
+    studioProjectId: null,
     catalogId: 'catalog-1',
     tags: [],
     producers: [],
@@ -219,6 +220,42 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
             text: 'Updated internal note',
             color: '#bfdbfe',
           },
+        }),
+      }),
+      expect.anything()
+    );
+  });
+
+  it('stores studio project ids on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        studioProjectId: 'studio-1',
+      } as any,
+      async () => ({ insertOne }) as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        studioProjectId: null,
+      } as any,
+      async () => ({ findOneAndUpdate }) as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        studioProjectId: 'studio-1',
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          studioProjectId: null,
         }),
       }),
       expect.anything()

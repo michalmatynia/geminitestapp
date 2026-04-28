@@ -11,18 +11,18 @@ import {
   getSessionScoreTone,
 } from '../../scores/mobileScoreSummary';
 import { createKangurPlanHref } from '../../plan/planHref';
-import type { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
-import type { useKangurMobileProfileRecentResults } from '../useKangurMobileProfileRecentResults';
+import { type KangurMobileCopy, type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
+import { type useKangurMobileProfileRecentResults, type UseKangurMobileProfileRecentResultsResult } from '../useKangurMobileProfileRecentResults';
 import type { Href } from 'expo-router';
 
 type ProfileResultsHubCardProps = {
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  copy: KangurMobileCopy;
   locale: ReturnType<typeof useKangurMobileI18n>['locale'];
-  profileRecentResults: ReturnType<typeof useKangurMobileProfileRecentResults>;
+  profileRecentResults: UseKangurMobileProfileRecentResultsResult;
   resultsRoute: Href;
 };
 
-const getResultsHubMessage = (recentResults: any): string => {
+const getResultsHubMessage = (recentResults: UseKangurMobileProfileRecentResultsResult, copy: KangurMobileCopy): string => {
   if (recentResults.isLoading || recentResults.isRestoringAuth) {
     return copy({
       de: 'Die gespeicherten Versuche für das Profil werden geladen.',
@@ -37,7 +37,7 @@ const getResultsHubMessage = (recentResults: any): string => {
       pl: 'Zaloguj się, aby zobaczyć tutaj wyniki i pełną historię.',
     });
   }
-  if (recentResults.error != null && recentResults.error !== '') {
+  if (recentResults.error !== null && recentResults.error !== '') {
     return recentResults.error;
   }
   return copy({
@@ -85,7 +85,7 @@ export function ProfileResultsHubCard({
           })}
         </Text>
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {getResultsHubMessage(profileRecentResults)}
+          {getResultsHubMessage(profileRecentResults, copy)}
         </Text>
       </View>
 

@@ -1,14 +1,26 @@
 import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobilePill as Pill, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
 import { LessonBadgeChip } from '../lesson-row-primitives';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type UseKangurMobileLessonsBadgesResult, type KangurMobileLessonsBadgeItem } from '../useKangurMobileLessonsBadges';
+import type { Href } from 'expo-router';
+
+interface LessonsBadgesSectionProps {
+    isPreparingLessonsView: boolean;
+    copy: KangurMobileCopy;
+    lessonBadges: UseKangurMobileLessonsBadgesResult;
+    profileHref: Href;
+}
 
 export function LessonsBadgesSection({
     isPreparingLessonsView,
     copy,
     lessonBadges,
     profileHref
-}: any): React.JSX.Element | null {
+}: LessonsBadgesSectionProps): React.JSX.Element | null {
     if (isPreparingLessonsView) return null;
+
+    const { unlockedBadges, totalBadges, remainingBadges, recentBadges } = lessonBadges;
 
     return (
         <Card>
@@ -25,23 +37,23 @@ export function LessonsBadgesSection({
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 <Pill
                     label={copy({
-                        de: `Freigeschaltet ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
-                        en: `Unlocked ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
-                        pl: `Odblokowane ${lessonBadges.unlockedBadges}/${lessonBadges.totalBadges}`,
+                        de: `Freigeschaltet ${unlockedBadges}/${totalBadges}`,
+                        en: `Unlocked ${unlockedBadges}/${totalBadges}`,
+                        pl: `Odblokowane ${unlockedBadges}/${totalBadges}`,
                     })}
                     tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
                 />
                 <Pill
                     label={copy({
-                        de: `Offen ${lessonBadges.remainingBadges}`,
-                        en: `Remaining ${lessonBadges.remainingBadges}`,
-                        pl: `Do zdobycia ${lessonBadges.remainingBadges}`,
+                        de: `Offen ${remainingBadges}`,
+                        en: `Remaining ${remainingBadges}`,
+                        pl: `Do zdobycia ${remainingBadges}`,
                     })}
                     tone={{ backgroundColor: '#fffbeb', borderColor: '#fde68a', textColor: '#b45309' }}
                 />
             </View>
 
-            {lessonBadges.recentBadges.length === 0 ? (
+            {recentBadges.length === 0 ? (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({ de: 'Es gibt noch keine lokal freigeschalteten Abzeichen. Schließe Lektionen, Trainings oder Spiele ab, damit sie hier erscheinen.', en: 'There are no locally unlocked badges yet. Finish lessons, practice runs, or games so they appear here.', pl: 'Nie ma jeszcze lokalnie odblokowanych odznak. Ukończ lekcje, treningi albo gry, aby pojawiły się tutaj.' })}
                 </Text>
@@ -51,7 +63,7 @@ export function LessonsBadgesSection({
                         {copy({ de: 'Zuletzt freigeschaltet', en: 'Recently unlocked', pl: 'Ostatnio odblokowane' })}
                     </Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                        {lessonBadges.recentBadges.map((item: any) => (
+                        {recentBadges.map((item: KangurMobileLessonsBadgeItem) => (
                             <LessonBadgeChip key={item.id} item={item} />
                         ))}
                     </View>

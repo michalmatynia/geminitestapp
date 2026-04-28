@@ -32,22 +32,34 @@ export const LESSONS_ROUTE = '/lessons' as Href;
 export const PLAN_ROUTE = createKangurPlanHref();
 export const PROFILE_ROUTE = '/profile' as Href;
 
-export function LessonCheckpointRow({
+function PracticeAction({
   item,
 }: {
   item: KangurMobileLessonCheckpointItem;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const practiceAction = item.practiceHref ? (
+}): React.JSX.Element | null {
+  const { copy } = useKangurMobileI18n();
+  const href = item.practiceHref;
+  if (!href) {
+    return null;
+  }
+  return (
     <LinkButton
-      href={item.practiceHref}
+      href={href}
       label={`${copy({
         de: 'Danach trainieren',
         en: 'Practice after',
         pl: 'Potem trenuj',
       })}: ${item.title}`}
     />
-  ) : null;
+  );
+}
+
+export function LessonCheckpointRow({
+  item,
+}: {
+  item: KangurMobileLessonCheckpointItem;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
 
   return (
     <InsetPanel gap={10}>
@@ -80,15 +92,6 @@ export function LessonCheckpointRow({
           }}
         />
       </View>
-
-      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({
-          de: `Zuletzt gespeichert ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-          en: `Last saved ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-          pl: `Ostatni zapis ${formatKangurMobileScoreDateTime(item.lastCompletedAt, locale)}`,
-        })}
-      </Text>
-
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton
           href={item.lessonHref}
@@ -99,11 +102,46 @@ export function LessonCheckpointRow({
           })}: ${item.title}`}
           tone='primary'
         />
-        {practiceAction}
+        <PracticeAction item={item} />
       </View>
     </InsetPanel>
   );
 }
+
+const getPriorityTone = (priority: 'high' | 'medium' | 'low'): Tone => {
+  switch (priority) {
+    case 'high':
+      return {
+        backgroundColor: '#fef2f2',
+        borderColor: '#fecaca',
+        textColor: '#b91c1c',
+      };
+    case 'medium':
+      return {
+        backgroundColor: '#fffbeb',
+        borderColor: '#fde68a',
+        textColor: '#b45309',
+      };
+    default:
+      return {
+        backgroundColor: '#eff6ff',
+        borderColor: '#bfdbfe',
+        textColor: '#1d4ed8',
+      };
+  }
+};
+
+const getPriorityLabel = (
+  priority: 'high' | 'medium' | 'low',
+  copy: (labels: { de: string; en: string; pl: string }) => string
+): string => {
+  const labels = {
+    high: { de: 'Hohe Priorität', en: 'High priority', pl: 'Priorytet wysoki' },
+    medium: { de: 'Mittlere Priorität', en: 'Medium priority', pl: 'Priorytet średni' },
+    low: { de: 'Niedrige Priorität', en: 'Low priority', pl: 'Priorytet niski' },
+  };
+  return copy(labels[priority]);
+};
 
 export function LeaderboardAssignmentRow({
   item,
@@ -111,24 +149,9 @@ export function LeaderboardAssignmentRow({
   item: KangurMobileLeaderboardAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const priorityTone =
-    item.assignment.priority === 'high'
-      ? {
-          backgroundColor: '#fef2f2',
-          borderColor: '#fecaca',
-          textColor: '#b91c1c',
-        }
-      : item.assignment.priority === 'medium'
-        ? {
-            backgroundColor: '#fffbeb',
-            borderColor: '#fde68a',
-            textColor: '#b45309',
-          }
-        : {
-            backgroundColor: '#eff6ff',
-            borderColor: '#bfdbfe',
-            textColor: '#1d4ed8',
-          };
+  const priority = item.assignment.priority || 'low';
+  const priorityTone = getPriorityTone(priority);
+  const priorityLabel = getPriorityLabel(priority, copy);
   const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
   const assignmentAction = item.href ? (
     <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' />
@@ -145,29 +168,7 @@ export function LeaderboardAssignmentRow({
 
   return (
     <InsetPanel gap={8}>
-      <Pill
-        label={copy({
-          de:
-            item.assignment.priority === 'high'
-              ? 'Hohe Priorität'
-              : item.assignment.priority === 'medium'
-                ? 'Mittlere Priorität'
-                : 'Niedrige Priorität',
-          en:
-            item.assignment.priority === 'high'
-              ? 'High priority'
-              : item.assignment.priority === 'medium'
-                ? 'Medium priority'
-                : 'Low priority',
-          pl:
-            item.assignment.priority === 'high'
-              ? 'Priorytet wysoki'
-              : item.assignment.priority === 'medium'
-                ? 'Priorytet średni'
-                : 'Priorytet niski',
-        })}
-        tone={priorityTone}
-      />
+      <Pill label={priorityLabel} tone={priorityTone} />
 
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
         {item.assignment.title}
@@ -227,18 +228,29 @@ const getMasteryTone = (masteryPercent: number): Tone => {
   };
 };
 
-function renderLeaderboardPracticeLink({
-  href,
-  label,
+function MasteryInfo({
+  insight,
+  title,
 }: {
-  href: Href | null;
-  label: string;
-}): React.JSX.Element | null {
-  if (!href) {
-    return null;
-  }
-
-  return <LinkButton href={href} label={label} />;
+  insight: KangurMobileLeaderboardLessonMasteryItem;
+  title: string;
+}): React.JSX.Element {
+  const { copy } = useKangurMobileI18n();
+  return (
+    <View style={{ flex: 1, gap: 4 }}>
+      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+        {insight.emoji} {insight.title}
+      </Text>
+      <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
+        {copy({
+          de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
+          en: `Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
+          pl: `Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
+        })}
+      </Text>
+    </View>
+  );
 }
 
 export function LessonMasteryRow({
@@ -252,11 +264,7 @@ export function LessonMasteryRow({
   const masteryTone = getMasteryTone(insight.masteryPercent);
   const lastAttemptLabel = insight.lastCompletedAt
     ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
-    : copy({
-        de: 'kein Datum',
-        en: 'no date',
-        pl: 'brak daty',
-      });
+    : copy({ de: 'kein Datum', en: 'no date', pl: 'brak daty' });
 
   return (
     <InsetPanel gap={10}>
@@ -268,22 +276,9 @@ export function LessonMasteryRow({
           gap: 12,
         }}
       >
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{title}</Text>
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {insight.emoji} {insight.title}
-          </Text>
-          <Text style={{ color: '#475569', fontSize: 13, lineHeight: 18 }}>
-            {copy({
-              de: `Versuche ${insight.attempts} • letztes Ergebnis ${insight.lastScorePercent}%`,
-              en: `Attempts ${insight.attempts} • last score ${insight.lastScorePercent}%`,
-              pl: `Próby ${insight.attempts} • ostatni wynik ${insight.lastScorePercent}%`,
-            })}
-          </Text>
-        </View>
+        <MasteryInfo insight={insight} title={title} />
         <Pill label={`${insight.masteryPercent}%`} tone={masteryTone} />
       </View>
-
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
           de: `Bestes Ergebnis ${insight.bestScorePercent}% • letzter Versuch ${lastAttemptLabel}`,
@@ -291,25 +286,18 @@ export function LessonMasteryRow({
           pl: `Najlepszy wynik ${insight.bestScorePercent}% • ostatnia próba ${lastAttemptLabel}`,
         })}
       </Text>
-
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton
           href={insight.lessonHref}
-          label={copy({
-            de: 'Lektion öffnen',
-            en: 'Open lesson',
-            pl: 'Otwórz lekcję',
-          })}
+          label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}
           tone='primary'
         />
-        {renderLeaderboardPracticeLink({
-          href: insight.practiceHref,
-          label: copy({
-            de: 'Danach trainieren',
-            en: 'Practice after',
-            pl: 'Potem trenuj',
-          }),
-        })}
+        {insight.practiceHref ? (
+          <LinkButton
+            href={insight.practiceHref}
+            label={copy({ de: 'Danach trainieren', en: 'Practice after', pl: 'Potem trenuj' })}
+          />
+        ) : null}
       </View>
     </InsetPanel>
   );

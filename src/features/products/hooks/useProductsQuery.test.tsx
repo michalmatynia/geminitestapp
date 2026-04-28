@@ -181,6 +181,7 @@ describe('useProductsWithCount', () => {
       products: [
         {
           ...createProduct('raw-1'),
+          stock: { warehouse_a: '2', warehouse_b: 3 },
           category: {
             id: 'category-1',
             createdAt: '2026-01-01T00:00:00.000Z',
@@ -251,6 +252,7 @@ describe('useProductsWithCount', () => {
     expect(result.current.products[0]?.catalogs).toEqual([]);
     expect(result.current.products[0]?.tags).toEqual([]);
     expect(result.current.products[0]?.producers).toEqual([]);
+    expect(result.current.products[0]?.stock).toBe(5);
     expect(result.current.products[0]?.parameters?.[0]).toEqual(
       expect.objectContaining({
         parameterId: 'material',

@@ -1,11 +1,11 @@
 import { View } from 'react-native';
+import { type KangurLearnerProfileSnapshot } from '@kangur/core';
 import { KangurMobileMetric as Metric } from '../../shared/KangurMobileUi';
 import type { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
-import type { KangurMobileLearnerSnapshot } from '@kangur/contracts/kangur-core';
 
 type ProfileMetricsSectionProps = {
   copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-  snapshot: KangurMobileLearnerSnapshot;
+  snapshot: KangurLearnerProfileSnapshot;
   unlockedBadges: number;
   totalBadges: number;
 };

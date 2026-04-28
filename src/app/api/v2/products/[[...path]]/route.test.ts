@@ -131,6 +131,23 @@ describe('v2 products catch-all route module', () => {
     expect(customFieldsByIdIndex).toBeLessThan(genericProductIdIndex);
   });
 
+  it('registers the product batch-edit route before the generic product id route', () => {
+    expect(routeSource).toContain(
+      '{ pattern: [\'batch-edit\'], loader: () => import(\'../batch-edit/route-handler\') },'
+    );
+
+    const batchEditIndex = routeSource.indexOf(
+      '{ pattern: [\'batch-edit\'], loader: () => import(\'../batch-edit/route-handler\') },'
+    );
+    const genericProductIdIndex = routeSource.indexOf(
+      '{ pattern: [param(\'id\')], loader: () => import(\'../[id]/route-handler\') },'
+    );
+
+    expect(batchEditIndex).toBeGreaterThan(-1);
+    expect(genericProductIdIndex).toBeGreaterThan(-1);
+    expect(batchEditIndex).toBeLessThan(genericProductIdIndex);
+  });
+
   it('routes sync profile creation and lets the handler resolve a missing inventory id', async () => {
     expect(
       getPathSegments(

@@ -1,12 +1,20 @@
 import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
 import { LessonCheckpointRow } from '../lesson-row-primitives';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type UseKangurMobileLessonCheckpointsResult, type KangurMobileLessonCheckpointItem } from '../useKangurMobileLessonCheckpoints';
+
+interface LessonsCheckpointsSectionProps {
+    isPreparingLessonsView: boolean;
+    copy: KangurMobileCopy;
+    lessonCheckpoints: UseKangurMobileLessonCheckpointsResult;
+}
 
 export function LessonsCheckpointsSection({
     isPreparingLessonsView,
     copy,
     lessonCheckpoints,
-}: any): React.JSX.Element | null {
+}: LessonsCheckpointsSectionProps): React.JSX.Element | null {
     if (isPreparingLessonsView) return null;
 
     return (
@@ -27,7 +35,7 @@ export function LessonsCheckpointsSection({
                 </Text>
             ) : (
                 <View style={{ gap: 10 }}>
-                    {lessonCheckpoints.recentCheckpoints.map((item: any) => (
+                    {lessonCheckpoints.recentCheckpoints.map((item: KangurMobileLessonCheckpointItem) => (
                         <LessonCheckpointRow key={item.componentId} item={item} />
                     ))}
                     <LinkButton

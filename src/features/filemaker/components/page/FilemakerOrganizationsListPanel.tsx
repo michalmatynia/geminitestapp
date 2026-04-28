@@ -1,15 +1,21 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { PlusIcon } from 'lucide-react';
+import React, { useEffect, useMemo } from 'react';
 
-import type { FilterField, PanelAction } from '@/shared/contracts/ui/panels';
+import type { PanelAction } from '@/shared/contracts/ui/panels';
 import {
   FolderTreeViewportV2,
   useMasterFolderTreeShell,
 } from '@/shared/lib/foldertree/public';
+import { useAdminLayoutActions, useAdminLayoutState } from '@/shared/providers/AdminLayoutProvider';
 import { AdminFilemakerBreadcrumbs } from '@/shared/ui/admin.public';
 import { AdminTitleBreadcrumbHeader } from '@/shared/ui/admin-title-breadcrumb-header';
-import { MasterTreeSettingsButton, Pagination } from '@/shared/ui/navigation-and-layout.public';
+import {
+  FocusModeTogglePortal,
+  MasterTreeSettingsButton,
+  Pagination,
+} from '@/shared/ui/navigation-and-layout.public';
 import { Badge } from '@/shared/ui/primitives.public';
 import { Button } from '@/shared/ui/button';
 import { FilterPanel, StandardDataTablePanel } from '@/shared/ui/templates.public';
@@ -17,75 +23,66 @@ import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2'
 
 import {
   ORGANIZATION_PAGE_SIZE_OPTIONS,
+  type OrganizationFilters,
   type OrganizationListState,
 } from '../../pages/AdminFilemakerOrganizationsPage.types';
+import { ORGANIZATION_FILTER_FIELDS } from './FilemakerOrganizationsListPanel.constants';
+import { FilemakerOrganizationsSelectionActions } from './FilemakerOrganizationsSelectionActions';
 
 const FILEMAKER_ORGANIZATION_TREE_INSTANCE: FolderTreeInstance = 'filemaker_organizations';
+const CREATE_ORGANIZATION_ACTION_KEY = 'create-organization';
 
-const ORGANIZATION_FILTER_FIELDS: FilterField[] = [
-  {
-    key: 'address',
-    label: 'Address',
-    type: 'select',
-    options: [
-      { value: 'all', label: 'All address states' },
-      { value: 'with_address', label: 'With default address' },
-      { value: 'without_address', label: 'Without default address' },
-    ],
-    width: '220px',
-  },
-  {
-    key: 'bank',
-    label: 'Bank',
-    type: 'select',
-    options: [
-      { value: 'all', label: 'All bank states' },
-      { value: 'with_bank', label: 'With default bank' },
-      { value: 'without_bank', label: 'Without default bank' },
-    ],
-    width: '210px',
-  },
-  {
-    key: 'parent',
-    label: 'Hierarchy',
-    type: 'select',
-    options: [
-      { value: 'all', label: 'All organisations' },
-      { value: 'root', label: 'Root organisations' },
-      { value: 'child', label: 'Child organisations' },
-    ],
-    width: '210px',
-  },
-  {
-    key: 'updatedBy',
-    label: 'Updated By',
-    type: 'text',
-    placeholder: 'Admin',
-    width: '180px',
-  },
-];
-
-function OrganizationHeaderActions(props: {
+function OrganizationCreateAction(props: {
   actions: PanelAction[];
-  customActions: React.ReactNode;
+}): React.JSX.Element | null {
+  const action = props.actions.find(
+    (candidate: PanelAction): boolean => candidate.key === CREATE_ORGANIZATION_ACTION_KEY
+  );
+  if (!action) return null;
+
+  const label = action.tooltip ?? action.label;
+  return (
+    <Button
+      onClick={(): void => {
+        void action.onClick();
+      }}
+      variant='outline'
+      aria-label={label}
+      title={label}
+      disabled={action.disabled === true}
+      className='h-7 w-7 rounded-full border border-white/20 bg-transparent p-0 text-white transition-colors hover:border-white/40 hover:bg-white/10'
+    >
+      <PlusIcon className='h-3 w-3' />
+    </Button>
+  );
+}
+
+function OrganizationSecondaryActions(props: {
+  actions: PanelAction[];
   isLoading: boolean;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
+  const actions = props.actions.filter(
+    (action: PanelAction): boolean => action.key !== CREATE_ORGANIZATION_ACTION_KEY
+  );
+  if (actions.length === 0) return null;
+
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      {props.customActions}
-      {props.actions.map((action: PanelAction): React.JSX.Element => (
+      {actions.map((action: PanelAction): React.JSX.Element => (
         <Button
           key={action.key}
-          variant={action.variant || 'outline'}
+          variant={action.variant ?? 'outline'}
           size='sm'
           onClick={(): void => {
             void action.onClick();
           }}
-          disabled={action.disabled || props.isLoading}
+          disabled={action.disabled === true || props.isLoading}
           title={action.tooltip}
           className='h-8'
         >
-          {action.icon ? <span className='mr-1'>{action.icon}</span> : null}
+          {action.icon !== undefined && action.icon !== null ? (
+            <span className='mr-1'>{action.icon}</span>
+          ) : null}
           {action.label}
         </Button>
       ))}
@@ -131,8 +128,117 @@ const renderOrganizationBreadcrumb = (): React.JSX.Element => (
   <AdminFilemakerBreadcrumbs current='Organisations' />
 );
 
+const renderTitleBreadcrumbHeader = (
+  titleStackClassName?: string,
+  actions?: React.ReactNode,
+  actionsClassName?: string
+): React.JSX.Element => (
+  <AdminTitleBreadcrumbHeader
+    title={renderOrganizationTitle()}
+    breadcrumb={renderOrganizationBreadcrumb()}
+    titleStackClassName={titleStackClassName}
+    actions={actions}
+    actionsClassName={actionsClassName}
+  />
+);
+
+function OrganizationCreateActionRail(props: OrganizationListState): React.JSX.Element | null {
+  return <OrganizationCreateAction actions={props.actions} />;
+}
+
+function OrganizationSecondaryActionRail(props: OrganizationListState): React.JSX.Element | null {
+  return <OrganizationSecondaryActions actions={props.actions} isLoading={props.isLoading} />;
+}
+
+function OrganizationBadgesRail(props: OrganizationListState): React.JSX.Element {
+  return (
+    <OrganizationListBadges
+      error={props.error}
+      isLoading={props.isLoading}
+      shownCount={props.shownCount}
+      totalCount={props.totalCount}
+      totalCountIsExact={props.totalCountIsExact}
+    />
+  );
+}
+
+function OrganizationPaginationControl(props: OrganizationListState): React.JSX.Element {
+  return (
+    <Pagination
+      page={props.page}
+      totalPages={props.totalPages}
+      pageSize={props.pageSize}
+      onPageChange={props.onPageChange}
+      onPageSizeChange={props.onPageSizeChange}
+      pageSizeOptions={ORGANIZATION_PAGE_SIZE_OPTIONS}
+      showPageSize
+      showLabels={false}
+      showPageJump
+      variant='compact'
+    />
+  );
+}
+
+function OrganizationMobileHeader(props: OrganizationListState): React.JSX.Element {
+  return (
+    <div className='space-y-3 lg:hidden'>
+      {renderTitleBreadcrumbHeader(undefined, <OrganizationCreateActionRail {...props} />, 'pt-0')}
+      <div className='space-y-3'>
+        <div className='relative z-10 flex justify-center'>
+          <OrganizationPaginationControl {...props} />
+        </div>
+        <div className='flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end'>
+          <OrganizationBadgesRail {...props} />
+          <OrganizationSecondaryActionRail {...props} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrganizationDesktopHeader(props: OrganizationListState): React.JSX.Element {
+  return (
+    <div className='hidden space-y-3 lg:block'>
+      {renderTitleBreadcrumbHeader(
+        'shrink-0 min-w-max',
+        <>
+          <OrganizationCreateActionRail {...props} />
+          <OrganizationPaginationControl {...props} />
+          <OrganizationBadgesRail {...props} />
+          <OrganizationSecondaryActionRail {...props} />
+        </>,
+        'relative z-0 min-w-0 flex-1 justify-end'
+      )}
+    </div>
+  );
+}
+
+function OrganizationFiltersPanel(props: {
+  filterValues: OrganizationFilters;
+  listState: OrganizationListState;
+}): React.JSX.Element {
+  return (
+    <div className='w-full'>
+      <FilterPanel
+        filters={ORGANIZATION_FILTER_FIELDS}
+        values={props.filterValues}
+        search={props.listState.query}
+        searchPlaceholder='Search name, address, tax ID, bank UUID, or legacy UUID.'
+        onFilterChange={props.listState.onFilterChange}
+        onSearchChange={props.listState.onQueryChange}
+        onReset={props.listState.onResetFilters}
+        showHeader={false}
+        collapsible
+        defaultExpanded
+      />
+    </div>
+  );
+}
+
 function OrganizationListHeader(props: OrganizationListState): React.JSX.Element {
-  const filterValues = useMemo(
+  const { isMenuHidden } = useAdminLayoutState();
+  const { setIsMenuHidden } = useAdminLayoutActions();
+  const filterValues = useMemo<OrganizationFilters>(
     () => ({
       address: props.filters.address,
       bank: props.filters.bank,
@@ -142,102 +248,23 @@ function OrganizationListHeader(props: OrganizationListState): React.JSX.Element
     [props.filters.address, props.filters.bank, props.filters.parent, props.filters.updatedBy]
   );
 
+  useEffect(() => {
+    return (): void => {
+      setIsMenuHidden(false);
+    };
+  }, [setIsMenuHidden]);
+
   return (
     <div className='space-y-4'>
-      <div className='space-y-3'>
-        <div className='space-y-3 lg:hidden'>
-          <AdminTitleBreadcrumbHeader
-            title={renderOrganizationTitle()}
-            breadcrumb={renderOrganizationBreadcrumb()}
-            actions={
-              <OrganizationHeaderActions
-                actions={props.actions}
-                customActions={props.customActions}
-                isLoading={props.isLoading}
-              />
-            }
-            actionsClassName='pt-0'
-          />
-          <div className='space-y-3'>
-            <OrganizationListBadges
-              error={props.error}
-              isLoading={props.isLoading}
-              shownCount={props.shownCount}
-              totalCount={props.totalCount}
-              totalCountIsExact={props.totalCountIsExact}
-            />
-            <div className='relative z-10 flex justify-center'>
-              <Pagination
-                page={props.page}
-                totalPages={props.totalPages}
-                totalCount={props.totalCount}
-                pageSize={props.pageSize}
-                onPageChange={props.onPageChange}
-                onPageSizeChange={props.onPageSizeChange}
-                pageSizeOptions={ORGANIZATION_PAGE_SIZE_OPTIONS}
-                showPageSize
-                showInfo
-                showLabels={false}
-                showPageJump
-                isLoading={props.isLoading}
-                variant='compact'
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className='hidden space-y-3 lg:block'>
-          <AdminTitleBreadcrumbHeader
-            title={renderOrganizationTitle()}
-            breadcrumb={renderOrganizationBreadcrumb()}
-            titleStackClassName='shrink-0 min-w-max'
-            actions={
-              <>
-                <OrganizationHeaderActions
-                  actions={props.actions}
-                  customActions={props.customActions}
-                  isLoading={props.isLoading}
-                />
-                <OrganizationListBadges
-                  error={props.error}
-                  isLoading={props.isLoading}
-                  shownCount={props.shownCount}
-                  totalCount={props.totalCount}
-                  totalCountIsExact={props.totalCountIsExact}
-                />
-                <Pagination
-                  page={props.page}
-                  totalPages={props.totalPages}
-                  totalCount={props.totalCount}
-                  pageSize={props.pageSize}
-                  onPageChange={props.onPageChange}
-                  onPageSizeChange={props.onPageSizeChange}
-                  pageSizeOptions={ORGANIZATION_PAGE_SIZE_OPTIONS}
-                  showPageSize
-                  showInfo
-                  showLabels={false}
-                  showPageJump
-                  isLoading={props.isLoading}
-                  variant='compact'
-                />
-              </>
-            }
-            actionsClassName='relative z-0 min-w-0 flex-1 justify-end'
-          />
-        </div>
-      </div>
-      <FilterPanel
-        filters={ORGANIZATION_FILTER_FIELDS}
-        values={filterValues}
-        search={props.query}
-        searchPlaceholder='Search name, address, tax ID, bank UUID, or legacy UUID.'
-        onFilterChange={props.onFilterChange}
-        onSearchChange={props.onQueryChange}
-        onReset={props.onResetFilters}
-        showHeader={false}
-        collapsible
-        defaultExpanded
+      <FocusModeTogglePortal
+        isFocusMode={!isMenuHidden}
+        onToggleFocusMode={() => setIsMenuHidden(!isMenuHidden)}
       />
+      <div className='space-y-3'>
+        <OrganizationMobileHeader {...props} />
+        <OrganizationDesktopHeader {...props} />
+        <OrganizationFiltersPanel filterValues={filterValues} listState={props} />
+      </div>
     </div>
   );
 }
@@ -277,6 +304,7 @@ export function FilemakerOrganizationsListPanel(
       variant='flat'
       className='[&>div:first-child]:mb-3'
       header={<OrganizationListHeader {...props} />}
+      actions={<FilemakerOrganizationsSelectionActions {...props} />}
       columns={[]}
       data={[]}
       isLoading={false}

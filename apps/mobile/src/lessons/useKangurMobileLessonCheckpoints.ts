@@ -32,7 +32,7 @@ type UseKangurMobileLessonCheckpointsOptions = {
   limit?: number;
 };
 
-type UseKangurMobileLessonCheckpointsResult = {
+export type UseKangurMobileLessonCheckpointsResult = {
   recentCheckpoints: KangurMobileLessonCheckpointItem[];
 };
 

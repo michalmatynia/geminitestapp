@@ -11,7 +11,7 @@ import {
   formatStatusLabel,
   localizeDuelText,
 } from './utils/duels-ui';
-import { type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];

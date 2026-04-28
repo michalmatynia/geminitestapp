@@ -1,20 +1,45 @@
 'use client';
+/* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Building2, ChevronDown, ChevronRight, Edit2, Folder, FolderOpen } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  Building2,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
+  Edit2,
+  ExternalLink,
+  Folder,
+  FolderOpen,
+  Loader2,
+  MailSearch,
+} from 'lucide-react';
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { Badge, Button } from '@/shared/ui/primitives.public';
+import { Badge, Button, Checkbox } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { fromFilemakerOrganizationNodeId } from '../../entity-master-tree';
+import {
+  fromFilemakerOrganizationEventNodeId,
+  fromFilemakerOrganizationJobListingNodeId,
+  fromFilemakerOrganizationNodeId,
+} from '../../entity-master-tree';
 import { formatFilemakerAddress } from '../../settings';
-import type { FilemakerOrganization } from '../../types';
+import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../../types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
 type FilemakerOrganizationTreeNodeProps = FolderTreeViewportRenderNodeInput & {
+  eventsById: ReadonlyMap<string, FilemakerEvent>;
+  jobListingsById: ReadonlyMap<string, FilemakerJobListing>;
   organizationById: Map<string, FilemakerOrganization>;
+  organizationEmailScrapeState: Record<string, boolean>;
+  organizationSelection: Record<string, boolean>;
+  onLaunchOrganizationEmailScrape: (organizationId: string) => void;
+  onOpenEvent: (eventId: string) => void;
+  onOpenJobListing: (organizationId: string, jobListingId: string) => void;
   onOpenOrganization: (organizationId: string) => void;
+  onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
 };
 
 type OrganizationGroupNodeProps = Pick<
@@ -24,10 +49,19 @@ type OrganizationGroupNodeProps = Pick<
   stateClassName: string;
 };
 
-type OrganizationLeafNodeProps = Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'select'> & {
+type OrganizationLeafNodeProps = Pick<
+  FolderTreeViewportRenderNodeInput,
+  'depth' | 'hasChildren' | 'isExpanded' | 'select' | 'toggleExpand'
+> & {
+  eventCount: number;
+  isEmailScrapeRunning: boolean;
+  isSelectedForBatch: boolean;
+  jobListingCount: number;
   organization: FilemakerOrganization;
   stateClassName: string;
+  onLaunchOrganizationEmailScrape: (organizationId: string) => void;
   onOpenOrganization: (organizationId: string) => void;
+  onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
 };
 
 const resolveOrganizationTreeNodeStateClassName = (input: {
@@ -53,16 +87,19 @@ const createTreeIndentStyle = (depth: number): React.CSSProperties => ({
   paddingLeft: `${depth * 16 + 8}px`,
 });
 
+const metadataNumber = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
 function TreeNodeSpacer(): React.JSX.Element {
   return <span className='inline-flex size-5 shrink-0' aria-hidden='true' />;
 }
 
 function OrganizationGroupToggleButton(props: {
   isExpanded: boolean;
+  label: string;
   toggleExpand: () => void;
 }): React.JSX.Element {
-  const { isExpanded, toggleExpand } = props;
-  const label = isExpanded ? 'Collapse organization group' : 'Expand organization group';
+  const { isExpanded, label, toggleExpand } = props;
 
   return (
     <Button
@@ -106,14 +143,18 @@ function FilemakerOrganizationGroupNode(props: OrganizationGroupNodeProps): Reac
       }}
     >
       {hasChildren ? (
-        <OrganizationGroupToggleButton isExpanded={isExpanded} toggleExpand={toggleExpand} />
+        <OrganizationGroupToggleButton
+          isExpanded={isExpanded}
+          label={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+          toggleExpand={toggleExpand}
+        />
       ) : (
         <TreeNodeSpacer />
       )}
       <FolderIcon className='size-4 shrink-0 text-sky-300/80' />
       <div className='min-w-0 flex-1 truncate font-medium text-gray-100'>{node.name}</div>
       <Badge variant='outline' className='h-5 shrink-0 text-[10px]'>
-        {Number(node.metadata?.['count'] ?? 0)}
+        {metadataNumber(node.metadata?.['count'])}
       </Badge>
     </div>
   );
@@ -121,13 +162,24 @@ function FilemakerOrganizationGroupNode(props: OrganizationGroupNodeProps): Reac
 
 function FilemakerOrganizationLeafDetails(props: {
   organization: FilemakerOrganization;
+  onOpenOrganization: (organizationId: string) => void;
 }): React.JSX.Element {
-  const { organization } = props;
+  const { onOpenOrganization, organization } = props;
   const tradingName = organization.tradingName?.trim() ?? '';
 
   return (
     <div className='min-w-0 flex-1'>
-      <div className='truncate font-semibold text-white'>{organization.name}</div>
+      <button
+        type='button'
+        className='block max-w-full truncate text-left font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenOrganization(organization.id);
+        }}
+      >
+        {organization.name}
+      </button>
       {tradingName.length > 0 ? (
         <div className='truncate text-[11px] italic text-gray-400'>{tradingName}</div>
       ) : null}
@@ -141,8 +193,46 @@ function FilemakerOrganizationLeafDetails(props: {
   );
 }
 
+function OrganizationRelationBadges(props: {
+  eventCount: number;
+  jobListingCount: number;
+}): React.JSX.Element | null {
+  const { eventCount, jobListingCount } = props;
+  if (eventCount === 0 && jobListingCount === 0) return null;
+
+  return (
+    <div className='hidden shrink-0 items-center gap-1 sm:flex'>
+      {eventCount > 0 ? (
+        <Badge variant='outline' className='h-5 text-[10px]'>
+          Events {eventCount}
+        </Badge>
+      ) : null}
+      {jobListingCount > 0 ? (
+        <Badge variant='outline' className='h-5 text-[10px]'>
+          Jobs {jobListingCount}
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
 function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.JSX.Element {
-  const { organization, depth, select, stateClassName, onOpenOrganization } = props;
+  const {
+    depth,
+    eventCount,
+    hasChildren,
+    isEmailScrapeRunning,
+    isExpanded,
+    isSelectedForBatch,
+    jobListingCount,
+    onLaunchOrganizationEmailScrape,
+    onOpenOrganization,
+    onToggleOrganizationSelection,
+    organization,
+    select,
+    stateClassName,
+    toggleExpand,
+  } = props;
 
   return (
     <div
@@ -155,17 +245,64 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
       tabIndex={0}
       onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
         select(event);
-        onOpenOrganization(organization.id);
+        if (hasChildren) toggleExpand();
       }}
       onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
         if (!isTreeActivationKey(event)) return;
         event.preventDefault();
-        onOpenOrganization(organization.id);
+        if (hasChildren) toggleExpand();
       }}
     >
-      <TreeNodeSpacer />
+      <Checkbox
+        checked={isSelectedForBatch}
+        aria-label={`Select organization ${organization.name}`}
+        className='shrink-0'
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.stopPropagation();
+        }}
+        onCheckedChange={(checked): void => {
+          onToggleOrganizationSelection(organization.id, checked === true);
+        }}
+      />
+      {hasChildren ? (
+        <OrganizationGroupToggleButton
+          isExpanded={isExpanded}
+          label={isExpanded ? `Collapse ${organization.name}` : `Expand ${organization.name}`}
+          toggleExpand={toggleExpand}
+        />
+      ) : (
+        <TreeNodeSpacer />
+      )}
       <Building2 className='size-4 shrink-0 text-blue-300' />
-      <FilemakerOrganizationLeafDetails organization={organization} />
+      <FilemakerOrganizationLeafDetails
+        organization={organization}
+        onOpenOrganization={onOpenOrganization}
+      />
+      <OrganizationRelationBadges eventCount={eventCount} jobListingCount={jobListingCount} />
+      <Button
+        type='button'
+        variant='outline'
+        size='icon'
+        className='size-7 cursor-pointer'
+        aria-label={`Scrape emails for organization ${organization.name}`}
+        title={
+          isEmailScrapeRunning
+            ? `Scraping emails for organization ${organization.name}`
+            : `Scrape emails for organization ${organization.name}`
+        }
+        disabled={isEmailScrapeRunning}
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
+          onLaunchOrganizationEmailScrape(organization.id);
+        }}
+      >
+        {isEmailScrapeRunning ? (
+          <Loader2 className='size-3.5 animate-spin' />
+        ) : (
+          <MailSearch className='size-3.5' />
+        )}
+      </Button>
       <Button
         type='button'
         variant='outline'
@@ -185,6 +322,105 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
   );
 }
 
+function OrganizationRelationLinkNode(props: Pick<
+  FolderTreeViewportRenderNodeInput,
+  'depth' | 'node' | 'select'
+> & {
+  description: string;
+  icon: React.ReactNode;
+  label: string;
+  metaBadge?: string;
+  onOpen: () => void;
+  stateClassName: string;
+}): React.JSX.Element {
+  const { depth, description, icon, label, metaBadge, node, onOpen, select, stateClassName } = props;
+  const resolvedLabel = label.trim().length > 0 ? label : node.name;
+  const normalizedMetaBadge = metaBadge?.trim() ?? '';
+
+  return (
+    <div
+      className={cn(
+        'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+        stateClassName
+      )}
+      style={createTreeIndentStyle(depth)}
+      role='button'
+      tabIndex={0}
+      onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
+        select(event);
+        onOpen();
+      }}
+      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
+        if (!isTreeActivationKey(event)) return;
+        event.preventDefault();
+        onOpen();
+      }}
+    >
+      <TreeNodeSpacer />
+      <span className='shrink-0 text-sky-300/90'>{icon}</span>
+      <div className='min-w-0 flex-1'>
+        <div className='truncate font-medium text-gray-100'>{resolvedLabel}</div>
+        <div className='truncate text-[11px] text-gray-500'>{description}</div>
+      </div>
+      {normalizedMetaBadge.length > 0 ? (
+        <Badge variant='outline' className='h-5 shrink-0 text-[10px] capitalize'>
+          {normalizedMetaBadge}
+        </Badge>
+      ) : null}
+      <ExternalLink className='size-3.5 shrink-0 text-gray-500' aria-hidden='true' />
+    </div>
+  );
+}
+
+function FilemakerOrganizationEventLinkNode(
+  props: Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'node' | 'select'> & {
+    event: FilemakerEvent | null;
+    eventId: string;
+    onOpenEvent: (eventId: string) => void;
+    stateClassName: string;
+  }
+): React.JSX.Element {
+  const { event, eventId, onOpenEvent } = props;
+  return (
+    <OrganizationRelationLinkNode
+      {...props}
+      description={
+        event !== null
+          ? `${event.city.trim().length > 0 ? event.city : 'No city'} | Updated: ${formatTimestamp(event.updatedAt)}`
+          : eventId
+      }
+      icon={<CalendarDays className='size-4' aria-hidden='true' />}
+      label={event?.eventName ?? props.node.name}
+      onOpen={() => onOpenEvent(eventId)}
+    />
+  );
+}
+
+function FilemakerOrganizationJobListingLinkNode(
+  props: Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'node' | 'select'> & {
+    jobListing: FilemakerJobListing | null;
+    jobListingId: string;
+    onOpenJobListing: (organizationId: string, jobListingId: string) => void;
+    organizationId: string;
+    stateClassName: string;
+  }
+): React.JSX.Element {
+  const { jobListing, jobListingId, onOpenJobListing, organizationId } = props;
+  const jobListingLocation = jobListing?.location?.trim() ?? '';
+  return (
+    <OrganizationRelationLinkNode
+      {...props}
+      description={
+        jobListingLocation.length > 0 ? jobListingLocation : 'Open organization job listing'
+      }
+      icon={<BriefcaseBusiness className='size-4' aria-hidden='true' />}
+      label={jobListing?.title ?? props.node.name}
+      metaBadge={jobListing?.status}
+      onOpen={() => onOpenJobListing(organizationId, jobListingId)}
+    />
+  );
+}
+
 export function FilemakerOrganizationMasterTreeNode(
   props: FilemakerOrganizationTreeNodeProps
 ): React.JSX.Element {
@@ -195,16 +431,56 @@ export function FilemakerOrganizationMasterTreeNode(
   const stateClassName = resolveOrganizationTreeNodeStateClassName({ isSelected, isSearchMatch });
 
   if (organization === null) {
+    const eventLink = fromFilemakerOrganizationEventNodeId(node.id);
+    if (eventLink !== null) {
+      return (
+        <FilemakerOrganizationEventLinkNode
+          depth={props.depth}
+          event={props.eventsById.get(eventLink.eventId) ?? null}
+          eventId={eventLink.eventId}
+          node={node}
+          onOpenEvent={props.onOpenEvent}
+          select={props.select}
+          stateClassName={stateClassName}
+        />
+      );
+    }
+
+    const jobListingLink = fromFilemakerOrganizationJobListingNodeId(node.id);
+    if (jobListingLink !== null) {
+      return (
+        <FilemakerOrganizationJobListingLinkNode
+          depth={props.depth}
+          jobListing={props.jobListingsById.get(jobListingLink.jobListingId) ?? null}
+          jobListingId={jobListingLink.jobListingId}
+          node={node}
+          onOpenJobListing={props.onOpenJobListing}
+          organizationId={jobListingLink.organizationId}
+          select={props.select}
+          stateClassName={stateClassName}
+        />
+      );
+    }
+
     return <FilemakerOrganizationGroupNode {...props} stateClassName={stateClassName} />;
   }
 
   return (
     <FilemakerOrganizationLeafNode
-      organization={organization}
       depth={props.depth}
+      eventCount={metadataNumber(node.metadata?.['eventCount'])}
+      hasChildren={props.hasChildren}
+      isEmailScrapeRunning={props.organizationEmailScrapeState[organization.id] === true}
+      isExpanded={props.isExpanded}
+      isSelectedForBatch={props.organizationSelection[organization.id] === true}
+      jobListingCount={metadataNumber(node.metadata?.['jobListingCount'])}
+      organization={organization}
       select={props.select}
       stateClassName={stateClassName}
+      onLaunchOrganizationEmailScrape={props.onLaunchOrganizationEmailScrape}
       onOpenOrganization={props.onOpenOrganization}
+      onToggleOrganizationSelection={props.onToggleOrganizationSelection}
+      toggleExpand={props.toggleExpand}
     />
   );
 }

@@ -12,6 +12,7 @@ const {
   traderaStatusCheckModalMock,
   useBulkSetProductsArchivedStateMock,
   useBulkConvertImagesToBase64Mock,
+  useBulkEditProductFieldsMock,
   useBulkProductBaseSyncMutationMock,
   useProductListFiltersContextMock,
   useProductListSelectionContextMock,
@@ -25,6 +26,7 @@ const {
   traderaStatusCheckModalMock: vi.fn(),
   useBulkSetProductsArchivedStateMock: vi.fn(),
   useBulkConvertImagesToBase64Mock: vi.fn(),
+  useBulkEditProductFieldsMock: vi.fn(),
   useBulkProductBaseSyncMutationMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
@@ -45,6 +47,7 @@ vi.mock('@/features/products/context/ProductListContext', async (importOriginal)
 vi.mock('@/features/products/hooks/useProductsMutations', () => ({
   useBulkSetProductsArchivedState: () => useBulkSetProductsArchivedStateMock(),
   useBulkConvertImagesToBase64: () => useBulkConvertImagesToBase64Mock(),
+  useBulkEditProductFields: () => useBulkEditProductFieldsMock(),
 }));
 
 vi.mock('@/features/product-sync/hooks/useProductBaseSync', () => ({
@@ -263,6 +266,10 @@ describe('ProductSelectionActions', () => {
       mutateAsync: setSelectedProductsArchivedStateMock,
       isPending: false,
     });
+    useBulkEditProductFieldsMock.mockReturnValue({
+      mutateAsync: vi.fn(),
+      isPending: false,
+    });
     useBulkProductBaseSyncMutationMock.mockReturnValue({
       mutateAsync: vi.fn(),
       isPending: false,
@@ -425,6 +432,15 @@ describe('ProductSelectionActions', () => {
         products: [{ id: 'product-1' }, { id: 'product-2' }],
       })
     );
+  });
+
+  it('opens the product field batch edit modal from the selection actions', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Product Fields' }));
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByText('Operation 1')).toBeInTheDocument();
   });
 
   it('deletes a saved advanced filter preset from the menu', async () => {

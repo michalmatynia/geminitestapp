@@ -538,6 +538,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
+    studioProjectId: toTrimmedString(doc.studioProjectId) ?? null,
     customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
     marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(
@@ -620,6 +621,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     catalogId,
     category,
     shippingGroupId: toTrimmedString(doc.shippingGroupId) ?? null,
+    studioProjectId: toTrimmedString(doc.studioProjectId) ?? null,
     customFields: normalizeProductCustomFieldValues(doc.customFields),
     parameters: normalizeParameterValues(doc.parameters),
     marketplaceContentOverrides: normalizeProductMarketplaceContentOverrides(

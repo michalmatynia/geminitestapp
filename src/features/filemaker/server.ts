@@ -1,6 +1,7 @@
 export * from './server/filemaker-mail-service';
 export * from './server/filemaker-mail-access';
 export * from './server/filemaker-email-repository';
+export * from './server/filemaker-organization-email-scrape';
 export * from './server/filemaker-website-repository';
 export * from './server/filemaker-anyparam-repository';
 export * from './server/filemaker-anytext-repository';

@@ -56,6 +56,7 @@ const ROUTES: CatchAllRouteDefinition<PatternToken>[] = [
   { pattern: ['images', 'base64', 'all'], loader: () => import('../images/base64/all/route-handler') },
   { pattern: ['images', 'upload'], loader: () => import('../images/upload/route-handler') },
   { pattern: ['archive', 'batch'], loader: () => import('../archive/batch/route-handler') },
+  { pattern: ['batch-edit'], loader: () => import('../batch-edit/route-handler') },
   { pattern: ['scans', 'latest'], loader: () => import('../scans/latest/route-handler') },
   { pattern: ['scans'], loader: () => import('../scans/route-handler') },
   { pattern: ['scans', param('scanId')], loader: () => import('../scans/[scanId]/route-handler') },

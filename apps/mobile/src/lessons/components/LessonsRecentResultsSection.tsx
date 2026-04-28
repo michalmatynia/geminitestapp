@@ -1,15 +1,66 @@
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
 import { LessonRecentResultRow } from '../lesson-row-primitives';
-import { View } from 'react-native';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type UseKangurMobileLessonsRecentResultsResult, type KangurMobileLessonsRecentResultItem } from '../useKangurMobileLessonsRecentResults';
+import type { Href } from 'expo-router';
+
+interface LessonsRecentResultsSectionProps {
+    isPreparingLessonsView: boolean;
+    copy: KangurMobileCopy;
+    resultsHref: Href;
+    lessonRecentResults: UseKangurMobileLessonsRecentResultsResult;
+}
 
 export function LessonsRecentResultsSection({ 
     isPreparingLessonsView, 
     copy, 
     resultsHref, 
     lessonRecentResults 
-}: any): React.JSX.Element | null {
+}: LessonsRecentResultsSectionProps): React.JSX.Element | null {
     if (isPreparingLessonsView) return null;
+
+    const renderContent = () => {
+        if (Boolean(lessonRecentResults.isLoading) || Boolean(lessonRecentResults.isRestoringAuth)) {
+            return (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Die letzten Ergebnisse werden geladen.', en: 'Loading recent results.', pl: 'Ładujemy ostatnie wyniki.' })}
+                </Text>
+            );
+        }
+        
+        if (!Boolean(lessonRecentResults.isEnabled)) {
+            return (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Melde dich an, um hier Ergebnisse zu sehen.', en: 'Sign in to see results here.', pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.' })}
+                </Text>
+            );
+        }
+
+        if (lessonRecentResults.error !== null && lessonRecentResults.error !== '') {
+            return (
+                <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+                    {lessonRecentResults.error}
+                </Text>
+            );
+        }
+
+        if (lessonRecentResults.recentResultItems.length === 0) {
+            return (
+                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+                    {copy({ de: 'Es gibt hier noch keine Ergebnisse. Beende einen Lauf, um diesen Bereich zu füllen.', en: 'There are no results here yet. Finish a run to fill this section.', pl: 'Nie ma tu jeszcze wyników. Ukończ serię, aby wypełnić tę sekcję.' })}
+                </Text>
+            );
+        }
+
+        return (
+            <View style={{ gap: 10 }}>
+                {lessonRecentResults.recentResultItems.map((item: KangurMobileLessonsRecentResultItem) => (
+                    <LessonRecentResultRow key={item.result.id} item={item} />
+                ))}
+            </View>
+        );
+    };
 
     return (
         <Card>
@@ -29,29 +80,7 @@ export function LessonsRecentResultsSection({
                 tone='secondary'
             />
 
-            {(lessonRecentResults.isLoading || lessonRecentResults.isRestoringAuth) ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {copy({ de: 'Die letzten Ergebnisse werden geladen.', en: 'Loading recent results.', pl: 'Ładujemy ostatnie wyniki.' })}
-                </Text>
-            ) : !lessonRecentResults.isEnabled ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {copy({ de: 'Melde dich an, um hier Ergebnisse zu sehen.', en: 'Sign in to see results here.', pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.' })}
-                </Text>
-            ) : lessonRecentResults.error ? (
-                <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-                    {lessonRecentResults.error}
-                </Text>
-            ) : lessonRecentResults.recentResultItems.length === 0 ? (
-                <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                    {copy({ de: 'Es gibt hier noch keine Ergebnisse. Beende einen Lauf, um diesen Bereich zu füllen.', en: 'There are no results here yet. Finish a run to fill this section.', pl: 'Nie ma tu jeszcze wyników. Ukończ serię, aby wypełnić tę sekcję.' })}
-                </Text>
-            ) : (
-                <View style={{ gap: 10 }}>
-                    {lessonRecentResults.recentResultItems.map((item: any) => (
-                        <LessonRecentResultRow key={item.result.id} item={item} />
-                    ))}
-                </View>
-            )}
+            {renderContent()}
         </Card>
     );
 }

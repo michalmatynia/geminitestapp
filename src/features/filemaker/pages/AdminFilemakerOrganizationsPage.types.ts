@@ -49,6 +49,7 @@ export type OrganizationListState = {
   onDeselectOrganizationsPage: () => void;
   onFilterChange: (key: string, value: unknown) => void;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
+  onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
   onPageChange: (value: number) => void;
   onPageSizeChange: (value: number) => void;
   onQueryChange: (value: string) => void;
@@ -57,6 +58,7 @@ export type OrganizationListState = {
   onSelectOrganizationsPage: () => void;
   onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
   organizationEmailScrapeState: Record<string, boolean>;
+  organizationWebsiteSocialScrapeState: Record<string, boolean>;
   organizationSelection: OrganizationSelectionState;
   organizations: FilemakerOrganization[];
   page: number;

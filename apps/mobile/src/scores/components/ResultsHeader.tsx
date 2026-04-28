@@ -1,10 +1,12 @@
 import { Text } from 'react-native';
 import { type Href } from 'expo-router';
 import { Card, LinkButton } from '../../shared/KangurMobileUi';
-import { createKangurPlanHref } from '../plan/planHref';
+import { createKangurPlanHref } from '../../plan/planHref';
+
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
 interface ResultsHeaderProps {
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
 }
 
 export function ResultsHeader({ copy }: ResultsHeaderProps): React.JSX.Element {

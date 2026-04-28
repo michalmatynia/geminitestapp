@@ -1,6 +1,8 @@
 import 'server-only';
 
-/* eslint-disable complexity, max-lines */
+/* eslint-disable complexity, max-lines, max-lines-per-function, no-await-in-loop, @typescript-eslint/strict-boolean-expressions */
+
+import { randomUUID } from 'crypto';
 
 import type { Collection, Document, Filter } from 'mongodb';
 
@@ -35,9 +37,11 @@ export type MongoFilemakerWebsiteDocument = Document & {
   legacyUuids: string[];
   normalizedUrl?: string;
   schemaVersion: 1;
+  socialPlatform?: string;
   updatedAt?: string;
   updatedBy?: string;
   url: string;
+  websiteKind?: 'official' | 'social' | 'other';
 };
 
 export type MongoFilemakerWebsiteLinkDocument = Document & {
@@ -64,6 +68,32 @@ export type MongoFilemakerWebsiteLinkDocument = Document & {
   websiteId: string;
 };
 
+export type MongoFilemakerOrganizationWebsiteDiscoveryInput = {
+  organization: FilemakerOrganization;
+  runId: string;
+  socialProfiles: Array<{
+    platform: string;
+    sourceUrl?: string | null;
+    url: string;
+  }>;
+  websites: Array<{
+    sourceUrl?: string | null;
+    url: string;
+  }>;
+};
+
+export type MongoFilemakerOrganizationWebsiteDiscoveryResult = {
+  linked: Array<{
+    id: string;
+    linkId: string;
+    socialPlatform?: string;
+    status: 'created' | 'linked' | 'already-linked';
+    url: string;
+    websiteKind: 'official' | 'social';
+  }>;
+  skipped: Array<{ reason: string; url: string }>;
+};
+
 type WebsiteWithLinksDocument = MongoFilemakerWebsiteDocument & {
   links?: MongoFilemakerWebsiteLinkDocument[];
 };
@@ -83,6 +113,8 @@ type ListWebsiteInput = {
 
 const DEFAULT_WEBSITE_PAGE_SIZE = 48;
 const MAX_WEBSITE_PAGE_SIZE = 200;
+const WEBSITE_DISCOVERY_IMPORT_SOURCE_KIND = 'organization-website-social-scrape';
+const WEBSITE_DISCOVERY_UPDATED_BY = 'filemaker:organization-website-social-scrape';
 
 export type MongoFilemakerWebsiteCollections = {
   links: Collection<MongoFilemakerWebsiteLinkDocument>;
@@ -166,6 +198,30 @@ const uniqueStrings = (values: Array<string | undefined>): string[] =>
     )
   );
 
+const normalizeDiscoveryUrl = (
+  value: string
+): Pick<MongoFilemakerWebsiteDocument, 'host' | 'normalizedUrl' | 'url'> | null => {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    const parsed = new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    parsed.hash = '';
+    parsed.hostname = parsed.hostname.toLowerCase();
+    const normalizedUrl =
+      parsed.pathname === '/' && parsed.search.length === ''
+        ? `${parsed.origin}/`
+        : parsed.toString();
+    return {
+      host: parsed.hostname,
+      normalizedUrl,
+      url: normalizedUrl,
+    };
+  } catch {
+    return null;
+  }
+};
+
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const parsePositiveInt = (value: string | null | undefined, fallback: number): number => {
@@ -202,9 +258,11 @@ const toMongoFilemakerWebsite = (
   ...(document.legacyUuid !== undefined ? { legacyUuid: document.legacyUuid } : {}),
   legacyUuids: document.legacyUuids,
   ...(document.normalizedUrl !== undefined ? { normalizedUrl: document.normalizedUrl } : {}),
+  ...(document.socialPlatform !== undefined ? { socialPlatform: document.socialPlatform } : {}),
   ...(document.updatedAt !== undefined ? { updatedAt: document.updatedAt } : {}),
   ...(document.updatedBy !== undefined ? { updatedBy: document.updatedBy } : {}),
   url: document.url,
+  ...(document.websiteKind !== undefined ? { websiteKind: document.websiteKind } : {}),
 });
 
 const toMongoFilemakerWebsiteLink = (
@@ -327,6 +385,192 @@ export const listMongoFilemakerWebsitesForEvent = async (
     partyKind: 'event',
     $or: clauses,
   });
+};
+
+const buildDiscoveryWebsiteFilter = (
+  normalizedUrl: string
+): Filter<MongoFilemakerWebsiteDocument> => ({
+  $or: [{ normalizedUrl }, { url: normalizedUrl }],
+});
+
+const findDiscoveryWebsite = async (
+  collections: MongoFilemakerWebsiteCollections,
+  normalizedUrl: string
+): Promise<MongoFilemakerWebsiteDocument | null> =>
+  await collections.websites.findOne(buildDiscoveryWebsiteFilter(normalizedUrl));
+
+const upsertDiscoveryWebsite = async (input: {
+  collections: MongoFilemakerWebsiteCollections;
+  runId: string;
+  socialPlatform?: string;
+  url: string;
+  websiteKind: 'official' | 'social';
+}): Promise<{ document: MongoFilemakerWebsiteDocument; status: 'created' | 'existing' }> => {
+  const normalized = normalizeDiscoveryUrl(input.url);
+  if (!normalized) {
+    throw new Error('Invalid website URL.');
+  }
+
+  const existing = await findDiscoveryWebsite(input.collections, normalized.normalizedUrl);
+  const now = new Date().toISOString();
+  if (existing) {
+    await input.collections.websites.updateOne(
+      { id: existing.id },
+      {
+        $set: {
+          host: normalized.host,
+          normalizedUrl: normalized.normalizedUrl,
+          updatedAt: now,
+          updatedBy: WEBSITE_DISCOVERY_UPDATED_BY,
+          url: existing.url || normalized.url,
+          websiteKind: input.websiteKind,
+          ...(input.socialPlatform ? { socialPlatform: input.socialPlatform } : {}),
+        },
+      }
+    );
+    return {
+      document: {
+        ...existing,
+        host: normalized.host,
+        normalizedUrl: normalized.normalizedUrl,
+        socialPlatform: input.socialPlatform ?? existing.socialPlatform,
+        updatedAt: now,
+        updatedBy: WEBSITE_DISCOVERY_UPDATED_BY,
+        websiteKind: input.websiteKind,
+      },
+      status: 'existing',
+    };
+  }
+
+  const id = randomUUID();
+  const document: MongoFilemakerWebsiteDocument = {
+    _id: id,
+    createdAt: now,
+    host: normalized.host,
+    id,
+    importBatchId: `${WEBSITE_DISCOVERY_IMPORT_SOURCE_KIND}:${input.runId}`,
+    importSourceKind: WEBSITE_DISCOVERY_IMPORT_SOURCE_KIND,
+    importedAt: new Date(),
+    legacyTypeRaw:
+      input.websiteKind === 'social'
+        ? `social:${input.socialPlatform ?? 'unknown'}`
+        : 'official',
+    legacyTypes: [input.websiteKind],
+    legacyUuids: [],
+    normalizedUrl: normalized.normalizedUrl,
+    schemaVersion: 1,
+    ...(input.socialPlatform ? { socialPlatform: input.socialPlatform } : {}),
+    updatedAt: now,
+    updatedBy: WEBSITE_DISCOVERY_UPDATED_BY,
+    url: normalized.url,
+    websiteKind: input.websiteKind,
+  };
+  try {
+    await input.collections.websites.insertOne(document);
+    return { document, status: 'created' };
+  } catch (error) {
+    const raced = await findDiscoveryWebsite(input.collections, normalized.normalizedUrl);
+    if (!raced) throw error;
+    return { document: raced, status: 'existing' };
+  }
+};
+
+const upsertDiscoveryWebsiteLink = async (input: {
+  collections: MongoFilemakerWebsiteCollections;
+  organization: FilemakerOrganization;
+  runId: string;
+  website: MongoFilemakerWebsiteDocument;
+}): Promise<{ linkId: string; status: 'linked' | 'already-linked' }> => {
+  const filter = {
+    websiteId: input.website.id,
+    partyKind: 'organization' as const,
+    partyId: input.organization.id,
+  };
+  const existing = await input.collections.links.findOne(filter);
+  if (existing) return { linkId: existing.id, status: 'already-linked' };
+
+  const now = new Date().toISOString();
+  const linkId = randomUUID();
+  const legacyOwnerUuid = input.organization.legacyUuid?.trim() || input.organization.id;
+  try {
+    await input.collections.links.insertOne({
+      _id: linkId,
+      id: linkId,
+      importBatchId: `${WEBSITE_DISCOVERY_IMPORT_SOURCE_KIND}:${input.runId}`,
+      importSourceKind: WEBSITE_DISCOVERY_IMPORT_SOURCE_KIND,
+      importedAt: new Date(),
+      legacyOwnerUuid,
+      legacyWebsiteUuid: input.website.legacyUuid ?? input.website.id,
+      organizationId: input.organization.id,
+      ownerName: input.organization.name,
+      partyId: input.organization.id,
+      partyKind: 'organization',
+      schemaVersion: 1,
+      createdAt: now,
+      updatedAt: now,
+      updatedBy: WEBSITE_DISCOVERY_UPDATED_BY,
+      websiteId: input.website.id,
+    });
+    return { linkId, status: 'linked' };
+  } catch (error) {
+    const raced = await input.collections.links.findOne(filter);
+    if (!raced) throw error;
+    return { linkId: raced.id, status: 'already-linked' };
+  }
+};
+
+export const upsertMongoFilemakerOrganizationWebsiteDiscovery = async (
+  input: MongoFilemakerOrganizationWebsiteDiscoveryInput
+): Promise<MongoFilemakerOrganizationWebsiteDiscoveryResult> => {
+  const collections = await getMongoFilemakerWebsiteCollections();
+  await ensureMongoFilemakerWebsiteIndexes(collections);
+  const linked: MongoFilemakerOrganizationWebsiteDiscoveryResult['linked'] = [];
+  const skipped: MongoFilemakerOrganizationWebsiteDiscoveryResult['skipped'] = [];
+  const candidates = [
+    ...input.websites.map((website) => ({
+      socialPlatform: undefined,
+      url: website.url,
+      websiteKind: 'official' as const,
+    })),
+    ...input.socialProfiles.map((profile) => ({
+      socialPlatform: profile.platform,
+      url: profile.url,
+      websiteKind: 'social' as const,
+    })),
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const websiteResult = await upsertDiscoveryWebsite({
+        collections,
+        runId: input.runId,
+        socialPlatform: candidate.socialPlatform,
+        url: candidate.url,
+        websiteKind: candidate.websiteKind,
+      });
+      const linkResult = await upsertDiscoveryWebsiteLink({
+        collections,
+        organization: input.organization,
+        runId: input.runId,
+        website: websiteResult.document,
+      });
+      linked.push({
+        id: websiteResult.document.id,
+        linkId: linkResult.linkId,
+        ...(candidate.socialPlatform ? { socialPlatform: candidate.socialPlatform } : {}),
+        status: websiteResult.status === 'created' ? 'created' : linkResult.status,
+        url: websiteResult.document.normalizedUrl ?? websiteResult.document.url,
+        websiteKind: candidate.websiteKind,
+      });
+    } catch (error) {
+      skipped.push({
+        reason: error instanceof Error ? error.message : String(error),
+        url: candidate.url,
+      });
+    }
+  }
+
+  return { linked, skipped };
 };
 
 const buildWebsiteSearchFilter = (query: string): Filter<MongoFilemakerWebsiteDocument> => {

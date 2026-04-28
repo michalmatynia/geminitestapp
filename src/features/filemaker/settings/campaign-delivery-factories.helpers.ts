@@ -22,7 +22,7 @@ const resolveDeliveryId = (input: Partial<FilemakerEmailCampaignDelivery>): stri
   return `filemaker-email-campaign-delivery-${token !== '' ? token : 'entry'}`;
 };
 
-const resolveDeliveryStatus = (status: string): FilemakerEmailCampaignDelivery['status'] => {
+const resolveDeliveryStatus = (status: unknown): FilemakerEmailCampaignDelivery['status'] => {
   const normalized = normalizeString(status).toLowerCase();
   const valid = ['queued', 'sent', 'failed', 'skipped', 'bounced'];
   if (valid.includes(normalized)) return normalized as FilemakerEmailCampaignDelivery['status'];
@@ -30,7 +30,7 @@ const resolveDeliveryStatus = (status: string): FilemakerEmailCampaignDelivery['
 };
 
 const resolveDeliveryProvider = (
-  provider: string | undefined
+  provider: unknown
 ): FilemakerEmailCampaignDelivery['provider'] => {
   const normalized = normalizeString(provider).toLowerCase();
   if (normalized === 'webhook' || normalized === 'smtp') {
@@ -40,7 +40,7 @@ const resolveDeliveryProvider = (
 };
 
 const resolveFailureCategory = (
-  category: string | undefined
+  category: unknown
 ): FilemakerEmailCampaignDelivery['failureCategory'] => {
   const normalized = normalizeString(category).toLowerCase();
   const valid = [
@@ -133,7 +133,7 @@ export const createFilemakerEmailCampaignDelivery = (
     emailAddress: normalizeString(input.emailAddress).toLowerCase(),
     partyKind: input.partyKind,
     partyId: normalizeString(input.partyId),
-    status: resolveDeliveryStatus(input.status ?? ''),
+    status: resolveDeliveryStatus(input.status),
     provider: resolveDeliveryProvider(input.provider),
     failureCategory: resolveFailureCategory(input.failureCategory),
     ...contentMetadata,

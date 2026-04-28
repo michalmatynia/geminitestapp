@@ -92,7 +92,10 @@ export function formatStatusLabel(status: KangurDuelStatus, locale: KangurMobile
 }
 
 export function formatLobbyChatSenderLabel(message: KangurDuelLobbyChatMessage, activeLearnerId: string | null, locale: KangurMobileLocale): string {
-  return message.senderId === activeLearnerId ? Formatters.localizeDuelText({ de: 'Du', en: 'You', pl: 'Ty' }, locale) : message.senderName;
+  if (message.senderId === activeLearnerId) {
+    return Formatters.localizeDuelText({ de: 'Du', en: 'You', pl: 'Ty' }, locale);
+  }
+  return message.senderName;
 }
 
 export const {

@@ -1,5 +1,6 @@
 import type { PlaywrightActionBlockConfig } from '@/shared/contracts/playwright-steps';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from './supplier-1688-runtime-constants';
+import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from './filemaker-organization-presence-runtime-constants';
 
 export const STEP_REGISTRY = {
   // Browser lifecycle
@@ -93,6 +94,32 @@ export const STEP_REGISTRY = {
   [SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize]: {
     id: SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS.finalize,
     label: 'Finalize 1688 probe result',
+  },
+
+  // FileMaker organisation website/social discovery
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.inputValidate]: {
+    id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.inputValidate,
+    label: 'Validate FileMaker organisation input',
+  },
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.searchWeb]: {
+    id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.searchWeb,
+    label: 'Search for organisation website',
+  },
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.collectCandidates]: {
+    id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.collectCandidates,
+    label: 'Collect organisation website candidates',
+  },
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.probeWebsites]: {
+    id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.probeWebsites,
+    label: 'Probe organisation websites',
+  },
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.extractSocialProfiles]: {
+    id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.extractSocialProfiles,
+    label: 'Extract organisation social profiles',
+  },
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.finalize]: {
+    id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.finalize,
+    label: 'Finalize organisation website discovery',
   },
 
   // Product scan shared / Amazon runtime flow

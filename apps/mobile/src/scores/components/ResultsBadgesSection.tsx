@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
 import { Card, KangurMobileSummaryChip, LinkButton } from '../../shared/KangurMobileUi';
-import { ResultsBadgeChip } from './results-primitives';
+import { ResultsBadgeChip } from '../results-primitives';
 
 interface ResultsBadgesSectionProps {
   resultsBadges: {

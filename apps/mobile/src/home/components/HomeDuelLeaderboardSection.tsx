@@ -46,7 +46,7 @@ function ErrorContent({
           pl: 'Odśwież ranking',
         })}
         onPress={() => {
-          void onRefresh();
+          onRefresh();
         }}
       />
     </View>

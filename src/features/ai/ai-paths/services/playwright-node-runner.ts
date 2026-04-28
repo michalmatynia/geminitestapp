@@ -43,6 +43,10 @@ import {
   executeSupplier1688ProbeScanRuntime,
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
 } from './playwright-node-runner.supplier-1688-runtime';
+import {
+  executeFilemakerOrganizationPresenceScrapeRuntime,
+  FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+} from './playwright-node-runner.filemaker-runtime';
 export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
 import type {
@@ -1831,6 +1835,9 @@ const executePlaywrightNodeRun = async (
     const isSupplier1688RuntimeRequest =
       isPlaywrightNodeRuntimeRunRequest(request) &&
       request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY;
+    const isFilemakerOrganizationPresenceRuntimeRequest =
+      isPlaywrightNodeRuntimeRunRequest(request) &&
+      request.runtimeKey === FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY;
     const isAmazonReverseImageScanRuntimeRequest =
       isPlaywrightNodeRuntimeRunRequest(request) &&
       (
@@ -1862,6 +1869,14 @@ const executePlaywrightNodeRun = async (
             helpers: userContext.helpers,
           });
         }
+        if (isFilemakerOrganizationPresenceRuntimeRequest) {
+          return executeFilemakerOrganizationPresenceScrapeRuntime({
+            page,
+            input: request.input ?? {},
+            emit: userContext.emit,
+            log: userContext.log,
+          });
+        }
         if (isPlaywrightNodeRuntimeRunRequest(request)) {
           throw new Error(`Unsupported Playwright runtime request: ${request.runtimeKey}`);
         }
@@ -1870,9 +1885,11 @@ const executePlaywrightNodeRun = async (
       timeoutMs,
       isSupplier1688RuntimeRequest
         ? '1688 supplier probe runtime timed out.'
-        : isAmazonReverseImageScanRuntimeRequest
-          ? 'Amazon reverse-image runtime timed out.'
-          : 'Playwright script timed out.'
+        : isFilemakerOrganizationPresenceRuntimeRequest
+          ? 'FileMaker organisation discovery runtime timed out.'
+          : isAmazonReverseImageScanRuntimeRequest
+            ? 'Amazon reverse-image runtime timed out.'
+            : 'Playwright script timed out.'
     );
 
     await captureFinalRunArtifacts({

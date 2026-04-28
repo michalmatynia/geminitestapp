@@ -28,6 +28,60 @@ const resolveWebsiteHref = (url: string): string | null => {
   }
 };
 
+function FilemakerLinkedWebsiteCard({
+  website,
+}: {
+  website: MongoFilemakerWebsite;
+}): React.JSX.Element {
+  const href = resolveWebsiteHref(website.url);
+  return (
+    <Card key={website.id} variant='subtle-compact' className='bg-card/20'>
+      <div className='flex items-start justify-between gap-3 p-3'>
+        <div className='flex min-w-0 gap-2'>
+          <Globe className='mt-0.5 size-3.5 shrink-0 text-cyan-300' />
+          <div className='min-w-0'>
+            <div className='truncate text-sm font-semibold text-white'>{website.url}</div>
+            <div className='truncate text-xs text-gray-300'>
+              {formatOptionalValue(website.host)}
+            </div>
+            <div className='truncate text-[10px] text-gray-600'>
+              Legacy UUID: {formatOptionalValue(website.legacyUuid)} | Updated:{' '}
+              {formatTimestamp(website.updatedAt)}
+            </div>
+          </div>
+        </div>
+        <div className='flex shrink-0 items-center gap-2'>
+          {website.websiteKind === 'social' ? (
+            <Badge variant='outline' className='h-5 text-[10px]'>
+              {website.socialPlatform ?? 'social'}
+            </Badge>
+          ) : null}
+          {website.legacyTypeRaw !== undefined ? (
+            <Badge variant='outline' className='h-5 text-[10px]'>
+              {website.legacyTypeRaw}
+            </Badge>
+          ) : null}
+          <Button
+            type='button'
+            variant='outline'
+            size='icon'
+            className='size-7'
+            aria-label={`Open website ${website.url}`}
+            title={`Open website ${website.url}`}
+            disabled={href === null}
+            onClick={(): void => {
+              if (href === null) return;
+              window.open(href, '_blank', 'noopener,noreferrer');
+            }}
+          >
+            <ExternalLink className='size-3.5' />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export function FilemakerLinkedWebsitesSection({
   websites,
 }: FilemakerLinkedWebsitesSectionProps): React.JSX.Element {
@@ -37,52 +91,9 @@ export function FilemakerLinkedWebsitesSection({
         <div className='text-xs text-gray-500'>No websites linked yet.</div>
       ) : (
         <div className='grid gap-2 sm:grid-cols-2'>
-          {websites.map((website: MongoFilemakerWebsite) => {
-            const href = resolveWebsiteHref(website.url);
-            return (
-              <Card key={website.id} variant='subtle-compact' className='bg-card/20'>
-                <div className='flex items-start justify-between gap-3 p-3'>
-                  <div className='flex min-w-0 gap-2'>
-                    <Globe className='mt-0.5 size-3.5 shrink-0 text-cyan-300' />
-                    <div className='min-w-0'>
-                      <div className='truncate text-sm font-semibold text-white'>
-                        {website.url}
-                      </div>
-                      <div className='truncate text-xs text-gray-300'>
-                        {formatOptionalValue(website.host)}
-                      </div>
-                      <div className='truncate text-[10px] text-gray-600'>
-                        Legacy UUID: {formatOptionalValue(website.legacyUuid)} | Updated:{' '}
-                        {formatTimestamp(website.updatedAt)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className='flex shrink-0 items-center gap-2'>
-                    {website.legacyTypeRaw !== undefined ? (
-                      <Badge variant='outline' className='h-5 text-[10px]'>
-                        {website.legacyTypeRaw}
-                      </Badge>
-                    ) : null}
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='icon'
-                      className='size-7'
-                      aria-label={`Open website ${website.url}`}
-                      title={`Open website ${website.url}`}
-                      disabled={href === null}
-                      onClick={(): void => {
-                        if (href === null) return;
-                        window.open(href, '_blank', 'noopener,noreferrer');
-                      }}
-                    >
-                      <ExternalLink className='size-3.5' />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+          {websites.map((website: MongoFilemakerWebsite) => (
+            <FilemakerLinkedWebsiteCard key={website.id} website={website} />
+          ))}
         </div>
       )}
     </FormSection>

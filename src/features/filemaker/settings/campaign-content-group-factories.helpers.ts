@@ -36,16 +36,27 @@ const normalizeLanguageCode = (input: unknown): string => {
 
 const resolveVariantBody = (
   input: Partial<FilemakerEmailCampaignContentVariant> | undefined
-): { bodyHtml: string | null; bodyBlocks: EmailBlock[] | null } => {
+): {
+  bodyHtml: string | null;
+  bodyBlocks: FilemakerEmailCampaignContentVariant['bodyBlocks'];
+} => {
   const bodyBlocks = normalizeEmailBlocks(
     (input as { bodyBlocks?: unknown } | undefined)?.bodyBlocks
   );
   if (bodyBlocks.length > 0) {
-    return { bodyHtml: compileBlocksToHtml(bodyBlocks), bodyBlocks };
+    return {
+      bodyHtml: compileBlocksToHtml(bodyBlocks),
+      bodyBlocks: toPersistedEmailBlocks(bodyBlocks),
+    };
   }
   const bodyHtml = normalizeString(input?.bodyHtml);
   return { bodyHtml: bodyHtml.length > 0 ? bodyHtml : null, bodyBlocks: null };
 };
+
+const toPersistedEmailBlocks = (
+  blocks: EmailBlock[]
+): NonNullable<FilemakerEmailCampaignContentVariant['bodyBlocks']> =>
+  blocks.map((block: EmailBlock): Record<string, unknown> => ({ ...block }));
 
 export const createFilemakerEmailCampaignContentVariant = (
   input?: Partial<FilemakerEmailCampaignContentVariant> &

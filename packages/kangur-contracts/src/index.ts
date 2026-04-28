@@ -11,3 +11,4 @@ export * from './kangur';
 export * from './kangur-tests';
 export * from './kangur-duels';
 export * from './kangur-duels-chat';
+export * from './kangur-assignments';

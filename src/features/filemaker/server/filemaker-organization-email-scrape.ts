@@ -20,6 +20,10 @@ import {
   type MongoFilemakerEmailLinkDocument,
 } from './filemaker-email-repository';
 import { getMongoFilemakerOrganizationById } from './filemaker-organizations-repository';
+import {
+  runFilemakerOrganizationPresenceScrapeForOrganization,
+  type FilemakerOrganizationPresenceScrapeResult,
+} from './filemaker-organization-presence-scrape';
 import { listMongoFilemakerWebsitesForOrganization } from './filemaker-website-repository';
 
 const EMAIL_SCRAPE_IMPORT_SOURCE_KIND = 'organization-email-scrape';
@@ -50,6 +54,10 @@ export type FilemakerOrganizationEmailScrapeResult = {
   promoted: FilemakerOrganizationEmailScrapePromotedItem[];
   skipped: FilemakerOrganizationEmailScrapeSkippedItem[];
   warnings: string[];
+  websiteDiscovery: Pick<
+    FilemakerOrganizationPresenceScrapeResult,
+    'persisted' | 'runId' | 'socialProfiles' | 'visitedUrls' | 'warnings' | 'websites'
+  > | null;
 };
 
 type ScrapedEmail = {
@@ -240,6 +248,15 @@ const readRunReturnValue = (result: unknown): unknown =>
     ? (result as Record<string, unknown>)['returnValue']
     : null;
 
+const buildOrganizationEmailLinkFilter = (input: {
+  emailId: string;
+  organizationId: string;
+}): Pick<MongoFilemakerEmailLinkDocument, 'emailId' | 'partyId' | 'partyKind'> => ({
+  emailId: input.emailId,
+  partyKind: 'organization',
+  partyId: input.organizationId,
+});
+
 const upsertOrganizationEmails = async (input: {
   organization: FilemakerOrganization;
   runId: string;
@@ -291,11 +308,11 @@ const upsertOrganizationEmails = async (input: {
         }
       }
 
-      const existingLink = await links.findOne({
+      const linkFilter = buildOrganizationEmailLinkFilter({
         emailId,
-        partyKind: 'organization',
-        partyId: input.organization.id,
+        organizationId: input.organization.id,
       });
+      const existingLink = await links.findOne(linkFilter);
       if (existingLink) {
         promoted.push({
           address,
@@ -309,23 +326,36 @@ const upsertOrganizationEmails = async (input: {
 
       const linkId = randomUUID();
       const legacyOrganizationUuid = input.organization.legacyUuid?.trim() ?? '';
-      await links.insertOne({
-        _id: linkId,
-        id: linkId,
-        emailId,
-        organizationId: input.organization.id,
-        partyId: input.organization.id,
-        partyKind: 'organization',
-        legacyEmailAddress: address,
-        ...(legacyOrganizationUuid.length > 0 ? { legacyOrganizationUuid } : {}),
-        legacyOrganizationName: input.organization.name,
-        importBatchId,
-        importedAt: now,
-        importSourceKind: EMAIL_SCRAPE_IMPORT_SOURCE_KIND,
-        schemaVersion: 1,
-        createdAt: nowIso,
-        updatedAt: nowIso,
-      });
+      try {
+        await links.insertOne({
+          _id: linkId,
+          id: linkId,
+          emailId,
+          organizationId: input.organization.id,
+          partyId: input.organization.id,
+          partyKind: 'organization',
+          legacyEmailAddress: address,
+          ...(legacyOrganizationUuid.length > 0 ? { legacyOrganizationUuid } : {}),
+          legacyOrganizationName: input.organization.name,
+          importBatchId,
+          importedAt: now,
+          importSourceKind: EMAIL_SCRAPE_IMPORT_SOURCE_KIND,
+          schemaVersion: 1,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+        });
+      } catch (error) {
+        const racedLink = await links.findOne(linkFilter);
+        if (!racedLink) throw error;
+        promoted.push({
+          address,
+          emailId,
+          linkId: racedLink.id,
+          sourceUrls: scrapedEmail.sourceUrls,
+          status: 'already-linked',
+        });
+        continue;
+      }
       promoted.push({
         address,
         emailId,
@@ -361,6 +391,31 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
     });
   }
 
+  const initialLinkedWebsites = await listMongoFilemakerWebsitesForOrganization(organization);
+  let websiteDiscovery: FilemakerOrganizationEmailScrapeResult['websiteDiscovery'] = null;
+  let discoveryWarnings: string[] = [];
+  try {
+    const discovery = await runFilemakerOrganizationPresenceScrapeForOrganization({
+      existingWebsites: initialLinkedWebsites,
+      maxPages: 6,
+      maxSearchResults: 8,
+      organization,
+    });
+    websiteDiscovery = {
+      persisted: discovery.persisted,
+      runId: discovery.runId,
+      socialProfiles: discovery.socialProfiles,
+      visitedUrls: discovery.visitedUrls,
+      warnings: discovery.warnings,
+      websites: discovery.websites,
+    };
+    discoveryWarnings = discovery.warnings.map((warning) => `Website discovery: ${warning}`);
+  } catch (error) {
+    discoveryWarnings = [
+      `Website discovery failed: ${error instanceof Error ? error.message : String(error)}`,
+    ];
+  }
+
   const linkedWebsites = await listMongoFilemakerWebsitesForOrganization(organization);
   const websites = uniqueStrings(
     linkedWebsites
@@ -378,7 +433,8 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
       visitedUrls: [],
       promoted: [],
       skipped: [{ address: '*', reason: 'No linked organisation websites to scrape.' }],
-      warnings: [],
+      warnings: discoveryWarnings,
+      websiteDiscovery,
     };
   }
 
@@ -426,7 +482,8 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
       visitedUrls: [],
       promoted: [],
       skipped: [{ address: '*', reason: run.error ?? `Scrape run status=${run.status}` }],
-      warnings: run.logs,
+      warnings: [...discoveryWarnings, ...normalizeStringArray(run.logs)],
+      websiteDiscovery,
     };
   }
 
@@ -446,6 +503,7 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
     visitedUrls: parsed.visitedUrls,
     promoted: upsert.promoted,
     skipped: upsert.skipped,
-    warnings: parsed.warnings,
+    warnings: [...discoveryWarnings, ...parsed.warnings],
+    websiteDiscovery,
   };
 };

@@ -26,22 +26,11 @@ export {
   parseFilemakerLegacyValueRows,
 } from './filemaker-values-import';
 export { importFilemakerLegacyValuesWorkbook } from './filemaker-values-import.workbook';
-export {
-  importFilemakerLegacyOrganiserRows,
-  importFilemakerLegacyOrganisersExport,
-  parseFilemakerLegacyOrganiserRows,
-} from './filemaker-organisers-import';
-export { importFilemakerLegacyOrganisersWorkbook } from './filemaker-organisers-import.workbook';
 export type {
   FilemakerLegacyValueImportIdKind,
   FilemakerLegacyValueImportOptions,
   FilemakerLegacyValuesImportResult,
 } from './filemaker-values-import';
-export type {
-  FilemakerLegacyOrganiserImportIdKind,
-  FilemakerLegacyOrganiserImportOptions,
-  FilemakerLegacyOrganisersImportResult,
-} from './filemaker-organisers-import';
 export {
   extractFilemakerEmailsFromText,
   parseFilemakerEmailParserRulesFromPromptSettings,

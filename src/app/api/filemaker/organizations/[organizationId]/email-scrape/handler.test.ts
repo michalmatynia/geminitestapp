@@ -67,4 +67,37 @@ describe('filemaker organization email scrape handler', () => {
       )
     ).rejects.toThrow(/Invalid email scrape request/);
   });
+
+  it('allows an empty JSON body and uses default scrape options', async () => {
+    const response = await postHandler(
+      new NextRequest('http://localhost/api/filemaker/organizations/org-1/email-scrape', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '',
+      }),
+      { params: { organizationId: 'org-1' } } as Parameters<typeof postHandler>[1]
+    );
+
+    expect(runFilemakerOrganizationEmailScrapeMock).toHaveBeenCalledWith({
+      organizationId: 'org-1',
+      maxPages: undefined,
+    });
+    await expect(response.json()).resolves.toMatchObject({
+      runId: 'run-1',
+    });
+  });
+
+  it('rejects malformed JSON bodies', async () => {
+    await expect(
+      postHandler(
+        new NextRequest('http://localhost/api/filemaker/organizations/org-1/email-scrape', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: '{"maxPages":',
+        }),
+        { params: { organizationId: 'org-1' } } as Parameters<typeof postHandler>[1]
+      )
+    ).rejects.toThrow(/Invalid email scrape request JSON/);
+    expect(runFilemakerOrganizationEmailScrapeMock).not.toHaveBeenCalled();
+  });
 });

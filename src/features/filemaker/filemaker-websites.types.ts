@@ -8,9 +8,11 @@ export type MongoFilemakerWebsite = {
   legacyUuid?: string;
   legacyUuids: string[];
   normalizedUrl?: string;
+  socialPlatform?: string;
   updatedAt?: string;
   updatedBy?: string;
   url: string;
+  websiteKind?: 'official' | 'social' | 'other';
 };
 
 export type MongoFilemakerWebsiteLink = {

@@ -1,6 +1,6 @@
 import { View, Text } from 'react-native';
 import { Card } from '../../shared/KangurMobileUi';
-import { ResultsAssignmentRow } from './results-primitives';
+import { ResultsAssignmentRow } from './ResultsAssignmentRow';
 
 interface ResultsAssignmentsSectionProps {
   assignmentItems: { assignment: { id: string } }[];

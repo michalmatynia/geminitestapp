@@ -5,7 +5,7 @@ import type {
   KangurAiTutorConversationContext,
 } from '../../../../src/shared/contracts/kangur-ai-tutor';
 import type { KangurAiTutorNativeGuideEntry } from '../../../../src/shared/contracts/kangur-ai-tutor-native-guide';
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 import { StatusPill } from '../shared/KangurAssessmentUi';
 import {
   KangurMobileActionButton,

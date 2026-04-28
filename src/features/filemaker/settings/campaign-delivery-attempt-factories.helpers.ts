@@ -14,7 +14,7 @@ import {
 } from './campaign-factory-utils.helpers';
 
 const resolveDeliveryProvider = (
-  provider: string | undefined
+  provider: unknown
 ): FilemakerEmailCampaignDelivery['provider'] => {
   const normalized = normalizeString(provider).toLowerCase();
   if (normalized === 'webhook' || normalized === 'smtp') {
@@ -24,7 +24,7 @@ const resolveDeliveryProvider = (
 };
 
 const resolveFailureCategory = (
-  category: string | undefined
+  category: unknown
 ): FilemakerEmailCampaignDelivery['failureCategory'] => {
   const normalized = normalizeString(category).toLowerCase();
   const valid = [
@@ -51,7 +51,7 @@ const resolveAttemptId = (input: Partial<FilemakerEmailCampaignDeliveryAttempt>)
 };
 
 const resolveAttemptStatus = (
-  status: string | undefined
+  status: unknown
 ): FilemakerEmailCampaignDeliveryAttempt['status'] => {
   const normalized = normalizeString(status).toLowerCase();
   const valid = ['sent', 'failed', 'bounced'];

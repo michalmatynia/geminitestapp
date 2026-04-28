@@ -30,7 +30,7 @@ const resolveEventId = (input: Partial<FilemakerEmailCampaignEvent>): string => 
   return `filemaker-email-campaign-event-${token !== '' ? token : 'entry'}`;
 };
 
-const resolveEventRunStatus = (status: string | undefined): FilemakerEmailCampaignRunStatus | null => {
+const resolveEventRunStatus = (status: unknown): FilemakerEmailCampaignRunStatus | null => {
   const normalized = normalizeString(status).toLowerCase();
   const valid = ['pending', 'queued', 'running', 'completed', 'failed', 'cancelled'];
   if (valid.includes(normalized)) return normalized as FilemakerEmailCampaignRunStatus;
@@ -38,7 +38,7 @@ const resolveEventRunStatus = (status: string | undefined): FilemakerEmailCampai
 };
 
 const resolveEventDeliveryStatus = (
-  status: string | undefined
+  status: unknown
 ): FilemakerEmailCampaignDeliveryStatus | null => {
   const normalized = normalizeString(status).toLowerCase();
   const valid = ['queued', 'sent', 'failed', 'skipped', 'bounced'];

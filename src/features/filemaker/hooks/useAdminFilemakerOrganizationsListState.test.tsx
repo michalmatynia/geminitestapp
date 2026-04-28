@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   buildFilemakerNavActionsMock: vi.fn(),
@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => ({
   parseFilemakerDatabaseMock: vi.fn(),
   pushMock: vi.fn(),
   toastMock: vi.fn(),
-  useFilemakerOrganiserImportActionMock: vi.fn(),
   withCsrfHeadersMock: vi.fn(),
 }));
 
@@ -56,11 +55,6 @@ vi.mock('../settings', () => ({
   getFilemakerJobListingsForOrganization: (...args: unknown[]) =>
     mocks.getFilemakerJobListingsForOrganizationMock(...args),
   parseFilemakerDatabase: (...args: unknown[]) => mocks.parseFilemakerDatabaseMock(...args),
-}));
-
-vi.mock('./useFilemakerOrganiserImportAction', () => ({
-  useFilemakerOrganiserImportAction: (...args: unknown[]) =>
-    mocks.useFilemakerOrganiserImportActionMock(...args),
 }));
 
 import { useAdminFilemakerOrganizationsListState } from './useAdminFilemakerOrganizationsListState';
@@ -110,7 +104,45 @@ const scrapeResponse = {
   skipped: [{ reason: 'Duplicate' }],
 };
 
+const emptyScrapeResponse = {
+  organizationId: 'org-1',
+  organizationName: 'Acme Inc',
+  promoted: [],
+  runId: 'run-1',
+  skipped: [],
+};
+
+const discoveryOnlyScrapeResponse = {
+  ...emptyScrapeResponse,
+  websiteDiscovery: {
+    persisted: {
+      linked: [{ url: 'https://acme.example/' }],
+    },
+  },
+};
+
+const createDeferred = <T,>(): {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+} => {
+  let resolvePromise: ((value: T) => void) | null = null;
+  const promise = new Promise<T>((resolve) => {
+    resolvePromise = resolve;
+  });
+  return {
+    promise,
+    resolve: (value: T): void => {
+      if (resolvePromise === null) throw new Error('Deferred promise is not initialized.');
+      resolvePromise(value);
+    },
+  };
+};
+
 describe('useAdminFilemakerOrganizationsListState', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.buildFilemakerNavActionsMock.mockReturnValue([]);
@@ -118,10 +150,6 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     mocks.getFilemakerEventsForOrganizationMock.mockReturnValue([]);
     mocks.getFilemakerJobListingsForOrganizationMock.mockReturnValue([]);
     mocks.parseFilemakerDatabaseMock.mockReturnValue({ events: [], jobListings: [] });
-    mocks.useFilemakerOrganiserImportActionMock.mockReturnValue({
-      importActions: [],
-      isImporting: false,
-    });
     mocks.withCsrfHeadersMock.mockImplementation((headers?: HeadersInit) => ({
       ...(headers as Record<string, string> | undefined),
       'x-csrf-token': 'csrf-token',
@@ -172,7 +200,123 @@ describe('useAdminFilemakerOrganizationsListState', () => {
       'Email scrape finished: 1 created, 1 linked, 1 already linked, 1 skipped.',
       { variant: 'success' }
     );
+  });
 
-    vi.unstubAllGlobals();
+  it('warns when the scrape finds no email addresses', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      if (url === '/api/filemaker/organizations/org-1/email-scrape') {
+        return Response.json(emptyScrapeResponse);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onLaunchOrganizationEmailScrape('org-1');
+    });
+
+    await waitFor(() => expect(result.current.organizationEmailScrapeState).toEqual({}));
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Email scrape finished: no email addresses found.',
+      { variant: 'warning' }
+    );
+  });
+
+  it('reports website and social discovery updates from the email scrape flow', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      if (url === '/api/filemaker/organizations/org-1/email-scrape') {
+        return Response.json(discoveryOnlyScrapeResponse);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onLaunchOrganizationEmailScrape('org-1');
+    });
+
+    await waitFor(() => expect(result.current.organizationEmailScrapeState).toEqual({}));
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Email scrape finished: no email addresses found. 1 website/social link updated.',
+      { variant: 'success' }
+    );
+  });
+
+  it('surfaces API error messages from failed scrape requests', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      if (url === '/api/filemaker/organizations/org-1/email-scrape') {
+        return Response.json({ message: 'Admin access required.' }, { status: 403 });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onLaunchOrganizationEmailScrape('org-1');
+    });
+
+    await waitFor(() => expect(result.current.organizationEmailScrapeState).toEqual({}));
+    expect(mocks.toastMock).toHaveBeenCalledWith('Admin access required.', {
+      variant: 'error',
+    });
+  });
+
+  it('ignores duplicate scrape launches while the organization scrape is in flight', async () => {
+    const scrapeDeferred = createDeferred<Response>();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      if (url === '/api/filemaker/organizations/org-1/email-scrape') {
+        return await scrapeDeferred.promise;
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onLaunchOrganizationEmailScrape('org-1');
+      result.current.onLaunchOrganizationEmailScrape('org-1');
+    });
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.filter(
+          ([input]) => String(input) === '/api/filemaker/organizations/org-1/email-scrape'
+        )
+      ).toHaveLength(1);
+    });
+
+    scrapeDeferred.resolve(Response.json(scrapeResponse));
+    await waitFor(() => expect(result.current.organizationEmailScrapeState).toEqual({}));
   });
 });

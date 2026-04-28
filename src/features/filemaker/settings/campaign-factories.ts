@@ -115,16 +115,24 @@ const resolveCampaignStatus = (status: string): FilemakerEmailCampaign['status']
 
 const resolveCampaignBody = (
   input: Partial<FilemakerEmailCampaign> | undefined
-): { bodyHtml: string | null; bodyBlocks: EmailBlock[] | null } => {
+): { bodyHtml: string | null; bodyBlocks: FilemakerEmailCampaign['bodyBlocks'] } => {
   const bodyBlocks = normalizeEmailBlocks(
     (input as { bodyBlocks?: unknown } | undefined)?.bodyBlocks
   );
   if (bodyBlocks.length > 0) {
-    return { bodyHtml: compileBlocksToHtml(bodyBlocks), bodyBlocks };
+    return {
+      bodyHtml: compileBlocksToHtml(bodyBlocks),
+      bodyBlocks: toPersistedEmailBlocks(bodyBlocks),
+    };
   }
   const bodyHtml = normalizeString(input?.bodyHtml);
   return { bodyHtml: bodyHtml.length > 0 ? bodyHtml : null, bodyBlocks: null };
 };
+
+const toPersistedEmailBlocks = (
+  blocks: EmailBlock[]
+): NonNullable<FilemakerEmailCampaign['bodyBlocks']> =>
+  blocks.map((block: EmailBlock): Record<string, unknown> => ({ ...block }));
 
 const resolveCampaignId = (input: Partial<FilemakerEmailCampaign>, name: string): string => {
   const id = normalizeString(input.id);

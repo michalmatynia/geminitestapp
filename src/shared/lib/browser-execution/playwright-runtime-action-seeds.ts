@@ -15,6 +15,10 @@ import {
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_NAME,
 } from './amazon-runtime-constants';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY } from './supplier-1688-runtime-constants';
+import {
+  FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
+  FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_NAME,
+} from './filemaker-organization-presence-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
   description: string;
@@ -84,6 +88,11 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
   [SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY]: {
     name: '1688 Supplier Probe Scan',
     description: 'Default 1688 supplier reverse-image probe scan flow.',
+  },
+  [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY]: {
+    name: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_NAME,
+    description:
+      'Finds organisation websites and social profiles, then feeds those URLs into downstream FileMaker email scraping.',
   },
   vinted_list: {
     name: 'Vinted List',

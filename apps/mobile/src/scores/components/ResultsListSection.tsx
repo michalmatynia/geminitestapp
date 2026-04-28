@@ -1,10 +1,10 @@
 import { View, Text } from 'react-native';
 import { Card, KangurMobileActionButton as ActionButton, KangurMobileFilterChip, KangurMobileInsetPanel as InsetPanel, KangurMobileLinkButton as LinkButton, KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
-import { formatKangurMobileScoreOperation, formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
+import { formatKangurMobileScoreOperation, formatKangurMobileScoreDateTime } from '../mobileScoreSummary';
 import { getAccuracyTone } from '../results-primitives';
-import { createKangurPracticeHref } from '../practice/practiceHref';
-import { createKangurResultsHref } from './resultsHref';
-import { createKangurLessonHrefForPracticeOperation } from '../lessons/lessonHref';
+import { createKangurPracticeHref } from '../../practice/practiceHref';
+import { createKangurResultsHref } from '../resultsHref';
+import { createKangurLessonHrefForPracticeOperation } from '../../lessons/lessonHref';
 import type { KangurScore } from '@kangur/contracts/kangur';
 import type { KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 

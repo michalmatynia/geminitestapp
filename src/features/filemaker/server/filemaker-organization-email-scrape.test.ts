@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   getMongoFilemakerEmailCollectionsMock: vi.fn(),
   getMongoFilemakerOrganizationByIdMock: vi.fn(),
   listMongoFilemakerWebsitesForOrganizationMock: vi.fn(),
+  runFilemakerOrganizationPresenceScrapeForOrganizationMock: vi.fn(),
   runPlaywrightEngineTaskMock: vi.fn(),
 }));
 
@@ -41,6 +42,11 @@ vi.mock('./filemaker-email-repository', () => ({
 
 vi.mock('./filemaker-organizations-repository', () => ({
   getMongoFilemakerOrganizationById: mocks.getMongoFilemakerOrganizationByIdMock,
+}));
+
+vi.mock('./filemaker-organization-presence-scrape', () => ({
+  runFilemakerOrganizationPresenceScrapeForOrganization: (...args: unknown[]) =>
+    mocks.runFilemakerOrganizationPresenceScrapeForOrganizationMock(...args),
 }));
 
 vi.mock('./filemaker-website-repository', () => ({
@@ -107,6 +113,16 @@ describe('runFilemakerOrganizationEmailScrape', () => {
         url: 'acme.example',
       },
     ]);
+    mocks.runFilemakerOrganizationPresenceScrapeForOrganizationMock.mockResolvedValue({
+      organizationId: 'org-1',
+      organizationName: 'Acme Sp. z o.o.',
+      persisted: { linked: [], skipped: [] },
+      runId: 'presence-run-1',
+      socialProfiles: [],
+      visitedUrls: [],
+      warnings: [],
+      websites: [],
+    });
     mocks.runPlaywrightEngineTaskMock.mockResolvedValue({
       artifacts: [],
       error: null,
@@ -128,7 +144,7 @@ describe('runFilemakerOrganizationEmailScrape', () => {
     });
   });
 
-  it('skips Playwright when the organization has no linked website to scrape', async () => {
+  it('skips email Playwright when discovery still leaves no linked website to scrape', async () => {
     mocks.listMongoFilemakerWebsitesForOrganizationMock.mockResolvedValue([]);
 
     const result = await runFilemakerOrganizationEmailScrape({
@@ -142,9 +158,48 @@ describe('runFilemakerOrganizationEmailScrape', () => {
       runtimeKey: 'filemaker_organization_email_scrape',
       skipped: [{ address: '*', reason: 'No linked organisation websites to scrape.' }],
       websites: [],
+      websiteDiscovery: expect.objectContaining({ runId: 'presence-run-1' }),
     });
+    expect(mocks.runFilemakerOrganizationPresenceScrapeForOrganizationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        existingWebsites: [],
+        organization,
+      })
+    );
     expect(mocks.runPlaywrightEngineTaskMock).not.toHaveBeenCalled();
     expect(mocks.getMongoFilemakerEmailCollectionsMock).not.toHaveBeenCalled();
+  });
+
+  it('uses discovered organization websites to enhance the email scrape', async () => {
+    mocks.listMongoFilemakerWebsitesForOrganizationMock
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([
+        {
+          id: 'website-discovered',
+          normalizedUrl: 'https://discovered.example/',
+          url: 'https://discovered.example/',
+        },
+      ]);
+    const collections = createMockEmailCollections();
+    const db = createMockDb(collections);
+    mocks.getMongoFilemakerEmailCollectionsMock.mockResolvedValue(collections);
+    mocks.getMongoDbMock.mockResolvedValue(db);
+
+    await runFilemakerOrganizationEmailScrape({
+      organizationId: 'org-1',
+    });
+
+    expect(mocks.runFilemakerOrganizationPresenceScrapeForOrganizationMock).toHaveBeenCalled();
+    expect(mocks.runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        request: expect.objectContaining({
+          input: expect.objectContaining({
+            websites: ['https://discovered.example/'],
+          }),
+          startUrl: 'https://discovered.example/',
+        }),
+      })
+    );
   });
 
   it('promotes scraped emails into email and organization-link collections', async () => {
@@ -221,6 +276,133 @@ describe('runFilemakerOrganizationEmailScrape', () => {
         emailId: insertedEmail?.['id'],
         sourceUrls: ['https://acme.example/contact'],
         status: 'created',
+      }),
+    ]);
+  });
+
+  it('returns a skipped result without touching email collections when Playwright fails', async () => {
+    mocks.runPlaywrightEngineTaskMock.mockResolvedValue({
+      artifacts: [],
+      error: 'Navigation timeout',
+      logs: ['page.goto timed out'],
+      result: null,
+      runId: 'run-failed',
+      status: 'failed',
+    });
+
+    const result = await runFilemakerOrganizationEmailScrape({
+      organizationId: 'org-1',
+    });
+
+    expect(result).toMatchObject({
+      organizationId: 'org-1',
+      organizationName: 'Acme Sp. z o.o.',
+      promoted: [],
+      runId: 'run-failed',
+      skipped: [{ address: '*', reason: 'Navigation timeout' }],
+      warnings: ['page.goto timed out'],
+      websites: ['https://acme.example/'],
+    });
+    expect(mocks.getMongoFilemakerEmailCollectionsMock).not.toHaveBeenCalled();
+    expect(mocks.ensureMongoFilemakerEmailIndexesMock).not.toHaveBeenCalled();
+  });
+
+  it('links an existing email without recreating it', async () => {
+    const collections = createMockEmailCollections();
+    const db = createMockDb(collections);
+    collections.emails.findOne.mockResolvedValue({
+      id: 'email-existing',
+      email: 'info@acme.example',
+    });
+    mocks.getMongoFilemakerEmailCollectionsMock.mockResolvedValue(collections);
+    mocks.getMongoDbMock.mockResolvedValue(db);
+
+    const result = await runFilemakerOrganizationEmailScrape({
+      organizationId: 'org-1',
+    });
+
+    expect(collections.emails.insertOne).not.toHaveBeenCalled();
+    expect(collections.links.insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailId: 'email-existing',
+        legacyEmailAddress: 'info@acme.example',
+        organizationId: 'org-1',
+        partyId: 'org-1',
+      })
+    );
+    expect(result.promoted).toEqual([
+      expect.objectContaining({
+        address: 'info@acme.example',
+        emailId: 'email-existing',
+        status: 'linked',
+      }),
+    ]);
+  });
+
+  it('reports already-linked emails without writing a duplicate link', async () => {
+    const collections = createMockEmailCollections();
+    const db = createMockDb(collections);
+    collections.emails.findOne.mockResolvedValue({
+      id: 'email-existing',
+      email: 'info@acme.example',
+    });
+    collections.links.findOne.mockResolvedValue({
+      id: 'link-existing',
+      emailId: 'email-existing',
+      partyId: 'org-1',
+      partyKind: 'organization',
+    });
+    mocks.getMongoFilemakerEmailCollectionsMock.mockResolvedValue(collections);
+    mocks.getMongoDbMock.mockResolvedValue(db);
+
+    const result = await runFilemakerOrganizationEmailScrape({
+      organizationId: 'org-1',
+    });
+
+    expect(collections.emails.insertOne).not.toHaveBeenCalled();
+    expect(collections.links.insertOne).not.toHaveBeenCalled();
+    expect(result.promoted).toEqual([
+      expect.objectContaining({
+        address: 'info@acme.example',
+        emailId: 'email-existing',
+        linkId: 'link-existing',
+        status: 'already-linked',
+      }),
+    ]);
+  });
+
+  it('treats raced link inserts as already linked', async () => {
+    const collections = createMockEmailCollections();
+    const db = createMockDb(collections);
+    collections.emails.findOne.mockResolvedValue({
+      id: 'email-existing',
+      email: 'info@acme.example',
+    });
+    collections.links.findOne
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({
+        id: 'link-raced',
+        emailId: 'email-existing',
+        partyId: 'org-1',
+        partyKind: 'organization',
+      });
+    collections.links.insertOne.mockRejectedValue(new Error('duplicate key'));
+    mocks.getMongoFilemakerEmailCollectionsMock.mockResolvedValue(collections);
+    mocks.getMongoDbMock.mockResolvedValue(db);
+
+    const result = await runFilemakerOrganizationEmailScrape({
+      organizationId: 'org-1',
+    });
+
+    expect(collections.links.insertOne).toHaveBeenCalledTimes(1);
+    expect(mocks.captureExceptionMock).not.toHaveBeenCalled();
+    expect(result.skipped).toEqual([]);
+    expect(result.promoted).toEqual([
+      expect.objectContaining({
+        address: 'info@acme.example',
+        emailId: 'email-existing',
+        linkId: 'link-raced',
+        status: 'already-linked',
       }),
     ]);
   });

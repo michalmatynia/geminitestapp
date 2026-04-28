@@ -1,4 +1,437 @@
-
-> libapp2@0.1.0 typecheck
-> tsc --noEmit --incremental false --incremental false
-
+apps/mobile/app.config.ts(2,40): error TS5097: An import path can only end with a '.ts' extension when 'allowImportingTsExtensions' is enabled.
+apps/mobile/src/ai-tutor/KangurMobileAiTutorCard.test.tsx(79,32): error TS2322: Type '{ readonly contentId: "lesson:test"; readonly focusId: "focus-id"; readonly focusKind: "lesson"; readonly surface: "lesson"; readonly title: "Test lesson"; }' is not assignable to type '{ surface: "game" | "lesson" | "test" | "profile" | "parent_dashboard" | "auth"; contentId?: string | undefined; title?: string | undefined; description?: string | undefined; masterySummary?: string | undefined; ... 18 more ...; previousCoachingMode?: "hint_ladder" | ... 3 more ... | undefined; }'.
+  Types of property 'focusKind' are incompatible.
+    Type '"lesson"' is not assignable to type '"selection" | "hero" | "screen" | "library" | "empty_state" | "navigation" | "lesson_header" | "assignment" | "document" | "home_actions" | "home_quest" | "priority_assignments" | ... 9 more ... | undefined'.
+apps/mobile/src/ai-tutor/KangurMobileAiTutorCard.tsx(48,13): error TS2304: Cannot find name 'KangurMobileLocalizedValue'.
+apps/mobile/src/ai-tutor/KangurMobileAiTutorCard.tsx(91,13): error TS2304: Cannot find name 'KangurMobileLocalizedValue'.
+apps/mobile/src/boot/useKangurAppStartup.ts(60,62): error TS2339: Property 'length' does not exist on type 'KangurMobileOperationPerformance'.
+apps/mobile/src/boot/useKangurAppStartup.ts(61,58): error TS2339: Property 'length' does not exist on type 'KangurMobileOperationPerformance'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(38,36): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(76,11): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(81,11): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(86,11): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(105,41): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(116,47): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(117,52): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(118,44): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string'.
+  Type 'null' is not assignable to type 'string'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(152,31): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/competition/CompetitionScreenSections.tsx(161,45): error TS2345: Argument of type 'string' is not assignable to parameter of type '"3" | "4" | "5" | "mixed"'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(43,106): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(79,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(90,11): error TS2741: Property 'questions' is missing in type 'ModeItem' but required in type 'KangurMobileCompetitionModeItem'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(154,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(165,17): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }' is not assignable to type 'string'.
+  Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(165,37): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }' is not assignable to type 'string'.
+  Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/competition/KangurCompetitionScreen.tsx(165,61): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }' is not assignable to type 'string'.
+  Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/duels/components/DetailsBody.tsx(27,21): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/duels/components/DetailsBody.tsx(27,33): error TS2322: Type 'UseKangurMobileDuelSessionResult' is not assignable to type 'DuelContext'.
+  Types of property 'session' are incompatible.
+    Type '{ id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; } | null' is not assignable to type '{ id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }'.
+      Type 'null' is not assignable to type '{ id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }'.
+apps/mobile/src/duels/components/DetailsBody.tsx(32,26): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/duels/components/DetailsBody.tsx(34,46): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/duels/components/DetailsPills.tsx(28,74): error TS2345: Argument of type 'string' is not assignable to parameter of type 'KangurMobileLocale'.
+apps/mobile/src/duels/components/DetailsPills.tsx(32,54): error TS2345: Argument of type 'string' is not assignable to parameter of type 'KangurMobileLocale'.
+apps/mobile/src/duels/components/ProgressPill.tsx(17,58): error TS2345: Argument of type 'string' is not assignable to parameter of type 'KangurMobileLocale'.
+apps/mobile/src/duels/components/ProgressPill.tsx(18,54): error TS2345: Argument of type 'string' is not assignable to parameter of type 'KangurMobileLocale'.
+apps/mobile/src/duels/DuelLobbyRoomsPanel.tsx(2,15): error TS2300: Duplicate identifier 'useKangurMobileI18n'.
+apps/mobile/src/duels/DuelLobbyRoomsPanel.tsx(14,10): error TS2300: Duplicate identifier 'useKangurMobileI18n'.
+apps/mobile/src/duels/DuelLobbyRoomsPanel.tsx(91,34): error TS2345: Argument of type '(option: { value: "all" | "challenge" | "quick_match"; label: KangurMobileLocalizedValue<string>; }) => JSX.Element' is not assignable to parameter of type '(value: { value: string; label: KangurMobileLocalizedValue<string>; }, index: number, array: readonly { value: string; label: KangurMobileLocalizedValue<string>; }[]) => Element'.
+  Types of parameters 'option' and 'value' are incompatible.
+    Type '{ value: string; label: KangurMobileLocalizedValue<string>; }' is not assignable to type '{ value: "all" | "challenge" | "quick_match"; label: KangurMobileLocalizedValue<string>; }'.
+      Types of property 'value' are incompatible.
+        Type 'string' is not assignable to type '"all" | "challenge" | "quick_match"'.
+apps/mobile/src/duels/DuelLobbyRoomsPanel.tsx(91,96): error TS2304: Cannot find name 'KangurMobileLocalizedValue'.
+apps/mobile/src/duels/DuelLobbySearchSection.tsx(45,24): error TS2322: Type 'Promise<string | null>' is not assignable to type 'void | Promise<void>'.
+  Type 'Promise<string | null>' is not assignable to type 'Promise<void>'.
+    Type 'string | null' is not assignable to type 'void'.
+      Type 'null' is not assignable to type 'void'.
+apps/mobile/src/duels/duels-primitives/LessonMasteryCard.tsx(110,10): error TS2741: Property 'copy' is missing in type '{ lessonFocusSummary: string; strongest: KangurMobileHomeLessonMasteryItem | null; weakest: KangurMobileHomeLessonMasteryItem | null; }' but required in type 'LessonMasterySummaryProps'.
+apps/mobile/src/duels/duels-primitives/NextStepsCard.tsx(57,81): error TS4111: Property 'low' comes from an index signature, so it must be accessed with ['low'].
+apps/mobile/src/duels/duels-primitives/NextStepsCard.tsx(77,84): error TS4111: Property 'low' comes from an index signature, so it must be accessed with ['low'].
+apps/mobile/src/duels/duels-primitives/NextStepsCard.tsx(81,25): error TS2345: Argument of type 'KangurMobileLocalizedValue<string> | undefined' is not assignable to parameter of type 'KangurMobileLocalizedValue<string>'.
+  Type 'undefined' is not assignable to type 'KangurMobileLocalizedValue<string>'.
+apps/mobile/src/duels/duels-primitives/NextStepsCard.tsx(81,41): error TS2322: Type 'KangurMobileTone | undefined' is not assignable to type 'KangurMobileTone'.
+  Type 'undefined' is not assignable to type 'KangurMobileTone'.
+apps/mobile/src/duels/duels-screen-lobby-view.tsx(23,10): error TS2305: Module '"./utils/duels-ui"' has no exported member 'HOME_ROUTE'.
+apps/mobile/src/duels/duels-screen-lobby-view.tsx(111,43): error TS2322: Type '{ copy: KangurMobileCopy; locale: KangurMobileLocale; lobby: UseKangurMobileDuelsLobbyResult; onOpenSession: (sessionId: string) => void; searchStatusLabel: string; searchStatusTone: KangurMobileTone; }' is not assignable to type 'IntrinsicAttributes & DuelLobbySearchSectionProps'.
+  Property 'locale' does not exist on type 'IntrinsicAttributes & DuelLobbySearchSectionProps'.
+apps/mobile/src/duels/duels-ui.ts(30,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatLobbyChatSenderLabel'.
+apps/mobile/src/duels/duels-ui.ts(33,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatReactionLabel'.
+apps/mobile/src/duels/duels-ui.ts(35,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatSeriesBestOfLabel'.
+apps/mobile/src/duels/duels-ui.ts(40,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatStatusLabel'.
+apps/mobile/src/duels/duels-ui.ts(41,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatDifficultyLabel'.
+apps/mobile/src/duels/duels-ui.ts(42,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatOperationLabel'.
+apps/mobile/src/duels/duels-ui.ts(43,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatModeLabel'.
+apps/mobile/src/duels/duels-ui.ts(46,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'formatRelativeAge'.
+apps/mobile/src/duels/duels-ui.ts(48,3): error TS2305: Module '"./utils/duels-formatters"' has no exported member 'normalizeSeriesBestOf'.
+apps/mobile/src/duels/DuelSessionSeriesCard.tsx(44,73): error TS2554: Expected 2 arguments, but got 3.
+apps/mobile/src/duels/DuelsScreenContent.tsx(105,7): error TS2322: Type '{ total: number; current: number; percent: number; } | null' is not assignable to type '{ total: number; current: number; percent: number; }'.
+  Type 'null' is not assignable to type '{ total: number; current: number; percent: number; }'.
+apps/mobile/src/duels/KangurDuelsScreen.test-support.tsx(67,14): error TS4111: Property 'onClick' comes from an index signature, so it must be accessed with ['onClick'].
+apps/mobile/src/duels/KangurDuelsScreen.test-support.tsx(71,14): error TS4111: Property 'onChange' comes from an index signature, so it must be accessed with ['onChange'].
+apps/mobile/src/duels/KangurDuelsScreen.test-support.tsx(77,14): error TS4111: Property 'type' comes from an index signature, so it must be accessed with ['type'].
+apps/mobile/src/duels/KangurDuelsScreen.tsx(3,10): error TS2305: Module '"./utils/duels-ui"' has no exported member 'HOME_ROUTE'.
+apps/mobile/src/duels/KangurDuelsScreen.tsx(3,22): error TS2305: Module '"./utils/duels-ui"' has no exported member 'LOBBY_CHAT_PREVIEW_LIMIT'.
+apps/mobile/src/duels/KangurDuelsScreen.tsx(37,6): error TS2739: Type '{ autoRefreshChipLabel: string; autoRefreshEnabled: boolean; canSendChatMessage: boolean; chatActionError: string | null; chatDraft: string; chatRemainingChars: number; createLoginCallToAction: (label: string) => Element; ... 33 more ...; searchStatusTone: KangurMobileTone; }' is missing the following properties from type 'DuelsScreenContentProps': onOpenLobby, onOpenSession
+apps/mobile/src/duels/useKangurDuelsAutoRefresh.ts(2,10): error TS2305: Module '"./utils/duels-ui"' has no exported member 'AUTO_REFRESH_INTERVAL_MS'.
+apps/mobile/src/duels/useKangurDuelsScreenData.ts(49,48): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | string[] | undefined'.
+  Type 'null' is not assignable to type 'string | string[] | undefined'.
+apps/mobile/src/duels/useKangurDuelsScreenData.ts(50,80): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | string[] | undefined'.
+  Type 'null' is not assignable to type 'string | string[] | undefined'.
+apps/mobile/src/duels/useKangurDuelsScreenData.ts(51,50): error TS2345: Argument of type 'string | null' is not assignable to parameter of type 'string | string[] | undefined'.
+  Type 'null' is not assignable to type 'string | string[] | undefined'.
+apps/mobile/src/duels/useKangurDuelsSessionActions.ts(68,67): error TS2554: Expected 1 arguments, but got 2.
+apps/mobile/src/duels/useKangurDuelsSessionActions.ts(73,38): error TS2554: Expected 0 arguments, but got 1.
+apps/mobile/src/duels/useKangurDuelsSessionActions.ts(74,43): error TS2554: Expected 0 arguments, but got 1.
+apps/mobile/src/duels/useKangurDuelsSessionActions.ts(86,7): error TS2322: Type 'UseKangurMobileDuelSessionResult' is not assignable to type '{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; }'.
+  Types of property 'session' are incompatible.
+    Type '{ id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; } | null' is not assignable to type '{ id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }'.
+      Type 'null' is not assignable to type '{ id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }'.
+apps/mobile/src/duels/useKangurDuelsSessionState.ts(45,58): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/mobile/src/duels/useKangurDuelsSessionState.ts(46,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/mobile/src/duels/useKangurDuelsSessionState.ts(47,59): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/mobile/src/duels/useKangurDuelsSessionState.ts(61,56): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/mobile/src/duels/useKangurDuelsSessionState.ts(62,54): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/mobile/src/duels/useKangurDuelsSessionState.ts(63,60): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+apps/mobile/src/duels/useKangurMobileDuelLobbyChat.ts(65,26): error TS2352: Conversion of type '{ getAuthMe: (requestOptions?: KangurApiRequestOptions) => Promise<{ id: string; full_name: string; email: string | null; role: "admin" | "user"; actorType: "parent" | "learner"; canManageLearners: boolean; ownerUserId: string | null; ownerEmailVerified: boolean; activeLearner: { ...; } | null; learners: { ...; }[];...' to type 'DuelApiClient' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  The types returned by 'reactToDuel(...)' are incompatible between these types.
+    Type 'Promise<{ reaction: { id: string; learnerId: string; displayName: string; type: "cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"; createdAt: string; }; serverTime: string; }>' is not comparable to type 'Promise<{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | ... 1 more ... | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; player: { ...; }; serverTime: string...'.
+      Type '{ reaction: { id: string; learnerId: string; displayName: string; type: "cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"; createdAt: string; }; serverTime: string; }' is missing the following properties from type '{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; player: { ...; }; serverTime: string; }': session, player
+apps/mobile/src/duels/useKangurMobileDuelSession.ts(80,72): error TS2322: Type 'Promise<{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | ... 1 more ... | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; player: { ...; }; serverTime: string...' is not assignable to type 'Promise<{ reaction: { id: string; learnerId: string; displayName: string; type: "cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"; createdAt: string; }; }>'.
+  Property 'reaction' is missing in type '{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; player: { ...; }; serverTime: string; }' but required in type '{ reaction: { id: string; learnerId: string; displayName: string; type: "cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"; createdAt: string; }; }'.
+apps/mobile/src/duels/useKangurMobileDuelSession.ts(116,21): error TS2352: Conversion of type '{ getAuthMe: (requestOptions?: KangurApiRequestOptions) => Promise<{ id: string; full_name: string; email: string | null; role: "admin" | "user"; actorType: "parent" | "learner"; canManageLearners: boolean; ownerUserId: string | null; ownerEmailVerified: boolean; activeLearner: { ...; } | null; learners: { ...; }[];...' to type 'DuelApiClient' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  The types returned by 'reactToDuel(...)' are incompatible between these types.
+    Type 'Promise<{ reaction: { id: string; learnerId: string; displayName: string; type: "cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"; createdAt: string; }; serverTime: string; }>' is not comparable to type 'Promise<{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | ... 1 more ... | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; player: { ...; }; serverTime: string...'.
+      Type '{ reaction: { id: string; learnerId: string; displayName: string; type: "cheer" | "wow" | "gg" | "fire" | "clap" | "rocket" | "thumbs_up"; createdAt: string; }; serverTime: string; }' is missing the following properties from type '{ session: { id: string; mode: "challenge" | "quick_match"; visibility: "public" | "private"; operation: "addition" | "subtraction" | "multiplication" | "division"; difficulty: "easy" | "medium" | "hard"; ... 16 more ...; recentReactions?: { ...; }[] | undefined; }; player: { ...; }; serverTime: string; }': session, player
+apps/mobile/src/duels/useKangurMobileDuelSession.ts(164,16): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/duels/useKangurMobileDuelsLobby.test.tsx(189,64): error TS2554: Expected 1 arguments, but got 2.
+apps/mobile/src/duels/useKangurMobileLearnerDuelsSummary.ts(69,34): error TS2339: Property 'createDuel' does not exist on type 'DuelApiClient'.
+apps/mobile/src/duels/useKangurMobileLearnerDuelsSummary.ts(84,58): error TS2345: Argument of type 'DuelCopy' is not assignable to parameter of type 'KangurMobileCopy'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'KangurMobileLocalizedValue<T>' is not assignable to type 'KangurMobileLocalizedValue<string>'.
+      Type 'T' is not assignable to type 'string'.
+apps/mobile/src/duels/utils/duels-formatters.ts(134,30): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+apps/mobile/src/home/components/AssignmentCard.tsx(27,73): error TS2345: Argument of type 'KangurMobileCopy' is not assignable to parameter of type '(args: Record<string, string>) => string'.
+  Types of parameters 'value' and 'args' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/home/components/AssignmentCard.tsx(29,55): error TS2367: This comparison appears to be unintentional because the types 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null' and '""' have no overlap.
+apps/mobile/src/home/components/AssignmentCard.tsx(30,18): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+  Type 'null' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/home/components/duels/AuthenticatedHomeActiveRivalsContent.tsx(123,13): error TS2322: Type 'string' is not assignable to type 'KangurMobileLocale'.
+apps/mobile/src/home/components/duels/AuthenticatedHomeInvitesContent.tsx(111,11): error TS2322: Type 'string' is not assignable to type 'KangurMobileLocale'.
+apps/mobile/src/home/components/duels/AuthenticatedHomeOutgoingChallengesContent.tsx(122,11): error TS2322: Type 'string' is not assignable to type 'KangurMobileLocale'.
+apps/mobile/src/home/components/duels/HomeDuelLeaderboardSection.tsx(98,13): error TS2322: Type '{ learnerId: string; displayName: string; wins: number; losses: number; ties: number; matches: number; winRate: number; lastPlayedAt: string; } | undefined' is not assignable to type '{ learnerId: string; displayName: string; wins: number; losses: number; ties: number; matches: number; winRate: number; lastPlayedAt: string; }'.
+  Type 'undefined' is not assignable to type '{ learnerId: string; displayName: string; wins: number; losses: number; ties: number; matches: number; winRate: number; lastPlayedAt: string; }'.
+apps/mobile/src/home/components/HomeAccountSection.tsx(4,3): error TS2305: Module '"../homeScreenPrimitives"' has no exported member 'DeferredHomeAccountDetails'.
+apps/mobile/src/home/components/HomeAccountSection.tsx(5,3): error TS2305: Module '"../homeScreenPrimitives"' has no exported member 'DeferredHomeAccountSummary'.
+apps/mobile/src/home/components/HomeDuelLeaderboardSection.tsx(83,44): error TS6198: All destructured elements are unused.
+apps/mobile/src/home/components/HomeDuelLeaderboardSection.tsx(84,3): error TS2339: Property '_activeDuelLearnerId' does not exist on type 'HomeDuelLeaderboardSectionProps'.
+apps/mobile/src/home/components/HomeDuelLeaderboardSection.tsx(85,3): error TS2339: Property '_isAuthenticated' does not exist on type 'HomeDuelLeaderboardSectionProps'.
+apps/mobile/src/home/components/HomeDuelSectionsGroup.tsx(76,9): error TS2322: Type '{ areDeferredHomeDuelAdvancedReady: boolean; areDeferredHomeDuelInvitesReady: boolean; areDeferredHomeDuelSecondaryReady: boolean; areDeferredHomePanelsReady: true; }' is not assignable to type 'IntrinsicAttributes & Props'.
+  Property 'areDeferredHomeDuelInvitesReady' does not exist on type 'IntrinsicAttributes & Props'. Did you mean 'areDeferredHomeDuelAdvancedReady'?
+apps/mobile/src/home/components/HomeHeroSection.tsx(179,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/home/components/HomeSecondaryInsightsBadgesAndPlanSectionGroup.tsx(2,3): error TS6133: 'DeferredHomeInsightsBadgesAndPlanCard' is declared but its value is never read.
+apps/mobile/src/home/components/HomeSecondaryInsightsBadgesAndPlanSectionGroup.tsx(8,3): error TS6133: 'DeferredHomeInsightsResultsHubCard' is declared but its value is never read.
+apps/mobile/src/home/components/HomeSecondaryLessonPlanSection.tsx(1,16): error TS6133: 'View' is declared but its value is never read.
+apps/mobile/src/home/components/LessonCheckpointCard.tsx(16,7): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+  Type 'null' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/home/components/LessonMasteryCard.tsx(25,7): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+  Type 'null' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/home/home-screen-content.tsx(3,1): error TS6133: 'Href' is declared but its value is never read.
+apps/mobile/src/home/home-screen-content.tsx(128,9): error TS6133: 'authBoundaryView' is declared but its value is never read.
+apps/mobile/src/home/home-screen-content.tsx(223,17): error TS2322: Type 'KangurMobileLessonCheckpointItem | null' is not assignable to type '{ title: string; lessonHref: string; } | null'.
+  Type 'KangurMobileLessonCheckpointItem' is not assignable to type '{ title: string; lessonHref: string; }'.
+    Types of property 'lessonHref' are incompatible.
+      Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }' is not assignable to type 'string'.
+        Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/home/home-screen-insights.tsx(1,1): error TS6133: 'View' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.boot-shell.test.tsx(6,10): error TS6133: 'fireEvent' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.boot-shell.test.tsx(6,21): error TS6133: 'render' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.boot-shell.test.tsx(6,37): error TS6133: 'waitFor' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.boot-shell.test.tsx(15,3): error TS6133: 'replaceMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.boot-shell.test.tsx(17,3): error TS6133: 'shareKangurDuelInviteMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(6,21): error TS6133: 'render' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(10,3): error TS6133: 'loadProgressMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(11,3): error TS6133: 'persistedHeroRecentScoresBootSnapshot' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(12,3): error TS6133: 'persistedHeroTrainingFocusBootSnapshot' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(13,3): error TS6133: 'persistedLessonCheckpointBootSnapshot' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(15,3): error TS6133: 'replaceMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(17,3): error TS6133: 'shareKangurDuelInviteMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(18,3): error TS6133: 'subscribeToProgressMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(19,3): error TS6133: 'useHomeScreenBootStateMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(24,3): error TS6133: 'useKangurMobileHomeDuelsInvitesMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(25,3): error TS6133: 'useKangurMobileHomeDuelsLeaderboardMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(26,3): error TS6133: 'useKangurMobileHomeDuelsPresenceMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(27,3): error TS6133: 'useKangurMobileHomeDuelsRematchesMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(28,3): error TS6133: 'useKangurMobileHomeDuelsSpotlightMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(29,3): error TS6133: 'useKangurMobileHomeLessonCheckpointsMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(30,3): error TS6133: 'useKangurMobileHomeLessonMasteryMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(32,3): error TS6133: 'useKangurMobileRuntimeMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.deferred-panels.test.tsx(33,3): error TS6133: 'useKangurMobileTrainingFocusMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(6,21): error TS6133: 'render' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(10,3): error TS6133: 'loadProgressMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(11,3): error TS6133: 'persistedHeroRecentScoresBootSnapshot' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(12,3): error TS6133: 'persistedHeroTrainingFocusBootSnapshot' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(13,3): error TS6133: 'persistedLessonCheckpointBootSnapshot' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(18,3): error TS6133: 'subscribeToProgressMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(19,3): error TS6133: 'useHomeScreenBootStateMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(20,3): error TS6133: 'useHomeScreenDeferredPanelsMock' is declared but its value is never read.
+apps/mobile/src/home/HomeScreen.test.tsx(32,3): error TS6133: 'useKangurMobileRuntimeMock' is declared but its value is never read.
+apps/mobile/src/home/useKangurMobileRecentResults.ts(34,3): error TS2322: Type '{ id: string; player_name: string; score: number; operation: string; subject: "alphabet" | "art" | "music" | "geometry" | "maths" | "english" | "web_development" | "agentic_coding"; ... 8 more ...; owner_user_id?: string | ... 1 more ... | undefined; }[] | null' is not assignable to type '{ id: string; player_name: string; score: number; operation: string; subject: "alphabet" | "art" | "music" | "geometry" | "maths" | "english" | "web_development" | "agentic_coding"; total_questions: number; ... 7 more ...; owner_user_id?: string | ... 1 more ... | undefined; }[]'.
+  Type 'null' is not assignable to type '{ id: string; player_name: string; score: number; operation: string; subject: "alphabet" | "art" | "music" | "geometry" | "maths" | "english" | "web_development" | "agentic_coding"; total_questions: number; ... 7 more ...; owner_user_id?: string | ... 1 more ... | undefined; }[]'.
+apps/mobile/src/home/useKangurMobileRecentResults.ts(62,39): error TS2304: Cannot find name 'shouldPersist'.
+apps/mobile/src/leaderboard/KangurLeaderboardScreen.tsx(466,11): error TS2322: Type '{ duelLeaderboard: UseKangurMobileLeaderboardDuelsResult; duelTopWinRatePercent: number | null; openDuelSession: (sessionId: string) => void; }' is not assignable to type 'IntrinsicAttributes & { duelLeaderboard: LeaderboardDuelsState; duelTopWinRatePercent: number | null; }'.
+  Property 'openDuelSession' does not exist on type 'IntrinsicAttributes & { duelLeaderboard: LeaderboardDuelsState; duelTopWinRatePercent: number | null; }'.
+apps/mobile/src/leaderboard/leaderboard-primitives.tsx(62,17): error TS6133: 'locale' is declared but its value is never read.
+apps/mobile/src/lessons/components/LessonsBadgesSection.tsx(5,15): error TS2724: '"../useKangurMobileLessonsBadges"' has no exported member named 'UseKangurMobileLessonsBadgesResult'. Did you mean 'useKangurMobileLessonsBadges'?
+apps/mobile/src/lessons/components/LessonsCatalogSection.tsx(11,42): error TS2307: Cannot find module '../i18n/kangurMobileI18n' or its corresponding type declarations.
+apps/mobile/src/lessons/components/LessonsCatalogSection.tsx(144,11): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null'.
+apps/mobile/src/lessons/components/LessonsDuelsSection.tsx(4,39): error TS2307: Cannot find module '../duels/duelsHref' or its corresponding type declarations.
+apps/mobile/src/lessons/components/LessonsMasterySection.tsx(94,29): error TS2322: Type 'KangurMobileHomeLessonMasteryItem | undefined' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+  Type 'undefined' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+    Type 'undefined' is not assignable to type 'KangurLessonMasteryInsight'.
+apps/mobile/src/lessons/components/LessonsMasterySection.tsx(100,29): error TS2322: Type 'KangurMobileHomeLessonMasteryItem | undefined' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+  Type 'undefined' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+    Type 'undefined' is not assignable to type 'KangurLessonMasteryInsight'.
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(52,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(92,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(118,19): error TS2339: Property 'practiceNote' does not exist on type 'LessonBody'.
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(120,23): error TS2339: Property 'practiceNote' does not exist on type 'LessonBody'.
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(179,32): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(216,29): error TS2345: Argument of type '{ de: string; }' is not assignable to parameter of type 'KangurMobileLocalizedValue<string>'.
+  Type '{ de: string; }' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en
+apps/mobile/src/lessons/KangurLessonsScreen.tsx(379,204): error TS2322: Type 'LessonMastery' is not assignable to type 'UseKangurMobileLessonsLessonMasteryResult'.
+  Types of property 'strongest' are incompatible.
+    Type '{ title: string; }[]' is not assignable to type 'KangurMobileHomeLessonMasteryItem[]'.
+      Type '{ title: string; }' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+        Type '{ title: string; }' is missing the following properties from type 'KangurLessonMasteryInsight': componentId, emoji, masteryPercent, attempts, and 3 more.
+apps/mobile/src/lessons/lesson-checkpoint-service.ts(1,15): error TS2724: '"@kangur/core"' has no exported member named 'KangurProgressState'. Did you mean 'KangurProgressStore'?
+apps/mobile/src/lessons/lesson-row-primitives.tsx(157,72): error TS2345: Argument of type 'KangurMobileCopy' is not assignable to parameter of type '(m: Record<string, string>) => string'.
+  Types of parameters 'value' and 'm' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/lessons/lessons-screen-secondary-sections.tsx(46,8): error TS2322: Type '{ copy: KangurMobileCopy; duelSectionDescription: string; isPreparingLessonsView: boolean; lessonBadges: UseKangurMobileLessonsBadgesResult; ... 11 more ...; resultsHref: RelativePathString | ... 34 more ... | { ...; }; }' is not assignable to type 'LessonsCatalogSectionProps'.
+  Types of property 'copy' are incompatible.
+    Type 'KangurMobileCopy' is not assignable to type '(translations: Record<string, string>) => string'.
+      Types of parameters 'value' and 'translations' are incompatible.
+        Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/lessons/LessonsBadgesPanel.tsx(44,9): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/lessons/LessonsCatalogPanel.tsx(10,26): error TS6133: 'renderLessonPracticeLink' is declared but its value is never read.
+apps/mobile/src/lessons/LessonsCatalogPanel.tsx(76,18): error TS2304: Cannot find name 'renderPracticeLink'.
+apps/mobile/src/lessons/LessonsCheckpointsPanel.tsx(4,37): error TS2307: Cannot find module './LessonCheckpointRow' or its corresponding type declarations.
+apps/mobile/src/lessons/LessonsDuelsPanel.tsx(9,30): error TS2307: Cannot find module './duels-primitives' or its corresponding type declarations.
+apps/mobile/src/lessons/LessonsDuelsPanel.tsx(53,14): error TS2741: Property 'pendingLabel' is missing in type '{ label: string; onPress: () => void; pending: boolean; }' but required in type 'KangurMobilePendingActionButtonProps'.
+apps/mobile/src/lessons/LessonsMasterySubPanels.tsx(4,28): error TS2307: Cannot find module './duels-primitives' or its corresponding type declarations.
+apps/mobile/src/lessons/LessonsMasterySubPanels.tsx(5,34): error TS2307: Cannot find module './practice-primitives' or its corresponding type declarations.
+apps/mobile/src/lessons/useKangurMobileLessons.ts(8,8): error TS2724: '"@kangur/core"' has no exported member named 'KangurProgressState'. Did you mean 'KangurProgressStore'?
+apps/mobile/src/parent/components/ParentTabsSection.tsx(3,1): error TS6133: 'BASE_TONE' is declared but its value is never read.
+apps/mobile/src/parent/components/ParentTabsSection.tsx(6,23): error TS6133: 'Pill' is declared but its value is never read.
+apps/mobile/src/parent/KangurParentDashboardScreen.tsx(136,51): error TS2345: Argument of type 'KangurMobileCopy' is not assignable to parameter of type '(text: Record<string, string>) => string'.
+  Types of parameters 'value' and 'text' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/parent/KangurParentDashboardScreen.tsx(155,11): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(text: Record<string, string>) => string'.
+  Types of parameters 'value' and 'text' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/parent/KangurParentDashboardScreen.tsx(156,59): error TS2345: Argument of type 'KangurMobileCopy' is not assignable to parameter of type '(text: Record<string, string>) => string'.
+  Types of parameters 'value' and 'text' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/parent/KangurParentDashboardScreen.tsx(167,15): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(text: Record<string, string>) => string'.
+  Types of parameters 'value' and 'text' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/parent/KangurParentDashboardScreen.tsx(176,72): error TS2345: Argument of type 'KangurMobileCopy' is not assignable to parameter of type '(text: Record<string, string>) => string'.
+  Types of parameters 'value' and 'text' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/parent/KangurParentDashboardScreen.tsx(177,15): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(text: Record<string, string>) => string'.
+  Types of parameters 'value' and 'text' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(16,8): error TS2307: Cannot find module '@/packages/kangur-contracts/src/kangur-duels' or its corresponding type declarations.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(57,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(95,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(115,84): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(136,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(181,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(256,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(275,89): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(289,97): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(311,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanDuelsSection.tsx(327,33): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(94,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(95,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(96,13): error TS2322: Type 'string' is not assignable to type '{ averageAccuracyPercent: number; operation: string; sessions: number; }'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(97,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(109,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(110,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(111,13): error TS2322: Type 'string' is not assignable to type '{ averageAccuracyPercent: number; operation: string; sessions: number; }'.
+apps/mobile/src/plan/components/DailyPlanFocusSection.tsx(112,13): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/plan/components/DailyPlanMasterySection.tsx(24,5): error TS2503: Cannot find namespace 'JSX'.
+apps/mobile/src/plan/components/DailyPlanMasterySection.tsx(30,56): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/plan/components/DailyPlanMasterySection.tsx(31,58): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/plan/components/DailyPlanMasterySection.tsx(34,58): error TS2322: Type '{ title: string; lessonHref: string; }' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+  Type '{ title: string; lessonHref: string; }' is missing the following properties from type 'KangurLessonMasteryInsight': componentId, emoji, masteryPercent, attempts, and 3 more.
+apps/mobile/src/plan/components/DailyPlanMasterySection.tsx(35,60): error TS2322: Type '{ title: string; lessonHref: string; }' is not assignable to type 'KangurMobileHomeLessonMasteryItem'.
+  Type '{ title: string; lessonHref: string; }' is missing the following properties from type 'KangurLessonMasteryInsight': componentId, emoji, masteryPercent, attempts, and 3 more.
+apps/mobile/src/plan/components/DailyPlanResultsSection.tsx(3,27): error TS6133: 'RESULTS_ROUTE' is declared but its value is never read.
+apps/mobile/src/practice/completion-card-types.ts(8,15): error TS2724: '"./useKangurMobilePracticeDuels"' has no exported member named 'KangurMobilePracticeDuelItem'. Did you mean 'useKangurMobilePracticeDuels'?
+apps/mobile/src/practice/completion-card-types.ts(10,15): error TS2305: Module '"./practiceSyncProofLogic"' has no exported member 'KangurPracticeSyncProofSnapshot'.
+apps/mobile/src/practice/KangurPracticeScreen.tsx(8,44): error TS2345: Argument of type 'PracticeData' is not assignable to parameter of type 'PracticeActionData'.
+  Type 'PracticeData' is missing the following properties from type 'PracticeActionData': runStartedAt, progressStore, apiClient, queryClient, and 2 more.
+apps/mobile/src/practice/practice-primitives-utils.tsx(3,10): error TS2305: Module '"../duels/duels-primitives"' has no exported member 'KangurMobileLinkButton'.
+apps/mobile/src/practice/PracticeAssignmentsPanel.tsx(4,39): error TS2307: Cannot find module './practice-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeBadgesPanel.tsx(4,54): error TS2307: Cannot find module './duels-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeBadgesPanel.tsx(5,35): error TS2307: Cannot find module './practice-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(17,15): error TS2305: Module '"./practiceSyncProofLogic"' has no exported member 'KangurPracticeSyncProofSnapshot'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(59,33): error TS2322: Type '<T>(value: KangurMobileLocalizedValue<T>) => T' is not assignable to type 'PracticeCopy'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/practice/PracticeCompletionCard.tsx(93,19): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(96,19): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(96,118): error TS2322: Type '"brand"' is not assignable to type '"primary" | "secondary" | undefined'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(115,9): error TS2740: Type '{ duels: KangurMobilePracticeDuelItem[]; }' is missing the following properties from type 'UseKangurMobileLearnerDuelsSummaryResult': actionError, createRematch, currentEntry, currentRank, and 8 more.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(127,9): error TS2322: Type '{ lessonMastery: { masteredLessons: number; strongest: KangurMobileHomeLessonMasteryItem[]; trackedLessons: number; weakest: KangurMobileHomeLessonMasteryItem[]; lessonsNeedingPractice: number; }; ... 4 more ...; locale: KangurMobileLocale; }' is not assignable to type 'IntrinsicAttributes & { copy: KangurMobileCopy; lessonFocusSummary: string | null; lessonMastery: UseKangurMobilePracticeLessonMasteryResult; strongestLesson: KangurMobileHomeLessonMasteryItem | null; weakestLesson: KangurMobileHomeLessonMasteryItem | null; }'.
+  Property 'locale' does not exist on type 'IntrinsicAttributes & { copy: KangurMobileCopy; lessonFocusSummary: string | null; lessonMastery: UseKangurMobilePracticeLessonMasteryResult; strongestLesson: KangurMobileHomeLessonMasteryItem | null; weakestLesson: KangurMobileHomeLessonMasteryItem | null; }'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(147,9): error TS2322: Type '{ practiceBadges: { unlockedBadges: number; totalBadges: number; remainingBadges: number; recentBadges: KangurMobileHomeBadgeItem[]; }; copy: <T>(value: KangurMobileLocalizedValue<T>) => T; locale: KangurMobileLocale; }' is not assignable to type 'IntrinsicAttributes & { copy: KangurMobileCopy; practiceBadges: UseKangurMobilePracticeBadgesResult; profileHref: string; }'.
+  Property 'locale' does not exist on type 'IntrinsicAttributes & { copy: KangurMobileCopy; practiceBadges: UseKangurMobilePracticeBadgesResult; profileHref: string; }'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(150,9): error TS2740: Type '{ recentResults: KangurMobilePracticeRecentResultItem[]; }' is missing the following properties from type 'UseKangurMobilePracticeRecentResultsResult': error, isEnabled, isLoading, isRestoringAuth, and 2 more.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(158,9): error TS2322: Type '{ practiceAssignments: { assignmentItems: KangurMobileHomeAssignmentItem[]; }; copy: <T>(value: KangurMobileLocalizedValue<T>) => T; locale: KangurMobileLocale; }' is not assignable to type 'IntrinsicAttributes & { copy: KangurMobileCopy; practiceAssignments: UseKangurMobilePracticeAssignmentsResult; }'.
+  Property 'locale' does not exist on type 'IntrinsicAttributes & { copy: KangurMobileCopy; practiceAssignments: UseKangurMobilePracticeAssignmentsResult; }'.
+apps/mobile/src/practice/PracticeCompletionCard.tsx(163,9): error TS2322: Type '{ lessonCheckpoints: { recentCheckpoints: KangurMobileLessonCheckpointItem[]; }; copy: <T>(value: KangurMobileLocalizedValue<T>) => T; locale: KangurMobileLocale; }' is not assignable to type 'IntrinsicAttributes & { copy: KangurMobileCopy; lessonCheckpoints: UseKangurMobileLessonCheckpointsResult; }'.
+  Property 'locale' does not exist on type 'IntrinsicAttributes & { copy: KangurMobileCopy; lessonCheckpoints: UseKangurMobileLessonCheckpointsResult; }'.
+apps/mobile/src/practice/PracticeDuelsPanel.tsx(4,24): error TS2305: Module '"../duels/duels-primitives/BaseComponents"' has no exported member 'KangurMobilePendingActionButton'.
+apps/mobile/src/practice/PracticeDuelsPanel.tsx(15,3): error TS6133: 'localeTag' is declared but its value is never read.
+apps/mobile/src/practice/PracticeDuelsPanel.tsx(62,21): error TS2322: Type '"/duels"' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/practice/PracticeLessonCheckpointsPanel.tsx(4,54): error TS2307: Cannot find module './duels-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeLessonCheckpointsPanel.tsx(5,37): error TS2307: Cannot find module './practice-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeLessonMasteryPanel.tsx(4,10): error TS2459: Module '"../duels/duels-primitives/BaseComponents"' declares 'KangurMobileLinkButton' locally, but it is not exported.
+apps/mobile/src/practice/PracticePreparationCard.tsx(5,10): error TS2724: '"../lessons/lessonHref"' has no exported member named 'createKangurPlanHref'. Did you mean 'createKangurLessonHref'?
+apps/mobile/src/practice/PracticePreparationCard.tsx(59,48): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/practice/PracticeQuestionDisplay.tsx(4,30): error TS2307: Cannot find module './practice-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeResultsPanel.tsx(4,54): error TS2307: Cannot find module './duels-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeResultsPanel.tsx(5,41): error TS2307: Cannot find module './practice-primitives' or its corresponding type declarations.
+apps/mobile/src/practice/PracticeScreenContent.tsx(2,10): error TS2724: '"../shared/KangurMobileUi"' has no exported member named 'KangurMobileAiTutorCard'. Did you mean 'KangurMobileCard'?
+apps/mobile/src/practice/PracticeScreenContent.tsx(8,15): error TS2724: '"./PracticeCompletionCard"' has no exported member named 'PracticeCompletionCardProps'. Did you mean 'PracticeCompletionCard'?
+apps/mobile/src/practice/practiceSyncProof.ts(62,9): error TS2322: Type '{ attempts: number; completions: number; masteryPercent: number; bestScorePercent: number; lastScorePercent: number; lastCompletedAt: string | null; } | null' is not assignable to type 'number | null'.
+  Type '{ attempts: number; completions: number; masteryPercent: number; bestScorePercent: number; lastScorePercent: number; lastCompletedAt: string | null; }' is not assignable to type 'number'.
+apps/mobile/src/practice/practiceSyncProof.ts(67,33): error TS2322: Type 'KangurLeaderboardItem | null | undefined' is not assignable to type 'KangurLeaderboardItem | null'.
+  Type 'undefined' is not assignable to type 'KangurLeaderboardItem | null'.
+apps/mobile/src/practice/practiceSyncProofLogic.ts(2,15): error TS6196: 'KangurProgressState' is declared but never used.
+apps/mobile/src/practice/useKangurPracticeActions.ts(5,42): error TS2459: Module '"./practice-utils"' declares 'PracticePlayerSession' locally, but it is not exported.
+apps/mobile/src/practice/useKangurPracticeActions.ts(137,9): error TS2322: Type 'unknown' is not assignable to type '{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }'.
+apps/mobile/src/practice/useKangurPracticeNavigationActions.ts(39,9): error TS2322: Type 'unknown' is not assignable to type '{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }'.
+apps/mobile/src/practice/useKangurPracticeScreenData.ts(43,38): error TS2345: Argument of type '("addition" | "subtraction" | "multiplication" | "division" | "clock" | "calendar" | "logical_thinking" | "logical_patterns" | "logical_classification" | "logical_reasoning" | "logical_analogies" | "mixed")[]' is not assignable to parameter of type 'KangurOperation[]'.
+  Type '"addition" | "subtraction" | "multiplication" | "division" | "clock" | "calendar" | "logical_thinking" | "logical_patterns" | "logical_classification" | "logical_reasoning" | "logical_analogies" | "mixed"' is not assignable to type 'KangurOperation'.
+    Type '"calendar"' is not assignable to type 'KangurOperation'.
+apps/mobile/src/practice/useKangurPracticeScreenData.ts(66,5): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(value: Record<string, string>) => string'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/practice/useKangurPracticeSyncProof.ts(11,8): error TS2724: '"./practiceSyncProof"' has no exported member named 'KangurPracticeSyncProofSnapshot'. Did you mean 'buildKangurPracticeSyncProofSnapshot'?
+apps/mobile/src/practice/useKangurPracticeSyncProof.ts(56,5): error TS2322: Type 'unknown[]' is not assignable to type 'KangurLeaderboardItem[]'.
+  Type 'unknown' is not assignable to type 'KangurLeaderboardItem'.
+apps/mobile/src/practice/useKangurPracticeSyncProof.ts(59,5): error TS2322: Type 'unknown' is not assignable to type '{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }'.
+apps/mobile/src/practice/useKangurPracticeSyncProof.ts(61,5): error TS2322: Type 'unknown[]' is not assignable to type '{ id: string; player_name: string; score: number; operation: string; subject: "alphabet" | "art" | "music" | "geometry" | "maths" | "english" | "web_development" | "agentic_coding"; total_questions: number; ... 7 more ...; owner_user_id?: string | ... 1 more ... | undefined; }[]'.
+  Type 'unknown' is not assignable to type '{ id: string; player_name: string; score: number; operation: string; subject: "alphabet" | "art" | "music" | "geometry" | "maths" | "english" | "web_development" | "agentic_coding"; total_questions: number; ... 7 more ...; owner_user_id?: string | ... 1 more ... | undefined; }'.
+apps/mobile/src/practice/useKangurPracticeSyncProof.ts(130,62): error TS2345: Argument of type 'KangurMobileCopy' is not assignable to parameter of type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/practice/useSyncScoreRecord.ts(13,42): error TS2459: Module '"./practice-utils"' declares 'PracticePlayerSession' locally, but it is not exported.
+apps/mobile/src/profile/components/ProfileAssignmentsCard.tsx(52,38): error TS2339: Property 'id' does not exist on type 'KangurMobileHomeAssignmentItem'.
+apps/mobile/src/profile/components/ProfileAssignmentsCard.tsx(52,42): error TS2322: Type '{ key: any; item: KangurMobileHomeAssignmentItem; }' is not assignable to type 'IntrinsicAttributes & { assignment: KangurAssignmentPlan; href: RelativePathString | ExternalPathString | ... 34 more ... | null; }'.
+  Property 'item' does not exist on type 'IntrinsicAttributes & { assignment: KangurAssignmentPlan; href: RelativePathString | ExternalPathString | ... 34 more ... | null; }'.
+apps/mobile/src/profile/components/ProfileLessonMasteryCard.tsx(35,29): error TS2339: Property 'masteryItems' does not exist on type 'UseKangurMobileProfileLessonMasteryResult'.
+apps/mobile/src/profile/components/ProfileLessonMasteryCard.tsx(45,33): error TS2339: Property 'masteryItems' does not exist on type 'UseKangurMobileProfileLessonMasteryResult'.
+apps/mobile/src/profile/components/ProfileLessonMasteryCard.tsx(45,51): error TS7006: Parameter 'item' implicitly has an 'any' type.
+apps/mobile/src/profile/components/ProfileLessonMasteryCard.tsx(48,15): error TS2322: Type '{ key: string; item: any; }' is not assignable to type 'IntrinsicAttributes & { insight: KangurLessonMasteryInsight; }'.
+  Property 'item' does not exist on type 'IntrinsicAttributes & { insight: KangurLessonMasteryInsight; }'.
+apps/mobile/src/profile/components/ProfileRecentResultsCard.tsx(52,35): error TS2339: Property 'id' does not exist on type 'KangurMobileProfileRecentResultItem'.
+apps/mobile/src/profile/components/ProfileRecommendationsCard.tsx(11,50): error TS2305: Module '"@kangur/core"' has no exported member 'KangurLearnerAction'.
+apps/mobile/src/profile/components/ProfileRecommendationsCard.tsx(53,11): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/profile/components/ProfileResultsHubCard.tsx(10,3): error TS2305: Module '"../../scores/mobileScoreSummary"' has no exported member 'getSessionAccentTone'.
+apps/mobile/src/profile/components/ProfileResultsHubCard.tsx(11,3): error TS2305: Module '"../../scores/mobileScoreSummary"' has no exported member 'getSessionScoreTone'.
+apps/mobile/src/profile/components/ProfileResultsHubCard.tsx(15,15): error TS6133: 'useKangurMobileProfileRecentResults' is declared but its value is never read.
+apps/mobile/src/profile/KangurProfileScreen.tsx(216,9): error TS2322: Type '(action: KangurLearnerRecommendationAction) => RelativePathString | ExternalPathString | "/" | ... 33 more ... | null' is not assignable to type '(action: KangurLearnerAction) => string | null'.
+  Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null' is not assignable to type 'string | null'.
+    Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/profile/profile-duels-card.tsx(86,166): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de"'.
+apps/mobile/src/profile/profile-duels-card.tsx(87,165): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de"'.
+apps/mobile/src/profile/profile-duels-card.tsx(88,171): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de"'.
+apps/mobile/src/profile/profile-duels-card.tsx(114,75): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de"'.
+apps/mobile/src/profile/profile-duels-card.tsx(115,71): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de"'.
+apps/mobile/src/profile/profile-duels-card.tsx(116,79): error TS2345: Argument of type 'string' is not assignable to parameter of type '"pl" | "en" | "de"'.
+apps/mobile/src/providers/KangurRuntimeContext.runtime.test.ts(93,7): error TS2345: Argument of type '{ loadProgress: Mock<Procedure>; loadProgressOwnerKey: Mock<Procedure>; saveProgress: Mock<() => { totalXp: number; }>; saveProgressOwnerKey: Mock<...>; subscribeToProgress: Mock<...>; }' is not assignable to parameter of type 'KangurProgressStore'.
+  The types returned by 'saveProgress(...)' are incompatible between these types.
+    Type '{ totalXp: number; }' is missing the following properties from type '{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }': gamesPlayed, perfectGames, lessonsCompleted, clockPerfect, and 5 more.
+apps/mobile/src/scores/components/LessonCheckpointRow.tsx(22,7): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/scores/components/LessonCheckpointRow.tsx(78,29): error TS2339: Property 'length' does not exist on type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+  Property 'length' does not exist on type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }'.
+apps/mobile/src/scores/components/LessonCheckpointRow.tsx(79,27): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 26 more ... | null' is not assignable to type 'string'.
+  Type 'null' is not assignable to type 'string'.
+apps/mobile/src/scores/components/ResultsAssignmentsSection.tsx(3,38): error TS2307: Cannot find module './results-primitives' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsBadgesSection.tsx(3,34): error TS2307: Cannot find module './results-primitives' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsBadgesSection.tsx(81,9): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/scores/components/ResultsCheckpointsSection.tsx(3,37): error TS2307: Cannot find module './results-primitives' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsHeader.tsx(4,38): error TS2307: Cannot find module '../plan/planHref' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsLessonMasterySection.tsx(3,34): error TS2307: Cannot find module './results-primitives' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsLessonMasterySection.tsx(91,17): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/scores/components/ResultsLessonMasterySection.tsx(99,17): error TS2322: Type 'string' is not assignable to type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }'.
+apps/mobile/src/scores/components/ResultsListSection.tsx(3,83): error TS2307: Cannot find module '../scores/mobileScoreSummary' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsListSection.tsx(5,42): error TS2307: Cannot find module '../practice/practiceHref' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsListSection.tsx(6,41): error TS2307: Cannot find module './resultsHref' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsListSection.tsx(7,60): error TS2307: Cannot find module '../lessons/lessonHref' or its corresponding type declarations.
+apps/mobile/src/scores/components/ResultsOverview.tsx(2,10): error TS2305: Module '"../../shared/KangurMobileUi"' has no exported member 'Metric'.
+apps/mobile/src/scores/KangurResultsScreen.tsx(67,26): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/scores/KangurResultsScreen.tsx(71,50): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/scores/KangurResultsScreen.tsx(74,17): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/scores/KangurResultsScreen.tsx(78,17): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/scores/KangurResultsScreen.tsx(79,17): error TS2322: Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }' is not assignable to type 'string'.
+  Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/scores/KangurResultsScreen.tsx(82,17): error TS2322: Type 'UseKangurMobileResultsLessonMasteryResult' is not assignable to type '{ trackedLessons: number; masteredLessons: number; lessonsNeedingPractice: number; weakest: { title: string; lessonHref: string; }[]; strongest: { title: string; lessonHref: string; }[]; }'.
+  Types of property 'weakest' are incompatible.
+    Type 'KangurMobileHomeLessonMasteryItem[]' is not assignable to type '{ title: string; lessonHref: string; }[]'.
+      Type 'KangurMobileHomeLessonMasteryItem' is not assignable to type '{ title: string; lessonHref: string; }'.
+        Types of property 'lessonHref' are incompatible.
+          Type 'RelativePathString | ExternalPathString | "/" | `/?${string}` | `/#${string}` | "/leaderboard" | `/leaderboard?${string}` | `/leaderboard#${string}` | "/lessons" | `/lessons?${string}` | ... 25 more ... | { ...; }' is not assignable to type 'string'.
+            Type '{ pathname: RelativePathString; params?: UnknownInputParams | undefined; }' is not assignable to type 'string'.
+apps/mobile/src/scores/KangurResultsScreen.tsx(84,17): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/scores/KangurResultsScreen.tsx(93,17): error TS2322: Type 'KangurMobileCopy' is not assignable to type '(v: Record<string, string>) => string'.
+  Types of parameters 'value' and 'v' are incompatible.
+    Type 'Record<string, string>' is missing the following properties from type 'KangurMobileLocalizedValue<string>': pl, en, de
+apps/mobile/src/scores/KangurResultsScreen.tsx(100,17): error TS2322: Type '{ results: UseKangurMobileResultsResult; copy: KangurMobileCopy; locale: KangurMobileLocale; filterFamily: KangurMobileScoreFamily; filterOperation: string | null; }' is not assignable to type 'IntrinsicAttributes & ResultsListSectionProps'.
+  Property 'filterFamily' does not exist on type 'IntrinsicAttributes & ResultsListSectionProps'.
+apps/mobile/src/scores/results-duels-card.tsx(156,11): error TS2322: Type '{ children: Element[]; gap: number; tone: { borderColor: string; backgroundColor: string; }; }' is not assignable to type 'IntrinsicAttributes & KangurMobileInsetPanelProps'.
+  Property 'tone' does not exist on type 'IntrinsicAttributes & KangurMobileInsetPanelProps'.
+apps/mobile/src/shared/KangurMobileUi.tsx(7,28): error TS2724: '"./KangurMobileUiDisplay"' has no exported member named 'KangurMobileInsetPanel'. Did you mean 'KangurMobileTone'?
+apps/mobile/src/tests/KangurTestsScreen.tsx(230,49): error TS2554: Expected 1 arguments, but got 0.
+apps/mobile/src/tests/KangurTestsScreen.tsx(237,33): error TS2322: Type '{ children: Element; title: string; }' is not assignable to type 'IntrinsicAttributes & KangurMobileScrollScreenProps'.
+  Property 'title' does not exist on type 'IntrinsicAttributes & KangurMobileScrollScreenProps'.
+apps/mobile/src/tests/KangurTestsScreen.tsx(244,31): error TS2322: Type '{ children: (false | Element | Element[])[]; onRefresh: () => Promise<void>; refreshing: boolean; title: string; }' is not assignable to type 'IntrinsicAttributes & KangurMobileScrollScreenProps'.
+  Property 'onRefresh' does not exist on type 'IntrinsicAttributes & KangurMobileScrollScreenProps'.

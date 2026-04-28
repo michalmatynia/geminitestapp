@@ -162,12 +162,14 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     expect(props.toggleExpand).not.toHaveBeenCalled();
   });
 
-  it('launches email scraping from the row action without navigating', async () => {
+  it('launches website/social/email scraping from the row action without navigating', async () => {
     const user = userEvent.setup();
     const props = renderOrganizationNode();
 
     await user.click(
-      screen.getByRole('button', { name: 'Scrape emails for organization Acme Inc' })
+      screen.getByRole('button', {
+        name: 'Scrape website, social profiles, and emails for organization Acme Inc',
+      })
     );
 
     expect(props.onLaunchOrganizationEmailScrape).toHaveBeenCalledWith('org-1');

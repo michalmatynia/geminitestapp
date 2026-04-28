@@ -16,7 +16,7 @@ import {
 import type {
   FilemakerEmailCampaignDelivery,
   FilemakerEmailCampaignEvent,
-} from '../types/campaigns';
+} from '../types';
 
 import {
   readFilemakerCampaignSettingValue,

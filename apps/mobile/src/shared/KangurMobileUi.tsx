@@ -2,9 +2,9 @@ export * from './KangurMobileUiLayout';
 export * from './KangurMobileUiButtons';
 export * from './KangurMobileUiDisplay';
 
-import { KangurMobileCard } from './KangurMobileUiLayout';
+import { KangurMobileCard, KangurMobileInsetPanel } from './KangurMobileUiLayout';
 import { KangurMobileLinkButton, KangurMobileActionButton } from './KangurMobileUiButtons';
-import { KangurMobilePill, KangurMobileInsetPanel } from './KangurMobileUiDisplay';
+import { KangurMobilePill } from './KangurMobileUiDisplay';
 
 export {
   KangurMobileCard as Card,

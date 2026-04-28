@@ -8,6 +8,7 @@ import React, {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 
@@ -42,6 +43,109 @@ type OrganizationEmailScrapeResponse = {
   promoted?: Array<{ status?: string }>;
   skipped?: Array<{ reason?: string }>;
   runId?: string | null;
+  websiteDiscovery?: {
+    persisted?: {
+      linked?: unknown[];
+    } | null;
+  } | null;
+};
+
+type OrganizationWebsiteSocialScrapeResponse = {
+  persisted?: {
+    linked?: unknown[];
+    skipped?: unknown[];
+  } | null;
+  socialProfiles?: unknown[];
+  websites?: unknown[];
+};
+
+type ScrapeToast = { message: string; variant: 'success' | 'warning' };
+
+const countPromotedStatus = (
+  promoted: Array<{ status?: string }>,
+  status: string
+): number => promoted.filter((item) => item.status === status).length;
+
+const getOrganizationEmailScrapeDiscoveryLinkCount = (
+  result: OrganizationEmailScrapeResponse
+): number => result.websiteDiscovery?.persisted?.linked?.length ?? 0;
+
+const buildOrganizationEmailScrapeDiscoverySuffix = (count: number): string =>
+  count > 0 ? ` ${count} website/social link${count === 1 ? '' : 's'} updated.` : '';
+
+const buildOrganizationEmailScrapeToast = (
+  result: OrganizationEmailScrapeResponse
+): ScrapeToast => {
+  const promoted = result.promoted ?? [];
+  const createdCount = countPromotedStatus(promoted, 'created');
+  const linkedCount = countPromotedStatus(promoted, 'linked');
+  const alreadyLinkedCount = countPromotedStatus(promoted, 'already-linked');
+  const skippedCount = result.skipped?.length ?? 0;
+  const discoveredLinkCount = getOrganizationEmailScrapeDiscoveryLinkCount(result);
+  const promotedCount = createdCount + linkedCount + alreadyLinkedCount;
+  const discoverySuffix = buildOrganizationEmailScrapeDiscoverySuffix(discoveredLinkCount);
+  const message =
+    promotedCount === 0 && skippedCount === 0
+      ? `Email scrape finished: no email addresses found.${discoverySuffix}`
+      : `Email scrape finished: ${createdCount} created, ${linkedCount} linked, ${alreadyLinkedCount} already linked, ${skippedCount} skipped.${discoverySuffix}`;
+  return {
+    message,
+    variant: promotedCount === 0 && discoveredLinkCount === 0 ? 'warning' : 'success',
+  };
+};
+
+const buildOrganizationWebsiteSocialScrapeToast = (
+  result: OrganizationWebsiteSocialScrapeResponse
+): ScrapeToast => {
+  const linkedCount = result.persisted?.linked?.length ?? 0;
+  const skippedCount = result.persisted?.skipped?.length ?? 0;
+  const websiteCount = result.websites?.length ?? 0;
+  const socialCount = result.socialProfiles?.length ?? 0;
+  const message = `Website/social scrape finished: ${websiteCount} website candidate${websiteCount === 1 ? '' : 's'}, ${socialCount} social profile${socialCount === 1 ? '' : 's'}, ${linkedCount} link${linkedCount === 1 ? '' : 's'} updated, ${skippedCount} skipped.`;
+  return {
+    message,
+    variant: linkedCount === 0 && websiteCount === 0 && socialCount === 0 ? 'warning' : 'success',
+  };
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object';
+
+const readStringField = (record: Record<string, unknown>, key: string): string | null => {
+  const value = record[key];
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const readOrganizationEmailScrapeErrorMessage = async (
+  response: Response
+): Promise<string> => {
+  const fallback = `Email scrape failed (${response.status}).`;
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().includes('application/json')) return fallback;
+  try {
+    const body = (await response.json()) as unknown;
+    if (!isRecord(body)) return fallback;
+    return readStringField(body, 'error') ?? readStringField(body, 'message') ?? fallback;
+  } catch {
+    return fallback;
+  }
+};
+
+const readOrganizationWebsiteSocialScrapeErrorMessage = async (
+  response: Response
+): Promise<string> => {
+  const fallback = `Website/social scrape failed (${response.status}).`;
+  const contentType = response.headers.get('content-type') ?? '';
+  if (!contentType.toLowerCase().includes('application/json')) return fallback;
+  try {
+    const body = (await response.json()) as unknown;
+    if (!isRecord(body)) return fallback;
+    return readStringField(body, 'error') ?? readStringField(body, 'message') ?? fallback;
+  } catch {
+    return fallback;
+  }
 };
 
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
@@ -227,8 +331,10 @@ function useOrganizationRenderNode(
   jobListingsById: ReadonlyMap<string, FilemakerJobListing>,
   organizations: FilemakerOrganization[],
   organizationEmailScrapeState: Record<string, boolean>,
+  organizationWebsiteSocialScrapeState: Record<string, boolean>,
   organizationSelection: OrganizationSelectionState,
   onLaunchOrganizationEmailScrape: (organizationId: string) => void,
+  onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void,
   onOpenEvent: (eventId: string) => void,
   onOpenJobListing: (organizationId: string, jobListingId: string) => void,
   onOpenOrganization: (organizationId: string) => void,
@@ -248,9 +354,11 @@ function useOrganizationRenderNode(
         eventsById={eventsById}
         jobListingsById={jobListingsById}
         organizationEmailScrapeState={organizationEmailScrapeState}
+        organizationWebsiteSocialScrapeState={organizationWebsiteSocialScrapeState}
         organizationSelection={organizationSelection}
         organizationById={organizationById}
         onLaunchOrganizationEmailScrape={onLaunchOrganizationEmailScrape}
+        onLaunchOrganizationWebsiteSocialScrape={onLaunchOrganizationWebsiteSocialScrape}
         onOpenEvent={onOpenEvent}
         onOpenJobListing={onOpenJobListing}
         onOpenOrganization={onOpenOrganization}
@@ -261,12 +369,14 @@ function useOrganizationRenderNode(
       eventsById,
       jobListingsById,
       onLaunchOrganizationEmailScrape,
+      onLaunchOrganizationWebsiteSocialScrape,
       onOpenEvent,
       onOpenJobListing,
       onOpenOrganization,
       onToggleOrganizationSelection,
       organizationById,
       organizationEmailScrapeState,
+      organizationWebsiteSocialScrapeState,
       organizationSelection,
     ]
   );
@@ -333,6 +443,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     useState<Record<string, boolean>>({});
   const [organizationSelection, setOrganizationSelection] =
     useState<OrganizationSelectionState>({});
+  const organizationEmailScrapeInFlightRef = useRef<Set<string>>(new Set());
   const deferredQuery = useDeferredValue(query.trim());
   const debouncedQuery = useDebouncedValue(deferredQuery, 250);
   const mongoOrganizations = useMongoFilemakerOrganizations({
@@ -406,6 +517,8 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   }, [filters, query, toast]);
   const launchOrganizationEmailScrape = useCallback(
     (organizationId: string): void => {
+      if (organizationEmailScrapeInFlightRef.current.has(organizationId)) return;
+      organizationEmailScrapeInFlightRef.current.add(organizationId);
       setOrganizationEmailScrapeState((current) => ({ ...current, [organizationId]: true }));
       void (async (): Promise<void> => {
         try {
@@ -418,25 +531,17 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
             }
           );
           if (!response.ok) {
-            throw new Error(`Email scrape failed (${response.status}).`);
+            throw new Error(await readOrganizationEmailScrapeErrorMessage(response));
           }
           const result = (await response.json()) as OrganizationEmailScrapeResponse;
-          const promoted = result.promoted ?? [];
-          const createdCount = promoted.filter((item) => item.status === 'created').length;
-          const linkedCount = promoted.filter((item) => item.status === 'linked').length;
-          const alreadyLinkedCount = promoted.filter(
-            (item) => item.status === 'already-linked'
-          ).length;
-          const skippedCount = result.skipped?.length ?? 0;
-          toast(
-            `Email scrape finished: ${createdCount} created, ${linkedCount} linked, ${alreadyLinkedCount} already linked, ${skippedCount} skipped.`,
-            { variant: 'success' }
-          );
+          const scrapeToast = buildOrganizationEmailScrapeToast(result);
+          toast(scrapeToast.message, { variant: scrapeToast.variant });
         } catch (error) {
           toast(error instanceof Error ? error.message : 'Email scrape failed.', {
             variant: 'error',
           });
         } finally {
+          organizationEmailScrapeInFlightRef.current.delete(organizationId);
           setOrganizationEmailScrapeState((current) => {
             const next = { ...current };
             delete next[organizationId];

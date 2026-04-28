@@ -304,7 +304,10 @@ export const resolveFilemakerCampaignContentForRecipient = (input: {
 };
 
 export const resolveFilemakerCampaignContentBodyText = (
-  content: Pick<FilemakerCampaignResolvedContent, 'bodyText' | 'bodyHtml'>
+  content: {
+    bodyHtml?: string | null;
+    bodyText?: string | null;
+  }
 ): string => {
   const text = content.bodyText?.trim() ?? '';
   if (text.length > 0) return text;

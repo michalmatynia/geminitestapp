@@ -233,8 +233,9 @@ const buildCanonicalStarterConfigRewrite = (args: {
     const resolution = resolveStarterWorkflowForPathConfig(parsedExisting);
     const provenance = readStarterProvenance(parsedExisting);
     const hasCurrentStarterProvenance =
-      Boolean(resolution?.entry) &&
-      provenance?.starterKey === resolution?.entry.starterLineage.starterKey &&
+      resolution?.entry !== undefined &&
+      provenance !== null &&
+      provenance.starterKey === resolution.entry.starterLineage.starterKey &&
       provenance.templateVersion >= resolution.entry.starterLineage.templateVersion;
 
     if (!hasCurrentStarterProvenance) {

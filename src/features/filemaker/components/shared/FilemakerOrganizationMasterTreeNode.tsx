@@ -284,11 +284,11 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
         variant='outline'
         size='icon'
         className='size-7 cursor-pointer'
-        aria-label={`Scrape emails for organization ${organization.name}`}
+        aria-label={`Scrape website, social profiles, and emails for organization ${organization.name}`}
         title={
           isEmailScrapeRunning
-            ? `Scraping emails for organization ${organization.name}`
-            : `Scrape emails for organization ${organization.name}`
+            ? `Scraping website, social profiles, and emails for organization ${organization.name}`
+            : `Scrape website, social profiles, and emails for organization ${organization.name}`
         }
         disabled={isEmailScrapeRunning}
         onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {

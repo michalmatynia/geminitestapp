@@ -89,19 +89,19 @@ export const computeEngagementSnapshot = (
       case 'delivery_sent': {
         counter.sends += 1;
         counter.consecutiveSendsSinceEngagement += 1;
-        counter.lastSendAt = event.createdAt;
+        counter.lastSendAt = event.createdAt ?? null;
         return;
       }
       case 'opened': {
         counter.opens += 1;
         counter.consecutiveSendsSinceEngagement = 0;
-        counter.lastEngagementAt = event.createdAt;
+        counter.lastEngagementAt = event.createdAt ?? null;
         return;
       }
       case 'clicked': {
         counter.clicks += 1;
         counter.consecutiveSendsSinceEngagement = 0;
-        counter.lastEngagementAt = event.createdAt;
+        counter.lastEngagementAt = event.createdAt ?? null;
         return;
       }
       default:

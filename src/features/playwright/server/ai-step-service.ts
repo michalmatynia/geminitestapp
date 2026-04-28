@@ -3,6 +3,7 @@ import 'server-only';
 import type { Page } from 'playwright';
 import type { z } from 'zod';
 
+import type { AiBrainCapabilityKey } from '@/shared/contracts/ai-brain';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/segments/api';
 import {
   isBrainModelVisionCapable,
@@ -32,6 +33,8 @@ export type PlaywrightStepEvaluateOptions = {
   inputSource: 'screenshot' | 'html' | 'text_content' | 'selector_text';
   data: string;
   systemPrompt?: string | null | undefined;
+  capability?: AiBrainCapabilityKey | null | undefined;
+  defaultModelId?: string | null | undefined;
 };
 
 export type PlaywrightStepEvaluateResult = {
@@ -44,6 +47,8 @@ export type PlaywrightStructuredScreenshotEvaluationOptions<TParsed> = {
   systemPrompt: string;
   promptPayload?: unknown;
   responseSchema: z.ZodType<TParsed>;
+  capability?: AiBrainCapabilityKey | null | undefined;
+  defaultModelId?: string | null | undefined;
 };
 
 export type PlaywrightStructuredScreenshotEvaluationResult<TParsed> = {
@@ -990,6 +995,8 @@ export async function evaluateStructuredPlaywrightScreenshotWithAI<TParsed>(
         options.promptPayload === undefined
           ? options.systemPrompt
           : [options.systemPrompt, JSON.stringify(options.promptPayload, null, 2)].join('\n\n'),
+      capability: options.capability,
+      defaultModelId: options.defaultModelId,
     });
 
     return {
@@ -1990,23 +1997,27 @@ export async function runPlaywrightVerificationObservationLoopWithProfile<
 export async function evaluateStepWithAI(
   options: PlaywrightStepEvaluateOptions
 ): Promise<PlaywrightStepEvaluateResult> {
+  const defaultModelId = options.defaultModelId?.trim() ?? '';
   const brainConfig = await resolveBrainExecutionConfigForCapability(
-    'playwright.ai_evaluator_step',
+    options.capability ?? 'playwright.ai_evaluator_step',
     {
       defaultSystemPrompt: EVALUATOR_DEFAULT_SYSTEM_PROMPT,
-      defaultModelId: 'claude-sonnet-4-6',
+      defaultTemperature: 0,
+      ...(defaultModelId.length > 0 ? { defaultModelId } : {}),
+      runtimeKind: options.inputSource === 'screenshot' ? 'vision' : 'chat',
     }
   );
 
   const modelId = brainConfig.modelId;
+  const systemPromptOverride = options.systemPrompt?.trim() ?? '';
   const systemPrompt =
-    options.systemPrompt?.trim() || brainConfig.systemPrompt || EVALUATOR_DEFAULT_SYSTEM_PROMPT;
+    systemPromptOverride.length > 0 ? systemPromptOverride : brainConfig.systemPrompt;
   const { inputSource, data } = options;
   const isImageInput = inputSource === 'screenshot';
 
   if (isImageInput && !isBrainModelVisionCapable(modelId)) {
     throw new Error(
-      `Model "${modelId}" does not support image inputs. Use a vision-capable model (e.g. claude-sonnet-4-6, gpt-4o, gemini-2.0-flash) for screenshot evaluation. Configure this in /admin/brain?tab=routing under Playwright.`
+      `Model "${modelId}" does not support image inputs. Use a vision-capable model selected in AI Brain for screenshot evaluation. Configure this in /admin/brain?tab=routing.`
     );
   }
 
@@ -2071,6 +2082,8 @@ export type PlaywrightInjectionConversationMessage = {
 export type PlaywrightStepInjectOptions = {
   goal: string;
   systemPrompt?: string | null | undefined;
+  capability?: AiBrainCapabilityKey | null | undefined;
+  defaultModelId?: string | null | undefined;
   context: PlaywrightStepInjectContext;
   /** Prior turns to prepend before the current user message, enabling multi-turn code generation */
   conversationHistory?: readonly PlaywrightInjectionConversationMessage[] | null | undefined;
@@ -2165,21 +2178,26 @@ const parseInjectorResponse = (
 export async function injectCodeWithAI(
   options: PlaywrightStepInjectOptions
 ): Promise<PlaywrightStepInjectResult> {
+  const defaultModelId = options.defaultModelId?.trim() ?? '';
   const brainConfig = await resolveBrainExecutionConfigForCapability(
-    'playwright.ai_code_injector',
+    options.capability ?? 'playwright.ai_code_injector',
     {
       defaultSystemPrompt: INJECTOR_DEFAULT_SYSTEM_PROMPT,
-      defaultModelId: 'claude-sonnet-4-6',
+      defaultTemperature: 0.2,
+      ...(defaultModelId.length > 0 ? { defaultModelId } : {}),
     }
   );
 
+  const systemPromptOverride = options.systemPrompt?.trim() ?? '';
   const systemPrompt =
-    options.systemPrompt?.trim() || brainConfig.systemPrompt || INJECTOR_DEFAULT_SYSTEM_PROMPT;
+    systemPromptOverride.length > 0 ? systemPromptOverride : brainConfig.systemPrompt;
   const userMessage = buildInjectorUserMessage(options);
   const screenshotBase64 = options.context.screenshotBase64;
 
   const userContent: unknown =
-    screenshotBase64 && isBrainModelVisionCapable(brainConfig.modelId)
+    screenshotBase64 !== null &&
+    screenshotBase64.length > 0 &&
+    isBrainModelVisionCapable(brainConfig.modelId)
       ? [
           {
             type: 'image_url' as const,
@@ -2241,6 +2259,10 @@ export type PlaywrightVisionGuidedEvaluatorOptions<TParsed> = {
   schema: z.ZodType<TParsed>;
   /** System prompt for the screenshot evaluator AI model */
   systemPrompt: string;
+  /** Optional AI Brain capability override for domain-specific screenshot evaluation. */
+  capability?: AiBrainCapabilityKey | null | undefined;
+  /** Optional fallback model used only when the selected AI Brain capability has no model. */
+  defaultModelId?: string | null | undefined;
   /**
    * Returns true when the parsed page state satisfies the goal.
    * Receives null when the AI evaluation failed or produced an unparseable response.
@@ -2280,6 +2302,10 @@ export type PlaywrightVisionGuidedAutomationOptions = {
   timeoutMs?: number | null | undefined;
   /** Optional system prompt override for the code generator */
   systemPrompt?: string | null | undefined;
+  /** Optional AI Brain capability override for domain-specific code generation. */
+  injectorCapability?: AiBrainCapabilityKey | null | undefined;
+  /** Optional fallback model used only when the selected AI Brain injector capability has no model. */
+  injectorDefaultModelId?: string | null | undefined;
   /**
    * When true (default), waits for domcontentloaded after navigation-triggering code.
    * Set to false to use only the fixed inter-iteration delay.
@@ -2437,6 +2463,8 @@ export async function runPlaywrightVisionGuidedAutomation(
     const result = await injectCodeWithAI({
       goal: options.goal,
       systemPrompt: options.systemPrompt ?? null,
+      capability: options.injectorCapability,
+      defaultModelId: options.injectorDefaultModelId,
       context: {
         iteration: iterationsRun,
         maxIterations,
@@ -2598,6 +2626,8 @@ export function createPlaywrightVisionGuidedEvaluator<TParsed>(
       screenshotBase64: capture.screenshotBase64,
       systemPrompt: options.systemPrompt,
       responseSchema: options.schema,
+      capability: options.capability,
+      defaultModelId: options.defaultModelId,
     });
 
     const parsed = evalResult.parsed;

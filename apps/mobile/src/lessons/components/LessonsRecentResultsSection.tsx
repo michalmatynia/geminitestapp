@@ -29,7 +29,7 @@ export function LessonsRecentResultsSection({
             );
         }
         
-        if (!Boolean(lessonRecentResults.isEnabled)) {
+        if (!lessonRecentResults.isEnabled) {
             return (
                 <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
                     {copy({ de: 'Melde dich an, um hier Ergebnisse zu sehen.', en: 'Sign in to see results here.', pl: 'Zaloguj się, aby zobaczyć tutaj wyniki.' })}

@@ -85,25 +85,30 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   ),
   ToggleRow: ({
     checked,
+    children,
     disabled,
     label,
     loading,
     onCheckedChange,
   }: {
     checked: boolean;
+    children?: React.ReactNode;
     disabled?: boolean;
     label: string;
     loading?: boolean;
     onCheckedChange: (checked: boolean) => void;
   }) => (
-    <button
-      type='button'
-      aria-pressed={checked}
-      disabled={disabled || loading}
-      onClick={() => onCheckedChange(!checked)}
-    >
-      {label}
-    </button>
+    <div>
+      <button
+        type='button'
+        aria-pressed={checked}
+        disabled={disabled || loading}
+        onClick={() => onCheckedChange(!checked)}
+      >
+        {label}
+      </button>
+      {children}
+    </div>
   ),
 }));
 
@@ -145,11 +150,18 @@ const successfulResponse = {
   sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
   summary: {
     createdListings: 0,
+    addressUpdates: 0,
+    createdLexiconTerms: 0,
+    createdOrganizations: 0,
+    linkedLexiconTerms: 0,
     matchedOffers: 0,
+    profileUpdates: 0,
     scrapedOffers: 0,
     skippedOffers: 0,
     unmatchedOffers: 0,
+    updatedOrganizations: 0,
     updatedListings: 0,
+    verifiedListings: 0,
   },
   warnings: [],
 };
@@ -360,10 +372,11 @@ describe('FilemakerJobBoardScrapeModal', () => {
     );
     expect(screen.getByLabelText('Provider')).toHaveValue('justjoin_it');
     expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
-    expect(screen.getByRole('button', { name: 'Headless browser' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Action browser mode' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
+    expect(screen.getByText('Current: Headless')).toBeInTheDocument();
   });
 
   it('uses and saves the shared Job Board Offer Scrape browser mode setting', async () => {
@@ -384,13 +397,15 @@ describe('FilemakerJobBoardScrapeModal', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Headed browser' })).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Action browser mode' })).toHaveAttribute(
       'aria-pressed',
       'false'
     );
+    expect(screen.getByText('Current: Headed')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save settings' })).toBeDisabled();
 
-    await user.click(screen.getByRole('button', { name: 'Headed browser' }));
+    await user.click(screen.getByRole('button', { name: 'Action browser mode' }));
+    expect(screen.getByText('Current: Headless')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Save settings' })).not.toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Save settings' }));
 
@@ -447,6 +462,313 @@ describe('FilemakerJobBoardScrapeModal', () => {
     });
   });
 
+  it('renders live preview updates from the streamed scrape response', async () => {
+    const user = userEvent.setup();
+    const offerResult = {
+      listingId: null,
+      match: {
+        confidence: 100,
+        organizationId: 'org-1',
+        organizationName: 'Acme Inc',
+        reason: 'exact name match',
+      },
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: 'Acme Inc builds commerce software.',
+        companyProfileUrl: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Warszawa',
+        postedAt: null,
+        salaryCurrency: 'PLN',
+        salaryMax: 18000,
+        salaryMin: 12000,
+        salaryPeriod: 'monthly',
+        salaryText: '12 000 - 18 000 PLN',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+        pills: [],
+        title: 'Frontend Developer',
+      },
+      reason: null,
+      status: 'preview',
+    };
+    const streamedResponse = {
+      ...successfulResponse,
+      offers: [offerResult],
+      summary: {
+        ...successfulResponse.summary,
+        matchedOffers: 1,
+        scrapedOffers: 1,
+      },
+    };
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        message: 'Collecting job-board offer links.',
+        type: 'status',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        provider: 'pracuj_pl',
+        runId: 'run-1',
+        sourceSite: 'pracuj.pl',
+        type: 'links',
+        urls: [offerResult.offer.sourceUrl],
+      },
+      {
+        at: '2026-04-28T10:00:02.000Z',
+        index: 1,
+        result: offerResult,
+        total: 1,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:03.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(screen.getByText('Live scrape preview')).toBeInTheDocument());
+    expect(screen.getByText('Discovered links')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: offerResult.offer.sourceUrl })).toBeInTheDocument();
+    expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Acme Inc builds commerce software/).length).toBeGreaterThan(0);
+    const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(request).toMatchObject({ mode: 'preview', stream: true });
+  });
+
+  it('renders streamed offers when optional scraper fields are missing', async () => {
+    const user = userEvent.setup();
+    const partialOfferResult = {
+      listingId: null,
+      match: null,
+      offer: {
+        companyName: 'Acme Inc',
+        sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+        title: 'Frontend Developer',
+      },
+      reason: null,
+      status: 'preview',
+    };
+    const streamedResponse = {
+      ...successfulResponse,
+      offers: [partialOfferResult],
+      summary: {
+        ...successfulResponse.summary,
+        scrapedOffers: 1,
+      },
+    };
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        index: 1,
+        result: partialOfferResult,
+        total: 1,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0));
+    expect(screen.getAllByText('Acme Inc').length).toBeGreaterThan(0);
+  });
+
+  it('renders streamed database write events during import', async () => {
+    const user = userEvent.setup();
+    const onCompleted = vi.fn();
+    const createdResult = {
+      listingId: 'listing-1',
+      match: {
+        confidence: 100,
+        organizationId: 'org-1',
+        organizationName: 'Acme Inc',
+        reason: 'created from scraped job-board employer',
+      },
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: 'Acme Inc builds commerce software.',
+        companyProfileUrl: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Warszawa',
+        postedAt: null,
+        salaryCurrency: null,
+        salaryMax: null,
+        salaryMin: null,
+        salaryPeriod: 'monthly',
+        salaryText: '',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+        pills: [],
+        title: 'Frontend Developer',
+      },
+      reason: null,
+      status: 'created',
+    };
+    const streamedResponse = {
+      ...successfulResponse,
+      mode: 'import',
+      offers: [createdResult],
+      summary: {
+        ...successfulResponse.summary,
+        createdListings: 1,
+        createdOrganizations: 1,
+        matchedOffers: 1,
+        profileUpdates: 1,
+        scrapedOffers: 1,
+        verifiedListings: 1,
+      },
+    };
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        message: 'Importing scraped offers.',
+        type: 'status',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        type: 'write',
+        write: {
+          action: 'organization_created',
+          message: 'Created organisation Acme Inc.',
+          profileUpdated: true,
+          result: { ...createdResult, listingId: null },
+        },
+      },
+      {
+        at: '2026-04-28T10:00:02.000Z',
+        type: 'write',
+        write: {
+          action: 'listing_created',
+          message: 'Created job listing Frontend Developer.',
+          profileUpdated: false,
+          result: createdResult,
+        },
+      },
+      {
+        at: '2026-04-28T10:00:03.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={onCompleted}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Import' }));
+
+    await waitFor(() => expect(screen.getByText('Database writes')).toBeInTheDocument());
+    expect(screen.getByText('Organisation created')).toBeInTheDocument();
+    expect(screen.getByText('Listing created')).toBeInTheDocument();
+    expect(screen.getByText(/listing-1/)).toBeInTheDocument();
+    await waitFor(() => expect(onCompleted).toHaveBeenCalledTimes(1));
+  });
+
+  it('renders duplicate scraper warnings without duplicate React key warnings', async () => {
+    const user = userEvent.setup();
+    const duplicateWarning = 'Updated company profile for Ch.-4';
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        ...successfulResponse,
+        warnings: [duplicateWarning, duplicateWarning],
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      render(
+        <FilemakerJobBoardScrapeModal
+          open
+          onClose={vi.fn()}
+          onCompleted={vi.fn()}
+          selectedOrganizationCount={0}
+          selectedOrganizationIds={[]}
+        />
+      );
+
+      await user.type(
+        screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+        'https://www.pracuj.pl/praca/it;kw'
+      );
+      await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+      await waitFor(() => expect(screen.getAllByText(duplicateWarning)).toHaveLength(2));
+      expect(hasDuplicateKeyWarning(consoleErrorSpy.mock.calls)).toBe(false);
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
   it('runs import mode and notifies completion after a successful import', async () => {
     const user = userEvent.setup();
     const onCompleted = vi.fn();
@@ -493,3 +815,11 @@ describe('FilemakerJobBoardScrapeModal', () => {
     });
   });
 });
+
+const hasDuplicateKeyWarning = (calls: unknown[][]): boolean =>
+  calls.some((call) =>
+    call.some((value) => {
+      const message = String(value);
+      return message.includes('Encountered two children') || message.includes('same key');
+    })
+  );

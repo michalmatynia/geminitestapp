@@ -177,4 +177,70 @@ describe('JobBoardScrapeSequencer', () => {
     expect(html).toContain('"companyProfile"');
     expect(html).toContain('Acme builds digital products');
   });
+
+  it('uses the Pracuj.pl Zobacz profil link to access company profile data', async () => {
+    const offerUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001';
+    const companyUrl = 'https://www.pracuj.pl/pracodawcy/acme,123';
+    let currentUrl = offerUrl;
+    const profileLocator = createLocator(true);
+    profileLocator.getAttribute.mockResolvedValue(companyUrl);
+    const bodyLocator = createLocator(true);
+    bodyLocator.textContent.mockResolvedValue('');
+    const page = {
+      evaluate: vi.fn(async () => {
+        if ((page.evaluate as ReturnType<typeof vi.fn>).mock.calls.length === 1) {
+          return {
+            companyLinks: [],
+            plainText: 'Developer job offer',
+            provider: 'pracuj_pl',
+            title: 'Developer - Acme',
+            url: offerUrl,
+          };
+        }
+        return {
+          facts: [],
+          headings: ['O firmie'],
+          plainText: 'Acme builds digital products from profile page.',
+          sections: [{ heading: 'O firmie', text: 'Acme builds digital products.' }],
+          title: 'Acme - profil pracodawcy',
+          url: companyUrl,
+          websiteUrls: [],
+        };
+      }),
+      frames: vi.fn(() => []),
+      goto: vi.fn(async (url: string) => {
+        currentUrl = url;
+        return null;
+      }),
+      locator: vi.fn((selector: string) => {
+        if (selector === 'body') return bodyLocator;
+        if (selector.includes('Zobacz profil')) return profileLocator;
+        return createLocator(false);
+      }),
+      mainFrame: vi.fn(() => null),
+      url: vi.fn(() => currentUrl),
+      waitForLoadState: vi.fn(async () => undefined),
+    } as unknown as Page;
+    const sequencer = new JobBoardScrapeSequencer(
+      { page, emit: vi.fn(), log: vi.fn() },
+      {
+        mode: 'fetch_offer',
+        provider: 'pracuj_pl',
+        sourceUrl: offerUrl,
+      }
+    );
+    (sequencer as unknown as { provider: string; sourceUrl: string }).provider = 'pracuj_pl';
+    (sequencer as unknown as { provider: string; sourceUrl: string }).sourceUrl = offerUrl;
+
+    await (
+      sequencer as unknown as {
+        extractOfferSnapshot: () => Promise<void>;
+      }
+    ).extractOfferSnapshot();
+
+    const html = (sequencer as unknown as { html: string | null }).html ?? '';
+    expect(page.goto).toHaveBeenCalledWith(companyUrl, expect.any(Object));
+    expect(profileLocator.getAttribute).toHaveBeenCalledWith('href', expect.any(Object));
+    expect(html).toContain('Acme builds digital products from profile page');
+  });
 });

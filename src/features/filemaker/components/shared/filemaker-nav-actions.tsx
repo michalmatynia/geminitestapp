@@ -1,5 +1,6 @@
 import {
   Building2,
+  BookOpen,
   CalendarDays,
   Database,
   Globe,
@@ -27,6 +28,7 @@ type FilemakerPageKey =
   | 'mail'
   | 'events'
   | 'values'
+  | 'lexicon'
   | 'campaigns'
   | 'control-centre'
   | 'suppressions'
@@ -93,6 +95,13 @@ const NAV_ITEMS: Array<{
     label: 'Values',
     href: '/admin/filemaker/values',
     icon: <Tags className='size-4' />,
+    variant: 'outline',
+  },
+  {
+    key: 'lexicon',
+    label: 'Lexicon',
+    href: '/admin/filemaker/lexicon',
+    icon: <BookOpen className='size-4' />,
     variant: 'outline',
   },
   {

@@ -119,6 +119,9 @@ const VISION_EMAIL_FINDER_STEP_DEFINITIONS = [
   { key: 'rank_company_emails', label: 'Rank company emails' },
 ] as const satisfies readonly { key: string; label: string }[];
 
+const JOB_BOARD_VISION_EMAIL_FINDER_CAPABILITY = 'job_board.vision_email_finder';
+const JOB_BOARD_VISION_NAVIGATION_CAPABILITY = 'job_board.vision_navigation';
+
 export type VisionEmailFinderActionHistoryEntry = {
   iteration: number;
   url: string | null;
@@ -664,6 +667,7 @@ while (iterationsRun < maxIterations && Date.now() - startAt < timeoutMs && !don
       inputSource: 'screenshot',
       data: screenshotBase64,
       systemPrompt: EMAIL_SYSTEM_PROMPT,
+      capability: '${JOB_BOARD_VISION_EMAIL_FINDER_CAPABILITY}',
     });
     parsed = parseJsonObject(evalResult.output);
   } catch {
@@ -769,6 +773,7 @@ while (iterationsRun < maxIterations && Date.now() - startAt < timeoutMs && !don
         priorExecutionError: executionErrors > 0 ? lastReasoning : null,
         priorInjectorReasoning: lastReasoning,
       },
+      capability: '${JOB_BOARD_VISION_NAVIGATION_CAPABILITY}',
     });
   } catch (error) {
     lastReasoning =
@@ -1250,6 +1255,7 @@ const findCompanyEmailsWithVisionLoopWithLocalBrowser = async (input: {
     const evaluator = createPlaywrightVisionGuidedEvaluator<EmailVisionResponse>({
       schema: emailVisionResponseSchema,
       systemPrompt: SYSTEM_PROMPT,
+      capability: JOB_BOARD_VISION_EMAIL_FINDER_CAPABILITY,
       isDone: (parsed, capture) => {
         if (parsed === null) return false;
         const sourceUrl = capture.url ?? page?.url() ?? startUrl;
@@ -1305,6 +1311,7 @@ const findCompanyEmailsWithVisionLoopWithLocalBrowser = async (input: {
       page,
       goal,
       evaluate: evaluator,
+      injectorCapability: JOB_BOARD_VISION_NAVIGATION_CAPABILITY,
       maxIterations: input.maxIterations ?? 5,
       timeoutMs: input.timeoutMs ?? 90_000,
       maxConsecutiveErrors: 2,

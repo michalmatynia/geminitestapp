@@ -181,6 +181,7 @@ export const jobScanCreateRequestSchema = z.object({
       message: 'Only pracuj.pl, justjoin.it, and nofluffjobs.com URLs are supported.',
     }),
   provider: jobScanProviderSchema.optional(),
+  useVision: z.boolean().optional(),
 });
 export type JobScanCreateRequest = z.infer<typeof jobScanCreateRequestSchema>;
 

@@ -7,12 +7,17 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
   type FilemakerJobBoardScrapeProvider,
+  type FilemakerJobBoardScrapeDraftSaveRequest,
   type FilemakerJobBoardDuplicateStrategy,
   type FilemakerJobBoardImportStrategy,
   type FilemakerJobBoardOrganizationScope,
+  type FilemakerJobBoardScrapeLiveEvent,
   type FilemakerJobBoardScrapeMode,
+  type FilemakerJobBoardScrapeOfferResult,
   type FilemakerJobBoardScrapeRequest,
   type FilemakerJobBoardScrapeResponse,
+  type FilemakerJobBoardScrapeWriteResult,
+  type FilemakerJobBoardScrapedOffer,
 } from '@/features/filemaker/filemaker-job-board-scrape-contracts';
 import type { FilemakerJobListingStatus } from '@/features/filemaker/types';
 import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
@@ -57,6 +62,15 @@ type ScrapeModalInitialState = {
 type ActiveScrapeRequest = {
   controller: AbortController;
   id: number;
+};
+
+type LivePreviewState = {
+  discoveredUrls: string[];
+  final: boolean;
+  messages: string[];
+  offers: FilemakerJobBoardScrapeOfferResult[];
+  warnings: string[];
+  writes: FilemakerJobBoardScrapeWriteResult[];
 };
 
 const SCRAPE_DRAFT_SETTINGS_KEYS = [
@@ -104,6 +118,40 @@ const STATUS_OPTIONS = [
   { value: 'paused', label: 'Paused' },
   { value: 'closed', label: 'Closed' },
 ] as const;
+
+const createEmptyLivePreviewState = (): LivePreviewState => ({
+  discoveredUrls: [],
+  final: false,
+  messages: [],
+  offers: [],
+  warnings: [],
+  writes: [],
+});
+
+type LivePreviewStatusLabel = 'Finished' | 'Ready' | 'Running';
+
+type PostScrapeRequestInput = {
+  draft: ScrapeDraft;
+  mode: FilemakerJobBoardScrapeMode;
+  onEvent: (event: FilemakerJobBoardScrapeLiveEvent) => void;
+  selectedOrganizationIds: string[];
+  signal: AbortSignal;
+};
+
+type PostSaveDraftsRequestInput = {
+  draft: ScrapeDraft;
+  offers: FilemakerJobBoardScrapedOffer[];
+  selectedOrganizationIds: string[];
+};
+
+const resolveLivePreviewStatusLabel = (
+  livePreview: LivePreviewState,
+  isRunning: boolean
+): LivePreviewStatusLabel => {
+  if (livePreview.final) return 'Finished';
+  if (isRunning) return 'Running';
+  return 'Ready';
+};
 
 const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
@@ -165,22 +213,344 @@ const buildRequest = (
   timeoutMs: toNumber(draft.timeoutMs, 180_000),
 });
 
-const postScrapeRequest = async (
+const buildDraftSaveRequest = (
   draft: ScrapeDraft,
-  mode: FilemakerJobBoardScrapeMode,
   selectedOrganizationIds: string[],
-  signal: AbortSignal
+  offers: FilemakerJobBoardScrapedOffer[]
+): FilemakerJobBoardScrapeDraftSaveRequest => {
+  const request = buildRequest(draft, 'import', selectedOrganizationIds);
+  return {
+    action: 'save_drafts',
+    duplicateStrategy: request.duplicateStrategy,
+    importStrategy: request.importStrategy,
+    minimumMatchConfidence: request.minimumMatchConfidence,
+    offers,
+    organizationScope: request.organizationScope,
+    provider: request.provider,
+    selectedOrganizationIds: request.selectedOrganizationIds,
+    sourceUrl: request.sourceUrl,
+    status: request.status,
+  };
+};
+
+const appendCapped = (items: string[], next: string, maxItems = 8): string[] =>
+  [...items, next].slice(-maxItems);
+
+const mergeLiveOffer = (
+  offers: FilemakerJobBoardScrapeOfferResult[],
+  next: FilemakerJobBoardScrapeOfferResult
+): FilemakerJobBoardScrapeOfferResult[] => {
+  const index = offers.findIndex((item) => item.offer.sourceUrl === next.offer.sourceUrl);
+  if (index < 0) return [...offers, next];
+  return offers.map((item, itemIndex) => (itemIndex === index ? next : item));
+};
+
+const mergeLiveOffers = (
+  offers: FilemakerJobBoardScrapeOfferResult[],
+  nextOffers: FilemakerJobBoardScrapeOfferResult[]
+): FilemakerJobBoardScrapeOfferResult[] =>
+  nextOffers.reduce(
+    (current, nextOffer) => mergeLiveOffer(current, nextOffer),
+    offers
+  );
+
+const formatOfferStatus = (status: FilemakerJobBoardScrapeOfferResult['status']): string =>
+  status === 'preview' ? 'not saved' : status;
+
+const formatWriteAction = (write: FilemakerJobBoardScrapeWriteResult): string => {
+  if (write.action === 'organization_address_updated') return 'Organisation address updated';
+  if (write.action === 'organization_created') return 'Organisation created';
+  if (write.action === 'organization_linked') return 'Organisation linked';
+  if (write.action === 'organization_profile_updated') return 'Company profile updated';
+  if (write.action === 'listing_lexicon_linked') return 'Lexicon terms linked';
+  if (write.action === 'listing_created') return 'Listing created';
+  if (write.action === 'listing_updated') return 'Listing updated';
+  if (write.action === 'listing_skipped') return 'Listing skipped';
+  return 'Unmatched offer';
+};
+
+const EMPTY_SCRAPE_SUMMARY: FilemakerJobBoardScrapeResponse['summary'] = {
+  addressUpdates: 0,
+  createdLexiconTerms: 0,
+  createdListings: 0,
+  createdOrganizations: 0,
+  linkedLexiconTerms: 0,
+  matchedOffers: 0,
+  profileUpdates: 0,
+  scrapedOffers: 0,
+  skippedOffers: 0,
+  unmatchedOffers: 0,
+  updatedListings: 0,
+  updatedOrganizations: 0,
+  verifiedListings: 0,
+};
+
+const readString = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+const readNullableString = (value: unknown): string | null => {
+  const normalized = readString(value).trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const readNumber = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
+const readStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+const normalizeOfferStatus = (value: unknown): FilemakerJobBoardScrapeOfferResult['status'] =>
+  value === 'created' ||
+  value === 'preview' ||
+  value === 'skipped' ||
+  value === 'unmatched' ||
+  value === 'updated'
+    ? value
+    : 'preview';
+
+const normalizeSalaryPeriod = (
+  value: unknown
+): FilemakerJobBoardScrapeOfferResult['offer']['salaryPeriod'] =>
+  value === 'fixed' || value === 'hourly' || value === 'monthly' || value === 'yearly'
+    ? value
+    : 'monthly';
+
+const normalizePillCategory = (
+  value: unknown
+): FilemakerJobBoardScrapeOfferResult['offer']['pills'][number]['category'] =>
+  (typeof value === 'string' && value.trim().length > 0
+    ? value
+    : 'other') as FilemakerJobBoardScrapeOfferResult['offer']['pills'][number]['category'];
+
+const normalizeOfferPills = (
+  value: unknown
+): FilemakerJobBoardScrapeOfferResult['offer']['pills'] => {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) return [];
+    const label = readString(item['label']).trim();
+    if (label.length === 0) return [];
+    const position = item['position'];
+    return [
+      {
+        category: normalizePillCategory(item['category']),
+        label,
+        position: typeof position === 'number' && Number.isFinite(position) ? position : index,
+        sourceSite: readString(item['sourceSite']),
+        sourceUrl: readString(item['sourceUrl']),
+      },
+    ];
+  });
+};
+
+const normalizeOfferMatch = (
+  value: unknown
+): FilemakerJobBoardScrapeOfferResult['match'] => {
+  if (!isRecord(value)) return null;
+  const organizationId = readString(value['organizationId']);
+  const organizationName = readString(value['organizationName']);
+  if (organizationId.length === 0 && organizationName.length === 0) return null;
+  return {
+    confidence: readNumber(value['confidence']),
+    organizationId,
+    organizationName: organizationName.length > 0 ? organizationName : organizationId,
+    reason: readString(value['reason']),
+  };
+};
+
+const normalizeOfferResult = (value: unknown): FilemakerJobBoardScrapeOfferResult => {
+  const record = isRecord(value) ? value : {};
+  const offer = isRecord(record['offer']) ? record['offer'] : {};
+  return {
+    listingId: readNullableString(record['listingId']),
+    match: normalizeOfferMatch(record['match']),
+    offer: {
+      companyName: readString(offer['companyName']),
+      companyProfile: readString(offer['companyProfile']),
+      companyProfileUrl: readNullableString(offer['companyProfileUrl']),
+      description: readString(offer['description']),
+      expiresAt: readNullableString(offer['expiresAt']),
+      location: readString(offer['location']),
+      pills: normalizeOfferPills(offer['pills']),
+      postedAt: readNullableString(offer['postedAt']),
+      salaryCurrency: readNullableString(offer['salaryCurrency']),
+      salaryMax: typeof offer['salaryMax'] === 'number' ? offer['salaryMax'] : null,
+      salaryMin: typeof offer['salaryMin'] === 'number' ? offer['salaryMin'] : null,
+      salaryPeriod: normalizeSalaryPeriod(offer['salaryPeriod']),
+      salaryText: readString(offer['salaryText']),
+      sourceExternalId: readNullableString(offer['sourceExternalId']),
+      sourceSite: readString(offer['sourceSite']),
+      sourceUrl: readString(offer['sourceUrl']),
+      title: readString(offer['title']),
+    },
+    reason: readNullableString(record['reason']),
+    status: normalizeOfferStatus(record['status']),
+  };
+};
+
+const normalizeScrapeSummary = (value: unknown): FilemakerJobBoardScrapeResponse['summary'] => {
+  const summary = isRecord(value) ? value : {};
+  return {
+    addressUpdates: readNumber(summary['addressUpdates']),
+    createdLexiconTerms: readNumber(summary['createdLexiconTerms']),
+    createdListings: readNumber(summary['createdListings']),
+    createdOrganizations: readNumber(summary['createdOrganizations']),
+    linkedLexiconTerms: readNumber(summary['linkedLexiconTerms']),
+    matchedOffers: readNumber(summary['matchedOffers']),
+    profileUpdates: readNumber(summary['profileUpdates']),
+    scrapedOffers: readNumber(summary['scrapedOffers']),
+    skippedOffers: readNumber(summary['skippedOffers']),
+    unmatchedOffers: readNumber(summary['unmatchedOffers']),
+    updatedListings: readNumber(summary['updatedListings']),
+    updatedOrganizations: readNumber(summary['updatedOrganizations']),
+    verifiedListings: readNumber(summary['verifiedListings']),
+  };
+};
+
+const normalizeScrapeResponse = (value: unknown): FilemakerJobBoardScrapeResponse => {
+  const record = isRecord(value) ? value : {};
+  return {
+    browserMode: record['browserMode'] === 'headed' ? 'headed' : 'headless',
+    mode: record['mode'] === 'import' ? 'import' : 'preview',
+    offers: Array.isArray(record['offers']) ? record['offers'].map(normalizeOfferResult) : [],
+    provider:
+      record['provider'] === 'justjoin_it' || record['provider'] === 'nofluffjobs'
+        ? record['provider']
+        : 'pracuj_pl',
+    runId: readNullableString(record['runId']),
+    sourceSite: readString(record['sourceSite']),
+    sourceUrl: readString(record['sourceUrl']),
+    summary: {
+      ...EMPTY_SCRAPE_SUMMARY,
+      ...normalizeScrapeSummary(record['summary']),
+    },
+    warnings: readStringArray(record['warnings']),
+  };
+};
+
+const normalizeWriteResult = (value: unknown): FilemakerJobBoardScrapeWriteResult | null => {
+  if (!isRecord(value)) return null;
+  const action = readString(value['action']);
+  return {
+    action: action as FilemakerJobBoardScrapeWriteResult['action'],
+    message: readString(value['message']),
+    profileUpdated: value['profileUpdated'] === true,
+    result: normalizeOfferResult(value['result']),
+  };
+};
+
+const parseLiveEventLine = (line: string): FilemakerJobBoardScrapeLiveEvent | null => {
+  try {
+    const value = JSON.parse(line) as unknown;
+    return isRecord(value) && typeof value['type'] === 'string'
+      ? (value as FilemakerJobBoardScrapeLiveEvent)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const readLiveScrapeStream = async (
+  response: Response,
+  onEvent: (event: FilemakerJobBoardScrapeLiveEvent) => void
+): Promise<FilemakerJobBoardScrapeResponse> => {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    return normalizeScrapeResponse(await response.json());
+  }
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  const handleLine = (line: string): FilemakerJobBoardScrapeResponse | null => {
+    const event = parseLiveEventLine(line);
+    if (event === null) return null;
+    onEvent(event);
+    if (event.type === 'done') {
+      return normalizeScrapeResponse(event.result);
+    }
+    if (event.type === 'error') {
+      throw new Error(event.message);
+    }
+    return null;
+  };
+
+  const processLine = (line: string): FilemakerJobBoardScrapeResponse | null => {
+    if (line.trim().length === 0) return null;
+    return handleLine(line);
+  };
+
+  const processLines = (lines: string[]): FilemakerJobBoardScrapeResponse | null => {
+    let nextResult: FilemakerJobBoardScrapeResponse | null = null;
+    for (const line of lines) {
+      const lineResult = processLine(line);
+      if (lineResult !== null) {
+        nextResult = lineResult;
+      }
+    }
+    return nextResult;
+  };
+
+  const readChunks = async (
+    currentResult: FilemakerJobBoardScrapeResponse | null
+  ): Promise<FilemakerJobBoardScrapeResponse | null> => {
+    const chunk = await reader.read();
+    if (chunk.done) return currentResult;
+    buffer += decoder.decode(chunk.value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    return readChunks(processLines(lines) ?? currentResult);
+  };
+
+  let finalResult: FilemakerJobBoardScrapeResponse | null = null;
+  try {
+    finalResult = await readChunks(null);
+    buffer += decoder.decode();
+    finalResult = processLine(buffer) ?? finalResult;
+  } finally {
+    reader.releaseLock();
+  }
+
+  if (finalResult === null) {
+    throw new Error('Job-board scrape stream ended without a result.');
+  }
+  return finalResult;
+};
+
+const postScrapeRequest = async (
+  input: PostScrapeRequestInput
 ): Promise<FilemakerJobBoardScrapeResponse> => {
   const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(buildRequest(draft, mode, selectedOrganizationIds)),
-    signal,
+    body: JSON.stringify({
+      ...buildRequest(input.draft, input.mode, input.selectedOrganizationIds),
+      stream: true,
+    }),
+    signal: input.signal,
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
-  return (await response.json()) as FilemakerJobBoardScrapeResponse;
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  if (contentType.includes('application/x-ndjson')) {
+    return readLiveScrapeStream(response, input.onEvent);
+  }
+  return normalizeScrapeResponse(await response.json());
+};
+
+const postSaveDraftsRequest = async (
+  input: PostSaveDraftsRequestInput
+): Promise<FilemakerJobBoardScrapeResponse> => {
+  const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(
+      buildDraftSaveRequest(input.draft, input.selectedOrganizationIds, input.offers)
+    ),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+  return normalizeScrapeResponse(await response.json());
 };
 
 const resultMessage = (result: FilemakerJobBoardScrapeResponse): string => {
@@ -313,11 +683,16 @@ export function FilemakerJobBoardScrapeModal(
     initialState.organizationScopeTouched
   );
   const [modeInFlight, setModeInFlight] = useState<FilemakerJobBoardScrapeMode | null>(null);
+  const [saveDraftsInFlight, setSaveDraftsInFlight] = useState<string | null>(null);
   const [result, setResult] = useState<FilemakerJobBoardScrapeResponse | null>(null);
+  const [livePreview, setLivePreview] = useState<LivePreviewState>(() =>
+    createEmptyLivePreviewState()
+  );
   const activeRequestRef = useRef<ActiveScrapeRequest | null>(null);
   const requestIdRef = useRef(0);
   const selectedScopeDisabled = props.selectedOrganizationCount === 0;
   const isRunning = modeInFlight !== null;
+  const isSavingPreviewDrafts = saveDraftsInFlight !== null;
   const isSavingRuntimeSettings = browserMode.isSaving;
   const sourceUrlMissing = draft.sourceUrl.trim().length === 0;
   const hasDraftUnsavedChanges = useMemo(
@@ -327,6 +702,21 @@ export function FilemakerJobBoardScrapeModal(
   const hasSettingsUnsavedChanges = hasDraftUnsavedChanges || browserMode.hasUnsavedChanges;
   const actionUpdatedAt =
     browserMode.action !== null ? formatActionUpdatedAt(browserMode.action.updatedAt) : null;
+  const hasLivePreview =
+    isRunning ||
+    livePreview.discoveredUrls.length > 0 ||
+    livePreview.messages.length > 0 ||
+    livePreview.offers.length > 0 ||
+    livePreview.warnings.length > 0 ||
+    livePreview.writes.length > 0;
+  const livePreviewStatusLabel = resolveLivePreviewStatusLabel(livePreview, isRunning);
+  const saveablePreviewOffers = livePreview.offers.filter((item) => item.status === 'preview');
+  const canSavePreviewOffers =
+    saveablePreviewOffers.length > 0 &&
+    !sourceUrlMissing &&
+    !isRunning &&
+    !isSavingPreviewDrafts &&
+    !isSavingRuntimeSettings;
 
   useEffect(() => {
     if (!props.open) return;
@@ -393,6 +783,11 @@ export function FilemakerJobBoardScrapeModal(
     activeRequest.controller.abort();
     activeRequestRef.current = null;
     setModeInFlight(null);
+    setLivePreview((current) => ({
+      ...current,
+      final: true,
+      messages: appendCapped(current.messages, 'Scrape stopped.'),
+    }));
     toast('Job-board scrape stopped.', { variant: 'default' });
   };
 
@@ -422,13 +817,109 @@ export function FilemakerJobBoardScrapeModal(
     nextResult: FilemakerJobBoardScrapeResponse,
     mode: FilemakerJobBoardScrapeMode
   ): void => {
-    setResult(nextResult);
-    toast(resultMessage(nextResult), {
+    const normalizedResult = normalizeScrapeResponse(nextResult);
+    setResult(normalizedResult);
+    toast(resultMessage(normalizedResult), {
       variant: mode === 'import' ? 'success' : 'default',
     });
     if (mode === 'import') {
       props.onCompleted();
     }
+  };
+
+  const handleDraftSaveSuccess = (nextResult: FilemakerJobBoardScrapeResponse): void => {
+    const normalizedResult = normalizeScrapeResponse(nextResult);
+    setResult(normalizedResult);
+    setLivePreview((current) => ({
+      ...current,
+      final: true,
+      messages: appendCapped(current.messages, resultMessage(normalizedResult)),
+      offers: mergeLiveOffers(current.offers, normalizedResult.offers),
+      warnings: normalizedResult.warnings,
+    }));
+    toast(resultMessage(normalizedResult), { variant: 'success' });
+    props.onCompleted();
+  };
+
+  const savePreviewDrafts = async (
+    offers: FilemakerJobBoardScrapeOfferResult[],
+    inFlightKey: string
+  ): Promise<void> => {
+    if (offers.length === 0 || isRunning || isSavingPreviewDrafts) return;
+    setSaveDraftsInFlight(inFlightKey);
+    try {
+      const nextResult = await postSaveDraftsRequest({
+        draft,
+        offers: offers.map((item) => item.offer),
+        selectedOrganizationIds: props.selectedOrganizationIds,
+      });
+      handleDraftSaveSuccess(nextResult);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to save scraped job drafts.', {
+        variant: 'error',
+      });
+    } finally {
+      setSaveDraftsInFlight(null);
+    }
+  };
+
+  const handleLiveEvent = (event: FilemakerJobBoardScrapeLiveEvent): void => {
+    if (event.type === 'done') {
+      const normalizedResult = normalizeScrapeResponse(event.result);
+      setLivePreview((current) => ({
+        ...current,
+        final: true,
+        offers: normalizedResult.offers,
+        warnings: normalizedResult.warnings,
+      }));
+      setResult(normalizedResult);
+      return;
+    }
+    setLivePreview((current) => {
+      if (event.type === 'status') {
+        return { ...current, messages: appendCapped(current.messages, readString(event.message)) };
+      }
+      if (event.type === 'links') {
+        const urls = readStringArray(event.urls);
+        return {
+          ...current,
+          discoveredUrls: urls,
+          messages: appendCapped(
+            current.messages,
+            `Found ${urls.length} offer link${urls.length === 1 ? '' : 's'} on ${readString(event.sourceSite)}.`
+          ),
+        };
+      }
+      if (event.type === 'offer') {
+        const offerResult = normalizeOfferResult(event.result);
+        const offerTitle = offerResult.offer.title.trim();
+        const offerSourceUrl = offerResult.offer.sourceUrl.trim();
+        let offerLabel = 'job-board offer';
+        if (offerSourceUrl.length > 0) offerLabel = offerSourceUrl;
+        if (offerTitle.length > 0) offerLabel = offerTitle;
+        return {
+          ...current,
+          offers: mergeLiveOffer(current.offers, offerResult),
+          messages: appendCapped(
+            current.messages,
+            `Scraped ${event.index}/${event.total}: ${offerLabel}`
+          ),
+        };
+      }
+      if (event.type === 'write') {
+        const write = normalizeWriteResult(event.write);
+        if (write === null) return current;
+        return {
+          ...current,
+          messages: appendCapped(current.messages, write.message),
+          writes: [...current.writes, write].slice(-16),
+        };
+      }
+      if (event.type === 'warning') {
+        return { ...current, warnings: appendCapped(current.warnings, readString(event.warning), 6) };
+      }
+      return { ...current, warnings: appendCapped(current.warnings, readString(event.message), 6) };
+    });
   };
 
   const runScrape = async (mode: FilemakerJobBoardScrapeMode): Promise<void> => {
@@ -439,9 +930,24 @@ export function FilemakerJobBoardScrapeModal(
     const request = startScrapeRequest();
     if (request === null) return;
     setModeInFlight(mode);
+    setResult(null);
+    setLivePreview({
+      ...createEmptyLivePreviewState(),
+      messages: [
+        mode === 'preview'
+          ? 'Preview run started. Records are not written in preview mode.'
+          : 'Import run started. Final statuses are written after scraping completes.',
+      ],
+    });
     try {
       await browserMode.persist();
-      const nextResult = await postScrapeRequest(draft, mode, props.selectedOrganizationIds, request.controller.signal);
+      const nextResult = await postScrapeRequest({
+        draft,
+        mode,
+        onEvent: handleLiveEvent,
+        selectedOrganizationIds: props.selectedOrganizationIds,
+        signal: request.controller.signal,
+      });
       if (isActiveScrapeRequest(request)) handleScrapeSuccess(nextResult, mode);
     } catch (error) {
       if (isAbortLikeError(error, request.controller.signal)) return;
@@ -457,6 +963,7 @@ export function FilemakerJobBoardScrapeModal(
     activeRequestRef.current?.controller.abort();
     activeRequestRef.current = null;
     setModeInFlight(null);
+    setSaveDraftsInFlight(null);
     props.onClose();
   };
 
@@ -471,8 +978,10 @@ export function FilemakerJobBoardScrapeModal(
       }}
       saveText='Preview'
       saveIcon={<Search className='h-4 w-4' />}
-      isSaving={isRunning || isSavingRuntimeSettings}
-      isSaveDisabled={sourceUrlMissing || isRunning || isSavingRuntimeSettings}
+      isSaving={isRunning || isSavingRuntimeSettings || isSavingPreviewDrafts}
+      isSaveDisabled={
+        sourceUrlMissing || isRunning || isSavingRuntimeSettings || isSavingPreviewDrafts
+      }
       size='xl'
       actions={
         <div className='flex flex-wrap items-center gap-2'>
@@ -493,7 +1002,12 @@ export function FilemakerJobBoardScrapeModal(
             onClick={() => {
               void saveSettings();
             }}
-            disabled={!hasSettingsUnsavedChanges || isRunning || isSavingRuntimeSettings}
+            disabled={
+              !hasSettingsUnsavedChanges ||
+              isRunning ||
+              isSavingRuntimeSettings ||
+              isSavingPreviewDrafts
+            }
             variant={hasSettingsUnsavedChanges ? 'success' : 'outline'}
           >
             <Save className='h-4 w-4' />
@@ -506,7 +1020,7 @@ export function FilemakerJobBoardScrapeModal(
             onClick={() => {
               void runScrape('import');
             }}
-            disabled={sourceUrlMissing || isRunning || isSavingRuntimeSettings}
+            disabled={sourceUrlMissing || isRunning || isSavingRuntimeSettings || isSavingPreviewDrafts}
           >
             <Play className='h-4 w-4' />
             {modeInFlight === 'import' ? 'Importing...' : 'Import'}
@@ -637,15 +1151,19 @@ export function FilemakerJobBoardScrapeModal(
 
         <div className='grid grid-cols-1 gap-3 md:grid-cols-4'>
           <ToggleRow
-            label={browserMode.headless ? 'Headless browser' : 'Headed browser'}
-            description='Backed by Job Board Offer Scrape action settings.'
+            label='Action browser mode'
+            description='Mirrors Job Board Offer Scrape action settings.'
             checked={browserMode.headless}
             onCheckedChange={browserMode.setHeadless}
             disabled={isRunning}
             loading={browserMode.isLoading || isSavingRuntimeSettings}
             variant='switch'
             toggleOnRowClick
-          />
+          >
+            <div className='pt-1 text-[11px] font-medium text-foreground'>
+              Current: {browserMode.headless ? 'Headless' : 'Headed'}
+            </div>
+          </ToggleRow>
           <ToggleRow
             label='Humanized input'
             description='Use persona pacing and mouse movement.'
@@ -703,6 +1221,159 @@ export function FilemakerJobBoardScrapeModal(
           </FormField>
         </div>
 
+        {hasLivePreview ? (
+          <div className='space-y-3 rounded-md border border-border/60 p-3'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <span className='text-sm font-semibold'>Live scrape preview</span>
+              <Badge variant={livePreview.final ? 'success' : 'secondary'}>
+                {livePreviewStatusLabel}
+              </Badge>
+              <Badge variant='secondary'>{livePreview.discoveredUrls.length} links</Badge>
+              <Badge variant='secondary'>{livePreview.offers.length} offers scraped</Badge>
+              <Badge variant='secondary'>{livePreview.writes.length} writes</Badge>
+              <Badge variant='secondary'>{livePreview.warnings.length} warnings</Badge>
+            </div>
+            {livePreview.messages.length > 0 ? (
+              <div className='space-y-1 rounded border border-border/40 bg-muted/10 px-3 py-2 text-xs text-muted-foreground'>
+                {livePreview.messages.slice(-4).map((message, index) => (
+                  <p key={`live-message-${index}-${message}`}>{message}</p>
+                ))}
+              </div>
+            ) : null}
+            {livePreview.discoveredUrls.length > 0 ? (
+              <div className='space-y-2'>
+                <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  Discovered links
+                </p>
+                <div className='max-h-36 space-y-1 overflow-auto pr-1'>
+                  {livePreview.discoveredUrls.slice(0, 12).map((url) => (
+                    <a
+                      key={url}
+                      href={url}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='block break-all rounded border border-border/40 px-3 py-2 text-xs text-muted-foreground hover:text-foreground'
+                    >
+                      {url}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {livePreview.offers.length > 0 ? (
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                    Scraped offers
+                  </p>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='success'
+                    disabled={!canSavePreviewOffers}
+                    onClick={() => {
+                      void savePreviewDrafts(saveablePreviewOffers, 'all');
+                    }}
+                  >
+                    <Save className='h-4 w-4' />
+                    {saveDraftsInFlight === 'all' ? 'Saving...' : 'Save'}
+                  </Button>
+                </div>
+                <div className='max-h-72 space-y-2 overflow-auto pr-1'>
+                  {livePreview.offers.slice(0, 12).map((item, index) => (
+                    <div
+                      key={`${item.offer.sourceUrl}-${item.status}-${index}`}
+                      className='rounded border border-border/40 px-3 py-2'
+                    >
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <span className='font-medium'>{item.offer.title}</span>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <Badge variant={item.match ? 'success' : 'secondary'}>
+                            {formatOfferStatus(item.status)}
+                          </Badge>
+                          {item.status === 'preview' ? (
+                            <Button
+                              type='button'
+                              size='sm'
+                              variant='outline'
+                              disabled={
+                                !canSavePreviewOffers ||
+                                (saveDraftsInFlight !== null &&
+                                  saveDraftsInFlight !== item.offer.sourceUrl)
+                              }
+                              onClick={() => {
+                                void savePreviewDrafts([item], item.offer.sourceUrl);
+                              }}
+                            >
+                              <Save className='h-4 w-4' />
+                              {saveDraftsInFlight === item.offer.sourceUrl ? 'Saving...' : 'Save'}
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className='mt-1 text-xs text-muted-foreground'>
+                        {item.offer.companyName}
+                        {item.match ? ` -> ${item.match.organizationName}` : ''}
+                        {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
+                      </div>
+                      {item.offer.companyProfile.trim().length > 0 ? (
+                        <p className='mt-1 max-h-10 overflow-hidden text-xs text-muted-foreground'>
+                          {item.offer.companyProfile}
+                        </p>
+                      ) : null}
+                      {item.offer.pills.length > 0 ? (
+                        <div className='mt-2 flex flex-wrap gap-1'>
+                          {item.offer.pills.slice(0, 8).map((pill, pillIndex) => (
+                            <Badge
+                              key={`${pill.category}-${pill.position}-${pillIndex}-${pill.label}`}
+                              variant='outline'
+                            >
+                              {pill.label}
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {livePreview.writes.length > 0 ? (
+              <div className='space-y-2'>
+                <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
+                  Database writes
+                </p>
+                <div className='max-h-48 space-y-2 overflow-auto pr-1'>
+                  {livePreview.writes.map((write, index) => (
+                    <div
+                      key={`${write.action}-${write.result.offer.sourceUrl}-${index}`}
+                      className='rounded border border-border/40 px-3 py-2'
+                    >
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <span className='font-medium'>{formatWriteAction(write)}</span>
+                        <Badge variant={write.result.match ? 'success' : 'secondary'}>
+                          {formatOfferStatus(write.result.status)}
+                        </Badge>
+                      </div>
+                      <div className='mt-1 text-xs text-muted-foreground'>
+                        {write.message}
+                        {write.result.listingId !== null ? ` · ${write.result.listingId}` : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {livePreview.warnings.length > 0 ? (
+              <div className='space-y-1 text-xs text-amber-300'>
+                {livePreview.warnings.slice(-3).map((warning, index) => (
+                  <p key={`live-warning-${index}-${warning}`}>{warning}</p>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         {result ? (
           <div className='space-y-3 rounded-md border border-border/60 p-3'>
             <div className='flex flex-wrap items-center gap-2'>
@@ -713,29 +1384,49 @@ export function FilemakerJobBoardScrapeModal(
               <Badge variant='secondary'>{result.summary.matchedOffers} matched</Badge>
               <Badge variant='secondary'>{result.summary.createdListings} created</Badge>
               <Badge variant='secondary'>{result.summary.updatedListings} updated</Badge>
+              <Badge variant='secondary'>
+                {result.summary.createdOrganizations} organisations
+              </Badge>
+              <Badge variant='secondary'>{result.summary.linkedLexiconTerms} lexicon links</Badge>
+              <Badge variant='secondary'>{result.summary.addressUpdates} addresses</Badge>
+              <Badge variant='secondary'>{result.summary.verifiedListings} verified</Badge>
             </div>
             <div className='max-h-56 space-y-2 overflow-auto pr-1'>
-              {result.offers.slice(0, 12).map((item) => (
+              {result.offers.slice(0, 12).map((item, index) => (
                 <div
-                  key={`${item.offer.sourceUrl}-${item.status}`}
+                  key={`${item.offer.sourceUrl}-${item.status}-${index}`}
                   className='rounded border border-border/40 px-3 py-2'
                 >
                   <div className='flex flex-wrap items-center justify-between gap-2'>
                     <span className='font-medium'>{item.offer.title}</span>
-                    <Badge variant={item.match ? 'success' : 'secondary'}>{item.status}</Badge>
+                    <Badge variant={item.match ? 'success' : 'secondary'}>
+                      {formatOfferStatus(item.status)}
+                    </Badge>
                   </div>
                   <div className='mt-1 text-xs text-muted-foreground'>
                     {item.offer.companyName}
                     {item.match ? ` -> ${item.match.organizationName}` : ''}
                     {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
                   </div>
+                  {item.offer.pills.length > 0 ? (
+                    <div className='mt-2 flex flex-wrap gap-1'>
+                      {item.offer.pills.slice(0, 8).map((pill, pillIndex) => (
+                        <Badge
+                          key={`${pill.category}-${pill.position}-${pillIndex}-${pill.label}`}
+                          variant='outline'
+                        >
+                          {pill.label}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               ))}
             </div>
             {result.warnings.length > 0 ? (
               <div className='space-y-1 text-xs text-amber-300'>
-                {result.warnings.slice(0, 3).map((warning) => (
-                  <p key={warning}>{warning}</p>
+                {result.warnings.slice(0, 3).map((warning, index) => (
+                  <p key={`result-warning-${index}-${warning}`}>{warning}</p>
                 ))}
               </div>
             ) : null}

@@ -8,6 +8,8 @@ import {
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
   createFilemakerJobListing,
+  createFilemakerJobListingLexiconLink,
+  createFilemakerLexiconTerm,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
@@ -34,6 +36,8 @@ import {
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
   type FilemakerJobListing,
+  type FilemakerJobListingLexiconLink,
+  type FilemakerLexiconTerm,
   type FilemakerOrganization,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
@@ -83,6 +87,8 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   valueParameterLinks: [],
   organizationLegacyDemands: [],
   jobListings: [],
+  lexiconTerms: [],
+  jobListingLexiconLinks: [],
 });
 
 const defaultAddressLinkIdForValues = (
@@ -136,6 +142,21 @@ const defaultValueParameterLinkIdForValues = (
 ): string => {
   const joined = `${valueId}-${parameterId}`;
   return `filemaker-value-parameter-link-${toIdToken(joined) || 'entry'}`;
+};
+
+const defaultLexiconTermIdForValues = (category: string, normalizedLabel: string): string => {
+  const joined = `${category}-${normalizedLabel}`;
+  const token = toIdToken(joined);
+  return `filemaker-lexicon-term-${token.length > 0 ? token : 'entry'}`;
+};
+
+const defaultJobListingLexiconLinkIdForValues = (
+  jobListingId: string,
+  lexiconTermId: string
+): string => {
+  const joined = `${jobListingId}-${lexiconTermId}`;
+  const token = toIdToken(joined);
+  return `filemaker-job-listing-lexicon-link-${token.length > 0 ? token : 'entry'}`;
 };
 
 const defaultOrganizationLegacyDemandIdForValues = (
@@ -319,6 +340,11 @@ export const normalizeFilemakerDatabase = (
     valueRecord['organizationLegacyDemands']
   );
   const rawJobListings = getRecordList('jobListings', valueRecord['jobListings']);
+  const rawLexiconTerms = getRecordList('lexiconTerms', valueRecord['lexiconTerms']);
+  const rawJobListingLexiconLinks = getRecordList(
+    'jobListingLexiconLinks',
+    valueRecord['jobListingLexiconLinks']
+  );
   const rawEventOrganizationLinks = getRecordList(
     'eventOrganizationLinks',
     valueRecord['eventOrganizationLinks']
@@ -368,6 +394,13 @@ export const normalizeFilemakerDatabase = (
         nip: normalizeString(entry['nip']),
         regon: normalizeString(entry['regon']),
         phoneNumbers: [],
+        linkedinUrl: normalizeString(entry['linkedinUrl']),
+        githubUrl: normalizeString(entry['githubUrl']),
+        profileEducation: entry['profileEducation'],
+        profileJobExperience: entry['profileJobExperience'],
+        cvProfessionalSummary: normalizeString(entry['cvProfessionalSummary']),
+        cvCoreStrengths: entry['cvCoreStrengths'],
+        cvSelectedTechnicalEnvironment: entry['cvSelectedTechnicalEnvironment'],
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });
@@ -892,9 +925,15 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
-  const normalizedValues = values.map((value: FilemakerValue): FilemakerValue => {
-    if (value.parentId === null || valueIds.has(value.parentId)) return value;
-    return { ...value, parentId: null };
+  const normalizedValues = values.map((entryValue: FilemakerValue): FilemakerValue => {
+    if (
+      entryValue.parentId === null ||
+      entryValue.parentId === undefined ||
+      valueIds.has(entryValue.parentId)
+    ) {
+      return entryValue;
+    }
+    return { ...entryValue, parentId: null };
   });
 
   const valueParameterIds = new Set<string>();
@@ -1044,6 +1083,49 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
+  const lexiconTermIds = new Set<string>();
+  const lexiconTermKeys = new Set<string>();
+  const lexiconTerms: FilemakerLexiconTerm[] = [];
+  rawLexiconTerms.forEach((entry: Record<string, unknown>): void => {
+    const label = normalizeString(entry['label']);
+    if (label.length === 0) return;
+    const requestedNormalizedLabel = normalizeString(entry['normalizedLabel']);
+    const normalizedLabel =
+      requestedNormalizedLabel.length > 0
+        ? requestedNormalizedLabel
+        : label.toLowerCase().replace(/\s+/g, ' ');
+    const requestedCategory = normalizeString(entry['category']);
+    const category = requestedCategory.length > 0 ? requestedCategory : 'other';
+    const relationKey = `${category}:${normalizedLabel}`;
+    if (lexiconTermKeys.has(relationKey)) return;
+    const baseId = defaultLexiconTermIdForValues(category, normalizedLabel);
+    const requestedId = normalizeString(entry['id']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      lexiconTermIds,
+      baseId
+    );
+    lexiconTermIds.add(id);
+    lexiconTermKeys.add(relationKey);
+    lexiconTerms.push(
+      createFilemakerLexiconTerm({
+        id,
+        label,
+        normalizedLabel,
+        category,
+        sourceSite: normalizeString(entry['sourceSite']),
+        sourceProvider: normalizeString(entry['sourceProvider']),
+        firstSeenAt: normalizeString(entry['firstSeenAt']),
+        lastSeenAt: normalizeString(entry['lastSeenAt']),
+        occurrenceCount: entry['occurrenceCount'],
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
   const jobListingIds = new Set<string>();
   const jobListings: FilemakerJobListing[] = [];
   rawJobListings.forEach((entry: Record<string, unknown>): void => {
@@ -1080,6 +1162,44 @@ export const normalizeFilemakerDatabase = (
         sourceSite: normalizeString(entry['sourceSite']),
         sourceUrl: normalizeString(entry['sourceUrl']),
         scrapedAt: normalizeString(entry['scrapedAt']),
+        lexiconTermIds: entry['lexiconTermIds'],
+        createdAt: createdAt.length > 0 ? createdAt : undefined,
+        updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
+      })
+    );
+  });
+
+  const jobListingLexiconLinkIds = new Set<string>();
+  const jobListingLexiconRelationKeys = new Set<string>();
+  const jobListingLexiconLinks: FilemakerJobListingLexiconLink[] = [];
+  rawJobListingLexiconLinks.forEach((entry: Record<string, unknown>): void => {
+    const jobListingId = normalizeString(entry['jobListingId']);
+    const lexiconTermId = normalizeString(entry['lexiconTermId']);
+    if (jobListingId.length === 0 || lexiconTermId.length === 0) return;
+    if (!jobListingIds.has(jobListingId) || !lexiconTermIds.has(lexiconTermId)) return;
+    const relationKey = `${jobListingId}:${lexiconTermId}`;
+    if (jobListingLexiconRelationKeys.has(relationKey)) return;
+    const baseId = defaultJobListingLexiconLinkIdForValues(jobListingId, lexiconTermId);
+    const requestedId = normalizeString(entry['id']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const id = ensureUniqueId(
+      requestedId.length > 0 ? requestedId : baseId,
+      jobListingLexiconLinkIds,
+      baseId
+    );
+    jobListingLexiconLinkIds.add(id);
+    jobListingLexiconRelationKeys.add(relationKey);
+    jobListingLexiconLinks.push(
+      createFilemakerJobListingLexiconLink({
+        id,
+        jobListingId,
+        lexiconTermId,
+        sourceSite: normalizeString(entry['sourceSite']),
+        sourceUrl: normalizeString(entry['sourceUrl']),
+        sourceValue: normalizeString(entry['sourceValue']),
+        category: normalizeString(entry['category']),
+        position: entry['position'],
         createdAt: createdAt.length > 0 ? createdAt : undefined,
         updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
       })
@@ -1105,6 +1225,8 @@ export const normalizeFilemakerDatabase = (
     valueParameterLinks,
     organizationLegacyDemands,
     jobListings,
+    lexiconTerms,
+    jobListingLexiconLinks,
   };
 };
 

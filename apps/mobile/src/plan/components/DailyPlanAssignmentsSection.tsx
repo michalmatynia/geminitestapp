@@ -2,10 +2,12 @@ import { Text, View } from 'react-native';
 import { KangurMobileCard as Card } from '../../shared/KangurMobileUi';
 import { AssignmentRow } from '../daily-plan-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type KangurAssignmentPlan } from '@kangur/core';
+import { type Href } from 'expo-router';
 
 interface DailyPlanAssignmentsSectionProps {
     copy: KangurMobileCopy;
-    assignmentItems: any[];
+    assignmentItems: { assignment: KangurAssignmentPlan; href: Href | null }[];
 }
 
 export function DailyPlanAssignmentsSection({

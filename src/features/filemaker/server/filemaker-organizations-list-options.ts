@@ -6,6 +6,29 @@ const MAX_ORGANIZATION_PAGE_SIZE = 200;
 export type FilemakerOrganizationAddressFilter = 'all' | 'with_address' | 'without_address';
 export type FilemakerOrganizationBankFilter = 'all' | 'with_bank' | 'without_bank';
 export type FilemakerOrganizationParentFilter = 'all' | 'root' | 'child';
+export type FilemakerOrganizationSortOption =
+  | 'createdAt_desc'
+  | 'createdAt_asc'
+  | 'eventCount_desc'
+  | 'eventCount_asc'
+  | 'jobListingCount_desc'
+  | 'jobListingCount_asc'
+  | 'name_asc'
+  | 'name_desc';
+
+export const DEFAULT_FILEMAKER_ORGANIZATION_SORT: FilemakerOrganizationSortOption =
+  'createdAt_desc';
+
+const SUPPORTED_ORGANIZATION_SORT_OPTIONS = new Set<string>([
+  'createdAt_desc',
+  'createdAt_asc',
+  'eventCount_desc',
+  'eventCount_asc',
+  'jobListingCount_desc',
+  'jobListingCount_asc',
+  'name_asc',
+  'name_desc',
+]);
 
 export type FilemakerOrganizationsListInput = {
   address?: string | null;
@@ -16,6 +39,7 @@ export type FilemakerOrganizationsListInput = {
   pageSize?: string | null;
   parent?: string | null;
   query?: string | null;
+  sort?: string | null;
   updatedBy?: string | null;
 };
 
@@ -27,6 +51,7 @@ export type FilemakerOrganizationsListOptions = {
   parentFilter: FilemakerOrganizationParentFilter;
   query: string;
   requestedPage: string | null;
+  sort: FilemakerOrganizationSortOption;
   updatedBy: string;
 };
 
@@ -55,6 +80,11 @@ const normalizeBankFilter = (value: string): FilemakerOrganizationBankFilter =>
 const normalizeParentFilter = (value: string): FilemakerOrganizationParentFilter =>
   value === 'root' || value === 'child' ? value : 'all';
 
+const normalizeOrganizationSort = (value: string): FilemakerOrganizationSortOption => {
+  if (SUPPORTED_ORGANIZATION_SORT_OPTIONS.has(value)) return value as FilemakerOrganizationSortOption;
+  return DEFAULT_FILEMAKER_ORGANIZATION_SORT;
+};
+
 export const resolveOrganizationListOptions = (
   input: FilemakerOrganizationsListInput
 ): FilemakerOrganizationsListOptions => {
@@ -68,6 +98,7 @@ export const resolveOrganizationListOptions = (
     parentFilter: normalizeParentFilter(readOptionalString(input.parent)),
     query: readOptionalString(input.query).trim(),
     requestedPage: input.page ?? null,
+    sort: normalizeOrganizationSort(readOptionalString(input.sort)),
     updatedBy: readOptionalString(input.updatedBy).trim(),
   };
 };

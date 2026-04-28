@@ -30,6 +30,7 @@ import {
 describe('job-board-sync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
       ...defaultPlaywrightActionExecutionSettings,
     });
@@ -180,5 +181,30 @@ describe('job-board-sync', () => {
         identityProfile: 'marketplace',
       },
     });
+  });
+
+  it('uses the runtime action browser preference when launching the job-board runtime', async () => {
+    vi.stubEnv('PLAYWRIGHT_BRAVE_EXECUTABLE_PATH', '/tmp/brave-browser');
+    mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValueOnce({
+      ...defaultPlaywrightActionExecutionSettings,
+      browserPreference: 'brave',
+      headless: false,
+    });
+
+    await collectJobBoardOfferUrls({
+      maxOffers: 10,
+      provider: 'auto',
+      sourceUrl: 'https://it.pracuj.pl/praca?its=frontend%2Cbackend%2Cfullstack',
+    });
+
+    const request = mocks.runPlaywrightEngineTaskMock.mock.calls[0][0].request;
+    expect(request).toMatchObject({
+      runtimeKey: JOB_BOARD_SCRAPE_RUNTIME_KEY,
+      launchOptions: {
+        executablePath: '/tmp/brave-browser',
+        headless: false,
+      },
+    });
+    expect(request.launchOptions).not.toHaveProperty('channel');
   });
 });

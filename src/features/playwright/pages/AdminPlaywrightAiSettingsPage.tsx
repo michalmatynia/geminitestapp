@@ -127,11 +127,8 @@ export function AdminPlaywrightAiSettingsPage(): React.JSX.Element {
             </p>
             <p>
               <span className='font-medium text-foreground'>Vision Models</span> — Screenshot input
-              requires a vision-capable model (e.g.{' '}
-              <code className='rounded bg-muted px-1 py-0.5 font-mono'>claude-sonnet-4-6</code>,{' '}
-              <code className='rounded bg-muted px-1 py-0.5 font-mono'>gpt-4o</code>,{' '}
-              <code className='rounded bg-muted px-1 py-0.5 font-mono'>gemini-2.0-flash</code>). The
-              step throws a 422-equivalent error if the configured model does not support image inputs.
+              requires a vision-capable model selected in AI Brain. The step throws a 422-equivalent
+              error if the configured model does not support image inputs.
             </p>
             <p>
               <span className='font-medium text-foreground'>AI Code Injector</span> — Add an{' '}

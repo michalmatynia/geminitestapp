@@ -87,7 +87,11 @@ describe('AdminJobBoardPage', () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (init?.method === 'POST') {
-        const body = JSON.parse(String(init.body)) as { provider?: string; sourceUrl: string };
+        const body = JSON.parse(String(init.body)) as {
+          provider?: string;
+          sourceUrl: string;
+          useVision?: boolean;
+        };
         return Response.json({ scan: createScan(body.sourceUrl, body.provider) }, { status: 202 });
       }
       if (url === '/api/v2/jobs/scans') return Response.json({ scans: [] });
@@ -118,7 +122,52 @@ describe('AdminJobBoardPage', () => {
           method: 'POST',
           body: JSON.stringify({
             sourceUrl: 'https://nofluffjobs.com/pl/job/backend-dev-acme',
+            useVision: false,
             provider: 'nofluffjobs',
+          }),
+        })
+      );
+    });
+  });
+
+  it('submits the AI vision email route toggle for new scans', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (init?.method === 'POST') {
+        const body = JSON.parse(String(init.body)) as {
+          provider?: string;
+          sourceUrl: string;
+        };
+        return Response.json({ scan: createScan(body.sourceUrl, body.provider) }, { status: 202 });
+      }
+      if (url === '/api/v2/jobs/scans') return Response.json({ scans: [] });
+      if (url === '/api/v2/jobs/companies') return Response.json({ companies: [] });
+      if (url === '/api/v2/jobs/listings') return Response.json({ listings: [] });
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<AdminJobBoardPage />);
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith('/api/v2/jobs/scans', { cache: 'no-store' })
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl/),
+      'https://www.pracuj.pl/praca/frontend-developer,oferta,1001'
+    );
+    await user.click(screen.getByRole('checkbox', { name: 'AI vision email route' }));
+    await user.click(screen.getByRole('button', { name: 'Scrape & save' }));
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/v2/jobs/scans',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({
+            sourceUrl: 'https://www.pracuj.pl/praca/frontend-developer,oferta,1001',
+            useVision: true,
           }),
         })
       );

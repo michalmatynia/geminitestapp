@@ -40,7 +40,10 @@ vi.mock('./filemaker-organizations-mongo', () => ({
 
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
-import { runFilemakerJobBoardScrape } from './filemaker-job-board-scrape';
+import {
+  runFilemakerJobBoardScrape,
+  saveFilemakerJobBoardScrapeDrafts,
+} from './filemaker-job-board-scrape';
 
 const sourceUrl = 'https://www.pracuj.pl/praca/it;kw';
 const offerUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001';
@@ -56,7 +59,9 @@ const settingsDatabase = (overrides: Record<string, unknown> = {}): string =>
     eventOrganizationLinks: [],
     events: [],
     jobListings: [],
+    jobListingLexiconLinks: [],
     legacyDemands: [],
+    lexiconTerms: [],
     organizations: [
       {
         id: 'org-1',
@@ -183,6 +188,41 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 
+  it('emits live scrape events while collecting and probing offers', async () => {
+    const events: Array<Record<string, unknown>> = [];
+
+    const result = await runFilemakerJobBoardScrape(
+      {
+        maxOffers: 5,
+        mode: 'preview',
+        sourceUrl,
+      },
+      {
+        onEvent: (event) => {
+          events.push(event as unknown as Record<string, unknown>);
+        },
+      }
+    );
+
+    expect(result.summary.scrapedOffers).toBe(1);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ message: 'Preparing job-board scraper.', type: 'status' }),
+        expect.objectContaining({ type: 'links', urls: [offerUrl] }),
+        expect.objectContaining({
+          index: 1,
+          result: expect.objectContaining({
+            offer: expect.objectContaining({ companyName: 'Acme Inc', title: 'Developer' }),
+            status: 'preview',
+          }),
+          total: 1,
+          type: 'offer',
+        }),
+        expect.objectContaining({ result, type: 'done' }),
+      ])
+    );
+  });
+
   it('uses the job-board runtime action browser mode when no run override is provided', async () => {
     mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValueOnce({
       ...defaultPlaywrightActionExecutionSettings,
@@ -233,9 +273,206 @@ describe('runFilemakerJobBoardScrape', () => {
       sourceUrl: offerUrl,
       title: 'Developer',
     });
+    expect(mocks.readFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('saves already scraped offer drafts without collecting or probing again', async () => {
+    const result = await saveFilemakerJobBoardScrapeDrafts({
+      action: 'save_drafts',
+      duplicateStrategy: 'skip',
+      importStrategy: 'create_unmatched',
+      minimumMatchConfidence: 85,
+      offers: [
+        {
+          companyName: 'Acme Inc',
+          companyProfile: 'Acme Inc builds commerce software.',
+          companyProfileUrl: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+          description: 'Build products',
+          expiresAt: null,
+          location: 'Warszawa',
+          postedAt: null,
+          salaryCurrency: 'PLN',
+          salaryMax: 18_000,
+          salaryMin: 12_000,
+          salaryPeriod: 'monthly',
+          salaryText: '12 000 - 18 000 PLN',
+          sourceExternalId: '1001',
+          sourceSite: 'pracuj.pl',
+          sourceUrl: offerUrl,
+          pills: [],
+          title: 'Developer',
+        },
+      ],
+      organizationScope: 'all',
+      provider: 'auto',
+      selectedOrganizationIds: [],
+      sourceUrl,
+      status: 'open',
+    });
+
+    expect(mocks.collectJobBoardOfferUrlsMock).not.toHaveBeenCalled();
+    expect(mocks.probeJobBoardOfferMock).not.toHaveBeenCalled();
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      matchedOffers: 1,
+      scrapedOffers: 1,
+      verifiedListings: 1,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      organizationId: 'org-1',
+      sourceUrl: offerUrl,
+      title: 'Developer',
+    });
+  });
+
+  it('stores scraped job-board pills as lexicon terms and maps the first Pracuj pill to an organisation address', async () => {
+    const events: Array<Record<string, unknown>> = [];
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-lexicon',
+      snapshot: {
+        pills: [
+          'Puławska 180, Mokotów, Warszawa(Masovian)',
+          'contract of employment, B2B contract',
+          'full-time',
+          'specialist (Mid / Regular)',
+          'full office work',
+          'Immediate employment',
+        ],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape(
+      {
+        mode: 'import',
+        sourceUrl,
+      },
+      {
+        onEvent: (event) => {
+          events.push(event as unknown as Record<string, unknown>);
+        },
+      }
+    );
+
+    expect(result.summary).toMatchObject({
+      addressUpdates: 1,
+      createdLexiconTerms: 6,
+      createdListings: 1,
+      linkedLexiconTerms: 6,
+      verifiedListings: 1,
+    });
+    expect(result.offers[0]?.offer.pills.map((pill) => pill.category)).toEqual([
+      'address',
+      'contract_type',
+      'employment_type',
+      'experience_level',
+      'work_mode',
+      'start_date',
+    ]);
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.addresses[0]).toMatchObject({
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      street: 'Puławska',
+      streetNumber: '180',
+    });
+    expect(persisted.organizations[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      displayAddressId: persisted.addresses[0].id,
+      id: 'org-1',
+    });
+    expect(persisted.addressLinks[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      isDefault: true,
+      ownerId: 'org-1',
+      ownerKind: 'organization',
+    });
+    expect(persisted.lexiconTerms).toHaveLength(6);
+    expect(persisted.jobListingLexiconLinks).toHaveLength(6);
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(6);
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'write',
+          write: expect.objectContaining({ action: 'organization_address_updated' }),
+        }),
+        expect.objectContaining({
+          type: 'write',
+          write: expect.objectContaining({ action: 'listing_lexicon_linked' }),
+        }),
+      ])
+    );
+  });
+
+  it('verifies imports against the persisted FileMaker settings copy after writing', async () => {
+    mocks.readFilemakerCampaignSettingValueMock
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(settingsDatabase({ jobListings: [], organizations: [] }));
+
+    const events: Array<Record<string, unknown>> = [];
+    const result = await runFilemakerJobBoardScrape(
+      {
+        mode: 'import',
+        sourceUrl,
+      },
+      {
+        onEvent: (event) => {
+          events.push(event as unknown as Record<string, unknown>);
+        },
+      }
+    );
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      verifiedListings: 0,
+    });
+    expect(result.warnings).toEqual(
+      expect.arrayContaining([
+        'Import verification could not find organisation Acme Inc.',
+        'Import verification could not find listing Developer.',
+      ])
+    );
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: 'Verifying persisted import.',
+          type: 'status',
+        }),
+        expect.objectContaining({
+          type: 'warning',
+          warning: 'Import verification could not find listing Developer.',
+        }),
+      ])
+    );
   });
 
   it('creates unmatched employers by default and stores Pracuj company profile data', async () => {
+    const events: Array<Record<string, unknown>> = [];
     mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue({
       find: vi.fn(() => ({
         limit: vi.fn(() => ({
@@ -275,16 +512,44 @@ describe('runFilemakerJobBoardScrape', () => {
       steps: [],
     });
 
-    const result = await runFilemakerJobBoardScrape({
-      mode: 'import',
-      sourceUrl,
-    });
+    const result = await runFilemakerJobBoardScrape(
+      {
+        mode: 'import',
+        sourceUrl,
+      },
+      {
+        onEvent: (event) => {
+          events.push(event as unknown as Record<string, unknown>);
+        },
+      }
+    );
 
     expect(result.summary).toMatchObject({
       createdListings: 1,
+      createdOrganizations: 1,
       matchedOffers: 1,
+      profileUpdates: 1,
       unmatchedOffers: 0,
+      verifiedListings: 1,
     });
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'write',
+          write: expect.objectContaining({
+            action: 'organization_created',
+            profileUpdated: true,
+          }),
+        }),
+        expect.objectContaining({
+          type: 'write',
+          write: expect.objectContaining({
+            action: 'listing_created',
+            result: expect.objectContaining({ status: 'created' }),
+          }),
+        }),
+      ])
+    );
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
     expect(persisted.organizations[0]).toMatchObject({
       name: 'New Employer',
@@ -354,5 +619,47 @@ describe('runFilemakerJobBoardScrape', () => {
       status: 'skipped',
     });
     expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
+  });
+
+  it('creates distinct scraped listings with the same title and location when source identity differs', async () => {
+    const existingOfferUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,9999';
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-existing',
+            organizationId: 'org-1',
+            title: 'Developer',
+            description: 'Existing listing',
+            location: 'Warszawa',
+            sourceExternalId: '9999',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: existingOfferUrl,
+            status: 'open',
+          },
+        ],
+      })
+    );
+
+    const result = await runFilemakerJobBoardScrape({
+      duplicateStrategy: 'skip',
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      skippedOffers: 0,
+      updatedListings: 0,
+    });
+    expect(result.offers[0]).toMatchObject({
+      status: 'created',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings).toHaveLength(2);
+    expect(persisted.jobListings[1]).toMatchObject({
+      sourceUrl: offerUrl,
+      title: 'Developer',
+    });
   });
 });

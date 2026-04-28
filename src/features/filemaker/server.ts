@@ -6,6 +6,8 @@ export * from './server/filemaker-anyparam-repository';
 export * from './server/filemaker-anytext-repository';
 export * from './server/filemaker-bank-account-repository';
 export * from './server/filemaker-contract-repository';
+export * from './server/filemaker-cv-repository';
+export * from './server/filemaker-cv-pdf';
 export * from './server/filemaker-document-repository';
 export * from './server/filemaker-person-occupation-repository';
 export * from './server/filemaker-contact-log-repository';

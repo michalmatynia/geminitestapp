@@ -6,6 +6,7 @@ import type { PlaywrightActionExecutionSettings } from '@/shared/contracts/playw
 import { runPlaywrightEngineTask } from '@/features/playwright/server/runtime';
 import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-board-runtime-constants';
 import { resolveRuntimeActionExecutionSettings } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
+import { resolvePlaywrightBrowserLaunchOptions } from '@/shared/lib/playwright/browser-launch';
 import {
   JOB_BOARD_SNAPSHOT_SCRIPT_ID,
   JOB_BOARD_SNAPSHOT_SCRIPT_TYPE,
@@ -21,6 +22,7 @@ import {
   type JobBoardProviderSelection,
 } from '@/shared/lib/job-board/job-board-providers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import type { LaunchOptions } from 'playwright';
 
 export type { JobBoardProvider, JobBoardProviderSelection };
 
@@ -72,7 +74,7 @@ export type JobBoardOfferUrlCollectionOptions = {
   timeoutMs?: number | null;
 };
 
-type JobBoardStructuredSnapshot = {
+export type JobBoardStructuredSnapshot = {
   applyUrls?: string[];
   canonical?: string | null;
   companyLinks?: string[];
@@ -92,6 +94,7 @@ type JobBoardStructuredSnapshot = {
   metaDescription?: string | null;
   ogDescription?: string | null;
   ogTitle?: string | null;
+  pills?: string[];
   plainText?: string | null;
   provider?: string | null;
   sections?: Array<{ heading?: string | null; text: string }>;
@@ -101,7 +104,7 @@ type JobBoardStructuredSnapshot = {
 
 type JobBoardRuntimeRequestCommon = {
   browserEngine: 'chromium';
-  launchOptions?: { headless: boolean };
+  launchOptions?: LaunchOptions;
   personaId?: string;
   policyAllowedHosts: string[];
   preventNewPages: boolean;
@@ -176,19 +179,41 @@ const buildActionSettingsOverrides = (
   ) as Partial<PlaywrightSettings>;
 };
 
-const resolveJobBoardActionSettingsOverrides = async (): Promise<Partial<PlaywrightSettings>> => {
+type JobBoardActionRuntimeSettings = {
+  browserPreference: PlaywrightActionExecutionSettings['browserPreference'];
+  settingsOverrides: Partial<PlaywrightSettings>;
+};
+
+const resolveJobBoardActionRuntimeSettings = async (): Promise<JobBoardActionRuntimeSettings> => {
   try {
-    return buildActionSettingsOverrides(
-      await resolveRuntimeActionExecutionSettings(JOB_BOARD_SCRAPE_RUNTIME_KEY)
-    );
+    const settings = await resolveRuntimeActionExecutionSettings(JOB_BOARD_SCRAPE_RUNTIME_KEY);
+    return {
+      browserPreference: settings.browserPreference,
+      settingsOverrides: buildActionSettingsOverrides(settings),
+    };
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'job-scans.job-board',
-      action: 'resolveJobBoardActionSettingsOverrides',
+      action: 'resolveJobBoardActionRuntimeSettings',
       runtimeKey: JOB_BOARD_SCRAPE_RUNTIME_KEY,
     });
-    return {};
+    return { browserPreference: null, settingsOverrides: {} };
   }
+};
+
+const buildJobBoardLaunchOptions = (input: {
+  browserPreference: PlaywrightActionExecutionSettings['browserPreference'];
+  headless: boolean | null | undefined;
+}): LaunchOptions | undefined => {
+  const browserLaunchOptions =
+    input.browserPreference !== null
+      ? resolvePlaywrightBrowserLaunchOptions(input.browserPreference)
+      : {};
+  const launchOptions: LaunchOptions = {
+    ...browserLaunchOptions,
+    ...(typeof input.headless === 'boolean' ? { headless: input.headless } : {}),
+  };
+  return Object.keys(launchOptions).length > 0 ? launchOptions : undefined;
 };
 
 const createRuntimeRequestCommon = async (input: {
@@ -200,9 +225,14 @@ const createRuntimeRequestCommon = async (input: {
   timeoutMs: number;
 }): Promise<JobBoardRuntimeRequestCommon> => {
   const config = getJobBoardProviderConfig(input.provider);
-  const actionSettingsOverrides = await resolveJobBoardActionSettingsOverrides();
+  const actionRuntimeSettings = await resolveJobBoardActionRuntimeSettings();
+  const actionSettingsOverrides = actionRuntimeSettings.settingsOverrides;
   const effectiveHeadless =
     typeof input.headless === 'boolean' ? input.headless : actionSettingsOverrides.headless;
+  const launchOptions = buildJobBoardLaunchOptions({
+    browserPreference: actionRuntimeSettings.browserPreference,
+    headless: effectiveHeadless,
+  });
   const settingsOverrides: Record<string, unknown> = {
     ...actionSettingsOverrides,
     identityProfile: actionSettingsOverrides.identityProfile ?? 'search',
@@ -214,9 +244,7 @@ const createRuntimeRequestCommon = async (input: {
 
   return {
     browserEngine: 'chromium',
-    ...(typeof effectiveHeadless === 'boolean'
-      ? { launchOptions: { headless: effectiveHeadless } }
-      : {}),
+    ...(launchOptions !== undefined ? { launchOptions } : {}),
     ...(input.personaId?.trim() ? { personaId: input.personaId.trim() } : {}),
     policyAllowedHosts: [...config.hostSuffixes],
     preventNewPages: true,
@@ -494,35 +522,47 @@ const SNAPSHOT_SCRIPT_MARKERS = [
 ] as const;
 
 const parseSnapshot = (html: string): JobBoardStructuredSnapshot | null => {
+  const scripts = Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi));
   for (const marker of SNAPSHOT_SCRIPT_MARKERS) {
-    const pattern = new RegExp(
-      `<script[^>]+type=["']${escapeRegex(marker.type)}["'][^>]+id=["']${escapeRegex(marker.id)}["'][^>]*>([\\s\\S]*?)<\\/script>`,
-      'i'
-    );
-    const match = html.match(pattern);
-    if (!match?.[1]) continue;
-    try {
-      const parsed = JSON.parse(match[1]) as JobBoardStructuredSnapshot;
-      return parsed && typeof parsed === 'object' ? parsed : null;
-    } catch {
-      return null;
+    for (const match of scripts) {
+      const attributes = match[1] ?? '';
+      const body = match[2] ?? '';
+      const hasType = new RegExp(
+        `\\btype=["']${escapeRegex(marker.type)}["']`,
+        'i'
+      ).test(attributes);
+      const hasId = new RegExp(`\\bid=["']${escapeRegex(marker.id)}["']`, 'i').test(
+        attributes
+      );
+      if (!hasType || !hasId || body.trim().length === 0) continue;
+      try {
+        const parsed = JSON.parse(body) as JobBoardStructuredSnapshot;
+        return parsed && typeof parsed === 'object' ? parsed : null;
+      } catch {
+        return null;
+      }
     }
   }
   return null;
 };
 
+export const extractJobBoardStructuredSnapshot = (html: string): JobBoardStructuredSnapshot | null =>
+  parseSnapshot(html);
+
 const stripSnapshot = (html: string): string => {
-  let stripped = html;
-  SNAPSHOT_SCRIPT_MARKERS.forEach((marker) => {
-    stripped = stripped.replace(
-      new RegExp(
-        `<script[^>]+type=["']${escapeRegex(marker.type)}["'][^>]+id=["']${escapeRegex(marker.id)}["'][^>]*>[\\s\\S]*?<\\/script>`,
+  return html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, (full, attributes: string) => {
+    const isSnapshotScript = SNAPSHOT_SCRIPT_MARKERS.some((marker) => {
+      const hasType = new RegExp(
+        `\\btype=["']${escapeRegex(marker.type)}["']`,
         'i'
-      ),
-      ' '
-    );
+      ).test(attributes);
+      const hasId = new RegExp(`\\bid=["']${escapeRegex(marker.id)}["']`, 'i').test(
+        attributes
+      );
+      return hasType && hasId;
+    });
+    return isSnapshotScript ? ' ' : full;
   });
-  return stripped;
 };
 
 const htmlToDenseText = (html: string): string =>
@@ -567,6 +607,12 @@ const buildSnapshotSection = (snapshot: JobBoardStructuredSnapshot): string => {
   if (facts.length > 0) {
     lines.push('facts:');
     facts.slice(0, 36).forEach((item) => lines.push(`- ${item.label}: ${item.value}`));
+  }
+
+  const pills = (snapshot.pills ?? []).map((item) => normalizeText(item)).filter(Boolean);
+  if (pills.length > 0) {
+    lines.push('pills:');
+    pills.slice(0, 36).forEach((item) => lines.push(`- ${item}`));
   }
 
   const applyUrls = (snapshot.applyUrls ?? []).map((item) => normalizeText(item)).filter(Boolean);

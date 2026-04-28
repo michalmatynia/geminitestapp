@@ -68,7 +68,7 @@ export function LessonCheckpointRow({
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton
-          href={item.lessonHref as Href}
+          href={item.lessonHref}
           label={`${copy({
             de: 'Zur Lektion zurück',
             en: 'Return to lesson',
@@ -77,7 +77,7 @@ export function LessonCheckpointRow({
           tone='primary'
         />
         {item.practiceHref && (
-          <PracticeButton practiceHref={item.practiceHref as Href} title={item.title} />
+          <PracticeButton practiceHref={item.practiceHref} title={item.title} />
         )}
       </View>
     </InsetPanel>

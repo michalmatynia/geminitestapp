@@ -57,7 +57,7 @@ function SyncPanel(props: {
         </View>
       )}
       {props.shouldShowSyncProof && (
-        <PracticeSyncProofPanel copy={props.copy} locale={props.locale} practiceSyncProof={props.practiceSyncProof as KangurPracticeSyncProofSnapshot} />
+        <PracticeSyncProofPanel copy={props.copy} locale={props.locale} practiceSyncProof={props.practiceSyncProof} />
       )}
     </>
   );
@@ -183,7 +183,7 @@ export function PracticeCompletionCard(props: PracticeCompletionCardProps): Reac
         shouldShowSyncProof={props.shouldShowSyncProof}
         copy={props.copy}
         locale={props.locale}
-        practiceSyncProof={props.practiceSyncProof as KangurPracticeSyncProofSnapshot} />
+        practiceSyncProof={props.practiceSyncProof} />
       <NewBadgesPanel
         completion={props.completion}
         copy={props.copy}

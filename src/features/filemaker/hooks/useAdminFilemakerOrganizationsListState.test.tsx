@@ -88,6 +88,7 @@ const listResponse = {
   page: 1,
   pageSize: 48,
   query: '',
+  sort: 'createdAt_desc',
   totalCount: 1,
   totalCountIsExact: true,
   totalPages: 1,
@@ -167,6 +168,34 @@ describe('useAdminFilemakerOrganizationsListState', () => {
       ...(headers as Record<string, string> | undefined),
       'x-csrf-token': 'csrf-token',
     }));
+  });
+
+  it('loads organizations newest first by default and refetches when sorting changes', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const firstListUrl = String(fetchMock.mock.calls[0]?.[0] ?? '');
+    expect(firstListUrl).toContain('sort=createdAt_desc');
+    expect(result.current.sort).toBe('createdAt_desc');
+
+    act(() => {
+      result.current.onSortChange('name_asc');
+    });
+
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map(([input]) => String(input));
+      expect(urls.some((url) => url.includes('sort=name_asc'))).toBe(true);
+    });
   });
 
   it('launches organization email scrape with CSRF headers and reports the result', async () => {

@@ -12,6 +12,15 @@ export type OrganizationSelectionState = Record<string, boolean>;
 export type OrganizationAddressFilter = 'all' | 'with_address' | 'without_address';
 export type OrganizationBankFilter = 'all' | 'with_bank' | 'without_bank';
 export type OrganizationParentFilter = 'all' | 'root' | 'child';
+export type OrganizationSortOption =
+  | 'createdAt_desc'
+  | 'createdAt_asc'
+  | 'eventCount_desc'
+  | 'eventCount_asc'
+  | 'jobListingCount_desc'
+  | 'jobListingCount_asc'
+  | 'name_asc'
+  | 'name_desc';
 
 export type OrganizationFilters = {
   address: OrganizationAddressFilter;
@@ -30,6 +39,7 @@ export type MongoFilemakerOrganizationsResponse = {
   page: number;
   pageSize: number;
   query: string;
+  sort: OrganizationSortOption;
   totalCount: number;
   totalCountIsExact: boolean;
   totalPages: number;
@@ -63,6 +73,7 @@ export type OrganizationListState = {
   onSelectOrganizationsPage: () => void;
   onSetAdvancedFilterPresets: (presets: OrganizationAdvancedFilterPreset[]) => Promise<void>;
   onSetAdvancedFilterState: (value: string, presetId: string | null) => void;
+  onSortChange: (value: OrganizationSortOption) => void;
   onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
   organizationEmailScrapeState: Record<string, boolean>;
   organizationWebsiteSocialScrapeState: Record<string, boolean>;
@@ -74,13 +85,28 @@ export type OrganizationListState = {
   renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
   selectedOrganizationCount: number;
   shownCount: number;
+  sort: OrganizationSortOption;
   totalCount: number;
   totalCountIsExact: boolean;
   totalPages: number;
 };
 
 export const DEFAULT_ORGANIZATION_PAGE_SIZE = 48;
+export const DEFAULT_ORGANIZATION_SORT: OrganizationSortOption = 'createdAt_desc';
 export const ORGANIZATION_PAGE_SIZE_OPTIONS = [24, 48, 96, 200];
+export const ORGANIZATION_SORT_OPTIONS: Array<{
+  label: string;
+  value: OrganizationSortOption;
+}> = [
+  { label: 'Created At: Newest First', value: 'createdAt_desc' },
+  { label: 'Created At: Oldest First', value: 'createdAt_asc' },
+  { label: 'Events: Most First', value: 'eventCount_desc' },
+  { label: 'Events: Fewest First', value: 'eventCount_asc' },
+  { label: 'Jobs: Most First', value: 'jobListingCount_desc' },
+  { label: 'Jobs: Fewest First', value: 'jobListingCount_asc' },
+  { label: 'Name: A-Z', value: 'name_asc' },
+  { label: 'Name: Z-A', value: 'name_desc' },
+];
 
 export const createDefaultOrganizationFilters = (): OrganizationFilters => ({
   address: 'all',
@@ -99,6 +125,7 @@ export const EMPTY_ORGANIZATIONS_RESPONSE: MongoFilemakerOrganizationsResponse =
   page: 1,
   pageSize: DEFAULT_ORGANIZATION_PAGE_SIZE,
   query: '',
+  sort: DEFAULT_ORGANIZATION_SORT,
   totalCount: 0,
   totalCountIsExact: true,
   totalPages: 1,

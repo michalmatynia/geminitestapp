@@ -42,6 +42,7 @@ import {
 import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../types';
 import {
   DEFAULT_ORGANIZATION_PAGE_SIZE,
+  DEFAULT_ORGANIZATION_SORT,
   EMPTY_ORGANIZATIONS_RESPONSE,
   createDefaultOrganizationFilters,
   type MongoFilemakerOrganizationsResponse,
@@ -49,6 +50,7 @@ import {
   type OrganizationFilters,
   type OrganizationListState,
   type OrganizationSelectionState,
+  type OrganizationSortOption,
 } from '../pages/AdminFilemakerOrganizationsPage.types';
 
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
@@ -160,6 +162,7 @@ const buildOrganizationListParams = (input: {
   page: number;
   pageSize: number;
   query: string;
+  sort: OrganizationSortOption;
 }): URLSearchParams => {
   const params = new URLSearchParams({
     address: input.filters.address,
@@ -167,6 +170,7 @@ const buildOrganizationListParams = (input: {
     page: String(input.page),
     pageSize: String(input.pageSize),
     parent: input.filters.parent,
+    sort: input.sort,
   });
   if (input.filters.advancedFilter.length > 0) {
     params.set('advancedFilter', input.filters.advancedFilter);
@@ -183,8 +187,9 @@ function useMongoFilemakerOrganizations(input: {
   pageSize: number;
   query: string;
   refreshKey: number;
+  sort: OrganizationSortOption;
 }): MongoFilemakerOrganizationsState {
-  const { filters, page, pageSize, query, refreshKey } = input;
+  const { filters, page, pageSize, query, refreshKey, sort } = input;
   const [state, setState] = useState<MongoFilemakerOrganizationsState>({
     ...EMPTY_ORGANIZATIONS_RESPONSE,
     error: null,
@@ -193,7 +198,7 @@ function useMongoFilemakerOrganizations(input: {
 
   useEffect(() => {
     const controller = new AbortController();
-    const params = buildOrganizationListParams({ filters, page, pageSize, query });
+    const params = buildOrganizationListParams({ filters, page, pageSize, query, sort });
     setState((current) => ({ ...current, error: null, isLoading: true }));
     fetch(`/api/filemaker/organizations?${params.toString()}`, { signal: controller.signal })
       .then(async (response: Response): Promise<MongoFilemakerOrganizationsResponse> => {
@@ -214,7 +219,7 @@ function useMongoFilemakerOrganizations(input: {
     return () => {
       controller.abort();
     };
-  }, [filters, page, pageSize, query, refreshKey]);
+  }, [filters, page, pageSize, query, refreshKey, sort]);
 
   return state;
 }
@@ -222,12 +227,14 @@ function useMongoFilemakerOrganizations(input: {
 const loadOrganizationIdsForSelection = async (input: {
   filters: OrganizationFilters;
   query: string;
+  sort: OrganizationSortOption;
 }): Promise<string[]> => {
   const params = buildOrganizationListParams({
     filters: input.filters,
     page: 1,
     pageSize: 1,
     query: input.query,
+    sort: input.sort,
   });
   params.set('idsOnly', 'true');
   const response = await fetch(`/api/filemaker/organizations?${params.toString()}`);
@@ -402,6 +409,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_ORGANIZATION_PAGE_SIZE);
+  const [sort, setSort] = useState<OrganizationSortOption>(DEFAULT_ORGANIZATION_SORT);
   const [filters, setFilters] = useState<OrganizationFilters>(() => ({
     ...createDefaultOrganizationFilters(),
     advancedFilter: readStoredString(ORGANIZATION_APPLIED_ADVANCED_FILTER_STORAGE_KEY),
@@ -433,6 +441,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     pageSize,
     query: debouncedQuery,
     refreshKey: organizationsRefreshKey,
+    sort,
   });
   const { actions, openEvent, openJobListing, openOrganization } = useOrganizationActions(router);
   const organizations = mongoOrganizations.organizations;
@@ -478,6 +487,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       const ids = await loadOrganizationIdsForSelection({
         filters,
         query: query.trim(),
+        sort,
       });
       setOrganizationSelection(
         ids.reduce<OrganizationSelectionState>(
@@ -496,7 +506,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     } finally {
       setIsSelectingAllOrganizations(false);
     }
-  }, [filters, query, toast]);
+  }, [filters, query, sort, toast]);
   const launchOrganizationEmailScrape = useCallback(
     (organizationId: string): void => {
       if (organizationEmailScrapeInFlightRef.current.has(organizationId)) return;
@@ -652,6 +662,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     onResetFilters: () => {
       setQuery('');
       setFilters(createDefaultOrganizationFilters());
+      setSort(DEFAULT_ORGANIZATION_SORT);
       setActiveAdvancedFilterPresetId(null);
       persistAppliedAdvancedFilterState({ value: '', presetId: null });
       setPage(1);
@@ -668,6 +679,10 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     },
     onSetAdvancedFilterPresets: updateAdvancedFilterPresets,
     onSetAdvancedFilterState: setAdvancedFilterState,
+    onSortChange: (value) => {
+      setSort(value);
+      setPage(1);
+    },
     onToggleOrganizationSelection: toggleOrganizationSelection,
     onLaunchOrganizationEmailScrape: launchOrganizationEmailScrape,
     onLaunchOrganizationWebsiteSocialScrape: launchOrganizationWebsiteSocialScrape,
@@ -681,6 +696,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     renderNode,
     selectedOrganizationCount,
     shownCount: organizations.length,
+    sort,
     totalCount: mongoOrganizations.totalCount,
     totalCountIsExact: mongoOrganizations.totalCountIsExact,
     totalPages: mongoOrganizations.totalPages,

@@ -132,6 +132,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
   const [tab, setTab] = useState<Tab>('scans');
   const [sourceUrl, setSourceUrl] = useState('');
   const [provider, setProvider] = useState<JobScanProviderSelection>('auto');
+  const [useVisionEmailFinder, setUseVisionEmailFinder] = useState(false);
   const [scans, setScans] = useState<JobScanRecord[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [listings, setListings] = useState<JobListing[]>([]);
@@ -203,6 +204,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sourceUrl: url,
+            useVision: useVisionEmailFinder,
             ...(provider !== 'auto' ? { provider } : {}),
           }),
         });
@@ -220,7 +222,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
         setIsSubmitting(false);
       }
     },
-    [sourceUrl, provider, loadAll]
+    [sourceUrl, provider, useVisionEmailFinder, loadAll]
   );
 
   const handleCompanyUpdated = useCallback((updatedCompany: Company): void => {
@@ -261,6 +263,18 @@ export function AdminJobBoardPage(): React.JSX.Element {
             onValueChange={(value) => setProvider(value as JobScanProviderSelection)}
           />
         </div>
+        <label className='flex items-center gap-2 rounded border border-slate-200 px-3 py-2 text-sm text-slate-700'>
+          <input
+            type='checkbox'
+            aria-label='AI vision email route'
+            checked={useVisionEmailFinder}
+            onChange={(event) => setUseVisionEmailFinder(event.target.checked)}
+          />
+          <span>
+            AI vision email route
+            <span className='block text-xs text-slate-500'>Off: preset contact-page routes</span>
+          </span>
+        </label>
         <div className='flex gap-2'>
           <Button type='submit' disabled={isSubmitting}>
             {isSubmitting ? 'Scanning...' : 'Scrape & save'}

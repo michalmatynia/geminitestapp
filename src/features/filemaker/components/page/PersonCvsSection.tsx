@@ -1,0 +1,289 @@
+'use client';
+
+/* eslint-disable complexity, max-lines-per-function */
+
+import { Download, ExternalLink, FileText, Loader2, Plus } from 'lucide-react';
+import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
+
+import { FormSection } from '@/shared/ui/forms-and-actions.public';
+import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import { useAdminFilemakerPersonEditPageStateContext } from '../../context/AdminFilemakerPersonEditPageContext';
+import { buildDefaultFilemakerCvBlocks, resolveFilemakerCvPersonName } from '../../cv-defaults';
+import type { FilemakerCv } from '../../filemaker-cv.types';
+import { formatTimestamp } from '../../pages/filemaker-page-utils';
+
+type CvListState = {
+  cvs: FilemakerCv[];
+  error: string | null;
+  isLoading: boolean;
+};
+
+const readDownloadFilename = (response: Response, fallback: string): string => {
+  const contentDisposition = response.headers.get('Content-Disposition') ?? '';
+  const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
+  if (quoted?.[1] !== undefined && quoted[1].length > 0) return quoted[1];
+  const unquoted = /filename=([^;]+)/i.exec(contentDisposition);
+  const unquotedFilename = unquoted?.[1]?.trim() ?? '';
+  return unquotedFilename.length > 0 ? unquotedFilename : fallback;
+};
+
+const downloadBlob = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
+const formatCvTitle = (cv: FilemakerCv): string => {
+  const title = cv.title.trim();
+  return title.length > 0 ? title : `${cv.personName} CV`;
+};
+
+export function PersonCvsSection(): React.JSX.Element {
+  const {
+    editableAddresses,
+    emails,
+    linkedAnyTexts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
+    person,
+    phoneNumbers,
+    router,
+    websites,
+  } = useAdminFilemakerPersonEditPageStateContext();
+  const { toast } = useToast();
+  const [state, setState] = useState<CvListState>({
+    cvs: [],
+    error: null,
+    isLoading: true,
+  });
+  const [isCreating, setIsCreating] = useState(false);
+  const [exportingCvId, setExportingCvId] = useState<string | null>(null);
+
+  const personId = person?.id ?? '';
+  const personName = useMemo(
+    () => (person !== null ? resolveFilemakerCvPersonName(person) : 'Person'),
+    [person]
+  );
+
+  useEffect(() => {
+    if (personId.length === 0) {
+      setState({ cvs: [], error: null, isLoading: false });
+      return undefined;
+    }
+    const controller = new AbortController();
+    setState((current) => ({ ...current, error: null, isLoading: true }));
+    fetch(`/api/filemaker/cvs?personId=${encodeURIComponent(personId)}`, {
+      signal: controller.signal,
+    })
+      .then(async (response: Response): Promise<{ cvs: FilemakerCv[] }> => {
+        if (!response.ok) throw new Error(`Failed to load CVs (${response.status}).`);
+        return (await response.json()) as { cvs: FilemakerCv[] };
+      })
+      .then((response: { cvs: FilemakerCv[] }): void => {
+        setState({ cvs: response.cvs, error: null, isLoading: false });
+      })
+      .catch((error: unknown): void => {
+        if (controller.signal.aborted) return;
+        logClientError(error);
+        setState({
+          cvs: [],
+          error: error instanceof Error ? error.message : 'Failed to load CVs.',
+          isLoading: false,
+        });
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [personId]);
+
+  const openCv = useCallback(
+    (cv: FilemakerCv): void => {
+      startTransition(() => {
+        router.push(
+          `/admin/filemaker/persons/${encodeURIComponent(cv.personId)}/cvs/${encodeURIComponent(cv.id)}`
+        );
+      });
+    },
+    [router]
+  );
+
+  const handleCreateCv = useCallback(async (): Promise<void> => {
+    if (person === null) return;
+    setIsCreating(true);
+    try {
+      const bodyBlocks = buildDefaultFilemakerCvBlocks({
+        addresses: editableAddresses,
+        anyTexts: linkedAnyTexts,
+        contracts: linkedContracts,
+        documents: linkedDocuments,
+        emails,
+        occupations: linkedOccupations,
+        person,
+        phoneNumbers,
+        websites,
+      });
+      const response = await fetch('/api/filemaker/cvs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bodyBlocks,
+          personId: person.id,
+          title: `${personName} CV`,
+        }),
+      });
+      if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
+      const payload = (await response.json()) as { cv: FilemakerCv };
+      toast('CV created.', { variant: 'success' });
+      openCv(payload.cv);
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to create CV.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  }, [
+    editableAddresses,
+    emails,
+    linkedAnyTexts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
+    openCv,
+    person,
+    personName,
+    phoneNumbers,
+    toast,
+    websites,
+  ]);
+
+  const handleExportPdf = useCallback(
+    async (cv: FilemakerCv): Promise<void> => {
+      setExportingCvId(cv.id);
+      try {
+        const response = await fetch('/api/filemaker/cvs/export-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cvId: cv.id }),
+        });
+        if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
+        const filename = readDownloadFilename(response, `${formatCvTitle(cv)}.pdf`);
+        downloadBlob(await response.blob(), filename);
+        toast('CV PDF exported.', { variant: 'success' });
+      } catch (error: unknown) {
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Failed to export CV PDF.', {
+          variant: 'error',
+        });
+      } finally {
+        setExportingCvId(null);
+      }
+    },
+    [toast]
+  );
+
+  const actions = (
+    <Button
+      type='button'
+      variant='outline'
+      size='sm'
+      disabled={isCreating || person === null}
+      loading={isCreating}
+      loadingText='Creating...'
+      onClick={() => {
+        void handleCreateCv();
+      }}
+      className='gap-2'
+    >
+      {!isCreating ? <Plus className='size-3.5' /> : null}
+      New CV
+    </Button>
+  );
+
+  let content: React.ReactNode;
+  if (state.isLoading) {
+    content = (
+      <div className='flex items-center gap-2 text-xs text-gray-500'>
+        <Loader2 className='size-3.5 animate-spin' />
+        Loading CVs.
+      </div>
+    );
+  } else if (state.error !== null) {
+    content = <div className='text-xs text-red-300'>{state.error}</div>;
+  } else if (state.cvs.length === 0) {
+    content = <div className='text-xs text-gray-500'>No CVs linked yet.</div>;
+  } else {
+    content = (
+      <div className='grid gap-2 sm:grid-cols-2'>
+        {state.cvs.map((cv: FilemakerCv) => (
+          <Card key={cv.id} variant='subtle-compact' className='bg-card/20'>
+            <div className='flex items-start justify-between gap-3 p-3'>
+              <div className='flex min-w-0 gap-2'>
+                <FileText className='mt-0.5 size-3.5 shrink-0 text-emerald-300' />
+                <div className='min-w-0'>
+                  <div className='truncate text-sm font-semibold text-white'>
+                    {formatCvTitle(cv)}
+                  </div>
+                  <div className='truncate text-[10px] text-gray-600'>
+                    Updated: {formatTimestamp(cv.updatedAt)}
+                  </div>
+                </div>
+              </div>
+              <div className='flex shrink-0 items-center gap-2'>
+                <Badge variant='outline' className='h-5 text-[10px]'>
+                  {cv.status}
+                </Badge>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  className='size-7'
+                  aria-label={`Export ${formatCvTitle(cv)} PDF`}
+                  title={`Export ${formatCvTitle(cv)} PDF`}
+                  disabled={exportingCvId === cv.id}
+                  onClick={() => {
+                    void handleExportPdf(cv);
+                  }}
+                >
+                  {exportingCvId === cv.id ? (
+                    <Loader2 className='size-3.5 animate-spin' />
+                  ) : (
+                    <Download className='size-3.5' />
+                  )}
+                </Button>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  className='size-7'
+                  aria-label={`Open ${formatCvTitle(cv)}`}
+                  title={`Open ${formatCvTitle(cv)}`}
+                  onClick={() => {
+                    openCv(cv);
+                  }}
+                >
+                  <ExternalLink className='size-3.5' />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <FormSection title='CVs' actions={actions} className='space-y-2 p-4'>
+      {content}
+    </FormSection>
+  );
+}

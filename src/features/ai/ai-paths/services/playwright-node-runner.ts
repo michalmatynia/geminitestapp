@@ -37,6 +37,8 @@ import { parseUserScript, safeStringify } from './playwright-node-runner.parser'
 import {
   evaluateStepWithAI,
   injectCodeWithAI,
+  type PlaywrightStepEvaluateOptions,
+  type PlaywrightStepInjectOptions,
 } from '@/features/playwright/server/ai-step-service';
 import { executeAmazonReverseImageScanRuntime } from './playwright-node-runner.amazon-runtime';
 import {
@@ -1806,25 +1808,14 @@ const executePlaywrightNodeRun = async (
             await pauseForAction();
           }
         },
-        aiEvaluate: async (opts: {
-          inputSource: 'screenshot' | 'html' | 'text_content' | 'selector_text';
-          data: string;
-          systemPrompt?: string | null | undefined;
-        }): Promise<{ output: string; modelId: string }> => {
+        aiEvaluate: async (
+          opts: PlaywrightStepEvaluateOptions
+        ): Promise<{ output: string; modelId: string }> => {
           return evaluateStepWithAI(opts);
         },
-        aiInject: async (opts: {
-          goal: string;
-          systemPrompt?: string | null | undefined;
-          context: {
-            iteration: number;
-            maxIterations: number;
-            url: string;
-            dom?: string | null | undefined;
-            priorEvaluation?: string | null | undefined;
-            priorInjectorReasoning?: string | null | undefined;
-          };
-        }): Promise<{ code: string; done: boolean; reasoning: string; modelId: string }> => {
+        aiInject: async (
+          opts: PlaywrightStepInjectOptions
+        ): Promise<{ code: string; done: boolean; reasoning: string; modelId: string }> => {
           return injectCodeWithAI(opts);
         },
         aiInjectExecute: async (code: string): Promise<void> => {

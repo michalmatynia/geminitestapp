@@ -209,8 +209,17 @@ vi.mock('@/shared/ui/select-simple', () => ({
 }));
 
 vi.mock('@/shared/ui/templates.public', () => ({
-  FilterPanel: ({ actions }: { actions?: React.ReactNode }) => (
-    <div data-testid='organization-filters'>
+  FilterPanel: ({
+    actions,
+    activeValues,
+  }: {
+    actions?: React.ReactNode;
+    activeValues?: Record<string, unknown>;
+  }) => (
+    <div
+      data-testid='organization-filters'
+      data-active-values={JSON.stringify(activeValues ?? {})}
+    >
       Filters
       {actions}
     </div>
@@ -307,6 +316,7 @@ const createProps = (
   onSelectOrganizationsPage: vi.fn(),
   onSetAdvancedFilterPresets: vi.fn(),
   onSetAdvancedFilterState: vi.fn(),
+  onSortChange: vi.fn(),
   onToggleOrganizationSelection: vi.fn(),
   organizationEmailScrapeState: {},
   organizationWebsiteSocialScrapeState: {},
@@ -318,6 +328,7 @@ const createProps = (
   renderNode: vi.fn(),
   selectedOrganizationCount: 0,
   shownCount: 12,
+  sort: 'createdAt_desc',
   totalCount: 42,
   totalCountIsExact: true,
   totalPages: 3,
@@ -359,13 +370,20 @@ describe('FilemakerOrganizationsListPanel', () => {
     );
     const desktopControlsRow = findDivByExactClassName(
       desktopHeaderRow,
-      'flex flex-wrap items-center gap-2 pt-1 relative z-0 min-w-0 flex-1 justify-end'
+      'flex flex-wrap items-center gap-2 pt-1 relative z-0 min-w-0 flex-1 justify-center'
+    );
+    const desktopSecondaryControlsRow = findDivByExactClassName(
+      desktopSection,
+      'flex w-full flex-wrap items-center gap-2'
     );
 
     expect(
       within(desktopTitleStack).getByRole('heading', { name: 'Organisations' })
     ).toBeInTheDocument();
     expect(within(desktopTitleStack).getByTestId('organization-breadcrumbs')).toBeInTheDocument();
+    expect(
+      within(desktopTitleStack).queryByRole('button', { name: 'Create Organisation' })
+    ).toBeNull();
     const createButton = within(desktopControlsRow).getByRole('button', {
       name: 'Create Organisation',
     });
@@ -376,21 +394,73 @@ describe('FilemakerOrganizationsListPanel', () => {
       'data-show-page-jump',
       'true'
     );
+    expect(
+      within(desktopSecondaryControlsRow).getByRole('button', { name: 'Refresh' })
+    ).toBeInTheDocument();
     expect(within(desktopControlsRow).queryByTestId('organization-badge')).toBeNull();
     expect(within(desktopControlsRow).queryByTestId('organization-filters')).toBeNull();
+    expect(screen.queryByText(/^Organisations:/u)).toBeNull();
+    expect(screen.queryByText(/^Shown:/u)).toBeNull();
 
     const sharedFiltersRow = findDivByExactClassName(container, 'w-full');
     expect(sharedFiltersRow).toHaveClass('w-full');
     expect(
       within(sharedFiltersRow as HTMLElement).getByTestId('organization-filters')
     ).toBeInTheDocument();
+    expect(
+      JSON.parse(
+        within(sharedFiltersRow as HTMLElement).getByTestId('organization-filters').dataset
+          .activeValues ?? '{}'
+      )
+    ).toEqual({
+      address: '',
+      advancedFilter: '',
+      bank: '',
+      parent: '',
+      updatedBy: '',
+    });
 
-    const secondaryControlsRow = findDivByExactClassName(
-      container,
-      'hidden w-full flex-wrap items-center justify-end gap-2 lg:flex'
+    const tableHeader = screen.getByTestId('organization-table-header');
+    expect(within(tableHeader).getByRole('button', { name: /Name/i })).toBeInTheDocument();
+    expect(within(tableHeader).getByRole('button', { name: /Created At/i })).toHaveAttribute(
+      'aria-pressed',
+      'true'
     );
-    expect(within(secondaryControlsRow).getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
-    expect(within(secondaryControlsRow).getAllByTestId('organization-badge')).toHaveLength(2);
+    expect(within(tableHeader).getByRole('button', { name: /Events/i })).toBeInTheDocument();
+    expect(within(tableHeader).getByRole('button', { name: /Jobs/i })).toBeInTheDocument();
+    expect(
+      tableHeader.compareDocumentPosition(screen.getByTestId('organization-tree')) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it('changes organization sorting from the table header row', async () => {
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+
+    render(<FilemakerOrganizationsListPanel {...createProps({ onSortChange })} />);
+
+    await user.click(
+      within(screen.getByTestId('organization-table-header')).getByRole('button', {
+        name: /Name/i,
+      })
+    );
+
+    expect(onSortChange).toHaveBeenCalledWith('name_asc');
+
+    await user.click(
+      within(screen.getByTestId('organization-table-header')).getByRole('button', {
+        name: /Events/i,
+      })
+    );
+    await user.click(
+      within(screen.getByTestId('organization-table-header')).getByRole('button', {
+        name: /Jobs/i,
+      })
+    );
+
+    expect(onSortChange).toHaveBeenCalledWith('eventCount_desc');
+    expect(onSortChange).toHaveBeenCalledWith('jobListingCount_desc');
   });
 
   it('renders product-style organization selection actions', () => {

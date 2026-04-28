@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runBrainChatCompletionMock = vi.fn();
+const resolveBrainExecutionConfigForCapabilityMock = vi.fn();
+
+vi.mock('@/shared/lib/ai-brain/server', () => ({
+  resolveBrainExecutionConfigForCapability: (...args: unknown[]) =>
+    resolveBrainExecutionConfigForCapabilityMock(...args),
+}));
 
 vi.mock('@/shared/lib/ai-brain/server-runtime-client', () => ({
   runBrainChatCompletion: (...args: unknown[]) =>
@@ -16,6 +22,13 @@ import { evaluateJobPageWithAi } from './job-scan-ai-evaluator';
 describe('evaluateJobPageWithAi', () => {
   beforeEach(() => {
     runBrainChatCompletionMock.mockReset();
+    resolveBrainExecutionConfigForCapabilityMock.mockReset();
+    resolveBrainExecutionConfigForCapabilityMock.mockResolvedValue({
+      modelId: 'brain-job-board-model',
+      systemPrompt: 'Extract job board data.',
+      temperature: 0,
+      maxTokens: 4096,
+    });
   });
 
   afterEach(() => {
@@ -52,6 +65,21 @@ describe('evaluateJobPageWithAi', () => {
       'TypeScript',
       'React',
     ]);
+    expect(resolveBrainExecutionConfigForCapabilityMock).toHaveBeenCalledWith(
+      'job_board.offer_extraction',
+      expect.objectContaining({
+        defaultMaxTokens: 4096,
+        defaultTemperature: 0,
+      })
+    );
+    expect(resolveBrainExecutionConfigForCapabilityMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      'defaultModelId'
+    );
+    expect(runBrainChatCompletionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        modelId: 'brain-job-board-model',
+      })
+    );
   });
 
   it('strips markdown fences before parsing', async () => {

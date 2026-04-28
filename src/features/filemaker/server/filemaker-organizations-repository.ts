@@ -1,11 +1,15 @@
 import 'server-only';
 /* eslint-disable complexity, max-lines */
 
-import type { Collection, Filter } from 'mongodb';
+import type { Collection, Document, Filter, Sort } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
+import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 
 import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import { parseFilemakerDatabase } from '../settings';
+import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
+import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
 import { buildOrganizationAdvancedFilter } from './filemaker-organization-advanced-filter-query';
 import {
   normalizeOrganizationPage,
@@ -13,6 +17,7 @@ import {
   type FilemakerOrganizationAddressFilter,
   type FilemakerOrganizationBankFilter,
   type FilemakerOrganizationParentFilter,
+  type FilemakerOrganizationSortOption,
   type FilemakerOrganizationsListInput,
   type FilemakerOrganizationsListOptions,
 } from './filemaker-organizations-list-options';
@@ -22,6 +27,7 @@ import {
   type FilemakerOrganizationMongoDocument,
 } from './filemaker-organizations-mongo';
 import { listMongoFilemakerEventsForOrganization } from './filemaker-events-repository';
+import { FILEMAKER_EVENT_ORGANIZATION_LINKS_COLLECTION } from './filemaker-events-mongo';
 
 export type FilemakerOrganizationsListResult = {
   collectionCount: number;
@@ -38,9 +44,15 @@ export type FilemakerOrganizationsListResult = {
   page: number;
   pageSize: number;
   query: string;
+  sort: FilemakerOrganizationSortOption;
   totalCount: number;
   totalCountIsExact: boolean;
   totalPages: number;
+};
+
+type OrganizationAggregationResult = {
+  documents?: FilemakerOrganizationMongoDocument[];
+  metadata?: Array<{ totalCount?: number }>;
 };
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -184,6 +196,114 @@ const buildOrganizationFilter = (input: {
   return activeClauses.length > 0 ? { $and: activeClauses } : {};
 };
 
+const buildOrganizationSort = (sort: FilemakerOrganizationSortOption): Sort => {
+  if (sort === 'createdAt_asc') return { createdAt: 1, name: 1, _id: 1 };
+  if (sort === 'eventCount_asc') return { eventCount: 1, name: 1, _id: 1 };
+  if (sort === 'eventCount_desc') return { eventCount: -1, name: 1, _id: 1 };
+  if (sort === 'jobListingCount_asc') return { jobListingCount: 1, name: 1, _id: 1 };
+  if (sort === 'jobListingCount_desc') return { jobListingCount: -1, name: 1, _id: 1 };
+  if (sort === 'name_asc') return { name: 1, _id: 1 };
+  if (sort === 'name_desc') return { name: -1, _id: 1 };
+  return { createdAt: -1, name: 1, _id: 1 };
+};
+
+const isRelationCountSort = (sort: FilemakerOrganizationSortOption): boolean =>
+  sort === 'eventCount_asc' ||
+  sort === 'eventCount_desc' ||
+  sort === 'jobListingCount_asc' ||
+  sort === 'jobListingCount_desc';
+
+const buildEventCountAggregationStages = (): Document[] => [
+  {
+    $lookup: {
+      as: 'eventCountLookup',
+      from: FILEMAKER_EVENT_ORGANIZATION_LINKS_COLLECTION,
+      let: {
+        legacyUuid: '$legacyUuid',
+        organizationId: '$id',
+      },
+      pipeline: [
+        {
+          $match: {
+            $expr: {
+              $or: [
+                { $eq: ['$organizationId', '$$organizationId'] },
+                {
+                  $and: [
+                    { $ne: ['$$legacyUuid', null] },
+                    { $ne: ['$$legacyUuid', ''] },
+                    { $eq: ['$legacyOrganizationUuid', '$$legacyUuid'] },
+                  ],
+                },
+              ],
+            },
+          },
+        },
+        { $group: { _id: '$eventId' } },
+        { $count: 'count' },
+      ],
+    },
+  },
+  {
+    $addFields: {
+      eventCount: { $ifNull: [{ $arrayElemAt: ['$eventCountLookup.count', 0] }, 0] },
+    },
+  },
+  { $project: { eventCountLookup: 0 } },
+];
+
+const loadJobListingCountByOrganizationId = async (): Promise<Map<string, number>> => {
+  const storedValue = await readFilemakerCampaignSettingValue(FILEMAKER_DATABASE_KEY);
+  if (storedValue === null) return new Map();
+  try {
+    const database = parseFilemakerDatabase(
+      decodeSettingValue(FILEMAKER_DATABASE_KEY, storedValue)
+    );
+    return database.jobListings.reduce<Map<string, number>>((counts, listing) => {
+      const organizationId = listing.organizationId.trim();
+      if (organizationId.length === 0) return counts;
+      counts.set(organizationId, (counts.get(organizationId) ?? 0) + 1);
+      return counts;
+    }, new Map());
+  } catch {
+    return new Map();
+  }
+};
+
+const buildJobListingCountAggregationStage = (
+  countsByOrganizationId: ReadonlyMap<string, number>
+): Document => {
+  const branches = Array.from(countsByOrganizationId.entries()).map(
+    ([organizationId, count]: [string, number]): Document => ({
+      case: { $eq: ['$id', organizationId] },
+      then: count,
+    })
+  );
+  if (branches.length === 0) return { $addFields: { jobListingCount: 0 } };
+  return {
+    $addFields: {
+      jobListingCount: {
+        $switch: {
+          branches,
+          default: 0,
+        },
+      },
+    },
+  };
+};
+
+const buildRelationCountAggregationStages = async (
+  sort: FilemakerOrganizationSortOption
+): Promise<Document[]> => {
+  if (sort === 'eventCount_asc' || sort === 'eventCount_desc') {
+    return buildEventCountAggregationStages();
+  }
+  if (sort === 'jobListingCount_asc' || sort === 'jobListingCount_desc') {
+    return [buildJobListingCountAggregationStage(await loadJobListingCountByOrganizationId())];
+  }
+  return [];
+};
+
 const buildListResult = (input: {
   collectionCount: number;
   documents: FilemakerOrganizationMongoDocument[];
@@ -208,10 +328,141 @@ const buildListResult = (input: {
   page: input.page,
   pageSize: input.options.pageSize,
   query: input.options.query,
+  sort: input.options.sort,
   totalCount: input.totalCount,
   totalCountIsExact: input.totalCountIsExact,
   totalPages: input.totalPages,
 });
+
+const buildRelationCountSortPipeline = async (input: {
+  filter: Filter<FilemakerOrganizationMongoDocument>;
+  options: FilemakerOrganizationsListOptions;
+  page: number;
+}): Promise<Document[]> => [
+  { $match: input.filter },
+  ...(await buildRelationCountAggregationStages(input.options.sort)),
+  { $sort: buildOrganizationSort(input.options.sort) },
+  {
+    $facet: {
+      metadata: [{ $count: 'totalCount' }],
+      documents: [
+        { $skip: (input.page - 1) * input.options.pageSize },
+        { $limit: input.options.pageSize },
+        { $project: ORGANIZATION_LIST_PROJECTION },
+      ],
+    },
+  },
+];
+
+const readRelationCountSortedPage = async (input: {
+  collection: Collection<FilemakerOrganizationMongoDocument>;
+  filter: Filter<FilemakerOrganizationMongoDocument>;
+  options: FilemakerOrganizationsListOptions;
+  page: number;
+}): Promise<OrganizationAggregationResult> => {
+  const [result] = await input.collection
+    .aggregate<OrganizationAggregationResult>(await buildRelationCountSortPipeline(input))
+    .toArray();
+  return result ?? { documents: [], metadata: [] };
+};
+
+const listOrganizationsWithRelationCountSort = async (input: {
+  collection: Collection<FilemakerOrganizationMongoDocument>;
+  filter: Filter<FilemakerOrganizationMongoDocument>;
+  options: FilemakerOrganizationsListOptions;
+}): Promise<{
+  documents: FilemakerOrganizationMongoDocument[];
+  page: number;
+  totalCount: number;
+  totalPages: number;
+}> => {
+  const requestedPage = normalizeOrganizationPage(
+    input.options.requestedPage,
+    Number.MAX_SAFE_INTEGER
+  );
+  const first = await readRelationCountSortedPage({ ...input, page: requestedPage });
+  const totalCount =
+    Array.isArray(first.metadata) && typeof first.metadata[0]?.totalCount === 'number'
+      ? first.metadata[0].totalCount
+      : 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / input.options.pageSize));
+  const page = normalizeOrganizationPage(input.options.requestedPage, totalPages);
+  if (page === requestedPage) {
+    return {
+      documents: first.documents ?? [],
+      page,
+      totalCount,
+      totalPages,
+    };
+  }
+  const next = await readRelationCountSortedPage({ ...input, page });
+  return {
+    documents: next.documents ?? [],
+    page,
+    totalCount,
+    totalPages,
+  };
+};
+
+const loadLinkedEventsByOrganizationDocuments = async (
+  documents: FilemakerOrganizationMongoDocument[]
+): Promise<Record<string, FilemakerEvent[]>> => {
+  const organizations = documents.map(toFilemakerOrganization);
+  const linkedEventEntries = await Promise.all(
+    organizations.map(
+      async (organization: FilemakerOrganization): Promise<[string, FilemakerEvent[]]> => [
+        organization.id,
+        await listMongoFilemakerEventsForOrganization(organization),
+      ]
+    )
+  );
+  return Object.fromEntries(
+    linkedEventEntries.filter(
+      (entry: [string, FilemakerEvent[]]): boolean => entry[1].length > 0
+    )
+  );
+};
+
+const listOrganizationsWithStandardSort = async (input: {
+  collection: Collection<FilemakerOrganizationMongoDocument>;
+  collectionCount: number;
+  filter: Filter<FilemakerOrganizationMongoDocument>;
+  hasActiveFilter: boolean;
+  options: FilemakerOrganizationsListOptions;
+}): Promise<{
+  documents: FilemakerOrganizationMongoDocument[];
+  page: number;
+  totalCount: number;
+  totalCountIsExact: boolean;
+  totalPages: number;
+}> => {
+  const exactTotalPages = Math.max(1, Math.ceil(input.collectionCount / input.options.pageSize));
+  const page = input.hasActiveFilter
+    ? normalizeOrganizationPage(input.options.requestedPage, Number.MAX_SAFE_INTEGER)
+    : normalizeOrganizationPage(input.options.requestedPage, exactTotalPages);
+  const requestedLimit = input.hasActiveFilter
+    ? input.options.pageSize + 1
+    : input.options.pageSize;
+  const rawDocuments = await input.collection
+    .find(input.filter, { projection: ORGANIZATION_LIST_PROJECTION })
+    .sort(buildOrganizationSort(input.options.sort))
+    .skip((page - 1) * input.options.pageSize)
+    .limit(requestedLimit)
+    .toArray();
+  const hasNextPage = input.hasActiveFilter && rawDocuments.length > input.options.pageSize;
+  const documents = input.hasActiveFilter
+    ? rawDocuments.slice(0, input.options.pageSize)
+    : rawDocuments;
+  return {
+    documents,
+    page,
+    totalCount: input.hasActiveFilter
+      ? (page - 1) * input.options.pageSize + documents.length + (hasNextPage ? 1 : 0)
+      : input.collectionCount,
+    totalCountIsExact: !input.hasActiveFilter,
+    totalPages: input.hasActiveFilter ? Math.max(1, page + (hasNextPage ? 1 : 0)) : exactTotalPages,
+  };
+};
 
 export const listMongoFilemakerOrganizations = async (
   input: FilemakerOrganizationsListInput
@@ -228,49 +479,31 @@ export const listMongoFilemakerOrganizations = async (
   const collection = await getFilemakerOrganizationsCollection();
   const hasActiveFilter = Object.keys(filter).length > 0;
   const collectionCount = await collection.estimatedDocumentCount();
-  const exactTotalPages = Math.max(1, Math.ceil(collectionCount / options.pageSize));
-  const page = hasActiveFilter
-    ? normalizeOrganizationPage(options.requestedPage, Number.MAX_SAFE_INTEGER)
-    : normalizeOrganizationPage(options.requestedPage, exactTotalPages);
-  const requestedLimit = hasActiveFilter ? options.pageSize + 1 : options.pageSize;
-  const rawDocuments = await collection
-    .find(filter, { projection: ORGANIZATION_LIST_PROJECTION })
-    .sort({ name: 1, _id: 1 })
-    .skip((page - 1) * options.pageSize)
-    .limit(requestedLimit)
-    .toArray();
-  const hasNextPage = hasActiveFilter && rawDocuments.length > options.pageSize;
-  const documents = hasActiveFilter ? rawDocuments.slice(0, options.pageSize) : rawDocuments;
-  const totalCount = hasActiveFilter
-    ? (page - 1) * options.pageSize + documents.length + (hasNextPage ? 1 : 0)
-    : collectionCount;
-  const totalPages = hasActiveFilter
-    ? Math.max(1, page + (hasNextPage ? 1 : 0))
-    : exactTotalPages;
-  const organizations = documents.map(toFilemakerOrganization);
-  const linkedEventEntries = await Promise.all(
-    organizations.map(
-      async (organization: FilemakerOrganization): Promise<[string, FilemakerEvent[]]> => [
-        organization.id,
-        await listMongoFilemakerEventsForOrganization(organization),
-      ]
-    )
-  );
-  const linkedEventsByOrganizationId = Object.fromEntries(
-    linkedEventEntries.filter(
-      (entry: [string, FilemakerEvent[]]): boolean => entry[1].length > 0
-    )
+  const pageResult = isRelationCountSort(options.sort)
+    ? {
+        ...(await listOrganizationsWithRelationCountSort({ collection, filter, options })),
+        totalCountIsExact: true,
+      }
+    : await listOrganizationsWithStandardSort({
+        collection,
+        collectionCount,
+        filter,
+        hasActiveFilter,
+        options,
+      });
+  const linkedEventsByOrganizationId = await loadLinkedEventsByOrganizationDocuments(
+    pageResult.documents
   );
 
   return buildListResult({
     collectionCount,
-    documents,
+    documents: pageResult.documents,
     linkedEventsByOrganizationId,
     options,
-    page,
-    totalCount,
-    totalCountIsExact: !hasActiveFilter,
-    totalPages,
+    page: pageResult.page,
+    totalCount: pageResult.totalCount,
+    totalCountIsExact: pageResult.totalCountIsExact,
+    totalPages: pageResult.totalPages,
   });
 };
 
@@ -287,9 +520,22 @@ export const listMongoFilemakerOrganizationIds = async (
     updatedBy: options.updatedBy,
   });
   const collection = await getFilemakerOrganizationsCollection();
+  if (isRelationCountSort(options.sort)) {
+    const documents = await collection
+      .aggregate<{ id?: string }>([
+        { $match: filter },
+        ...(await buildRelationCountAggregationStages(options.sort)),
+        { $sort: buildOrganizationSort(options.sort) },
+        { $project: { _id: 0, id: 1 } },
+      ])
+      .toArray();
+    return documents
+      .map((document: { id?: string }): string => document.id ?? '')
+      .filter((id: string): boolean => id.length > 0);
+  }
   const documents = await collection
     .find(filter, { projection: { _id: 0, id: 1 } })
-    .sort({ name: 1, _id: 1 })
+    .sort(buildOrganizationSort(options.sort))
     .toArray();
   return documents
     .map((document: FilemakerOrganizationMongoDocument): string => document.id)

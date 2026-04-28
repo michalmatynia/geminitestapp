@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable max-lines */
 
-import { PlusIcon } from 'lucide-react';
+import { ArrowUpDown, PlusIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -17,7 +17,6 @@ import {
   MasterTreeSettingsButton,
   Pagination,
 } from '@/shared/ui/navigation-and-layout.public';
-import { Badge } from '@/shared/ui/primitives.public';
 import { Button } from '@/shared/ui/button';
 import { FilterPanel, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
@@ -26,6 +25,7 @@ import {
   ORGANIZATION_PAGE_SIZE_OPTIONS,
   type OrganizationFilters,
   type OrganizationListState,
+  type OrganizationSortOption,
 } from '../../pages/AdminFilemakerOrganizationsPage.types';
 import { FilemakerOrganizationAdvancedFilterModal } from './FilemakerOrganizationAdvancedFilterModal';
 import { ORGANIZATION_FILTER_FIELDS } from './FilemakerOrganizationsListPanel.constants';
@@ -92,36 +92,6 @@ function OrganizationSecondaryActions(props: {
   );
 }
 
-function OrganizationListBadges(props: Pick<
-  OrganizationListState,
-  'error' | 'isLoading' | 'shownCount' | 'totalCount' | 'totalCountIsExact'
->): React.JSX.Element {
-  const hasError = props.error !== null && props.error.length > 0;
-  const totalCountLabel = props.totalCountIsExact
-    ? String(props.totalCount)
-    : `>= ${props.totalCount}`;
-  return (
-    <div className='flex flex-wrap items-center gap-2'>
-      <Badge variant='outline' className='text-[10px]'>
-        Organisations: {totalCountLabel}
-      </Badge>
-      <Badge variant='outline' className='text-[10px]'>
-        Shown: {props.shownCount}
-      </Badge>
-      {props.isLoading ? (
-        <Badge variant='outline' className='text-[10px]'>
-          Loading
-        </Badge>
-      ) : null}
-      {hasError ? (
-        <Badge variant='destructive' className='text-[10px]'>
-          {props.error}
-        </Badge>
-      ) : null}
-    </div>
-  );
-}
-
 const renderOrganizationTitle = (): React.JSX.Element => (
   <h1 className='text-3xl font-bold tracking-tight text-white'>Organisations</h1>
 );
@@ -152,18 +122,6 @@ function OrganizationSecondaryActionRail(props: OrganizationListState): React.JS
   return <OrganizationSecondaryActions actions={props.actions} isLoading={props.isLoading} />;
 }
 
-function OrganizationBadgesRail(props: OrganizationListState): React.JSX.Element {
-  return (
-    <OrganizationListBadges
-      error={props.error}
-      isLoading={props.isLoading}
-      shownCount={props.shownCount}
-      totalCount={props.totalCount}
-      totalCountIsExact={props.totalCountIsExact}
-    />
-  );
-}
-
 function OrganizationPaginationControl(props: OrganizationListState): React.JSX.Element {
   return (
     <Pagination
@@ -181,6 +139,19 @@ function OrganizationPaginationControl(props: OrganizationListState): React.JSX.
   );
 }
 
+function OrganizationPrimaryHeaderControls(props: OrganizationListState): React.JSX.Element {
+  return (
+    <>
+      <OrganizationCreateActionRail {...props} />
+      <OrganizationPaginationControl {...props} />
+    </>
+  );
+}
+
+function OrganizationSecondaryHeaderControls(props: OrganizationListState): React.JSX.Element {
+  return <OrganizationSecondaryActionRail {...props} />;
+}
+
 function OrganizationMobileHeader(props: OrganizationListState): React.JSX.Element {
   return (
     <div className='space-y-3 lg:hidden'>
@@ -190,7 +161,6 @@ function OrganizationMobileHeader(props: OrganizationListState): React.JSX.Eleme
           <OrganizationPaginationControl {...props} />
         </div>
         <div className='flex w-full flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end'>
-          <OrganizationBadgesRail {...props} />
           <OrganizationSecondaryActionRail {...props} />
         </div>
       </div>
@@ -203,24 +173,25 @@ function OrganizationDesktopHeader(props: OrganizationListState): React.JSX.Elem
     <div className='hidden space-y-3 lg:block'>
       {renderTitleBreadcrumbHeader(
         'shrink-0 min-w-max',
-        <>
-          <OrganizationCreateActionRail {...props} />
-          <OrganizationPaginationControl {...props} />
-        </>,
-        'relative z-0 min-w-0 flex-1 justify-end'
+        <OrganizationPrimaryHeaderControls {...props} />,
+        'relative z-0 min-w-0 flex-1 justify-center'
       )}
+      <div className='flex w-full flex-wrap items-center gap-2'>
+        <OrganizationSecondaryHeaderControls {...props} />
+      </div>
     </div>
   );
 }
 
-function OrganizationDesktopSecondaryRail(props: OrganizationListState): React.JSX.Element {
-  return (
-    <div className='hidden w-full flex-wrap items-center justify-end gap-2 lg:flex'>
-      <OrganizationBadgesRail {...props} />
-      <OrganizationSecondaryActionRail {...props} />
-    </div>
-  );
-}
+const createActiveOrganizationFilterValues = (
+  filters: OrganizationFilters
+): Record<string, unknown> => ({
+  address: filters.address === 'all' ? '' : filters.address,
+  advancedFilter: filters.advancedFilter.trim(),
+  bank: filters.bank === 'all' ? '' : filters.bank,
+  parent: filters.parent === 'all' ? '' : filters.parent,
+  updatedBy: filters.updatedBy.trim(),
+});
 
 function OrganizationFiltersPanel(props: {
   filterValues: OrganizationFilters;
@@ -228,12 +199,23 @@ function OrganizationFiltersPanel(props: {
 }): React.JSX.Element {
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const hasAdvancedFilter = props.filterValues.advancedFilter.trim().length > 0;
+  const activeFilterValues = useMemo(
+    () => createActiveOrganizationFilterValues(props.filterValues),
+    [
+      props.filterValues.address,
+      props.filterValues.advancedFilter,
+      props.filterValues.bank,
+      props.filterValues.parent,
+      props.filterValues.updatedBy,
+    ]
+  );
 
   return (
     <div className='w-full'>
       <FilterPanel
         filters={ORGANIZATION_FILTER_FIELDS}
         values={props.filterValues}
+        activeValues={activeFilterValues}
         search={props.listState.query}
         searchPlaceholder='Search name, address, tax ID, bank UUID, or legacy UUID.'
         onFilterChange={props.listState.onFilterChange}
@@ -265,6 +247,88 @@ function OrganizationFiltersPanel(props: {
           onSavePresets={props.listState.onSetAdvancedFilterPresets}
         />
       ) : null}
+    </div>
+  );
+}
+
+const nextCreatedAtSort = (sort: OrganizationSortOption): OrganizationSortOption =>
+  sort === 'createdAt_desc' ? 'createdAt_asc' : 'createdAt_desc';
+
+const nextEventCountSort = (sort: OrganizationSortOption): OrganizationSortOption =>
+  sort === 'eventCount_desc' ? 'eventCount_asc' : 'eventCount_desc';
+
+const nextJobListingCountSort = (sort: OrganizationSortOption): OrganizationSortOption =>
+  sort === 'jobListingCount_desc' ? 'jobListingCount_asc' : 'jobListingCount_desc';
+
+const nextNameSort = (sort: OrganizationSortOption): OrganizationSortOption =>
+  sort === 'name_asc' ? 'name_desc' : 'name_asc';
+
+function OrganizationSortHeaderButton(props: {
+  isActive: boolean;
+  label: string;
+  onClick: () => void;
+}): React.JSX.Element {
+  return (
+    <Button
+      type='button'
+      variant='ghost'
+      size='sm'
+      aria-pressed={props.isActive}
+      onClick={props.onClick}
+      className={
+        props.isActive
+          ? 'h-7 px-2 text-xs font-semibold text-white'
+          : 'h-7 px-2 text-xs font-semibold text-gray-400'
+      }
+    >
+      {props.label}
+      <ArrowUpDown className='ml-2 size-3.5' aria-hidden='true' />
+    </Button>
+  );
+}
+
+function OrganizationTableHeader(props: OrganizationListState): React.JSX.Element {
+  const isNameSort = props.sort === 'name_asc' || props.sort === 'name_desc';
+  const isEventCountSort = props.sort === 'eventCount_asc' || props.sort === 'eventCount_desc';
+  const isJobListingCountSort =
+    props.sort === 'jobListingCount_asc' || props.sort === 'jobListingCount_desc';
+  const isCreatedAtSort = props.sort === 'createdAt_asc' || props.sort === 'createdAt_desc';
+
+  return (
+    <div
+      data-testid='organization-table-header'
+      className='flex items-center gap-2 rounded border border-white/10 bg-muted/20 px-2 py-1.5'
+    >
+      <div className='hidden w-[5.75rem] shrink-0 md:block' aria-hidden='true' />
+      <div className='min-w-0 flex-1'>
+        <OrganizationSortHeaderButton
+          isActive={isNameSort}
+          label='Name'
+          onClick={(): void => props.onSortChange(nextNameSort(props.sort))}
+        />
+      </div>
+      <div className='hidden w-20 shrink-0 justify-center md:flex'>
+        <OrganizationSortHeaderButton
+          isActive={isEventCountSort}
+          label='Events'
+          onClick={(): void => props.onSortChange(nextEventCountSort(props.sort))}
+        />
+      </div>
+      <div className='hidden w-16 shrink-0 justify-center md:flex'>
+        <OrganizationSortHeaderButton
+          isActive={isJobListingCountSort}
+          label='Jobs'
+          onClick={(): void => props.onSortChange(nextJobListingCountSort(props.sort))}
+        />
+      </div>
+      <div className='w-36 shrink-0 text-right md:w-44'>
+        <OrganizationSortHeaderButton
+          isActive={isCreatedAtSort}
+          label='Created At'
+          onClick={(): void => props.onSortChange(nextCreatedAtSort(props.sort))}
+        />
+      </div>
+      <div className='hidden w-16 shrink-0 md:block' aria-hidden='true' />
     </div>
   );
 }
@@ -305,7 +369,6 @@ function OrganizationListHeader(props: OrganizationListState): React.JSX.Element
         <OrganizationMobileHeader {...props} />
         <OrganizationDesktopHeader {...props} />
         <OrganizationFiltersPanel filterValues={filterValues} listState={props} />
-        <OrganizationDesktopSecondaryRail {...props} />
       </div>
     </div>
   );
@@ -323,7 +386,8 @@ function OrganizationListViewport(props: OrganizationListState): React.JSX.Eleme
   const hasQuery = props.query.trim().length > 0;
 
   return (
-    <div className='relative'>
+    <div className='relative space-y-1'>
+      <OrganizationTableHeader {...props} />
       <FolderTreeViewportV2
         controller={controller}
         scrollToNodeRef={scrollToNodeRef}

@@ -40,10 +40,12 @@ export const ALL_BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'chatbot',
   'kangur_ai_tutor',
   'kangur_social',
+  'job_board',
   'analytics',
   'runtime_analytics',
   'system_logs',
   'error_logs',
+  'playwright',
 ];
 
 export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = {
@@ -54,6 +56,7 @@ export const DEFAULT_BRAIN_OVERRIDES_ENABLED: Record<AiBrainFeature, boolean> = 
   chatbot: false,
   kangur_ai_tutor: false,
   kangur_social: false,
+  job_board: false,
   products: false,
   integrations: false,
   case_resolver: false,

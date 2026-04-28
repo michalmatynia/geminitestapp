@@ -8,7 +8,9 @@ import {
   collectJobBoardOfferUrls,
   extractJobBoardExternalIdFromUrl,
   isJobBoardOfferUrl,
+  type JobBoardStructuredSnapshot,
 } from '@/features/job-board/server/providers/job-board-sync';
+import type { FilemakerLexiconTermCategory } from '@/shared/contracts/filemaker';
 import { getFilemakerOrganizationsCollection } from '@/features/filemaker/server/filemaker-organizations-mongo';
 import type { JobScanEvaluation } from '@/shared/contracts/job-board';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
@@ -16,26 +18,45 @@ import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job
 import { resolveRuntimeActionExecutionSettings } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
+  getJobBoardSourceSite,
   resolveJobBoardProvider,
   type JobBoardProvider,
 } from '@/shared/lib/job-board/job-board-providers';
 
 import {
+  filemakerJobBoardScrapeDraftSaveRequestSchema,
   filemakerJobBoardScrapeRequestSchema,
   type FilemakerJobBoardOrganizationMatch,
+  type FilemakerJobBoardScrapeDraftSaveRequest,
+  type FilemakerJobBoardScrapeLiveEvent,
   type FilemakerJobBoardScrapeOfferResult,
   type FilemakerJobBoardScrapeRequest,
   type FilemakerJobBoardScrapeResponse,
+  type FilemakerJobBoardScrapeWriteAction,
+  type FilemakerJobBoardScrapeWriteResult,
   type FilemakerJobBoardScrapedOffer,
 } from '../filemaker-job-board-scrape-contracts';
 import {
+  createFilemakerAddress,
+  createFilemakerAddressLink,
   createFilemakerJobListing,
+  createFilemakerJobListingLexiconLink,
+  createFilemakerLexiconTerm,
   createFilemakerOrganization,
   normalizeFilemakerDatabase,
   toPersistedFilemakerDatabase,
 } from '../settings';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
-import type { FilemakerDatabase, FilemakerJobListing, FilemakerOrganization } from '../types';
+import { normalizeString, toIdToken } from '../filemaker-settings.helpers';
+import type {
+  FilemakerAddress,
+  FilemakerAddressLink,
+  FilemakerDatabase,
+  FilemakerJobListing,
+  FilemakerJobListingLexiconLink,
+  FilemakerLexiconTerm,
+  FilemakerOrganization,
+} from '../types';
 import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
@@ -56,8 +77,23 @@ type OrganizationCandidate = {
 type ApplyImportInput = {
   candidates: OrganizationCandidate[];
   database: FilemakerDatabase;
+  onWrite?: (write: FilemakerJobBoardScrapeWriteResult) => Promise<void> | void;
   options: FilemakerJobBoardScrapeRequest;
   offers: FilemakerJobBoardScrapedOffer[];
+};
+
+type ImportCounters = {
+  addressUpdates: number;
+  createdLexiconTerms: number;
+  createdOrganizations: number;
+  linkedLexiconTerms: number;
+  profileUpdates: number;
+  updatedOrganizations: number;
+};
+
+type ImportVerification = {
+  verifiedListings: number;
+  warnings: string[];
 };
 
 type CentralizedScrapeResult = {
@@ -68,7 +104,65 @@ type CentralizedScrapeResult = {
   warnings: string[];
 };
 
+export type FilemakerJobBoardScrapeLiveEventEmitter = (
+  event: FilemakerJobBoardScrapeLiveEvent
+) => Promise<void> | void;
+
+type FilemakerJobBoardScrapeRunOptions = {
+  onEvent?: FilemakerJobBoardScrapeLiveEventEmitter;
+  signal?: AbortSignal;
+};
+
+type ScrapeProgressHandlers = {
+  onLinks?: (input: {
+    provider: JobBoardProvider;
+    runId: string | null;
+    sourceSite: string;
+    urls: string[];
+  }) => Promise<void> | void;
+  onOffer?: (input: {
+    index: number;
+    offer: FilemakerJobBoardScrapedOffer;
+    total: number;
+  }) => Promise<void> | void;
+  onStatus?: (message: string) => Promise<void> | void;
+  onWarning?: (warning: string) => Promise<void> | void;
+};
+
 const DEFAULT_WARNINGS: string[] = [];
+
+const EMPTY_IMPORT_COUNTERS: ImportCounters = {
+  addressUpdates: 0,
+  createdLexiconTerms: 0,
+  createdOrganizations: 0,
+  linkedLexiconTerms: 0,
+  profileUpdates: 0,
+  updatedOrganizations: 0,
+};
+
+const EMPTY_IMPORT_VERIFICATION: ImportVerification = {
+  verifiedListings: 0,
+  warnings: [],
+};
+
+const throwIfScrapeAborted = (signal: AbortSignal | undefined): void => {
+  if (signal === undefined || signal.aborted === false) return;
+  const error = new Error('Job-board scrape stopped.');
+  error.name = 'AbortError';
+  throw error;
+};
+
+const emitLiveEvent = async (
+  onEvent: FilemakerJobBoardScrapeLiveEventEmitter | undefined,
+  event: Omit<FilemakerJobBoardScrapeLiveEvent, 'at'>
+): Promise<void> => {
+  if (!onEvent) return;
+  const liveEvent: FilemakerJobBoardScrapeLiveEvent = {
+    ...event,
+    at: new Date().toISOString(),
+  };
+  await onEvent(liveEvent);
+};
 
 const resolveEffectiveHeadless = async (
   override: boolean | null | undefined
@@ -123,6 +217,71 @@ const normalizeJobBoardSourceUrl = (value: unknown): string | null => {
   }
 };
 
+const normalizeLexiconLabel = (value: string): string =>
+  value.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+
+const normalizeLexiconKey = (value: string): string =>
+  normalizeLexiconLabel(value)
+    .toLowerCase()
+    .replace(/ł/g, 'l')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const looksLikeAddressPill = (value: string): boolean =>
+  /\d/.test(value) && value.includes(',') && normalizeLexiconKey(value).split(' ').length >= 3;
+
+const classifyOfferPill = (
+  label: string,
+  position: number,
+  provider: JobBoardProvider
+): FilemakerLexiconTermCategory => {
+  const normalized = normalizeLexiconKey(label);
+  if (provider === 'pracuj_pl' && position === 0 && looksLikeAddressPill(label)) {
+    return 'address';
+  }
+  if (looksLikeAddressPill(label) && /(ul|street|avenue|aleja|warszawa|krakow|wroclaw|poznan|gdansk|lodz)/i.test(normalized)) {
+    return 'address';
+  }
+  if (/\bb2b\b|contract of employment|employment contract|umowa o prace|mandate|zlecenie/.test(normalized)) {
+    return 'contract_type';
+  }
+  if (/full time|part time|pelny etat|czesc etatu|etat/.test(normalized)) {
+    return 'employment_type';
+  }
+  if (/junior|mid|regular|senior|expert|manager|specialist|specjalista/.test(normalized)) {
+    return 'experience_level';
+  }
+  if (/remote|hybrid|office|onsite|zdalna|hybrydowa|biur/.test(normalized)) {
+    return 'work_mode';
+  }
+  if (/immediate|asap|od zaraz|employment|start/.test(normalized)) {
+    return 'start_date';
+  }
+  return 'other';
+};
+
+const snapshotPillValues = (snapshot: JobBoardStructuredSnapshot | null | undefined): string[] => {
+  const values = snapshot?.pills ?? [];
+  return uniqueStrings(values.map(normalizeLexiconLabel)).slice(0, 48);
+};
+
+const buildScrapedOfferPills = (input: {
+  provider: JobBoardProvider;
+  snapshot: JobBoardStructuredSnapshot | null | undefined;
+  sourceSite: string;
+  sourceUrl: string;
+}): FilemakerJobBoardScrapedOffer['pills'] =>
+  snapshotPillValues(input.snapshot).map((label, index) => ({
+    category: classifyOfferPill(label, index, input.provider),
+    label,
+    position: index,
+    sourceSite: input.sourceSite,
+    sourceUrl: input.sourceUrl,
+  }));
+
 const clipProfileText = (value: string, max = 8_000): string =>
   value.length > max ? `${value.slice(0, Math.max(0, max - 3))}...` : value;
 
@@ -173,6 +332,7 @@ const offerFromEvaluation = (input: {
   finalUrl: string;
   options: FilemakerJobBoardScrapeRequest;
   provider: JobBoardProvider;
+  snapshot?: JobBoardStructuredSnapshot | null;
   sourceSite: string;
 }): FilemakerJobBoardScrapedOffer | null => {
   const evaluation = input.evaluation;
@@ -200,6 +360,12 @@ const offerFromEvaluation = (input: {
     sourceExternalId: extractJobBoardExternalIdFromUrl(sourceUrl, input.provider),
     sourceSite: input.sourceSite,
     sourceUrl,
+    pills: buildScrapedOfferPills({
+      provider: input.provider,
+      snapshot: input.snapshot,
+      sourceSite: input.sourceSite,
+      sourceUrl,
+    }),
     title,
   };
 };
@@ -218,6 +384,19 @@ const loadFilemakerDatabase = async (): Promise<LoadedDatabase> => {
   } catch {
     return { database: normalizeFilemakerDatabase(null), rawValue };
   }
+};
+
+const hasLoadedFilemakerRecords = (database: FilemakerDatabase): boolean =>
+  database.organizations.length > 0 || database.jobListings.length > 0;
+
+const loadPersistedVerificationDatabase = async (
+  fallbackDatabase: FilemakerDatabase
+): Promise<FilemakerDatabase> => {
+  const loaded = await loadFilemakerDatabase();
+  if (loaded.rawValue !== null || hasLoadedFilemakerRecords(loaded.database)) {
+    return loaded.database;
+  }
+  return normalizeFilemakerDatabase(fallbackDatabase);
 };
 
 const normalizeNameForMatch = (value: string): string =>
@@ -334,7 +513,9 @@ const loadOrganizationCandidates = async (
 };
 
 const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedOffer): string => {
-  const stablePart = offer.sourceExternalId ?? `${offer.title}-${offer.location}`;
+  const stablePart =
+    offer.sourceExternalId ??
+    (offer.sourceUrl.length > 0 ? offer.sourceUrl : `${offer.title}-${offer.location}`);
   const slug = normalizeNameForMatch(`${organizationId}-${stablePart}`).replace(/\s+/g, '-');
   return `filemaker-job-board-job-${slug.length > 0 ? slug : randomUUID()}`;
 };
@@ -351,6 +532,7 @@ const findExistingListingIndex = (
     if (listing.organizationId !== organizationId) return false;
     if (offer.sourceExternalId !== null && listing.sourceExternalId === offer.sourceExternalId) return true;
     if (offer.sourceUrl.length > 0 && listing.sourceUrl === offer.sourceUrl) return true;
+    if (offer.sourceExternalId !== null || offer.sourceUrl.length > 0) return false;
     return normalizeDedupeKey(`${listing.organizationId} ${listing.title} ${listing.location ?? ''}`) === titleKey;
   });
 };
@@ -424,6 +606,175 @@ const applyOfferProfileToDatabaseOrganization = (
   if (!result.changed) return false;
   database.organizations.splice(index, 1, result.organization);
   return true;
+};
+
+const findOfferAddressPill = (
+  offer: FilemakerJobBoardScrapedOffer
+): FilemakerJobBoardScrapedOffer['pills'][number] | null =>
+  offer.pills.find((pill) => pill.category === 'address') ?? null;
+
+type OrganizationAddressApplyResult = {
+  address: FilemakerAddress | null;
+  assignedDefault: boolean;
+  changed: boolean;
+};
+
+const cleanAddressCity = (value: string): string =>
+  normalizeLexiconLabel(value.replace(/\([^)]*\)/g, ''));
+
+const parseScrapedAddressPill = (
+  value: string
+): Pick<FilemakerAddress, 'city' | 'country' | 'countryId' | 'postalCode' | 'street' | 'streetNumber'> | null => {
+  const parts = normalizeLexiconLabel(value)
+    .split(',')
+    .map((part) => normalizeLexiconLabel(part))
+    .filter(Boolean);
+  if (parts.length === 0) return null;
+  const streetPart = parts[0] ?? '';
+  const streetMatch = streetPart.match(/^(.+?)\s+([0-9]+[0-9A-Za-z/ -]*)$/);
+  const street = normalizeLexiconLabel(streetMatch?.[1] ?? streetPart);
+  const streetNumber = normalizeLexiconLabel(streetMatch?.[2] ?? '');
+  const city = cleanAddressCity(parts[parts.length - 1] ?? '');
+  if (street.length === 0 && city.length === 0) return null;
+  return {
+    city,
+    country: 'Poland',
+    countryId: 'PL',
+    postalCode: '',
+    street,
+    streetNumber,
+  };
+};
+
+const addressComparisonKey = (
+  address: Pick<FilemakerAddress, 'city' | 'country' | 'postalCode' | 'street' | 'streetNumber'>
+): string =>
+  normalizeLexiconKey(
+    [address.street, address.streetNumber, address.postalCode, address.city, address.country]
+      .filter(Boolean)
+      .join(' ')
+  );
+
+const buildJobBoardAddressId = (
+  organizationId: string,
+  address: Pick<FilemakerAddress, 'city' | 'country' | 'postalCode' | 'street' | 'streetNumber'>
+): string => {
+  const token = toIdToken(`${organizationId}-${addressComparisonKey(address)}`);
+  return `filemaker-address-job-board-${token.length > 0 ? token : randomUUID()}`;
+};
+
+const buildJobBoardAddressLinkId = (organizationId: string, addressId: string): string => {
+  const token = toIdToken(`organization-${organizationId}-${addressId}`);
+  return `filemaker-address-link-${token.length > 0 ? token : randomUUID()}`;
+};
+
+const ensureAddressRecord = (
+  database: FilemakerDatabase,
+  organizationId: string,
+  parsedAddress: Pick<
+    FilemakerAddress,
+    'city' | 'country' | 'countryId' | 'postalCode' | 'street' | 'streetNumber'
+  >
+): { address: FilemakerAddress; created: boolean } => {
+  const comparisonKey = addressComparisonKey(parsedAddress);
+  const existing = database.addresses.find(
+    (address: FilemakerAddress): boolean => addressComparisonKey(address) === comparisonKey
+  );
+  if (existing !== undefined) return { address: existing, created: false };
+  const address = createFilemakerAddress({
+    id: buildJobBoardAddressId(organizationId, parsedAddress),
+    ...parsedAddress,
+  });
+  database.addresses.push(address);
+  return { address, created: true };
+};
+
+const ensureOrganizationAddressLink = (
+  database: FilemakerDatabase,
+  organizationId: string,
+  addressId: string,
+  isDefault: boolean
+): boolean => {
+  const existingIndex = database.addressLinks.findIndex(
+    (link: FilemakerAddressLink): boolean =>
+      link.ownerKind === 'organization' &&
+      link.ownerId === organizationId &&
+      link.addressId === addressId
+  );
+  if (existingIndex >= 0) {
+    const existing = database.addressLinks[existingIndex];
+    if (existing === undefined || !isDefault || existing.isDefault) return false;
+    database.addressLinks.splice(existingIndex, 1, {
+      ...existing,
+      isDefault: true,
+      updatedAt: new Date().toISOString(),
+    });
+    return true;
+  }
+  database.addressLinks.push(
+    createFilemakerAddressLink({
+      id: buildJobBoardAddressLinkId(organizationId, addressId),
+      ownerKind: 'organization',
+      ownerId: organizationId,
+      addressId,
+      isDefault,
+    })
+  );
+  return true;
+};
+
+const applyOfferAddressToDatabaseOrganization = (
+  database: FilemakerDatabase,
+  organizationId: string,
+  offer: FilemakerJobBoardScrapedOffer
+): OrganizationAddressApplyResult => {
+  const addressPill = findOfferAddressPill(offer);
+  if (addressPill === null) return { address: null, assignedDefault: false, changed: false };
+  const parsedAddress = parseScrapedAddressPill(addressPill.label);
+  if (parsedAddress === null) return { address: null, assignedDefault: false, changed: false };
+  const index = database.organizations.findIndex(
+    (organization: FilemakerOrganization): boolean => organization.id === organizationId
+  );
+  if (index < 0) return { address: null, assignedDefault: false, changed: false };
+  const organization = database.organizations[index];
+  if (organization === undefined) return { address: null, assignedDefault: false, changed: false };
+  const addressRecord = ensureAddressRecord(database, organizationId, parsedAddress);
+  const shouldSetDefaultAddress = normalizeString(organization.addressId).length === 0;
+  const shouldSetDisplayAddress = normalizeString(organization.displayAddressId).length === 0;
+  const linkChanged = ensureOrganizationAddressLink(
+    database,
+    organizationId,
+    addressRecord.address.id,
+    shouldSetDefaultAddress
+  );
+  const nextOrganization = createFilemakerOrganization({
+    ...organization,
+    ...(shouldSetDefaultAddress ? { addressId: addressRecord.address.id } : {}),
+    ...(shouldSetDisplayAddress ? { displayAddressId: addressRecord.address.id } : {}),
+    ...(shouldSetDefaultAddress
+      ? {
+          city: addressRecord.address.city,
+          country: addressRecord.address.country,
+          countryId: addressRecord.address.countryId,
+          postalCode: addressRecord.address.postalCode,
+          street: addressRecord.address.street,
+          streetNumber: addressRecord.address.streetNumber,
+        }
+      : {}),
+    updatedAt: new Date().toISOString(),
+    updatedBy: 'filemaker:job-board-scrape',
+  });
+  const organizationChanged =
+    JSON.stringify(organization) !== JSON.stringify(nextOrganization) &&
+    (shouldSetDefaultAddress || shouldSetDisplayAddress);
+  if (organizationChanged) {
+    database.organizations.splice(index, 1, nextOrganization);
+  }
+  return {
+    address: addressRecord.address,
+    assignedDefault: shouldSetDefaultAddress,
+    changed: addressRecord.created || linkChanged || organizationChanged,
+  };
 };
 
 const createUnmatchedOrganization = (
@@ -517,6 +868,36 @@ const upsertMongoOrganizationProfile = async (
   }
 };
 
+const upsertMongoOrganizationAddress = async (
+  organizationId: string,
+  address: FilemakerAddress | null
+): Promise<void> => {
+  if (address === null) return;
+  try {
+    const now = new Date().toISOString();
+    const collection = await getFilemakerOrganizationsCollection();
+    await collection.updateOne(
+      { id: organizationId },
+      {
+        $set: {
+          addressId: address.id,
+          city: address.city,
+          country: address.country,
+          countryId: address.countryId,
+          displayAddressId: address.id,
+          postalCode: address.postalCode,
+          street: address.street,
+          streetNumber: address.streetNumber,
+          updatedAt: now,
+          updatedBy: 'filemaker:job-board-scrape',
+        },
+      }
+    );
+  } catch {
+    // Settings persistence remains the source of truth in non-Mongo test/dev environments.
+  }
+};
+
 const buildOfferResult = (
   offer: FilemakerJobBoardScrapedOffer,
   match: FilemakerJobBoardOrganizationMatch | null
@@ -528,42 +909,252 @@ const buildOfferResult = (
   status: 'preview',
 });
 
+const buildWriteMessage = (
+  action: FilemakerJobBoardScrapeWriteAction,
+  result: FilemakerJobBoardScrapeOfferResult
+): string => {
+  const organizationName = result.match?.organizationName ?? result.offer.companyName;
+  if (action === 'organization_address_updated') {
+    return `Updated organisation address for ${organizationName}.`;
+  }
+  if (action === 'organization_created') {
+    return `Created organisation ${organizationName}.`;
+  }
+  if (action === 'organization_linked') {
+    return `Linked existing organisation ${organizationName}.`;
+  }
+  if (action === 'organization_profile_updated') {
+    return `Updated company profile for ${organizationName}.`;
+  }
+  if (action === 'listing_created') {
+    return `Created job listing ${result.offer.title}.`;
+  }
+  if (action === 'listing_updated') {
+    return `Updated job listing ${result.offer.title}.`;
+  }
+  if (action === 'listing_skipped') {
+    return `Skipped existing job listing ${result.offer.title}.`;
+  }
+  if (action === 'listing_lexicon_linked') {
+    return `Linked job-board lexicon terms for ${result.offer.title}.`;
+  }
+  return `No organisation matched ${result.offer.companyName}.`;
+};
+
+const emitWriteResult = async (
+  onWrite: ApplyImportInput['onWrite'],
+  action: FilemakerJobBoardScrapeWriteAction,
+  result: FilemakerJobBoardScrapeOfferResult,
+  profileUpdated: boolean
+): Promise<void> => {
+  await onWrite?.({
+    action,
+    message: buildWriteMessage(action, result),
+    profileUpdated,
+    result,
+  });
+};
+
+type OfferLexiconApplyResult = {
+  changed: boolean;
+  createdTerms: number;
+  linkedTerms: number;
+};
+
+const buildLexiconTermId = (
+  category: FilemakerLexiconTermCategory,
+  normalizedLabel: string
+): string => {
+  const token = toIdToken(`${category}-${normalizedLabel}`);
+  return `filemaker-lexicon-term-${token.length > 0 ? token : randomUUID()}`;
+};
+
+const buildJobListingLexiconLinkId = (jobListingId: string, lexiconTermId: string): string => {
+  const token = toIdToken(`${jobListingId}-${lexiconTermId}`);
+  return `filemaker-job-listing-lexicon-link-${token.length > 0 ? token : randomUUID()}`;
+};
+
+const upsertLexiconTerm = (
+  database: FilemakerDatabase,
+  pill: FilemakerJobBoardScrapedOffer['pills'][number],
+  sourceProvider: string
+): { created: boolean; term: FilemakerLexiconTerm; updated: boolean } => {
+  const normalizedLabel = normalizeLexiconKey(pill.label);
+  const existingIndex = database.lexiconTerms.findIndex(
+    (term: FilemakerLexiconTerm): boolean =>
+      term.category === pill.category && term.normalizedLabel === normalizedLabel
+  );
+  const now = new Date().toISOString();
+  if (existingIndex >= 0) {
+    const existing = database.lexiconTerms[existingIndex];
+    if (existing === undefined) {
+      throw internalError('Lexicon term index resolved without a term.');
+    }
+    const next = createFilemakerLexiconTerm({
+      ...existing,
+      lastSeenAt: now,
+      occurrenceCount: existing.occurrenceCount + 1,
+      updatedAt: now,
+    });
+    database.lexiconTerms.splice(existingIndex, 1, next);
+    return { created: false, term: next, updated: true };
+  }
+  const term = createFilemakerLexiconTerm({
+    id: buildLexiconTermId(pill.category, normalizedLabel),
+    label: pill.label,
+    normalizedLabel,
+    category: pill.category,
+    sourceSite: pill.sourceSite,
+    sourceProvider,
+    firstSeenAt: now,
+    lastSeenAt: now,
+    occurrenceCount: 1,
+  });
+  database.lexiconTerms.push(term);
+  return { created: true, term, updated: true };
+};
+
+const ensureJobListingLexiconLink = (
+  database: FilemakerDatabase,
+  jobListingId: string,
+  term: FilemakerLexiconTerm,
+  pill: FilemakerJobBoardScrapedOffer['pills'][number]
+): boolean => {
+  const exists = database.jobListingLexiconLinks.some(
+    (link: FilemakerJobListingLexiconLink): boolean =>
+      link.jobListingId === jobListingId && link.lexiconTermId === term.id
+  );
+  if (exists) return false;
+  database.jobListingLexiconLinks.push(
+    createFilemakerJobListingLexiconLink({
+      id: buildJobListingLexiconLinkId(jobListingId, term.id),
+      jobListingId,
+      lexiconTermId: term.id,
+      sourceSite: pill.sourceSite,
+      sourceUrl: pill.sourceUrl,
+      sourceValue: pill.label,
+      category: pill.category,
+      position: pill.position,
+    })
+  );
+  return true;
+};
+
+const updateListingLexiconTermIds = (
+  database: FilemakerDatabase,
+  jobListingId: string,
+  termIds: string[]
+): boolean => {
+  const index = database.jobListings.findIndex(
+    (listing: FilemakerJobListing): boolean => listing.id === jobListingId
+  );
+  if (index < 0) return false;
+  const listing = database.jobListings[index];
+  if (listing === undefined) return false;
+  const nextTermIds = uniqueStrings([...listing.lexiconTermIds, ...termIds]);
+  if (nextTermIds.length === listing.lexiconTermIds.length) return false;
+  database.jobListings.splice(
+    index,
+    1,
+    createFilemakerJobListing({
+      ...listing,
+      lexiconTermIds: nextTermIds,
+      updatedAt: new Date().toISOString(),
+    })
+  );
+  return true;
+};
+
+const applyOfferLexiconToListing = (
+  database: FilemakerDatabase,
+  listingId: string,
+  offer: FilemakerJobBoardScrapedOffer
+): OfferLexiconApplyResult => {
+  if (offer.pills.length === 0) {
+    return { changed: false, createdTerms: 0, linkedTerms: 0 };
+  }
+  const termIds: string[] = [];
+  let createdTerms = 0;
+  let linkedTerms = 0;
+  let changed = false;
+  for (const pill of offer.pills) {
+    const termResult = upsertLexiconTerm(database, pill, offer.sourceSite);
+    if (termResult.created) createdTerms += 1;
+    if (termResult.updated) changed = true;
+    termIds.push(termResult.term.id);
+    if (ensureJobListingLexiconLink(database, listingId, termResult.term, pill)) {
+      linkedTerms += 1;
+      changed = true;
+    }
+  }
+  if (updateListingLexiconTermIds(database, listingId, termIds)) {
+    changed = true;
+  }
+  return { changed, createdTerms, linkedTerms };
+};
+
 const applyImport = async ({
   candidates,
   database,
+  onWrite,
   offers,
   options,
 }: ApplyImportInput): Promise<{
   changed: boolean;
+  counters: ImportCounters;
   results: FilemakerJobBoardScrapeOfferResult[];
 }> => {
   let changed = false;
+  const counters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
   const candidateList = [...candidates];
   const results: FilemakerJobBoardScrapeOfferResult[] = [];
 
   for (const offer of offers) {
     let match = findBestMatch(offer, candidateList, options.minimumMatchConfidence);
+    let createdOrganization = false;
+    let createdOrganizationProfileUpdated = false;
     if (!match && options.importStrategy === 'create_unmatched') {
-      const createdOrganization = createUnmatchedOrganization(database, offer);
-      const candidate = buildCandidate(createdOrganization);
+      const createdOrganizationRecord = createUnmatchedOrganization(database, offer);
+      const candidate = buildCandidate(createdOrganizationRecord);
       candidateList.push(candidate);
       match = {
         confidence: 100,
-        organizationId: createdOrganization.id,
-        organizationName: createdOrganization.name,
+        organizationId: candidate.organization.id,
+        organizationName: candidate.organization.name,
         reason: 'created from scraped job-board employer',
       };
       changed = true;
-      await upsertMongoOrganizationForCreatedCandidate(createdOrganization);
+      createdOrganization = true;
+      counters.createdOrganizations += 1;
+      if (offer.companyProfile.trim().length > 0) {
+        createdOrganizationProfileUpdated = true;
+        counters.profileUpdates += 1;
+      }
+      const organizationResult: FilemakerJobBoardScrapeOfferResult = {
+        listingId: null,
+        match,
+        offer,
+        reason: null,
+        status: 'created',
+      };
+      await emitWriteResult(
+        onWrite,
+        'organization_created',
+        organizationResult,
+        createdOrganizationProfileUpdated
+      );
+      await upsertMongoOrganizationForCreatedCandidate(candidate.organization);
     }
     if (!match) {
-      results.push({
+      const result: FilemakerJobBoardScrapeOfferResult = {
         listingId: null,
         match: null,
         offer,
         reason: 'No organisation matched the employer name.',
         status: 'unmatched',
-      });
+      };
+      results.push(result);
+      await emitWriteResult(onWrite, 'offer_unmatched', result, false);
       continue;
     }
 
@@ -573,22 +1164,70 @@ const applyImport = async ({
     );
     if (matchedCandidate && ensureOrganizationInDatabase(database, matchedCandidate.organization)) {
       changed = true;
+      await emitWriteResult(
+        onWrite,
+        'organization_linked',
+        { listingId: null, match, offer, reason: null, status: 'preview' },
+        false
+      );
     }
-    if (applyOfferProfileToDatabaseOrganization(database, match.organizationId, offer)) {
+    const profileUpdated = applyOfferProfileToDatabaseOrganization(
+      database,
+      match.organizationId,
+      offer
+    );
+    if (profileUpdated) {
       changed = true;
+      if (!createdOrganization) {
+        counters.updatedOrganizations += 1;
+        counters.profileUpdates += 1;
+      }
+      await emitWriteResult(
+        onWrite,
+        'organization_profile_updated',
+        { listingId: null, match, offer, reason: null, status: 'updated' },
+        true
+      );
     }
     await upsertMongoOrganizationProfile(match.organizationId, offer);
+    const addressApply = applyOfferAddressToDatabaseOrganization(
+      database,
+      match.organizationId,
+      offer
+    );
+    if (addressApply.changed) {
+      changed = true;
+      counters.addressUpdates += 1;
+      if (addressApply.assignedDefault) {
+        await upsertMongoOrganizationAddress(match.organizationId, addressApply.address);
+      }
+      await emitWriteResult(
+        onWrite,
+        'organization_address_updated',
+        { listingId: null, match, offer, reason: null, status: 'updated' },
+        false
+      );
+    }
 
     const existingIndex = findExistingListingIndex(database.jobListings, match.organizationId, offer);
     const existing = existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
     if (existing && options.duplicateStrategy === 'skip') {
-      results.push({
+      const result: FilemakerJobBoardScrapeOfferResult = {
         listingId: existing.id,
         match,
         offer,
         reason: `A matching ${offer.sourceSite} listing already exists.`,
         status: 'skipped',
-      });
+      };
+      results.push(result);
+      await emitWriteResult(onWrite, 'listing_skipped', result, false);
+      const lexicon = applyOfferLexiconToListing(database, existing.id, offer);
+      if (lexicon.changed) {
+        changed = true;
+        counters.createdLexiconTerms += lexicon.createdTerms;
+        counters.linkedLexiconTerms += lexicon.linkedTerms;
+        await emitWriteResult(onWrite, 'listing_lexicon_linked', result, false);
+      }
       continue;
     }
 
@@ -600,27 +1239,174 @@ const applyImport = async ({
     });
     if (existing && options.duplicateStrategy === 'update') {
       database.jobListings.splice(existingIndex, 1, listing);
-      results.push({ listingId: listing.id, match, offer, reason: null, status: 'updated' });
+      const result: FilemakerJobBoardScrapeOfferResult = {
+        listingId: listing.id,
+        match,
+        offer,
+        reason: null,
+        status: 'updated',
+      };
+      results.push(result);
+      await emitWriteResult(onWrite, 'listing_updated', result, false);
+      const lexicon = applyOfferLexiconToListing(database, listing.id, offer);
+      if (lexicon.changed) {
+        counters.createdLexiconTerms += lexicon.createdTerms;
+        counters.linkedLexiconTerms += lexicon.linkedTerms;
+        await emitWriteResult(onWrite, 'listing_lexicon_linked', result, false);
+      }
     } else {
       database.jobListings.push(listing);
-      results.push({ listingId: listing.id, match, offer, reason: null, status: 'created' });
+      const result: FilemakerJobBoardScrapeOfferResult = {
+        listingId: listing.id,
+        match,
+        offer,
+        reason: null,
+        status: 'created',
+      };
+      results.push(result);
+      await emitWriteResult(onWrite, 'listing_created', result, false);
+      const lexicon = applyOfferLexiconToListing(database, listing.id, offer);
+      if (lexicon.changed) {
+        counters.createdLexiconTerms += lexicon.createdTerms;
+        counters.linkedLexiconTerms += lexicon.linkedTerms;
+        await emitWriteResult(onWrite, 'listing_lexicon_linked', result, false);
+      }
     }
     changed = true;
   }
 
-  return { changed, results };
+  return { changed, counters, results };
+};
+
+const verifyImportedResults = (
+  database: FilemakerDatabase,
+  results: readonly FilemakerJobBoardScrapeOfferResult[]
+): ImportVerification => {
+  const warnings: string[] = [];
+  let verifiedListings = 0;
+
+  for (const result of results) {
+    if (result.match !== null) {
+      const organization = database.organizations.find(
+        (entry: FilemakerOrganization): boolean => entry.id === result.match.organizationId
+      );
+      if (organization === undefined) {
+        warnings.push(
+          `Import verification could not find organisation ${result.match.organizationName}.`
+        );
+      } else if (
+        result.offer.companyProfile.trim().length > 0 &&
+        organization.jobBoardCompanyProfile !== result.offer.companyProfile
+      ) {
+        warnings.push(
+          `Import verification could not confirm company profile for ${organization.name}.`
+        );
+      }
+    }
+
+    if (result.listingId === null || result.status === 'unmatched') {
+      continue;
+    }
+    const listing = database.jobListings.find(
+      (entry: FilemakerJobListing): boolean => entry.id === result.listingId
+    );
+    if (listing === undefined) {
+      warnings.push(`Import verification could not find listing ${result.offer.title}.`);
+      continue;
+    }
+    if (result.offer.pills.length > 0) {
+      const listingLinkedTermIds = new Set([
+        ...listing.lexiconTermIds,
+        ...database.jobListingLexiconLinks
+          .filter(
+            (link: FilemakerJobListingLexiconLink): boolean =>
+              link.jobListingId === listing.id
+          )
+          .map((link: FilemakerJobListingLexiconLink): string => link.lexiconTermId),
+      ]);
+      const missingTerm = result.offer.pills.find((pill): boolean => {
+        const normalizedLabel = normalizeLexiconKey(pill.label);
+        const term = database.lexiconTerms.find(
+          (entry: FilemakerLexiconTerm): boolean =>
+            entry.category === pill.category && entry.normalizedLabel === normalizedLabel
+        );
+        return term === undefined || !listingLinkedTermIds.has(term.id);
+      });
+      if (missingTerm !== undefined) {
+        warnings.push(`Import verification could not confirm lexicon terms for ${result.offer.title}.`);
+      }
+    }
+    verifiedListings += 1;
+  }
+
+  return { verifiedListings, warnings: uniqueStrings(warnings) };
 };
 
 const buildSummary = (
-  offers: readonly FilemakerJobBoardScrapeOfferResult[]
+  offers: readonly FilemakerJobBoardScrapeOfferResult[],
+  counters: ImportCounters = EMPTY_IMPORT_COUNTERS,
+  verification: ImportVerification = EMPTY_IMPORT_VERIFICATION
 ): FilemakerJobBoardScrapeResponse['summary'] => ({
   createdListings: offers.filter((offer) => offer.status === 'created').length,
+  createdLexiconTerms: counters.createdLexiconTerms,
+  createdOrganizations: counters.createdOrganizations,
+  linkedLexiconTerms: counters.linkedLexiconTerms,
   matchedOffers: offers.filter((offer) => offer.match !== null).length,
+  profileUpdates: counters.profileUpdates,
+  addressUpdates: counters.addressUpdates,
   scrapedOffers: offers.length,
   skippedOffers: offers.filter((offer) => offer.status === 'skipped').length,
   unmatchedOffers: offers.filter((offer) => offer.status === 'unmatched').length,
+  updatedOrganizations: counters.updatedOrganizations,
   updatedListings: offers.filter((offer) => offer.status === 'updated').length,
+  verifiedListings: verification.verifiedListings,
 });
+
+const toDraftSaveImportOptions = (
+  input: FilemakerJobBoardScrapeDraftSaveRequest
+): FilemakerJobBoardScrapeRequest =>
+  filemakerJobBoardScrapeRequestSchema.parse({
+    delayMs: 0,
+    duplicateStrategy: input.duplicateStrategy,
+    extractDescriptions: true,
+    extractSalaries: true,
+    headless: null,
+    humanizeMouse: true,
+    importStrategy: input.importStrategy,
+    maxOffers: input.offers.length,
+    maxPages: 1,
+    minimumMatchConfidence: input.minimumMatchConfidence,
+    mode: 'import',
+    organizationScope: input.organizationScope,
+    personaId: null,
+    provider: input.provider,
+    selectedOrganizationIds: input.selectedOrganizationIds,
+    sourceUrl: input.sourceUrl,
+    status: input.status,
+    timeoutMs: 180_000,
+  });
+
+const resolveDraftSaveProvider = (
+  input: FilemakerJobBoardScrapeDraftSaveRequest
+): JobBoardProvider => {
+  const provider =
+    resolveJobBoardProvider(input.sourceUrl, input.provider) ??
+    resolveJobBoardProvider(input.offers[0]?.sourceUrl ?? '', input.provider);
+  if (provider === null) {
+    throw badRequestError('Unsupported job board provider.');
+  }
+  return provider;
+};
+
+const resolveDraftSaveSourceSite = (
+  input: FilemakerJobBoardScrapeDraftSaveRequest,
+  provider: JobBoardProvider
+): string => {
+  const offerSourceSite = input.offers.find(
+    (offer): boolean => offer.sourceSite.trim().length > 0
+  )?.sourceSite;
+  return offerSourceSite?.trim() || getJobBoardSourceSite(provider);
+};
 
 const collectOfferLinks = async (
   options: FilemakerJobBoardScrapeRequest
@@ -660,14 +1446,37 @@ const collectOfferLinks = async (
 };
 
 const scrapeOffersViaJobBoardSequencer = async (
-  options: FilemakerJobBoardScrapeRequest
+  options: FilemakerJobBoardScrapeRequest,
+  progress: ScrapeProgressHandlers = {},
+  signal?: AbortSignal
 ): Promise<CentralizedScrapeResult> => {
+  throwIfScrapeAborted(signal);
+  await progress.onStatus?.('Collecting job-board offer links.');
   const collected = await collectOfferLinks(options);
+  throwIfScrapeAborted(signal);
   const offers: FilemakerJobBoardScrapedOffer[] = [];
   const warnings = [...collected.warnings];
   let runId = collected.runId;
+  await progress.onLinks?.({
+    provider: collected.provider,
+    runId: collected.runId,
+    sourceSite: collected.sourceSite,
+    urls: collected.urls,
+  });
+  for (const warning of collected.warnings) {
+    await progress.onWarning?.(warning);
+  }
+  if (collected.urls.length === 0) {
+    const warning = `No job offer links were found on ${options.sourceUrl}.`;
+    warnings.push(warning);
+    await progress.onWarning?.(warning);
+  }
 
-  for (const url of collected.urls) {
+  for (const [index, url] of collected.urls.entries()) {
+    throwIfScrapeAborted(signal);
+    await progress.onStatus?.(
+      `Scraping offer ${index + 1} of ${collected.urls.length}: ${url}`
+    );
     const probe = await probeJobBoardOffer({
       forcePlaywright: true,
       headless: options.headless,
@@ -683,13 +1492,18 @@ const scrapeOffersViaJobBoardSequencer = async (
       finalUrl: probe.finalUrl,
       options,
       provider: probe.provider,
+      snapshot: probe.snapshot,
       sourceSite: probe.sourceSite,
     });
     if (offer) {
       offers.push(offer);
+      await progress.onOffer?.({ index: index + 1, offer, total: collected.urls.length });
     } else {
-      warnings.push(probe.error ?? `Could not extract a job offer from ${url}.`);
+      const warning = probe.error ?? `Could not extract a job offer from ${url}.`;
+      warnings.push(warning);
+      await progress.onWarning?.(warning);
     }
+    throwIfScrapeAborted(signal);
     await sleep(options.delayMs);
   }
 
@@ -702,31 +1516,147 @@ const scrapeOffersViaJobBoardSequencer = async (
   };
 };
 
+export const saveFilemakerJobBoardScrapeDrafts = async (
+  rawInput: unknown,
+  runOptions: FilemakerJobBoardScrapeRunOptions = {}
+): Promise<FilemakerJobBoardScrapeResponse> => {
+  const parsed = filemakerJobBoardScrapeDraftSaveRequestSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    throw badRequestError('Invalid job-board scrape draft save request.', {
+      issues: parsed.error.issues,
+    });
+  }
+  const input = parsed.data;
+  const options = toDraftSaveImportOptions(input);
+  const onEvent = runOptions.onEvent;
+  const signal = runOptions.signal;
+  throwIfScrapeAborted(signal);
+  if (options.organizationScope === 'selected' && options.selectedOrganizationIds.length === 0) {
+    throw badRequestError('Select at least one organisation or use all organisations.');
+  }
+
+  await emitLiveEvent(onEvent, { message: 'Saving scraped job-board drafts.', type: 'status' });
+  const effectiveHeadless = await resolveEffectiveHeadless(options.headless);
+  const provider = resolveDraftSaveProvider(input);
+  const sourceSite = resolveDraftSaveSourceSite(input, provider);
+  throwIfScrapeAborted(signal);
+  const { database } = await loadFilemakerDatabase();
+  const candidates = await loadOrganizationCandidates(database, options);
+  throwIfScrapeAborted(signal);
+  const imported = await applyImport({
+    candidates,
+    database,
+    offers: input.offers,
+    onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),
+    options,
+  });
+  let verificationDatabase = normalizeFilemakerDatabase(database);
+  if (imported.changed) {
+    throwIfScrapeAborted(signal);
+    await emitLiveEvent(onEvent, { message: 'Persisting imported job listings.', type: 'status' });
+    const persisted = await upsertFilemakerCampaignSettingValue(
+      FILEMAKER_DATABASE_KEY,
+      JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
+    );
+    if (!persisted) {
+      throw internalError('Failed to persist imported job-board listings.');
+    }
+    throwIfScrapeAborted(signal);
+    await emitLiveEvent(onEvent, { message: 'Verifying persisted import.', type: 'status' });
+    verificationDatabase = await loadPersistedVerificationDatabase(database);
+  }
+  const importVerification = verifyImportedResults(verificationDatabase, imported.results);
+  for (const warning of importVerification.warnings) {
+    await emitLiveEvent(onEvent, { type: 'warning', warning });
+  }
+  const warnings = uniqueStrings(importVerification.warnings);
+  const response: FilemakerJobBoardScrapeResponse = {
+    browserMode: effectiveHeadless ? 'headless' : 'headed',
+    mode: 'import',
+    offers: imported.results,
+    provider,
+    runId: null,
+    sourceSite,
+    sourceUrl: options.sourceUrl,
+    summary: buildSummary(imported.results, imported.counters, importVerification),
+    warnings: warnings.length > 0 ? warnings : DEFAULT_WARNINGS,
+  };
+  await emitLiveEvent(onEvent, { result: response, type: 'done' });
+  return response;
+};
+
 export const runFilemakerJobBoardScrape = async (
-  rawInput: unknown
+  rawInput: unknown,
+  runOptions: FilemakerJobBoardScrapeRunOptions = {}
 ): Promise<FilemakerJobBoardScrapeResponse> => {
   const parsed = filemakerJobBoardScrapeRequestSchema.safeParse(rawInput);
   if (!parsed.success) {
     throw badRequestError('Invalid job-board scrape request.', { issues: parsed.error.issues });
   }
   const options = parsed.data;
+  const onEvent = runOptions.onEvent;
+  const signal = runOptions.signal;
+  throwIfScrapeAborted(signal);
+  await emitLiveEvent(onEvent, { message: 'Preparing job-board scraper.', type: 'status' });
   const effectiveHeadless = await resolveEffectiveHeadless(options.headless);
+  throwIfScrapeAborted(signal);
   if (options.organizationScope === 'selected' && options.selectedOrganizationIds.length === 0) {
     throw badRequestError('Select at least one organisation or use all organisations.');
   }
 
+  await emitLiveEvent(onEvent, { message: 'Loading FileMaker organisations.', type: 'status' });
   const { database } = await loadFilemakerDatabase();
   const candidates = await loadOrganizationCandidates(database, options);
-  const scraped = await scrapeOffersViaJobBoardSequencer(options);
+  throwIfScrapeAborted(signal);
+  const scraped = await scrapeOffersViaJobBoardSequencer(
+    options,
+    {
+      onLinks: (input) =>
+        emitLiveEvent(onEvent, {
+          provider: input.provider,
+          runId: input.runId,
+          sourceSite: input.sourceSite,
+          type: 'links',
+          urls: input.urls,
+        }),
+      onOffer: (input) =>
+        emitLiveEvent(onEvent, {
+          index: input.index,
+          result: buildOfferResult(
+            input.offer,
+            findBestMatch(input.offer, candidates, options.minimumMatchConfidence)
+          ),
+          total: input.total,
+          type: 'offer',
+        }),
+      onStatus: (message) => emitLiveEvent(onEvent, { message, type: 'status' }),
+      onWarning: (warning) => emitLiveEvent(onEvent, { type: 'warning', warning }),
+    },
+    signal
+  );
   const previewResults = scraped.offers.map((offer) =>
     buildOfferResult(offer, findBestMatch(offer, candidates, options.minimumMatchConfidence))
   );
 
   let results = previewResults;
+  let importCounters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
+  let importVerification: ImportVerification = { ...EMPTY_IMPORT_VERIFICATION };
   if (options.mode === 'import') {
-    const imported = await applyImport({ candidates, database, offers: scraped.offers, options });
+    throwIfScrapeAborted(signal);
+    await emitLiveEvent(onEvent, { message: 'Importing scraped offers.', type: 'status' });
+    const imported = await applyImport({
+      candidates,
+      database,
+      offers: scraped.offers,
+      onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),
+      options,
+    });
+    importCounters = imported.counters;
     results = imported.results;
+    let verificationDatabase = normalizeFilemakerDatabase(database);
     if (imported.changed) {
+      throwIfScrapeAborted(signal);
+      await emitLiveEvent(onEvent, { message: 'Persisting imported job listings.', type: 'status' });
       const persisted = await upsertFilemakerCampaignSettingValue(
         FILEMAKER_DATABASE_KEY,
         JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
@@ -734,10 +1664,19 @@ export const runFilemakerJobBoardScrape = async (
       if (!persisted) {
         throw internalError('Failed to persist imported job-board listings.');
       }
+      throwIfScrapeAborted(signal);
+      await emitLiveEvent(onEvent, { message: 'Verifying persisted import.', type: 'status' });
+      verificationDatabase = await loadPersistedVerificationDatabase(database);
+    }
+    importVerification = verifyImportedResults(verificationDatabase, results);
+    for (const warning of importVerification.warnings) {
+      await emitLiveEvent(onEvent, { type: 'warning', warning });
     }
   }
 
-  return {
+  const warnings = uniqueStrings([...scraped.warnings, ...importVerification.warnings]);
+
+  const response: FilemakerJobBoardScrapeResponse = {
     browserMode: effectiveHeadless ? 'headless' : 'headed',
     mode: options.mode,
     offers: results,
@@ -745,7 +1684,9 @@ export const runFilemakerJobBoardScrape = async (
     runId: scraped.runId,
     sourceSite: scraped.sourceSite,
     sourceUrl: options.sourceUrl,
-    summary: buildSummary(results),
-    warnings: scraped.warnings.length > 0 ? scraped.warnings : DEFAULT_WARNINGS,
+    summary: buildSummary(results, importCounters, importVerification),
+    warnings: warnings.length > 0 ? warnings : DEFAULT_WARNINGS,
   };
+  await emitLiveEvent(onEvent, { result: response, type: 'done' });
+  return response;
 };

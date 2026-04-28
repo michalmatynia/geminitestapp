@@ -55,6 +55,8 @@ export {
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
   createFilemakerJobListing,
+  createFilemakerJobListingLexiconLink,
+  createFilemakerLexiconTerm,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,

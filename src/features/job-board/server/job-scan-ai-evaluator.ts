@@ -8,10 +8,9 @@ import {
   jobWorkModeSchema,
   type JobScanEvaluation,
 } from '@/shared/contracts/job-board';
+import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import { runBrainChatCompletion } from '@/shared/lib/ai-brain/server-runtime-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-const DEFAULT_MODEL_ID = 'claude-haiku-4-5-20251001';
 
 const aiCompanyPartialSchema = z.object({
   name: z.string().nullable().optional(),
@@ -111,22 +110,32 @@ export const evaluateJobPageWithAi = async (input: {
   pageContent: string;
   modelId?: string;
 }): Promise<JobScanEvaluation> => {
-  const modelId = input.modelId ?? DEFAULT_MODEL_ID;
+  let modelId = input.modelId?.trim() ?? '';
   const truncated = input.pageContent.slice(0, MAX_INPUT_CHARS);
   const evaluatedAt = new Date().toISOString();
 
   try {
+    const brainConfig = await resolveBrainExecutionConfigForCapability(
+      'job_board.offer_extraction',
+      {
+        defaultTemperature: 0,
+        defaultMaxTokens: 4096,
+        defaultSystemPrompt: SYSTEM_PROMPT,
+        ...(modelId.length > 0 ? { defaultModelId: modelId } : {}),
+      }
+    );
+    modelId = brainConfig.modelId;
     const completion = await runBrainChatCompletion({
       modelId,
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: brainConfig.systemPrompt },
         {
           role: 'user',
           content: `Source URL: ${input.sourceUrl}\n\nPage content (HTML or structured text):\n\n${truncated}`,
         },
       ],
-      temperature: 0,
-      maxTokens: 4096,
+      temperature: brainConfig.temperature,
+      maxTokens: brainConfig.maxTokens,
       jsonMode: true,
     });
 

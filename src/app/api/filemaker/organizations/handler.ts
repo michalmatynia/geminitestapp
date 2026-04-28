@@ -19,6 +19,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     pageSize: url.searchParams.get('pageSize'),
     parent: url.searchParams.get('parent'),
     query: url.searchParams.get('query'),
+    sort: url.searchParams.get('sort'),
     updatedBy: url.searchParams.get('updatedBy'),
   };
   if (url.searchParams.get('idsOnly') === 'true') {

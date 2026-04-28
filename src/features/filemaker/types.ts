@@ -107,12 +107,18 @@ export type {
   FilemakerEventDto,
   FilemakerEventOrganizationLink,
   FilemakerEventOrganizationLinkDto,
+  FilemakerJobListingLexiconLink,
+  FilemakerJobListingLexiconLinkDto,
   FilemakerJobListing,
   FilemakerJobListingDto,
   FilemakerJobListingSalaryPeriod,
   FilemakerJobListingSalaryPeriodDto,
   FilemakerJobListingStatus,
   FilemakerJobListingStatusDto,
+  FilemakerLexiconTerm,
+  FilemakerLexiconTermCategory,
+  FilemakerLexiconTermCategoryDto,
+  FilemakerLexiconTermDto,
   FilemakerValue,
   FilemakerValueDto,
   FilemakerValueParameter,
@@ -139,6 +145,10 @@ export type {
   FilemakerPhoneNumberLinkDto,
   FilemakerPerson,
   FilemakerPersonDto,
+  FilemakerPersonProfileEducation,
+  FilemakerPersonProfileEducationDto,
+  FilemakerPersonProfileJobExperience,
+  FilemakerPersonProfileJobExperienceDto,
 } from '@/shared/contracts/filemaker';
 
 export type {
@@ -197,3 +207,11 @@ export type {
   FilemakerMailThreadDetailDto,
   FilemakerMailThreadDto,
 } from '@/shared/contracts/filemaker-mail';
+
+export type {
+  FilemakerCv,
+  FilemakerCvListResponse,
+  FilemakerCvResponse,
+  FilemakerCvStatus,
+  FilemakerCvTemplate,
+} from './filemaker-cv.types';

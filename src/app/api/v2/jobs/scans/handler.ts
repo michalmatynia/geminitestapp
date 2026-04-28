@@ -40,7 +40,8 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const body = ctx.body as JobScanCreateRequest;
   const created = await createJobScan({
     sourceUrl: body.sourceUrl,
-    ...(body.provider ? { provider: body.provider } : {}),
+    ...(body.provider !== undefined ? { provider: body.provider } : {}),
+    ...(typeof body.useVision === 'boolean' ? { useVision: body.useVision } : {}),
     createdBy: ctx.userId ?? null,
   });
 

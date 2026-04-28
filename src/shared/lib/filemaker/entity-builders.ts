@@ -91,6 +91,91 @@ const normalizePhoneNumbers = (value: unknown): string[] => {
   return [];
 };
 
+const normalizeStringList = (value: unknown): string[] => {
+  const unique = new Set<string>();
+  const add = (entry: unknown): void => {
+    const normalized = normalizeString(entry);
+    if (normalized.length === 0) return;
+    unique.add(normalized);
+  };
+
+  if (Array.isArray(value)) {
+    value.forEach(add);
+    return Array.from(unique);
+  }
+
+  if (typeof value === 'string') {
+    value.split(/\r?\n|,/).forEach(add);
+    return Array.from(unique);
+  }
+
+  return [];
+};
+
+type FilemakerPersonProfileEducation = NonNullable<FilemakerPerson['profileEducation']>[number];
+type FilemakerPersonProfileJobExperience = NonNullable<
+  FilemakerPerson['profileJobExperience']
+>[number];
+
+const normalizeProfileEducation = (value: unknown): FilemakerPersonProfileEducation[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry: unknown): FilemakerPersonProfileEducation | null => {
+      if (entry === null || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const degree = normalizeString(record['degree']);
+      const institution = normalizeString(record['institution']);
+      const period = normalizeString(record['period']);
+      const description = normalizeOptionalString(record['description']);
+      if (degree.length === 0 && institution.length === 0) return null;
+      return {
+        ...(normalizeOptionalString(record['id']) !== undefined
+          ? { id: normalizeOptionalString(record['id']) }
+          : {}),
+        degree,
+        institution,
+        period,
+        ...(description !== undefined ? { description } : {}),
+      };
+    })
+    .filter(
+      (entry: FilemakerPersonProfileEducation | null): entry is FilemakerPersonProfileEducation =>
+        entry !== null
+    );
+};
+
+const normalizeProfileJobExperience = (value: unknown): FilemakerPersonProfileJobExperience[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry: unknown): FilemakerPersonProfileJobExperience | null => {
+      if (entry === null || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const title = normalizeString(record['title']);
+      const organization = normalizeString(record['organization']);
+      const period = normalizeString(record['period']);
+      const location = normalizeOptionalString(record['location']);
+      const description = normalizeOptionalString(record['description']);
+      const highlights = normalizeStringList(record['highlights']);
+      if (title.length === 0 && organization.length === 0) return null;
+      return {
+        ...(normalizeOptionalString(record['id']) !== undefined
+          ? { id: normalizeOptionalString(record['id']) }
+          : {}),
+        title,
+        organization,
+        period,
+        ...(location !== undefined ? { location } : {}),
+        ...(description !== undefined ? { description } : {}),
+        ...(highlights.length > 0 ? { highlights } : {}),
+      };
+    })
+    .filter(
+      (
+        entry: FilemakerPersonProfileJobExperience | null
+      ): entry is FilemakerPersonProfileJobExperience => entry !== null
+    );
+};
+
 export const normalizeAddressFields = (value: {
   street?: unknown;
   streetNumber?: unknown;
@@ -189,6 +274,13 @@ export const createFilemakerPerson = (input: {
   nip?: unknown;
   regon?: unknown;
   phoneNumbers?: unknown;
+  linkedinUrl?: unknown;
+  githubUrl?: unknown;
+  profileEducation?: unknown;
+  profileJobExperience?: unknown;
+  cvProfessionalSummary?: unknown;
+  cvCoreStrengths?: unknown;
+  cvSelectedTechnicalEnvironment?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerPerson => {
@@ -201,6 +293,13 @@ export const createFilemakerPerson = (input: {
     country: input.country,
     countryId: input.countryId,
   });
+  const linkedinUrl = normalizeOptionalString(input.linkedinUrl);
+  const githubUrl = normalizeOptionalString(input.githubUrl);
+  const profileEducation = normalizeProfileEducation(input.profileEducation);
+  const profileJobExperience = normalizeProfileJobExperience(input.profileJobExperience);
+  const cvProfessionalSummary = normalizeOptionalString(input.cvProfessionalSummary);
+  const cvCoreStrengths = normalizeStringList(input.cvCoreStrengths);
+  const cvSelectedTechnicalEnvironment = normalizeStringList(input.cvSelectedTechnicalEnvironment);
   return {
     id: normalizeString(input.id),
     firstName: normalizeString(input.firstName),
@@ -215,6 +314,13 @@ export const createFilemakerPerson = (input: {
     nip: normalizeString(input.nip),
     regon: normalizeString(input.regon),
     phoneNumbers: normalizePhoneNumbers(input.phoneNumbers),
+    ...(linkedinUrl !== undefined ? { linkedinUrl } : {}),
+    ...(githubUrl !== undefined ? { githubUrl } : {}),
+    ...(profileEducation.length > 0 ? { profileEducation } : {}),
+    ...(profileJobExperience.length > 0 ? { profileJobExperience } : {}),
+    ...(cvProfessionalSummary !== undefined ? { cvProfessionalSummary } : {}),
+    ...(cvCoreStrengths.length > 0 ? { cvCoreStrengths } : {}),
+    ...(cvSelectedTechnicalEnvironment.length > 0 ? { cvSelectedTechnicalEnvironment } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

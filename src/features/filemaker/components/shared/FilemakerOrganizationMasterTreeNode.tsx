@@ -53,7 +53,7 @@ type OrganizationGroupNodeProps = Pick<
 
 type OrganizationLeafNodeProps = Pick<
   FolderTreeViewportRenderNodeInput,
-  'depth' | 'hasChildren' | 'isExpanded' | 'select' | 'toggleExpand'
+  'depth' | 'hasChildren' | 'isExpanded' | 'toggleExpand'
 > & {
   eventCount: number;
   isEmailScrapeRunning: boolean;
@@ -172,10 +172,10 @@ function FilemakerOrganizationLeafDetails(props: {
   const tradingName = organization.tradingName?.trim() ?? '';
 
   return (
-    <div className='min-w-0 flex-1'>
+    <div className='min-w-0 flex-1 cursor-default'>
       <button
         type='button'
-        className='block max-w-full truncate text-left font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+        className='inline-block max-w-full cursor-pointer select-text truncate align-top text-left font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
         onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
           event.preventDefault();
           event.stopPropagation();
@@ -185,35 +185,63 @@ function FilemakerOrganizationLeafDetails(props: {
         {organization.name}
       </button>
       {tradingName.length > 0 ? (
-        <div className='truncate text-[11px] italic text-gray-400'>{tradingName}</div>
+        <div className='cursor-default text-[11px] italic text-gray-400'>
+          <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
+            {tradingName}
+          </span>
+        </div>
       ) : null}
-      <div className='truncate text-xs text-gray-300'>{formatFilemakerAddress(organization)}</div>
-      <div className='truncate text-[10px] text-gray-600'>
-        NIP: {formatOptionalOrganizationField(organization.taxId)} | KRS:{' '}
-        {formatOptionalOrganizationField(organization.krs)} | Updated:{' '}
-        {formatTimestamp(organization.updatedAt)}
+      <div className='cursor-default text-xs text-gray-300'>
+        <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
+          {formatFilemakerAddress(organization)}
+        </span>
+      </div>
+      <div className='cursor-default text-[10px] text-gray-600'>
+        <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
+          NIP: {formatOptionalOrganizationField(organization.taxId)} | KRS:{' '}
+          {formatOptionalOrganizationField(organization.krs)}
+          <span className='md:hidden'> | Created: {formatTimestamp(organization.createdAt)}</span>
+          {' | '}Updated:{' '}
+          {formatTimestamp(organization.updatedAt)}
+        </span>
       </div>
     </div>
   );
 }
 
-function OrganizationRelationBadges(props: {
-  eventCount: number;
-  jobListingCount: number;
-}): React.JSX.Element | null {
-  const { eventCount, jobListingCount } = props;
-  if (eventCount === 0 && jobListingCount === 0) return null;
+function OrganizationCreatedAtColumn(props: {
+  organization: FilemakerOrganization;
+}): React.JSX.Element {
+  const createdAtLabel = formatTimestamp(props.organization.createdAt);
 
   return (
-    <div className='hidden shrink-0 items-center gap-1 sm:flex'>
-      {eventCount > 0 ? (
-        <Badge variant='outline' className='h-5 text-[10px]'>
-          Events {eventCount}
-        </Badge>
-      ) : null}
-      {jobListingCount > 0 ? (
-        <Badge variant='outline' className='h-5 text-[10px]'>
-          Jobs {jobListingCount}
+    <div
+      className='hidden w-44 shrink-0 cursor-default text-right text-xs font-medium text-gray-200 md:block'
+      aria-label={`Created at ${createdAtLabel}`}
+    >
+      <span className='inline-block cursor-text select-text'>{createdAtLabel}</span>
+    </div>
+  );
+}
+
+function OrganizationRelationCountColumn(props: {
+  count: number;
+  label: string;
+  widthClassName: string;
+}): React.JSX.Element {
+  const { count, label, widthClassName } = props;
+
+  return (
+    <div
+      className={cn(
+        'hidden shrink-0 cursor-default justify-center md:flex',
+        widthClassName
+      )}
+      aria-label={`${label}: ${count}`}
+    >
+      {count > 0 ? (
+        <Badge variant='outline' className='h-5 max-w-full truncate text-[10px]'>
+          {label} {count}
         </Badge>
       ) : null}
     </div>
@@ -235,7 +263,6 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
     onOpenOrganization,
     onToggleOrganizationSelection,
     organization,
-    select,
     stateClassName,
     toggleExpand,
   } = props;
@@ -243,21 +270,10 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
   return (
     <div
       className={cn(
-        'flex cursor-pointer items-center gap-2 rounded px-2 py-2 text-sm transition',
+        'flex cursor-default items-center gap-2 rounded px-2 py-2 text-sm transition',
         stateClassName
       )}
       style={createTreeIndentStyle(depth)}
-      role='button'
-      tabIndex={0}
-      onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
-        select(event);
-        if (hasChildren) toggleExpand();
-      }}
-      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-        if (!isTreeActivationKey(event)) return;
-        event.preventDefault();
-        if (hasChildren) toggleExpand();
-      }}
     >
       <Checkbox
         checked={isSelectedForBatch}
@@ -284,7 +300,9 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
         organization={organization}
         onOpenOrganization={onOpenOrganization}
       />
-      <OrganizationRelationBadges eventCount={eventCount} jobListingCount={jobListingCount} />
+      <OrganizationRelationCountColumn count={eventCount} label='Events' widthClassName='w-20' />
+      <OrganizationRelationCountColumn count={jobListingCount} label='Jobs' widthClassName='w-16' />
+      <OrganizationCreatedAtColumn organization={organization} />
       <Button
         type='button'
         variant='outline'
@@ -493,7 +511,6 @@ export function FilemakerOrganizationMasterTreeNode(
       }
       jobListingCount={metadataNumber(node.metadata?.['jobListingCount'])}
       organization={organization}
-      select={props.select}
       stateClassName={stateClassName}
       onLaunchOrganizationEmailScrape={props.onLaunchOrganizationEmailScrape}
       onLaunchOrganizationWebsiteSocialScrape={

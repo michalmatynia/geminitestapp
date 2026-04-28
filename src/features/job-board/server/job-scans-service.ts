@@ -43,8 +43,10 @@ import {
 } from './job-scans-repository';
 import {
   detectJobBoardProviderFromUrl,
+  extractJobBoardStructuredSnapshot,
   fetchJobBoardPage,
   reduceJobBoardHtml,
+  type JobBoardStructuredSnapshot,
 } from './providers/job-board-sync';
 import { getCompanyById } from './companies-repository';
 
@@ -57,6 +59,163 @@ const inferProviderFromUrl = (url: string): JobScanProvider => {
 };
 
 const stamp = (): string => new Date().toISOString();
+
+const normalizeProbeText = (value: unknown): string =>
+  typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+
+const firstNonEmpty = (values: unknown[]): string | null => {
+  for (const value of values) {
+    const normalized = normalizeProbeText(value);
+    if (normalized.length > 0) return normalized;
+  }
+  return null;
+};
+
+const clipProbeText = (value: unknown, max = 8_000): string | null => {
+  const normalized = normalizeProbeText(value);
+  if (normalized.length === 0) return null;
+  return normalized.length > max ? `${normalized.slice(0, Math.max(0, max - 3))}...` : normalized;
+};
+
+const cleanCompanyProfileTitle = (value: unknown): string | null => {
+  const normalized = normalizeProbeText(value)
+    .replace(/\s*[-|]\s*(profil pracodawcy|pracodawca|kariera|career|jobs).*$/i, '')
+    .trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const cleanListingTitle = (value: unknown): string | null => {
+  const normalized = normalizeProbeText(value)
+    .replace(/\s*[-|]\s*(oferta pracy|job offer|praca).*$/i, '')
+    .trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const snapshotFactValue = (
+  facts: Array<{ label: string; value: string }> | undefined,
+  patterns: RegExp[]
+): string | null => {
+  for (const fact of facts ?? []) {
+    const label = normalizeProbeText(fact.label);
+    if (patterns.some((pattern) => pattern.test(label))) {
+      const value = normalizeProbeText(fact.value);
+      if (value.length > 0) return value;
+    }
+  }
+  return null;
+};
+
+const firstSnapshotSectionText = (
+  sections: Array<{ heading?: string | null; text: string }> | undefined
+): string | null => {
+  const selected =
+    sections?.find((section) => /opis|description|requirements|wymagania|obowiazki|responsibil/i.test(
+      `${section.heading ?? ''} ${section.text}`
+    )) ?? sections?.[0];
+  return clipProbeText(selected?.text, 8_000);
+};
+
+const hostnameFromUrl = (value: string | null): string | null => {
+  if (value === null) return null;
+  try {
+    return new URL(value).hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+};
+
+const buildSnapshotFallbackEvaluation = (
+  snapshot: JobBoardStructuredSnapshot | null,
+  finalUrl: string,
+  evaluatedAt: string
+): JobScanEvaluation => {
+  if (snapshot === null) return null;
+  const companyProfile = snapshot.companyProfile ?? null;
+  const profileText = clipProbeText(
+    firstSnapshotSectionText(companyProfile?.sections) ?? companyProfile?.plainText,
+    8_000
+  );
+  const profileTitle = cleanCompanyProfileTitle(companyProfile?.title);
+  const companyName = firstNonEmpty([
+    snapshotFactValue(snapshot.facts, [/pracodawca/i, /firma/i, /company/i, /employer/i]),
+    snapshotFactValue(companyProfile?.facts, [/nazwa/i, /firma/i, /company/i, /employer/i]),
+    profileTitle,
+  ]);
+  const listingTitle = firstNonEmpty([
+    cleanListingTitle(snapshot.headings?.[0]),
+    cleanListingTitle(snapshot.ogTitle),
+    cleanListingTitle(snapshot.title),
+  ]);
+  const city = snapshotFactValue(snapshot.facts, [
+    /lokalizacja/i,
+    /miejsce pracy/i,
+    /city/i,
+    /location/i,
+  ]);
+  const applyUrl = firstNonEmpty(snapshot.applyUrls ?? []);
+  const website = firstNonEmpty(companyProfile?.websiteUrls ?? []);
+
+  if (listingTitle === null && companyName === null && profileText === null) return null;
+  return {
+    company: {
+      name: companyName,
+      description: profileText,
+      profileUrl: companyProfile?.url ?? firstNonEmpty(snapshot.companyLinks ?? []),
+      website,
+      domain: hostnameFromUrl(website),
+    },
+    listing: {
+      title: listingTitle,
+      description: firstSnapshotSectionText(snapshot.sections) ?? clipProbeText(snapshot.plainText),
+      city,
+      country: 'Poland',
+      salary: null,
+      applyUrl,
+      requirements: [],
+      responsibilities: [],
+      benefits: [],
+      technologies: [],
+    },
+    confidence: 0.62,
+    modelId: 'job-board-snapshot-fallback',
+    error: null,
+    evaluatedAt,
+  };
+};
+
+const hasUsefulValue = (value: unknown): boolean =>
+  typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined;
+
+const mergeEvaluationRecord = (
+  fallback: Record<string, unknown> | null,
+  primary: Record<string, unknown> | null
+): Record<string, unknown> | null => {
+  if (fallback === null && primary === null) return null;
+  const merged: Record<string, unknown> = { ...(fallback ?? {}) };
+  Object.entries(primary ?? {}).forEach(([key, value]) => {
+    if (hasUsefulValue(value)) merged[key] = value;
+  });
+  return merged;
+};
+
+const mergeJobScanEvaluations = (
+  primary: JobScanEvaluation,
+  fallback: JobScanEvaluation
+): JobScanEvaluation => {
+  if (fallback === null) return primary;
+  if (primary === null) return fallback;
+  const listing = mergeEvaluationRecord(fallback.listing, primary.listing);
+  const company = mergeEvaluationRecord(fallback.company, primary.company);
+  const hasTitle = typeof listing?.['title'] === 'string' && listing['title'].trim().length > 0;
+  return {
+    company,
+    listing,
+    confidence: primary.confidence ?? fallback.confidence,
+    modelId: primary.modelId ?? fallback.modelId,
+    error: hasTitle ? null : primary.error ?? fallback.error,
+    evaluatedAt: primary.evaluatedAt ?? fallback.evaluatedAt,
+  };
+};
 
 const buildStep = (
   key: string,
@@ -73,12 +232,48 @@ const buildStep = (
   durationMs: partial.durationMs ?? null,
 });
 
+type JobScanEmailFinderMode = 'vision_ai' | 'preselected_routes';
+
+const resolveEmailFinderModeFromUseVision = (
+  useVision: boolean | null | undefined
+): JobScanEmailFinderMode | null => {
+  if (useVision === true) return 'vision_ai';
+  if (useVision === false) return 'preselected_routes';
+  return null;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const resolveScanEmailFinderMode = (scan: JobScanRecord): JobScanEmailFinderMode | null => {
+  const rawResult = asRecord(scan.rawResult);
+  const mode = rawResult?.['emailFinderMode'];
+  if (mode === 'vision_ai' || mode === 'preselected_routes') return mode;
+  const useVisionEmailFinder = rawResult?.['useVisionEmailFinder'];
+  return typeof useVisionEmailFinder === 'boolean'
+    ? resolveEmailFinderModeFromUseVision(useVisionEmailFinder)
+    : null;
+};
+
+const describeEmailFinderMode = (mode: JobScanEmailFinderMode | null): string => {
+  if (mode === 'vision_ai') {
+    return 'Using screenshot AI evaluation and AI injection for email discovery.';
+  }
+  if (mode === 'preselected_routes') {
+    return 'Using preset contact/about/careers route crawling for email discovery.';
+  }
+  return 'Using the configured default email discovery route.';
+};
+
 /**
  * Creates a queued job scan from a source URL. Caller can run synchronizeJobScan() afterwards
  * (or rely on listJobScansWithSync() to drive it).
  */
 export const createJobScan = async (input: JobScanCreateRequest & { createdBy?: string | null }): Promise<JobScanRecord> => {
   const provider = input.provider ?? inferProviderFromUrl(input.sourceUrl);
+  const emailFinderMode = resolveEmailFinderModeFromUseVision(input.useVision);
   return await upsertJobScan({
     id: randomUUID(),
     provider,
@@ -89,7 +284,13 @@ export const createJobScan = async (input: JobScanCreateRequest & { createdBy?: 
     companyId: null,
     jobListingId: null,
     steps: [buildStep('queue', 'Queued', 'pending')],
-    rawResult: null,
+    rawResult:
+      emailFinderMode !== null
+        ? {
+            emailFinderMode,
+            useVisionEmailFinder: emailFinderMode === 'vision_ai',
+          }
+        : null,
     error: null,
     createdBy: input.createdBy ?? null,
     completedAt: null,
@@ -104,6 +305,7 @@ export type JobBoardJobOfferProbeResult = {
   ok: boolean;
   provider: JobScanProvider;
   runId: string | null;
+  snapshot: JobBoardStructuredSnapshot | null;
   sourceSite: string;
   sourceUrl: string;
   steps: JobScanStep[];
@@ -148,6 +350,7 @@ export const probeJobBoardOffer = async (input: {
       ok: false,
       provider: fetchResult.provider,
       runId: fetchResult.runId ?? null,
+      snapshot: null,
       sourceSite: fetchResult.sourceSite,
       sourceUrl: input.sourceUrl,
       steps,
@@ -155,12 +358,17 @@ export const probeJobBoardOffer = async (input: {
   }
 
   const reduced = reduceJobBoardHtml(fetchResult.html);
+  const snapshot = extractJobBoardStructuredSnapshot(fetchResult.html);
   const evalStartedAt = stamp();
-  const evaluation = await evaluateJobPageWithAi({
+  const aiEvaluation = await evaluateJobPageWithAi({
     sourceUrl: fetchResult.finalUrl,
     pageContent: reduced,
   });
   const evalCompletedAt = stamp();
+  const evaluation = mergeJobScanEvaluations(
+    aiEvaluation,
+    buildSnapshotFallbackEvaluation(snapshot, fetchResult.finalUrl, evalCompletedAt)
+  );
   const evalOk = Boolean(evaluation) && !evaluation?.error && Boolean(evaluation?.listing?.['title']);
   steps.push(
     buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
@@ -179,6 +387,7 @@ export const probeJobBoardOffer = async (input: {
     ok: evalOk,
     provider: fetchResult.provider,
     runId: fetchResult.runId ?? null,
+    snapshot,
     sourceSite: fetchResult.sourceSite,
     sourceUrl: input.sourceUrl,
     steps,
@@ -226,12 +435,17 @@ const runJobBoardSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
   }
 
   const reduced = reduceJobBoardHtml(fetchResult.html);
+  const snapshot = extractJobBoardStructuredSnapshot(fetchResult.html);
   const evalStartedAt = stamp();
-  const evaluation = await evaluateJobPageWithAi({
+  const aiEvaluation = await evaluateJobPageWithAi({
     sourceUrl: fetchResult.finalUrl,
     pageContent: reduced,
   });
   const evalCompletedAt = stamp();
+  const evaluation = mergeJobScanEvaluations(
+    aiEvaluation,
+    buildSnapshotFallbackEvaluation(snapshot, fetchResult.finalUrl, evalCompletedAt)
+  );
   const evalOk = Boolean(evaluation) && !evaluation.error && Boolean(evaluation.listing?.['title']);
   steps.push(
     buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
@@ -295,7 +509,20 @@ const runJobBoardSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
       })
     );
 
-    company = await enrichCompanyWithEmails({ company, steps, runAutoPromote: true });
+    const emailFinderMode = resolveScanEmailFinderMode(scan);
+    steps.push(
+      buildStep('email_finder_mode', 'Email finder route', 'completed', {
+        message: describeEmailFinderMode(emailFinderMode),
+        completedAt: stamp(),
+      })
+    );
+    company = await enrichCompanyWithEmails({
+      company,
+      steps,
+      forceVision:
+        emailFinderMode !== null ? emailFinderMode === 'vision_ai' : null,
+      runAutoPromote: true,
+    });
 
     return await upsertJobScan({
       ...scan,

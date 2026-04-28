@@ -39,6 +39,7 @@ export const aiBrainFeatureSchema = z.enum([
   'prompt_engine',
   'integrations',
   'playwright',
+  'job_board',
 ]);
 export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 
@@ -85,6 +86,9 @@ export const aiBrainCapabilityKeySchema = z.enum([
   'playwright.ai_evaluator_step',
   'playwright.probe_suggestions',
   'playwright.ai_code_injector',
+  'job_board.offer_extraction',
+  'job_board.vision_email_finder',
+  'job_board.vision_navigation',
 ]);
 export type AiBrainCapabilityKey = z.infer<typeof aiBrainCapabilityKeySchema>;
 

@@ -272,6 +272,20 @@ const stripUndefinedFields = <T extends Record<string, unknown>>(input: T): Part
     Object.entries(input).filter((entry: [string, unknown]): boolean => entry[1] !== undefined)
   ) as Partial<T>;
 
+const normalizePatchStringList = (value: string[] | undefined): string[] | undefined =>
+  value?.map((entry: string): string => entry.trim());
+
+const resolvePatchFullName = (
+  existing: FilemakerPersonMongoDocument,
+  firstName: string | undefined,
+  lastName: string | undefined
+): string | undefined => {
+  if (firstName === undefined && lastName === undefined) return undefined;
+  return [firstName ?? existing.firstName, lastName ?? existing.lastName]
+    .filter((part: string): boolean => part.length > 0)
+    .join(' ');
+};
+
 const buildMongoFilemakerPersonUpdate = (
   existing: FilemakerPersonMongoDocument,
   patch: Partial<FilemakerPerson>,
@@ -279,16 +293,20 @@ const buildMongoFilemakerPersonUpdate = (
 ): Partial<FilemakerPersonMongoDocument> => {
   const firstName = patch.firstName?.trim();
   const lastName = patch.lastName?.trim();
-  const fullName =
-    firstName !== undefined || lastName !== undefined
-      ? [firstName ?? existing.firstName, lastName ?? existing.lastName]
-          .filter((part: string): boolean => part.length > 0)
-          .join(' ')
-      : undefined;
+  const fullName = resolvePatchFullName(existing, firstName, lastName);
   return stripUndefinedFields({
+    cvCoreStrengths: normalizePatchStringList(patch.cvCoreStrengths),
+    cvProfessionalSummary: patch.cvProfessionalSummary?.trim(),
+    cvSelectedTechnicalEnvironment: normalizePatchStringList(
+      patch.cvSelectedTechnicalEnvironment
+    ),
     firstName,
     fullName,
+    githubUrl: patch.githubUrl?.trim(),
     lastName,
+    linkedinUrl: patch.linkedinUrl?.trim(),
+    profileEducation: patch.profileEducation,
+    profileJobExperience: patch.profileJobExperience,
     updatedAt: now,
   });
 };
@@ -341,7 +359,7 @@ export const listMongoFilemakerPersonsForOrganization = async (
 
   const documents = await db
     .collection<FilemakerPersonMongoDocument>(FILEMAKER_PERSONS_COLLECTION)
-    .aggregate([
+    .aggregate<FilemakerPersonMongoDocument>([
       { $match: { id: { $in: personIds } } },
       {
         $lookup: {

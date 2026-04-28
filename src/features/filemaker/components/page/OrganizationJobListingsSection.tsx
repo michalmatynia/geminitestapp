@@ -20,9 +20,12 @@ import {
   useAdminFilemakerOrganizationEditPageStateContext,
 } from '../../context/AdminFilemakerOrganizationEditPageContext';
 import { createClientFilemakerId, formatTimestamp } from '../../pages/filemaker-page-utils';
+import { formatFilemakerLexiconCategory } from '../../pages/AdminFilemakerLexiconPage.helpers';
 import {
+  FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   createFilemakerJobListing,
+  parseFilemakerDatabase,
   parseFilemakerEmailCampaignRegistry,
 } from '../../settings';
 import type {
@@ -30,6 +33,7 @@ import type {
   FilemakerJobListing,
   FilemakerJobListingSalaryPeriod,
   FilemakerJobListingStatus,
+  FilemakerLexiconTerm,
 } from '../../types';
 
 const JOB_STATUS_OPTIONS: Array<{ value: FilemakerJobListingStatus; label: string }> = [
@@ -51,6 +55,11 @@ const toCampaignOption = (campaign: FilemakerEmailCampaign): MultiSelectOption =
   label: campaign.name.trim().length > 0 ? campaign.name : campaign.id,
 });
 
+const toLexiconOption = (term: FilemakerLexiconTerm): MultiSelectOption => ({
+  value: term.id,
+  label: `${term.label} (${formatFilemakerLexiconCategory(term.category)})`,
+});
+
 const addMissingCampaignOptions = (
   options: MultiSelectOption[],
   selectedCampaignIds: string[]
@@ -64,6 +73,30 @@ const addMissingCampaignOptions = (
     }));
   return [...options, ...missingOptions];
 };
+
+const addMissingLexiconOptions = (
+  options: MultiSelectOption[],
+  selectedTermIds: string[]
+): MultiSelectOption[] => {
+  const knownIds = new Set(options.map((option: MultiSelectOption): string => option.value));
+  const missingOptions = selectedTermIds
+    .filter((termId: string): boolean => termId.length > 0 && !knownIds.has(termId))
+    .map((termId: string): MultiSelectOption => ({
+      value: termId,
+      label: `Missing lexicon term (${termId})`,
+    }));
+  return [...options, ...missingOptions];
+};
+
+const buildLexiconOptions = (rawDatabase: unknown): MultiSelectOption[] =>
+  parseFilemakerDatabase(rawDatabase)
+    .lexiconTerms.slice()
+    .sort((left: FilemakerLexiconTerm, right: FilemakerLexiconTerm): number => {
+      const categoryCompare = left.category.localeCompare(right.category);
+      if (categoryCompare !== 0) return categoryCompare;
+      return left.label.localeCompare(right.label);
+    })
+    .map(toLexiconOption);
 
 const formatSalary = (listing: FilemakerJobListing): string => {
   const currency = listing.salaryCurrency ?? '';
@@ -92,11 +125,16 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const { jobListings, organization } = useAdminFilemakerOrganizationEditPageStateContext();
   const { setJobListings } = useAdminFilemakerOrganizationEditPageActionsContext();
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
+  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
 
   const campaignOptions = useMemo<MultiSelectOption[]>(() => {
     const registry = parseFilemakerEmailCampaignRegistry(rawCampaigns);
     return registry.campaigns.map(toCampaignOption);
   }, [rawCampaigns]);
+  const lexiconOptions = useMemo<MultiSelectOption[]>(
+    () => buildLexiconOptions(rawDatabase),
+    [rawDatabase]
+  );
 
   const targetedCount = jobListings.filter(
     (listing: FilemakerJobListing): boolean => listing.targetedCampaignIds.length > 0
@@ -169,6 +207,10 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
             const campaignSelectOptions = addMissingCampaignOptions(
               campaignOptions,
               listing.targetedCampaignIds
+            );
+            const lexiconSelectOptions = addMissingLexiconOptions(
+              lexiconOptions,
+              listing.lexiconTermIds
             );
             const targeted = listing.targetedCampaignIds.length > 0;
             return (
@@ -282,6 +324,20 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       }
                       placeholder='PLN'
                       aria-label={`Job listing ${index + 1} salary currency`}
+                    />
+                  </FormField>
+                  <FormField label='Lexicon tags'>
+                    <MultiSelect
+                      selected={listing.lexiconTermIds}
+                      options={lexiconSelectOptions}
+                      onChange={(termIds: string[]): void =>
+                        updateListing(listing.id, { lexiconTermIds: termIds })
+                      }
+                      placeholder='Select tags'
+                      searchPlaceholder='Search tags'
+                      emptyMessage='No lexicon terms found.'
+                      disabled={lexiconSelectOptions.length === 0}
+                      ariaLabel={`Job listing ${index + 1} lexicon tags`}
                     />
                   </FormField>
                   <FormField

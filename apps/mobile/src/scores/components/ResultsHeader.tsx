@@ -35,7 +35,7 @@ export function ResultsHeader({ copy }: ResultsHeaderProps): React.JSX.Element {
         })}
       </Text>
       <LinkButton
-        href={planHref as Href}
+        href={planHref}
         label={copy({
           de: 'Tagesplan öffnen',
           en: 'Open daily plan',

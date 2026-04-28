@@ -149,12 +149,12 @@ export function LeaderboardAssignmentRow({
   item: KangurMobileLeaderboardAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const priority = item.assignment.priority || 'low';
+  const priority = (item.assignment.priority === 'high' || item.assignment.priority === 'medium') ? item.assignment.priority : 'low';
   const priorityTone = getPriorityTone(priority);
   const priorityLabel = getPriorityLabel(priority, copy);
   const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
-  const assignmentAction = item.href ? (
-    <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' />
+  const assignmentAction = Boolean(item.href) ? (
+    <LinkButton href={item.href!} label={assignmentActionLabel} tone='primary' />
   ) : (
     <MutedActionChip
       compact
@@ -262,7 +262,7 @@ export function LessonMasteryRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const masteryTone = getMasteryTone(insight.masteryPercent);
-  const lastAttemptLabel = insight.lastCompletedAt
+  const lastAttemptLabel = insight.lastCompletedAt != null
     ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
     : copy({ de: 'kein Datum', en: 'no date', pl: 'brak daty' });
 
@@ -292,12 +292,12 @@ export function LessonMasteryRow({
           label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}
           tone='primary'
         />
-        {insight.practiceHref ? (
+        {Boolean(insight.practiceHref) && (
           <LinkButton
-            href={insight.practiceHref}
+            href={insight.practiceHref!}
             label={copy({ de: 'Danach trainieren', en: 'Practice after', pl: 'Potem trenuj' })}
           />
-        ) : null}
+        )}
       </View>
     </InsetPanel>
   );

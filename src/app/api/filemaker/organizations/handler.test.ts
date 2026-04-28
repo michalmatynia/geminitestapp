@@ -39,6 +39,7 @@ describe('filemaker organizations handler', () => {
       page: 1,
       pageSize: 48,
       query: '',
+      sort: 'createdAt_desc',
       totalCount: 2,
       totalCountIsExact: true,
       totalPages: 1,
@@ -63,6 +64,7 @@ describe('filemaker organizations handler', () => {
       pageSize: null,
       parent: null,
       query: 'acme',
+      sort: null,
       updatedBy: null,
     });
     expect(listMongoFilemakerOrganizationsMock).not.toHaveBeenCalled();
@@ -71,7 +73,9 @@ describe('filemaker organizations handler', () => {
 
   it('returns paged organizations by default', async () => {
     const response = await getHandler(
-      new NextRequest('http://localhost/api/filemaker/organizations?page=2&pageSize=24'),
+      new NextRequest(
+        'http://localhost/api/filemaker/organizations?page=2&pageSize=24&sort=name_asc'
+      ),
       { params: {} }
     );
 
@@ -84,6 +88,7 @@ describe('filemaker organizations handler', () => {
       pageSize: '24',
       parent: null,
       query: null,
+      sort: 'name_asc',
       updatedBy: null,
     });
     await expect(response.json()).resolves.toMatchObject({

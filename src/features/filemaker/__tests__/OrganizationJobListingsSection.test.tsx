@@ -5,6 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 /* eslint-disable max-lines-per-function */
 
 import { OrganizationJobListingsSection } from '../components/page/OrganizationJobListingsSection';
+import {
+  createDefaultFilemakerDatabase,
+  createFilemakerJobListing,
+  createFilemakerLexiconTerm,
+  FILEMAKER_DATABASE_KEY,
+  FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  toPersistedFilemakerDatabase,
+} from '../settings';
 import type { FilemakerJobListing, FilemakerOrganization } from '../types';
 
 const mocks = vi.hoisted(() => ({
@@ -63,7 +71,11 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     ariaLabel?: string;
   }) => (
     <div aria-label={ariaLabel}>
-      <output data-testid='selected-campaigns'>{selected.join(',')}</output>
+      <output
+        data-testid={ariaLabel?.includes('lexicon') === true ? 'selected-lexicon-tags' : 'selected-campaigns'}
+      >
+        {selected.join(',')}
+      </output>
       {options.map((option) => {
         const isSelected = selected.includes(option.value);
         return (
@@ -189,8 +201,43 @@ const organization: FilemakerOrganization = {
   updatedAt: '2026-04-01T10:00:00.000Z',
 };
 
-function JobListingsHarness(): React.JSX.Element {
-  const [jobListings, setJobListings] = useState<FilemakerJobListing[]>([]);
+const createSettingsValue = (): string => {
+  const database = createDefaultFilemakerDatabase();
+  database.lexiconTerms = [
+    createFilemakerLexiconTerm({
+      id: 'term-contract',
+      label: 'B2B contract',
+      normalizedLabel: 'b2b contract',
+      category: 'contract_type',
+    }),
+    createFilemakerLexiconTerm({
+      id: 'term-office',
+      label: 'full office work',
+      normalizedLabel: 'full office work',
+      category: 'work_mode',
+    }),
+  ];
+  return JSON.stringify(toPersistedFilemakerDatabase(database));
+};
+
+const createCampaignsValue = (): string =>
+  JSON.stringify({
+    version: 1,
+    campaigns: [
+      {
+        id: 'campaign-1',
+        name: 'Spring hiring campaign',
+        status: 'active',
+      },
+    ],
+  });
+
+function JobListingsHarness(props: {
+  initialJobListings?: FilemakerJobListing[];
+}): React.JSX.Element {
+  const [jobListings, setJobListings] = useState<FilemakerJobListing[]>(
+    props.initialJobListings ?? []
+  );
   mocks.useStateContext.mockReturnValue({
     jobListings,
     organization,
@@ -209,18 +256,11 @@ function JobListingsHarness(): React.JSX.Element {
 
 describe('OrganizationJobListingsSection', () => {
   it('adds a job listing and records targeted email campaigns', () => {
-    mocks.settingsGet.mockReturnValue(
-      JSON.stringify({
-        version: 1,
-        campaigns: [
-          {
-            id: 'campaign-1',
-            name: 'Spring hiring campaign',
-            status: 'active',
-          },
-        ],
-      })
-    );
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
 
     render(<JobListingsHarness />);
 
@@ -256,5 +296,34 @@ describe('OrganizationJobListingsSection', () => {
       targetedCampaignIds: ['campaign-1'],
     });
     expect(state[0]?.lastTargetedAt).toEqual(expect.any(String));
+  });
+
+  it('loads reusable lexicon tags for job listing categorization', () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'Frontend Developer',
+            lexiconTermIds: ['term-contract'],
+          }),
+        ]}
+      />
+    );
+
+    expect(screen.getByTestId('selected-lexicon-tags')).toHaveTextContent('term-contract');
+
+    fireEvent.click(screen.getByRole('button', { name: 'full office work (Work mode)' }));
+
+    const state = JSON.parse(screen.getByTestId('job-listings-state').textContent) as
+      FilemakerJobListing[];
+    expect(state[0]?.lexiconTermIds).toEqual(['term-contract', 'term-office']);
   });
 });

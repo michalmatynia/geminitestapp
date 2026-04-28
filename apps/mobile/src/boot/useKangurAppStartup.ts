@@ -57,8 +57,8 @@ const useCachedTrainingFocus = (
 const hasTrainingFocusData = (
   trainingFocus: ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null,
 ): boolean => {
-  const hasStrongestOp = !!trainingFocus?.strongestOperation;
-  const hasWeakestOp = !!trainingFocus?.weakestOperation;
+  const hasStrongestOp = Boolean(trainingFocus?.strongestOperation);
+  const hasWeakestOp = Boolean(trainingFocus?.weakestOperation);
   return hasStrongestOp || hasWeakestOp;
 };
 
@@ -66,7 +66,7 @@ const hasAnyCachedData = (
   recentResults: ReturnType<typeof resolvePersistedKangurMobileRecentResults> | null,
   trainingFocus: ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null,
 ): boolean => {
-  const hasRecentResults = !!recentResults && Object.keys(recentResults).length > 0;
+  const hasRecentResults = Boolean(recentResults) && Object.keys(recentResults).length > 0;
   return hasRecentResults || hasTrainingFocusData(trainingFocus);
 };
 

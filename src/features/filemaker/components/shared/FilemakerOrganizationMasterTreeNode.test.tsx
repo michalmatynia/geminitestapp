@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -138,20 +138,51 @@ const renderOrganizationNode = (
 };
 
 describe('FilemakerOrganizationMasterTreeNode', () => {
-  it('opens the organization only from the name, while row click expands', async () => {
+  it('opens the organization only from the name, while explicit expand expands relations', async () => {
     const user = userEvent.setup();
     const props = renderOrganizationNode({ hasChildren: true });
 
-    await user.click(screen.getByText('Acme Inc'));
+    const titleButton = screen.getByRole('button', { name: 'Acme Inc' });
+    expect(titleButton).toHaveClass('cursor-pointer');
+
+    await user.click(titleButton);
 
     expect(props.onOpenOrganization).toHaveBeenCalledWith('org-1');
     expect(screen.queryByRole('button', { name: 'Edit organization Acme Inc' })).toBeNull();
     expect(props.toggleExpand).not.toHaveBeenCalled();
+    expect(props.select).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: /Expand Acme Inc/i }));
 
     expect(props.toggleExpand).toHaveBeenCalledTimes(1);
     expect(props.onOpenOrganization).toHaveBeenCalledTimes(1);
+    expect(props.select).not.toHaveBeenCalled();
+  });
+
+  it('uses text cursors for supporting text and does not select the row on text click', async () => {
+    const user = userEvent.setup();
+    const props = renderOrganizationNode({ hasChildren: true });
+    const metadataText = screen.getByText(
+      (_content: string, element: Element | null): boolean =>
+        element?.tagName === 'SPAN' && element.textContent?.includes('NIP:') === true
+    );
+    const metadata = metadataText.closest('div');
+    expect(metadata).not.toBeNull();
+    const formattedTimestamp = new Date(timestamp).toLocaleString();
+    const createdAtColumn = screen.getByLabelText(`Created at ${formattedTimestamp}`);
+    const createdAtText = within(createdAtColumn).getByText(formattedTimestamp);
+
+    expect(metadata as HTMLElement).toHaveClass('cursor-default');
+    expect(metadataText).toHaveClass('cursor-text', 'select-text');
+    expect(createdAtColumn).toHaveClass('cursor-default');
+    expect(createdAtText).toHaveClass('cursor-text', 'select-text');
+
+    await user.click(metadata as HTMLElement);
+    await user.click(createdAtColumn);
+
+    expect(props.select).not.toHaveBeenCalled();
+    expect(props.toggleExpand).not.toHaveBeenCalled();
+    expect(props.onOpenOrganization).not.toHaveBeenCalled();
   });
 
   it('toggles batch selection from the checkbox without navigating', async () => {
@@ -163,6 +194,25 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     expect(props.onToggleOrganizationSelection).toHaveBeenCalledWith('org-1', true);
     expect(props.onOpenOrganization).not.toHaveBeenCalled();
     expect(props.toggleExpand).not.toHaveBeenCalled();
+  });
+
+  it('shows when the organization record was created', () => {
+    renderOrganizationNode();
+
+    const formattedTimestamp = new Date(timestamp).toLocaleString();
+    expect(screen.getByLabelText(`Created at ${formattedTimestamp}`)).toBeInTheDocument();
+  });
+
+  it('keeps relation counts in fixed columns so created dates stay aligned', () => {
+    renderOrganizationNode();
+
+    const eventsColumn = screen.getByLabelText('Events: 1');
+    const jobsColumn = screen.getByLabelText('Jobs: 0');
+
+    expect(eventsColumn).toHaveClass('w-20', 'cursor-default');
+    expect(jobsColumn).toHaveClass('w-16', 'cursor-default');
+    expect(within(eventsColumn).getByText('Events 1')).toBeInTheDocument();
+    expect(within(jobsColumn).queryByText(/Jobs/u)).toBeNull();
   });
 
   it('launches website/social/email scraping from the row action without navigating', async () => {

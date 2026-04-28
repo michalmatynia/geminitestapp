@@ -4,7 +4,7 @@ import { KangurMobileInsetPanel as InsetPanel } from '../shared/KangurMobileUi';
 import { ActionButton, KangurMobilePendingActionButton, LinkButton } from '../duels/duels-primitives/BaseComponents';
 
 import { formatPracticeDuelRecord } from './practice-utils';
-import { useKangurMobilePracticeDuels } from './useKangurMobilePracticeDuels';
+import { type useKangurMobilePracticeDuels } from './useKangurMobilePracticeDuels';
 
 type PracticeCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type PracticeDuelsState = ReturnType<typeof useKangurMobilePracticeDuels>;

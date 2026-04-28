@@ -56,6 +56,7 @@ export const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'chatbot',
   'prompt_engine',
   'playwright',
+  'job_board',
 ];
 
 export type AiBrainCapabilityPolicy = 'model-only' | 'agent-or-model';
@@ -370,6 +371,27 @@ export const BRAIN_CAPABILITY_REGISTRY: Record<AiBrainCapabilityKey, BrainCapabi
     policy: 'model-only',
     modelFamily: 'chat',
   },
+  'job_board.offer_extraction': {
+    key: 'job_board.offer_extraction',
+    feature: 'job_board',
+    label: 'Job Board Offer Extraction',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
+  'job_board.vision_email_finder': {
+    key: 'job_board.vision_email_finder',
+    feature: 'job_board',
+    label: 'Job Board Vision Email Finder',
+    policy: 'model-only',
+    modelFamily: 'vision_extract',
+  },
+  'job_board.vision_navigation': {
+    key: 'job_board.vision_navigation',
+    feature: 'job_board',
+    label: 'Job Board Vision Navigation',
+    policy: 'model-only',
+    modelFamily: 'chat',
+  },
 };
 
 export const BRAIN_CAPABILITY_KEYS = Object.keys(
@@ -394,6 +416,7 @@ export const DEFAULT_BRAIN_CAPABILITY_BY_FEATURE: Record<AiBrainFeature, AiBrain
   prompt_engine: 'prompt_engine.prompt_exploder',
   integrations: 'selector_registry.role_classification',
   playwright: 'playwright.ai_evaluator_step',
+  job_board: 'job_board.offer_extraction',
 };
 
 export const defaultBrainAssignment: AiBrainAssignment = {

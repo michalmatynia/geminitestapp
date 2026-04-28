@@ -354,6 +354,13 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         nip: personDraft.nip ?? '',
         regon: personDraft.regon ?? '',
         phoneNumbers: personDraft.phoneNumbers ?? [],
+        linkedinUrl: personDraft.linkedinUrl ?? '',
+        githubUrl: personDraft.githubUrl ?? '',
+        profileEducation: personDraft.profileEducation ?? [],
+        profileJobExperience: personDraft.profileJobExperience ?? [],
+        cvProfessionalSummary: personDraft.cvProfessionalSummary ?? '',
+        cvCoreStrengths: personDraft.cvCoreStrengths ?? [],
+        cvSelectedTechnicalEnvironment: personDraft.cvSelectedTechnicalEnvironment ?? [],
         createdAt: now,
         updatedAt: now,
       });
@@ -378,8 +385,15 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            cvCoreStrengths: personDraft.cvCoreStrengths ?? [],
+            cvProfessionalSummary: personDraft.cvProfessionalSummary ?? '',
+            cvSelectedTechnicalEnvironment: personDraft.cvSelectedTechnicalEnvironment ?? [],
             firstName: nextFirstName,
+            githubUrl: personDraft.githubUrl ?? '',
             lastName: nextLastName,
+            linkedinUrl: personDraft.linkedinUrl ?? '',
+            profileEducation: personDraft.profileEducation ?? [],
+            profileJobExperience: personDraft.profileJobExperience ?? [],
           }),
         });
         if (!response.ok) throw new Error(`Failed to save person (${response.status}).`);

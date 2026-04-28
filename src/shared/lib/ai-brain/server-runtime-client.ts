@@ -110,7 +110,17 @@ export const isBrainModelVisionCapable = (modelId: string): boolean => {
       normalized.startsWith('gemini-flash')
     );
   }
-  return false;
+  return (
+    normalized === 'gemma' ||
+    normalized.startsWith('gemma3') ||
+    normalized.startsWith('gemma-3') ||
+    normalized.startsWith('gemma4') ||
+    normalized.startsWith('gemma-4') ||
+    normalized.includes('vision') ||
+    normalized.includes('-vl') ||
+    normalized.includes('llava') ||
+    normalized.includes('multimodal')
+  );
 };
 
 export const supportsBrainJsonMode = (modelId: string): boolean => {

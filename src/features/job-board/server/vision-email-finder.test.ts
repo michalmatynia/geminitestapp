@@ -81,12 +81,16 @@ describe('vision-email-finder', () => {
     expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({
         request: expect.objectContaining({
+          script: expect.stringContaining("capability: 'job_board.vision_email_finder'"),
           startUrl: 'https://acme.example',
           settingsOverrides: expect.objectContaining({
             headless: false,
           }),
         }),
       })
+    );
+    expect(runPlaywrightEngineTaskMock.mock.calls[0]?.[0].request.script).toContain(
+      "capability: 'job_board.vision_navigation'"
     );
     expect(result.error).toBeUndefined();
     expect(result.actionHistory).toEqual(

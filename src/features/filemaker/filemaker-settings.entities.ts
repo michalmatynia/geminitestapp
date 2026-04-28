@@ -9,8 +9,11 @@ import {
   type FilemakerEvent,
   type FilemakerEventOrganizationLink,
   type FilemakerJobListing,
+  type FilemakerJobListingLexiconLink,
   type FilemakerJobListingSalaryPeriod,
   type FilemakerJobListingStatus,
+  type FilemakerLexiconTerm,
+  type FilemakerLexiconTermCategory,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
@@ -32,6 +35,18 @@ const FILEMAKER_JOB_LISTING_SALARY_PERIODS: FilemakerJobListingSalaryPeriod[] = 
   'monthly',
   'yearly',
   'fixed',
+];
+
+const FILEMAKER_LEXICON_TERM_CATEGORIES: FilemakerLexiconTermCategory[] = [
+  'address',
+  'contract_type',
+  'employment_type',
+  'experience_level',
+  'work_mode',
+  'start_date',
+  'technology',
+  'benefit',
+  'other',
 ];
 
 const normalizeOptionalNumber = (value: unknown): number | null => {
@@ -66,6 +81,15 @@ const normalizeJobListingSalaryPeriod = (value: unknown): FilemakerJobListingSal
     FILEMAKER_JOB_LISTING_SALARY_PERIODS.find(
       (period: FilemakerJobListingSalaryPeriod): boolean => period === normalized
     ) ?? 'monthly'
+  );
+};
+
+const normalizeLexiconTermCategory = (value: unknown): FilemakerLexiconTermCategory => {
+  const normalized = normalizeString(value).toLowerCase();
+  return (
+    FILEMAKER_LEXICON_TERM_CATEGORIES.find(
+      (category: FilemakerLexiconTermCategory): boolean => category === normalized
+    ) ?? 'other'
   );
 };
 
@@ -351,6 +375,78 @@ export const createFilemakerOrganizationLegacyDemand = (input: {
   };
 };
 
+export const createFilemakerLexiconTerm = (input: {
+  id: string;
+  label: unknown;
+  normalizedLabel?: unknown;
+  category?: unknown;
+  sourceSite?: unknown;
+  sourceProvider?: unknown;
+  firstSeenAt?: unknown;
+  lastSeenAt?: unknown;
+  occurrenceCount?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerLexiconTerm => {
+  const now = new Date().toISOString();
+  const label = normalizeString(input.label);
+  const requestedNormalizedLabel = normalizeString(input.normalizedLabel);
+  const normalizedLabel =
+    requestedNormalizedLabel.length > 0 ? requestedNormalizedLabel : label.toLowerCase();
+  const sourceSite = normalizeString(input.sourceSite);
+  const sourceProvider = normalizeString(input.sourceProvider);
+  const firstSeenAt = normalizeString(input.firstSeenAt);
+  const lastSeenAt = normalizeString(input.lastSeenAt);
+  const occurrenceCount = Number(input.occurrenceCount);
+  return {
+    id: normalizeString(input.id),
+    label,
+    normalizedLabel,
+    category: normalizeLexiconTermCategory(input.category),
+    ...(sourceSite.length > 0 ? { sourceSite } : {}),
+    ...(sourceProvider.length > 0 ? { sourceProvider } : {}),
+    ...(firstSeenAt.length > 0 ? { firstSeenAt } : {}),
+    ...(lastSeenAt.length > 0 ? { lastSeenAt } : {}),
+    occurrenceCount:
+      Number.isFinite(occurrenceCount) && occurrenceCount >= 0
+        ? Math.floor(occurrenceCount)
+        : 0,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createFilemakerJobListingLexiconLink = (input: {
+  id: string;
+  jobListingId: unknown;
+  lexiconTermId: unknown;
+  sourceSite?: unknown;
+  sourceUrl?: unknown;
+  sourceValue?: unknown;
+  category?: unknown;
+  position?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerJobListingLexiconLink => {
+  const now = new Date().toISOString();
+  const position = Number(input.position);
+  const sourceSite = normalizeString(input.sourceSite);
+  const sourceUrl = normalizeString(input.sourceUrl);
+  const sourceValue = normalizeString(input.sourceValue);
+  return {
+    id: normalizeString(input.id),
+    jobListingId: normalizeString(input.jobListingId),
+    lexiconTermId: normalizeString(input.lexiconTermId),
+    ...(sourceSite.length > 0 ? { sourceSite } : {}),
+    ...(sourceUrl.length > 0 ? { sourceUrl } : {}),
+    ...(sourceValue.length > 0 ? { sourceValue } : {}),
+    category: normalizeLexiconTermCategory(input.category),
+    position: Number.isFinite(position) && position >= 0 ? Math.floor(position) : 0,
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
 export const createFilemakerJobListing = (input: {
   id: string;
   organizationId: unknown;
@@ -368,6 +464,7 @@ export const createFilemakerJobListing = (input: {
   sourceSite?: unknown;
   sourceUrl?: unknown;
   scrapedAt?: unknown;
+  lexiconTermIds?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerJobListing => {
@@ -398,6 +495,7 @@ export const createFilemakerJobListing = (input: {
     ...(sourceSite.length > 0 ? { sourceSite } : {}),
     ...(sourceUrl.length > 0 ? { sourceUrl } : {}),
     ...(scrapedAt.length > 0 ? { scrapedAt } : {}),
+    lexiconTermIds: normalizeStringList(input.lexiconTermIds),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { filemakerJobListingStatusSchema } from '@/shared/contracts/filemaker';
+import {
+  filemakerJobListingStatusSchema,
+  filemakerLexiconTermCategorySchema,
+  type FilemakerLexiconTermCategory,
+} from '@/shared/contracts/filemaker';
 import { JOB_BOARD_PROVIDER_IDS } from '@/shared/lib/job-board/job-board-providers';
 
 export const FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT =
@@ -79,24 +83,64 @@ export type FilemakerJobBoardScrapeProvider = z.infer<
   typeof filemakerJobBoardScrapeProviderSchema
 >;
 
-export type FilemakerJobBoardScrapedOffer = {
-  companyName: string;
-  companyProfile: string;
-  companyProfileUrl: string | null;
-  description: string;
-  expiresAt: string | null;
-  location: string;
-  postedAt: string | null;
-  salaryCurrency: string | null;
-  salaryMax: number | null;
-  salaryMin: number | null;
-  salaryPeriod: 'hourly' | 'monthly' | 'yearly' | 'fixed';
-  salaryText: string;
-  sourceExternalId: string | null;
-  sourceSite: string;
-  sourceUrl: string;
-  title: string;
+export const filemakerJobBoardScrapedPillSchema = z.object({
+  category: filemakerLexiconTermCategorySchema.default('other'),
+  label: z.string().trim().min(1),
+  position: z.number().int().nonnegative().default(0),
+  sourceSite: z.string().trim().default(''),
+  sourceUrl: jobBoardSourceUrlSchema,
+});
+
+export const filemakerJobBoardScrapedOfferSchema = z.object({
+  companyName: z.string().trim().min(1),
+  companyProfile: z.string().default(''),
+  companyProfileUrl: z.string().trim().url().nullable().default(null),
+  description: z.string().default(''),
+  expiresAt: z.string().trim().nullable().default(null),
+  location: z.string().default(''),
+  postedAt: z.string().trim().nullable().default(null),
+  salaryCurrency: z.string().trim().nullable().default(null),
+  salaryMax: z.number().nonnegative().nullable().default(null),
+  salaryMin: z.number().nonnegative().nullable().default(null),
+  salaryPeriod: z.enum(['hourly', 'monthly', 'yearly', 'fixed']).default('monthly'),
+  salaryText: z.string().default(''),
+  sourceExternalId: z.string().trim().nullable().default(null),
+  sourceSite: z.string().trim().default(''),
+  sourceUrl: jobBoardSourceUrlSchema,
+  pills: z.array(filemakerJobBoardScrapedPillSchema).max(100).default([]),
+  title: z.string().trim().min(1),
+});
+
+export const filemakerJobBoardScrapeDraftSaveRequestSchema =
+  filemakerJobBoardScrapeRequestSchema
+    .pick({
+      duplicateStrategy: true,
+      importStrategy: true,
+      minimumMatchConfidence: true,
+      organizationScope: true,
+      provider: true,
+      selectedOrganizationIds: true,
+      sourceUrl: true,
+      status: true,
+    })
+    .extend({
+      action: z.literal('save_drafts'),
+      offers: z.array(filemakerJobBoardScrapedOfferSchema).min(1).max(250),
+    });
+
+export type FilemakerJobBoardScrapedPill = z.infer<
+  typeof filemakerJobBoardScrapedPillSchema
+> & {
+  category: FilemakerLexiconTermCategory;
 };
+
+export type FilemakerJobBoardScrapedOffer = z.infer<
+  typeof filemakerJobBoardScrapedOfferSchema
+>;
+
+export type FilemakerJobBoardScrapeDraftSaveRequest = z.infer<
+  typeof filemakerJobBoardScrapeDraftSaveRequestSchema
+>;
 
 export type FilemakerJobBoardOrganizationMatch = {
   confidence: number;
@@ -122,11 +166,18 @@ export type FilemakerJobBoardScrapeOfferResult = {
 
 export type FilemakerJobBoardScrapeSummary = {
   createdListings: number;
+  createdLexiconTerms: number;
+  createdOrganizations: number;
+  linkedLexiconTerms: number;
   matchedOffers: number;
+  profileUpdates: number;
+  addressUpdates: number;
   scrapedOffers: number;
   skippedOffers: number;
   unmatchedOffers: number;
+  updatedOrganizations: number;
   updatedListings: number;
+  verifiedListings: number;
 };
 
 export type FilemakerJobBoardScrapeResponse = {
@@ -140,3 +191,63 @@ export type FilemakerJobBoardScrapeResponse = {
   summary: FilemakerJobBoardScrapeSummary;
   warnings: string[];
 };
+
+export type FilemakerJobBoardScrapeWriteAction =
+  | 'organization_address_updated'
+  | 'organization_created'
+  | 'organization_linked'
+  | 'organization_profile_updated'
+  | 'listing_lexicon_linked'
+  | 'listing_created'
+  | 'listing_updated'
+  | 'listing_skipped'
+  | 'offer_unmatched';
+
+export type FilemakerJobBoardScrapeWriteResult = {
+  action: FilemakerJobBoardScrapeWriteAction;
+  message: string;
+  profileUpdated: boolean;
+  result: FilemakerJobBoardScrapeOfferResult;
+};
+
+export type FilemakerJobBoardScrapeLiveEvent =
+  | {
+      at: string;
+      message: string;
+      type: 'status';
+    }
+  | {
+      at: string;
+      provider: Exclude<FilemakerJobBoardScrapeProvider, 'auto'>;
+      runId: string | null;
+      sourceSite: string;
+      type: 'links';
+      urls: string[];
+    }
+  | {
+      at: string;
+      index: number;
+      result: FilemakerJobBoardScrapeOfferResult;
+      total: number;
+      type: 'offer';
+    }
+  | {
+      at: string;
+      type: 'write';
+      write: FilemakerJobBoardScrapeWriteResult;
+    }
+  | {
+      at: string;
+      type: 'warning';
+      warning: string;
+    }
+  | {
+      at: string;
+      result: FilemakerJobBoardScrapeResponse;
+      type: 'done';
+    }
+  | {
+      at: string;
+      message: string;
+      type: 'error';
+    };

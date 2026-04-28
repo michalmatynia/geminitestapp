@@ -2,21 +2,15 @@ import { Text, View } from 'react-native';
 import { KangurMobileCard as Card } from '../../shared/KangurMobileUi';
 import { FocusCard } from '../daily-plan-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
-
-interface FocusRecord {
-  historyHref: string;
-  lessonHref: string;
-  operation: string;
-  practiceHref: string;
-}
+import { type KangurMobileDailyPlanFocus } from '../useKangurMobileDailyPlan';
 
 interface DailyPlanFocusSectionProps {
   copy: KangurMobileCopy;
   isLoading: boolean;
   isAuthenticated: boolean;
   scoreError: string | null;
-  weakestFocus: FocusRecord | null;
-  strongestFocus: FocusRecord | null;
+  weakestFocus: KangurMobileDailyPlanFocus | null;
+  strongestFocus: KangurMobileDailyPlanFocus | null;
 }
 
 export function DailyPlanFocusSection({

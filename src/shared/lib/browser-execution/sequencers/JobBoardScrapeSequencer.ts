@@ -178,6 +178,28 @@ const PRACUJ_EMPLOYER_MODAL_CLOSE_SELECTORS = [
 
 const PRACUJ_EMPLOYER_MODAL_CLOSE_PATTERNS = [/zamknij/i, /close/i] as const;
 
+const PRACUJ_COMPANY_PROFILE_SELECTORS = [
+  'a:has-text("Zobacz profil firmy")',
+  '[role="link"]:has-text("Zobacz profil firmy")',
+  'button:has-text("Zobacz profil firmy")',
+  '[role="button"]:has-text("Zobacz profil firmy")',
+  'a:has-text("Zobacz profil")',
+  '[role="link"]:has-text("Zobacz profil")',
+  'button:has-text("Zobacz profil")',
+  '[role="button"]:has-text("Zobacz profil")',
+  'a:has-text("Profil firmy")',
+  '[role="link"]:has-text("Profil firmy")',
+  'a:has-text("Company profile")',
+  '[role="link"]:has-text("Company profile")',
+  'a:has-text("View company profile")',
+  '[role="link"]:has-text("View company profile")',
+  'a:has-text("O firmie")',
+  'a:has-text("O pracodawcy")',
+  'a:has-text("About the company")',
+  '[role="link"]:has-text("O firmie")',
+  '[role="link"]:has-text("About the company")',
+] as const;
+
 const clampInt = (value: unknown, fallback: number, max: number): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed) || parsed < 1) return fallback;
@@ -817,7 +839,7 @@ export class JobBoardScrapeSequencer {
             .map((link) => {
               const href = link.href || '';
               const label = normalizeText(link.textContent ?? '');
-              return /(o firmie|about|pracodaw|company|employer|organizacja|kariera|career)/i.test(
+              return /(o firmie|zobacz profil|profil firmy|about|pracodaw|company|employer|organizacja|kariera|career)/i.test(
                 `${href} ${label}`
               )
                 ? href
@@ -825,6 +847,35 @@ export class JobBoardScrapeSequencer {
             })
             .filter(Boolean),
           12
+        );
+        const pillSelectors = [
+          '[data-test*="badge" i]',
+          '[data-testid*="badge" i]',
+          '[data-test*="chip" i]',
+          '[data-testid*="chip" i]',
+          '[class*="badge" i]',
+          '[class*="chip" i]',
+          '[class*="tag" i]',
+          '[class*="pill" i]',
+          '[role="listitem"]',
+          'li',
+        ];
+        const pills = unique(
+          Array.from((root ?? document).querySelectorAll(pillSelectors.join(',')))
+            .filter(isVisible)
+            .map((element) => normalizeText(element.textContent ?? ''))
+            .filter((text) => {
+              if (text.length < 2 || text.length > 180) return false;
+              if (text.includes(':')) return false;
+              if (/^(aplikuj|apply|zapisz|save|udostepnij|share|zamknij|close)$/i.test(text)) {
+                return false;
+              }
+              if (/cookies|prywatnosc|privacy|pracuj dla przedsiebiorcow/i.test(text)) {
+                return false;
+              }
+              return true;
+            }),
+          48
         );
 
         const jsonLd = unique(
@@ -862,6 +913,7 @@ export class JobBoardScrapeSequencer {
             36
           ),
           facts: facts.slice(0, 48),
+          pills,
           sections,
           applyUrls,
           companyLinks,
@@ -954,14 +1006,32 @@ export class JobBoardScrapeSequencer {
       if (normalized !== null) return normalized;
     }
 
-    const selectorUrl = await this.context.page
-      .locator(
-        'a:has-text("O firmie"), a:has-text("O pracodawcy"), a:has-text("About the company"), [role="link"]:has-text("O firmie"), [role="link"]:has-text("About the company")'
-      )
-      .first()
-      .getAttribute('href', { timeout: 1_000 })
-      .catch(() => null);
-    return this.normalizeProviderUrl(selectorUrl, provider);
+    const selectorUrl = await this.resolveCompanyProfileSelectorUrl(provider);
+    if (selectorUrl !== null) return selectorUrl;
+    return await this.clickCompanyProfileTrigger(provider);
+  }
+
+  private async resolveCompanyProfileSelectorUrl(provider: JobBoardProvider): Promise<string | null> {
+    const locator = this.context.page.locator(PRACUJ_COMPANY_PROFILE_SELECTORS.join(',')).first();
+    const href = await locator.getAttribute('href', { timeout: 1_000 }).catch(() => null);
+    const hrefUrl = this.normalizeProviderUrl(href, provider);
+    if (hrefUrl !== null) return hrefUrl;
+    const dataHref = await locator.getAttribute('data-href', { timeout: 500 }).catch(() => null);
+    return this.normalizeProviderUrl(dataHref, provider);
+  }
+
+  private async clickCompanyProfileTrigger(provider: JobBoardProvider): Promise<string | null> {
+    const startUrl = this.safeCurrentUrl();
+    const locator = this.context.page.locator(PRACUJ_COMPANY_PROFILE_SELECTORS.join(',')).first();
+    const clicked = await this.clickIfVisible(locator, 1_000);
+    if (!clicked) return null;
+    await this.context.page.waitForLoadState('domcontentloaded', { timeout: 8_000 }).catch(() => undefined);
+    await this.context.page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+    await this.dismissKnownBlockingOverlayInScopes();
+    const currentUrl = this.normalizeProviderUrl(this.safeCurrentUrl(), provider);
+    const normalizedStartUrl = this.normalizeProviderUrl(startUrl, provider);
+    if (currentUrl === null || currentUrl === normalizedStartUrl) return null;
+    return currentUrl;
   }
 
   private normalizeProviderUrl(value: unknown, provider: JobBoardProvider): string | null {

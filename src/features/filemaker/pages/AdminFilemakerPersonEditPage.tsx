@@ -7,10 +7,12 @@ import { PersonAnyTextsSection } from '../components/page/PersonAnyTextsSection'
 import { PersonBankAccountsSection } from '../components/page/PersonBankAccountsSection';
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
 import { PersonContractsSection } from '../components/page/PersonContractsSection';
+import { PersonCvsSection } from '../components/page/PersonCvsSection';
 import { PersonDocumentsSection } from '../components/page/PersonDocumentsSection';
 import { PersonEmailsSection } from '../components/page/PersonEmailsSection';
 import { PersonWebsitesSection } from '../components/page/PersonWebsitesSection';
 import { PersonOccupationsSection } from '../components/page/PersonOccupationsSection';
+import { PersonProfileCvSection } from '../components/page/PersonProfileCvSection';
 import { FilemakerPartyEditPageLayout } from '../components/shared/FilemakerPartyEditPageLayout';
 import {
   useAdminFilemakerPersonEditPageActionsContext,
@@ -44,8 +46,10 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
       isSaving={updateSetting.isPending}
     >
       <PersonBasicInfoSection />
+      <PersonProfileCvSection />
       {isCreateMode ? null : (
         <>
+          <PersonCvsSection />
           <PersonBankAccountsSection />
           <PersonContractsSection />
           <PersonDocumentsSection />

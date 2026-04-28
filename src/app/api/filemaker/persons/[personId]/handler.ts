@@ -18,9 +18,34 @@ import {
 } from '@/features/filemaker/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
+const personProfileEducationPatchSchema = z.object({
+  id: z.string().optional(),
+  degree: z.string(),
+  institution: z.string(),
+  period: z.string(),
+  description: z.string().optional(),
+});
+
+const personProfileJobExperiencePatchSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  organization: z.string(),
+  period: z.string(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  highlights: z.array(z.string()).optional(),
+});
+
 const personPatchSchema = z.object({
+  cvCoreStrengths: z.array(z.string()).optional(),
+  cvProfessionalSummary: z.string().optional(),
+  cvSelectedTechnicalEnvironment: z.array(z.string()).optional(),
   firstName: z.string().optional(),
+  githubUrl: z.string().optional(),
   lastName: z.string().optional(),
+  linkedinUrl: z.string().optional(),
+  profileEducation: z.array(personProfileEducationPatchSchema).optional(),
+  profileJobExperience: z.array(personProfileJobExperiencePatchSchema).optional(),
 });
 
 const resolvePersonId = (ctx: ApiHandlerContext): string => {

@@ -27,6 +27,8 @@ export const filemakerEntityKindSchema = z.enum([
   'value_parameter_link',
   'organization_legacy_demand',
   'job_listing',
+  'lexicon_term',
+  'job_listing_lexicon_link',
   'email_campaign',
   'email_campaign_content_group',
   'email_campaign_content_variant',
@@ -78,6 +80,34 @@ export const filemakerAddressLinkSchema = dtoBaseSchema.extend({
 export type FilemakerAddressLinkDto = z.infer<typeof filemakerAddressLinkSchema>;
 export type FilemakerAddressLink = FilemakerAddressLinkDto;
 
+export const filemakerPersonProfileEducationSchema = z.object({
+  id: z.string().optional(),
+  degree: z.string(),
+  institution: z.string(),
+  period: z.string(),
+  description: z.string().optional(),
+});
+
+export type FilemakerPersonProfileEducationDto = z.infer<
+  typeof filemakerPersonProfileEducationSchema
+>;
+export type FilemakerPersonProfileEducation = FilemakerPersonProfileEducationDto;
+
+export const filemakerPersonProfileJobExperienceSchema = z.object({
+  id: z.string().optional(),
+  title: z.string(),
+  organization: z.string(),
+  period: z.string(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  highlights: z.array(z.string()).optional(),
+});
+
+export type FilemakerPersonProfileJobExperienceDto = z.infer<
+  typeof filemakerPersonProfileJobExperienceSchema
+>;
+export type FilemakerPersonProfileJobExperience = FilemakerPersonProfileJobExperienceDto;
+
 export const filemakerPersonSchema = dtoBaseSchema.extend({
   firstName: z.string(),
   lastName: z.string(),
@@ -91,6 +121,13 @@ export const filemakerPersonSchema = dtoBaseSchema.extend({
   nip: z.string(),
   regon: z.string(),
   phoneNumbers: z.array(z.string()),
+  linkedinUrl: z.string().optional(),
+  githubUrl: z.string().optional(),
+  profileEducation: z.array(filemakerPersonProfileEducationSchema).optional(),
+  profileJobExperience: z.array(filemakerPersonProfileJobExperienceSchema).optional(),
+  cvProfessionalSummary: z.string().optional(),
+  cvCoreStrengths: z.array(z.string()).optional(),
+  cvSelectedTechnicalEnvironment: z.array(z.string()).optional(),
 });
 
 export type FilemakerPersonDto = z.infer<typeof filemakerPersonSchema>;
@@ -253,6 +290,51 @@ export type FilemakerJobListingSalaryPeriodDto = z.infer<
 >;
 export type FilemakerJobListingSalaryPeriod = FilemakerJobListingSalaryPeriodDto;
 
+export const filemakerLexiconTermCategorySchema = z.enum([
+  'address',
+  'contract_type',
+  'employment_type',
+  'experience_level',
+  'work_mode',
+  'start_date',
+  'technology',
+  'benefit',
+  'other',
+]);
+export type FilemakerLexiconTermCategoryDto = z.infer<
+  typeof filemakerLexiconTermCategorySchema
+>;
+export type FilemakerLexiconTermCategory = FilemakerLexiconTermCategoryDto;
+
+export const filemakerLexiconTermSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  normalizedLabel: z.string(),
+  category: filemakerLexiconTermCategorySchema.default('other'),
+  sourceSite: z.string().optional(),
+  sourceProvider: z.string().optional(),
+  firstSeenAt: z.string().nullable().optional(),
+  lastSeenAt: z.string().nullable().optional(),
+  occurrenceCount: z.number().int().nonnegative().default(0),
+});
+
+export type FilemakerLexiconTermDto = z.infer<typeof filemakerLexiconTermSchema>;
+export type FilemakerLexiconTerm = FilemakerLexiconTermDto;
+
+export const filemakerJobListingLexiconLinkSchema = dtoBaseSchema.extend({
+  jobListingId: z.string(),
+  lexiconTermId: z.string(),
+  sourceSite: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  sourceValue: z.string().optional(),
+  category: filemakerLexiconTermCategorySchema.default('other'),
+  position: z.number().int().nonnegative().default(0),
+});
+
+export type FilemakerJobListingLexiconLinkDto = z.infer<
+  typeof filemakerJobListingLexiconLinkSchema
+>;
+export type FilemakerJobListingLexiconLink = FilemakerJobListingLexiconLinkDto;
+
 export const filemakerJobListingSchema = dtoBaseSchema.extend({
   organizationId: z.string(),
   title: z.string(),
@@ -269,6 +351,7 @@ export const filemakerJobListingSchema = dtoBaseSchema.extend({
   sourceSite: z.string().optional(),
   sourceUrl: z.string().optional(),
   scrapedAt: z.string().nullable().optional(),
+  lexiconTermIds: z.array(z.string()).default([]),
 });
 
 export type FilemakerJobListingDto = z.infer<typeof filemakerJobListingSchema>;
@@ -936,6 +1019,8 @@ export const filemakerDatabaseSchema = z.object({
   valueParameterLinks: z.array(filemakerValueParameterLinkSchema).default([]),
   organizationLegacyDemands: z.array(filemakerOrganizationLegacyDemandSchema).default([]),
   jobListings: z.array(filemakerJobListingSchema).default([]),
+  lexiconTerms: z.array(filemakerLexiconTermSchema).default([]),
+  jobListingLexiconLinks: z.array(filemakerJobListingLexiconLinkSchema).default([]),
 });
 
 export type FilemakerDatabaseDto = z.infer<typeof filemakerDatabaseSchema>;

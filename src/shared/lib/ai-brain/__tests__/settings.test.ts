@@ -108,6 +108,18 @@ describe('ai-brain settings helpers', () => {
     ]);
   });
 
+  it('exposes dedicated Job Board AI capabilities', () => {
+    expect(getDefaultCapabilityForFeature('job_board')).toBe('job_board.offer_extraction');
+    expect(getBrainCapabilityDefinition('job_board.offer_extraction')).toMatchObject({
+      feature: 'job_board',
+      modelFamily: 'chat',
+    });
+    expect(getBrainCapabilityDefinition('job_board.vision_email_finder')).toMatchObject({
+      feature: 'job_board',
+      modelFamily: 'vision_extract',
+    });
+  });
+
   it('coerces invalid providers to the allowed provider set', () => {
     const sanitized = sanitizeBrainAssignmentForProviders(
       {

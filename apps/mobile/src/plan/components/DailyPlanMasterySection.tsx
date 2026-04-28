@@ -2,14 +2,13 @@ import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton, KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
 import { LessonMasteryRow } from '../daily-plan-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
-import { type LessonMastery } from './LessonMastery';
+import { type UseKangurMobileDailyPlanLessonMasteryResult, type KangurMobileDailyPlanLessonMasteryItem } from '../useKangurMobileDailyPlanLessonMastery';
 
 interface DailyPlanMasterySectionProps {
     copy: KangurMobileCopy;
-    lessonMastery: LessonMastery;
+    lessonMastery: UseKangurMobileDailyPlanLessonMasteryResult;
     lessonFocusSummary: string | null;
 }
-
 
 function MasteryContent({
     copy,
@@ -19,12 +18,12 @@ function MasteryContent({
 }: {
     copy: KangurMobileCopy;
     lessonFocusSummary: string | null;
-    weakestLesson: { title: string; lessonHref: string } | null;
-    strongestLesson: { title: string; lessonHref: string } | null;
-}): JSX.Element {
+    weakestLesson: KangurMobileDailyPlanLessonMasteryItem | null;
+    strongestLesson: KangurMobileDailyPlanLessonMasteryItem | null;
+}): React.JSX.Element {
     return (
         <View style={{ gap: 12 }}>
-            {lessonFocusSummary !== null && <Text style={{ color: '#475569', lineHeight: 22 }}>{lessonFocusSummary}</Text>}
+            {lessonFocusSummary !== null && lessonFocusSummary !== '' && <Text style={{ color: '#475569', lineHeight: 22 }}>{lessonFocusSummary}</Text>}
 
             <View style={{ alignSelf: 'stretch', gap: 10 }}>
                 {weakestLesson !== null && <LinkButton href={weakestLesson.lessonHref} label={copy({ de: `Fokus: ${weakestLesson.title}`, en: `Focus: ${weakestLesson.title}`, pl: `Skup się: ${weakestLesson.title}` })} tone='primary' stretch />}

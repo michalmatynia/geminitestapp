@@ -44,10 +44,14 @@ export type FilemakerPersonMongoDocument = Document & {
   country?: string;
   countryId?: string;
   createdAt?: string;
+  cvCoreStrengths?: string[];
+  cvProfessionalSummary?: string;
+  cvSelectedTechnicalEnvironment?: string[];
   dateOfBirth?: string;
   displayAddressId?: string | null;
   firstName: string;
   fullName?: string;
+  githubUrl?: string;
   id: string;
   lastName: string;
   legacyDefaultAddressUuid?: string;
@@ -57,7 +61,10 @@ export type FilemakerPersonMongoDocument = Document & {
   legacyOrganizationUuids?: string[];
   legacyParentUuid?: string;
   legacyUuid?: string;
+  linkedinUrl?: string;
   postalCode?: string;
+  profileEducation?: FilemakerPerson['profileEducation'];
+  profileJobExperience?: FilemakerPerson['profileJobExperience'];
   street?: string;
   streetNumber?: string;
   updatedAt?: string;
@@ -136,6 +143,13 @@ export function toMongoFilemakerPerson(
       nip: '',
       regon: '',
       phoneNumbers: [],
+      linkedinUrl: document.linkedinUrl,
+      githubUrl: document.githubUrl,
+      profileEducation: document.profileEducation,
+      profileJobExperience: document.profileJobExperience,
+      cvProfessionalSummary: document.cvProfessionalSummary,
+      cvCoreStrengths: document.cvCoreStrengths,
+      cvSelectedTechnicalEnvironment: document.cvSelectedTechnicalEnvironment,
       createdAt: document.createdAt,
       updatedAt: document.updatedAt,
     }),

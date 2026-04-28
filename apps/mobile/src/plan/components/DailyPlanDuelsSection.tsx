@@ -15,30 +15,12 @@ import {
   type KangurDuelLeaderboardEntry,
 } from '@/packages/kangur-contracts/src/kangur-duels';
 import { type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
-
-// Helper to safely access opponent properties
-const getDisplayName = (o: KangurDuelOpponentEntry | undefined | null) => o?.displayName ?? '';
-const getLastPlayedAt = (o: KangurDuelOpponentEntry | undefined | null) => o?.lastPlayedAt ?? new Date().toISOString();
-const getLearnerId = (o: KangurDuelOpponentEntry | undefined | null) => o?.learnerId ?? '';
-
-export interface DailyPlanDuelsState {
-  opponents: KangurDuelOpponentEntry[];
-  currentRank: number | null;
-  currentEntry: KangurDuelLeaderboardEntry | null;
-  isRestoringAuth: boolean;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  error: string | null;
-  actionError: string | null;
-  pendingOpponentLearnerId: string | null;
-  refresh: () => void;
-  createRematch: (learnerId: string) => Promise<string | null>;
-}
+import { type UseKangurMobileLearnerDuelsSummaryResult } from '../../duels/useKangurMobileLearnerDuelsSummary';
 
 export interface DailyPlanDuelsSectionProps {
   copy: KangurMobileCopy;
   locale: string;
-  duelPlan: DailyPlanDuelsState;
+  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
   openDuelSession: (sessionId: string) => void;
 }
 
@@ -52,12 +34,12 @@ function OpponentItem({
   opponent: KangurDuelOpponentEntry;
   copy: DailyPlanDuelsSectionProps['copy'];
   locale: string;
-  duelPlan: DailyPlanDuelsState;
+  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
   openDuelSession: (sessionId: string) => void;
-}): JSX.Element {
-  const displayName = getDisplayName(opponent);
-  const lastPlayedAt = getLastPlayedAt(opponent);
-  const learnerId = getLearnerId(opponent);
+}): React.JSX.Element {
+  const displayName = opponent.displayName;
+  const lastPlayedAt = opponent.lastPlayedAt;
+  const learnerId = opponent.learnerId;
 
   return (
     <InsetPanel gap={8}>
@@ -74,7 +56,7 @@ function OpponentItem({
         label={copy({ de: 'Schneller Rückkampf', en: 'Quick rematch', pl: 'Szybki rewanż' })}
         onPress={() => {
           void duelPlan.createRematch(learnerId).then((sessionId) => {
-            if (sessionId) openDuelSession(sessionId);
+            if (sessionId !== null && sessionId !== '') openDuelSession(sessionId);
           });
         }}
         pending={duelPlan.pendingOpponentLearnerId === learnerId}
@@ -92,7 +74,7 @@ function CurrentEntryPanel({
   copy: DailyPlanDuelsSectionProps['copy'];
   rank: number | null;
   entry: KangurDuelLeaderboardEntry;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <InsetPanel gap={8} style={{ borderColor: '#bfdbfe', backgroundColor: '#eff6ff' }}>
       <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
@@ -112,7 +94,7 @@ function CurrentEntryPanel({
   );
 }
 
-function DuelStatusHeader({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): JSX.Element {
+function DuelStatusHeader({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): React.JSX.Element {
   return (
     <View style={{ gap: 4 }}>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -133,7 +115,7 @@ function DuelStatusPills({
   copy: DailyPlanDuelsSectionProps['copy'];
   opponentCount: number;
   currentRank: number | null;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
       <Pill
@@ -172,16 +154,16 @@ function DuelContentArea({
 }: {
   copy: DailyPlanDuelsSectionProps['copy'];
   locale: string;
-  duelPlan: DailyPlanDuelsState;
+  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
   openDuelSession: (sessionId: string) => void;
   opponents: KangurDuelOpponentEntry[];
   currentRank: number | null;
   currentEntry: KangurDuelLeaderboardEntry | null;
   actionError: string | null;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <View style={{ gap: 12 }}>
-      {currentEntry ? (
+      {currentEntry !== null ? (
         <CurrentEntryPanel copy={copy} rank={currentRank} entry={currentEntry} />
       ) : (
         <Text style={{ color: '#475569', lineHeight: 22 }}>
@@ -193,7 +175,7 @@ function DuelContentArea({
         </Text>
       )}
 
-      {actionError !== null && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
+      {actionError !== null && actionError !== '' && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
 
       {opponents.length === 0 ? (
         <Text style={{ color: '#475569', lineHeight: 22 }}>
@@ -221,7 +203,7 @@ function DuelContentArea({
       <View style={{ alignSelf: 'stretch', gap: 10 }}>
         <ActionButton
           label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-          onPress={duelPlan.refresh}
+          onPress={() => { void duelPlan.refresh(); }}
           stretch
           tone='secondary'
         />
@@ -247,13 +229,13 @@ function DailyPlanDuelsBody({
 }: {
   copy: DailyPlanDuelsSectionProps['copy'];
   locale: string;
-  duelPlan: DailyPlanDuelsState;
+  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
   openDuelSession: (sessionId: string) => void;
   opponents: KangurDuelOpponentEntry[];
   currentRank: number | null;
   currentEntry: KangurDuelLeaderboardEntry | null;
   actionError: string | null;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <Card>
       <DuelStatusHeader copy={copy} />
@@ -272,7 +254,7 @@ function DailyPlanDuelsBody({
   );
 }
 
-function DailyPlanDuelsLoading({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): JSX.Element {
+function DailyPlanDuelsLoading({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#475569', lineHeight: 22 }}>
@@ -286,7 +268,7 @@ function DailyPlanDuelsLoading({ copy }: { copy: DailyPlanDuelsSectionProps['cop
   );
 }
 
-function DailyPlanDuelsUnauthenticated({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): JSX.Element {
+function DailyPlanDuelsUnauthenticated({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#475569', lineHeight: 22 }}>
@@ -308,7 +290,7 @@ function DailyPlanDuelsError({
   error: string;
   copy: DailyPlanDuelsSectionProps['copy'];
   onRefresh: () => void;
-}): JSX.Element {
+}): React.JSX.Element {
   return (
     <Card>
       <View style={{ gap: 10 }}>
@@ -324,11 +306,11 @@ export function DailyPlanDuelsSection({
   locale,
   duelPlan,
   openDuelSession,
-}: DailyPlanDuelsSectionProps): JSX.Element {
+}: DailyPlanDuelsSectionProps): React.JSX.Element {
   const { opponents, currentRank, currentEntry, isRestoringAuth, isLoading, isAuthenticated, error, actionError } =
     duelPlan;
 
-  if (isRestoringAuth || isLoading) {
+  if (Boolean(isRestoringAuth) || Boolean(isLoading)) {
     return <DailyPlanDuelsLoading copy={copy} />;
   }
 
@@ -336,8 +318,8 @@ export function DailyPlanDuelsSection({
     return <DailyPlanDuelsUnauthenticated copy={copy} />;
   }
 
-  if (error !== null) {
-    return <DailyPlanDuelsError error={error} copy={copy} onRefresh={duelPlan.refresh} />;
+  if (error !== null && error !== '') {
+    return <DailyPlanDuelsError error={error} copy={copy} onRefresh={() => { void duelPlan.refresh(); }} />;
   }
 
   return (

@@ -297,6 +297,26 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
                   ],
                 },
               ],
+              importedProfiles: [
+                {
+                  id: 'profile-mongo-1',
+                  legacyOrganizationUuid: 'LEGACY-ORG-UUID',
+                  legacyUuid: 'LEGACY-PROFILE-UUID',
+                  legacyValueUuids: ['LEGACY-PROFILE-VALUE'],
+                  organizationId: 'mongo-org-1',
+                  updatedAt: '2026-03-02T10:00:00.000Z',
+                  updatedBy: 'Importer',
+                  valueIds: ['profile-value'],
+                  values: [
+                    {
+                      label: 'Education',
+                      legacyValueUuid: 'LEGACY-PROFILE-VALUE',
+                      level: 1,
+                      valueId: 'profile-value',
+                    },
+                  ],
+                },
+              ],
               linkedAddresses: [
                 {
                   id: 'mongo-address-1',
@@ -375,6 +395,12 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
           valueIds: ['value-root'],
         }),
       ]);
+      expect(result.current.importedProfiles).toEqual([
+        expect.objectContaining({
+          id: 'profile-mongo-1',
+          valueIds: ['profile-value'],
+        }),
+      ]);
       expect(result.current.harvestProfiles).toEqual([
         expect.objectContaining({
           id: 'harvest-1',
@@ -439,6 +465,24 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
                   ],
                 },
               ],
+              importedProfiles: [
+                {
+                  id: 'profile-mongo-1',
+                  legacyOrganizationUuid: 'LEGACY-ORG-UUID',
+                  legacyUuid: 'LEGACY-PROFILE-UUID',
+                  legacyValueUuids: ['LEGACY-PROFILE-VALUE'],
+                  organizationId: 'org-1',
+                  valueIds: ['profile-value'],
+                  values: [
+                    {
+                      label: 'Education',
+                      legacyValueUuid: 'LEGACY-PROFILE-VALUE',
+                      level: 1,
+                      valueId: 'profile-value',
+                    },
+                  ],
+                },
+              ],
               linkedAddresses: [],
               linkedEmails: [],
               organization: {
@@ -458,6 +502,9 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
       expect(result.current.organizationSource).toBe('settings');
       expect(result.current.importedDemands).toEqual([
         expect.objectContaining({ id: 'demand-mongo-1' }),
+      ]);
+      expect(result.current.importedProfiles).toEqual([
+        expect.objectContaining({ id: 'profile-mongo-1' }),
       ]);
       expect(result.current.harvestProfiles).toEqual([
         expect.objectContaining({ id: 'harvest-1' }),

@@ -34,14 +34,14 @@ describe('pracuj-pl-sync reducePracujHtml', () => {
             <h1>Senior Node Developer</h1>
             <p>Oferta pracy</p>
           </main>
-          <script type="application/pracuj+json" id="__CODEX_PRACUJ_SNAPSHOT__">${JSON.stringify(snapshot)}</script>
+          <script type="application/job-board+json" id="__CODEX_JOB_BOARD_SNAPSHOT__">${JSON.stringify(snapshot)}</script>
         </body>
       </html>
     `;
 
     const reduced = reducePracujHtml(html);
 
-    expect(reduced).toContain('[pracuj_snapshot]');
+    expect(reduced).toContain('[job_board_snapshot');
     expect(reduced).toContain('title: Senior Node Developer');
     expect(reduced).toContain('facts:');
     expect(reduced).toContain('- Wynagrodzenie: 20 000 - 26 000 PLN netto + VAT / mies.');

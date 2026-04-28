@@ -19,6 +19,10 @@ import {
   FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
   FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_NAME,
 } from './filemaker-organization-presence-runtime-constants';
+import {
+  JOB_BOARD_SCRAPE_RUNTIME_KEY,
+  JOB_BOARD_SCRAPE_RUNTIME_NAME,
+} from './job-board-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
   description: string;
@@ -93,6 +97,11 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     name: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_NAME,
     description:
       'Finds organisation websites and social profiles, then feeds those URLs into downstream FileMaker email scraping.',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_KEY]: {
+    name: JOB_BOARD_SCRAPE_RUNTIME_NAME,
+    description:
+      'Collects and probes job offers from supported job boards through the shared browser runtime, persona, and humanized execution settings.',
   },
   vinted_list: {
     name: 'Vinted List',

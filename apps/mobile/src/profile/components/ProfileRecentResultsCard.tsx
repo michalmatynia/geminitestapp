@@ -49,7 +49,7 @@ export function ProfileRecentResultsCard({
       ) : (
         <View style={{ gap: 12 }}>
           {profileRecentResults.recentResultItems.map((item) => (
-            <SessionRow key={item.id} item={item} />
+            <SessionRow key={item.result.id} item={item} />
           ))}
 
           <LinkButton

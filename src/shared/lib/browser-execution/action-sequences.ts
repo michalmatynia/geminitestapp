@@ -14,6 +14,10 @@ import {
   FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
   FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEP_IDS,
 } from './filemaker-organization-presence-runtime-constants';
+import {
+  JOB_BOARD_SCRAPE_RUNTIME_KEY,
+  JOB_BOARD_SCRAPE_RUNTIME_STEP_IDS,
+} from './job-board-runtime-constants';
 
 export type ActionSequenceKey =
   | 'playwright_programmable_listing'
@@ -31,6 +35,7 @@ export type ActionSequenceKey =
   | typeof AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY
   | typeof SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY
   | typeof FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY
+  | typeof JOB_BOARD_SCRAPE_RUNTIME_KEY
   | 'vinted_list'
   | 'vinted_relist'
   | 'vinted_sync';
@@ -161,6 +166,8 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
 
   [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY]:
     FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEP_IDS,
+
+  [JOB_BOARD_SCRAPE_RUNTIME_KEY]: JOB_BOARD_SCRAPE_RUNTIME_STEP_IDS,
 
   vinted_list: [
     ...BROWSER_AND_AUTH,

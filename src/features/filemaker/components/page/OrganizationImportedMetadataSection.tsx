@@ -33,6 +33,14 @@ const metadataValue = (value: string | undefined): string => {
   return normalized.length > 0 ? normalized : missingValue;
 };
 
+const optionalMetadataValue = (value: string | undefined): string | undefined => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const firstMetadataValue = (values: Array<string | undefined>): string | undefined =>
+  values.map(optionalMetadataValue).find((value): value is string => value !== undefined);
+
 const normalizeLegacyUuidKey = (value: string): string => value.trim().toUpperCase();
 
 const buildValueCatalogLookups = (valueCatalog: FilemakerValue[]): ValueCatalogLookups => {
@@ -50,17 +58,13 @@ const importedValueLabel = (
   value: FilemakerOrganizationDemandValue,
   lookups: ValueCatalogLookups
 ): string => {
-  const valueId = value.valueId?.trim() ?? '';
-  const valueIdLabel = valueId.length > 0 ? lookups.byId.get(valueId)?.label : undefined;
+  const valueId = optionalMetadataValue(value.valueId);
+  const valueIdLabel = valueId === undefined ? undefined : lookups.byId.get(valueId)?.label;
   const legacyUuidLabel = lookups.byLegacyUuid.get(
     normalizeLegacyUuidKey(value.legacyValueUuid)
   )?.label;
   return metadataValue(
-    value.label ??
-      valueIdLabel ??
-      legacyUuidLabel ??
-      (valueId.length > 0 ? valueId : undefined) ??
-      value.legacyValueUuid
+    firstMetadataValue([value.label, valueIdLabel, legacyUuidLabel, valueId, value.legacyValueUuid])
   );
 };
 

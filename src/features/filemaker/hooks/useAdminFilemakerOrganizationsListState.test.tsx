@@ -63,6 +63,7 @@ const listResponse = {
   collectionCount: 1,
   filters: {
     address: 'all',
+    advancedFilter: '',
     bank: 'all',
     parent: 'all',
     updatedBy: '',

@@ -1,3 +1,4 @@
+import type { Href } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
@@ -13,7 +14,7 @@ function PracticeButton({
   practiceHref,
   title,
 }: {
-  practiceHref: string;
+  practiceHref: Href;
   title: string;
 }): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
@@ -67,7 +68,7 @@ export function LessonCheckpointRow({
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <LinkButton
-          href={item.lessonHref}
+          href={item.lessonHref as Href}
           label={`${copy({
             de: 'Zur Lektion zurück',
             en: 'Return to lesson',
@@ -75,8 +76,8 @@ export function LessonCheckpointRow({
           })}: ${item.title}`}
           tone='primary'
         />
-        {item.practiceHref?.length > 0 && (
-          <PracticeButton practiceHref={item.practiceHref} title={item.title} />
+        {item.practiceHref && (
+          <PracticeButton practiceHref={item.practiceHref as Href} title={item.title} />
         )}
       </View>
     </InsetPanel>

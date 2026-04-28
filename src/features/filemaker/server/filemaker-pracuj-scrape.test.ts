@@ -1,21 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
-  collectPracujOfferUrlsMock: vi.fn(),
+  collectJobBoardOfferUrlsMock: vi.fn(),
   getFilemakerOrganizationsCollectionMock: vi.fn(),
-  probePracujJobOfferMock: vi.fn(),
+  probeJobBoardOfferMock: vi.fn(),
   readFilemakerCampaignSettingValueMock: vi.fn(),
   upsertFilemakerCampaignSettingValueMock: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
 
-vi.mock('@/features/job-board/server/providers/pracuj-pl-sync', () => ({
-  collectPracujOfferUrls: (...args: unknown[]) => mocks.collectPracujOfferUrlsMock(...args),
+vi.mock('@/features/job-board/server/providers/job-board-sync', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/features/job-board/server/providers/job-board-sync')>()),
+  collectJobBoardOfferUrls: (...args: unknown[]) => mocks.collectJobBoardOfferUrlsMock(...args),
 }));
 
 vi.mock('@/features/job-board/server/job-scans-service', () => ({
-  probePracujJobOffer: (...args: unknown[]) => mocks.probePracujJobOfferMock(...args),
+  probeJobBoardOffer: (...args: unknown[]) => mocks.probeJobBoardOfferMock(...args),
 }));
 
 vi.mock('./campaign-settings-store', () => ({
@@ -37,6 +38,33 @@ import { runFilemakerPracujScrape } from './filemaker-pracuj-scrape';
 const sourceUrl = 'https://www.pracuj.pl/praca/it;kw';
 const offerUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001';
 
+const settingsDatabase = (overrides: Record<string, unknown> = {}): string =>
+  JSON.stringify({
+    version: 2,
+    addresses: [],
+    addressLinks: [],
+    emailCampaigns: [],
+    emailLinks: [],
+    emails: [],
+    eventOrganizationLinks: [],
+    events: [],
+    jobListings: [],
+    legacyDemands: [],
+    organizations: [
+      {
+        id: 'org-1',
+        name: 'Acme Inc',
+      },
+    ],
+    persons: [],
+    phoneNumberLinks: [],
+    phoneNumbers: [],
+    valueParameterLinks: [],
+    valueParameters: [],
+    values: [],
+    ...overrides,
+  });
+
 const createCollection = () => ({
   find: vi.fn(() => ({
     limit: vi.fn(() => ({
@@ -57,14 +85,16 @@ describe('runFilemakerPracujScrape', () => {
     mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(null);
     mocks.upsertFilemakerCampaignSettingValueMock.mockResolvedValue(true);
     mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(createCollection());
-    mocks.collectPracujOfferUrlsMock.mockResolvedValue({
+    mocks.collectJobBoardOfferUrlsMock.mockResolvedValue({
       links: [{ title: 'Developer', url: offerUrl }],
+      provider: 'pracuj_pl',
       runId: 'collect-run-1',
+      sourceSite: 'pracuj.pl',
       sourceUrl,
       visitedUrls: [sourceUrl],
       warnings: [],
     });
-    mocks.probePracujJobOfferMock.mockResolvedValue({
+    mocks.probeJobBoardOfferMock.mockResolvedValue({
       error: null,
       evaluation: {
         company: { name: 'Acme Inc' },
@@ -90,7 +120,9 @@ describe('runFilemakerPracujScrape', () => {
       finalUrl: offerUrl,
       fetchStatus: 200,
       ok: true,
+      provider: 'pracuj_pl',
       runId: 'offer-run-1',
+      sourceSite: 'pracuj.pl',
       sourceUrl: offerUrl,
       steps: [],
     });
@@ -104,17 +136,19 @@ describe('runFilemakerPracujScrape', () => {
       sourceUrl,
     });
 
-    expect(mocks.collectPracujOfferUrlsMock).toHaveBeenCalledWith(
+    expect(mocks.collectJobBoardOfferUrlsMock).toHaveBeenCalledWith(
       expect.objectContaining({
         headless: false,
         maxOffers: 5,
+        provider: 'pracuj_pl',
         sourceUrl,
       })
     );
-    expect(mocks.probePracujJobOfferMock).toHaveBeenCalledWith(
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
       expect.objectContaining({
         forcePlaywright: true,
         headless: false,
+        provider: 'pracuj_pl',
         sourceUrl: offerUrl,
       })
     );
@@ -156,5 +190,63 @@ describe('runFilemakerPracujScrape', () => {
       sourceUrl: offerUrl,
       title: 'Developer',
     });
+  });
+
+  it('probes a direct offer URL when link collection returns no category links', async () => {
+    mocks.collectJobBoardOfferUrlsMock.mockResolvedValue({
+      links: [],
+      provider: 'pracuj_pl',
+      runId: 'collect-run-1',
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      visitedUrls: [offerUrl],
+      warnings: [],
+    });
+
+    const result = await runFilemakerPracujScrape({
+      mode: 'preview',
+      sourceUrl: offerUrl,
+    });
+
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
+      expect.objectContaining({ sourceUrl: offerUrl })
+    );
+    expect(result.summary.scrapedOffers).toBe(1);
+  });
+
+  it('skips duplicate listings without persisting unchanged imports', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Developer',
+            description: 'Existing listing',
+            sourceExternalId: '1001',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+          },
+        ],
+      })
+    );
+
+    const result = await runFilemakerPracujScrape({
+      duplicateStrategy: 'skip',
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 0,
+      skippedOffers: 1,
+      updatedListings: 0,
+    });
+    expect(result.offers[0]).toMatchObject({
+      listingId: 'listing-1',
+      status: 'skipped',
+    });
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 });

@@ -11,6 +11,27 @@ import {
   type KangurPracticeSyncProofSnapshot,
 } from './practiceSyncProof';
 
+type UseKangurPracticeSyncProofOptions = {
+  enabled: boolean;
+  expectedCorrectAnswers: number;
+  expectedTotalQuestions: number;
+  operation: KangurPracticeOperation;
+  runStartedAt: number;
+};
+
+type UseKangurPracticeSyncProofResult = {
+  error: string | null;
+  isEnabled: boolean;
+  isLoading: boolean;
+  refresh: () => Promise<void>;
+  snapshot: KangurPracticeSyncProofSnapshot;
+};
+
+const EMPTY_SNAPSHOT: KangurPracticeSyncProofSnapshot = {
+  matchedScoreId: null,
+  surfaces: [],
+};
+
 interface SnapshotParams {
   enabled: boolean;
   expectedCorrectAnswers: number;

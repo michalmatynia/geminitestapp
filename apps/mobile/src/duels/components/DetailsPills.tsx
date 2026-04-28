@@ -1,12 +1,13 @@
 import type { KangurDuelSession, KangurDuelPlayer } from '@kangur/contracts/kangur-duels';
 import React from 'react';
 import { View } from 'react-native';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 import { KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
 import { formatStatusLabel, getStatusTone, formatSeriesTitle } from '../utils/duels-ui';
 import { ProgressPill } from './ProgressPill';
 
 interface DuelContext {
-  session: KangurDuelSession;
+  session: KangurDuelSession | null;
   isSpectating?: boolean;
   spectatorCount?: number;
   player?: KangurDuelPlayer;
@@ -14,12 +15,16 @@ interface DuelContext {
 
 interface DetailsPillsProps {
   duel: DuelContext;
-  copy: (v: Record<string, string>) => string;
-  locale: string;
+  copy: KangurMobileCopy;
+  locale: any;
 }
 
 export function DetailsPills({ duel, copy, locale }: DetailsPillsProps): React.JSX.Element {
   const { session } = duel;
+
+  if (!session) {
+    return <View />;
+  }
 
   const spectatorLabel = duel.spectatorCount !== undefined && duel.spectatorCount > 0
     ? copy({ de: `Zuschauer ${duel.spectatorCount}`, en: `Audience ${duel.spectatorCount}`, pl: `Widownia ${duel.spectatorCount}` })

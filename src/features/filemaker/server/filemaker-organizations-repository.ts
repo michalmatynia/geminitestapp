@@ -6,6 +6,7 @@ import type { Collection, Filter } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
 
 import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import { buildOrganizationAdvancedFilter } from './filemaker-organization-advanced-filter-query';
 import {
   normalizeOrganizationPage,
   resolveOrganizationListOptions,
@@ -26,6 +27,7 @@ export type FilemakerOrganizationsListResult = {
   collectionCount: number;
   filters: {
     address: FilemakerOrganizationAddressFilter;
+    advancedFilter: string;
     bank: FilemakerOrganizationBankFilter;
     parent: FilemakerOrganizationParentFilter;
     updatedBy: string;
@@ -132,13 +134,14 @@ const buildParentFilter = (
 
 const buildOrganizationFilter = (input: {
   addressFilter: FilemakerOrganizationAddressFilter;
+  advancedFilter: string;
   bankFilter: FilemakerOrganizationBankFilter;
   parentFilter: FilemakerOrganizationParentFilter;
   query: string;
   updatedBy: string;
 }): Filter<FilemakerOrganizationMongoDocument> => {
   const clauses: Filter<FilemakerOrganizationMongoDocument>[] = [];
-  const { addressFilter, bankFilter, parentFilter, query, updatedBy } = input;
+  const { addressFilter, advancedFilter, bankFilter, parentFilter, query, updatedBy } = input;
   const normalizedQuery = query.trim();
   if (normalizedQuery.length > 0) {
     const regex = new RegExp(escapeRegex(normalizedQuery), 'i');
@@ -163,7 +166,17 @@ const buildOrganizationFilter = (input: {
   if (updatedBy.length > 0) {
     clauses.push({ updatedBy: new RegExp(escapeRegex(updatedBy), 'i') });
   }
-  clauses.push(buildAddressFilter(addressFilter), buildBankFilter(bankFilter), buildParentFilter(parentFilter));
+  clauses.push(
+    buildAddressFilter(addressFilter),
+    buildBankFilter(bankFilter),
+    buildParentFilter(parentFilter),
+    buildOrganizationAdvancedFilter({
+      advancedFilter,
+      escapeRegex,
+      hasFieldValueFilter,
+      hasNoFieldValueFilter,
+    })
+  );
   const activeClauses = clauses.filter((clause) => Object.keys(clause).length > 0);
   return activeClauses.length > 0 ? { $and: activeClauses } : {};
 };
@@ -181,6 +194,7 @@ const buildListResult = (input: {
   collectionCount: input.collectionCount,
   filters: {
     address: input.options.addressFilter,
+    advancedFilter: input.options.advancedFilter,
     bank: input.options.bankFilter,
     parent: input.options.parentFilter,
     updatedBy: input.options.updatedBy,
@@ -202,6 +216,7 @@ export const listMongoFilemakerOrganizations = async (
   const options = resolveOrganizationListOptions(input);
   const filter = buildOrganizationFilter({
     addressFilter: options.addressFilter,
+    advancedFilter: options.advancedFilter,
     bankFilter: options.bankFilter,
     parentFilter: options.parentFilter,
     query: options.query,
@@ -262,6 +277,7 @@ export const listMongoFilemakerOrganizationIds = async (
   const options = resolveOrganizationListOptions(input);
   const filter = buildOrganizationFilter({
     addressFilter: options.addressFilter,
+    advancedFilter: options.advancedFilter,
     bankFilter: options.bankFilter,
     parentFilter: options.parentFilter,
     query: options.query,

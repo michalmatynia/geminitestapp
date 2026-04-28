@@ -7,8 +7,6 @@ import {
 } from '../../shared/KangurMobileUi';
 import {
   formatKangurMobileScoreOperation,
-  getSessionAccentTone,
-  getSessionScoreTone,
 } from '../../scores/mobileScoreSummary';
 import { createKangurPlanHref } from '../../plan/planHref';
 import { type KangurMobileCopy, type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
@@ -46,6 +44,18 @@ const getResultsHubMessage = (recentResults: UseKangurMobileProfileRecentResults
     pl: 'Stąd możesz odświeżyć wyniki, otworzyć pełną historię i od razu przejść do kolejnego kroku nauki.',
   });
 };
+
+const getSessionAccentTone = (operation: string) => ({
+  backgroundColor: '#f1f5f9',
+  borderColor: '#cbd5e1',
+  textColor: '#475569',
+});
+
+const getSessionScoreTone = (accuracy: number) => ({
+  backgroundColor: accuracy >= 70 ? '#ecfdf5' : '#fef2f2',
+  borderColor: accuracy >= 70 ? '#a7f3d0' : '#fecaca',
+  textColor: accuracy >= 70 ? '#047857' : '#b91c1c',
+});
 
 export function ProfileResultsHubCard({
   copy,

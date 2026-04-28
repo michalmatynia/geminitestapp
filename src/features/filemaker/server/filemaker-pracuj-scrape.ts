@@ -3,12 +3,20 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { probePracujJobOffer } from '@/features/job-board/server/job-scans-service';
-import { collectPracujOfferUrls } from '@/features/job-board/server/providers/pracuj-pl-sync';
+import { probeJobBoardOffer } from '@/features/job-board/server/job-scans-service';
+import {
+  collectJobBoardOfferUrls,
+  extractJobBoardExternalIdFromUrl,
+  isJobBoardOfferUrl,
+} from '@/features/job-board/server/providers/job-board-sync';
 import { getFilemakerOrganizationsCollection } from '@/features/filemaker/server/filemaker-organizations-mongo';
 import type { JobScanEvaluation } from '@/shared/contracts/job-board';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
+import {
+  resolveJobBoardProvider,
+  type JobBoardProvider,
+} from '@/shared/lib/job-board/job-board-providers';
 
 import {
   filemakerPracujScrapeRequestSchema,
@@ -52,11 +60,12 @@ type ApplyImportInput = {
 
 type CentralizedScrapeResult = {
   offers: FilemakerPracujScrapedOffer[];
+  provider: JobBoardProvider;
   runId: string | null;
+  sourceSite: string;
   warnings: string[];
 };
 
-const PRACUJ_SOURCE_SITE = 'pracuj.pl';
 const DEFAULT_WARNINGS: string[] = [];
 
 const sleep = async (delayMs: number): Promise<void> => {
@@ -90,7 +99,7 @@ const normalizeSalaryPeriod = (value: unknown): FilemakerPracujScrapedOffer['sal
     : 'monthly';
 };
 
-const normalizePracujSourceUrl = (value: unknown): string | null => {
+const normalizeJobBoardSourceUrl = (value: unknown): string | null => {
   const raw = toStringValue(value);
   if (raw.length === 0) return null;
   try {
@@ -100,13 +109,6 @@ const normalizePracujSourceUrl = (value: unknown): string | null => {
   } catch {
     return null;
   }
-};
-
-const isPracujOfferUrl = (url: string): boolean => /\/praca\//i.test(url) && /(?:oferta|offer|\d{5,})/i.test(url);
-
-const extractExternalIdFromUrl = (url: string): string | null => {
-  const match = url.match(/(?:oferta|offer)[^\d]*(\d{5,})/i) ?? url.match(/(\d{5,})(?:[/?#]|$)/);
-  return match?.[1] ?? null;
 };
 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
@@ -155,11 +157,13 @@ const offerFromEvaluation = (input: {
   evaluation: JobScanEvaluation;
   finalUrl: string;
   options: FilemakerPracujScrapeRequest;
+  provider: JobBoardProvider;
+  sourceSite: string;
 }): FilemakerPracujScrapedOffer | null => {
   const evaluation = input.evaluation;
   const listing = asRecord(evaluation?.listing);
   const company = asRecord(evaluation?.company);
-  const sourceUrl = normalizePracujSourceUrl(input.finalUrl);
+  const sourceUrl = normalizeJobBoardSourceUrl(input.finalUrl);
   const title = recordString(listing, 'title');
   const companyName = recordString(company, 'name');
   if (sourceUrl === null || title.length === 0 || companyName.length === 0) return null;
@@ -175,7 +179,8 @@ const offerFromEvaluation = (input: {
     salaryMin: salary.salaryMin,
     salaryPeriod: salary.salaryPeriod,
     salaryText: salary.salaryText,
-    sourceExternalId: extractExternalIdFromUrl(sourceUrl),
+    sourceExternalId: extractJobBoardExternalIdFromUrl(sourceUrl, input.provider),
+    sourceSite: input.sourceSite,
     sourceUrl,
     title,
   };
@@ -313,7 +318,7 @@ const loadOrganizationCandidates = async (
 const buildListingId = (organizationId: string, offer: FilemakerPracujScrapedOffer): string => {
   const stablePart = offer.sourceExternalId ?? `${offer.title}-${offer.location}`;
   const slug = normalizeNameForMatch(`${organizationId}-${stablePart}`).replace(/\s+/g, '-');
-  return `filemaker-pracuj-job-${slug.length > 0 ? slug : randomUUID()}`;
+  return `filemaker-job-board-job-${slug.length > 0 ? slug : randomUUID()}`;
 };
 
 const normalizeDedupeKey = (value: string): string => normalizeNameForMatch(value);
@@ -353,7 +358,7 @@ const toJobListing = (input: {
     targetedCampaignIds: input.existing?.targetedCampaignIds ?? [],
     lastTargetedAt: input.existing?.lastTargetedAt,
     sourceExternalId: input.offer.sourceExternalId ?? undefined,
-    sourceSite: PRACUJ_SOURCE_SITE,
+    sourceSite: input.offer.sourceSite,
     sourceUrl: input.offer.sourceUrl,
     scrapedAt: now,
     createdAt: input.existing?.createdAt ?? now,
@@ -367,9 +372,9 @@ const createUnmatchedOrganization = (
 ): FilemakerOrganization => {
   const now = new Date().toISOString();
   const organization = createFilemakerOrganization({
-    id: `filemaker-pracuj-organization-${randomUUID()}`,
+    id: `filemaker-job-board-organization-${randomUUID()}`,
     name: companyName,
-    updatedBy: 'filemaker:pracuj-scrape',
+    updatedBy: 'filemaker:job-board-scrape',
     createdAt: now,
     updatedAt: now,
   });
@@ -439,7 +444,7 @@ const applyImport = async ({
         confidence: 100,
         organizationId: createdOrganization.id,
         organizationName: createdOrganization.name,
-        reason: 'created from pracuj.pl employer',
+        reason: 'created from scraped job-board employer',
       };
       changed = true;
     }
@@ -461,7 +466,7 @@ const applyImport = async ({
         listingId: existing.id,
         match,
         offer,
-        reason: 'A matching pracuj.pl listing already exists.',
+        reason: `A matching ${offer.sourceSite} listing already exists.`,
         status: 'skipped',
       });
       continue;
@@ -500,24 +505,35 @@ const buildSummary = (
 const collectOfferLinks = async (
   options: FilemakerPracujScrapeRequest
 ): Promise<{
+  provider: JobBoardProvider;
   runId: string | null;
+  sourceSite: string;
   urls: string[];
   warnings: string[];
 }> => {
-  const collected = await collectPracujOfferUrls({
+  const provider = resolveJobBoardProvider(options.sourceUrl, options.provider);
+  if (provider === null) {
+    throw badRequestError('Unsupported job board provider.');
+  }
+  const collected = await collectJobBoardOfferUrls({
     delayMs: options.delayMs,
     headless: options.headless,
+    humanizeMouse: options.humanizeMouse,
     maxOffers: options.maxOffers,
     maxPages: options.maxPages,
+    personaId: options.personaId,
+    provider,
     sourceUrl: options.sourceUrl,
     timeoutMs: options.timeoutMs,
   });
   const urls = uniqueStrings(collected.links.map((link) => link.url));
-  if (urls.length === 0 && isPracujOfferUrl(options.sourceUrl)) {
+  if (urls.length === 0 && isJobBoardOfferUrl(options.sourceUrl, provider)) {
     urls.push(options.sourceUrl);
   }
   return {
+    provider,
     runId: collected.runId,
+    sourceSite: collected.sourceSite,
     urls: urls.slice(0, options.maxOffers),
     warnings: collected.warnings,
   };
@@ -532,9 +548,12 @@ const scrapeOffersViaJobBoardSequencer = async (
   let runId = collected.runId;
 
   for (const url of collected.urls) {
-    const probe = await probePracujJobOffer({
+    const probe = await probeJobBoardOffer({
       forcePlaywright: true,
       headless: options.headless,
+      humanizeMouse: options.humanizeMouse,
+      personaId: options.personaId,
+      provider: collected.provider,
       sourceUrl: url,
       timeoutMs: options.timeoutMs,
     });
@@ -543,6 +562,8 @@ const scrapeOffersViaJobBoardSequencer = async (
       evaluation: probe.evaluation,
       finalUrl: probe.finalUrl,
       options,
+      provider: probe.provider,
+      sourceSite: probe.sourceSite,
     });
     if (offer) {
       offers.push(offer);
@@ -552,7 +573,13 @@ const scrapeOffersViaJobBoardSequencer = async (
     await sleep(options.delayMs);
   }
 
-  return { offers, runId, warnings };
+  return {
+    offers,
+    provider: collected.provider,
+    runId,
+    sourceSite: collected.sourceSite,
+    warnings,
+  };
 };
 
 export const runFilemakerPracujScrape = async (
@@ -560,7 +587,7 @@ export const runFilemakerPracujScrape = async (
 ): Promise<FilemakerPracujScrapeResponse> => {
   const parsed = filemakerPracujScrapeRequestSchema.safeParse(rawInput);
   if (!parsed.success) {
-    throw badRequestError('Invalid pracuj.pl scrape request.', { issues: parsed.error.issues });
+    throw badRequestError('Invalid job-board scrape request.', { issues: parsed.error.issues });
   }
   const options = parsed.data;
   if (options.organizationScope === 'selected' && options.selectedOrganizationIds.length === 0) {
@@ -584,7 +611,7 @@ export const runFilemakerPracujScrape = async (
         JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
       );
       if (!persisted) {
-        throw internalError('Failed to persist imported pracuj.pl job listings.');
+        throw internalError('Failed to persist imported job-board listings.');
       }
     }
   }
@@ -593,7 +620,9 @@ export const runFilemakerPracujScrape = async (
     browserMode: options.headless ? 'headless' : 'headed',
     mode: options.mode,
     offers: results,
+    provider: scraped.provider,
     runId: scraped.runId,
+    sourceSite: scraped.sourceSite,
     sourceUrl: options.sourceUrl,
     summary: buildSummary(results),
     warnings: scraped.warnings.length > 0 ? scraped.warnings : DEFAULT_WARNINGS,

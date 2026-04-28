@@ -57,8 +57,8 @@ const useCachedTrainingFocus = (
 const hasTrainingFocusData = (
   trainingFocus: ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null,
 ): boolean => {
-  const hasStrongestOp = (trainingFocus?.strongestOperation?.length ?? 0) > 0;
-  const hasWeakestOp = (trainingFocus?.weakestOperation?.length ?? 0) > 0;
+  const hasStrongestOp = !!trainingFocus?.strongestOperation;
+  const hasWeakestOp = !!trainingFocus?.weakestOperation;
   return hasStrongestOp || hasWeakestOp;
 };
 

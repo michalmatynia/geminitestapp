@@ -120,6 +120,14 @@ export {
 } from './amazon-runtime-constants';
 
 export {
+  JOB_BOARD_SCRAPE_RUNTIME_KEY,
+  JOB_BOARD_SCRAPE_RUNTIME_NAME,
+  JOB_BOARD_SCRAPE_RUNTIME_STEP_IDS,
+  JOB_BOARD_SCRAPE_RUNTIME_STEPS,
+  type JobBoardScrapeRuntimeStepId,
+} from './job-board-runtime-constants';
+
+export {
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
   SUPPLIER_1688_PROBE_SCAN_SELECTOR_PROFILE,
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS,

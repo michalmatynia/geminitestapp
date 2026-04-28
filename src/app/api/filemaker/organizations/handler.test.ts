@@ -28,6 +28,7 @@ describe('filemaker organizations handler', () => {
       collectionCount: 2,
       filters: {
         address: 'all',
+        advancedFilter: '',
         bank: 'all',
         parent: 'all',
         updatedBy: '',
@@ -47,7 +48,7 @@ describe('filemaker organizations handler', () => {
   it('returns matching organization ids for resultset selection', async () => {
     const response = await getHandler(
       new NextRequest(
-        'http://localhost/api/filemaker/organizations?idsOnly=true&query=acme&address=with_address'
+        'http://localhost/api/filemaker/organizations?idsOnly=true&query=acme&address=with_address&advancedFilter=%7B%22type%22%3A%22group%22%7D'
       ),
       { params: {} }
     );
@@ -55,6 +56,7 @@ describe('filemaker organizations handler', () => {
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
     expect(listMongoFilemakerOrganizationIdsMock).toHaveBeenCalledWith({
       address: 'with_address',
+      advancedFilter: '{"type":"group"}',
       bank: null,
       limit: null,
       page: null,
@@ -75,6 +77,7 @@ describe('filemaker organizations handler', () => {
 
     expect(listMongoFilemakerOrganizationsMock).toHaveBeenCalledWith({
       address: null,
+      advancedFilter: null,
       bank: null,
       limit: null,
       page: '2',

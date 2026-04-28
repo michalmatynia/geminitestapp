@@ -12,6 +12,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   const url = new URL(req.url);
   const input = {
     address: url.searchParams.get('address'),
+    advancedFilter: url.searchParams.get('advancedFilter'),
     bank: url.searchParams.get('bank'),
     limit: url.searchParams.get('limit'),
     page: url.searchParams.get('page'),

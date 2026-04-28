@@ -47,16 +47,70 @@ vi.mock('@/shared/ui/button', () => ({
   ),
 }));
 
+vi.mock('@/shared/ui/ActionMenu', () => ({
+  ActionMenu: ({
+    ariaLabel,
+    children,
+    trigger,
+  }: {
+    ariaLabel?: string;
+    children?: React.ReactNode;
+    trigger?: React.ReactNode;
+  }) => (
+    <div>
+      <button type='button'>{trigger ?? ariaLabel ?? 'Open actions menu'}</button>
+      <div>{children}</div>
+    </div>
+  ),
+}));
+
+vi.mock('@/shared/ui/app-modal', () => ({
+  AppModal: ({
+    children,
+    footer,
+    isOpen,
+    title,
+  }: {
+    children?: React.ReactNode;
+    footer?: React.ReactNode;
+    isOpen: boolean;
+    title: string;
+  }) =>
+    isOpen ? (
+      <section role='dialog' aria-label={title}>
+        {children}
+        {footer}
+      </section>
+    ) : null,
+}));
+
+vi.mock('@/shared/ui/chip', () => ({
+  Chip: ({
+    label,
+    onClick,
+  }: {
+    label: React.ReactNode;
+    onClick?: () => void;
+  }) => (
+    <button type='button' onClick={onClick}>
+      {label}
+    </button>
+  ),
+}));
+
 vi.mock('@/shared/ui/dropdown-menu', () => ({
   DropdownMenuItem: ({
     children,
     disabled,
     onClick,
+    ...props
   }: React.ButtonHTMLAttributes<HTMLButtonElement> & { children?: React.ReactNode }) => (
-    <button type='button' disabled={disabled} onClick={onClick}>
+    <button type='button' disabled={disabled} onClick={onClick} {...props}>
       {children}
     </button>
   ),
+  DropdownMenuLabel: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuSeparator: () => <hr />,
 }));
 
 vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
@@ -123,8 +177,44 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   ),
 }));
 
+vi.mock('@/shared/ui/select-simple', () => ({
+  SelectSimple: ({
+    'aria-label': ariaLabel,
+    ariaLabel: explicitAriaLabel,
+    onValueChange,
+    options,
+    value,
+  }: {
+    'aria-label'?: string;
+    ariaLabel?: string;
+    onValueChange?: (value: string) => void;
+    options: Array<{ label: string; value: string }>;
+    value?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel ?? explicitAriaLabel}
+      value={value ?? ''}
+      onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+        onValueChange?.(event.target.value)
+      }
+    >
+      <option value=''>Filter presets</option>
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
+}));
+
 vi.mock('@/shared/ui/templates.public', () => ({
-  FilterPanel: () => <div data-testid='organization-filters'>Filters</div>,
+  FilterPanel: ({ actions }: { actions?: React.ReactNode }) => (
+    <div data-testid='organization-filters'>
+      Filters
+      {actions}
+    </div>
+  ),
   StandardDataTablePanel: ({
     actions,
     children,
@@ -142,9 +232,23 @@ vi.mock('@/shared/ui/templates.public', () => ({
   ),
 }));
 
+vi.mock('@/shared/ui/templates/modals/JSONImportModal', () => ({
+  JSONImportModal: ({ isOpen, title }: { isOpen: boolean; title: string }) =>
+    isOpen ? <div role='dialog'>{title}</div> : null,
+}));
+
 vi.mock('./FilemakerPracujScrapeModal', () => ({
   FilemakerPracujScrapeModal: ({ open }: { open: boolean }) =>
     open ? <div data-testid='pracuj-scrape-modal' /> : null,
+}));
+
+vi.mock('./FilemakerOrganizationAdvancedFilterModal', () => ({
+  FilemakerOrganizationAdvancedFilterModal: ({ open }: { open: boolean }) =>
+    open ? <div data-testid='organization-advanced-filter-modal' /> : null,
+}));
+
+vi.mock('./OrganizationAdvancedFilterBuilder', () => ({
+  OrganizationAdvancedFilterBuilder: () => <div data-testid='organization-preset-builder' />,
 }));
 
 import { FilemakerOrganizationsListPanel } from './FilemakerOrganizationsListPanel';
@@ -179,10 +283,13 @@ const createProps = (
   error: null,
   filters: {
     address: 'all',
+    advancedFilter: '',
     bank: 'all',
     parent: 'all',
     updatedBy: '',
   },
+  activeAdvancedFilterPresetId: null,
+  advancedFilterPresets: [],
   isLoading: false,
   isSelectingAllOrganizations: false,
   nodes: [],
@@ -198,6 +305,8 @@ const createProps = (
   onResetFilters: vi.fn(),
   onSelectAllOrganizations: vi.fn(),
   onSelectOrganizationsPage: vi.fn(),
+  onSetAdvancedFilterPresets: vi.fn(),
+  onSetAdvancedFilterState: vi.fn(),
   onToggleOrganizationSelection: vi.fn(),
   organizationEmailScrapeState: {},
   organizationWebsiteSocialScrapeState: {},
@@ -301,6 +410,57 @@ describe('FilemakerOrganizationsListPanel', () => {
       within(actions).getByRole('button', { name: 'Select All Resultset' })
     ).toBeInTheDocument();
     expect(within(actions).getByRole('button', { name: /Copy selected IDs/i })).toBeInTheDocument();
-    expect(within(actions).getByRole('button', { name: /Scrape pracuj.pl/i })).toBeInTheDocument();
+    expect(within(actions).getByRole('button', { name: /Scrape jobs/i })).toBeInTheDocument();
+  });
+
+  it('renders advanced filter controls and applies saved presets', async () => {
+    const user = userEvent.setup();
+    const onSetAdvancedFilterState = vi.fn();
+
+    render(
+      <FilemakerOrganizationsListPanel
+        {...createProps({
+          activeAdvancedFilterPresetId: 'preset-1',
+          advancedFilterPresets: [
+            {
+              id: 'preset-1',
+              name: 'Warsaw roots',
+              filter: {
+                combinator: 'and',
+                id: 'group-1',
+                not: false,
+                rules: [
+                  {
+                    field: 'city',
+                    id: 'condition-1',
+                    operator: 'contains',
+                    type: 'condition',
+                    value: 'Warsaw',
+                  },
+                ],
+                type: 'group',
+              },
+            },
+          ],
+          filters: {
+            address: 'all',
+            advancedFilter: '{"type":"group"}',
+            bank: 'all',
+            parent: 'all',
+            updatedBy: '',
+          },
+          onSetAdvancedFilterState,
+        })}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Advanced Filter' })).toBeInTheDocument();
+
+    await user.click(screen.getByTitle('Apply preset Warsaw roots'));
+
+    expect(onSetAdvancedFilterState).toHaveBeenCalledWith(
+      expect.stringContaining('"city"'),
+      'preset-1'
+    );
   });
 });

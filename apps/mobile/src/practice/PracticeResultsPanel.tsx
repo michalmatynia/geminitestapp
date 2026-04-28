@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { KangurMobileInsetPanel as InsetPanel } from '../shared/KangurMobileUi';
-import { KangurMobileLinkButton as LinkButton } from './duels-primitives';
-import { PracticeRecentResultRow } from './practice-primitives';
+import { KangurMobileLinkButton as LinkButton } from '../duels/duels-primitives/BaseComponents';
+import { PracticeRecentResultRow } from './PracticeRecentResultRow';
 import type { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import type { useKangurMobilePracticeRecentResults } from './useKangurMobilePracticeRecentResults';
 

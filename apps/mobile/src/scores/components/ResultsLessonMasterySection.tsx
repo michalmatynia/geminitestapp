@@ -2,14 +2,15 @@ import { View, Text } from 'react-native';
 import { Card, KangurMobileSummaryChip, LinkButton } from '../../shared/KangurMobileUi';
 import { LessonMasteryRow } from './LessonMasteryRow';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type KangurMobileHomeLessonMasteryItem } from '../../home/useKangurMobileHomeLessonMastery';
 
 interface ResultsLessonMasterySectionProps {
   lessonMastery: {
     trackedLessons: number;
     masteredLessons: number;
     lessonsNeedingPractice: number;
-    weakest: { title: string; lessonHref: string }[];
-    strongest: { title: string; lessonHref: string }[];
+    weakest: KangurMobileHomeLessonMasteryItem[];
+    strongest: KangurMobileHomeLessonMasteryItem[];
   };
   lessonFocusSummary: string | null;
   copy: KangurMobileCopy;

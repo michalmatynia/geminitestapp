@@ -2,10 +2,11 @@
 /* eslint-disable max-lines, max-lines-per-function */
 
 import { Play, Search } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
-  FILEMAKER_PRACUJ_SCRAPE_ENDPOINT,
+  FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
+  type FilemakerJobBoardScrapeProvider,
   type FilemakerPracujDuplicateStrategy,
   type FilemakerPracujImportStrategy,
   type FilemakerPracujOrganizationScope,
@@ -32,11 +33,14 @@ type ScrapeDraft = {
   extractDescriptions: boolean;
   extractSalaries: boolean;
   headless: boolean;
+  humanizeMouse: boolean;
   importStrategy: FilemakerPracujImportStrategy;
   maxOffers: string;
   maxPages: string;
   minimumMatchConfidence: string;
   organizationScope: FilemakerPracujOrganizationScope;
+  personaId: string;
+  provider: FilemakerJobBoardScrapeProvider;
   sourceUrl: string;
   status: FilemakerJobListingStatus;
   timeoutMs: string;
@@ -53,9 +57,9 @@ const readErrorMessage = async (response: Response): Promise<string> => {
     const message = typeof body.message === 'string' ? body.message : body.error;
     return typeof message === 'string' && message.trim().length > 0
       ? message
-      : `pracuj.pl scrape failed (${response.status}).`;
+      : `Job-board scrape failed (${response.status}).`;
   } catch {
-    return `pracuj.pl scrape failed (${response.status}).`;
+    return `Job-board scrape failed (${response.status}).`;
   }
 };
 
@@ -69,12 +73,15 @@ const buildRequest = (
   extractDescriptions: draft.extractDescriptions,
   extractSalaries: draft.extractSalaries,
   headless: draft.headless,
+  humanizeMouse: draft.humanizeMouse,
   importStrategy: draft.importStrategy,
   maxOffers: toNumber(draft.maxOffers, 25),
   maxPages: toNumber(draft.maxPages, 2),
   minimumMatchConfidence: toNumber(draft.minimumMatchConfidence, 85),
   mode,
   organizationScope: draft.organizationScope,
+  personaId: draft.personaId.trim().length > 0 ? draft.personaId.trim() : null,
+  provider: draft.provider,
   selectedOrganizationIds: draft.organizationScope === 'selected' ? selectedOrganizationIds : [],
   sourceUrl: draft.sourceUrl.trim(),
   status: draft.status,
@@ -94,11 +101,14 @@ const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
   extractDescriptions: true,
   extractSalaries: true,
   headless: true,
+  humanizeMouse: true,
   importStrategy: 'matched_only',
   maxOffers: '25',
   maxPages: '2',
   minimumMatchConfidence: '85',
   organizationScope: selectedOrganizationCount > 0 ? 'selected' : 'all',
+  personaId: '',
+  provider: 'auto',
   sourceUrl: '',
   status: 'open',
   timeoutMs: '180000',
@@ -109,11 +119,29 @@ export function FilemakerPracujScrapeModal(
 ): React.JSX.Element | null {
   const { toast } = useToast();
   const [draft, setDraft] = useState<ScrapeDraft>(() => defaultDraft(props.selectedOrganizationCount));
+  const [organizationScopeTouched, setOrganizationScopeTouched] = useState(false);
   const [modeInFlight, setModeInFlight] = useState<FilemakerPracujScrapeMode | null>(null);
   const [result, setResult] = useState<FilemakerPracujScrapeResponse | null>(null);
   const selectedScopeDisabled = props.selectedOrganizationCount === 0;
   const isRunning = modeInFlight !== null;
   const sourceUrlMissing = draft.sourceUrl.trim().length === 0;
+
+  useEffect(() => {
+    if (!props.open) return;
+    setDraft((current) => {
+      if (props.selectedOrganizationCount === 0 && current.organizationScope === 'selected') {
+        return { ...current, organizationScope: 'all' };
+      }
+      if (
+        !organizationScopeTouched &&
+        props.selectedOrganizationCount > 0 &&
+        current.organizationScope === 'all'
+      ) {
+        return { ...current, organizationScope: 'selected' };
+      }
+      return current;
+    });
+  }, [organizationScopeTouched, props.open, props.selectedOrganizationCount]);
 
   const organizationScopeOptions = useMemo(
     () => [
@@ -133,12 +161,12 @@ export function FilemakerPracujScrapeModal(
 
   const runScrape = async (mode: FilemakerPracujScrapeMode): Promise<void> => {
     if (sourceUrlMissing) {
-      toast('Provide a pracuj.pl category or offer link.', { variant: 'error' });
+      toast('Provide a supported job-board category or offer link.', { variant: 'error' });
       return;
     }
     setModeInFlight(mode);
     try {
-      const response = await fetch(FILEMAKER_PRACUJ_SCRAPE_ENDPOINT, {
+      const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
         method: 'POST',
         headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(buildRequest(draft, mode, props.selectedOrganizationIds)),
@@ -155,7 +183,7 @@ export function FilemakerPracujScrapeModal(
         props.onCompleted();
       }
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'pracuj.pl scrape failed.', {
+      toast(error instanceof Error ? error.message : 'Job-board scrape failed.', {
         variant: 'error',
       });
     } finally {
@@ -167,7 +195,7 @@ export function FilemakerPracujScrapeModal(
     <FormModal
       open={props.open}
       onClose={props.onClose}
-      title='pracuj.pl Scraper'
+      title='Job Board Scraper'
       subtitle='Centralized through the Job Board Playwright sequencer.'
       onSave={() => {
         void runScrape('preview');
@@ -194,26 +222,42 @@ export function FilemakerPracujScrapeModal(
       }
     >
       <div className='space-y-5'>
-        <FormField label='pracuj.pl link' required>
+        <FormField label='Job board link' required>
           <Input
             value={draft.sourceUrl}
             onChange={(event) => updateDraft('sourceUrl', event.target.value)}
-            placeholder='https://www.pracuj.pl/praca/...'
+            placeholder='https://www.pracuj.pl/praca/... or https://justjoin.it/...'
           />
         </FormField>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+          <FormField label='Provider'>
+            <SelectSimple
+              ariaLabel='Provider'
+              value={draft.provider}
+              options={[
+                { value: 'auto', label: 'Auto-detect' },
+                { value: 'pracuj_pl', label: 'Pracuj.pl' },
+                { value: 'justjoin_it', label: 'Just Join IT' },
+                { value: 'nofluffjobs', label: 'No Fluff Jobs' },
+              ]}
+              onValueChange={(value) => updateDraft('provider', value as FilemakerJobBoardScrapeProvider)}
+            />
+          </FormField>
           <FormField label='Organisation scope'>
             <SelectSimple
+              ariaLabel='Organisation scope'
               value={draft.organizationScope}
               options={organizationScopeOptions}
-              onValueChange={(value) =>
-                updateDraft('organizationScope', value as FilemakerPracujOrganizationScope)
-              }
+              onValueChange={(value) => {
+                setOrganizationScopeTouched(true);
+                updateDraft('organizationScope', value as FilemakerPracujOrganizationScope);
+              }}
             />
           </FormField>
           <FormField label='Unmatched employers'>
             <SelectSimple
+              ariaLabel='Unmatched employers'
               value={draft.importStrategy}
               options={[
                 { value: 'matched_only', label: 'Skip unmatched' },
@@ -224,6 +268,7 @@ export function FilemakerPracujScrapeModal(
           </FormField>
           <FormField label='Duplicates'>
             <SelectSimple
+              ariaLabel='Duplicates'
               value={draft.duplicateStrategy}
               options={[
                 { value: 'skip', label: 'Skip existing' },
@@ -267,6 +312,7 @@ export function FilemakerPracujScrapeModal(
           </FormField>
           <FormField label='Status'>
             <SelectSimple
+              ariaLabel='Status'
               value={draft.status}
               options={[
                 { value: 'draft', label: 'Draft' },
@@ -279,12 +325,20 @@ export function FilemakerPracujScrapeModal(
           </FormField>
         </div>
 
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
+        <div className='grid grid-cols-1 gap-3 md:grid-cols-4'>
           <ToggleRow
             label={draft.headless ? 'Headless browser' : 'Headed browser'}
             description='Runs in the shared Playwright sequencer.'
             checked={draft.headless}
             onCheckedChange={(checked) => updateDraft('headless', checked)}
+            variant='switch'
+            toggleOnRowClick
+          />
+          <ToggleRow
+            label='Humanized input'
+            description='Use persona pacing and mouse movement.'
+            checked={draft.humanizeMouse}
+            onCheckedChange={(checked) => updateDraft('humanizeMouse', checked)}
             variant='switch'
             toggleOnRowClick
           />
@@ -307,6 +361,13 @@ export function FilemakerPracujScrapeModal(
         </div>
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField label='Persona ID'>
+            <Input
+              value={draft.personaId}
+              onChange={(event) => updateDraft('personaId', event.target.value)}
+              placeholder='default persona'
+            />
+          </FormField>
           <FormField label='Delay ms'>
             <Input
               type='number'
@@ -316,6 +377,9 @@ export function FilemakerPracujScrapeModal(
               onChange={(event) => updateDraft('delayMs', event.target.value)}
             />
           </FormField>
+        </div>
+
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <FormField label='Timeout ms'>
             <Input
               type='number'
@@ -331,6 +395,7 @@ export function FilemakerPracujScrapeModal(
           <div className='space-y-3 rounded-md border border-border/60 p-3'>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='secondary'>{result.browserMode}</Badge>
+              <Badge variant='secondary'>{result.sourceSite}</Badge>
               <Badge variant='secondary'>{result.mode}</Badge>
               <Badge variant='secondary'>{result.summary.scrapedOffers} offers</Badge>
               <Badge variant='secondary'>{result.summary.matchedOffers} matched</Badge>
@@ -350,6 +415,7 @@ export function FilemakerPracujScrapeModal(
                   <div className='mt-1 text-xs text-muted-foreground'>
                     {item.offer.companyName}
                     {item.match ? ` -> ${item.match.organizationName}` : ''}
+                    {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
                   </div>
                 </div>
               ))}

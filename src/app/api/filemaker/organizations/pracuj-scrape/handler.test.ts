@@ -24,7 +24,9 @@ describe('filemaker pracuj.pl scrape handler', () => {
       browserMode: 'headless',
       mode: 'preview',
       offers: [],
+      provider: 'pracuj_pl',
       runId: 'run-1',
+      sourceSite: 'pracuj.pl',
       sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
       summary: {
         createdListings: 0,
@@ -73,7 +75,7 @@ describe('filemaker pracuj.pl scrape handler', () => {
         }),
         { params: {} } as Parameters<typeof postHandler>[1]
       )
-    ).rejects.toThrow(/Invalid pracuj.pl scrape request JSON/);
+    ).rejects.toThrow(/Invalid job-board scrape request JSON/);
     expect(runFilemakerPracujScrapeMock).not.toHaveBeenCalled();
   });
 });

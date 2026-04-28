@@ -7,7 +7,7 @@ export const COMPANIES_COLLECTION = 'companies';
 export const JOB_LISTINGS_COLLECTION = 'job_listings';
 export const JOB_SCANS_COLLECTION = 'job_scans';
 
-export const jobScanProviderSchema = z.enum(['pracuj_pl']);
+export const jobScanProviderSchema = z.enum(['pracuj_pl', 'justjoin_it', 'nofluffjobs']);
 export type JobScanProvider = z.infer<typeof jobScanProviderSchema>;
 
 export const jobScanStatusSchema = z.enum([

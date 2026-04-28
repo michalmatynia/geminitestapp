@@ -1,7 +1,8 @@
 'use client';
+/* eslint-disable max-lines */
 
 import { PlusIcon } from 'lucide-react';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import {
@@ -26,6 +27,7 @@ import {
   type OrganizationFilters,
   type OrganizationListState,
 } from '../../pages/AdminFilemakerOrganizationsPage.types';
+import { FilemakerOrganizationAdvancedFilterModal } from './FilemakerOrganizationAdvancedFilterModal';
 import { ORGANIZATION_FILTER_FIELDS } from './FilemakerOrganizationsListPanel.constants';
 import { FilemakerOrganizationsSelectionActions } from './FilemakerOrganizationsSelectionActions';
 
@@ -224,6 +226,9 @@ function OrganizationFiltersPanel(props: {
   filterValues: OrganizationFilters;
   listState: OrganizationListState;
 }): React.JSX.Element {
+  const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
+  const hasAdvancedFilter = props.filterValues.advancedFilter.trim().length > 0;
+
   return (
     <div className='w-full'>
       <FilterPanel
@@ -234,10 +239,32 @@ function OrganizationFiltersPanel(props: {
         onFilterChange={props.listState.onFilterChange}
         onSearchChange={props.listState.onQueryChange}
         onReset={props.listState.onResetFilters}
+        actions={
+          <Button
+            type='button'
+            size='sm'
+            variant={hasAdvancedFilter ? 'default' : 'outline'}
+            onClick={(): void => setIsAdvancedFilterOpen(true)}
+            className='h-8 w-full sm:w-auto'
+          >
+            Advanced Filter
+          </Button>
+        }
         showHeader={false}
         collapsible
         defaultExpanded
       />
+      {isAdvancedFilterOpen ? (
+        <FilemakerOrganizationAdvancedFilterModal
+          open={isAdvancedFilterOpen}
+          value={props.filterValues.advancedFilter}
+          presets={props.listState.advancedFilterPresets}
+          onClose={(): void => setIsAdvancedFilterOpen(false)}
+          onApply={props.listState.onSetAdvancedFilterState}
+          onClear={(): void => props.listState.onSetAdvancedFilterState('', null)}
+          onSavePresets={props.listState.onSetAdvancedFilterPresets}
+        />
+      ) : null}
     </div>
   );
 }
@@ -248,11 +275,18 @@ function OrganizationListHeader(props: OrganizationListState): React.JSX.Element
   const filterValues = useMemo<OrganizationFilters>(
     () => ({
       address: props.filters.address,
+      advancedFilter: props.filters.advancedFilter,
       bank: props.filters.bank,
       parent: props.filters.parent,
       updatedBy: props.filters.updatedBy,
     }),
-    [props.filters.address, props.filters.bank, props.filters.parent, props.filters.updatedBy]
+    [
+      props.filters.address,
+      props.filters.advancedFilter,
+      props.filters.bank,
+      props.filters.parent,
+      props.filters.updatedBy,
+    ]
   );
 
   useEffect(() => {

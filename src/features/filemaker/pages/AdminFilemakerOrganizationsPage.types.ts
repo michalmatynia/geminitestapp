@@ -4,6 +4,7 @@ import type { PanelAction } from '@/shared/contracts/ui/panels';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
+import type { OrganizationAdvancedFilterPreset } from '../filemaker-organization-advanced-filters';
 import type { FilemakerEvent, FilemakerOrganization } from '../types';
 
 export type OrganizationSelectionState = Record<string, boolean>;
@@ -14,6 +15,7 @@ export type OrganizationParentFilter = 'all' | 'root' | 'child';
 
 export type OrganizationFilters = {
   address: OrganizationAddressFilter;
+  advancedFilter: string;
   bank: OrganizationBankFilter;
   parent: OrganizationParentFilter;
   updatedBy: string;
@@ -40,6 +42,8 @@ export type MongoFilemakerOrganizationsState = MongoFilemakerOrganizationsRespon
 
 export type OrganizationListState = {
   actions: PanelAction[];
+  activeAdvancedFilterPresetId: string | null;
+  advancedFilterPresets: OrganizationAdvancedFilterPreset[];
   error: string | null;
   filters: OrganizationFilters;
   isLoading: boolean;
@@ -57,6 +61,8 @@ export type OrganizationListState = {
   onResetFilters: () => void;
   onSelectAllOrganizations: () => Promise<void>;
   onSelectOrganizationsPage: () => void;
+  onSetAdvancedFilterPresets: (presets: OrganizationAdvancedFilterPreset[]) => Promise<void>;
+  onSetAdvancedFilterState: (value: string, presetId: string | null) => void;
   onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
   organizationEmailScrapeState: Record<string, boolean>;
   organizationWebsiteSocialScrapeState: Record<string, boolean>;
@@ -78,6 +84,7 @@ export const ORGANIZATION_PAGE_SIZE_OPTIONS = [24, 48, 96, 200];
 
 export const createDefaultOrganizationFilters = (): OrganizationFilters => ({
   address: 'all',
+  advancedFilter: '',
   bank: 'all',
   parent: 'all',
   updatedBy: '',

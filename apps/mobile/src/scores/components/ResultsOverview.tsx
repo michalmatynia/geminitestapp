@@ -1,5 +1,7 @@
+import React from 'react';
 import { View } from 'react-native';
-import { Metric } from '../../shared/KangurMobileUi';
+import { KangurMobileMetric as Metric } from '../../shared/KangurMobileUiDisplay';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
 interface ResultsOverviewProps {
   results: {
@@ -12,7 +14,7 @@ interface ResultsOverviewProps {
       logicSessions: number;
     };
   };
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
 }
 
 export function ResultsOverview({ results, copy }: ResultsOverviewProps): React.JSX.Element {

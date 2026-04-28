@@ -6,6 +6,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import { createFilemakerEmail } from '../filemaker-settings.entities';
 import type { FilemakerEmail, FilemakerEmailStatus, FilemakerOrganization, FilemakerPartyKind } from '../types';
+import type { MxLookupOutcome } from './filemaker-email-mx-verifier';
 
 export const FILEMAKER_EMAILS_COLLECTION = 'filemaker_emails';
 export const FILEMAKER_EMAIL_LINKS_COLLECTION = 'filemaker_email_links';
@@ -19,6 +20,10 @@ export type MongoFilemakerEmailDocument = Document & {
   importBatchId?: string;
   importSourceKind?: string;
   importedAt?: Date;
+  domainHasMx?: boolean;
+  domainMxCheckedAt?: Date;
+  domainMxLookupOutcome?: MxLookupOutcome;
+  isRoleAccount?: boolean;
   legacyStatusRaw?: string;
   legacyStatusUuid?: string;
   legacyUuid?: string;

@@ -68,7 +68,7 @@ import { KangurMobileAiTutorCard } from './KangurMobileAiTutorCard';
 const context = {
   contentId: 'lesson:test',
   focusId: 'focus-id',
-  focusKind: 'lesson',
+  focusKind: 'screen',
   surface: 'lesson',
   title: 'Test lesson',
 } as const;

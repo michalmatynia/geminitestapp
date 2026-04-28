@@ -9,6 +9,7 @@ export type FilemakerOrganizationParentFilter = 'all' | 'root' | 'child';
 
 export type FilemakerOrganizationsListInput = {
   address?: string | null;
+  advancedFilter?: string | null;
   bank?: string | null;
   limit?: string | null;
   page?: string | null;
@@ -20,6 +21,7 @@ export type FilemakerOrganizationsListInput = {
 
 export type FilemakerOrganizationsListOptions = {
   addressFilter: FilemakerOrganizationAddressFilter;
+  advancedFilter: string;
   bankFilter: FilemakerOrganizationBankFilter;
   pageSize: number;
   parentFilter: FilemakerOrganizationParentFilter;
@@ -60,6 +62,7 @@ export const resolveOrganizationListOptions = (
   const limit = readOptionalString(input.limit);
   return {
     addressFilter: normalizeAddressFilter(readOptionalString(input.address)),
+    advancedFilter: readOptionalString(input.advancedFilter).trim(),
     bankFilter: normalizeBankFilter(readOptionalString(input.bank)),
     pageSize: normalizePageSize(pageSize, limit),
     parentFilter: normalizeParentFilter(readOptionalString(input.parent)),

@@ -1,6 +1,7 @@
 import type { PlaywrightActionBlockConfig } from '@/shared/contracts/playwright-steps';
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from './supplier-1688-runtime-constants';
 import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from './filemaker-organization-presence-runtime-constants';
+import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from './job-board-runtime-constants';
 
 export const STEP_REGISTRY = {
   // Browser lifecycle
@@ -120,6 +121,36 @@ export const STEP_REGISTRY = {
   [FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.finalize]: {
     id: FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS.finalize,
     label: 'Finalize organisation website discovery',
+  },
+
+  // Job board scrape runtime
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.inputValidate]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.inputValidate,
+    label: 'Validate job board scrape input',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.openSource]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.openSource,
+    label: 'Open job board source',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.acceptCookies]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.acceptCookies,
+    label: 'Accept job board cookies',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.collectOfferLinks]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.collectOfferLinks,
+    label: 'Collect job board offer links',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.waitOfferContent]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.waitOfferContent,
+    label: 'Wait for job offer content',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.extractOfferSnapshot]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.extractOfferSnapshot,
+    label: 'Extract job offer snapshot',
+  },
+  [JOB_BOARD_SCRAPE_RUNTIME_STEPS.finalize]: {
+    id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.finalize,
+    label: 'Finalize job board scrape',
   },
 
   // Product scan shared / Amazon runtime flow

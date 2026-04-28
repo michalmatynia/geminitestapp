@@ -22,6 +22,10 @@ import { FilemakerOrganizationMasterTreeNode } from '../components/shared/Filema
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { buildFilemakerOrganizationListNodes } from '../entity-master-tree';
 import {
+  organizationAdvancedFilterPresetSchema,
+  type OrganizationAdvancedFilterPreset,
+} from '../filemaker-organization-advanced-filters';
+import {
   buildOrganizationEmailScrapeToast,
   buildOrganizationWebsiteSocialScrapeToast,
   readOrganizationEmailScrapeErrorMessage,
@@ -50,6 +54,12 @@ import {
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
 const BANK_FILTERS = new Set(['with_bank', 'without_bank']);
 const PARENT_FILTERS = new Set(['root', 'child']);
+const ORGANIZATION_ADVANCED_FILTER_PRESETS_STORAGE_KEY =
+  'filemakerOrganizationAdvancedFilterPresets';
+const ORGANIZATION_APPLIED_ADVANCED_FILTER_STORAGE_KEY =
+  'filemakerOrganizationAppliedAdvancedFilter';
+const ORGANIZATION_APPLIED_ADVANCED_FILTER_PRESET_STORAGE_KEY =
+  'filemakerOrganizationAppliedAdvancedFilterPresetId';
 
 const normalizeSelectFilter = <T extends string>(
   value: string,
@@ -61,6 +71,7 @@ const FILTER_NORMALIZERS: Record<
   string,
   (value: string) => Partial<OrganizationFilters>
 > = {
+  advancedFilter: (value: string) => ({ advancedFilter: value.trim() }),
   address: (value: string) => ({
     address: normalizeSelectFilter(value, ADDRESS_FILTERS, 'all'),
   }),
@@ -93,6 +104,57 @@ const normalizeFilterValue = (key: string, value: unknown): Partial<Organization
   return normalizer ? normalizer(typeof value === 'string' ? value : '') : {};
 };
 
+const readOrganizationAdvancedFilterPresets = (): OrganizationAdvancedFilterPreset[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const rawValue = window.localStorage.getItem(ORGANIZATION_ADVANCED_FILTER_PRESETS_STORAGE_KEY);
+    if (rawValue === null || rawValue.trim().length === 0) return [];
+    const parsed: unknown = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry: unknown): OrganizationAdvancedFilterPreset | null => {
+        const result = organizationAdvancedFilterPresetSchema.safeParse(entry);
+        return result.success ? result.data : null;
+      })
+      .filter((entry): entry is OrganizationAdvancedFilterPreset => entry !== null);
+  } catch {
+    return [];
+  }
+};
+
+const readStoredString = (key: string): string => {
+  if (typeof window === 'undefined') return '';
+  return window.localStorage.getItem(key)?.trim() ?? '';
+};
+
+const persistAdvancedFilterPresets = (
+  presets: OrganizationAdvancedFilterPreset[]
+): Promise<void> => {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(
+      ORGANIZATION_ADVANCED_FILTER_PRESETS_STORAGE_KEY,
+      JSON.stringify(presets)
+    );
+  }
+  return Promise.resolve();
+};
+
+const persistAppliedAdvancedFilterState = (state: {
+  presetId: string | null;
+  value: string;
+}): void => {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(ORGANIZATION_APPLIED_ADVANCED_FILTER_STORAGE_KEY, state.value);
+  if (state.presetId !== null && state.presetId.length > 0) {
+    window.localStorage.setItem(
+      ORGANIZATION_APPLIED_ADVANCED_FILTER_PRESET_STORAGE_KEY,
+      state.presetId
+    );
+  } else {
+    window.localStorage.removeItem(ORGANIZATION_APPLIED_ADVANCED_FILTER_PRESET_STORAGE_KEY);
+  }
+};
+
 const buildOrganizationListParams = (input: {
   filters: OrganizationFilters;
   page: number;
@@ -106,6 +168,9 @@ const buildOrganizationListParams = (input: {
     pageSize: String(input.pageSize),
     parent: input.filters.parent,
   });
+  if (input.filters.advancedFilter.length > 0) {
+    params.set('advancedFilter', input.filters.advancedFilter);
+  }
   if (input.query.length > 0) params.set('query', input.query);
   const updatedBy = input.filters.updatedBy.trim();
   if (updatedBy.length > 0) params.set('updatedBy', updatedBy);
@@ -337,7 +402,19 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_ORGANIZATION_PAGE_SIZE);
-  const [filters, setFilters] = useState<OrganizationFilters>(createDefaultOrganizationFilters);
+  const [filters, setFilters] = useState<OrganizationFilters>(() => ({
+    ...createDefaultOrganizationFilters(),
+    advancedFilter: readStoredString(ORGANIZATION_APPLIED_ADVANCED_FILTER_STORAGE_KEY),
+  }));
+  const [activeAdvancedFilterPresetId, setActiveAdvancedFilterPresetId] = useState<string | null>(
+    () => {
+      const value = readStoredString(ORGANIZATION_APPLIED_ADVANCED_FILTER_PRESET_STORAGE_KEY);
+      return value.length > 0 ? value : null;
+    }
+  );
+  const [advancedFilterPresets, setAdvancedFilterPresets] = useState<
+    OrganizationAdvancedFilterPreset[]
+  >(readOrganizationAdvancedFilterPresets);
   const [organizationsRefreshKey, setOrganizationsRefreshKey] = useState(0);
   const [isSelectingAllOrganizations, setIsSelectingAllOrganizations] = useState(false);
   const [organizationEmailScrapeState, setOrganizationEmailScrapeState] =
@@ -518,9 +595,29 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     settingsStore.refetch();
     setOrganizationsRefreshKey((current) => current + 1);
   }, [settingsStore]);
+  const setAdvancedFilterState = useCallback((value: string, presetId: string | null): void => {
+    const normalizedValue = value.trim();
+    const nextPresetId = normalizedValue.length > 0 ? presetId : null;
+    setFilters((current: OrganizationFilters): OrganizationFilters => ({
+      ...current,
+      advancedFilter: normalizedValue,
+    }));
+    setActiveAdvancedFilterPresetId(nextPresetId);
+    persistAppliedAdvancedFilterState({ value: normalizedValue, presetId: nextPresetId });
+    setPage(1);
+  }, []);
+  const updateAdvancedFilterPresets = useCallback(
+    async (presets: OrganizationAdvancedFilterPreset[]): Promise<void> => {
+      setAdvancedFilterPresets(presets);
+      await persistAdvancedFilterPresets(presets);
+    },
+    []
+  );
 
   return {
     actions,
+    activeAdvancedFilterPresetId,
+    advancedFilterPresets,
     error: mongoOrganizations.error,
     filters,
     isLoading: mongoOrganizations.isLoading,
@@ -555,6 +652,8 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     onResetFilters: () => {
       setQuery('');
       setFilters(createDefaultOrganizationFilters());
+      setActiveAdvancedFilterPresetId(null);
+      persistAppliedAdvancedFilterState({ value: '', presetId: null });
       setPage(1);
     },
     onSelectAllOrganizations: selectAllOrganizations,
@@ -567,6 +666,8 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         return next;
       });
     },
+    onSetAdvancedFilterPresets: updateAdvancedFilterPresets,
+    onSetAdvancedFilterState: setAdvancedFilterState,
     onToggleOrganizationSelection: toggleOrganizationSelection,
     onLaunchOrganizationEmailScrape: launchOrganizationEmailScrape,
     onLaunchOrganizationWebsiteSocialScrape: launchOrganizationWebsiteSocialScrape,

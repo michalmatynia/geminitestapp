@@ -112,7 +112,7 @@ function MainStatsPanel(props: {
   return (
     <>
       <PracticeDuelsPanel
-        practiceDuels={props.practiceDuels}
+        practiceDuels={props.practiceDuels.duels}
         openDuelSession={props.openDuelSession}
         copy={props.copy}
         locale={props.locale}
@@ -147,18 +147,18 @@ function SecondaryStatsPanel(props: {
         locale={props.locale}
       />
       <PracticeResultsPanel
-        practiceRecentResults={props.practiceRecentResults}
+        practiceRecentResults={props.practiceRecentResults.recentResults}
         resultsHistoryHref={props.resultsHistoryHref}
         copy={props.copy}
         locale={props.locale}
       />
       <PracticeAssignmentsPanel
-        practiceAssignments={props.practiceAssignments}
+        practiceAssignments={props.practiceAssignments.assignmentItems}
         copy={props.copy}
         locale={props.locale}
       />
       <PracticeLessonCheckpointsPanel
-        lessonCheckpoints={props.lessonCheckpoints}
+        lessonCheckpoints={props.lessonCheckpoints.recentCheckpoints}
         copy={props.copy}
         locale={props.locale}
       />

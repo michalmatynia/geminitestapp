@@ -2,13 +2,14 @@ import { View, Text } from 'react-native';
 import { Card, KangurMobileSummaryChip, LinkButton } from '../../shared/KangurMobileUi';
 import { ResultsBadgeChip } from '../results-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type KangurMobileResultsBadgeItem } from '../useKangurMobileResultsBadges';
 
 interface ResultsBadgesSectionProps {
   resultsBadges: {
     unlockedBadges: number;
     totalBadges: number;
     remainingBadges: number;
-    recentBadges: { id: string }[];
+    recentBadges: KangurMobileResultsBadgeItem[];
   };
   copy: KangurMobileCopy;
   profileHref: string;

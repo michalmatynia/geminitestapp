@@ -24,6 +24,15 @@ import {
   runFilemakerOrganizationPresenceScrapeForOrganization,
   type FilemakerOrganizationPresenceScrapeResult,
 } from './filemaker-organization-presence-scrape';
+import {
+  createMxVerifier,
+  type MxVerifier,
+} from './filemaker-email-mx-verifier';
+import {
+  EXTRACTOR_BODY,
+  classifyEmail,
+  isPlausibleEmail,
+} from './filemaker-organization-email-scrape-extractor';
 import { listMongoFilemakerWebsitesForOrganization } from './filemaker-website-repository';
 
 const EMAIL_SCRAPE_IMPORT_SOURCE_KIND = 'organization-email-scrape';
@@ -44,6 +53,24 @@ export type FilemakerOrganizationEmailScrapeSkippedItem = {
   reason: string;
 };
 
+export type FilemakerOrganizationEmailScrapeMetrics = {
+  totalEmailsFound: number;
+  disposableSkipped: number;
+  rolePromoted: number;
+  retries: number;
+  domainsWithoutMx: number;
+  domainsWithNullMx: number;
+  mxLookupTimeouts: number;
+  mxLookupErrors: number;
+  sourceBreakdown: {
+    regex: number;
+    mailto: number;
+    jsonLd: number;
+    dataCfemail: number;
+    microdata: number;
+  };
+};
+
 export type FilemakerOrganizationEmailScrapeResult = {
   organizationId: string;
   organizationName: string;
@@ -53,6 +80,7 @@ export type FilemakerOrganizationEmailScrapeResult = {
   visitedUrls: string[];
   promoted: FilemakerOrganizationEmailScrapePromotedItem[];
   skipped: FilemakerOrganizationEmailScrapeSkippedItem[];
+  metrics: FilemakerOrganizationEmailScrapeMetrics;
   warnings: string[];
   websiteDiscovery: Pick<
     FilemakerOrganizationPresenceScrapeResult,
@@ -63,13 +91,27 @@ export type FilemakerOrganizationEmailScrapeResult = {
 type ScrapedEmail = {
   address: string;
   sourceUrls: string[];
+  kinds: string[];
 };
 
 type EngineScrapeResult = {
   emails: ScrapedEmail[];
   visitedUrls: string[];
   warnings: string[];
+  metrics: FilemakerOrganizationEmailScrapeMetrics;
 };
+
+const emptyMetrics = (): FilemakerOrganizationEmailScrapeMetrics => ({
+  totalEmailsFound: 0,
+  disposableSkipped: 0,
+  rolePromoted: 0,
+  retries: 0,
+  domainsWithoutMx: 0,
+  domainsWithNullMx: 0,
+  mxLookupTimeouts: 0,
+  mxLookupErrors: 0,
+  sourceBreakdown: { regex: 0, mailto: 0, jsonLd: 0, dataCfemail: 0, microdata: 0 },
+});
 
 const normalizeEmailAddress = (value: string): string => value.trim().toLowerCase();
 
@@ -93,6 +135,7 @@ const uniqueStrings = (values: string[]): string[] =>
 const normalizeScrapedEmails = (value: unknown): ScrapedEmail[] => {
   if (!Array.isArray(value)) return [];
   const byAddress = new Map<string, Set<string>>();
+  const kindsByAddress = new Map<string, string[]>();
 
   value.forEach((entry: unknown): void => {
     const record =
@@ -119,11 +162,16 @@ const normalizeScrapedEmails = (value: unknown): ScrapedEmail[] => {
       if (normalizedSourceUrl.length > 0) existing.add(normalizedSourceUrl);
     });
     byAddress.set(address, existing);
+    const kinds = Array.isArray(record['kinds'])
+      ? record['kinds'].filter((k): k is string => typeof k === 'string')
+      : [];
+    kindsByAddress.set(address, kinds);
   });
 
   return Array.from(byAddress.entries()).map(([address, sourceUrls]) => ({
     address,
     sourceUrls: Array.from(sourceUrls),
+    kinds: kindsByAddress.get(address) ?? [],
   }));
 };
 
@@ -132,6 +180,41 @@ const normalizeStringArray = (value: unknown): string[] =>
     ? uniqueStrings(value.filter((item): item is string => typeof item === 'string'))
     : [];
 
+const parseMetrics = (value: unknown): FilemakerOrganizationEmailScrapeMetrics => {
+  const base = emptyMetrics();
+  if (value === null || typeof value !== 'object') return base;
+  const record = value as Record<string, unknown>;
+  const numberOr = (key: string, fallback: number): number => {
+    const raw = record[key];
+    return typeof raw === 'number' && Number.isFinite(raw) ? raw : fallback;
+  };
+  const breakdownRaw =
+    record['sourceBreakdown'] !== null && typeof record['sourceBreakdown'] === 'object'
+      ? (record['sourceBreakdown'] as Record<string, unknown>)
+      : {};
+  const breakdownNumber = (key: string): number => {
+    const raw = breakdownRaw[key];
+    return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+  };
+  return {
+    totalEmailsFound: numberOr('totalEmailsFound', base.totalEmailsFound),
+    disposableSkipped: numberOr('disposableSkipped', base.disposableSkipped),
+    rolePromoted: numberOr('rolePromoted', base.rolePromoted),
+    retries: numberOr('retries', base.retries),
+    domainsWithoutMx: numberOr('domainsWithoutMx', base.domainsWithoutMx),
+    domainsWithNullMx: numberOr('domainsWithNullMx', base.domainsWithNullMx),
+    mxLookupTimeouts: numberOr('mxLookupTimeouts', base.mxLookupTimeouts),
+    mxLookupErrors: numberOr('mxLookupErrors', base.mxLookupErrors),
+    sourceBreakdown: {
+      regex: breakdownNumber('regex'),
+      mailto: breakdownNumber('mailto'),
+      jsonLd: breakdownNumber('jsonLd'),
+      dataCfemail: breakdownNumber('dataCfemail'),
+      microdata: breakdownNumber('microdata'),
+    },
+  };
+};
+
 const parseEngineScrapeResult = (value: unknown): EngineScrapeResult => {
   const record =
     value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : {};
@@ -139,43 +222,55 @@ const parseEngineScrapeResult = (value: unknown): EngineScrapeResult => {
     emails: normalizeScrapedEmails(record['emails']),
     visitedUrls: normalizeStringArray(record['visitedUrls']),
     warnings: normalizeStringArray(record['warnings']),
+    metrics: parseMetrics(record['metrics']),
   };
 };
 
 export const buildFilemakerOrganizationEmailScrapeScript = (): string => `
   export default async ({ page, input, log }) => {
-    const emailPattern = /[A-Z0-9._%+-]+\\s*(?:@|\\s*\\[at\\]\\s*|\\s*\\(at\\)\\s*|\\s+at\\s+)\\s*[A-Z0-9.-]+\\s*(?:\\.|\\s*\\[dot\\]\\s*|\\s*\\(dot\\)\\s*|\\s+dot\\s+)\\s*[A-Z]{2,}/gi;
-    const normalizeEmail = (value) => String(value || '')
-      .replace(/\\s*\\[at\\]\\s*|\\s*\\(at\\)\\s*|\\s+at\\s+/gi, '@')
-      .replace(/\\s*\\[dot\\]\\s*|\\s*\\(dot\\)\\s*|\\s+dot\\s+/gi, '.')
-      .replace(/\\s+/g, '')
-      .toLowerCase()
-      .trim();
-    const isEmail = (value) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value);
+    const api = {};
+    ${EXTRACTOR_BODY}
+
     const toUrl = (value) => {
       try {
         const url = new URL(String(value || ''));
         return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
-      } catch {
+      } catch (e) {
         return null;
       }
     };
-    const sameHost = (left, right) => left.hostname.replace(/^www\\./, '') === right.hostname.replace(/^www\\./, '');
-    const contactWords = /(contact|kontakt|o-nas|onas|about|team|zespol|zarzad|biuro|office|firma)/i;
+    const sameHost = (left, right) =>
+      left.hostname.replace(/^www\\./, '') === right.hostname.replace(/^www\\./, '');
+
     const maxPages = Math.max(1, Math.min(Number(input.maxPages || 8), 12));
     const startUrls = Array.isArray(input.websites) ? input.websites.map(toUrl).filter(Boolean) : [];
-    const queue = [...startUrls];
+    const queue = startUrls.slice();
     const seen = new Set();
     const visitedUrls = [];
     const warnings = [];
-    const emails = new Map();
+    const aggregate = new Map();
+    const totalBreakdown = { regex: 0, mailto: 0, jsonLd: 0, dataCfemail: 0, microdata: 0 };
+    let disposableSkipped = 0;
+    let rolePromoted = 0;
+    let retries = 0;
 
-    const addEmail = (address, sourceUrl) => {
-      const normalized = normalizeEmail(address);
-      if (!isEmail(normalized)) return;
-      const current = emails.get(normalized) || new Set();
-      if (sourceUrl) current.add(sourceUrl);
-      emails.set(normalized, current);
+    const gotoWithRetry = async (href) => {
+      let lastError = null;
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          await page.goto(href, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          try { await page.waitForLoadState('networkidle', { timeout: 5000 }); } catch (e) {}
+          return true;
+        } catch (error) {
+          lastError = error;
+          const message = error instanceof Error ? error.message : String(error);
+          const transient = /Timeout|net::ERR_|ECONN|ETIMEDOUT|socket hang up/i.test(message);
+          if (!transient || attempt === 2) break;
+          retries += 1;
+          await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+        }
+      }
+      throw lastError || new Error('navigation failed');
     };
 
     while (queue.length > 0 && visitedUrls.length < maxPages) {
@@ -185,12 +280,15 @@ export const buildFilemakerOrganizationEmailScrapeScript = (): string => `
       if (seen.has(href)) continue;
       seen.add(href);
       try {
-        await page.goto(href, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        try { await page.waitForLoadState('networkidle', { timeout: 5000 }); } catch {}
+        await gotoWithRetry(href);
         const currentUrl = page.url();
         visitedUrls.push(currentUrl);
         const extracted = await page.evaluate(() => {
           const anchors = Array.from(document.querySelectorAll('a'));
+          const microdataNodes = Array.from(
+            document.querySelectorAll('[itemprop="email"], [itemprop="contactEmail"]')
+          );
+          const ogEmail = document.querySelector('meta[property="og:email"]');
           return {
             text: document.body ? document.body.innerText || '' : '',
             html: document.documentElement ? document.documentElement.innerHTML || '' : '',
@@ -200,25 +298,45 @@ export const buildFilemakerOrganizationEmailScrapeScript = (): string => `
             links: anchors.map((anchor) => ({
               href: anchor.href || '',
               text: anchor.textContent || '',
+              ariaLabel: anchor.getAttribute('aria-label') || '',
+              title: anchor.getAttribute('title') || '',
             })),
             jsonLd: Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
               .map((script) => script.textContent || ''),
+            microdataEmails: microdataNodes
+              .map((node) => node.getAttribute('content') || node.textContent || '')
+              .filter((value) => value && value.length > 0)
+              .concat(ogEmail ? [ogEmail.getAttribute('content') || ''] : []),
           };
         });
 
-        extracted.mailtos.forEach((mailto) => {
-          const address = mailto.replace(/^mailto:/i, '').split('?')[0];
-          addEmail(address, currentUrl);
+        const pageResult = api.extractEmailsFromPage({
+          text: extracted.text,
+          html: extracted.html,
+          mailtos: extracted.mailtos,
+          jsonLd: extracted.jsonLd,
+          microdataEmails: extracted.microdataEmails,
         });
-        const scanText = [extracted.text, extracted.html, ...extracted.jsonLd].join('\\n');
-        for (const match of scanText.matchAll(emailPattern)) {
-          addEmail(match[0], currentUrl);
-        }
+        totalBreakdown.regex += pageResult.breakdown.regex;
+        totalBreakdown.mailto += pageResult.breakdown.mailto;
+        totalBreakdown.jsonLd += pageResult.breakdown.jsonLd;
+        totalBreakdown.dataCfemail += pageResult.breakdown.dataCfemail;
+        totalBreakdown.microdata += pageResult.breakdown.microdata;
+        disposableSkipped += pageResult.disposableSkipped || 0;
+
+        pageResult.emails.forEach((entry) => {
+          const existing = aggregate.get(entry.address) || { sourceUrls: new Set(), kinds: new Set() };
+          existing.sourceUrls.add(currentUrl);
+          (entry.kinds || []).forEach((k) => existing.kinds.add(k));
+          aggregate.set(entry.address, existing);
+          if (entry.kinds && entry.kinds.indexOf('role') !== -1) rolePromoted += 1;
+        });
 
         const baseUrl = toUrl(currentUrl);
         if (baseUrl) {
           extracted.links.forEach((link) => {
-            if (!contactWords.test(link.href) && !contactWords.test(link.text)) return;
+            const haystack = (link.href || '') + ' ' + (link.text || '') + ' ' + (link.ariaLabel || '') + ' ' + (link.title || '');
+            if (!api.matchesContactKeyword(haystack)) return;
             const candidate = toUrl(link.href);
             if (!candidate || !sameHost(baseUrl, candidate)) return;
             if (!seen.has(candidate.toString()) && queue.length < maxPages * 2) {
@@ -232,13 +350,26 @@ export const buildFilemakerOrganizationEmailScrapeScript = (): string => `
       }
     }
 
+    const emailsOut = [];
+    aggregate.forEach((entry, address) => {
+      emailsOut.push({
+        address: address,
+        sourceUrls: Array.from(entry.sourceUrls),
+        kinds: Array.from(entry.kinds),
+      });
+    });
+
     return {
-      emails: Array.from(emails.entries()).map(([address, sourceUrls]) => ({
-        address,
-        sourceUrls: Array.from(sourceUrls),
-      })),
-      visitedUrls,
-      warnings,
+      emails: emailsOut,
+      visitedUrls: visitedUrls,
+      warnings: warnings,
+      metrics: {
+        totalEmailsFound: emailsOut.length,
+        disposableSkipped: disposableSkipped,
+        rolePromoted: rolePromoted,
+        retries: retries,
+        sourceBreakdown: totalBreakdown,
+      },
     };
   };
 `;
@@ -261,7 +392,14 @@ const upsertOrganizationEmails = async (input: {
   organization: FilemakerOrganization;
   runId: string;
   scrapedEmails: ScrapedEmail[];
-}): Promise<Pick<FilemakerOrganizationEmailScrapeResult, 'promoted' | 'skipped'>> => {
+  mxVerifier: MxVerifier;
+}): Promise<
+  Pick<FilemakerOrganizationEmailScrapeResult, 'promoted' | 'skipped'> & {
+    domainsWithoutMx: number;
+    mxLookupTimeouts: number;
+    mxLookupErrors: number;
+  }
+> => {
   const collections = await getMongoFilemakerEmailCollections();
   await ensureMongoFilemakerEmailIndexes(collections);
   const db = await getMongoDb();
@@ -272,11 +410,19 @@ const upsertOrganizationEmails = async (input: {
   const now = new Date();
   const promoted: FilemakerOrganizationEmailScrapePromotedItem[] = [];
   const skipped: FilemakerOrganizationEmailScrapeSkippedItem[] = [];
+  const domainsWithoutMx = new Set<string>();
+  const domainsWithMxLookupTimeout = new Set<string>();
+  const domainsWithMxLookupError = new Set<string>();
 
   for (const scrapedEmail of input.scrapedEmails) {
     const address = normalizeEmailAddress(scrapedEmail.address);
-    if (!EMAIL_RE.test(address)) {
+    if (!EMAIL_RE.test(address) || !isPlausibleEmail(address)) {
       skipped.push({ address: scrapedEmail.address, reason: 'Invalid address.' });
+      continue;
+    }
+    const classification = classifyEmail(address);
+    if (classification.kind === 'disposable') {
+      skipped.push({ address: scrapedEmail.address, reason: 'Disposable domain.' });
       continue;
     }
 
@@ -285,14 +431,23 @@ const upsertOrganizationEmails = async (input: {
       let emailId = existingEmail?.id ?? randomUUID();
       let emailWasCreated = false;
       if (!existingEmail) {
+        const domain = address.slice(address.indexOf('@') + 1);
+        const mxLookup = await input.mxVerifier.lookup(domain);
+        if (mxLookup.outcome === 'none') domainsWithoutMx.add(domain);
+        if (mxLookup.outcome === 'timeout') domainsWithMxLookupTimeout.add(domain);
+        if (mxLookup.outcome === 'error') domainsWithMxLookupError.add(domain);
         try {
           await emails.insertOne({
             _id: emailId,
+            domainHasMx: mxLookup.hasMail,
+            domainMxCheckedAt: now,
+            domainMxLookupOutcome: mxLookup.outcome,
             email: address,
             id: emailId,
             importBatchId,
             importedAt: now,
             importSourceKind: EMAIL_SCRAPE_IMPORT_SOURCE_KIND,
+            ...(classification.kind === 'role' ? { isRoleAccount: true } : {}),
             legacyUuids: [],
             schemaVersion: 1,
             status: 'unverified',
@@ -377,13 +532,21 @@ const upsertOrganizationEmails = async (input: {
     }
   }
 
-  return { promoted, skipped };
+  return {
+    promoted,
+    skipped,
+    domainsWithoutMx: domainsWithoutMx.size,
+    mxLookupErrors: domainsWithMxLookupError.size,
+    mxLookupTimeouts: domainsWithMxLookupTimeout.size,
+  };
 };
 
 export const runFilemakerOrganizationEmailScrape = async (input: {
   organizationId: string;
   maxPages?: number;
+  mxVerifier?: MxVerifier;
 }): Promise<FilemakerOrganizationEmailScrapeResult> => {
+  const mxVerifier = input.mxVerifier ?? createMxVerifier();
   const organization = await getMongoFilemakerOrganizationById(input.organizationId);
   if (!organization) {
     throw notFoundError(`Filemaker organisation ${input.organizationId} not found.`, {
@@ -433,6 +596,7 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
       visitedUrls: [],
       promoted: [],
       skipped: [{ address: '*', reason: 'No linked organisation websites to scrape.' }],
+      metrics: emptyMetrics(),
       warnings: discoveryWarnings,
       websiteDiscovery,
     };
@@ -482,6 +646,7 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
       visitedUrls: [],
       promoted: [],
       skipped: [{ address: '*', reason: run.error ?? `Scrape run status=${run.status}` }],
+      metrics: emptyMetrics(),
       warnings: [...discoveryWarnings, ...normalizeStringArray(run.logs)],
       websiteDiscovery,
     };
@@ -492,7 +657,17 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
     organization,
     runId: run.runId,
     scrapedEmails: parsed.emails,
+    mxVerifier,
   });
+
+  const disposableSkipped = upsert.skipped.filter((s) => s.reason === 'Disposable domain.').length;
+  const metrics: FilemakerOrganizationEmailScrapeMetrics = {
+    ...parsed.metrics,
+    disposableSkipped: parsed.metrics.disposableSkipped + disposableSkipped,
+    domainsWithoutMx: upsert.domainsWithoutMx,
+    mxLookupErrors: upsert.mxLookupErrors,
+    mxLookupTimeouts: upsert.mxLookupTimeouts,
+  };
 
   return {
     organizationId: organization.id,
@@ -503,6 +678,7 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
     visitedUrls: parsed.visitedUrls,
     promoted: upsert.promoted,
     skipped: upsert.skipped,
+    metrics,
     warnings: [...discoveryWarnings, ...parsed.warnings],
     websiteDiscovery,
   };

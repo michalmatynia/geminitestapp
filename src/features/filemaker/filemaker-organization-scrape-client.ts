@@ -2,6 +2,22 @@ export type OrganizationEmailScrapeResponse = {
   promoted?: Array<{ status?: string }>;
   skipped?: Array<{ reason?: string }>;
   runId?: string | null;
+  metrics?: {
+    totalEmailsFound?: number;
+    disposableSkipped?: number;
+    rolePromoted?: number;
+    retries?: number;
+    domainsWithoutMx?: number;
+    mxLookupTimeouts?: number;
+    mxLookupErrors?: number;
+    sourceBreakdown?: {
+      regex?: number;
+      mailto?: number;
+      jsonLd?: number;
+      dataCfemail?: number;
+      microdata?: number;
+    };
+  };
   websiteDiscovery?: {
     persisted?: {
       linked?: unknown[];
@@ -45,6 +61,45 @@ const getOrganizationEmailScrapeDiscoveryLinkCount = (
 const buildOrganizationEmailScrapeDiscoverySuffix = (count: number): string =>
   count > 0 ? ` ${count} website/social link${count === 1 ? '' : 's'} updated.` : '';
 
+const getPositiveMetricCount = (value: number | undefined): number | null =>
+  typeof value === 'number' && value > 0 ? value : null;
+
+const pushMetricPart = (
+  parts: string[],
+  value: number | undefined,
+  format: (count: number) => string
+): void => {
+  const count = getPositiveMetricCount(value);
+  if (count === null) return;
+  parts.push(format(count));
+};
+
+const buildOrganizationEmailScrapeMetricsSuffix = (
+  metrics: OrganizationEmailScrapeResponse['metrics']
+): string => {
+  if (!metrics) return '';
+  const parts: string[] = [];
+  pushMetricPart(parts, metrics.disposableSkipped, (count) => `${count} disposable dropped`);
+  pushMetricPart(parts, metrics.rolePromoted, (count) => `${count} role-account`);
+  pushMetricPart(parts, metrics.retries, (count) => `${count} retr${count === 1 ? 'y' : 'ies'}`);
+  pushMetricPart(
+    parts,
+    metrics.domainsWithoutMx,
+    (count) => `${count} domain${count === 1 ? '' : 's'} without MX`
+  );
+  pushMetricPart(
+    parts,
+    metrics.mxLookupTimeouts,
+    (count) => `${count} MX lookup timeout${count === 1 ? '' : 's'}`
+  );
+  pushMetricPart(
+    parts,
+    metrics.mxLookupErrors,
+    (count) => `${count} MX lookup error${count === 1 ? '' : 's'}`
+  );
+  return parts.length > 0 ? ` (${parts.join(', ')})` : '';
+};
+
 export const buildOrganizationEmailScrapeToast = (
   result: OrganizationEmailScrapeResponse
 ): ScrapeToast => {
@@ -56,10 +111,11 @@ export const buildOrganizationEmailScrapeToast = (
   const discoveredLinkCount = getOrganizationEmailScrapeDiscoveryLinkCount(result);
   const promotedCount = createdCount + linkedCount + alreadyLinkedCount;
   const discoverySuffix = buildOrganizationEmailScrapeDiscoverySuffix(discoveredLinkCount);
+  const metricsSuffix = buildOrganizationEmailScrapeMetricsSuffix(result.metrics);
   const message =
     promotedCount === 0 && skippedCount === 0
-      ? `Email scrape finished: no email addresses found.${discoverySuffix}`
-      : `Email scrape finished: ${createdCount} created, ${linkedCount} linked, ${alreadyLinkedCount} already linked, ${skippedCount} skipped.${discoverySuffix}`;
+      ? `Email scrape finished: no email addresses found.${discoverySuffix}${metricsSuffix}`
+      : `Email scrape finished: ${createdCount} created, ${linkedCount} linked, ${alreadyLinkedCount} already linked, ${skippedCount} skipped.${discoverySuffix}${metricsSuffix}`;
   return {
     message,
     variant: promotedCount === 0 && discoveredLinkCount === 0 ? 'warning' : 'success',

@@ -41,12 +41,15 @@ import {
   listJobScans,
   upsertJobScan,
 } from './job-scans-repository';
-import { fetchPracujPage, reducePracujHtml } from './providers/pracuj-pl-sync';
+import {
+  detectJobBoardProviderFromUrl,
+  fetchJobBoardPage,
+  reduceJobBoardHtml,
+} from './providers/job-board-sync';
 import { getCompanyById } from './companies-repository';
 
 const inferProviderFromUrl = (url: string): JobScanProvider => {
-  if (/(?:^|\.)pracuj\.pl/i.test(url)) return 'pracuj_pl';
-  return 'pracuj_pl';
+  return detectJobBoardProviderFromUrl(url) ?? 'pracuj_pl';
 };
 
 const stamp = (): string => new Date().toISOString();
@@ -89,29 +92,37 @@ export const createJobScan = async (input: JobScanCreateRequest & { createdBy?: 
   });
 };
 
-export type PracujJobOfferProbeResult = {
+export type JobBoardJobOfferProbeResult = {
   error: string | null;
   evaluation: JobScanEvaluation;
   finalUrl: string;
   fetchStatus: number;
   ok: boolean;
+  provider: JobScanProvider;
   runId: string | null;
+  sourceSite: string;
   sourceUrl: string;
   steps: JobScanStep[];
 };
 
-export const probePracujJobOffer = async (input: {
+export const probeJobBoardOffer = async (input: {
   forcePlaywright?: boolean | null;
   headless?: boolean | null;
+  humanizeMouse?: boolean | null;
+  personaId?: string | null;
+  provider?: JobScanProvider | null;
   sourceUrl: string;
   timeoutMs?: number | null;
-}): Promise<PracujJobOfferProbeResult> => {
+}): Promise<JobBoardJobOfferProbeResult> => {
   const steps: JobScanStep[] = [];
   const fetchStartedAt = stamp();
-  const fetchResult = await fetchPracujPage(input.sourceUrl, {
+  const fetchResult = await fetchJobBoardPage(input.sourceUrl, {
     fallbackToFetch: false,
     forcePlaywright: input.forcePlaywright ?? true,
     headless: input.headless ?? true,
+    humanizeMouse: input.humanizeMouse ?? true,
+    personaId: input.personaId ?? null,
+    provider: input.provider ?? null,
     timeoutMs: input.timeoutMs ?? null,
   });
   const fetchCompletedAt = stamp();
@@ -131,13 +142,15 @@ export const probePracujJobOffer = async (input: {
       finalUrl: fetchResult.finalUrl,
       fetchStatus: fetchResult.status,
       ok: false,
+      provider: fetchResult.provider,
       runId: fetchResult.runId ?? null,
+      sourceSite: fetchResult.sourceSite,
       sourceUrl: input.sourceUrl,
       steps,
     };
   }
 
-  const reduced = reducePracujHtml(fetchResult.html);
+  const reduced = reduceJobBoardHtml(fetchResult.html);
   const evalStartedAt = stamp();
   const evaluation = await evaluateJobPageWithAi({
     sourceUrl: fetchResult.finalUrl,
@@ -160,17 +173,34 @@ export const probePracujJobOffer = async (input: {
     finalUrl: fetchResult.finalUrl,
     fetchStatus: fetchResult.status,
     ok: evalOk,
+    provider: fetchResult.provider,
     runId: fetchResult.runId ?? null,
+    sourceSite: fetchResult.sourceSite,
     sourceUrl: input.sourceUrl,
     steps,
   };
 };
 
-const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
+export type PracujJobOfferProbeResult = JobBoardJobOfferProbeResult;
+
+export const probePracujJobOffer = async (input: {
+  forcePlaywright?: boolean | null;
+  headless?: boolean | null;
+  sourceUrl: string;
+  timeoutMs?: number | null;
+}): Promise<PracujJobOfferProbeResult> =>
+  await probeJobBoardOffer({
+    ...input,
+    provider: 'pracuj_pl',
+  });
+
+const runJobBoardSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
   const steps: JobScanStep[] = [];
 
   const fetchStartedAt = stamp();
-  const fetchResult = await fetchPracujPage(scan.sourceUrl);
+  const fetchResult = await fetchJobBoardPage(scan.sourceUrl, {
+    provider: scan.provider,
+  });
   const fetchCompletedAt = stamp();
   steps.push(
     buildStep('fetch', 'Fetch page', fetchResult.ok ? 'completed' : 'failed', {
@@ -191,7 +221,7 @@ const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
     });
   }
 
-  const reduced = reducePracujHtml(fetchResult.html);
+  const reduced = reduceJobBoardHtml(fetchResult.html);
   const evalStartedAt = stamp();
   const evaluation = await evaluateJobPageWithAi({
     sourceUrl: fetchResult.finalUrl,
@@ -647,8 +677,12 @@ export const synchronizeJobScan = async (scan: JobScanRecord): Promise<JobScanRe
 
   try {
     const running = await upsertJobScan({ ...scan, status: 'running' });
-    if (running.provider === 'pracuj_pl') {
-      return await runPracujSync(running);
+    if (
+      running.provider === 'pracuj_pl' ||
+      running.provider === 'justjoin_it' ||
+      running.provider === 'nofluffjobs'
+    ) {
+      return await runJobBoardSync(running);
     }
     return running;
   } catch (error) {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   usePriceGroups: vi.fn(),
   useProducers: vi.fn(),
   useCategories: vi.fn(),
+  useCategoriesForCatalogs: vi.fn(),
   useShippingGroups: vi.fn(),
   useTags: vi.fn(),
   useParameters: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock('./useProductMetadataQueries', () => ({
   usePriceGroups: () => mocks.usePriceGroups(),
   useProducers: () => mocks.useProducers(),
   useCategories: (...args: unknown[]) => mocks.useCategories(...args),
+  useCategoriesForCatalogs: (...args: unknown[]) => mocks.useCategoriesForCatalogs(...args),
   useShippingGroups: (...args: unknown[]) => mocks.useShippingGroups(...args),
   useTags: (...args: unknown[]) => mocks.useTags(...args),
   useParameters: (...args: unknown[]) => mocks.useParameters(...args),
@@ -94,6 +96,10 @@ describe('useProductMetadata', () => {
       data: [],
       isLoading: false,
     });
+    mocks.useCategoriesForCatalogs.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
     mocks.useShippingGroups.mockReturnValue({
       data: [],
       isLoading: false,
@@ -149,5 +155,42 @@ describe('useProductMetadata', () => {
 
     expect(result.current.selectedCatalogIds).toEqual(['catalog-1']);
     expect(mocks.useParameters).toHaveBeenCalledWith('catalog-1');
+  });
+
+  it('loads category options from every selected catalog', () => {
+    renderHook(() =>
+      useProductMetadata({
+        initialCatalogIds: ['catalog-1', 'catalog-2'],
+      })
+    );
+
+    expect(mocks.useCategoriesForCatalogs).toHaveBeenCalledWith(['catalog-1', 'catalog-2']);
+  });
+
+  it('promotes the chosen category catalog so parameters follow the category', () => {
+    mocks.useCategoriesForCatalogs.mockReturnValue({
+      data: [
+        {
+          id: 'category-foam-hammer',
+          name: 'Foam Hammer',
+          catalogId: 'catalog-2',
+          parentId: null,
+        },
+      ],
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() =>
+      useProductMetadata({
+        initialCatalogIds: ['catalog-1', 'catalog-2'],
+      })
+    );
+
+    act(() => {
+      result.current.setCategoryId('category-foam-hammer');
+    });
+
+    expect(result.current.selectedCategoryId).toBe('category-foam-hammer');
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-2', 'catalog-1']);
   });
 });

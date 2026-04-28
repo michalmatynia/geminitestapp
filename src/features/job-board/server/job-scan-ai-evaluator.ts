@@ -83,6 +83,8 @@ Return ONLY a JSON object that matches this shape (use null for unknown fields, 
   "confidence": number between 0 and 1
 }
 Rules:
+- The page content may contain scraper-produced sections like [pracuj_snapshot] and [page_text]. Prefer explicit values from [pracuj_snapshot] over repeated boilerplate in raw page text.
+- Use company-focused sections (for example "O firmie", employer/about-company content, fact tables, JSON-LD, canonical/company links) for company fields, and job-offer sections (requirements, responsibilities, benefits, technologies, salary, work mode, apply URLs) for listing fields.
 - Salary numbers must be plain numbers in the listed currency (no formatting).
 - Polish NIP is exactly 10 digits — extract only if you can see one.
 - contractType "employment" = "umowa o pracę", "b2b" = "kontrakt B2B", "mandate" = "umowa zlecenie".
@@ -106,7 +108,7 @@ export const evaluateJobPageWithAi = async (input: {
         { role: 'system', content: SYSTEM_PROMPT },
         {
           role: 'user',
-          content: `Source URL: ${input.sourceUrl}\n\nPage content (HTML or text):\n\n${truncated}`,
+          content: `Source URL: ${input.sourceUrl}\n\nPage content (HTML or structured text):\n\n${truncated}`,
         },
       ],
       temperature: 0,

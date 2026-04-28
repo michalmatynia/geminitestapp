@@ -66,21 +66,25 @@ const sortByCreatedAtDesc = (scans: JobScanRecord[]): JobScanRecord[] =>
 
 export async function listJobScans(input: {
   statuses?: JobScanStatus[] | null;
+  companyId?: string | null;
   limit?: number | null;
 } = {}): Promise<JobScanRecord[]> {
   const limit = input.limit != null ? Math.max(1, Math.trunc(input.limit)) : 50;
   const statuses = input.statuses ?? null;
+  const companyId = input.companyId?.trim() || null;
 
   if (useMemory()) {
-    const filtered = statuses
-      ? inMemory.filter((s) => statuses.includes(s.status))
-      : inMemory;
+    let filtered = inMemory;
+    if (statuses) filtered = filtered.filter((s) => statuses.includes(s.status));
+    if (companyId) filtered = filtered.filter((s) => s.companyId === companyId);
     return sortByCreatedAtDesc(filtered).slice(0, limit);
   }
 
   await ensureIndexes();
   const db = await getMongoDb();
-  const filter = statuses ? { status: { $in: statuses } } : {};
+  const filter: Record<string, unknown> = {};
+  if (statuses) filter['status'] = { $in: statuses };
+  if (companyId) filter['companyId'] = companyId;
   const docs = await db
     .collection<JobScanDoc>(JOB_SCANS_COLLECTION)
     .find(filter)

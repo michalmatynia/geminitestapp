@@ -1,0 +1,98 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/components/InsightCard.tsx
+   8:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required         @typescript-eslint/strict-boolean-expressions
+  12:8   error  Function 'InsightCard' has a complexity of 13. Maximum allowed is 8                                complexity
+  23:5   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  25:9   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  41:23  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  47:8   error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/context-registry/system-prompt.ts
+  46:28  error  Unexpected number value in conditional. An explicit zero/NaN check is required  @typescript-eslint/strict-boolean-expressions
+  46:60  error  Unexpected number value in conditional. An explicit zero/NaN check is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/context-registry/workspace.ts
+  42:8   error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  59:56  error  Arrow function has too many lines (63). Maximum allowed is 60                       max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/generator.ts
+   59:28   error  Return values from promise executor functions cannot be read                                                                                                                                                                                                                                                            no-promise-executor-return
+  123:14   error  Unexpected `await` inside a loop                                                                                                                                                                                                                                                                                        no-await-in-loop
+  134:9    error  Unexpected `await` inside a loop                                                                                                                                                                                                                                                                                        no-await-in-loop
+  141:109  error  Missing return type on function                                                                                                                                                                                                                                                                                         @typescript-eslint/explicit-function-return-type
+  148:6    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                                                                                                                                                                                                       @typescript-eslint/strict-boolean-expressions
+  161:104  error  Missing return type on function                                                                                                                                                                                                                                                                                         @typescript-eslint/explicit-function-return-type
+  166:6    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                                                                                                                                                                                                       @typescript-eslint/strict-boolean-expressions
+  179:152  error  Missing return type on function                                                                                                                                                                                                                                                                                         @typescript-eslint/explicit-function-return-type
+  187:6    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                                                                                                                                                                                                       @typescript-eslint/strict-boolean-expressions
+  205:51   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+  205:67   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+  209:33   error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                @typescript-eslint/no-explicit-any
+  209:69   error  Unsafe argument of type `any` assigned to a parameter of type `"24h" | "7d" | "30d" | "1h"`                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-argument
+  209:78   error  Unsafe member access .range on an `any` value                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  209:94   error  Unsafe argument of type `any` assigned to a parameter of type `{ contextRegistry?: { refs: { id: string; kind: "runtime_document" | "static_node"; providerId?: string | undefined; entityType?: string | undefined; }[]; engineVersion: string; resolved?: { ...; } | undefined; } | null | undefined; } | undefined`  @typescript-eslint/no-unsafe-argument
+  212:8    error  Async function 'generateAiInsightByType' has too many lines (74). Maximum allowed is 60                                                                                                                                                                                                                                 max-lines-per-function
+  212:8    error  Async function 'generateAiInsightByType' has a complexity of 10. Maximum allowed is 8                                                                                                                                                                                                                                   complexity
+  233:22   error  Unnecessary conditional, value is always truthy                                                                                                                                                                                                                                                                         @typescript-eslint/no-unnecessary-condition
+  233:22   error  Unexpected string value in conditional. An explicit empty string check is required                                                                                                                                                                                                                                      @typescript-eslint/strict-boolean-expressions
+  235:18   error  Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                       @typescript-eslint/no-unnecessary-condition
+  242:9    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-assignment
+  248:7    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-assignment
+  248:23   error  Unsafe member access .systemPrompt on an `any` value                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  255:7    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-assignment
+  255:23   error  Unsafe member access .userPrompt on an `any` value                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-member-access
+  263:7    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-assignment
+  263:20   error  Unsafe member access .name on an `any` value                                                                                                                                                                                                                                                                            @typescript-eslint/no-unsafe-member-access
+  268:7    error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-assignment
+  268:24   error  Unsafe member access .metadata on an `any` value                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  281:5    error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator                                                                                                                                                      @typescript-eslint/no-floating-promises
+  327:18   error  Unnecessary optional chain on a non-nullish value                                                                                                                                                                                                                                                                       @typescript-eslint/no-unnecessary-condition
+  333:1    error  File has too many lines (382). Maximum allowed is 300                                                                                                                                                                                                                                                                   max-lines
+  334:6    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                                                                                                                                                                                                       @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/generator/runtime-analytics-prompt.ts
+  78:85  error  Arrow function has a complexity of 10. Maximum allowed is 8  complexity
+  80:5   error  Do not nest ternary expressions                              no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/generator/settings-service.ts
+   7:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  28:13  error  Expected '===' and instead saw '=='                                                                eqeqeq
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/generator/utils.ts
+   4:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  34:64  error  Arrow function has a complexity of 13. Maximum allowed is 8                                 complexity
+  41:10  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  46:11  error  Unexpected any value in conditional. An explicit comparison or type conversion is required  @typescript-eslint/strict-boolean-expressions
+  55:9   error  Blocks are nested too deeply (4). Maximum allowed is 3                                      max-depth
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/pages/AdminAiInsightsPage.tsx
+  48:1   error  Function 'InsightsResultPanel' has a complexity of 10. Maximum allowed is 8  complexity
+  68:10  error  Do not nest ternary expressions                                              no-nested-ternary
+  70:13  error  Do not nest ternary expressions                                              no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/repository.ts
+  20:3   error  Do not nest ternary expressions                                                                    no-nested-ternary
+  28:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  38:8   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  52:41  error  Unnecessary conditional, value is always truthy                                                    @typescript-eslint/no-unnecessary-condition
+  52:41  error  Unexpected object value in conditional. The condition is always true                               @typescript-eslint/strict-boolean-expressions
+  54:30  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  55:30  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  89:47  error  Unnecessary conditional, value is always truthy                                                    @typescript-eslint/no-unnecessary-condition
+  89:47  error  Unexpected object value in conditional. The condition is always true                               @typescript-eslint/strict-boolean-expressions
+  91:30  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  92:30  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/workers/ai-insights-processor.ts
+  136:31  error  Async arrow function has a complexity of 13. Maximum allowed is 8  complexity
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/workers/aiInsightsQueue.ts
+  139:3   error  Possible race condition: `aiInsightsQueueState.workerStarted` might be assigned based on an outdated state of `aiInsightsQueueState`  require-atomic-updates
+  190:82  error  Async arrow function has a complexity of 11. Maximum allowed is 8                                                                     complexity
+  200:17  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined                                    @typescript-eslint/no-unnecessary-condition
+  201:18  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined                                    @typescript-eslint/no-unnecessary-condition
+  202:17  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined                                    @typescript-eslint/no-unnecessary-condition
+  203:20  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined                                    @typescript-eslint/no-unnecessary-condition
+
+✖ 73 problems (73 errors, 0 warnings)
+

@@ -44,11 +44,14 @@ import { StructuredProductNameField } from './StructuredProductNameField';
 import ProductFormLatestAmazonExtraction from './ProductFormLatestAmazonExtraction';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+const PRODUCT_IDENTIFIER_FIELD_NAMES = ['ean', 'gtin', 'asin'] as const;
+type ProductIdentifierFieldName = (typeof PRODUCT_IDENTIFIER_FIELD_NAMES)[number];
+
 const PRODUCT_IDENTIFIER_OPTIONS = [
   { value: 'ean', label: 'EAN' },
   { value: 'gtin', label: 'GTIN' },
   { value: 'asin', label: 'ASIN' },
-] as const satisfies ReadonlyArray<LabeledOptionDto<'ean' | 'gtin' | 'asin'>>;
+] as const satisfies ReadonlyArray<LabeledOptionDto<ProductIdentifierFieldName>>;
 
 const coerceWatchedString = (value: unknown): string => (typeof value === 'string' ? value : '');
 
@@ -111,11 +114,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const polishBaseNameAutoSyncRef = useRef<boolean>(true);
   const focusOutSyncTimeoutRef = useRef<number | null>(null);
 
-  const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>(
-    (): 'ean' | 'gtin' | 'asin' => {
+  const [identifierType, setIdentifierType] = useState<ProductIdentifierFieldName>(
+    (): ProductIdentifierFieldName => {
       const vals = getValues();
-      if (vals.asin) return 'asin';
-      if (vals.gtin) return 'gtin';
+      if (typeof vals.asin === 'string' && vals.asin.trim().length > 0) return 'asin';
+      if (typeof vals.gtin === 'string' && vals.gtin.trim().length > 0) return 'gtin';
       return 'ean';
     }
   );
@@ -713,14 +716,20 @@ export default function ProductFormGeneral(): React.JSX.Element {
                 size='sm'
                 value={identifierType}
                 onValueChange={(value: string): void =>
-                  setIdentifierType(value as 'ean' | 'gtin' | 'asin')
+                  setIdentifierType(value as ProductIdentifierFieldName)
                 }
                 ariaLabel='Product identifier type'
                 options={PRODUCT_IDENTIFIER_OPTIONS}
                 className='w-[100px]'
                 title='Product Identifier'
               />
+              {PRODUCT_IDENTIFIER_FIELD_NAMES.filter((fieldName) => fieldName !== identifierType).map(
+                (fieldName) => (
+                  <input key={`hidden-${fieldName}`} type='hidden' {...register(fieldName)} />
+                )
+              )}
               <Input
+                key={`active-${identifierType}`}
                 id={identifierType}
                 {...register(identifierType)}
                 placeholder={`Enter ${identifierType.toUpperCase()}`}

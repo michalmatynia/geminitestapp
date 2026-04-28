@@ -1,0 +1,51 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/PreviewBlock.tsx
+  121:8   error  Function 'PreviewSection' has too many lines (316). Maximum allowed is 60                           max-lines-per-function
+  121:8   error  Function 'PreviewSection' has a complexity of 56. Maximum allowed is 8                              complexity
+  136:28  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  254:28  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  255:7   error  Do not nest ternary expressions                                                                     no-nested-ternary
+  260:7   error  Do not nest ternary expressions                                                                     no-nested-ternary
+  261:9   error  Do not nest ternary expressions                                                                     no-nested-ternary
+  262:11  error  Unnecessary conditional, value is always falsy                                                      @typescript-eslint/no-unnecessary-condition
+  326:24  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  328:7   error  Do not nest ternary expressions                                                                     no-nested-ternary
+  334:24  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  335:26  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  336:29  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  339:8   error  Do not nest ternary expressions                                                                     no-nested-ternary
+  340:1   error  File has too many lines (809). Maximum allowed is 300                                               max-lines
+  343:7   error  Do not nest ternary expressions                                                                     no-nested-ternary
+  360:10  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  368:30  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  404:19  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  406:10  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  416:10  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  474:1   error  Function 'PreviewBlockItem' has too many lines (386). Maximum allowed is 60                         max-lines-per-function
+  474:1   error  Function 'PreviewBlockItem' has a complexity of 94. Maximum allowed is 8                            complexity
+  502:28  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  502:45  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  512:28  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  555:13  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  566:33  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  625:19  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  647:19  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  649:10  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  659:10  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  671:20  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  672:20  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  685:24  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  705:23  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  737:24  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  738:23  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  738:41  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  740:17  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  818:21  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  818:61  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  819:23  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  820:24  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  840:32  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  841:17  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+
+✖ 46 problems (46 errors, 0 warnings)
+

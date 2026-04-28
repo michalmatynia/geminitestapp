@@ -6,7 +6,8 @@ import {
 import {
   MessageCard,
 } from './duels-primitives';
-import { type UseKangurMobileDuelLobbyChatResult as DuelChatState } from './useKangurMobileDuelLobbyChat';
+import { type UseKangurMobileDuelsLobbyChatResult as DuelChatState } from './useKangurMobileDuelLobbyChat';
+import { type KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import { ChatMessageRow } from './DuelLobbyChatPanel/ChatMessageRow';
 import { ChatHeader } from './DuelLobbyChatPanel/ChatHeader';
 import { ChatFormInput, ChatFormActions } from './DuelLobbyChatPanel/ChatForm';
@@ -30,7 +31,7 @@ type DuelLobbyChatPanelProps = {
 };
 
 function renderMessages(
-  lobbyChatPreview: DuelChatState['messages'],
+  lobbyChatPreview: KangurDuelLobbyChatMessage[],
   activeLearnerId: string | null,
   locale: DuelLocale,
   copy: DuelCopy,

@@ -42,6 +42,44 @@ export type ResultsDuelsState = {
   refresh: () => Promise<void>;
 };
 
+function renderDuelStatus(duelResults: any, copy: any): React.JSX.Element | null {
+  if (duelResults.isRestoringAuth || duelResults.isLoading) {
+    return (
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+        {copy({
+          de: 'Der Duellstand in den Ergebnissen wird geladen.',
+          en: 'Loading the duel standing in results.',
+          pl: 'Pobieramy stan pojedynków w wynikach.',
+        })}
+      </Text>
+    );
+  }
+  if (duelResults.error) {
+    return (
+      <View style={{ gap: 10 }}>
+        <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+          {duelResults.error}
+        </Text>
+        <ActionButton
+          label={copy({
+            de: 'Duelle aktualisieren',
+            en: 'Refresh duels',
+            pl: 'Odśwież pojedynki',
+          })}
+          onPress={() => {
+            void duelResults.refresh();
+          }}
+          stretch
+          style={{ borderRadius: 16 }}
+          tone='primary'
+          verticalPadding={12}
+        />
+      </View>
+    );
+  }
+  return null;
+}
+
 export function ResultsDuelsCard({
   duelResults,
   duelsHref,
@@ -109,162 +147,158 @@ export function ResultsDuelsCard({
           textColor='#047857'
         />
       </View>
-
-      {duelResults.isRestoringAuth || duelResults.isLoading ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Der Duellstand in den Ergebnissen wird geladen.',
-            en: 'Loading the duel standing in results.',
-            pl: 'Pobieramy stan pojedynków w wynikach.',
-          })}
-        </Text>
-      ) : duelResults.error ? (
-        <View style={{ gap: 10 }}>
-          <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-            {duelResults.error}
-          </Text>
-          <ActionButton
-            label={copy({
-              de: 'Duelle aktualisieren',
-              en: 'Refresh duels',
-              pl: 'Odśwież pojedynki',
+      {renderDuelStatus(duelResults, copy)}
+      {duelResults.currentRank !== null ? (
+        <InsetPanel
+          gap={10}
+          tone={{
+            borderColor: '#bfdbfe',
+            backgroundColor: '#eff6ff',
+          }}
+        >
+          <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
+            {copy({
+              de: 'DEIN DUELLSTAND',
+              en: 'YOUR DUEL SNAPSHOT',
+              pl: 'TWÓJ WYNIK W POJEDYNKACH',
             })}
-            onPress={() => duelResults.refresh()}
-          />
-        </View>
+          </Text>
+          <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
+            #{duelResults.currentRank} {duelResults.currentEntry.displayName}
+          </Text>
+          <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+            {copy({
+              de: `Siege ${duelResults.currentEntry.wins} • Niederlagen ${duelResults.currentEntry.losses} • Unentschieden ${duelResults.currentEntry.ties}`,
+              en: `Wins ${duelResults.currentEntry.wins} • Losses ${duelResults.currentEntry.losses} • Ties ${duelResults.currentEntry.ties}`,
+              pl: `Wygrane ${duelResults.currentEntry.wins} • Porażki ${duelResults.currentEntry.losses} • Remisy ${duelResults.currentEntry.ties}`,
+            })}
+          </Text>
+          <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+            {copy({
+              de: `Matches ${duelResults.currentEntry.matches} • Quote ${Math.round(duelResults.currentEntry.winRate * 100)}% • letztes Duell ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
+              en: `Matches ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • last duel ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
+              pl: `Mecze ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • ostatni pojedynek ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
+            })}
+          </Text>
+        </InsetPanel>
       ) : (
-        <View style={{ gap: 12 }}>
-          {duelResults.currentEntry ? (
-            <InsetPanel
-              gap={8}
-              style={{
-                borderColor: '#bfdbfe',
-                backgroundColor: '#eff6ff',
-              }}
-            >
-              <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-                {copy({
-                  de: 'DEIN DUELLSTAND',
-                  en: 'YOUR DUEL SNAPSHOT',
-                  pl: 'TWÓJ WYNIK W POJEDYNKACH',
-                })}
-              </Text>
-              <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-                #{duelResults.currentRank} {duelResults.currentEntry.displayName}
-              </Text>
-              <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-                {copy({
-                  de: `Siege ${duelResults.currentEntry.wins} • Niederlagen ${duelResults.currentEntry.losses} • Unentschieden ${duelResults.currentEntry.ties}`,
-                  en: `Wins ${duelResults.currentEntry.wins} • Losses ${duelResults.currentEntry.losses} • Ties ${duelResults.currentEntry.ties}`,
-                  pl: `Wygrane ${duelResults.currentEntry.wins} • Porażki ${duelResults.currentEntry.losses} • Remisy ${duelResults.currentEntry.ties}`,
-                })}
-              </Text>
-              <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                {copy({
-                  de: `Matches ${duelResults.currentEntry.matches} • Quote ${Math.round(duelResults.currentEntry.winRate * 100)}% • letztes Duell ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
-                  en: `Matches ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • last duel ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
-                  pl: `Mecze ${duelResults.currentEntry.matches} • Win rate ${Math.round(duelResults.currentEntry.winRate * 100)}% • ostatni pojedynek ${formatKangurMobileScoreDateTime(duelResults.currentEntry.lastPlayedAt, locale)}`,
-                })}
-              </Text>
-            </InsetPanel>
-          ) : (
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-                en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
-                pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
-              })}
-            </Text>
-          )}
-
-          {duelResults.actionError ? (
-            <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-              {duelResults.actionError}
-            </Text>
-          ) : null}
-
-          {duelResults.opponents.length === 0 ? (
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
-                en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
-                pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
-              })}
-            </Text>
-          ) : (
-            <View style={{ gap: 10 }}>
-              <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-                {copy({
-                  de: 'Letzte Rivalen',
-                  en: 'Recent rivals',
-                  pl: 'Ostatni rywale',
-                })}
-              </Text>
-              {duelResults.opponents.map((opponent) => (
-                <InsetPanel
-                  key={opponent.learnerId}
-                  gap={8}
-                >
-                  <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-                    {opponent.displayName}
-                  </Text>
-                  <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-                    {copy({
-                      de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                      en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                      pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
-                    })}
-                  </Text>
-                  <KangurMobilePendingActionButton
-                    horizontalPadding={14}
-                    label={copy({
-                      de: 'Schneller Rückkampf',
-                      en: 'Quick rematch',
-                      pl: 'Szybki rewanż',
-                    })}
-                    onPress={() => {
-                      void duelResults.createRematch(opponent.learnerId).then((sessionId) => {
-                        if (sessionId) {
-                          openDuelSession(sessionId);
-                        }
-                      });
-                    }}
-                    pending={duelResults.pendingOpponentLearnerId === opponent.learnerId}
-                    pendingLabel={copy({
-                      de: 'Rückkampf wird gesendet...',
-                      en: 'Sending rematch...',
-                      pl: 'Wysyłanie rewanżu...',
-                    })}
-                  />
-                </InsetPanel>
-              ))}
-            </View>
-          )}
-
-          <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            <ActionButton
-              label={copy({
-                de: 'Duelle aktualisieren',
-                en: 'Refresh duels',
-                pl: 'Odśwież pojedynki',
-              })}
-              onPress={() => duelResults.refresh()}
-              stretch
-              tone='secondary'
-            />
-
-            <LinkButton
-              href={duelsHref}
-              label={copy({
-                de: 'Duelle öffnen',
-                en: 'Open duels',
-                pl: 'Otwórz pojedynki',
-              })}
-              stretch
-            />
-          </View>
-        </View>
+        <RenderResultsContent copy={copy} />
       )}
+
+      {duelResults.actionError ? (
+        <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
+          {duelResults.actionError}
+        </Text>
+      ) : null}
     </Card>
   );
 }
+
+function RenderResultsContent({ copy }: { copy: any }): React.JSX.Element {
+  return (
+    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+      {copy({
+        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+        en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      })}
+    </Text>
+  );
+}
+
+      {duelResults.opponents.length === 0 ? (
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+          {copy({
+            de: 'Es gibt noch keine letzten Rivalen. Das erste beendete Duell füllt hier die Rivalenliste und schaltet schnelle Rückkämpfe frei.',
+            en: 'There are no recent rivals yet. The first completed duel will fill the rival list here and unlock quick rematches.',
+            pl: 'Nie ma jeszcze ostatnich rywali. Pierwszy zakończony pojedynek wypełni tutaj listę rywali i odblokuje szybkie rewanże.',
+          })}
+        </Text>
+      ) : (
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
+            {copy({
+              de: 'Letzte Rivalen',
+              en: 'Recent rivals',
+              pl: 'Ostatni rywale',
+            })}
+          </Text>
+          {duelResults.opponents.map((opponent) => (
+            <InsetPanel
+              key={opponent.learnerId}
+              gap={8}
+            >
+              <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+                {opponent.displayName}
+              </Text>
+              <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+                {copy({
+                  de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                  en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                  pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+                })}
+              </Text>
+              <KangurMobilePendingActionButton
+                horizontalPadding={14}
+                label={copy({
+                  de: 'Schneller Rückkampf',
+                  en: 'Quick rematch',
+                  pl: 'Szybki rewanż',
+                })}
+                onPress={() => {
+                  void duelResults.createRematch(opponent.learnerId).then((sessionId) => {
+                    if (sessionId) {
+                      openDuelSession(sessionId);
+                    }
+                  });
+                }}
+                pending={duelResults.pendingOpponentLearnerId === opponent.learnerId}
+                pendingLabel={copy({
+                  de: 'Rückkampf wird gesendet...',
+                  en: 'Sending rematch...',
+                  pl: 'Wysyłanie rewanżu...',
+                })}
+              />
+            </InsetPanel>
+          ))}
+        </View>
+      )}
+
+      <View style={{ alignSelf: 'stretch', gap: 10 }}>
+        <ActionButton
+          label={copy({
+            de: 'Duelle aktualisieren',
+            en: 'Refresh duels',
+            pl: 'Odśwież pojedynki',
+          })}
+          onPress={() => duelResults.refresh()}
+          stretch
+          tone='secondary'
+        />
+
+        <LinkButton
+          href={duelsHref}
+          label={copy({
+            de: 'Duelle öffnen',
+            en: 'Open duels',
+            pl: 'Otwórz pojedynki',
+          })}
+          stretch
+        />
+      </View>
+    </Card>
+    </Card>
+  );
+}
+
+function RenderResultsContent({ copy }: { copy: any }): React.JSX.Element {
+  return (
+    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+      {copy({
+        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
+        en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
+        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
+      })} 
+    </Text>
+  );
+  );

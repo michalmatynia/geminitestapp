@@ -2,7 +2,7 @@
 
 import React, { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
@@ -344,6 +344,39 @@ describe('useProductFormValidator latest SKU source', () => {
       undefined,
       { fresh: true }
     );
+  });
+
+  it('applies global formatter default when validator settings load after mount', async () => {
+    let validatorConfig:
+      | {
+          enabledByDefault: boolean;
+          formatterEnabledByDefault: boolean;
+          instanceDenyBehavior: null;
+          patterns: ProductValidationPattern[];
+        }
+      | undefined;
+    useProductValidatorConfigMock.mockImplementation(() => ({
+      data: validatorConfig,
+    }));
+
+    const { result, rerender } = renderHook(() => useProductFormValidator(), {
+      wrapper: createWrapper(),
+    });
+
+    expect(result.current.formatterEnabled).toBe(false);
+
+    validatorConfig = {
+      enabledByDefault: true,
+      formatterEnabledByDefault: true,
+      instanceDenyBehavior: null,
+      patterns: [],
+    };
+    rerender();
+
+    await waitFor(() => {
+      expect(result.current.validatorEnabled).toBe(true);
+      expect(result.current.formatterEnabled).toBe(true);
+    });
   });
 
   it('excludes the current product when resolving the latest validator source in edit mode', () => {

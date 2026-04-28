@@ -772,6 +772,44 @@ describe('BaseQuickExportButton', () => {
     );
   });
 
+  it('retries export from a stale pending Base row instead of opening listing management', async () => {
+    const onOpenIntegrations = vi.fn();
+    apiPostMock.mockImplementation((url: string) => {
+      if (url === '/api/v2/integrations/imports/base') {
+        return Promise.resolve({
+          inventories: [{ id: 'inv-main', name: 'Main inventory', is_default: true }],
+        });
+      }
+      if (url === '/api/v2/integrations/products/product-1/base/sku-check') {
+        return Promise.resolve({
+          sku: 'SKU-001',
+          exists: false,
+          existingProductId: null,
+        });
+      }
+      return Promise.reject(new Error(`Unexpected POST ${url}`));
+    });
+
+    renderButton({
+      status: 'pending',
+      showMarketplaceBadge: true,
+      onOpenIntegrations,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'One-click export to Base.com' }));
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          productId: 'product-1',
+          connectionId: 'conn-base-1',
+          inventoryId: 'inv-main',
+        })
+      );
+    });
+    expect(onOpenIntegrations).not.toHaveBeenCalled();
+  });
+
   it('opens integration options instead of re-exporting when the Base row state is failed', () => {
     const onOpenIntegrations = vi.fn();
 

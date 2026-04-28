@@ -125,7 +125,7 @@ type ScriptSource =
 
 const TRADERA_CHECK_STATUS_TIMEOUT_MS = 60_000;
 const TRADERA_MOVE_TO_UNSOLD_TIMEOUT_MS = 90_000;
-const TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES: Partial<PlaywrightSettings> = {
+const TRADERA_MOVE_TO_UNSOLD_RUNTIME_SETTINGS_OVERRIDES: Partial<PlaywrightSettings> = {
   slowMo: 0,
   humanizeMouse: false,
   mouseJitter: 0,
@@ -848,7 +848,6 @@ export const runTraderaBrowserCheckStatus = async ({
     }),
     timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
     browserMode,
-    runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
     ...(options?.onRunStarted ? { onRunStarted: options.onRunStarted } : {}),
   });
 
@@ -876,7 +875,10 @@ export const runTraderaBrowserCheckStatus = async ({
       checkedStatus,
       checkStatusError,
       requestedBrowserMode: browserMode,
+      browserMode: result.effectiveBrowserMode,
       runId: result.runId,
+      playwrightPersonaId: result.personaId,
+      playwrightSettings: result.executionSettings,
       ...buildSelectorRuntimeMetadata(selectorRuntimeResolution),
       ...(executionSteps.length > 0 ? { executionSteps } : {}),
       verificationSection: toTrimmedString(rawResult['verificationSection']) || null,
@@ -951,7 +953,7 @@ export const runTraderaBrowserMoveToUnsold = async ({
     }),
     timeoutMs: TRADERA_MOVE_TO_UNSOLD_TIMEOUT_MS,
     browserMode,
-    runtimeSettingsOverrides: TRADERA_CHECK_STATUS_RUNTIME_SETTINGS_OVERRIDES,
+    runtimeSettingsOverrides: TRADERA_MOVE_TO_UNSOLD_RUNTIME_SETTINGS_OVERRIDES,
     ...(options?.onRunStarted ? { onRunStarted: options.onRunStarted } : {}),
   });
 

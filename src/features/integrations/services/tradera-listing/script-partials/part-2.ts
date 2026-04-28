@@ -488,7 +488,33 @@ export const PART_2 = String.raw`      /(delivery|shipping|ship|leverans|frakt)/
             }
           }
 
-          return bestCandidate ? bestCandidate.absoluteUrl : null;
+          if (bestCandidate) {
+            return bestCandidate.absoluteUrl;
+          }
+
+          const currentUrlObj = new URL(currentUrl);
+          const currentQueryPage = pageParamNames
+            .map((paramName) => {
+              const value = currentUrlObj.searchParams.get(paramName);
+              const normalized = normalize(value || '');
+              const parsed = Number.parseInt(normalized, 10);
+              if (!Number.isFinite(parsed) || parsed <= 0) {
+                return null;
+              }
+
+              return {
+                paramName,
+                parsed,
+              };
+            })
+            .find(Boolean);
+
+          if (!currentQueryPage) {
+            return null;
+          }
+
+          currentUrlObj.searchParams.set(currentQueryPage.paramName, String(currentQueryPage.parsed + 1));
+          return currentUrlObj.toString();
         },
         {
           currentUrl: page.url(),

@@ -22,7 +22,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { isEditingProductHydrated } from './editingProductHydration';
 import {
   useCatalogs,
-  useCategories,
+  useCategoriesForCatalogs,
   useLanguages,
   useParameters,
   usePriceGroups,
@@ -36,7 +36,7 @@ import type { UseFormGetValues, UseFormSetValue } from 'react-hook-form';
 export {
   productMetadataKeys,
   useCatalogs,
-  useCategories,
+  useCategoriesForCatalogs,
   useDeleteProducerMutation,
   useLanguages,
   useParameters,
@@ -49,6 +49,7 @@ export {
   useTags,
   useTitleTerms,
 } from './useProductMetadataQueries';
+export { useCategories } from './useProductMetadataQueries';
 
 export interface ProductMetadataHookResult {
   catalogs: CatalogRecord[];
@@ -135,6 +136,8 @@ const normalizeCatalogIdList = (values: ReadonlyArray<unknown>): string[] => {
   return Array.from(unique);
 };
 
+const CATALOG_ID_KEY_SEPARATOR = '\u001f';
+
 const resolveCategoryIdFromProduct = (product?: ProductWithImages): string | null => {
   if (product === undefined || product === null) return null;
   const direct = toTrimmedString(product.categoryId);
@@ -155,6 +158,9 @@ export function useProductMetadata({
   const languagesQuery = useLanguages();
   const priceGroupsQuery = usePriceGroups();
   const producersQuery = useProducers();
+  const initialCatalogIdsKey = normalizeCatalogIdList(initialCatalogIds ?? []).join(
+    CATALOG_ID_KEY_SEPARATOR
+  );
   // Initialize selections based on product or initial values
   const initialCatalogSelection = React.useMemo((): string[] => {
     if (product !== undefined && product !== null) {
@@ -170,7 +176,10 @@ export function useProductMetadata({
         return [fallbackCatalogId];
       }
     }
-    const normalizedInitialCatalogIds = normalizeCatalogIdList(initialCatalogIds ?? []);
+    const normalizedInitialCatalogIds =
+      initialCatalogIdsKey === ''
+        ? []
+        : initialCatalogIdsKey.split(CATALOG_ID_KEY_SEPARATOR).filter(Boolean);
     if (normalizedInitialCatalogIds.length > 0) {
       return normalizedInitialCatalogIds;
     }
@@ -180,7 +189,7 @@ export function useProductMetadata({
       return [fallbackInitialCatalogId];
     }
     return [];
-  }, [product, initialCatalogIds, initialCatalogId]);
+  }, [product, initialCatalogIdsKey, initialCatalogId]);
 
   const initialCategorySelection = React.useMemo((): string | null => {
     const resolvedProductCategoryId = resolveCategoryIdFromProduct(product);
@@ -249,7 +258,7 @@ export function useProductMetadata({
   }, [initialProducerSelection]);
 
   const primaryCatalogId = selectedCatalogIds[0] ?? '';
-  const categoriesQuery = useCategories(primaryCatalogId);
+  const categoriesQuery = useCategoriesForCatalogs(selectedCatalogIds);
   const shippingGroupsQuery = useShippingGroups(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
@@ -324,6 +333,18 @@ export function useProductMetadata({
   const setCategoryId = (categoryId: string | null): void => {
     const trimmed = typeof categoryId === 'string' ? categoryId.trim() : '';
     setSelectedCategoryId(trimmed !== '' ? trimmed : null);
+    if (trimmed === '') return;
+
+    const categoryCatalogId =
+      categories.find((category: ProductCategory) => category.id === trimmed)?.catalogId?.trim() ??
+      '';
+    if (categoryCatalogId === '') return;
+
+    setSelectedCatalogIds((prev: string[]) => {
+      if (prev[0] === categoryCatalogId) return prev;
+      const withoutCategoryCatalog = prev.filter((id: string) => id !== categoryCatalogId);
+      return [categoryCatalogId, ...withoutCategoryCatalog];
+    });
   };
 
   const toggleTag = (tagId: string): void => {

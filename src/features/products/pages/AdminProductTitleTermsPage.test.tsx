@@ -10,6 +10,7 @@ const {
   useCatalogsMock,
   useTitleTermsMock,
   useSaveTitleTermMutationMock,
+  saveTitleTermMutateAsyncMock,
   useDeleteTitleTermMutationMock,
   useSearchParamsMock,
 } = vi.hoisted(() => ({
@@ -18,6 +19,7 @@ const {
   useCatalogsMock: vi.fn(),
   useTitleTermsMock: vi.fn(),
   useSaveTitleTermMutationMock: vi.fn(),
+  saveTitleTermMutateAsyncMock: vi.fn(),
   useDeleteTitleTermMutationMock: vi.fn(),
   useSearchParamsMock: vi.fn(),
 }));
@@ -147,26 +149,110 @@ vi.mock('@/shared/ui/select-simple', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/SettingsPanelBuilder', () => ({
-  SettingsPanelBuilder: () => null,
+  SettingsPanelBuilder: ({
+    open,
+    title,
+    fields,
+    values,
+    onChange,
+    onSave,
+  }: {
+    open: boolean;
+    title: string;
+    fields: Array<{
+      key: string;
+      label: string;
+      type: string;
+      options?: Array<{ value: string; label: string }>;
+    }>;
+    values: Record<string, string>;
+    onChange: (values: Record<string, string>) => void;
+    onSave: () => Promise<void>;
+  }) => {
+    if (!open) return null;
+    return (
+      <section aria-label={title}>
+        <h2>{title}</h2>
+        {fields.map((field) => (
+          <label key={field.key}>
+            <span>{field.label}</span>
+            {field.type === 'select' ? (
+              <select
+                aria-label={field.label}
+                value={values[field.key] ?? ''}
+                onChange={(event) => onChange({ [field.key]: event.target.value })}
+              >
+                {(field.options ?? []).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                aria-label={field.label}
+                value={values[field.key] ?? ''}
+                onChange={(event) => onChange({ [field.key]: event.target.value })}
+              />
+            )}
+          </label>
+        ))}
+        <button type='button' onClick={() => void onSave()}>
+          Save
+        </button>
+      </section>
+    );
+  },
 }));
 
 vi.mock('@/shared/ui/templates/StandardDataTablePanel', () => ({
   StandardDataTablePanel: ({
     data,
+    columns,
     filters,
   }: {
-    data?: Array<{ id: string; name_en: string; catalogId: string; type: string }>;
+    data?: Array<{
+      id: string;
+      name_en: string;
+      name_pl: string | null;
+      catalogId: string;
+      type: string;
+    }>;
+    columns?: Array<{
+      accessorKey?: string;
+      id?: string;
+      cell?: (props: {
+        row: {
+          original: {
+            id: string;
+            name_en: string;
+            name_pl: string | null;
+            catalogId: string;
+            type: string;
+          };
+        };
+      }) => React.ReactNode;
+    }>;
     filters?: React.ReactNode;
   }) => (
     <section>
       {filters}
-      {data?.map((row) => (
-        <div key={row.id}>
-          <span>{row.name_en}</span>
-          <span>{row.catalogId}</span>
-          <span>{row.type}</span>
-        </div>
-      ))}
+      {data?.map((row) => {
+        const actionsColumn = columns?.find((column) => column.id === 'actions');
+        const visibleColumns = columns?.filter((column) => column.id !== 'actions') ?? [];
+        return (
+          <div key={row.id}>
+            {visibleColumns.map((column) => (
+              <div key={column.id ?? column.accessorKey}>
+                {column.cell !== undefined
+                  ? column.cell({ row: { original: row } })
+                  : row[column.accessorKey as keyof typeof row]}
+              </div>
+            ))}
+            {actionsColumn?.cell?.({ row: { original: row } })}
+          </div>
+        );
+      })}
     </section>
   ),
 }));
@@ -203,7 +289,7 @@ const titleTerms = [
     catalogId: 'catalog-b',
     type: 'material',
     name_en: 'Metal',
-    name_pl: 'Metal',
+    name_pl: 'Metal PL',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
@@ -212,6 +298,7 @@ const titleTerms = [
 describe('AdminProductTitleTermsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    saveTitleTermMutateAsyncMock.mockResolvedValue(titleTerms[0]);
     useSearchParamsMock.mockReturnValue(new URLSearchParams());
 
     useCatalogsMock.mockReturnValue(
@@ -229,7 +316,7 @@ describe('AdminProductTitleTermsPage', () => {
         })
     );
     useSaveTitleTermMutationMock.mockReturnValue({
-      mutateAsync: vi.fn(),
+      mutateAsync: saveTitleTermMutateAsyncMock,
       isPending: false,
     });
     useDeleteTitleTermMutationMock.mockReturnValue({
@@ -246,6 +333,7 @@ describe('AdminProductTitleTermsPage', () => {
     });
     expect(screen.getByText('4 cm')).toBeInTheDocument();
     expect(screen.getByText('Metal')).toBeInTheDocument();
+    expect(screen.getByText('Metal PL')).toBeInTheDocument();
   });
 
   it('switches to a catalog-specific query when the catalog filter changes', async () => {
@@ -274,5 +362,38 @@ describe('AdminProductTitleTermsPage', () => {
     });
     expect(screen.queryByText('4 cm')).not.toBeInTheDocument();
     expect(screen.getByText('Metal')).toBeInTheDocument();
+  });
+
+  it('hydrates and saves the selected title term when editing', async () => {
+    render(<AdminProductTitleTermsPage />);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]!);
+
+    expect(screen.getByText('Edit Title Term')).toBeInTheDocument();
+    expect(screen.getByLabelText('Catalog')).toHaveValue('catalog-a');
+    expect(screen.getByLabelText('Type')).toHaveValue('size');
+    expect(screen.getByLabelText('English name')).toHaveValue('4 cm');
+    expect(screen.getByLabelText('Polish translation')).toHaveValue('4 cm');
+
+    fireEvent.change(screen.getByLabelText('English name'), {
+      target: { value: '4.5 cm' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(saveTitleTermMutateAsyncMock).toHaveBeenCalledWith({
+        id: 'term-1',
+        data: {
+          catalogId: 'catalog-a',
+          type: 'size',
+          name_en: '4.5 cm',
+          name_pl: '4 cm',
+        },
+      });
+    });
+    await waitFor(() => {
+      expect(screen.queryByText('Edit Title Term')).not.toBeInTheDocument();
+    });
   });
 });

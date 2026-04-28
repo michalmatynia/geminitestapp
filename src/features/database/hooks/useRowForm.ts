@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import type { DatabaseColumnInfo } from '@/shared/contracts/database';
-import { parseInputValue } from '../../utils/database-utils';
+import { parseInputValue } from '../utils/database-utils';
 
 export function useRowForm(
   columns: DatabaseColumnInfo[],

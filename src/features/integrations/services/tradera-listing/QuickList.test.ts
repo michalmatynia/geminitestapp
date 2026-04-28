@@ -1054,6 +1054,14 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('shippingDialogReady.saveButton ||');
   });
+
+  it('falls back to URL page-parameter pagination when explicit next links are missing', () => {
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const currentUrlObj = new URL(currentUrl);');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const currentQueryPage = pageParamNames');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "currentUrlObj.searchParams.set(currentQueryPage.paramName, String(currentQueryPage.parsed + 1));"
+    );
+  });
 });
 
 describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
@@ -1067,7 +1075,9 @@ describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
     });
   });
 
-  it('recovers visible Unsold candidates into deep inspection when title DOM is weak', () => {
+  it('restricts seller-section matching to 100% exact-title candidates', () => {
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('log,');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('helpers,');
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('const inferListingTitleFromUrl = (value) => {');
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
       "title: normalizeWhitespace(candidateInfo.titleText || '') || inferredTitleFromUrl,"
@@ -1076,19 +1086,39 @@ describe('TRADERA_CHECK_STATUS_SCRIPT', () => {
       'const collectVisibleListingCandidatesAcrossPages = async (section, searchTerm = null) => {'
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
-      'const isLikelyDuplicateMatchByText = (candidate, normalizedSearchTerm) => {'
+      'const nonExactVisibleCandidateCount = visibleCandidates.filter('
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
-      'const inspectionCandidates = dedupeCandidatesByListing(['
+      'const inspectionCandidates = dedupeCandidatesByListing(exactTitleCandidates);'
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
       'const visibleCandidates = await collectVisibleListingCandidatesAcrossPages('
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
-      'via fallback candidate recovery from visible listing text.'
+      "if (helpers && typeof helpers.click === 'function') {"
     );
     expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
-      'search-result page(s) by description and Product ID.'
+      "if (helpers && typeof helpers.fill === 'function') {"
+    );
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
+      "if (helpers && typeof helpers.press === 'function') {"
+    );
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
+      '100% exact-title matches'
+    );
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
+      'Ignored '
+    );
+    expect(TRADERA_CHECK_STATUS_SCRIPT).not.toContain(
+      'via fallback candidate recovery from visible listing text.'
+    );
+  });
+
+  it('falls back to URL page-parameter pagination when explicit next links are missing', () => {
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('const currentUrlObj = new URL(currentUrl);');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain('const currentQueryPage = pageParamNames');
+    expect(TRADERA_CHECK_STATUS_SCRIPT).toContain(
+      "currentUrlObj.searchParams.set(currentQueryPage.paramName, String(currentQueryPage.parsed + 1));"
     );
   });
 

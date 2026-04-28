@@ -122,7 +122,7 @@ export function useCategoriesForCatalogs(
   ).sort();
   const queryKey = normalizeQueryKey([
     ...productMetadataKeys.all,
-    'categories-batch',
+    'categories-flat-batch',
     normalizedCatalogIds,
   ]);
 

@@ -13,6 +13,7 @@ const {
   resolveWarehouseAndStockMappingsMock,
   executeBaseExportMock,
   isBaseImageErrorMock,
+  buildImageDiagnosticsLoggerMock,
   productRepoUpdateProductMock,
 } = vi.hoisted(() => ({
   checkBaseSkuExistsMock: vi.fn(),
@@ -27,6 +28,7 @@ const {
   resolveWarehouseAndStockMappingsMock: vi.fn(),
   executeBaseExportMock: vi.fn(),
   isBaseImageErrorMock: vi.fn(),
+  buildImageDiagnosticsLoggerMock: vi.fn(),
   productRepoUpdateProductMock: vi.fn(),
 }));
 
@@ -56,13 +58,14 @@ vi.mock('@/features/integrations/services/base-export-segments', () => ({
     resolveWarehouseAndStockMappingsMock(...args),
   executeBaseExport: (...args: unknown[]) => executeBaseExportMock(...args),
   isBaseImageError: (...args: unknown[]) => isBaseImageErrorMock(...args),
+  buildImageDiagnosticsLogger: (...args: unknown[]) => buildImageDiagnosticsLoggerMock(...args),
 }));
 
 import { processBaseExportJob } from './baseExportProcessor';
 
 describe('processBaseExportJob', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     checkBaseSkuExistsMock.mockResolvedValue({ exists: false, productId: null });
     getExportWarehouseIdMock.mockResolvedValue('warehouse-1');
     resolveBaseConnectionTokenMock.mockReturnValue({ token: 'base-token' });
@@ -129,6 +132,7 @@ describe('processBaseExportJob', () => {
       finalMappings: {},
     });
     isBaseImageErrorMock.mockReturnValue(false);
+    buildImageDiagnosticsLoggerMock.mockReturnValue(vi.fn());
     productRepoUpdateProductMock.mockResolvedValue(undefined);
   });
 
@@ -176,6 +180,83 @@ describe('processBaseExportJob', () => {
           requestId: 'request-123',
           jobId: 'job-1',
         }),
+      })
+    );
+  });
+
+  it('preserves the original export arguments when retrying Base image uploads', async () => {
+    const listingRepo = {
+      updateListing: vi.fn(),
+      updateListingExternalId: vi.fn(),
+      updateListingStatus: vi.fn(),
+      appendExportHistory: vi.fn(),
+    };
+    resolveListingForExportMock.mockResolvedValue({
+      listingRepo,
+      listingId: 'listing-base-1',
+      listingExternalId: null,
+      listingInventoryId: null,
+    });
+    isBaseImageErrorMock.mockReturnValue(true);
+    executeBaseExportMock
+      .mockResolvedValueOnce({
+        result: { success: false, error: 'Image too large' },
+        exportFields: ['images'],
+        finalWarehouseId: 'warehouse-1',
+        finalMappings: {},
+      })
+      .mockResolvedValueOnce({
+        result: { success: true, productId: 'base-456' },
+        exportFields: ['images'],
+        finalWarehouseId: 'warehouse-1',
+        finalMappings: {},
+      });
+
+    await processBaseExportJob(
+      {
+        productId: 'product-1',
+        connectionId: 'connection-base-1',
+        inventoryId: 'inventory-main',
+        templateId: 'template-1',
+        imagesOnly: false,
+        listingId: null,
+        externalListingId: null,
+        allowDuplicateSku: false,
+        exportImagesAsBase64: null,
+        imageBase64Mode: null,
+        imageTransform: null,
+        imageBaseUrl: 'https://localhost:3000',
+        requestId: 'request-123',
+        runId: 'run-1',
+        userId: 'user-1',
+      },
+      'job-1'
+    );
+
+    expect(executeBaseExportMock).toHaveBeenCalledTimes(2);
+    expect(executeBaseExportMock.mock.calls[1]?.[0]).toEqual(
+      expect.objectContaining({
+        product: expect.objectContaining({ id: 'product-1', sku: 'SKU-001' }),
+        exportProduct: expect.objectContaining({ id: 'product-1', sku: 'SKU-001' }),
+        exportImagesAsBase64: true,
+        imageBase64Mode: 'base-only',
+        imageTransform: {
+          forceJpeg: true,
+          maxDimension: 1600,
+          jpegQuality: 85,
+        },
+      })
+    );
+    expect(productRepoUpdateProductMock).toHaveBeenCalledWith('product-1', {
+      baseProductId: 'base-456',
+    });
+    expect(listingRepo.updateListing).toHaveBeenLastCalledWith(
+      'listing-base-1',
+      expect.objectContaining({
+        status: 'active',
+        failureReason: null,
+        inventoryId: 'inventory-main',
+        externalListingId: 'base-456',
       })
     );
   });

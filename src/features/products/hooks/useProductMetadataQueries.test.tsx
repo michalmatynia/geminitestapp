@@ -21,7 +21,11 @@ vi.mock('@/shared/lib/api-client', () => ({
   },
 }));
 
-import { useSaveTitleTermMutation, useSimpleParameters } from './useProductMetadataQueries';
+import {
+  useCategoriesForCatalogs,
+  useSaveTitleTermMutation,
+  useSimpleParameters,
+} from './useProductMetadataQueries';
 
 const createQueryClient = (): QueryClient =>
   new QueryClient({
@@ -121,5 +125,58 @@ describe('useSimpleParameters', () => {
       },
       cache: 'no-store',
     });
+  });
+});
+
+describe('useCategoriesForCatalogs', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('uses a flat-category cache key separate from the grouped batch lookup', async () => {
+    const queryClient = createQueryClient();
+    queryClient.setQueryData(
+      [...QUERY_KEYS.products.metadata.all, 'categories-batch', ['catalog-1']],
+      {
+        'catalog-1': [
+          {
+            id: 'grouped-category',
+            name: 'Grouped Category',
+            catalogId: 'catalog-1',
+            parentId: null,
+          },
+        ],
+      }
+    );
+    apiGetMock.mockResolvedValue({
+      'catalog-1': [
+        {
+          id: 'flat-category',
+          name: 'Flat Category',
+          catalogId: 'catalog-1',
+          parentId: null,
+        },
+      ],
+    });
+
+    const { result } = renderHook(() => useCategoriesForCatalogs(['catalog-1']), {
+      wrapper: createWrapper(queryClient),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isSuccess).toBe(true);
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/products/categories/batch?catalogIds=catalog-1'
+    );
+    expect(result.current.data).toEqual([
+      {
+        id: 'flat-category',
+        name: 'Flat Category',
+        catalogId: 'catalog-1',
+        parentId: null,
+      },
+    ]);
   });
 });

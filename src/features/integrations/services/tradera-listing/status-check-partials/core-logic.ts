@@ -156,7 +156,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
 
     const searchTrigger = await findScopedSearchTrigger();
     if (searchTrigger) {
-      await searchTrigger.click({ timeout: 2_000 }).catch(() => undefined);
+      await humanClick(searchTrigger, { pauseBefore: 200, pauseAfter: 300 });
       await waitForCondition(async () => Boolean(await findScopedSearchInput()), {
         timeoutMs: 1_200,
         intervalMs: 100,
@@ -192,9 +192,10 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       normalizeWhitespace(await readSearchInputValue(searchInput)).toLowerCase() ===
       normalizedExpectedTerm;
 
-    await searchInput.click({ timeout: 2_000 }).catch(() => undefined);
-    await searchInput.fill('').catch(() => undefined);
-    await searchInput.fill(expectedTerm).catch(() => undefined);
+    await humanFill(searchInput, expectedTerm, {
+      pauseBefore: 200,
+      pauseAfter: 200,
+    });
     await waitForCondition(hasExpectedValue, {
       timeoutMs: 1_000,
       intervalMs: 100,
@@ -202,8 +203,10 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
 
     let appliedValue = await readSearchInputValue(searchInput);
     if (normalizeWhitespace(appliedValue).toLowerCase() !== normalizedExpectedTerm) {
-      await searchInput.fill('').catch(() => undefined);
-      await searchInput.fill(expectedTerm).catch(() => undefined);
+      await humanFill(searchInput, expectedTerm, {
+        pauseBefore: 150,
+        pauseAfter: 200,
+      });
       await waitForCondition(hasExpectedValue, {
         timeoutMs: 1_000,
         intervalMs: 100,
@@ -223,12 +226,12 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
   const triggerSearchSubmit = async () => {
     const submitButton = await firstVisible(ACTIVE_SEARCH_SUBMIT_SELECTORS);
     if (submitButton) {
-      await submitButton.click({ timeout: 2_000 }).catch(() => undefined);
+      await humanClick(submitButton, { pauseBefore: 150, pauseAfter: 250 });
       await waitForPageIdle(1_000);
       return 'button';
     }
 
-    await page.keyboard.press('Enter').catch(() => undefined);
+    await humanPress('Enter', { pauseBefore: 100, pauseAfter: 250 });
     await waitForPageIdle(1_000);
     return 'enter';
   };
@@ -266,13 +269,16 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     const hasSectionContext = async () =>
       isSectionUrl(page.url().toLowerCase()) || Boolean(await firstVisible(section.stateSelectors));
 
+    await acceptCookies();
     if (await hasSectionContext()) {
       return true;
     }
 
     const trigger = await findSectionTrigger(section);
     if (trigger) {
-      await trigger.click({ timeout: 2_000 }).catch(() => undefined);
+      await acceptCookies();
+      await humanClick(trigger, { pauseBefore: 150, pauseAfter: 300 });
+      await acceptCookies();
       if (
         await waitForCondition(hasSectionContext, {
           timeoutMs: 2_500,
@@ -288,6 +294,8 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
         waitUntil: 'domcontentloaded',
         timeout: 30_000,
       }).catch(() => undefined);
+      await waitForPageIdle(800);
+      await acceptCookies();
       if (
         await waitForCondition(hasSectionContext, {
           timeoutMs: 2_500,
@@ -298,6 +306,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       }
     }
 
+    await acceptCookies();
     return hasSectionContext();
   };
 
@@ -658,7 +667,33 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
             }
           }
 
-          return bestCandidate ? bestCandidate.absoluteUrl : null;
+          if (bestCandidate) {
+            return bestCandidate.absoluteUrl;
+          }
+
+          const currentUrlObj = new URL(currentUrl);
+          const currentQueryPage = pageParamNames
+            .map((paramName) => {
+              const value = currentUrlObj.searchParams.get(paramName);
+              const normalized = normalize(value || '');
+              const parsed = Number.parseInt(normalized, 10);
+              if (!Number.isFinite(parsed) || parsed <= 0) {
+                return null;
+              }
+
+              return {
+                paramName,
+                parsed,
+              };
+            })
+            .find(Boolean);
+
+          if (!currentQueryPage) {
+            return null;
+          }
+
+          currentUrlObj.searchParams.set(currentQueryPage.paramName, String(currentQueryPage.parsed + 1));
+          return currentUrlObj.toString();
         },
         {
           currentUrl: page.url(),
@@ -754,59 +789,6 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     }
 
     return deduped;
-  };
-
-  const isLikelyDuplicateMatchByText = (candidate, normalizedSearchTerm) => {
-    if (!normalizedSearchTerm) {
-      return false;
-    }
-
-    const normalizedCandidateTitle = normalizeListingMatchValue(candidate?.title || '');
-    const normalizedCandidateText = normalizeListingMatchValue(
-      [candidate?.text || '', candidate?.title || ''].filter(Boolean).join(' ')
-    );
-    const candidateTitle = normalizedCandidateTitle;
-    const candidateText = normalizedCandidateText;
-
-    if (!candidateTitle && !candidateText) {
-      return false;
-    }
-
-    if (
-      candidateTitle === normalizedSearchTerm ||
-      candidateText === normalizedSearchTerm ||
-      candidateTitle.includes(normalizedSearchTerm) ||
-      candidateText.includes(normalizedSearchTerm)
-    ) {
-      return true;
-    }
-
-    if (candidateTitle && normalizedSearchTerm.includes(candidateTitle) && candidateTitle.length >= 12) {
-      return true;
-    }
-
-    const searchTokens = normalizedSearchTerm
-      .split(' ')
-      .map((token) => token.trim())
-      .filter((token) => token.length >= 3);
-    if (searchTokens.length < 2) {
-      return false;
-    }
-
-    const candidateTokens = new Set(
-      normalizeWhitespace([candidateTitle, candidateText].filter(Boolean).join(' '))
-        .split(' ')
-        .map((token) => token.trim())
-        .filter((token) => token.length >= 3)
-    );
-    let matchCount = 0;
-    for (const token of searchTokens) {
-      if (candidateTokens.has(token)) {
-        matchCount += 1;
-      }
-    }
-
-    return matchCount >= Math.min(2, Math.ceil(searchTokens.length / 2));
   };
 
   const readDuplicateCandidateListingText = async () => {
@@ -1090,7 +1072,87 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
 
     const searchInput = await openScopedSearchInput();
     if (!searchInput) {
-      throw new Error('FAIL_STATUS_SEARCH_UNAVAILABLE: Search input not found in ' + section.label + '.');
+      updateStep(
+        section.searchStepId,
+        'success',
+        'No searchable input was found in ' +
+          section.label +
+          '; checking currently visible listings directly for 100% exact-title matches.'
+      );
+
+      const visibleCandidates = await collectVisibleListingCandidatesAcrossPages(
+        section,
+        resolvedSearchTitle || ''
+      );
+      const exactTitleCandidates = await collectListingLinksForTerm(
+        resolvedSearchTitle || '',
+        null,
+        visibleCandidates
+      );
+      const nonExactVisibleCandidateCount = visibleCandidates.filter(
+        (candidate) => !titlesExactlyMatch(candidate?.title || '', resolvedSearchTitle || '')
+      ).length;
+      const inspectionCandidates = dedupeCandidatesByListing(exactTitleCandidates);
+
+      if (inspectionCandidates.length === 0) {
+        updateStep(
+          section.inspectStepId,
+          'success',
+          'No candidate inspection was needed in ' +
+            section.label +
+            ' because no 100% exact-title matches were found without a search input.' +
+            (nonExactVisibleCandidateCount > 0
+              ? ' Ignored ' +
+                nonExactVisibleCandidateCount +
+                ' visible non-exact candidate(s) to stay aligned with duplicate-check matching rules.'
+              : '')
+        );
+        return null;
+      }
+
+      updateStep(
+        section.inspectStepId,
+        'running',
+        'Inspecting ' +
+          inspectionCandidates.length +
+          ' candidate(s) from all ' +
+          section.label +
+          ' pages by description and Product ID without using a searchable field.'
+      );
+
+      for (const candidate of inspectionCandidates) {
+        const matchedCandidate = await inspectMatchingCandidate(section, candidate);
+        if (!matchedCandidate) {
+          continue;
+        }
+
+        updateStep(
+          section.inspectStepId,
+          'success',
+          'Matched the listing in ' +
+            section.label +
+            ' using ' +
+            matchedCandidate.matchStrategy +
+            ' and resolved raw status tag "' +
+            matchedCandidate.rawStatusTag +
+            '".'
+        );
+
+        return {
+          ...matchedCandidate,
+          candidateCount: inspectionCandidates.length,
+        };
+      }
+
+      updateStep(
+        section.inspectStepId,
+        'success',
+        '100% exact-title candidates were found in ' +
+          section.label +
+          ', but none matched the product description or Product ID.'
+      );
+
+      return null;
     }
 
     const preparedSearchValue = await prepareSearchInput(searchInput, resolvedSearchTitle || '');
@@ -1100,46 +1162,47 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
       section,
       resolvedSearchTitle || ''
     );
-    const normalizedSearchTerm = normalizeListingMatchValue(resolvedSearchTitle || '');
     const exactTitleCandidates = await collectListingLinksForTerm(
       resolvedSearchTitle || '',
       null,
       visibleCandidates
     );
-    const fallbackCandidates =
-      exactTitleCandidates.length === 0
-        ? visibleCandidates.filter((candidate) =>
-            isLikelyDuplicateMatchByText(candidate, normalizedSearchTerm)
-          )
-        : [];
-    const inspectionCandidates = dedupeCandidatesByListing([
-      ...exactTitleCandidates,
-      ...fallbackCandidates,
-    ]);
+    const nonExactVisibleCandidateCount = visibleCandidates.filter(
+      (candidate) => !titlesExactlyMatch(candidate?.title || '', resolvedSearchTitle || '')
+    ).length;
+    const inspectionCandidates = dedupeCandidatesByListing(exactTitleCandidates);
     updateStep(
       section.searchStepId,
       'success',
       inspectionCandidates.length > 0
         ? 'Found ' +
             inspectionCandidates.length +
-            ' candidate(s) across all ' +
+            ' 100% exact-title candidate(s) across all ' +
             section.label +
             ' search-result page(s) using "' +
             preparedSearchValue +
             '" (' +
             searchTrigger +
-            ')' +
-            (exactTitleCandidates.length > 0
-              ? '.'
-              : ' via fallback candidate recovery from visible listing text.')
-        : 'No exact-title candidates were found in ' + section.label + ' for "' + preparedSearchValue + '".'
+            ').'
+        : 'No 100% exact-title candidates were found in ' +
+            section.label +
+            ' for "' +
+            preparedSearchValue +
+            '".' +
+            (nonExactVisibleCandidateCount > 0
+              ? ' Ignored ' +
+                nonExactVisibleCandidateCount +
+                ' visible non-exact candidate(s) to stay aligned with duplicate-check matching rules.'
+              : '')
     );
 
     if (inspectionCandidates.length === 0) {
       updateStep(
         section.inspectStepId,
         'success',
-        'No candidate inspection was needed in ' + section.label + ' because no exact-title matches were found.'
+        'No candidate inspection was needed in ' +
+          section.label +
+          ' because no 100% exact-title matches were found.'
       );
       return null;
     }
@@ -1181,7 +1244,7 @@ export const STATUS_CHECK_CORE_LOGIC = String.raw`
     updateStep(
       section.inspectStepId,
       'success',
-      'Exact-title candidates were found in ' +
+      '100% exact-title candidates were found in ' +
         section.label +
         ', but none matched the product description or Product ID.'
     );

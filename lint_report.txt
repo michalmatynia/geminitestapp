@@ -1,0 +1,140 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/product-sync/services/product-sync-processor.ts
+   136:61   error  Arrow function has a complexity of 9. Maximum allowed is 8                                                                            complexity
+   148:7    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   182:64   error  Arrow function has a complexity of 11. Maximum allowed is 8                                                                           complexity
+   184:7    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   193:7    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   218:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   225:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   232:33   error  Arrow function has a complexity of 22. Maximum allowed is 8                                                                           complexity
+   234:8    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   236:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   236:25   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   258:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   258:64   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   260:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   260:24   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   276:65   error  Arrow function has a complexity of 9. Maximum allowed is 8                                                                            complexity
+   281:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   281:27   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   287:23   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   301:14   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   317:27   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined                                    @typescript-eslint/no-unnecessary-condition
+   319:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   320:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   321:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   322:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   333:1    error  File has too many lines (1721). Maximum allowed is 300                                                                                max-lines
+   340:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   362:7    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   364:9    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+   369:31   error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined                                    @typescript-eslint/no-unnecessary-condition
+   384:23   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   396:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   396:24   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   415:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   451:47   error  Async arrow function has too many lines (107). Maximum allowed is 60                                                                  max-lines-per-function
+   458:45   error  Async arrow function has a complexity of 15. Maximum allowed is 8                                                                     complexity
+   498:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   503:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   524:55   error  Arrow function has a complexity of 10. Maximum allowed is 8                                                                           complexity
+   531:11   error  Unexpected value in conditional. A boolean expression is required                                                                     @typescript-eslint/strict-boolean-expressions
+   541:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   590:8    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   606:27   error  Arrow function has a complexity of 11. Maximum allowed is 8                                                                           complexity
+   624:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   646:103  error  Arrow function has a complexity of 16. Maximum allowed is 8                                                                           complexity
+   661:7    error  Unnecessary conditional, comparison is always true, since `"custom_fields" === "custom_fields"` is true                               @typescript-eslint/no-unnecessary-condition
+   667:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   673:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   680:10   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   687:67   error  Arrow function has a complexity of 9. Maximum allowed is 8                                                                            complexity
+   690:7    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   698:86   error  Arrow function has a complexity of 10. Maximum allowed is 8                                                                           complexity
+   714:7    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   723:40   error  Arrow function has too many lines (82). Maximum allowed is 60                                                                         max-lines-per-function
+   726:12   error  Arrow function has a complexity of 36. Maximum allowed is 8                                                                           complexity
+   809:12   error  Arrow function has a complexity of 10. Maximum allowed is 8                                                                           complexity
+   815:11   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+   819:9    error  Blocks are nested too deeply (4). Maximum allowed is 3                                                                                max-depth
+   821:11   error  Blocks are nested too deeply (5). Maximum allowed is 3                                                                                max-depth
+   836:99   error  Arrow function has a complexity of 9. Maximum allowed is 8                                                                            complexity
+   838:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   846:10   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+   848:10   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                            @typescript-eslint/strict-boolean-expressions
+   855:8    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+   868:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   875:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   921:7    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+   932:7    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+   968:21   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+   985:51   error  Async arrow function has too many lines (73). Maximum allowed is 60                                                                   max-lines-per-function
+  1024:26   error  Unexpected number value in conditional. An explicit zero/NaN check is required                                                        @typescript-eslint/strict-boolean-expressions
+  1033:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1047:21   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1104:43   error  Arrow function has too many lines (74). Maximum allowed is 60                                                                         max-lines-per-function
+  1119:82   error  Arrow function has a complexity of 12. Maximum allowed is 8                                                                           complexity
+  1122:7    error  Do not nest ternary expressions                                                                                                       no-nested-ternary
+  1171:38   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1210:24   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1217:24   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1245:27   error  Unexpected `await` of a non-Promise (non-"Thenable") value                                                                            @typescript-eslint/await-thenable
+  1262:8    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1269:21   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1290:21   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1293:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1294:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1296:12   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1309:7    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1322:7    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1345:7    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1354:7    error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1373:20   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1379:10   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1446:7    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1455:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1460:10   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1463:40   error  Async arrow function has too many lines (102). Maximum allowed is 60                                                                  max-lines-per-function
+  1474:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1507:28   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1576:38   error  Async arrow function has too many lines (193). Maximum allowed is 60                                                                  max-lines-per-function
+  1576:91   error  Async arrow function has a complexity of 27. Maximum allowed is 8                                                                     complexity
+  1648:5    error  Possible race condition: `lastProgressFlushProcessed` might be reassigned based on an outdated value of `lastProgressFlushProcessed`  require-atomic-updates
+  1649:5    error  Possible race condition: `lastProgressFlushAtMs` might be reassigned based on an outdated value of `lastProgressFlushAtMs`            require-atomic-updates
+  1653:12   error  Unnecessary conditional, value is always truthy                                                                                       @typescript-eslint/no-unnecessary-condition
+  1654:24   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1657:13   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1664:32   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1673:33   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1681:9    error  Blocks are nested too deeply (4). Maximum allowed is 3                                                                                max-depth
+  1685:11   error  Blocks are nested too deeply (5). Maximum allowed is 3                                                                                max-depth
+  1686:28   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1698:13   error  Blocks are nested too deeply (6). Maximum allowed is 3                                                                                max-depth
+  1700:15   error  Blocks are nested too deeply (7). Maximum allowed is 3                                                                                max-depth
+  1701:15   error  Blocks are nested too deeply (7). Maximum allowed is 3                                                                                max-depth
+  1723:13   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1724:13   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1746:13   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1747:13   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1762:7    error  Do not nest ternary expressions                                                                                                       no-nested-ternary
+  1798:39   error  Async arrow function has too many lines (108). Maximum allowed is 60                                                                  max-lines-per-function
+  1809:4    error  Async arrow function has a complexity of 32. Maximum allowed is 8                                                                     complexity
+  1810:27   error  Unexpected `await` of a non-Promise (non-"Thenable") value                                                                            @typescript-eslint/await-thenable
+  1826:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1829:6    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1840:5    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1842:8    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1864:22   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1867:11   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1878:9    error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1879:10   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1880:13   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1886:12   error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly                                     @typescript-eslint/strict-boolean-expressions
+  1890:12   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+  1891:9    error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1896:22   error  Unexpected `await` inside a loop                                                                                                      no-await-in-loop
+  1902:17   error  Unexpected string value in conditional. An explicit empty string check is required                                                    @typescript-eslint/strict-boolean-expressions
+
+✖ 135 problems (135 errors, 0 warnings)
+

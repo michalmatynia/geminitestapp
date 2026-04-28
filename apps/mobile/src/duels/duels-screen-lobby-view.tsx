@@ -68,7 +68,29 @@ function GuestIntroCard({ copy, loginIntroCallToAction }: { copy: DuelCopy, logi
 }
 
 export function DuelsLobbyView(props: DuelsLobbyViewProps): React.JSX.Element {
-  const { copy, lobby, activeLearnerId, autoRefreshEnabled, autoRefreshChipLabel, canSendChatMessage, chat, chatActionError, chatDraft, chatRemainingChars, lobbyChatPreview, locale, onChatDraftChange, onOpenSession, onSendLobbyChat, onToggleAutoRefresh, renderJoinAction, renderSpectateAction, searchStatusLabel, searchStatusTone, loginIntroCallToAction } = props;
+  const {
+    copy,
+    lobby,
+    activeLearnerId,
+    autoRefreshEnabled,
+    autoRefreshChipLabel,
+    canSendChatMessage,
+    chat,
+    chatActionError,
+    chatDraft,
+    chatRemainingChars,
+    lobbyChatPreview,
+    locale,
+    onChatDraftChange,
+    onOpenSession,
+    onSendLobbyChat,
+    onToggleAutoRefresh,
+    renderJoinAction,
+    renderSpectateAction,
+    searchStatusLabel,
+    searchStatusTone,
+    loginIntroCallToAction,
+  } = props;
 
   return (
     <KangurMobileScrollScreen contentContainerStyle={{ gap: 18, paddingHorizontal: 20, paddingVertical: 24 }} keyboardShouldPersistTaps='handled'>

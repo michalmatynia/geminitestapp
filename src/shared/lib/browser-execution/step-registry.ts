@@ -26,6 +26,12 @@ export const STEP_REGISTRY = {
   resolve_price:          { id: 'resolve_price',          label: 'Resolve listing price' },
   image_cleanup:          { id: 'image_cleanup',          label: 'Clear draft images' },
 
+  // Tradera move-to-unsold (end-listing) path
+  listing_open:           { id: 'listing_open',           label: 'Open Tradera listing' },
+  end_listing_action:     { id: 'end_listing_action',     label: 'Open listing actions' },
+  end_listing_confirm:    { id: 'end_listing_confirm',    label: 'Confirm end listing' },
+  end_listing_verify:     { id: 'end_listing_verify',     label: 'Verify final status' },
+
   // Tradera check_status path
   overview_open:          { id: 'overview_open',          label: 'Open Tradera overview' },
   search_active:          { id: 'search_active',          label: 'Search active listings' },

@@ -6,6 +6,7 @@ import {
   listJobScansWithSync,
   synchronizeJobScan,
 } from '@/features/job-board/server/job-scans-service';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   jobScanCreateRequestSchema,
   jobScanCreateResponseSchema,
@@ -42,8 +43,18 @@ export async function postHandler(_req: NextRequest, ctx: ApiHandlerContext): Pr
     ...(body.provider ? { provider: body.provider } : {}),
     createdBy: ctx.userId ?? null,
   });
-  const synchronized = await synchronizeJobScan(created);
-  return NextResponse.json(jobScanCreateResponseSchema.parse({ scan: synchronized }), {
-    status: 201,
+
+  // Fire-and-forget: persist the queued scan immediately so the UI can poll for results.
+  // synchronizeJobScan transitions the scan through running → completed/failed and persists each step.
+  void synchronizeJobScan(created).catch((error) => {
+    void ErrorSystem.captureException(error, {
+      service: 'v2.jobs.scans.POST',
+      action: 'synchronizeJobScan.background',
+      scanId: created.id,
+    });
+  });
+
+  return NextResponse.json(jobScanCreateResponseSchema.parse({ scan: created }), {
+    status: 202,
   });
 }

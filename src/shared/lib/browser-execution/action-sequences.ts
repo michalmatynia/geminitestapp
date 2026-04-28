@@ -20,6 +20,7 @@ export type ActionSequenceKey =
   | 'tradera_quicklist_relist'
   | 'tradera_quicklist_sync'
   | 'tradera_check_status'
+  | 'tradera_move_to_unsold'
   | 'tradera_fetch_categories'
   | typeof AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY
   | typeof AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
@@ -88,11 +89,23 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
     'overview_open',
     'search_active',
     'inspect_active',
-    'search_unsold',
-    'inspect_unsold',
     'search_sold',
     'inspect_sold',
+    'search_unsold',
+    'inspect_unsold',
     'resolve_status',
+    'browser_close',
+  ],
+
+  tradera_move_to_unsold: [
+    'browser_preparation',
+    'browser_open',
+    'listing_open',
+    'cookie_accept',
+    'auth_check',
+    'end_listing_action',
+    'end_listing_confirm',
+    'end_listing_verify',
     'browser_close',
   ],
 

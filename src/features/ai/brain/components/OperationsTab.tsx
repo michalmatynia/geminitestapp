@@ -195,6 +195,115 @@ const trendToneClass = (trend: BrainOperationsTrend): string => {
   return 'text-gray-400';
 };
 
+const DomainCard = ({
+  domainKey,
+  domain,
+  Icon,
+  isExpanded,
+  onToggleExpand,
+  selectedRangeLabel,
+}: {
+  domainKey: BrainOperationsDomainKey;
+  domain: any;
+  Icon: ComponentType<{ className?: string }>;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  selectedRangeLabel: string;
+}) => {
+  const trend = domain.trend;
+  const TrendIcon = trend ? TREND_ICON[trend.direction] : Minus;
+
+  const runtimeRiskMetric = domainKey === 'ai_paths' ? domain.metrics.find((m: any) => m.key === 'runtime_kernel_risk') : undefined;
+  const runtimeRiskValue = runtimeRiskMetric ? normalizeMetricValue(runtimeRiskMetric.value) : '';
+  const runtimeRiskDisplay = runtimeRiskMetric ? formatMetricValue(runtimeRiskMetric.value) : '';
+  const showRuntimeRiskBadge = domainKey === 'ai_paths' && runtimeRiskValue !== '' && runtimeRiskValue !== 'disabled' && runtimeRiskValue !== 'n/a';
+
+  const runtimeRiskCurrentMetric = parseMetricInteger(getMetricValue(domainKey, domain.metrics, 'runtime_risk_events_current'));
+  const runtimeRiskPreviousMetric = parseMetricInteger(getMetricValue(domainKey, domain.metrics, 'runtime_risk_events_previous'));
+  const showRuntimeRiskSummary = domainKey === 'ai_paths' && runtimeRiskCurrentMetric !== null && runtimeRiskPreviousMetric !== null;
+
+  return (
+    <Card variant='subtle' padding='md' className='border-border/60 bg-card/35 space-y-3'>
+      <div className='flex items-start justify-between gap-3'>
+        <div className='space-y-1'>
+          <div className='flex items-center gap-2'>
+            <Icon className='size-4 text-emerald-300' />
+            <div className='text-sm font-semibold text-white'>{domain.label}</div>
+          </div>
+          <div className='text-[11px] text-gray-500'>
+            Updated {formatFreshness(domain.updatedAt)} · sample {domain.sampleSize}
+          </div>
+        </div>
+        <StatusBadge status={domain.state} label={domain.state.toUpperCase()} size='sm' className='font-bold' />
+      </div>
+
+      {domain.message && <div className='text-xs text-gray-300'>{domain.message}</div>}
+
+      {showRuntimeRiskBadge && (
+        <div className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium uppercase tracking-wide ${runtimeRiskToneClass(runtimeRiskValue)}`}>
+          Kernel parity risk: {runtimeRiskDisplay}
+        </div>
+      )}
+
+      {showRuntimeRiskSummary && (
+        <div className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium ${runtimeRiskSummaryToneClass(runtimeRiskCurrentMetric, runtimeRiskPreviousMetric)}`}>
+          Runtime risk events: {runtimeRiskCurrentMetric} current / {runtimeRiskPreviousMetric} previous
+        </div>
+      )}
+
+      {trend && (
+        <div className='flex items-center justify-between rounded-md border border-border/60 bg-background/40 px-2 py-1.5 text-[11px]'>
+          <div className='text-gray-400'>{trend.label}</div>
+          <div className={`inline-flex items-center gap-1 ${trendToneClass(trend)}`}>
+            <TrendIcon className='size-3' />
+            {formatTrendValue(trend)}
+          </div>
+        </div>
+      )}
+
+      <div className='grid grid-cols-2 gap-2'>
+        {domain.metrics.map((metric: any) => (
+          <div key={`${domainKey}:${metric.key}`} className={`rounded-md border px-2 py-1.5 ${metricCellToneClass(domainKey, metric)}`}>
+            <div className='text-[10px] uppercase text-gray-500'>{metric.label}</div>
+            <div className={`text-xs ${metricValueToneClass(domainKey, metric)}`}>{formatMetricValue(metric.value)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className='flex flex-wrap items-center gap-2'>
+        {domain.links.map((link: any) => (
+          <Link key={`${domainKey}:${link.href}`} href={link.href} className='inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/50 px-2 py-1 text-[11px] text-gray-200 hover:bg-background/70'>
+            {link.label}
+            <ExternalLink className='size-3' />
+          </Link>
+        ))}
+        <button type='button' className='inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/50 px-2 py-1 text-[11px] text-gray-200 hover:bg-background/70' onClick={onToggleExpand}>
+          Details
+          {isExpanded ? <ChevronUp className='size-3' /> : <ChevronDown className='size-3' />}
+        </button>
+      </div>
+
+      {isExpanded && (
+        <div className='space-y-2 rounded-md border border-border/60 bg-background/30 p-2'>
+          <div className='text-[10px] uppercase text-gray-500'>Recent events ({selectedRangeLabel})</div>
+          {domain.recentEvents.length === 0 ? (
+            <div className='text-xs text-gray-400'>No recent events in sampled records.</div>
+          ) : (
+            <div className='space-y-1'>
+              {domain.recentEvents.map((event: any) => (
+                <div key={`${domainKey}:${event.id ?? event.timestamp}:${event.status}`} className='flex items-center justify-between rounded border border-border/50 bg-background/40 px-2 py-1 text-[11px]'>
+                  <span className={`font-medium ${eventToneClass(event.status)}`}>{toEventStatusLabel(event.status)}</span>
+                  <span className='text-gray-400'>{formatUpdatedAt(event.timestamp)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+};
+
 export function OperationsTab(): React.JSX.Element {
   const { operationsRange, setOperationsRange, operationsOverviewQuery } = useBrain();
   const data = operationsOverviewQuery.data;
@@ -251,161 +360,17 @@ export function OperationsTab(): React.JSX.Element {
             {DOMAIN_ORDER.map((key: BrainOperationsDomainKey) => {
               const domain = data.domains[key];
               const Icon = DOMAIN_ICONS[key];
-              const trend = domain.trend;
-              const TrendIcon = trend ? TREND_ICON[trend.direction] : Minus;
-              const isExpanded = expandedDomain === key;
-              const runtimeRiskMetric =
-                key === 'ai_paths'
-                  ? domain.metrics.find((metric) => metric.key === 'runtime_kernel_risk')
-                  : undefined;
-              const runtimeRiskValue = runtimeRiskMetric
-                ? normalizeMetricValue(runtimeRiskMetric.value)
-                : '';
-              const runtimeRiskDisplay = runtimeRiskMetric
-                ? formatMetricValue(runtimeRiskMetric.value)
-                : '';
-              const showRuntimeRiskBadge =
-                key === 'ai_paths' &&
-                runtimeRiskValue.length > 0 &&
-                runtimeRiskValue !== 'disabled' &&
-                runtimeRiskValue !== 'n/a';
-              const runtimeRiskCurrentMetric = parseMetricInteger(
-                getMetricValue(key, domain.metrics, 'runtime_risk_events_current')
-              );
-              const runtimeRiskPreviousMetric = parseMetricInteger(
-                getMetricValue(key, domain.metrics, 'runtime_risk_events_previous')
-              );
-              const showRuntimeRiskSummary =
-                key === 'ai_paths' &&
-                runtimeRiskCurrentMetric !== null &&
-                runtimeRiskPreviousMetric !== null;
 
               return (
-                <Card
+                <DomainCard
                   key={key}
-                  variant='subtle'
-                  padding='md'
-                  className='border-border/60 bg-card/35 space-y-3'
-                >
-                  <div className='flex items-start justify-between gap-3'>
-                    <div className='space-y-1'>
-                      <div className='flex items-center gap-2'>
-                        <Icon className='size-4 text-emerald-300' />
-                        <div className='text-sm font-semibold text-white'>{domain.label}</div>
-                      </div>
-                      <div className='text-[11px] text-gray-500'>
-                        Updated {formatFreshness(domain.updatedAt)} · sample {domain.sampleSize}
-                      </div>
-                    </div>
-                    <StatusBadge
-                      status={domain.state}
-                      label={domain.state.toUpperCase()}
-                      size='sm'
-                      className='font-bold'
-                    />
-                  </div>
-
-                  {domain.message ? (
-                    <div className='text-xs text-gray-300'>{domain.message}</div>
-                  ) : null}
-
-                  {showRuntimeRiskBadge ? (
-                    <div
-                      data-testid={`operations-runtime-risk-${key}`}
-                      className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium uppercase tracking-wide ${runtimeRiskToneClass(runtimeRiskValue)}`}
-                    >
-                      Kernel parity risk: {runtimeRiskDisplay}
-                    </div>
-                  ) : null}
-
-                  {showRuntimeRiskSummary ? (
-                    <div
-                      data-testid={`operations-runtime-risk-summary-${key}`}
-                      className={`inline-flex items-center rounded-md border px-2 py-1 text-[11px] font-medium ${runtimeRiskSummaryToneClass(runtimeRiskCurrentMetric, runtimeRiskPreviousMetric)}`}
-                    >
-                      Runtime risk events: {runtimeRiskCurrentMetric} current /{' '}
-                      {runtimeRiskPreviousMetric} previous
-                    </div>
-                  ) : null}
-
-                  {trend ? (
-                    <div className='flex items-center justify-between rounded-md border border-border/60 bg-background/40 px-2 py-1.5 text-[11px]'>
-                      <div className='text-gray-400'>{trend.label}</div>
-                      <div className={`inline-flex items-center gap-1 ${trendToneClass(trend)}`}>
-                        <TrendIcon className='size-3' />
-                        {formatTrendValue(trend)}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className='grid grid-cols-2 gap-2'>
-                    {domain.metrics.map((metric: BrainOperationsMetric) => (
-                      <div
-                        key={`${key}:${metric.key}`}
-                        className={`rounded-md border px-2 py-1.5 ${metricCellToneClass(key, metric)}`}
-                      >
-                        <div className='text-[10px] uppercase text-gray-500'>{metric.label}</div>
-                        <div className={`text-xs ${metricValueToneClass(key, metric)}`}>
-                          {formatMetricValue(metric.value)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className='flex flex-wrap items-center gap-2'>
-                    {domain.links.map((link) => (
-                      <Link
-                        key={`${key}:${link.href}`}
-                        href={link.href}
-                        className='inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/50 px-2 py-1 text-[11px] text-gray-200 hover:bg-background/70'
-                      >
-                        {link.label}
-                        <ExternalLink className='size-3' />
-                      </Link>
-                    ))}
-                    <button
-                      type='button'
-                      className='inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/50 px-2 py-1 text-[11px] text-gray-200 hover:bg-background/70'
-                      onClick={(): void => setExpandedDomain(isExpanded ? null : key)}
-                    >
-                      Details
-                      {isExpanded ? (
-                        <ChevronUp className='size-3' />
-                      ) : (
-                        <ChevronDown className='size-3' />
-                      )}
-                    </button>
-                  </div>
-
-                  {isExpanded ? (
-                    <div className='space-y-2 rounded-md border border-border/60 bg-background/30 p-2'>
-                      <div className='text-[10px] uppercase text-gray-500'>
-                        Recent events ({selectedRangeLabel})
-                      </div>
-                      {domain.recentEvents.length === 0 ? (
-                        <div className='text-xs text-gray-400'>
-                          No recent events in sampled records.
-                        </div>
-                      ) : (
-                        <div className='space-y-1'>
-                          {domain.recentEvents.map((event) => (
-                            <div
-                              key={`${key}:${event.id ?? event.timestamp}:${event.status}`}
-                              className='flex items-center justify-between rounded border border-border/50 bg-background/40 px-2 py-1 text-[11px]'
-                            >
-                              <span className={`font-medium ${eventToneClass(event.status)}`}>
-                                {toEventStatusLabel(event.status)}
-                              </span>
-                              <span className='text-gray-400'>
-                                {formatUpdatedAt(event.timestamp)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                </Card>
+                  domainKey={key}
+                  domain={domain}
+                  Icon={Icon}
+                  isExpanded={expandedDomain === key}
+                  onToggleExpand={() => setExpandedDomain(expandedDomain === key ? null : key)}
+                  selectedRangeLabel={selectedRangeLabel}
+                />
               );
             })}
           </div>
@@ -414,3 +379,4 @@ export function OperationsTab(): React.JSX.Element {
     </div>
   );
 }
+

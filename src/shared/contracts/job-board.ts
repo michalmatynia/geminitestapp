@@ -27,6 +27,13 @@ export const isJobScanTerminalStatus = (
   value: JobScanStatus | null | undefined
 ): boolean => !isJobScanActiveStatus(value);
 
+export const companyEmailSchema = z.object({
+  address: trimmed.min(3).max(320),
+  source: optStr(2_000),
+  isPrimary: z.boolean().default(false),
+});
+export type CompanyEmail = z.infer<typeof companyEmailSchema>;
+
 export const companySchema = z.object({
   id: trimmed.min(1).max(160),
   name: trimmed.min(1).max(300),
@@ -41,6 +48,8 @@ export const companySchema = z.object({
   city: optStr(200),
   postalCode: optStr(40),
   country: optStr(120),
+  emails: z.array(companyEmailSchema).max(20).default([]),
+  emailsSearchedAt: z.string().datetime().nullable().default(null),
   sourceUrl: optStr(4_000),
   createdAt: z.string().datetime().optional(),
   updatedAt: z.string().datetime().optional(),
@@ -177,6 +186,24 @@ export const jobScanCreateResponseSchema = z.object({
 });
 export type JobScanCreateResponse = z.infer<typeof jobScanCreateResponseSchema>;
 
+export const jobBoardRefreshCompanyEmailsRequestSchema = z.object({
+  useVision: z.boolean().optional(),
+  autoPromote: z.boolean().optional(),
+  headless: z.boolean().optional(),
+}).default({});
+export type JobBoardRefreshCompanyEmailsRequest = z.infer<
+  typeof jobBoardRefreshCompanyEmailsRequestSchema
+>;
+
+export const jobBoardRefreshCompanyEmailsResponseSchema = z.object({
+  company: companySchema,
+  steps: z.array(jobScanStepSchema).default([]),
+  usedVision: z.boolean(),
+});
+export type JobBoardRefreshCompanyEmailsResponse = z.infer<
+  typeof jobBoardRefreshCompanyEmailsResponseSchema
+>;
+
 export const companyListResponseSchema = z.object({
   companies: z.array(companySchema).default([]),
 });
@@ -186,3 +213,42 @@ export const jobListingListResponseSchema = z.object({
   listings: z.array(jobListingSchema).default([]),
 });
 export type JobListingListResponse = z.infer<typeof jobListingListResponseSchema>;
+
+export const filemakerOrganisationHitSchema = z.object({
+  id: trimmed.min(1).max(160),
+  name: trimmed.min(1).max(500),
+  taxId: optStr(40),
+  krs: optStr(40),
+  city: optStr(200),
+  tradingName: optStr(300),
+  cooperationStatus: optStr(80),
+});
+export type FilemakerOrganisationHit = z.infer<typeof filemakerOrganisationHitSchema>;
+
+export const organisationSearchResponseSchema = z.object({
+  hits: z.array(filemakerOrganisationHitSchema).default([]),
+});
+export type OrganisationSearchResponse = z.infer<typeof organisationSearchResponseSchema>;
+
+export const promoteCompanyRequestSchema = z.object({
+  organizationId: trimmed.min(1).max(160),
+  addresses: z.array(trimmed.min(3).max(320)).max(20).optional(),
+});
+export type PromoteCompanyRequest = z.infer<typeof promoteCompanyRequestSchema>;
+
+export const promotionItemSchema = z.object({
+  address: trimmed.min(3).max(320),
+  emailId: trimmed.min(1).max(160),
+  linkId: trimmed.min(1).max(160),
+  status: z.enum(['created', 'linked', 'already-linked']),
+});
+export type PromotionItem = z.infer<typeof promotionItemSchema>;
+
+export const promoteCompanyResponseSchema = z.object({
+  companyId: trimmed.min(1).max(160),
+  organizationId: trimmed.min(1).max(160),
+  organizationName: trimmed.min(1).max(500),
+  promoted: z.array(promotionItemSchema).default([]),
+  skipped: z.array(z.object({ address: trimmed.max(320), reason: trimmed.max(2_000) })).default([]),
+});
+export type PromoteCompanyResponse = z.infer<typeof promoteCompanyResponseSchema>;

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -56,7 +56,11 @@ vi.mock('@/features/products/ui', () => ({
     options: Array<{ value: string; label: string }>;
     ariaLabel?: string;
   }) => (
-    <select aria-label={ariaLabel} value={value} onChange={(event) => onValueChange(event.target.value)}>
+    <select
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
       {options.map((option) => (
         <option key={option.value} value={option.value}>
           {option.label}
@@ -85,6 +89,32 @@ vi.mock('@/features/products/ui', () => ({
   ),
   Alert: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Skeleton: () => <div data-testid='skeleton' />,
+}));
+
+vi.mock('@/shared/ui/select-simple', () => ({
+  SelectSimple: ({
+    value,
+    onValueChange,
+    options,
+    ariaLabel,
+  }: {
+    value: string;
+    onValueChange: (value: string) => void;
+    options: Array<{ value: string; label: string }>;
+    ariaLabel?: string;
+  }) => (
+    <select
+      aria-label={ariaLabel}
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    >
+      {options.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  ),
 }));
 
 vi.mock('./ValidatedField', () => ({
@@ -183,10 +213,16 @@ function ValueProbe(): React.JSX.Element {
   const { watch } = useFormContext<ProductFormData>();
   const skuValue = watch('sku') ?? '';
   const sizeLengthValue = watch('sizeLength') ?? '';
+  const eanValue = watch('ean') ?? '';
+  const gtinValue = watch('gtin') ?? '';
+  const asinValue = watch('asin') ?? '';
   return (
     <>
       <output data-testid='sku-value'>{String(skuValue)}</output>
       <output data-testid='size-length-value'>{String(sizeLengthValue)}</output>
+      <output data-testid='ean-value'>{String(eanValue)}</output>
+      <output data-testid='gtin-value'>{String(gtinValue)}</output>
+      <output data-testid='asin-value'>{String(asinValue)}</output>
     </>
   );
 }
@@ -195,10 +231,16 @@ function renderProductFormGeneral({
   defaultSku = 'AUTO',
   defaultSizeLength = 0,
   defaultNameEn = '',
+  defaultEan = '',
+  defaultGtin = '',
+  defaultAsin = '',
 }: {
   defaultSku?: string;
   defaultSizeLength?: number;
   defaultNameEn?: string;
+  defaultEan?: string;
+  defaultGtin?: string;
+  defaultAsin?: string;
 } = {}) {
   function Wrapper({ children }: { children: React.ReactNode }): React.JSX.Element {
     const methods = useForm<ProductFormData>({
@@ -210,9 +252,9 @@ function renderProductFormGeneral({
         description_pl: '',
         description_de: '',
         sku: defaultSku,
-        ean: '',
-        gtin: '',
-        asin: '',
+        ean: defaultEan,
+        gtin: defaultGtin,
+        asin: defaultAsin,
         price: 0,
         stock: 0,
         weight: 0,
@@ -267,6 +309,32 @@ describe('ProductFormGeneral formatter auto-apply', () => {
       validatorPatterns: [],
       latestProductValues: null,
     });
+  });
+
+  it('preserves EAN when switching the identifier input to ASIN', async () => {
+    renderProductFormGeneral({ defaultEan: '5901234567890' });
+
+    expect(screen.getByLabelText('Enter EAN')).toHaveValue('5901234567890');
+
+    fireEvent.change(screen.getByLabelText('Product identifier type'), {
+      target: { value: 'asin' },
+    });
+
+    expect(screen.getByTestId('ean-value')).toHaveTextContent('5901234567890');
+    expect(screen.getByLabelText('Enter ASIN')).toHaveValue('');
+
+    fireEvent.change(screen.getByLabelText('Enter ASIN'), {
+      target: { value: 'B000123456' },
+    });
+
+    expect(screen.getByTestId('ean-value')).toHaveTextContent('5901234567890');
+    expect(screen.getByTestId('asin-value')).toHaveTextContent('B000123456');
+
+    fireEvent.change(screen.getByLabelText('Product identifier type'), {
+      target: { value: 'ean' },
+    });
+
+    expect(screen.getByLabelText('Enter EAN')).toHaveValue('5901234567890');
   });
 
   it('auto-runs non-runtime SKU replacements configured for formatter auto-apply', async () => {

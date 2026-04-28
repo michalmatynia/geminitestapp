@@ -144,7 +144,7 @@ export function formatSpectatorQuestionProgress(
   session: KangurDuelSession,
   locale: KangurMobileLocale,
 ): string {
-  let currentQuestion = session.currentQuestionIndex ?? 0;
+  let currentQuestion = session.currentQuestionIndex;
   if (session.status === 'in_progress') {
     currentQuestion += 1;
   }
@@ -165,8 +165,8 @@ export function resolveRoundProgress(
 ): { total: number; current: number; percent: number } {
   const total = session.questionCount;
   const current = isSpectating
-    ? session.currentQuestionIndex ?? 0
-    : player?.currentQuestionIndex ?? 0;
+    ? session.currentQuestionIndex
+    : (player?.currentQuestionIndex ?? 0);
   
   const safeCurrent = Math.min(current, total);
   const percent = total > 0 ? Math.round((safeCurrent / total) * 100) : 0;

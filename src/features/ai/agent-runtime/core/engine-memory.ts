@@ -148,35 +148,20 @@ function getStepSummaryLines(stepSummary: { title: string; status: string; phase
   });
 }
 
-function getVerificationEvidenceLine(evidence: string[] | undefined): string | null {
-  if (evidence !== undefined && evidence.length > 0) {
-    return `Evidence: ${evidence.join(' | ')}`;
-  }
-  return null;
-}
-
-function getVerificationMissingLine(missing: string[] | undefined): string | null {
-  if (missing !== undefined && missing.length > 0) {
-    return `Missing: ${missing.join(' | ')}`;
-  }
-  return null;
-}
-
-function getVerificationFollowUpLine(followUp: string | null | undefined): string | null {
-  if (followUp !== undefined && followUp !== null && followUp !== '') {
-    return `Follow-up: ${followUp}`;
-  }
-  return null;
-}
-
 function getVerificationLines(verification: AgentVerification | null): string[] {
+  const getLine = (prefix: string, items: string[] | undefined): string | null =>
+    (items !== undefined && items.length > 0) ? `${prefix}: ${items.join(' | ')}` : null;
+
   const lines: (string | null)[] = [
-    getVerificationEvidenceLine(verification?.evidence),
-    getVerificationMissingLine(verification?.missing),
-    getVerificationFollowUpLine(verification?.followUp),
+    getLine('Evidence', verification?.evidence),
+    getLine('Missing', verification?.missing),
+    (verification?.followUp !== undefined && verification.followUp !== null && verification.followUp !== '') 
+      ? `Follow-up: ${verification.followUp}` 
+      : null,
   ];
   return lines.filter((l): l is string => l !== null);
 }
+
 
 function buildRunSummaryContent(
   summary: string,

@@ -1,4 +1,5 @@
 import { Text } from 'react-native';
+import { type Href } from 'expo-router';
 import { Card, LinkButton } from '../../shared/KangurMobileUi';
 import { createKangurPlanHref } from '../plan/planHref';
 
@@ -7,6 +8,7 @@ interface ResultsHeaderProps {
 }
 
 export function ResultsHeader({ copy }: ResultsHeaderProps): React.JSX.Element {
+  const planHref = createKangurPlanHref();
   return (
     <Card>
       <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
@@ -31,7 +33,7 @@ export function ResultsHeader({ copy }: ResultsHeaderProps): React.JSX.Element {
         })}
       </Text>
       <LinkButton
-        href={createKangurPlanHref()}
+        href={planHref as Href}
         label={copy({
           de: 'Tagesplan öffnen',
           en: 'Open daily plan',

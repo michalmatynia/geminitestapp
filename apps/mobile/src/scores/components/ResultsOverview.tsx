@@ -1,5 +1,5 @@
-import { View, Text } from 'react-native';
-import { Card, Metric } from '../../shared/KangurMobileUi';
+import { View } from 'react-native';
+import { Metric } from '../../shared/KangurMobileUi';
 
 interface ResultsOverviewProps {
   results: {
@@ -25,6 +25,15 @@ export function ResultsOverview({ results, copy }: ResultsOverviewProps): React.
         gap: 12,
       }}
     >
+      <ResultsSummaryMetric results={results} copy={copy} />
+      <ArithmeticMetrics results={results} copy={copy} />
+    </View>
+  );
+}
+
+function ResultsSummaryMetric({ results, copy }: ResultsOverviewProps): React.JSX.Element {
+  return (
+    <>
       <Metric
         label={copy({
           de: 'Ergebnisse',
@@ -51,6 +60,13 @@ export function ResultsOverview({ results, copy }: ResultsOverviewProps): React.
           pl: `Najlepsza skuteczność: ${results.summary.bestAccuracyPercent}%`,
         })}
       />
+    </>
+  );
+}
+
+function ArithmeticMetrics({ results, copy }: ResultsOverviewProps): React.JSX.Element {
+  return (
+    <>
       <Metric
         label={copy({
           de: 'Arithmetik',
@@ -90,6 +106,6 @@ export function ResultsOverview({ results, copy }: ResultsOverviewProps): React.
           pl: 'Wszystkie dostępne sesje logiczne.',
         })}
       />
-    </View>
+    </>
   );
 }

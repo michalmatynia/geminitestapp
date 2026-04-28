@@ -455,20 +455,20 @@ describe('runTraderaBrowserCheckStatus', () => {
     runPlaywrightScrapeScriptMock.mockResolvedValue({
       runId: 'run-check-status',
       effectiveBrowserMode: 'headed',
-      personaId: null,
+      personaId: 'persona-marketplace',
       executionSettings: {
         headless: false,
-        slowMo: 0,
+        slowMo: 85,
         timeout: 30_000,
-        navigationTimeout: 30_000,
-        humanizeMouse: false,
-        mouseJitter: 0,
-        clickDelayMin: 0,
-        clickDelayMax: 0,
-        inputDelayMin: 0,
-        inputDelayMax: 0,
-        actionDelayMin: 0,
-        actionDelayMax: 0,
+        navigationTimeout: 45_000,
+        humanizeMouse: true,
+        mouseJitter: 12,
+        clickDelayMin: 40,
+        clickDelayMax: 140,
+        inputDelayMin: 30,
+        inputDelayMax: 110,
+        actionDelayMin: 220,
+        actionDelayMax: 800,
         proxyEnabled: false,
         emulateDevice: false,
         deviceName: 'Desktop Chrome',
@@ -629,6 +629,9 @@ describe('runTraderaBrowserCheckStatus', () => {
         }),
       })
     );
+    expect(runPlaywrightScrapeScriptMock.mock.calls[0]?.[0]).not.toHaveProperty(
+      'runtimeSettingsOverrides'
+    );
 
     expect(result).toEqual({
       externalListingId: 'listing-123',
@@ -637,7 +640,26 @@ describe('runTraderaBrowserCheckStatus', () => {
         checkedStatus: 'ended',
         checkStatusError: null,
         requestedBrowserMode: 'headed',
+        browserMode: 'headed',
         runId: 'run-check-status',
+        playwrightPersonaId: 'persona-marketplace',
+        playwrightSettings: {
+          headless: false,
+          slowMo: 85,
+          timeout: 30_000,
+          navigationTimeout: 45_000,
+          humanizeMouse: true,
+          mouseJitter: 12,
+          clickDelayMin: 40,
+          clickDelayMax: 140,
+          inputDelayMin: 30,
+          inputDelayMax: 110,
+          actionDelayMin: 220,
+          actionDelayMax: 800,
+          proxyEnabled: false,
+          emulateDevice: false,
+          deviceName: 'Desktop Chrome',
+        },
         selectorProfileRequested: 'default',
         selectorProfileResolved: 'default',
         selectorProfileSourceProfiles: ['code'],

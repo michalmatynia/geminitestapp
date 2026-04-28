@@ -1,0 +1,191 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/AssignmentEditor.tsx
+  18:8   error  Function 'AssignmentEditor' has too many lines (168). Maximum allowed is 60                  max-lines-per-function
+  18:8   error  Function 'AssignmentEditor' has a complexity of 19. Maximum allowed is 8                     complexity
+  52:38  error  Unexpected nullable boolean value in conditional. Please handle the nullish case explicitly  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainCatalogNodeItem.tsx
+  40:8   error  Function 'BrainCatalogNodeItem' has too many lines (97). Maximum allowed is 60                      max-lines-per-function
+  44:21  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainCatalogTree.tsx
+  65:8  error  Function 'BrainCatalogTree' has too many lines (82). Maximum allowed is 60  max-lines-per-function
+  88:9  error  Async method 'onApply' has no 'await' expression                            @typescript-eslint/require-await
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainRoutingEditModal.tsx
+  33:8   error  Function 'BrainRoutingEditModal' has too many lines (120). Maximum allowed is 60  max-lines-per-function
+  33:8   error  Function 'BrainRoutingEditModal' has a complexity of 19. Maximum allowed is 8     complexity
+  50:12  error  Unexpected value in conditional. A boolean expression is required                 @typescript-eslint/strict-boolean-expressions
+  55:19  error  Unexpected value in conditional. A boolean expression is required                 @typescript-eslint/strict-boolean-expressions
+  69:17  error  Unexpected value in conditional. A boolean expression is required                 @typescript-eslint/strict-boolean-expressions
+  77:23  error  Do not nest ternary expressions                                                   no-nested-ternary
+  79:7   error  Do not nest ternary expressions                                                   no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainRoutingTree.tsx
+   43:8   error  Function 'BrainRoutingTree' has too many lines (122). Maximum allowed is 60  max-lines-per-function
+   43:8   error  Function 'BrainRoutingTree' has a complexity of 22. Maximum allowed is 8     complexity
+   89:65  error  Arrow function has a complexity of 9. Maximum allowed is 8                   complexity
+  111:12  error  Unexpected value in conditional. A boolean expression is required            @typescript-eslint/strict-boolean-expressions
+  119:27  error  Do not nest ternary expressions                                              no-nested-ternary
+  121:11  error  Do not nest ternary expressions                                              no-nested-ternary
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainSettingsHeader.tsx
+  24:37  error  Promise-returning function provided to attribute where a void return was expected  @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainStateOverview.tsx
+    9:8   error  Unexpected value in conditional. A boolean expression is required                                   @typescript-eslint/strict-boolean-expressions
+   16:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required          @typescript-eslint/strict-boolean-expressions
+   25:10  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+   28:8   error  Function 'BrainStateOverview' has too many lines (92). Maximum allowed is 60                        max-lines-per-function
+   28:8   error  Function 'BrainStateOverview' has a complexity of 22. Maximum allowed is 8                          complexity
+   33:47  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   34:57  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   35:62  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   45:33  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+   46:34  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+   56:19  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+   68:22  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+   72:23  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+   75:22  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  104:12  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+  114:14  error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/MetricsTab.tsx
+   17:8   error  Unexpected value in conditional. A boolean expression is required                                   @typescript-eslint/strict-boolean-expressions
+   39:8   error  Unexpected any value in conditional. An explicit comparison or type conversion is required          @typescript-eslint/strict-boolean-expressions
+   48:8   error  Unexpected string value in conditional. An explicit empty string check is required                  @typescript-eslint/strict-boolean-expressions
+   52:8   error  Function 'MetricsTab' has too many lines (248). Maximum allowed is 60                               max-lines-per-function
+   52:8   error  Function 'MetricsTab' has a complexity of 29. Maximum allowed is 8                                  complexity
+   63:57  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   64:62  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   66:47  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+   81:12  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  119:12  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  134:24  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly   @typescript-eslint/strict-boolean-expressions
+  232:10  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  237:13  error  Do not nest ternary expressions                                                                     no-nested-ternary
+  241:18  error  Arrow function has a complexity of 15. Maximum allowed is 8                                         complexity
+  242:62  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  243:35  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  243:47  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  244:44  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  244:56  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  245:45  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  245:57  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  246:33  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  246:45  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+  247:44  error  Unnecessary conditional, expected left-hand side of `??` operator to be possibly null or undefined  @typescript-eslint/no-unnecessary-condition
+  247:56  error  Unnecessary optional chain on a non-nullish value                                                   @typescript-eslint/no-unnecessary-condition
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/OperationsTab.tsx
+  101:11   error  Arrow function has a complexity of 9. Maximum allowed is 8                                                                                                                                                     complexity
+  122:11   error  Arrow function has a complexity of 12. Maximum allowed is 8                                                                                                                                                    complexity
+  198:20   error  Arrow function has too many lines (98). Maximum allowed is 60                                                                                                                                                  max-lines-per-function
+  207:11   error  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  212:4    error  Missing return type on function                                                                                                                                                                                @typescript-eslint/explicit-function-return-type
+  212:4    error  Arrow function has a complexity of 17. Maximum allowed is 8                                                                                                                                                    complexity
+  213:9    error  Unsafe assignment of an `any` value                                                                                                                                                                            @typescript-eslint/no-unsafe-assignment
+  213:24   error  Unsafe member access .trend on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  214:9    error  Unsafe assignment of an error typed value                                                                                                                                                                      @typescript-eslint/no-unsafe-assignment
+  214:21   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                                                                                                     @typescript-eslint/strict-boolean-expressions
+  214:40   error  Computed name [trend.direction] resolves to an `any` value                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  214:46   error  Unsafe member access .direction on an `any` value                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  216:9    error  Unsafe assignment of an `any` value                                                                                                                                                                            @typescript-eslint/no-unsafe-assignment
+  216:56   error  Unsafe call of an `any` typed value                                                                                                                                                                            @typescript-eslint/no-unsafe-call
+  216:63   error  Unsafe member access .metrics on an `any` value                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  216:80   error  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  216:90   error  Unsafe member access .key on an `any` value                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  217:28   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                                                                                                     @typescript-eslint/strict-boolean-expressions
+  217:69   error  Unsafe argument of type `any` assigned to a parameter of type `string | number | boolean`                                                                                                                      @typescript-eslint/no-unsafe-argument
+  217:87   error  Unsafe member access .value on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  218:30   error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                                                                                                     @typescript-eslint/strict-boolean-expressions
+  218:68   error  Unsafe argument of type `any` assigned to a parameter of type `string | number | boolean`                                                                                                                      @typescript-eslint/no-unsafe-argument
+  218:86   error  Unsafe member access .value on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  221:81   error  Unsafe argument of type `any` assigned to a parameter of type `{ key: string; label: string; value: string | number | boolean; }[]`                                                                            @typescript-eslint/no-unsafe-argument
+  221:88   error  Unsafe member access .metrics on an `any` value                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  222:82   error  Unsafe argument of type `any` assigned to a parameter of type `{ key: string; label: string; value: string | number | boolean; }[]`                                                                            @typescript-eslint/no-unsafe-argument
+  222:89   error  Unsafe member access .metrics on an `any` value                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  231:71   error  Unsafe member access .label on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  234:38   error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                         @typescript-eslint/no-unsafe-argument
+  234:45   error  Unsafe member access .updatedAt on an `any` value                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  234:74   error  Unsafe member access .sampleSize on an `any` value                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
+  237:30   error  Unsafe assignment of an `any` value                                                                                                                                                                            @typescript-eslint/no-unsafe-assignment
+  237:37   error  Unsafe member access .state on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  237:51   error  Unsafe assignment of an `any` value                                                                                                                                                                            @typescript-eslint/no-unsafe-assignment
+  237:51   error  Unsafe call of an `any` typed value                                                                                                                                                                            @typescript-eslint/no-unsafe-call
+  237:58   error  Unsafe member access .state on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  240:8    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                                                                                                     @typescript-eslint/strict-boolean-expressions
+  240:15   error  Unsafe member access .message on an `any` value                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  240:73   error  Unsafe member access .message on an `any` value                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  254:8    error  Unexpected any value in conditional. An explicit comparison or type conversion is required                                                                                                                     @typescript-eslint/strict-boolean-expressions
+  256:49   error  Unsafe member access .label on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  257:76   error  Unsafe argument of type `any` assigned to a parameter of type `{ direction: "unknown" | "up" | "down" | "flat"; delta: number; label: string; current?: number | undefined; previous?: number | undefined; }`  @typescript-eslint/no-unsafe-argument
+  259:31   error  Unsafe argument of type `any` assigned to a parameter of type `{ direction: "unknown" | "up" | "down" | "flat"; delta: number; label: string; current?: number | undefined; previous?: number | undefined; }`  @typescript-eslint/no-unsafe-argument
+  265:10   error  Unsafe call of an `any` typed value                                                                                                                                                                            @typescript-eslint/no-unsafe-call
+  265:17   error  Unsafe member access .metrics on an `any` value                                                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  265:38   error  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  266:44   error  Unsafe member access .key on an `any` value                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  266:126  error  Unsafe argument of type `any` assigned to a parameter of type `{ key: string; label: string; value: string | number | boolean; }`                                                                              @typescript-eslint/no-unsafe-argument
+  267:74   error  Unsafe member access .label on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  268:72   error  Unsafe argument of type `any` assigned to a parameter of type `{ key: string; label: string; value: string | number | boolean; }`                                                                              @typescript-eslint/no-unsafe-argument
+  268:102  error  Unsafe argument of type `any` assigned to a parameter of type `string | number | boolean`                                                                                                                      @typescript-eslint/no-unsafe-argument
+  268:109  error  Unsafe member access .value on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  274:10   error  Unsafe call of an `any` typed value                                                                                                                                                                            @typescript-eslint/no-unsafe-call
+  274:17   error  Unsafe member access .links on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  274:34   error  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  275:43   error  Unsafe member access .href on an `any` value                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  275:57   error  Unsafe assignment of an `any` value                                                                                                                                                                            @typescript-eslint/no-unsafe-assignment
+  275:62   error  Unsafe member access .href on an `any` value                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  276:19   error  Unsafe member access .label on an `any` value                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
+  289:19   error  Unsafe member access .recentEvents on an `any` value                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  293:16   error  Unsafe call of an `any` typed value                                                                                                                                                                            @typescript-eslint/no-unsafe-call
+  293:23   error  Unsafe member access .recentEvents on an `any` value                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  293:48   error  Unexpected any. Specify a different type                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  294:49   error  Unsafe member access .id on an `any` value                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  294:61   error  Unsafe member access .timestamp on an `any` value                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  294:80   error  Unsafe member access .status on an `any` value                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  295:66   error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                         @typescript-eslint/no-unsafe-argument
+  295:72   error  Unsafe member access .status on an `any` value                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  295:103  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                         @typescript-eslint/no-unsafe-argument
+  295:109  error  Unsafe member access .status on an `any` value                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  296:68   error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                                                         @typescript-eslint/no-unsafe-argument
+  296:74   error  Unsafe member access .timestamp on an `any` value                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  307:8    error  Function 'OperationsTab' has too many lines (68). Maximum allowed is 60                                                                                                                                        max-lines-per-function
+  307:8    error  Function 'OperationsTab' has a complexity of 9. Maximum allowed is 8                                                                                                                                           complexity
+  338:1    error  File has too many lines (340). Maximum allowed is 300                                                                                                                                                          max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/ProvidersTab.tsx
+   59:8   error  Function 'ProvidersTab' has too many lines (261). Maximum allowed is 60                            max-lines-per-function
+   59:8   error  Function 'ProvidersTab' has a complexity of 10. Maximum allowed is 8                               complexity
+  138:64  error  Async arrow function has no 'await' expression                                                     @typescript-eslint/require-await
+  140:10  error  Unexpected string value in conditional. An explicit empty string check is required                 @typescript-eslint/strict-boolean-expressions
+  219:30  error  Expected 'undefined' and instead saw 'void'                                                        no-void
+  236:12  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  238:15  error  Do not nest ternary expressions                                                                    no-nested-ternary
+  244:10  error  Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly  @typescript-eslint/strict-boolean-expressions
+  328:1   error  File has too many lines (311). Maximum allowed is 300                                              max-lines
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/ReportsTab.tsx
+   59:1  error  Function 'ReportSchedulesSection' has too many lines (75). Maximum allowed is 60   max-lines-per-function
+  201:1  error  Function 'FeatureOverridesSection' has too many lines (76). Maximum allowed is 60  max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/RoutingTab.tsx
+   17:8   error  Function 'RoutingTab' has too many lines (176). Maximum allowed is 60  max-lines-per-function
+   39:48  error  Unnecessary optional chain on a non-nullish value                      @typescript-eslint/no-unnecessary-condition
+   39:57  error  Unnecessary optional chain on a non-nullish value                      @typescript-eslint/no-unnecessary-condition
+  121:33  error  Arrow function has too many lines (72). Maximum allowed is 60          max-lines-per-function
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/brain-catalog-master-tree.ts
+  24:8   error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  24:20  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  28:8   error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  28:17  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/brain-routing-master-tree.ts
+  114:8  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  116:8  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  126:8  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+  128:8  error  Unexpected string value in conditional. An explicit empty string check is required  @typescript-eslint/strict-boolean-expressions
+
+✖ 160 problems (160 errors, 0 warnings)
+

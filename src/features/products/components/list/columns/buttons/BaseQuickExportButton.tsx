@@ -41,6 +41,8 @@ import { cn } from '@/shared/utils/ui-utils';
 
 import {
   FAILURE_STATUSES,
+  PENDING_STATUSES,
+  PROCESSING_STATUSES,
   SUCCESS_STATUSES,
   getMarketplaceButtonClass,
   normalizeMarketplaceStatus,
@@ -787,8 +789,12 @@ export function BaseQuickExportButton(props: {
   const resolvedButtonStatus = trackedExportRunStatus ?? status;
   const normalizedResolvedButtonStatus = normalizeMarketplaceStatus(resolvedButtonStatus);
   const isFailureState = FAILURE_STATUSES.has(normalizedResolvedButtonStatus);
+  const isServerInProgressState =
+    PENDING_STATUSES.has(normalizedResolvedButtonStatus) ||
+    PROCESSING_STATUSES.has(normalizedResolvedButtonStatus);
   const shouldManageExistingListing =
     isFailureState === false &&
+    isServerInProgressState === false &&
     (showMarketplaceBadge === true || SUCCESS_STATUSES.has(normalizedResolvedButtonStatus));
   const shouldUseFilledMarketplaceTone = showMarketplaceBadge === true || trackedExportRunStatus !== null;
 

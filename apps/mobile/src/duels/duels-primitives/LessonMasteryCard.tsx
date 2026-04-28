@@ -41,23 +41,29 @@ function LessonMasteryRow({ insight, title }: { insight: KangurMobileDuelsLesson
 
 function resolveLessonFocusSummary(copy: DuelCopy, context: 'lobby' | 'session', weakest: KangurMobileDuelsLessonMasteryItem | null, strongest: KangurMobileDuelsLessonMasteryItem | null): string {
   if (weakest !== null) {
-    return copy({
-      de: context === 'session' ? `Fokus neben dem Duell: ${weakest.title} braucht noch eine kurze Wiederholung, sobald diese Sitzung endet.` : `Fokus aus der Lobby: ${weakest.title} braucht noch eine kurze Wiederholung, bevor du den nächsten Rivalen öffnest.`,
-      en: context === 'session' ? `Focus beside the duel: ${weakest.title} still needs a short review once this session ends.` : `Focus from the lobby: ${weakest.title} still needs a short review before you open the next rival.`,
-      pl: context === 'session' ? `Fokus obok pojedynku: ${weakest.title} potrzebuje jeszcze krótkiej powtórki, gdy ta sesja się skończy.` : `Fokus z lobby: ${weakest.title} potrzebuje jeszcze krótkiej powtórki, zanim otworzysz kolejnego rywala.`,
-    });
+    return getWeakestMessage(copy, context, weakest);
   }
   if (strongest !== null) {
-    return copy({
-      de: context === 'session' ? `Stabile Stärke neben dem Duell: ${strongest.title} hält ihr Niveau und eignet sich nach dieser Sitzung für eine kurze Auffrischung.` : `Stabile Stärke aus der Lobby: ${strongest.title} hält ihr Niveau und eignet sich vor dem nächsten Match für eine kurze Auffrischung.`,
-      en: context === 'session' ? `Stable strength beside the duel: ${strongest.title} is holding its level and works for a short refresh after this session.` : `Stable strength from the lobby: ${strongest.title} is holding its level and works for a short refresh before the next match.`,
-      pl: context === 'session' ? `Stabilna mocna strona obok pojedynku: ${strongest.title} trzyma poziom i nadaje się na krótkie podtrzymanie po tej sesji.` : `Stabilna mocna strona z lobby: ${strongest.title} trzyma poziom i nadaje się na krótkie podtrzymanie przed następnym meczem.`,
-    });
+    return getStrongestMessage(copy, context, strongest);
   }
   return '';
 }
 
-import type { KangurMobileLocalizedValue } from '../../i18n/kangurMobileI18n';
+function getWeakestMessage(copy: DuelCopy, context: 'lobby' | 'session', weakest: KangurMobileDuelsLessonMasteryItem): string {
+  return copy({
+    de: context === 'session' ? `Fokus neben dem Duell: ${weakest.title} braucht noch eine kurze Wiederholung, sobald diese Sitzung endet.` : `Fokus aus der Lobby: ${weakest.title} braucht noch eine kurze Wiederholung, bevor du den nächsten Rivalen öffnest.`,
+    en: context === 'session' ? `Focus beside the duel: ${weakest.title} still needs a short review once this session ends.` : `Focus from the lobby: ${weakest.title} still needs a short review before you open the next rival.`,
+    pl: context === 'session' ? `Fokus obok pojedynku: ${weakest.title} potrzebuje jeszcze krótkiej powtórki, gdy ta sesja się skończy.` : `Fokus z lobby: ${weakest.title} potrzebuje jeszcze krótkiej powtórki, zanim otworzysz kolejnego rywala.`,
+  });
+}
+
+function getStrongestMessage(copy: DuelCopy, context: 'lobby' | 'session', strongest: KangurMobileDuelsLessonMasteryItem): string {
+  return copy({
+    de: context === 'session' ? `Stabile Stärke neben dem Duell: ${strongest.title} hält ihr Niveau und eignet sich nach dieser Sitzung für eine kurze Auffrischung.` : `Stabile Stärke aus der Lobby: ${strongest.title} hält ihr Niveau und eignet sich vor dem nächsten Match für eine kurze Auffrischung.`,
+    en: context === 'session' ? `Stable strength beside the duel: ${strongest.title} is holding its level and works for a short refresh after this session.` : `Stable strength from the lobby: ${strongest.title} is holding its level and works for a short refresh before the next match.`,
+    pl: context === 'session' ? `Stabilna mocna strona obok pojedynku: ${strongest.title} trzyma poziom i nadaje się na krótkie podtrzymanie po tej sesji.` : `Stabilna mocna strona z lobby: ${strongest.title} trzyma poziom i nadaje się na krótkie podtrzymanie przed następnym meczem.`,
+  });
+}
 
 interface LessonMasterySummaryProps {
   weakest: KangurMobileDuelsLessonMasteryItem | null;

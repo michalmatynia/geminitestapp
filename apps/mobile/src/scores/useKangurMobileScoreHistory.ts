@@ -29,20 +29,11 @@ export const useKangurMobileScoreHistory = (
   const { isLoadingAuth, session } = useKangurMobileAuth();
   const { apiBaseUrl, apiClient } = useKangurMobileRuntime();
   const scoreScope = resolveKangurMobileScoreScope(session.user);
-  const limit =
-    typeof options.limit === 'number' && options.limit > 0
-      ? Math.round(options.limit)
-      : 120;
-  const sort =
-    typeof options.sort === 'string' && options.sort.trim().length > 0
-      ? options.sort
-      : '-created_date';
-  const isEnabled =
-    (options.enabled ?? true) &&
-    session.status === 'authenticated' &&
-    Boolean(scoreScope);
-  const isRestoringAuth =
-    isLoadingAuth && session.status !== 'authenticated';
+
+  const limit = getLimit(options.limit);
+  const sort = getSort(options.sort);
+  const isEnabled = checkIsEnabled(options.enabled, session.status, scoreScope);
+  const isRestoringAuth = isLoadingAuth && session.status !== 'authenticated';
 
   const scoresQuery = useQuery({
     enabled: isEnabled,
@@ -82,3 +73,15 @@ export const useKangurMobileScoreHistory = (
     scores: scoresQuery.data ?? [],
   };
 };
+
+function getLimit(limit?: number): number {
+  return typeof limit === 'number' && limit > 0 ? Math.round(limit) : 120;
+}
+
+function getSort(sort?: string): string {
+  return typeof sort === 'string' && sort.trim().length > 0 ? sort : '-created_date';
+}
+
+function checkIsEnabled(enabled: boolean | undefined, status: string, scoreScope: object | null | undefined): boolean {
+  return (enabled ?? true) && status === 'authenticated' && Boolean(scoreScope);
+}

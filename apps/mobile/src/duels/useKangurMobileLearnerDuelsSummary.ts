@@ -35,9 +35,12 @@ export type UseKangurMobileLearnerDuelsSummaryResult = {
 
 import { toDuelsSummaryErrorMessage, toDuelsSummaryActionErrorMessage } from './useKangurMobileLearnerDuelsSummary.errors';
 
-function resolveLearnerRank(activeLearnerId: string | null, entries: KangurDuelLeaderboardEntry[]) {
-  const index = activeLearnerId ? entries.findIndex((e) => e.learnerId === activeLearnerId) : -1;
-  return { rank: index >= 0 ? index + 1 : null, entry: index >= 0 ? entries[index] ?? null : null };
+function resolveLearnerRank(
+  activeLearnerId: string | null, 
+  entries: KangurDuelLeaderboardEntry[]
+): { rank: number | null; entry: KangurDuelLeaderboardEntry | null } {
+  const index = activeLearnerId !== null ? entries.findIndex((e) => e.learnerId === activeLearnerId) : -1;
+  return { rank: index >= 0 ? index + 1 : null, entry: index >= 0 ? (entries[index] ?? null) : null };
 }
 
 import type { QueryClient } from '@tanstack/react-query';

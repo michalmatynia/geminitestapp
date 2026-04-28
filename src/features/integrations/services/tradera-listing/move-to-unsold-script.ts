@@ -1,13 +1,23 @@
+import { getActionStepManifest } from '@/shared/lib/browser-execution/action-constructor';
+import { generateBrowserExecutionStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
 import { TRADERA_SELECTOR_REGISTRY_RUNTIME } from '@/shared/lib/browser-execution/selectors/tradera';
 
+import { TRADERA_COOKIE_DISMISSAL_SNIPPET } from './script-partials/cookie-dismissal';
+
+const DEFAULT_TRADERA_MOVE_TO_UNSOLD_STEPS_INIT = generateBrowserExecutionStepsInit(
+  getActionStepManifest('tradera_move_to_unsold')
+);
+
 export const buildTraderaMoveToUnsoldScript = (
-  selectorRegistryRuntime: string = TRADERA_SELECTOR_REGISTRY_RUNTIME
+  selectorRegistryRuntime: string = TRADERA_SELECTOR_REGISTRY_RUNTIME,
+  executionStepsInit: string = DEFAULT_TRADERA_MOVE_TO_UNSOLD_STEPS_INIT
 ): string =>
   String.raw`export default async function run({
   page,
   input,
   emit,
   log,
+  helpers,
 }) {
   const {
     listingUrl = null,
@@ -77,38 +87,7 @@ ${selectorRegistryRuntime}
     'utgången',
   ];
 
-  const executionSteps = [
-    {
-      id: 'open_listing',
-      label: 'Open listing',
-      status: 'pending',
-      message: null,
-    },
-    {
-      id: 'open_actions',
-      label: 'Open listing actions',
-      status: 'pending',
-      message: null,
-    },
-    {
-      id: 'confirm_end',
-      label: 'Confirm end listing',
-      status: 'pending',
-      message: null,
-    },
-    {
-      id: 'verify_outcome',
-      label: 'Verify final status',
-      status: 'pending',
-      message: null,
-    },
-    {
-      id: 'browser_close',
-      label: 'Close browser',
-      status: 'pending',
-      message: null,
-    },
-  ];
+  ${executionStepsInit}
 
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -169,12 +148,7 @@ ${selectorRegistryRuntime}
     return null;
   };
 
-  const dismissCookiesIfPresent = async () => {
-    const cookieButton = await firstVisible(COOKIE_ACCEPT_SELECTORS);
-    if (!cookieButton) return false;
-    await humanClick(cookieButton, { pauseAfter: 800 });
-    return true;
-  };
+  ${TRADERA_COOKIE_DISMISSAL_SNIPPET}
 
   const isLoginPage = () => page.url().trim().toLowerCase().includes('/login');
 
@@ -226,6 +200,7 @@ ${selectorRegistryRuntime}
   };
 
   const clickEndListingAction = async () => {
+    await dismissCookiesIfPresent({ context: 'pre-end-click' });
     const directClick = await clickByLabels([page], END_LISTING_LABELS, 'direct-end');
     if (directClick.clicked) {
       return directClick;
@@ -340,23 +315,35 @@ ${selectorRegistryRuntime}
   }
 
   try {
-    updateStep('open_listing', 'running', 'Opening the Tradera listing page.');
+    updateStep('browser_preparation', 'success', 'Browser settings were prepared.');
+    updateStep('browser_open', 'success', 'Browser was opened successfully.');
+
+    updateStep('listing_open', 'running', 'Opening the Tradera listing page.');
     await page.goto(TARGET_URL, {
       waitUntil: 'domcontentloaded',
       timeout: 30_000,
     });
     await waitForPageIdle(1_200);
-    await dismissCookiesIfPresent();
+    updateStep('listing_open', 'success', 'Tradera listing page opened successfully.');
 
+    updateStep('cookie_accept', 'running', 'Checking for cookie consent banner.');
+    const cookiesDismissed = await dismissCookiesIfPresent({ context: 'move-to-unsold' });
+    updateStep(
+      'cookie_accept',
+      'success',
+      cookiesDismissed ? 'Cookies accepted.' : 'No cookie banner detected.'
+    );
+
+    updateStep('auth_check', 'running', 'Validating Tradera session.');
     if (isLoginPage()) {
+      updateStep('auth_check', 'error', 'Stored Tradera session redirected to login.');
       throw new Error(
         'AUTH_REQUIRED: Stored Tradera session redirected to login before the listing could be managed.'
       );
     }
+    updateStep('auth_check', 'success', 'Tradera session is valid.');
 
-    updateStep('open_listing', 'success', 'Tradera listing page opened successfully.');
-
-    updateStep('open_actions', 'running', 'Opening Tradera listing actions.');
+    updateStep('end_listing_action', 'running', 'Opening Tradera listing actions.');
     const clickedAction = await clickEndListingAction();
     if (!clickedAction.clicked) {
       throw new Error(
@@ -364,26 +351,26 @@ ${selectorRegistryRuntime}
       );
     }
     updateStep(
-      'open_actions',
+      'end_listing_action',
       'success',
       'Triggered the Tradera end-listing action using "' + clickedAction.label + '".'
     );
 
-    updateStep('confirm_end', 'running', 'Confirming the Tradera end-listing action.');
+    updateStep('end_listing_confirm', 'running', 'Confirming the Tradera end-listing action.');
     const confirmationHandled = await confirmEndListingIfNeeded();
     updateStep(
-      'confirm_end',
+      'end_listing_confirm',
       'success',
       confirmationHandled
         ? 'Confirmed the Tradera end-listing action.'
         : 'No additional confirmation dialog appeared.'
     );
 
-    updateStep('verify_outcome', 'running', 'Resolving the final Tradera status.');
+    updateStep('end_listing_verify', 'running', 'Resolving the final Tradera status.');
     await waitForPageIdle(1_500);
     const currentStatus = await detectCurrentPageStatus();
     if (currentStatus === 'unsold') {
-      updateStep('verify_outcome', 'success', 'Listing reached the Unsold section.');
+      updateStep('end_listing_verify', 'success', 'Listing reached the Unsold section.');
       updateStep('browser_close', 'success', 'Browser was closed.');
       emit('result', {
         status: 'unsold',
@@ -406,7 +393,7 @@ ${selectorRegistryRuntime}
         ? 'current-page-ended'
         : 'ended-fallback';
     updateStep(
-      'verify_outcome',
+      'end_listing_verify',
       'success',
       finalStatus === 'unsold'
         ? 'Listing was verified in the Tradera Unsold section.'

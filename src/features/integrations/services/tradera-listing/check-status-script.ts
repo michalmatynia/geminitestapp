@@ -17,11 +17,11 @@ const DEFAULT_TRADERA_CHECK_STATUS_STEPS_INIT = generateBrowserExecutionStepsIni
  * Verifies listing state from the authenticated seller listing sections instead
  * of trusting the public item page. The search order is:
  * 1. Active listings
- * 2. Unsold items
- * 3. Your sold items
+ * 2. Your sold items
+ * 3. Unsold items
  *
  * Candidate matching mirrors the duplicate-link flow:
- * - exact English title search
+ * - 100% exact English title search
  * - confirm by description first
  * - fall back to Product ID match
  */
@@ -34,6 +34,7 @@ export const buildTraderaCheckStatusScript = (
   input,
   emit,
   log,
+  helpers,
 }) {
 ` +
   (selectorRegistryRuntime
@@ -86,7 +87,7 @@ export const buildTraderaCheckStatusScript = (
   };
 
   const acceptCookies = async () => {
-    const accepted = await dismissCookiesIfPresent();
+    const accepted = await dismissCookiesIfPresent({ context: 'status-check' });
     if (accepted) {
       updateStep('cookie_accept', 'success', 'Cookies accepted.');
     } else if (executionSteps.find((s) => s.id === 'cookie_accept').status === 'pending') {
@@ -109,10 +110,10 @@ export const buildTraderaCheckStatusScript = (
     skipStep('cookie_accept', 'Skipped because no searchable English title was available.');
     skipStep('search_active', 'Skipped because no searchable English title was available.');
     skipStep('inspect_active', 'Skipped because no searchable English title was available.');
-    skipStep('search_unsold', 'Skipped because no searchable English title was available.');
-    skipStep('inspect_unsold', 'Skipped because no searchable English title was available.');
     skipStep('search_sold', 'Skipped because no searchable English title was available.');
     skipStep('inspect_sold', 'Skipped because no searchable English title was available.');
+    skipStep('search_unsold', 'Skipped because no searchable English title was available.');
+    skipStep('inspect_unsold', 'Skipped because no searchable English title was available.');
     skipStep('resolve_status', 'Skipped because no searchable English title was available.');
     updateStep('browser_close', 'success', 'Browser was closed.');
     emit('result', {
@@ -149,10 +150,10 @@ export const buildTraderaCheckStatusScript = (
       skipStep('overview_open', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('search_active', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('inspect_active', 'Skipped because Tradera seller overview could not be accessed.');
-      skipStep('search_unsold', 'Skipped because Tradera seller overview could not be accessed.');
-      skipStep('inspect_unsold', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('search_sold', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('inspect_sold', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('search_unsold', 'Skipped because Tradera seller overview could not be accessed.');
+      skipStep('inspect_unsold', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('resolve_status', 'Skipped because Tradera seller overview could not be accessed.');
       updateStep('browser_close', 'success', 'Browser was closed.');
       emit('result', {

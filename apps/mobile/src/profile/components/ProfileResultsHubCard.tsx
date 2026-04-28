@@ -22,6 +22,31 @@ type ProfileResultsHubCardProps = {
   resultsRoute: Href;
 };
 
+const getResultsHubMessage = (recentResults: any): string => {
+  if (recentResults.isLoading || recentResults.isRestoringAuth) {
+    return copy({
+      de: 'Die gespeicherten Versuche für das Profil werden geladen.',
+      en: 'Loading saved attempts for the profile.',
+      pl: 'Pobieramy zapisane podejścia dla profilu.',
+    });
+  }
+  if (!recentResults.isEnabled) {
+    return copy({
+      de: 'Melde dich an, um hier Ergebnisse und den vollständigen Verlauf zu sehen.',
+      en: 'Sign in to see results and the full history here.',
+      pl: 'Zaloguj się, aby zobaczyć tutaj wyniki i pełną historię.',
+    });
+  }
+  if (recentResults.error != null && recentResults.error !== '') {
+    return recentResults.error;
+  }
+  return copy({
+    de: 'Stąd możesz odświeżyć wyniki, otworzyć pełną historię und od razu przejść do kolejnego kroku nauki.',
+    en: 'From here you can refresh results, open the full history, and jump straight into the next study step.',
+    pl: 'Stąd możesz odświeżyć wyniki, otworzyć pełną historię i od razu przejść do kolejnego kroku nauki.',
+  });
+};
+
 export function ProfileResultsHubCard({
   copy,
   locale,
@@ -60,25 +85,7 @@ export function ProfileResultsHubCard({
           })}
         </Text>
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {profileRecentResults.isLoading || profileRecentResults.isRestoringAuth
-            ? copy({
-                de: 'Die gespeicherten Versuche für das Profil werden geladen.',
-                en: 'Loading saved attempts for the profile.',
-                pl: 'Pobieramy zapisane podejścia dla profilu.',
-              })
-            : !profileRecentResults.isEnabled
-              ? copy({
-                  de: 'Melde dich an, um hier Ergebnisse und den vollständigen Verlauf zu sehen.',
-                  en: 'Sign in to see results and the full history here.',
-                  pl: 'Zaloguj się, aby zobaczyć tutaj wyniki i pełną historię.',
-                })
-              : profileRecentResults.error !== null && profileRecentResults.error !== ''
-                ? profileRecentResults.error
-                : copy({
-                    de: 'Stąd możesz odświeżyć wyniki, otworzyć pełną historię i od razu przejść do kolejnego kroku nauki.',
-                    en: 'From here you can refresh results, open the full history, and jump straight into the next study step.',
-                    pl: 'Stąd możesz odświeżyć wyniki, otworzyć pełną historię i od razu przejść do kolejnego kroku nauki.',
-                  })}
+          {getResultsHubMessage(profileRecentResults)}
         </Text>
       </View>
 

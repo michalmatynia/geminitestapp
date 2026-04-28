@@ -26,7 +26,7 @@ export function ChatFormInput({
         en: 'Lobby chat message',
         pl: 'Wiadomość do czatu lobby',
       })}
-      editable={!chat.isSending}
+  editable={chat.isSending === false}
       maxLength={chat.maxMessageLength}
       multiline
       onChangeText={onChatDraftChange}
@@ -88,7 +88,7 @@ export function ChatFormActions({
       <ActionButton
         disabled={!canSendChatMessage}
         label={
-          chat.isSending
+          chat.isSending === true
             ? copy({
                 de: 'Wird gesendet...',
                 en: 'Sending...',

@@ -15,8 +15,25 @@ import {
 } from '@/shared/contracts/job-board';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import { upsertCompanyByMatch } from './companies-repository';
+import { upsertCompany, upsertCompanyByMatch } from './companies-repository';
+import { findCompanyEmails } from './email-finder';
+import { findCompanyWebsite } from './google-search';
 import { upsertJobListing } from './job-listings-repository';
+import {
+  findFilemakerOrganisationMatch,
+  promoteCompanyToOrganisation,
+} from './organisation-promotion';
+import {
+  findCompanyEmailsWithVisionLoop,
+  isVisionEmailFinderEnabled,
+} from './vision-email-finder';
+
+const isAutoPromoteEnabled = (): { nipOnly: boolean; nameToo: boolean } => {
+  const value = process.env['JOB_BOARD_AUTO_PROMOTE_ON_NIP_MATCH']?.toLowerCase();
+  if (value === 'true' || value === 'nip') return { nipOnly: true, nameToo: false };
+  if (value === 'name-too' || value === 'name') return { nipOnly: true, nameToo: true };
+  return { nipOnly: false, nameToo: false };
+};
 import { evaluateJobPageWithAi } from './job-scan-ai-evaluator';
 import {
   getJobScanById,
@@ -24,6 +41,7 @@ import {
   upsertJobScan,
 } from './job-scans-repository';
 import { fetchPracujPage, reducePracujHtml } from './providers/pracuj-pl-sync';
+import { getCompanyById } from './companies-repository';
 
 const inferProviderFromUrl = (url: string): JobScanProvider => {
   if (/(?:^|\.)pracuj\.pl/i.test(url)) return 'pracuj_pl';
@@ -164,6 +182,9 @@ const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
         completedAt: stamp(),
       })
     );
+
+    company = await enrichCompanyWithEmails({ company, steps, runAutoPromote: true });
+
     return await upsertJobScan({
       ...scan,
       status: 'completed',
@@ -196,6 +217,259 @@ const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
       completedAt: stamp(),
     });
   }
+};
+
+const enrichCompanyWithEmails = async (input: {
+  company: Company;
+  steps: JobScanStep[];
+  forceVision?: boolean | null;
+  headless?: boolean | null;
+  runAutoPromote?: boolean;
+}): Promise<Company> => {
+  const { steps } = input;
+  let company = input.company;
+  const runAutoPromote = input.runAutoPromote ?? true;
+
+  let website = company.website?.trim() || null;
+  let domain = company.domain?.trim() || null;
+
+  if (!website && !domain) {
+    const searchStartedAt = stamp();
+    try {
+      const found = await findCompanyWebsite({
+        companyName: company.name,
+        ...(company.city != null ? { city: company.city } : {}),
+      });
+      const searchCompletedAt = stamp();
+      if (found.website || found.domain) {
+        website = found.website ?? website;
+        domain = found.domain ?? domain;
+        steps.push(
+          buildStep('search_website', 'Resolve company website (Google)', 'completed', {
+            message: found.website ?? found.domain ?? 'no result',
+            startedAt: searchStartedAt,
+            completedAt: searchCompletedAt,
+            durationMs: Date.parse(searchCompletedAt) - Date.parse(searchStartedAt),
+          })
+        );
+        company = await upsertCompany({
+          ...company,
+          website: website ?? company.website,
+          domain: domain ?? company.domain,
+        });
+      } else {
+        steps.push(
+          buildStep('search_website', 'Resolve company website (Google)', 'skipped', {
+            message: found.error ?? 'No corporate website found.',
+            startedAt: searchStartedAt,
+            completedAt: searchCompletedAt,
+          })
+        );
+      }
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'job-scans.service',
+        action: 'findCompanyWebsite',
+        companyId: company.id,
+      });
+      steps.push(
+        buildStep('search_website', 'Resolve company website (Google)', 'failed', {
+          message: error instanceof Error ? error.message : String(error),
+          startedAt: searchStartedAt,
+          completedAt: stamp(),
+        })
+      );
+    }
+  }
+
+  if (!website && !domain) {
+    steps.push(
+      buildStep('find_emails', 'Find company emails', 'skipped', {
+        message: 'No website or domain available.',
+        completedAt: stamp(),
+      })
+    );
+    return company;
+  }
+
+  const useVision = input.forceVision != null ? input.forceVision : isVisionEmailFinderEnabled();
+  const emailStartedAt = stamp();
+  try {
+    const result = useVision
+      ? await (async () => {
+          const r = await findCompanyEmailsWithVisionLoop({
+            website,
+            domain,
+            companyName: company.name,
+            headless: input.headless ?? null,
+          });
+          return {
+            emails: r.emails,
+            visitedUrls: r.finalUrl ? [r.finalUrl] : [],
+            durationMs: r.durationMs,
+            ...(r.error !== undefined ? { error: r.error } : {}),
+            iterationsRun: r.iterationsRun,
+            reasoning: r.reasoning,
+            steps: r.steps,
+          };
+        })()
+      : {
+          ...(await findCompanyEmails({
+            website,
+            domain,
+            companyName: company.name,
+            headless: input.headless ?? null,
+          })),
+          iterationsRun: 0,
+          reasoning: null,
+        };
+    const emailCompletedAt = stamp();
+    if ('steps' in result && Array.isArray(result.steps) && result.steps.length > 0) {
+      steps.push(...result.steps);
+    } else if (useVision) {
+      const message =
+        result.emails.length > 0
+          ? `${result.emails.length} email(s) via vision loop in ${result.iterationsRun} iter`
+          : ('error' in result && result.error) || `No emails found (vision loop, ${result.iterationsRun} iter)`;
+      steps.push(
+        buildStep(
+          'vision_find_emails',
+          'Find emails (vision-guided)',
+          result.emails.length > 0 ? 'completed' : 'skipped',
+          {
+            message,
+            startedAt: emailStartedAt,
+            completedAt: emailCompletedAt,
+            durationMs: Date.parse(emailCompletedAt) - Date.parse(emailStartedAt),
+          }
+        )
+      );
+    } else {
+      steps.push(
+        buildStep('find_emails', 'Find company emails', result.emails.length > 0 ? 'completed' : 'skipped', {
+          message:
+            result.emails.length > 0
+              ? `${result.emails.length} email(s) across ${result.visitedUrls.length} URL(s)`
+              : result.error ?? 'No emails found.',
+          startedAt: emailStartedAt,
+          completedAt: emailCompletedAt,
+          durationMs: Date.parse(emailCompletedAt) - Date.parse(emailStartedAt),
+        })
+      );
+    }
+    if (result.emails.length > 0) {
+      company = await upsertCompany({
+        ...company,
+        emails: result.emails,
+        emailsSearchedAt: emailCompletedAt,
+      });
+    } else {
+      company = await upsertCompany({
+        ...company,
+        emailsSearchedAt: emailCompletedAt,
+      });
+    }
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'job-scans.service',
+      action: 'findCompanyEmails',
+      companyId: company.id,
+    });
+    const failedLabel = useVision ? 'Find emails (vision-guided)' : 'Find company emails';
+    const failedKey = useVision ? 'vision_find_emails' : 'find_emails';
+    steps.push(
+      buildStep(failedKey, failedLabel, 'failed', {
+        message: error instanceof Error ? error.message : String(error),
+        startedAt: emailStartedAt,
+        completedAt: stamp(),
+      })
+    );
+  }
+
+  if (runAutoPromote && company.emails.length > 0) {
+    company = await maybeAutoPromoteToOrganiser({ company, steps });
+  }
+
+  return company;
+};
+
+const maybeAutoPromoteToOrganiser = async (input: {
+  company: Company;
+  steps: JobScanStep[];
+}): Promise<Company> => {
+  const { steps } = input;
+  const company = input.company;
+  const auto = isAutoPromoteEnabled();
+  if (!auto.nipOnly && !auto.nameToo) return company;
+  if (!process.env['MONGODB_URI']) return company;
+
+  const startedAt = stamp();
+  try {
+    const match = await findFilemakerOrganisationMatch({
+      nip: company.nip,
+      name: company.name,
+    });
+    if (!match) {
+      steps.push(
+        buildStep('auto_promote', 'Auto-promote to Organiser', 'skipped', {
+          message: 'No unique Filemaker organisation match (skipping for safety).',
+          startedAt,
+          completedAt: stamp(),
+        })
+      );
+      return company;
+    }
+    if (match.confidence === 'name' && !auto.nameToo) {
+      steps.push(
+        buildStep('auto_promote', 'Auto-promote to Organiser', 'skipped', {
+          message: `Name-only match for "${match.organization.name}" (NIP-only mode — skip).`,
+          startedAt,
+          completedAt: stamp(),
+        })
+      );
+      return company;
+    }
+
+    const result = await promoteCompanyToOrganisation({
+      companyId: company.id,
+      organizationId: match.organization.id,
+      addresses: company.emails.map((e) => e.address),
+      updatedBy: 'job-board:auto',
+    });
+    const promotedCount = result.promoted.length;
+    const skippedCount = result.skipped.length;
+    const completedAt = stamp();
+    steps.push(
+      buildStep(
+        'auto_promote',
+        'Auto-promote to Organiser',
+        promotedCount > 0 ? 'completed' : 'skipped',
+        {
+          message:
+            `Matched "${match.organization.name}" (${match.confidence}); ` +
+            `${promotedCount} email link(s) written, ${skippedCount} skipped.`,
+          startedAt,
+          completedAt,
+          durationMs: Date.parse(completedAt) - Date.parse(startedAt),
+        }
+      )
+    );
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'job-scans.service',
+      action: 'maybeAutoPromoteToOrganiser',
+      companyId: company.id,
+    });
+    steps.push(
+      buildStep('auto_promote', 'Auto-promote to Organiser', 'failed', {
+        message: error instanceof Error ? error.message : String(error),
+        startedAt,
+        completedAt: stamp(),
+      })
+    );
+  }
+
+  return company;
 };
 
 const buildCompanyInput = (
@@ -247,6 +521,46 @@ const buildListingInput = (
     sourceUrl,
     postedAt: p.postedAt ?? null,
     expiresAt: p.expiresAt ?? null,
+  };
+};
+
+export type RefreshCompanyEmailsResult = {
+  company: Company;
+  steps: JobScanStep[];
+  usedVision: boolean;
+};
+
+export const refreshCompanyEmails = async (input: {
+  companyId: string;
+  useVision?: boolean | null;
+  headless?: boolean | null;
+  autoPromote?: boolean;
+}): Promise<RefreshCompanyEmailsResult> => {
+  const companyId = input.companyId.trim();
+  if (!companyId) {
+    throw new Error('companyId is required');
+  }
+
+  const existing = await getCompanyById(companyId);
+  if (!existing) {
+    throw new Error(`Company ${companyId} not found`);
+  }
+
+  const steps: JobScanStep[] = [];
+  const forceVision =
+    input.useVision != null ? input.useVision : isVisionEmailFinderEnabled();
+  const company = await enrichCompanyWithEmails({
+    company: existing,
+    steps,
+    forceVision,
+    headless: input.headless ?? null,
+    runAutoPromote: input.autoPromote ?? false,
+  });
+
+  return {
+    company,
+    steps,
+    usedVision: forceVision,
   };
 };
 

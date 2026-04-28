@@ -1071,6 +1071,10 @@ export const normalizeFilemakerDatabase = (
         status: normalizeString(entry['status']),
         targetedCampaignIds: entry['targetedCampaignIds'],
         lastTargetedAt: lastTargetedAt.length > 0 ? lastTargetedAt : undefined,
+        sourceExternalId: normalizeString(entry['sourceExternalId']),
+        sourceSite: normalizeString(entry['sourceSite']),
+        sourceUrl: normalizeString(entry['sourceUrl']),
+        scrapedAt: normalizeString(entry['scrapedAt']),
         createdAt: createdAt.length > 0 ? createdAt : undefined,
         updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
       })

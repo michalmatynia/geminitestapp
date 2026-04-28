@@ -52,6 +52,7 @@ export type OrganizationListState = {
   onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
   onPageChange: (value: number) => void;
   onPageSizeChange: (value: number) => void;
+  onPracujScrapeCompleted: () => void;
   onQueryChange: (value: string) => void;
   onResetFilters: () => void;
   onSelectAllOrganizations: () => Promise<void>;

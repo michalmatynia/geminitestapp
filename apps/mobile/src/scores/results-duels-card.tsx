@@ -153,7 +153,7 @@ export function ResultsDuelsCard({
       {duelResults.currentRank !== null && duelResults.currentEntry ? (
         <InsetPanel
           gap={10}
-          tone={{
+          style={{
             borderColor: '#bfdbfe',
             backgroundColor: '#eff6ff',
           }}

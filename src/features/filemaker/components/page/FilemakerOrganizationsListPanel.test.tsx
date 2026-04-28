@@ -87,17 +87,20 @@ vi.mock('@/shared/ui/selection-bar', () => ({
     actions,
     label,
     onSelectAllGlobal,
+    rightActions,
     selectedCount,
   }: {
     actions?: React.ReactNode;
     label?: string;
     onSelectAllGlobal?: () => Promise<void>;
+    rightActions?: React.ReactNode;
     selectedCount: number;
   }) => (
     <div data-testid='organization-selection-actions' data-selected-count={String(selectedCount)}>
       <span>{label}</span>
       {onSelectAllGlobal ? <button type='button'>Select All Resultset</button> : null}
       {actions}
+      {rightActions}
     </div>
   ),
 }));
@@ -137,6 +140,11 @@ vi.mock('@/shared/ui/templates.public', () => ({
       <div>{children}</div>
     </section>
   ),
+}));
+
+vi.mock('./FilemakerPracujScrapeModal', () => ({
+  FilemakerPracujScrapeModal: ({ open }: { open: boolean }) =>
+    open ? <div data-testid='pracuj-scrape-modal' /> : null,
 }));
 
 import { FilemakerOrganizationsListPanel } from './FilemakerOrganizationsListPanel';
@@ -182,14 +190,17 @@ const createProps = (
   onDeselectOrganizationsPage: vi.fn(),
   onFilterChange: vi.fn(),
   onLaunchOrganizationEmailScrape: vi.fn(),
+  onLaunchOrganizationWebsiteSocialScrape: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
+  onPracujScrapeCompleted: vi.fn(),
   onQueryChange: vi.fn(),
   onResetFilters: vi.fn(),
   onSelectAllOrganizations: vi.fn(),
   onSelectOrganizationsPage: vi.fn(),
   onToggleOrganizationSelection: vi.fn(),
   organizationEmailScrapeState: {},
+  organizationWebsiteSocialScrapeState: {},
   organizationSelection: {},
   organizations: [],
   page: 1,
@@ -251,20 +262,26 @@ describe('FilemakerOrganizationsListPanel', () => {
     });
     expect(createButton).toHaveClass('h-7', 'w-7', 'rounded-full');
     expect(within(desktopControlsRow).queryByRole('button', { name: 'Import' })).toBeNull();
-    expect(within(desktopControlsRow).getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    expect(within(desktopControlsRow).queryByRole('button', { name: 'Refresh' })).toBeNull();
     expect(within(desktopControlsRow).getByTestId('organization-pagination')).toHaveAttribute(
       'data-show-page-jump',
       'true'
     );
-    expect(within(desktopControlsRow).getAllByTestId('organization-badge')).toHaveLength(2);
+    expect(within(desktopControlsRow).queryByTestId('organization-badge')).toBeNull();
     expect(within(desktopControlsRow).queryByTestId('organization-filters')).toBeNull();
 
-    const headerContent = findDivByExactClassName(container, 'space-y-3');
-    const sharedFiltersRow = headerContent.lastElementChild;
+    const sharedFiltersRow = findDivByExactClassName(container, 'w-full');
     expect(sharedFiltersRow).toHaveClass('w-full');
     expect(
       within(sharedFiltersRow as HTMLElement).getByTestId('organization-filters')
     ).toBeInTheDocument();
+
+    const secondaryControlsRow = findDivByExactClassName(
+      container,
+      'hidden w-full flex-wrap items-center justify-end gap-2 lg:flex'
+    );
+    expect(within(secondaryControlsRow).getByRole('button', { name: 'Refresh' })).toBeInTheDocument();
+    expect(within(secondaryControlsRow).getAllByTestId('organization-badge')).toHaveLength(2);
   });
 
   it('renders product-style organization selection actions', () => {
@@ -284,5 +301,6 @@ describe('FilemakerOrganizationsListPanel', () => {
       within(actions).getByRole('button', { name: 'Select All Resultset' })
     ).toBeInTheDocument();
     expect(within(actions).getByRole('button', { name: /Copy selected IDs/i })).toBeInTheDocument();
+    expect(within(actions).getByRole('button', { name: /Scrape pracuj.pl/i })).toBeInTheDocument();
   });
 });

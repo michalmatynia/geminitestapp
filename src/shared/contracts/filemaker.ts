@@ -262,6 +262,10 @@ export const filemakerJobListingSchema = dtoBaseSchema.extend({
   status: filemakerJobListingStatusSchema.default('draft'),
   targetedCampaignIds: z.array(z.string()).default([]),
   lastTargetedAt: z.string().nullable().optional(),
+  sourceExternalId: z.string().optional(),
+  sourceSite: z.string().optional(),
+  sourceUrl: z.string().optional(),
+  scrapedAt: z.string().nullable().optional(),
 });
 
 export type FilemakerJobListingDto = z.infer<typeof filemakerJobListingSchema>;

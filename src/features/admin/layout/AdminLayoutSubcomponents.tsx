@@ -37,6 +37,7 @@ export function getContentClassName(
 function isProductsListRoute(pathname: string): boolean {
   return (
     pathname === '/admin/products' ||
+    pathname === '/admin/filemaker/organizations' ||
     pathname === '/admin/validator' ||
     pathname === '/admin/validator/lists' ||
     pathname === '/admin/ai-paths/queue' ||

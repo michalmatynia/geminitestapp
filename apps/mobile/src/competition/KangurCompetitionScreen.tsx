@@ -1,9 +1,9 @@
+import React, { useEffect, useState, useMemo } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text } from 'react-native';
-import { useEffect, useState, useMemo } from 'react';
 
 import { KangurMobileAiTutorCard } from '../ai-tutor/KangurMobileAiTutorCard';
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import { createKangurLessonsCatalogHref } from '../lessons/lessonHref';
 import { createKangurPlanHref } from '../plan/planHref';
 import { createKangurPracticeHref } from '../practice/practiceHref';
@@ -40,7 +40,7 @@ type ModeItem = {
   pointTier: string;
 };
 
-const NextStepsSection = ({ copy }: { copy: (dict: { de: string; en: string; pl: string }) => string }): JSX.Element => (
+const NextStepsSection = ({ copy }: { copy: KangurMobileCopy }): React.JSX.Element => (
   <SectionCard
     title={copy({ de: 'Nächste Schritte', en: 'Next steps', pl: 'Kolejne kroki' })}
   >
@@ -72,11 +72,11 @@ const ModesList = ({
   onSetActiveMode,
 }: {
   activeItem: ModeItem | null;
-  copy: (dict: { de: string; en: string; pl: string }) => string;
+  copy: KangurMobileCopy;
   locale: KangurMobileLocale;
   modes: ModeItem[];
   onSetActiveMode: (mode: KangurMobileCompetitionMode | null) => void;
-}): JSX.Element => (
+}): React.JSX.Element => (
   <>
     {activeItem !== null ? (
       <>
@@ -136,7 +136,7 @@ const MainSection = ({
   setActiveMode,
 }: {
   activeItem: ModeItem | null;
-  copy: (dict: { de: string; en: string; pl: string }) => string;
+  copy: KangurMobileCopy;
   modes: ModeItem[];
   totalQuestions: number;
   setupTutorContext: {
@@ -151,7 +151,7 @@ const MainSection = ({
   router: ReturnType<typeof useRouter>;
   locale: KangurMobileLocale;
   setActiveMode: (m: KangurMobileCompetitionMode | null) => void;
-}): JSX.Element => (
+}): React.JSX.Element => (
   <KangurMobileScrollScreen
     backgroundColor='#f8fafc'
     contentContainerStyle={{ gap: 16, padding: 16, paddingBottom: 32 }}

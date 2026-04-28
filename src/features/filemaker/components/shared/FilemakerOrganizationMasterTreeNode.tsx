@@ -7,10 +7,10 @@ import {
   CalendarDays,
   ChevronDown,
   ChevronRight,
-  Edit2,
   ExternalLink,
   Folder,
   FolderOpen,
+  Globe2,
   Loader2,
   MailSearch,
 } from 'lucide-react';
@@ -34,8 +34,10 @@ type FilemakerOrganizationTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   jobListingsById: ReadonlyMap<string, FilemakerJobListing>;
   organizationById: Map<string, FilemakerOrganization>;
   organizationEmailScrapeState: Record<string, boolean>;
+  organizationWebsiteSocialScrapeState: Record<string, boolean>;
   organizationSelection: Record<string, boolean>;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
+  onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
   onOpenEvent: (eventId: string) => void;
   onOpenJobListing: (organizationId: string, jobListingId: string) => void;
   onOpenOrganization: (organizationId: string) => void;
@@ -56,10 +58,12 @@ type OrganizationLeafNodeProps = Pick<
   eventCount: number;
   isEmailScrapeRunning: boolean;
   isSelectedForBatch: boolean;
+  isWebsiteSocialScrapeRunning: boolean;
   jobListingCount: number;
   organization: FilemakerOrganization;
   stateClassName: string;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
+  onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
   onOpenOrganization: (organizationId: string) => void;
   onToggleOrganizationSelection: (organizationId: string, checked: boolean) => void;
 };
@@ -224,8 +228,10 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
     isEmailScrapeRunning,
     isExpanded,
     isSelectedForBatch,
+    isWebsiteSocialScrapeRunning,
     jobListingCount,
     onLaunchOrganizationEmailScrape,
+    onLaunchOrganizationWebsiteSocialScrape,
     onOpenOrganization,
     onToggleOrganizationSelection,
     organization,
@@ -284,6 +290,30 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
         variant='outline'
         size='icon'
         className='size-7 cursor-pointer'
+        aria-label={`Discover website and social profiles for organization ${organization.name}`}
+        title={
+          isWebsiteSocialScrapeRunning
+            ? `Discovering website and social profiles for organization ${organization.name}`
+            : `Discover website and social profiles for organization ${organization.name}`
+        }
+        disabled={isWebsiteSocialScrapeRunning}
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
+          onLaunchOrganizationWebsiteSocialScrape(organization.id);
+        }}
+      >
+        {isWebsiteSocialScrapeRunning ? (
+          <Loader2 className='size-3.5 animate-spin' />
+        ) : (
+          <Globe2 className='size-3.5' />
+        )}
+      </Button>
+      <Button
+        type='button'
+        variant='outline'
+        size='icon'
+        className='size-7 cursor-pointer'
         aria-label={`Scrape website, social profiles, and emails for organization ${organization.name}`}
         title={
           isEmailScrapeRunning
@@ -302,21 +332,6 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
         ) : (
           <MailSearch className='size-3.5' />
         )}
-      </Button>
-      <Button
-        type='button'
-        variant='outline'
-        size='icon'
-        className='size-7 cursor-pointer'
-        aria-label={`Edit organization ${organization.name}`}
-        title={`Edit organization ${organization.name}`}
-        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-          event.preventDefault();
-          event.stopPropagation();
-          onOpenOrganization(organization.id);
-        }}
-      >
-        <Edit2 className='size-3.5' />
       </Button>
     </div>
   );
@@ -473,11 +488,17 @@ export function FilemakerOrganizationMasterTreeNode(
       isEmailScrapeRunning={props.organizationEmailScrapeState[organization.id] === true}
       isExpanded={props.isExpanded}
       isSelectedForBatch={props.organizationSelection[organization.id] === true}
+      isWebsiteSocialScrapeRunning={
+        props.organizationWebsiteSocialScrapeState[organization.id] === true
+      }
       jobListingCount={metadataNumber(node.metadata?.['jobListingCount'])}
       organization={organization}
       select={props.select}
       stateClassName={stateClassName}
       onLaunchOrganizationEmailScrape={props.onLaunchOrganizationEmailScrape}
+      onLaunchOrganizationWebsiteSocialScrape={
+        props.onLaunchOrganizationWebsiteSocialScrape
+      }
       onOpenOrganization={props.onOpenOrganization}
       onToggleOrganizationSelection={props.onToggleOrganizationSelection}
       toggleExpand={props.toggleExpand}

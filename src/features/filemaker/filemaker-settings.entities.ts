@@ -364,6 +364,10 @@ export const createFilemakerJobListing = (input: {
   status?: unknown;
   targetedCampaignIds?: unknown;
   lastTargetedAt?: unknown;
+  sourceExternalId?: unknown;
+  sourceSite?: unknown;
+  sourceUrl?: unknown;
+  scrapedAt?: unknown;
   createdAt?: string | null | undefined;
   updatedAt?: string | null | undefined;
 }): FilemakerJobListing => {
@@ -372,7 +376,11 @@ export const createFilemakerJobListing = (input: {
   const salaryMax = normalizeOptionalNumber(input.salaryMax);
   const lastTargetedAt = normalizeString(input.lastTargetedAt);
   const location = normalizeString(input.location);
+  const scrapedAt = normalizeString(input.scrapedAt);
   const salaryCurrency = normalizeString(input.salaryCurrency).toUpperCase();
+  const sourceExternalId = normalizeString(input.sourceExternalId);
+  const sourceSite = normalizeString(input.sourceSite);
+  const sourceUrl = normalizeString(input.sourceUrl);
   return {
     id: normalizeString(input.id),
     organizationId: normalizeString(input.organizationId),
@@ -386,6 +394,10 @@ export const createFilemakerJobListing = (input: {
     status: normalizeJobListingStatus(input.status),
     targetedCampaignIds: normalizeStringList(input.targetedCampaignIds),
     ...(lastTargetedAt.length > 0 ? { lastTargetedAt } : {}),
+    ...(sourceExternalId.length > 0 ? { sourceExternalId } : {}),
+    ...(sourceSite.length > 0 ? { sourceSite } : {}),
+    ...(sourceUrl.length > 0 ? { sourceUrl } : {}),
+    ...(scrapedAt.length > 0 ? { scrapedAt } : {}),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,
   };

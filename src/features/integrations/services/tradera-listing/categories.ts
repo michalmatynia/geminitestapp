@@ -157,11 +157,11 @@ const logCategoryFetchResult = (
   });
 };
 
-const assertCategoryFetchResult = (
+function assertCategoryFetchResult(
   result: TraderaCategorySequencerResult | null,
   connection: IntegrationConnectionRecord,
   config: CategoryFetchResultConfig
-): asserts result is TraderaCategorySequencerResult => {
+): asserts result is TraderaCategorySequencerResult {
   if (result !== null) return;
 
   throw new AppError(config.noResultMessage, {
@@ -170,7 +170,7 @@ const assertCategoryFetchResult = (
     meta: { connectionId: connection.id },
     expected: false,
   });
-};
+}
 
 const assertCategoriesWereScraped = ({
   categories,

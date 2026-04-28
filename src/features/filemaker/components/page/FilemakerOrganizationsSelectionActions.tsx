@@ -1,9 +1,10 @@
 'use client';
 
-import { Copy } from 'lucide-react';
-import React, { useCallback } from 'react';
+import { BriefcaseBusiness, Copy } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
+import { Button } from '@/shared/ui/button';
 import { SelectionBar } from '@/shared/ui/selection-bar';
 import { useToast } from '@/shared/ui/toast';
 
@@ -12,29 +13,62 @@ import type {
   OrganizationSelectionState,
 } from '../../pages/AdminFilemakerOrganizationsPage.types';
 import type { FilemakerOrganization } from '../../types';
+import { FilemakerPracujScrapeModal } from './FilemakerPracujScrapeModal';
 
 const selectedOrganizationIds = (selection: OrganizationSelectionState): string[] =>
   Object.keys(selection).filter((id: string): boolean => selection[id] === true);
+
+function PracujScrapeAction(props: {
+  onCompleted: () => void;
+  selectedOrganizationCount: number;
+  selectedOrganizationIds: string[];
+}): React.JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        className='gap-2'
+        onClick={() => setIsOpen(true)}
+      >
+        <BriefcaseBusiness className='h-4 w-4' />
+        Scrape pracuj.pl
+      </Button>
+      <FilemakerPracujScrapeModal
+        open={isOpen}
+        onClose={() => setIsOpen(false)}
+        onCompleted={props.onCompleted}
+        selectedOrganizationCount={props.selectedOrganizationCount}
+        selectedOrganizationIds={props.selectedOrganizationIds}
+      />
+    </>
+  );
+}
 
 export function FilemakerOrganizationsSelectionActions(
   props: OrganizationListState
 ): React.JSX.Element {
   const { toast } = useToast();
+  const selectedIds = useMemo(
+    () => selectedOrganizationIds(props.organizationSelection),
+    [props.organizationSelection]
+  );
   const copySelectedIds = useCallback(async (): Promise<void> => {
-    const ids = selectedOrganizationIds(props.organizationSelection);
-    if (ids.length === 0) {
+    if (selectedIds.length === 0) {
       toast('Please select organisations to copy.', { variant: 'error' });
       return;
     }
     try {
-      await navigator.clipboard.writeText(ids.join('\n'));
-      toast(`Copied ${ids.length} organisation ID${ids.length === 1 ? '' : 's'}.`, {
+      await navigator.clipboard.writeText(selectedIds.join('\n'));
+      toast(`Copied ${selectedIds.length} organisation ID${selectedIds.length === 1 ? '' : 's'}.`, {
         variant: 'success',
       });
     } catch {
       toast('Failed to copy selected organisation IDs.', { variant: 'error' });
     }
-  }, [props.organizationSelection, toast]);
+  }, [selectedIds, toast]);
 
   return (
     <SelectionBar<FilemakerOrganization>
@@ -48,6 +82,13 @@ export function FilemakerOrganizationsSelectionActions(
       loadingGlobal={props.isSelectingAllOrganizations}
       className='border-t pt-3'
       label='Organisations'
+      rightActions={
+        <PracujScrapeAction
+          onCompleted={props.onPracujScrapeCompleted}
+          selectedOrganizationCount={props.selectedOrganizationCount}
+          selectedOrganizationIds={selectedIds}
+        />
+      }
       actions={
         <DropdownMenuItem
           onClick={() => {

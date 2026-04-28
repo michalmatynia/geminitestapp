@@ -1,7 +1,7 @@
-import { Badge, Button } from '@/shared/ui/primitives.public';
+import { Button } from '@/shared/ui/primitives.public';
 import { Trash2 } from 'lucide-react';
 
-export function SessionCard({ session, onPromote, onPromoteAndArchive, onReject, isReadOnly }: any) {
+export function SessionCard({ session, onPromote, onReject, isReadOnly }: any) {
   return (
     <div className='space-y-3 rounded-md border border-border/70 bg-background/50 p-4'>
       <div className='flex items-center justify-between'>

@@ -123,8 +123,10 @@ const renderOrganizationNode = (
     jobListingsById: new Map(),
     organizationById: new Map<string, FilemakerOrganization>([['org-1', organizationFixture]]),
     organizationEmailScrapeState: {},
+    organizationWebsiteSocialScrapeState: {},
     organizationSelection: {},
     onLaunchOrganizationEmailScrape: vi.fn(),
+    onLaunchOrganizationWebsiteSocialScrape: vi.fn(),
     onOpenEvent: vi.fn(),
     onOpenJobListing: vi.fn(),
     onOpenOrganization: vi.fn(),
@@ -143,6 +145,7 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     await user.click(screen.getByText('Acme Inc'));
 
     expect(props.onOpenOrganization).toHaveBeenCalledWith('org-1');
+    expect(screen.queryByRole('button', { name: 'Edit organization Acme Inc' })).toBeNull();
     expect(props.toggleExpand).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: /Expand Acme Inc/i }));
@@ -173,6 +176,21 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     );
 
     expect(props.onLaunchOrganizationEmailScrape).toHaveBeenCalledWith('org-1');
+    expect(props.onOpenOrganization).not.toHaveBeenCalled();
+    expect(props.toggleExpand).not.toHaveBeenCalled();
+  });
+
+  it('launches website and social scraping from the row action without navigating', async () => {
+    const user = userEvent.setup();
+    const props = renderOrganizationNode();
+
+    await user.click(
+      screen.getByRole('button', {
+        name: 'Discover website and social profiles for organization Acme Inc',
+      })
+    );
+
+    expect(props.onLaunchOrganizationWebsiteSocialScrape).toHaveBeenCalledWith('org-1');
     expect(props.onOpenOrganization).not.toHaveBeenCalled();
     expect(props.toggleExpand).not.toHaveBeenCalled();
   });

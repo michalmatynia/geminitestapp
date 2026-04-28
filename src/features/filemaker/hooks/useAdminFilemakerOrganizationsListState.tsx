@@ -22,6 +22,14 @@ import { FilemakerOrganizationMasterTreeNode } from '../components/shared/Filema
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
 import { buildFilemakerOrganizationListNodes } from '../entity-master-tree';
 import {
+  buildOrganizationEmailScrapeToast,
+  buildOrganizationWebsiteSocialScrapeToast,
+  readOrganizationEmailScrapeErrorMessage,
+  readOrganizationWebsiteSocialScrapeErrorMessage,
+  type OrganizationEmailScrapeResponse,
+  type OrganizationWebsiteSocialScrapeResponse,
+} from '../filemaker-organization-scrape-client';
+import {
   FILEMAKER_DATABASE_KEY,
   getFilemakerEventsForOrganization,
   getFilemakerJobListingsForOrganization,
@@ -38,115 +46,6 @@ import {
   type OrganizationListState,
   type OrganizationSelectionState,
 } from '../pages/AdminFilemakerOrganizationsPage.types';
-
-type OrganizationEmailScrapeResponse = {
-  promoted?: Array<{ status?: string }>;
-  skipped?: Array<{ reason?: string }>;
-  runId?: string | null;
-  websiteDiscovery?: {
-    persisted?: {
-      linked?: unknown[];
-    } | null;
-  } | null;
-};
-
-type OrganizationWebsiteSocialScrapeResponse = {
-  persisted?: {
-    linked?: unknown[];
-    skipped?: unknown[];
-  } | null;
-  socialProfiles?: unknown[];
-  websites?: unknown[];
-};
-
-type ScrapeToast = { message: string; variant: 'success' | 'warning' };
-
-const countPromotedStatus = (
-  promoted: Array<{ status?: string }>,
-  status: string
-): number => promoted.filter((item) => item.status === status).length;
-
-const getOrganizationEmailScrapeDiscoveryLinkCount = (
-  result: OrganizationEmailScrapeResponse
-): number => result.websiteDiscovery?.persisted?.linked?.length ?? 0;
-
-const buildOrganizationEmailScrapeDiscoverySuffix = (count: number): string =>
-  count > 0 ? ` ${count} website/social link${count === 1 ? '' : 's'} updated.` : '';
-
-const buildOrganizationEmailScrapeToast = (
-  result: OrganizationEmailScrapeResponse
-): ScrapeToast => {
-  const promoted = result.promoted ?? [];
-  const createdCount = countPromotedStatus(promoted, 'created');
-  const linkedCount = countPromotedStatus(promoted, 'linked');
-  const alreadyLinkedCount = countPromotedStatus(promoted, 'already-linked');
-  const skippedCount = result.skipped?.length ?? 0;
-  const discoveredLinkCount = getOrganizationEmailScrapeDiscoveryLinkCount(result);
-  const promotedCount = createdCount + linkedCount + alreadyLinkedCount;
-  const discoverySuffix = buildOrganizationEmailScrapeDiscoverySuffix(discoveredLinkCount);
-  const message =
-    promotedCount === 0 && skippedCount === 0
-      ? `Email scrape finished: no email addresses found.${discoverySuffix}`
-      : `Email scrape finished: ${createdCount} created, ${linkedCount} linked, ${alreadyLinkedCount} already linked, ${skippedCount} skipped.${discoverySuffix}`;
-  return {
-    message,
-    variant: promotedCount === 0 && discoveredLinkCount === 0 ? 'warning' : 'success',
-  };
-};
-
-const buildOrganizationWebsiteSocialScrapeToast = (
-  result: OrganizationWebsiteSocialScrapeResponse
-): ScrapeToast => {
-  const linkedCount = result.persisted?.linked?.length ?? 0;
-  const skippedCount = result.persisted?.skipped?.length ?? 0;
-  const websiteCount = result.websites?.length ?? 0;
-  const socialCount = result.socialProfiles?.length ?? 0;
-  const message = `Website/social scrape finished: ${websiteCount} website candidate${websiteCount === 1 ? '' : 's'}, ${socialCount} social profile${socialCount === 1 ? '' : 's'}, ${linkedCount} link${linkedCount === 1 ? '' : 's'} updated, ${skippedCount} skipped.`;
-  return {
-    message,
-    variant: linkedCount === 0 && websiteCount === 0 && socialCount === 0 ? 'warning' : 'success',
-  };
-};
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object';
-
-const readStringField = (record: Record<string, unknown>, key: string): string | null => {
-  const value = record[key];
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const readOrganizationEmailScrapeErrorMessage = async (
-  response: Response
-): Promise<string> => {
-  const fallback = `Email scrape failed (${response.status}).`;
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.toLowerCase().includes('application/json')) return fallback;
-  try {
-    const body = (await response.json()) as unknown;
-    if (!isRecord(body)) return fallback;
-    return readStringField(body, 'error') ?? readStringField(body, 'message') ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
-
-const readOrganizationWebsiteSocialScrapeErrorMessage = async (
-  response: Response
-): Promise<string> => {
-  const fallback = `Website/social scrape failed (${response.status}).`;
-  const contentType = response.headers.get('content-type') ?? '';
-  if (!contentType.toLowerCase().includes('application/json')) return fallback;
-  try {
-    const body = (await response.json()) as unknown;
-    if (!isRecord(body)) return fallback;
-    return readStringField(body, 'error') ?? readStringField(body, 'message') ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
 
 const ADDRESS_FILTERS = new Set(['with_address', 'without_address']);
 const BANK_FILTERS = new Set(['with_bank', 'without_bank']);
@@ -218,8 +117,9 @@ function useMongoFilemakerOrganizations(input: {
   page: number;
   pageSize: number;
   query: string;
+  refreshKey: number;
 }): MongoFilemakerOrganizationsState {
-  const { filters, page, pageSize, query } = input;
+  const { filters, page, pageSize, query, refreshKey } = input;
   const [state, setState] = useState<MongoFilemakerOrganizationsState>({
     ...EMPTY_ORGANIZATIONS_RESPONSE,
     error: null,
@@ -249,7 +149,7 @@ function useMongoFilemakerOrganizations(input: {
     return () => {
       controller.abort();
     };
-  }, [filters, page, pageSize, query]);
+  }, [filters, page, pageSize, query, refreshKey]);
 
   return state;
 }
@@ -438,12 +338,16 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_ORGANIZATION_PAGE_SIZE);
   const [filters, setFilters] = useState<OrganizationFilters>(createDefaultOrganizationFilters);
+  const [organizationsRefreshKey, setOrganizationsRefreshKey] = useState(0);
   const [isSelectingAllOrganizations, setIsSelectingAllOrganizations] = useState(false);
   const [organizationEmailScrapeState, setOrganizationEmailScrapeState] =
+    useState<Record<string, boolean>>({});
+  const [organizationWebsiteSocialScrapeState, setOrganizationWebsiteSocialScrapeState] =
     useState<Record<string, boolean>>({});
   const [organizationSelection, setOrganizationSelection] =
     useState<OrganizationSelectionState>({});
   const organizationEmailScrapeInFlightRef = useRef<Set<string>>(new Set());
+  const organizationWebsiteSocialScrapeInFlightRef = useRef<Set<string>>(new Set());
   const deferredQuery = useDeferredValue(query.trim());
   const debouncedQuery = useDebouncedValue(deferredQuery, 250);
   const mongoOrganizations = useMongoFilemakerOrganizations({
@@ -451,6 +355,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     page,
     pageSize,
     query: debouncedQuery,
+    refreshKey: organizationsRefreshKey,
   });
   const { actions, openEvent, openJobListing, openOrganization } = useOrganizationActions(router);
   const organizations = mongoOrganizations.organizations;
@@ -552,19 +457,67 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     },
     [toast]
   );
+  const launchOrganizationWebsiteSocialScrape = useCallback(
+    (organizationId: string): void => {
+      if (organizationWebsiteSocialScrapeInFlightRef.current.has(organizationId)) return;
+      organizationWebsiteSocialScrapeInFlightRef.current.add(organizationId);
+      setOrganizationWebsiteSocialScrapeState((current) => ({
+        ...current,
+        [organizationId]: true,
+      }));
+      void (async (): Promise<void> => {
+        try {
+          const response = await fetch(
+            `/api/filemaker/organizations/${encodeURIComponent(
+              organizationId
+            )}/website-social-scrape`,
+            {
+              method: 'POST',
+              headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+              body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
+            }
+          );
+          if (!response.ok) {
+            throw new Error(await readOrganizationWebsiteSocialScrapeErrorMessage(response));
+          }
+          const result = (await response.json()) as OrganizationWebsiteSocialScrapeResponse;
+          const scrapeToast = buildOrganizationWebsiteSocialScrapeToast(result);
+          toast(scrapeToast.message, { variant: scrapeToast.variant });
+        } catch (error) {
+          toast(error instanceof Error ? error.message : 'Website/social scrape failed.', {
+            variant: 'error',
+          });
+        } finally {
+          organizationWebsiteSocialScrapeInFlightRef.current.delete(organizationId);
+          setOrganizationWebsiteSocialScrapeState((current) => {
+            const next = { ...current };
+            delete next[organizationId];
+            return next;
+          });
+        }
+      })();
+    },
+    [toast]
+  );
   const renderNode = useOrganizationRenderNode(
     organizationRelations.eventsById,
     organizationRelations.jobListingsById,
     organizations,
     organizationEmailScrapeState,
+    organizationWebsiteSocialScrapeState,
     organizationSelection,
     launchOrganizationEmailScrape,
+    launchOrganizationWebsiteSocialScrape,
     openEvent,
     openJobListing,
     openOrganization,
     toggleOrganizationSelection
   );
   const selectedOrganizationCount = selectedOrganizationIdsFromState(organizationSelection).length;
+  const handlePracujScrapeCompleted = useCallback((): void => {
+    settingsStore.refetch();
+    setOrganizationsRefreshKey((current) => current + 1);
+  }, [settingsStore]);
 
   return {
     actions,
@@ -594,6 +547,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       setPageSize(value);
       setPage(1);
     },
+    onPracujScrapeCompleted: handlePracujScrapeCompleted,
     onQueryChange: (value) => {
       setQuery(value);
       setPage(1);
@@ -615,7 +569,9 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     },
     onToggleOrganizationSelection: toggleOrganizationSelection,
     onLaunchOrganizationEmailScrape: launchOrganizationEmailScrape,
+    onLaunchOrganizationWebsiteSocialScrape: launchOrganizationWebsiteSocialScrape,
     organizationEmailScrapeState,
+    organizationWebsiteSocialScrapeState,
     organizationSelection,
     organizations,
     page,

@@ -121,6 +121,18 @@ const discoveryOnlyScrapeResponse = {
   },
 };
 
+const websiteSocialScrapeResponse = {
+  organizationId: 'org-1',
+  organizationName: 'Acme Inc',
+  persisted: {
+    linked: [{ url: 'https://acme.example/' }, { url: 'https://linkedin.com/company/acme' }],
+    skipped: [],
+  },
+  runId: 'presence-run-1',
+  socialProfiles: [{ platform: 'linkedin' }],
+  websites: [{ url: 'https://acme.example/' }],
+};
+
 const createDeferred = <T,>(): {
   promise: Promise<T>;
   resolve: (value: T) => void;
@@ -254,6 +266,50 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     await waitFor(() => expect(result.current.organizationEmailScrapeState).toEqual({}));
     expect(mocks.toastMock).toHaveBeenCalledWith(
       'Email scrape finished: no email addresses found. 1 website/social link updated.',
+      { variant: 'success' }
+    );
+  });
+
+  it('launches organization website/social scrape with CSRF headers and reports the result', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      if (url === '/api/filemaker/organizations/org-1/website-social-scrape') {
+        expect(init).toMatchObject({
+          method: 'POST',
+          body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
+        });
+        expect(init?.headers).toMatchObject({
+          'Content-Type': 'application/json',
+          'x-csrf-token': 'csrf-token',
+        });
+        return Response.json(websiteSocialScrapeResponse);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onLaunchOrganizationWebsiteSocialScrape('org-1');
+    });
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/organizations/org-1/website-social-scrape',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+    await waitFor(() =>
+      expect(result.current.organizationWebsiteSocialScrapeState).toEqual({})
+    );
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Website/social scrape finished: 1 website candidate, 1 social profile, 2 links updated, 0 skipped.',
       { variant: 'success' }
     );
   });

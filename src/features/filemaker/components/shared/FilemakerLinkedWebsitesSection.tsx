@@ -1,4 +1,4 @@
-import { ExternalLink, Globe } from 'lucide-react';
+import { ExternalLink, Globe, Loader2, Search } from 'lucide-react';
 import React from 'react';
 
 import type { MongoFilemakerWebsite } from '../../filemaker-websites.types';
@@ -7,7 +7,9 @@ import { Badge, Button, Card } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
 export interface FilemakerLinkedWebsitesSectionProps {
+  isDiscoveringWebsiteSocial?: boolean;
   websites: MongoFilemakerWebsite[];
+  onDiscoverWebsiteSocial?: () => void;
 }
 
 const formatOptionalValue = (value: string | null | undefined): string => {
@@ -83,10 +85,31 @@ function FilemakerLinkedWebsiteCard({
 }
 
 export function FilemakerLinkedWebsitesSection({
+  isDiscoveringWebsiteSocial = false,
+  onDiscoverWebsiteSocial,
   websites,
 }: FilemakerLinkedWebsitesSectionProps): React.JSX.Element {
+  const actions =
+    onDiscoverWebsiteSocial === undefined ? undefined : (
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        className='gap-2'
+        disabled={isDiscoveringWebsiteSocial}
+        onClick={onDiscoverWebsiteSocial}
+      >
+        {isDiscoveringWebsiteSocial ? (
+          <Loader2 className='size-3.5 animate-spin' />
+        ) : (
+          <Search className='size-3.5' />
+        )}
+        Discover
+      </Button>
+    );
+
   return (
-    <FormSection title='Linked Websites' className='space-y-2 p-4'>
+    <FormSection title='Linked Websites' actions={actions} className='space-y-2 p-4'>
       {websites.length === 0 ? (
         <div className='text-xs text-gray-500'>No websites linked yet.</div>
       ) : (

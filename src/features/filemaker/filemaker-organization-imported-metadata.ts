@@ -6,6 +6,8 @@ export type FilemakerOrganizationDemandValue = {
   valueId?: string;
 };
 
+export type FilemakerOrganizationProfileValue = FilemakerOrganizationDemandValue;
+
 export type FilemakerOrganizationImportedDemand = {
   createdAt?: string;
   createdBy?: string;
@@ -19,6 +21,21 @@ export type FilemakerOrganizationImportedDemand = {
   updatedBy?: string;
   valueIds: string[];
   values: FilemakerOrganizationDemandValue[];
+};
+
+export type FilemakerOrganizationImportedProfile = {
+  createdAt?: string;
+  createdBy?: string;
+  id: string;
+  legacyOrganizationUuid: string;
+  legacyUuid: string;
+  legacyValueUuids: string[];
+  organizationId?: string;
+  organizationName?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  valueIds: string[];
+  values: FilemakerOrganizationProfileValue[];
 };
 
 export type FilemakerOrganizationHarvestProfile = {

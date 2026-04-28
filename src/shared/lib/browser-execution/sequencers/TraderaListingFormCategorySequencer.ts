@@ -152,8 +152,9 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
         width: config.viewportWidth ?? 1_280,
         height: config.viewportHeight ?? 900,
       });
-      if (config.settleDelayMs > 0) {
-        await this.wait(config.settleDelayMs);
+      const settleDelayMs = config.settleDelayMs ?? 0;
+      if (settleDelayMs > 0) {
+        await this.wait(settleDelayMs);
       }
     }
     this.complete('browser_preparation', 'Browser settings were prepared.');
@@ -172,14 +173,14 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
   }
 
   private async stepCookieAccept(): Promise<void> {
-    const accepted = await this.acceptCookies();
+    const accepted = await this.acceptCategoryCookies();
     this.complete(
       'cookie_accept',
       accepted ? 'Cookie consent was handled.' : 'No cookie banner detected.'
     );
   }
 
-  private async acceptCookies(): Promise<boolean> {
+  private async acceptCategoryCookies(): Promise<boolean> {
     return acceptTraderaListingFormCategoryCookies({
       page: this.context.page,
       wait: this.waitForPicker,
@@ -234,7 +235,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
     }
 
     await this.openListingForm();
-    await this.acceptCookies();
+    await this.acceptCategoryCookies();
 
     if (await isOnTraderaListingFormAuthPage(this.context.page)) {
       this.context.tracker.fail(
@@ -380,7 +381,7 @@ export class TraderaListingFormCategorySequencer extends PlaywrightSequencer {
       wait: this.waitForPicker,
     });
     await this.openListingForm();
-    await this.acceptCookies();
+    await this.acceptCategoryCookies();
   }
 
   private async drillAndRead(path: PickerItem[]): Promise<PickerItem[] | null> {

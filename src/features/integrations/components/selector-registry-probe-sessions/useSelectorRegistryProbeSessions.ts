@@ -5,22 +5,12 @@ import {
   useRestoreSelectorRegistryProbeSessionMutation,
   useSaveSelectorRegistryEntryMutation,
 } from '@/features/integrations/hooks/useSelectorRegistry';
-import type {
-  SelectorRegistryNamespace,
-  SelectorRegistryProbeSession,
-} from '@/shared/contracts/integrations/selector-registry';
+import type { SelectorRegistryProbeSession } from '@/shared/contracts/integrations/selector-registry';
 import {
-  applySelectorRegistryProbeCarryForwardDefaults,
   applySelectorRegistryProbeCarryForwardManualSelection,
 } from '@/shared/lib/browser-execution/selector-registry-probe-carry-forward';
 
-export function useSelectorRegistryProbeSessions(
-  namespace: SelectorRegistryNamespace,
-  profile: string,
-  sessions: SelectorRegistryProbeSession[],
-  promotableEntries: any[], // Will define proper type later
-  defaultKeysByRole: Record<string, string[]>
-) {
+export function useSelectorRegistryProbeSessions(sessions: SelectorRegistryProbeSession[]) {
   const saveMutation = useSaveSelectorRegistryEntryMutation();
   const archiveMutation = useArchiveSelectorRegistryProbeSessionMutation();
   const restoreMutation = useRestoreSelectorRegistryProbeSessionMutation();

@@ -237,6 +237,19 @@ describe('AdminLayout', () => {
     });
   });
 
+  it('uses product-list vertical spacing for the organizations list route', () => {
+    pathnameMock = '/admin/filemaker/organizations';
+
+    render(
+      <AdminLayout>
+        <div data-testid='content'>content</div>
+      </AdminLayout>
+    );
+
+    expect(screen.getByRole('main')).toHaveClass('p-6');
+    expect(screen.getByRole('main')).not.toHaveClass('pt-16');
+  });
+
   it('defers the remote admin menu preference lookup until after initial mount when no seed preference exists', async () => {
     render(
       <AdminLayout>

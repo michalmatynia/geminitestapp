@@ -32,7 +32,7 @@ export function ProfileLessonMasteryCard({
         </Text>
       </View>
 
-      {profileLessonMastery.masteryItems.length === 0 ? (
+      {profileLessonMastery.weakest.length === 0 && profileLessonMastery.strongest.length === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
           {copy({
             de: 'Noch keine Beherrschungsdaten verfügbar. Beende einige Lektionen, um Einblicke in deine Stärken zu erhalten.',
@@ -42,10 +42,16 @@ export function ProfileLessonMasteryCard({
         </Text>
       ) : (
         <View style={{ gap: 12 }}>
-          {profileLessonMastery.masteryItems.map((item) => (
+          {profileLessonMastery.weakest.map((item) => (
             <MasteryInsightRow
               key={`${item.operation}-${item.difficulty}`}
-              item={item}
+              insight={item}
+            />
+          ))}
+          {profileLessonMastery.strongest.map((item) => (
+            <MasteryInsightRow
+              key={`${item.operation}-${item.difficulty}`}
+              insight={item}
             />
           ))}
         </View>

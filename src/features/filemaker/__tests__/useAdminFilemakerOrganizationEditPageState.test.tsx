@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   settingsGet: vi.fn(),
   updateSettingMutateAsync: vi.fn(),
   toast: vi.fn(),
+  withCsrfHeaders: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -36,6 +37,10 @@ vi.mock('@/shared/hooks/use-settings', () => ({
     mutateAsync: mocks.updateSettingMutateAsync,
     isPending: false,
   }),
+}));
+
+vi.mock('@/shared/lib/security/csrf-client', () => ({
+  withCsrfHeaders: (headers?: HeadersInit) => mocks.withCsrfHeaders(headers),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -211,6 +216,11 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
     mocks.updateSettingMutateAsync.mockReset();
     mocks.updateSettingMutateAsync.mockResolvedValue({});
     mocks.toast.mockReset();
+    mocks.withCsrfHeaders.mockReset();
+    mocks.withCsrfHeaders.mockImplementation((headers?: HeadersInit) => ({
+      ...headers,
+      'x-csrf-token': 'csrf-token',
+    }));
     mocks.routeParams = { organizationId: 'org-1' };
     mocks.settingsGet.mockReset();
     mocks.settingsGet.mockImplementation((key: string) =>
@@ -462,6 +472,146 @@ describe('useAdminFilemakerOrganizationEditPageState', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/filemaker/organizations/LEGACY-ORG-UUID', {
       signal: expect.any(AbortSignal),
     });
+  });
+
+  it('launches website/social discovery from organization details and refreshes linked websites', async () => {
+    mocks.routeParams = { organizationId: 'mongo-org-1' };
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY
+        ? JSON.stringify({ ...databaseFixture, organizations: [] })
+        : null
+    );
+    let detailRequestCount = 0;
+    const linkedWebsite = {
+      id: 'website-1',
+      url: 'https://acme.example/',
+      host: 'acme.example',
+      websiteKind: 'official',
+      createdAt: '2026-04-28T10:00:00.000Z',
+      updatedAt: '2026-04-28T10:00:00.000Z',
+    };
+    const organizationPayload = {
+      id: 'mongo-org-1',
+      name: 'Mongo Org',
+      addressId: '',
+      street: '',
+      streetNumber: '',
+      city: '',
+      postalCode: '',
+      country: '',
+      countryId: '',
+      taxId: '',
+      krs: '',
+      createdAt: '2026-03-01T10:00:00.000Z',
+      updatedAt: '2026-03-01T10:00:00.000Z',
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/organizations/mongo-org-1/website-social-scrape') {
+        expect(init).toMatchObject({
+          method: 'POST',
+          body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
+        });
+        expect(init?.headers).toMatchObject({
+          'Content-Type': 'application/json',
+          'x-csrf-token': 'csrf-token',
+        });
+        return Response.json({
+          persisted: { linked: [linkedWebsite], skipped: [] },
+          socialProfiles: [{ platform: 'linkedin' }],
+          websites: [{ url: 'https://acme.example/' }],
+        });
+      }
+      if (url === '/api/filemaker/organizations/mongo-org-1') {
+        detailRequestCount += 1;
+        return Response.json({
+          linkedAddresses: [],
+          linkedEmails: [],
+          linkedWebsites: detailRequestCount > 1 ? [linkedWebsite] : [],
+          organization: organizationPayload,
+        });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.organizationSource).toBe('mongo');
+    });
+
+    await act(async () => {
+      await result.current.handleWebsiteSocialScrape();
+    });
+
+    await waitFor(() => {
+      expect(result.current.linkedWebsites).toEqual([linkedWebsite]);
+    });
+    expect(result.current.isWebsiteSocialScrapeRunning).toBe(false);
+    expect(detailRequestCount).toBe(2);
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Website/social scrape finished: 1 website candidate, 1 social profile, 1 link updated, 0 skipped.',
+      { variant: 'success' }
+    );
+  });
+
+  it('uses the Mongo legacy lookup id for settings-backed website/social discovery', async () => {
+    mocks.settingsGet.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY
+        ? JSON.stringify({
+            ...databaseFixture,
+            organizations: [
+              {
+                ...databaseFixture.organizations[0],
+                legacyUuid: 'LEGACY-ORG-UUID',
+              },
+            ],
+          })
+        : null
+    );
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/organizations/LEGACY-ORG-UUID/website-social-scrape') {
+        expect(init?.method).toBe('POST');
+        return Response.json({
+          persisted: { linked: [], skipped: [] },
+          socialProfiles: [],
+          websites: [],
+        });
+      }
+      if (url === '/api/filemaker/organizations/LEGACY-ORG-UUID') {
+        return Response.json({
+          linkedAddresses: [],
+          linkedEmails: [],
+          organization: {
+            ...databaseFixture.organizations[0],
+            legacyUuid: 'LEGACY-ORG-UUID',
+          },
+        });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.organizationSource).toBe('settings');
+    });
+
+    await act(async () => {
+      await result.current.handleWebsiteSocialScrape();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/filemaker/organizations/LEGACY-ORG-UUID/website-social-scrape',
+      expect.objectContaining({ method: 'POST' })
+    );
+    expect(fetchMock).not.toHaveBeenCalledWith(
+      '/api/filemaker/organizations/org-1/website-social-scrape',
+      expect.anything()
+    );
   });
 
   it('persists Mongo organization address country values to the detail endpoint', async () => {

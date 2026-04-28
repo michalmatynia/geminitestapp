@@ -25,6 +25,7 @@ import {
 import {
   listMongoFilemakerDemandsForOrganization,
   listMongoFilemakerHarvestProfilesForOrganization,
+  listMongoFilemakerProfilesForOrganization,
 } from '@/features/filemaker/server/filemaker-organization-imported-metadata';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
@@ -75,6 +76,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   const [
     harvestProfiles,
     importedDemands,
+    importedProfiles,
     linkedAnyParams,
     linkedAnyTexts,
     linkedAddresses,
@@ -89,6 +91,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   ] = await Promise.all([
     listMongoFilemakerHarvestProfilesForOrganization(organization),
     listMongoFilemakerDemandsForOrganization(organization),
+    listMongoFilemakerProfilesForOrganization(organization),
     listMongoFilemakerAnyParamsForOrganization(organization),
     listMongoFilemakerAnyTextsForOrganization(organization),
     listMongoFilemakerAddressesForOrganization(organization),
@@ -108,6 +111,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
   return Response.json({
     harvestProfiles,
     importedDemands,
+    importedProfiles,
     linkedAnyParams,
     linkedAnyTexts,
     linkedAddresses,

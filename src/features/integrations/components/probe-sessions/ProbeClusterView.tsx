@@ -1,5 +1,6 @@
 import { Badge, Button } from '@/shared/ui/primitives.public';
 import { Trash2 } from 'lucide-react';
+import type { SelectorRegistryRole } from '@/shared/contracts/integrations/selector-registry';
 import { formatSelectorRegistryRoleLabel } from '@/shared/lib/browser-execution/selector-registry-roles';
 
 export function ProbeClusterView({ cluster, onPromote, onPromoteAndArchive, onReject, isReadOnly }: any) {
@@ -11,7 +12,7 @@ export function ProbeClusterView({ cluster, onPromote, onPromoteAndArchive, onRe
           <div className='flex gap-2'>
             <Badge variant='outline'>{cluster.sessionCount} sessions</Badge>
             {cluster.roleSignature.map((role: string) => (
-              <Badge key={role} variant='secondary'>{formatSelectorRegistryRoleLabel(role) ?? role}</Badge>
+              <Badge key={role} variant='secondary'>{formatSelectorRegistryRoleLabel(role as SelectorRegistryRole) ?? role}</Badge>
             ))}
           </div>
         </div>

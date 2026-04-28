@@ -204,11 +204,18 @@ function OrganizationDesktopHeader(props: OrganizationListState): React.JSX.Elem
         <>
           <OrganizationCreateActionRail {...props} />
           <OrganizationPaginationControl {...props} />
-          <OrganizationBadgesRail {...props} />
-          <OrganizationSecondaryActionRail {...props} />
         </>,
         'relative z-0 min-w-0 flex-1 justify-end'
       )}
+    </div>
+  );
+}
+
+function OrganizationDesktopSecondaryRail(props: OrganizationListState): React.JSX.Element {
+  return (
+    <div className='hidden w-full flex-wrap items-center justify-end gap-2 lg:flex'>
+      <OrganizationBadgesRail {...props} />
+      <OrganizationSecondaryActionRail {...props} />
     </div>
   );
 }
@@ -264,6 +271,7 @@ function OrganizationListHeader(props: OrganizationListState): React.JSX.Element
         <OrganizationMobileHeader {...props} />
         <OrganizationDesktopHeader {...props} />
         <OrganizationFiltersPanel filterValues={filterValues} listState={props} />
+        <OrganizationDesktopSecondaryRail {...props} />
       </div>
     </div>
   );

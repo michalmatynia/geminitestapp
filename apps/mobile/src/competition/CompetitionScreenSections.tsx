@@ -1,5 +1,6 @@
+import React from 'react';
 import { Text, View } from 'react-native';
-import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import { type KangurMobileLocale, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import {
   BASE_TONE,
   INDIGO_TONE,
@@ -20,7 +21,7 @@ import {
 import type { KangurMobileCompetitionMode } from './useKangurMobileCompetition';
 
 type CompetitionHeaderSectionProps = {
-  copy: (dict: { de: string; en: string; pl: string }) => string;
+  copy: KangurMobileCopy;
   modesCount: number;
   questionCount: number;
   routes: {
@@ -35,7 +36,9 @@ export function CompetitionHeaderSection({
   modesCount,
   questionCount,
   routes,
-}: CompetitionHeaderSectionProps): JSX.Element {
+}: CompetitionHeaderSectionProps): React.JSX.Element {
+// ...
+
   const headerTitle = copy({
     de: 'Kangur-Wettbewerb',
     en: 'Kangaroo competition',
@@ -93,7 +96,7 @@ export function CompetitionHeaderSection({
 }
 
 type CompetitionMissingModeSectionProps = {
-  copy: (dict: { de: string; en: string; pl: string }) => string;
+  copy: KangurMobileCopy;
   modeToken: string | null;
   onOpenFull: () => void;
 };
@@ -102,7 +105,8 @@ export function CompetitionMissingModeSection({
   copy,
   modeToken,
   onOpenFull,
-}: CompetitionMissingModeSectionProps): JSX.Element {
+}: CompetitionMissingModeSectionProps): React.JSX.Element {
+  const token = modeToken ?? '';
   return (
     <SectionCard
       title={copy({
@@ -113,9 +117,9 @@ export function CompetitionMissingModeSection({
     >
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
         {copy({
-          de: `Der Link zu "${formatModeToken(modeToken)}" passt gerade zu keiner Wettbewerbsrunde.`,
-          en: `The shortcut for "${formatModeToken(modeToken)}" does not match any competition round right now.`,
-          pl: `Skrót do „${formatModeToken(modeToken)}” nie pasuje teraz do żadnej rundy konkursu.`,
+          de: `Der Link zu "${formatModeToken(token)}" passt gerade zu keiner Wettbewerbsrunde.`,
+          en: `The shortcut for "${formatModeToken(token)}" does not match any competition round right now.`,
+          pl: `Skrót do „${formatModeToken(token)}” nie pasuje teraz do żadnej rundy konkursu.`,
         })}
       </Text>
       <PrimaryButton
@@ -132,7 +136,7 @@ export function CompetitionMissingModeSection({
 }
 
 type CompetitionModeCardProps = {
-  copy: (dict: { de: string; en: string; pl: string }) => string;
+  copy: KangurMobileCopy;
   item: {
     mode: KangurMobileCompetitionMode;
     questionCount: number;
@@ -149,7 +153,7 @@ export function CompetitionModeCard({
   locale,
   onPress,
   isStart = false,
-}: CompetitionModeCardProps): JSX.Element {
+}: CompetitionModeCardProps): React.JSX.Element {
   return (
     <SectionCard title={formatCompetitionModeTitle(item.mode, locale)}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -158,7 +162,7 @@ export function CompetitionModeCard({
           tone={SUCCESS_TONE}
         />
         <StatusPill
-          label={formatCompetitionTierLabel(item.pointTier, locale)}
+          label={formatCompetitionTierLabel(item.pointTier as any, locale)}
           tone={WARNING_TONE}
         />
       </View>

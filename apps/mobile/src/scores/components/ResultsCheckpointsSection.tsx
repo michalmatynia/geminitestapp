@@ -1,10 +1,11 @@
 import { View, Text } from 'react-native';
 import { Card, LinkButton } from '../../shared/KangurMobileUi';
 import { LessonCheckpointRow } from './LessonCheckpointRow';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
 interface ResultsCheckpointsSectionProps {
   checkpoints: { componentId: string }[];
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
   lessonsHref: any;
 }
 

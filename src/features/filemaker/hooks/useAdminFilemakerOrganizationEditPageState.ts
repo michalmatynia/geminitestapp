@@ -8,6 +8,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
@@ -36,7 +37,13 @@ import {
 import type {
   FilemakerOrganizationHarvestProfile,
   FilemakerOrganizationImportedDemand,
+  FilemakerOrganizationImportedProfile,
 } from '../filemaker-organization-imported-metadata';
+import {
+  buildOrganizationWebsiteSocialScrapeToast,
+  readOrganizationWebsiteSocialScrapeErrorMessage,
+  type OrganizationWebsiteSocialScrapeResponse,
+} from '../filemaker-organization-scrape-client';
 import type { FilemakerAnyParam } from '../filemaker-anyparam.types';
 import type { FilemakerAnyText } from '../filemaker-anytext.types';
 import type { FilemakerBankAccount } from '../filemaker-bank-account.types';
@@ -73,6 +80,7 @@ type MongoFilemakerOrganizationState = {
   error: string | null;
   harvestProfiles: FilemakerOrganizationHarvestProfile[];
   importedDemands: FilemakerOrganizationImportedDemand[];
+  importedProfiles: FilemakerOrganizationImportedProfile[];
   isLoading: boolean;
   linkedAddresses: FilemakerAddress[];
   linkedAnyParams: FilemakerAnyParam[];
@@ -91,6 +99,7 @@ type MongoFilemakerOrganizationState = {
 type MongoFilemakerOrganizationResponse = {
   harvestProfiles?: FilemakerOrganizationHarvestProfile[];
   importedDemands?: FilemakerOrganizationImportedDemand[];
+  importedProfiles?: FilemakerOrganizationImportedProfile[];
   linkedAddresses?: FilemakerAddress[];
   linkedAnyParams?: FilemakerAnyParam[];
   linkedAnyTexts?: FilemakerAnyText[];
@@ -112,6 +121,7 @@ const EMPTY_MONGO_ORGANIZATION_STATE: MongoFilemakerOrganizationState = {
   error: null,
   harvestProfiles: [],
   importedDemands: [],
+  importedProfiles: [],
   isLoading: false,
   linkedAddresses: [],
   linkedAnyParams: [],
@@ -313,6 +323,7 @@ const toLoadedMongoOrganizationState = (
   error: null,
   harvestProfiles: response.harvestProfiles ?? [],
   importedDemands: response.importedDemands ?? [],
+  importedProfiles: response.importedProfiles ?? [],
   isLoading: false,
   linkedAddresses: response.linkedAddresses ?? [],
   linkedAnyParams: response.linkedAnyParams ?? [],
@@ -357,6 +368,7 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
   linkedWebsites: MongoFilemakerWebsite[];
   harvestProfiles: FilemakerOrganizationHarvestProfile[];
   importedDemands: FilemakerOrganizationImportedDemand[];
+  importedProfiles: FilemakerOrganizationImportedProfile[];
   relationshipSummary: FilemakerPartySnapshot | null;
   valueCatalog: FilemakerValue[];
   phoneNumbers: FilemakerPhoneNumber[];
@@ -364,6 +376,8 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
   database: FilemakerDatabase;
   handleSave: () => Promise<void>;
   handleExtractEmails: () => Promise<void>;
+  handleWebsiteSocialScrape: () => Promise<void>;
+  isWebsiteSocialScrapeRunning: boolean;
   updateSetting: { isPending: boolean };
   router: AppRouterInstance;
   isLoading: boolean;
@@ -372,7 +386,8 @@ export type AdminFilemakerOrganizationEditPageContextValue = {
 
 function useMongoFilemakerOrganization(
   organizationId: string,
-  enabled: boolean
+  enabled: boolean,
+  refreshKey: number
 ): MongoFilemakerOrganizationState {
   const [state, setState] = useState<MongoFilemakerOrganizationState>(
     EMPTY_MONGO_ORGANIZATION_STATE
@@ -402,6 +417,7 @@ function useMongoFilemakerOrganization(
           error: error instanceof Error ? error.message : 'Failed to load Mongo organization.',
           harvestProfiles: [],
           importedDemands: [],
+          importedProfiles: [],
           isLoading: false,
           linkedAddresses: [],
           linkedAnyParams: [],
@@ -421,7 +437,7 @@ function useMongoFilemakerOrganization(
     return () => {
       controller.abort();
     };
-  }, [enabled, organizationId]);
+  }, [enabled, organizationId, refreshKey]);
 
   return state;
 }
@@ -452,6 +468,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
+  const [mongoOrganizationRefreshKey, setMongoOrganizationRefreshKey] = useState(0);
+  const [isWebsiteSocialScrapeRunning, setIsWebsiteSocialScrapeRunning] = useState(false);
 
   const organizationId = decodeRouteParam(params['organizationId']);
   const isCreateMode = organizationId === 'new';
@@ -488,7 +506,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       : organizationId;
   const mongoOrganizationState = useMongoFilemakerOrganization(
     mongoOrganizationLookupId,
-    shouldLoadMongoOrganization
+    shouldLoadMongoOrganization,
+    mongoOrganizationRefreshKey
   );
   const organization = settingsOrganization ?? mongoOrganizationState.organization;
   const organizationSource = resolveOrganizationSource({
@@ -635,6 +654,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   const linkedWebsites = mongoOrganizationState.linkedWebsites;
   const harvestProfiles = mongoOrganizationState.harvestProfiles;
   const importedDemands = mongoOrganizationState.importedDemands;
+  const importedProfiles = mongoOrganizationState.importedProfiles;
   const relationshipSummary = mongoOrganizationState.relationshipSummary;
   const valueCatalog =
     mongoOrganizationState.valueCatalog.length > 0
@@ -883,6 +903,36 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     setEmailExtractionText('');
   }, [database, organization, emailExtractionText, persistDatabase, settingsStore]);
 
+  const handleWebsiteSocialScrape = useCallback(async (): Promise<void> => {
+    if (organization === null || isWebsiteSocialScrapeRunning) return;
+    setIsWebsiteSocialScrapeRunning(true);
+    try {
+      const response = await fetch(
+        `/api/filemaker/organizations/${encodeURIComponent(
+          mongoOrganizationLookupId
+        )}/website-social-scrape`,
+        {
+          method: 'POST',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ maxPages: 6, maxSearchResults: 8 }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await readOrganizationWebsiteSocialScrapeErrorMessage(response));
+      }
+      const result = (await response.json()) as OrganizationWebsiteSocialScrapeResponse;
+      const scrapeToast = buildOrganizationWebsiteSocialScrapeToast(result);
+      toast(scrapeToast.message, { variant: scrapeToast.variant });
+      setMongoOrganizationRefreshKey((current) => current + 1);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Website/social scrape failed.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsWebsiteSocialScrapeRunning(false);
+    }
+  }, [isWebsiteSocialScrapeRunning, mongoOrganizationLookupId, organization, toast]);
+
   return {
     isCreateMode,
     organization,
@@ -910,6 +960,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     linkedWebsites,
     harvestProfiles,
     importedDemands,
+    importedProfiles,
     relationshipSummary,
     valueCatalog,
     phoneNumbers,
@@ -917,6 +968,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     database,
     handleSave,
     handleExtractEmails,
+    handleWebsiteSocialScrape,
+    isWebsiteSocialScrapeRunning,
     updateSetting,
     router,
     isLoading,

@@ -9,6 +9,7 @@ import {
   type CompanyInput,
   type JobListingInput,
   type JobScanCreateRequest,
+  type JobScanEvaluation,
   type JobScanProvider,
   type JobScanRecord,
   type JobScanStep,
@@ -86,6 +87,83 @@ export const createJobScan = async (input: JobScanCreateRequest & { createdBy?: 
     createdBy: input.createdBy ?? null,
     completedAt: null,
   });
+};
+
+export type PracujJobOfferProbeResult = {
+  error: string | null;
+  evaluation: JobScanEvaluation;
+  finalUrl: string;
+  fetchStatus: number;
+  ok: boolean;
+  runId: string | null;
+  sourceUrl: string;
+  steps: JobScanStep[];
+};
+
+export const probePracujJobOffer = async (input: {
+  forcePlaywright?: boolean | null;
+  headless?: boolean | null;
+  sourceUrl: string;
+  timeoutMs?: number | null;
+}): Promise<PracujJobOfferProbeResult> => {
+  const steps: JobScanStep[] = [];
+  const fetchStartedAt = stamp();
+  const fetchResult = await fetchPracujPage(input.sourceUrl, {
+    fallbackToFetch: false,
+    forcePlaywright: input.forcePlaywright ?? true,
+    headless: input.headless ?? true,
+    timeoutMs: input.timeoutMs ?? null,
+  });
+  const fetchCompletedAt = stamp();
+  steps.push(
+    buildStep('fetch', 'Fetch page', fetchResult.ok ? 'completed' : 'failed', {
+      message: fetchResult.ok ? `HTTP ${fetchResult.status}` : fetchResult.error ?? `HTTP ${fetchResult.status}`,
+      startedAt: fetchStartedAt,
+      completedAt: fetchCompletedAt,
+      durationMs: Date.parse(fetchCompletedAt) - Date.parse(fetchStartedAt),
+    })
+  );
+
+  if (!fetchResult.ok || !fetchResult.html) {
+    return {
+      error: fetchResult.error ?? `Fetch failed with HTTP ${fetchResult.status}`,
+      evaluation: null,
+      finalUrl: fetchResult.finalUrl,
+      fetchStatus: fetchResult.status,
+      ok: false,
+      runId: fetchResult.runId ?? null,
+      sourceUrl: input.sourceUrl,
+      steps,
+    };
+  }
+
+  const reduced = reducePracujHtml(fetchResult.html);
+  const evalStartedAt = stamp();
+  const evaluation = await evaluateJobPageWithAi({
+    sourceUrl: fetchResult.finalUrl,
+    pageContent: reduced,
+  });
+  const evalCompletedAt = stamp();
+  const evalOk = Boolean(evaluation) && !evaluation?.error && Boolean(evaluation?.listing?.['title']);
+  steps.push(
+    buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
+      message: evaluation?.error ?? `confidence=${evaluation?.confidence ?? 'n/a'}`,
+      startedAt: evalStartedAt,
+      completedAt: evalCompletedAt,
+      durationMs: Date.parse(evalCompletedAt) - Date.parse(evalStartedAt),
+    })
+  );
+
+  return {
+    error: evalOk ? null : evaluation?.error ?? 'AI did not extract a job listing',
+    evaluation,
+    finalUrl: fetchResult.finalUrl,
+    fetchStatus: fetchResult.status,
+    ok: evalOk,
+    runId: fetchResult.runId ?? null,
+    sourceUrl: input.sourceUrl,
+    steps,
+  };
 };
 
 const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {

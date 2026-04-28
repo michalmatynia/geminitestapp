@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLessonCheckpoints } from '../lessons/useKangurMobileLessonCheckpoints';
 import {
   resolveResultsFilterFamily,

@@ -9,6 +9,36 @@ export type PracujPageFetchResult = {
   html: string;
   finalUrl: string;
   error?: string;
+  runId?: string | null;
+};
+
+export type PracujPageFetchOptions = {
+  fallbackToFetch?: boolean | null;
+  forcePlaywright?: boolean | null;
+  headless?: boolean | null;
+  timeoutMs?: number | null;
+};
+
+export type PracujCollectedOfferLink = {
+  title: string;
+  url: string;
+};
+
+export type PracujOfferUrlCollectionResult = {
+  links: PracujCollectedOfferLink[];
+  runId: string | null;
+  sourceUrl: string;
+  visitedUrls: string[];
+  warnings: string[];
+};
+
+export type PracujOfferUrlCollectionOptions = {
+  delayMs?: number | null;
+  headless?: boolean | null;
+  maxOffers?: number | null;
+  maxPages?: number | null;
+  sourceUrl: string;
+  timeoutMs?: number | null;
 };
 
 type PracujStructuredSnapshot = {
@@ -324,11 +354,92 @@ const PRACUJ_FETCH_SCRIPT = `
   };
 `;
 
+const PRACUJ_CATEGORY_LINKS_SCRIPT = `
+  export default async ({ page, input, log }) => {
+    const sourceUrl = String(input.sourceUrl || '');
+    const maxPages = Math.max(1, Math.min(Number(input.maxPages || 2), 20));
+    const maxOffers = Math.max(1, Math.min(Number(input.maxOffers || 50), 250));
+    const delayMs = Math.max(0, Math.min(Number(input.delayMs || 750), 10000));
+    const visitedUrls = [];
+    const warnings = [];
+    const offerLinks = new Map();
+
+    const sleep = async (ms) => {
+      if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+    };
+    const clean = (value) => String(value || '').replace(/\\s+/g, ' ').trim();
+    const toUrl = (value, base) => {
+      try {
+        const url = new URL(String(value || ''), base || sourceUrl);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+        if (!url.hostname.toLowerCase().endsWith('pracuj.pl')) return null;
+        url.hash = '';
+        return url.toString();
+      } catch {
+        return null;
+      }
+    };
+    const hasOfferShape = (url) => /\\/praca\\//i.test(url) && /(?:oferta|offer|\\d{5,})/i.test(url);
+    const collectLinks = async () => {
+      return await page.evaluate(() => {
+        const clean = (value) => String(value || '').replace(/\\s+/g, ' ').trim();
+        return Array.from(document.querySelectorAll('a[href]')).map((anchor) => ({
+          href: anchor.href || anchor.getAttribute('href') || '',
+          title: clean(anchor.textContent || ''),
+        }));
+      });
+    };
+    const findNextUrl = async () => {
+      return await page.evaluate(() => {
+        const labels = /nast[eę]pna|dalej|next/i;
+        const rel = document.querySelector('a[rel="next"]');
+        if (rel && rel.href) return rel.href;
+        const anchors = Array.from(document.querySelectorAll('a[href]'));
+        const next = anchors.find((anchor) => labels.test(anchor.textContent || '') || labels.test(anchor.getAttribute('aria-label') || ''));
+        return next && next.href ? next.href : null;
+      });
+    };
+
+    let nextUrl = sourceUrl;
+    for (let pageIndex = 0; pageIndex < maxPages && nextUrl && offerLinks.size < maxOffers; pageIndex += 1) {
+      try {
+        await page.goto(nextUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+        try { await page.waitForLoadState('networkidle', { timeout: 6000 }); } catch {}
+        visitedUrls.push(page.url());
+        const links = await collectLinks();
+        links.forEach((link) => {
+          const normalized = toUrl(link.href, page.url());
+          if (!normalized || !hasOfferShape(normalized) || offerLinks.has(normalized)) return;
+          offerLinks.set(normalized, clean(link.title));
+        });
+        const foundNext = await findNextUrl();
+        nextUrl = foundNext ? toUrl(foundNext, page.url()) : null;
+        await sleep(delayMs);
+      } catch (error) {
+        warnings.push('Failed to collect pracuj.pl offers from ' + nextUrl + ': ' + (error instanceof Error ? error.message : String(error)));
+        log('pracuj category link collection failed', nextUrl);
+        break;
+      }
+    }
+
+    if (offerLinks.size === 0 && hasOfferShape(sourceUrl)) {
+      offerLinks.set(sourceUrl, '');
+    }
+
+    return {
+      links: Array.from(offerLinks.entries()).slice(0, maxOffers).map(([url, title]) => ({ url, title })),
+      visitedUrls,
+      warnings,
+    };
+  };
+`;
+
 const shouldUsePlaywright = (): boolean =>
   process.env['JOB_BOARD_USE_PLAYWRIGHT']?.toLowerCase() === 'true';
 
 const fetchPracujPageWithPlaywright = async (
-  sourceUrl: string
+  sourceUrl: string,
+  options: Pick<PracujPageFetchOptions, 'headless' | 'timeoutMs'> = {}
 ): Promise<PracujPageFetchResult> => {
   try {
     const run = await runPlaywrightEngineTask({
@@ -336,8 +447,9 @@ const fetchPracujPageWithPlaywright = async (
         script: PRACUJ_FETCH_SCRIPT,
         startUrl: sourceUrl,
         input: { url: sourceUrl },
-        timeoutMs: PLAYWRIGHT_TIMEOUT_MS,
+        timeoutMs: options.timeoutMs ?? PLAYWRIGHT_TIMEOUT_MS,
         browserEngine: 'chromium',
+        launchOptions: { headless: options.headless ?? true },
       },
       instance: {
         kind: 'custom',
@@ -354,6 +466,7 @@ const fetchPracujPageWithPlaywright = async (
         html: '',
         finalUrl: sourceUrl,
         error: run.error ?? `Playwright run status=${run.status}`,
+        runId: run.runId,
       };
     }
 
@@ -370,9 +483,10 @@ const fetchPracujPageWithPlaywright = async (
         html: '',
         finalUrl,
         error: 'Playwright run completed without HTML output',
+        runId: run.runId,
       };
     }
-    return { ok: true, status, html, finalUrl };
+    return { ok: true, status, html, finalUrl, runId: run.runId };
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'job-scans.pracuj-pl',
@@ -385,6 +499,7 @@ const fetchPracujPageWithPlaywright = async (
       html: '',
       finalUrl: sourceUrl,
       error: error instanceof Error ? error.message : String(error),
+      runId: null,
     };
   }
 };
@@ -396,10 +511,14 @@ const fetchPracujPageWithPlaywright = async (
  * pracuj.pl serves a JS-rendered shell). Falls back to plain `fetch` otherwise so local development
  * still works without the Playwright runtime configured.
  */
-export const fetchPracujPage = async (sourceUrl: string): Promise<PracujPageFetchResult> => {
-  if (shouldUsePlaywright()) {
-    const playwrightResult = await fetchPracujPageWithPlaywright(sourceUrl);
+export const fetchPracujPage = async (
+  sourceUrl: string,
+  options: PracujPageFetchOptions = {}
+): Promise<PracujPageFetchResult> => {
+  if (options.forcePlaywright === true || shouldUsePlaywright()) {
+    const playwrightResult = await fetchPracujPageWithPlaywright(sourceUrl, options);
     if (playwrightResult.ok) return playwrightResult;
+    if (options.fallbackToFetch === false) return playwrightResult;
     // Fall through to plain fetch on Playwright failure so the scan still produces something.
   }
   try {
@@ -417,6 +536,7 @@ export const fetchPracujPage = async (sourceUrl: string): Promise<PracujPageFetc
       status: response.status,
       html,
       finalUrl: response.url || sourceUrl,
+      runId: null,
     };
   } catch (error) {
     void ErrorSystem.captureException(error, {
@@ -430,6 +550,103 @@ export const fetchPracujPage = async (sourceUrl: string): Promise<PracujPageFetc
       html: '',
       finalUrl: sourceUrl,
       error: error instanceof Error ? error.message : String(error),
+      runId: null,
+    };
+  }
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+
+const readReturnValue = (value: unknown): Record<string, unknown> | null =>
+  asRecord(asRecord(value)?.['returnValue']);
+
+const normalizeStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? Array.from(
+        new Set(value.filter((entry): entry is string => typeof entry === 'string').map((entry) => entry.trim()))
+      ).filter(Boolean)
+    : [];
+
+const normalizeCollectedLinks = (value: unknown): PracujCollectedOfferLink[] => {
+  if (!Array.isArray(value)) return [];
+  const byUrl = new Map<string, PracujCollectedOfferLink>();
+  value.forEach((entry: unknown): void => {
+    const record = asRecord(entry);
+    const rawUrl = typeof record?.['url'] === 'string' ? record['url'].trim() : '';
+    if (!rawUrl) return;
+    try {
+      const url = new URL(rawUrl);
+      url.hash = '';
+      const title = typeof record?.['title'] === 'string' ? record['title'].trim() : '';
+      byUrl.set(url.toString(), { title, url: url.toString() });
+    } catch {
+      // Ignore malformed links from the page snapshot.
+    }
+  });
+  return Array.from(byUrl.values());
+};
+
+export const collectPracujOfferUrls = async (
+  options: PracujOfferUrlCollectionOptions
+): Promise<PracujOfferUrlCollectionResult> => {
+  const timeoutMs = options.timeoutMs ?? Math.max(PLAYWRIGHT_TIMEOUT_MS, 180_000);
+  try {
+    const run = await runPlaywrightEngineTask({
+      request: {
+        actionId: 'job_board_pracuj_offer_link_collect',
+        actionName: 'Pracuj.pl offer link collection',
+        browserEngine: 'chromium',
+        input: {
+          delayMs: options.delayMs ?? 750,
+          maxOffers: options.maxOffers ?? 50,
+          maxPages: options.maxPages ?? 2,
+          sourceUrl: options.sourceUrl,
+        },
+        launchOptions: { headless: options.headless ?? true },
+        preventNewPages: true,
+        script: PRACUJ_CATEGORY_LINKS_SCRIPT,
+        startUrl: options.sourceUrl,
+        timeoutMs,
+      },
+      instance: {
+        kind: 'custom',
+        family: 'scrape',
+        label: 'Pracuj.pl offer link collection',
+        tags: ['job-board', 'pracuj-pl', 'category'],
+      },
+    });
+
+    if (run.status === 'failed' || run.status === 'cancelled' || run.status === 'canceled') {
+      return {
+        links: [],
+        runId: run.runId,
+        sourceUrl: options.sourceUrl,
+        visitedUrls: [],
+        warnings: [run.error ?? `Playwright run status=${run.status}`],
+      };
+    }
+
+    const payload = readReturnValue(run.result);
+    return {
+      links: normalizeCollectedLinks(payload?.['links']),
+      runId: run.runId,
+      sourceUrl: options.sourceUrl,
+      visitedUrls: normalizeStringArray(payload?.['visitedUrls']),
+      warnings: [...normalizeStringArray(payload?.['warnings']), ...normalizeStringArray(run.logs)],
+    };
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'job-scans.pracuj-pl',
+      action: 'collectPracujOfferUrls',
+      sourceUrl: options.sourceUrl,
+    });
+    return {
+      links: [],
+      runId: null,
+      sourceUrl: options.sourceUrl,
+      visitedUrls: [],
+      warnings: [error instanceof Error ? error.message : String(error)],
     };
   }
 };

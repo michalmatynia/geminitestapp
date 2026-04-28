@@ -1,10 +1,13 @@
 import { View, Text } from 'react-native';
 import { Card } from '../../shared/KangurMobileUi';
 import { ResultsAssignmentRow } from './ResultsAssignmentRow';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+
+import { type KangurMobileResultsAssignmentItem } from '../useKangurMobileResultsAssignments';
 
 interface ResultsAssignmentsSectionProps {
-  assignmentItems: { assignment: { id: string } }[];
-  copy: (v: Record<string, string>) => string;
+  assignmentItems: KangurMobileResultsAssignmentItem[];
+  copy: KangurMobileCopy;
 }
 
 export function ResultsAssignmentsSection({

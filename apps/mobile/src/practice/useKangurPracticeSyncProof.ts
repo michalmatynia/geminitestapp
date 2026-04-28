@@ -1,8 +1,8 @@
-import type { KangurPracticeOperation } from '@kangur/core';
-import { createDefaultKangurProgressState } from '@kangur/contracts/kangur';
+import { type KangurLeaderboardItem, type KangurPracticeOperation } from '@kangur/core';
+import { createDefaultKangurProgressState, type KangurProgressState, type KangurScore } from '@kangur/contracts/kangur';
 import { useMemo, useSyncExternalStore } from 'react';
 
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLeaderboard } from '../leaderboard/useKangurMobileLeaderboard';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import { useKangurMobileScoreHistory } from '../scores/useKangurMobileScoreHistory';
@@ -10,39 +10,17 @@ import {
   buildKangurPracticeSyncProofSnapshot,
   type KangurPracticeSyncProofSnapshot,
 } from './practiceSyncProof';
-import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
-
-type UseKangurPracticeSyncProofOptions = {
-  enabled: boolean;
-  expectedCorrectAnswers: number;
-  expectedTotalQuestions: number;
-  operation: KangurPracticeOperation;
-  runStartedAt: number;
-};
-
-type UseKangurPracticeSyncProofResult = {
-  error: string | null;
-  isEnabled: boolean;
-  isLoading: boolean;
-  refresh: () => Promise<void>;
-  snapshot: KangurPracticeSyncProofSnapshot;
-};
-
-const EMPTY_SNAPSHOT: KangurPracticeSyncProofSnapshot = {
-  matchedScoreId: null,
-  surfaces: [],
-};
 
 interface SnapshotParams {
   enabled: boolean;
   expectedCorrectAnswers: number;
   expectedTotalQuestions: number;
-  leaderboardItems: unknown[];
+  leaderboardItems: KangurLeaderboardItem[];
   locale: KangurMobileLocale;
   operation: KangurPracticeOperation;
-  progress: unknown;
+  progress: KangurProgressState;
   runStartedAt: number;
-  scores: unknown[];
+  scores: KangurScore[];
 }
 
 function calculateSnapshot(params: SnapshotParams): KangurPracticeSyncProofSnapshot {

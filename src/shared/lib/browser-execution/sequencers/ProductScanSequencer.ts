@@ -88,8 +88,9 @@ export interface ProductScanPayloadAugmentingSession {
 
 export interface ProductScanPageSessionRuntime<
   TSession extends ProductScanPayloadAugmentingSession,
+  TContext = ProductScanPageSessionFactoryContext,
 > {
-  createPageSession: (context: ProductScanPageSessionFactoryContext) => TSession;
+  createPageSession: (context: TContext) => TSession;
 }
 
 export interface ProductScanCandidateStepMeta {
@@ -343,14 +344,15 @@ export abstract class ProductScanSequencer {
 
   protected createPayloadAugmentedRuntimePageSession<
     TSession extends ProductScanPayloadAugmentingSession,
+    TContext,
   >(
-    runtime: ProductScanPageSessionRuntime<TSession>,
+    runtime: ProductScanPageSessionRuntime<TSession, TContext>,
     options?: {
       decoratePayload?: (payload: Record<string, unknown>) => Record<string, unknown>;
     }
   ): TSession {
     return this.createPayloadAugmentedPageSession(
-      (context) => runtime.createPageSession(context),
+      (context) => runtime.createPageSession(context as unknown as TContext),
       options
     );
   }

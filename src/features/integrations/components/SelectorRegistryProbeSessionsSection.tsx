@@ -11,7 +11,6 @@ import type {
 } from '@/shared/contracts/integrations/selector-registry';
 import {
   applySelectorRegistryProbeCarryForwardDefaults,
-  applySelectorRegistryProbeCarryForwardManualSelection,
   buildSelectorRegistryProbeCarryForwardDefaultKeysByRole,
   buildSelectorRegistryProbeEntriesByRole,
   buildSelectorRegistryProbeCarryForwardInheritedCounts,
@@ -29,7 +28,17 @@ import {
 } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-formatting';
 import { SelectorRegistryProbeSuggestionCandidateDetails } from '@/shared/lib/browser-execution/selector-registry-probe-suggestion-candidates';
 import { useSelectorRegistryProbeSessions } from './selector-registry-probe-sessions/useSelectorRegistryProbeSessions';
-import { useToast } from '@/shared/ui/primitives.public';
+import {
+  Badge,
+  Button,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  useToast,
+} from '@/shared/ui/primitives.public';
 import { buildSelectorRegistryProbeSessionClusters } from './selectorRegistryProbeSessionClustering';
 
 type Props = {
@@ -66,6 +75,7 @@ export function SelectorRegistryProbeSessionsSection({
   showArchived,
   onShowArchivedChange,
 }: Props) {
+  const { toast } = useToast();
   const defaultKeysByRole = useMemo(
     () => buildSelectorRegistryProbeCarryForwardDefaultKeysByRole(promotableEntries),
     [promotableEntries]
@@ -81,13 +91,7 @@ export function SelectorRegistryProbeSessionsSection({
     archiveMutation,
     restoreMutation,
     deleteMutation,
-  } = useSelectorRegistryProbeSessions(
-    namespace,
-    profile,
-    sessions,
-    promotableEntries,
-    defaultKeysByRole
-  );
+  } = useSelectorRegistryProbeSessions(sessions);
   const [bulkPromotingSessionId, setBulkPromotingSessionId] = useState<string | null>(null);
   const [promotingAndArchivingSessionId, setPromotingAndArchivingSessionId] = useState<string | null>(null);
   const [rejectingSessionId, setRejectingSessionId] = useState<string | null>(null);
@@ -170,7 +174,7 @@ export function SelectorRegistryProbeSessionsSection({
       }
       return next;
     });
-  }, [manuallySelectedKeys, promotableEntries, resolvedClusters, suggestionIds]);
+  }, [defaultKeysByRole, manuallySelectedKeys, resolvedClusters, suggestionIds]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || window.location.hash !== '#probe-sessions') {
@@ -689,7 +693,7 @@ export function SelectorRegistryProbeSessionsSection({
                                 <Label htmlFor={`stored-probe-key-${suggestionKey}`}>Promote As</Label>
                                 <Select
                                   value={selectedKey}
-                                  onValueChange={(value) => {
+                                  onValueChange={(value: string) => {
                                     updateSelection(suggestionKey, value, clusterCarryForwardItems);
                                   }}
                                 >

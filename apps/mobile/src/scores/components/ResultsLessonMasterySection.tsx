@@ -1,6 +1,7 @@
 import { View, Text } from 'react-native';
 import { Card, KangurMobileSummaryChip, LinkButton } from '../../shared/KangurMobileUi';
 import { LessonMasteryRow } from './LessonMasteryRow';
+import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
 interface ResultsLessonMasterySectionProps {
   lessonMastery: {
@@ -11,7 +12,7 @@ interface ResultsLessonMasterySectionProps {
     strongest: { title: string; lessonHref: string }[];
   };
   lessonFocusSummary: string | null;
-  copy: (v: Record<string, string>) => string;
+  copy: KangurMobileCopy;
 }
 
 export function ResultsLessonMasterySection({

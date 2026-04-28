@@ -120,7 +120,7 @@ const runPracujSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
     pageContent: reduced,
   });
   const evalCompletedAt = stamp();
-  const evalOk = !!evaluation && !evaluation.error && !!evaluation.listing?.['title'];
+  const evalOk = Boolean(evaluation) && !evaluation.error && Boolean(evaluation.listing?.['title']);
   steps.push(
     buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
       message: evaluation?.error ?? `confidence=${evaluation?.confidence ?? 'n/a'}`,
@@ -479,7 +479,7 @@ const buildCompanyInput = (
   const p = (partial ?? {}) as Partial<CompanyInput>;
   return {
     id: randomUUID(),
-    name: (p.name && p.name.trim()) || 'Unknown company',
+    name: (p.name?.trim()) || 'Unknown company',
     nip: p.nip ?? null,
     domain: p.domain ?? null,
     website: p.website ?? null,

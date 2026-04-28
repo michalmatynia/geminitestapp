@@ -42,7 +42,7 @@ export type ResultsDuelsState = {
   refresh: () => Promise<void>;
 };
 
-function renderDuelStatus(duelResults: any, copy: any): React.JSX.Element | null {
+function renderDuelStatus(duelResults: ResultsDuelsState, copy: any): React.JSX.Element | null {
   if (duelResults.isRestoringAuth || duelResults.isLoading) {
     return (
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -147,8 +147,10 @@ export function ResultsDuelsCard({
           textColor='#047857'
         />
       </View>
+
       {renderDuelStatus(duelResults, copy)}
-      {duelResults.currentRank !== null ? (
+
+      {duelResults.currentRank !== null && duelResults.currentEntry ? (
         <InsetPanel
           gap={10}
           tone={{
@@ -190,21 +192,6 @@ export function ResultsDuelsCard({
           {duelResults.actionError}
         </Text>
       ) : null}
-    </Card>
-  );
-}
-
-function RenderResultsContent({ copy }: { copy: any }): React.JSX.Element {
-  return (
-    <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-      {copy({
-        de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
-        en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
-        pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
-      })}
-    </Text>
-  );
-}
 
       {duelResults.opponents.length === 0 ? (
         <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -271,7 +258,9 @@ function RenderResultsContent({ copy }: { copy: any }): React.JSX.Element {
             en: 'Refresh duels',
             pl: 'Odśwież pojedynki',
           })}
-          onPress={() => duelResults.refresh()}
+          onPress={() => {
+            void duelResults.refresh();
+          }}
           stretch
           tone='secondary'
         />
@@ -287,7 +276,6 @@ function RenderResultsContent({ copy }: { copy: any }): React.JSX.Element {
         />
       </View>
     </Card>
-    </Card>
   );
 }
 
@@ -298,7 +286,7 @@ function RenderResultsContent({ copy }: { copy: any }): React.JSX.Element {
         de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar. Schließe ein weiteres Duell ab oder öffne die Lobby, damit deine Position hier erscheint.',
         en: 'Your account is not visible in this duel standing yet. Finish another duel or open the lobby so your rank appears here.',
         pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków. Rozegraj kolejny pojedynek albo otwórz lobby, aby pojawiła się tutaj Twoja pozycja.',
-      })} 
+      })}
     </Text>
   );
-  );
+}

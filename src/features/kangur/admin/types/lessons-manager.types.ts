@@ -1,4 +1,4 @@
-import { KangurLesson } from '@/features/kangur/shared/contracts/kangur';
+import { type KangurLesson } from '@/features/kangur/shared/contracts/kangur';
 
 export interface AdminLessonsManagerState {
   contentLocale: string;

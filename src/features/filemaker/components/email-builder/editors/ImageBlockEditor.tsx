@@ -28,7 +28,7 @@ export function ImageBlockEditor({ block, onUpdate }: EditorProps<EmailImageBloc
       <TextInput
         value={block.src}
         onChangeText={(text) => onUpdate({ src: text })}
-        placeholder="https://..."
+        placeholder='https://...'
       />
       <Text>Alt text</Text>
       <TextInput
@@ -39,11 +39,11 @@ export function ImageBlockEditor({ block, onUpdate }: EditorProps<EmailImageBloc
       <TextInput
         value={block.href ?? ''}
         onChangeText={(text) => onUpdate({ href: text || null })}
-        placeholder="https://..."
+        placeholder='https://...'
       />
       <Text>Width (px)</Text>
       <TextInput
-        keyboardType="numeric"
+        keyboardType='numeric'
         value={String(block.width ?? '')}
         onChangeText={(text) => {
           const parsed = Math.trunc(Number(text));

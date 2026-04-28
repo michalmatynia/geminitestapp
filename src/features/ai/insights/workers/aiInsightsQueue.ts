@@ -165,10 +165,8 @@ export const startAiInsightsQueue = (): void => {
       return;
     }
 
-    if (!aiInsightsQueueState.workerStarted) {
-      queue.startWorker();
-      aiInsightsQueueState.workerStarted = true;
-    }
+  aiInsightsQueueState.workerStarted = true;
+  queue.startWorker();
 
     if (aiInsightsQueueState.schedulerRegistered) return;
 
@@ -194,14 +192,14 @@ export const getAiInsightsQueueStatus = async (): Promise<AiInsightsQueueStatus>
 
   const health = await queue.getHealthStatus();
   return {
-    running: health.running ?? false,
-    healthy: health.healthy ?? false,
-    processing: health.processing ?? false,
-    activeJobs: health.activeCount ?? 0,
-    waitingJobs: health.waitingCount ?? 0,
-    failedJobs: health.failedCount ?? 0,
-    completedJobs: health.completedCount ?? 0,
-    lastPollTime: health.lastPollTime ?? 0,
-    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
+    running: health.running,
+    healthy: health.healthy,
+    processing: health.processing,
+    activeJobs: health.activeCount,
+    waitingJobs: health.waitingCount,
+    failedJobs: health.failedCount,
+    completedJobs: health.completedCount,
+    lastPollTime: health.lastPollTime,
+    timeSinceLastPoll: health.timeSinceLastPoll,
   };
 };

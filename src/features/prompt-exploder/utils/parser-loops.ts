@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 import {

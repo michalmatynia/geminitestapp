@@ -1,4 +1,4 @@
-/* eslint-disable complexity, max-lines, max-depth, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition */
+/* eslint-disable complexity, max-lines, max-depth, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition */
 import 'server-only';
 
 import { getAgentAuditLogDelegate } from '@/features/ai/agent-runtime/store-delegates';

@@ -204,13 +204,13 @@ const getSessionUser = (token: JWT, current: User): User => {
   return {
     ...current,
     id: String(token['sub'] ?? current.id),
-    role: (token['role'] as string | null | undefined) ?? null,
-    permissions: (token['permissions'] as string[] | undefined) ?? [],
-    roleLevel: (token['roleLevel'] as number | null | undefined) ?? null,
-    isElevated: (token['isElevated'] as boolean | undefined) ?? false,
-    roleAssigned: (token['roleAssigned'] as boolean | undefined) ?? false,
-    accountDisabled: (token['accountDisabled'] as boolean | undefined) ?? false,
-    accountBanned: (token['accountBanned'] as boolean | undefined) ?? false,
+    role: (token['role']) ?? null,
+    permissions: (token['permissions']) ?? [],
+    roleLevel: (token['roleLevel']) ?? null,
+    isElevated: (token['isElevated']) ?? false,
+    roleAssigned: (token['roleAssigned']) ?? false,
+    accountDisabled: (token['accountDisabled']) ?? false,
+    accountBanned: (token['accountBanned']) ?? false,
   };
 };
 
@@ -245,7 +245,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
     callbacks: {
       ...(authConfig.callbacks ?? {}),
       async jwt({ token, user }): Promise<JWT> {
-        const userId = user?.id ?? (token['sub'] as string | undefined);
+        const userId = user?.id ?? (token['sub']);
         if (userId === undefined || (user === undefined && !checkRefreshRequired(token))) return token;
         try {
           return await getUpdatedToken(userId, token);
@@ -268,8 +268,8 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         await logSignInActivity(user);
       },
       async signOut(message) {
-        const token = 'token' in message ? (message.token as JWT | null) : null;
-        const sub = token ? (token['sub'] as string | undefined) : undefined;
+        const token = 'token' in message ? (message.token) : null;
+        const sub = token ? (token['sub']) : undefined;
         if (sub !== undefined && sub !== null) {
           await logActivity({ type: ActivityTypes.AUTH.LOGOUT, description: 'User logged out', userId: sub });
         }

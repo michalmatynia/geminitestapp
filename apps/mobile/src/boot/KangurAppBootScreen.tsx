@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 
 function BootScreenLoadingDots(): React.JSX.Element {
   return (
@@ -44,7 +44,7 @@ function BootScreenLoadingDots(): React.JSX.Element {
   );
 }
 
-function BootScreenCard({ copy }: { copy: (messages: Record<string, string>) => string }): React.JSX.Element {
+function BootScreenCard({ copy }: { copy: KangurMobileCopy }): React.JSX.Element {
   return (
     <View
       style={{
@@ -96,7 +96,7 @@ function BootScreenCard({ copy }: { copy: (messages: Record<string, string>) => 
   );
 }
 
-function BootScreenContent({ copy }: { copy: (messages: Record<string, string>) => string }): React.JSX.Element {
+function BootScreenContent({ copy }: { copy: KangurMobileCopy }): React.JSX.Element {
   return (
     <View
       style={{

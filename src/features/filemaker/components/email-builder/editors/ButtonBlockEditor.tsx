@@ -26,7 +26,7 @@ export function ButtonBlockEditor({ block, onUpdate }: EditorProps<EmailButtonBl
       <TextInput
         value={block.href}
         onChangeText={(text) => onUpdate({ href: text })}
-        placeholder="https://..."
+        placeholder='https://...'
       />
       <Text>Background colour</Text>
       <TextInput

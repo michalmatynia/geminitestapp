@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type {
   KangurDuelChoice,
@@ -48,7 +48,7 @@ interface DuelActions {
 
 interface DuelActionsDeps {
   apiClient: DuelApiClient;
-  copy: (v: any) => string;
+  copy: (v: Record<string, string>) => string;
   queryClient: QueryClient;
   playerKey: readonly unknown[];
   spectatorKey: readonly unknown[];
@@ -102,6 +102,10 @@ function useDuelActions(deps: DuelActionsDeps): DuelActions {
   return { leaveSession, sendReaction, submitAnswer };
 }
 
+function getLearnerId(user: any): string {
+  return user?.activeLearner?.id ?? user?.email ?? user?.id ?? 'guest';
+}
+
 export const useKangurMobileDuelSession = (
   sessionId: string | null,
   options: { spectate?: boolean } = {},
@@ -116,7 +120,7 @@ export const useKangurMobileDuelSession = (
   const [isMutating, setIsMutating] = useState(false);
   const [spectatorId] = useState(createMobileDuelSpectatorId);
 
-  const learnerId = authSession.user?.activeLearner?.id ?? authSession.user?.email ?? authSession.user?.id ?? 'guest';
+  const learnerId = getLearnerId(authSession.user);
   const isAuthenticated = authSession.status === 'authenticated';
   const isSpectating = options.spectate === true;
   const normalizedSessionId = sessionId?.trim() ?? '';
@@ -146,17 +150,19 @@ export const useKangurMobileDuelSession = (
   const currentQuestion = resolveCurrentQuestion(duelSession, isSpectating, player);
 
   useEffect(() => {
-    if (isSpectating || !hasSessionId || !isAuthenticated || duelSession === null || duelSession.status === 'completed' || duelSession.status === 'aborted') return;
+    const isInactive = !hasSessionId || !isAuthenticated || duelSession === null || duelSession.status === 'completed' || duelSession.status === 'aborted';
+    if (isSpectating || isInactive) return undefined;
+
     const intervalId = safeSetInterval(() => {
       void apiClient.heartbeatDuel({ clientTimestamp: new Date().toISOString(), sessionId: normalizedSessionId }, { cache: 'no-store' })
         .then((resp) => { queryClient.setQueryData(playerKey, resp); }).catch(() => {});
     }, MOBILE_DUEL_HEARTBEAT_MS);
-    return () => safeClearInterval(intervalId);
+    return () => { safeClearInterval(intervalId); };
   }, [apiClient, duelSession, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerKey, queryClient]);
 
-  const { leaveSession, sendReaction, submitAnswer } = useDuelActions(
+  const actions = useDuelActions({
     apiClient, copy, queryClient, playerKey, spectatorKey, isSpectating, normalizedSessionId, currentQuestion, setIsMutating, setActionError
-  );
+  });
 
   return {
     actionError,
@@ -167,12 +173,14 @@ export const useKangurMobileDuelSession = (
     isMutating,
     isRestoringAuth: isLoadingAuth && !isAuthenticated,
     isSpectating,
-    leaveSession,
+    leaveSession: actions.leaveSession,
     player,
-    refresh: async (): Promise<void> => { if (isSpectating) await spectatorQuery.refetch(); else await playerQuery.refetch(); },
-    sendReaction,
+    refresh: async (): Promise<void> => {
+      if (isSpectating) await spectatorQuery.refetch(); else await playerQuery.refetch();
+    },
+    sendReaction: actions.sendReaction,
     session: duelSession,
     spectatorCount: duelSession?.spectatorCount ?? 0,
-    submitAnswer,
+    submitAnswer: actions.submitAnswer,
   };
 };

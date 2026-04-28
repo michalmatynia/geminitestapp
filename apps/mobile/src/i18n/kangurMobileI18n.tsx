@@ -97,8 +97,10 @@ export function KangurMobileI18nProvider({
   );
 }
 
+export type KangurMobileCopy = <T>(value: KangurMobileLocalizedValue<T>) => T;
+
 export const useKangurMobileI18n = (): KangurMobileI18nContextValue & {
-  copy: <T>(value: KangurMobileLocalizedValue<T>) => T;
+  copy: KangurMobileCopy;
 } => {
   const context = useContext(KangurMobileI18nContext);
 

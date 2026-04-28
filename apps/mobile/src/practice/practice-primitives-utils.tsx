@@ -1,6 +1,6 @@
 import type { Href } from 'expo-router';
 import React from 'react';
-import { KangurMobileLinkButton as LinkButton } from './duels-primitives';
+import { KangurMobileLinkButton as LinkButton } from '../duels/duels-primitives';
 
 export function renderPracticeLink({
   href,

@@ -14,6 +14,39 @@ interface LibraryItemsListProps {
   onAdd: (entry: AdminNavNodeEntry) => void;
 }
 
+function LibraryItem({
+  entry,
+  isAdded,
+  onAdd,
+}: {
+  entry: AdminNavNodeEntry;
+  isAdded: boolean;
+  onAdd: (entry: AdminNavNodeEntry) => void;
+}): React.JSX.Element {
+  return (
+    <div className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 p-3'>
+      <SectionHeader
+        title={entry.label}
+        subtitle={`${entry.parents.join(' / ')}${entry.parents.length > 0 ? ' / ' : ''}${entry.href ?? 'Group'}`}
+        size='xs'
+        className='flex-1'
+        actions={
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='h-7 px-2 text-[11px]'
+            disabled={isAdded}
+            onClick={() => onAdd(entry)}
+          >
+            {isAdded ? 'Added' : 'Add'}
+          </Button>
+        }
+      />
+    </div>
+  );
+}
+
 export function LibraryItemsList({
   libraryQuery,
   setLibraryQuery,
@@ -44,34 +77,14 @@ export function LibraryItemsList({
             No matching menu items.
           </p>
         ) : (
-          filteredLibraryItems.map((entry: AdminNavNodeEntry) => {
-            const isAdded = customIds.has(entry.id);
-            return (
-              <div
-                key={entry.id}
-                className='flex items-center justify-between gap-2 rounded-md border border-border/60 bg-card/30 p-3'
-              >
-                <SectionHeader
-                  title={entry.label}
-                  subtitle={`${entry.parents.join(' / ')}${entry.parents.length > 0 ? ' / ' : ''}${entry.href ?? 'Group'}`}
-                  size='xs'
-                  className='flex-1'
-                  actions={
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      className='h-7 px-2 text-[11px]'
-                      disabled={isAdded}
-                      onClick={() => onAdd(entry)}
-                    >
-                      {isAdded ? 'Added' : 'Add'}
-                    </Button>
-                  }
-                />
-              </div>
-            );
-          })
+          filteredLibraryItems.map((entry: AdminNavNodeEntry) => (
+            <LibraryItem
+              key={entry.id}
+              entry={entry}
+              isAdded={customIds.has(entry.id)}
+              onAdd={onAdd}
+            />
+          ))
         )}
       </div>
     </div>

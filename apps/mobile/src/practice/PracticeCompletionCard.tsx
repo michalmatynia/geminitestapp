@@ -11,9 +11,9 @@ import { PracticeResultsPanel } from './PracticeResultsPanel';
 import { PracticeAssignmentsPanel } from './PracticeAssignmentsPanel';
 import { PracticeLessonCheckpointsPanel } from './PracticeLessonCheckpointsPanel';
 import { translateKangurMobileActionLabel } from '../shared/translateKangurMobileActionLabel';
-import { createKangurPlanHref } from '../lessons/lessonHref';
+import { createKangurPlanHref } from '../plan/planHref';
 import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
-export { type PracticeCompletionCardProps } from './completion-card-types';
+import { type PracticeCompletionCardProps } from './completion-card-types';
 
 function CompletionHeader(props: {
   copy: PracticeCompletionCardProps['copy'];
@@ -97,6 +97,74 @@ function CompletionActions(props: {
   );
 }
 
+function MainStatsPanel(props: {
+  practiceDuels: PracticeCompletionCardProps['practiceDuels'];
+  openDuelSession: PracticeCompletionCardProps['openDuelSession'];
+  lessonMastery: PracticeCompletionCardProps['lessonMastery'];
+  lessonFocusSummary: PracticeCompletionCardProps['lessonFocusSummary'];
+  strongestLesson: PracticeCompletionCardProps['strongestLesson'];
+  weakestLesson: PracticeCompletionCardProps['weakestLesson'];
+  copy: PracticeCompletionCardProps['copy'];
+  locale: PracticeCompletionCardProps['locale'];
+  localeTag: PracticeCompletionCardProps['localeTag'];
+}): React.JSX.Element {
+  return (
+    <>
+      <PracticeDuelsPanel
+        practiceDuels={props.practiceDuels}
+        openDuelSession={props.openDuelSession}
+        copy={props.copy}
+        locale={props.locale}
+        localeTag={props.localeTag}
+      />
+      <PracticeLessonMasteryPanel
+        lessonMastery={props.lessonMastery}
+        lessonFocusSummary={props.lessonFocusSummary}
+        strongestLesson={props.strongestLesson}
+        weakestLesson={props.weakestLesson}
+        copy={props.copy}
+        locale={props.locale}
+      />
+    </>
+  );
+}
+
+function SecondaryStatsPanel(props: {
+  practiceBadges: PracticeCompletionCardProps['practiceBadges'];
+  practiceRecentResults: PracticeCompletionCardProps['practiceRecentResults'];
+  resultsHistoryHref: PracticeCompletionCardProps['resultsHistoryHref'];
+  practiceAssignments: PracticeCompletionCardProps['practiceAssignments'];
+  lessonCheckpoints: PracticeCompletionCardProps['lessonCheckpoints'];
+  copy: PracticeCompletionCardProps['copy'];
+  locale: PracticeCompletionCardProps['locale'];
+}): React.JSX.Element {
+  return (
+    <>
+      <PracticeBadgesPanel
+        practiceBadges={props.practiceBadges}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeResultsPanel
+        practiceRecentResults={props.practiceRecentResults}
+        resultsHistoryHref={props.resultsHistoryHref}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeAssignmentsPanel
+        practiceAssignments={props.practiceAssignments}
+        copy={props.copy}
+        locale={props.locale}
+      />
+      <PracticeLessonCheckpointsPanel
+        lessonCheckpoints={props.lessonCheckpoints}
+        copy={props.copy}
+        locale={props.locale}
+      />
+    </>
+  );
+}
+
 export function PracticeCompletionCard(props: PracticeCompletionCardProps): React.JSX.Element {
   return (
     <Card>
@@ -120,37 +188,22 @@ export function PracticeCompletionCard(props: PracticeCompletionCardProps): Reac
         copy={props.copy}
         locale={props.locale}
       />
-      <PracticeDuelsPanel
+      <MainStatsPanel
         practiceDuels={props.practiceDuels}
         openDuelSession={props.openDuelSession}
-        copy={props.copy}
-        locale={props.locale}
-      />
-      <PracticeLessonMasteryPanel
         lessonMastery={props.lessonMastery}
         lessonFocusSummary={props.lessonFocusSummary}
         strongestLesson={props.strongestLesson}
         weakestLesson={props.weakestLesson}
         copy={props.copy}
         locale={props.locale}
+        localeTag={props.localeTag}
       />
-      <PracticeBadgesPanel
+      <SecondaryStatsPanel
         practiceBadges={props.practiceBadges}
-        copy={props.copy}
-        locale={props.locale}
-      />
-      <PracticeResultsPanel
         practiceRecentResults={props.practiceRecentResults}
         resultsHistoryHref={props.resultsHistoryHref}
-        copy={props.copy}
-        locale={props.locale}
-      />
-      <PracticeAssignmentsPanel
         practiceAssignments={props.practiceAssignments}
-        copy={props.copy}
-        locale={props.locale}
-      />
-      <PracticeLessonCheckpointsPanel
         lessonCheckpoints={props.lessonCheckpoints}
         copy={props.copy}
         locale={props.locale}

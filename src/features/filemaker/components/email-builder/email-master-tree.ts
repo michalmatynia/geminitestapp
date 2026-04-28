@@ -102,7 +102,7 @@ const buildBlockFromNode = (
   switch (node.kind) {
     case 'section': {
       const previousSection =
-        previous && previous.kind === 'section' ? previous : null;
+        previous?.kind === 'section' ? previous : null;
       return createEmailBlock('section', {
         ...(previousSection ?? {}),
         id: node.id,
@@ -114,7 +114,7 @@ const buildBlockFromNode = (
     }
     case 'columns': {
       const previousColumns =
-        previous && previous.kind === 'columns' ? previous : null;
+        previous?.kind === 'columns' ? previous : null;
       return createEmailBlock('columns', {
         ...(previousColumns ?? {}),
         id: node.id,
@@ -125,7 +125,7 @@ const buildBlockFromNode = (
       } as Partial<EmailColumnsBlock>);
     }
     case 'row': {
-      const previousRow = previous && previous.kind === 'row' ? previous : null;
+      const previousRow = previous?.kind === 'row' ? previous : null;
       return createEmailBlock('row', {
         ...(previousRow ?? {}),
         id: node.id,
@@ -141,7 +141,7 @@ const buildBlockFromNode = (
     case 'button':
     case 'divider':
     case 'spacer': {
-      if (!previous || previous.kind !== node.kind) {
+      if (previous?.kind !== node.kind) {
         // node has no prior data (just created via tree insertion) — synthesise default
         return createEmailBlock(node.kind, { id: node.id });
       }

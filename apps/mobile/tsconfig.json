@@ -7,6 +7,30 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@kangur/contracts": [
+        "../../packages/kangur-contracts/src/index.ts"
+      ],
+      "@kangur/contracts/*": [
+        "../../packages/kangur-contracts/src/*"
+      ],
+      "@kangur/core": [
+        "../../packages/kangur-core/src/index.ts"
+      ],
+      "@kangur/core/*": [
+        "../../packages/kangur-core/src/*"
+      ],
+      "@kangur/api-client": [
+        "../../packages/kangur-api-client/src/index.ts"
+      ],
+      "@kangur/api-client/*": [
+        "../../packages/kangur-api-client/src/*"
+      ],
+      "@kangur/platform": [
+        "../../packages/kangur-platform/src/index.ts"
+      ],
+      "@kangur/platform/*": [
+        "../../packages/kangur-platform/src/*"
+      ],
       "@/*": [
         "../../src/*"
       ]

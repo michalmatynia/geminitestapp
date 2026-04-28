@@ -1,5 +1,5 @@
 import type { KangurPracticeCompletionResult } from '@kangur/core';
-import type { KangurMobileLocale } from '../i18n/kangurMobileI18n';
+import { type KangurMobileLocale, type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 import type { KangurMobileTone } from '../shared/KangurMobileUi';
 import type { PracticeScoreSyncState } from './practiceScoreSyncState';
 import { type KangurMobilePracticeLessonMasteryItem } from './useKangurMobilePracticeLessonMastery';
@@ -13,7 +13,7 @@ import { type KangurMobileLessonCheckpointItem } from '../lessons/useKangurMobil
 export interface PracticeCompletionCardProps {
   completion: KangurPracticeCompletionResult;
   completionLessonAction: React.ReactNode;
-  copy: (value: Record<string, string>) => string;
+  copy: <T>(value: KangurMobileLocalizedValue<T>) => T;
   correctAnswers: number;
   lessonCheckpoints: { recentCheckpoints: KangurMobileLessonCheckpointItem[] };
   lessonFocusSummary: string | null;

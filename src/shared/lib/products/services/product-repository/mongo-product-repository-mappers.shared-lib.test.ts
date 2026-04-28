@@ -218,6 +218,22 @@ describe('mongo product repository mappers shared-lib coverage', () => {
     ]);
   });
 
+  it('normalizes legacy object-backed stock payloads on response and base product mappings', () => {
+    const doc = asProductDocument({
+      _id: 'product-stock-legacy-1',
+      id: 'product-stock-legacy-1',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      name_en: 'Keychain',
+      stock: { warehouse_a: '2', warehouse_b: 3 },
+      published: true,
+    });
+
+    expect(toProductResponse(doc).stock).toBe(5);
+    expect(toProductBase(doc).stock).toBe(5);
+  });
+
   it('reconstructs legacy producer references in both response and base mappers', () => {
     const response = toProductResponse(
       asProductDocument({

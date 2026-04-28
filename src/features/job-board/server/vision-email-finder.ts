@@ -1036,7 +1036,7 @@ const findCompanyEmailsWithVisionLoopViaEngine = async (input: {
 
     const returnValue = (run.result && typeof run.result === 'object'
       ? (run.result as { returnValue?: unknown }).returnValue
-      : null) as unknown;
+      : null);
     const parsed = parseEngineResult(returnValue);
     if (!parsed) {
       const errorMessage = 'Vision engine script returned an invalid result shape.';
@@ -1288,9 +1288,9 @@ const findCompanyEmailsWithVisionLoopWithLocalBrowser = async (input: {
           }
           if (parsed.nextAction) {
             lines.push(
-              `Suggested next: ${parsed.nextAction.kind}` +
-                (parsed.nextAction.target ? ` → ${parsed.nextAction.target}` : '') +
-                (parsed.nextAction.reason ? ` (${parsed.nextAction.reason})` : '')
+              `Suggested next: ${parsed.nextAction.kind}${ 
+                parsed.nextAction.target ? ` → ${parsed.nextAction.target}` : '' 
+                }${parsed.nextAction.reason ? ` (${parsed.nextAction.reason})` : ''}`
             );
           }
         }

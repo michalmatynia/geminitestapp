@@ -128,7 +128,7 @@ const bumpAttempt = async (scope: 'email' | 'ip', value: string, max: number, wi
   const key = buildAttemptKey(scope, value);
   const now = new Date();
   const existing = await readActiveAttempt(key, now);
-  if (existing && existing.lockedUntil && existing.lockedUntil.getTime() > now.getTime()) return { lockedUntil: existing.lockedUntil ?? null, count: existing.count };
+  if (existing?.lockedUntil && existing.lockedUntil.getTime() > now.getTime()) return { lockedUntil: existing.lockedUntil ?? null, count: existing.count };
 
   const winMs = winMin * 60 * 1000;
   const lockMs = lockMin * 60 * 1000;

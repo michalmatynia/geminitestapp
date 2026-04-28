@@ -199,7 +199,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
                 {copy({
                   de: `Der Shortcut wollte "${focusToken}" öffnen. Dieser Shortcut öffnet "${focusToken}" nicht mehr.`,
                   en: `The shortcut tried to open "${focusToken}". This shortcut no longer opens "${focusToken}".`,
-                  pl: `Skrót próbował otworzyć
+                  pl: `Skrót próbował otworzyć "${focusToken}". Ten skrót już nie otwiera "${focusToken}".`,
                 })}
               </Text>
               <Text style={{ color: '#64748b', fontSize: 13, lineHeight: 18 }}>

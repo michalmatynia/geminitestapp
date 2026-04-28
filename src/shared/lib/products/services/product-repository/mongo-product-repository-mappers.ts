@@ -9,6 +9,7 @@ import type {
 import {
   normalizeProductMarketplaceContentOverrides,
   normalizeProductNotes,
+  normalizeProductStockValue,
 } from '@/shared/contracts/products/product';
 import { validationError } from '@/shared/errors/app-error';
 import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
@@ -526,7 +527,7 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     supplierName: doc.supplierName ?? null,
     supplierLink: doc.supplierLink ?? null,
     priceComment: doc.priceComment ?? null,
-    stock: doc.stock ?? null,
+    stock: normalizeProductStockValue(doc.stock),
     price: doc.price ?? null,
     sizeLength: doc.sizeLength ?? null,
     sizeWidth: doc.sizeWidth ?? null,
@@ -608,7 +609,7 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     supplierName: doc.supplierName ?? null,
     supplierLink: doc.supplierLink ?? null,
     priceComment: doc.priceComment ?? null,
-    stock: doc.stock ?? null,
+    stock: normalizeProductStockValue(doc.stock),
     price: doc.price ?? null,
     sizeLength: doc.sizeLength ?? null,
     sizeWidth: doc.sizeWidth ?? null,

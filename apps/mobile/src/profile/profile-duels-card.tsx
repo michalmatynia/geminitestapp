@@ -18,7 +18,7 @@ type ProfileDuelOpponent = {
   learnerId: string;
 };
 
-type ProfileDuelsState = {
+export type ProfileDuelsState = {
   actionError: string | null;
   createRematch: (opponentLearnerId: string) => Promise<string | null>;
   currentEntry: KangurDuelLeaderboardEntry | null;
@@ -42,7 +42,8 @@ const DuelStatsPanel = ({
   copy: KangurMobileCopy;
   locale: string;
 }): React.JSX.Element | null => {
-  if (!duelProfile.currentEntry) {
+  const currentEntry = duelProfile.currentEntry;
+  if (currentEntry === null) {
     return (
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
         {copy({
@@ -54,7 +55,7 @@ const DuelStatsPanel = ({
     );
   }
 
-  const { currentEntry, currentRank } = duelProfile;
+  const currentRank = duelProfile.currentRank;
   return (
     <InsetPanel
       gap={8}
@@ -71,20 +72,20 @@ const DuelStatsPanel = ({
         })}
       </Text>
       <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        #{currentRank ?? 0} {currentEntry.displayName ?? ''}
+        #{currentRank ?? 0} {currentEntry.displayName}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
         {copy({
-          de: `Siege ${currentEntry.wins ?? 0} • Niederlagen ${currentEntry.losses ?? 0} • Unentschieden ${currentEntry.ties ?? 0}`,
-          en: `Wins ${currentEntry.wins ?? 0} • Losses ${currentEntry.losses ?? 0} • Ties ${currentEntry.ties ?? 0}`,
-          pl: `Wygrane ${currentEntry.wins ?? 0} • Porażki ${currentEntry.losses ?? 0} • Remisy ${currentEntry.ties ?? 0}`,
+          de: `Siege ${currentEntry.wins} • Niederlagen ${currentEntry.losses} • Unentschieden ${currentEntry.ties}`,
+          en: `Wins ${currentEntry.wins} • Losses ${currentEntry.losses} • Ties ${currentEntry.ties}`,
+          pl: `Wygrane ${currentEntry.wins} • Porażki ${currentEntry.losses} • Remisy ${currentEntry.ties}`,
         })}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Matches ${currentEntry.matches ?? 0} • Quote ${Math.round((currentEntry.winRate ?? 0) * 100)}% • letztes Duell ${formatProfileDateTime(currentEntry.lastPlayedAt ?? '', locale)}`,
-          en: `Matches ${currentEntry.matches ?? 0} • Win rate ${Math.round((currentEntry.winRate ?? 0) * 100)}% • last duel ${formatProfileDateTime(currentEntry.lastPlayedAt ?? '', locale)}`,
-          pl: `Mecze ${currentEntry.matches ?? 0} • Win rate ${Math.round((currentEntry.winRate ?? 0) * 100)}% • ostatni pojedynek ${formatProfileDateTime(currentEntry.lastPlayedAt ?? '', locale)}`,
+          de: `Matches ${currentEntry.matches} • Quote ${Math.round(currentEntry.winRate * 100)}% • letztes Duell ${formatProfileDateTime(currentEntry.lastPlayedAt, locale)}`,
+          en: `Matches ${currentEntry.matches} • Win rate ${Math.round(currentEntry.winRate * 100)}% • last duel ${formatProfileDateTime(currentEntry.lastPlayedAt, locale)}`,
+          pl: `Mecze ${currentEntry.matches} • Win rate ${Math.round(currentEntry.winRate * 100)}% • ostatni pojedynek ${formatProfileDateTime(currentEntry.lastPlayedAt, locale)}`,
         })}
       </Text>
     </InsetPanel>
@@ -92,52 +93,52 @@ const DuelStatsPanel = ({
 };
 
 const OpponentListItem = ({
-    opponent,
-    duelProfile,
-    openDuelSession,
-    copy,
-    locale,
+  opponent,
+  duelProfile,
+  openDuelSession,
+  copy,
+  locale,
 }: {
-    opponent: ProfileDuelOpponent;
-    duelProfile: ProfileDuelsState;
-    openDuelSession: (sessionId: string) => void;
-    copy: KangurMobileCopy;
-    locale: string;
-}) => (
-    <InsetPanel gap={8}>
-        <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-            {opponent.displayName ?? ''}
-        </Text>
-        <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-            {copy({
-                de: `Letztes Duell ${formatProfileDateTime(opponent.lastPlayedAt ?? '', locale)}`,
-                en: `Last duel ${formatProfileDateTime(opponent.lastPlayedAt ?? '', locale)}`,
-                pl: `Ostatni pojedynek ${formatProfileDateTime(opponent.lastPlayedAt ?? '', locale)}`,
-            })}
-        </Text>
-        <ActionButton
-            disabled={duelProfile.isActionPending}
-            label={
-                duelProfile.pendingOpponentLearnerId === opponent.learnerId
-                    ? copy({
-                        de: 'Rückkampf wird gesendet...',
-                        en: 'Sending rematch...',
-                        pl: 'Wysyłanie rewanżu...',
-                    })
-                    : copy({
-                        de: 'Schneller Rückkampf',
-                        en: 'Quick rematch',
-                        pl: 'Szybki rewanż',
-                    })
-            }
-            onPress={async () => {
-                const sessionId = await duelProfile.createRematch(opponent.learnerId ?? '');
-                if (sessionId) {
-                    openDuelSession(sessionId);
-                }
-            }}
-        />
-    </InsetPanel>
+  opponent: ProfileDuelOpponent;
+  duelProfile: ProfileDuelsState;
+  openDuelSession: (sessionId: string) => void;
+  copy: KangurMobileCopy;
+  locale: string;
+}): React.JSX.Element => (
+  <InsetPanel gap={8}>
+    <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
+      {opponent.displayName}
+    </Text>
+    <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+      {copy({
+        de: `Letztes Duell ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+        en: `Last duel ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+        pl: `Ostatni pojedynek ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+      })}
+    </Text>
+    <ActionButton
+      disabled={duelProfile.isActionPending}
+      label={
+        duelProfile.pendingOpponentLearnerId === opponent.learnerId
+          ? copy({
+              de: 'Rückkampf wird gesendet...',
+              en: 'Sending rematch...',
+              pl: 'Wysyłanie rewanżu...',
+            })
+          : copy({
+              de: 'Schneller Rückkampf',
+              en: 'Quick rematch',
+              pl: 'Szybki rewanż',
+            })
+      }
+      onPress={async () => {
+        const sessionId = await duelProfile.createRematch(opponent.learnerId);
+        if (sessionId) {
+          openDuelSession(sessionId);
+        }
+      }}
+    />
+  </InsetPanel>
 );
 
 const OpponentListPanel = ({
@@ -174,12 +175,12 @@ const OpponentListPanel = ({
       </Text>
       {duelProfile.opponents.map((opponent) => (
         <OpponentListItem
-            key={opponent.learnerId}
-            opponent={opponent}
-            duelProfile={duelProfile}
-            openDuelSession={openDuelSession}
-            copy={copy}
-            locale={locale}
+          key={opponent.learnerId}
+          opponent={opponent}
+          duelProfile={duelProfile}
+          openDuelSession={openDuelSession}
+          copy={copy}
+          locale={locale}
         />
       ))}
     </View>
@@ -230,7 +231,7 @@ export function ProfileDuelsCard({
         />
         <Pill
           label={
-            duelProfile.currentRank
+            duelProfile.currentRank !== null
               ? copy({
                   de: `Deine Position #${duelProfile.currentRank}`,
                   en: `Your rank #${duelProfile.currentRank}`,
@@ -258,19 +259,21 @@ export function ProfileDuelsCard({
             pl: 'Pobieramy rywali i ranking pojedynków.',
           })}
         </Text>
-      ) : duelProfile.error ? (
+      ) : duelProfile.error !== null ? (
         <View style={{ gap: 10 }}>
           <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{duelProfile.error}</Text>
           <ActionButton
             label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-            onPress={() => duelProfile.refresh()}
+            onPress={() => {
+              void duelProfile.refresh();
+            }}
             stretch
           />
         </View>
       ) : (
         <View style={{ gap: 12 }}>
           <DuelStatsPanel duelProfile={duelProfile} copy={copy} locale={locale} />
-          {duelProfile.actionError ? (
+          {duelProfile.actionError !== null ? (
             <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
               {duelProfile.actionError}
             </Text>
@@ -284,7 +287,9 @@ export function ProfileDuelsCard({
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
             <ActionButton
               label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-              onPress={() => duelProfile.refresh()}
+              onPress={() => {
+                void duelProfile.refresh();
+              }}
               stretch
               tone='secondary'
             />

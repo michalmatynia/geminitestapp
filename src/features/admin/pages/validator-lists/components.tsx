@@ -30,21 +30,15 @@ export function ValidatorListsHeader({
   listsCount: number;
   totalLocked: number;
   onSave: () => void;
-}) {
+}): React.JSX.Element {
   return (
     <AdminTitleBreadcrumbHeader
-      title={
-        <h1 className='text-3xl font-bold tracking-tight text-white'>
-          Validation Pattern Lists
-        </h1>
-      }
-      breadcrumb={
-        <AdminSectionBreadcrumbs
-          section={{ label: 'Global Validator', href: '/admin/validator' }}
-          current={activeView === 'tooltips' ? 'Settings' : 'Validation Pattern Lists'}
-          data-testid='validator-lists-breadcrumbs'
-        />
-      }
+      title={<h1 className='text-3xl font-bold tracking-tight text-white'>Validation Pattern Lists</h1>}
+      breadcrumb={<AdminSectionBreadcrumbs
+        section={{ label: 'Global Validator', href: '/admin/validator' }}
+        current={activeView === 'tooltips' ? 'Settings' : 'Validation Pattern Lists'}
+        data-testid='validator-lists-breadcrumbs'
+      />}
       actions={
         <>
           <Button type='button' variant='outline' size='xs' asChild>
@@ -53,21 +47,12 @@ export function ValidatorListsHeader({
               Back To Validator
             </Link>
           </Button>
-          <Button
-            type='button'
-            size='xs'
-            onClick={onSave}
-            disabled={!isDirty || isPending}
-          >
+          <Button type='button' size='xs' onClick={onSave} disabled={!isDirty || isPending}>
             <Save className='mr-2 size-4' />
             Save Lists
           </Button>
-          <Badge variant='outline' className='border-white/10 text-gray-300'>
-            {listsCount} lists
-          </Badge>
-          <Badge variant='outline' className='border-white/10 text-gray-300'>
-            {totalLocked} locked
-          </Badge>
+          <Badge variant='outline' className='border-white/10 text-gray-300'>{listsCount} lists</Badge>
+          <Badge variant='outline' className='border-white/10 text-gray-300'>{totalLocked} locked</Badge>
         </>
       }
     />
@@ -80,7 +65,7 @@ export function ValidatorListsViewTabs({
 }: {
   activeView: ValidatorListsView;
   onSelectView: (view: ValidatorListsView) => void;
-}) {
+}): React.JSX.Element {
   return (
     <div
       role='tablist'
@@ -124,11 +109,11 @@ export function AddValidatorListForm({
   newListName: string;
   setNewListName: (val: string) => void;
   newListScope: string;
-  setNewListScope: (val: any) => void;
+  setNewListScope: (val: string) => void;
   newListDescription: string;
   setNewListDescription: (val: string) => void;
   onAdd: () => void;
-}) {
+}): React.JSX.Element {
   return (
     <FormSection
       title='Add New List'
@@ -138,9 +123,7 @@ export function AddValidatorListForm({
       <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_280px_minmax(0,1fr)_auto]'>
         <Input
           value={newListName}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            setNewListName(event.target.value);
-          }}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewListName(event.target.value)}
           placeholder='List name'
           aria-label='List name'
           className='h-9'
@@ -149,7 +132,7 @@ export function AddValidatorListForm({
         <SelectSimple
           size='sm'
           value={newListScope}
-          onValueChange={(value: string): void => {
+          onValueChange={(value: string) => {
             const matched = scopeOptions.find((option) => option.value === value);
             setNewListScope(matched?.value ?? 'products');
           }}
@@ -160,9 +143,7 @@ export function AddValidatorListForm({
         />
         <Input
           value={newListDescription}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            setNewListDescription(event.target.value);
-          }}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => setNewListDescription(event.target.value)}
           placeholder='Optional description'
           aria-label='List description'
           className='h-9'

@@ -301,6 +301,37 @@ export const productNotesSchema = z.preprocess(
 
 export type ProductNotes = NonNullable<z.infer<typeof productNotesSchema>>;
 
+const coerceFiniteProductNumericValue = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const normalized = trimmed.replace(',', '.');
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const normalizeProductStockValue = (value: unknown): number | null => {
+  const direct = coerceFiniteProductNumericValue(value);
+  if (direct !== null) return direct;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+
+  const record = value as Record<string, unknown>;
+  for (const key of ['value', 'stock', 'available', 'quantity', 'qty', 'count', 'total']) {
+    const candidate = coerceFiniteProductNumericValue(record[key]);
+    if (candidate !== null) return candidate;
+  }
+
+  const numericValues = Object.values(record)
+    .map((entry: unknown) => coerceFiniteProductNumericValue(entry))
+    .filter((entry: number | null): entry is number => entry !== null);
+
+  if (numericValues.length === 0) return null;
+  return numericValues.reduce((sum: number, entry: number) => sum + entry, 0);
+};
+
 /**
  * Product Contract
  */
@@ -323,7 +354,7 @@ export const productSchema = dtoBaseSchema.extend({
   supplierName: z.string().nullable(),
   supplierLink: z.string().nullable(),
   priceComment: z.string().nullable(),
-  stock: z.number().nullable(),
+  stock: z.preprocess(normalizeProductStockValue, z.number().nullable()),
   price: z.number().nullable(),
   sizeLength: z.number().nullable(),
   sizeWidth: z.number().nullable(),

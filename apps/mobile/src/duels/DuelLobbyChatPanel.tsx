@@ -6,7 +6,7 @@ import {
 import {
   MessageCard,
 } from './duels-primitives';
-import { type UseKangurMobileDuelsLobbyChatResult as DuelChatState } from './useKangurMobileDuelLobbyChat';
+import { type UseKangurMobileDuelLobbyChatResult as DuelChatState } from './useKangurMobileDuelLobbyChat';
 import { type KangurDuelLobbyChatMessage } from '@kangur/contracts/kangur-duels-chat';
 import { ChatMessageRow } from './DuelLobbyChatPanel/ChatMessageRow';
 import { ChatHeader } from './DuelLobbyChatPanel/ChatHeader';

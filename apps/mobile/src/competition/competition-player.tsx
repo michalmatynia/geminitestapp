@@ -44,7 +44,7 @@ const CompetitionSummary = ({
   results,
   onRestart,
   onBackToCatalog,
-}: CompetitionSummaryProps): JSX.Element => (
+}: CompetitionSummaryProps): React.JSX.Element => (
   <>
     <KangurMobileAiTutorCard
       context={{
@@ -95,7 +95,7 @@ type QuestionViewProps = {
   onSetFinished: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const QuestionView = ({ copy, locale, item, currentIndex, currentQuestion, selectedChoice, onSetAnswers, onSetCurrentIndex, onSetFinished }: QuestionViewProps): JSX.Element => (
+const QuestionView = ({ copy, locale, item, currentIndex, currentQuestion, selectedChoice, onSetAnswers, onSetCurrentIndex, onSetFinished }: QuestionViewProps): React.JSX.Element => (
   <>
     <KangurMobileAiTutorCard
       context={{

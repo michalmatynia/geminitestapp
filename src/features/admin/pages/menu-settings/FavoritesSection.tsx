@@ -109,7 +109,7 @@ function FilteredItem({
 }): React.JSX.Element {
   const isFavorite = favoritesSet.has(item.id);
   const hrefLabel =
-    item.href !== undefined && item.href !== null && item.href !== '' ? (
+    item.href !== undefined && item.href !== '' ? (
       <div className='truncate text-[11px] text-gray-600'>{item.href}</div>
     ) : null;
 
@@ -214,7 +214,7 @@ export function FavoritesSection(): React.JSX.Element {
         ) : (
           <div className='space-y-2'>
             {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => {
-              if (entry === undefined || entry === null) return null;
+              if (entry === undefined) return null;
               return (
                 <FavoriteItem
                   key={entry.id}

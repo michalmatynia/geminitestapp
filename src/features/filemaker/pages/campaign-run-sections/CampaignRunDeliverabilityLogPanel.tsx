@@ -42,7 +42,7 @@ export function CampaignRunDeliverabilityLogPanel({
     () =>
       events
         .filter((event) =>
-          DELIVERABILITY_EVENT_TYPES.has(event.type as FilemakerEmailCampaignEventType)
+          DELIVERABILITY_EVENT_TYPES.has(event.type)
         )
         .slice()
         .sort((left, right) => {

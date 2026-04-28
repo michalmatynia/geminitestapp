@@ -8,7 +8,9 @@ export function useKangurDuelsAutoRefresh(
   enabled: boolean,
 ): void {
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return undefined;
+    }
 
     const handleLobbyRefresh = (): void => {
       void lobby.refresh();

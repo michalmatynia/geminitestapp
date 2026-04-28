@@ -12,8 +12,17 @@ import type {
   KangurDuelLobbyEntry,
   KangurDuelOpponentEntry,
   KangurDuelLobbyPresenceEntry,
-  KangurDuelSearchEntry
+  KangurDuelSearchEntry,
+  KangurDuelStateResponse,
+  KangurDuelSpectatorStateResponse,
+  KangurDuelReactionType,
+  KangurDuelChoice
 } from '@kangur/contracts/kangur-duels';
+import type { 
+  KangurDuelLobbyChatListResponse, 
+  KangurDuelLobbyChatSendResponse, 
+  KangurDuelLobbyChatCreateInput 
+} from '@kangur/contracts/kangur-duels-chat';
 import type { KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 
 const MOBILE_DUEL_LOBBY_LIMIT = 12;
@@ -81,6 +90,8 @@ export interface DuelApiClient {
   listDuelOpponents: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelOpponentsResponse>;
   getDuelLeaderboard: (params: { limit: number; lookbackDays: number }, options: { cache: string }) => Promise<KangurDuelLeaderboardResponse>;
   searchDuels: (query: string, params: { limit: number }, options: { cache: string }) => Promise<KangurDuelSearchResponse>;
+  listDuelLobbyChat: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelLobbyChatListResponse>;
+  sendDuelLobbyChatMessage: (input: KangurDuelLobbyChatCreateInput, options: { cache: string }) => Promise<KangurDuelLobbyChatSendResponse>;
 }
 
 export function useLobbyQuery(apiClient: DuelApiClient, apiBaseUrl: string, learnerIdentity: string): UseQueryResult<KangurDuelLobbyResponse> {

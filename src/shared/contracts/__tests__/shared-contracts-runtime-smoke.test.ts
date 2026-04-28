@@ -642,6 +642,35 @@ describe('shared contracts runtime smoke', () => {
     expect(product.catalogs[0]?.catalogId).toBe('catalog-1');
   });
 
+  it('normalizes legacy object-backed stock payloads on product rows', () => {
+    const product = productWithImagesSchema.parse({
+      id: 'product-stock-legacy-1',
+      sku: 'KEYCHA330',
+      baseProductId: null,
+      defaultPriceGroupId: null,
+      ean: null,
+      gtin: null,
+      asin: null,
+      name: { en: 'Keychain' },
+      description: { en: '' },
+      supplierName: null,
+      supplierLink: null,
+      priceComment: null,
+      stock: { warehouse_a: '2', warehouse_b: 3 },
+      price: null,
+      sizeLength: null,
+      sizeWidth: null,
+      weight: null,
+      length: null,
+      published: false,
+      categoryId: null,
+      catalogId: 'catalog-1',
+      catalogs: [],
+    });
+
+    expect(product.stock).toBe(5);
+  });
+
   it('parses product relation records with nested catalog, tag, and producer payloads', () => {
     expect(
       productCatalogRecordSchema.parse({

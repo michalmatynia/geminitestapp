@@ -9,6 +9,44 @@ interface HomeLearnerCredentialsSignInSectionProps {
   onSignIn: (loginName: string, password: string) => Promise<void>;
 }
 
+function SignInFields({
+  copy,
+  loginName,
+  setLoginName,
+  password,
+  setPassword,
+}: {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  loginName: string;
+  setLoginName: (val: string) => void;
+  password: string;
+  setPassword: (val: string) => void;
+}): React.JSX.Element {
+  return (
+    <>
+      <LabeledTextField
+        autoCapitalize='none'
+        hint={copy({ de: 'Gib den Schüler-Login ein.', en: 'Enter the learner login.', pl: 'Wpisz login ucznia.' })}
+        label={copy({ de: 'Schuler-Login', en: 'Learner login', pl: 'Login ucznia' })}
+        onChangeText={setLoginName}
+        placeholder={copy({ de: 'Schuler-Login', en: 'Learner login', pl: 'Login ucznia' })}
+        textContentType='username'
+        value={loginName}
+      />
+      <LabeledTextField
+        autoCapitalize='none'
+        hint={copy({ de: 'Gib das Schülerpasswort ein.', en: 'Enter the learner password.', pl: 'Wpisz hasło ucznia.' })}
+        label={copy({ de: 'Passwort', en: 'Password', pl: 'Hasło' })}
+        onChangeText={setPassword}
+        placeholder={copy({ de: 'Passwort', en: 'Password', pl: 'Hasło' })}
+        secureTextEntry
+        textContentType='password'
+        value={password}
+      />
+    </>
+  );
+}
+
 export function HomeLearnerCredentialsSignInSection({
   isDeferredReady,
   onSignIn,
@@ -30,48 +68,12 @@ export function HomeLearnerCredentialsSignInSection({
 
   return (
     <View style={{ gap: 10 }}>
-      <LabeledTextField
-        autoCapitalize='none'
-        hint={copy({
-          de: 'Gib den Schüler-Login ein.',
-          en: 'Enter the learner login.',
-          pl: 'Wpisz login ucznia.',
-        })}
-        label={copy({
-          de: 'Schuler-Login',
-          en: 'Learner login',
-          pl: 'Login ucznia',
-        })}
-        onChangeText={setLoginName}
-        placeholder={copy({
-          de: 'Schuler-Login',
-          en: 'Learner login',
-          pl: 'Login ucznia',
-        })}
-        textContentType='username'
-        value={loginName}
-      />
-      <LabeledTextField
-        autoCapitalize='none'
-        hint={copy({
-          de: 'Gib das Schülerpasswort ein.',
-          en: 'Enter the learner password.',
-          pl: 'Wpisz hasło ucznia.',
-        })}
-        label={copy({
-          de: 'Passwort',
-          en: 'Password',
-          pl: 'Hasło',
-        })}
-        onChangeText={setPassword}
-        placeholder={copy({
-          de: 'Passwort',
-          en: 'Password',
-          pl: 'Hasło',
-        })}
-        secureTextEntry
-        textContentType='password'
-        value={password}
+      <SignInFields
+        copy={copy}
+        loginName={loginName}
+        setLoginName={setLoginName}
+        password={password}
+        setPassword={setPassword}
       />
       <PrimaryButton
         hint={copy({
@@ -79,11 +81,7 @@ export function HomeLearnerCredentialsSignInSection({
           en: 'Signs you in with the entered credentials.',
           pl: 'Loguje Cię za pomocą wpisanych danych.',
         })}
-        label={copy({
-          de: 'Anmelden',
-          en: 'Sign in',
-          pl: 'Zaloguj',
-        })}
+        label={copy({ de: 'Anmelden', en: 'Sign in', pl: 'Zaloguj' })}
         onPress={() => {
           void onSignIn(loginName, password);
         }}

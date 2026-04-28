@@ -75,5 +75,6 @@ export const integrationDefinitions = [
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
   { name: 'LinkedIn', slug: 'linkedin' },
+  { name: 'Pracuj.pl', slug: 'pracuj-pl' },
   { name: 'Playwright (Programmable)', slug: 'playwright-programmable' },
 ] as const;

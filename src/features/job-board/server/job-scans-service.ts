@@ -17,17 +17,13 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { upsertCompany, upsertCompanyByMatch } from './companies-repository';
-import { findCompanyEmails } from './email-finder';
+import { findCompanyEmails, isVisionEmailFinderEnabled } from './email-finding';
 import { findCompanyWebsite } from './google-search';
 import { upsertJobListing } from './job-listings-repository';
 import {
   findFilemakerOrganisationMatch,
   promoteCompanyToOrganisation,
 } from './organisation-promotion';
-import {
-  findCompanyEmailsWithVisionLoop,
-  isVisionEmailFinderEnabled,
-} from './vision-email-finder';
 
 const isAutoPromoteEnabled = (): { nipOnly: boolean; nameToo: boolean } => {
   const value = process.env['JOB_BOARD_AUTO_PROMOTE_ON_NIP_MATCH']?.toLowerCase();
@@ -60,177 +56,19 @@ const inferProviderFromUrl = (url: string): JobScanProvider => {
 
 const stamp = (): string => new Date().toISOString();
 
-const normalizeProbeText = (value: unknown): string =>
-  typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
-
-const firstNonEmpty = (values: unknown[]): string | null => {
-  for (const value of values) {
-    const normalized = normalizeProbeText(value);
-    if (normalized.length > 0) return normalized;
-  }
-  return null;
-};
-
-const clipProbeText = (value: unknown, max = 8_000): string | null => {
-  const normalized = normalizeProbeText(value);
-  if (normalized.length === 0) return null;
-  return normalized.length > max ? `${normalized.slice(0, Math.max(0, max - 3))}...` : normalized;
-};
-
-const cleanCompanyProfileTitle = (value: unknown): string | null => {
-  const normalized = normalizeProbeText(value)
-    .replace(/\s*[-|]\s*(profil pracodawcy|pracodawca|kariera|career|jobs).*$/i, '')
-    .trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const cleanListingTitle = (value: unknown): string | null => {
-  const normalized = normalizeProbeText(value)
-    .replace(/\s*[-|]\s*(oferta pracy|job offer|praca).*$/i, '')
-    .trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const snapshotFactValue = (
-  facts: Array<{ label: string; value: string }> | undefined,
-  patterns: RegExp[]
-): string | null => {
-  for (const fact of facts ?? []) {
-    const label = normalizeProbeText(fact.label);
-    if (patterns.some((pattern) => pattern.test(label))) {
-      const value = normalizeProbeText(fact.value);
-      if (value.length > 0) return value;
-    }
-  }
-  return null;
-};
-
-const firstSnapshotSectionText = (
-  sections: Array<{ heading?: string | null; text: string }> | undefined
-): string | null => {
-  const selected =
-    sections?.find((section) => /opis|description|requirements|wymagania|obowiazki|responsibil/i.test(
-      `${section.heading ?? ''} ${section.text}`
-    )) ?? sections?.[0];
-  return clipProbeText(selected?.text, 8_000);
-};
-
-const hostnameFromUrl = (value: string | null): string | null => {
-  if (value === null) return null;
-  try {
-    return new URL(value).hostname.replace(/^www\./, '');
-  } catch {
-    return null;
-  }
-};
-
-const buildSnapshotFallbackEvaluation = (
-  snapshot: JobBoardStructuredSnapshot | null,
-  finalUrl: string,
-  evaluatedAt: string
-): JobScanEvaluation => {
-  if (snapshot === null) return null;
-  const companyProfile = snapshot.companyProfile ?? null;
-  const profileText = clipProbeText(
-    firstSnapshotSectionText(companyProfile?.sections) ?? companyProfile?.plainText,
-    8_000
-  );
-  const profileTitle = cleanCompanyProfileTitle(companyProfile?.title);
-  const companyName = firstNonEmpty([
-    snapshotFactValue(snapshot.facts, [/pracodawca/i, /firma/i, /company/i, /employer/i]),
-    snapshotFactValue(companyProfile?.facts, [/nazwa/i, /firma/i, /company/i, /employer/i]),
-    profileTitle,
-  ]);
-  const listingTitle = firstNonEmpty([
-    cleanListingTitle(snapshot.headings?.[0]),
-    cleanListingTitle(snapshot.ogTitle),
-    cleanListingTitle(snapshot.title),
-  ]);
-  const city = snapshotFactValue(snapshot.facts, [
-    /lokalizacja/i,
-    /miejsce pracy/i,
-    /city/i,
-    /location/i,
-  ]);
-  const applyUrl = firstNonEmpty(snapshot.applyUrls ?? []);
-  const website = firstNonEmpty(companyProfile?.websiteUrls ?? []);
-
-  if (listingTitle === null && companyName === null && profileText === null) return null;
-  return {
-    company: {
-      name: companyName,
-      description: profileText,
-      profileUrl: companyProfile?.url ?? firstNonEmpty(snapshot.companyLinks ?? []),
-      website,
-      domain: hostnameFromUrl(website),
-    },
-    listing: {
-      title: listingTitle,
-      description: firstSnapshotSectionText(snapshot.sections) ?? clipProbeText(snapshot.plainText),
-      city,
-      country: 'Poland',
-      salary: null,
-      applyUrl,
-      requirements: [],
-      responsibilities: [],
-      benefits: [],
-      technologies: [],
-    },
-    confidence: 0.62,
-    modelId: 'job-board-snapshot-fallback',
-    error: null,
-    evaluatedAt,
-  };
-};
-
-const hasUsefulValue = (value: unknown): boolean =>
-  typeof value === 'string' ? value.trim().length > 0 : value !== null && value !== undefined;
-
-const mergeEvaluationRecord = (
-  fallback: Record<string, unknown> | null,
-  primary: Record<string, unknown> | null
-): Record<string, unknown> | null => {
-  if (fallback === null && primary === null) return null;
-  const merged: Record<string, unknown> = { ...(fallback ?? {}) };
-  Object.entries(primary ?? {}).forEach(([key, value]) => {
-    if (hasUsefulValue(value)) merged[key] = value;
-  });
-  return merged;
-};
-
-const mergeJobScanEvaluations = (
-  primary: JobScanEvaluation,
-  fallback: JobScanEvaluation
-): JobScanEvaluation => {
-  if (fallback === null) return primary;
-  if (primary === null) return fallback;
-  const listing = mergeEvaluationRecord(fallback.listing, primary.listing);
-  const company = mergeEvaluationRecord(fallback.company, primary.company);
-  const hasTitle = typeof listing?.['title'] === 'string' && listing['title'].trim().length > 0;
-  return {
-    company,
-    listing,
-    confidence: primary.confidence ?? fallback.confidence,
-    modelId: primary.modelId ?? fallback.modelId,
-    error: hasTitle ? null : primary.error ?? fallback.error,
-    evaluatedAt: primary.evaluatedAt ?? fallback.evaluatedAt,
-  };
-};
-
-const buildStep = (
-  key: string,
-  label: string,
-  status: JobScanStep['status'],
-  partial: Partial<JobScanStep> = {}
-): JobScanStep => ({
-  key,
-  label,
-  status,
-  message: partial.message ?? null,
-  startedAt: partial.startedAt ?? null,
-  completedAt: partial.completedAt ?? null,
-  durationMs: partial.durationMs ?? null,
-});
+import {
+  buildSnapshotFallbackEvaluation,
+  buildStep,
+  cleanCompanyProfileTitle,
+  cleanListingTitle,
+  clipProbeText,
+  firstNonEmpty,
+  firstSnapshotSectionText,
+  hostnameFromUrl,
+  mergeJobScanEvaluations,
+  normalizeProbeText,
+  snapshotFactValue,
+} from './job-scans/snapshot-helpers';
 
 type JobScanEmailFinderMode = 'vision_ai' | 'preselected_routes';
 
@@ -311,7 +149,18 @@ export type JobBoardJobOfferProbeResult = {
   steps: JobScanStep[];
 };
 
-export const probeJobBoardOffer = async (input: {
+export type JobBoardOfferProbeExtractionPath =
+  | 'playwright_ai'
+  | 'deterministic'
+  | 'deterministic_then_playwright';
+
+type JobBoardOfferProbeSingleExtractionPath = Exclude<
+  JobBoardOfferProbeExtractionPath,
+  'deterministic_then_playwright'
+>;
+
+type JobBoardOfferProbeInput = {
+  extractionPath?: JobBoardOfferProbeExtractionPath | null;
   forcePlaywright?: boolean | null;
   headless?: boolean | null;
   humanizeMouse?: boolean | null;
@@ -319,12 +168,25 @@ export const probeJobBoardOffer = async (input: {
   provider?: JobScanProvider | null;
   sourceUrl: string;
   timeoutMs?: number | null;
-}): Promise<JobBoardJobOfferProbeResult> => {
+};
+
+const resolveJobBoardOfferProbeExtractionPath = (
+  value: JobBoardOfferProbeExtractionPath | null | undefined
+): JobBoardOfferProbeExtractionPath => {
+  if (value === 'deterministic' || value === 'deterministic_then_playwright') return value;
+  return 'playwright_ai';
+};
+
+const runJobBoardOfferProbe = async (
+  input: JobBoardOfferProbeInput,
+  extractionPath: JobBoardOfferProbeSingleExtractionPath
+): Promise<JobBoardJobOfferProbeResult> => {
+  const useDeterministicPath = extractionPath === 'deterministic';
   const steps: JobScanStep[] = [];
   const fetchStartedAt = stamp();
   const fetchResult = await fetchJobBoardPage(input.sourceUrl, {
-    fallbackToFetch: false,
-    forcePlaywright: input.forcePlaywright ?? true,
+    fallbackToFetch: useDeterministicPath,
+    forcePlaywright: useDeterministicPath ? false : input.forcePlaywright ?? true,
     headless: input.headless ?? null,
     humanizeMouse: input.humanizeMouse ?? true,
     personaId: input.personaId ?? null,
@@ -357,18 +219,58 @@ export const probeJobBoardOffer = async (input: {
     };
   }
 
-  const reduced = reduceJobBoardHtml(fetchResult.html);
-  const snapshot = extractJobBoardStructuredSnapshot(fetchResult.html);
+  const snapshot = extractJobBoardStructuredSnapshot(fetchResult.html, fetchResult.finalUrl);
   const evalStartedAt = stamp();
+  if (useDeterministicPath) {
+    const evalCompletedAt = stamp();
+    const evaluation = buildSnapshotFallbackEvaluation(
+      snapshot,
+      fetchResult.finalUrl,
+      evalCompletedAt
+    );
+    const evalOk = Boolean(evaluation) && Boolean(evaluation?.listing?.['title']);
+    steps.push(
+      buildStep('deterministic_extract', 'Deterministic extract', evalOk ? 'completed' : 'failed', {
+        message:
+          evaluation?.error ??
+          (evalOk
+            ? `confidence=${evaluation?.confidence ?? 'n/a'}`
+            : 'Deterministic extractor did not find a job listing'),
+        startedAt: evalStartedAt,
+        completedAt: evalCompletedAt,
+        durationMs: Date.parse(evalCompletedAt) - Date.parse(evalStartedAt),
+      })
+    );
+
+    return {
+      error: evalOk
+        ? null
+        : evaluation?.error ?? 'Deterministic extractor did not find a job listing',
+      evaluation,
+      finalUrl: fetchResult.finalUrl,
+      fetchStatus: fetchResult.status,
+      ok: evalOk,
+      provider: fetchResult.provider,
+      runId: fetchResult.runId ?? null,
+      snapshot,
+      sourceSite: fetchResult.sourceSite,
+      sourceUrl: input.sourceUrl,
+      steps,
+    };
+  }
+
+  const reduced = reduceJobBoardHtml(fetchResult.html);
   const aiEvaluation = await evaluateJobPageWithAi({
     sourceUrl: fetchResult.finalUrl,
     pageContent: reduced,
   });
   const evalCompletedAt = stamp();
-  const evaluation = mergeJobScanEvaluations(
-    aiEvaluation,
-    buildSnapshotFallbackEvaluation(snapshot, fetchResult.finalUrl, evalCompletedAt)
+  const fallbackEvaluation = buildSnapshotFallbackEvaluation(
+    snapshot,
+    fetchResult.finalUrl,
+    evalCompletedAt
   );
+  const evaluation = mergeJobScanEvaluations(aiEvaluation, fallbackEvaluation);
   const evalOk = Boolean(evaluation) && !evaluation?.error && Boolean(evaluation?.listing?.['title']);
   steps.push(
     buildStep('ai_evaluate', 'AI extract', evalOk ? 'completed' : 'failed', {
@@ -391,6 +293,32 @@ export const probeJobBoardOffer = async (input: {
     sourceSite: fetchResult.sourceSite,
     sourceUrl: input.sourceUrl,
     steps,
+  };
+};
+
+export const probeJobBoardOffer = async (
+  input: JobBoardOfferProbeInput
+): Promise<JobBoardJobOfferProbeResult> => {
+  const extractionPath = resolveJobBoardOfferProbeExtractionPath(input.extractionPath);
+  if (extractionPath !== 'deterministic_then_playwright') {
+    return await runJobBoardOfferProbe(input, extractionPath);
+  }
+
+  const deterministicResult = await runJobBoardOfferProbe(input, 'deterministic');
+  if (deterministicResult.ok) return deterministicResult;
+
+  const playwrightResult = await runJobBoardOfferProbe(
+    {
+      ...input,
+      forcePlaywright: true,
+    },
+    'playwright_ai'
+  );
+  return {
+    ...playwrightResult,
+    error: playwrightResult.ok ? null : playwrightResult.error ?? deterministicResult.error,
+    runId: playwrightResult.runId ?? deterministicResult.runId,
+    steps: [...deterministicResult.steps, ...playwrightResult.steps],
   };
 };
 
@@ -435,7 +363,7 @@ const runJobBoardSync = async (scan: JobScanRecord): Promise<JobScanRecord> => {
   }
 
   const reduced = reduceJobBoardHtml(fetchResult.html);
-  const snapshot = extractJobBoardStructuredSnapshot(fetchResult.html);
+  const snapshot = extractJobBoardStructuredSnapshot(fetchResult.html, fetchResult.finalUrl);
   const evalStartedAt = stamp();
   const aiEvaluation = await evaluateJobPageWithAi({
     sourceUrl: fetchResult.finalUrl,
@@ -634,34 +562,13 @@ const enrichCompanyWithEmails = async (input: {
   const useVision = input.forceVision != null ? input.forceVision : isVisionEmailFinderEnabled();
   const emailStartedAt = stamp();
   try {
-    const result = useVision
-      ? await (async () => {
-          const r = await findCompanyEmailsWithVisionLoop({
-            website,
-            domain,
-            companyName: company.name,
-            headless: input.headless ?? null,
-          });
-          return {
-            emails: r.emails,
-            visitedUrls: r.finalUrl ? [r.finalUrl] : [],
-            durationMs: r.durationMs,
-            ...(r.error !== undefined ? { error: r.error } : {}),
-            iterationsRun: r.iterationsRun,
-            reasoning: r.reasoning,
-            steps: r.steps,
-          };
-        })()
-      : {
-          ...(await findCompanyEmails({
-            website,
-            domain,
-            companyName: company.name,
-            headless: input.headless ?? null,
-          })),
-          iterationsRun: 0,
-          reasoning: null,
-        };
+    const result = await findCompanyEmails({
+      website,
+      domain,
+      companyName: company.name,
+      headless: input.headless ?? null,
+      strategy: useVision ? 'vision' : 'deterministic',
+    });
     const emailCompletedAt = stamp();
     if ('steps' in result && Array.isArray(result.steps) && result.steps.length > 0) {
       steps.push(...result.steps);

@@ -153,9 +153,10 @@ export function LessonsAssignmentRow({
   item: KangurMobileLessonsAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const priorityTone = resolvePriorityTone(item.assignment.priority);
-  const priorityLabel = resolvePriorityLabel(item.assignment.priority, copy);
-  const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  const assignment = item.assignment as { priority: string; title: string; description: string; target: string; action: { label: string } };
+  const priorityTone = resolvePriorityTone(assignment.priority);
+  const priorityLabel = resolvePriorityLabel(assignment.priority, copy);
+  const actionLabel = translateKangurMobileActionLabel(assignment.action.label, locale);
   const soonLabel = copy({ de: 'bald', en: 'soon', pl: 'wkrotce' });
 
   const assignmentAction =
@@ -169,16 +170,16 @@ export function LessonsAssignmentRow({
     <InsetPanel gap={8}>
       <Pill label={priorityLabel} tone={priorityTone} />
       <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-        {item.assignment.title}
+        {assignment.title}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {item.assignment.description}
+        {assignment.description}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Ziel: ${item.assignment.target}`,
-          en: `Goal: ${item.assignment.target}`,
-          pl: `Cel: ${item.assignment.target}`,
+          de: `Ziel: ${assignment.target}`,
+          en: `Goal: ${assignment.target}`,
+          pl: `Cel: ${assignment.target}`,
         })}
       </Text>
       {assignmentAction}

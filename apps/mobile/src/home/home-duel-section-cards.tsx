@@ -17,6 +17,33 @@ type HomeCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 
 const DUELS_ROUTE = createKangurDuelsHref();
 
+function DuelInviteCardActions({
+  invite,
+  copy,
+}: {
+  invite: KangurDuelLobbyEntry;
+  copy: HomeCopy;
+}): React.JSX.Element {
+  return (
+    <View style={{ flexDirection: 'column', gap: 8 }}>
+      <OutlineLink
+        href={createKangurDuelsHref({ joinSessionId: invite.sessionId })}
+        hint={copy({
+          de: `Nimmt die Einladung von ${invite.host.displayName} an.`,
+          en: `Accepts the invite from ${invite.host.displayName}.`,
+          pl: `Przyjmuje zaproszenie od ${invite.host.displayName}.`,
+        })}
+        label={`${copy({ de: 'Beitreten', en: 'Join', pl: 'Dołącz' })}: ${invite.host.displayName}`}
+      />
+      <OutlineLink
+        href={DUELS_ROUTE}
+        hint={copy({ de: 'Öffnet die Duell-Lobby.', en: 'Opens the duels lobby.', pl: 'Otwiera lobby pojedynków.' })}
+        label={copy({ de: 'Lobby öffnen', en: 'Open lobby', pl: 'Otwórz lobby' })}
+      />
+    </View>
+  );
+}
+
 export function DuelInviteCard({
   copy,
   invite,
@@ -27,28 +54,11 @@ export function DuelInviteCard({
   locale: KangurMobileLocale;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        backgroundColor: '#f8fafc',
-        borderColor: '#e2e8f0',
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-        {invite.host.displayName}
-      </Text>
+    <View style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>{invite.host.displayName}</Text>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
-        {getHomeDuelModeLabel(invite.mode, locale)} •{' '}
-        {formatKangurMobileScoreOperation(invite.operation, locale)} •{' '}
-        {copy({
-          de: 'Stufe',
-          en: 'level',
-          pl: 'poziom',
-        })}{' '}
-        {getHomeDuelDifficultyLabel(invite.difficulty, locale)}
+        {getHomeDuelModeLabel(invite.mode, locale)} • {formatKangurMobileScoreOperation(invite.operation, locale)} •{' '}
+        {copy({ de: 'Stufe', en: 'level', pl: 'poziom' })} {getHomeDuelDifficultyLabel(invite.difficulty, locale)}
       </Text>
       <Text style={{ color: '#64748b' }}>
         {copy({
@@ -57,39 +67,44 @@ export function DuelInviteCard({
           pl: `${invite.questionCount} pytań • ${invite.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(invite.updatedAt, locale)}`,
         })}
       </Text>
-      {invite.series ? (
-        <Text style={{ color: '#4338ca', lineHeight: 20 }}>
-          {getHomeDuelSeriesLabel(invite.series, locale)}
-        </Text>
-      ) : null}
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <OutlineLink
-          href={createKangurDuelsHref({ joinSessionId: invite.sessionId })}
-          hint={copy({
-            de: `Nimmt die Einladung von ${invite.host.displayName} an.`,
-            en: `Accepts the invite from ${invite.host.displayName}.`,
-            pl: `Przyjmuje zaproszenie od ${invite.host.displayName}.`,
-          })}
-          label={`${copy({
-            de: 'Beitreten',
-            en: 'Join',
-            pl: 'Dołącz',
-          })}: ${invite.host.displayName}`}
-        />
-        <OutlineLink
-          href={DUELS_ROUTE}
-          hint={copy({
-            de: 'Öffnet die Duell-Lobby.',
-            en: 'Opens the duels lobby.',
-            pl: 'Otwiera lobby pojedynków.',
-          })}
-          label={copy({
-            de: 'Lobby öffnen',
-            en: 'Open lobby',
-            pl: 'Otwórz lobby',
-          })}
-        />
-      </View>
+      {invite.series ? <Text style={{ color: '#4338ca', lineHeight: 20 }}>{getHomeDuelSeriesLabel(invite.series, locale)}</Text> : null}
+      <DuelInviteCardActions invite={invite} copy={copy} />
+    </View>
+  );
+}
+
+function OutgoingChallengeCardActions({
+  entry,
+  copy,
+  isSharing,
+  onShare,
+}: {
+  entry: KangurDuelLobbyEntry;
+  copy: HomeCopy;
+  isSharing: boolean;
+  onShare: () => Promise<void>;
+}): React.JSX.Element {
+  return (
+    <View style={{ flexDirection: 'column', gap: 8 }}>
+      <PrimaryButton
+        disabled={isSharing}
+        hint={copy({
+          de: 'Teilt den direkten Einladungslink erneut.',
+          en: 'Reshares the direct invite link.',
+          pl: 'Udostępnia ponownie bezpośredni link do zaproszenia.',
+        })}
+        label={
+          isSharing
+            ? copy({ de: 'Link wird geteilt...', en: 'Sharing link...', pl: 'Udostępnianie linku...' })
+            : copy({ de: 'Link teilen', en: 'Share link', pl: 'Udostępnij link' })
+        }
+        onPress={onShare}
+      />
+      <OutlineLink
+        href={createKangurDuelsHref({ sessionId: entry.sessionId })}
+        hint={copy({ de: 'Öffnet die private Duellsitzung.', en: 'Opens the private duel session.', pl: 'Otwiera prywatną sesję pojedynku.' })}
+        label={copy({ de: 'Duell öffnen', en: 'Open duel', pl: 'Otwórz pojedynek' })}
+      />
     </View>
   );
 }
@@ -108,32 +123,11 @@ export function OutgoingChallengeCard({
   onShare: () => Promise<void>;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        backgroundColor: '#f8fafc',
-        borderColor: '#e2e8f0',
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-        {copy({
-          de: 'Private Herausforderung',
-          en: 'Private challenge',
-          pl: 'Prywatne wyzwanie',
-        })}
-      </Text>
+    <View style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>{copy({ de: 'Private Herausforderung', en: 'Private challenge', pl: 'Prywatne wyzwanie' })}</Text>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
-        {getHomeDuelModeLabel(entry.mode, locale)} •{' '}
-        {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
-        {copy({
-          de: 'Stufe',
-          en: 'level',
-          pl: 'poziom',
-        })}{' '}
-        {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
+        {getHomeDuelModeLabel(entry.mode, locale)} • {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
+        {copy({ de: 'Stufe', en: 'level', pl: 'poziom' })} {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
       </Text>
       <Text style={{ color: '#64748b' }}>
         {copy({
@@ -142,49 +136,43 @@ export function OutgoingChallengeCard({
           pl: `${entry.questionCount} pytań • ${entry.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
         })}
       </Text>
-      {entry.series ? (
-        <Text style={{ color: '#4338ca', lineHeight: 20 }}>
-          {getHomeDuelSeriesLabel(entry.series, locale)}
-        </Text>
-      ) : null}
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <PrimaryButton
-          disabled={isSharing}
-          hint={copy({
-            de: 'Teilt den direkten Einladungslink erneut.',
-            en: 'Reshares the direct invite link.',
-            pl: 'Udostępnia ponownie bezpośredni link do zaproszenia.',
-          })}
-          label={
-            isSharing
-              ? copy({
-                  de: 'Link wird geteilt...',
-                  en: 'Sharing link...',
-                  pl: 'Udostępnianie linku...',
-                })
-              : copy({
-                  de: 'Link teilen',
-                  en: 'Share link',
-                  pl: 'Udostępnij link',
-                })
-          }
-          onPress={onShare}
-        />
-        <OutlineLink
-          href={createKangurDuelsHref({ sessionId: entry.sessionId })}
-          hint={copy({
-            de: 'Öffnet die private Duellsitzung.',
-            en: 'Opens the private duel session.',
-            pl: 'Otwiera prywatną sesję pojedynku.',
-          })}
-          label={copy({
-            de: 'Duell öffnen',
-            en: 'Open duel',
-            pl: 'Otwórz pojedynek',
-          })}
-        />
-      </View>
+      {entry.series ? <Text style={{ color: '#4338ca', lineHeight: 20 }}>{getHomeDuelSeriesLabel(entry.series, locale)}</Text> : null}
+      <OutgoingChallengeCardActions entry={entry} copy={copy} isSharing={isSharing} onShare={onShare} />
     </View>
+  );
+}
+
+function ActiveRivalCardStatus({
+  entry,
+  copy,
+  locale,
+  isCurrentLearner,
+}: {
+  entry: KangurDuelLobbyPresenceEntry;
+  copy: HomeCopy;
+  locale: KangurMobileLocale;
+  isCurrentLearner: boolean;
+}): React.JSX.Element {
+  return (
+    <>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+        {entry.displayName}
+        {isCurrentLearner
+          ? copy({
+              de: ' · Du',
+              en: ' · You',
+              pl: ' · Ty',
+            })
+          : ''}
+      </Text>
+      <Text style={{ color: '#64748b' }}>
+        {copy({
+          de: `Zuletzt aktiv ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
+          en: `Last active ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
+          pl: `Ostatnia aktywność ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
+        })}
+      </Text>
+    </>
   );
 }
 
@@ -216,24 +204,8 @@ export function ActiveRivalCard({
         padding: 14,
       }}
     >
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-        {entry.displayName}
-        {isCurrentLearner
-          ? copy({
-              de: ' · Du',
-              en: ' · You',
-              pl: ' · Ty',
-            })
-          : ''}
-      </Text>
-      <Text style={{ color: '#64748b' }}>
-        {copy({
-          de: `Zuletzt aktiv ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
-          en: `Last active ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
-          pl: `Ostatnia aktywność ${formatHomeRelativeAge(entry.lastSeenAt, locale)}`,
-        })}
-      </Text>
-      {!isCurrentLearner && onChallenge ? (
+      <ActiveRivalCardStatus entry={entry} copy={copy} locale={locale} isCurrentLearner={isCurrentLearner} />
+      {!isCurrentLearner && onChallenge !== null ? (
         <PrimaryButton
           disabled={isActionPending}
           hint={copy({
@@ -261,6 +233,58 @@ export function ActiveRivalCard({
   );
 }
 
+function RecentOpponentCardActions({
+  entry,
+  copy,
+  isPending,
+  onRematch,
+}: {
+  entry: KangurDuelOpponentEntry;
+  copy: HomeCopy;
+  isPending: boolean;
+  onRematch: () => Promise<void>;
+}): React.JSX.Element {
+  return (
+    <View style={{ flexDirection: 'column', gap: 8 }}>
+      <PrimaryButton
+        disabled={isPending}
+        hint={copy({
+          de: `Sendet einen schnellen privaten Rückkampf an ${entry.displayName}.`,
+          en: `Sends a quick private rematch to ${entry.displayName}.`,
+          pl: `Wysyła szybki prywatny rewanż do ${entry.displayName}.`,
+        })}
+        label={
+          isPending
+            ? copy({
+                de: 'Rückkampf wird gesendet...',
+                en: 'Sending rematch...',
+                pl: 'Wysyłanie rewanżu...',
+              })
+            : copy({
+                de: 'Schneller Rückkampf',
+                en: 'Quick rematch',
+                pl: 'Szybki rewanż',
+              })
+        }
+        onPress={onRematch}
+      />
+      <OutlineLink
+        href={DUELS_ROUTE}
+        hint={copy({
+          de: 'Öffnet die Duell-Lobby.',
+          en: 'Opens the duels lobby.',
+          pl: 'Otwiera lobby pojedynków.',
+        })}
+        label={copy({
+          de: 'Lobby öffnen',
+          en: 'Open lobby',
+          pl: 'Otwórz lobby',
+        })}
+      />
+    </View>
+  );
+}
+
 export function RecentOpponentCard({
   copy,
   entry,
@@ -275,19 +299,8 @@ export function RecentOpponentCard({
   onRematch: () => Promise<void>;
 }): React.JSX.Element {
   return (
-    <View
-      style={{
-        backgroundColor: '#f8fafc',
-        borderColor: '#e2e8f0',
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-        {entry.displayName}
-      </Text>
+    <View style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>{entry.displayName}</Text>
       <Text style={{ color: '#64748b' }}>
         {copy({
           de: `Letztes Duell ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
@@ -295,43 +308,56 @@ export function RecentOpponentCard({
           pl: `Ostatni pojedynek ${formatHomeRelativeAge(entry.lastPlayedAt, locale)}`,
         })}
       </Text>
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <PrimaryButton
-          disabled={isPending}
-          hint={copy({
-            de: `Sendet einen schnellen privaten Rückkampf an ${entry.displayName}.`,
-            en: `Sends a quick private rematch to ${entry.displayName}.`,
-            pl: `Wysyła szybki prywatny rewanż do ${entry.displayName}.`,
-          })}
-          label={
-            isPending
-              ? copy({
-                  de: 'Rückkampf wird gesendet...',
-                  en: 'Sending rematch...',
-                  pl: 'Wysyłanie rewanżu...',
-                })
-              : copy({
-                  de: 'Schneller Rückkampf',
-                  en: 'Quick rematch',
-                  pl: 'Szybki rewanż',
-                })
-          }
-          onPress={onRematch}
-        />
-        <OutlineLink
-          href={DUELS_ROUTE}
-          hint={copy({
-            de: 'Öffnet die Duell-Lobby.',
-            en: 'Opens the duels lobby.',
-            pl: 'Otwiera lobby pojedynków.',
-          })}
-          label={copy({
-            de: 'Lobby öffnen',
-            en: 'Open lobby',
-            pl: 'Otwórz lobby',
-          })}
-        />
-      </View>
+      <RecentOpponentCardActions entry={entry} copy={copy} isPending={isPending} onRematch={onRematch} />
+    </View>
+  );
+}
+
+function LiveDuelCardActions({
+  entry,
+  copy,
+  isAuthenticated,
+}: {
+  entry: KangurDuelLobbyEntry;
+  copy: HomeCopy;
+  isAuthenticated: boolean;
+}): React.JSX.Element {
+  const isLiveEntry = entry.status === 'in_progress';
+  
+  let primaryHref: Href;
+  let primaryHint: string;
+  let primaryLabel: string;
+
+  if (isLiveEntry) {
+    primaryHref = createKangurDuelsHref({ sessionId: entry.sessionId, spectate: true });
+    primaryHint = copy({
+      de: `Öffnet das Live-Duell von ${entry.host.displayName}.`,
+      en: `Opens the live duel hosted by ${entry.host.displayName}.`,
+      pl: `Otwiera pojedynek na żywo gospodarza ${entry.host.displayName}.`,
+    });
+    primaryLabel = copy({ de: 'Live ansehen', en: 'Watch live', pl: 'Obserwuj na żywo' });
+  } else if (isAuthenticated) {
+    primaryHref = createKangurDuelsHref({ joinSessionId: entry.sessionId });
+    primaryHint = copy({
+      de: `Tritt dem öffentlichen Duell von ${entry.host.displayName} bei.`,
+      en: `Joins the public duel hosted by ${entry.host.displayName}.`,
+      pl: `Dołącza do publicznego pojedynku gospodarza ${entry.host.displayName}.`,
+    });
+    primaryLabel = copy({ de: 'Match beitreten', en: 'Join match', pl: 'Dołącz do meczu' });
+  } else {
+    primaryHref = DUELS_ROUTE;
+    primaryHint = copy({ de: 'Öffnet die Duell-Lobby.', en: 'Opens the duels lobby.', pl: 'Otwiera lobby pojedynków.' });
+    primaryLabel = copy({ de: 'Lobby öffnen', en: 'Open lobby', pl: 'Otwórz lobby' });
+  }
+
+  return (
+    <View style={{ flexDirection: 'column', gap: 8 }}>
+      <OutlineLink href={primaryHref} hint={primaryHint} label={primaryLabel} />
+      <OutlineLink
+        href={DUELS_ROUTE}
+        hint={copy({ de: 'Öffnet die Duell-Lobby.', en: 'Opens the duels lobby.', pl: 'Otwiera lobby pojedynków.' })}
+        label={copy({ de: 'Alle Duelle', en: 'All duels', pl: 'Wszystkie pojedynki' })}
+      />
     </View>
   );
 }
@@ -347,75 +373,12 @@ export function LiveDuelCard({
   isAuthenticated: boolean;
   locale: KangurMobileLocale;
 }): React.JSX.Element {
-  const isLiveEntry = entry.status === 'in_progress';
-  const primaryHref = isLiveEntry
-    ? createKangurDuelsHref({
-        sessionId: entry.sessionId,
-        spectate: true,
-      })
-    : isAuthenticated
-      ? createKangurDuelsHref({
-          joinSessionId: entry.sessionId,
-        })
-      : DUELS_ROUTE;
-  const primaryHint = isLiveEntry
-    ? copy({
-        de: `Öffnet das Live-Duell von ${entry.host.displayName}.`,
-        en: `Opens the live duel hosted by ${entry.host.displayName}.`,
-        pl: `Otwiera pojedynek na żywo gospodarza ${entry.host.displayName}.`,
-      })
-    : isAuthenticated
-      ? copy({
-          de: `Tritt dem öffentlichen Duell von ${entry.host.displayName} bei.`,
-          en: `Joins the public duel hosted by ${entry.host.displayName}.`,
-          pl: `Dołącza do publicznego pojedynku gospodarza ${entry.host.displayName}.`,
-        })
-      : copy({
-          de: 'Öffnet die Duell-Lobby.',
-          en: 'Opens the duels lobby.',
-          pl: 'Otwiera lobby pojedynków.',
-        });
-  const primaryLabel = isLiveEntry
-    ? copy({
-        de: 'Live ansehen',
-        en: 'Watch live',
-        pl: 'Obserwuj na żywo',
-      })
-    : isAuthenticated
-      ? copy({
-          de: 'Match beitreten',
-          en: 'Join match',
-          pl: 'Dołącz do meczu',
-        })
-      : copy({
-          de: 'Lobby öffnen',
-          en: 'Open lobby',
-          pl: 'Otwórz lobby',
-        });
-
   return (
-    <View
-      style={{
-        backgroundColor: '#f8fafc',
-        borderColor: '#e2e8f0',
-        borderRadius: 20,
-        borderWidth: 1,
-        gap: 8,
-        padding: 14,
-      }}
-    >
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-        {entry.host.displayName}
-      </Text>
+    <View style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>{entry.host.displayName}</Text>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
-        {getHomeDuelModeLabel(entry.mode, locale)} •{' '}
-        {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
-        {copy({
-          de: 'Stufe',
-          en: 'level',
-          pl: 'poziom',
-        })}{' '}
-        {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
+        {getHomeDuelModeLabel(entry.mode, locale)} • {formatKangurMobileScoreOperation(entry.operation, locale)} •{' '}
+        {copy({ de: 'Stufe', en: 'level', pl: 'poziom' })} {getHomeDuelDifficultyLabel(entry.difficulty, locale)}
       </Text>
       <Text style={{ color: '#64748b' }}>
         {copy({
@@ -424,31 +387,8 @@ export function LiveDuelCard({
           pl: `${getHomeDuelStatusLabel(entry.status, locale)} • ${entry.questionCount} pytań • ${entry.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(entry.updatedAt, locale)}`,
         })}
       </Text>
-      {entry.series ? (
-        <Text style={{ color: '#4338ca', lineHeight: 20 }}>
-          {getHomeDuelSeriesLabel(entry.series, locale)}
-        </Text>
-      ) : null}
-      <View style={{ flexDirection: 'column', gap: 8 }}>
-        <OutlineLink
-          href={primaryHref}
-          hint={primaryHint}
-          label={primaryLabel}
-        />
-        <OutlineLink
-          href={DUELS_ROUTE}
-          hint={copy({
-            de: 'Öffnet die Duell-Lobby.',
-            en: 'Opens the duels lobby.',
-            pl: 'Otwiera lobby pojedynków.',
-          })}
-          label={copy({
-            de: 'Alle Duelle',
-            en: 'All duels',
-            pl: 'Wszystkie pojedynki',
-          })}
-        />
-      </View>
+      {entry.series ? <Text style={{ color: '#4338ca', lineHeight: 20 }}>{getHomeDuelSeriesLabel(entry.series, locale)}</Text> : null}
+      <LiveDuelCardActions entry={entry} copy={copy} isAuthenticated={isAuthenticated} />
     </View>
   );
 }

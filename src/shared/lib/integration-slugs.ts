@@ -2,6 +2,7 @@ const BASE_INTEGRATION_SLUG_VALUES = ['baselinker', 'base', 'base-com'] as const
 const TRADERA_INTEGRATION_SLUG_VALUES = ['tradera'] as const;
 
 export const LINKEDIN_INTEGRATION_SLUG = 'linkedin';
+export const PRACUJ_PL_INTEGRATION_SLUG = 'pracuj-pl';
 export const VINTED_INTEGRATION_SLUG = 'vinted';
 export const SCANNER_1688_INTEGRATION_SLUG = '1688';
 
@@ -24,6 +25,9 @@ export const isVintedIntegrationSlug = (value: string | null | undefined): boole
 export const is1688IntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === SCANNER_1688_INTEGRATION_SLUG;
 
+export const isPracujPlIntegrationSlug = (value: string | null | undefined): boolean =>
+  normalizeIntegrationSlug(value) === PRACUJ_PL_INTEGRATION_SLUG;
+
 export const isTraderaBrowserIntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === TRADERA_BROWSER_INTEGRATION_SLUG;
 
@@ -32,7 +36,12 @@ export const isBrowserAutomationIntegrationSlug = (
 ): boolean =>
   isTraderaBrowserIntegrationSlug(value) ||
   isVintedIntegrationSlug(value) ||
-  is1688IntegrationSlug(value);
+  is1688IntegrationSlug(value) ||
+  isPracujPlIntegrationSlug(value);
+
+export const isJobSearchPlatformIntegrationSlug = (
+  value: string | null | undefined
+): boolean => isPracujPlIntegrationSlug(value);
 
 export const isLinkedInIntegrationSlug = (value: string | null | undefined): boolean =>
   normalizeIntegrationSlug(value) === LINKEDIN_INTEGRATION_SLUG;

@@ -17,6 +17,11 @@ export const filemakerJobBoardImportStrategySchema = z.enum([
   'create_unmatched',
 ]);
 export const filemakerJobBoardDuplicateStrategySchema = z.enum(['skip', 'update', 'add']);
+export const filemakerJobBoardScrapeExtractionPathSchema = z.enum([
+  'playwright_ai',
+  'deterministic',
+  'deterministic_then_playwright',
+]);
 export const filemakerJobBoardScrapeProviderSchema = z.enum([
   'auto',
   ...JOB_BOARD_PROVIDER_IDS,
@@ -47,9 +52,10 @@ const jobBoardSourceUrlSchema = z.string().trim().url().refine(
 
 export const filemakerJobBoardScrapeRequestSchema = z.object({
   delayMs: z.number().int().min(0).max(10_000).default(750),
-  duplicateStrategy: filemakerJobBoardDuplicateStrategySchema.default('skip'),
+  duplicateStrategy: filemakerJobBoardDuplicateStrategySchema.default('update'),
   extractDescriptions: z.boolean().default(true),
   extractSalaries: z.boolean().default(true),
+  extractionPath: filemakerJobBoardScrapeExtractionPathSchema.default('playwright_ai'),
   headless: z.boolean().nullable().optional().default(null),
   humanizeMouse: z.boolean().default(true),
   importStrategy: filemakerJobBoardImportStrategySchema.default('create_unmatched'),
@@ -78,6 +84,9 @@ export type FilemakerJobBoardImportStrategy = z.infer<
 >;
 export type FilemakerJobBoardDuplicateStrategy = z.infer<
   typeof filemakerJobBoardDuplicateStrategySchema
+>;
+export type FilemakerJobBoardScrapeExtractionPath = z.infer<
+  typeof filemakerJobBoardScrapeExtractionPathSchema
 >;
 export type FilemakerJobBoardScrapeProvider = z.infer<
   typeof filemakerJobBoardScrapeProviderSchema
@@ -192,6 +201,35 @@ export type FilemakerJobBoardScrapeResponse = {
   warnings: string[];
 };
 
+export type FilemakerJobBoardScrapeRuntimeStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'canceled';
+
+export type FilemakerJobBoardScrapeRuntimeRun = {
+  completedAt: string | null;
+  createdAt: string;
+  error: string | null;
+  id: string;
+  mode: FilemakerJobBoardScrapeMode;
+  result: FilemakerJobBoardScrapeResponse | null;
+  sourceUrl: string;
+  startedAt: string | null;
+  status: FilemakerJobBoardScrapeRuntimeStatus;
+  updatedAt: string;
+};
+
+export type FilemakerJobBoardScrapeRuntimeSnapshot = {
+  events: FilemakerJobBoardScrapeLiveEvent[];
+  run: FilemakerJobBoardScrapeRuntimeRun | null;
+};
+
+export type FilemakerJobBoardScrapeRuntimeStartResponse = {
+  run: FilemakerJobBoardScrapeRuntimeRun;
+};
+
 export type FilemakerJobBoardScrapeWriteAction =
   | 'organization_address_updated'
   | 'organization_created'
@@ -211,6 +249,11 @@ export type FilemakerJobBoardScrapeWriteResult = {
 };
 
 export type FilemakerJobBoardScrapeLiveEvent =
+  | {
+      at: string;
+      run: FilemakerJobBoardScrapeRuntimeRun;
+      type: 'run';
+    }
   | {
       at: string;
       message: string;

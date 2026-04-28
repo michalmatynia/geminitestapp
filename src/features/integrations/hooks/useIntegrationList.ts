@@ -18,6 +18,7 @@ type IntegrationListState = {
   scanner1688Definition: IntegrationDefinition | null;
   baselinkerDefinition: IntegrationDefinition | null;
   linkedinDefinition: IntegrationDefinition | null;
+  pracujDefinition: IntegrationDefinition | null;
 };
 
 export function useIntegrationList(): IntegrationListState {
@@ -38,6 +39,8 @@ export function useIntegrationList(): IntegrationListState {
     integrationDefinitions.find((definition) => definition.slug === 'baselinker') ?? null;
   const linkedinDefinition =
     integrationDefinitions.find((definition) => definition.slug === 'linkedin') ?? null;
+  const pracujDefinition =
+    integrationDefinitions.find((definition) => definition.slug === 'pracuj-pl') ?? null;
 
   return {
     integrations,
@@ -50,5 +53,6 @@ export function useIntegrationList(): IntegrationListState {
     scanner1688Definition,
     baselinkerDefinition,
     linkedinDefinition,
+    pracujDefinition,
   };
 }

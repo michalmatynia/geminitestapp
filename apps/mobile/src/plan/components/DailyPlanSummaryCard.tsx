@@ -76,7 +76,14 @@ function SummaryActions({
       <LinkButton href='/practice?operation=mixed' label={copy({ de: 'Gemischtes Training starten', en: 'Start mixed practice', pl: 'Uruchom trening mieszany' })} tone='primary' stretch />
       <LinkButton href={RESULTS_ROUTE} label={copy({ de: 'Ergebnisse öffnen', en: 'Open results', pl: 'Otwórz wyniki' })} stretch />
       <LinkButton href={DUELS_ROUTE} label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })} stretch />
-      <ActionButton label={copy({ de: 'Plan aktualisieren', en: 'Refresh plan', pl: 'Odśwież plan' })} onPress={() => { void refresh(); }} stretch tone='secondary' />
+      <ActionButton
+        label={copy({ de: 'Plan aktualisieren', en: 'Refresh plan', pl: 'Odśwież plan' })}
+        onPress={() => {
+          refresh();
+        }}
+        stretch
+        tone='secondary'
+      />
     </View>
   );
 }
@@ -114,9 +121,17 @@ function AuthStateContent({
         </View>
       );
     }
-    return <ActionButton label={copy({ de: 'Demo starten', en: 'Start demo', pl: 'Uruchom demo' })} onPress={() => { void signIn(); }} tone='brand' />;
+    return (
+      <ActionButton
+        label={copy({ de: 'Demo starten', en: 'Start demo', pl: 'Uruchom demo' })}
+        onPress={() => {
+          signIn();
+        }}
+        tone='brand'
+      />
+    );
   }
-  return authError ? <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text> : null;
+  return authError !== null && authError !== '' ? <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{authError}</Text> : null;
 }
 
 export function DailyPlanSummaryCard({

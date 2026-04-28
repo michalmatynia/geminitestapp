@@ -42,8 +42,8 @@ export type ResultsDuelsState = {
   refresh: () => Promise<void>;
 };
 
-function renderDuelStatus(duelResults: ResultsDuelsState, copy: any): React.JSX.Element | null {
-  if (duelResults.isRestoringAuth || duelResults.isLoading) {
+function renderDuelStatus(duelResults: ResultsDuelsState, copy: KangurMobileCopy): React.JSX.Element | null {
+  if (Boolean(duelResults.isRestoringAuth) || Boolean(duelResults.isLoading)) {
     return (
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
         {copy({
@@ -54,7 +54,7 @@ function renderDuelStatus(duelResults: ResultsDuelsState, copy: any): React.JSX.
       </Text>
     );
   }
-  if (duelResults.error) {
+  if (duelResults.error !== null && duelResults.error !== '') {
     return (
       <View style={{ gap: 10 }}>
         <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
@@ -150,7 +150,7 @@ export function ResultsDuelsCard({
 
       {renderDuelStatus(duelResults, copy)}
 
-      {duelResults.currentRank !== null && duelResults.currentEntry ? (
+      {Boolean(duelResults.currentRank) duelResults.currentRank !== null && duelResults.currentRank !== 0 && duelResults.currentEntry !== nullduelResults.currentRank !== null && duelResults.currentRank !== 0 && duelResults.currentEntry !== null duelResults.currentEntry !== null ? (
         <InsetPanel
           gap={10}
           style={{

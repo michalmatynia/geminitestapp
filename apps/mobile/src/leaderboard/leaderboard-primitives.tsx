@@ -1,7 +1,7 @@
 import { type Href } from 'expo-router';
 import { Text, View } from 'react-native';
 
-import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import type { KangurMobileLessonCheckpointItem } from '../lessons/useKangurMobileLessonCheckpoints';
 import { createKangurPlanHref } from '../plan/planHref';
 import { formatKangurMobileScoreDateTime } from '../scores/mobileScoreSummary';
@@ -39,7 +39,7 @@ function PracticeAction({
 }): React.JSX.Element | null {
   const { copy } = useKangurMobileI18n();
   const href = item.practiceHref;
-  if (!href) {
+  if (href === null) {
     return null;
   }
   return (
@@ -59,7 +59,7 @@ export function LessonCheckpointRow({
 }: {
   item: KangurMobileLessonCheckpointItem;
 }): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
+  const { copy } = useKangurMobileI18n();
 
   return (
     <InsetPanel gap={10}>
@@ -148,16 +148,16 @@ export function LeaderboardAssignmentRow({
 }: {
   item: KangurMobileLeaderboardAssignmentItem;
 }): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const priority = (item.assignment.priority === 'high' || item.assignment.priority === 'medium') ? item.assignment.priority : 'low';
+  const { copy } = useKangurMobileI18n();
+  const assignment = item.assignment as { priority?: 'high' | 'medium' | 'low'; title: string; description: string; target: string; action: { label: string } };
+  const priority = (assignment.priority === 'high' || assignment.priority === 'medium') ? assignment.priority : 'low';
   const priorityTone = getPriorityTone(priority);
   const priorityLabel = getPriorityLabel(priority, copy);
-  const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
-  const assignmentAction = Boolean(item.href) ? (
-    <LinkButton href={item.href!} label={assignmentActionLabel} tone='primary' />
+  const assignmentActionLabel = translateKangurMobileActionLabel(assignment.action.label, locale as KangurMobileLocale);
+  const assignmentAction = item.href !== null ? (
+    <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' />
   ) : (
     <MutedActionChip
-      compact
       label={`${assignmentActionLabel} · ${copy({
         de: 'bald',
         en: 'soon',
@@ -171,16 +171,16 @@ export function LeaderboardAssignmentRow({
       <Pill label={priorityLabel} tone={priorityTone} />
 
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-        {item.assignment.title}
+        {assignment.title}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {item.assignment.description}
+        {assignment.description}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Ziel: ${item.assignment.target}`,
-          en: `Goal: ${item.assignment.target}`,
-          pl: `Cel: ${item.assignment.target}`,
+          de: `Ziel: ${assignment.target}`,
+          en: `Goal: ${assignment.target}`,
+          pl: `Cel: ${assignment.target}`,
         })}
       </Text>
 
@@ -260,10 +260,10 @@ export function LessonMasteryRow({
   insight: KangurMobileLeaderboardLessonMasteryItem;
   title: string;
 }): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
+  const { copy } = useKangurMobileI18n();
   const masteryTone = getMasteryTone(insight.masteryPercent);
-  const lastAttemptLabel = insight.lastCompletedAt != null
-    ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale)
+  const lastAttemptLabel = insight.lastCompletedAt !== null
+    ? formatKangurMobileScoreDateTime(insight.lastCompletedAt, locale as KangurMobileLocale)
     : copy({ de: 'kein Datum', en: 'no date', pl: 'brak daty' });
 
   return (
@@ -292,9 +292,9 @@ export function LessonMasteryRow({
           label={copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}
           tone='primary'
         />
-        {Boolean(insight.practiceHref) && (
+        {insight.practiceHref !== null && (
           <LinkButton
-            href={insight.practiceHref!}
+            href={insight.practiceHref}
             label={copy({ de: 'Danach trainieren', en: 'Practice after', pl: 'Potem trenuj' })}
           />
         )}

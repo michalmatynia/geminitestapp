@@ -1,4 +1,4 @@
-import type { KangurProgressState } from '@kangur/core';
+import type { KangurProgressState } from '@kangur/contracts/kangur';
 import { buildKangurLessonMasteryUpdate, checkKangurNewBadges } from '@kangur/core';
 
 export interface SaveLessonCheckpointInput {
@@ -16,7 +16,7 @@ export interface SaveLessonCheckpointResult {
 export function saveLessonCheckpoint(
   input: SaveLessonCheckpointInput,
   currentProgress: KangurProgressState,
-  progressStore: { saveProgress: (p: any) => void }
+  progressStore: { saveProgress: (p: KangurProgressState) => void }
 ): SaveLessonCheckpointResult {
   const normalizedScorePercent = Math.max(0, Math.min(100, Math.round(input.scorePercent)));
   const countsAsLessonCompletion = input.countsAsLessonCompletion === true;

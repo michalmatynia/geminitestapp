@@ -23,6 +23,63 @@ type HomeDuelSectionsGroupProps = {
   copy: ReturnType<typeof useKangurMobileI18n>['copy'];
 };
 
+function LiveDuelsSection({
+  copy,
+  areDeferredHomeDuelAdvancedReady,
+  isAuthenticated,
+}: {
+  copy: HomeDuelSectionsGroupProps['copy'];
+  areDeferredHomeDuelAdvancedReady: boolean;
+  isAuthenticated: boolean;
+}): React.JSX.Element {
+  if (!areDeferredHomeDuelAdvancedReady) {
+    return (
+      <SectionCard
+        title={copy({
+          de: 'Live-Duelle',
+          en: 'Live duels',
+          pl: 'Na żywo w pojedynkach',
+        })}
+      >
+        <DeferredDuelAdvancedSectionPlaceholder />
+      </SectionCard>
+    );
+  }
+  return <HomeLiveDuelsSection isAuthenticated={isAuthenticated} />;
+}
+
+function LeaderboardSection({
+  copy,
+  areDeferredHomeDuelAdvancedReady,
+  activeDuelLearnerId,
+  isAuthenticated,
+}: {
+  copy: HomeDuelSectionsGroupProps['copy'];
+  areDeferredHomeDuelAdvancedReady: boolean;
+  activeDuelLearnerId: string | null;
+  isAuthenticated: boolean;
+}): React.JSX.Element {
+  if (!areDeferredHomeDuelAdvancedReady) {
+    return (
+      <SectionCard
+        title={copy({
+          de: 'Duell-Rangliste',
+          en: 'Duel leaderboard',
+          pl: 'Ranking pojedynków',
+        })}
+      >
+        <DeferredDuelAdvancedSectionPlaceholder />
+      </SectionCard>
+    );
+  }
+  return (
+    <HomeDuelLeaderboardSection
+      activeDuelLearnerId={activeDuelLearnerId}
+      isAuthenticated={isAuthenticated}
+    />
+  );
+}
+
 export function HomeDuelSectionsGroup({
   areDeferredHomePanelsReady,
   areDeferredHomeDuelAdvancedReady,
@@ -34,9 +91,7 @@ export function HomeDuelSectionsGroup({
   copy,
 }: HomeDuelSectionsGroupProps): React.JSX.Element | null {
   if (!areDeferredHomePanelsReady) {
-    if (shouldRenderCombinedHomeStartupPlaceholder) {
-      return null;
-    }
+    if (shouldRenderCombinedHomeStartupPlaceholder) return null;
     return <DeferredHomeActivitySectionsCard />;
   }
 
@@ -56,44 +111,23 @@ export function HomeDuelSectionsGroup({
         areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
         areDeferredHomePanelsReady={areDeferredHomePanelsReady}
       />
-
-      {!areDeferredHomeDuelAdvancedReady ? (
-        <SectionCard
-          title={copy({
-            de: 'Live-Duelle',
-            en: 'Live duels',
-            pl: 'Na żywo w pojedynkach',
-          })}
-        >
-          <DeferredDuelAdvancedSectionPlaceholder />
-        </SectionCard>
-      ) : (
-        <HomeLiveDuelsSection isAuthenticated={isAuthenticated} />
-      )}
-
+      <LiveDuelsSection
+        copy={copy}
+        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+        isAuthenticated={isAuthenticated}
+      />
       <RematchesSection
         areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
         areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
         areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
         areDeferredHomePanelsReady={areDeferredHomePanelsReady}
       />
-
-      {!areDeferredHomeDuelAdvancedReady ? (
-        <SectionCard
-          title={copy({
-            de: 'Duell-Rangliste',
-            en: 'Duel leaderboard',
-            pl: 'Ranking pojedynków',
-          })}
-        >
-          <DeferredDuelAdvancedSectionPlaceholder />
-        </SectionCard>
-      ) : (
-        <HomeDuelLeaderboardSection
-          activeDuelLearnerId={activeDuelLearnerId}
-          isAuthenticated={isAuthenticated}
-        />
-      )}
+      <LeaderboardSection
+        copy={copy}
+        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+        activeDuelLearnerId={activeDuelLearnerId}
+        isAuthenticated={isAuthenticated}
+      />
     </>
   );
 }

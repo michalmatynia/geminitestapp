@@ -132,6 +132,12 @@ vi.mock('@/shared/ui/primitives.public', () => ({
 }));
 
 import { FilemakerJobBoardScrapeModal } from './FilemakerJobBoardScrapeModal';
+import type {
+  FilemakerJobBoardScrapeOfferResult,
+  FilemakerJobBoardScrapeResponse,
+  FilemakerJobBoardScrapeRuntimeRun,
+  FilemakerJobBoardScrapeRuntimeStatus,
+} from '@/features/filemaker/filemaker-job-board-scrape-contracts';
 import {
   defaultPlaywrightActionExecutionSettings,
   normalizePlaywrightAction,
@@ -164,7 +170,44 @@ const successfulResponse = {
     verifiedListings: 0,
   },
   warnings: [],
-};
+} satisfies FilemakerJobBoardScrapeResponse;
+
+const buildPreviewOfferResult = (input: {
+  externalId: string;
+  title?: string;
+  sourceUrl?: string;
+}): FilemakerJobBoardScrapeOfferResult => ({
+  listingId: null,
+  match: {
+    confidence: 100,
+    organizationId: 'org-1',
+    organizationName: 'Acme Inc',
+    reason: 'exact name match',
+  },
+  offer: {
+    companyName: 'Acme Inc',
+    companyProfile: 'Acme Inc builds commerce software.',
+    companyProfileUrl: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+    description: 'Build interfaces',
+    expiresAt: null,
+    location: 'Warszawa',
+    postedAt: null,
+    salaryCurrency: 'PLN',
+    salaryMax: 18000,
+    salaryMin: 12000,
+    salaryPeriod: 'monthly',
+    salaryText: '12 000 - 18 000 PLN',
+    sourceExternalId: input.externalId,
+    sourceSite: 'pracuj.pl',
+    sourceUrl:
+      input.sourceUrl ??
+      `https://www.pracuj.pl/praca/developer-warszawa,oferta,${input.externalId}`,
+    pills: [],
+    title: input.title ?? 'Frontend Developer',
+  },
+  reason: null,
+  status: 'preview',
+});
 
 const buildJobBoardAction = (
   headless: boolean | null,
@@ -184,6 +227,24 @@ const buildJobBoardAction = (
     },
   });
 };
+
+const buildRuntimeRun = (
+  status: FilemakerJobBoardScrapeRuntimeStatus,
+  result: FilemakerJobBoardScrapeResponse | null = null
+): FilemakerJobBoardScrapeRuntimeRun => ({
+  completedAt: ['completed', 'failed', 'canceled'].includes(status)
+    ? '2026-04-28T10:03:00.000Z'
+    : null,
+  createdAt: '2026-04-28T10:00:00.000Z',
+  error: status === 'failed' || status === 'canceled' ? 'Job-board scrape stopped.' : null,
+  id: 'runtime-run-1',
+  mode: result?.mode ?? 'preview',
+  result,
+  sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+  startedAt: status === 'queued' ? null : '2026-04-28T10:00:01.000Z',
+  status,
+  updatedAt: '2026-04-28T10:03:00.000Z',
+});
 
 describe('FilemakerJobBoardScrapeModal', () => {
   afterEach(() => {
@@ -240,6 +301,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(request).toMatchObject({
+      extractionPath: 'playwright_ai',
       headless: null,
       mode: 'preview',
       organizationScope: 'selected',
@@ -250,6 +312,71 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
       'Content-Type': 'application/json',
       'x-csrf-token': 'csrf-token',
+    });
+  });
+
+  it('sends the deterministic scraper path when selected', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async () => Response.json(successfulResponse));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.selectOptions(screen.getByLabelText('Scraper path'), 'deterministic');
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(request).toMatchObject({
+      extractionPath: 'deterministic',
+      mode: 'preview',
+      sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+    });
+  });
+
+  it('sends the combined deterministic and Playwright fallback path when selected', async () => {
+    const user = userEvent.setup();
+    const fetchMock = vi.fn(async () => Response.json(successfulResponse));
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.selectOptions(
+      screen.getByLabelText('Scraper path'),
+      'deterministic_then_playwright'
+    );
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(request).toMatchObject({
+      extractionPath: 'deterministic_then_playwright',
+      mode: 'preview',
+      sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
     });
   });
 
@@ -338,6 +465,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
       'https://justjoin.it/job-offers/all-locations/javascript'
     );
     await user.selectOptions(screen.getByLabelText('Provider'), 'justjoin_it');
+    await user.selectOptions(screen.getByLabelText('Scraper path'), 'deterministic');
     await user.selectOptions(screen.getByLabelText('Duplicates'), 'update');
     expect(screen.getByRole('button', { name: 'Save settings' })).not.toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save settings' })).toHaveAttribute(
@@ -371,12 +499,41 @@ describe('FilemakerJobBoardScrapeModal', () => {
       'https://justjoin.it/job-offers/all-locations/javascript'
     );
     expect(screen.getByLabelText('Provider')).toHaveValue('justjoin_it');
+    expect(screen.getByLabelText('Scraper path')).toHaveValue('deterministic');
     expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
     expect(screen.getByRole('button', { name: 'Action browser mode' })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
     expect(screen.getByText('Current: Headless')).toBeInTheDocument();
+  });
+
+  it('migrates old saved skip-duplicate scraper settings to update existing', () => {
+    window.localStorage.setItem(
+      'filemaker.job-board-scraper.settings.v1',
+      JSON.stringify({
+        version: 2,
+        draft: {
+          duplicateStrategy: 'skip',
+          sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+        },
+      })
+    );
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
+    expect(screen.getByPlaceholderText(/pracuj\.pl\/praca/)).toHaveValue(
+      'https://www.pracuj.pl/praca/it;kw'
+    );
   });
 
   it('uses and saves the shared Job Board Offer Scrape browser mode setting', async () => {
@@ -562,6 +719,353 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(request).toMatchObject({ mode: 'preview', stream: true });
   });
 
+  it('stores the Redis runtime run id from a streamed preview run', async () => {
+    const user = userEvent.setup();
+    const completedRun = buildRuntimeRun('completed', successfulResponse);
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        run: buildRuntimeRun('queued'),
+        type: 'run',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        message: 'Collecting job-board offer links.',
+        type: 'status',
+      },
+      {
+        at: '2026-04-28T10:00:02.000Z',
+        result: successfulResponse,
+        type: 'done',
+      },
+      {
+        at: '2026-04-28T10:00:03.000Z',
+        run: completedRun,
+        type: 'run',
+      },
+    ];
+    const fetchMock = vi.fn(async () =>
+      new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: {
+          'content-type': 'application/x-ndjson; charset=utf-8',
+          'x-filemaker-job-board-scrape-run-id': 'runtime-run-1',
+        },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() =>
+      expect(
+        window.localStorage.getItem('filemaker.job-board-scraper.active-run-id.v1')
+      ).toBe('runtime-run-1')
+    );
+    await waitFor(() => expect(screen.getByText('Run completed')).toBeInTheDocument());
+  });
+
+  it('rehydrates a stored Redis runtime run when the modal opens again', async () => {
+    const offerResult = buildPreviewOfferResult({ externalId: '1001' });
+    window.localStorage.setItem(
+      'filemaker.job-board-scraper.active-run-id.v1',
+      'runtime-run-1'
+    );
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        events: [
+          {
+            at: '2026-04-28T10:00:00.000Z',
+            run: buildRuntimeRun('running'),
+            type: 'run',
+          },
+          {
+            at: '2026-04-28T10:00:01.000Z',
+            message: 'Collecting job-board offer links.',
+            type: 'status',
+          },
+          {
+            at: '2026-04-28T10:00:02.000Z',
+            index: 1,
+            result: offerResult,
+            total: 1,
+            type: 'offer',
+          },
+        ],
+        run: buildRuntimeRun('running'),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/organizations/job-board-scrape/runs/runtime-run-1',
+        expect.objectContaining({ method: 'GET' })
+      )
+    );
+    expect(screen.getByText('Live scrape preview')).toBeInTheDocument();
+    expect(screen.getByText('Run running')).toBeInTheDocument();
+    expect(screen.getByText('Collecting job-board offer links.')).toBeInTheDocument();
+    expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+  });
+
+  it('falls back to the latest Redis runtime run when the stored run id is stale', async () => {
+    const offerResult = buildPreviewOfferResult({ externalId: '1001' });
+    const latestRun = { ...buildRuntimeRun('running'), id: 'runtime-run-latest' };
+    window.localStorage.setItem(
+      'filemaker.job-board-scraper.active-run-id.v1',
+      'stale-runtime-run'
+    );
+    const fetchMock = vi.fn(async (url: RequestInfo | URL) => {
+      if (String(url).endsWith('/runs/latest')) {
+        return Response.json({
+          events: [
+            {
+              at: '2026-04-28T10:00:00.000Z',
+              run: latestRun,
+              type: 'run',
+            },
+            {
+              at: '2026-04-28T10:00:01.000Z',
+              index: 1,
+              result: offerResult,
+              total: 1,
+              type: 'offer',
+            },
+          ],
+          run: latestRun,
+        });
+      }
+      return Response.json({ message: 'Job-board scrape run not found.' }, { status: 404 });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/organizations/job-board-scrape/runs/latest',
+        expect.objectContaining({ method: 'GET' })
+      )
+    );
+    expect(screen.getByText('Run running')).toBeInTheDocument();
+    expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0);
+    expect(
+      window.localStorage.getItem('filemaker.job-board-scraper.active-run-id.v1')
+    ).toBe('runtime-run-latest');
+  });
+
+  it('saves all scraped preview drafts from the Scraped offers section', async () => {
+    const user = userEvent.setup();
+    const onCompleted = vi.fn();
+    const offerResult = buildPreviewOfferResult({ externalId: '1001' });
+    const savedResult = {
+      ...offerResult,
+      listingId: 'listing-1',
+      status: 'created',
+    };
+    const streamedResponse = {
+      ...successfulResponse,
+      offers: [offerResult],
+      summary: {
+        ...successfulResponse.summary,
+        matchedOffers: 1,
+        scrapedOffers: 1,
+      },
+    };
+    const saveResponse = {
+      ...successfulResponse,
+      mode: 'import',
+      offers: [savedResult],
+      summary: {
+        ...successfulResponse.summary,
+        createdListings: 1,
+        matchedOffers: 1,
+        scrapedOffers: 1,
+        verifiedListings: 1,
+      },
+    };
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        index: 1,
+        result: offerResult,
+        total: 1,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    const fetchMock = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      if (body['action'] === 'save_drafts') return Response.json(saveResponse);
+      return new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={onCompleted}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(screen.getByText('Scraped offers')).toBeInTheDocument());
+    await user.click(screen.getAllByRole('button', { name: /^Save$/ })[0]);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const saveRequest = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
+    expect(saveRequest).toMatchObject({
+      action: 'save_drafts',
+      duplicateStrategy: 'update',
+      importStrategy: 'create_unmatched',
+      sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+    });
+    expect(saveRequest.stream).toBeUndefined();
+    expect(saveRequest.offers).toHaveLength(1);
+    expect(saveRequest.offers[0]).toMatchObject({
+      sourceUrl: offerResult.offer.sourceUrl,
+      title: 'Frontend Developer',
+    });
+    await waitFor(() => expect(screen.getAllByText('created').length).toBeGreaterThan(0));
+    expect(onCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves an individual scraped draft from its not saved row action', async () => {
+    const user = userEvent.setup();
+    const firstOffer = buildPreviewOfferResult({ externalId: '1001', title: 'Frontend Developer' });
+    const secondOffer = buildPreviewOfferResult({ externalId: '1002', title: 'Backend Developer' });
+    const savedSecondOffer = {
+      ...secondOffer,
+      listingId: 'listing-2',
+      status: 'created',
+    };
+    const streamedResponse = {
+      ...successfulResponse,
+      offers: [firstOffer, secondOffer],
+      summary: {
+        ...successfulResponse.summary,
+        matchedOffers: 2,
+        scrapedOffers: 2,
+      },
+    };
+    const saveResponse = {
+      ...successfulResponse,
+      mode: 'import',
+      offers: [savedSecondOffer],
+      summary: {
+        ...successfulResponse.summary,
+        createdListings: 1,
+        matchedOffers: 1,
+        scrapedOffers: 1,
+        verifiedListings: 1,
+      },
+    };
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        index: 1,
+        result: firstOffer,
+        total: 2,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        index: 2,
+        result: secondOffer,
+        total: 2,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:02.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    const fetchMock = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      if (body['action'] === 'save_drafts') return Response.json(saveResponse);
+      return new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(screen.getAllByText('Backend Developer').length).toBeGreaterThan(0));
+    await user.click(screen.getAllByRole('button', { name: /^Save$/ })[2]);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const saveRequest = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
+    expect(saveRequest).toMatchObject({ action: 'save_drafts' });
+    expect(saveRequest.offers).toHaveLength(1);
+    expect(saveRequest.offers[0]).toMatchObject({
+      sourceUrl: secondOffer.offer.sourceUrl,
+      title: 'Backend Developer',
+    });
+  });
+
   it('renders streamed offers when optional scraper fields are missing', async () => {
     const user = userEvent.setup();
     const partialOfferResult = {
@@ -622,6 +1126,50 @@ describe('FilemakerJobBoardScrapeModal', () => {
 
     await waitFor(() => expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0));
     expect(screen.getAllByText('Acme Inc').length).toBeGreaterThan(0);
+  });
+
+  it('shows skipped offer reasons in the scrape result list', async () => {
+    const user = userEvent.setup();
+    const skippedReason = 'A matching pracuj.pl listing already exists.';
+    const skippedResult = {
+      ...buildPreviewOfferResult({ externalId: '1001' }),
+      listingId: 'listing-1',
+      reason: skippedReason,
+      status: 'skipped',
+    } satisfies FilemakerJobBoardScrapeOfferResult;
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        ...successfulResponse,
+        mode: 'import',
+        offers: [skippedResult],
+        summary: {
+          ...successfulResponse.summary,
+          matchedOffers: 1,
+          scrapedOffers: 1,
+          skippedOffers: 1,
+        },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Import' }));
+
+    await waitFor(() => expect(screen.getByText(skippedReason)).toBeInTheDocument());
+    expect(screen.getByText('skipped')).toBeInTheDocument();
   });
 
   it('renders streamed database write events during import', async () => {

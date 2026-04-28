@@ -2,12 +2,14 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  enqueueFilemakerJobBoardScrapeRunMock,
+  readFilemakerJobBoardScrapeRunMock,
   requireFilemakerMailAdminSessionMock,
-  runFilemakerJobBoardScrapeMock,
   saveFilemakerJobBoardScrapeDraftsMock,
 } = vi.hoisted(() => ({
+  enqueueFilemakerJobBoardScrapeRunMock: vi.fn(),
+  readFilemakerJobBoardScrapeRunMock: vi.fn(),
   requireFilemakerMailAdminSessionMock: vi.fn(),
-  runFilemakerJobBoardScrapeMock: vi.fn(),
   saveFilemakerJobBoardScrapeDraftsMock: vi.fn(),
 }));
 
@@ -16,40 +18,37 @@ vi.mock('@/features/filemaker/server/filemaker-mail-access', () => ({
 }));
 
 vi.mock('@/features/filemaker/server/filemaker-job-board-scrape', () => ({
-  runFilemakerJobBoardScrape: runFilemakerJobBoardScrapeMock,
   saveFilemakerJobBoardScrapeDrafts: saveFilemakerJobBoardScrapeDraftsMock,
 }));
 
+vi.mock('@/features/filemaker/server/filemaker-job-board-scrape-runtime', () => ({
+  enqueueFilemakerJobBoardScrapeRun: enqueueFilemakerJobBoardScrapeRunMock,
+  readFilemakerJobBoardScrapeRun: readFilemakerJobBoardScrapeRunMock,
+}));
+
 import { postHandler } from './handler';
+
+const queuedRun = {
+  completedAt: null,
+  createdAt: '2026-04-28T10:00:00.000Z',
+  error: null,
+  id: 'run-1',
+  mode: 'preview',
+  result: null,
+  sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
+  startedAt: null,
+  status: 'queued',
+  updatedAt: '2026-04-28T10:00:00.000Z',
+};
 
 describe('filemaker job-board scrape handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireFilemakerMailAdminSessionMock.mockResolvedValue(undefined);
-    runFilemakerJobBoardScrapeMock.mockResolvedValue({
-      browserMode: 'headless',
-      mode: 'preview',
-      offers: [],
-      provider: 'justjoin_it',
-      runId: 'run-1',
-      sourceSite: 'justjoin.it',
-      sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
-      summary: {
-        addressUpdates: 0,
-        createdListings: 0,
-        createdLexiconTerms: 0,
-        createdOrganizations: 0,
-        linkedLexiconTerms: 0,
-        matchedOffers: 0,
-        profileUpdates: 0,
-        scrapedOffers: 0,
-        skippedOffers: 0,
-        unmatchedOffers: 0,
-        updatedOrganizations: 0,
-        updatedListings: 0,
-        verifiedListings: 0,
-      },
-      warnings: [],
+    enqueueFilemakerJobBoardScrapeRunMock.mockResolvedValue({ run: queuedRun });
+    readFilemakerJobBoardScrapeRunMock.mockResolvedValue({
+      events: [],
+      run: { ...queuedRun, completedAt: '2026-04-28T10:01:00.000Z', status: 'completed' },
     });
     saveFilemakerJobBoardScrapeDraftsMock.mockResolvedValue({
       browserMode: 'headless',
@@ -78,8 +77,9 @@ describe('filemaker job-board scrape handler', () => {
     });
   });
 
-  it('requires admin access and forwards generic job-board scrape bodies', async () => {
+  it('requires admin access and enqueues generic job-board scrape bodies', async () => {
     const body = {
+      extractionPath: 'deterministic',
       mode: 'preview',
       provider: 'justjoin_it',
       sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
@@ -95,11 +95,15 @@ describe('filemaker job-board scrape handler', () => {
     );
 
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
-    expect(runFilemakerJobBoardScrapeMock).toHaveBeenCalledWith(body);
+    expect(enqueueFilemakerJobBoardScrapeRunMock).toHaveBeenCalledWith(body);
+    expect(response.status).toBe(202);
+    expect(response.headers.get('x-filemaker-job-board-scrape-run-id')).toBe('run-1');
     await expect(response.json()).resolves.toMatchObject({
-      provider: 'justjoin_it',
-      sourceSite: 'justjoin.it',
-      runId: 'run-1',
+      run: {
+        id: 'run-1',
+        mode: 'preview',
+        status: 'queued',
+      },
     });
   });
 
@@ -140,7 +144,7 @@ describe('filemaker job-board scrape handler', () => {
     );
 
     expect(saveFilemakerJobBoardScrapeDraftsMock).toHaveBeenCalledWith(body);
-    expect(runFilemakerJobBoardScrapeMock).not.toHaveBeenCalled();
+    expect(enqueueFilemakerJobBoardScrapeRunMock).not.toHaveBeenCalled();
     await expect(response.json()).resolves.toMatchObject({
       mode: 'import',
       runId: null,
@@ -149,19 +153,20 @@ describe('filemaker job-board scrape handler', () => {
 
   it('streams live job-board scrape events when requested', async () => {
     const body = {
+      extractionPath: 'deterministic',
       mode: 'preview',
       provider: 'justjoin_it',
       sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
       stream: true,
     };
-    runFilemakerJobBoardScrapeMock.mockImplementationOnce(
-      async (_body: unknown, options: { onEvent: (event: unknown) => void }) => {
-        options.onEvent({
+    readFilemakerJobBoardScrapeRunMock.mockResolvedValueOnce({
+      events: [
+        {
           at: '2026-04-28T10:00:00.000Z',
           message: 'Collecting job-board offer links.',
           type: 'status',
-        });
-        options.onEvent({
+        },
+        {
           at: '2026-04-28T10:00:01.000Z',
           result: {
             browserMode: 'headless',
@@ -189,34 +194,10 @@ describe('filemaker job-board scrape handler', () => {
             warnings: [],
           },
           type: 'done',
-        });
-        return {
-          browserMode: 'headless',
-          mode: 'preview',
-          offers: [],
-          provider: 'justjoin_it',
-          runId: 'run-1',
-          sourceSite: 'justjoin.it',
-          sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
-          summary: {
-            addressUpdates: 0,
-            createdListings: 0,
-            createdLexiconTerms: 0,
-            createdOrganizations: 0,
-            linkedLexiconTerms: 0,
-            matchedOffers: 0,
-            profileUpdates: 0,
-            scrapedOffers: 0,
-            skippedOffers: 0,
-            unmatchedOffers: 0,
-            updatedOrganizations: 0,
-            updatedListings: 0,
-            verifiedListings: 0,
-          },
-          warnings: [],
-        };
-      }
-    );
+        },
+      ],
+      run: { ...queuedRun, completedAt: '2026-04-28T10:01:00.000Z', status: 'completed' },
+    });
 
     const response = await postHandler(
       new NextRequest('http://localhost/api/filemaker/organizations/job-board-scrape', {
@@ -228,6 +209,7 @@ describe('filemaker job-board scrape handler', () => {
     );
 
     expect(response.headers.get('content-type')).toContain('application/x-ndjson');
+    expect(response.headers.get('x-filemaker-job-board-scrape-run-id')).toBe('run-1');
     const events = (await response.text())
       .trim()
       .split('\n')
@@ -236,12 +218,7 @@ describe('filemaker job-board scrape handler', () => {
       expect.objectContaining({ message: 'Collecting job-board offer links.', type: 'status' }),
       expect.objectContaining({ type: 'done' }),
     ]);
-    expect(runFilemakerJobBoardScrapeMock).toHaveBeenCalledWith(
-      body,
-      expect.objectContaining({
-        onEvent: expect.any(Function),
-        signal: expect.any(AbortSignal),
-      })
-    );
+    expect(enqueueFilemakerJobBoardScrapeRunMock).toHaveBeenCalledWith(body);
+    expect(readFilemakerJobBoardScrapeRunMock).toHaveBeenCalledWith('run-1');
   });
 });

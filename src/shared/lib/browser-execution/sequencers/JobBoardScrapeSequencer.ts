@@ -41,7 +41,7 @@ export type JobBoardScrapeInput = {
   maxOffers?: number | null;
   maxPages?: number | null;
   mode?: JobBoardScrapeMode | null;
-  provider?: JobBoardProviderSelection | null;
+  provider?: JobBoardProviderSelection;
   sourceUrl?: string | null;
 };
 
@@ -245,9 +245,9 @@ const escapeHtml = (value: string): string =>
 
 const readProvider = (
   sourceUrl: string,
-  provider: JobBoardProviderSelection | null | undefined
+  provider: JobBoardProviderSelection = 'auto'
 ): JobBoardProvider | null => {
-  if (provider && provider !== 'auto' && isJobBoardProvider(provider)) return provider;
+  if (provider !== 'auto' && isJobBoardProvider(provider)) return provider;
   return detectJobBoardProviderFromUrl(sourceUrl);
 };
 

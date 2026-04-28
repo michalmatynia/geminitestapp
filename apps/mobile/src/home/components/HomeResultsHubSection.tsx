@@ -145,65 +145,72 @@ function ResultsHubSummary({
   );
 }
 
+function ResultItem({ result }: { result: KangurScore }): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  return (
+    <View
+      key={result.id}
+      style={{
+        backgroundColor: '#f8fafc',
+        borderColor: '#e2e8f0',
+        borderRadius: 20,
+        borderWidth: 1,
+        gap: 8,
+        padding: 14,
+      }}
+    >
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
+        {formatKangurMobileScoreOperation(result.operation, locale)}
+      </Text>
+      <Text style={{ color: '#475569' }}>
+        {copy({
+          de: `${result.correct_answers}/${result.total_questions} richtig`,
+          en: `${result.correct_answers}/${result.total_questions} correct`,
+          pl: `${result.correct_answers}/${result.total_questions} poprawnych`,
+        })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <OutlineLink
+          href={createKangurPracticeHref(result.operation)}
+          hint={copy({
+            de: `Startet erneut das Training für den Modus ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
+            en: `Starts practice again for the ${formatKangurMobileScoreOperation(result.operation, locale)} mode.`,
+            pl: `Uruchamia ponowny trening dla trybu ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
+          })}
+          label={`${copy({
+            de: 'Erneut trainieren',
+            en: 'Train again',
+            pl: 'Trenuj ponownie',
+          })}: ${formatKangurMobileScoreOperation(result.operation, locale)}`}
+        />
+        <OutlineLink
+          href={createKangurResultsHref({ operation: result.operation })}
+          hint={copy({
+            de: `Öffnet den Ergebnisverlauf für den Modus ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
+            en: `Opens result history for the ${formatKangurMobileScoreOperation(result.operation, locale)} mode.`,
+            pl: `Otwiera historię wyników dla trybu ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
+          })}
+          label={`${copy({
+            de: 'Modusverlauf',
+            en: 'Mode history',
+            pl: 'Historia trybu',
+          })}: ${formatKangurMobileScoreOperation(result.operation, locale)}`}
+        />
+      </View>
+    </View>
+  );
+}
+
 function ResultsHubDetailedList({
   results,
 }: {
   results: KangurScore[];
 }): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
+  const { copy } = useKangurMobileI18n();
   return (
     <View style={{ gap: 12 }}>
       {results.map((result) => (
-        <View
-          key={result.id}
-          style={{
-            backgroundColor: '#f8fafc',
-            borderColor: '#e2e8f0',
-            borderRadius: 20,
-            borderWidth: 1,
-            gap: 8,
-            padding: 14,
-          }}
-        >
-          <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>
-            {formatKangurMobileScoreOperation(result.operation, locale)}
-          </Text>
-          <Text style={{ color: '#475569' }}>
-            {copy({
-              de: `${result.correct_answers}/${result.total_questions} richtig`,
-              en: `${result.correct_answers}/${result.total_questions} correct`,
-              pl: `${result.correct_answers}/${result.total_questions} poprawnych`,
-            })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <OutlineLink
-              href={createKangurPracticeHref(result.operation)}
-              hint={copy({
-                de: `Startet erneut das Training für den Modus ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
-                en: `Starts practice again for the ${formatKangurMobileScoreOperation(result.operation, locale)} mode.`,
-                pl: `Uruchamia ponowny trening dla trybu ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
-              })}
-              label={`${copy({
-                de: 'Erneut trainieren',
-                en: 'Train again',
-                pl: 'Trenuj ponownie',
-              })}: ${formatKangurMobileScoreOperation(result.operation, locale)}`}
-            />
-            <OutlineLink
-              href={createKangurResultsHref({ operation: result.operation })}
-              hint={copy({
-                de: `Öffnet den Ergebnisverlauf für den Modus ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
-                en: `Opens result history for the ${formatKangurMobileScoreOperation(result.operation, locale)} mode.`,
-                pl: `Otwiera historię wyników dla trybu ${formatKangurMobileScoreOperation(result.operation, locale)}.`,
-              })}
-              label={`${copy({
-                de: 'Modusverlauf',
-                en: 'Mode history',
-                pl: 'Historia trybu',
-              })}: ${formatKangurMobileScoreOperation(result.operation, locale)}`}
-            />
-          </View>
-        </View>
+        <ResultItem key={result.id} result={result} />
       ))}
       <OutlineLink
         href={RESULTS_ROUTE}

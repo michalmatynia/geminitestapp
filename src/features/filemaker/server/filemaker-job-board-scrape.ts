@@ -6,6 +6,7 @@ import { randomUUID } from 'crypto';
 import { probeJobBoardOffer } from '@/features/job-board/server/job-scans-service';
 import {
   collectJobBoardOfferUrls,
+  collectJobBoardOfferUrlsDeterministically,
   extractJobBoardExternalIdFromUrl,
   isJobBoardOfferUrl,
   type JobBoardStructuredSnapshot,
@@ -27,6 +28,7 @@ import {
   filemakerJobBoardScrapeDraftSaveRequestSchema,
   filemakerJobBoardScrapeRequestSchema,
   type FilemakerJobBoardOrganizationMatch,
+  type FilemakerJobBoardDuplicateStrategy,
   type FilemakerJobBoardScrapeDraftSaveRequest,
   type FilemakerJobBoardScrapeLiveEvent,
   type FilemakerJobBoardScrapeOfferResult,
@@ -182,117 +184,24 @@ const sleep = async (delayMs: number): Promise<void> => {
   }
 };
 
-const uniqueStrings = (values: string[]): string[] =>
-  Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
-
-const toStringValue = (value: unknown): string =>
-  typeof value === 'string' ? value.trim() : '';
-
-const toNullableString = (value: unknown): string | null => {
-  const normalized = toStringValue(value);
-  return normalized.length > 0 ? normalized : null;
-};
-
-const toNullableNumber = (value: unknown): number | null => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-};
-
-const normalizeSalaryPeriod = (value: unknown): FilemakerJobBoardScrapedOffer['salaryPeriod'] => {
-  const normalized = toStringValue(value).toLowerCase();
-  return normalized === 'hourly' || normalized === 'yearly' || normalized === 'fixed'
-    ? normalized
-    : 'monthly';
-};
-
-const normalizeJobBoardSourceUrl = (value: unknown): string | null => {
-  const raw = toStringValue(value);
-  if (raw.length === 0) return null;
-  try {
-    const parsed = new URL(raw);
-    parsed.hash = '';
-    return parsed.toString();
-  } catch {
-    return null;
-  }
-};
-
-const normalizeLexiconLabel = (value: string): string =>
-  value.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
-
-const normalizeLexiconKey = (value: string): string =>
-  normalizeLexiconLabel(value)
-    .toLowerCase()
-    .replace(/ł/g, 'l')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const looksLikeAddressPill = (value: string): boolean =>
-  /\d/.test(value) && value.includes(',') && normalizeLexiconKey(value).split(' ').length >= 3;
-
-const classifyOfferPill = (
-  label: string,
-  position: number,
-  provider: JobBoardProvider
-): FilemakerLexiconTermCategory => {
-  const normalized = normalizeLexiconKey(label);
-  if (provider === 'pracuj_pl' && position === 0 && looksLikeAddressPill(label)) {
-    return 'address';
-  }
-  if (looksLikeAddressPill(label) && /(ul|street|avenue|aleja|warszawa|krakow|wroclaw|poznan|gdansk|lodz)/i.test(normalized)) {
-    return 'address';
-  }
-  if (/\bb2b\b|contract of employment|employment contract|umowa o prace|mandate|zlecenie/.test(normalized)) {
-    return 'contract_type';
-  }
-  if (/full time|part time|pelny etat|czesc etatu|etat/.test(normalized)) {
-    return 'employment_type';
-  }
-  if (/junior|mid|regular|senior|expert|manager|specialist|specjalista/.test(normalized)) {
-    return 'experience_level';
-  }
-  if (/remote|hybrid|office|onsite|zdalna|hybrydowa|biur/.test(normalized)) {
-    return 'work_mode';
-  }
-  if (/immediate|asap|od zaraz|employment|start/.test(normalized)) {
-    return 'start_date';
-  }
-  return 'other';
-};
-
-const snapshotPillValues = (snapshot: JobBoardStructuredSnapshot | null | undefined): string[] => {
-  const values = snapshot?.pills ?? [];
-  return uniqueStrings(values.map(normalizeLexiconLabel)).slice(0, 48);
-};
-
-const buildScrapedOfferPills = (input: {
-  provider: JobBoardProvider;
-  snapshot: JobBoardStructuredSnapshot | null | undefined;
-  sourceSite: string;
-  sourceUrl: string;
-}): FilemakerJobBoardScrapedOffer['pills'] =>
-  snapshotPillValues(input.snapshot).map((label, index) => ({
-    category: classifyOfferPill(label, index, input.provider),
-    label,
-    position: index,
-    sourceSite: input.sourceSite,
-    sourceUrl: input.sourceUrl,
-  }));
-
-const clipProfileText = (value: string, max = 8_000): string =>
-  value.length > max ? `${value.slice(0, Math.max(0, max - 3))}...` : value;
-
-const asRecord = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-
-const recordString = (record: Record<string, unknown> | null, key: string): string =>
-  toStringValue(record?.[key]);
-
-const recordNullableString = (record: Record<string, unknown> | null, key: string): string | null =>
-  toNullableString(record?.[key]);
+import {
+  asRecord,
+  buildScrapedOfferPills,
+  classifyOfferPill,
+  clipProfileText,
+  looksLikeAddressPill,
+  normalizeJobBoardSourceUrl,
+  normalizeLexiconKey,
+  normalizeLexiconLabel,
+  normalizeSalaryPeriod,
+  recordNullableString,
+  recordString,
+  snapshotPillValues,
+  toNullableNumber,
+  toNullableString,
+  toStringValue,
+  uniqueStrings,
+} from './job-board-scrape/normalizers';
 
 const salaryFromListing = (
   listing: Record<string, unknown> | null,
@@ -513,14 +422,51 @@ const loadOrganizationCandidates = async (
 };
 
 const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedOffer): string => {
-  const stablePart =
-    offer.sourceExternalId ??
-    (offer.sourceUrl.length > 0 ? offer.sourceUrl : `${offer.title}-${offer.location}`);
+  const sourceSite = offer.sourceSite.length > 0 ? offer.sourceSite : 'job-board';
+  let stablePart =
+    offer.sourceUrl.length > 0 ? offer.sourceUrl : `${offer.title}-${offer.location}`;
+  if (offer.sourceExternalId !== null) {
+    stablePart = `${sourceSite}-${offer.sourceExternalId}`;
+  }
   const slug = normalizeNameForMatch(`${organizationId}-${stablePart}`).replace(/\s+/g, '-');
   return `filemaker-job-board-job-${slug.length > 0 ? slug : randomUUID()}`;
 };
 
 const normalizeDedupeKey = (value: string): string => normalizeNameForMatch(value);
+
+const normalizeSourceSiteForDedupe = (value: unknown): string =>
+  normalizeDedupeKey(toStringValue(value));
+
+const normalizeExternalIdForDedupe = (value: unknown): string =>
+  toStringValue(value).toLowerCase();
+
+const normalizeSourceUrlForDedupe = (value: unknown): string => {
+  const normalized = normalizeJobBoardSourceUrl(value) ?? toStringValue(value);
+  if (normalized.length === 0) return '';
+  try {
+    const parsed = new URL(normalized);
+    parsed.hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+    parsed.hash = '';
+    parsed.search = '';
+    return parsed.toString().toLowerCase();
+  } catch {
+    return normalizeDedupeKey(normalized);
+  }
+};
+
+const listingSourceMatchesOfferSource = (
+  listing: FilemakerJobListing,
+  offer: FilemakerJobBoardScrapedOffer
+): boolean => {
+  const listingSourceSite = normalizeSourceSiteForDedupe(listing.sourceSite);
+  const offerSourceSite = normalizeSourceSiteForDedupe(offer.sourceSite);
+  return (
+    listingSourceSite.length === 0 ||
+    offerSourceSite.length === 0 ||
+    listingSourceSite === offerSourceSite
+  );
+};
 
 const findExistingListingIndex = (
   listings: readonly FilemakerJobListing[],
@@ -528,12 +474,33 @@ const findExistingListingIndex = (
   offer: FilemakerJobBoardScrapedOffer
 ): number => {
   const titleKey = normalizeDedupeKey(`${organizationId} ${offer.title} ${offer.location}`);
+  const offerExternalId = normalizeExternalIdForDedupe(offer.sourceExternalId);
+  const offerSourceUrl = normalizeSourceUrlForDedupe(offer.sourceUrl);
+  const hasSourceIdentity = offerExternalId.length > 0 || offerSourceUrl.length > 0;
   return listings.findIndex((listing: FilemakerJobListing): boolean => {
     if (listing.organizationId !== organizationId) return false;
-    if (offer.sourceExternalId !== null && listing.sourceExternalId === offer.sourceExternalId) return true;
-    if (offer.sourceUrl.length > 0 && listing.sourceUrl === offer.sourceUrl) return true;
-    if (offer.sourceExternalId !== null || offer.sourceUrl.length > 0) return false;
-    return normalizeDedupeKey(`${listing.organizationId} ${listing.title} ${listing.location ?? ''}`) === titleKey;
+    if (!listingSourceMatchesOfferSource(listing, offer)) return false;
+    const listingExternalId = normalizeExternalIdForDedupe(listing.sourceExternalId);
+    if (
+      offerExternalId.length > 0 &&
+      listingExternalId.length > 0 &&
+      listingExternalId === offerExternalId
+    ) {
+      return true;
+    }
+    const listingSourceUrl = normalizeSourceUrlForDedupe(listing.sourceUrl);
+    if (
+      offerSourceUrl.length > 0 &&
+      listingSourceUrl.length > 0 &&
+      listingSourceUrl === offerSourceUrl
+    ) {
+      return true;
+    }
+    if (hasSourceIdentity) return false;
+    const listingTitleKey = normalizeDedupeKey(
+      `${listing.organizationId} ${listing.title} ${listing.location ?? ''}`
+    );
+    return listingTitleKey === titleKey;
   });
 };
 
@@ -1362,12 +1329,16 @@ const buildSummary = (
   verifiedListings: verification.verifiedListings,
 });
 
+const resolveDraftSaveDuplicateStrategy = (
+  strategy: FilemakerJobBoardDuplicateStrategy
+): FilemakerJobBoardDuplicateStrategy => (strategy === 'add' ? 'add' : 'update');
+
 const toDraftSaveImportOptions = (
   input: FilemakerJobBoardScrapeDraftSaveRequest
 ): FilemakerJobBoardScrapeRequest =>
   filemakerJobBoardScrapeRequestSchema.parse({
     delayMs: 0,
-    duplicateStrategy: input.duplicateStrategy,
+    duplicateStrategy: resolveDraftSaveDuplicateStrategy(input.duplicateStrategy),
     extractDescriptions: true,
     extractSalaries: true,
     headless: null,
@@ -1405,8 +1376,24 @@ const resolveDraftSaveSourceSite = (
   const offerSourceSite = input.offers.find(
     (offer): boolean => offer.sourceSite.trim().length > 0
   )?.sourceSite;
-  return offerSourceSite?.trim() || getJobBoardSourceSite(provider);
+  const normalizedSourceSite = offerSourceSite?.trim() ?? '';
+  return normalizedSourceSite.length > 0 ? normalizedSourceSite : getJobBoardSourceSite(provider);
 };
+
+const isDirectOfferUrlForScrape = (sourceUrl: string, provider: JobBoardProvider): boolean => {
+  if (!isJobBoardOfferUrl(sourceUrl, provider)) return false;
+  if (provider !== 'pracuj_pl') return true;
+  try {
+    return /,oferta,/i.test(new URL(sourceUrl).pathname);
+  } catch {
+    return false;
+  }
+};
+
+const usesDeterministicFirstExtractionPath = (
+  extractionPath: FilemakerJobBoardScrapeRequest['extractionPath']
+): boolean =>
+  extractionPath === 'deterministic' || extractionPath === 'deterministic_then_playwright';
 
 const collectOfferLinks = async (
   options: FilemakerJobBoardScrapeRequest
@@ -1421,7 +1408,20 @@ const collectOfferLinks = async (
   if (provider === null) {
     throw badRequestError('Unsupported job board provider.');
   }
-  const collected = await collectJobBoardOfferUrls({
+  const useDeterministicFirst = usesDeterministicFirstExtractionPath(options.extractionPath);
+  if (
+    useDeterministicFirst &&
+    isDirectOfferUrlForScrape(options.sourceUrl, provider)
+  ) {
+    return {
+      provider,
+      runId: null,
+      sourceSite: getJobBoardSourceSite(provider),
+      urls: [options.sourceUrl],
+      warnings: [],
+    };
+  }
+  const collectOptions = {
     delayMs: options.delayMs,
     headless: options.headless,
     humanizeMouse: options.humanizeMouse,
@@ -1431,9 +1431,49 @@ const collectOfferLinks = async (
     provider,
     sourceUrl: options.sourceUrl,
     timeoutMs: options.timeoutMs,
-  });
+  };
+
+  if (useDeterministicFirst) {
+    const deterministicCollected = await collectJobBoardOfferUrlsDeterministically(collectOptions);
+    const deterministicUrls = uniqueStrings(
+      deterministicCollected.links.map((link) => link.url)
+    );
+    if (deterministicUrls.length > 0 || options.extractionPath === 'deterministic') {
+      if (
+        deterministicUrls.length === 0 &&
+        isDirectOfferUrlForScrape(options.sourceUrl, provider)
+      ) {
+        deterministicUrls.push(options.sourceUrl);
+      }
+      return {
+        provider,
+        runId: deterministicCollected.runId,
+        sourceSite: deterministicCollected.sourceSite,
+        urls: deterministicUrls.slice(0, options.maxOffers),
+        warnings: deterministicCollected.warnings,
+      };
+    }
+
+    const fallbackCollected = await collectJobBoardOfferUrls(collectOptions);
+    const fallbackUrls = uniqueStrings(fallbackCollected.links.map((link) => link.url));
+    if (fallbackUrls.length === 0 && isDirectOfferUrlForScrape(options.sourceUrl, provider)) {
+      fallbackUrls.push(options.sourceUrl);
+    }
+    return {
+      provider,
+      runId: fallbackCollected.runId ?? deterministicCollected.runId,
+      sourceSite: fallbackCollected.sourceSite,
+      urls: fallbackUrls.slice(0, options.maxOffers),
+      warnings:
+        fallbackUrls.length === 0
+          ? [...deterministicCollected.warnings, ...fallbackCollected.warnings]
+          : fallbackCollected.warnings,
+    };
+  }
+
+  const collected = await collectJobBoardOfferUrls(collectOptions);
   const urls = uniqueStrings(collected.links.map((link) => link.url));
-  if (urls.length === 0 && isJobBoardOfferUrl(options.sourceUrl, provider)) {
+  if (urls.length === 0 && isDirectOfferUrlForScrape(options.sourceUrl, provider)) {
     urls.push(options.sourceUrl);
   }
   return {
@@ -1478,7 +1518,8 @@ const scrapeOffersViaJobBoardSequencer = async (
       `Scraping offer ${index + 1} of ${collected.urls.length}: ${url}`
     );
     const probe = await probeJobBoardOffer({
-      forcePlaywright: true,
+      extractionPath: options.extractionPath,
+      forcePlaywright: options.extractionPath !== 'deterministic',
       headless: options.headless,
       humanizeMouse: options.humanizeMouse,
       personaId: options.personaId,

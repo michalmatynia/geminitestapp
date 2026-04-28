@@ -13,7 +13,7 @@ import { formatKangurMobileScoreDateTime } from '../../scores/mobileScoreSummary
 import {
   type KangurDuelOpponentEntry,
   type KangurDuelLeaderboardEntry,
-} from '@/packages/kangur-contracts/src/kangur-duels';
+} from '@kangur/contracts/kangur-duels';
 import { type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 import { type UseKangurMobileLearnerDuelsSummaryResult } from '../../duels/useKangurMobileLearnerDuelsSummary';
 

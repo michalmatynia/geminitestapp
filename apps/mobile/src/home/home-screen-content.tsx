@@ -1,8 +1,7 @@
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { Href } from 'expo-router';
 
-import { getKangurHomeAuthBoundaryViewModel } from './homeAuthBoundary';
+import { getKangurHomeAuthBoundaryViewModel, type KangurHomeAuthBoundaryViewModel } from './homeAuthBoundary';
 import { SectionCard } from './homeScreenPrimitives';
 import {
   useHomeScreenDeferredPanelGroup,
@@ -12,8 +11,10 @@ import {
   type KangurMobileHomeLessonCheckpointItem,
 } from './useKangurMobileHomeLessonCheckpoints';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import { type KangurMobileAuthMode } from '../auth/mobileAuthMode';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
+import type { KangurAuthSession } from '@kangur/platform';
 import {
   HOME_ACCOUNT_DETAILS_PANEL_GROUP,
   HOME_DUEL_PANEL_SEQUENCE,
@@ -34,7 +35,9 @@ import {
   DeferredAuthenticatedHomeScoreState,
   HomeDebugProofOperationState,
   HomeHeroLatestLessonCheckpointState,
+  type HomeRecentResultsViewModel,
   type HomeScoreViewModel,
+  type HomeTrainingFocusViewModel,
   LiveAuthenticatedHomeScoreState,
 } from './home-screen-score-state';
 

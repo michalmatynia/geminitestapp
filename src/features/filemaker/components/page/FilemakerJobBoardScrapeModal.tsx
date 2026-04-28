@@ -2,7 +2,7 @@
 /* eslint-disable max-lines, max-lines-per-function, complexity */
 
 import { Play, Save, Search, Square } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
@@ -11,11 +11,15 @@ import {
   type FilemakerJobBoardDuplicateStrategy,
   type FilemakerJobBoardImportStrategy,
   type FilemakerJobBoardOrganizationScope,
+  type FilemakerJobBoardScrapeExtractionPath,
   type FilemakerJobBoardScrapeLiveEvent,
   type FilemakerJobBoardScrapeMode,
   type FilemakerJobBoardScrapeOfferResult,
   type FilemakerJobBoardScrapeRequest,
   type FilemakerJobBoardScrapeResponse,
+  type FilemakerJobBoardScrapeRuntimeRun,
+  type FilemakerJobBoardScrapeRuntimeSnapshot,
+  type FilemakerJobBoardScrapeRuntimeStatus,
   type FilemakerJobBoardScrapeWriteResult,
   type FilemakerJobBoardScrapedOffer,
 } from '@/features/filemaker/filemaker-job-board-scrape-contracts';
@@ -41,6 +45,7 @@ type ScrapeDraft = {
   duplicateStrategy: FilemakerJobBoardDuplicateStrategy;
   extractDescriptions: boolean;
   extractSalaries: boolean;
+  extractionPath: FilemakerJobBoardScrapeExtractionPath;
   humanizeMouse: boolean;
   importStrategy: FilemakerJobBoardImportStrategy;
   maxOffers: string;
@@ -78,6 +83,7 @@ const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'duplicateStrategy',
   'extractDescriptions',
   'extractSalaries',
+  'extractionPath',
   'humanizeMouse',
   'importStrategy',
   'maxOffers',
@@ -92,7 +98,18 @@ const SCRAPE_DRAFT_SETTINGS_KEYS = [
 ] as const satisfies readonly (keyof ScrapeDraft)[];
 
 const SCRAPER_SETTINGS_STORAGE_KEY = 'filemaker.job-board-scraper.settings.v1';
-const SCRAPER_SETTINGS_VERSION = 2;
+const SCRAPER_SETTINGS_VERSION = 3;
+const SCRAPER_ACTIVE_RUN_STORAGE_KEY = 'filemaker.job-board-scraper.active-run-id.v1';
+const RUNTIME_RUN_POLL_INTERVAL_MS = 1000;
+
+const jobBoardScrapeRunEndpoint = (runId: string): string =>
+  `${FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT}/runs/${encodeURIComponent(runId)}`;
+
+const JOB_BOARD_SCRAPE_LATEST_RUN_ENDPOINT =
+  `${FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT}/runs/latest`;
+
+const jobBoardScrapeRunCancelEndpoint = (runId: string): string =>
+  `${jobBoardScrapeRunEndpoint(runId)}/cancel`;
 
 const PROVIDER_OPTIONS = [
   { value: 'auto', label: 'Auto-detect' },
@@ -107,9 +124,18 @@ const IMPORT_STRATEGY_OPTIONS = [
 ] as const;
 
 const DUPLICATE_STRATEGY_OPTIONS = [
-  { value: 'skip', label: 'Skip existing' },
   { value: 'update', label: 'Update existing' },
+  { value: 'skip', label: 'Skip existing' },
   { value: 'add', label: 'Always add' },
+] as const;
+
+const EXTRACTION_PATH_OPTIONS = [
+  { value: 'playwright_ai', label: 'Playwright screenshot + AI' },
+  { value: 'deterministic', label: 'Deterministic path' },
+  {
+    value: 'deterministic_then_playwright',
+    label: 'Both: deterministic first, Playwright fallback',
+  },
 ] as const;
 
 const STATUS_OPTIONS = [
@@ -134,6 +160,7 @@ type PostScrapeRequestInput = {
   draft: ScrapeDraft;
   mode: FilemakerJobBoardScrapeMode;
   onEvent: (event: FilemakerJobBoardScrapeLiveEvent) => void;
+  onRunId?: (runId: string) => void;
   selectedOrganizationIds: string[];
   signal: AbortSignal;
 };
@@ -188,6 +215,16 @@ const readErrorMessage = async (response: Response): Promise<string> => {
   }
 };
 
+const responseError = async (response: Response, fallback: string): Promise<Error> => {
+  const message = await readErrorMessage(response);
+  const error = new Error(message.length > 0 ? message : fallback);
+  (error as Error & { status?: number }).status = response.status;
+  return error;
+};
+
+const isNotFoundResponseError = (error: unknown): boolean =>
+  error instanceof Error && (error as Error & { status?: number }).status === 404;
+
 const buildRequest = (
   draft: ScrapeDraft,
   mode: FilemakerJobBoardScrapeMode,
@@ -197,6 +234,7 @@ const buildRequest = (
   duplicateStrategy: draft.duplicateStrategy,
   extractDescriptions: draft.extractDescriptions,
   extractSalaries: draft.extractSalaries,
+  extractionPath: draft.extractionPath,
   headless: null,
   humanizeMouse: draft.humanizeMouse,
   importStrategy: draft.importStrategy,
@@ -291,6 +329,17 @@ const readNullableString = (value: unknown): string | null => {
   const normalized = readString(value).trim();
   return normalized.length > 0 ? normalized : null;
 };
+
+const normalizeRuntimeStatus = (value: unknown): FilemakerJobBoardScrapeRuntimeStatus =>
+  value === 'running' ||
+  value === 'completed' ||
+  value === 'failed' ||
+  value === 'canceled'
+    ? value
+    : 'queued';
+
+const isRuntimeRunActive = (run: FilemakerJobBoardScrapeRuntimeRun | null): boolean =>
+  run !== null && (run.status === 'queued' || run.status === 'running');
 
 const readNumber = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
@@ -427,6 +476,40 @@ const normalizeScrapeResponse = (value: unknown): FilemakerJobBoardScrapeRespons
   };
 };
 
+const normalizeRuntimeRun = (value: unknown): FilemakerJobBoardScrapeRuntimeRun | null => {
+  if (!isRecord(value)) return null;
+  const id = readString(value['id']).trim();
+  if (id.length === 0) return null;
+  const result = value['result'];
+  return {
+    completedAt: readNullableString(value['completedAt']),
+    createdAt: readString(value['createdAt']),
+    error: readNullableString(value['error']),
+    id,
+    mode: value['mode'] === 'import' ? 'import' : 'preview',
+    result: isRecord(result) ? normalizeScrapeResponse(result) : null,
+    sourceUrl: readString(value['sourceUrl']),
+    startedAt: readNullableString(value['startedAt']),
+    status: normalizeRuntimeStatus(value['status']),
+    updatedAt: readString(value['updatedAt']),
+  };
+};
+
+const normalizeRuntimeSnapshot = (
+  value: unknown
+): FilemakerJobBoardScrapeRuntimeSnapshot => {
+  const record = isRecord(value) ? value : {};
+  return {
+    events: Array.isArray(record['events'])
+      ? record['events'].filter(
+          (event): event is FilemakerJobBoardScrapeLiveEvent =>
+            isRecord(event) && typeof event['type'] === 'string'
+        )
+      : [],
+    run: normalizeRuntimeRun(record['run']),
+  };
+};
+
 const normalizeWriteResult = (value: unknown): FilemakerJobBoardScrapeWriteResult | null => {
   if (!isRecord(value)) return null;
   const action = readString(value['action']);
@@ -447,6 +530,146 @@ const parseLiveEventLine = (line: string): FilemakerJobBoardScrapeLiveEvent | nu
   } catch {
     return null;
   }
+};
+
+const readStoredRuntimeRunId = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.localStorage.getItem(SCRAPER_ACTIVE_RUN_STORAGE_KEY);
+    const normalized = value?.trim() ?? '';
+    return normalized.length > 0 ? normalized : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredRuntimeRunId = (runId: string): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(SCRAPER_ACTIVE_RUN_STORAGE_KEY, runId);
+  } catch {
+    // Best-effort continuity; the Redis runtime remains authoritative.
+  }
+};
+
+const removeStoredRuntimeRunId = (): void => {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(SCRAPER_ACTIVE_RUN_STORAGE_KEY);
+  } catch {
+    // Best-effort cleanup only.
+  }
+};
+
+const buildClientRuntimeRun = (
+  runId: string,
+  draft: ScrapeDraft,
+  mode: FilemakerJobBoardScrapeMode
+): FilemakerJobBoardScrapeRuntimeRun => {
+  const timestamp = new Date().toISOString();
+  return {
+    completedAt: null,
+    createdAt: timestamp,
+    error: null,
+    id: runId,
+    mode,
+    result: null,
+    sourceUrl: draft.sourceUrl.trim(),
+    startedAt: null,
+    status: 'queued',
+    updatedAt: timestamp,
+  };
+};
+
+const reduceLivePreviewEvent = (
+  current: LivePreviewState,
+  event: FilemakerJobBoardScrapeLiveEvent
+): LivePreviewState => {
+  if (event.type === 'run') return current;
+  if (event.type === 'done') {
+    const normalizedResult = normalizeScrapeResponse(event.result);
+    return {
+      ...current,
+      final: true,
+      offers: normalizedResult.offers,
+      warnings: normalizedResult.warnings,
+    };
+  }
+  if (event.type === 'status') {
+    return { ...current, messages: appendCapped(current.messages, readString(event.message)) };
+  }
+  if (event.type === 'links') {
+    const urls = readStringArray(event.urls);
+    return {
+      ...current,
+      discoveredUrls: urls,
+      messages: appendCapped(
+        current.messages,
+        `Found ${urls.length} offer link${urls.length === 1 ? '' : 's'} on ${readString(event.sourceSite)}.`
+      ),
+    };
+  }
+  if (event.type === 'offer') {
+    const offerResult = normalizeOfferResult(event.result);
+    const offerTitle = offerResult.offer.title.trim();
+    const offerSourceUrl = offerResult.offer.sourceUrl.trim();
+    let offerLabel = 'job-board offer';
+    if (offerSourceUrl.length > 0) offerLabel = offerSourceUrl;
+    if (offerTitle.length > 0) offerLabel = offerTitle;
+    return {
+      ...current,
+      offers: mergeLiveOffer(current.offers, offerResult),
+      messages: appendCapped(
+        current.messages,
+        `Scraped ${event.index}/${event.total}: ${offerLabel}`
+      ),
+    };
+  }
+  if (event.type === 'write') {
+    const write = normalizeWriteResult(event.write);
+    if (write === null) return current;
+    return {
+      ...current,
+      messages: appendCapped(current.messages, write.message),
+      writes: [...current.writes, write].slice(-16),
+    };
+  }
+  if (event.type === 'warning') {
+    return { ...current, warnings: appendCapped(current.warnings, readString(event.warning), 6) };
+  }
+  return { ...current, warnings: appendCapped(current.warnings, readString(event.message), 6) };
+};
+
+const buildLivePreviewFromEvents = (
+  events: FilemakerJobBoardScrapeLiveEvent[]
+): LivePreviewState =>
+  events.reduce(reduceLivePreviewEvent, createEmptyLivePreviewState());
+
+const fetchRuntimeSnapshot = async (
+  runId: string,
+  signal?: AbortSignal
+): Promise<FilemakerJobBoardScrapeRuntimeSnapshot> => {
+  const response = await fetch(jobBoardScrapeRunEndpoint(runId), {
+    method: 'GET',
+    signal,
+  });
+  if (!response.ok) {
+    throw await responseError(response, 'Failed to load job-board scrape run.');
+  }
+  return normalizeRuntimeSnapshot(await response.json());
+};
+
+const fetchLatestRuntimeSnapshot = async (
+  signal?: AbortSignal
+): Promise<FilemakerJobBoardScrapeRuntimeSnapshot> => {
+  const response = await fetch(JOB_BOARD_SCRAPE_LATEST_RUN_ENDPOINT, {
+    method: 'GET',
+    signal,
+  });
+  if (!response.ok) {
+    throw await responseError(response, 'Failed to load latest job-board scrape run.');
+  }
+  return normalizeRuntimeSnapshot(await response.json());
 };
 
 const readLiveScrapeStream = async (
@@ -530,6 +753,10 @@ const postScrapeRequest = async (
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
+  const runId = response.headers.get('x-filemaker-job-board-scrape-run-id')?.trim() ?? '';
+  if (runId.length > 0) {
+    input.onRunId?.(runId);
+  }
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
   if (contentType.includes('application/x-ndjson')) {
     return readLiveScrapeStream(response, input.onEvent);
@@ -571,9 +798,10 @@ const formatActionUpdatedAt = (value: string): string | null => {
 
 const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
   delayMs: '750',
-  duplicateStrategy: 'skip',
+  duplicateStrategy: 'update',
   extractDescriptions: true,
   extractSalaries: true,
+  extractionPath: 'playwright_ai',
   humanizeMouse: true,
   importStrategy: 'create_unmatched',
   maxOffers: '25',
@@ -591,9 +819,11 @@ const normalizeSavedDraft = (
   value: unknown,
   selectedOrganizationCount: number
 ): ScrapeDraft | null => {
-  if (!isRecord(value) || value['version'] !== SCRAPER_SETTINGS_VERSION || !isRecord(value['draft'])) {
+  if (!isRecord(value) || !isRecord(value['draft'])) {
     return null;
   }
+  const version = readNumber(value['version']);
+  if (version !== 2 && version !== SCRAPER_SETTINGS_VERSION) return null;
   const saved = value['draft'];
   const fallback = defaultDraft(selectedOrganizationCount);
   const organizationScope = readStoredChoice(
@@ -602,15 +832,22 @@ const normalizeSavedDraft = (
     fallback.organizationScope
   );
 
+  const duplicateStrategy = readStoredChoice(
+    saved['duplicateStrategy'],
+    DUPLICATE_STRATEGY_OPTIONS.map((option) => option.value),
+    fallback.duplicateStrategy
+  );
+
   return {
     delayMs: readStoredString(saved['delayMs'], fallback.delayMs),
-    duplicateStrategy: readStoredChoice(
-      saved['duplicateStrategy'],
-      DUPLICATE_STRATEGY_OPTIONS.map((option) => option.value),
-      fallback.duplicateStrategy
-    ),
+    duplicateStrategy: version === 2 && duplicateStrategy === 'skip' ? 'update' : duplicateStrategy,
     extractDescriptions: readStoredBoolean(saved['extractDescriptions'], fallback.extractDescriptions),
     extractSalaries: readStoredBoolean(saved['extractSalaries'], fallback.extractSalaries),
+    extractionPath: readStoredChoice(
+      saved['extractionPath'],
+      EXTRACTION_PATH_OPTIONS.map((option) => option.value),
+      fallback.extractionPath
+    ),
     humanizeMouse: readStoredBoolean(saved['humanizeMouse'], fallback.humanizeMouse),
     importStrategy: readStoredChoice(
       saved['importStrategy'],
@@ -685,13 +922,18 @@ export function FilemakerJobBoardScrapeModal(
   const [modeInFlight, setModeInFlight] = useState<FilemakerJobBoardScrapeMode | null>(null);
   const [saveDraftsInFlight, setSaveDraftsInFlight] = useState<string | null>(null);
   const [result, setResult] = useState<FilemakerJobBoardScrapeResponse | null>(null);
+  const [activeRuntimeRun, setActiveRuntimeRun] =
+    useState<FilemakerJobBoardScrapeRuntimeRun | null>(null);
   const [livePreview, setLivePreview] = useState<LivePreviewState>(() =>
     createEmptyLivePreviewState()
   );
   const activeRequestRef = useRef<ActiveScrapeRequest | null>(null);
+  const notifiedRuntimeRunIdsRef = useRef<Set<string>>(new Set());
+  const rehydratedRunIdRef = useRef<string | null>(null);
   const requestIdRef = useRef(0);
   const selectedScopeDisabled = props.selectedOrganizationCount === 0;
-  const isRunning = modeInFlight !== null;
+  const activeRuntimeRunIsRunning = isRuntimeRunActive(activeRuntimeRun);
+  const isRunning = modeInFlight !== null || activeRuntimeRunIsRunning;
   const isSavingPreviewDrafts = saveDraftsInFlight !== null;
   const isSavingRuntimeSettings = browserMode.isSaving;
   const sourceUrlMissing = draft.sourceUrl.trim().length === 0;
@@ -703,6 +945,7 @@ export function FilemakerJobBoardScrapeModal(
   const actionUpdatedAt =
     browserMode.action !== null ? formatActionUpdatedAt(browserMode.action.updatedAt) : null;
   const hasLivePreview =
+    activeRuntimeRun !== null ||
     isRunning ||
     livePreview.discoveredUrls.length > 0 ||
     livePreview.messages.length > 0 ||
@@ -777,8 +1020,32 @@ export function FilemakerJobBoardScrapeModal(
     }
   };
 
-  const stopScrape = (): void => {
+  const stopScrape = async (): Promise<void> => {
     const activeRequest = activeRequestRef.current;
+    const runtimeRun = activeRuntimeRun;
+    if (runtimeRun !== null && isRuntimeRunActive(runtimeRun)) {
+      activeRequest?.controller.abort();
+      if (activeRequest === null || activeRequestRef.current?.id === activeRequest.id) {
+        activeRequestRef.current = null;
+      }
+      try {
+        const response = await fetch(jobBoardScrapeRunCancelEndpoint(runtimeRun.id), {
+          method: 'POST',
+          headers: withCsrfHeaders(),
+        });
+        if (!response.ok) {
+          throw new Error(await readErrorMessage(response));
+        }
+        applyRuntimeSnapshot(normalizeRuntimeSnapshot(await response.json()));
+        toast('Job-board scrape stopped.', { variant: 'default' });
+      } catch (error) {
+        toast(error instanceof Error ? error.message : 'Failed to stop job-board scrape.', {
+          variant: 'error',
+        });
+      }
+      return;
+    }
+
     if (activeRequest === null) return;
     activeRequest.controller.abort();
     activeRequestRef.current = null;
@@ -818,6 +1085,13 @@ export function FilemakerJobBoardScrapeModal(
     mode: FilemakerJobBoardScrapeMode
   ): void => {
     const normalizedResult = normalizeScrapeResponse(nextResult);
+    if (normalizedResult.runId !== null) {
+      notifiedRuntimeRunIdsRef.current.add(normalizedResult.runId);
+    }
+    const storedRuntimeRunId = readStoredRuntimeRunId();
+    if (storedRuntimeRunId !== null) {
+      notifiedRuntimeRunIdsRef.current.add(storedRuntimeRunId);
+    }
     setResult(normalizedResult);
     toast(resultMessage(normalizedResult), {
       variant: mode === 'import' ? 'success' : 'default',
@@ -826,6 +1100,59 @@ export function FilemakerJobBoardScrapeModal(
       props.onCompleted();
     }
   };
+
+  const notifyRuntimeCompletion = useCallback((
+    run: FilemakerJobBoardScrapeRuntimeRun,
+    nextResult: FilemakerJobBoardScrapeResponse
+  ): void => {
+    if (notifiedRuntimeRunIdsRef.current.has(run.id)) return;
+    notifiedRuntimeRunIdsRef.current.add(run.id);
+    toast(resultMessage(nextResult), {
+      variant: run.mode === 'import' ? 'success' : 'default',
+    });
+    if (run.mode === 'import') {
+      props.onCompleted();
+    }
+  }, [props.onCompleted, toast]);
+
+  const applyRuntimeSnapshot = useCallback((
+    snapshot: FilemakerJobBoardScrapeRuntimeSnapshot,
+    options: { notifyCompletion?: boolean } = {}
+  ): void => {
+    const normalizedSnapshot = normalizeRuntimeSnapshot(snapshot);
+    const run = normalizedSnapshot.run;
+    setActiveRuntimeRun(run);
+    if (run !== null) {
+      writeStoredRuntimeRunId(run.id);
+      setModeInFlight(isRuntimeRunActive(run) ? run.mode : null);
+    }
+
+    const eventPreview = buildLivePreviewFromEvents(normalizedSnapshot.events);
+    const runResult = run?.result ?? null;
+    if (runResult !== null) {
+      const normalizedResult = normalizeScrapeResponse(runResult);
+      setResult(normalizedResult);
+      setLivePreview({
+        ...eventPreview,
+        final: !isRuntimeRunActive(run),
+        offers: mergeLiveOffers(eventPreview.offers, normalizedResult.offers),
+        warnings: normalizedResult.warnings,
+      });
+      if (
+        options.notifyCompletion === true &&
+        run !== null &&
+        run.status === 'completed'
+      ) {
+        notifyRuntimeCompletion(run, normalizedResult);
+      }
+      return;
+    }
+
+    setLivePreview({
+      ...eventPreview,
+      final: eventPreview.final || (run !== null && !isRuntimeRunActive(run)),
+    });
+  }, [notifyRuntimeCompletion]);
 
   const handleDraftSaveSuccess = (nextResult: FilemakerJobBoardScrapeResponse): void => {
     const normalizedResult = normalizeScrapeResponse(nextResult);
@@ -864,62 +1191,23 @@ export function FilemakerJobBoardScrapeModal(
   };
 
   const handleLiveEvent = (event: FilemakerJobBoardScrapeLiveEvent): void => {
-    if (event.type === 'done') {
-      const normalizedResult = normalizeScrapeResponse(event.result);
-      setLivePreview((current) => ({
-        ...current,
-        final: true,
-        offers: normalizedResult.offers,
-        warnings: normalizedResult.warnings,
-      }));
-      setResult(normalizedResult);
+    if (event.type === 'run') {
+      const run = normalizeRuntimeRun(event.run);
+      if (run !== null) {
+        setActiveRuntimeRun(run);
+        writeStoredRuntimeRunId(run.id);
+        setModeInFlight(isRuntimeRunActive(run) ? run.mode : null);
+        if (run.result !== null) {
+          setResult(normalizeScrapeResponse(run.result));
+        }
+      }
       return;
     }
-    setLivePreview((current) => {
-      if (event.type === 'status') {
-        return { ...current, messages: appendCapped(current.messages, readString(event.message)) };
-      }
-      if (event.type === 'links') {
-        const urls = readStringArray(event.urls);
-        return {
-          ...current,
-          discoveredUrls: urls,
-          messages: appendCapped(
-            current.messages,
-            `Found ${urls.length} offer link${urls.length === 1 ? '' : 's'} on ${readString(event.sourceSite)}.`
-          ),
-        };
-      }
-      if (event.type === 'offer') {
-        const offerResult = normalizeOfferResult(event.result);
-        const offerTitle = offerResult.offer.title.trim();
-        const offerSourceUrl = offerResult.offer.sourceUrl.trim();
-        let offerLabel = 'job-board offer';
-        if (offerSourceUrl.length > 0) offerLabel = offerSourceUrl;
-        if (offerTitle.length > 0) offerLabel = offerTitle;
-        return {
-          ...current,
-          offers: mergeLiveOffer(current.offers, offerResult),
-          messages: appendCapped(
-            current.messages,
-            `Scraped ${event.index}/${event.total}: ${offerLabel}`
-          ),
-        };
-      }
-      if (event.type === 'write') {
-        const write = normalizeWriteResult(event.write);
-        if (write === null) return current;
-        return {
-          ...current,
-          messages: appendCapped(current.messages, write.message),
-          writes: [...current.writes, write].slice(-16),
-        };
-      }
-      if (event.type === 'warning') {
-        return { ...current, warnings: appendCapped(current.warnings, readString(event.warning), 6) };
-      }
-      return { ...current, warnings: appendCapped(current.warnings, readString(event.message), 6) };
-    });
+    if (event.type === 'done') {
+      const normalizedResult = normalizeScrapeResponse(event.result);
+      setResult(normalizedResult);
+    }
+    setLivePreview((current) => reduceLivePreviewEvent(current, event));
   };
 
   const runScrape = async (mode: FilemakerJobBoardScrapeMode): Promise<void> => {
@@ -931,6 +1219,7 @@ export function FilemakerJobBoardScrapeModal(
     if (request === null) return;
     setModeInFlight(mode);
     setResult(null);
+    setActiveRuntimeRun(null);
     setLivePreview({
       ...createEmptyLivePreviewState(),
       messages: [
@@ -945,6 +1234,10 @@ export function FilemakerJobBoardScrapeModal(
         draft,
         mode,
         onEvent: handleLiveEvent,
+        onRunId: (runId) => {
+          writeStoredRuntimeRunId(runId);
+          setActiveRuntimeRun(buildClientRuntimeRun(runId, draft, mode));
+        },
         selectedOrganizationIds: props.selectedOrganizationIds,
         signal: request.controller.signal,
       });
@@ -967,12 +1260,87 @@ export function FilemakerJobBoardScrapeModal(
     props.onClose();
   };
 
+  useEffect(() => {
+    if (!props.open) {
+      rehydratedRunIdRef.current = null;
+      return undefined;
+    }
+    const runId = readStoredRuntimeRunId();
+    if (runId === null || rehydratedRunIdRef.current === runId) return undefined;
+    rehydratedRunIdRef.current = runId;
+    const controller = new AbortController();
+    fetchRuntimeSnapshot(runId, controller.signal)
+      .then((snapshot) => {
+        applyRuntimeSnapshot(snapshot, { notifyCompletion: true });
+      })
+      .catch(async (error: unknown) => {
+        if (isAbortLikeError(error, controller.signal)) return;
+        if (isNotFoundResponseError(error)) {
+          removeStoredRuntimeRunId();
+          const latestSnapshot = await fetchLatestRuntimeSnapshot(controller.signal);
+          applyRuntimeSnapshot(latestSnapshot, { notifyCompletion: true });
+          return;
+        }
+        toast(error instanceof Error ? error.message : 'Failed to load job-board scrape run.', {
+          variant: 'error',
+        });
+      })
+      .catch((error: unknown) => {
+        if (isAbortLikeError(error, controller.signal)) return;
+        toast(error instanceof Error ? error.message : 'Failed to load latest job-board scrape run.', {
+          variant: 'error',
+        });
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [applyRuntimeSnapshot, props.open, toast]);
+
+  useEffect(() => {
+    if (!props.open || !isRuntimeRunActive(activeRuntimeRun)) return undefined;
+    if (activeRequestRef.current !== null) return undefined;
+    let canceled = false;
+    let timeoutId: number | null = null;
+    const controller = new AbortController();
+
+    const poll = async (): Promise<void> => {
+      try {
+        const snapshot = await fetchRuntimeSnapshot(activeRuntimeRun.id, controller.signal);
+        if (!canceled) {
+          applyRuntimeSnapshot(snapshot, { notifyCompletion: true });
+        }
+      } catch (error) {
+        if (!canceled && !isAbortLikeError(error, controller.signal)) {
+          toast(error instanceof Error ? error.message : 'Failed to refresh job-board scrape run.', {
+            variant: 'error',
+          });
+        }
+      }
+      if (!canceled) {
+        timeoutId = window.setTimeout(() => {
+          void poll();
+        }, RUNTIME_RUN_POLL_INTERVAL_MS);
+      }
+    };
+
+    timeoutId = window.setTimeout(() => {
+      void poll();
+    }, RUNTIME_RUN_POLL_INTERVAL_MS);
+    return () => {
+      canceled = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+      controller.abort();
+    };
+  }, [activeRuntimeRun, applyRuntimeSnapshot, modeInFlight, props.open, toast]);
+
   return (
     <FormModal
       open={props.open}
       onClose={closeModal}
       title='Job Board Scraper'
-      subtitle='Centralized through the Job Board Playwright sequencer.'
+      subtitle='Centralized job-board offer scraping.'
       onSave={() => {
         void runScrape('preview');
       }}
@@ -990,7 +1358,9 @@ export function FilemakerJobBoardScrapeModal(
               type='button'
               variant='warning'
               size='sm'
-              onClick={stopScrape}
+              onClick={() => {
+                void stopScrape();
+              }}
             >
               <Square className='h-4 w-4' />
               Stop
@@ -1037,13 +1407,23 @@ export function FilemakerJobBoardScrapeModal(
           />
         </FormField>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5'>
           <FormField label='Provider'>
             <SelectSimple
               ariaLabel='Provider'
               value={draft.provider}
               options={PROVIDER_OPTIONS}
               onValueChange={(value) => updateDraft('provider', value as FilemakerJobBoardScrapeProvider)}
+            />
+          </FormField>
+          <FormField label='Scraper path'>
+            <SelectSimple
+              ariaLabel='Scraper path'
+              value={draft.extractionPath}
+              options={EXTRACTION_PATH_OPTIONS}
+              onValueChange={(value) =>
+                updateDraft('extractionPath', value as FilemakerJobBoardScrapeExtractionPath)
+              }
             />
           </FormField>
           <FormField label='Organisation scope'>
@@ -1228,6 +1608,9 @@ export function FilemakerJobBoardScrapeModal(
               <Badge variant={livePreview.final ? 'success' : 'secondary'}>
                 {livePreviewStatusLabel}
               </Badge>
+              {activeRuntimeRun !== null ? (
+                <Badge variant='secondary'>Run {activeRuntimeRun.status}</Badge>
+              ) : null}
               <Badge variant='secondary'>{livePreview.discoveredUrls.length} links</Badge>
               <Badge variant='secondary'>{livePreview.offers.length} offers scraped</Badge>
               <Badge variant='secondary'>{livePreview.writes.length} writes</Badge>
@@ -1296,11 +1679,7 @@ export function FilemakerJobBoardScrapeModal(
                               type='button'
                               size='sm'
                               variant='outline'
-                              disabled={
-                                !canSavePreviewOffers ||
-                                (saveDraftsInFlight !== null &&
-                                  saveDraftsInFlight !== item.offer.sourceUrl)
-                              }
+                              disabled={!canSavePreviewOffers}
                               onClick={() => {
                                 void savePreviewDrafts([item], item.offer.sourceUrl);
                               }}
@@ -1316,6 +1695,9 @@ export function FilemakerJobBoardScrapeModal(
                         {item.match ? ` -> ${item.match.organizationName}` : ''}
                         {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
                       </div>
+                      {item.reason !== null ? (
+                        <div className='mt-1 text-xs text-muted-foreground'>{item.reason}</div>
+                      ) : null}
                       {item.offer.companyProfile.trim().length > 0 ? (
                         <p className='mt-1 max-h-10 overflow-hidden text-xs text-muted-foreground'>
                           {item.offer.companyProfile}
@@ -1408,6 +1790,9 @@ export function FilemakerJobBoardScrapeModal(
                     {item.match ? ` -> ${item.match.organizationName}` : ''}
                     {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
                   </div>
+                  {item.reason !== null ? (
+                    <div className='mt-1 text-xs text-muted-foreground'>{item.reason}</div>
+                  ) : null}
                   {item.offer.pills.length > 0 ? (
                     <div className='mt-2 flex flex-wrap gap-1'>
                       {item.offer.pills.slice(0, 8).map((pill, pillIndex) => (

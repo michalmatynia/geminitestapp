@@ -5,7 +5,7 @@ import type { KangurMobileHomeAssignmentItem } from '../useKangurMobileHomeAssig
 import { OutlineLink, SummaryChip } from '../homeScreenPrimitives';
 
 function getPriorityConfig(
-  priority: string,
+  priority: string | undefined,
   copy: (args: Record<string, string>) => string,
 ): { accent: 'rose' | 'amber' | 'blue'; label: string } {
   if (priority === 'high') {
@@ -23,11 +23,18 @@ export function AssignmentCard({
   item: KangurMobileHomeAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
-  const { accent, label } = getPriorityConfig(item.assignment.priority, copy);
+  const assignment = item.assignment as {
+    priority: string | undefined;
+    title: string;
+    description: string;
+    target: string;
+    action: { label: unknown };
+  };
+  const actionLabel = translateKangurMobileActionLabel(assignment.action.label as string, locale);
+  const { accent, label } = getPriorityConfig(assignment.priority, copy);
   
-  const assignmentAction = item.href !== undefined && item.href !== '' ? (
-    <OutlineLink href={item.href} hint={item.assignment.description} label={actionLabel} />
+  const assignmentAction = item.href !== null ? (
+    <OutlineLink href={item.href} hint={assignment.description} label={actionLabel} />
   ) : (
     <View
       style={{
@@ -57,13 +64,13 @@ export function AssignmentCard({
     >
       <SummaryChip accent={accent} label={label} />
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-        {item.assignment.title}
+        {assignment.title}
       </Text>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
-        {item.assignment.description}
+        {assignment.description}
       </Text>
       <Text style={{ color: '#64748b', lineHeight: 20 }}>
-        {copy({ de: `Ziel: ${item.assignment.target}`, en: `Goal: ${item.assignment.target}`, pl: `Cel: ${item.assignment.target}` })}
+        {copy({ de: `Ziel: ${assignment.target}`, en: `Goal: ${assignment.target}`, pl: `Cel: ${assignment.target}` })}
       </Text>
       {assignmentAction}
     </View>

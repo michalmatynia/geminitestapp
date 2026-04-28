@@ -59,9 +59,9 @@ export const detectJobBoardProviderFromUrl = (value: string): JobBoardProvider |
 
 export const resolveJobBoardProvider = (
   sourceUrl: string,
-  requestedProvider?: JobBoardProviderSelection | null
+  requestedProvider: JobBoardProviderSelection = 'auto'
 ): JobBoardProvider | null => {
-  if (requestedProvider && requestedProvider !== 'auto') return requestedProvider;
+  if (requestedProvider !== 'auto') return requestedProvider;
   return detectJobBoardProviderFromUrl(sourceUrl);
 };
 

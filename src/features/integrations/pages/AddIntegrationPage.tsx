@@ -35,6 +35,14 @@ const AVAILABLE_INTEGRATIONS = [
     method: 'api',
   },
   {
+    name: 'Pracuj.pl',
+    slug: 'pracuj-pl',
+    description:
+      'Browser-based job-search platform connection for applying to Pracuj.pl offers with a reusable login session.',
+    type: 'job_search',
+    method: 'browser',
+  },
+  {
     name: 'Tradera',
     slug: 'tradera',
     description: 'Direct integration with Tradera marketplace.',
@@ -139,8 +147,20 @@ export default function AddIntegrationPage(): React.JSX.Element {
         renderCustomContent={(item) => (
           <div className='flex items-center gap-2 mt-2'>
             <StatusBadge
-              status={item.original.type === 'marketplace' ? 'Marketplace' : 'Platform'}
-              variant={item.original.type === 'marketplace' ? 'success' : 'processing'}
+              status={
+                item.original.type === 'marketplace'
+                  ? 'Marketplace'
+                  : item.original.type === 'job_search'
+                    ? 'Job Search'
+                    : 'Platform'
+              }
+              variant={
+                item.original.type === 'marketplace'
+                  ? 'success'
+                  : item.original.type === 'job_search'
+                    ? 'info'
+                    : 'processing'
+              }
               size='sm'
               className='font-semibold'
             />

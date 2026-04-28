@@ -43,7 +43,7 @@ export type JobBoardPageFetchOptions = {
   headless?: boolean | null;
   humanizeMouse?: boolean | null;
   personaId?: string | null;
-  provider?: JobBoardProviderSelection | null;
+  provider?: JobBoardProviderSelection;
   timeoutMs?: number | null;
 };
 
@@ -69,7 +69,7 @@ export type JobBoardOfferUrlCollectionOptions = {
   maxOffers?: number | null;
   maxPages?: number | null;
   personaId?: string | null;
-  provider?: JobBoardProviderSelection | null;
+  provider?: JobBoardProviderSelection;
   sourceUrl: string;
   timeoutMs?: number | null;
 };
@@ -137,9 +137,9 @@ const normalizeStringArray = (value: unknown): string[] =>
 
 const resolveProviderOrThrow = (
   sourceUrl: string,
-  provider: JobBoardProviderSelection | null | undefined
+  provider: JobBoardProviderSelection = 'auto'
 ): JobBoardProvider => {
-  const resolved = resolveJobBoardProvider(sourceUrl, provider ?? 'auto');
+  const resolved = resolveJobBoardProvider(sourceUrl, provider);
   if (resolved !== null) return resolved;
   throw new Error('Supported job boards are pracuj.pl, justjoin.it, and nofluffjobs.com.');
 };
@@ -348,7 +348,7 @@ export const fetchJobBoardPage = async (
 ): Promise<JobBoardPageFetchResult> => {
   const provider = resolveProviderOrThrow(sourceUrl, options.provider);
   const sourceSite = getJobBoardSourceSite(provider);
-  if (options.forcePlaywright === true || shouldUsePlaywright()) {
+  if (options.forcePlaywright === true || (options.forcePlaywright !== false && shouldUsePlaywright())) {
     const playwrightResult = await fetchJobBoardPageWithPlaywright(sourceUrl, {
       ...options,
       provider,
@@ -546,9 +546,6 @@ const parseSnapshot = (html: string): JobBoardStructuredSnapshot | null => {
   return null;
 };
 
-export const extractJobBoardStructuredSnapshot = (html: string): JobBoardStructuredSnapshot | null =>
-  parseSnapshot(html);
-
 const stripSnapshot = (html: string): string => {
   return html.replace(/<script\b([^>]*)>[\s\S]*?<\/script>/gi, (full, attributes: string) => {
     const isSnapshotScript = SNAPSHOT_SCRIPT_MARKERS.some((marker) => {
@@ -576,6 +573,270 @@ const htmlToDenseText = (html: string): string =>
       .replace(/<[^>]+>/g, ' ')
       .replace(/\n+/g, '\n')
   );
+
+const readHtmlAttribute = (attributes: string, name: string): string | null => {
+  const match = new RegExp(
+    `\\b${escapeRegex(name)}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`,
+    'i'
+  ).exec(attributes);
+  const value = match?.[2] ?? match?.[3] ?? match?.[4] ?? '';
+  const normalized = normalizeText(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const readMetaContent = (html: string, names: readonly string[]): string | null => {
+  const wanted = new Set(names.map((name) => name.toLowerCase()));
+  for (const match of html.matchAll(/<meta\b([^>]*)>/gi)) {
+    const attributes = match[1] ?? '';
+    const key = (
+      readHtmlAttribute(attributes, 'property') ??
+      readHtmlAttribute(attributes, 'name') ??
+      ''
+    ).toLowerCase();
+    if (!wanted.has(key)) continue;
+    const content = readHtmlAttribute(attributes, 'content');
+    if (content !== null) return content;
+  }
+  return null;
+};
+
+const readLinkHref = (html: string, rel: string): string | null => {
+  for (const match of html.matchAll(/<link\b([^>]*)>/gi)) {
+    const attributes = match[1] ?? '';
+    if ((readHtmlAttribute(attributes, 'rel') ?? '').toLowerCase() !== rel) continue;
+    const href = readHtmlAttribute(attributes, 'href');
+    if (href !== null) return href;
+  }
+  return null;
+};
+
+const readFirstTagText = (html: string, tagName: string): string | null => {
+  const match = new RegExp(`<${tagName}\\b[^>]*>([\\s\\S]*?)<\\/${tagName}>`, 'i').exec(html);
+  const text = match ? htmlToDenseText(match[1] ?? '') : '';
+  return text.length > 0 ? text : null;
+};
+
+const readHeadingTexts = (html: string): string[] =>
+  normalizeStringArray(
+    Array.from(html.matchAll(/<h[1-3]\b[^>]*>([\s\S]*?)<\/h[1-3]>/gi)).map((match) =>
+      htmlToDenseText(match[1] ?? '')
+    )
+  ).slice(0, 24);
+
+const collectJsonLdRecords = (value: unknown): Record<string, unknown>[] => {
+  const records: Record<string, unknown>[] = [];
+  const visit = (entry: unknown): void => {
+    if (Array.isArray(entry)) {
+      entry.forEach(visit);
+      return;
+    }
+    const record = asRecord(entry);
+    if (record === null) return;
+    records.push(record);
+    visit(record['@graph']);
+  };
+  visit(value);
+  return records;
+};
+
+const readJsonLdScripts = (html: string): string[] =>
+  Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi))
+    .filter((match) => /type=["']application\/ld\+json["']/i.test(match[1] ?? ''))
+    .map((match) => normalizeText(match[2] ?? ''))
+    .filter(Boolean)
+    .slice(0, 8);
+
+const jsonLdTypeMatches = (record: Record<string, unknown>, expectedType: string): boolean => {
+  const rawType = record['@type'];
+  const values = Array.isArray(rawType) ? rawType : [rawType];
+  return values.some(
+    (value) => typeof value === 'string' && value.toLowerCase() === expectedType.toLowerCase()
+  );
+};
+
+const readFirstJsonLdString = (...values: unknown[]): string | null => {
+  for (const value of values) {
+    const candidates = Array.isArray(value) ? value : [value];
+    for (const candidate of candidates) {
+      if (typeof candidate !== 'string') continue;
+      const normalized = normalizeText(candidate);
+      if (normalized.length > 0) return normalized;
+    }
+  }
+  return null;
+};
+
+const isDeterministicOfferUrl = (value: string, provider: JobBoardProvider): boolean => {
+  if (!isJobBoardOfferUrl(value, provider)) return false;
+  if (provider !== 'pracuj_pl') return true;
+  try {
+    return /,oferta,/i.test(new URL(value).pathname);
+  } catch {
+    return false;
+  }
+};
+
+const normalizeOfferUrl = (
+  value: string | null,
+  baseUrl: string,
+  provider: JobBoardProvider
+): string | null => {
+  if (value === null) return null;
+  try {
+    const url = new URL(value, baseUrl);
+    url.hash = '';
+    return isDeterministicOfferUrl(url.toString(), provider) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
+
+const collectOfferLinksFromHtml = (
+  html: string,
+  baseUrl: string,
+  provider: JobBoardProvider
+): JobBoardCollectedOfferLink[] => {
+  const anchorLinks = Array.from(html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)).flatMap(
+    (match) => {
+      const url = normalizeOfferUrl(readHtmlAttribute(match[1] ?? '', 'href'), baseUrl, provider);
+      if (url === null) return [];
+      return [{ title: clipText(htmlToDenseText(match[2] ?? ''), 180), url }];
+    }
+  );
+  const jsonLdLinks = readJsonLdScripts(html).flatMap((script) => {
+    try {
+      return collectJsonLdRecords(JSON.parse(script)).flatMap((record) => {
+        if (!jsonLdTypeMatches(record, 'JobPosting')) return [];
+        const url = normalizeOfferUrl(readFirstJsonLdString(record['url']), baseUrl, provider);
+        if (url === null) return [];
+        return [{ title: readFirstJsonLdString(record['title']) ?? '', url }];
+      });
+    } catch {
+      return [];
+    }
+  });
+  const directUrl = normalizeOfferUrl(baseUrl, baseUrl, provider);
+  return normalizeCollectedLinks([
+    ...(directUrl !== null ? [{ title: '', url: directUrl }] : []),
+    ...anchorLinks,
+    ...jsonLdLinks,
+  ]);
+};
+
+const buildPlainHtmlStructuredSnapshot = (
+  html: string,
+  fallbackUrl: string | null
+): JobBoardStructuredSnapshot | null => {
+  const rawHtml = stripSnapshot(html);
+  const title = readFirstTagText(rawHtml, 'title');
+  const canonical = readLinkHref(rawHtml, 'canonical');
+  const ogTitle = readMetaContent(rawHtml, ['og:title']);
+  const metaDescription = readMetaContent(rawHtml, ['description']);
+  const ogDescription = readMetaContent(rawHtml, ['og:description']);
+  const headings = readHeadingTexts(rawHtml);
+  const jsonLd = readJsonLdScripts(rawHtml);
+  const records = jsonLd.flatMap((script) => {
+    try {
+      return collectJsonLdRecords(JSON.parse(script));
+    } catch {
+      return [];
+    }
+  });
+  const jobPosting = records.find((record) => jsonLdTypeMatches(record, 'JobPosting')) ?? null;
+  const hiringOrganization = asRecord(jobPosting?.['hiringOrganization']);
+  const rawJobLocation = jobPosting?.['jobLocation'];
+  const jobLocation = Array.isArray(rawJobLocation)
+    ? asRecord(rawJobLocation[0])
+    : asRecord(rawJobLocation);
+  const jobAddress = asRecord(jobLocation?.['address']);
+  const companyName = readFirstJsonLdString(hiringOrganization?.['name']);
+  const companyUrl = readFirstJsonLdString(
+    hiringOrganization?.['sameAs'],
+    hiringOrganization?.['url']
+  );
+  const location = readFirstJsonLdString(
+    jobAddress?.['addressLocality'],
+    jobAddress?.['addressRegion'],
+    jobLocation?.['name']
+  );
+  const listingTitle = readFirstJsonLdString(jobPosting?.['title'], headings[0], ogTitle, title);
+  const description = readFirstJsonLdString(jobPosting?.['description'], ogDescription, metaDescription);
+  const denseText = clipText(htmlToDenseText(rawHtml), 12_000);
+  if (!listingTitle && !companyName && !description && !denseText) return null;
+
+  return {
+    applyUrls: normalizeStringArray([readFirstJsonLdString(jobPosting?.['url'], fallbackUrl)]),
+    canonical,
+    companyLinks: normalizeStringArray([companyUrl]),
+    companyProfile:
+      companyName || companyUrl
+        ? {
+            facts: companyName ? [{ label: 'Company', value: companyName }] : [],
+            headings: companyName ? [companyName] : [],
+            plainText: null,
+            sections: [],
+            title: companyName,
+            url: companyUrl,
+            websiteUrls: normalizeStringArray([companyUrl]),
+          }
+        : null,
+    facts: [
+      ...(companyName ? [{ label: 'Company', value: companyName }] : []),
+      ...(location ? [{ label: 'Location', value: location }] : []),
+    ],
+    headings: normalizeStringArray([listingTitle, ...headings]),
+    jsonLd,
+    metaDescription,
+    ogDescription,
+    ogTitle,
+    plainText: denseText,
+    provider: null,
+    sections: description ? [{ heading: 'Description', text: htmlToDenseText(description) }] : [],
+    title,
+    url: fallbackUrl,
+  };
+};
+
+export const extractJobBoardStructuredSnapshot = (
+  html: string,
+  fallbackUrl: string | null = null
+): JobBoardStructuredSnapshot | null =>
+  parseSnapshot(html) ?? buildPlainHtmlStructuredSnapshot(html, fallbackUrl);
+
+export const collectJobBoardOfferUrlsDeterministically = async (
+  options: JobBoardOfferUrlCollectionOptions
+): Promise<JobBoardOfferUrlCollectionResult> => {
+  const provider = resolveProviderOrThrow(options.sourceUrl, options.provider);
+  const sourceSite = getJobBoardSourceSite(provider);
+  const page = await fetchJobBoardPage(options.sourceUrl, {
+    forcePlaywright: false,
+    provider,
+    timeoutMs: options.timeoutMs ?? null,
+  });
+  if (!page.ok || page.html.trim().length === 0) {
+    return {
+      links: [],
+      runId: page.runId ?? null,
+      sourceUrl: options.sourceUrl,
+      provider,
+      sourceSite,
+      visitedUrls: page.finalUrl ? [page.finalUrl] : [],
+      warnings: [page.error ?? `HTTP ${page.status}`],
+    };
+  }
+  return {
+    links: collectOfferLinksFromHtml(page.html, page.finalUrl, page.provider).slice(
+      0,
+      options.maxOffers ?? 50
+    ),
+    runId: page.runId ?? null,
+    sourceUrl: options.sourceUrl,
+    provider: page.provider,
+    sourceSite: page.sourceSite,
+    visitedUrls: [page.finalUrl],
+    warnings: [],
+  };
+};
 
 const buildSnapshotSection = (snapshot: JobBoardStructuredSnapshot): string => {
   const provider = typeof snapshot.provider === 'string' ? snapshot.provider : 'unknown';
@@ -730,38 +991,5 @@ export const reduceJobBoardHtml = (html: string): string => {
   return parts.join('\n\n').trim();
 };
 
-const slugifyExternalId = (value: string): string | null => {
-  const slug = value
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  return slug.length > 0 ? slug.slice(0, 180) : null;
-};
-
-export const extractJobBoardExternalIdFromUrl = (
-  url: string,
-  provider?: JobBoardProvider | null
-): string | null => {
-  const resolvedProvider = provider ?? detectJobBoardProviderFromUrl(url);
-  try {
-    const parsed = new URL(url);
-    if (resolvedProvider === 'pracuj_pl') {
-      const match = url.match(/(?:oferta|offer)[^\d]*(\d{5,})/i) ?? url.match(/(\d{5,})(?:[/?#]|$)/);
-      return match?.[1] ?? null;
-    }
-    if (resolvedProvider === 'justjoin_it') {
-      const match = parsed.pathname.match(/\/job-offer\/([^/?#]+)/i);
-      return match?.[1] ? slugifyExternalId(match[1]) : null;
-    }
-    if (resolvedProvider === 'nofluffjobs') {
-      const match = parsed.pathname.match(/\/(?:pl\/)?job\/(.+)$/i);
-      return match?.[1] ? slugifyExternalId(match[1]) : null;
-    }
-    return slugifyExternalId(`${parsed.hostname}${parsed.pathname}`);
-  } catch {
-    return null;
-  }
-};
-
+export { extractJobBoardExternalIdFromUrl } from './sync/external-id';
 export { detectJobBoardProviderFromUrl, getJobBoardSourceSite, isJobBoardOfferUrl };

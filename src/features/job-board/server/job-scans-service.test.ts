@@ -13,8 +13,9 @@ vi.mock('./companies-repository', () => ({
   upsertCompanyByMatch: vi.fn(),
 }));
 
-vi.mock('./email-finder', () => ({
+vi.mock('./email-finding', () => ({
   findCompanyEmails: vi.fn(),
+  isVisionEmailFinderEnabled: vi.fn(() => false),
 }));
 
 vi.mock('./google-search', () => ({
@@ -36,11 +37,6 @@ vi.mock('./organisation-promotion', () => ({
   promoteCompanyToOrganisation: vi.fn(),
 }));
 
-vi.mock('./vision-email-finder', () => ({
-  findCompanyEmailsWithVisionLoop: vi.fn(),
-  isVisionEmailFinderEnabled: vi.fn(() => false),
-}));
-
 vi.mock('./job-scan-ai-evaluator', () => ({
   evaluateJobPageWithAi: (...args: unknown[]) => mocks.evaluateJobPageWithAiMock(...args),
 }));
@@ -50,14 +46,10 @@ vi.mock('./providers/job-board-sync', async (importOriginal) => ({
   fetchJobBoardPage: (...args: unknown[]) => mocks.fetchJobBoardPageMock(...args),
 }));
 
-import { findCompanyEmails } from './email-finder';
+import { findCompanyEmails, isVisionEmailFinderEnabled } from './email-finding';
 import { upsertCompany, upsertCompanyByMatch } from './companies-repository';
 import { upsertJobListing } from './job-listings-repository';
 import { upsertJobScan } from './job-scans-repository';
-import {
-  findCompanyEmailsWithVisionLoop,
-  isVisionEmailFinderEnabled,
-} from './vision-email-finder';
 import { createJobScan, probeJobBoardOffer, synchronizeJobScan } from './job-scans-service';
 
 const offerUrl = 'https://www.pracuj.pl/praca/frontend-developer-warszawa,oferta,10012345';
@@ -132,6 +124,99 @@ describe('probeJobBoardOffer', () => {
         title: 'Frontend Developer',
       },
     });
+  });
+
+  it('uses the deterministic offer probe path without AI evaluation', async () => {
+    const result = await probeJobBoardOffer({
+      extractionPath: 'deterministic',
+      provider: 'pracuj_pl',
+      sourceUrl: offerUrl,
+    });
+
+    expect(mocks.fetchJobBoardPageMock).toHaveBeenCalledWith(
+      offerUrl,
+      expect.objectContaining({
+        fallbackToFetch: true,
+        forcePlaywright: false,
+        provider: 'pracuj_pl',
+      })
+    );
+    expect(mocks.evaluateJobPageWithAiMock).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+    expect(result.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: 'deterministic_extract',
+          label: 'Deterministic extract',
+          status: 'completed',
+        }),
+      ])
+    );
+    expect(result.evaluation).toMatchObject({
+      company: {
+        name: 'Acme',
+      },
+      listing: {
+        title: 'Frontend Developer',
+      },
+      modelId: 'job-board-snapshot-fallback',
+    });
+  });
+
+  it('falls back to Playwright AI when the combined probe path fails deterministically', async () => {
+    mocks.fetchJobBoardPageMock.mockResolvedValueOnce({
+      error: 'HTTP 403',
+      finalUrl: offerUrl,
+      html: '',
+      ok: false,
+      provider: 'pracuj_pl',
+      runId: null,
+      sourceSite: 'pracuj.pl',
+      status: 403,
+    });
+    mocks.evaluateJobPageWithAiMock.mockResolvedValue({
+      company: { name: 'Acme' },
+      confidence: 0.93,
+      error: null,
+      evaluatedAt: '2026-04-28T10:00:00.000Z',
+      listing: { title: 'Frontend Developer' },
+      modelId: 'model-1',
+    });
+
+    const result = await probeJobBoardOffer({
+      extractionPath: 'deterministic_then_playwright',
+      provider: 'pracuj_pl',
+      sourceUrl: offerUrl,
+    });
+
+    expect(mocks.fetchJobBoardPageMock).toHaveBeenCalledTimes(2);
+    expect(mocks.fetchJobBoardPageMock).toHaveBeenNthCalledWith(
+      1,
+      offerUrl,
+      expect.objectContaining({
+        fallbackToFetch: true,
+        forcePlaywright: false,
+        provider: 'pracuj_pl',
+      })
+    );
+    expect(mocks.fetchJobBoardPageMock).toHaveBeenNthCalledWith(
+      2,
+      offerUrl,
+      expect.objectContaining({
+        fallbackToFetch: false,
+        forcePlaywright: true,
+        provider: 'pracuj_pl',
+      })
+    );
+    expect(mocks.evaluateJobPageWithAiMock).toHaveBeenCalledTimes(1);
+    expect(result.ok).toBe(true);
+    expect(result.error).toBeNull();
+    expect(result.steps).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: 'fetch', status: 'failed' }),
+        expect.objectContaining({ key: 'ai_evaluate', status: 'completed' }),
+      ])
+    );
   });
 });
 
@@ -228,19 +313,13 @@ describe('job scan email route selection', () => {
       emailsSearchedAt: company.emailsSearchedAt ?? null,
     }));
     vi.mocked(findCompanyEmails).mockResolvedValue({
+      durationMs: 100,
       emails: [],
+      iterationsRun: 0,
+      reasoning: null,
+      steps: [],
+      strategy: 'deterministic',
       visitedUrls: ['https://acme.example'],
-      durationMs: 100,
-      steps: [],
-    });
-    vi.mocked(findCompanyEmailsWithVisionLoop).mockResolvedValue({
-      emails: [],
-      iterationsRun: 1,
-      durationMs: 100,
-      finalUrl: 'https://acme.example/contact',
-      reasoning: 'No email visible.',
-      actionHistory: [],
-      steps: [],
     });
     vi.mocked(upsertJobScan).mockImplementation(async (scan) => ({
       id: scan.id,
@@ -307,8 +386,8 @@ describe('job scan email route selection', () => {
       expect.objectContaining({
         website: 'https://acme.example',
         domain: 'acme.example',
+        strategy: 'deterministic',
       })
     );
-    expect(findCompanyEmailsWithVisionLoop).not.toHaveBeenCalled();
   });
 });

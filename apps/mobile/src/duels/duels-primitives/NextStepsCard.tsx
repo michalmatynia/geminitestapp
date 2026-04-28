@@ -5,60 +5,12 @@ import { useKangurMobileDuelsAssignments, type KangurMobileDuelsAssignmentItem }
 import {
   KangurMobileCard as Card,
   KangurMobileInsetPanel,
+  KangurMobileLinkButton as LinkButton,
+  KangurMobileMutedActionChip as MutedActionChip,
   KangurMobilePill as Pill,
   type KangurMobileTone as Tone,
 } from '../../shared/KangurMobileUi';
 import { translateKangurMobileActionLabel } from '../../shared/translateKangurMobileActionLabel';
-import { LinkButton } from './BaseComponents';
-
-const priorityTones: Record<string, Tone> = {
-  high: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
-    textColor: '#b91c1c',
-  },
-  medium: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fde68a',
-    textColor: '#b45309',
-  },
-  low: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
-    textColor: '#1d4ed8',
-  },
-};
-
-const priorityLabels: Record<string, KangurMobileLocalizedValue<string>> = {
-  high: {
-    de: 'Hohe Priorität',
-    en: 'High priority',
-    pl: 'Priorytet wysoki',
-  },
-  medium: {
-    de: 'Mittlere Priorität',
-    en: 'Medium priority',
-    pl: 'Priorytet średni',
-  },
-  low: {
-    de: 'Niedrige Priorität',
-    en: 'Low priority',
-    pl: 'Priorytet niski',
-  },
-};
-
-import { Text, View } from 'react-native';
-
-import { useKangurMobileI18n, type KangurMobileLocalizedValue } from '../../i18n/kangurMobileI18n';
-import { useKangurMobileDuelsAssignments, type KangurMobileDuelsAssignmentItem } from '../useKangurMobileDuelsAssignments';
-import {
-  KangurMobileCard as Card,
-  KangurMobileInsetPanel,
-  KangurMobilePill as Pill,
-  type KangurMobileTone as Tone,
-} from '../../shared/KangurMobileUi';
-import { translateKangurMobileActionLabel } from '../../shared/translateKangurMobileActionLabel';
-import { LinkButton } from './BaseComponents';
 
 const priorityTones: Record<string, Tone> = {
   high: {
@@ -102,29 +54,24 @@ function DuelAssignmentRow({
   item: KangurMobileDuelsAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-
-  const priority = (item.assignment.priority === 'high' || item.assignment.priority === 'medium') 
-    ? item.assignment.priority 
+  const assignment = item.assignment as { priority: string; title: string; description: string; target: string; action: { label: unknown } };
+  const priority = (assignment.priority === 'high' || assignment.priority === 'medium') 
+    ? assignment.priority 
     : 'low';
   
   const priorityTone = priorityTones[priority] ?? priorityTones.low;
   const priorityLabel = priorityLabels[priority] ?? priorityLabels.low;
 
-  const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
-  const assignmentAction = Boolean(item.href) ? (
-    <LinkButton href={item.href!} label={assignmentActionLabel} tone='primary' stretch />
+  const assignmentActionLabel = translateKangurMobileActionLabel(assignment.action.label as string, locale);
+  const assignmentAction = item.href !== null ? (
+    <LinkButton href={item.href} label={assignmentActionLabel} tone='primary' stretch />
   ) : (
-    <Pill
+    <MutedActionChip
       label={`${assignmentActionLabel} · ${copy({
         de: 'bald',
         en: 'soon',
         pl: 'wkrotce',
       })}`}
-      tone={{
-        backgroundColor: '#e2e8f0',
-        borderColor: '#cbd5e1',
-        textColor: '#475569',
-      }}
     />
   );
 
@@ -133,16 +80,16 @@ function DuelAssignmentRow({
       <Pill label={copy(priorityLabel)} tone={priorityTone} />
 
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-        {item.assignment.title}
+        {assignment.title}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {item.assignment.description}
+        {assignment.description}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Ziel: ${item.assignment.target}`,
-          en: `Goal: ${item.assignment.target}`,
-          pl: `Cel: ${item.assignment.target}`,
+          de: `Ziel: ${assignment.target}`,
+          en: `Goal: ${assignment.target}`,
+          pl: `Cel: ${assignment.target}`,
         })}
       </Text>
 
@@ -159,12 +106,11 @@ function NextStepsList({
   return (
     <View style={{ gap: 12 }}>
       {assignments.map((item) => (
-        <DuelAssignmentRow key={item.assignment.id} item={item} />
+        <DuelAssignmentRow key={(item.assignment as { id: string }).id} item={item} />
       ))}
     </View>
   );
 }
-
 
 type DuelCopy = (value: KangurMobileLocalizedValue<string>) => string;
 

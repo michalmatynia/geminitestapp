@@ -20,8 +20,10 @@ import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/pla
 import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-board-runtime-constants';
 
 import {
+  collectJobBoardOfferUrlsDeterministically,
   collectJobBoardOfferUrls,
   detectJobBoardProviderFromUrl,
+  extractJobBoardStructuredSnapshot,
   extractJobBoardExternalIdFromUrl,
   fetchJobBoardPage,
   isJobBoardOfferUrl,
@@ -31,6 +33,7 @@ describe('job-board-sync', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
     mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
       ...defaultPlaywrightActionExecutionSettings,
     });
@@ -135,6 +138,117 @@ describe('job-board-sync', () => {
     });
     expect(request).not.toHaveProperty('launchOptions');
     expect(request).not.toHaveProperty('script');
+  });
+
+  it('keeps forcePlaywright false on the deterministic HTTP fetch path', async () => {
+    vi.stubEnv('JOB_BOARD_USE_PLAYWRIGHT', 'true');
+    const fetchMock = vi.fn(async () => new Response('<html><main>Senior Node</main></html>'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await fetchJobBoardPage('https://justjoin.it/job-offer/acme-senior-node', {
+      forcePlaywright: false,
+      provider: 'auto',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mocks.runPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('collects offer links through deterministic HTML parsing without the browser runtime', async () => {
+    const html = `
+      <html>
+        <body>
+          <a href="/job-offer/acme-senior-node">Senior Node</a>
+          <a href="https://justjoin.it/job-offer/acme-frontend">Frontend</a>
+          <a href="/companies/acme">Company profile</a>
+        </body>
+      </html>
+    `;
+    const fetchMock = vi.fn(async () => new Response(html));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await collectJobBoardOfferUrlsDeterministically({
+      maxOffers: 10,
+      provider: 'auto',
+      sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
+    });
+
+    expect(result.links).toEqual([
+      { title: 'Senior Node', url: 'https://justjoin.it/job-offer/acme-senior-node' },
+      { title: 'Frontend', url: 'https://justjoin.it/job-offer/acme-frontend' },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mocks.runPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('does not treat Pracuj category URLs as deterministic offer links', async () => {
+    const html = `
+      <html>
+        <body>
+          <a href="/praca/it;kw">IT category</a>
+          <a href="/praca/frontend-developer-warszawa,oferta,1001">Frontend Developer</a>
+        </body>
+      </html>
+    `;
+    const fetchMock = vi.fn(async () => new Response(html));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await collectJobBoardOfferUrlsDeterministically({
+      maxOffers: 10,
+      provider: 'auto',
+      sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+    });
+
+    expect(result.links).toEqual([
+      {
+        title: 'Frontend Developer',
+        url: 'https://www.pracuj.pl/praca/frontend-developer-warszawa,oferta,1001',
+      },
+    ]);
+    expect(mocks.runPlaywrightEngineTaskMock).not.toHaveBeenCalled();
+  });
+
+  it('builds a deterministic structured snapshot from plain job posting HTML', () => {
+    const html = `
+      <html>
+        <head>
+          <title>Senior Node Developer - Acme Tech</title>
+          <meta property="og:description" content="Build commerce APIs." />
+          <script type="application/ld+json">
+            {
+              "@type": "JobPosting",
+              "title": "Senior Node Developer",
+              "description": "<p>Build APIs for merchants.</p>",
+              "hiringOrganization": {
+                "name": "Acme Tech",
+                "sameAs": "https://acme.example"
+              },
+              "jobLocation": {
+                "address": { "addressLocality": "Warszawa" }
+              }
+            }
+          </script>
+        </head>
+        <body><main><h1>Senior Node Developer</h1></main></body>
+      </html>
+    `;
+
+    const snapshot = extractJobBoardStructuredSnapshot(
+      html,
+      'https://justjoin.it/job-offer/acme-senior-node'
+    );
+
+    expect(snapshot).toMatchObject({
+      companyLinks: ['https://acme.example'],
+      facts: [
+        { label: 'Company', value: 'Acme Tech' },
+        { label: 'Location', value: 'Warszawa' },
+      ],
+      headings: ['Senior Node Developer'],
+      sections: [{ heading: 'Description', text: 'Build APIs for merchants.' }],
+      url: 'https://justjoin.it/job-offer/acme-senior-node',
+    });
   });
 
   it('uses the runtime action browser mode when no run override is provided', async () => {

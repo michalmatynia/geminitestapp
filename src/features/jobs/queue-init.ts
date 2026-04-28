@@ -13,6 +13,7 @@ import { startFilemakerEmailCampaignSchedulerQueue } from '@/server/queues/filem
 import { startFilemakerMailSyncSchedulerQueue } from '@/features/filemaker/workers/filemakerMailSyncSchedulerQueue';
 import { startFilemakerMailIdleManager } from '@/features/filemaker/workers/filemakerMailIdleManager';
 import { startFilemakerCampaignColdPruneSchedulerQueue } from '@/features/filemaker/workers/filemakerCampaignColdPruneSchedulerQueue';
+import { startFilemakerJobBoardScrapeQueue } from '@/features/filemaker/server/filemaker-job-board-scrape-runtime';
 import {
   startPlaywrightListingQueue,
   startTraderaListingQueue,
@@ -79,6 +80,7 @@ const FEATURE_AWARE_STARTERS = [
   startImageStudioRunQueue,
   startImageStudioSequenceQueue,
   startCaseResolverOcrQueue,
+  startFilemakerJobBoardScrapeQueue,
 ] as const satisfies readonly QueueStarter[];
 
 const parseEnvBoolean = (value: string | undefined): boolean | null => {

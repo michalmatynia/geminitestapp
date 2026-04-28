@@ -115,11 +115,12 @@ const LessonBodyView = ({ copy, lessonBody, activeSectionIndex, setActiveSection
           </View>
         </InsetPanel>
       )}
-      {lessonBody.practiceNote && (
+      {Boolean(lessonBody.practiceNote) && (
         <Text style={{ color: '#475569', fontSize: 13, fontStyle: 'italic', lineHeight: 18 }}>
           {lessonBody.practiceNote}
         </Text>
       )}
+
       <ActionButton centered label={copy({ de: 'Zapisz checkpoint', en: 'Save checkpoint', pl: 'Zapisz checkpoint' })} onPress={onSave} stretch tone='primary' />
     </View>
   );

@@ -22,6 +22,7 @@ export const resolveIntegrationManagedRuntimeActionKeys = (args: {
       'tradera_quicklist_relist',
       'tradera_quicklist_sync',
       'tradera_check_status',
+      'tradera_move_to_unsold',
       'tradera_fetch_categories',
     ];
   }

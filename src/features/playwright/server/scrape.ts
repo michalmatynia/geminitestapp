@@ -4,6 +4,7 @@ import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-cont
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integration-storage';
 import type { PlaywrightRelistBrowserMode } from '@/shared/contracts/playwright-listing-runtime';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 
 import {
   startPlaywrightConnectionEngineTask,
@@ -92,6 +93,7 @@ export const runPlaywrightScrapeScript = async ({
   browserMode = 'connection_default',
   failureHoldOpenMs,
   runtimeSettingsOverrides,
+  runtimeActionKey,
   startUrl,
   capture,
   onRunStarted,
@@ -105,6 +107,7 @@ export const runPlaywrightScrapeScript = async ({
   browserMode?: PlaywrightRelistBrowserMode;
   failureHoldOpenMs?: number;
   runtimeSettingsOverrides?: Partial<PlaywrightSettings>;
+  runtimeActionKey?: ActionSequenceKey;
   startUrl?: string;
   capture?: PlaywrightConnectionBaseEngineRunRequest['capture'];
   onRunStarted?: ((runId: string) => Promise<void> | void) | undefined;
@@ -124,6 +127,7 @@ export const runPlaywrightScrapeScript = async ({
       ...(contextRegistry ? { contextRegistry } : {}),
     },
     instance,
+    ...(runtimeActionKey ? { runtimeActionKey } : {}),
     resolveEngineRequestConfig: (runtime: ResolvedPlaywrightConnectionRuntime) => {
       const runtimeSettings = {
         ...runtime.settings,

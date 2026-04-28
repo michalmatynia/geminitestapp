@@ -438,6 +438,7 @@ describe('playwright connection runtime', () => {
         input: { title: 'Example' },
         browserEngine: 'chromium',
       },
+      runtimeActionKey: 'playwright_programmable_listing',
       resolveEngineRequestConfig: (runtime) => ({
         settings: {
           ...runtime.settings,
@@ -457,6 +458,7 @@ describe('playwright connection runtime', () => {
         script: 'export default async function run() {}',
         input: { title: 'Example' },
         browserEngine: 'chromium',
+        runtimeKey: 'playwright_programmable_listing',
         contextOptions: {
           storageState: {
             cookies: [{ name: 'session', value: 'abc', domain: '.example.com', path: '/' }],
@@ -547,6 +549,7 @@ describe('playwright connection runtime', () => {
 
     expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
+        runtimeKey: 'playwright_programmable_listing',
         contextOptions: expect.objectContaining({
           locale: 'en-GB',
           viewport: { width: 1440, height: 900 },
@@ -658,6 +661,7 @@ describe('playwright connection runtime', () => {
     );
     expect(runPlaywrightEngineTaskMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
+        runtimeKey: 'playwright_programmable_listing',
         personaId: 'action-persona',
         contextOptions: expect.objectContaining({
           viewport: { width: 1600, height: 1000 },

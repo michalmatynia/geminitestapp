@@ -41,6 +41,7 @@ import {
   generateBrowserExecutionStepsInit,
   generateTraderaQuicklistBrowserStepsInit,
 } from '@/shared/lib/browser-execution/generate-browser-steps';
+import type { ActionSequenceKey } from '@/shared/lib/browser-execution/action-sequences';
 import {
   resolveAppBaseUrl,
   toAbsoluteUrl,
@@ -136,6 +137,11 @@ const TRADERA_MOVE_TO_UNSOLD_RUNTIME_SETTINGS_OVERRIDES: Partial<PlaywrightSetti
   actionDelayMin: 0,
   actionDelayMax: 0,
 };
+const TRADERA_QUICKLIST_RUNTIME_ACTION_KEYS = {
+  list: 'tradera_quicklist_list',
+  relist: 'tradera_quicklist_relist',
+  sync: 'tradera_quicklist_sync',
+} satisfies Record<'list' | 'relist' | 'sync', ActionSequenceKey>;
 
 type TraderaPlaywrightRunStartedCallback = ((runId: string) => Promise<void> | void) | undefined;
 
@@ -227,7 +233,7 @@ const refreshTraderaAuthenticatedConnectionForScriptedRun = async ({
 
   await runPlaywrightConnectionNativeTask<void>({
     connection,
-    runtimeActionKey: 'tradera_standard_list',
+    runtimeActionKey: 'tradera_auth',
     instance: createTraderaStandardListingPlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,
@@ -674,6 +680,7 @@ const runTraderaScriptedListingForProduct = async ({
       ? { failureHoldOpenMs: TRADERA_HEADED_FAILURE_HOLD_OPEN_MS }
       : {}),
     runtimeSettingsOverrides,
+    runtimeActionKey: TRADERA_QUICKLIST_RUNTIME_ACTION_KEYS[action],
     ...(onRunStarted ? { onRunStarted } : {}),
   });
 
@@ -848,6 +855,7 @@ export const runTraderaBrowserCheckStatus = async ({
     }),
     timeoutMs: TRADERA_CHECK_STATUS_TIMEOUT_MS,
     browserMode,
+    runtimeActionKey: 'tradera_check_status',
     ...(options?.onRunStarted ? { onRunStarted: options.onRunStarted } : {}),
   });
 
@@ -930,8 +938,12 @@ export const runTraderaBrowserMoveToUnsold = async ({
   const selectorRuntimeResolution = await resolveTraderaSelectorRegistryRuntime({
     profile: resolvedSystemSettings.selectorProfile,
   });
+  const moveToUnsoldExecutionStepsInit = generateBrowserExecutionStepsInit(
+    await getResolvedActionStepManifest('tradera_move_to_unsold')
+  );
   const moveToUnsoldScript = buildTraderaMoveToUnsoldScript(
-    selectorRuntimeResolution.runtime
+    selectorRuntimeResolution.runtime,
+    moveToUnsoldExecutionStepsInit
   );
 
   const result = await runPlaywrightScrapeScript({
@@ -953,6 +965,7 @@ export const runTraderaBrowserMoveToUnsold = async ({
     }),
     timeoutMs: TRADERA_MOVE_TO_UNSOLD_TIMEOUT_MS,
     browserMode,
+    runtimeActionKey: 'tradera_move_to_unsold',
     runtimeSettingsOverrides: TRADERA_MOVE_TO_UNSOLD_RUNTIME_SETTINGS_OVERRIDES,
     ...(options?.onRunStarted ? { onRunStarted: options.onRunStarted } : {}),
   });

@@ -87,7 +87,7 @@ type PlaywrightNodeRunRequestBase = {
 
 export type PlaywrightNodeScriptRunRequest = PlaywrightNodeRunRequestBase & {
   script: string;
-  runtimeKey?: null | undefined;
+  runtimeKey?: string | undefined;
 };
 
 export type PlaywrightNodeRuntimeRunRequest = PlaywrightNodeRunRequestBase & {
@@ -101,7 +101,8 @@ export type PlaywrightNodeRunRequest =
 
 export const isPlaywrightNodeRuntimeRunRequest = (
   request: PlaywrightNodeRunRequest
-): request is PlaywrightNodeRuntimeRunRequest => typeof request.runtimeKey === 'string';
+): request is PlaywrightNodeRuntimeRunRequest =>
+  typeof request.runtimeKey === 'string' && typeof request.script !== 'string';
 
 export type PlaywrightNodeArtifactReadResult = {
   artifact: PlaywrightNodeRunArtifact;

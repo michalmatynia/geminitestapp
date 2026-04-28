@@ -8,11 +8,11 @@ export const resolveNotesFolderTargetForNode = (
   nodes: MasterTreeNode[],
   nodeId: MasterTreeId | null
 ): string | null => {
-  if (!nodeId) return null;
+  if (nodeId === null) return null;
   const folderId = fromFolderMasterNodeId(nodeId);
-  if (folderId) return folderId;
+  if (folderId !== null) return folderId;
   const node = nodes.find((item: MasterTreeNode) => item.id === nodeId);
-  if (!node?.parentId) return null;
+  if (node === undefined || node.parentId === null) return null;
   return resolveNotesFolderTargetForNode(nodes, node.parentId);
 };
 
@@ -40,9 +40,9 @@ export const createNotesMasterTreeAdapter = (operations: NotesMasterTreeOperatio
               )
               .map((entry: MasterTreeNode): string | null => fromFolderMasterNodeId(entry.id))
               .find(
-                (folderId: string | null): boolean => Boolean(folderId) && folderId !== node.id
+                (folderId: string | null): boolean => folderId !== null && folderId !== node.id
               ) ?? null;
-          if (firstRootFolderId) {
+          if (firstRootFolderId !== null) {
             await operations.handleReorderFolder(node.id, firstRootFolderId, 'before');
             return;
           }

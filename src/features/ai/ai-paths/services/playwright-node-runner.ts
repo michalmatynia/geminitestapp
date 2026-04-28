@@ -603,7 +603,7 @@ const summarizePlaywrightRunRequest = (
   if (request.startUrl) summary.startUrl = request.startUrl;
   if (request.browserEngine) summary.browserEngine = request.browserEngine;
   if (typeof request.timeoutMs === 'number') summary.timeoutMs = request.timeoutMs;
-  if (isPlaywrightNodeRuntimeRunRequest(request)) summary.runtimeKey = request.runtimeKey;
+  if (typeof request.runtimeKey === 'string') summary.runtimeKey = request.runtimeKey;
   if (request.actionId) summary.actionId = request.actionId;
   if (request.actionName) summary.actionName = request.actionName;
   if (request.selectorProfile) summary.selectorProfile = request.selectorProfile;

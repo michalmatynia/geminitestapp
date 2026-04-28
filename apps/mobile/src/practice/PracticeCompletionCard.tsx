@@ -14,6 +14,7 @@ import { translateKangurMobileActionLabel } from '../shared/translateKangurMobil
 import { createKangurPlanHref } from '../plan/planHref';
 import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
 import { type PracticeCompletionCardProps } from './completion-card-types';
+import { type KangurPracticeSyncProofSnapshot } from './practiceSyncProofLogic';
 
 function CompletionHeader(props: {
   copy: PracticeCompletionCardProps['copy'];
@@ -55,7 +56,7 @@ function SyncPanel(props: {
         </View>
       )}
       {props.shouldShowSyncProof && (
-        <PracticeSyncProofPanel copy={props.copy} locale={props.locale} practiceSyncProof={props.practiceSyncProof} />
+        <PracticeSyncProofPanel copy={props.copy} locale={props.locale} practiceSyncProof={props.practiceSyncProof as KangurPracticeSyncProofSnapshot} />
       )}
     </>
   );
@@ -181,8 +182,7 @@ export function PracticeCompletionCard(props: PracticeCompletionCardProps): Reac
         shouldShowSyncProof={props.shouldShowSyncProof}
         copy={props.copy}
         locale={props.locale}
-        practiceSyncProof={props.practiceSyncProof}
-      />
+        practiceSyncProof={props.practiceSyncProof as KangurPracticeSyncProofSnapshot} />
       <NewBadgesPanel
         completion={props.completion}
         copy={props.copy}

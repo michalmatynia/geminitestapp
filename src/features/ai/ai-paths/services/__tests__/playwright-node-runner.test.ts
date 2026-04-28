@@ -617,6 +617,27 @@ describe('enqueuePlaywrightNodeRun', () => {
     );
   });
 
+  it('preserves runtime keys for managed script runs without treating them as runtime-only requests', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        runtimeKey: 'tradera_check_status',
+      },
+    });
+
+    expect(run.status).toBe('completed');
+
+    const persisted = await readPlaywrightNodeRun(run.runId);
+    expect(persisted?.requestSummary).toMatchObject({
+      runtimeKey: 'tradera_check_status',
+    });
+  });
+
   it('fails when the start URL violates outbound policy', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();

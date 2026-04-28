@@ -444,6 +444,7 @@ const buildPlaywrightConnectionEngineRunRequest = (input: {
   settings: PlaywrightConnectionSettingsOverridesInput;
   environmentOverrides?: PlaywrightContextEnvironmentOverrides;
   browserPreference?: PlaywrightBrowserPreference | null;
+  runtimeActionKey?: ActionSequenceKey;
 }): PlaywrightEngineRunRequest => {
   const requestOptions = buildPlaywrightConnectionEngineRequestOptions({
     runtime: input.runtime,
@@ -458,6 +459,18 @@ const buildPlaywrightConnectionEngineRunRequest = (input: {
   ) {
     return {
       ...input.request,
+      ...requestOptions,
+    };
+  }
+
+  if (
+    'script' in input.request &&
+    typeof input.request.script === 'string' &&
+    typeof input.runtimeActionKey === 'string'
+  ) {
+    return {
+      ...input.request,
+      runtimeKey: input.runtimeActionKey,
       ...requestOptions,
     };
   }
@@ -522,6 +535,7 @@ const executePlaywrightConnectionEngineTask = async (
     settings: config.settings,
     environmentOverrides: contextEnvironmentOverrides,
     browserPreference,
+    runtimeActionKey: input.runtimeActionKey,
   });
 
   const run =

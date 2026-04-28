@@ -19,7 +19,7 @@ export const normalizeKangurSocialProjectUrl = (
 
 const isLoopbackHost = (hostname: string): boolean => {
   const normalized = hostname.trim().toLowerCase().replace(/^\[|\]$/g, '');
-  if (!normalized) return false;
+  if (normalized === '') return false;
   return (
     normalized === 'localhost' ||
     LOCALHOST_SUBDOMAIN_PATTERN.test(normalized) ||
@@ -32,7 +32,7 @@ export const getKangurSocialProjectUrlError = (
   value: string | null | undefined
 ): string | null => {
   const normalized = normalizeKangurSocialProjectUrl(value);
-  if (!normalized) {
+  if (normalized === '') {
     return KANGUR_SOCIAL_PROJECT_URL_REQUIRED_MESSAGE;
   }
 

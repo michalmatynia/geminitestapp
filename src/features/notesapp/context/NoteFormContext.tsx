@@ -125,7 +125,7 @@ export function NoteFormProvider({
   } = useNoteFileAttachments(note?.files);
 
   const setLightboxImage = (imgSrc: string | null): void => {
-    if (imgSrc) {
+    if (imgSrc !== null) {
       openLightbox(imgSrc);
     } else {
       closeLightbox();
@@ -223,7 +223,7 @@ export function NoteFormProvider({
   const handleSubmit = useCallback(
     async (e: React.FormEvent): Promise<void> => {
       e.preventDefault();
-      if (!title || !content) return;
+      if (title.length === 0 || content.length === 0) return;
 
       try {
         const baseData = {
@@ -281,7 +281,7 @@ export function NoteFormProvider({
   );
 
   useEffect((): void => {
-    if (note?.id) {
+    if (note?.id !== undefined) {
       resetHistory(note.content);
     }
   }, [note?.id, note?.content, resetHistory]);

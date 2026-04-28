@@ -613,6 +613,7 @@ describe('runTraderaBrowserCheckStatus', () => {
         script: TRADERA_CHECK_STATUS_SCRIPT,
         timeoutMs: 60_000,
         browserMode: 'headed',
+        runtimeActionKey: 'tradera_check_status',
         input: expect.objectContaining({
           listingUrl: 'https://www.tradera.com/item/123',
           externalListingId: 'listing-123',
@@ -836,6 +837,7 @@ describe('runTraderaBrowserMoveToUnsold', () => {
 
     expect(runPlaywrightScrapeScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        runtimeActionKey: 'tradera_move_to_unsold',
         input: expect.objectContaining({
           listingUrl: 'https://www.tradera.com/item/123',
           externalListingId: 'listing-123',

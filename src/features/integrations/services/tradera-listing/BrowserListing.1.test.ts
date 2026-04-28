@@ -435,6 +435,11 @@ describe('runTraderaBrowserListing scripted mode', () => {
         }),
       })
     );
+    expect(runPlaywrightConnectionNativeTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeActionKey: 'tradera_auth',
+      })
+    );
     expect(listParametersMock).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       externalListingId: 'listing-123',
@@ -829,6 +834,7 @@ describe('runTraderaBrowserListing scripted mode', () => {
 
     expect(runPlaywrightListingScriptMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        runtimeActionKey: 'tradera_quicklist_sync',
         input: expect.objectContaining({
           listingAction: 'sync',
           existingExternalListingId: 'external-existing',

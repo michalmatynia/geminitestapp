@@ -18,6 +18,7 @@ import {
   TRADERA_SELECTOR_REGISTRY_SEED_ENTRIES,
   generateTraderaSelectorRegistryRuntime,
 } from '../selectors/tradera';
+import { getPlaywrightRuntimeActionSeed } from '../playwright-runtime-action-seeds';
 
 // ── Registry completeness ─────────────────────────────────────────────────────
 
@@ -165,6 +166,15 @@ describe('ACTION_SEQUENCES', () => {
       'categories_finalize',
       'browser_close',
     ]);
+  });
+
+  it('every action sequence has a seeded runtime action', () => {
+    for (const key of Object.keys(ACTION_SEQUENCES) as Array<keyof typeof ACTION_SEQUENCES>) {
+      expect(
+        getPlaywrightRuntimeActionSeed(key),
+        `missing runtime action seed for ${key}`
+      ).not.toBeNull();
+    }
   });
 });
 

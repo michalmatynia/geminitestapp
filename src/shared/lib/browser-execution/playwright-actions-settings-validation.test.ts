@@ -5,6 +5,7 @@ import {
   parseAndValidatePlaywrightActionsSettingValue,
 } from './playwright-actions-settings-validation';
 import { PLAYWRIGHT_RUNTIME_ACTION_SEEDS } from './playwright-runtime-action-seeds';
+import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 
 describe('playwright-actions-settings-validation', () => {
   it('normalizes valid actions into canonical JSON', () => {
@@ -49,17 +50,7 @@ describe('playwright-actions-settings-validation', () => {
         },
       },
     ]);
-    expect(result.actions[0]?.executionSettings).toEqual({
-      headless: null,
-      browserPreference: null,
-      emulateDevice: null,
-      deviceName: null,
-      slowMo: null,
-      timeout: null,
-      navigationTimeout: null,
-      locale: null,
-      timezoneId: null,
-    });
+    expect(result.actions[0]?.executionSettings).toEqual(defaultPlaywrightActionExecutionSettings);
     expect(JSON.parse(result.value)).toEqual(result.actions);
   });
 

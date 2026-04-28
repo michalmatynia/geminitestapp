@@ -58,6 +58,10 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     name: 'Tradera Check Status',
     description: 'Default Tradera live status-check flow.',
   },
+  tradera_move_to_unsold: {
+    name: 'Tradera End Listing',
+    description: 'Default Tradera end-listing flow.',
+  },
   tradera_fetch_categories: {
     name: 'Tradera Fetch Categories',
     description: 'Default Tradera public category crawl flow.',

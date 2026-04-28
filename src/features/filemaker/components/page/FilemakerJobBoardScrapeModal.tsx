@@ -1,25 +1,29 @@
 'use client';
-/* eslint-disable max-lines, max-lines-per-function */
+/* eslint-disable max-lines, max-lines-per-function, complexity */
 
-import { Play, Save, Search } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import { Play, Save, Search, Square } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
   type FilemakerJobBoardScrapeProvider,
-  type FilemakerPracujDuplicateStrategy,
-  type FilemakerPracujImportStrategy,
-  type FilemakerPracujOrganizationScope,
-  type FilemakerPracujScrapeMode,
-  type FilemakerPracujScrapeRequest,
-  type FilemakerPracujScrapeResponse,
-} from '@/features/filemaker/filemaker-pracuj-scrape-contracts';
+  type FilemakerJobBoardDuplicateStrategy,
+  type FilemakerJobBoardImportStrategy,
+  type FilemakerJobBoardOrganizationScope,
+  type FilemakerJobBoardScrapeMode,
+  type FilemakerJobBoardScrapeRequest,
+  type FilemakerJobBoardScrapeResponse,
+} from '@/features/filemaker/filemaker-job-board-scrape-contracts';
 import type { FilemakerJobListingStatus } from '@/features/filemaker/types';
+import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { FormField, FormModal, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
-type FilemakerPracujScrapeModalProps = {
+import { useJobBoardScrapeBrowserModeSetting } from './useJobBoardScrapeBrowserModeSetting';
+
+type FilemakerJobBoardScrapeModalProps = {
   onClose: () => void;
   onCompleted: () => void;
   open: boolean;
@@ -29,16 +33,15 @@ type FilemakerPracujScrapeModalProps = {
 
 type ScrapeDraft = {
   delayMs: string;
-  duplicateStrategy: FilemakerPracujDuplicateStrategy;
+  duplicateStrategy: FilemakerJobBoardDuplicateStrategy;
   extractDescriptions: boolean;
   extractSalaries: boolean;
-  headless: boolean;
   humanizeMouse: boolean;
-  importStrategy: FilemakerPracujImportStrategy;
+  importStrategy: FilemakerJobBoardImportStrategy;
   maxOffers: string;
   maxPages: string;
   minimumMatchConfidence: string;
-  organizationScope: FilemakerPracujOrganizationScope;
+  organizationScope: FilemakerJobBoardOrganizationScope;
   personaId: string;
   provider: FilemakerJobBoardScrapeProvider;
   sourceUrl: string;
@@ -51,8 +54,31 @@ type ScrapeModalInitialState = {
   organizationScopeTouched: boolean;
 };
 
+type ActiveScrapeRequest = {
+  controller: AbortController;
+  id: number;
+};
+
+const SCRAPE_DRAFT_SETTINGS_KEYS = [
+  'delayMs',
+  'duplicateStrategy',
+  'extractDescriptions',
+  'extractSalaries',
+  'humanizeMouse',
+  'importStrategy',
+  'maxOffers',
+  'maxPages',
+  'minimumMatchConfidence',
+  'organizationScope',
+  'personaId',
+  'provider',
+  'sourceUrl',
+  'status',
+  'timeoutMs',
+] as const satisfies readonly (keyof ScrapeDraft)[];
+
 const SCRAPER_SETTINGS_STORAGE_KEY = 'filemaker.job-board-scraper.settings.v1';
-const SCRAPER_SETTINGS_VERSION = 1;
+const SCRAPER_SETTINGS_VERSION = 2;
 
 const PROVIDER_OPTIONS = [
   { value: 'auto', label: 'Auto-detect' },
@@ -99,6 +125,9 @@ const readStoredChoice = <T extends string>(
   fallback: T
 ): T => (typeof value === 'string' && allowed.includes(value as T) ? (value as T) : fallback);
 
+const areDraftSettingsEqual = (left: ScrapeDraft, right: ScrapeDraft): boolean =>
+  SCRAPE_DRAFT_SETTINGS_KEYS.every((key) => left[key] === right[key]);
+
 const readErrorMessage = async (response: Response): Promise<string> => {
   try {
     const body = (await response.json()) as { message?: unknown; error?: unknown };
@@ -113,14 +142,14 @@ const readErrorMessage = async (response: Response): Promise<string> => {
 
 const buildRequest = (
   draft: ScrapeDraft,
-  mode: FilemakerPracujScrapeMode,
+  mode: FilemakerJobBoardScrapeMode,
   selectedOrganizationIds: string[]
-): FilemakerPracujScrapeRequest => ({
+): FilemakerJobBoardScrapeRequest => ({
   delayMs: toNumber(draft.delayMs, 750),
   duplicateStrategy: draft.duplicateStrategy,
   extractDescriptions: draft.extractDescriptions,
   extractSalaries: draft.extractSalaries,
-  headless: draft.headless,
+  headless: null,
   humanizeMouse: draft.humanizeMouse,
   importStrategy: draft.importStrategy,
   maxOffers: toNumber(draft.maxOffers, 25),
@@ -136,11 +165,38 @@ const buildRequest = (
   timeoutMs: toNumber(draft.timeoutMs, 180_000),
 });
 
-const resultMessage = (result: FilemakerPracujScrapeResponse): string => {
+const postScrapeRequest = async (
+  draft: ScrapeDraft,
+  mode: FilemakerJobBoardScrapeMode,
+  selectedOrganizationIds: string[],
+  signal: AbortSignal
+): Promise<FilemakerJobBoardScrapeResponse> => {
+  const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(buildRequest(draft, mode, selectedOrganizationIds)),
+    signal,
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+  return (await response.json()) as FilemakerJobBoardScrapeResponse;
+};
+
+const resultMessage = (result: FilemakerJobBoardScrapeResponse): string => {
   if (result.mode === 'preview') {
     return `Preview found ${result.summary.scrapedOffers} offer${result.summary.scrapedOffers === 1 ? '' : 's'} and ${result.summary.matchedOffers} match${result.summary.matchedOffers === 1 ? '' : 'es'}.`;
   }
   return `Imported ${result.summary.createdListings} created, ${result.summary.updatedListings} updated, ${result.summary.skippedOffers} skipped.`;
+};
+
+const formatActionUpdatedAt = (value: string): string | null => {
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return null;
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(timestamp));
 };
 
 const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
@@ -148,9 +204,8 @@ const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
   duplicateStrategy: 'skip',
   extractDescriptions: true,
   extractSalaries: true,
-  headless: true,
   humanizeMouse: true,
-  importStrategy: 'matched_only',
+  importStrategy: 'create_unmatched',
   maxOffers: '25',
   maxPages: '2',
   minimumMatchConfidence: '85',
@@ -186,7 +241,6 @@ const normalizeSavedDraft = (
     ),
     extractDescriptions: readStoredBoolean(saved['extractDescriptions'], fallback.extractDescriptions),
     extractSalaries: readStoredBoolean(saved['extractSalaries'], fallback.extractSalaries),
-    headless: readStoredBoolean(saved['headless'], fallback.headless),
     humanizeMouse: readStoredBoolean(saved['humanizeMouse'], fallback.humanizeMouse),
     importStrategy: readStoredChoice(
       saved['importStrategy'],
@@ -247,20 +301,32 @@ const createInitialState = (selectedOrganizationCount: number): ScrapeModalIniti
     : { draft: defaultDraft(selectedOrganizationCount), organizationScopeTouched: false };
 };
 
-export function FilemakerPracujScrapeModal(
-  props: FilemakerPracujScrapeModalProps
+export function FilemakerJobBoardScrapeModal(
+  props: FilemakerJobBoardScrapeModalProps
 ): React.JSX.Element | null {
   const { toast } = useToast();
+  const browserMode = useJobBoardScrapeBrowserModeSetting(props.open);
   const [initialState] = useState(() => createInitialState(props.selectedOrganizationCount));
   const [draft, setDraft] = useState<ScrapeDraft>(initialState.draft);
+  const [savedDraftBaseline, setSavedDraftBaseline] = useState<ScrapeDraft>(initialState.draft);
   const [organizationScopeTouched, setOrganizationScopeTouched] = useState(
     initialState.organizationScopeTouched
   );
-  const [modeInFlight, setModeInFlight] = useState<FilemakerPracujScrapeMode | null>(null);
-  const [result, setResult] = useState<FilemakerPracujScrapeResponse | null>(null);
+  const [modeInFlight, setModeInFlight] = useState<FilemakerJobBoardScrapeMode | null>(null);
+  const [result, setResult] = useState<FilemakerJobBoardScrapeResponse | null>(null);
+  const activeRequestRef = useRef<ActiveScrapeRequest | null>(null);
+  const requestIdRef = useRef(0);
   const selectedScopeDisabled = props.selectedOrganizationCount === 0;
   const isRunning = modeInFlight !== null;
+  const isSavingRuntimeSettings = browserMode.isSaving;
   const sourceUrlMissing = draft.sourceUrl.trim().length === 0;
+  const hasDraftUnsavedChanges = useMemo(
+    () => !areDraftSettingsEqual(draft, savedDraftBaseline),
+    [draft, savedDraftBaseline]
+  );
+  const hasSettingsUnsavedChanges = hasDraftUnsavedChanges || browserMode.hasUnsavedChanges;
+  const actionUpdatedAt =
+    browserMode.action !== null ? formatActionUpdatedAt(browserMode.action.updatedAt) : null;
 
   useEffect(() => {
     if (!props.open) return;
@@ -279,6 +345,14 @@ export function FilemakerPracujScrapeModal(
     });
   }, [organizationScopeTouched, props.open, props.selectedOrganizationCount]);
 
+  useEffect(
+    () => () => {
+      activeRequestRef.current?.controller.abort();
+      activeRequestRef.current = null;
+    },
+    []
+  );
+
   const organizationScopeOptions = useMemo(
     () => [
       {
@@ -295,49 +369,101 @@ export function FilemakerPracujScrapeModal(
     setDraft((current) => ({ ...current, [key]: value }));
   };
 
-  const saveSettings = (): void => {
-    const saved = writeSavedDraft(draft);
-    toast(saved ? 'Scraper settings saved.' : 'Failed to save scraper settings.', {
-      variant: saved ? 'success' : 'error',
-    });
+  const saveSettings = async (): Promise<void> => {
+    if (!hasSettingsUnsavedChanges) return;
+    try {
+      const saved = hasDraftUnsavedChanges ? writeSavedDraft(draft) : true;
+      if (saved) {
+        setSavedDraftBaseline(draft);
+      }
+      await browserMode.persist();
+      toast(saved ? 'Scraper settings saved.' : 'Failed to save scraper settings.', {
+        variant: saved ? 'success' : 'error',
+      });
+    } catch (error) {
+      toast(extractMutationErrorMessage(error, 'Failed to save scraper settings.'), {
+        variant: 'error',
+      });
+    }
   };
 
-  const runScrape = async (mode: FilemakerPracujScrapeMode): Promise<void> => {
+  const stopScrape = (): void => {
+    const activeRequest = activeRequestRef.current;
+    if (activeRequest === null) return;
+    activeRequest.controller.abort();
+    activeRequestRef.current = null;
+    setModeInFlight(null);
+    toast('Job-board scrape stopped.', { variant: 'default' });
+  };
+
+  const startScrapeRequest = (): ActiveScrapeRequest | null => {
+    if (activeRequestRef.current !== null) return null;
+    const request: ActiveScrapeRequest = {
+      controller: new AbortController(),
+      id: requestIdRef.current + 1,
+    };
+    requestIdRef.current = request.id;
+    activeRequestRef.current = request;
+    return request;
+  };
+
+  const isActiveScrapeRequest = (request: ActiveScrapeRequest): boolean =>
+    activeRequestRef.current !== null &&
+    activeRequestRef.current.id === request.id &&
+    !request.controller.signal.aborted;
+
+  const finishScrapeRequest = (request: ActiveScrapeRequest): void => {
+    if (activeRequestRef.current?.id !== request.id) return;
+    activeRequestRef.current = null;
+    setModeInFlight(null);
+  };
+
+  const handleScrapeSuccess = (
+    nextResult: FilemakerJobBoardScrapeResponse,
+    mode: FilemakerJobBoardScrapeMode
+  ): void => {
+    setResult(nextResult);
+    toast(resultMessage(nextResult), {
+      variant: mode === 'import' ? 'success' : 'default',
+    });
+    if (mode === 'import') {
+      props.onCompleted();
+    }
+  };
+
+  const runScrape = async (mode: FilemakerJobBoardScrapeMode): Promise<void> => {
     if (sourceUrlMissing) {
       toast('Provide a supported job-board category or offer link.', { variant: 'error' });
       return;
     }
+    const request = startScrapeRequest();
+    if (request === null) return;
     setModeInFlight(mode);
     try {
-      const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
-        method: 'POST',
-        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(buildRequest(draft, mode, props.selectedOrganizationIds)),
-      });
-      if (!response.ok) {
-        throw new Error(await readErrorMessage(response));
-      }
-      const nextResult = (await response.json()) as FilemakerPracujScrapeResponse;
-      setResult(nextResult);
-      toast(resultMessage(nextResult), {
-        variant: mode === 'import' ? 'success' : 'default',
-      });
-      if (mode === 'import') {
-        props.onCompleted();
-      }
+      await browserMode.persist();
+      const nextResult = await postScrapeRequest(draft, mode, props.selectedOrganizationIds, request.controller.signal);
+      if (isActiveScrapeRequest(request)) handleScrapeSuccess(nextResult, mode);
     } catch (error) {
+      if (isAbortLikeError(error, request.controller.signal)) return;
       toast(error instanceof Error ? error.message : 'Job-board scrape failed.', {
         variant: 'error',
       });
     } finally {
-      setModeInFlight(null);
+      finishScrapeRequest(request);
     }
+  };
+
+  const closeModal = (): void => {
+    activeRequestRef.current?.controller.abort();
+    activeRequestRef.current = null;
+    setModeInFlight(null);
+    props.onClose();
   };
 
   return (
     <FormModal
       open={props.open}
-      onClose={props.onClose}
+      onClose={closeModal}
       title='Job Board Scraper'
       subtitle='Centralized through the Job Board Playwright sequencer.'
       onSave={() => {
@@ -345,21 +471,33 @@ export function FilemakerPracujScrapeModal(
       }}
       saveText='Preview'
       saveIcon={<Search className='h-4 w-4' />}
-      isSaving={isRunning}
-      isSaveDisabled={sourceUrlMissing || isRunning}
-      disableCloseWhileSaving
+      isSaving={isRunning || isSavingRuntimeSettings}
+      isSaveDisabled={sourceUrlMissing || isRunning || isSavingRuntimeSettings}
       size='xl'
       actions={
         <div className='flex flex-wrap items-center gap-2'>
+          {isRunning ? (
+            <Button
+              type='button'
+              variant='warning'
+              size='sm'
+              onClick={stopScrape}
+            >
+              <Square className='h-4 w-4' />
+              Stop
+            </Button>
+          ) : null}
           <Button
             type='button'
-            variant='outline'
             size='sm'
-            onClick={saveSettings}
-            disabled={isRunning}
+            onClick={() => {
+              void saveSettings();
+            }}
+            disabled={!hasSettingsUnsavedChanges || isRunning || isSavingRuntimeSettings}
+            variant={hasSettingsUnsavedChanges ? 'success' : 'outline'}
           >
             <Save className='h-4 w-4' />
-            Save settings
+            {isSavingRuntimeSettings ? 'Saving...' : 'Save settings'}
           </Button>
           <Button
             type='button'
@@ -368,7 +506,7 @@ export function FilemakerPracujScrapeModal(
             onClick={() => {
               void runScrape('import');
             }}
-            disabled={sourceUrlMissing || isRunning}
+            disabled={sourceUrlMissing || isRunning || isSavingRuntimeSettings}
           >
             <Play className='h-4 w-4' />
             {modeInFlight === 'import' ? 'Importing...' : 'Import'}
@@ -401,7 +539,7 @@ export function FilemakerPracujScrapeModal(
               options={organizationScopeOptions}
               onValueChange={(value) => {
                 setOrganizationScopeTouched(true);
-                updateDraft('organizationScope', value as FilemakerPracujOrganizationScope);
+                updateDraft('organizationScope', value as FilemakerJobBoardOrganizationScope);
               }}
             />
           </FormField>
@@ -410,7 +548,7 @@ export function FilemakerPracujScrapeModal(
               ariaLabel='Unmatched employers'
               value={draft.importStrategy}
               options={IMPORT_STRATEGY_OPTIONS}
-              onValueChange={(value) => updateDraft('importStrategy', value as FilemakerPracujImportStrategy)}
+              onValueChange={(value) => updateDraft('importStrategy', value as FilemakerJobBoardImportStrategy)}
             />
           </FormField>
           <FormField label='Duplicates'>
@@ -419,11 +557,45 @@ export function FilemakerPracujScrapeModal(
               value={draft.duplicateStrategy}
               options={DUPLICATE_STRATEGY_OPTIONS}
               onValueChange={(value) =>
-                updateDraft('duplicateStrategy', value as FilemakerPracujDuplicateStrategy)
+                updateDraft('duplicateStrategy', value as FilemakerJobBoardDuplicateStrategy)
               }
             />
           </FormField>
         </div>
+
+        {browserMode.action !== null ? (
+          <div className='rounded-md border border-border/60 bg-muted/10 p-3'>
+            <div className='flex flex-wrap items-start justify-between gap-3'>
+              <div className='min-w-0 space-y-1'>
+                <p className='text-[11px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                  Connected scraping action
+                </p>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <span className='text-sm font-medium'>{browserMode.action.name}</span>
+                  <Badge variant='secondary'>{browserMode.action.runtimeKey}</Badge>
+                  {browserMode.action.isSeedFallback ? (
+                    <Badge variant='outline'>Seed default</Badge>
+                  ) : (
+                    <Badge variant='success'>Saved action</Badge>
+                  )}
+                </div>
+                {browserMode.action.description !== null ? (
+                  <p className='max-w-3xl text-xs text-muted-foreground'>
+                    {browserMode.action.description}
+                  </p>
+                ) : null}
+              </div>
+              <Badge variant='secondary'>{browserMode.action.browserModeLabel}</Badge>
+            </div>
+            <div className='mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground'>
+              <span>Action ID: {browserMode.action.id}</span>
+              <span>
+                Steps: {browserMode.action.enabledStepCount}/{browserMode.action.totalStepCount}
+              </span>
+              {actionUpdatedAt !== null ? <span>Updated: {actionUpdatedAt}</span> : null}
+            </div>
+          </div>
+        ) : null}
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
           <FormField label='Max pages'>
@@ -465,10 +637,12 @@ export function FilemakerPracujScrapeModal(
 
         <div className='grid grid-cols-1 gap-3 md:grid-cols-4'>
           <ToggleRow
-            label={draft.headless ? 'Headless browser' : 'Headed browser'}
-            description='Runs in the shared Playwright sequencer.'
-            checked={draft.headless}
-            onCheckedChange={(checked) => updateDraft('headless', checked)}
+            label={browserMode.headless ? 'Headless browser' : 'Headed browser'}
+            description='Backed by Job Board Offer Scrape action settings.'
+            checked={browserMode.headless}
+            onCheckedChange={browserMode.setHeadless}
+            disabled={isRunning}
+            loading={browserMode.isLoading || isSavingRuntimeSettings}
             variant='switch'
             toggleOnRowClick
           />

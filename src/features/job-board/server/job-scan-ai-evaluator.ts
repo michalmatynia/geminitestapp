@@ -18,6 +18,7 @@ const aiCompanyPartialSchema = z.object({
   nip: z.string().nullable().optional(),
   domain: z.string().nullable().optional(),
   website: z.string().nullable().optional(),
+  profileUrl: z.string().nullable().optional(),
   industry: z.string().nullable().optional(),
   size: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
@@ -63,11 +64,12 @@ export const jobScanAiResponseSchema = z.object({
   confidence: z.number().min(0).max(1).nullable(),
 });
 export type JobScanAiResponse = z.infer<typeof jobScanAiResponseSchema>;
+type JobScanAiListingResponse = z.infer<typeof aiListingPartialSchema>;
 
 const SYSTEM_PROMPT = `You extract structured company and job-listing data from a job-board page (e.g. pracuj.pl).
 Return ONLY a JSON object that matches this shape (use null for unknown fields, never invent values):
 {
-  "company": { "name": string|null, "nip": string|null, "domain": string|null, "website": string|null,
+  "company": { "name": string|null, "nip": string|null, "domain": string|null, "website": string|null, "profileUrl": string|null,
                "industry": string|null, "size": string|null, "description": string|null,
                "addressLine": string|null, "city": string|null, "postalCode": string|null, "country": string|null },
   "listing": { "title": string|null, "description": string|null,
@@ -84,13 +86,25 @@ Return ONLY a JSON object that matches this shape (use null for unknown fields, 
 }
 Rules:
 - The page content may contain scraper-produced sections like [pracuj_snapshot] and [page_text]. Prefer explicit values from [pracuj_snapshot] over repeated boilerplate in raw page text.
-- Use company-focused sections (for example "O firmie", employer/about-company content, fact tables, JSON-LD, canonical/company links) for company fields, and job-offer sections (requirements, responsibilities, benefits, technologies, salary, work mode, apply URLs) for listing fields.
+- Use company-focused sections (for example "O firmie", "company_profile", employer/about-company content, fact tables, JSON-LD, canonical/company links) for company fields, and job-offer sections (requirements, responsibilities, benefits, technologies, salary, work mode, apply URLs) for listing fields.
+- If a [job_board_snapshot] contains company_profile text from Pracuj.pl, summarize that content into company.description and use its URL/website links for company.website/domain when explicit.
 - Salary numbers must be plain numbers in the listed currency (no formatting).
 - Polish NIP is exactly 10 digits — extract only if you can see one.
 - contractType "employment" = "umowa o pracę", "b2b" = "kontrakt B2B", "mandate" = "umowa zlecenie".
 - Output JSON only, no markdown, no comments.`;
 
 const MAX_INPUT_CHARS = 80_000;
+
+const normalizeAiListing = (listing: JobScanAiListingResponse | null): Record<string, unknown> | null =>
+  listing
+    ? {
+        ...listing,
+        requirements: listing.requirements ?? [],
+        responsibilities: listing.responsibilities ?? [],
+        benefits: listing.benefits ?? [],
+        technologies: listing.technologies ?? [],
+      }
+    : null;
 
 export const evaluateJobPageWithAi = async (input: {
   sourceUrl: string;
@@ -121,15 +135,7 @@ export const evaluateJobPageWithAi = async (input: {
 
     return {
       company: parsed.company ?? null,
-      listing: parsed.listing
-        ? {
-            ...parsed.listing,
-            requirements: parsed.listing.requirements ?? [],
-            responsibilities: parsed.listing.responsibilities ?? [],
-            benefits: parsed.listing.benefits ?? [],
-            technologies: parsed.listing.technologies ?? [],
-          }
-        : null,
+      listing: normalizeAiListing(parsed.listing),
       confidence: parsed.confidence,
       modelId: completion.modelId,
       error: null,
@@ -155,7 +161,8 @@ export const evaluateJobPageWithAi = async (input: {
 const extractJsonObject = (text: string): string => {
   const trimmed = text.trim();
   const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenced) return fenced[1]!.trim();
+  const fencedJson = fenced?.[1];
+  if (fencedJson !== undefined) return fencedJson.trim();
   const start = trimmed.indexOf('{');
   const end = trimmed.lastIndexOf('}');
   if (start >= 0 && end > start) return trimmed.slice(start, end + 1);

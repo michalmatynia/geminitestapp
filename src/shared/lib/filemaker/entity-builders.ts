@@ -30,6 +30,9 @@ const ORGANIZATION_OPTIONAL_STRING_FIELDS = [
   'taxId',
   'tradingName',
   'updatedBy',
+  'jobBoardCompanyProfile',
+  'jobBoardCompanyProfileScrapedAt',
+  'jobBoardCompanyProfileUrl',
 ] as const;
 
 type OrganizationOptionalStringField = (typeof ORGANIZATION_OPTIONAL_STRING_FIELDS)[number];

@@ -1,6 +1,6 @@
 /* eslint-disable max-lines, max-lines-per-function, complexity, no-await-in-loop, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/require-await, @typescript-eslint/no-shadow, no-promise-executor-return, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/prefer-optional-chain */
 
-import type { Locator, Page } from 'playwright';
+import type { Frame, Locator, Page } from 'playwright';
 
 import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from '../job-board-runtime-constants';
 import {
@@ -48,6 +48,16 @@ export type JobBoardScrapeInput = {
 export type JobBoardCollectedOfferLink = {
   title: string;
   url: string;
+};
+
+export type JobBoardCompanyProfileSnapshot = {
+  facts: Array<{ label: string; value: string }>;
+  headings: string[];
+  plainText: string | null;
+  sections: Array<{ heading?: string | null; text: string }>;
+  title: string | null;
+  url: string;
+  websiteUrls: string[];
 };
 
 export type JobBoardScrapePayload = {
@@ -103,8 +113,15 @@ const STEP_LABELS: Record<string, string> = {
 
 const COOKIE_ACCEPT_SELECTORS = [
   '#onetrust-accept-btn-handler',
+  '[data-test*="accept" i]',
   '[data-testid*="accept" i]',
+  '[data-cy*="accept" i]',
+  'button:has-text("Akceptuj wszystkie")',
+  '[role="button"]:has-text("Akceptuj wszystkie")',
+  'button:has-text("Accept all")',
+  '[role="button"]:has-text("Accept all")',
   '[aria-label*="accept" i]',
+  '[aria-label*="akceptuj" i]',
   '[id*="cookie" i] button',
   '[class*="cookie" i] button',
   '[id*="consent" i] button',
@@ -112,6 +129,7 @@ const COOKIE_ACCEPT_SELECTORS = [
 ] as const;
 
 const COOKIE_ACCEPT_PATTERNS = [
+  /akceptuj wszystkie/i,
   /accept all/i,
   /accept/i,
   /allow all/i,
@@ -126,6 +144,39 @@ const COOKIE_ACCEPT_PATTERNS = [
   /rozumiem/i,
   /przejd[zź]/i,
 ] as const;
+
+const COOKIE_CONSENT_SURFACE_TEXT_HINTS = [
+  'cenimy twoja prywatnosc',
+  'lista partnerow cookies',
+  'polityka cookies',
+  'ustawienia plikow cookies',
+  'cookie',
+  'consent',
+] as const;
+
+const COOKIE_CONSENT_CLOSE_TEXT_HINTS = [
+  'cenimy twoja prywatnosc',
+  'akceptuj wszystkie',
+] as const;
+
+const PRACUJ_EMPLOYER_MODAL_SURFACE_TEXT_HINTS = [
+  'pracuj dla przedsiebiorcow',
+  'szukasz pracownika',
+  'pracuj.pl dla firm',
+  'dodaj ogloszenie w atrakcyjnej cenie',
+] as const;
+
+const PRACUJ_EMPLOYER_MODAL_CLOSE_SELECTORS = [
+  'button:has-text("Zamknij")',
+  '[role="button"]:has-text("Zamknij")',
+  'button[aria-label*="zamknij" i]',
+  '[role="button"][aria-label*="zamknij" i]',
+  '[aria-label*="zamknij" i]',
+  'button:has-text("Close")',
+  '[role="button"]:has-text("Close")',
+] as const;
+
+const PRACUJ_EMPLOYER_MODAL_CLOSE_PATTERNS = [/zamknij/i, /close/i] as const;
 
 const clampInt = (value: unknown, fallback: number, max: number): number => {
   const parsed = Number(value);
@@ -142,6 +193,12 @@ const clampDelay = (value: unknown): number => {
 const normalizeText = (value: unknown): string =>
   typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
 
+const normalizeSearchText = (value: unknown): string =>
+  normalizeText(value)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
 const normalizeUrl = (value: unknown): string | null => {
   const raw = normalizeText(value);
   if (!raw) return null;
@@ -155,6 +212,14 @@ const normalizeUrl = (value: unknown): string | null => {
     return null;
   }
 };
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 
 const readProvider = (
   sourceUrl: string,
@@ -355,39 +420,244 @@ export class JobBoardScrapeSequencer {
   private async acceptCookies(): Promise<void> {
     const key = JOB_BOARD_SCRAPE_RUNTIME_STEPS.acceptCookies;
     this.startStep(key);
-    let clicked = 0;
-    for (const selector of COOKIE_ACCEPT_SELECTORS) {
-      const locator = this.context.page.locator(selector).first();
-      if (await this.clickIfVisible(locator)) {
-        clicked += 1;
-        break;
-      }
+    let result: { clicked: boolean; label: string | null } = { clicked: false, label: null };
+    let overlayResult: { clicked: boolean; label: string | null } = { clicked: false, label: null };
+    for (let attempt = 0; attempt < 5 && !result.clicked; attempt += 1) {
+      result = await this.acceptCookieConsentInScopes();
+      if (!result.clicked) await this.wait(900);
     }
-    if (clicked === 0) {
-      const controls = this.context.page.locator(
-        'button, [role="button"], a, input[type="button"], input[type="submit"]'
-      );
-      const count = Math.min(await controls.count().catch(() => 0), 80);
-      for (let index = 0; index < count; index += 1) {
-        const control = controls.nth(index);
-        const label = normalizeText(
-          [
-            await control.textContent().catch(() => ''),
-            await control.getAttribute('aria-label').catch(() => ''),
-            await control.getAttribute('value').catch(() => ''),
-          ].join(' ')
-        );
-        if (!label || !COOKIE_ACCEPT_PATTERNS.some((pattern) => pattern.test(label))) continue;
-        if (await this.clickIfVisible(control)) {
-          clicked += 1;
-          break;
-        }
-      }
-    }
-    if (clicked > 0) {
+    if (result.clicked) {
       await this.context.page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);
+      await this.waitForCookieConsentToClose();
     }
-    this.completeStep(key, clicked > 0 ? `Clicked ${clicked} consent control.` : 'No consent control found.');
+    for (let attempt = 0; attempt < 3 && !overlayResult.clicked; attempt += 1) {
+      overlayResult = await this.dismissKnownBlockingOverlayInScopes();
+      if (!overlayResult.clicked) await this.wait(250);
+    }
+    this.completeStep(
+      key,
+      this.formatConsentStepMessage(result, overlayResult)
+    );
+  }
+
+  private formatConsentStepMessage(
+    consentResult: { clicked: boolean; label: string | null },
+    overlayResult: { clicked: boolean; label: string | null }
+  ): string {
+    const messages: string[] = [];
+    if (consentResult.clicked) {
+      messages.push(
+        `Accepted cookie consent${consentResult.label ? ` via ${consentResult.label}` : ''}`
+      );
+    }
+    if (overlayResult.clicked) {
+      messages.push(
+        `dismissed blocking overlay${overlayResult.label ? ` via ${overlayResult.label}` : ''}`
+      );
+    }
+    return messages.length > 0 ? `${messages.join('; ')}.` : 'No consent control found.';
+  }
+
+  private async acceptCookieConsentInScopes(): Promise<{ clicked: boolean; label: string | null }> {
+    const pageResult = await this.acceptCookieConsentInScope(this.context.page, 'page');
+    if (pageResult.clicked) return pageResult;
+
+    for (const frame of this.context.page.frames()) {
+      if (frame === this.context.page.mainFrame()) continue;
+      const frameResult = await this.acceptCookieConsentInScope(frame, 'frame');
+      if (frameResult.clicked) return frameResult;
+    }
+
+    return { clicked: false, label: null };
+  }
+
+  private async acceptCookieConsentInScope(
+    scope: Page | Frame,
+    scopeLabel: string
+  ): Promise<{ clicked: boolean; label: string | null }> {
+    for (const selector of COOKIE_ACCEPT_SELECTORS) {
+      const locator = scope.locator(selector).first();
+      if (await this.clickIfVisible(locator, 1_500)) {
+        return { clicked: true, label: `${scopeLabel}:${selector}` };
+      }
+    }
+
+    const roleResult = await this.clickCookieAcceptByRole(scope, scopeLabel);
+    if (roleResult.clicked) return roleResult;
+
+    const heuristicResult = await this.clickCookieAcceptByHeuristic(scope, scopeLabel);
+    if (heuristicResult.clicked) return heuristicResult;
+
+    return { clicked: false, label: null };
+  }
+
+  private async clickCookieAcceptByRole(
+    scope: Page | Frame,
+    scopeLabel: string
+  ): Promise<{ clicked: boolean; label: string | null }> {
+    for (const pattern of COOKIE_ACCEPT_PATTERNS) {
+      const locator = scope.getByRole('button', { name: pattern }).first();
+      if (await this.clickIfVisible(locator, 1_500)) {
+        return { clicked: true, label: `${scopeLabel}:button:${String(pattern)}` };
+      }
+    }
+    return { clicked: false, label: null };
+  }
+
+  private async clickCookieAcceptByHeuristic(
+    scope: Page | Frame,
+    scopeLabel: string
+  ): Promise<{ clicked: boolean; label: string | null }> {
+    const controls = scope.locator(
+      'button, [role="button"], a, input[type="button"], input[type="submit"]'
+    );
+    const bestIndex = await controls
+      .evaluateAll((elements, surfaceHintsInput) => {
+        const normalize = (value: unknown): string =>
+          (typeof value === 'string' ? value : '')
+            .normalize('NFKD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+        const surfaceHints = Array.isArray(surfaceHintsInput)
+          ? surfaceHintsInput.map((hint) => normalize(hint))
+          : [];
+        const acceptHints = [
+          'akceptuj wszystkie',
+          'akceptuje wszystkie',
+          'zaakceptuj wszystkie',
+          'accept all',
+          'allow all',
+          'i agree',
+          'zgadzam sie',
+        ];
+        const rejectHints = [
+          'dostosuj',
+          'ustawienia',
+          'settings',
+          'lista partnerow',
+          'polityka',
+          'privacy policy',
+        ];
+        const bodyText = normalize(document.body?.innerText ?? document.body?.textContent ?? '');
+        const consentSurfaceVisible = surfaceHints.some((hint) => bodyText.includes(hint));
+        let best = { index: -1, score: 0 };
+        elements.forEach((element, index) => {
+          if (!(element instanceof HTMLElement)) return;
+          const style = window.getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          if (style.display === 'none' || style.visibility === 'hidden' || rect.width <= 0 || rect.height <= 0) {
+            return;
+          }
+          const text = normalize(
+            [
+              element.innerText,
+              element.textContent,
+              element.getAttribute('aria-label'),
+              element.getAttribute('title'),
+              element.getAttribute('value'),
+              element.id,
+              element.className,
+            ].join(' ')
+          );
+          if (!text || rejectHints.some((hint) => text.includes(hint))) return;
+          let score = 0;
+          if (acceptHints.some((hint) => text.includes(hint))) score += 10;
+          if (text.includes('akceptuj')) score += 5;
+          if (text.includes('accept')) score += 5;
+          if (text.includes('allow')) score += 4;
+          if (consentSurfaceVisible) score += 2;
+          if (score > best.score) best = { index, score };
+        });
+        return best.index;
+      }, [...COOKIE_CONSENT_SURFACE_TEXT_HINTS])
+      .catch(() => -1);
+
+    if (typeof bestIndex !== 'number' || bestIndex < 0) return { clicked: false, label: null };
+    const locator = controls.nth(bestIndex);
+    if (await this.clickIfVisible(locator, 2_000)) {
+      return { clicked: true, label: `${scopeLabel}:heuristic_accept_control` };
+    }
+    return { clicked: false, label: null };
+  }
+
+  private async waitForCookieConsentToClose(): Promise<void> {
+    await this.context.page
+      .locator('body')
+      .first()
+      .waitFor({ state: 'visible', timeout: 2_000 })
+      .catch(() => undefined);
+    await this.context.page
+      .waitForFunction(
+        (patterns) => {
+          const normalize = (value: unknown): string =>
+            (typeof value === 'string' ? value : '')
+              .normalize('NFKD')
+              .replace(/[\u0300-\u036f]/g, '')
+              .toLowerCase();
+          const bodyText = normalize(document.body?.innerText ?? document.body?.textContent ?? '');
+          return !(Array.isArray(patterns) ? patterns : []).some((pattern) =>
+            bodyText.includes(String(pattern))
+          );
+        },
+        [...COOKIE_CONSENT_CLOSE_TEXT_HINTS],
+        { timeout: 5_000 }
+      )
+      .catch(() => undefined);
+  }
+
+  private async dismissKnownBlockingOverlayInScopes(): Promise<{
+    clicked: boolean;
+    label: string | null;
+  }> {
+    const pageResult = await this.dismissKnownBlockingOverlayInScope(this.context.page, 'page');
+    if (pageResult.clicked) return pageResult;
+
+    for (const frame of this.context.page.frames()) {
+      if (frame === this.context.page.mainFrame()) continue;
+      const frameResult = await this.dismissKnownBlockingOverlayInScope(frame, 'frame');
+      if (frameResult.clicked) return frameResult;
+    }
+
+    return { clicked: false, label: null };
+  }
+
+  private async dismissKnownBlockingOverlayInScope(
+    scope: Page | Frame,
+    scopeLabel: string
+  ): Promise<{ clicked: boolean; label: string | null }> {
+    if (!(await this.hasPracujEmployerModalSurface(scope))) {
+      return { clicked: false, label: null };
+    }
+
+    for (const selector of PRACUJ_EMPLOYER_MODAL_CLOSE_SELECTORS) {
+      const locator = scope.locator(selector).first();
+      if (await this.clickIfVisible(locator, 1_500)) {
+        return { clicked: true, label: `${scopeLabel}:${selector}` };
+      }
+    }
+
+    for (const pattern of PRACUJ_EMPLOYER_MODAL_CLOSE_PATTERNS) {
+      const locator = scope.getByRole('button', { name: pattern }).first();
+      if (await this.clickIfVisible(locator, 1_500)) {
+        return { clicked: true, label: `${scopeLabel}:button:${String(pattern)}` };
+      }
+    }
+
+    return { clicked: false, label: null };
+  }
+
+  private async hasPracujEmployerModalSurface(scope: Page | Frame): Promise<boolean> {
+    const bodyText = await scope
+      .locator('body')
+      .first()
+      .textContent({ timeout: 1_000 })
+      .catch(() => '');
+    const normalized = normalizeSearchText(bodyText);
+    return PRACUJ_EMPLOYER_MODAL_SURFACE_TEXT_HINTS.some((hint) =>
+      normalized.includes(hint)
+    );
   }
 
   private async collectOfferLinks(): Promise<void> {
@@ -443,6 +713,7 @@ export class JobBoardScrapeSequencer {
     const key = JOB_BOARD_SCRAPE_RUNTIME_STEPS.extractOfferSnapshot;
     this.startStep(key);
     const provider = this.requireProvider();
+    const offerUrl = this.context.page.url();
     const snapshot = await this.context.page.evaluate(
       ({ providerId, snapshotScriptId, snapshotScriptType }) => {
         const normalizeText = (value: unknown): string =>
@@ -613,12 +884,212 @@ export class JobBoardScrapeSequencer {
         snapshotScriptType: SNAPSHOT_SCRIPT_TYPE,
       }
     );
-    this.html = await this.context.page.content();
-    this.finalUrl = this.context.page.url();
+    const companyProfile = await this.extractLinkedCompanyProfile(provider, snapshot);
+    const augmentedSnapshot =
+      companyProfile !== null ? { ...snapshot, companyProfile } : snapshot;
+    this.html = this.renderSnapshotHtml(augmentedSnapshot);
+    this.finalUrl = offerUrl;
     this.completeStep(key, 'Offer snapshot extracted.', [
       { label: 'title', value: normalizeText((snapshot as { title?: unknown }).title) },
-      { label: 'url', value: this.finalUrl },
+      { label: 'url', value: offerUrl },
+      ...(companyProfile !== null ? [{ label: 'companyProfileUrl', value: companyProfile.url }] : []),
     ]);
+  }
+
+  private renderSnapshotHtml(snapshot: unknown): string {
+    const json = JSON.stringify(snapshot).replace(/</g, '\\u003c');
+    const record = snapshot !== null && typeof snapshot === 'object'
+      ? (snapshot as { plainText?: unknown; companyProfile?: { plainText?: unknown } })
+      : {};
+    const offerText = normalizeText(record.plainText);
+    const companyText = normalizeText(record.companyProfile?.plainText);
+    const bodyText = [offerText, companyText].filter(Boolean).join('\n\n');
+    return [
+      '<!doctype html><html><head>',
+      `<script id="${SNAPSHOT_SCRIPT_ID}" type="${SNAPSHOT_SCRIPT_TYPE}">${json}</script>`,
+      '</head><body>',
+      bodyText ? `<pre>${escapeHtml(bodyText)}</pre>` : '',
+      '</body></html>',
+    ].join('');
+  }
+
+  private async extractLinkedCompanyProfile(
+    provider: JobBoardProvider,
+    snapshot: unknown
+  ): Promise<JobBoardCompanyProfileSnapshot | null> {
+    if (provider !== 'pracuj_pl') return null;
+    const companyUrl = await this.resolveCompanyProfileUrl(provider, snapshot);
+    if (companyUrl === null) return null;
+
+    try {
+      await this.context.page.goto(companyUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 45_000,
+      });
+      this.visitedUrls.push(this.context.page.url());
+      await this.context.page.waitForLoadState('networkidle', { timeout: 8_000 }).catch(() => undefined);
+      await this.dismissKnownBlockingOverlayInScopes();
+      await this.wait(500);
+      return await this.extractCompanyProfileSnapshot(companyUrl);
+    } catch (error) {
+      this.warnings.push(
+        `Could not extract Pracuj company profile ${companyUrl}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      return null;
+    }
+  }
+
+  private async resolveCompanyProfileUrl(
+    provider: JobBoardProvider,
+    snapshot: unknown
+  ): Promise<string | null> {
+    const record = snapshot !== null && typeof snapshot === 'object'
+      ? (snapshot as { companyLinks?: unknown })
+      : {};
+    const snapshotLinks = Array.isArray(record.companyLinks) ? record.companyLinks : [];
+    for (const link of snapshotLinks) {
+      const normalized = this.normalizeProviderUrl(link, provider);
+      if (normalized !== null) return normalized;
+    }
+
+    const selectorUrl = await this.context.page
+      .locator(
+        'a:has-text("O firmie"), a:has-text("O pracodawcy"), a:has-text("About the company"), [role="link"]:has-text("O firmie"), [role="link"]:has-text("About the company")'
+      )
+      .first()
+      .getAttribute('href', { timeout: 1_000 })
+      .catch(() => null);
+    return this.normalizeProviderUrl(selectorUrl, provider);
+  }
+
+  private normalizeProviderUrl(value: unknown, provider: JobBoardProvider): string | null {
+    const raw = normalizeText(value);
+    if (!raw) return null;
+    const config = getJobBoardProviderConfig(provider);
+    try {
+      const url = new URL(raw, this.sourceUrl || (this.safeCurrentUrl() ?? undefined));
+      if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+      const host = url.hostname.toLowerCase().replace(/^www\./, '');
+      const allowed = config.hostSuffixes.some(
+        (suffix) => host === suffix || host.endsWith(`.${suffix}`)
+      );
+      if (!allowed) return null;
+      url.hash = '';
+      return url.toString();
+    } catch {
+      return null;
+    }
+  }
+
+  private async extractCompanyProfileSnapshot(
+    fallbackUrl: string
+  ): Promise<JobBoardCompanyProfileSnapshot> {
+    return await this.context.page.evaluate((input) => {
+      const normalizeText = (value: unknown): string =>
+        typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+      const clipText = (value: unknown, max = 4000): string => {
+        const text = normalizeText(value);
+        return text.length > max ? `${text.slice(0, Math.max(0, max - 3))}...` : text;
+      };
+      const isVisible = (element: Element): boolean => {
+        if (!(element instanceof HTMLElement)) return false;
+        const style = window.getComputedStyle(element);
+        if (style.display === 'none' || style.visibility === 'hidden') return false;
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      };
+      const unique = (items: unknown[], max = 20): string[] => {
+        const out: string[] = [];
+        const seen = new Set<string>();
+        for (const item of items) {
+          const normalized = normalizeText(item);
+          if (!normalized) continue;
+          const key = normalized.toLowerCase();
+          if (seen.has(key)) continue;
+          seen.add(key);
+          out.push(normalized);
+          if (out.length >= max) break;
+        }
+        return out;
+      };
+      const root =
+        document.querySelector('main, article, [role="main"]') ??
+        document.querySelector('body');
+      const facts: Array<{ label: string; value: string }> = [];
+      const factKeys = new Set<string>();
+      const addFact = (label: unknown, value: unknown): void => {
+        const normalizedLabel = normalizeText(label).replace(/:$/, '');
+        const normalizedValue = clipText(value, 320);
+        if (!normalizedLabel || !normalizedValue) return;
+        const key = `${normalizedLabel.toLowerCase()}::${normalizedValue.toLowerCase()}`;
+        if (factKeys.has(key)) return;
+        factKeys.add(key);
+        facts.push({ label: normalizedLabel, value: normalizedValue });
+      };
+
+      for (const dl of Array.from((root ?? document).querySelectorAll('dl')).slice(0, 20)) {
+        let lastTerm = '';
+        for (const child of Array.from(dl.children)) {
+          const tagName = child.tagName.toLowerCase();
+          if (tagName === 'dt') {
+            lastTerm = child.textContent ?? '';
+          } else if (tagName === 'dd' && lastTerm) {
+            addFact(lastTerm, child.textContent ?? '');
+          }
+        }
+      }
+
+      for (const item of Array.from((root ?? document).querySelectorAll('li, p, div')).slice(0, 260)) {
+        if (!isVisible(item)) continue;
+        const text = normalizeText(item.textContent ?? '');
+        if (!text || text.length > 260) continue;
+        const separatorIndex = text.indexOf(':');
+        if (separatorIndex <= 0 || separatorIndex >= 80) continue;
+        addFact(text.slice(0, separatorIndex), text.slice(separatorIndex + 1));
+      }
+
+      const sections = Array.from((root ?? document).querySelectorAll('section, article'))
+        .slice(0, 18)
+        .map((section) => {
+          if (!isVisible(section)) return null;
+          const heading = normalizeText(
+            section.querySelector('h1, h2, h3, h4, header')?.textContent ?? ''
+          );
+          const text = clipText(section.textContent ?? '', 1800);
+          if (!text) return null;
+          return { heading: heading || null, text };
+        })
+        .filter((section): section is { heading: string | null; text: string } => section !== null);
+
+      const websiteUrls = unique(
+        Array.from(document.querySelectorAll('a[href]'))
+          .map((link) => {
+            const anchor = link as HTMLAnchorElement;
+            const label = normalizeText(anchor.textContent ?? '');
+            const href = anchor.href || '';
+            return /(strona|website|www|http|kontakt|contact)/i.test(`${label} ${href}`) ? href : '';
+          })
+          .filter(Boolean),
+        10
+      );
+
+      return {
+        facts: facts.slice(0, 40),
+        headings: unique(
+          Array.from(document.querySelectorAll('h1, h2, h3'))
+            .filter(isVisible)
+            .map((element) => element.textContent ?? ''),
+          30
+        ),
+        plainText: clipText(root?.textContent ?? document.body?.textContent ?? '', 10_000) || null,
+        sections,
+        title: normalizeText(document.title) || null,
+        url: window.location.href || input.fallbackUrl,
+        websiteUrls,
+      };
+    }, { fallbackUrl });
   }
 
   private async finalize(status: 'completed' | 'failed', message?: string): Promise<void> {
@@ -663,12 +1134,16 @@ export class JobBoardScrapeSequencer {
       return;
     }
     const ms = delayMs ?? clampDelay(this.input.delayMs);
-    if (ms > 0) await new Promise((resolve) => setTimeout(resolve, ms));
+    if (ms > 0) await this.wait(ms);
   }
 
-  private async clickIfVisible(locator: Locator): Promise<boolean> {
+  private async wait(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private async clickIfVisible(locator: Locator, timeout = 1_200): Promise<boolean> {
     try {
-      if (!(await locator.isVisible({ timeout: 1_200 }))) return false;
+      if (!(await locator.isVisible({ timeout }))) return false;
       const helpers = readHelpers(this.context.helpers);
       if (typeof helpers.click === 'function') {
         await helpers.click(locator, { clickOptions: { timeout: 2_000 } });

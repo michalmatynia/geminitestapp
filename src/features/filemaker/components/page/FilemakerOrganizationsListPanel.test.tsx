@@ -237,9 +237,9 @@ vi.mock('@/shared/ui/templates/modals/JSONImportModal', () => ({
     isOpen ? <div role='dialog'>{title}</div> : null,
 }));
 
-vi.mock('./FilemakerPracujScrapeModal', () => ({
-  FilemakerPracujScrapeModal: ({ open }: { open: boolean }) =>
-    open ? <div data-testid='pracuj-scrape-modal' /> : null,
+vi.mock('./FilemakerJobBoardScrapeModal', () => ({
+  FilemakerJobBoardScrapeModal: ({ open }: { open: boolean }) =>
+    open ? <div data-testid='job-board-scrape-modal' /> : null,
 }));
 
 vi.mock('./FilemakerOrganizationAdvancedFilterModal', () => ({
@@ -300,7 +300,7 @@ const createProps = (
   onLaunchOrganizationWebsiteSocialScrape: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
-  onPracujScrapeCompleted: vi.fn(),
+  onJobBoardScrapeCompleted: vi.fn(),
   onQueryChange: vi.fn(),
   onResetFilters: vi.fn(),
   onSelectAllOrganizations: vi.fn(),

@@ -1,8 +1,11 @@
 import 'server-only';
 /* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition, no-nested-ternary */
 
+import type { PlaywrightSettings } from '@/shared/contracts/playwright';
+import type { PlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 import { runPlaywrightEngineTask } from '@/features/playwright/server/runtime';
 import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-board-runtime-constants';
+import { resolveRuntimeActionExecutionSettings } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import {
   JOB_BOARD_SNAPSHOT_SCRIPT_ID,
   JOB_BOARD_SNAPSHOT_SCRIPT_TYPE,
@@ -73,6 +76,15 @@ type JobBoardStructuredSnapshot = {
   applyUrls?: string[];
   canonical?: string | null;
   companyLinks?: string[];
+  companyProfile?: {
+    facts?: Array<{ label: string; value: string }>;
+    headings?: string[];
+    plainText?: string | null;
+    sections?: Array<{ heading?: string | null; text: string }>;
+    title?: string | null;
+    url?: string | null;
+    websiteUrls?: string[];
+  } | null;
   dataScripts?: string[];
   facts?: Array<{ label: string; value: string }>;
   headings?: string[];
@@ -85,6 +97,18 @@ type JobBoardStructuredSnapshot = {
   sections?: Array<{ heading?: string | null; text: string }>;
   title?: string | null;
   url?: string | null;
+};
+
+type JobBoardRuntimeRequestCommon = {
+  browserEngine: 'chromium';
+  launchOptions?: { headless: boolean };
+  personaId?: string;
+  policyAllowedHosts: string[];
+  preventNewPages: boolean;
+  runtimeKey: typeof JOB_BOARD_SCRAPE_RUNTIME_KEY;
+  settingsOverrides: Record<string, unknown>;
+  startUrl: string;
+  timeoutMs: number;
 };
 
 const USER_AGENT =
@@ -117,36 +141,87 @@ const resolveProviderOrThrow = (
   throw new Error('Supported job boards are pracuj.pl, justjoin.it, and nofluffjobs.com.');
 };
 
-const createRuntimeRequestCommon = (input: {
+const buildActionSettingsOverrides = (
+  settings: PlaywrightActionExecutionSettings
+): Partial<PlaywrightSettings> => {
+  const entries = [
+    ['identityProfile', settings.identityProfile],
+    ['headless', settings.headless],
+    ['emulateDevice', settings.emulateDevice],
+    ['deviceName', settings.deviceName],
+    ['slowMo', settings.slowMo],
+    ['timeout', settings.timeout],
+    ['navigationTimeout', settings.navigationTimeout],
+    ['locale', settings.locale],
+    ['timezoneId', settings.timezoneId],
+    ['humanizeMouse', settings.humanizeMouse],
+    ['mouseJitter', settings.mouseJitter],
+    ['clickDelayMin', settings.clickDelayMin],
+    ['clickDelayMax', settings.clickDelayMax],
+    ['inputDelayMin', settings.inputDelayMin],
+    ['inputDelayMax', settings.inputDelayMax],
+    ['actionDelayMin', settings.actionDelayMin],
+    ['actionDelayMax', settings.actionDelayMax],
+    ['proxyEnabled', settings.proxyEnabled],
+    ['proxyServer', settings.proxyServer],
+    ['proxyUsername', settings.proxyUsername],
+    ['proxyPassword', settings.proxyPassword],
+    ['proxySessionAffinity', settings.proxySessionAffinity],
+    ['proxySessionMode', settings.proxySessionMode],
+    ['proxyProviderPreset', settings.proxyProviderPreset],
+  ] satisfies Array<[keyof PlaywrightSettings, unknown]>;
+
+  return Object.fromEntries(
+    entries.filter(([, value]) => value !== null && value !== undefined)
+  ) as Partial<PlaywrightSettings>;
+};
+
+const resolveJobBoardActionSettingsOverrides = async (): Promise<Partial<PlaywrightSettings>> => {
+  try {
+    return buildActionSettingsOverrides(
+      await resolveRuntimeActionExecutionSettings(JOB_BOARD_SCRAPE_RUNTIME_KEY)
+    );
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'job-scans.job-board',
+      action: 'resolveJobBoardActionSettingsOverrides',
+      runtimeKey: JOB_BOARD_SCRAPE_RUNTIME_KEY,
+    });
+    return {};
+  }
+};
+
+const createRuntimeRequestCommon = async (input: {
   headless?: boolean | null;
   humanizeMouse?: boolean | null;
   personaId?: string | null;
   provider: JobBoardProvider;
   sourceUrl: string;
   timeoutMs: number;
-}): {
-  browserEngine: 'chromium';
-  launchOptions: { headless: boolean };
-  personaId?: string;
-  policyAllowedHosts: string[];
-  preventNewPages: boolean;
-  runtimeKey: typeof JOB_BOARD_SCRAPE_RUNTIME_KEY;
-  settingsOverrides: Record<string, unknown>;
-  startUrl: string;
-  timeoutMs: number;
-} => {
+}): Promise<JobBoardRuntimeRequestCommon> => {
   const config = getJobBoardProviderConfig(input.provider);
+  const actionSettingsOverrides = await resolveJobBoardActionSettingsOverrides();
+  const effectiveHeadless =
+    typeof input.headless === 'boolean' ? input.headless : actionSettingsOverrides.headless;
+  const settingsOverrides: Record<string, unknown> = {
+    ...actionSettingsOverrides,
+    identityProfile: actionSettingsOverrides.identityProfile ?? 'search',
+    humanizeMouse: input.humanizeMouse ?? actionSettingsOverrides.humanizeMouse ?? true,
+  };
+  if (typeof effectiveHeadless === 'boolean') {
+    settingsOverrides.headless = effectiveHeadless;
+  }
+
   return {
     browserEngine: 'chromium',
-    launchOptions: { headless: input.headless ?? true },
+    ...(typeof effectiveHeadless === 'boolean'
+      ? { launchOptions: { headless: effectiveHeadless } }
+      : {}),
     ...(input.personaId?.trim() ? { personaId: input.personaId.trim() } : {}),
     policyAllowedHosts: [...config.hostSuffixes],
     preventNewPages: true,
     runtimeKey: JOB_BOARD_SCRAPE_RUNTIME_KEY,
-    settingsOverrides: {
-      identityProfile: 'search',
-      humanizeMouse: input.humanizeMouse ?? true,
-    },
+    settingsOverrides,
     startUrl: input.sourceUrl,
     timeoutMs: input.timeoutMs,
   };
@@ -164,14 +239,14 @@ const fetchJobBoardPageWithPlaywright = async (
   try {
     const run = await runPlaywrightEngineTask({
       request: {
-        ...createRuntimeRequestCommon({
+        ...(await createRuntimeRequestCommon({
           headless: options.headless,
           humanizeMouse: options.humanizeMouse,
           personaId: options.personaId,
           provider,
           sourceUrl,
           timeoutMs: options.timeoutMs ?? PLAYWRIGHT_TIMEOUT_MS,
-        }),
+        })),
         actionId: 'job_board_offer_fetch',
         actionName: 'Job board offer fetch',
         input: {
@@ -320,14 +395,14 @@ export const collectJobBoardOfferUrls = async (
   try {
     const run = await runPlaywrightEngineTask({
       request: {
-        ...createRuntimeRequestCommon({
+        ...(await createRuntimeRequestCommon({
           headless: options.headless,
           humanizeMouse: options.humanizeMouse,
           personaId: options.personaId,
           provider,
           sourceUrl: options.sourceUrl,
           timeoutMs,
-        }),
+        })),
         actionId: 'job_board_offer_link_collect',
         actionName: 'Job board offer link collection',
         input: {
@@ -506,6 +581,55 @@ const buildSnapshotSection = (snapshot: JobBoardStructuredSnapshot): string => {
   if (companyLinks.length > 0) {
     lines.push('company_links:');
     companyLinks.slice(0, 10).forEach((item) => lines.push(`- ${item}`));
+  }
+
+  const companyProfile = snapshot.companyProfile;
+  if (companyProfile) {
+    lines.push('company_profile:');
+    if (companyProfile.url) lines.push(`company_profile_url: ${normalizeText(companyProfile.url)}`);
+    if (companyProfile.title) {
+      lines.push(`company_profile_title: ${clipText(normalizeText(companyProfile.title), 500)}`);
+    }
+    const profileHeadings = (companyProfile.headings ?? [])
+      .map((item) => normalizeText(item))
+      .filter(Boolean);
+    if (profileHeadings.length > 0) {
+      lines.push('company_profile_headings:');
+      profileHeadings.slice(0, 20).forEach((item) => lines.push(`- ${item}`));
+    }
+    const profileFacts = (companyProfile.facts ?? [])
+      .map((item) => ({
+        label: normalizeText(item.label),
+        value: normalizeText(item.value),
+      }))
+      .filter((item) => item.label && item.value);
+    if (profileFacts.length > 0) {
+      lines.push('company_profile_facts:');
+      profileFacts.slice(0, 30).forEach((item) => lines.push(`- ${item.label}: ${item.value}`));
+    }
+    const profileSections = (companyProfile.sections ?? [])
+      .map((item) => ({
+        heading: item.heading ? normalizeText(item.heading) : null,
+        text: normalizeText(item.text),
+      }))
+      .filter((item) => item.text);
+    if (profileSections.length > 0) {
+      lines.push('company_profile_sections:');
+      profileSections.slice(0, 10).forEach((item, index) => {
+        lines.push(`- profile_section_${index + 1}_heading: ${item.heading ?? 'unknown'}`);
+        lines.push(`  profile_section_${index + 1}_text: ${clipText(item.text, 1400)}`);
+      });
+    }
+    const websiteUrls = (companyProfile.websiteUrls ?? [])
+      .map((item) => normalizeText(item))
+      .filter(Boolean);
+    if (websiteUrls.length > 0) {
+      lines.push('company_profile_website_urls:');
+      websiteUrls.slice(0, 8).forEach((item) => lines.push(`- ${item}`));
+    }
+    if (companyProfile.plainText) {
+      lines.push(`company_profile_plain_text: ${clipText(normalizeText(companyProfile.plainText), 5000)}`);
+    }
   }
 
   const sections = (snapshot.sections ?? [])

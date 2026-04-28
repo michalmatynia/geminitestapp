@@ -138,8 +138,8 @@ vi.mock('@/shared/ui/templates/modals/JSONImportModal', () => ({
     ) : null,
 }));
 
-vi.mock('./FilemakerPracujScrapeModal', () => ({
-  FilemakerPracujScrapeModal: (props: {
+vi.mock('./FilemakerJobBoardScrapeModal', () => ({
+  FilemakerJobBoardScrapeModal: (props: {
     onCompleted: () => void;
     onClose: () => void;
     open: boolean;
@@ -149,7 +149,7 @@ vi.mock('./FilemakerPracujScrapeModal', () => ({
     modalPropsMock(props);
     return props.open ? (
       <section
-        aria-label='pracuj modal'
+        aria-label='job-board scrape modal'
         data-selected-count={String(props.selectedOrganizationCount)}
         data-selected-ids={props.selectedOrganizationIds.join(',')}
         role='dialog'
@@ -195,7 +195,7 @@ const createProps = (
   onLaunchOrganizationWebsiteSocialScrape: vi.fn(),
   onPageChange: vi.fn(),
   onPageSizeChange: vi.fn(),
-  onPracujScrapeCompleted: vi.fn(),
+  onJobBoardScrapeCompleted: vi.fn(),
   onQueryChange: vi.fn(),
   onResetFilters: vi.fn(),
   onSelectAllOrganizations: vi.fn(),
@@ -252,12 +252,12 @@ describe('FilemakerOrganizationsSelectionActions', () => {
 
   it('opens the job-board scrape modal with the selected organisation IDs', async () => {
     const user = userEvent.setup();
-    const onPracujScrapeCompleted = vi.fn();
+    const onJobBoardScrapeCompleted = vi.fn();
 
     render(
       <FilemakerOrganizationsSelectionActions
         {...createProps({
-          onPracujScrapeCompleted,
+          onJobBoardScrapeCompleted,
           organizationSelection: { 'org-1': true, 'org-2': false, 'org-3': true },
           selectedOrganizationCount: 2,
         })}
@@ -266,17 +266,17 @@ describe('FilemakerOrganizationsSelectionActions', () => {
 
     const selectionBar = screen.getByTestId('selection-bar');
     expect(selectionBar).toHaveAttribute('data-selected-count', '2');
-    expect(screen.queryByRole('dialog', { name: 'pracuj modal' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'job-board scrape modal' })).toBeNull();
 
     await user.click(within(selectionBar).getByRole('button', { name: /Scrape jobs/i }));
 
-    const modal = screen.getByRole('dialog', { name: 'pracuj modal' });
+    const modal = screen.getByRole('dialog', { name: 'job-board scrape modal' });
     expect(modal).toHaveAttribute('data-selected-count', '2');
     expect(modal).toHaveAttribute('data-selected-ids', 'org-1,org-3');
 
     await user.click(within(modal).getByRole('button', { name: 'Complete scrape' }));
 
-    expect(onPracujScrapeCompleted).toHaveBeenCalledTimes(1);
+    expect(onJobBoardScrapeCompleted).toHaveBeenCalledTimes(1);
   });
 
   it('applies and clears an active advanced filter preset', async () => {

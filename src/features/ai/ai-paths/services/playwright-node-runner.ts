@@ -1335,7 +1335,7 @@ const executePlaywrightNodeRun = async (
     });
     logs.push(`[runtime] Launching ${browserEngine} browser.`);
     logs.push(
-      `[runtime] Anti-detection posture: browser=${runtimePostureSnapshot.browser.label}, profile=${runtimePostureSnapshot.antiDetection.identityProfile}, locale=${runtimePostureSnapshot.antiDetection.locale ?? 'default'}, timezone=${runtimePostureSnapshot.antiDetection.timezoneId ?? 'default'}, proxy=${runtimePostureSnapshot.antiDetection.proxy.enabled ? `${runtimePostureSnapshot.antiDetection.proxy.providerPreset}/${runtimePostureSnapshot.antiDetection.proxy.sessionMode}/${runtimePostureSnapshot.antiDetection.proxy.reason}` : 'disabled'}.`
+      `[runtime] Anti-detection posture: browser=${runtimePostureSnapshot.browser.label}, mode=${runtimePostureSnapshot.browser.headless ? 'headless' : 'headed'}, profile=${runtimePostureSnapshot.antiDetection.identityProfile}, locale=${runtimePostureSnapshot.antiDetection.locale ?? 'default'}, timezone=${runtimePostureSnapshot.antiDetection.timezoneId ?? 'default'}, proxy=${runtimePostureSnapshot.antiDetection.proxy.enabled ? `${runtimePostureSnapshot.antiDetection.proxy.providerPreset}/${runtimePostureSnapshot.antiDetection.proxy.sessionMode}/${runtimePostureSnapshot.antiDetection.proxy.reason}` : 'disabled'}.`
     );
     queueLiveStateSnapshot();
     browser = await withTimeout(

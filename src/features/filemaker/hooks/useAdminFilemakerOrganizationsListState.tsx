@@ -591,7 +591,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     toggleOrganizationSelection
   );
   const selectedOrganizationCount = selectedOrganizationIdsFromState(organizationSelection).length;
-  const handlePracujScrapeCompleted = useCallback((): void => {
+  const handleJobBoardScrapeCompleted = useCallback((): void => {
     settingsStore.refetch();
     setOrganizationsRefreshKey((current) => current + 1);
   }, [settingsStore]);
@@ -644,7 +644,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       setPageSize(value);
       setPage(1);
     },
-    onPracujScrapeCompleted: handlePracujScrapeCompleted,
+    onJobBoardScrapeCompleted: handleJobBoardScrapeCompleted,
     onQueryChange: (value) => {
       setQuery(value);
       setPage(1);

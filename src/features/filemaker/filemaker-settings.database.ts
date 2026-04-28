@@ -416,6 +416,11 @@ export const normalizeFilemakerDatabase = (
         legacyDisplayBankAccountUuid:
           legacyDisplayBankAccountUuid.length > 0 ? legacyDisplayBankAccountUuid : undefined,
         updatedBy: normalizeString(entry['updatedBy']) || undefined,
+        jobBoardCompanyProfile: normalizeString(entry['jobBoardCompanyProfile']) || undefined,
+        jobBoardCompanyProfileUrl:
+          normalizeString(entry['jobBoardCompanyProfileUrl']) || undefined,
+        jobBoardCompanyProfileScrapedAt:
+          normalizeString(entry['jobBoardCompanyProfileScrapedAt']) || undefined,
         createdAt: normalizeString(entry['createdAt']) || undefined,
         updatedAt: normalizeString(entry['updatedAt']) || undefined,
       });

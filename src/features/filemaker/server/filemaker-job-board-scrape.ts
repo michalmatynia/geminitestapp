@@ -12,6 +12,8 @@ import {
 import { getFilemakerOrganizationsCollection } from '@/features/filemaker/server/filemaker-organizations-mongo';
 import type { JobScanEvaluation } from '@/shared/contracts/job-board';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
+import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-board-runtime-constants';
+import { resolveRuntimeActionExecutionSettings } from '@/shared/lib/browser-execution/runtime-action-resolver.server';
 import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 import {
   resolveJobBoardProvider,
@@ -19,13 +21,13 @@ import {
 } from '@/shared/lib/job-board/job-board-providers';
 
 import {
-  filemakerPracujScrapeRequestSchema,
-  type FilemakerPracujOrganizationMatch,
-  type FilemakerPracujScrapeOfferResult,
-  type FilemakerPracujScrapeRequest,
-  type FilemakerPracujScrapeResponse,
-  type FilemakerPracujScrapedOffer,
-} from '../filemaker-pracuj-scrape-contracts';
+  filemakerJobBoardScrapeRequestSchema,
+  type FilemakerJobBoardOrganizationMatch,
+  type FilemakerJobBoardScrapeOfferResult,
+  type FilemakerJobBoardScrapeRequest,
+  type FilemakerJobBoardScrapeResponse,
+  type FilemakerJobBoardScrapedOffer,
+} from '../filemaker-job-board-scrape-contracts';
 import {
   createFilemakerJobListing,
   createFilemakerOrganization,
@@ -54,12 +56,12 @@ type OrganizationCandidate = {
 type ApplyImportInput = {
   candidates: OrganizationCandidate[];
   database: FilemakerDatabase;
-  options: FilemakerPracujScrapeRequest;
-  offers: FilemakerPracujScrapedOffer[];
+  options: FilemakerJobBoardScrapeRequest;
+  offers: FilemakerJobBoardScrapedOffer[];
 };
 
 type CentralizedScrapeResult = {
-  offers: FilemakerPracujScrapedOffer[];
+  offers: FilemakerJobBoardScrapedOffer[];
   provider: JobBoardProvider;
   runId: string | null;
   sourceSite: string;
@@ -67,6 +69,16 @@ type CentralizedScrapeResult = {
 };
 
 const DEFAULT_WARNINGS: string[] = [];
+
+const resolveEffectiveHeadless = async (
+  override: boolean | null | undefined
+): Promise<boolean> => {
+  if (typeof override === 'boolean') {
+    return override;
+  }
+  const settings = await resolveRuntimeActionExecutionSettings(JOB_BOARD_SCRAPE_RUNTIME_KEY);
+  return settings.headless ?? true;
+};
 
 const sleep = async (delayMs: number): Promise<void> => {
   if (delayMs > 0) {
@@ -92,7 +104,7 @@ const toNullableNumber = (value: unknown): number | null => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 };
 
-const normalizeSalaryPeriod = (value: unknown): FilemakerPracujScrapedOffer['salaryPeriod'] => {
+const normalizeSalaryPeriod = (value: unknown): FilemakerJobBoardScrapedOffer['salaryPeriod'] => {
   const normalized = toStringValue(value).toLowerCase();
   return normalized === 'hourly' || normalized === 'yearly' || normalized === 'fixed'
     ? normalized
@@ -111,6 +123,9 @@ const normalizeJobBoardSourceUrl = (value: unknown): string | null => {
   }
 };
 
+const clipProfileText = (value: string, max = 8_000): string =>
+  value.length > max ? `${value.slice(0, Math.max(0, max - 3))}...` : value;
+
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
 
@@ -124,7 +139,7 @@ const salaryFromListing = (
   listing: Record<string, unknown> | null,
   extractSalaries: boolean
 ): Pick<
-  FilemakerPracujScrapedOffer,
+  FilemakerJobBoardScrapedOffer,
   'salaryCurrency' | 'salaryMax' | 'salaryMin' | 'salaryPeriod' | 'salaryText'
 > => {
   if (!extractSalaries) {
@@ -156,10 +171,10 @@ const locationFromListing = (listing: Record<string, unknown> | null): string =>
 const offerFromEvaluation = (input: {
   evaluation: JobScanEvaluation;
   finalUrl: string;
-  options: FilemakerPracujScrapeRequest;
+  options: FilemakerJobBoardScrapeRequest;
   provider: JobBoardProvider;
   sourceSite: string;
-}): FilemakerPracujScrapedOffer | null => {
+}): FilemakerJobBoardScrapedOffer | null => {
   const evaluation = input.evaluation;
   const listing = asRecord(evaluation?.listing);
   const company = asRecord(evaluation?.company);
@@ -168,8 +183,11 @@ const offerFromEvaluation = (input: {
   const companyName = recordString(company, 'name');
   if (sourceUrl === null || title.length === 0 || companyName.length === 0) return null;
   const salary = salaryFromListing(listing, input.options.extractSalaries);
+  const companyProfile = clipProfileText(recordString(company, 'description'));
   return {
     companyName,
+    companyProfile,
+    companyProfileUrl: recordNullableString(company, 'profileUrl'),
     description: input.options.extractDescriptions ? recordString(listing, 'description') : '',
     expiresAt: recordNullableString(listing, 'expiresAt'),
     location: locationFromListing(listing),
@@ -234,7 +252,7 @@ const scoreTokens = (left: string[], right: string[]): number => {
 const scoreCandidate = (
   companyName: string,
   candidate: OrganizationCandidate
-): FilemakerPracujOrganizationMatch | null => {
+): FilemakerJobBoardOrganizationMatch | null => {
   const normalizedCompany = normalizeNameForMatch(companyName);
   if (normalizedCompany.length === 0) return null;
   let best = 0;
@@ -260,15 +278,15 @@ const scoreCandidate = (
 };
 
 const findBestMatch = (
-  offer: FilemakerPracujScrapedOffer,
+  offer: FilemakerJobBoardScrapedOffer,
   candidates: OrganizationCandidate[],
   minimumMatchConfidence: number
-): FilemakerPracujOrganizationMatch | null => {
+): FilemakerJobBoardOrganizationMatch | null => {
   const matches = candidates
-    .map((candidate: OrganizationCandidate): FilemakerPracujOrganizationMatch | null =>
+    .map((candidate: OrganizationCandidate): FilemakerJobBoardOrganizationMatch | null =>
       scoreCandidate(offer.companyName, candidate)
     )
-    .filter((match): match is FilemakerPracujOrganizationMatch => match !== null)
+    .filter((match): match is FilemakerJobBoardOrganizationMatch => match !== null)
     .sort((left, right) => right.confidence - left.confidence);
   const best = matches[0] ?? null;
   return best && best.confidence >= minimumMatchConfidence ? best : null;
@@ -293,7 +311,7 @@ const listMongoCandidateOrganizations = async (
 
 const loadOrganizationCandidates = async (
   database: FilemakerDatabase,
-  options: FilemakerPracujScrapeRequest
+  options: FilemakerJobBoardScrapeRequest
 ): Promise<OrganizationCandidate[]> => {
   const selectedOnly = options.organizationScope === 'selected';
   const selectedIds = new Set(options.selectedOrganizationIds);
@@ -315,7 +333,7 @@ const loadOrganizationCandidates = async (
   return Array.from(organizationsById.values()).map(buildCandidate);
 };
 
-const buildListingId = (organizationId: string, offer: FilemakerPracujScrapedOffer): string => {
+const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedOffer): string => {
   const stablePart = offer.sourceExternalId ?? `${offer.title}-${offer.location}`;
   const slug = normalizeNameForMatch(`${organizationId}-${stablePart}`).replace(/\s+/g, '-');
   return `filemaker-job-board-job-${slug.length > 0 ? slug : randomUUID()}`;
@@ -326,7 +344,7 @@ const normalizeDedupeKey = (value: string): string => normalizeNameForMatch(valu
 const findExistingListingIndex = (
   listings: readonly FilemakerJobListing[],
   organizationId: string,
-  offer: FilemakerPracujScrapedOffer
+  offer: FilemakerJobBoardScrapedOffer
 ): number => {
   const titleKey = normalizeDedupeKey(`${organizationId} ${offer.title} ${offer.location}`);
   return listings.findIndex((listing: FilemakerJobListing): boolean => {
@@ -339,8 +357,8 @@ const findExistingListingIndex = (
 
 const toJobListing = (input: {
   existing?: FilemakerJobListing;
-  offer: FilemakerPracujScrapedOffer;
-  options: FilemakerPracujScrapeRequest;
+  offer: FilemakerJobBoardScrapedOffer;
+  options: FilemakerJobBoardScrapeRequest;
   organizationId: string;
 }): FilemakerJobListing => {
   const now = new Date().toISOString();
@@ -366,20 +384,80 @@ const toJobListing = (input: {
   });
 };
 
+const applyOfferProfileToOrganization = (
+  organization: FilemakerOrganization,
+  offer: FilemakerJobBoardScrapedOffer,
+  now = new Date().toISOString()
+): { changed: boolean; organization: FilemakerOrganization } => {
+  if (offer.companyProfile.trim().length === 0) {
+    return { changed: false, organization };
+  }
+  const next = createFilemakerOrganization({
+    ...organization,
+    jobBoardCompanyProfile: offer.companyProfile,
+    jobBoardCompanyProfileUrl: offer.companyProfileUrl ?? undefined,
+    jobBoardCompanyProfileScrapedAt: now,
+    updatedBy: 'filemaker:job-board-scrape',
+    updatedAt: now,
+  });
+  return {
+    changed:
+      organization.jobBoardCompanyProfile !== next.jobBoardCompanyProfile ||
+      organization.jobBoardCompanyProfileUrl !== next.jobBoardCompanyProfileUrl ||
+      organization.jobBoardCompanyProfileScrapedAt !== next.jobBoardCompanyProfileScrapedAt,
+    organization: next,
+  };
+};
+
+const applyOfferProfileToDatabaseOrganization = (
+  database: FilemakerDatabase,
+  organizationId: string,
+  offer: FilemakerJobBoardScrapedOffer
+): boolean => {
+  const index = database.organizations.findIndex(
+    (organization: FilemakerOrganization): boolean => organization.id === organizationId
+  );
+  if (index < 0) return false;
+  const organization = database.organizations[index];
+  if (organization === undefined) return false;
+  const result = applyOfferProfileToOrganization(organization, offer);
+  if (!result.changed) return false;
+  database.organizations.splice(index, 1, result.organization);
+  return true;
+};
+
 const createUnmatchedOrganization = (
   database: FilemakerDatabase,
-  companyName: string
+  offer: FilemakerJobBoardScrapedOffer
 ): FilemakerOrganization => {
   const now = new Date().toISOString();
-  const organization = createFilemakerOrganization({
+  const baseOrganization = createFilemakerOrganization({
     id: `filemaker-job-board-organization-${randomUUID()}`,
-    name: companyName,
+    name: offer.companyName,
     updatedBy: 'filemaker:job-board-scrape',
     createdAt: now,
     updatedAt: now,
   });
+  const organization = applyOfferProfileToOrganization(baseOrganization, offer, now).organization;
   database.organizations.push(organization);
   return organization;
+};
+
+const ensureOrganizationInDatabase = (
+  database: FilemakerDatabase,
+  organization: FilemakerOrganization
+): boolean => {
+  const exists = database.organizations.some(
+    (entry: FilemakerOrganization): boolean => entry.id === organization.id
+  );
+  if (exists) return false;
+  database.organizations.push(
+    createFilemakerOrganization({
+      ...organization,
+      updatedBy: organization.updatedBy ?? 'filemaker:job-board-scrape',
+    })
+  );
+  return true;
 };
 
 const upsertMongoOrganizationForCreatedCandidate = async (
@@ -393,6 +471,9 @@ const upsertMongoOrganizationForCreatedCandidate = async (
         $set: {
           city: organization.city,
           id: organization.id,
+          jobBoardCompanyProfile: organization.jobBoardCompanyProfile,
+          jobBoardCompanyProfileScrapedAt: organization.jobBoardCompanyProfileScrapedAt,
+          jobBoardCompanyProfileUrl: organization.jobBoardCompanyProfileUrl,
           name: organization.name,
           updatedAt: organization.updatedAt,
           updatedBy: organization.updatedBy,
@@ -409,10 +490,37 @@ const upsertMongoOrganizationForCreatedCandidate = async (
   }
 };
 
+const upsertMongoOrganizationProfile = async (
+  organizationId: string,
+  offer: FilemakerJobBoardScrapedOffer
+): Promise<void> => {
+  if (offer.companyProfile.trim().length === 0) return;
+  try {
+    const now = new Date().toISOString();
+    const collection = await getFilemakerOrganizationsCollection();
+    await collection.updateOne(
+      { id: organizationId },
+      {
+        $set: {
+          jobBoardCompanyProfile: offer.companyProfile,
+          ...(offer.companyProfileUrl !== null
+            ? { jobBoardCompanyProfileUrl: offer.companyProfileUrl }
+            : {}),
+          jobBoardCompanyProfileScrapedAt: now,
+          updatedAt: now,
+          updatedBy: 'filemaker:job-board-scrape',
+        },
+      }
+    );
+  } catch {
+    // Settings persistence is still useful in non-Mongo test/dev environments.
+  }
+};
+
 const buildOfferResult = (
-  offer: FilemakerPracujScrapedOffer,
-  match: FilemakerPracujOrganizationMatch | null
-): FilemakerPracujScrapeOfferResult => ({
+  offer: FilemakerJobBoardScrapedOffer,
+  match: FilemakerJobBoardOrganizationMatch | null
+): FilemakerJobBoardScrapeOfferResult => ({
   listingId: null,
   match,
   offer,
@@ -427,17 +535,16 @@ const applyImport = async ({
   options,
 }: ApplyImportInput): Promise<{
   changed: boolean;
-  results: FilemakerPracujScrapeOfferResult[];
+  results: FilemakerJobBoardScrapeOfferResult[];
 }> => {
   let changed = false;
   const candidateList = [...candidates];
-  const results: FilemakerPracujScrapeOfferResult[] = [];
+  const results: FilemakerJobBoardScrapeOfferResult[] = [];
 
   for (const offer of offers) {
     let match = findBestMatch(offer, candidateList, options.minimumMatchConfidence);
     if (!match && options.importStrategy === 'create_unmatched') {
-      const createdOrganization = createUnmatchedOrganization(database, offer.companyName);
-      await upsertMongoOrganizationForCreatedCandidate(createdOrganization);
+      const createdOrganization = createUnmatchedOrganization(database, offer);
       const candidate = buildCandidate(createdOrganization);
       candidateList.push(candidate);
       match = {
@@ -447,6 +554,7 @@ const applyImport = async ({
         reason: 'created from scraped job-board employer',
       };
       changed = true;
+      await upsertMongoOrganizationForCreatedCandidate(createdOrganization);
     }
     if (!match) {
       results.push({
@@ -458,6 +566,18 @@ const applyImport = async ({
       });
       continue;
     }
+
+    const matchedCandidate = candidateList.find(
+      (candidate: OrganizationCandidate): boolean =>
+        candidate.organization.id === match.organizationId
+    );
+    if (matchedCandidate && ensureOrganizationInDatabase(database, matchedCandidate.organization)) {
+      changed = true;
+    }
+    if (applyOfferProfileToDatabaseOrganization(database, match.organizationId, offer)) {
+      changed = true;
+    }
+    await upsertMongoOrganizationProfile(match.organizationId, offer);
 
     const existingIndex = findExistingListingIndex(database.jobListings, match.organizationId, offer);
     const existing = existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
@@ -492,8 +612,8 @@ const applyImport = async ({
 };
 
 const buildSummary = (
-  offers: readonly FilemakerPracujScrapeOfferResult[]
-): FilemakerPracujScrapeResponse['summary'] => ({
+  offers: readonly FilemakerJobBoardScrapeOfferResult[]
+): FilemakerJobBoardScrapeResponse['summary'] => ({
   createdListings: offers.filter((offer) => offer.status === 'created').length,
   matchedOffers: offers.filter((offer) => offer.match !== null).length,
   scrapedOffers: offers.length,
@@ -503,7 +623,7 @@ const buildSummary = (
 });
 
 const collectOfferLinks = async (
-  options: FilemakerPracujScrapeRequest
+  options: FilemakerJobBoardScrapeRequest
 ): Promise<{
   provider: JobBoardProvider;
   runId: string | null;
@@ -540,10 +660,10 @@ const collectOfferLinks = async (
 };
 
 const scrapeOffersViaJobBoardSequencer = async (
-  options: FilemakerPracujScrapeRequest
+  options: FilemakerJobBoardScrapeRequest
 ): Promise<CentralizedScrapeResult> => {
   const collected = await collectOfferLinks(options);
-  const offers: FilemakerPracujScrapedOffer[] = [];
+  const offers: FilemakerJobBoardScrapedOffer[] = [];
   const warnings = [...collected.warnings];
   let runId = collected.runId;
 
@@ -582,14 +702,15 @@ const scrapeOffersViaJobBoardSequencer = async (
   };
 };
 
-export const runFilemakerPracujScrape = async (
+export const runFilemakerJobBoardScrape = async (
   rawInput: unknown
-): Promise<FilemakerPracujScrapeResponse> => {
-  const parsed = filemakerPracujScrapeRequestSchema.safeParse(rawInput);
+): Promise<FilemakerJobBoardScrapeResponse> => {
+  const parsed = filemakerJobBoardScrapeRequestSchema.safeParse(rawInput);
   if (!parsed.success) {
     throw badRequestError('Invalid job-board scrape request.', { issues: parsed.error.issues });
   }
   const options = parsed.data;
+  const effectiveHeadless = await resolveEffectiveHeadless(options.headless);
   if (options.organizationScope === 'selected' && options.selectedOrganizationIds.length === 0) {
     throw badRequestError('Select at least one organisation or use all organisations.');
   }
@@ -617,7 +738,7 @@ export const runFilemakerPracujScrape = async (
   }
 
   return {
-    browserMode: options.headless ? 'headless' : 'headed',
+    browserMode: effectiveHeadless ? 'headless' : 'headed',
     mode: options.mode,
     offers: results,
     provider: scraped.provider,

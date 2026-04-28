@@ -121,6 +121,9 @@ export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   legacyDefaultBankAccountUuid: z.string().optional(),
   legacyDisplayBankAccountUuid: z.string().optional(),
   updatedBy: z.string().optional(),
+  jobBoardCompanyProfile: z.string().optional(),
+  jobBoardCompanyProfileUrl: z.string().optional(),
+  jobBoardCompanyProfileScrapedAt: z.string().nullable().optional(),
 });
 
 export type FilemakerOrganizationDto = z.infer<typeof filemakerOrganizationSchema>;

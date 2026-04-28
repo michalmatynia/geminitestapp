@@ -2,6 +2,35 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createMxVerifier } from './filemaker-email-mx-verifier';
 
+const dnsError = (code: string): Error & { code: string } =>
+  Object.assign(new Error(code), { code });
+
+type Deferred = {
+  promise: Promise<void>;
+  resolve: () => void;
+};
+
+const createDeferred = (): Deferred => {
+  let resolve: () => void = () => undefined;
+  const promise = new Promise<void>((innerResolve) => {
+    resolve = innerResolve;
+  });
+  return { promise, resolve };
+};
+
+const waitForMockCallCount = async (
+  mock: { mock: { calls: unknown[] } },
+  count: number
+): Promise<void> => {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    if (mock.mock.calls.length >= count) return;
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0);
+    });
+  }
+  expect(mock.mock.calls.length).toBeGreaterThanOrEqual(count);
+};
+
 describe('createMxVerifier — hasMx (legacy boolean API)', () => {
   it('returns true for MX hit', async () => {
     const verifier = createMxVerifier({
@@ -63,6 +92,18 @@ describe('createMxVerifier — lookup (structured outcome)', () => {
     });
   });
 
+  it('reports outcome=address-only when DNS reports no MX data but A exists', async () => {
+    const verifier = createMxVerifier({
+      resolveMx: vi.fn().mockRejectedValue(dnsError('ENODATA')),
+      resolveA: vi.fn().mockResolvedValue(['1.2.3.4']),
+      resolveAaaa: vi.fn().mockRejectedValue(dnsError('ENODATA')),
+    });
+    await expect(verifier.lookup('user@example.com')).resolves.toEqual({
+      outcome: 'address-only',
+      hasMail: true,
+    });
+  });
+
   it('reports outcome=address-only when MX is empty but AAAA exists', async () => {
     const verifier = createMxVerifier({
       resolveMx: vi.fn().mockResolvedValue([]),
@@ -72,6 +113,58 @@ describe('createMxVerifier — lookup (structured outcome)', () => {
     await expect(verifier.lookup('user@example.com')).resolves.toEqual({
       outcome: 'address-only',
       hasMail: true,
+    });
+  });
+
+  it('reports outcome=none when DNS reports no MX, A, or AAAA data', async () => {
+    const verifier = createMxVerifier({
+      resolveMx: vi.fn().mockRejectedValue(dnsError('ENODATA')),
+      resolveA: vi.fn().mockRejectedValue(dnsError('ENODATA')),
+      resolveAaaa: vi.fn().mockRejectedValue(dnsError('ENODATA')),
+    });
+    await expect(verifier.lookup('user@nope.invalid')).resolves.toEqual({
+      outcome: 'none',
+      hasMail: false,
+    });
+  });
+
+  it('reports outcome=error when MX lookup fails operationally even if A exists', async () => {
+    const verifier = createMxVerifier({
+      resolveMx: vi.fn().mockRejectedValue(dnsError('ESERVFAIL')),
+      resolveA: vi.fn().mockResolvedValue(['1.2.3.4']),
+      resolveAaaa: vi.fn().mockResolvedValue([]),
+    });
+    await expect(verifier.lookup('user@example.com')).resolves.toEqual({
+      outcome: 'error',
+      hasMail: false,
+    });
+  });
+
+  it('reports outcome=error when MX resolver throws synchronously', async () => {
+    const verifier = createMxVerifier({
+      resolveMx: vi.fn(() => {
+        throw dnsError('ESERVFAIL');
+      }),
+      resolveA: vi.fn().mockResolvedValue(['1.2.3.4']),
+      resolveAaaa: vi.fn().mockResolvedValue([]),
+    });
+    await expect(verifier.lookup('user@example.com')).resolves.toEqual({
+      outcome: 'error',
+      hasMail: false,
+    });
+  });
+
+  it('reports outcome=error when an address resolver throws synchronously after empty MX', async () => {
+    const verifier = createMxVerifier({
+      resolveMx: vi.fn().mockResolvedValue([]),
+      resolveA: vi.fn(() => {
+        throw dnsError('ESERVFAIL');
+      }),
+      resolveAaaa: vi.fn().mockResolvedValue([]),
+    });
+    await expect(verifier.lookup('user@example.com')).resolves.toEqual({
+      outcome: 'error',
+      hasMail: false,
     });
   });
 
@@ -175,6 +268,27 @@ describe('createMxVerifier — lookup (structured outcome)', () => {
     await verifier.lookup('User@ACME.com.');
     expect(resolveMx).toHaveBeenCalledWith('acme.com');
   });
+
+  it('normalizes display-name mailto addresses before resolving', async () => {
+    const resolveMx = vi.fn().mockResolvedValue([{ exchange: 'mx.acme.com' }]);
+    const verifier = createMxVerifier({ resolveMx, resolveA: vi.fn(), resolveAaaa: vi.fn() });
+    await verifier.lookup('Acme <mailto:Sales@ACME.com.?subject=hello>');
+    expect(resolveMx).toHaveBeenCalledWith('acme.com');
+  });
+
+  it('rejects malformed DNS labels before resolver calls', async () => {
+    const resolveMx = vi.fn();
+    const resolveA = vi.fn();
+    const resolveAaaa = vi.fn();
+    const verifier = createMxVerifier({ resolveMx, resolveA, resolveAaaa });
+    await expect(verifier.lookup('user@bad_domain.example')).resolves.toEqual({
+      outcome: 'error',
+      hasMail: false,
+    });
+    expect(resolveMx).not.toHaveBeenCalled();
+    expect(resolveA).not.toHaveBeenCalled();
+    expect(resolveAaaa).not.toHaveBeenCalled();
+  });
 });
 
 describe('createMxVerifier — caching', () => {
@@ -204,5 +318,107 @@ describe('createMxVerifier — caching', () => {
     nowValue += 200; // past TTL
     await verifier.lookup('c@acme.com');
     expect(resolveMx).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not cache transient error outcomes by default', async () => {
+    const resolveMx = vi.fn().mockRejectedValue(dnsError('ESERVFAIL'));
+    const verifier = createMxVerifier({
+      resolveMx,
+      resolveA: vi.fn().mockRejectedValue(dnsError('ESERVFAIL')),
+      resolveAaaa: vi.fn().mockRejectedValue(dnsError('ESERVFAIL')),
+    });
+    await verifier.lookup('a@broken.example');
+    await verifier.lookup('b@broken.example');
+    expect(resolveMx).toHaveBeenCalledTimes(2);
+  });
+
+  it('can cache transient error outcomes when configured', async () => {
+    const resolveMx = vi.fn().mockRejectedValue(dnsError('ESERVFAIL'));
+    const verifier = createMxVerifier({
+      resolveMx,
+      resolveA: vi.fn().mockRejectedValue(dnsError('ESERVFAIL')),
+      resolveAaaa: vi.fn().mockRejectedValue(dnsError('ESERVFAIL')),
+      transientCacheTtlMs: 1000,
+    });
+    await verifier.lookup('a@broken.example');
+    await verifier.lookup('b@broken.example');
+    expect(resolveMx).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('createMxVerifier — lookupMany', () => {
+  it('returns results aligned to the input order', async () => {
+    const verifier = createMxVerifier({
+      resolveMx: vi.fn(async (domain: string) =>
+        domain === 'acme.example' ? [{ exchange: 'mx.acme.example' }] : []
+      ),
+      resolveA: vi.fn(async (domain: string) =>
+        domain === 'relay.example' ? ['1.2.3.4'] : []
+      ),
+      resolveAaaa: vi.fn().mockResolvedValue([]),
+    });
+    await expect(verifier.lookupMany?.(['sales@acme.example', 'relay.example', 'bad'])).resolves.toEqual([
+      { outcome: 'mx', hasMail: true },
+      { outcome: 'address-only', hasMail: true },
+      { outcome: 'error', hasMail: false },
+    ]);
+  });
+
+  it('deduplicates repeated domains through the shared lookup cache', async () => {
+    const resolveMx = vi.fn().mockResolvedValue([{ exchange: 'mx.acme.example' }]);
+    const verifier = createMxVerifier({
+      resolveMx,
+      resolveA: vi.fn(),
+      resolveAaaa: vi.fn(),
+    });
+    await expect(verifier.lookupMany?.(['a@acme.example', 'b@acme.example', 'ACME.example.'])).resolves.toEqual([
+      { outcome: 'mx', hasMail: true },
+      { outcome: 'mx', hasMail: true },
+      { outcome: 'mx', hasMail: true },
+    ]);
+    expect(resolveMx).toHaveBeenCalledTimes(1);
+  });
+
+  it('limits concurrent distinct-domain lookups', async () => {
+    const releases: Deferred[] = [];
+    let active = 0;
+    let peakActive = 0;
+    const resolveMx = vi.fn(async (domain: string) => {
+      active += 1;
+      peakActive = Math.max(peakActive, active);
+      const release = createDeferred();
+      releases.push(release);
+      await release.promise;
+      active -= 1;
+      return [{ exchange: `mx.${domain}` }];
+    });
+    const verifier = createMxVerifier({
+      resolveMx,
+      resolveA: vi.fn(),
+      resolveAaaa: vi.fn(),
+      maxConcurrentLookups: 2,
+      timeoutMs: 1000,
+    });
+    const lookupMany = verifier.lookupMany;
+    if (lookupMany === undefined) throw new Error('Expected lookupMany to be available.');
+
+    const lookupPromise = lookupMany(['a.example', 'b.example', 'c.example', 'd.example']);
+    await waitForMockCallCount(resolveMx, 2);
+    expect(resolveMx).toHaveBeenCalledTimes(2);
+    expect(peakActive).toBe(2);
+
+    releases.splice(0).forEach((release) => release.resolve());
+    await waitForMockCallCount(resolveMx, 4);
+    expect(resolveMx).toHaveBeenCalledTimes(4);
+    expect(peakActive).toBe(2);
+
+    releases.splice(0).forEach((release) => release.resolve());
+    await expect(lookupPromise).resolves.toEqual([
+      { outcome: 'mx', hasMail: true },
+      { outcome: 'mx', hasMail: true },
+      { outcome: 'mx', hasMail: true },
+      { outcome: 'mx', hasMail: true },
+    ]);
+    expect(active).toBe(0);
   });
 });

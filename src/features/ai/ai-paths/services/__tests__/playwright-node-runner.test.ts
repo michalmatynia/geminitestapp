@@ -447,7 +447,7 @@ describe('enqueuePlaywrightNodeRun', () => {
       expect.arrayContaining([
         expect.stringContaining('[runtime] Launching chromium browser.'),
         expect.stringContaining(
-          '[runtime] Anti-detection posture: browser=Chrome, profile=default'
+          '[runtime] Anti-detection posture: browser=Chrome, mode=headed, profile=default'
         ),
         expect.stringContaining('[runtime] Applied Chromium anti-detection defaults'),
         expect.stringContaining('[runtime] Trace capture started.'),

@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server';
 
 import { requireFilemakerMailAdminSession } from '@/features/filemaker/server/filemaker-mail-access';
-import { runFilemakerPracujScrape } from '@/features/filemaker/server/filemaker-pracuj-scrape';
+import { runFilemakerJobBoardScrape } from '@/features/filemaker/server/filemaker-job-board-scrape';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 
@@ -19,6 +19,6 @@ const readOptionalJsonBody = async (req: NextRequest): Promise<unknown> => {
 
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
-  const result = await runFilemakerPracujScrape(await readOptionalJsonBody(req));
+  const result = await runFilemakerJobBoardScrape(await readOptionalJsonBody(req));
   return Response.json(result);
 }

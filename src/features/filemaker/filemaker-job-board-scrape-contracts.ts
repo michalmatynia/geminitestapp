@@ -3,18 +3,16 @@ import { z } from 'zod';
 import { filemakerJobListingStatusSchema } from '@/shared/contracts/filemaker';
 import { JOB_BOARD_PROVIDER_IDS } from '@/shared/lib/job-board/job-board-providers';
 
-export const FILEMAKER_PRACUJ_SCRAPE_ENDPOINT =
-  '/api/filemaker/organizations/pracuj-scrape';
 export const FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT =
   '/api/filemaker/organizations/job-board-scrape';
 
-export const filemakerPracujScrapeModeSchema = z.enum(['preview', 'import']);
-export const filemakerPracujOrganizationScopeSchema = z.enum(['all', 'selected']);
-export const filemakerPracujImportStrategySchema = z.enum([
+export const filemakerJobBoardScrapeModeSchema = z.enum(['preview', 'import']);
+export const filemakerJobBoardOrganizationScopeSchema = z.enum(['all', 'selected']);
+export const filemakerJobBoardImportStrategySchema = z.enum([
   'matched_only',
   'create_unmatched',
 ]);
-export const filemakerPracujDuplicateStrategySchema = z.enum(['skip', 'update', 'add']);
+export const filemakerJobBoardDuplicateStrategySchema = z.enum(['skip', 'update', 'add']);
 export const filemakerJobBoardScrapeProviderSchema = z.enum([
   'auto',
   ...JOB_BOARD_PROVIDER_IDS,
@@ -43,19 +41,19 @@ const jobBoardSourceUrlSchema = z.string().trim().url().refine(
   { message: 'Only https pracuj.pl, justjoin.it, and nofluffjobs.com links are supported.' }
 );
 
-export const filemakerPracujScrapeRequestSchema = z.object({
+export const filemakerJobBoardScrapeRequestSchema = z.object({
   delayMs: z.number().int().min(0).max(10_000).default(750),
-  duplicateStrategy: filemakerPracujDuplicateStrategySchema.default('skip'),
+  duplicateStrategy: filemakerJobBoardDuplicateStrategySchema.default('skip'),
   extractDescriptions: z.boolean().default(true),
   extractSalaries: z.boolean().default(true),
-  headless: z.boolean().default(true),
+  headless: z.boolean().nullable().optional().default(null),
   humanizeMouse: z.boolean().default(true),
-  importStrategy: filemakerPracujImportStrategySchema.default('matched_only'),
+  importStrategy: filemakerJobBoardImportStrategySchema.default('create_unmatched'),
   maxOffers: z.number().int().min(1).max(250).default(50),
   maxPages: z.number().int().min(1).max(20).default(2),
   minimumMatchConfidence: z.number().int().min(50).max(100).default(85),
-  mode: filemakerPracujScrapeModeSchema.default('preview'),
-  organizationScope: filemakerPracujOrganizationScopeSchema.default('all'),
+  mode: filemakerJobBoardScrapeModeSchema.default('preview'),
+  organizationScope: filemakerJobBoardOrganizationScopeSchema.default('all'),
   personaId: z.string().trim().max(160).nullable().optional().default(null),
   provider: filemakerJobBoardScrapeProviderSchema.default('auto'),
   selectedOrganizationIds: z.array(z.string().trim().min(1)).max(500).default([]),
@@ -64,25 +62,27 @@ export const filemakerPracujScrapeRequestSchema = z.object({
   timeoutMs: z.number().int().min(30_000).max(600_000).default(180_000),
 });
 
-export type FilemakerPracujScrapeRequest = z.infer<
-  typeof filemakerPracujScrapeRequestSchema
+export type FilemakerJobBoardScrapeRequest = z.infer<
+  typeof filemakerJobBoardScrapeRequestSchema
 >;
-export type FilemakerPracujScrapeMode = z.infer<typeof filemakerPracujScrapeModeSchema>;
-export type FilemakerPracujOrganizationScope = z.infer<
-  typeof filemakerPracujOrganizationScopeSchema
+export type FilemakerJobBoardScrapeMode = z.infer<typeof filemakerJobBoardScrapeModeSchema>;
+export type FilemakerJobBoardOrganizationScope = z.infer<
+  typeof filemakerJobBoardOrganizationScopeSchema
 >;
-export type FilemakerPracujImportStrategy = z.infer<
-  typeof filemakerPracujImportStrategySchema
+export type FilemakerJobBoardImportStrategy = z.infer<
+  typeof filemakerJobBoardImportStrategySchema
 >;
-export type FilemakerPracujDuplicateStrategy = z.infer<
-  typeof filemakerPracujDuplicateStrategySchema
+export type FilemakerJobBoardDuplicateStrategy = z.infer<
+  typeof filemakerJobBoardDuplicateStrategySchema
 >;
 export type FilemakerJobBoardScrapeProvider = z.infer<
   typeof filemakerJobBoardScrapeProviderSchema
 >;
 
-export type FilemakerPracujScrapedOffer = {
+export type FilemakerJobBoardScrapedOffer = {
   companyName: string;
+  companyProfile: string;
+  companyProfileUrl: string | null;
   description: string;
   expiresAt: string | null;
   location: string;
@@ -98,29 +98,29 @@ export type FilemakerPracujScrapedOffer = {
   title: string;
 };
 
-export type FilemakerPracujOrganizationMatch = {
+export type FilemakerJobBoardOrganizationMatch = {
   confidence: number;
   organizationId: string;
   organizationName: string;
   reason: string;
 };
 
-export type FilemakerPracujScrapeImportStatus =
+export type FilemakerJobBoardScrapeImportStatus =
   | 'preview'
   | 'created'
   | 'updated'
   | 'skipped'
   | 'unmatched';
 
-export type FilemakerPracujScrapeOfferResult = {
+export type FilemakerJobBoardScrapeOfferResult = {
   listingId: string | null;
-  match: FilemakerPracujOrganizationMatch | null;
-  offer: FilemakerPracujScrapedOffer;
+  match: FilemakerJobBoardOrganizationMatch | null;
+  offer: FilemakerJobBoardScrapedOffer;
   reason: string | null;
-  status: FilemakerPracujScrapeImportStatus;
+  status: FilemakerJobBoardScrapeImportStatus;
 };
 
-export type FilemakerPracujScrapeSummary = {
+export type FilemakerJobBoardScrapeSummary = {
   createdListings: number;
   matchedOffers: number;
   scrapedOffers: number;
@@ -129,14 +129,14 @@ export type FilemakerPracujScrapeSummary = {
   updatedListings: number;
 };
 
-export type FilemakerPracujScrapeResponse = {
+export type FilemakerJobBoardScrapeResponse = {
   browserMode: 'headed' | 'headless';
-  mode: FilemakerPracujScrapeMode;
-  offers: FilemakerPracujScrapeOfferResult[];
+  mode: FilemakerJobBoardScrapeMode;
+  offers: FilemakerJobBoardScrapeOfferResult[];
   provider: Exclude<FilemakerJobBoardScrapeProvider, 'auto'>;
   runId: string | null;
   sourceSite: string;
   sourceUrl: string;
-  summary: FilemakerPracujScrapeSummary;
+  summary: FilemakerJobBoardScrapeSummary;
   warnings: string[];
 };

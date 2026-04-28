@@ -46,113 +46,71 @@ import {
   HomeTrainingFocusSection,
 } from './components';
 
-export function HomeScreenContent({
-  initialLatestLessonCheckpoint,
+function DebugProofSection({ copy, homeDebugProof }: { copy: ReturnType<typeof useKangurMobileI18n>['copy']; homeDebugProof: any }): React.JSX.Element | null {
+  if (!__DEV__ || homeDebugProof === null) return null;
+
+  const renderDebugCheck = (check: { label: string; status: 'ready' | 'info' | 'missing'; detail: string }): React.JSX.Element => {
+    const statusColors = {
+      ready: { bg: '#ecfdf5', border: '#a7f3d0', text: '#166534' },
+      info: { bg: '#eff6ff', border: '#bfdbfe', text: '#1e3a8a' },
+      missing: { bg: '#fff7ed', border: '#fed7aa', text: '#991b1b' },
+    };
+    const { bg, border } = statusColors[check.status];
+    const statusText =
+      check.status === 'ready'
+        ? copy({ de: 'bereit', en: 'ready', pl: 'gotowe' })
+        : check.status === 'info'
+        ? copy({ de: 'läuft', en: 'in progress', pl: 'w toku' })
+        : copy({ de: 'fehlt', en: 'missing', pl: 'brak' });
+
+    return (
+      <View key={check.label} style={{ backgroundColor: bg, borderColor: border, borderRadius: 18, borderWidth: 1, gap: 4, padding: 12 }}>
+        <Text style={{ color: '#0f172a', fontWeight: '700' }}>{check.label}: {statusText}</Text>
+        <Text style={{ color: '#475569', lineHeight: 20 }}>{check.detail}</Text>
+      </View>
+    );
+  };
+
+  return (
+    <SectionCard title={copy({ de: 'Entwickler-Prüfung für Startdaten', en: 'Developer home checks', pl: 'Deweloperskie sprawdzenie danych startu' })}>
+      <Text style={{ color: '#0f172a', fontWeight: '700' }}>
+        {copy({ de: 'Modus', en: 'Mode', pl: 'Tryb' })}: {homeDebugProof.operationLabel}
+      </Text>
+      <View style={{ gap: 10 }}>{homeDebugProof.checks.map(renderDebugCheck)}</View>
+    </SectionCard>
+  );
+}
+
+function HomeInsightsSection({
+  copy,
+  areDeferredHomeInsightsReady,
   initialRecentLessonCheckpoints,
   isLiveHomeProgressReady,
+  recentResults,
+  trainingFocus,
 }: {
-  initialLatestLessonCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  areDeferredHomeInsightsReady: boolean;
   initialRecentLessonCheckpoints: KangurMobileHomeLessonCheckpointItem[];
   isLiveHomeProgressReady: boolean;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const { apiBaseUrl, apiBaseUrlSource } = useKangurMobileRuntime();
-  const {
-    authError,
-    authMode,
-    developerAutoSignInEnabled,
-    hasAttemptedDeveloperAutoSignIn,
-    isLoadingAuth,
-    session,
-    signIn,
-    signInWithLearnerCredentials,
-    signOut,
-    supportsLearnerCredentials,
-  } = useKangurMobileAuth();
-  const [
-    areDeferredHomePanelsReady,
-    areDeferredHomeDuelSecondaryReady,
-    areDeferredHomeDuelInvitesReady,
-    areDeferredHomeDuelAdvancedReady,
-  ] = useHomeScreenDeferredPanelSequence(HOME_DUEL_PANEL_SEQUENCE, false);
-  const [areDeferredHomeInsightsReady, areDeferredHomeScoreRefreshReady] =
-    useHomeScreenDeferredPanelSequence(
-      HOME_INSIGHT_SCORE_REFRESH_SEQUENCE,
-      !areDeferredHomePanelsReady,
-    );
-  const [areDeferredHomeHeroScoresReady, areDeferredHomeTrainingFocusDetailsReady] =
-    useHomeScreenDeferredPanelGroup(
-      HOME_SCORE_DETAILS_PANEL_GROUP,
-      !areDeferredHomePanelsReady,
-    );
-  const [
-    areDeferredHomeHeroIntroReady,
-    areDeferredHomeHeroDetailsReady,
-    areDeferredHomeAccountSummaryReady,
-  ] = useHomeScreenDeferredPanelGroup(HOME_PRIMARY_SURFACE_PANEL_GROUP, false);
-  const [areDeferredHomeAccountDetailsReady, areDeferredHomeAccountSignInReady] =
-    useHomeScreenDeferredPanelGroup(
-      HOME_ACCOUNT_DETAILS_PANEL_GROUP,
-      !areDeferredHomeAccountSummaryReady,
-    );
-  const [
-    areDeferredHomeNavigationSecondaryReady,
-    areDeferredHomeNavigationExtendedReady,
-  ] = useHomeScreenDeferredPanelSequence(HOME_NAVIGATION_PANEL_SEQUENCE, false);
-  const isRestoringLearnerSession =
-    isLoadingAuth && session.status !== 'authenticated';
-  const shouldShowLearnerCredentialsForm =
-    supportsLearnerCredentials &&
-    !isRestoringLearnerSession &&
-    session.status !== 'authenticated';
-  const authBoundary = areDeferredHomeAccountSummaryReady
-    ? getKangurHomeAuthBoundaryViewModel({
-        authError,
-        developerAutoSignInEnabled,
-        hasAttemptedDeveloperAutoSignIn,
-        isLoadingAuth,
-        locale,
-        session,
-        supportsLearnerCredentials,
-      })
-    : null;
-  const activeLearnerDisplayName = session.user?.activeLearner?.displayName?.trim() ?? '';
-  const userFullName = session.user?.full_name?.trim() ?? '';
-  const homeHeroLearnerName = activeLearnerDisplayName !== ''
-    ? activeLearnerDisplayName
-    : (userFullName !== '' ? userFullName : null);
-  const canOpenParentDashboard =
-    session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
-  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
-
-  const authBoundaryView = !areDeferredHomeAccountSummaryReady ? null : getKangurHomeAuthBoundaryViewModel({
-        authError,
-        developerAutoSignInEnabled,
-        hasAttemptedDeveloperAutoSignIn,
-        isLoadingAuth,
-        locale,
-        session,
-        supportsLearnerCredentials,
-      });
-
-  const shouldRenderCombinedHomeQuickAccessPlaceholder =
-    !areDeferredHomeAccountSummaryReady && !areDeferredHomeNavigationSecondaryReady;
-  const shouldRenderCombinedHomeStartupPlaceholder =
-    shouldRenderCombinedHomeQuickAccessPlaceholder && !areDeferredHomePanelsReady;
-  const shouldRenderCombinedHomeHeroPlaceholder =
-    !areDeferredHomeHeroIntroReady && !areDeferredHomeHeroDetailsReady;
-  const shouldRenderCombinedHomePrimaryStartupPlaceholder =
-    shouldRenderCombinedHomeStartupPlaceholder && shouldRenderCombinedHomeHeroPlaceholder;
-
-  const handleSignIn = (): void => {
-    void signIn();
-  };
-  const handleSignOut = (): void => {
-    void signOut();
-  };
-  const handleSignInWithLearnerCredentials = async (loginName: string, password: string): Promise<void> => {
-    await signInWithLearnerCredentials(loginName, password);
-  };
+  recentResults: any;
+  trainingFocus: any;
+}): React.JSX.Element | null {
+  if (!areDeferredHomeInsightsReady) return <DeferredHomeInsightsCard />;
+  return (
+    <HomeSecondaryInsightsSectionGroup
+      initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
+      isLiveHomeProgressReady={isLiveHomeProgressReady}
+      recentResults={{
+        error: recentResults.error,
+        isDeferred: !trainingFocus.isEnabled,
+        isLoading: recentResults.isLoading,
+        isRestoringAuth: recentResults.isRestoringAuth,
+        results: recentResults.results,
+      }}
+    />
+  );
+}
 
 const RenderHomeScreenContent = ({
   viewModel,
@@ -334,6 +292,146 @@ const RenderHomeScreenContent = ({
   );
 };
 
+export function HomeScreenContent({
+  initialLatestLessonCheckpoint,
+  initialRecentLessonCheckpoints,
+  isLiveHomeProgressReady,
+}: {
+  initialLatestLessonCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
+  initialRecentLessonCheckpoints: KangurMobileHomeLessonCheckpointItem[];
+  isLiveHomeProgressReady: boolean;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const { apiBaseUrl, apiBaseUrlSource } = useKangurMobileRuntime();
+  const {
+    authError,
+    authMode,
+    developerAutoSignInEnabled,
+    hasAttemptedDeveloperAutoSignIn,
+    isLoadingAuth,
+    session,
+    signIn,
+    signInWithLearnerCredentials,
+    signOut,
+    supportsLearnerCredentials,
+  } = useKangurMobileAuth();
+  const [
+    areDeferredHomePanelsReady,
+    areDeferredHomeDuelSecondaryReady,
+    areDeferredHomeDuelInvitesReady,
+    areDeferredHomeDuelAdvancedReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_DUEL_PANEL_SEQUENCE, false);
+  const [areDeferredHomeInsightsReady, areDeferredHomeScoreRefreshReady] =
+    useHomeScreenDeferredPanelSequence(
+      HOME_INSIGHT_SCORE_REFRESH_SEQUENCE,
+      !areDeferredHomePanelsReady,
+    );
+  const [areDeferredHomeHeroScoresReady, areDeferredHomeTrainingFocusDetailsReady] =
+    useHomeScreenDeferredPanelGroup(
+      HOME_SCORE_DETAILS_PANEL_GROUP,
+      !areDeferredHomePanelsReady,
+    );
+  const [
+    areDeferredHomeHeroIntroReady,
+    areDeferredHomeHeroDetailsReady,
+    areDeferredHomeAccountSummaryReady,
+  ] = useHomeScreenDeferredPanelGroup(HOME_PRIMARY_SURFACE_PANEL_GROUP, false);
+  const [areDeferredHomeAccountDetailsReady, areDeferredHomeAccountSignInReady] =
+    useHomeScreenDeferredPanelGroup(
+      HOME_ACCOUNT_DETAILS_PANEL_GROUP,
+      !areDeferredHomeAccountSummaryReady,
+    );
+  const [
+    areDeferredHomeNavigationSecondaryReady,
+    areDeferredHomeNavigationExtendedReady,
+  ] = useHomeScreenDeferredPanelSequence(HOME_NAVIGATION_PANEL_SEQUENCE, false);
+  const isRestoringLearnerSession =
+    isLoadingAuth && session.status !== 'authenticated';
+  const shouldShowLearnerCredentialsForm =
+    supportsLearnerCredentials &&
+    !isRestoringLearnerSession &&
+    session.status !== 'authenticated';
+  const authBoundary = areDeferredHomeAccountSummaryReady
+    ? getKangurHomeAuthBoundaryViewModel({
+        authError,
+        developerAutoSignInEnabled,
+        hasAttemptedDeveloperAutoSignIn,
+        isLoadingAuth,
+        locale,
+        session,
+        supportsLearnerCredentials,
+      })
+    : null;
+  const activeLearnerDisplayName = session.user?.activeLearner?.displayName?.trim() ?? '';
+  const userFullName = session.user?.full_name?.trim() ?? '';
+  const homeHeroLearnerName = activeLearnerDisplayName !== ''
+    ? activeLearnerDisplayName
+    : (userFullName !== '' ? userFullName : null);
+  const canOpenParentDashboard =
+    session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
+  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+
+  const shouldRenderCombinedHomeQuickAccessPlaceholder =
+    !areDeferredHomeAccountSummaryReady && !areDeferredHomeNavigationSecondaryReady;
+  const shouldRenderCombinedHomeStartupPlaceholder =
+    shouldRenderCombinedHomeQuickAccessPlaceholder && !areDeferredHomePanelsReady;
+  const shouldRenderCombinedHomeHeroPlaceholder =
+    !areDeferredHomeHeroIntroReady && !areDeferredHomeHeroDetailsReady;
+  const shouldRenderCombinedHomePrimaryStartupPlaceholder =
+    shouldRenderCombinedHomeStartupPlaceholder && shouldRenderCombinedHomeHeroPlaceholder;
+
+  const handleSignIn = (): void => {
+    void signIn();
+  };
+  const handleSignOut = (): void => {
+    void signOut();
+  };
+  const handleSignInWithLearnerCredentials = async (loginName: string, password: string): Promise<void> => {
+    await signInWithLearnerCredentials(loginName, password);
+  };
+
+  const renderContent = (props: HomeScoreViewModel) => (
+    <RenderHomeScreenContent
+      viewModel={props}
+      copy={copy}
+      initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
+      isLiveHomeProgressReady={isLiveHomeProgressReady}
+      apiBaseUrl={apiBaseUrl}
+      apiBaseUrlSource={apiBaseUrlSource}
+      areDeferredHomeAccountDetailsReady={areDeferredHomeAccountDetailsReady}
+      areDeferredHomeAccountSignInReady={areDeferredHomeAccountSignInReady}
+      areDeferredHomeAccountSummaryReady={areDeferredHomeAccountSummaryReady}
+      authBoundary={authBoundary}
+      authError={authError}
+      authMode={authMode}
+      sessionStatus={session.status}
+      shouldShowLearnerCredentialsForm={shouldShowLearnerCredentialsForm}
+      handleSignIn={handleSignIn}
+      handleSignInWithLearnerCredentials={handleSignInWithLearnerCredentials}
+      handleSignOut={handleSignOut}
+      areDeferredHomeNavigationExtendedReady={areDeferredHomeNavigationExtendedReady}
+      areDeferredHomeNavigationSecondaryReady={areDeferredHomeNavigationSecondaryReady}
+      canOpenParentDashboard={canOpenParentDashboard}
+      areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+      shouldRenderCombinedHomePrimaryStartupPlaceholder={shouldRenderCombinedHomePrimaryStartupPlaceholder}
+      shouldRenderCombinedHomeStartupPlaceholder={shouldRenderCombinedHomeStartupPlaceholder}
+      shouldRenderCombinedHomeQuickAccessPlaceholder={shouldRenderCombinedHomeQuickAccessPlaceholder}
+      areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
+      areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
+      homeHeroLearnerName={homeHeroLearnerName}
+      session={session}
+      isLoadingAuth={isLoadingAuth}
+      areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
+      initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
+      shouldRenderCombinedHomeHeroPlaceholder={shouldRenderCombinedHomeHeroPlaceholder}
+      activeDuelLearnerId={activeDuelLearnerId}
+      areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+      areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
+      areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
+      areDeferredHomeTrainingFocusDetailsReady={areDeferredHomeTrainingFocusDetailsReady}
+    />
+  );
+
   if (session.status === 'authenticated') {
     return (
       <HomeDebugProofOperationState>
@@ -344,47 +442,7 @@ const RenderHomeScreenContent = ({
                 areDeferredHomePanelsReady={areDeferredHomePanelsReady}
                 debugProofOperation={debugProofOperation}
               >
-                {(props) => (
-                  <RenderHomeScreenContent
-                    viewModel={props}
-                    copy={copy}
-                    initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
-                    isLiveHomeProgressReady={isLiveHomeProgressReady}
-                    apiBaseUrl={apiBaseUrl}
-                    apiBaseUrlSource={apiBaseUrlSource}
-                    areDeferredHomeAccountDetailsReady={areDeferredHomeAccountDetailsReady}
-                    areDeferredHomeAccountSignInReady={areDeferredHomeAccountSignInReady}
-                    areDeferredHomeAccountSummaryReady={areDeferredHomeAccountSummaryReady}
-                    authBoundary={authBoundary}
-                    authError={authError}
-                    authMode={authMode}
-                    sessionStatus={session.status}
-                    shouldShowLearnerCredentialsForm={shouldShowLearnerCredentialsForm}
-                    handleSignIn={handleSignIn}
-                    handleSignInWithLearnerCredentials={handleSignInWithLearnerCredentials}
-                    handleSignOut={handleSignOut}
-                    areDeferredHomeNavigationExtendedReady={areDeferredHomeNavigationExtendedReady}
-                    areDeferredHomeNavigationSecondaryReady={areDeferredHomeNavigationSecondaryReady}
-                    canOpenParentDashboard={canOpenParentDashboard}
-                    areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-                    shouldRenderCombinedHomePrimaryStartupPlaceholder={shouldRenderCombinedHomePrimaryStartupPlaceholder}
-                    shouldRenderCombinedHomeStartupPlaceholder={shouldRenderCombinedHomeStartupPlaceholder}
-                    shouldRenderCombinedHomeQuickAccessPlaceholder={shouldRenderCombinedHomeQuickAccessPlaceholder}
-                    areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
-                    areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
-                    homeHeroLearnerName={homeHeroLearnerName}
-                    session={session}
-                    isLoadingAuth={isLoadingAuth}
-                    areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
-                    initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
-                    shouldRenderCombinedHomeHeroPlaceholder={shouldRenderCombinedHomeHeroPlaceholder}
-                    activeDuelLearnerId={activeDuelLearnerId}
-                    areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
-                    areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
-                    areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
-                    areDeferredHomeTrainingFocusDetailsReady={areDeferredHomeTrainingFocusDetailsReady}
-                  />
-                )}
+                {renderContent}
               </DeferredAuthenticatedHomeScoreState>
             ) : (
               <LiveAuthenticatedHomeScoreState
@@ -392,47 +450,7 @@ const RenderHomeScreenContent = ({
                 areDeferredHomeScoreRefreshReady={areDeferredHomeScoreRefreshReady}
                 debugProofOperation={debugProofOperation}
               >
-                {(props) => (
-                  <RenderHomeScreenContent
-                    viewModel={props}
-                    copy={copy}
-                    initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
-                    isLiveHomeProgressReady={isLiveHomeProgressReady}
-                    apiBaseUrl={apiBaseUrl}
-                    apiBaseUrlSource={apiBaseUrlSource}
-                    areDeferredHomeAccountDetailsReady={areDeferredHomeAccountDetailsReady}
-                    areDeferredHomeAccountSignInReady={areDeferredHomeAccountSignInReady}
-                    areDeferredHomeAccountSummaryReady={areDeferredHomeAccountSummaryReady}
-                    authBoundary={authBoundary}
-                    authError={authError}
-                    authMode={authMode}
-                    sessionStatus={session.status}
-                    shouldShowLearnerCredentialsForm={shouldShowLearnerCredentialsForm}
-                    handleSignIn={handleSignIn}
-                    handleSignInWithLearnerCredentials={handleSignInWithLearnerCredentials}
-                    handleSignOut={handleSignOut}
-                    areDeferredHomeNavigationExtendedReady={areDeferredHomeNavigationExtendedReady}
-                    areDeferredHomeNavigationSecondaryReady={areDeferredHomeNavigationSecondaryReady}
-                    canOpenParentDashboard={canOpenParentDashboard}
-                    areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-                    shouldRenderCombinedHomePrimaryStartupPlaceholder={shouldRenderCombinedHomePrimaryStartupPlaceholder}
-                    shouldRenderCombinedHomeStartupPlaceholder={shouldRenderCombinedHomeStartupPlaceholder}
-                    shouldRenderCombinedHomeQuickAccessPlaceholder={shouldRenderCombinedHomeQuickAccessPlaceholder}
-                    areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
-                    areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
-                    homeHeroLearnerName={homeHeroLearnerName}
-                    session={session}
-                    isLoadingAuth={isLoadingAuth}
-                    areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
-                    initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
-                    shouldRenderCombinedHomeHeroPlaceholder={shouldRenderCombinedHomeHeroPlaceholder}
-                    activeDuelLearnerId={activeDuelLearnerId}
-                    areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
-                    areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
-                    areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
-                    areDeferredHomeTrainingFocusDetailsReady={areDeferredHomeTrainingFocusDetailsReady}
-                  />
-                )}
+                {renderContent}
               </LiveAuthenticatedHomeScoreState>
             )}
           </>
@@ -449,47 +467,7 @@ const RenderHomeScreenContent = ({
           debugProofOperation={debugProofOperation}
           isRestoringAuth={isLoadingAuth}
         >
-          {(props) => (
-            <RenderHomeScreenContent
-              viewModel={props}
-              copy={copy}
-              initialLatestLessonCheckpoint={initialLatestLessonCheckpoint}
-              isLiveHomeProgressReady={isLiveHomeProgressReady}
-              apiBaseUrl={apiBaseUrl}
-              apiBaseUrlSource={apiBaseUrlSource}
-              areDeferredHomeAccountDetailsReady={areDeferredHomeAccountDetailsReady}
-              areDeferredHomeAccountSignInReady={areDeferredHomeAccountSignInReady}
-              areDeferredHomeAccountSummaryReady={areDeferredHomeAccountSummaryReady}
-              authBoundary={authBoundary}
-              authError={authError}
-              authMode={authMode}
-              sessionStatus={session.status}
-              shouldShowLearnerCredentialsForm={shouldShowLearnerCredentialsForm}
-              handleSignIn={handleSignIn}
-              handleSignInWithLearnerCredentials={handleSignInWithLearnerCredentials}
-              handleSignOut={handleSignOut}
-              areDeferredHomeNavigationExtendedReady={areDeferredHomeNavigationExtendedReady}
-              areDeferredHomeNavigationSecondaryReady={areDeferredHomeNavigationSecondaryReady}
-              canOpenParentDashboard={canOpenParentDashboard}
-              areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-              shouldRenderCombinedHomePrimaryStartupPlaceholder={shouldRenderCombinedHomePrimaryStartupPlaceholder}
-              shouldRenderCombinedHomeStartupPlaceholder={shouldRenderCombinedHomeStartupPlaceholder}
-              shouldRenderCombinedHomeQuickAccessPlaceholder={shouldRenderCombinedHomeQuickAccessPlaceholder}
-              areDeferredHomeHeroDetailsReady={areDeferredHomeHeroDetailsReady}
-              areDeferredHomeHeroIntroReady={areDeferredHomeHeroIntroReady}
-              homeHeroLearnerName={homeHeroLearnerName}
-              session={session}
-              isLoadingAuth={isLoadingAuth}
-              areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
-              initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
-              shouldRenderCombinedHomeHeroPlaceholder={shouldRenderCombinedHomeHeroPlaceholder}
-              activeDuelLearnerId={activeDuelLearnerId}
-              areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
-              areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
-              areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
-              areDeferredHomeTrainingFocusDetailsReady={areDeferredHomeTrainingFocusDetailsReady}
-            />
-          )}
+          {renderContent}
         </AnonymousHomeScoreState>
       )}
     </HomeDebugProofOperationState>

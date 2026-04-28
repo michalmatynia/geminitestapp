@@ -377,6 +377,72 @@ describe('runFilemakerOrganizationEmailScrape', () => {
     );
   });
 
+  it('prefetches unique promotable domains with lookupMany when supported', async () => {
+    const collections = createMockEmailCollections();
+    const db = createMockDb(collections);
+    mocks.getMongoFilemakerEmailCollectionsMock.mockResolvedValue(collections);
+    mocks.getMongoDbMock.mockResolvedValue(db);
+    mocks.runPlaywrightEngineTaskMock.mockResolvedValue({
+      artifacts: [],
+      error: null,
+      logs: [],
+      result: {
+        returnValue: {
+          emails: [
+            { address: 'sales@batch.example', sourceUrls: ['https://acme.example/contact'] },
+            { address: 'support@batch.example', sourceUrls: ['https://acme.example/contact'] },
+            { address: 'ops@nomx.example', sourceUrls: ['https://acme.example/contact'] },
+          ],
+          visitedUrls: ['https://acme.example/'],
+          warnings: [],
+        },
+      },
+      runId: 'run-1',
+      status: 'completed',
+    });
+    const lookup = vi.fn().mockResolvedValue({ outcome: 'error', hasMail: false });
+    const lookupMany = vi.fn(async (domains: readonly string[]) =>
+      domains.map((domain) =>
+        domain === 'nomx.example'
+          ? { outcome: 'none', hasMail: false } as const
+          : { outcome: 'mx', hasMail: true } as const
+      )
+    );
+
+    const result = await runFilemakerOrganizationEmailScrape({
+      organizationId: 'org-1',
+      mxVerifier: {
+        hasMx: vi.fn().mockResolvedValue(true),
+        lookup,
+        lookupMany,
+      },
+    });
+
+    expect(lookupMany).toHaveBeenCalledWith(['batch.example', 'nomx.example']);
+    expect(lookup).not.toHaveBeenCalled();
+    expect(result.metrics.domainsWithoutMx).toBe(1);
+    const insertedEmails = collections.emails.insertOne.mock.calls.map(([document]) => document);
+    expect(insertedEmails).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          domainHasMx: true,
+          domainMxLookupOutcome: 'mx',
+          email: 'sales@batch.example',
+        }),
+        expect.objectContaining({
+          domainHasMx: true,
+          domainMxLookupOutcome: 'mx',
+          email: 'support@batch.example',
+        }),
+        expect.objectContaining({
+          domainHasMx: false,
+          domainMxLookupOutcome: 'none',
+          email: 'ops@nomx.example',
+        }),
+      ])
+    );
+  });
+
   it('returns a skipped result without touching email collections when Playwright fails', async () => {
     mocks.runPlaywrightEngineTaskMock.mockResolvedValue({
       artifacts: [],
@@ -413,12 +479,21 @@ describe('runFilemakerOrganizationEmailScrape', () => {
     });
     mocks.getMongoFilemakerEmailCollectionsMock.mockResolvedValue(collections);
     mocks.getMongoDbMock.mockResolvedValue(db);
+    const lookup = vi.fn().mockResolvedValue({ outcome: 'error', hasMail: false });
+    const lookupMany = vi.fn().mockResolvedValue([]);
 
     const result = await runFilemakerOrganizationEmailScrape({
       organizationId: 'org-1',
+      mxVerifier: {
+        hasMx: vi.fn().mockResolvedValue(true),
+        lookup,
+        lookupMany,
+      },
     });
 
     expect(collections.emails.insertOne).not.toHaveBeenCalled();
+    expect(lookup).not.toHaveBeenCalled();
+    expect(lookupMany).not.toHaveBeenCalled();
     expect(collections.links.insertOne).toHaveBeenCalledWith(
       expect.objectContaining({
         emailId: 'email-existing',

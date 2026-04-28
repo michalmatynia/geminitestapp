@@ -123,7 +123,7 @@ export const probeJobBoardOffer = async (input: {
   const fetchResult = await fetchJobBoardPage(input.sourceUrl, {
     fallbackToFetch: false,
     forcePlaywright: input.forcePlaywright ?? true,
-    headless: input.headless ?? true,
+    headless: input.headless ?? null,
     humanizeMouse: input.humanizeMouse ?? true,
     personaId: input.personaId ?? null,
     provider: input.provider ?? null,

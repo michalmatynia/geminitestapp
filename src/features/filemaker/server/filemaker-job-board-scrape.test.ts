@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   getFilemakerOrganizationsCollectionMock: vi.fn(),
   probeJobBoardOfferMock: vi.fn(),
   readFilemakerCampaignSettingValueMock: vi.fn(),
+  resolveRuntimeActionExecutionSettingsMock: vi.fn(),
   upsertFilemakerCampaignSettingValueMock: vi.fn(),
 }));
 
@@ -26,14 +27,20 @@ vi.mock('./campaign-settings-store', () => ({
     mocks.upsertFilemakerCampaignSettingValueMock(...args),
 }));
 
+vi.mock('@/shared/lib/browser-execution/runtime-action-resolver.server', () => ({
+  resolveRuntimeActionExecutionSettings: (...args: unknown[]) =>
+    mocks.resolveRuntimeActionExecutionSettingsMock(...args),
+}));
+
 vi.mock('./filemaker-organizations-mongo', () => ({
   getFilemakerOrganizationsCollection: (...args: unknown[]) =>
     mocks.getFilemakerOrganizationsCollectionMock(...args),
   toFilemakerOrganization: (value: unknown) => value,
 }));
 
+import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
-import { runFilemakerPracujScrape } from './filemaker-pracuj-scrape';
+import { runFilemakerJobBoardScrape } from './filemaker-job-board-scrape';
 
 const sourceUrl = 'https://www.pracuj.pl/praca/it;kw';
 const offerUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001';
@@ -77,12 +84,17 @@ const createCollection = () => ({
       ]),
     })),
   })),
+  updateOne: vi.fn(async () => ({ acknowledged: true, modifiedCount: 1, upsertedCount: 0 })),
 });
 
-describe('runFilemakerPracujScrape', () => {
+describe('runFilemakerJobBoardScrape', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(null);
+    mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValue({
+      ...defaultPlaywrightActionExecutionSettings,
+      headless: true,
+    });
     mocks.upsertFilemakerCampaignSettingValueMock.mockResolvedValue(true);
     mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(createCollection());
     mocks.collectJobBoardOfferUrlsMock.mockResolvedValue({
@@ -129,7 +141,7 @@ describe('runFilemakerPracujScrape', () => {
   });
 
   it('previews offers through the centralized job-board pracuj collector and probe', async () => {
-    const result = await runFilemakerPracujScrape({
+    const result = await runFilemakerJobBoardScrape({
       headless: false,
       maxOffers: 5,
       mode: 'preview',
@@ -171,8 +183,35 @@ describe('runFilemakerPracujScrape', () => {
     expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 
+  it('uses the job-board runtime action browser mode when no run override is provided', async () => {
+    mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValueOnce({
+      ...defaultPlaywrightActionExecutionSettings,
+      headless: false,
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'preview',
+      sourceUrl,
+    });
+
+    expect(mocks.collectJobBoardOfferUrlsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: null,
+        sourceUrl,
+      })
+    );
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headless: null,
+        sourceUrl: offerUrl,
+      })
+    );
+    expect(result.browserMode).toBe('headed');
+  });
+
   it('imports matched offers into Filemaker job listings', async () => {
-    const result = await runFilemakerPracujScrape({
+    const result = await runFilemakerJobBoardScrape({
       mode: 'import',
       sourceUrl,
     });
@@ -183,12 +222,79 @@ describe('runFilemakerPracujScrape', () => {
       expect.any(String)
     );
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.organizations[0]).toMatchObject({
+      id: 'org-1',
+      name: 'Acme Inc',
+    });
     expect(persisted.jobListings[0]).toMatchObject({
       organizationId: 'org-1',
       salaryCurrency: 'PLN',
       sourceSite: 'pracuj.pl',
       sourceUrl: offerUrl,
       title: 'Developer',
+    });
+  });
+
+  it('creates unmatched employers by default and stores Pracuj company profile data', async () => {
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue({
+      find: vi.fn(() => ({
+        limit: vi.fn(() => ({
+          toArray: vi.fn(async () => []),
+        })),
+      })),
+      updateOne: vi.fn(async () => ({ acknowledged: true, modifiedCount: 0, upsertedCount: 1 })),
+    });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: {
+          name: 'New Employer',
+          description: 'New Employer builds digital products for enterprise clients.',
+          profileUrl: 'https://www.pracuj.pl/pracodawcy/new-employer,123',
+        },
+        listing: {
+          title: 'Frontend Developer',
+          description: 'Build interfaces',
+          city: 'Kraków',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.91,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-2',
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      matchedOffers: 1,
+      unmatchedOffers: 0,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.organizations[0]).toMatchObject({
+      name: 'New Employer',
+      jobBoardCompanyProfile: 'New Employer builds digital products for enterprise clients.',
+      jobBoardCompanyProfileUrl: 'https://www.pracuj.pl/pracodawcy/new-employer,123',
+    });
+    expect(persisted.jobListings[0]).toMatchObject({
+      organizationId: persisted.organizations[0].id,
+      title: 'Frontend Developer',
+      sourceUrl: offerUrl,
     });
   });
 
@@ -203,7 +309,7 @@ describe('runFilemakerPracujScrape', () => {
       warnings: [],
     });
 
-    const result = await runFilemakerPracujScrape({
+    const result = await runFilemakerJobBoardScrape({
       mode: 'preview',
       sourceUrl: offerUrl,
     });
@@ -232,7 +338,7 @@ describe('runFilemakerPracujScrape', () => {
       })
     );
 
-    const result = await runFilemakerPracujScrape({
+    const result = await runFilemakerJobBoardScrape({
       duplicateStrategy: 'skip',
       mode: 'import',
       sourceUrl,

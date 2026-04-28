@@ -35,7 +35,7 @@ import { SelectionBar } from '@/shared/ui/selection-bar';
 import { JSONImportModal } from '@/shared/ui/templates/modals/JSONImportModal';
 import { useToast } from '@/shared/ui/toast';
 
-import { FilemakerPracujScrapeModal } from './FilemakerPracujScrapeModal';
+import { FilemakerJobBoardScrapeModal } from './FilemakerJobBoardScrapeModal';
 import { OrganizationAdvancedFilterBuilder } from './OrganizationAdvancedFilterBuilder';
 import {
   buildOrganizationPresetBundle,
@@ -63,7 +63,7 @@ type OrganizationFilterPresetActionsProps = Omit<
   advancedFilterPresets?: OrganizationAdvancedFilterPreset[];
 };
 
-function PracujScrapeAction(props: {
+function JobBoardScrapeAction(props: {
   onCompleted: () => void;
   selectedOrganizationCount: number;
   selectedOrganizationIds: string[];
@@ -81,7 +81,7 @@ function PracujScrapeAction(props: {
         <BriefcaseBusiness className='h-4 w-4' />
         Scrape jobs
       </Button>
-      <FilemakerPracujScrapeModal
+      <FilemakerJobBoardScrapeModal
         open={isOpen}
         onClose={(): void => setIsOpen(false)}
         onCompleted={props.onCompleted}
@@ -577,8 +577,8 @@ export function FilemakerOrganizationsSelectionActions(
       rightActions={
         <>
           <OrganizationFilterPresetActions {...props} />
-          <PracujScrapeAction
-            onCompleted={props.onPracujScrapeCompleted}
+          <JobBoardScrapeAction
+            onCompleted={props.onJobBoardScrapeCompleted}
             selectedOrganizationCount={props.selectedOrganizationCount}
             selectedOrganizationIds={selectedIds}
           />

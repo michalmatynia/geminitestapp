@@ -1,17 +1,17 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { requireFilemakerMailAdminSessionMock, runFilemakerPracujScrapeMock } = vi.hoisted(() => ({
+const { requireFilemakerMailAdminSessionMock, runFilemakerJobBoardScrapeMock } = vi.hoisted(() => ({
   requireFilemakerMailAdminSessionMock: vi.fn(),
-  runFilemakerPracujScrapeMock: vi.fn(),
+  runFilemakerJobBoardScrapeMock: vi.fn(),
 }));
 
 vi.mock('@/features/filemaker/server/filemaker-mail-access', () => ({
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
 }));
 
-vi.mock('@/features/filemaker/server/filemaker-pracuj-scrape', () => ({
-  runFilemakerPracujScrape: runFilemakerPracujScrapeMock,
+vi.mock('@/features/filemaker/server/filemaker-job-board-scrape', () => ({
+  runFilemakerJobBoardScrape: runFilemakerJobBoardScrapeMock,
 }));
 
 import { postHandler } from './handler';
@@ -20,7 +20,7 @@ describe('filemaker job-board scrape handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireFilemakerMailAdminSessionMock.mockResolvedValue(undefined);
-    runFilemakerPracujScrapeMock.mockResolvedValue({
+    runFilemakerJobBoardScrapeMock.mockResolvedValue({
       browserMode: 'headless',
       mode: 'preview',
       offers: [],
@@ -57,7 +57,7 @@ describe('filemaker job-board scrape handler', () => {
     );
 
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
-    expect(runFilemakerPracujScrapeMock).toHaveBeenCalledWith(body);
+    expect(runFilemakerJobBoardScrapeMock).toHaveBeenCalledWith(body);
     await expect(response.json()).resolves.toMatchObject({
       provider: 'justjoin_it',
       sourceSite: 'justjoin.it',

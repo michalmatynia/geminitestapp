@@ -1,0 +1,5 @@
+apps/mobile/src/home/home-screen-content.tsx(248,9): error TS1128: Declaration or statement expected.
+apps/mobile/src/home/home-screen-content.tsx(249,7): error TS1128: Declaration or statement expected.
+apps/mobile/src/home/home-screen-content.tsx(250,5): error TS1109: Expression expected.
+apps/mobile/src/home/home-screen-content.tsx(251,3): error TS1128: Declaration or statement expected.
+apps/mobile/src/home/home-screen-content.tsx(306,1): error TS1128: Declaration or statement expected.

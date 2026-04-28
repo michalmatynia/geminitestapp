@@ -28,6 +28,9 @@ export type FilemakerOrganizationMongoDocument = Document & {
   displayBankAccountId?: string | null;
   establishedDate?: string | null;
   id: string;
+  jobBoardCompanyProfile?: string;
+  jobBoardCompanyProfileScrapedAt?: string | null;
+  jobBoardCompanyProfileUrl?: string;
   krs?: string;
   legacyDefaultAddressUuid?: string;
   legacyDefaultBankAccountUuid?: string;
@@ -127,6 +130,9 @@ export const toFilemakerOrganization = (
     legacyDefaultBankAccountUuid: document.legacyDefaultBankAccountUuid,
     legacyDisplayBankAccountUuid: document.legacyDisplayBankAccountUuid,
     updatedBy: document.updatedBy,
+    jobBoardCompanyProfile: document.jobBoardCompanyProfile,
+    jobBoardCompanyProfileUrl: document.jobBoardCompanyProfileUrl,
+    jobBoardCompanyProfileScrapedAt: document.jobBoardCompanyProfileScrapedAt,
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
   });

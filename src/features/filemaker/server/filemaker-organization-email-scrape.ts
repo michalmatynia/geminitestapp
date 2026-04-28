@@ -26,6 +26,7 @@ import {
 } from './filemaker-organization-presence-scrape';
 import {
   createMxVerifier,
+  type MxLookupResult,
   type MxVerifier,
 } from './filemaker-email-mx-verifier';
 import {
@@ -388,6 +389,36 @@ const buildOrganizationEmailLinkFilter = (input: {
   partyId: input.organizationId,
 });
 
+const getEmailDomain = (address: string): string => address.slice(address.indexOf('@') + 1);
+
+type OrganizationEmailUpsertCandidate = {
+  address: string;
+  classification: ReturnType<typeof classifyEmail>;
+  existingEmail: MongoFilemakerEmailDocument | null;
+  scrapedEmail: ScrapedEmail;
+};
+
+const buildPrefetchedMxLookupMap = async (input: {
+  domains: string[];
+  mxVerifier: MxVerifier;
+}): Promise<Map<string, MxLookupResult>> => {
+  if (input.mxVerifier.lookupMany === undefined) return new Map();
+  const domains = uniqueStrings(input.domains);
+  if (domains.length === 0) return new Map();
+  const results = await input.mxVerifier.lookupMany(domains);
+  return new Map(domains.map((domain, index) => [
+    domain,
+    results[index] ?? { outcome: 'error', hasMail: false },
+  ]));
+};
+
+const lookupDomainMx = async (input: {
+  domain: string;
+  mxVerifier: MxVerifier;
+  prefetchedMxLookups: Map<string, MxLookupResult>;
+}): Promise<MxLookupResult> =>
+  input.prefetchedMxLookups.get(input.domain) ?? input.mxVerifier.lookup(input.domain);
+
 const upsertOrganizationEmails = async (input: {
   organization: FilemakerOrganization;
   runId: string;
@@ -415,7 +446,7 @@ const upsertOrganizationEmails = async (input: {
   const domainsWithNullMx = new Set<string>();
   const domainsWithMxLookupTimeout = new Set<string>();
   const domainsWithMxLookupError = new Set<string>();
-
+  const candidates: OrganizationEmailUpsertCandidate[] = [];
   for (const scrapedEmail of input.scrapedEmails) {
     const address = normalizeEmailAddress(scrapedEmail.address);
     if (!EMAIL_RE.test(address) || !isPlausibleEmail(address)) {
@@ -427,14 +458,45 @@ const upsertOrganizationEmails = async (input: {
       skipped.push({ address: scrapedEmail.address, reason: 'Disposable domain.' });
       continue;
     }
-
     try {
-      const existingEmail = await emails.findOne({ email: address });
+      candidates.push({
+        address,
+        classification,
+        existingEmail: await emails.findOne({ email: address }),
+        scrapedEmail,
+      });
+    } catch (error) {
+      void ErrorSystem.captureException(error, {
+        service: 'filemaker.organization-email-scrape',
+        action: 'upsert-email',
+        organizationId: input.organization.id,
+        address,
+      });
+      skipped.push({
+        address,
+        reason: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  const prefetchedMxLookups = await buildPrefetchedMxLookupMap({
+    domains: candidates
+      .filter((candidate) => candidate.existingEmail === null)
+      .map((candidate) => getEmailDomain(candidate.address)),
+    mxVerifier: input.mxVerifier,
+  });
+
+  for (const candidate of candidates) {
+    const { address, classification, existingEmail, scrapedEmail } = candidate;
+    try {
       let emailId = existingEmail?.id ?? randomUUID();
       let emailWasCreated = false;
       if (!existingEmail) {
-        const domain = address.slice(address.indexOf('@') + 1);
-        const mxLookup = await input.mxVerifier.lookup(domain);
+        const domain = getEmailDomain(address);
+        const mxLookup = await lookupDomainMx({
+          domain,
+          mxVerifier: input.mxVerifier,
+          prefetchedMxLookups,
+        });
         if (mxLookup.outcome === 'none') domainsWithoutMx.add(domain);
         if (mxLookup.outcome === 'null-mx') domainsWithNullMx.add(domain);
         if (mxLookup.outcome === 'timeout') domainsWithMxLookupTimeout.add(domain);

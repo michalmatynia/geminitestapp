@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable max-lines, max-lines-per-function */
 
-import { Play, Search } from 'lucide-react';
+import { Play, Save, Search } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -46,10 +46,58 @@ type ScrapeDraft = {
   timeoutMs: string;
 };
 
+type ScrapeModalInitialState = {
+  draft: ScrapeDraft;
+  organizationScopeTouched: boolean;
+};
+
+const SCRAPER_SETTINGS_STORAGE_KEY = 'filemaker.job-board-scraper.settings.v1';
+const SCRAPER_SETTINGS_VERSION = 1;
+
+const PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto-detect' },
+  { value: 'pracuj_pl', label: 'Pracuj.pl' },
+  { value: 'justjoin_it', label: 'Just Join IT' },
+  { value: 'nofluffjobs', label: 'No Fluff Jobs' },
+] as const;
+
+const IMPORT_STRATEGY_OPTIONS = [
+  { value: 'matched_only', label: 'Skip unmatched' },
+  { value: 'create_unmatched', label: 'Create organisations' },
+] as const;
+
+const DUPLICATE_STRATEGY_OPTIONS = [
+  { value: 'skip', label: 'Skip existing' },
+  { value: 'update', label: 'Update existing' },
+  { value: 'add', label: 'Always add' },
+] as const;
+
+const STATUS_OPTIONS = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'open', label: 'Open' },
+  { value: 'paused', label: 'Paused' },
+  { value: 'closed', label: 'Closed' },
+] as const;
+
 const toNumber = (value: string, fallback: number): number => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const readStoredString = (value: unknown, fallback: string): string =>
+  typeof value === 'string' ? value : fallback;
+
+const readStoredBoolean = (value: unknown, fallback: boolean): boolean =>
+  typeof value === 'boolean' ? value : fallback;
+
+const readStoredChoice = <T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T
+): T => (typeof value === 'string' && allowed.includes(value as T) ? (value as T) : fallback);
 
 const readErrorMessage = async (response: Response): Promise<string> => {
   try {
@@ -114,12 +162,100 @@ const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
   timeoutMs: '180000',
 });
 
+const normalizeSavedDraft = (
+  value: unknown,
+  selectedOrganizationCount: number
+): ScrapeDraft | null => {
+  if (!isRecord(value) || value['version'] !== SCRAPER_SETTINGS_VERSION || !isRecord(value['draft'])) {
+    return null;
+  }
+  const saved = value['draft'];
+  const fallback = defaultDraft(selectedOrganizationCount);
+  const organizationScope = readStoredChoice(
+    saved['organizationScope'],
+    ['selected', 'all'] as const,
+    fallback.organizationScope
+  );
+
+  return {
+    delayMs: readStoredString(saved['delayMs'], fallback.delayMs),
+    duplicateStrategy: readStoredChoice(
+      saved['duplicateStrategy'],
+      DUPLICATE_STRATEGY_OPTIONS.map((option) => option.value),
+      fallback.duplicateStrategy
+    ),
+    extractDescriptions: readStoredBoolean(saved['extractDescriptions'], fallback.extractDescriptions),
+    extractSalaries: readStoredBoolean(saved['extractSalaries'], fallback.extractSalaries),
+    headless: readStoredBoolean(saved['headless'], fallback.headless),
+    humanizeMouse: readStoredBoolean(saved['humanizeMouse'], fallback.humanizeMouse),
+    importStrategy: readStoredChoice(
+      saved['importStrategy'],
+      IMPORT_STRATEGY_OPTIONS.map((option) => option.value),
+      fallback.importStrategy
+    ),
+    maxOffers: readStoredString(saved['maxOffers'], fallback.maxOffers),
+    maxPages: readStoredString(saved['maxPages'], fallback.maxPages),
+    minimumMatchConfidence: readStoredString(
+      saved['minimumMatchConfidence'],
+      fallback.minimumMatchConfidence
+    ),
+    organizationScope:
+      selectedOrganizationCount === 0 && organizationScope === 'selected' ? 'all' : organizationScope,
+    personaId: readStoredString(saved['personaId'], fallback.personaId),
+    provider: readStoredChoice(
+      saved['provider'],
+      PROVIDER_OPTIONS.map((option) => option.value),
+      fallback.provider
+    ),
+    sourceUrl: readStoredString(saved['sourceUrl'], fallback.sourceUrl),
+    status: readStoredChoice(
+      saved['status'],
+      STATUS_OPTIONS.map((option) => option.value),
+      fallback.status
+    ),
+    timeoutMs: readStoredString(saved['timeoutMs'], fallback.timeoutMs),
+  };
+};
+
+const readSavedDraft = (selectedOrganizationCount: number): ScrapeDraft | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(SCRAPER_SETTINGS_STORAGE_KEY);
+    return raw !== null ? normalizeSavedDraft(JSON.parse(raw), selectedOrganizationCount) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeSavedDraft = (draft: ScrapeDraft): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    window.localStorage.setItem(
+      SCRAPER_SETTINGS_STORAGE_KEY,
+      JSON.stringify({ version: SCRAPER_SETTINGS_VERSION, draft })
+    );
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const createInitialState = (selectedOrganizationCount: number): ScrapeModalInitialState => {
+  const savedDraft = readSavedDraft(selectedOrganizationCount);
+  return savedDraft
+    ? { draft: savedDraft, organizationScopeTouched: true }
+    : { draft: defaultDraft(selectedOrganizationCount), organizationScopeTouched: false };
+};
+
 export function FilemakerPracujScrapeModal(
   props: FilemakerPracujScrapeModalProps
 ): React.JSX.Element | null {
   const { toast } = useToast();
-  const [draft, setDraft] = useState<ScrapeDraft>(() => defaultDraft(props.selectedOrganizationCount));
-  const [organizationScopeTouched, setOrganizationScopeTouched] = useState(false);
+  const [initialState] = useState(() => createInitialState(props.selectedOrganizationCount));
+  const [draft, setDraft] = useState<ScrapeDraft>(initialState.draft);
+  const [organizationScopeTouched, setOrganizationScopeTouched] = useState(
+    initialState.organizationScopeTouched
+  );
   const [modeInFlight, setModeInFlight] = useState<FilemakerPracujScrapeMode | null>(null);
   const [result, setResult] = useState<FilemakerPracujScrapeResponse | null>(null);
   const selectedScopeDisabled = props.selectedOrganizationCount === 0;
@@ -157,6 +293,13 @@ export function FilemakerPracujScrapeModal(
 
   const updateDraft = <K extends keyof ScrapeDraft>(key: K, value: ScrapeDraft[K]): void => {
     setDraft((current) => ({ ...current, [key]: value }));
+  };
+
+  const saveSettings = (): void => {
+    const saved = writeSavedDraft(draft);
+    toast(saved ? 'Scraper settings saved.' : 'Failed to save scraper settings.', {
+      variant: saved ? 'success' : 'error',
+    });
   };
 
   const runScrape = async (mode: FilemakerPracujScrapeMode): Promise<void> => {
@@ -207,18 +350,30 @@ export function FilemakerPracujScrapeModal(
       disableCloseWhileSaving
       size='xl'
       actions={
-        <Button
-          type='button'
-          variant='success'
-          size='sm'
-          onClick={() => {
-            void runScrape('import');
-          }}
-          disabled={sourceUrlMissing || isRunning}
-        >
-          <Play className='h-4 w-4' />
-          {modeInFlight === 'import' ? 'Importing...' : 'Import'}
-        </Button>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={saveSettings}
+            disabled={isRunning}
+          >
+            <Save className='h-4 w-4' />
+            Save settings
+          </Button>
+          <Button
+            type='button'
+            variant='success'
+            size='sm'
+            onClick={() => {
+              void runScrape('import');
+            }}
+            disabled={sourceUrlMissing || isRunning}
+          >
+            <Play className='h-4 w-4' />
+            {modeInFlight === 'import' ? 'Importing...' : 'Import'}
+          </Button>
+        </div>
       }
     >
       <div className='space-y-5'>
@@ -235,12 +390,7 @@ export function FilemakerPracujScrapeModal(
             <SelectSimple
               ariaLabel='Provider'
               value={draft.provider}
-              options={[
-                { value: 'auto', label: 'Auto-detect' },
-                { value: 'pracuj_pl', label: 'Pracuj.pl' },
-                { value: 'justjoin_it', label: 'Just Join IT' },
-                { value: 'nofluffjobs', label: 'No Fluff Jobs' },
-              ]}
+              options={PROVIDER_OPTIONS}
               onValueChange={(value) => updateDraft('provider', value as FilemakerJobBoardScrapeProvider)}
             />
           </FormField>
@@ -259,10 +409,7 @@ export function FilemakerPracujScrapeModal(
             <SelectSimple
               ariaLabel='Unmatched employers'
               value={draft.importStrategy}
-              options={[
-                { value: 'matched_only', label: 'Skip unmatched' },
-                { value: 'create_unmatched', label: 'Create organisations' },
-              ]}
+              options={IMPORT_STRATEGY_OPTIONS}
               onValueChange={(value) => updateDraft('importStrategy', value as FilemakerPracujImportStrategy)}
             />
           </FormField>
@@ -270,11 +417,7 @@ export function FilemakerPracujScrapeModal(
             <SelectSimple
               ariaLabel='Duplicates'
               value={draft.duplicateStrategy}
-              options={[
-                { value: 'skip', label: 'Skip existing' },
-                { value: 'update', label: 'Update existing' },
-                { value: 'add', label: 'Always add' },
-              ]}
+              options={DUPLICATE_STRATEGY_OPTIONS}
               onValueChange={(value) =>
                 updateDraft('duplicateStrategy', value as FilemakerPracujDuplicateStrategy)
               }
@@ -314,12 +457,7 @@ export function FilemakerPracujScrapeModal(
             <SelectSimple
               ariaLabel='Status'
               value={draft.status}
-              options={[
-                { value: 'draft', label: 'Draft' },
-                { value: 'open', label: 'Open' },
-                { value: 'paused', label: 'Paused' },
-                { value: 'closed', label: 'Closed' },
-              ]}
+              options={STATUS_OPTIONS}
               onValueChange={(value) => updateDraft('status', value as FilemakerJobListingStatus)}
             />
           </FormField>

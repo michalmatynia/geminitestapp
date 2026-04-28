@@ -13,7 +13,8 @@ export type MxVerifier = {
   lookup: (domain: string) => Promise<MxLookupResult>;
 };
 
-export type MxResolver = (domain: string) => Promise<readonly { exchange: string; priority?: number }[]>;
+export type MxRecord = { exchange: string; priority?: number };
+export type MxResolver = (domain: string) => Promise<readonly MxRecord[]>;
 export type ARecordResolver = (domain: string) => Promise<readonly string[]>;
 export type AaaaRecordResolver = (domain: string) => Promise<readonly string[]>;
 
@@ -98,12 +99,41 @@ const resolverResultErrored = <T>(result: TimedResolverResult<T>): boolean =>
 
 const normalizeMxExchange = (exchange: string): string => exchange.trim().toLowerCase();
 
-const isNullMxRecord = (record: { exchange: string }): boolean =>
+const isNullMxRecord = (record: MxRecord): boolean =>
   normalizeMxExchange(record.exchange) === '.';
 
-const isUsableMxRecord = (record: { exchange: string }): boolean => {
+const isUsableMxRecord = (record: MxRecord): boolean => {
   const exchange = normalizeMxExchange(record.exchange);
   return exchange.length > 0 && exchange !== '.';
+};
+
+const interpretMxResult = (
+  result: TimedResolverResult<readonly MxRecord[]>
+): MxLookupResult | null => {
+  if (result === TIMEOUT_SENTINEL) return { outcome: 'timeout', hasMail: false };
+  if (result.status !== 'ok') return null;
+  if (result.records.some(isUsableMxRecord)) return { outcome: 'mx', hasMail: true };
+  if (result.records.length > 0 && result.records.every(isNullMxRecord)) {
+    return { outcome: 'null-mx', hasMail: false };
+  }
+  return null;
+};
+
+const interpretAddressResults = (input: {
+  a: TimedResolverResult<readonly string[]>;
+  aaaa: TimedResolverResult<readonly string[]>;
+  mx: TimedResolverResult<readonly MxRecord[]>;
+}): MxLookupResult => {
+  if (input.a === TIMEOUT_SENTINEL || input.aaaa === TIMEOUT_SENTINEL) {
+    return { outcome: 'timeout', hasMail: false };
+  }
+  if (resolverResultHasRecords(input.a) || resolverResultHasRecords(input.aaaa)) {
+    return { outcome: 'address-only', hasMail: true };
+  }
+  if (resolverResultErrored(input.mx) && resolverResultErrored(input.a) && resolverResultErrored(input.aaaa)) {
+    return { outcome: 'error', hasMail: false };
+  }
+  return { outcome: 'none', hasMail: false };
 };
 
 export const createMxVerifier = (options: MxVerifierOptions = {}): MxVerifier => {
@@ -117,29 +147,14 @@ export const createMxVerifier = (options: MxVerifierOptions = {}): MxVerifier =>
 
   const performLookup = async (domain: string): Promise<MxLookupResult> => {
     const mxRaw = await resolveWithTimeout(resolveMx, domain, timeoutMs);
-    if (mxRaw === TIMEOUT_SENTINEL) return { outcome: 'timeout', hasMail: false };
-    if (mxRaw.status === 'ok' && mxRaw.records.some(isUsableMxRecord)) {
-      return { outcome: 'mx', hasMail: true };
-    }
-    if (mxRaw.status === 'ok' && mxRaw.records.length > 0 && mxRaw.records.every(isNullMxRecord)) {
-      return { outcome: 'null-mx', hasMail: false };
-    }
+    const mxResult = interpretMxResult(mxRaw);
+    if (mxResult !== null) return mxResult;
 
     const [aRaw, aaaaRaw] = await Promise.all([
       resolveWithTimeout(resolveA, domain, timeoutMs),
       resolveWithTimeout(resolveAaaa, domain, timeoutMs),
     ]);
-    if (aRaw === TIMEOUT_SENTINEL || aaaaRaw === TIMEOUT_SENTINEL) {
-      return { outcome: 'timeout', hasMail: false };
-    }
-    if (resolverResultHasRecords(aRaw) || resolverResultHasRecords(aaaaRaw)) {
-      return { outcome: 'address-only', hasMail: true };
-    }
-
-    if (resolverResultErrored(mxRaw) && resolverResultErrored(aRaw) && resolverResultErrored(aaaaRaw)) {
-      return { outcome: 'error', hasMail: false };
-    }
-    return { outcome: 'none', hasMail: false };
+    return interpretAddressResults({ a: aRaw, aaaa: aaaaRaw, mx: mxRaw });
   };
 
   const lookup = (domainOrAddress: string): Promise<MxLookupResult> => {

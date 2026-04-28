@@ -130,6 +130,7 @@ describe('FilemakerPracujScrapeModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     mocks.withCsrfHeadersMock.mockImplementation((headers?: HeadersInit) => ({
       ...(headers as Record<string, string> | undefined),
       'x-csrf-token': 'csrf-token',
@@ -210,6 +211,55 @@ describe('FilemakerPracujScrapeModal', () => {
       organizationScope: 'all',
       selectedOrganizationIds: [],
     });
+  });
+
+  it('saves scraper settings and restores them for the next modal instance', async () => {
+    const user = userEvent.setup();
+
+    const { unmount } = render(
+      <FilemakerPracujScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://justjoin.it/job-offers/all-locations/javascript'
+    );
+    await user.selectOptions(screen.getByLabelText('Provider'), 'justjoin_it');
+    await user.selectOptions(screen.getByLabelText('Duplicates'), 'update');
+    await user.click(screen.getByRole('button', { name: 'Headless browser' }));
+    await user.click(screen.getByRole('button', { name: 'Save settings' }));
+
+    expect(mocks.toastMock).toHaveBeenCalledWith('Scraper settings saved.', {
+      variant: 'success',
+    });
+
+    unmount();
+
+    render(
+      <FilemakerPracujScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    expect(screen.getByPlaceholderText(/pracuj\.pl\/praca/)).toHaveValue(
+      'https://justjoin.it/job-offers/all-locations/javascript'
+    );
+    expect(screen.getByLabelText('Provider')).toHaveValue('justjoin_it');
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
+    expect(screen.getByRole('button', { name: 'Headed browser' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    );
   });
 
   it('runs import mode and notifies completion after a successful import', async () => {

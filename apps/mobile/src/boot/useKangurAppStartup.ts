@@ -66,7 +66,7 @@ const hasAnyCachedData = (
   recentResults: ReturnType<typeof resolvePersistedKangurMobileRecentResults> | null,
   trainingFocus: ReturnType<typeof resolvePersistedKangurMobileTrainingFocus> | null,
 ): boolean => {
-  const hasRecentResults = (recentResults?.length ?? 0) > 0;
+  const hasRecentResults = !!recentResults && Object.keys(recentResults).length > 0;
   return hasRecentResults || hasTrainingFocusData(trainingFocus);
 };
 

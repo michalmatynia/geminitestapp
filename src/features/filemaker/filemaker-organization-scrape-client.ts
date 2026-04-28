@@ -8,6 +8,7 @@ export type OrganizationEmailScrapeResponse = {
     rolePromoted?: number;
     retries?: number;
     domainsWithoutMx?: number;
+    domainsWithNullMx?: number;
     mxLookupTimeouts?: number;
     mxLookupErrors?: number;
     sourceBreakdown?: {
@@ -86,6 +87,11 @@ const buildOrganizationEmailScrapeMetricsSuffix = (
     parts,
     metrics.domainsWithoutMx,
     (count) => `${count} domain${count === 1 ? '' : 's'} without MX`
+  );
+  pushMetricPart(
+    parts,
+    metrics.domainsWithNullMx,
+    (count) => `${count} null MX domain${count === 1 ? '' : 's'}`
   );
   pushMetricPart(
     parts,

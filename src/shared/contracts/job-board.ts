@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
+import { isSupportedJobBoardUrl } from '@/shared/lib/job-board/job-board-providers';
+
 const trimmed = z.string().trim();
-const optStr = (max: number) => trimmed.max(max).nullable().default(null);
+const optStr = (max: number): z.ZodDefault<z.ZodNullable<z.ZodString>> =>
+  trimmed.max(max).nullable().default(null);
 
 export const COMPANIES_COLLECTION = 'companies';
 export const JOB_LISTINGS_COLLECTION = 'job_listings';
@@ -171,7 +174,12 @@ export const normalizeJobListing = (value: JobListingInput): JobListing =>
   jobListingSchema.parse(value);
 
 export const jobScanCreateRequestSchema = z.object({
-  sourceUrl: trimmed.url().max(4_000),
+  sourceUrl: trimmed
+    .url()
+    .max(4_000)
+    .refine(isSupportedJobBoardUrl, {
+      message: 'Only pracuj.pl, justjoin.it, and nofluffjobs.com URLs are supported.',
+    }),
   provider: jobScanProviderSchema.optional(),
 });
 export type JobScanCreateRequest = z.infer<typeof jobScanCreateRequestSchema>;

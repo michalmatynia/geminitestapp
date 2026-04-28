@@ -305,6 +305,7 @@ describe('runFilemakerOrganizationEmailScrape', () => {
             { address: 'sales@nomx.example', sourceUrls: ['https://acme.example/contact'] },
             { address: 'team@slow.example', sourceUrls: ['https://acme.example/contact'] },
             { address: 'ops@broken.example', sourceUrls: ['https://acme.example/contact'] },
+            { address: 'reject@nullmx.example', sourceUrls: ['https://acme.example/contact'] },
             { address: 'hello@relay.example', sourceUrls: ['https://acme.example/contact'] },
           ],
           visitedUrls: ['https://acme.example/'],
@@ -317,7 +318,8 @@ describe('runFilemakerOrganizationEmailScrape', () => {
     const outcomesByDomain = {
       'broken.example': { outcome: 'error', hasMail: false },
       'nomx.example': { outcome: 'none', hasMail: false },
-      'relay.example': { outcome: 'a-only', hasMail: true },
+      'nullmx.example': { outcome: 'null-mx', hasMail: false },
+      'relay.example': { outcome: 'address-only', hasMail: true },
       'slow.example': { outcome: 'timeout', hasMail: false },
     } as const;
     const lookup = vi.fn(
@@ -338,10 +340,11 @@ describe('runFilemakerOrganizationEmailScrape', () => {
 
     expect(result.metrics).toMatchObject({
       domainsWithoutMx: 1,
+      domainsWithNullMx: 1,
       mxLookupErrors: 1,
       mxLookupTimeouts: 1,
     });
-    expect(lookup).toHaveBeenCalledTimes(4);
+    expect(lookup).toHaveBeenCalledTimes(5);
     const insertedEmails = collections.emails.insertOne.mock.calls.map(([document]) => document);
     expect(insertedEmails).toEqual(
       expect.arrayContaining([
@@ -357,12 +360,17 @@ describe('runFilemakerOrganizationEmailScrape', () => {
         }),
         expect.objectContaining({
           domainHasMx: false,
+          domainMxLookupOutcome: 'null-mx',
+          email: 'reject@nullmx.example',
+        }),
+        expect.objectContaining({
+          domainHasMx: false,
           domainMxLookupOutcome: 'error',
           email: 'ops@broken.example',
         }),
         expect.objectContaining({
           domainHasMx: true,
-          domainMxLookupOutcome: 'a-only',
+          domainMxLookupOutcome: 'address-only',
           email: 'hello@relay.example',
         }),
       ])

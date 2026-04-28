@@ -49,7 +49,7 @@ export function ProfileAssignmentsCard({
       ) : (
         <View style={{ gap: 12 }}>
           {profileAssignments.assignmentItems.map((item) => (
-            <AssignmentRow key={item.assignment.id} assignment={item.assignment} href={item.href} />
+            <AssignmentRow key={item.id} assignment={item} href={item.href} />
           ))}
 
           <LinkButton

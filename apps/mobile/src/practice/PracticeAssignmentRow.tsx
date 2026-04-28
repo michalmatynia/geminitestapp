@@ -37,9 +37,9 @@ export function PracticeAssignmentRow({
     return copy({ de: 'Niedrige Priorität', en: 'Low priority', pl: 'Priorytet niski' });
   };
 
-  const priorityTone = getPriorityTone(item.assignment.priority);
-  const priorityLabel = getPriorityLabel(item.assignment.priority);
-  const actionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  const priorityTone = getPriorityTone(item.priority);
+  const priorityLabel = getPriorityLabel(item.priority);
+  const actionLabel = translateKangurMobileActionLabel(item.action.label, locale);
   
   let assignmentAction: React.JSX.Element = (
     <MutedActionChip
@@ -63,10 +63,10 @@ export function PracticeAssignmentRow({
   return (
     <InsetPanel gap={8} padding={12} style={{ borderRadius: 18, backgroundColor: '#ffffff' }}>
       <Pill label={priorityLabel} tone={priorityTone} />
-      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>{item.assignment.title}</Text>
-      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{item.assignment.description}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>{item.title}</Text>
+      <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{item.description}</Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-        {copy({ de: `Ziel: ${item.assignment.target}`, en: `Goal: ${item.assignment.target}`, pl: `Cel: ${item.assignment.target}` })}
+        {copy({ de: `Ziel: ${item.target}`, en: `Goal: ${item.target}`, pl: `Cel: ${item.target}` })}
       </Text>
       {assignmentAction}
     </InsetPanel>

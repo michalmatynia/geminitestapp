@@ -11,9 +11,11 @@ import type {
   JobScanCreateResponse,
   JobScanListResponse,
   JobScanRecord,
+  JobScanProvider,
 } from '@/shared/contracts/job-board';
 import { AdminJobBoardPageLayout } from '@/shared/ui/admin-job-board-page-layout';
 import { Button } from '@/shared/ui/button';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { Input } from '@/shared/ui/input';
 
 import { JobScanDetailDialog } from './JobScanDetailDialog';
@@ -23,6 +25,14 @@ const COMPANIES_ENDPOINT = '/api/v2/jobs/companies';
 const LISTINGS_ENDPOINT = '/api/v2/jobs/listings';
 
 type Tab = 'scans' | 'companies' | 'listings' | 'promotions';
+type JobScanProviderSelection = 'auto' | JobScanProvider;
+
+const JOB_SCAN_PROVIDER_OPTIONS = [
+  { value: 'auto', label: 'Auto-detect' },
+  { value: 'pracuj_pl', label: 'Pracuj.pl' },
+  { value: 'justjoin_it', label: 'Just Join IT' },
+  { value: 'nofluffjobs', label: 'No Fluff Jobs' },
+] as const;
 
 type PromotionLogEntry = {
   scanId: string;
@@ -121,6 +131,7 @@ const formatSalary = (salary: JobListing['salary']): string => {
 export function AdminJobBoardPage(): React.JSX.Element {
   const [tab, setTab] = useState<Tab>('scans');
   const [sourceUrl, setSourceUrl] = useState('');
+  const [provider, setProvider] = useState<JobScanProviderSelection>('auto');
   const [scans, setScans] = useState<JobScanRecord[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [listings, setListings] = useState<JobListing[]>([]);
@@ -190,7 +201,10 @@ export function AdminJobBoardPage(): React.JSX.Element {
         const response = await fetch(SCANS_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sourceUrl: url }),
+          body: JSON.stringify({
+            sourceUrl: url,
+            ...(provider !== 'auto' ? { provider } : {}),
+          }),
         });
         if (!response.ok) {
           const text = await response.text();
@@ -206,7 +220,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
         setIsSubmitting(false);
       }
     },
-    [sourceUrl, loadAll]
+    [sourceUrl, provider, loadAll]
   );
 
   const handleCompanyUpdated = useCallback((updatedCompany: Company): void => {
@@ -224,7 +238,7 @@ export function AdminJobBoardPage(): React.JSX.Element {
     <AdminJobBoardPageLayout
       title='Job Board Scraper'
       current='Job Board Scraper'
-      description='Scrape job offers (e.g. pracuj.pl), extract company + listing data with AI, and persist them.'
+      description='Scrape job offers from pracuj.pl, Just Join IT, or No Fluff Jobs, extract company + listing data with AI, and persist them.'
       icon={<Briefcase className='size-4' />}
     >
       <form
@@ -234,11 +248,19 @@ export function AdminJobBoardPage(): React.JSX.Element {
         <Input
           type='url'
           required
-          placeholder='https://www.pracuj.pl/praca/...'
+          placeholder='https://www.pracuj.pl/... or https://justjoin.it/...'
           value={sourceUrl}
           onChange={(event) => setSourceUrl(event.target.value)}
           className='flex-1'
         />
+        <div className='w-full sm:w-52'>
+          <SelectSimple
+            ariaLabel='Job board provider'
+            value={provider}
+            options={JOB_SCAN_PROVIDER_OPTIONS}
+            onValueChange={(value) => setProvider(value as JobScanProviderSelection)}
+          />
+        </div>
         <div className='flex gap-2'>
           <Button type='submit' disabled={isSubmitting}>
             {isSubmitting ? 'Scanning...' : 'Scrape & save'}

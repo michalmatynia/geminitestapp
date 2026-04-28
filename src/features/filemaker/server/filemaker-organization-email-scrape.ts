@@ -396,6 +396,7 @@ const upsertOrganizationEmails = async (input: {
 }): Promise<
   Pick<FilemakerOrganizationEmailScrapeResult, 'promoted' | 'skipped'> & {
     domainsWithoutMx: number;
+    domainsWithNullMx: number;
     mxLookupTimeouts: number;
     mxLookupErrors: number;
   }
@@ -411,6 +412,7 @@ const upsertOrganizationEmails = async (input: {
   const promoted: FilemakerOrganizationEmailScrapePromotedItem[] = [];
   const skipped: FilemakerOrganizationEmailScrapeSkippedItem[] = [];
   const domainsWithoutMx = new Set<string>();
+  const domainsWithNullMx = new Set<string>();
   const domainsWithMxLookupTimeout = new Set<string>();
   const domainsWithMxLookupError = new Set<string>();
 
@@ -434,6 +436,7 @@ const upsertOrganizationEmails = async (input: {
         const domain = address.slice(address.indexOf('@') + 1);
         const mxLookup = await input.mxVerifier.lookup(domain);
         if (mxLookup.outcome === 'none') domainsWithoutMx.add(domain);
+        if (mxLookup.outcome === 'null-mx') domainsWithNullMx.add(domain);
         if (mxLookup.outcome === 'timeout') domainsWithMxLookupTimeout.add(domain);
         if (mxLookup.outcome === 'error') domainsWithMxLookupError.add(domain);
         try {
@@ -536,6 +539,7 @@ const upsertOrganizationEmails = async (input: {
     promoted,
     skipped,
     domainsWithoutMx: domainsWithoutMx.size,
+    domainsWithNullMx: domainsWithNullMx.size,
     mxLookupErrors: domainsWithMxLookupError.size,
     mxLookupTimeouts: domainsWithMxLookupTimeout.size,
   };
@@ -665,6 +669,7 @@ export const runFilemakerOrganizationEmailScrape = async (input: {
     ...parsed.metrics,
     disposableSkipped: parsed.metrics.disposableSkipped + disposableSkipped,
     domainsWithoutMx: upsert.domainsWithoutMx,
+    domainsWithNullMx: upsert.domainsWithNullMx,
     mxLookupErrors: upsert.mxLookupErrors,
     mxLookupTimeouts: upsert.mxLookupTimeouts,
   };

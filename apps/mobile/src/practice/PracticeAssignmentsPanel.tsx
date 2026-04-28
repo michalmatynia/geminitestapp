@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { KangurMobileInsetPanel as InsetPanel } from '../shared/KangurMobileUi';
-import { PracticeAssignmentRow } from './practice-primitives';
+import { PracticeAssignmentRow } from './PracticeAssignmentRow';
 import type { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import type { useKangurMobilePracticeAssignments } from './useKangurMobilePracticeAssignments';
 

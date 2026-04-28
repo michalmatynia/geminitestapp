@@ -14,7 +14,8 @@ import { translateKangurMobileActionLabel } from '../shared/translateKangurMobil
 import { createKangurPlanHref } from '../plan/planHref';
 import { getLocalizedKangurMetadataBadgeName } from '@kangur/core';
 import { type PracticeCompletionCardProps } from './completion-card-types';
-import { type KangurPracticeSyncProofSnapshot } from './practiceSyncProofLogic';
+import { type KangurPracticeSyncProofSnapshot } from './practiceSyncProof';
+import { type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 
 function CompletionHeader(props: {
   copy: PracticeCompletionCardProps['copy'];

@@ -1,4 +1,4 @@
-import React from 'react';
+import { type Href } from 'expo-router';
 import { View } from 'react-native';
 import {
   OutlineLink,
@@ -122,7 +122,7 @@ function HomeNavigationLink({
   label,
 }: {
   href: Href;
-  hint: string;
+  hint: string | undefined;
   label: string;
 }): React.JSX.Element {
   return <OutlineLink href={href} hint={hint} label={label} />;

@@ -22,6 +22,7 @@ describe('buildOrganizationEmailScrapeToast', () => {
         totalEmailsFound: 4,
         disposableSkipped: 1,
         domainsWithoutMx: 1,
+        domainsWithNullMx: 1,
         mxLookupErrors: 1,
         mxLookupTimeouts: 2,
         rolePromoted: 2,
@@ -38,6 +39,7 @@ describe('buildOrganizationEmailScrapeToast', () => {
     expect(toast.message).toContain('2 role-account');
     expect(toast.message).toContain('1 retry');
     expect(toast.message).toContain('1 domain without MX');
+    expect(toast.message).toContain('1 null MX domain');
     expect(toast.message).toContain('2 MX lookup timeouts');
     expect(toast.message).toContain('1 MX lookup error');
   });

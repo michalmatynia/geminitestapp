@@ -10,8 +10,7 @@ import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { resolveKangurMobileActionHref } from '../shared/resolveKangurMobileActionHref';
 import { useKangurMobileHomeProgressSnapshot } from './KangurMobileHomeProgressSnapshotContext';
 
-export type KangurMobileHomeAssignmentItem = {
-  assignment: KangurAssignmentPlan;
+export type KangurMobileHomeAssignmentItem = KangurAssignmentPlan & {
   href: Href | null;
 };
 
@@ -33,7 +32,7 @@ export const useKangurMobileHomeAssignments =
 
     return {
       assignmentItems: assignments.map((assignment) => ({
-        assignment,
+        ...assignment,
         href: createKangurMobileActionHref(assignment.action),
       })),
     };

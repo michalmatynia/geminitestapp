@@ -49,7 +49,11 @@ import {
 import { getCompanyById } from './companies-repository';
 
 const inferProviderFromUrl = (url: string): JobScanProvider => {
-  return detectJobBoardProviderFromUrl(url) ?? 'pracuj_pl';
+  const provider = detectJobBoardProviderFromUrl(url);
+  if (provider !== null) return provider;
+  throw new Error(
+    'Unsupported job board URL. Supported job boards are pracuj.pl, justjoin.it, and nofluffjobs.com.'
+  );
 };
 
 const stamp = (): string => new Date().toISOString();

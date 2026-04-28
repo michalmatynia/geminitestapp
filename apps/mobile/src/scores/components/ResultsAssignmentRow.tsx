@@ -17,13 +17,13 @@ export function ResultsAssignmentRow({
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const priorityTone =
-    item.assignment.priority === 'high'
+    item.priority === 'high'
       ? {
           backgroundColor: '#fef2f2',
           borderColor: '#fecaca',
           textColor: '#b91c1c',
         }
-      : item.assignment.priority === 'medium'
+      : item.priority === 'medium'
         ? {
             backgroundColor: '#fffbeb',
             borderColor: '#fde68a',
@@ -34,7 +34,7 @@ export function ResultsAssignmentRow({
             borderColor: '#bfdbfe',
             textColor: '#1d4ed8',
           };
-  const assignmentActionLabel = translateKangurMobileActionLabel(item.assignment.action.label, locale);
+  const assignmentActionLabel = translateKangurMobileActionLabel(item.action.label, locale);
   let assignmentAction: React.JSX.Element;
 
   if (item.href !== null && item.href !== undefined) {
@@ -57,37 +57,37 @@ export function ResultsAssignmentRow({
       <Pill
         label={copy({
           de:
-            item.assignment.priority === 'high'
+            item.priority === 'high'
               ? 'Hohe Priorität'
-              : item.assignment.priority === 'medium'
+              : item.priority === 'medium'
                 ? 'Mittlere Priorität'
                 : 'Niedrige Priorität',
           en:
-            item.assignment.priority === 'high'
+            item.priority === 'high'
               ? 'High priority'
-              : item.assignment.priority === 'medium'
+              : item.priority === 'medium'
                 ? 'Medium priority'
                 : 'Low priority',
           pl:
-            item.assignment.priority === 'high'
+            item.priority === 'high'
               ? 'Priorytet wysoki'
-              : item.assignment.priority === 'medium'
+              : item.priority === 'medium'
                 ? 'Priorytet średni'
                 : 'Priorytet niski',
         })}
         tone={priorityTone}
       />
       <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-        {item.assignment.title}
+        {item.title}
       </Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-        {item.assignment.description}
+        {item.description}
       </Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Ziel: ${item.assignment.target}`,
-          en: `Goal: ${item.assignment.target}`,
-          pl: `Cel: ${item.assignment.target}`,
+          de: `Ziel: ${item.target}`,
+          en: `Goal: ${item.target}`,
+          pl: `Cel: ${item.target}`,
         })}
       </Text>
       {assignmentAction}

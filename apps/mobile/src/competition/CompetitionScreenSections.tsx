@@ -20,14 +20,18 @@ import {
 } from './competition-utils';
 import type { KangurMobileCompetitionMode } from './useKangurMobileCompetition';
 
+import { type Href } from 'expo-router';
+
+// ...
+
 type CompetitionHeaderSectionProps = {
   copy: KangurMobileCopy;
   modesCount: number;
   questionCount: number;
   routes: {
-    tests: string;
-    results: string;
-    plan: string;
+    tests: Href;
+    results: Href;
+    plan: Href;
   };
 };
 

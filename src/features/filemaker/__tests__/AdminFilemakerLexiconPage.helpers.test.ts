@@ -15,6 +15,11 @@ import {
   upsertFilemakerLexiconTermInDatabase,
   withDeletedFilemakerLexiconTerm,
 } from '../pages/AdminFilemakerLexiconPage.helpers';
+import {
+  buildFilemakerLexiconTypeEditOptions,
+  buildFilemakerLexiconTypeMetadata,
+  formatFilemakerLexiconCategory,
+} from '../pages/AdminFilemakerLexiconPage.type-metadata';
 
 describe('AdminFilemakerLexiconPage helpers', () => {
   it('normalizes labels into reusable search keys', () => {
@@ -75,6 +80,24 @@ describe('AdminFilemakerLexiconPage helpers', () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0]?.term.id).toBe('term-1');
+  });
+
+  it('uses database-backed lexicon type labels and order', () => {
+    const database = createDefaultFilemakerDatabase();
+    database.lexiconTypes = database.lexiconTypes.map((type) =>
+      type.key === 'technology'
+        ? { ...type, label: 'Tech stack', sortOrder: 1 }
+        : type.key === 'requirement'
+          ? { ...type, sortOrder: 2 }
+          : type
+    );
+    const typeMetadata = buildFilemakerLexiconTypeMetadata(database);
+
+    expect(formatFilemakerLexiconCategory('technology', typeMetadata)).toBe('Tech stack');
+    expect(buildFilemakerLexiconTypeEditOptions(database).slice(0, 2)).toEqual([
+      expect.objectContaining({ label: 'Tech stack', value: 'technology' }),
+      expect.objectContaining({ label: 'Requirement', value: 'requirement' }),
+    ]);
   });
 
   it('upserts manual terms using normalized keys', () => {

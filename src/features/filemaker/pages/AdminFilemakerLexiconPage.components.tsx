@@ -10,23 +10,40 @@ import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.publi
 import type { FilemakerLexiconTerm, FilemakerLexiconTermCategory } from '../types';
 import { formatTimestamp } from './filemaker-page-utils';
 import {
-  FILEMAKER_LEXICON_CATEGORY_OPTIONS,
-  FILEMAKER_LEXICON_EDIT_CATEGORY_OPTIONS,
-  formatFilemakerLexiconCategory,
-  isFilemakerLexiconCategory,
   normalizeFilemakerLexiconKey,
-  parseFilemakerLexiconCategoryFilter,
   type FilemakerLexiconEditorState,
   type FilemakerLexiconFormState,
   type FilemakerLexiconTermRow,
 } from './AdminFilemakerLexiconPage.helpers';
+import {
+  formatFilemakerLexiconCategory,
+  isFilemakerLexiconCategory,
+  parseFilemakerLexiconCategoryFilter,
+  type FilemakerLexiconTypeDraft,
+  type FilemakerLexiconTypeMetadataMap,
+  type FilemakerLexiconTypeOption,
+} from './AdminFilemakerLexiconPage.type-metadata';
+import { FilemakerLexiconTypesModal } from './AdminFilemakerLexiconTypesModal';
+
+type FilemakerLexiconTypeEditorViewState = {
+  changeDraft: (
+    key: FilemakerLexiconTypeDraft['key'],
+    patch: Partial<FilemakerLexiconTypeDraft>
+  ) => void;
+  close: () => void;
+  drafts: FilemakerLexiconTypeDraft[];
+  open: boolean;
+  save: () => Promise<void>;
+};
 
 type FilemakerLexiconPageViewProps = {
   actions: PanelAction[];
+  categoryOptions: Array<FilemakerLexiconTypeOption | { label: string; value: 'all' }>;
   categoryFilter: FilemakerLexiconTermCategory | 'all';
   columns: Array<ColumnDef<FilemakerLexiconTermRow, unknown>>;
   ConfirmationModal: React.ComponentType;
   data: FilemakerLexiconTermRow[];
+  editCategoryOptions: FilemakerLexiconTypeOption[];
   editor: FilemakerLexiconEditorState;
   isLoading: boolean;
   onCategoryFilterChange: (value: FilemakerLexiconTermCategory | 'all') => void;
@@ -35,6 +52,7 @@ type FilemakerLexiconPageViewProps = {
   onEditorSave: () => Promise<void>;
   query: string;
   setQuery: (value: string) => void;
+  typeEditor: FilemakerLexiconTypeEditorViewState;
 };
 
 export function FilemakerLexiconPageView(
@@ -52,6 +70,7 @@ export function FilemakerLexiconPageView(
       <StandardDataTablePanel
         filters={
           <FilemakerLexiconFilters
+            categoryOptions={props.categoryOptions}
             categoryFilter={props.categoryFilter}
             query={props.query}
             setCategoryFilter={props.onCategoryFilterChange}
@@ -66,6 +85,7 @@ export function FilemakerLexiconPageView(
         getRowId={(row) => row.term.id}
       />
       <FilemakerLexiconEditorModal
+        editCategoryOptions={props.editCategoryOptions}
         editor={props.editor}
         isSaving={props.isLoading}
         onChange={props.onEditorChange}
@@ -74,12 +94,23 @@ export function FilemakerLexiconPageView(
           void props.onEditorSave();
         }}
       />
+      <FilemakerLexiconTypesModal
+        drafts={props.typeEditor.drafts}
+        isSaving={props.isLoading}
+        onChange={props.typeEditor.changeDraft}
+        onClose={props.typeEditor.close}
+        onSave={() => {
+          void props.typeEditor.save();
+        }}
+        open={props.typeEditor.open}
+      />
       <ConfirmationModal />
     </div>
   );
 }
 
 type FilemakerLexiconFiltersProps = {
+  categoryOptions: Array<FilemakerLexiconTypeOption | { label: string; value: 'all' }>;
   categoryFilter: FilemakerLexiconTermCategory | 'all';
   query: string;
   setCategoryFilter: (value: FilemakerLexiconTermCategory | 'all') => void;
@@ -92,9 +123,9 @@ export function FilemakerLexiconFilters(
   return (
     <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
       <SelectSimple
-        ariaLabel='Lexicon category'
+        ariaLabel='Lexicon type'
         value={props.categoryFilter}
-        options={FILEMAKER_LEXICON_CATEGORY_OPTIONS}
+        options={props.categoryOptions}
         onValueChange={(value) => {
           props.setCategoryFilter(parseFilemakerLexiconCategoryFilter(value));
         }}
@@ -116,6 +147,7 @@ export function FilemakerLexiconFilters(
 }
 
 type FilemakerLexiconEditorModalProps = {
+  editCategoryOptions: FilemakerLexiconTypeOption[];
   editor: FilemakerLexiconEditorState;
   isSaving: boolean;
   onChange: (patch: Partial<FilemakerLexiconFormState>) => void;
@@ -148,11 +180,11 @@ export function FilemakerLexiconEditorModal(
             placeholder='contract of employment'
           />
         </FormField>
-        <FormField label='Category' required>
+        <FormField label='Type' required>
           <SelectSimple
-            ariaLabel='Term category'
+            ariaLabel='Term type'
             value={props.editor.form.category}
-            options={FILEMAKER_LEXICON_EDIT_CATEGORY_OPTIONS}
+            options={props.editCategoryOptions}
             onValueChange={(value) => {
               if (isFilemakerLexiconCategory(value)) props.onChange({ category: value });
             }}
@@ -169,6 +201,7 @@ export function FilemakerLexiconEditorModal(
 type FilemakerLexiconColumnActions = {
   onDeleteTerm: (term: FilemakerLexiconTerm) => void;
   onEditTerm: (term: FilemakerLexiconTerm) => void;
+  typeMetadata: FilemakerLexiconTypeMetadataMap;
 };
 
 export const createFilemakerLexiconColumns = (
@@ -181,8 +214,10 @@ export const createFilemakerLexiconColumns = (
   },
   {
     id: 'category',
-    header: 'Category',
-    cell: ({ row }) => <TermCategoryCell row={row.original} />,
+    header: 'Type',
+    cell: ({ row }) => (
+      <TermCategoryCell row={row.original} typeMetadata={actions.typeMetadata} />
+    ),
   },
   {
     id: 'usage',
@@ -217,9 +252,14 @@ function TermLabelCell(props: { row: FilemakerLexiconTermRow }): React.JSX.Eleme
   );
 }
 
-function TermCategoryCell(props: { row: FilemakerLexiconTermRow }): React.JSX.Element {
+function TermCategoryCell(props: {
+  row: FilemakerLexiconTermRow;
+  typeMetadata: FilemakerLexiconTypeMetadataMap;
+}): React.JSX.Element {
   return (
-    <Badge variant='outline'>{formatFilemakerLexiconCategory(props.row.term.category)}</Badge>
+    <Badge variant='outline'>
+      {formatFilemakerLexiconCategory(props.row.term.typeKey, props.typeMetadata)}
+    </Badge>
   );
 }
 

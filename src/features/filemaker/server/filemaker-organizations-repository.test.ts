@@ -51,7 +51,10 @@ vi.mock('../settings', () => ({
   parseFilemakerDatabase: (...args: unknown[]) => mocks.parseFilemakerDatabaseMock(...args),
 }));
 
-import { listMongoFilemakerOrganizations } from './filemaker-organizations-repository';
+import {
+  deleteMongoFilemakerOrganization,
+  listMongoFilemakerOrganizations,
+} from './filemaker-organizations-repository';
 
 const createFindChain = (documents: Array<Record<string, unknown>>) => {
   const chain = {
@@ -133,5 +136,26 @@ describe('listMongoFilemakerOrganizations', () => {
         }),
       ],
     });
+  });
+
+  it('deletes an organization by the resolved Mongo document id', async () => {
+    const findOne = vi.fn(async () => ({
+      _id: 'mongo-org-1',
+      id: 'org-1',
+      name: 'Acme Inc',
+    }));
+    const deleteOne = vi.fn(async () => ({ deletedCount: 1 }));
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue({
+      deleteOne,
+      findOne,
+    });
+
+    const deleted = await deleteMongoFilemakerOrganization('org-1');
+
+    expect(findOne).toHaveBeenCalledWith({
+      $or: [{ _id: 'org-1' }, { id: 'org-1' }, { legacyUuid: 'org-1' }],
+    });
+    expect(deleteOne).toHaveBeenCalledWith({ _id: 'mongo-org-1' });
+    expect(deleted).toEqual(expect.objectContaining({ id: 'org-1', name: 'Acme Inc' }));
   });
 });

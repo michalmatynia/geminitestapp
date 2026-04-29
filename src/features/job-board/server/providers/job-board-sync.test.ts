@@ -222,9 +222,18 @@ describe('job-board-sync', () => {
               "description": "<p>Build APIs for merchants.</p>",
               "hiringOrganization": {
                 "name": "Acme Tech",
-                "sameAs": "https://acme.example",
+                "url": "https://acme.example",
+                "sameAs": [
+                  "https://www.linkedin.com/company/acme-tech",
+                  "https://github.com/acme-tech"
+                ],
+                "email": "jobs@acme.example",
+                "telephone": "+48 22 123 45 67",
+                "logo": "https://cdn.acme.example/logo.png",
+                "taxID": "5210123456",
                 "description": "Acme builds commerce systems.",
                 "industry": "Software",
+                "numberOfEmployees": 250,
                 "address": {
                   "streetAddress": "Konstruktorska 12A",
                   "postalCode": "02-673",
@@ -256,17 +265,34 @@ describe('job-board-sync', () => {
     );
 
     expect(snapshot).toMatchObject({
-      companyLinks: ['https://acme.example'],
+      companyLinks: [
+        'https://acme.example',
+        'https://www.linkedin.com/company/acme-tech',
+        'https://github.com/acme-tech',
+      ],
       companyProfile: {
         facts: expect.arrayContaining([
           { label: 'Company', value: 'Acme Tech' },
+          { label: 'Website', value: 'https://acme.example' },
+          { label: 'Same as', value: 'https://www.linkedin.com/company/acme-tech' },
+          { label: 'Same as', value: 'https://github.com/acme-tech' },
+          { label: 'Email', value: 'jobs@acme.example' },
+          { label: 'Phone', value: '+48 22 123 45 67' },
+          { label: 'Logo URL', value: 'https://cdn.acme.example/logo.png' },
           { label: 'Industry', value: 'Software' },
+          { label: 'Company size', value: '250' },
+          { label: 'NIP', value: '5210123456' },
           {
             label: 'Company Address',
             value: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
           },
         ]),
         plainText: 'Acme builds commerce systems.',
+        websiteUrls: [
+          'https://acme.example',
+          'https://www.linkedin.com/company/acme-tech',
+          'https://github.com/acme-tech',
+        ],
       },
       facts: expect.arrayContaining([
         { label: 'Company', value: 'Acme Tech' },

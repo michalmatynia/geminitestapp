@@ -137,12 +137,14 @@ describe('starter job application preparation workflow', () => {
 
     expect(promptNode?.config?.prompt?.template).toContain('Tailor the CV and cover letter');
     expect(promptNode?.config?.prompt?.template).toContain('bodyText');
+    expect(modelNode?.title).toBe('CV & Cover Letter Model');
     expect(modelNode?.config?.model).toEqual(
       expect.objectContaining({
         maxTokens: 2200,
         waitForResult: true,
       })
     );
+    expect(modelNode?.config?.model).not.toHaveProperty('modelId');
     expect(regexNode?.config?.regex).toEqual(
       expect.objectContaining({
         mode: 'extract_json',

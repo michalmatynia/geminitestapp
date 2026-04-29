@@ -17,6 +17,8 @@ import {
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
+import { ActionMenu } from '@/shared/ui/ActionMenu';
+import { DropdownMenuItem } from '@/shared/ui/dropdown-menu';
 import { Badge, Button, Checkbox } from '@/shared/ui/primitives.public';
 import { cn } from '@/shared/utils/ui-utils';
 
@@ -36,6 +38,7 @@ type FilemakerOrganizationTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   organizationEmailScrapeState: Record<string, boolean>;
   organizationWebsiteSocialScrapeState: Record<string, boolean>;
   organizationSelection: Record<string, boolean>;
+  onDeleteOrganization: (organization: FilemakerOrganization) => void;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
   onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
   onOpenEvent: (eventId: string) => void;
@@ -62,6 +65,7 @@ type OrganizationLeafNodeProps = Pick<
   jobListingCount: number;
   organization: FilemakerOrganization;
   stateClassName: string;
+  onDeleteOrganization: (organization: FilemakerOrganization) => void;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
   onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
   onOpenOrganization: (organizationId: string) => void;
@@ -273,6 +277,7 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
     isSelectedForBatch,
     isWebsiteSocialScrapeRunning,
     jobListingCount,
+    onDeleteOrganization,
     onLaunchOrganizationEmailScrape,
     onLaunchOrganizationWebsiteSocialScrape,
     onOpenOrganization,
@@ -367,6 +372,20 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
           <MailSearch className='size-3.5' />
         )}
       </Button>
+      <ActionMenu
+        ariaLabel={`Open actions for organization ${organization.name}`}
+        triggerClassName='size-7 cursor-pointer'
+      >
+        <DropdownMenuItem
+          className='text-destructive focus:text-destructive'
+          onSelect={(event: Event): void => {
+            event.preventDefault();
+            onDeleteOrganization(organization);
+          }}
+        >
+          Delete Organisation
+        </DropdownMenuItem>
+      </ActionMenu>
     </div>
   );
 }
@@ -462,7 +481,7 @@ const jobListingDescription = (jobListing: FilemakerJobListing | null): string =
 };
 
 function FilemakerOrganizationJobListingLinkNode(
-  props: Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'node' | 'select'> & {
+  props: Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'node'> & {
     jobListing: FilemakerJobListing | null;
     jobListingId: string;
     onOpenJobListing: (organizationId: string, jobListingId: string) => void;
@@ -471,15 +490,47 @@ function FilemakerOrganizationJobListingLinkNode(
   }
 ): React.JSX.Element {
   const { jobListing, jobListingId, onOpenJobListing, organizationId } = props;
+  const label = jobListing?.title ?? props.node.name;
+  const resolvedLabel = label.trim().length > 0 ? label : props.node.name;
+  const normalizedMetaBadge = jobListing !== null ? jobListing.status.trim() : '';
+
   return (
-    <OrganizationRelationLinkNode
-      {...props}
-      description={jobListingDescription(jobListing)}
-      icon={<BriefcaseBusiness className='size-4' aria-hidden='true' />}
-      label={jobListing?.title ?? props.node.name}
-      metaBadge={jobListing?.status}
-      onOpen={() => onOpenJobListing(organizationId, jobListingId)}
-    />
+    <div
+      className={cn(
+        'flex cursor-default items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+        props.stateClassName
+      )}
+      style={createTreeIndentStyle(props.depth)}
+    >
+      <TreeNodeSpacer />
+      <span className='shrink-0 text-sky-300/90'>
+        <BriefcaseBusiness className='size-4' aria-hidden='true' />
+      </span>
+      <div className='min-w-0 flex-1 cursor-default'>
+        <button
+          type='button'
+          className='inline-block max-w-full cursor-pointer select-text truncate align-top text-left font-medium text-gray-100 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpenJobListing(organizationId, jobListingId);
+          }}
+        >
+          {resolvedLabel}
+        </button>
+        <div className='cursor-default text-[11px] text-gray-500'>
+          <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
+            {jobListingDescription(jobListing)}
+          </span>
+        </div>
+      </div>
+      {normalizedMetaBadge.length > 0 ? (
+        <Badge variant='outline' className='h-5 shrink-0 text-[10px] capitalize'>
+          {normalizedMetaBadge}
+        </Badge>
+      ) : null}
+      <ExternalLink className='size-3.5 shrink-0 text-gray-500' aria-hidden='true' />
+    </div>
   );
 }
 
@@ -541,6 +592,7 @@ export function FilemakerOrganizationMasterTreeNode(
       jobListingCount={metadataNumber(node.metadata?.['jobListingCount'])}
       organization={organization}
       stateClassName={stateClassName}
+      onDeleteOrganization={props.onDeleteOrganization}
       onLaunchOrganizationEmailScrape={props.onLaunchOrganizationEmailScrape}
       onLaunchOrganizationWebsiteSocialScrape={
         props.onLaunchOrganizationWebsiteSocialScrape

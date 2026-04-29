@@ -1,13 +1,11 @@
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { createKangurDuelsHref } from '../duels/duelsHref';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileScrollScreen,
   KangurMobileSectionTitle,
 } from '../shared/KangurMobileUi';
 import {
-  PLAN_ROUTE,
 } from './leaderboard-primitives';
 import { useKangurMobileLeaderboard } from './useKangurLeaderboard';
 import { useKangurMobileLeaderboardDuels } from './useKangurMobileLeaderboardDuels';
@@ -34,6 +32,13 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
       }}
     >
         <View style={{ alignItems: 'flex-start', gap: 14 }}>
+          <Text
+            onPress={() => {}}
+            style={{ color: '#1d4ed8', fontWeight: '700' }}
+          >
+            {copy({ de: 'Zurück', en: 'Back', pl: 'Wróć' })}
+          </Text>
+
           <KangurMobileSectionTitle
             title={copy({ de: 'Rangliste', en: 'Leaderboard', pl: 'Ranking' })}
             subtitle={copy({
@@ -52,8 +57,18 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
           />
 
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            <LinkButton href={PLAN_ROUTE} label={copy({ de: 'Tagesplan jetzt', en: 'Daily plan now', pl: 'Plan dnia teraz' })} stretch />
-            <LinkButton href={createKangurDuelsHref()} label={copy({ de: 'Duell-Lobby öffnen', en: 'Open duel lobby', pl: 'Otwórz lobby pojedynków' })} stretch tone='primary' />
+            <Text
+              onPress={() => {}}
+              style={{ color: '#1d4ed8', fontWeight: '700' }}
+            >
+              {copy({ de: 'Tagesplan jetzt', en: 'Daily plan now', pl: 'Plan dnia teraz' })}
+            </Text>
+            <Text
+              onPress={() => {}}
+              style={{ color: '#1d4ed8', fontWeight: '700' }}
+            >
+              {copy({ de: 'Duell-Lobby öffnen', en: 'Open duel lobby', pl: 'Otwórz lobby pojedynków' })}
+            </Text>
           </View>
         </View>
 

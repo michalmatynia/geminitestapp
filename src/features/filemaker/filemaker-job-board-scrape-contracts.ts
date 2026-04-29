@@ -3,7 +3,9 @@ import { z } from 'zod';
 import {
   filemakerJobListingStatusSchema,
   filemakerLexiconTermCategorySchema,
+  filemakerLexiconTypeKeySchema,
   type FilemakerLexiconTermCategory,
+  type FilemakerLexiconTypeKey,
 } from '@/shared/contracts/filemaker';
 import { JOB_BOARD_PROVIDER_IDS } from '@/shared/lib/job-board/job-board-providers';
 
@@ -92,13 +94,19 @@ export type FilemakerJobBoardScrapeProvider = z.infer<
   typeof filemakerJobBoardScrapeProviderSchema
 >;
 
-export const filemakerJobBoardScrapedPillSchema = z.object({
-  category: filemakerLexiconTermCategorySchema.default('other'),
-  label: z.string().trim().min(1),
-  position: z.number().int().nonnegative().default(0),
-  sourceSite: z.string().trim().default(''),
-  sourceUrl: jobBoardSourceUrlSchema,
-});
+export const filemakerJobBoardScrapedPillSchema = z
+  .object({
+    typeKey: filemakerLexiconTypeKeySchema.optional(),
+    category: filemakerLexiconTermCategorySchema.optional(),
+    label: z.string().trim().min(1),
+    position: z.number().int().nonnegative().default(0),
+    sourceSite: z.string().trim().default(''),
+    sourceUrl: jobBoardSourceUrlSchema,
+  })
+  .transform((pill) => {
+    const typeKey = pill.typeKey ?? pill.category ?? 'other';
+    return { ...pill, typeKey, category: typeKey };
+  });
 
 export const filemakerJobBoardScrapedOfferSchema = z.object({
   companyName: z.string().trim().min(1),
@@ -141,6 +149,7 @@ export type FilemakerJobBoardScrapedPill = z.infer<
   typeof filemakerJobBoardScrapedPillSchema
 > & {
   category: FilemakerLexiconTermCategory;
+  typeKey: FilemakerLexiconTypeKey;
 };
 
 export type FilemakerJobBoardScrapedOffer = z.infer<

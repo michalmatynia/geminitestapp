@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus } from 'lucide-react';
+import { Plus, SlidersHorizontal } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
@@ -11,22 +11,27 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
-import {
-  FILEMAKER_DATABASE_KEY,
-  parseFilemakerDatabase,
-  toPersistedFilemakerDatabase,
-} from '../settings';
+import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
 import type { FilemakerDatabase, FilemakerLexiconTerm, FilemakerLexiconTermCategory } from '../types';
 import {
   createFilemakerLexiconColumns,
   FilemakerLexiconPageView,
 } from './AdminFilemakerLexiconPage.components';
 import {
+  buildFilemakerLexiconTypeMetadata,
+  getFilemakerLexiconCreateCategory,
+  parseFilemakerLexiconCategoryFilter,
+} from './AdminFilemakerLexiconPage.type-metadata';
+import {
+  useFilemakerLexiconTypeUi,
+  usePersistFilemakerLexiconDatabase,
+  useFilemakerLexiconTypeEditor,
+  type PersistFilemakerLexiconDatabase,
+} from './AdminFilemakerLexiconPage.type-editor';
+import {
   DEFAULT_FILEMAKER_LEXICON_FORM,
   filterFilemakerLexiconTermRows,
-  getFilemakerLexiconCreateCategory,
   hasDuplicateFilemakerLexiconTerm,
-  parseFilemakerLexiconCategoryFilter,
   toFilemakerLexiconTermRows,
   upsertFilemakerLexiconTermInDatabase,
   withDeletedFilemakerLexiconTerm,
@@ -35,11 +40,6 @@ import {
   type FilemakerLexiconTermRow,
 } from './AdminFilemakerLexiconPage.helpers';
 import { createClientFilemakerId } from './filemaker-page-utils';
-
-type PersistFilemakerLexiconDatabase = (
-  nextDatabase: FilemakerDatabase,
-  message: string
-) => Promise<void>;
 
 type FilemakerLexiconEditorController = {
   changeEditorForm: (patch: Partial<FilemakerLexiconFormState>) => void;
@@ -61,7 +61,8 @@ type UseFilemakerLexiconEditorInput = {
 
 const buildLexiconPageActions = (
   router: ReturnType<typeof useRouter>,
-  openCreate: () => void
+  openCreate: () => void,
+  openTypes: () => void
 ): PanelAction[] => [
   {
     key: 'create-lexicon-term',
@@ -69,6 +70,13 @@ const buildLexiconPageActions = (
     icon: <Plus className='size-4' />,
     variant: 'success',
     onClick: openCreate,
+  },
+  {
+    key: 'manage-lexicon-types',
+    label: 'Manage Types',
+    icon: <SlidersHorizontal className='size-4' />,
+    variant: 'outline',
+    onClick: openTypes,
   },
   ...buildFilemakerNavActions(router, 'lexicon'),
 ];
@@ -88,7 +96,7 @@ const createExistingEditorState = (
   term: FilemakerLexiconTerm
 ): FilemakerLexiconEditorState => ({
   editing: term,
-  form: { category: term.category, label: term.label },
+  form: { category: term.typeKey, label: term.label },
   open: true,
 });
 
@@ -104,9 +112,15 @@ const useFilemakerLexiconRows = (
 ): FilemakerLexiconTermRow[] => {
   const deferredQuery = useDeferredValue(query.trim());
   const rows = useMemo(() => toFilemakerLexiconTermRows(database), [database]);
+  const typeMetadata = useMemo(() => buildFilemakerLexiconTypeMetadata(database), [database]);
   return useMemo(
-    () => filterFilemakerLexiconTermRows(rows, { category: categoryFilter, query: deferredQuery }),
-    [categoryFilter, deferredQuery, rows]
+    () =>
+      filterFilemakerLexiconTermRows(
+        rows,
+        { category: categoryFilter, query: deferredQuery },
+        typeMetadata
+      ),
+    [categoryFilter, deferredQuery, rows, typeMetadata]
   );
 };
 
@@ -117,7 +131,9 @@ const readUrlLexiconFilters = (): {
   if (typeof window === 'undefined') return { categoryFilter: 'all', query: '' };
   const params = new URLSearchParams(window.location.search);
   return {
-    categoryFilter: parseFilemakerLexiconCategoryFilter(params.get('category') ?? 'all'),
+    categoryFilter: parseFilemakerLexiconCategoryFilter(
+      params.get('type') ?? params.get('category') ?? 'all'
+    ),
     query: params.get('query') ?? '',
   };
 };
@@ -169,7 +185,7 @@ const useFilemakerLexiconEditor = (
   }, []);
   const saveEditor = useCallback(async (): Promise<void> => {
     if (hasDuplicateFilemakerLexiconTerm(database, editor.editing?.id ?? null, editor.form)) {
-      toast('A lexicon term with this label and category already exists.', { variant: 'error' });
+      toast('A lexicon term with this label and type already exists.', { variant: 'error' });
       return;
     }
     await persistDatabase(
@@ -209,18 +225,15 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const { categoryFilter, query, setCategoryFilter, setQuery } = useUrlBackedLexiconFilters();
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const { categoryOptions, editCategoryOptions, typeMetadata } =
+    useFilemakerLexiconTypeUi(database);
   const filteredRows = useFilemakerLexiconRows(database, categoryFilter, query);
-  const persistDatabase = useCallback<PersistFilemakerLexiconDatabase>(
-    async (nextDatabase, message) => {
-      await updateSetting.mutateAsync({
-        key: FILEMAKER_DATABASE_KEY,
-        value: JSON.stringify(toPersistedFilemakerDatabase(nextDatabase)),
-      });
-      settingsStore.refetch();
-      toast(message, { variant: 'success' });
-    },
-    [settingsStore, toast, updateSetting]
-  );
+  const persistDatabase = usePersistFilemakerLexiconDatabase({
+    settingsStore,
+    toast,
+    updateSetting,
+  });
+  const typeEditor = useFilemakerLexiconTypeEditor({ database, persistDatabase, toast });
   const editor = useFilemakerLexiconEditor({
     categoryFilter,
     confirm,
@@ -229,20 +242,27 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
     toast,
   });
   const columns = useMemo(
-    () => createFilemakerLexiconColumns({ onDeleteTerm: editor.deleteTerm, onEditTerm: editor.openEdit }),
-    [editor.deleteTerm, editor.openEdit]
+    () =>
+      createFilemakerLexiconColumns({
+        onDeleteTerm: editor.deleteTerm,
+        onEditTerm: editor.openEdit,
+        typeMetadata,
+      }),
+    [editor.deleteTerm, editor.openEdit, typeMetadata]
   );
   const actions = useMemo(
-    () => buildLexiconPageActions(router, editor.openCreate),
-    [editor.openCreate, router]
+    () => buildLexiconPageActions(router, editor.openCreate, typeEditor.openEditor),
+    [editor.openCreate, router, typeEditor.openEditor]
   );
   return (
     <FilemakerLexiconPageView
       actions={actions}
+      categoryOptions={categoryOptions}
       categoryFilter={categoryFilter}
       columns={columns}
       ConfirmationModal={ConfirmationModal}
       data={filteredRows}
+      editCategoryOptions={editCategoryOptions}
       editor={editor.editor}
       isLoading={settingsStore.isLoading || updateSetting.isPending}
       onCategoryFilterChange={setCategoryFilter}
@@ -251,6 +271,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
       onEditorSave={editor.saveEditor}
       query={query}
       setQuery={setQuery}
+      typeEditor={typeEditor}
     />
   );
 }

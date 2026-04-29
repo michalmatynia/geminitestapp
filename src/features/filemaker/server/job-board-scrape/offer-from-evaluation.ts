@@ -105,9 +105,9 @@ const SALARY_FACT_KEYWORDS = [
   'widelki',
 ] as const;
 
-const SALARY_CURRENCY_RE = /\b(PLN|EUR|USD|GBP|CHF|CZK|SEK|NOK|DKK)\b|zł|zl/iu;
+const SALARY_CURRENCY_RE = /\b(PLN|EUR|USD|GBP|CHF|CZK|SEK|NOK|DKK)\b|zł|zl|€|£|\$/iu;
 const SALARY_TEXT_HINT_RE =
-  /salary|compensation|pay|wynagrodzenie|widełki|widelki|PLN|EUR|USD|GBP|CHF|CZK|SEK|NOK|DKK|zł|zl|netto|brutto|gross|net|\/\s*(?:h|hour|godz|mies|month)|per\s+(?:hour|month|year)/iu;
+  /salary|compensation|pay|wynagrodzenie|widełki|widelki|PLN|EUR|USD|GBP|CHF|CZK|SEK|NOK|DKK|zł|zl|€|£|\$|netto|brutto|gross|net|\/\s*(?:h|hour|godz|mies|month)|per\s+(?:hour|month|year)/iu;
 const SALARY_NUMBER_RE = /\b\d+(?:[ \u00a0.]?\d{3})*(?:[,.]\d+)?\s*k?\b/giu;
 
 const CONTRACT_TYPE_LABELS: Record<string, string> = {
@@ -215,13 +215,22 @@ const COMPANY_PROFILE_FIELDS = [
   { factKeywords: ['nip'], jsonLdKeys: ['taxID', 'vatID'], key: 'nip', label: 'NIP' },
   { factKeywords: ['krs'], jsonLdKeys: ['krs'], key: 'krs', label: 'KRS' },
   { factKeywords: ['regon'], jsonLdKeys: ['regon'], key: 'regon', label: 'REGON' },
+  { factKeywords: ['email', 'e-mail', 'mail'], jsonLdKeys: ['email'], key: 'email', label: 'Email' },
+  {
+    factKeywords: ['phone', 'telephone', 'telefon', 'tel'],
+    jsonLdKeys: ['telephone', 'phone'],
+    key: 'phone',
+    label: 'Phone',
+  },
   { factKeywords: ['logo'], jsonLdKeys: ['logo', 'image'], key: 'logoUrl', label: 'Logo URL' },
 ] as const;
 
 const COMPANY_PROFILE_TEXT_PATTERNS: Record<string, RegExp[]> = {
+  email: [/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i],
   industry: [/\b(?:industry|branza|branża|sector|sektor)\s*:?\s*([^.;|]{2,120})/i],
   krs: [/\bKRS\s*:?\s*([0-9][0-9 -]{4,}[0-9])\b/i],
   nip: [/\bNIP\s*:?\s*([0-9][0-9 -]{8,}[0-9])\b/i],
+  phone: [/\b(?:phone|telephone|tel\.?|telefon)\s*:?\s*(\+?[0-9][0-9\s().-]{6,}[0-9])/i],
   regon: [/\bREGON\s*:?\s*([0-9][0-9 -]{7,}[0-9])\b/i],
   size: [
     /\b(?:company size|employees|liczba pracownikow|liczba pracowników|zatrudnienie)\s*:?\s*([0-9][0-9 +.,-]*(?:employees|osob|osób|pracownikow|pracowników)?)/i,
@@ -255,13 +264,54 @@ const TEXT_ADDRESS_RE =
   /(?:^|[^\p{L}0-9])(?:(?:adres(?:\s+siedziby)?|siedziba|address|headquarters|office|biuro|lokalizacja|miejsce pracy)[:\s-]*)?(?:(?:ul\.?|ulica|al\.?|aleja|pl\.?|plac|rondo)\s+)?([\p{L}][\p{L}0-9'. -]{1,70}?)\s+([0-9]+[0-9A-Za-z/-]{0,12})\s*,?\s*([0-9]{2}-[0-9]{3})\s+([\p{L}][\p{L}'. -]{1,50})/giu;
 
 const TEXT_ADDRESS_WITHOUT_POSTAL_RE =
-  /(?:^|[^\p{L}0-9])(?:(?:adres(?:\s+siedziby)?|siedziba|address|headquarters|office|biuro|lokalizacja|miejsce pracy)[:\s-]*)?(?:(?:ul\.?|ulica|al\.?|aleja|pl\.?|plac|rondo)\s+)?([\p{L}][\p{L}0-9'. -]{1,70}?)\s+([0-9]+[0-9A-Za-z/-]{0,12})\s*,\s*([\p{L}][\p{L}'. -]{1,60})\s*,\s*([\p{L}][\p{L}'. -]{1,60}(?:\([^)]{1,40}\))?)/giu;
+  /(?:^|[^\p{L}0-9])(?:(?:adres(?:\s+siedziby)?|siedziba|address|headquarters|office|biuro|lokalizacja|miejsce pracy)[:\s-]*)?(?:(?:ul\.?|ulica|al\.?|aleja|pl\.?|plac|rondo)\s+)?([\p{L}][\p{L}0-9'. -]{1,70}?)\s+([0-9]+[0-9A-Za-z/-]{0,12})\s*,\s*([\p{L}][\p{L}'. -]{1,60}(?:\([^)]{1,40}\))?)(?:\s*,\s*([\p{L}][\p{L}'. -]{1,60}(?:\([^)]{1,40}\))?))?/giu;
 
 const JOB_DESCRIPTION_SECTION_RE =
   /opis|description|responsibil|obowiaz|obowiąz|wymagania|requirements|kwalifikacje|qualifications|benefits|benefity|oferujemy|zadania|role|scope|zakres/i;
 
+const SOCIAL_COMPANY_URL_HOSTS = [
+  'facebook.com',
+  'github.com',
+  'gitlab.com',
+  'instagram.com',
+  'linkedin.com',
+  'medium.com',
+  'tiktok.com',
+  'twitter.com',
+  'x.com',
+  'youtube.com',
+  'youtu.be',
+] as const;
+
 const normalizeProfileValue = (value: unknown): string =>
   normalizeLexiconLabel(toStringValue(value));
+
+const normalizeCompanyUrl = (value: unknown): string | null => {
+  const raw = normalizeProfileValue(value).replace(/[),.;]+$/g, '');
+  if (raw.length === 0) return null;
+  const withProtocol = /^www\./iu.test(raw) ? `https://${raw}` : raw;
+  try {
+    const parsed = new URL(withProtocol);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    parsed.hash = '';
+    if (parsed.pathname === '/') return `${parsed.protocol}//${parsed.host}${parsed.search}`;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+};
+
+const companyUrlKey = (value: unknown): string =>
+  (normalizeCompanyUrl(value) ?? normalizeProfileValue(value)).replace(/\/$/u, '').toLowerCase();
+
+const isSocialCompanyUrl = (value: string): boolean => {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase().replace(/^www\./u, '');
+    return SOCIAL_COMPANY_URL_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`));
+  } catch {
+    return false;
+  }
+};
 
 const normalizeDescriptionValue = (value: unknown): string | null => {
   const raw = toStringValue(value);
@@ -619,6 +669,50 @@ const firstJsonLdOrganizationValue = (
   return null;
 };
 
+const jsonLdUrlValues = (value: unknown): string[] => {
+  const normalized = normalizeCompanyUrl(value);
+  if (normalized !== null) return [normalized];
+  if (Array.isArray(value)) return value.flatMap(jsonLdUrlValues);
+  const record = asRecord(value);
+  if (record === null) return [];
+  return [...jsonLdUrlValues(record['url']), ...jsonLdUrlValues(record['sameAs'])];
+};
+
+const jsonLdOrganizationUrlCandidates = (
+  snapshot: JobBoardStructuredSnapshot | null | undefined
+): string[] =>
+  uniqueStrings(
+    jsonLdOrganizationRecords(snapshot).flatMap((record) => [
+      ...jsonLdUrlValues(record['url']),
+      ...jsonLdUrlValues(record['sameAs']),
+    ])
+  );
+
+const companyRelatedUrlCandidates = (
+  snapshot: JobBoardStructuredSnapshot | null | undefined
+): string[] =>
+  uniqueStrings(
+    [
+      normalizeCompanyUrl(snapshot?.companyProfile?.url) ?? '',
+      ...(snapshot?.companyLinks ?? []).map((url) => normalizeCompanyUrl(url) ?? ''),
+      ...(snapshot?.companyProfile?.websiteUrls ?? []).map((url) => normalizeCompanyUrl(url) ?? ''),
+      ...jsonLdOrganizationUrlCandidates(snapshot),
+      normalizeCompanyUrl(firstSnapshotTextProfileValue(snapshot, 'website')) ?? '',
+    ].filter(Boolean)
+  ).slice(0, 16);
+
+const addCompanyRelatedUrlLines = (
+  lines: LabeledProfileLine[],
+  snapshot: JobBoardStructuredSnapshot | null | undefined,
+  primaryUrls: Array<string | null>
+): void => {
+  const primaryKeys = new Set(primaryUrls.filter((url): url is string => url !== null).map(companyUrlKey));
+  companyRelatedUrlCandidates(snapshot).forEach((url) => {
+    if (primaryKeys.has(companyUrlKey(url))) return;
+    addProfileLine(lines, isSocialCompanyUrl(url) ? 'Social URL' : 'Related URL', url);
+  });
+};
+
 const addressFromRecord = (record: Record<string, unknown> | null): string | null => {
   if (record === null) return null;
   const source = asRecord(record['address']) ?? record;
@@ -677,8 +771,8 @@ const addressCandidateWithoutPostalFromTextMatch = (
 ): string | null => {
   const street = cleanExtractedAddressStreet(match[1] ?? '');
   const streetNumber = normalizeProfileValue(match[2]);
-  const district = cleanExtractedAddressCity(match[3] ?? '');
-  const city = cleanExtractedAddressCity(match[4] ?? '');
+  const district = cleanExtractedAddressCity(match[4] !== undefined ? match[3] ?? '' : '');
+  const city = cleanExtractedAddressCity(match[4] ?? match[3] ?? '');
   if (street.length === 0 || streetNumber.length === 0 || city.length === 0) return null;
   return uniqueStrings([`${street} ${streetNumber}`, district, city]).join(', ');
 };
@@ -716,10 +810,14 @@ const snapshotTextAddressCandidates = (
 
 const normalizeProfileTextCapture = (key: string, value: string): string => {
   const normalized = normalizeProfileValue(value);
+  if (key === 'email') return normalized.replace(/[.,;]+$/, '').toLowerCase();
   if (key === 'nip' || key === 'krs' || key === 'regon') return normalized.replace(/\D/g, '');
+  if (key === 'phone') return normalized.replace(/[.,;]+$/, '').replace(/\s+/g, ' ');
   if (key === 'website') return normalized.replace(/[.,;]+$/, '');
   if (key === 'industry') {
-    return normalized.replace(/\b(?:nip|krs|regon|adres|address|strona|website)\b.*$/i, '').trim();
+    return normalized
+      .replace(/\b(?:nip|krs|regon|adres|address|strona|website|e-mail|email|telefon|phone)\b.*$/i, '')
+      .trim();
   }
   return normalized;
 };
@@ -788,8 +886,11 @@ const profileLinesFromCompany = (input: {
         firstSnapshotTextProfileValue(input.snapshot, field.key)
     );
   });
-  addProfileLine(lines, 'Website', firstSnapshotWebsite(input.snapshot));
-  addProfileLine(lines, 'Profile URL', firstSnapshotCompanyUrl(input.snapshot));
+  const website = firstSnapshotWebsite(input.snapshot);
+  const profileUrl = firstSnapshotCompanyUrl(input.snapshot);
+  addProfileLine(lines, 'Website', website);
+  addProfileLine(lines, 'Profile URL', profileUrl);
+  addCompanyRelatedUrlLines(lines, input.snapshot, [website, profileUrl]);
   addProfileLine(lines, 'Address', companyAddressCandidates(input)[0]);
   addProfileLine(lines, 'City', recordFirstNullableString(input.company, COMPANY_CITY_KEYS));
   addProfileLine(lines, 'Region', recordFirstNullableString(input.company, COMPANY_REGION_KEYS));
@@ -868,8 +969,21 @@ const listingFieldPillValues = (input: {
     ...normalizedStringArray(input.listing?.['benefits'])
       .slice(0, 24)
       .map((label) => ({ category: 'benefit' as const, label })),
+    ...normalizedStringArray(input.listing?.['requirements'])
+      .slice(0, 24)
+      .map((label) => ({ category: 'requirement' as const, label })),
+    ...normalizedStringArray(input.listing?.['responsibilities'])
+      .slice(0, 24)
+      .map((label) => ({ category: 'responsibility' as const, label })),
+    ...normalizedStringArray(input.listing?.['languages'])
+      .slice(0, 12)
+      .map((label) => ({ category: 'language' as const, label })),
   ];
 };
+
+const scrapedOfferPillKey = (pill: Pick<ScrapedOfferPill, 'category' | 'label'> & {
+  typeKey?: ScrapedOfferPill['typeKey'];
+}): string => `${pill.typeKey ?? pill.category}:${normalizeLexiconKey(pill.label)}`;
 
 const buildOfferPills = (input: {
   addressCandidates: string[];
@@ -885,16 +999,17 @@ const buildOfferPills = (input: {
     sourceSite: input.sourceSite,
     sourceUrl: input.sourceUrl,
   });
-  const seen = new Set(basePills.map((pill) => normalizeLexiconLabel(pill.label).toLowerCase()));
+  const seen = new Set(basePills.map(scrapedOfferPillKey));
   const listingPills = listingFieldPillValues({ listing: input.listing }).flatMap(
     (candidate, index): ScrapedOfferPill[] => {
       const normalized = normalizeLexiconLabel(candidate.label);
-      const key = normalized.toLowerCase();
+      const key = scrapedOfferPillKey({ category: candidate.category, label: normalized });
       if (normalized.length === 0 || seen.has(key)) return [];
       seen.add(key);
       return [
         {
           category: candidate.category,
+          typeKey: candidate.category,
           label: normalized,
           position: basePills.length + index,
           sourceSite: input.sourceSite,
@@ -905,12 +1020,13 @@ const buildOfferPills = (input: {
   );
   const addressPills = input.addressCandidates.flatMap((label, index): ScrapedOfferPill[] => {
     const normalized = normalizeLexiconLabel(label);
-    const key = normalized.toLowerCase();
+    const key = scrapedOfferPillKey({ category: 'address', label: normalized });
     if (normalized.length === 0 || seen.has(key)) return [];
     seen.add(key);
     return [
       {
         category: 'address',
+        typeKey: 'address',
         label: normalized,
         position: basePills.length + listingPills.length + index,
         sourceSite: input.sourceSite,
@@ -944,6 +1060,9 @@ const normalizeSalaryCurrency = (value: unknown): string | null => {
   const normalized = normalizeLexiconLabel(toStringValue(value));
   if (normalized.length === 0) return null;
   if (/^(?:zł|zl)$/iu.test(normalized)) return 'PLN';
+  if (normalized === '€') return 'EUR';
+  if (normalized === '£') return 'GBP';
+  if (normalized === '$') return 'USD';
   return normalized.toUpperCase();
 };
 
@@ -960,6 +1079,7 @@ const salaryNumberFromValue = (value: unknown): number | null => {
   const multiplier = /\d\s*k\b/iu.test(normalized) ? 1_000 : 1;
   const decimalNormalized = normalized
     .replace(/[ \u00a0.](?=\d{3}\b)/g, '')
+    .replace(/,(?=\d{3}\b)/g, '')
     .replace(',', '.')
     .replace(/[^\d.]/g, '');
   const parsed = Number(decimalNormalized);
@@ -974,6 +1094,17 @@ const salaryPeriodFromText = (value: string): FilemakerJobBoardScrapedOffer['sal
   return 'monthly';
 };
 
+const salaryBoundsFromNumbers = (text: string, numbers: number[]): Pick<SalaryFields, 'salaryMax' | 'salaryMin'> => {
+  const first = numbers[0] ?? null;
+  const second = numbers[1] ?? null;
+  if (first === null) return { salaryMax: null, salaryMin: null };
+  if (second !== null) return { salaryMax: second, salaryMin: first };
+  const normalized = normalizeLexiconKey(text);
+  if (/\b(up to|upto|max|maximum|do)\b/.test(normalized)) return { salaryMax: first, salaryMin: null };
+  if (/\b(from|min|minimum|od)\b/.test(normalized)) return { salaryMax: null, salaryMin: first };
+  return { salaryMax: first, salaryMin: first };
+};
+
 const salaryFromText = (value: unknown): SalaryFields | null => {
   const text = normalizeLexiconLabel(toStringValue(value));
   if (text.length === 0) return null;
@@ -981,13 +1112,11 @@ const salaryFromText = (value: unknown): SalaryFields | null => {
     .map((match) => salaryNumberFromValue(match[0]))
     .filter((number): number is number => number !== null);
   if (numbers.length === 0 && salaryCurrencyFromText(text) === null) return null;
-  const sorted = numbers.slice(0, 2);
-  const first = sorted[0] ?? null;
-  const second = sorted[1] ?? null;
+  const bounds = salaryBoundsFromNumbers(text, numbers.slice(0, 2));
   return {
     salaryCurrency: salaryCurrencyFromText(text),
-    salaryMax: second ?? first,
-    salaryMin: first,
+    salaryMax: bounds.salaryMax,
+    salaryMin: bounds.salaryMin,
     salaryPeriod: salaryPeriodFromText(text),
     salaryText: text,
   };

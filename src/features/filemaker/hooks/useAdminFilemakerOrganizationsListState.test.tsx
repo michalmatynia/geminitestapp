@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   buildFilemakerNavActionsMock: vi.fn(),
   buildFilemakerOrganizationListNodesMock: vi.fn(),
+  confirmMock: vi.fn(),
   getFilemakerEventsForOrganizationMock: vi.fn(),
   getFilemakerJobListingsForOrganizationMock: vi.fn(),
   parseFilemakerDatabaseMock: vi.fn(),
@@ -22,6 +23,13 @@ vi.mock('nextjs-toploader/app', () => ({
 
 vi.mock('@/shared/lib/security/csrf-client', () => ({
   withCsrfHeaders: (headers?: HeadersInit) => mocks.withCsrfHeadersMock(headers),
+}));
+
+vi.mock('@/shared/hooks/ui/useConfirm', () => ({
+  useConfirm: () => ({
+    confirm: mocks.confirmMock,
+    ConfirmationModal: () => null,
+  }),
 }));
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
@@ -413,6 +421,56 @@ describe('useAdminFilemakerOrganizationsListState', () => {
       'Website/social scrape finished: 1 website candidate, 1 social profile, 2 links updated, 0 skipped.',
       { variant: 'success' }
     );
+  });
+
+  it('confirms and deletes an organization from the row action menu', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      if (url === '/api/filemaker/organizations/org-1') {
+        expect(init).toMatchObject({ method: 'DELETE' });
+        expect(init?.headers).toMatchObject({ 'x-csrf-token': 'csrf-token' });
+        return new Response(null, { status: 204 });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onToggleOrganizationSelection('org-1', true);
+      result.current.onDeleteOrganization(listResponse.organizations[0]);
+    });
+
+    const confirmPayload = mocks.confirmMock.mock.calls.at(-1)?.[0] as {
+      confirmText: string;
+      isDangerous: boolean;
+      onConfirm: () => Promise<void>;
+      title: string;
+    };
+    expect(confirmPayload).toMatchObject({
+      confirmText: 'Delete',
+      isDangerous: true,
+      title: 'Delete Organisation',
+    });
+
+    await act(async () => {
+      await confirmPayload.onConfirm();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/filemaker/organizations/org-1',
+      expect.objectContaining({ method: 'DELETE' })
+    );
+    expect(result.current.organizationSelection).toEqual({});
+    expect(mocks.toastMock).toHaveBeenCalledWith('Deleted organisation "Acme Inc".', {
+      variant: 'success',
+    });
   });
 
   it('surfaces API error messages from failed scrape requests', async () => {

@@ -27,6 +27,7 @@ export const filemakerEntityKindSchema = z.enum([
   'value_parameter_link',
   'organization_legacy_demand',
   'job_listing',
+  'lexicon_type',
   'lexicon_term',
   'job_listing_lexicon_link',
   'email_campaign',
@@ -290,17 +291,37 @@ export type FilemakerJobListingSalaryPeriodDto = z.infer<
 >;
 export type FilemakerJobListingSalaryPeriod = FilemakerJobListingSalaryPeriodDto;
 
-export const filemakerLexiconTermCategorySchema = z.enum([
+export const filemakerLexiconTypeKeySchema = z.enum([
   'address',
+  'benefit',
+  'company_attribute',
   'contract_type',
   'employment_type',
   'experience_level',
-  'work_mode',
+  'language',
+  'requirement',
+  'responsibility',
+  'salary',
   'start_date',
   'technology',
-  'benefit',
+  'work_mode',
   'other',
 ]);
+export type FilemakerLexiconTypeKeyDto = z.infer<typeof filemakerLexiconTypeKeySchema>;
+export type FilemakerLexiconTypeKey = FilemakerLexiconTypeKeyDto;
+
+export const filemakerLexiconTypeSchema = dtoBaseSchema.extend({
+  key: filemakerLexiconTypeKeySchema,
+  label: z.string(),
+  description: z.string().optional(),
+  sortOrder: z.number().int().nonnegative().default(0),
+  system: z.boolean().default(true),
+});
+
+export type FilemakerLexiconTypeDto = z.infer<typeof filemakerLexiconTypeSchema>;
+export type FilemakerLexiconType = FilemakerLexiconTypeDto;
+
+export const filemakerLexiconTermCategorySchema = filemakerLexiconTypeKeySchema;
 export type FilemakerLexiconTermCategoryDto = z.infer<
   typeof filemakerLexiconTermCategorySchema
 >;
@@ -309,6 +330,7 @@ export type FilemakerLexiconTermCategory = FilemakerLexiconTermCategoryDto;
 export const filemakerLexiconTermSchema = dtoBaseSchema.extend({
   label: z.string(),
   normalizedLabel: z.string(),
+  typeKey: filemakerLexiconTypeKeySchema.default('other'),
   category: filemakerLexiconTermCategorySchema.default('other'),
   sourceSite: z.string().optional(),
   sourceProvider: z.string().optional(),
@@ -326,6 +348,7 @@ export const filemakerJobListingLexiconLinkSchema = dtoBaseSchema.extend({
   sourceSite: z.string().optional(),
   sourceUrl: z.string().optional(),
   sourceValue: z.string().optional(),
+  typeKey: filemakerLexiconTypeKeySchema.default('other'),
   category: filemakerLexiconTermCategorySchema.default('other'),
   position: z.number().int().nonnegative().default(0),
 });
@@ -1021,6 +1044,7 @@ export const filemakerDatabaseSchema = z.object({
   valueParameterLinks: z.array(filemakerValueParameterLinkSchema).default([]),
   organizationLegacyDemands: z.array(filemakerOrganizationLegacyDemandSchema).default([]),
   jobListings: z.array(filemakerJobListingSchema).default([]),
+  lexiconTypes: z.array(filemakerLexiconTypeSchema).default([]),
   lexiconTerms: z.array(filemakerLexiconTermSchema).default([]),
   jobListingLexiconLinks: z.array(filemakerJobListingLexiconLinkSchema).default([]),
 });

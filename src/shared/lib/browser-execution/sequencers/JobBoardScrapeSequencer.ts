@@ -790,16 +790,6 @@ export class JobBoardScrapeSequencer {
           if (Array.isArray(value)) return asRecord(value[0]);
           return asRecord(value);
         };
-        const readFirst = (...values: unknown[]): string => {
-          for (const value of values) {
-            const candidates = Array.isArray(value) ? value : [value];
-            for (const candidate of candidates) {
-              const normalized = normalizeText(candidate);
-              if (normalized) return normalized;
-            }
-          }
-          return '';
-        };
         const readJsonLdRecords = (): Array<Record<string, unknown>> => {
           const records: Array<Record<string, unknown>> = [];
           const visit = (value: unknown): void => {
@@ -830,6 +820,50 @@ export class JobBoardScrapeSequencer {
           return values.some(
             (value) => normalizeText(value).toLowerCase() === expected.toLowerCase()
           );
+        };
+        const readAll = (...values: unknown[]): string[] => {
+          const output: string[] = [];
+          const visit = (value: unknown): void => {
+            if (Array.isArray(value)) {
+              value.forEach(visit);
+              return;
+            }
+            if (typeof value === 'string') {
+              const normalized = normalizeText(value);
+              if (normalized) output.push(normalized);
+              return;
+            }
+            if (typeof value === 'number' && Number.isFinite(value)) {
+              output.push(String(value));
+              return;
+            }
+            const record = asRecord(value);
+            if (record === null) return;
+            visit(record['name']);
+            visit(record['value']);
+            visit(record['url']);
+            visit(record['sameAs']);
+            visit(record['contentUrl']);
+          };
+          values.forEach(visit);
+          return unique(output, 24);
+        };
+        const readFirst = (...values: unknown[]): string => readAll(...values)[0] ?? '';
+        const addOrganizationFacts = (record: Record<string, unknown> | null): void => {
+          if (record === null) return;
+          addFact('Company', readFirst(record['name']));
+          addFact('Website', readFirst(record['url']));
+          readAll(record['sameAs']).forEach((url) => addFact('Same as', url));
+          addFact('Email', readFirst(record['email']));
+          addFact('Phone', readFirst(record['telephone'], record['phone']));
+          addFact('Logo URL', readFirst(record['logo'], record['image']));
+          addFact('Industry', readFirst(record['industry']));
+          addFact('Company size', readFirst(record['numberOfEmployees'], record['employee']));
+          addFact('Company description', readFirst(record['description']));
+          addFact('NIP', readFirst(record['taxID'], record['vatID']));
+          addFact('KRS', readFirst(record['krs']));
+          addFact('REGON', readFirst(record['regon']));
+          addAddressFacts('Company ', firstRecord(record['address']));
         };
         const addAddressFacts = (
           labelPrefix: string,
@@ -882,11 +916,7 @@ export class JobBoardScrapeSequencer {
               addFact('Expires at', readFirst(record['validThrough']));
               addFact('Employment type', readFirst(record['employmentType']));
               const hiringOrganization = firstRecord(record['hiringOrganization']);
-              addFact('Company', readFirst(hiringOrganization?.['name']));
-              addFact('Industry', readFirst(hiringOrganization?.['industry']));
-              addFact('Company size', readFirst(hiringOrganization?.['numberOfEmployees']));
-              addFact('Company description', readFirst(hiringOrganization?.['description']));
-              addAddressFacts('Company ', firstRecord(hiringOrganization?.['address']));
+              addOrganizationFacts(hiringOrganization);
               const locations = Array.isArray(record['jobLocation'])
                 ? record['jobLocation']
                 : [record['jobLocation']];
@@ -895,11 +925,7 @@ export class JobBoardScrapeSequencer {
                 addAddressFacts('', firstRecord(locationRecord?.['address']) ?? locationRecord);
               });
             } else if (typeMatches(record, 'Organization')) {
-              addFact('Company', readFirst(record['name']));
-              addFact('Industry', readFirst(record['industry']));
-              addFact('Company size', readFirst(record['numberOfEmployees']));
-              addFact('Company description', readFirst(record['description']));
-              addAddressFacts('Company ', firstRecord(record['address']));
+              addOrganizationFacts(record);
             }
           });
         };
@@ -1225,16 +1251,6 @@ export class JobBoardScrapeSequencer {
         if (Array.isArray(value)) return asRecord(value[0]);
         return asRecord(value);
       };
-      const readFirst = (...values: unknown[]): string => {
-        for (const value of values) {
-          const candidates = Array.isArray(value) ? value : [value];
-          for (const candidate of candidates) {
-            const normalized = normalizeText(candidate);
-            if (normalized) return normalized;
-          }
-        }
-        return '';
-      };
       const readJsonLdRecords = (): Array<Record<string, unknown>> => {
         const records: Array<Record<string, unknown>> = [];
         const visit = (value: unknown): void => {
@@ -1265,6 +1281,50 @@ export class JobBoardScrapeSequencer {
           (value) => normalizeText(value).toLowerCase() === expected.toLowerCase()
         );
       };
+      const readAll = (...values: unknown[]): string[] => {
+        const output: string[] = [];
+        const visit = (value: unknown): void => {
+          if (Array.isArray(value)) {
+            value.forEach(visit);
+            return;
+          }
+          if (typeof value === 'string') {
+            const normalized = normalizeText(value);
+            if (normalized) output.push(normalized);
+            return;
+          }
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            output.push(String(value));
+            return;
+          }
+          const record = asRecord(value);
+          if (record === null) return;
+          visit(record['name']);
+          visit(record['value']);
+          visit(record['url']);
+          visit(record['sameAs']);
+          visit(record['contentUrl']);
+        };
+        values.forEach(visit);
+        return unique(output, 24);
+      };
+      const readFirst = (...values: unknown[]): string => readAll(...values)[0] ?? '';
+      const addOrganizationFacts = (record: Record<string, unknown> | null): void => {
+        if (record === null) return;
+        addFact('Company', readFirst(record['name']));
+        addFact('Website', readFirst(record['url']));
+        readAll(record['sameAs']).forEach((url) => addFact('Same as', url));
+        addFact('Email', readFirst(record['email']));
+        addFact('Phone', readFirst(record['telephone'], record['phone']));
+        addFact('Logo URL', readFirst(record['logo'], record['image']));
+        addFact('Industry', readFirst(record['industry']));
+        addFact('Company size', readFirst(record['numberOfEmployees'], record['employee']));
+        addFact('Company description', readFirst(record['description']));
+        addFact('NIP', readFirst(record['taxID'], record['vatID']));
+        addFact('KRS', readFirst(record['krs']));
+        addFact('REGON', readFirst(record['regon']));
+        addAddressFacts('Company ', firstRecord(record['address']));
+      };
       const addAddressFacts = (
         labelPrefix: string,
         address: Record<string, unknown> | null
@@ -1287,12 +1347,7 @@ export class JobBoardScrapeSequencer {
       const addProfileJsonLdFacts = (): void => {
         readJsonLdRecords().forEach((record) => {
           if (!typeMatches(record, 'Organization') && !typeMatches(record, 'Corporation')) return;
-          addFact('Company', readFirst(record['name']));
-          addFact('Industry', readFirst(record['industry']));
-          addFact('Company size', readFirst(record['numberOfEmployees']));
-          addFact('Company description', readFirst(record['description']));
-          addFact('NIP', readFirst(record['taxID'], record['vatID']));
-          addAddressFacts('Company ', firstRecord(record['address']));
+          addOrganizationFacts(record);
         });
       };
       const addVisibleIdentifierFacts = (): void => {
@@ -1348,8 +1403,17 @@ export class JobBoardScrapeSequencer {
         })
         .filter((section): section is { heading: string | null; text: string } => section !== null);
 
+      const jsonLdWebsiteUrls = unique(
+        readJsonLdRecords().flatMap((record) =>
+          typeMatches(record, 'Organization') || typeMatches(record, 'Corporation')
+            ? readAll(record['url'], record['sameAs'])
+            : []
+        ),
+        10
+      );
       const websiteUrls = unique(
-        Array.from(document.querySelectorAll('a[href]'))
+        [
+          ...Array.from(document.querySelectorAll('a[href]'))
           .map((link) => {
             const anchor = link as HTMLAnchorElement;
             const label = normalizeText(anchor.textContent ?? '');
@@ -1357,7 +1421,9 @@ export class JobBoardScrapeSequencer {
             return /(strona|website|www|http|kontakt|contact)/i.test(`${label} ${href}`) ? href : '';
           })
           .filter(Boolean),
-          10
+          ...jsonLdWebsiteUrls,
+        ],
+        10
       );
       addProfileJsonLdFacts();
       addVisibleIdentifierFacts();

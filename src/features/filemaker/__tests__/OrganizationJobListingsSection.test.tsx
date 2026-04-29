@@ -13,7 +13,7 @@ import {
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
   toPersistedFilemakerDatabase,
 } from '../settings';
-import type { FilemakerJobListing, FilemakerOrganization } from '../types';
+import type { FilemakerJobApplication, FilemakerJobListing, FilemakerOrganization } from '../types';
 
 const mocks = vi.hoisted(() => ({
   fireAiPathTriggerEvent: vi.fn(),
@@ -102,15 +102,18 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     onValueChange,
     options,
     ariaLabel,
+    disabled,
   }: {
     value?: string;
     onValueChange?: (value: string) => void;
     options: Array<{ value: string; label: string }>;
     ariaLabel?: string;
+    disabled?: boolean;
   }) => (
     <select
       aria-label={ariaLabel}
       value={value ?? ''}
+      disabled={disabled}
       onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
         onValueChange?.(event.target.value)
       }
@@ -185,6 +188,9 @@ vi.mock('@/shared/ui/primitives.public', () => ({
       aria-label={ariaLabel}
     />
   ),
+  useToast: () => ({
+    toast: vi.fn(),
+  }),
 }));
 
 vi.mock('@/shared/ui/templates.public', () => ({
@@ -313,9 +319,42 @@ describe('OrganizationJobListingsSection', () => {
     jobApplicationsPayload = { applications: [] };
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (url: string | URL | Request) => {
+      vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
         const href = String(url);
-        if (href.includes('/api/filemaker/job-applications')) {
+        const method = init?.method ?? 'GET';
+        if (href.includes('/api/filemaker/job-applications/application-1')) {
+          if (method === 'PATCH') {
+            const body =
+              typeof init?.body === 'string'
+                ? (JSON.parse(init.body) as { status?: string })
+                : { status: undefined };
+            const updatedApplications = jobApplicationsPayload.applications.map(
+              (application: unknown): unknown => {
+                const record = application as FilemakerJobApplication;
+                return record.id === 'application-1'
+                  ? {
+                      ...record,
+                      status: body.status ?? record.status,
+                      updatedAt: '2026-04-29T11:00:00.000Z',
+                    }
+                  : application;
+              }
+            );
+            jobApplicationsPayload = { applications: updatedApplications };
+            return createJsonResponse({ application: updatedApplications[0] });
+          }
+          if (method === 'DELETE') {
+            jobApplicationsPayload = {
+              applications: jobApplicationsPayload.applications.filter(
+                (application: unknown): boolean =>
+                  (application as FilemakerJobApplication).id !== 'application-1'
+              ),
+            };
+            return new Response(null, { status: 204 });
+          }
+          return createJsonResponse({ application: jobApplicationsPayload.applications[0] });
+        }
+        if (href.includes('/api/filemaker/job-applications?')) {
           return createJsonResponse(jobApplicationsPayload);
         }
         if (href.includes('/api/v2/integrations/with-connections')) {
@@ -504,13 +543,17 @@ describe('OrganizationJobListingsSection', () => {
           integrationSlug: 'pracuj-pl',
           connectionId: 'connection-pracuj',
           tailoredCvId: 'cv-ai-1',
-          tailoredCv: { title: 'Ada Lovelace - FileMaker Consultant' },
+          tailoredCv: {
+            professionalSummary: 'Ada has strong marketplace workflow automation experience.',
+            skills: ['FileMaker', 'Workflow automation'],
+            title: 'Ada Lovelace - FileMaker Consultant',
+          },
           coverLetter: {
             subject: 'Application for FileMaker Consultant',
             bodyMarkdown: 'I can help Acme Hiring automate marketplace workflows.',
           },
-          applicationNotes: [],
-          missingInformation: [],
+          applicationNotes: ['Use Pracuj.pl authenticated profile.'],
+          missingInformation: ['Confirm preferred salary range.'],
           confidence: 0.86,
           source: 'ai-path-job-application-prepare',
           sourceEntityId: 'org-1:job-1:person-1',
@@ -533,6 +576,8 @@ describe('OrganizationJobListingsSection', () => {
             id: 'job-1',
             organizationId: 'org-1',
             title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
           }),
         ]}
       />
@@ -545,6 +590,53 @@ describe('OrganizationJobListingsSection', () => {
       'href',
       '/admin/filemaker/persons/person-1/cvs/cv-ai-1'
     );
+    expect(screen.getByRole('link', { name: 'Job' })).toHaveAttribute(
+      'href',
+      'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'View' }));
+
+    expect(screen.getByRole('dialog', { name: 'Prepared application' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Apply' })).toHaveAttribute(
+      'href',
+      'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001'
+    );
+    expect(screen.getByRole('button', { name: 'Export CV PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Download Text' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export PDF' })).toBeInTheDocument();
+    expect(screen.getByText('86% confidence')).toBeInTheDocument();
+    expect(
+      screen.getByText('Ada has strong marketplace workflow automation experience.')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Use Pracuj.pl authenticated profile.')).toBeInTheDocument();
+    expect(screen.getByText('Confirm preferred salary range.')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Application status'), {
+      target: { value: 'applied' },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Application status')).toHaveValue('applied');
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/filemaker/job-applications/application-1',
+      expect.objectContaining({
+        body: JSON.stringify({ status: 'applied' }),
+        method: 'PATCH',
+      })
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Prepared application' })).not.toBeInTheDocument();
+    });
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/filemaker/job-applications/application-1',
+      expect.objectContaining({ method: 'DELETE' })
+    );
+    expect(screen.queryByText('Prepared applications')).not.toBeInTheDocument();
   });
 
   it('fires the job application AI Path with person CV, job, and organisation context', async () => {

@@ -127,8 +127,8 @@
     {
       "id": "node-model-job-application-prepare",
       "type": "model",
-      "title": "Model",
-      "description": "Generate the tailored CV and cover letter.",
+      "title": "CV & Cover Letter Model",
+      "description": "Model node for generating the tailored CV and cover letter.",
       "position": {
         "x": 1280,
         "y": 240

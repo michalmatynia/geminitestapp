@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildFilemakerPartyOptions,
+  createDefaultFilemakerDatabase,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
   getFilemakerAddressById,
@@ -300,6 +301,44 @@ describe('filemaker settings', () => {
       organizationId: 'mongo-organization-1',
       status: 'paused',
     });
+  });
+
+  it('normalizes reusable lexicon type records with defaults', () => {
+    const defaultDatabase = createDefaultFilemakerDatabase();
+    expect(defaultDatabase.lexiconTypes.map((type) => type.key)).toEqual(
+      expect.arrayContaining(['technology', 'requirement', 'benefit', 'responsibility'])
+    );
+
+    const database = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        lexiconTypes: [
+          {
+            key: 'technology',
+            label: 'Tech stack',
+            description: 'Offer technologies and tooling',
+            sortOrder: 5,
+            system: true,
+          },
+        ],
+      })
+    );
+
+    const typeKeys = database.lexiconTypes.map((type) => type.key);
+    expect(new Set(typeKeys).size).toBe(typeKeys.length);
+    expect(typeKeys).toEqual(expect.arrayContaining(['technology', 'requirement', 'benefit']));
+    expect(database.lexiconTypes.find((type) => type.key === 'technology')).toMatchObject({
+      id: 'filemaker-lexicon-type-technology',
+      key: 'technology',
+      label: 'Tech stack',
+      description: 'Offer technologies and tooling',
+      sortOrder: 5,
+    });
+    expect(database.lexiconTypes.find((type) => type.key === 'requirement')).toMatchObject({
+      key: 'requirement',
+      label: 'Requirement',
+    });
+    expect(toPersistedFilemakerDatabase(database).lexiconTypes).toEqual(database.lexiconTypes);
   });
 
   it('normalizes address links and enforces one default per owner', () => {

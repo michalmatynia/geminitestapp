@@ -1,3 +1,10 @@
+export type FilemakerJobApplicationStatus =
+  | 'draft'
+  | 'ready'
+  | 'applied'
+  | 'rejected'
+  | 'archived';
+
 export type FilemakerJobApplicationTailoredCv = {
   bodyMarkdown: string | null;
   bodyText: string | null;
@@ -16,7 +23,7 @@ export type FilemakerJobApplicationCoverLetter = {
 
 export type FilemakerJobApplication = {
   id: string;
-  status: string;
+  status: FilemakerJobApplicationStatus;
   personId: string;
   personName: string | null;
   organizationId: string;
@@ -41,4 +48,8 @@ export type FilemakerJobApplication = {
 
 export type FilemakerJobApplicationListResponse = {
   applications: FilemakerJobApplication[];
+};
+
+export type FilemakerJobApplicationResponse = {
+  application: FilemakerJobApplication;
 };

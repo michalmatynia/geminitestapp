@@ -659,15 +659,20 @@ const buildJobListingLexiconLinkId = (jobListingId: string, lexiconTermId: strin
   return `filemaker-job-listing-lexicon-link-${token.length > 0 ? token : randomUUID()}`;
 };
 
+const scrapedPillTypeKey = (
+  pill: FilemakerJobBoardScrapedOffer['pills'][number]
+): FilemakerLexiconTermCategory => pill.typeKey;
+
 const upsertLexiconTerm = (
   database: FilemakerDatabase,
   pill: FilemakerJobBoardScrapedOffer['pills'][number],
   sourceProvider: string
 ): { created: boolean; term: FilemakerLexiconTerm; updated: boolean } => {
   const normalizedLabel = normalizeLexiconKey(pill.label);
+  const typeKey = scrapedPillTypeKey(pill);
   const existingIndex = database.lexiconTerms.findIndex(
     (term: FilemakerLexiconTerm): boolean =>
-      term.category === pill.category && term.normalizedLabel === normalizedLabel
+      term.typeKey === typeKey && term.normalizedLabel === normalizedLabel
   );
   const now = new Date().toISOString();
   if (existingIndex >= 0) {
@@ -685,10 +690,11 @@ const upsertLexiconTerm = (
     return { created: false, term: next, updated: true };
   }
   const term = createFilemakerLexiconTerm({
-    id: buildLexiconTermId(pill.category, normalizedLabel),
+    id: buildLexiconTermId(typeKey, normalizedLabel),
     label: pill.label,
     normalizedLabel,
-    category: pill.category,
+    typeKey,
+    category: typeKey,
     sourceSite: pill.sourceSite,
     sourceProvider,
     firstSeenAt: now,
@@ -718,7 +724,8 @@ const ensureJobListingLexiconLink = (
       sourceSite: pill.sourceSite,
       sourceUrl: pill.sourceUrl,
       sourceValue: pill.label,
-      category: pill.category,
+      typeKey: scrapedPillTypeKey(pill),
+      category: scrapedPillTypeKey(pill),
       position: pill.position,
     })
   );
@@ -1014,9 +1021,10 @@ const verifyImportedResults = (
       ]);
       const missingTerm = result.offer.pills.find((pill): boolean => {
         const normalizedLabel = normalizeLexiconKey(pill.label);
+        const typeKey = scrapedPillTypeKey(pill);
         const term = database.lexiconTerms.find(
           (entry: FilemakerLexiconTerm): boolean =>
-            entry.category === pill.category && entry.normalizedLabel === normalizedLabel
+            entry.typeKey === typeKey && entry.normalizedLabel === normalizedLabel
         );
         return term === undefined || !listingLinkedTermIds.has(term.id);
       });

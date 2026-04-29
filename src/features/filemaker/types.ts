@@ -119,6 +119,10 @@ export type {
   FilemakerLexiconTermCategory,
   FilemakerLexiconTermCategoryDto,
   FilemakerLexiconTermDto,
+  FilemakerLexiconType,
+  FilemakerLexiconTypeDto,
+  FilemakerLexiconTypeKey,
+  FilemakerLexiconTypeKeyDto,
   FilemakerValue,
   FilemakerValueDto,
   FilemakerValueParameter,
@@ -220,5 +224,7 @@ export type {
   FilemakerJobApplication,
   FilemakerJobApplicationCoverLetter,
   FilemakerJobApplicationListResponse,
+  FilemakerJobApplicationResponse,
+  FilemakerJobApplicationStatus,
   FilemakerJobApplicationTailoredCv,
 } from './filemaker-job-application.types';

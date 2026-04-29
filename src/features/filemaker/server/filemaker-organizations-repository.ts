@@ -635,3 +635,18 @@ export const updateMongoFilemakerOrganization = async (
   }
   return toFilemakerOrganization(updated);
 };
+
+export const deleteMongoFilemakerOrganization = async (
+  organizationId: string
+): Promise<FilemakerOrganization> => {
+  const collection = await getFilemakerOrganizationsCollection();
+  const existing = await findMongoFilemakerOrganizationDocument(collection, organizationId);
+  if (!existing) {
+    throw notFoundError('Filemaker organization was not found.');
+  }
+  const result = await collection.deleteOne({ _id: existing._id });
+  if (result.deletedCount !== 1) {
+    throw notFoundError('Filemaker organization was not found.');
+  }
+  return toFilemakerOrganization(existing);
+};

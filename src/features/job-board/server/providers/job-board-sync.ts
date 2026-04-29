@@ -658,12 +658,44 @@ const readFirstJsonLdString = (...values: unknown[]): string | null => {
   for (const value of values) {
     const candidates = Array.isArray(value) ? value : [value];
     for (const candidate of candidates) {
-      if (typeof candidate !== 'string') continue;
-      const normalized = normalizeText(candidate);
+      const normalized =
+        typeof candidate === 'number' && Number.isFinite(candidate)
+          ? String(candidate)
+          : typeof candidate === 'string'
+            ? normalizeText(candidate)
+            : '';
       if (normalized.length > 0) return normalized;
     }
   }
   return null;
+};
+
+const readJsonLdStrings = (...values: unknown[]): string[] => {
+  const output: string[] = [];
+  const visit = (value: unknown): void => {
+    if (Array.isArray(value)) {
+      value.forEach(visit);
+      return;
+    }
+    if (typeof value === 'string') {
+      const normalized = normalizeText(value);
+      if (normalized.length > 0) output.push(normalized);
+      return;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      output.push(String(value));
+      return;
+    }
+    const record = asRecord(value);
+    if (record === null) return;
+    visit(record['name']);
+    visit(record['value']);
+    visit(record['url']);
+    visit(record['sameAs']);
+    visit(record['contentUrl']);
+  };
+  values.forEach(visit);
+  return normalizeStringArray(output);
 };
 
 const readJsonLdAddressLine = (address: Record<string, unknown> | null): string | null => {
@@ -790,16 +822,20 @@ const buildPlainHtmlStructuredSnapshot = (
   const jobAddress = asRecord(jobLocation?.['address']);
   const companyAddress = asRecord(hiringOrganization?.['address']);
   const companyName = readFirstJsonLdString(hiringOrganization?.['name']);
-  const companyUrl = readFirstJsonLdString(
-    hiringOrganization?.['sameAs'],
-    hiringOrganization?.['url']
-  );
+  const companyUrls = readJsonLdStrings(hiringOrganization?.['url'], hiringOrganization?.['sameAs']);
+  const companyUrl = companyUrls[0] ?? null;
   const companyDescription = readFirstJsonLdString(hiringOrganization?.['description']);
   const companyIndustry = readFirstJsonLdString(hiringOrganization?.['industry']);
   const companySize = readFirstJsonLdString(
     hiringOrganization?.['numberOfEmployees'],
     hiringOrganization?.['employee']
   );
+  const companyEmail = readFirstJsonLdString(hiringOrganization?.['email']);
+  const companyPhone = readFirstJsonLdString(hiringOrganization?.['telephone'], hiringOrganization?.['phone']);
+  const companyLogo = readFirstJsonLdString(hiringOrganization?.['logo'], hiringOrganization?.['image']);
+  const companyTaxId = readFirstJsonLdString(hiringOrganization?.['taxID'], hiringOrganization?.['vatID']);
+  const companyKrs = readFirstJsonLdString(hiringOrganization?.['krs']);
+  const companyRegon = readFirstJsonLdString(hiringOrganization?.['regon']);
   const datePosted = readFirstJsonLdString(jobPosting?.['datePosted']);
   const validThrough = readFirstJsonLdString(jobPosting?.['validThrough']);
   const location = readFirstJsonLdString(
@@ -815,14 +851,22 @@ const buildPlainHtmlStructuredSnapshot = (
   return {
     applyUrls: normalizeStringArray([readFirstJsonLdString(jobPosting?.['url'], fallbackUrl)]),
     canonical,
-    companyLinks: normalizeStringArray([companyUrl]),
+    companyLinks: companyUrls,
     companyProfile:
       companyName || companyUrl || companyAddress !== null
         ? {
             facts: [
               ...(companyName ? [{ label: 'Company', value: companyName }] : []),
+              ...(companyUrl ? [{ label: 'Website', value: companyUrl }] : []),
+              ...companyUrls.slice(1).map((url) => ({ label: 'Same as', value: url })),
+              ...(companyEmail ? [{ label: 'Email', value: companyEmail }] : []),
+              ...(companyPhone ? [{ label: 'Phone', value: companyPhone }] : []),
+              ...(companyLogo ? [{ label: 'Logo URL', value: companyLogo }] : []),
               ...(companyIndustry ? [{ label: 'Industry', value: companyIndustry }] : []),
               ...(companySize ? [{ label: 'Company size', value: companySize }] : []),
+              ...(companyTaxId ? [{ label: 'NIP', value: companyTaxId }] : []),
+              ...(companyKrs ? [{ label: 'KRS', value: companyKrs }] : []),
+              ...(companyRegon ? [{ label: 'REGON', value: companyRegon }] : []),
               ...jsonLdAddressFacts(companyAddress, 'Company '),
             ],
             headings: companyName ? [companyName] : [],
@@ -830,7 +874,7 @@ const buildPlainHtmlStructuredSnapshot = (
             sections: [],
             title: companyName,
             url: companyUrl,
-            websiteUrls: normalizeStringArray([companyUrl]),
+            websiteUrls: companyUrls,
           }
         : null,
     facts: [

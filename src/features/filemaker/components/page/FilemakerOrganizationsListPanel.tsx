@@ -429,6 +429,7 @@ export function FilemakerOrganizationsListPanel(
       contentClassName='space-y-3'
     >
       <OrganizationListViewport {...props} />
+      <props.ConfirmationModal />
     </StandardDataTablePanel>
   );
 }

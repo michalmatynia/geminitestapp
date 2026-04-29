@@ -48,6 +48,36 @@ vi.mock('@/shared/ui/primitives.public', () => ({
   ),
 }));
 
+vi.mock('@/shared/ui/ActionMenu', () => ({
+  ActionMenu: ({
+    children,
+  }: {
+    ariaLabel?: string;
+    children?: React.ReactNode;
+    triggerClassName?: string;
+  }) => <div>{children}</div>,
+}));
+
+vi.mock('@/shared/ui/dropdown-menu', () => ({
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+    onSelect?: (event: Event) => void;
+  }) => (
+    <button
+      type='button'
+      onClick={(): void => {
+        onSelect?.(new Event('select'));
+      }}
+    >
+      {children}
+    </button>
+  ),
+}));
+
 const timestamp = '2026-03-01T10:00:00.000Z';
 
 const organizationFixture: FilemakerOrganization = {
@@ -144,6 +174,7 @@ const renderOrganizationNode = (
     organizationEmailScrapeState: {},
     organizationWebsiteSocialScrapeState: {},
     organizationSelection: {},
+    onDeleteOrganization: vi.fn(),
     onLaunchOrganizationEmailScrape: vi.fn(),
     onLaunchOrganizationWebsiteSocialScrape: vi.fn(),
     onOpenEvent: vi.fn(),
@@ -261,6 +292,48 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     ).toBeInTheDocument();
   });
 
+  it('opens organization job relation nodes only from the title without selecting the row', async () => {
+    const user = userEvent.setup();
+    const props = renderOrganizationNode({
+      node: {
+        id: toFilemakerOrganizationJobListingNodeId('org-1', 'job-1'),
+        type: 'file',
+        kind: 'filemaker_organization_job_listing',
+        parentId: toFilemakerOrganizationNodeId('org-1'),
+        name: 'Frontend Developer',
+        path: 'organizations/Acme Inc/jobs/Frontend Developer',
+        sortOrder: 0,
+        metadata: {
+          entity: 'filemaker_organization_job_listing',
+          organizationId: 'org-1',
+          rawId: 'job-1',
+        },
+        children: [],
+      },
+    });
+
+    const titleButton = screen.getByRole('button', { name: 'Frontend Developer' });
+    const detailsText = screen.getByText(
+      'Warszawa | Posted: 2026-04-28T09:00:00.000Z | Expires: 2026-05-28T23:59:59.000Z'
+    );
+    const detailsRow = detailsText.closest('div');
+    expect(detailsRow).not.toBeNull();
+
+    expect(titleButton).toHaveClass('cursor-pointer');
+    expect(detailsText).toHaveClass('cursor-text', 'select-text');
+    expect(detailsRow as HTMLElement).toHaveClass('cursor-default');
+
+    await user.click(detailsRow as HTMLElement);
+
+    expect(props.onOpenJobListing).not.toHaveBeenCalled();
+    expect(props.select).not.toHaveBeenCalled();
+
+    await user.click(titleButton);
+
+    expect(props.onOpenJobListing).toHaveBeenCalledWith('org-1', 'job-1');
+    expect(props.select).not.toHaveBeenCalled();
+  });
+
   it('launches website/social/email scraping from the row action without navigating', async () => {
     const user = userEvent.setup();
     const props = renderOrganizationNode();
@@ -289,6 +362,17 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     expect(props.onLaunchOrganizationWebsiteSocialScrape).toHaveBeenCalledWith('org-1');
     expect(props.onOpenOrganization).not.toHaveBeenCalled();
     expect(props.toggleExpand).not.toHaveBeenCalled();
+  });
+
+  it('opens row action menu delete without navigating or selecting', async () => {
+    const user = userEvent.setup();
+    const props = renderOrganizationNode();
+
+    await user.click(screen.getByRole('button', { name: 'Delete Organisation' }));
+
+    expect(props.onDeleteOrganization).toHaveBeenCalledWith(organizationFixture);
+    expect(props.onOpenOrganization).not.toHaveBeenCalled();
+    expect(props.select).not.toHaveBeenCalled();
   });
 
   it('opens linked event child nodes', async () => {

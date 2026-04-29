@@ -45,7 +45,7 @@ import {
   HomeTrainingFocusSection,
 } from './components';
 
-function DebugProofSection({ _copy, homeDebugProof }: { copy: ReturnType<typeof useKangurMobileI18n>['copy']; homeDebugProof: { operationLabel: string; checks: { label: string; status: 'ready' | 'info' | 'missing'; detail: string }[] } | null }): React.JSX.Element | null {
+function DebugProofSection({ copy, homeDebugProof }: { copy: ReturnType<typeof useKangurMobileI18n>['copy']; homeDebugProof: { operationLabel: string; checks: { label: string; status: 'ready' | 'info' | 'missing'; detail: string }[] } | null }): React.JSX.Element | null {
   if (!__DEV__ || homeDebugProof === null) return null;
 
   const renderDebugCheck = (check: { label: string; status: 'ready' | 'info' | 'missing'; detail: string }): React.JSX.Element => {
@@ -56,11 +56,12 @@ function DebugProofSection({ _copy, homeDebugProof }: { copy: ReturnType<typeof 
     };
     const { bg, border } = statusColors[check.status];
     const getStatusText = (status: 'ready' | 'info' | 'missing'): string => {
-      switch (status) {
-        case 'ready': return _copy({ de: 'bereit', en: 'ready', pl: 'gotowe' });
-        case 'info': return _copy({ de: 'läuft', en: 'in progress', pl: 'w toku' });
-        default: return _copy({ de: 'fehlt', en: 'missing', pl: 'brak' });
-      }
+      const texts: Record<'ready' | 'info' | 'missing', string> = {
+        ready: copy({ de: 'bereit', en: 'ready', pl: 'gotowe' }),
+        info: copy({ de: 'läuft', en: 'in progress', pl: 'w toku' }),
+        missing: copy({ de: 'fehlt', en: 'missing', pl: 'brak' }),
+      };
+      return texts[status];
     };
     const statusText = getStatusText(check.status);
 

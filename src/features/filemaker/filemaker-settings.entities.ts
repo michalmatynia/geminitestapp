@@ -14,6 +14,8 @@ import {
   type FilemakerJobListingStatus,
   type FilemakerLexiconTerm,
   type FilemakerLexiconTermCategory,
+  type FilemakerLexiconType,
+  type FilemakerLexiconTypeKey,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
   type FilemakerPhoneNumber,
@@ -37,17 +39,116 @@ const FILEMAKER_JOB_LISTING_SALARY_PERIODS: FilemakerJobListingSalaryPeriod[] = 
   'fixed',
 ];
 
-const FILEMAKER_LEXICON_TERM_CATEGORIES: FilemakerLexiconTermCategory[] = [
+const FILEMAKER_LEXICON_TYPE_KEYS: FilemakerLexiconTypeKey[] = [
   'address',
+  'benefit',
+  'company_attribute',
   'contract_type',
   'employment_type',
   'experience_level',
-  'work_mode',
+  'language',
+  'requirement',
+  'responsibility',
+  'salary',
   'start_date',
   'technology',
-  'benefit',
+  'work_mode',
   'other',
 ];
+
+const FILEMAKER_LEXICON_TYPE_SYSTEM_TIMESTAMP = '2026-04-29T00:00:00.000Z';
+
+export const FILEMAKER_LEXICON_TYPE_DEFINITIONS = [
+  {
+    key: 'address',
+    label: 'Address',
+    description: 'Physical office, work location, and address pills from job boards.',
+    sortOrder: 10,
+  },
+  {
+    key: 'benefit',
+    label: 'Benefit',
+    description: 'Employer-provided perks, benefits, and non-salary offer advantages.',
+    sortOrder: 20,
+  },
+  {
+    key: 'company_attribute',
+    label: 'Company attribute',
+    description: 'Company profile facts, traits, markets, and organization descriptors.',
+    sortOrder: 30,
+  },
+  {
+    key: 'contract_type',
+    label: 'Contract type',
+    description: 'Legal engagement forms such as B2B contract or contract of employment.',
+    sortOrder: 40,
+  },
+  {
+    key: 'employment_type',
+    label: 'Employment type',
+    description: 'Workload and schedule terms such as full-time or part-time.',
+    sortOrder: 50,
+  },
+  {
+    key: 'experience_level',
+    label: 'Experience level',
+    description: 'Seniority and role level labels from offer metadata.',
+    sortOrder: 60,
+  },
+  {
+    key: 'language',
+    label: 'Language',
+    description: 'Languages and language proficiency expectations.',
+    sortOrder: 70,
+  },
+  {
+    key: 'requirement',
+    label: 'Requirement',
+    description: 'Candidate requirements, qualifications, and expected skills.',
+    sortOrder: 80,
+  },
+  {
+    key: 'responsibility',
+    label: 'Responsibility',
+    description: 'Role duties and recurring responsibilities listed in offers.',
+    sortOrder: 90,
+  },
+  {
+    key: 'salary',
+    label: 'Salary',
+    description: 'Salary ranges, compensation hints, and pay-period metadata.',
+    sortOrder: 100,
+  },
+  {
+    key: 'start_date',
+    label: 'Start date',
+    description: 'Hiring timeline, immediate employment, and start date signals.',
+    sortOrder: 110,
+  },
+  {
+    key: 'technology',
+    label: 'Technology',
+    description: 'Technologies, tools, platforms, frameworks, and stacks.',
+    sortOrder: 120,
+  },
+  {
+    key: 'work_mode',
+    label: 'Work mode',
+    description: 'Remote, hybrid, office, and workplace arrangement labels.',
+    sortOrder: 130,
+  },
+  {
+    key: 'other',
+    label: 'Other',
+    description: 'Reusable pills that do not fit a more specific lexicon type.',
+    sortOrder: 900,
+  },
+] as const satisfies readonly Array<{
+  key: FilemakerLexiconTypeKey;
+  label: string;
+  description: string;
+  sortOrder: number;
+}>;
 
 const normalizeOptionalNumber = (value: unknown): number | null => {
   if (value === null || value === undefined || value === '') return null;
@@ -84,14 +185,17 @@ const normalizeJobListingSalaryPeriod = (value: unknown): FilemakerJobListingSal
   );
 };
 
-const normalizeLexiconTermCategory = (value: unknown): FilemakerLexiconTermCategory => {
+const normalizeLexiconTypeKey = (value: unknown): FilemakerLexiconTypeKey => {
   const normalized = normalizeString(value).toLowerCase();
   return (
-    FILEMAKER_LEXICON_TERM_CATEGORIES.find(
-      (category: FilemakerLexiconTermCategory): boolean => category === normalized
+    FILEMAKER_LEXICON_TYPE_KEYS.find(
+      (typeKey: FilemakerLexiconTypeKey): boolean => typeKey === normalized
     ) ?? 'other'
   );
 };
+
+const normalizeLexiconTermCategory = (value: unknown): FilemakerLexiconTermCategory =>
+  normalizeLexiconTypeKey(value);
 
 export {
   createFilemakerAddress,
@@ -375,10 +479,62 @@ export const createFilemakerOrganizationLegacyDemand = (input: {
   };
 };
 
+const defaultFilemakerLexiconTypeId = (key: FilemakerLexiconTypeKey): string =>
+  `filemaker-lexicon-type-${key}`;
+
+export const createFilemakerLexiconType = (input: {
+  id?: unknown;
+  key: unknown;
+  label?: unknown;
+  description?: unknown;
+  sortOrder?: unknown;
+  system?: unknown;
+  createdAt?: string | null | undefined;
+  updatedAt?: string | null | undefined;
+}): FilemakerLexiconType => {
+  const now = new Date().toISOString();
+  const key = normalizeLexiconTypeKey(input.key);
+  const defaultDefinition = FILEMAKER_LEXICON_TYPE_DEFINITIONS.find(
+    (definition): boolean => definition.key === key
+  );
+  const label = normalizeString(input.label) || defaultDefinition?.label || key;
+  const description =
+    normalizeString(input.description) || defaultDefinition?.description || undefined;
+  const sortOrder = Number(input.sortOrder);
+  return {
+    id: normalizeString(input.id) || defaultFilemakerLexiconTypeId(key),
+    key,
+    label,
+    ...(description ? { description } : {}),
+    sortOrder:
+      Number.isFinite(sortOrder) && sortOrder >= 0
+        ? Math.floor(sortOrder)
+        : defaultDefinition?.sortOrder ?? 0,
+    system: input.system === undefined ? true : Boolean(input.system),
+    createdAt: input.createdAt ?? now,
+    updatedAt: input.updatedAt ?? now,
+  };
+};
+
+export const createDefaultFilemakerLexiconTypes = (): FilemakerLexiconType[] =>
+  FILEMAKER_LEXICON_TYPE_DEFINITIONS.map((definition) =>
+    createFilemakerLexiconType({
+      id: defaultFilemakerLexiconTypeId(definition.key),
+      key: definition.key,
+      label: definition.label,
+      description: definition.description,
+      sortOrder: definition.sortOrder,
+      system: true,
+      createdAt: FILEMAKER_LEXICON_TYPE_SYSTEM_TIMESTAMP,
+      updatedAt: FILEMAKER_LEXICON_TYPE_SYSTEM_TIMESTAMP,
+    })
+  );
+
 export const createFilemakerLexiconTerm = (input: {
   id: string;
   label: unknown;
   normalizedLabel?: unknown;
+  typeKey?: unknown;
   category?: unknown;
   sourceSite?: unknown;
   sourceProvider?: unknown;
@@ -398,11 +554,13 @@ export const createFilemakerLexiconTerm = (input: {
   const firstSeenAt = normalizeString(input.firstSeenAt);
   const lastSeenAt = normalizeString(input.lastSeenAt);
   const occurrenceCount = Number(input.occurrenceCount);
+  const typeKey = normalizeLexiconTermCategory(input.typeKey ?? input.category);
   return {
     id: normalizeString(input.id),
     label,
     normalizedLabel,
-    category: normalizeLexiconTermCategory(input.category),
+    typeKey,
+    category: typeKey,
     ...(sourceSite.length > 0 ? { sourceSite } : {}),
     ...(sourceProvider.length > 0 ? { sourceProvider } : {}),
     ...(firstSeenAt.length > 0 ? { firstSeenAt } : {}),
@@ -423,6 +581,7 @@ export const createFilemakerJobListingLexiconLink = (input: {
   sourceSite?: unknown;
   sourceUrl?: unknown;
   sourceValue?: unknown;
+  typeKey?: unknown;
   category?: unknown;
   position?: unknown;
   createdAt?: string | null | undefined;
@@ -433,6 +592,7 @@ export const createFilemakerJobListingLexiconLink = (input: {
   const sourceSite = normalizeString(input.sourceSite);
   const sourceUrl = normalizeString(input.sourceUrl);
   const sourceValue = normalizeString(input.sourceValue);
+  const typeKey = normalizeLexiconTermCategory(input.typeKey ?? input.category);
   return {
     id: normalizeString(input.id),
     jobListingId: normalizeString(input.jobListingId),
@@ -440,7 +600,8 @@ export const createFilemakerJobListingLexiconLink = (input: {
     ...(sourceSite.length > 0 ? { sourceSite } : {}),
     ...(sourceUrl.length > 0 ? { sourceUrl } : {}),
     ...(sourceValue.length > 0 ? { sourceValue } : {}),
-    category: normalizeLexiconTermCategory(input.category),
+    typeKey,
+    category: typeKey,
     position: Number.isFinite(position) && position >= 0 ? Math.floor(position) : 0,
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? now,

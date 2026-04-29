@@ -2,7 +2,17 @@
 
 /* eslint-disable complexity, max-lines, max-lines-per-function */
 
-import { BriefcaseBusiness, FileText, Loader2, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  Download,
+  ExternalLink,
+  Eye,
+  FileText,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Trash2,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { MultiSelectOption } from '@/shared/ui/forms-and-actions.public';
@@ -12,8 +22,9 @@ import {
   MultiSelect,
   SelectSimple,
 } from '@/shared/ui/forms-and-actions.public';
-import { Badge, Button, Input, Textarea } from '@/shared/ui/primitives.public';
+import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { DetailModal } from '@/shared/ui/templates.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
@@ -22,7 +33,12 @@ import {
 } from '../../context/AdminFilemakerOrganizationEditPageContext';
 import { JobApplicationPreparationModal } from './JobApplicationPreparationModal';
 import { createClientFilemakerId, formatTimestamp } from '../../pages/filemaker-page-utils';
-import { formatFilemakerLexiconCategory } from '../../pages/AdminFilemakerLexiconPage.helpers';
+import {
+  buildFilemakerLexiconTypeMetadata,
+  compareFilemakerLexiconTypeKeys,
+  formatFilemakerLexiconCategory,
+  type FilemakerLexiconTypeMetadataMap,
+} from '../../pages/AdminFilemakerLexiconPage.type-metadata';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
@@ -31,8 +47,10 @@ import {
   parseFilemakerEmailCampaignRegistry,
 } from '../../settings';
 import type {
+  FilemakerDatabase,
   FilemakerEmailCampaign,
   FilemakerJobApplication,
+  FilemakerJobApplicationStatus,
   FilemakerJobListing,
   FilemakerJobListingSalaryPeriod,
   FilemakerJobListingStatus,
@@ -53,22 +71,53 @@ const SALARY_PERIOD_OPTIONS: Array<{ value: FilemakerJobListingSalaryPeriod; lab
   { value: 'fixed', label: 'Fixed' },
 ];
 
+const APPLICATION_STATUS_OPTIONS: Array<{ value: FilemakerJobApplicationStatus; label: string }> = [
+  { value: 'draft', label: 'Draft' },
+  { value: 'ready', label: 'Ready' },
+  { value: 'applied', label: 'Applied' },
+  { value: 'rejected', label: 'Rejected' },
+  { value: 'archived', label: 'Archived' },
+];
+
 const toCampaignOption = (campaign: FilemakerEmailCampaign): MultiSelectOption => ({
   value: campaign.id,
   label: campaign.name.trim().length > 0 ? campaign.name : campaign.id,
 });
 
-const toLexiconOption = (term: FilemakerLexiconTerm): MultiSelectOption => ({
+const toLexiconOption = (
+  term: FilemakerLexiconTerm,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): MultiSelectOption => ({
   value: term.id,
-  label: `${term.label} (${formatFilemakerLexiconCategory(term.category)})`,
+  label: `${term.label} (${formatFilemakerLexiconCategory(term.typeKey, typeMetadata)})`,
 });
 
 const lexiconTermHref = (term: FilemakerLexiconTerm): string => {
   const params = new URLSearchParams({
-    category: term.category,
+    type: term.typeKey,
     query: term.label,
   });
   return `/admin/filemaker/lexicon?${params.toString()}`;
+};
+
+const groupLexiconTermsByCategory = (
+  terms: FilemakerLexiconTerm[],
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): Array<{ typeKey: FilemakerLexiconTerm['typeKey']; terms: FilemakerLexiconTerm[] }> => {
+  const groups = new Map<FilemakerLexiconTerm['typeKey'], FilemakerLexiconTerm[]>();
+  terms.forEach((term: FilemakerLexiconTerm): void => {
+    const existing = groups.get(term.typeKey) ?? [];
+    existing.push(term);
+    groups.set(term.typeKey, existing);
+  });
+  return Array.from(groups.entries())
+    .map(([typeKey, groupTerms]) => ({
+      typeKey,
+      terms: groupTerms,
+    }))
+    .sort((left, right): number =>
+      compareFilemakerLexiconTypeKeys(left.typeKey, right.typeKey, typeMetadata)
+    );
 };
 
 const addMissingCampaignOptions = (
@@ -99,15 +148,22 @@ const addMissingLexiconOptions = (
   return [...options, ...missingOptions];
 };
 
-const buildLexiconOptions = (rawDatabase: unknown): MultiSelectOption[] =>
-  parseFilemakerDatabase(rawDatabase)
-    .lexiconTerms.slice()
+const buildLexiconOptions = (
+  database: FilemakerDatabase,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): MultiSelectOption[] =>
+  database.lexiconTerms
+    .slice()
     .sort((left: FilemakerLexiconTerm, right: FilemakerLexiconTerm): number => {
-      const categoryCompare = left.category.localeCompare(right.category);
-      if (categoryCompare !== 0) return categoryCompare;
+      const typeCompare = compareFilemakerLexiconTypeKeys(
+        left.typeKey,
+        right.typeKey,
+        typeMetadata
+      );
+      if (typeCompare !== 0) return typeCompare;
       return left.label.localeCompare(right.label);
     })
-    .map(toLexiconOption);
+    .map((term: FilemakerLexiconTerm): MultiSelectOption => toLexiconOption(term, typeMetadata));
 
 const formatSalary = (listing: FilemakerJobListing): string => {
   const currency = listing.salaryCurrency ?? '';
@@ -157,6 +213,91 @@ const formatApplicationPreview = (application: FilemakerJobApplication): string 
   return body.length > 180 ? `${body.slice(0, 180).trim()}...` : body;
 };
 
+const formatApplicationConfidence = (application: FilemakerJobApplication): string => {
+  if (application.confidence === null) return 'Confidence not set';
+  return `${Math.round(application.confidence * 100)}% confidence`;
+};
+
+const formatNullableText = (value: string | null | undefined, fallback: string): string => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : fallback;
+};
+
+const readDownloadFilename = (response: Response, fallback: string): string => {
+  const contentDisposition = response.headers.get('Content-Disposition') ?? '';
+  const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
+  if (quoted?.[1] !== undefined && quoted[1].length > 0) return quoted[1];
+  const unquoted = /filename=([^;]+)/i.exec(contentDisposition);
+  const unquotedFilename = unquoted?.[1]?.trim() ?? '';
+  return unquotedFilename.length > 0 ? unquotedFilename : fallback;
+};
+
+const downloadBlob = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+};
+
+const createDownloadFilename = (value: string | null | undefined, fallback: string): string => {
+  const normalized = (value ?? '')
+    .replace(/[<>:"/\\|?*]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return normalized.length > 0 ? normalized : fallback;
+};
+
+const composeCoverLetterText = (application: FilemakerJobApplication): string => {
+  const subject = formatNullableText(application.coverLetter?.subject, 'Cover letter');
+  const body = formatNullableText(
+    application.coverLetter?.bodyMarkdown,
+    'No cover letter content was generated.'
+  );
+  const meta = [
+    formatApplicationPerson(application),
+    application.jobTitle,
+    application.organizationName,
+  ]
+    .map((value: string | null | undefined): string => value?.trim() ?? '')
+    .filter((value: string): boolean => value.length > 0)
+    .join(' · ');
+  return [subject, meta, body].filter((value: string): boolean => value.length > 0).join('\n\n');
+};
+
+const normalizeExternalHref = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return null;
+  try {
+    const url = new URL(trimmed);
+    return url.protocol === 'http:' || url.protocol === 'https:' ? trimmed : null;
+  } catch {
+    return null;
+  }
+};
+
+const readRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const getApplicationContextJobHref = (application: FilemakerJobApplication): string | null => {
+  const context = readRecord(application.sourceApplicationContext);
+  const jobContext = readRecord(context?.['jobContext']);
+  const listing = readRecord(jobContext?.['listing']);
+  return normalizeExternalHref(listing?.['sourceUrl']);
+};
+
+const getApplicationJobHref = (
+  application: FilemakerJobApplication,
+  listing: FilemakerJobListing | null | undefined
+): string | null =>
+  normalizeExternalHref(listing?.sourceUrl) ?? getApplicationContextJobHref(application);
+
 const cvApplicationHref = (application: FilemakerJobApplication): string | null => {
   if (application.tailoredCvId === null || application.personId.trim().length === 0) {
     return null;
@@ -182,8 +323,12 @@ const groupApplicationsByJobListing = (
 
 function JobApplicationsInline({
   applications,
+  jobListing,
+  onOpenApplication,
 }: {
   applications: FilemakerJobApplication[];
+  jobListing: FilemakerJobListing;
+  onOpenApplication: (applicationId: string) => void;
 }): React.JSX.Element | null {
   if (applications.length === 0) return null;
   return (
@@ -195,6 +340,7 @@ function JobApplicationsInline({
       <div className='space-y-2'>
         {applications.slice(0, 3).map((application: FilemakerJobApplication) => {
           const cvHref = cvApplicationHref(application);
+          const jobHref = getApplicationJobHref(application, jobListing);
           return (
             <div
               key={application.id}
@@ -209,11 +355,34 @@ function JobApplicationsInline({
                     {formatApplicationPerson(application)} · {formatTimestamp(application.createdAt)}
                   </div>
                 </div>
-                {cvHref !== null ? (
-                  <a className='text-xs text-emerald-300 hover:underline' href={cvHref}>
-                    Open CV
-                  </a>
-                ) : null}
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-7 gap-1.5'
+                    onClick={(): void => onOpenApplication(application.id)}
+                  >
+                    <Eye className='h-3.5 w-3.5' aria-hidden='true' />
+                    View
+                  </Button>
+                  {cvHref !== null ? (
+                    <a className='text-xs text-emerald-300 hover:underline' href={cvHref}>
+                      Open CV
+                    </a>
+                  ) : null}
+                  {jobHref !== null ? (
+                    <a
+                      className='inline-flex items-center gap-1 text-xs text-blue-300 hover:underline'
+                      href={jobHref}
+                      target='_blank'
+                      rel='noreferrer'
+                    >
+                      <ExternalLink className='h-3 w-3' aria-hidden='true' />
+                      Job
+                    </a>
+                  ) : null}
+                </div>
               </div>
               <p className='mt-1 line-clamp-2 text-xs text-gray-400'>
                 {formatApplicationPreview(application)}
@@ -226,11 +395,285 @@ function JobApplicationsInline({
   );
 }
 
+function ApplicationPackageModal({
+  application,
+  isMutating,
+  jobListing,
+  onClose,
+  onDelete,
+  onStatusChange,
+}: {
+  application: FilemakerJobApplication | null;
+  isMutating: boolean;
+  jobListing: FilemakerJobListing | null;
+  onClose: () => void;
+  onDelete: (applicationId: string) => void;
+  onStatusChange: (applicationId: string, status: FilemakerJobApplicationStatus) => void;
+}): React.JSX.Element {
+  const { toast } = useToast();
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingCoverLetterPdf, setIsExportingCoverLetterPdf] = useState(false);
+  const cvHref = application !== null ? cvApplicationHref(application) : null;
+  const jobHref = application !== null ? getApplicationJobHref(application, jobListing) : null;
+  const notes = application?.applicationNotes ?? [];
+  const missingInformation = application?.missingInformation ?? [];
+  const skills = application?.tailoredCv?.skills ?? [];
+  const canExportPdf =
+    application?.tailoredCvId !== null &&
+    application?.tailoredCvId !== undefined &&
+    application.tailoredCvId.trim().length > 0;
+
+  const handleExportPdf = async (): Promise<void> => {
+    if (!application || !canExportPdf) return;
+    setIsExportingPdf(true);
+    try {
+      const response = await fetch('/api/filemaker/cvs/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvId: application.tailoredCvId }),
+      });
+      if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
+      const fallbackTitle = formatNullableText(application.tailoredCv?.title, application.id);
+      const filename = readDownloadFilename(response, `${fallbackTitle}.pdf`);
+      downloadBlob(await response.blob(), filename);
+      toast('CV PDF exported.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to export CV PDF.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleDownloadCoverLetterText = (): void => {
+    if (!application) return;
+    const fallbackTitle = createDownloadFilename(application.coverLetter?.subject, application.id);
+    downloadBlob(
+      new Blob([composeCoverLetterText(application)], { type: 'text/plain;charset=utf-8' }),
+      `${fallbackTitle}.txt`
+    );
+    toast('Cover letter text downloaded.', { variant: 'success' });
+  };
+
+  const handleExportCoverLetterPdf = async (): Promise<void> => {
+    if (!application) return;
+    setIsExportingCoverLetterPdf(true);
+    try {
+      const response = await fetch(
+        `/api/filemaker/job-applications/${encodeURIComponent(application.id)}/cover-letter-pdf`,
+        { method: 'POST' }
+      );
+      if (!response.ok) throw new Error(`Failed to export cover letter (${response.status}).`);
+      const fallbackTitle = createDownloadFilename(application.coverLetter?.subject, application.id);
+      const filename = readDownloadFilename(response, `${fallbackTitle}.pdf`);
+      downloadBlob(await response.blob(), filename);
+      toast('Cover letter PDF exported.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to export cover letter PDF.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsExportingCoverLetterPdf(false);
+    }
+  };
+
+  return (
+    <DetailModal
+      isOpen={application !== null}
+      onClose={onClose}
+      title='Prepared application'
+      subtitle={application !== null ? formatApplicationTitle(application) : undefined}
+      size='lg'
+      footer={
+        <>
+          {cvHref !== null ? (
+            <a
+              href={cvHref}
+              className='inline-flex h-9 items-center rounded-md border border-border/70 px-3 text-sm text-gray-100 hover:bg-white/5'
+            >
+              Open CV
+            </a>
+          ) : null}
+          {canExportPdf ? (
+            <Button
+              type='button'
+              variant='outline'
+              onClick={(): void => {
+                void handleExportPdf();
+              }}
+              disabled={isMutating || isExportingPdf}
+              className='gap-1.5'
+            >
+              {!isExportingPdf ? <Download className='h-3.5 w-3.5' aria-hidden='true' /> : null}
+              {isExportingPdf ? 'Exporting...' : 'Export CV PDF'}
+            </Button>
+          ) : null}
+          {jobHref !== null ? (
+            <a
+              href={jobHref}
+              target='_blank'
+              rel='noreferrer'
+              className='inline-flex h-9 items-center gap-1.5 rounded-md border border-border/70 px-3 text-sm text-gray-100 hover:bg-white/5'
+            >
+              <ExternalLink className='h-3.5 w-3.5' aria-hidden='true' />
+              Apply
+            </a>
+          ) : null}
+          {application !== null ? (
+            <Button
+              type='button'
+              variant='outline'
+              onClick={(): void => onDelete(application.id)}
+              disabled={isMutating}
+            >
+              Delete
+            </Button>
+          ) : null}
+          <Button type='button' onClick={onClose}>
+            Close
+          </Button>
+        </>
+      }
+    >
+      {application !== null ? (
+        <div className='space-y-4'>
+          <div className='flex flex-wrap gap-2 text-xs text-gray-400'>
+            <Badge variant='outline'>{application.status}</Badge>
+            <Badge variant='outline'>{formatApplicationConfidence(application)}</Badge>
+            <Badge variant='outline'>{formatApplicationPerson(application)}</Badge>
+            <Badge variant='outline'>{formatTimestamp(application.createdAt)}</Badge>
+          </div>
+
+          <FormField label='Application status'>
+            <SelectSimple
+              value={application.status}
+              onValueChange={(value: string): void => {
+                onStatusChange(application.id, value as FilemakerJobApplicationStatus);
+              }}
+              options={APPLICATION_STATUS_OPTIONS}
+              ariaLabel='Application status'
+              disabled={isMutating}
+            />
+          </FormField>
+
+          <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
+            <div className='space-y-3'>
+              <section className='space-y-2'>
+                <div className='flex flex-wrap items-center justify-between gap-2'>
+                  <h4 className='text-sm font-semibold text-white'>Cover letter</h4>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-8 gap-1.5'
+                      onClick={handleDownloadCoverLetterText}
+                      disabled={isMutating}
+                    >
+                      <Download className='h-3.5 w-3.5' aria-hidden='true' />
+                      Download Text
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-8 gap-1.5'
+                      onClick={(): void => {
+                        void handleExportCoverLetterPdf();
+                      }}
+                      disabled={isMutating || isExportingCoverLetterPdf}
+                    >
+                      {!isExportingCoverLetterPdf ? (
+                        <Download className='h-3.5 w-3.5' aria-hidden='true' />
+                      ) : null}
+                      {isExportingCoverLetterPdf ? 'Exporting...' : 'Export PDF'}
+                    </Button>
+                  </div>
+                </div>
+                <div className='rounded-md border border-border/50 bg-background/30 p-3'>
+                  <div className='mb-2 text-sm font-medium text-gray-100'>
+                    {formatNullableText(application.coverLetter?.subject, 'Cover letter')}
+                  </div>
+                  <pre className='whitespace-pre-wrap text-xs leading-5 text-gray-300'>
+                    {formatNullableText(
+                      application.coverLetter?.bodyMarkdown,
+                      'No cover letter content was generated.'
+                    )}
+                  </pre>
+                </div>
+              </section>
+
+              <section className='space-y-2'>
+                <h4 className='text-sm font-semibold text-white'>Tailored CV</h4>
+                <div className='rounded-md border border-border/50 bg-background/30 p-3'>
+                  <div className='mb-2 text-sm font-medium text-gray-100'>
+                    {formatNullableText(application.tailoredCv?.title, 'Tailored CV')}
+                  </div>
+                  <p className='text-xs leading-5 text-gray-300'>
+                    {formatNullableText(
+                      application.tailoredCv?.professionalSummary,
+                      'No professional summary was generated.'
+                    )}
+                  </p>
+                  {skills.length > 0 ? (
+                    <div className='mt-3 flex flex-wrap gap-1'>
+                      {skills.map((skill: string) => (
+                        <Badge key={skill} variant='outline'>
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            </div>
+
+            <aside className='space-y-3'>
+              <section className='space-y-2'>
+                <h4 className='text-sm font-semibold text-white'>Notes</h4>
+                {notes.length > 0 ? (
+                  <ul className='space-y-1 text-xs text-gray-300'>
+                    {notes.map((note: string) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className='text-xs text-gray-500'>No application notes.</p>
+                )}
+              </section>
+
+              <section className='space-y-2'>
+                <h4 className='text-sm font-semibold text-white'>Missing information</h4>
+                {missingInformation.length > 0 ? (
+                  <ul className='space-y-1 text-xs text-gray-300'>
+                    {missingInformation.map((item: string) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className='text-xs text-gray-500'>No missing information flagged.</p>
+                )}
+              </section>
+            </aside>
+          </div>
+        </div>
+      ) : null}
+    </DetailModal>
+  );
+}
+
 export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const settingsStore = useSettingsStore();
   const { jobListings, organization } = useAdminFilemakerOrganizationEditPageStateContext();
   const { setJobListings } = useAdminFilemakerOrganizationEditPageActionsContext();
   const [applicationListingId, setApplicationListingId] = useState<string | null>(null);
+  const [selectedPreparedApplicationId, setSelectedPreparedApplicationId] = useState<string | null>(
+    null
+  );
+  const [isMutatingApplication, setIsMutatingApplication] = useState(false);
   const [applicationsState, setApplicationsState] = useState<JobApplicationsState>({
     applications: [],
     error: null,
@@ -239,24 +682,27 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const organizationId = organization?.id ?? '';
+  const filemakerDatabase = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const lexiconTypeMetadata = useMemo(
+    () => buildFilemakerLexiconTypeMetadata(filemakerDatabase),
+    [filemakerDatabase]
+  );
 
   const campaignOptions = useMemo<MultiSelectOption[]>(() => {
     const registry = parseFilemakerEmailCampaignRegistry(rawCampaigns);
     return registry.campaigns.map(toCampaignOption);
   }, [rawCampaigns]);
   const lexiconOptions = useMemo<MultiSelectOption[]>(
-    () => buildLexiconOptions(rawDatabase),
-    [rawDatabase]
+    () => buildLexiconOptions(filemakerDatabase, lexiconTypeMetadata),
+    [filemakerDatabase, lexiconTypeMetadata]
   );
   const lexiconTermsById = useMemo(() => {
-    const database = parseFilemakerDatabase(rawDatabase);
     return new Map(
-      database.lexiconTerms.map((term: FilemakerLexiconTerm): [string, FilemakerLexiconTerm] => [
-        term.id,
-        term,
-      ])
+      filemakerDatabase.lexiconTerms.map(
+        (term: FilemakerLexiconTerm): [string, FilemakerLexiconTerm] => [term.id, term]
+      )
     );
-  }, [rawDatabase]);
+  }, [filemakerDatabase]);
 
   const targetedCount = jobListings.filter(
     (listing: FilemakerJobListing): boolean => listing.targetedCampaignIds.length > 0
@@ -264,6 +710,24 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const applicationsByJobListingId = useMemo(
     () => groupApplicationsByJobListing(applicationsState.applications),
     [applicationsState.applications]
+  );
+  const selectedPreparedApplication = useMemo(
+    () =>
+      applicationsState.applications.find(
+        (application: FilemakerJobApplication): boolean =>
+          application.id === selectedPreparedApplicationId
+      ) ?? null,
+    [applicationsState.applications, selectedPreparedApplicationId]
+  );
+  const selectedPreparedJobListing = useMemo(
+    () =>
+      selectedPreparedApplication !== null
+        ? jobListings.find(
+            (listing: FilemakerJobListing): boolean =>
+              listing.id === selectedPreparedApplication.jobListingId
+          ) ?? null
+        : null,
+    [jobListings, selectedPreparedApplication]
   );
 
   const loadApplications = useCallback(
@@ -344,6 +808,78 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     },
     [setJobListings]
   );
+
+  const handleApplicationStatusChange = useCallback(
+    async (
+      applicationId: string,
+      status: FilemakerJobApplicationStatus
+    ): Promise<void> => {
+      setIsMutatingApplication(true);
+      try {
+        const response = await fetch(
+          `/api/filemaker/job-applications/${encodeURIComponent(applicationId)}`,
+          {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`Failed to update application (${response.status}).`);
+        }
+        const payload = (await response.json()) as {
+          application?: FilemakerJobApplication;
+        };
+        const nextApplication = payload.application;
+        if (nextApplication !== undefined) {
+          setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+            ...current,
+            applications: current.applications.map(
+              (application: FilemakerJobApplication): FilemakerJobApplication =>
+                application.id === nextApplication.id ? nextApplication : application
+            ),
+          }));
+        }
+      } catch (error: unknown) {
+        logClientError(error);
+        setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+          ...current,
+          error: error instanceof Error ? error.message : 'Failed to update application.',
+        }));
+      } finally {
+        setIsMutatingApplication(false);
+      }
+    },
+    []
+  );
+
+  const handleApplicationDelete = useCallback(async (applicationId: string): Promise<void> => {
+    setIsMutatingApplication(true);
+    try {
+      const response = await fetch(
+        `/api/filemaker/job-applications/${encodeURIComponent(applicationId)}`,
+        { method: 'DELETE' }
+      );
+      if (!response.ok) {
+        throw new Error(`Failed to delete application (${response.status}).`);
+      }
+      setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+        ...current,
+        applications: current.applications.filter(
+          (application: FilemakerJobApplication): boolean => application.id !== applicationId
+        ),
+      }));
+      setSelectedPreparedApplicationId(null);
+    } catch (error: unknown) {
+      logClientError(error);
+      setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+        ...current,
+        error: error instanceof Error ? error.message : 'Failed to delete application.',
+      }));
+    } finally {
+      setIsMutatingApplication(false);
+    }
+  }, []);
 
   if (!organization) return null;
 
@@ -584,17 +1120,30 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       ariaLabel={`Job listing ${index + 1} lexicon tags`}
                     />
                     {selectedLexiconTerms.length > 0 ? (
-                      <div className='mt-2 flex flex-wrap gap-1'>
-                        {selectedLexiconTerms.map((term: FilemakerLexiconTerm) => (
-                          <Badge key={term.id} variant='outline'>
-                            <a
-                              href={lexiconTermHref(term)}
-                              className='hover:underline'
-                              title={`Open lexicon term: ${term.label}`}
-                            >
-                              {term.label}
-                            </a>
-                          </Badge>
+                      <div className='mt-2 space-y-1'>
+                        {groupLexiconTermsByCategory(
+                          selectedLexiconTerms,
+                          lexiconTypeMetadata
+                        ).map((group) => (
+                          <div key={group.typeKey} className='flex flex-wrap items-center gap-1'>
+                            <span className='text-[11px] font-medium uppercase text-muted-foreground'>
+                              {formatFilemakerLexiconCategory(group.typeKey, lexiconTypeMetadata)}
+                            </span>
+                            {group.terms.map((term: FilemakerLexiconTerm) => (
+                              <Badge key={term.id} variant='outline'>
+                                <a
+                                  href={lexiconTermHref(term)}
+                                  className='hover:underline'
+                                  title={`Open ${formatFilemakerLexiconCategory(
+                                    term.typeKey,
+                                    lexiconTypeMetadata
+                                  )} lexicon term: ${term.label}`}
+                                >
+                                  {term.label}
+                                </a>
+                              </Badge>
+                            ))}
+                          </div>
                         ))}
                       </div>
                     ) : null}
@@ -638,7 +1187,11 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     />
                   </FormField>
                 </div>
-                <JobApplicationsInline applications={applications} />
+                <JobApplicationsInline
+                  applications={applications}
+                  jobListing={listing}
+                  onOpenApplication={setSelectedPreparedApplicationId}
+                />
               </div>
             );
           })}
@@ -653,6 +1206,18 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
           void loadApplications();
         }}
         organization={organization}
+      />
+      <ApplicationPackageModal
+        application={selectedPreparedApplication}
+        isMutating={isMutatingApplication}
+        jobListing={selectedPreparedJobListing}
+        onClose={(): void => setSelectedPreparedApplicationId(null)}
+        onDelete={(applicationId: string): void => {
+          void handleApplicationDelete(applicationId);
+        }}
+        onStatusChange={(applicationId: string, status: FilemakerJobApplicationStatus): void => {
+          void handleApplicationStatusChange(applicationId, status);
+        }}
       />
     </FormSection>
   );

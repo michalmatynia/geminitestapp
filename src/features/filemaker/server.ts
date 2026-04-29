@@ -9,6 +9,7 @@ export * from './server/filemaker-contract-repository';
 export * from './server/filemaker-cv-repository';
 export * from './server/filemaker-cv-pdf';
 export * from './server/filemaker-job-application-repository';
+export * from './server/filemaker-job-application-pdf';
 export * from './server/filemaker-document-repository';
 export * from './server/filemaker-person-occupation-repository';
 export * from './server/filemaker-contact-log-repository';

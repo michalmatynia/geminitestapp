@@ -152,6 +152,9 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     </button>
   ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  Textarea: (props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea {...props} />
+  ),
   useToast: () => ({ toast: toastMock }),
 }));
 
@@ -290,12 +293,12 @@ describe('AdminFilemakerLexiconPage', () => {
     window.history.replaceState(
       null,
       '',
-      '/admin/filemaker/lexicon?category=contract_type&query=B2B'
+      '/admin/filemaker/lexicon?type=contract_type&query=B2B'
     );
 
     render(<AdminFilemakerLexiconPage />);
 
-    expect(screen.getByLabelText('Lexicon category')).toHaveValue('contract_type');
+    expect(screen.getByLabelText('Lexicon type')).toHaveValue('contract_type');
     expect(screen.getByLabelText('Search lexicon terms')).toHaveValue('B2B');
     expect(screen.getByText('B2B contract')).toBeInTheDocument();
     expect(screen.queryByText('full office work')).toBeNull();
@@ -308,7 +311,7 @@ describe('AdminFilemakerLexiconPage', () => {
     expect(screen.getByText('B2B contract')).toBeInTheDocument();
     expect(screen.getByText('1 jobs / 2 sightings')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('Lexicon category'), {
+    fireEvent.change(screen.getByLabelText('Lexicon type'), {
       target: { value: 'work_mode' },
     });
 
@@ -323,7 +326,7 @@ describe('AdminFilemakerLexiconPage', () => {
     fireEvent.change(screen.getByLabelText('Label'), {
       target: { value: 'Immediate employment' },
     });
-    fireEvent.change(screen.getByLabelText('Term category'), {
+    fireEvent.change(screen.getByLabelText('Term type'), {
       target: { value: 'start_date' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Save term' }));
@@ -337,6 +340,27 @@ describe('AdminFilemakerLexiconPage', () => {
         normalizedLabel: 'immediate employment',
       })
     );
+  });
+
+  it('updates lexicon type labels and ordering in the Filemaker settings database', async () => {
+    render(<AdminFilemakerLexiconPage />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Manage Types' }));
+    fireEvent.change(screen.getByLabelText('technology type label'), {
+      target: { value: 'Tech stack' },
+    });
+    fireEvent.change(screen.getByLabelText('technology type order'), {
+      target: { value: '1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save types' }));
+
+    await waitFor(() => expect(updateSettingMutateAsyncMock).toHaveBeenCalledTimes(1));
+    const persisted = getPersistedDatabaseFromLastSave();
+    expect(persisted.lexiconTypes.find((type) => type.key === 'technology')).toMatchObject({
+      key: 'technology',
+      label: 'Tech stack',
+      sortOrder: 1,
+    });
   });
 
   it('deletes a lexicon term and removes job listing links', async () => {

@@ -26,10 +26,18 @@ import {
 import type { FilemakerJobListingStatus } from '@/features/filemaker/types';
 import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { FormField, FormModal, SelectSimple, ToggleRow } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 
+import {
+  buildFilemakerLexiconTypeMetadata,
+  compareFilemakerLexiconTypeKeys,
+  formatFilemakerLexiconCategory,
+  type FilemakerLexiconTypeMetadataMap,
+} from '../../pages/AdminFilemakerLexiconPage.type-metadata';
+import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../../settings';
 import { useJobBoardScrapeBrowserModeSetting } from './useJobBoardScrapeBrowserModeSetting';
 
 type FilemakerJobBoardScrapeModalProps = {
@@ -157,29 +165,63 @@ const createEmptyLivePreviewState = (): LivePreviewState => ({
 
 const lexiconPillHref = (pill: ScrapedOfferPill): string => {
   const params = new URLSearchParams({
-    category: pill.category,
+    type: pill.typeKey,
     query: pill.label,
   });
   return `/admin/filemaker/lexicon?${params.toString()}`;
 };
 
-function ScrapedOfferPillLinks(props: { pills: ScrapedOfferPill[] }): React.JSX.Element | null {
+const groupScrapedOfferPills = (
+  pills: ScrapedOfferPill[],
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): Array<{ typeKey: ScrapedOfferPill['typeKey']; pills: ScrapedOfferPill[] }> => {
+  const groups = new Map<ScrapedOfferPill['typeKey'], ScrapedOfferPill[]>();
+  pills.forEach((pill) => {
+    const existing = groups.get(pill.typeKey) ?? [];
+    existing.push(pill);
+    groups.set(pill.typeKey, existing);
+  });
+  return Array.from(groups.entries())
+    .map(([typeKey, groupPills]) => ({
+      typeKey,
+      pills: groupPills,
+    }))
+    .sort((left, right): number =>
+      compareFilemakerLexiconTypeKeys(left.typeKey, right.typeKey, typeMetadata)
+    );
+};
+
+function ScrapedOfferPillLinks(props: {
+  pills: ScrapedOfferPill[];
+  typeMetadata: FilemakerLexiconTypeMetadataMap;
+}): React.JSX.Element | null {
   if (props.pills.length === 0) return null;
+  const groups = groupScrapedOfferPills(props.pills.slice(0, 24), props.typeMetadata);
   return (
-    <div className='mt-2 flex flex-wrap gap-1'>
-      {props.pills.slice(0, 8).map((pill, pillIndex) => (
-        <Badge
-          key={`${pill.category}-${pill.position}-${pillIndex}-${pill.label}`}
-          variant='outline'
-        >
-          <a
-            href={lexiconPillHref(pill)}
-            className='hover:underline'
-            title={`Open lexicon term: ${pill.label}`}
-          >
-            {pill.label}
-          </a>
-        </Badge>
+    <div className='mt-2 space-y-1'>
+      {groups.map((group) => (
+        <div key={group.typeKey} className='flex flex-wrap items-center gap-1'>
+          <span className='text-[11px] font-medium uppercase text-muted-foreground'>
+            {formatFilemakerLexiconCategory(group.typeKey, props.typeMetadata)}
+          </span>
+          {group.pills.map((pill, pillIndex) => (
+            <Badge
+              key={`${pill.typeKey}-${pill.position}-${pillIndex}-${pill.label}`}
+              variant='outline'
+            >
+              <a
+                href={lexiconPillHref(pill)}
+                className='hover:underline'
+                title={`Open ${formatFilemakerLexiconCategory(
+                  pill.typeKey,
+                  props.typeMetadata
+                )} lexicon term: ${pill.label}`}
+              >
+                {pill.label}
+              </a>
+            </Badge>
+          ))}
+        </div>
       ))}
     </div>
   );
@@ -452,9 +494,11 @@ const normalizeOfferPills = (
     const label = readString(item['label']).trim();
     if (label.length === 0) return [];
     const position = item['position'];
+    const typeKey = normalizePillCategory(item['typeKey'] ?? item['category']);
     return [
       {
-        category: normalizePillCategory(item['category']),
+        category: typeKey,
+        typeKey,
         label,
         position: typeof position === 'number' && Number.isFinite(position) ? position : index,
         sourceSite: readString(item['sourceSite']),
@@ -997,6 +1041,7 @@ export function FilemakerJobBoardScrapeModal(
   props: FilemakerJobBoardScrapeModalProps
 ): React.JSX.Element | null {
   const { toast } = useToast();
+  const settingsStore = useSettingsStore();
   const browserMode = useJobBoardScrapeBrowserModeSetting(props.open);
   const [initialState] = useState(() => createInitialState(props.selectedOrganizationCount));
   const [draft, setDraft] = useState<ScrapeDraft>(initialState.draft);
@@ -1016,6 +1061,12 @@ export function FilemakerJobBoardScrapeModal(
   const notifiedRuntimeRunIdsRef = useRef<Set<string>>(new Set());
   const rehydratedRunIdRef = useRef<string | null>(null);
   const requestIdRef = useRef(0);
+  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
+  const filemakerDatabase = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const lexiconTypeMetadata = useMemo(
+    () => buildFilemakerLexiconTypeMetadata(filemakerDatabase),
+    [filemakerDatabase]
+  );
   const selectedScopeDisabled = props.selectedOrganizationCount === 0;
   const activeRuntimeRunIsRunning = isRuntimeRunActive(activeRuntimeRun);
   const isRunning = modeInFlight !== null || activeRuntimeRunIsRunning;
@@ -1799,7 +1850,10 @@ export function FilemakerJobBoardScrapeModal(
                         </p>
                       ) : null}
                       <ScrapedOfferMetadata offer={item.offer} />
-                      <ScrapedOfferPillLinks pills={item.offer.pills} />
+                      <ScrapedOfferPillLinks
+                        pills={item.offer.pills}
+                        typeMetadata={lexiconTypeMetadata}
+                      />
                     </div>
                   ))}
                 </div>
@@ -1884,7 +1938,10 @@ export function FilemakerJobBoardScrapeModal(
                     </p>
                   ) : null}
                   <ScrapedOfferMetadata offer={item.offer} />
-                  <ScrapedOfferPillLinks pills={item.offer.pills} />
+                  <ScrapedOfferPillLinks
+                    pills={item.offer.pills}
+                    typeMetadata={lexiconTypeMetadata}
+                  />
                 </div>
               ))}
             </div>

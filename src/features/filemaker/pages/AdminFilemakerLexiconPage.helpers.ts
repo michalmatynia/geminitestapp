@@ -5,7 +5,15 @@ import type {
   FilemakerLexiconTerm,
   FilemakerLexiconTermCategory,
 } from '../types';
-import { createFilemakerJobListing, createFilemakerLexiconTerm } from '../settings';
+import {
+  compareFilemakerLexiconTypeKeys,
+  formatFilemakerLexiconCategory,
+  type FilemakerLexiconTypeMetadataMap,
+} from './AdminFilemakerLexiconPage.type-metadata';
+import {
+  createFilemakerJobListing,
+  createFilemakerLexiconTerm,
+} from '../settings';
 
 export type FilemakerLexiconFormState = {
   category: FilemakerLexiconTermCategory;
@@ -21,53 +29,6 @@ export type FilemakerLexiconEditorState = {
 export const DEFAULT_FILEMAKER_LEXICON_FORM: FilemakerLexiconFormState = {
   category: 'other',
   label: '',
-};
-
-export const FILEMAKER_LEXICON_CATEGORY_OPTIONS = [
-  { label: 'All categories', value: 'all' },
-  { label: 'Address', value: 'address' },
-  { label: 'Contract type', value: 'contract_type' },
-  { label: 'Employment type', value: 'employment_type' },
-  { label: 'Experience level', value: 'experience_level' },
-  { label: 'Work mode', value: 'work_mode' },
-  { label: 'Start date', value: 'start_date' },
-  { label: 'Technology', value: 'technology' },
-  { label: 'Benefit', value: 'benefit' },
-  { label: 'Other', value: 'other' },
-] as const;
-
-export const FILEMAKER_LEXICON_EDIT_CATEGORY_OPTIONS =
-  FILEMAKER_LEXICON_CATEGORY_OPTIONS.filter((option) => option.value !== 'all') as Array<{
-    label: string;
-    value: FilemakerLexiconTermCategory;
-  }>;
-
-const CATEGORY_LABELS = new Map<string, string>(
-  FILEMAKER_LEXICON_CATEGORY_OPTIONS.map((option) => [option.value, option.label])
-);
-
-export const formatFilemakerLexiconCategory = (
-  category: FilemakerLexiconTermCategory
-): string => CATEGORY_LABELS.get(category) ?? category;
-
-export const isFilemakerLexiconCategory = (
-  value: string
-): value is FilemakerLexiconTermCategory =>
-  FILEMAKER_LEXICON_EDIT_CATEGORY_OPTIONS.some((option) => option.value === value);
-
-export const parseFilemakerLexiconCategoryFilter = (
-  value: string
-): FilemakerLexiconTermCategory | 'all' => {
-  if (value === 'all') return 'all';
-  if (isFilemakerLexiconCategory(value)) return value;
-  return 'all';
-};
-
-export const getFilemakerLexiconCreateCategory = (
-  categoryFilter: FilemakerLexiconTermCategory | 'all'
-): FilemakerLexiconTermCategory => {
-  if (categoryFilter === 'all') return 'other';
-  return categoryFilter;
 };
 
 export const normalizeFilemakerLexiconLabel = (value: string): string =>
@@ -129,14 +90,19 @@ export const toFilemakerLexiconTermRows = (
   }));
 };
 
-const includesLexiconQuery = (row: FilemakerLexiconTermRow, query: string): boolean => {
+const includesLexiconQuery = (
+  row: FilemakerLexiconTermRow,
+  query: string,
+  typeMetadata?: FilemakerLexiconTypeMetadataMap
+): boolean => {
   const normalizedQuery = normalizeFilemakerLexiconKey(query);
   if (normalizedQuery.length === 0) return true;
   const searchable = normalizeFilemakerLexiconKey(
     [
       row.term.label,
       row.term.normalizedLabel,
-      row.term.category,
+      row.term.typeKey,
+      formatFilemakerLexiconCategory(row.term.typeKey, typeMetadata),
       row.term.sourceSite ?? '',
       row.term.sourceProvider ?? '',
     ].join(' ')
@@ -146,16 +112,23 @@ const includesLexiconQuery = (row: FilemakerLexiconTermRow, query: string): bool
 
 export const filterFilemakerLexiconTermRows = (
   rows: FilemakerLexiconTermRow[],
-  filters: FilemakerLexiconTermFilters
+  filters: FilemakerLexiconTermFilters,
+  typeMetadata?: FilemakerLexiconTypeMetadataMap
 ): FilemakerLexiconTermRow[] =>
   rows
     .filter((row: FilemakerLexiconTermRow): boolean =>
-      filters.category === 'all' ? true : row.term.category === filters.category
+      filters.category === 'all' ? true : row.term.typeKey === filters.category
     )
-    .filter((row: FilemakerLexiconTermRow): boolean => includesLexiconQuery(row, filters.query))
+    .filter((row: FilemakerLexiconTermRow): boolean =>
+      includesLexiconQuery(row, filters.query, typeMetadata)
+    )
     .sort((left: FilemakerLexiconTermRow, right: FilemakerLexiconTermRow): number => {
-      const categoryCompare = left.term.category.localeCompare(right.term.category);
-      if (categoryCompare !== 0) return categoryCompare;
+      const typeCompare = compareFilemakerLexiconTypeKeys(
+        left.term.typeKey,
+        right.term.typeKey,
+        typeMetadata
+      );
+      if (typeCompare !== 0) return typeCompare;
       return left.term.label.localeCompare(right.term.label);
     });
 
@@ -168,7 +141,7 @@ export const hasDuplicateFilemakerLexiconTerm = (
   if (normalizedLabel.length === 0) return false;
   return database.lexiconTerms.some((term: FilemakerLexiconTerm): boolean => {
     if (term.id === editingId) return false;
-    return term.category === form.category && term.normalizedLabel === normalizedLabel;
+    return term.typeKey === form.category && term.normalizedLabel === normalizedLabel;
   });
 };
 
@@ -237,6 +210,7 @@ const createFilemakerLexiconTermFromForm = (
     id: getFilemakerLexiconTermId(input.editing, input.fallbackId),
     label,
     normalizedLabel: normalizeFilemakerLexiconKey(label),
+    typeKey: input.form.category,
     category: input.form.category,
     updatedAt: input.now,
   });

@@ -7,9 +7,11 @@ import {
   createFilemakerEmailLink,
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
+  createDefaultFilemakerLexiconTypes,
   createFilemakerJobListing,
   createFilemakerJobListingLexiconLink,
   createFilemakerLexiconTerm,
+  createFilemakerLexiconType,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
@@ -38,6 +40,7 @@ import {
   type FilemakerJobListing,
   type FilemakerJobListingLexiconLink,
   type FilemakerLexiconTerm,
+  type FilemakerLexiconType,
   type FilemakerOrganization,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
@@ -87,6 +90,7 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   valueParameterLinks: [],
   organizationLegacyDemands: [],
   jobListings: [],
+  lexiconTypes: createDefaultFilemakerLexiconTypes(),
   lexiconTerms: [],
   jobListingLexiconLinks: [],
 });
@@ -148,6 +152,11 @@ const defaultLexiconTermIdForValues = (category: string, normalizedLabel: string
   const joined = `${category}-${normalizedLabel}`;
   const token = toIdToken(joined);
   return `filemaker-lexicon-term-${token.length > 0 ? token : 'entry'}`;
+};
+
+const defaultLexiconTypeIdForValues = (key: string): string => {
+  const token = toIdToken(key);
+  return `filemaker-lexicon-type-${token.length > 0 ? token : 'other'}`;
 };
 
 const defaultJobListingLexiconLinkIdForValues = (
@@ -340,6 +349,7 @@ export const normalizeFilemakerDatabase = (
     valueRecord['organizationLegacyDemands']
   );
   const rawJobListings = getRecordList('jobListings', valueRecord['jobListings']);
+  const rawLexiconTypes = getRecordList('lexiconTypes', valueRecord['lexiconTypes']);
   const rawLexiconTerms = getRecordList('lexiconTerms', valueRecord['lexiconTerms']);
   const rawJobListingLexiconLinks = getRecordList(
     'jobListingLexiconLinks',
@@ -1083,6 +1093,47 @@ export const normalizeFilemakerDatabase = (
     );
   });
 
+  const lexiconTypesByKey = new Map<string, FilemakerLexiconType>(
+    createDefaultFilemakerLexiconTypes().map(
+      (lexiconType: FilemakerLexiconType): [string, FilemakerLexiconType] => [
+        lexiconType.key,
+        lexiconType,
+      ]
+    )
+  );
+  rawLexiconTypes.forEach((entry: Record<string, unknown>): void => {
+    const keyProbe = createFilemakerLexiconType({
+      key: entry['key'],
+    });
+    const existing = lexiconTypesByKey.get(keyProbe.key);
+    const requestedId = normalizeString(entry['id']);
+    const label = normalizeString(entry['label']);
+    const description = normalizeString(entry['description']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const lexiconType = createFilemakerLexiconType({
+      id:
+        requestedId.length > 0
+          ? requestedId
+          : existing?.id ?? defaultLexiconTypeIdForValues(keyProbe.key),
+      key: keyProbe.key,
+      label: label.length > 0 ? label : existing?.label,
+      description: description.length > 0 ? description : existing?.description,
+      sortOrder: entry['sortOrder'] ?? existing?.sortOrder,
+      system: entry['system'] ?? existing?.system ?? true,
+      createdAt: createdAt.length > 0 ? createdAt : existing?.createdAt,
+      updatedAt: updatedAt.length > 0 ? updatedAt : existing?.updatedAt,
+    });
+    lexiconTypesByKey.set(lexiconType.key, lexiconType);
+  });
+  const lexiconTypes = Array.from(lexiconTypesByKey.values()).sort(
+    (left: FilemakerLexiconType, right: FilemakerLexiconType): number => {
+      const sortCompare = left.sortOrder - right.sortOrder;
+      if (sortCompare !== 0) return sortCompare;
+      return left.label.localeCompare(right.label);
+    }
+  );
+
   const lexiconTermIds = new Set<string>();
   const lexiconTermKeys = new Set<string>();
   const lexiconTerms: FilemakerLexiconTerm[] = [];
@@ -1094,11 +1145,18 @@ export const normalizeFilemakerDatabase = (
       requestedNormalizedLabel.length > 0
         ? requestedNormalizedLabel
         : label.toLowerCase().replace(/\s+/g, ' ');
+    const requestedTypeKey = normalizeString(entry['typeKey']);
     const requestedCategory = normalizeString(entry['category']);
-    const category = requestedCategory.length > 0 ? requestedCategory : 'other';
-    const relationKey = `${category}:${normalizedLabel}`;
+    const rawTypeKey =
+      requestedTypeKey.length > 0
+        ? requestedTypeKey
+        : requestedCategory.length > 0
+          ? requestedCategory
+          : 'other';
+    const typeKey = createFilemakerLexiconType({ key: rawTypeKey }).key;
+    const relationKey = `${typeKey}:${normalizedLabel}`;
     if (lexiconTermKeys.has(relationKey)) return;
-    const baseId = defaultLexiconTermIdForValues(category, normalizedLabel);
+    const baseId = defaultLexiconTermIdForValues(typeKey, normalizedLabel);
     const requestedId = normalizeString(entry['id']);
     const createdAt = normalizeString(entry['createdAt']);
     const updatedAt = normalizeString(entry['updatedAt']);
@@ -1114,7 +1172,8 @@ export const normalizeFilemakerDatabase = (
         id,
         label,
         normalizedLabel,
-        category,
+        typeKey,
+        category: typeKey,
         sourceSite: normalizeString(entry['sourceSite']),
         sourceProvider: normalizeString(entry['sourceProvider']),
         firstSeenAt: normalizeString(entry['firstSeenAt']),
@@ -1185,6 +1244,8 @@ export const normalizeFilemakerDatabase = (
     const requestedId = normalizeString(entry['id']);
     const createdAt = normalizeString(entry['createdAt']);
     const updatedAt = normalizeString(entry['updatedAt']);
+    const linkTypeKey = normalizeString(entry['typeKey']);
+    const linkCategory = normalizeString(entry['category']);
     const id = ensureUniqueId(
       requestedId.length > 0 ? requestedId : baseId,
       jobListingLexiconLinkIds,
@@ -1200,7 +1261,8 @@ export const normalizeFilemakerDatabase = (
         sourceSite: normalizeString(entry['sourceSite']),
         sourceUrl: normalizeString(entry['sourceUrl']),
         sourceValue: normalizeString(entry['sourceValue']),
-        category: normalizeString(entry['category']),
+        typeKey: linkTypeKey.length > 0 ? linkTypeKey : linkCategory,
+        category: linkTypeKey.length > 0 ? linkTypeKey : linkCategory,
         position: entry['position'],
         createdAt: createdAt.length > 0 ? createdAt : undefined,
         updatedAt: updatedAt.length > 0 ? updatedAt : undefined,
@@ -1227,6 +1289,7 @@ export const normalizeFilemakerDatabase = (
     valueParameterLinks,
     organizationLegacyDemands,
     jobListings,
+    lexiconTypes,
     lexiconTerms,
     jobListingLexiconLinks,
   };

@@ -64,6 +64,7 @@ export type OrganizationListState = {
   nodes: MasterTreeNode[];
   onDeselectAllOrganizations: () => void;
   onDeselectOrganizationsPage: () => void;
+  onDeleteOrganization: (organization: FilemakerOrganization) => void;
   onFilterChange: (key: string, value: unknown) => void;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
   onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;
@@ -92,6 +93,7 @@ export type OrganizationListState = {
   totalCount: number;
   totalCountIsExact: boolean;
   totalPages: number;
+  ConfirmationModal: React.ComponentType;
 };
 
 export const DEFAULT_ORGANIZATION_PAGE_SIZE = 48;

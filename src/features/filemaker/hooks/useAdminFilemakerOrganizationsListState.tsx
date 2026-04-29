@@ -13,6 +13,7 @@ import React, {
 } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -307,6 +308,7 @@ function useOrganizationRenderNode(
   organizationSelection: OrganizationSelectionState,
   onLaunchOrganizationEmailScrape: (organizationId: string) => void,
   onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void,
+  onDeleteOrganization: (organization: FilemakerOrganization) => void,
   onOpenEvent: (eventId: string) => void,
   onOpenJobListing: (organizationId: string, jobListingId: string) => void,
   onOpenOrganization: (organizationId: string) => void,
@@ -331,6 +333,7 @@ function useOrganizationRenderNode(
         organizationById={organizationById}
         onLaunchOrganizationEmailScrape={onLaunchOrganizationEmailScrape}
         onLaunchOrganizationWebsiteSocialScrape={onLaunchOrganizationWebsiteSocialScrape}
+        onDeleteOrganization={onDeleteOrganization}
         onOpenEvent={onOpenEvent}
         onOpenJobListing={onOpenJobListing}
         onOpenOrganization={onOpenOrganization}
@@ -342,6 +345,7 @@ function useOrganizationRenderNode(
       jobListingsById,
       onLaunchOrganizationEmailScrape,
       onLaunchOrganizationWebsiteSocialScrape,
+      onDeleteOrganization,
       onOpenEvent,
       onOpenJobListing,
       onOpenOrganization,
@@ -421,6 +425,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const router = useRouter();
   const settingsStore = useSettingsStore();
   const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_ORGANIZATION_PAGE_SIZE);
@@ -607,6 +612,38 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     },
     [toast]
   );
+  const deleteOrganization = useCallback(
+    (organization: FilemakerOrganization): void => {
+      confirm({
+        title: 'Delete Organisation',
+        message: `Delete organisation "${organization.name}"? This action cannot be undone.`,
+        confirmText: 'Delete',
+        isDangerous: true,
+        onConfirm: async (): Promise<void> => {
+          const response = await fetch(
+            `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
+            {
+              method: 'DELETE',
+              headers: withCsrfHeaders(),
+            }
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to delete organisation (${response.status}).`);
+          }
+          setOrganizationSelection(
+            (current: OrganizationSelectionState): OrganizationSelectionState => {
+              const next = { ...current };
+              delete next[organization.id];
+              return next;
+            }
+          );
+          setOrganizationsRefreshKey((current: number): number => current + 1);
+          toast(`Deleted organisation "${organization.name}".`, { variant: 'success' });
+        },
+      });
+    },
+    [confirm, toast]
+  );
   const renderNode = useOrganizationRenderNode(
     organizationRelations.eventsById,
     organizationRelations.jobListingsById,
@@ -616,6 +653,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     organizationSelection,
     launchOrganizationEmailScrape,
     launchOrganizationWebsiteSocialScrape,
+    deleteOrganization,
     openEvent,
     openJobListing,
     openOrganization,
@@ -668,6 +706,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
         return next;
       });
     },
+    onDeleteOrganization: deleteOrganization,
     onFilterChange: (key, value) => {
       setFilters((current) => ({ ...current, ...normalizeFilterValue(key, value) }));
       setPage(1);
@@ -723,5 +762,6 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     totalCount: mongoOrganizations.totalCount,
     totalCountIsExact: mongoOrganizations.totalCountIsExact,
     totalPages: mongoOrganizations.totalPages,
+    ConfirmationModal,
   };
 }

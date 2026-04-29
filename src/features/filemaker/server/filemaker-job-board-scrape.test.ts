@@ -835,6 +835,190 @@ describe('runFilemakerJobBoardScrape', () => {
     });
   });
 
+  it('fills salary currency from visible symbol currency salary pills', async () => {
+    const noFluffSourceUrl = 'https://nofluffjobs.com/pl';
+    const noFluffOfferUrl = 'https://nofluffjobs.com/pl/job/frontend-dev-acme';
+    mocks.collectJobBoardOfferUrlsMock.mockResolvedValueOnce({
+      links: [{ title: 'Frontend Developer', url: noFluffOfferUrl }],
+      provider: 'nofluffjobs',
+      runId: 'collect-run-nofluff-symbol-salary',
+      sourceSite: 'nofluffjobs.com',
+      sourceUrl: noFluffSourceUrl,
+      visitedUrls: [noFluffSourceUrl],
+      warnings: [],
+    });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Frontend Developer',
+          description: 'Build interfaces',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: noFluffOfferUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'nofluffjobs',
+      runId: 'offer-run-symbol-salary',
+      snapshot: {
+        pills: ['€4,000 - €6,000 gross/month', 'remote'],
+        provider: 'nofluffjobs',
+      },
+      sourceSite: 'nofluffjobs.com',
+      sourceUrl: noFluffOfferUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      provider: 'nofluffjobs',
+      sourceUrl: noFluffSourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer).toMatchObject({
+      salaryCurrency: 'EUR',
+      salaryMax: 6_000,
+      salaryMin: 4_000,
+      salaryPeriod: 'monthly',
+      salaryText: '€4,000 - €6,000 gross/month',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      salaryCurrency: 'EUR',
+      salaryMax: 6_000,
+      salaryMin: 4_000,
+      salaryPeriod: 'monthly',
+    });
+  });
+
+  it('keeps single-bound visible salary pills as min-only or max-only values', async () => {
+    const justJoinSourceUrl = 'https://justjoin.it/';
+    const justJoinOfferUrl = 'https://justjoin.it/job-offer/acme-senior-developer';
+    const justJoinMinOfferUrl = 'https://justjoin.it/job-offer/acme-mid-developer';
+    mocks.collectJobBoardOfferUrlsMock.mockResolvedValueOnce({
+      links: [
+        { title: 'Senior Developer', url: justJoinOfferUrl },
+        { title: 'Mid Developer', url: justJoinMinOfferUrl },
+      ],
+      provider: 'justjoin_it',
+      runId: 'collect-run-justjoin-single-bound-salary',
+      sourceSite: 'justjoin.it',
+      sourceUrl: justJoinSourceUrl,
+      visitedUrls: [justJoinSourceUrl],
+      warnings: [],
+    });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Senior Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: justJoinOfferUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'justjoin_it',
+      runId: 'offer-run-single-bound-salary',
+      snapshot: {
+        pills: ['up to 24k PLN net/month', 'remote'],
+        provider: 'justjoin_it',
+      },
+      sourceSite: 'justjoin.it',
+      sourceUrl: justJoinOfferUrl,
+      steps: [],
+    });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Mid Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: justJoinMinOfferUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'justjoin_it',
+      runId: 'offer-run-single-lower-bound-salary',
+      snapshot: {
+        pills: ['from 18k PLN net/month', 'remote'],
+        provider: 'justjoin_it',
+      },
+      sourceSite: 'justjoin.it',
+      sourceUrl: justJoinMinOfferUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      delayMs: 0,
+      mode: 'import',
+      provider: 'justjoin_it',
+      sourceUrl: justJoinSourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(2);
+    expect(result.offers[0].offer).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 24_000,
+      salaryMin: null,
+      salaryPeriod: 'monthly',
+      salaryText: 'up to 24k PLN net/month',
+    });
+    expect(result.offers[1].offer).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: null,
+      salaryMin: 18_000,
+      salaryPeriod: 'monthly',
+      salaryText: 'from 18k PLN net/month',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          salaryCurrency: 'PLN',
+          salaryMax: 24_000,
+          salaryMin: null,
+          salaryPeriod: 'monthly',
+        }),
+        expect.objectContaining({
+          salaryCurrency: 'PLN',
+          salaryMax: null,
+          salaryMin: 18_000,
+          salaryPeriod: 'monthly',
+        }),
+      ])
+    );
+  });
+
   it('fills salary fields from salary lines in sequencer plain text snapshots', async () => {
     const noFluffSourceUrl = 'https://nofluffjobs.com/pl';
     const noFluffOfferUrl = 'https://nofluffjobs.com/pl/job/backend-dev-acme';
@@ -923,7 +1107,7 @@ describe('runFilemakerJobBoardScrape', () => {
           sections: [],
           title: 'Acme Inc',
           url: null,
-          websiteUrls: [],
+          websiteUrls: ['https://acme.example', 'https://www.facebook.com/acmeinc'],
         },
         jsonLd: [
           JSON.stringify({
@@ -936,6 +1120,7 @@ describe('runFilemakerJobBoardScrape', () => {
               '@type': 'Organization',
               name: 'Acme Inc',
               url: 'https://acme.example/careers',
+              sameAs: ['https://www.linkedin.com/company/acme-inc', 'https://github.com/acme'],
               description: 'Acme builds enterprise commerce systems.',
               industry: 'Enterprise software',
               numberOfEmployees: 250,
@@ -994,7 +1179,19 @@ describe('runFilemakerJobBoardScrape', () => {
       'Description: Acme builds enterprise commerce systems.'
     );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
-      'Website: https://acme.example/careers'
+      'Website: https://acme.example'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Profile URL: https://acme.example/careers'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Social URL: https://www.linkedin.com/company/acme-inc'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Social URL: https://www.facebook.com/acmeinc'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Social URL: https://github.com/acme'
     );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Industry: Enterprise software'
@@ -1111,7 +1308,7 @@ describe('runFilemakerJobBoardScrape', () => {
           facts: [],
           headings: ['Acme Inc'],
           plainText:
-            'Dane firmy. Strona internetowa: https://acme.example. Branża: IT consulting. Zatrudnienie: 201-500 pracowników. Adres siedziby: Prosta 20, 00-850 Warszawa. NIP 5210123456.',
+            'Dane firmy. Strona internetowa: https://acme.example. E-mail: Kontakt@Acme.Example. Telefon: +48 22 123 45 67. Branża: IT consulting. Zatrudnienie: 201-500 pracowników. Adres siedziby: Prosta 20, 00-850 Warszawa. NIP 5210123456.',
           sections: [],
           title: 'Acme Inc',
           url: 'https://www.pracuj.pl/pracodawcy/acme,1001',
@@ -1153,6 +1350,12 @@ describe('runFilemakerJobBoardScrape', () => {
     );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Website: https://acme.example'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Email: kontakt@acme.example'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Phone: +48 22 123 45 67'
     );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('Industry: IT consulting');
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
@@ -1242,6 +1445,76 @@ describe('runFilemakerJobBoardScrape', () => {
         expect.objectContaining({
           category: 'address',
           label: 'Puławska 180, Mokotów, Warszawa(Masovian)',
+        }),
+      ])
+    );
+  });
+
+  it('extracts organisation addresses from company profile text without district or postal code', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.82,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-profile-text-address-no-district',
+      snapshot: {
+        companyProfile: {
+          facts: [],
+          headings: ['Acme Inc'],
+          plainText:
+            'Dane firmy. Adres siedziby: Puławska 180, Warszawa(Masovian). Branża: IT consulting.',
+          sections: [],
+          title: 'Acme Inc',
+          url: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+          websiteUrls: [],
+        },
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      addressUpdates: 1,
+      createdListings: 1,
+      matchedOffers: 1,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.addresses[0]).toMatchObject({
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '',
+      street: 'Puławska',
+      streetNumber: '180',
+    });
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'address',
+          label: 'Puławska 180, Warszawa(Masovian)',
         }),
       ])
     );
@@ -1522,6 +1795,80 @@ describe('runFilemakerJobBoardScrape', () => {
         }),
       ])
     );
+  });
+
+  it('keeps scraped lexicon types separate when labels repeat across sections', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Frontend Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-lexicon-types',
+      snapshot: {
+        provider: 'pracuj_pl',
+        sections: [
+          { heading: 'Technologies', text: 'React\nTypeScript' },
+          { heading: 'Requirements', text: 'React\nEnglish B2' },
+          { heading: 'Benefits', text: 'Private medical care' },
+          { heading: 'Responsibilities', text: 'Build reusable UI components' },
+        ],
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdLexiconTerms: 6,
+      createdListings: 1,
+      linkedLexiconTerms: 6,
+      verifiedListings: 1,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'technology', label: 'React' }),
+        expect.objectContaining({ category: 'requirement', typeKey: 'requirement', label: 'React' }),
+        expect.objectContaining({ category: 'technology', label: 'TypeScript' }),
+        expect.objectContaining({ category: 'requirement', label: 'English B2' }),
+        expect.objectContaining({ category: 'benefit', label: 'Private medical care' }),
+        expect.objectContaining({
+          category: 'responsibility',
+          label: 'Build reusable UI components',
+        }),
+      ])
+    );
+    expect(
+      persisted.lexiconTerms.filter((term: { label?: string }) => term.label === 'React')
+    ).toHaveLength(2);
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'technology', typeKey: 'technology', label: 'React' }),
+        expect.objectContaining({ category: 'requirement', typeKey: 'requirement', label: 'React' }),
+      ])
+    );
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(6);
   });
 
   it('verifies imports against the persisted FileMaker settings copy after writing', async () => {

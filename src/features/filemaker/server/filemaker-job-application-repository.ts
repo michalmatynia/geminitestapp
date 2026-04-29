@@ -2,11 +2,13 @@ import 'server-only';
 
 import type { Collection, Document } from 'mongodb';
 
+import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type {
   FilemakerJobApplication,
   FilemakerJobApplicationCoverLetter,
+  FilemakerJobApplicationStatus,
   FilemakerJobApplicationTailoredCv,
 } from '../filemaker-job-application.types';
 
@@ -73,6 +75,19 @@ const normalizeStringArray = (value: unknown): string[] =>
 const normalizeNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+const normalizeStatus = (value: unknown): FilemakerJobApplicationStatus => {
+  if (
+    value === 'ready' ||
+    value === 'applied' ||
+    value === 'rejected' ||
+    value === 'archived' ||
+    value === 'draft'
+  ) {
+    return value;
+  }
+  return 'draft';
+};
+
 const normalizeRecord = (value: unknown): Record<string, unknown> | null =>
   value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -113,7 +128,7 @@ const toFilemakerJobApplication = (
   document: FilemakerJobApplicationMongoDocument
 ): FilemakerJobApplication => ({
   id: normalizeId(document),
-  status: normalizeRequiredString(document.status, 'draft'),
+  status: normalizeStatus(document.status),
   personId: normalizeRequiredString(document.personId),
   personName: normalizeString(document.personName),
   organizationId: normalizeRequiredString(document.organizationId),
@@ -135,6 +150,24 @@ const toFilemakerJobApplication = (
   createdAt: normalizeRequiredString(document.createdAt),
   updatedAt: normalizeRequiredString(document.updatedAt),
 });
+
+export const getMongoFilemakerJobApplicationById = async (
+  applicationId: string
+): Promise<FilemakerJobApplication | null> => {
+  const collection = await getFilemakerJobApplicationsCollection();
+  const document = await collection.findOne({
+    $or: [{ _id: applicationId }, { id: applicationId }],
+  });
+  return document !== null ? toFilemakerJobApplication(document) : null;
+};
+
+export const requireMongoFilemakerJobApplicationById = async (
+  applicationId: string
+): Promise<FilemakerJobApplication> => {
+  const application = await getMongoFilemakerJobApplicationById(applicationId);
+  if (application === null) throw notFoundError('Filemaker job application was not found.');
+  return application;
+};
 
 const normalizeLimit = (value: number | undefined): number => {
   if (value === undefined || !Number.isFinite(value)) return 24;
@@ -162,4 +195,38 @@ export const listMongoFilemakerJobApplications = async (
     .limit(normalizeLimit(input.limit))
     .toArray();
   return documents.map(toFilemakerJobApplication);
+};
+
+export const updateMongoFilemakerJobApplicationStatus = async (
+  applicationId: string,
+  status: FilemakerJobApplicationStatus
+): Promise<FilemakerJobApplication> => {
+  const collection = await getFilemakerJobApplicationsCollection();
+  const existing = await collection.findOne({
+    $or: [{ _id: applicationId }, { id: applicationId }],
+  });
+  if (existing === null) throw notFoundError('Filemaker job application was not found.');
+
+  await collection.updateOne(
+    { _id: existing._id },
+    {
+      $set: {
+        status,
+        updatedAt: new Date().toISOString(),
+      },
+    }
+  );
+  return requireMongoFilemakerJobApplicationById(normalizeId(existing));
+};
+
+export const deleteMongoFilemakerJobApplication = async (
+  applicationId: string
+): Promise<void> => {
+  const collection = await getFilemakerJobApplicationsCollection();
+  const result = await collection.deleteOne({
+    $or: [{ _id: applicationId }, { id: applicationId }],
+  });
+  if (result.deletedCount === 0) {
+    throw notFoundError('Filemaker job application was not found.');
+  }
 };

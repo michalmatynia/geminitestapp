@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   savePlaywrightActionsIsPending: false,
   savePlaywrightActionsMutateAsyncMock: vi.fn(),
+  settingsGetMock: vi.fn(),
   toastMock: vi.fn(),
   usePlaywrightActionsMock: vi.fn(),
   withCsrfHeadersMock: vi.fn(),
@@ -22,6 +23,12 @@ vi.mock('@/shared/hooks/usePlaywrightStepSequencer', () => ({
   useSavePlaywrightActionsMutation: () => ({
     isPending: mocks.savePlaywrightActionsIsPending,
     mutateAsync: mocks.savePlaywrightActionsMutateAsyncMock,
+  }),
+}));
+
+vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
+  useSettingsStore: () => ({
+    get: mocks.settingsGetMock,
   }),
 }));
 
@@ -260,6 +267,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     vi.clearAllMocks();
     mocks.savePlaywrightActionsIsPending = false;
     mocks.savePlaywrightActionsMutateAsyncMock.mockResolvedValue(undefined);
+    mocks.settingsGetMock.mockReturnValue(undefined);
     mocks.usePlaywrightActionsMock.mockReturnValue({
       data: [buildJobBoardAction(true)],
       isLoading: false,
@@ -766,7 +774,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     );
     expect(screen.getAllByRole('link', { name: 'contract of employment' })[0]).toHaveAttribute(
       'href',
-      '/admin/filemaker/lexicon?category=contract_type&query=contract+of+employment'
+      '/admin/filemaker/lexicon?type=contract_type&query=contract+of+employment'
     );
     expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Acme Inc builds commerce software/).length).toBeGreaterThan(0);

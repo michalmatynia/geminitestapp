@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { notFoundError } from '@/shared/errors/app-error';
 import {
+  deleteMongoFilemakerOrganization,
   getMongoFilemakerOrganizationById,
   getMongoFilemakerPartySnapshot,
   listMongoFilemakerAnyParamsForOrganization,
@@ -147,4 +148,10 @@ export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Pr
       ? undefined
       : await updateMongoFilemakerAddressesForOrganization(organization, addresses);
   return Response.json({ linkedAddresses, organization });
+}
+
+export async function deleteHandler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+  await requireFilemakerMailAdminSession();
+  await deleteMongoFilemakerOrganization(resolveOrganizationId(ctx));
+  return new Response(null, { status: 204 });
 }

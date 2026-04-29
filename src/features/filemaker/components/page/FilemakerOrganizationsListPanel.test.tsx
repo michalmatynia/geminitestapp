@@ -302,6 +302,7 @@ const createProps = (
   isLoading: false,
   isSelectingAllOrganizations: false,
   nodes: [],
+  onDeleteOrganization: vi.fn(),
   onDeselectAllOrganizations: vi.fn(),
   onDeselectOrganizationsPage: vi.fn(),
   onFilterChange: vi.fn(),
@@ -332,6 +333,7 @@ const createProps = (
   totalCount: 42,
   totalCountIsExact: true,
   totalPages: 3,
+  ConfirmationModal: () => null,
   ...overrides,
 });
 

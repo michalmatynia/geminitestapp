@@ -11,7 +11,7 @@ import { normalizeLexiconKey, normalizeLexiconLabel } from './normalizers';
 export const findOfferAddressPill = (
   offer: FilemakerJobBoardScrapedOffer
 ): FilemakerJobBoardScrapedOffer['pills'][number] | null =>
-  offer.pills.find((pill) => pill.category === 'address') ?? null;
+  offer.pills.find((pill) => pill.typeKey === 'address') ?? null;
 
 export const cleanAddressCity = (value: string): string =>
   normalizeLexiconLabel(value.replace(/\([^)]*\)/g, ''));

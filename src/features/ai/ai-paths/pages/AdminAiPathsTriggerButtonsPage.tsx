@@ -39,7 +39,10 @@ import {
   type AiTriggerButtonRow,
 } from '../components/TriggerButtonListManager';
 
-type TriggerButtonDraft = AiTriggerButtonCreatePayload & { id?: string };
+type TriggerButtonDraft = AiTriggerButtonCreatePayload & {
+  contextTemplateRaw: string;
+  id?: string;
+};
 type TriggerButtonPathUsage = { id: string; name: string };
 type TriggerButtonFixtureCleanupResult = {
   removedTriggerButtons: number;
@@ -105,6 +108,10 @@ const normalizeDraft = (record?: AiTriggerButtonRow | null): TriggerButtonDraft 
   locations: record?.locations ?? ['product_modal'],
   mode: record?.mode ?? 'click',
   display: toDisplayMode(record),
+  contextTemplate: record?.contextTemplate ?? null,
+  contextTemplateRaw: record?.contextTemplate
+    ? JSON.stringify(record.contextTemplate, null, 2)
+    : '',
 });
 
 const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
@@ -603,6 +610,15 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         helperText: 'How the button behaves when clicked.',
       },
       {
+        key: 'contextTemplateRaw',
+        label: 'Trigger Context Metadata',
+        type: 'textarea',
+        placeholder:
+          '{\n  "jobApplicationArtifactKind": "tailored_cv"\n}',
+        helperText:
+          'Optional JSON merged into trigger extras. Use this for UI-owned trigger metadata, not hardcoded feature behavior.',
+      },
+      {
         key: 'locations',
         label: 'Location Visibility',
         type: 'custom',
@@ -680,10 +696,29 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         helperText: 'Paths containing Trigger nodes configured for this button.',
       },
     ],
-    [draft.iconId, draft.id, draft.locations, draftPathUsage, selectedIconItem]
+    [draft.contextTemplateRaw, draft.iconId, draft.id, draft.locations, draftPathUsage, selectedIconItem]
   );
 
   const handleSave = async (): Promise<void> => {
+    let contextTemplate: Record<string, unknown> | null = null;
+    const contextTemplateRaw = draft.contextTemplateRaw.trim();
+    if (contextTemplateRaw.length > 0) {
+      try {
+        const parsedContextTemplate = JSON.parse(contextTemplateRaw) as unknown;
+        if (
+          parsedContextTemplate === null ||
+          typeof parsedContextTemplate !== 'object' ||
+          Array.isArray(parsedContextTemplate)
+        ) {
+          toast('Trigger context metadata must be a JSON object.', { variant: 'error' });
+          return;
+        }
+        contextTemplate = parsedContextTemplate as Record<string, unknown>;
+      } catch {
+        toast('Trigger context metadata must be valid JSON.', { variant: 'error' });
+        return;
+      }
+    }
     const validation = validateFormData(
       aiTriggerButtonCreateSchema,
       {
@@ -693,6 +728,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         locations: draft.locations,
         mode: draft.mode,
         display: draft.display,
+        ...(contextTemplate !== null || draft.contextTemplate !== null ? { contextTemplate } : {}),
       },
       'Trigger button form is invalid.'
     );

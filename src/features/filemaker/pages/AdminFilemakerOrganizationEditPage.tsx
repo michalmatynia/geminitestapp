@@ -2,6 +2,8 @@
 
 import React, { startTransition } from 'react';
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+
 import { OrganizationAnyParamsSection } from '../components/page/OrganizationAnyParamsSection';
 import { OrganizationAnyTextsSection } from '../components/page/OrganizationAnyTextsSection';
 import { OrganizationAddressesSection } from '../components/page/OrganizationAddressesSection';
@@ -46,6 +48,8 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
           ? 'Create Organization'
           : (organization?.name ?? (isPageLoading ? 'Loading...' : null))
       }
+      fullWidth
+      pageTitle='Organization Page'
       notFoundMessage='Organization not found.'
       parent={{ label: 'Organizations', href: '/admin/filemaker/organizations' }}
       onSave={() => {
@@ -55,30 +59,46 @@ function AdminFilemakerOrganizationEditPageInner(): React.JSX.Element {
       isSaving={updateSetting.isPending}
     >
       {isPageLoading ? null : (
-        <>
-          <OrganizationBasicInfoSection />
-          <OrganizationAddressesSection />
-          {isCreateMode ? null : (
-            <>
-              <OrganizationLegacyMetadataSection />
-              <OrganizationMongoSummarySection />
-              <OrganizationImportedMetadataSection />
-              <OrganizationBankAccountsSection />
-              <OrganizationDocumentsSection />
+        <Tabs defaultValue='details' className='w-full space-y-4'>
+          <TabsList className='bg-card/40' aria-label='Organization page tabs'>
+            <TabsTrigger value='details'>Organization Details</TabsTrigger>
+            {!isCreateMode ? <TabsTrigger value='job-listings'>Job Listings</TabsTrigger> : null}
+            {!isCreateMode ? <TabsTrigger value='linked-records'>Linked Records</TabsTrigger> : null}
+            {!isCreateMode ? <TabsTrigger value='activity'>Metadata & Activity</TabsTrigger> : null}
+          </TabsList>
+          <TabsContent value='details' className='m-0 space-y-4 outline-none'>
+            <OrganizationBasicInfoSection />
+            <OrganizationAddressesSection />
+          </TabsContent>
+          {!isCreateMode ? (
+            <TabsContent value='job-listings' className='m-0 space-y-4 outline-none'>
               <OrganizationLegacyDemandSection />
               <OrganizationJobListingsSection />
+            </TabsContent>
+          ) : null}
+          {!isCreateMode ? (
+            <TabsContent value='linked-records' className='m-0 space-y-4 outline-none'>
+              <OrganizationBankAccountsSection />
+              <OrganizationDocumentsSection />
               <OrganizationPersonsSection />
               <OrganizationEventsSection />
-              <OrganizationContactLogsSection />
               <OrganizationAnyTextsSection />
               <OrganizationAnyParamsSection />
               <OrganizationEmailsSection />
               <OrganizationWebsitesSection />
+            </TabsContent>
+          ) : null}
+          {!isCreateMode ? (
+            <TabsContent value='activity' className='m-0 space-y-4 outline-none'>
+              <OrganizationLegacyMetadataSection />
+              <OrganizationMongoSummarySection />
+              <OrganizationImportedMetadataSection />
+              <OrganizationContactLogsSection />
               <OrganizationEmailLogSection />
               <OrganizationCampaignDeliveriesSection />
-            </>
-          )}
-        </>
+            </TabsContent>
+          ) : null}
+        </Tabs>
       )}
       {/* More sections will be added here */}
     </FilemakerPartyEditPageLayout>

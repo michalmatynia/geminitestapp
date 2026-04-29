@@ -298,6 +298,7 @@ export type FilemakerJobBoardScrapeResponse = {
 export type FilemakerJobBoardScrapeRuntimeStatus =
   | 'queued'
   | 'running'
+  | 'paused'
   | 'completed'
   | 'failed'
   | 'canceled';

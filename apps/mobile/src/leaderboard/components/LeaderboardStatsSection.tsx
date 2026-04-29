@@ -1,5 +1,5 @@
-import { Text, View } from 'react-native';
-import { KangurMobileCard as Card, KangurMobileSummaryChip } from '../../shared/KangurMobileUi';
+import { View } from 'react-native';
+import { KangurMobileSummaryChip } from '../../shared/KangurMobileUi';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
 
 interface LeaderboardStatsSectionProps {

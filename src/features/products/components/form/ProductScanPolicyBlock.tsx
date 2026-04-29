@@ -18,8 +18,7 @@ type ProductScanPolicyBlockProps = {
   clearBlockedScanReviewed: (scanId: string | null | undefined) => void;
 };
 
-function PolicyVerificationLinks({ scanId, canShow }: { scanId: string, canShow: boolean }): React.JSX.Element | null {
-  if (!canShow) return null;
+function PolicyVerificationLinks({ scanId }: { scanId: string }): React.JSX.Element | null {
   const urlsHref = buildProductScan1688SectionId(scanId, 'candidate-urls');
   const matchHref = buildProductScan1688SectionId(scanId, 'match-evaluation');
   if (urlsHref === null || matchHref === null) return null;
@@ -50,7 +49,7 @@ export function ProductScanPolicyBlock({
   const summary = resolveProductScan1688ApplyPolicySummary(scan);
   if (summary === null || summary.blockActions === false) return null;
 
-  const isReviewed = summary.blockActions === true && isBlockedScanReviewed(scan.id);
+  const isReviewed = isBlockedScanReviewed(scan.id);
 
   return (
     <div className='space-y-1.5 rounded-md border border-amber-500/20 bg-amber-500/5 px-3 py-2'>
@@ -59,15 +58,13 @@ export function ProductScanPolicyBlock({
         <p className='text-[11px] text-muted-foreground'>Review bypass active (reviewed at {formatTimestamp(scan.updatedAt)})</p>
       ) : (
         <div className='flex flex-wrap gap-3'>
-          <PolicyVerificationLinks scanId={scan.id} canShow={summary.blockActions === true} />
-          {summary.blockActions === true ? (
-            <button type='button' onClick={() => markBlockedScanReviewed(scan.id)} className='text-primary underline-offset-2 hover:underline text-[11px]'>
-              Mark reviewed
-            </button>
-          ) : null}
+          <PolicyVerificationLinks scanId={scan.id} />
+          <button type='button' onClick={() => markBlockedScanReviewed(scan.id)} className='text-primary underline-offset-2 hover:underline text-[11px]'>
+            Mark reviewed
+          </button>
         </div>
       )}
-      {isReviewed === true && summary.blockActions === true ? (
+      {isReviewed === true ? (
          <button type='button' onClick={() => clearBlockedScanReviewed(scan.id)} className='text-primary underline-offset-2 hover:underline text-[11px]'>
             Undo review
          </button>

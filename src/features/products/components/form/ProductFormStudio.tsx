@@ -21,7 +21,20 @@ import { StudioSourceImageSelector } from './studio/StudioSourceImageSelector';
 import { StudioVariantsGrid } from './studio/StudioVariantsGrid';
 import { ProductStudioProvider, useProductStudioContext } from '../../context/ProductStudioContext';
 
-function ProductFormStudioInner(): React.JSX.Element {
+type ProductStudioRegistrySource = {
+  label: string;
+  resolved: ReturnType<typeof buildProductStudioWorkspaceContextBundle>;
+} | null;
+
+function StudioUnavailableSection({ description }: { description: string }): React.JSX.Element {
+  return (
+    <FormSection title='Studio' description={description}>
+      <StudioProjectField />
+    </FormSection>
+  );
+}
+
+function useProductStudioWorkspaceRegistrySource(): ProductStudioRegistrySource {
   const {
     activeRunId,
     auditEntries,
@@ -32,68 +45,63 @@ function ProductFormStudioInner(): React.JSX.Element {
     selectedVariantSlotId,
     sequenceReadinessMessage,
     studioProjectId,
-    studioActionError: _studioActionError,
     variantsData,
   } = useProductStudioContext();
   const { product } = useProductFormCore();
-  const registrySource = React.useMemo(() => {
-    if (!product?.id) {
-      return null;
-    }
+  const productId = product?.id ?? '';
 
-    const workspaceContextInput = {
-      product,
-      studioProjectId,
-      selectedImageIndex,
-      imageSlotPreviews,
-      selectedVariantSlotId,
-      variantsData,
-      activeRunId,
-      runStatus,
-      pendingVariantPlaceholderCount,
-      sequenceReadinessMessage,
-      auditEntries,
-    };
+  return React.useMemo((): ProductStudioRegistrySource => {
+    if (productId === '') return null;
 
     return {
       label: 'Product Studio workspace state',
-      resolved: buildProductStudioWorkspaceContextBundle(workspaceContextInput),
+      resolved: buildProductStudioWorkspaceContextBundle({
+        product,
+        studioProjectId,
+        selectedImageIndex,
+        imageSlotPreviews,
+        selectedVariantSlotId,
+        variantsData,
+        activeRunId,
+        runStatus,
+        pendingVariantPlaceholderCount,
+        sequenceReadinessMessage,
+        auditEntries,
+      }),
     };
   }, [
-      activeRunId,
-      auditEntries,
-      imageSlotPreviews,
-      pendingVariantPlaceholderCount,
-      product,
-      runStatus,
-      selectedImageIndex,
-      selectedVariantSlotId,
-      sequenceReadinessMessage,
-      studioProjectId,
-      variantsData,
-    ]);
+    activeRunId,
+    auditEntries,
+    imageSlotPreviews,
+    pendingVariantPlaceholderCount,
+    product,
+    productId,
+    runStatus,
+    selectedImageIndex,
+    selectedVariantSlotId,
+    sequenceReadinessMessage,
+    studioProjectId,
+    variantsData,
+  ]);
+}
+
+function ProductFormStudioInner(): React.JSX.Element {
+  const { studioProjectId } = useProductStudioContext();
+  const { product } = useProductFormCore();
+  const productId = product?.id ?? '';
+  const registrySource = useProductStudioWorkspaceRegistrySource();
 
   useRegisterContextRegistryPageSource('product-studio-workspace-state', registrySource);
 
-  if (!studioProjectId) {
+  if (studioProjectId === null || studioProjectId === '') {
     return (
-      <FormSection
-        title='Studio'
-        description='Connect this product to an Image Studio project to enable permanent listing generations.'
-      >
-        <StudioProjectField />
-      </FormSection>
+      <StudioUnavailableSection description='Connect this product to an Image Studio project to enable permanent listing generations.' />
     );
   }
 
-  if (!product?.id) {
+  if (productId === '') {
     return (
-      <FormSection
-        title='Studio'
-        description='Save the product first to start permanent Studio generations.'
-      >
-        <StudioProjectField />
-      </FormSection>
+      <StudioUnavailableSection description='Save the product first to start permanent Studio generations.' />
     );
   }
 

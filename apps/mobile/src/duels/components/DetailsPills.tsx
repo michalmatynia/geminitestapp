@@ -1,7 +1,7 @@
 import type { KangurDuelSession, KangurDuelPlayer } from '@kangur/contracts/kangur-duels';
 import React from 'react';
 import { View } from 'react-native';
-import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type KangurMobileCopy, type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 import { KangurMobilePill as Pill } from '../../shared/KangurMobileUi';
 import { formatStatusLabel, getStatusTone, formatSeriesTitle } from '../utils/duels-ui';
 import { ProgressPill } from './ProgressPill';
@@ -16,7 +16,7 @@ interface DuelContext {
 interface DetailsPillsProps {
   duel: DuelContext;
   copy: KangurMobileCopy;
-  locale: any;
+  locale: KangurMobileLocale;
 }
 
 export function DetailsPills({ duel, copy, locale }: DetailsPillsProps): React.JSX.Element {

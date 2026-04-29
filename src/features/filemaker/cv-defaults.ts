@@ -1,4 +1,4 @@
-/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 
 import type { FilemakerAnyText } from './filemaker-anytext.types';
 import type { FilemakerContract } from './filemaker-contract.types';
@@ -8,14 +8,28 @@ import type {
   FilemakerPersonOccupationValue,
 } from './filemaker-person-occupation.types';
 import type { MongoFilemakerWebsite } from './filemaker-websites.types';
-import { createCvBlock, type CvBlock, type CvRowBlock } from './components/cv-builder/cv-block-model';
+import {
+  createCvBlock,
+  type CvBlock,
+  type CvRowBlock,
+  type CvTechStackItem,
+} from './components/cv-builder/cv-block-model';
 import type {
   FilemakerEmail,
+  FilemakerLexiconTerm,
+  FilemakerLexiconValidationPattern,
   FilemakerPerson,
   FilemakerPersonProfileEducation,
   FilemakerPersonProfileJobExperience,
   FilemakerPhoneNumber,
 } from './types';
+import { classifyFilemakerLexiconLabelWithPatterns } from './lexicon-validation-pattern-engine';
+import {
+  hasFilemakerTechnologyIconDefinition,
+  normalizeFilemakerTechnologyIconKey,
+  resolveFilemakerTechnologyDisplayLabel,
+  resolveFilemakerTechnologyIconUrl,
+} from './technology-icons';
 
 export type FilemakerCvAddressSeed = {
   city?: string;
@@ -30,6 +44,8 @@ export type FilemakerCvProfileSeed = {
   contracts?: FilemakerContract[];
   documents?: FilemakerDocument[];
   emails?: FilemakerEmail[];
+  lexiconTerms?: FilemakerLexiconTerm[];
+  lexiconValidationPatterns?: FilemakerLexiconValidationPattern[];
   occupations?: FilemakerPersonOccupation[];
   person: Pick<
     FilemakerPerson,
@@ -40,6 +56,7 @@ export type FilemakerCvProfileSeed = {
     | 'phoneNumbers'
     | 'linkedinUrl'
     | 'githubUrl'
+    | 'languageSkills'
     | 'profileEducation'
     | 'profileJobExperience'
     | 'cvHeadline'
@@ -188,13 +205,178 @@ const buildCustomListSection = (label: string, items: string[]): CvBlock | null 
   ]);
 };
 
+const splitTechnicalStackText = (values: string[]): string[] => {
+  const seen = new Set<string>();
+  const items: string[] = [];
+  values.forEach((value: string): void => {
+    const afterColon = value.includes(':') ? (value.split(':').slice(1).join(':') || value) : value;
+    afterColon
+      .split(/[,;•\n]|\s+\/\s+|\s+\|\s+|\s+and\s+/i)
+      .map((entry: string): string => entry.trim())
+      .filter((entry: string): boolean => entry.length > 0)
+      .forEach((entry: string): void => {
+        const normalized = normalizeFilemakerTechnologyIconKey(entry);
+        if (normalized.length === 0 || seen.has(normalized)) return;
+        seen.add(normalized);
+        items.push(entry);
+      });
+  });
+  return items;
+};
+
+const buildTechnologyTermLookup = (
+  terms: FilemakerLexiconTerm[] = []
+): FilemakerLexiconTerm[] =>
+  terms
+    .filter((term: FilemakerLexiconTerm): boolean => term.typeKey === 'technology')
+    .sort(
+      (left: FilemakerLexiconTerm, right: FilemakerLexiconTerm): number =>
+        normalizeFilemakerTechnologyIconKey(right.label).length -
+        normalizeFilemakerTechnologyIconKey(left.label).length
+    );
+
+const isValidatedTechnologyLabel = (
+  label: string,
+  patterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
+): boolean =>
+  classifyFilemakerLexiconLabelWithPatterns(patterns, {
+    label,
+    sourceScope: 'listing_field_technology',
+  })?.typeKey === 'technology';
+
+const technologyTermAliases = (term: FilemakerLexiconTerm): string[] => {
+  const values = [
+    term.label,
+    term.normalizedLabel,
+    resolveFilemakerTechnologyDisplayLabel(term.label),
+  ];
+  if (/\.js$/i.test(term.label)) values.push(term.label.replace(/\.js$/i, ''));
+  if (/\bapi$/i.test(term.label)) values.push(`${term.label}s`);
+  if (/\bapis$/i.test(term.label)) values.push(term.label.replace(/apis$/i, 'API'));
+  return Array.from(
+    new Set(
+      values
+        .map((value: string): string => normalizeFilemakerTechnologyIconKey(value))
+        .filter((value: string): boolean => value.length >= 2)
+    )
+  );
+};
+
+const cvSourceMentionsTechnologyTerm = (
+  sourceTextKey: string,
+  term: FilemakerLexiconTerm
+): boolean => {
+  const paddedSource = ` ${sourceTextKey} `;
+  return technologyTermAliases(term).some((alias: string): boolean =>
+    paddedSource.includes(` ${alias} `)
+  );
+};
+
+const exactLexiconTechnologyTermForCandidate = (
+  candidate: string,
+  terms: FilemakerLexiconTerm[]
+): FilemakerLexiconTerm | null => {
+  const candidateKey = normalizeFilemakerTechnologyIconKey(candidate);
+  if (candidateKey.length === 0) return null;
+  return terms.find((term: FilemakerLexiconTerm): boolean =>
+    technologyTermAliases(term).includes(candidateKey)
+  ) ?? null;
+};
+
+const buildTechnicalStackItems = (
+  sourceValues: string[],
+  explicitCandidateValues: string[],
+  lexiconTerms: FilemakerLexiconTerm[] = [],
+  lexiconValidationPatterns: FilemakerLexiconValidationPattern[] = []
+): CvTechStackItem[] => {
+  const terms = buildTechnologyTermLookup(lexiconTerms);
+  const validationPatterns = lexiconValidationPatterns;
+  const sourceTextKey = normalizeFilemakerTechnologyIconKey(sourceValues.join(' '));
+  const seen = new Set<string>();
+  const items: CvTechStackItem[] = [];
+  const addItem = (label: string, term?: FilemakerLexiconTerm): void => {
+    const key = normalizeFilemakerTechnologyIconKey(term?.normalizedLabel || term?.label || label);
+    if (key.length === 0 || seen.has(key)) return;
+    seen.add(key);
+    items.push({
+      label: term?.label ?? label,
+      iconUrl: resolveFilemakerTechnologyIconUrl(term?.label ?? label, term?.iconUrl),
+      ...(term?.id ? { lexiconTermId: term.id } : {}),
+      ...(term?.normalizedLabel ? { normalizedLabel: term.normalizedLabel } : {}),
+    });
+  };
+
+  terms
+    .filter((term: FilemakerLexiconTerm): boolean =>
+      isValidatedTechnologyLabel(term.label, validationPatterns) ||
+      hasFilemakerTechnologyIconDefinition(term.label)
+    )
+    .filter((term: FilemakerLexiconTerm): boolean =>
+      cvSourceMentionsTechnologyTerm(sourceTextKey, term)
+    )
+    .forEach((term: FilemakerLexiconTerm): void => {
+      addItem(term.label, term);
+    });
+
+  splitTechnicalStackText(explicitCandidateValues).forEach((candidate: string): void => {
+    const matchedTerm = exactLexiconTechnologyTermForCandidate(candidate, terms);
+    const matchedKnownLabel =
+      matchedTerm === null &&
+      (isValidatedTechnologyLabel(candidate, validationPatterns) || hasFilemakerTechnologyIconDefinition(candidate))
+        ? resolveFilemakerTechnologyDisplayLabel(candidate)
+        : null;
+    if (matchedTerm === null && matchedKnownLabel === null) return;
+    addItem(matchedKnownLabel ?? candidate, matchedTerm);
+  });
+
+  return items.slice(0, 28);
+};
+
+const CV_MONTH_LABELS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+const formatProfileExperienceMonth = (value: string | undefined): string => {
+  const normalized = value?.trim() ?? '';
+  const match = /^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/.exec(normalized);
+  if (!match) return '';
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return '';
+  return `${CV_MONTH_LABELS[month - 1]} ${match[1]}`;
+};
+
+const resolveProfileExperiencePeriod = (
+  experience: FilemakerPersonProfileJobExperience
+): string => {
+  const startLabel = formatProfileExperienceMonth(experience.startDate);
+  const endLabel = experience.isCurrent
+    ? 'Present'
+    : formatProfileExperienceMonth(experience.endDate);
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+  if (startLabel && experience.isCurrent) return `${startLabel} - Present`;
+  if (startLabel) return startLabel;
+  if (endLabel && !experience.isCurrent) return endLabel;
+  return experience.period;
+};
+
 const profileExperienceToCvBlock = (
   experience: FilemakerPersonProfileJobExperience
 ): CvBlock =>
   createCvBlock('experience', {
     title: experience.title,
     organization: experience.organization,
-    period: experience.period,
+    period: resolveProfileExperiencePeriod(experience),
     location: experience.location ?? '',
     description: experience.description ?? '',
     highlights: experience.highlights ?? [],
@@ -205,8 +387,33 @@ const profileEducationToCvBlock = (education: FilemakerPersonProfileEducation): 
     degree: education.degree,
     institution: education.institution,
     period: education.period,
+    country: education.country ?? '',
     description: education.description ?? '',
   });
+
+const collectTechnicalStackSourceValues = (seed: FilemakerCvProfileSeed): string[] => [
+  ...(seed.person.cvSelectedTechnicalEnvironment ?? []),
+  seed.person.cvHeadline ?? '',
+  seed.person.cvProfessionalSummary ?? '',
+  ...(seed.person.cvCoreStrengths ?? []),
+  ...(seed.person.profileJobExperience ?? []).flatMap(
+    (experience: FilemakerPersonProfileJobExperience): string[] => [
+      experience.title,
+      experience.organization,
+      experience.description ?? '',
+      ...(experience.highlights ?? []),
+    ]
+  ),
+  ...(seed.person.profileEducation ?? []).flatMap(
+    (education: FilemakerPersonProfileEducation): string[] => [
+      education.degree,
+      education.institution,
+      education.country ?? '',
+      education.description ?? '',
+    ]
+  ),
+  ...(seed.anyTexts ?? []).map((entry: FilemakerAnyText): string => entry.text),
+];
 
 export const buildDefaultFilemakerCvBlocks = (seed: FilemakerCvProfileSeed): CvBlock[] => {
   const occupations = seed.occupations ?? [];
@@ -235,10 +442,34 @@ export const buildDefaultFilemakerCvBlocks = (seed: FilemakerCvProfileSeed): CvB
     'Core Strengths',
     seed.person.cvCoreStrengths ?? []
   );
-  const technicalEnvironmentSection = buildCustomListSection(
-    'Selected Technical Environment',
-    seed.person.cvSelectedTechnicalEnvironment ?? []
+  const technicalStackItems = buildTechnicalStackItems(
+    collectTechnicalStackSourceValues(seed),
+    seed.person.cvSelectedTechnicalEnvironment ?? [],
+    seed.lexiconTerms,
+    seed.lexiconValidationPatterns
   );
+  const technicalEnvironmentSection =
+    technicalStackItems.length > 0
+      ? createReferenceSection('Selected Technical Environment', [
+          createCvBlock('techStack', {
+            label: '',
+            items: technicalStackItems,
+          }),
+        ])
+      : buildCustomListSection(
+          'Selected Technical Environment',
+          seed.person.cvSelectedTechnicalEnvironment ?? []
+      );
+  const languageItems = seed.person.languageSkills ?? [];
+  const languageSection =
+    languageItems.length > 0
+      ? createReferenceSection('Language Skills', [
+          createCvBlock('languages', {
+            label: '',
+            items: languageItems,
+          }),
+        ])
+      : null;
 
   const experienceBlocks =
     profileJobExperience.length > 0
@@ -326,6 +557,7 @@ export const buildDefaultFilemakerCvBlocks = (seed: FilemakerCvProfileSeed): CvB
     profileHeader,
     summarySection,
     ...(coreStrengthsSection ? [coreStrengthsSection] : []),
+    ...(languageSection ? [languageSection] : []),
     ...(technicalEnvironmentSection ? [technicalEnvironmentSection] : []),
     ...(experienceSection ? [experienceSection] : []),
     ...(educationSection ? [educationSection] : []),

@@ -199,7 +199,7 @@ export const useHomeScreenDeferredPanels = (
   useEffect(() => {
     if (isBlocked) {
       setArePanelsReady(false);
-      return;
+      return undefined;
     }
 
     setArePanelsReady(false);

@@ -252,7 +252,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   });
   if (!parsed.ok) return parsed.response;
 
-  const { name, iconId, pathId, enabled, locations, mode, display } = parsed.data;
+  const { name, iconId, pathId, enabled, locations, mode, display, contextTemplate } = parsed.data;
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
   const normalizedName = name.trim();
@@ -279,6 +279,7 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     locations,
     mode,
     display: buildCanonicalTriggerButtonDisplay(normalizedName, display),
+    contextTemplate: contextTemplate ?? null,
     createdAt: now,
     updatedAt: now,
     sortIndex: maxSortIndex + 1,

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import {
   createMongoFilemakerCv,
   getMongoFilemakerPersonById,
+  listMongoFilemakerCvsForPersonIds,
   listMongoFilemakerCvsForPerson,
   requireFilemakerMailAdminSession,
 } from '@/features/filemaker/server';
@@ -16,6 +17,8 @@ const cvCreateSchema = z.object({
   bodyBlocks: z.unknown().optional(),
   bodyHtml: z.string().nullable().optional(),
   bodyText: z.string().nullable().optional(),
+  highlightTechnologyTerms: z.unknown().optional(),
+  jobListingId: z.string().nullable().optional(),
   personId: z.string().min(1),
   title: z.string().nullable().optional(),
 });
@@ -27,7 +30,17 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
   if (personId.length === 0) {
     throw badRequestError('personId is required.');
   }
-  const cvs = await listMongoFilemakerCvsForPerson(personId);
+  const person = await getMongoFilemakerPersonById(personId);
+  const personRecord = person as unknown as Record<string, unknown> | null;
+  const mongoPersonId =
+    typeof personRecord?.['_id'] === 'string' ? personRecord['_id'] : undefined;
+  const personName = person ? resolveFilemakerCvPersonName(person) : '';
+  const cvs = person
+    ? await listMongoFilemakerCvsForPersonIds(
+        [personId, person.id, person.legacyUuid, mongoPersonId, personName],
+        [personName, person.fullName]
+      )
+    : await listMongoFilemakerCvsForPerson(personId);
   return Response.json({ cvs });
 }
 
@@ -49,6 +62,8 @@ export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     bodyBlocks: result.data.bodyBlocks,
     bodyHtml: result.data.bodyHtml,
     bodyText: result.data.bodyText,
+    highlightTechnologyTerms: result.data.highlightTechnologyTerms,
+    jobListingId: result.data.jobListingId,
     personId: person.id,
     personName: resolveFilemakerCvPersonName(person),
     title: result.data.title,

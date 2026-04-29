@@ -5,6 +5,12 @@ import {
 import { productAdvancedFilterPresetSchema, productAdvancedFilterPresetBundleSchema } from '@/shared/contracts/products/filters';
 import { type ProductAdvancedFilterPreset, type ProductAdvancedFilterGroup } from '@/shared/contracts/products';
 
+type ProductAdvancedFilterPresetBundle = {
+  version: 1;
+  exportedAt: string;
+  presets: ProductAdvancedFilterPreset[];
+};
+
 export const normalizePresetName = (name: string): string => name.trim();
 
 export const hasPresetNameConflict = (
@@ -13,9 +19,11 @@ export const hasPresetNameConflict = (
   exceptPresetId?: string
 ): boolean => {
   const normalizedName = name.trim().toLowerCase();
-  if (!normalizedName) return false;
+  if (normalizedName === '') return false;
   return presets.some((preset: ProductAdvancedFilterPreset) => {
-    if (exceptPresetId && preset.id === exceptPresetId) return false;
+    if (exceptPresetId !== undefined && exceptPresetId !== '' && preset.id === exceptPresetId) {
+      return false;
+    }
     return preset.name.trim().toLowerCase() === normalizedName;
   });
 };
@@ -34,7 +42,9 @@ export const createAdvancedPreset = (
   };
 };
 
-export const buildPresetBundle = (presets: ProductAdvancedFilterPreset[]) => ({
+export const buildPresetBundle = (
+  presets: ProductAdvancedFilterPreset[]
+): ProductAdvancedFilterPresetBundle => ({
   version: 1 as const,
   exportedAt: new Date().toISOString(),
   presets,
@@ -56,7 +66,8 @@ const resolveImportedPresetName = (
   desiredName: string,
   usedLowercaseNames: Set<string>
 ): string => {
-  const baseName = normalizePresetName(desiredName) || 'Imported Preset';
+  const normalizedDesiredName = normalizePresetName(desiredName);
+  const baseName = normalizedDesiredName !== '' ? normalizedDesiredName : 'Imported Preset';
   let copyIndex = 1;
   let candidate = baseName;
 
@@ -105,11 +116,11 @@ export const slugifyPresetFilename = (name: string): string => {
     .trim()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return normalized || 'preset';
+  return normalized !== '' ? normalized : 'preset';
 };
 
 export const writeToClipboard = async (value: string): Promise<void> => {
-  if (!navigator.clipboard?.writeText) {
+  if (typeof navigator === 'undefined') {
     throw new Error('Clipboard API is not available in this browser.');
   }
   await navigator.clipboard.writeText(value);

@@ -95,9 +95,20 @@ const buildWarehouseLabelMap = (
   return map;
 };
 
-const buildPriceGroupLabelMap = (groups: PriceGroup[]): Map<string, string> => {
+const normalizePriceGroups = (value: unknown): PriceGroup[] => {
+  if (Array.isArray(value)) return value as PriceGroup[];
+  if (value === null || typeof value !== 'object') return [];
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record['priceGroups'])) return record['priceGroups'] as PriceGroup[];
+  if (Array.isArray(record['groups'])) return record['groups'] as PriceGroup[];
+  if (Array.isArray(record['items'])) return record['items'] as PriceGroup[];
+  if (Array.isArray(record['data'])) return record['data'] as PriceGroup[];
+  return [];
+};
+
+const buildPriceGroupLabelMap = (groups: unknown): Map<string, string> => {
   const map = new Map<string, string>();
-  groups.forEach((g: PriceGroup) => {
+  normalizePriceGroups(groups).forEach((g: PriceGroup) => {
     const id = (g.groupId || g.id || '').trim();
     if (!id || map.has(id)) return;
     map.set(id, `${g.name} (${id})`);

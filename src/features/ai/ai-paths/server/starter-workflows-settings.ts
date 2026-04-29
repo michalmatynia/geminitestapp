@@ -65,6 +65,7 @@ const toTriggerButtonRecord = (
     mode?: AiTriggerButtonRecord['mode'];
     enabled?: boolean;
     display?: AiTriggerButtonRecord['display'];
+    contextTemplate?: AiTriggerButtonRecord['contextTemplate'];
     sortIndex?: number;
   },
   timestamp: string
@@ -80,6 +81,7 @@ const toTriggerButtonRecord = (
     label: preset.name,
     showLabel: true,
   },
+  contextTemplate: preset.contextTemplate ?? null,
   createdAt: timestamp,
   updatedAt: timestamp,
   sortIndex: preset.sortIndex ?? 0,
@@ -122,6 +124,38 @@ const areTriggerButtonDisplaysEqual = (
   left.showLabel === right.showLabel &&
   left.tooltip === right.tooltip;
 
+const stableJsonStringify = (value: unknown): string => {
+  if (value === null || value === undefined) return 'null';
+  if (Array.isArray(value)) {
+    return `[${value.map((entry: unknown): string => stableJsonStringify(entry)).join(',')}]`;
+  }
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort()
+      .map((key: string): string => `${JSON.stringify(key)}:${stableJsonStringify(record[key])}`)
+      .join(',')}}`;
+  }
+  return JSON.stringify(value);
+};
+
+const areTriggerButtonContextTemplatesEqual = (
+  left: AiTriggerButtonRecord['contextTemplate'],
+  right: AiTriggerButtonRecord['contextTemplate']
+): boolean => stableJsonStringify(left ?? null) === stableJsonStringify(right ?? null);
+
+const isLegacyStarterTriggerButtonContextTemplate = (
+  current: AiTriggerButtonRecord['contextTemplate'],
+  next: AiTriggerButtonRecord['contextTemplate']
+): boolean => {
+  if (!current || !next) return false;
+  const currentKeys = Object.keys(current);
+  if (currentKeys.length !== 1 || currentKeys[0] !== 'jobApplicationArtifactKind') {
+    return false;
+  }
+  return current['jobApplicationArtifactKind'] === next['jobApplicationArtifactKind'];
+};
+
 const buildRefreshedStarterTriggerButton = (
   button: AiTriggerButtonRecord,
   preset: StarterWorkflowTriggerPreset,
@@ -131,6 +165,15 @@ const buildRefreshedStarterTriggerButton = (
     label: preset.name,
     showLabel: true,
   };
+  const nextContextTemplate = preset.contextTemplate ?? null;
+  const shouldBackfillContextTemplate =
+    (button.contextTemplate === null ||
+      button.contextTemplate === undefined ||
+      isLegacyStarterTriggerButtonContextTemplate(button.contextTemplate, nextContextTemplate)) &&
+    nextContextTemplate !== null;
+  const resolvedContextTemplate = shouldBackfillContextTemplate
+    ? nextContextTemplate
+    : button.contextTemplate ?? null;
   const nextMode = preset.mode ?? 'click';
   const nextLocations = [...preset.locations];
   const isCurrent =
@@ -138,7 +181,8 @@ const buildRefreshedStarterTriggerButton = (
     (button.pathId ?? null) === preset.pathId &&
     button.mode === nextMode &&
     areStringArraysEqual(button.locations ?? [], nextLocations) &&
-    areTriggerButtonDisplaysEqual(button.display, nextDisplay);
+    areTriggerButtonDisplaysEqual(button.display, nextDisplay) &&
+    areTriggerButtonContextTemplatesEqual(button.contextTemplate, resolvedContextTemplate);
 
   if (isCurrent) return null;
 
@@ -149,6 +193,7 @@ const buildRefreshedStarterTriggerButton = (
     locations: nextLocations,
     mode: nextMode,
     display: nextDisplay,
+    contextTemplate: resolvedContextTemplate,
     updatedAt: timestamp,
   };
 };

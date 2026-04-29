@@ -15,6 +15,7 @@ import {
 } from '../../context/AdminFilemakerPersonEditPageContext';
 import type {
   FilemakerPerson,
+  FilemakerPersonLanguageSkill,
   FilemakerPersonProfileEducation,
   FilemakerPersonProfileJobExperience,
 } from '../../types';
@@ -34,6 +35,114 @@ const parseLines = (value: string): string[] =>
 
 const joinLines = (values: string[] | undefined): string => (values ?? []).join('\n');
 
+const MONTH_LABELS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+] as const;
+
+const MONTH_LOOKUP = new Map<string, number>([
+  ['jan', 1],
+  ['january', 1],
+  ['feb', 2],
+  ['february', 2],
+  ['mar', 3],
+  ['march', 3],
+  ['apr', 4],
+  ['april', 4],
+  ['may', 5],
+  ['jun', 6],
+  ['june', 6],
+  ['jul', 7],
+  ['july', 7],
+  ['aug', 8],
+  ['august', 8],
+  ['sep', 9],
+  ['sept', 9],
+  ['september', 9],
+  ['oct', 10],
+  ['october', 10],
+  ['nov', 11],
+  ['november', 11],
+  ['dec', 12],
+  ['december', 12],
+]);
+
+const toMonthValue = (year: string, month: number): string =>
+  `${year}-${String(month).padStart(2, '0')}`;
+
+const normalizeMonthInputValue = (value: string | undefined): string => {
+  const normalized = value?.trim() ?? '';
+  const monthValueMatch = /^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/.exec(normalized);
+  if (monthValueMatch) {
+    const month = Number(monthValueMatch[2]);
+    if (month >= 1 && month <= 12) return toMonthValue(monthValueMatch[1] ?? '', month);
+  }
+  const labelMatch = /^([A-Za-z]{3,9})\.?\s+(\d{4})$/.exec(normalized);
+  if (labelMatch) {
+    const month = MONTH_LOOKUP.get((labelMatch[1] ?? '').toLowerCase());
+    if (month !== undefined) return toMonthValue(labelMatch[2] ?? '', month);
+  }
+  return '';
+};
+
+const formatMonthInputValue = (value: string): string => {
+  const normalized = normalizeMonthInputValue(value);
+  if (!normalized) return '';
+  const [year, monthRaw] = normalized.split('-');
+  const month = Number(monthRaw);
+  if (!year || month < 1 || month > 12) return '';
+  return `${MONTH_LABELS[month - 1]} ${year}`;
+};
+
+const parseExperiencePeriodDates = (
+  period: string
+): { startDate: string; endDate: string; isCurrent: boolean } => {
+  const [startRaw = '', endRaw = ''] = period.split(/\s+(?:-|–|—|to)\s+/i);
+  const end = endRaw.trim();
+  const isCurrent = /\b(?:present|current|now)\b/i.test(end);
+  return {
+    startDate: normalizeMonthInputValue(startRaw),
+    endDate: isCurrent ? '' : normalizeMonthInputValue(end),
+    isCurrent,
+  };
+};
+
+const resolveExperienceDateState = (
+  experience: FilemakerPersonProfileJobExperience
+): { startDate: string; endDate: string; isCurrent: boolean } => {
+  const parsed = parseExperiencePeriodDates(experience.period);
+  const isCurrent = experience.isCurrent ?? parsed.isCurrent;
+  return {
+    startDate: normalizeMonthInputValue(experience.startDate) || parsed.startDate,
+    endDate: isCurrent ? '' : normalizeMonthInputValue(experience.endDate) || parsed.endDate,
+    isCurrent,
+  };
+};
+
+const buildExperiencePeriod = (input: {
+  endDate: string;
+  isCurrent: boolean;
+  startDate: string;
+}): string => {
+  const startLabel = formatMonthInputValue(input.startDate);
+  const endLabel = input.isCurrent ? 'Present' : formatMonthInputValue(input.endDate);
+  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
+  if (startLabel && input.isCurrent) return `${startLabel} - Present`;
+  if (startLabel) return startLabel;
+  if (endLabel && !input.isCurrent) return endLabel;
+  return '';
+};
+
 const updateDraft = (
   personDraft: Partial<FilemakerPerson>,
   setPersonDraft: (value: React.SetStateAction<Partial<FilemakerPerson>>) => void,
@@ -47,6 +156,9 @@ const emptyExperience = (): FilemakerPersonProfileJobExperience => ({
   title: '',
   organization: '',
   period: '',
+  startDate: '',
+  endDate: '',
+  isCurrent: false,
   location: '',
   description: '',
   highlights: [],
@@ -57,8 +169,21 @@ const emptyEducation = (): FilemakerPersonProfileEducation => ({
   degree: '',
   institution: '',
   period: '',
+  country: '',
   description: '',
 });
+
+const emptyLanguageSkill = (): FilemakerPersonLanguageSkill => ({
+  id: createProfileEntryId('language'),
+  language: '',
+  level: 5,
+});
+
+const normalizeLanguageLevel = (value: string): number => {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(10, Math.max(1, Math.round(parsed)));
+};
 
 const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
   firstName: 'Micha\u0142',
@@ -80,12 +205,19 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
     'AI and automation: AI tutors, agentic workflows, OpenAI / Gemini / GPT integrations, Ollama, and prompt-driven tooling',
     'Data, UI, and platform: MongoDB, Redis, BullMQ, TanStack Query, Tailwind CSS, Radix UI, CMS work, testing, and maintainable architecture',
   ],
+  languageSkills: [
+    { id: 'reference-cv-language-english', language: 'English', level: 10 },
+    { id: 'reference-cv-language-polish', language: 'Polish', level: 10 },
+  ],
   profileJobExperience: [
     {
       id: 'reference-cv-experience-studiq',
       title: 'Agentic Engineer for StudiQ',
       organization: 'studiqbeta.vercel.app (Self-employed)',
       period: 'Sep 2025 - Present',
+      startDate: '2025-09',
+      endDate: '',
+      isCurrent: true,
       location: 'Szczecin, Poland | Remote',
       description: '',
       highlights: [
@@ -100,6 +232,9 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
       title: 'Software Integration Engineer',
       organization: 'Stargater.net (Freelance)',
       period: 'Jun 2024 - May 2025',
+      startDate: '2024-06',
+      endDate: '2025-05',
+      isCurrent: false,
       location: 'Szczecin, Poland | Remote',
       description: '',
       highlights: [
@@ -114,6 +249,9 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
       title: 'Front End Developer',
       organization: 'lastminute.com (Full-time)',
       period: 'Jan 2022 - Mar 2024',
+      startDate: '2022-01',
+      endDate: '2024-03',
+      isCurrent: false,
       location: 'Remote',
       description: '',
       highlights: [
@@ -127,6 +265,9 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
       title: 'Full-Stack Developer',
       organization: 'Milkbardesigners.com (Full-time)',
       period: 'Oct 2012 - Mar 2020',
+      startDate: '2012-10',
+      endDate: '2020-03',
+      isCurrent: false,
       location: 'Szczecin, Poland | On-site',
       description: '',
       highlights: [
@@ -140,6 +281,9 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
       title: 'Database Administrator',
       organization: 'Procter & Gamble (Full-time)',
       period: 'Jun 2007 - Aug 2010',
+      startDate: '2007-06',
+      endDate: '2010-08',
+      isCurrent: false,
       location: 'Dublin, Ireland | On-site',
       description: '',
       highlights: [
@@ -155,6 +299,7 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
       degree: "Master's Degree in Media & Communication",
       institution: 'Dalarna University',
       period: '2004 - 2005',
+      country: 'Sweden',
       description: '',
     },
     {
@@ -162,6 +307,7 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
       degree: "Bachelor's Degree in English Language & Literature",
       institution: 'University of Szczecin',
       period: '2001 - 2003',
+      country: 'Poland',
       description: '',
     },
   ],
@@ -173,6 +319,11 @@ const cloneReferenceCvProfile = (): Partial<FilemakerPerson> => ({
   cvSelectedTechnicalEnvironment: [
     ...(REFERENCE_CV_PROFILE.cvSelectedTechnicalEnvironment ?? []),
   ],
+  languageSkills: (REFERENCE_CV_PROFILE.languageSkills ?? []).map(
+    (skill: FilemakerPersonLanguageSkill): FilemakerPersonLanguageSkill => ({
+      ...skill,
+    })
+  ),
   profileEducation: (REFERENCE_CV_PROFILE.profileEducation ?? []).map(
     (education: FilemakerPersonProfileEducation): FilemakerPersonProfileEducation => ({
       ...education,
@@ -217,6 +368,9 @@ const mergeMissingReferenceCvProfile = (
     cvSelectedTechnicalEnvironment: hasArrayEntries(current.cvSelectedTechnicalEnvironment)
       ? current.cvSelectedTechnicalEnvironment
       : reference.cvSelectedTechnicalEnvironment,
+    languageSkills: hasArrayEntries(current.languageSkills)
+      ? current.languageSkills
+      : reference.languageSkills,
     profileJobExperience: hasArrayEntries(current.profileJobExperience)
       ? current.profileJobExperience
       : reference.profileJobExperience,
@@ -305,12 +459,143 @@ function PersonProfileLinksAndCvFields(): React.JSX.Element {
   );
 }
 
+function LanguageSkillFields(props: {
+  index: number;
+  skill: FilemakerPersonLanguageSkill;
+  onRemove: () => void;
+  onUpdate: (patch: Partial<FilemakerPersonLanguageSkill>) => void;
+}): React.JSX.Element {
+  return (
+    <div className='grid gap-3 rounded-md border border-border/60 bg-card/20 p-3 md:grid-cols-[minmax(0,1fr)_140px_auto] md:items-end'>
+      <FormField label={`Language ${props.index + 1}`}>
+        <Input
+          value={props.skill.language}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            props.onUpdate({ language: event.target.value });
+          }}
+          placeholder='English'
+          aria-label={`Language skill ${props.index + 1} language`}
+        />
+      </FormField>
+      <FormField label='Level 1-10'>
+        <Input
+          type='number'
+          min={1}
+          max={10}
+          step={1}
+          value={props.skill.level}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            props.onUpdate({ level: normalizeLanguageLevel(event.target.value) });
+          }}
+          aria-label={`Language skill ${props.index + 1} level`}
+        />
+      </FormField>
+      <Button
+        type='button'
+        variant='ghost'
+        size='icon'
+        className='size-9 text-red-300'
+        aria-label={`Remove language skill ${props.index + 1}`}
+        onClick={props.onRemove}
+      >
+        <Trash2 className='size-3.5' />
+      </Button>
+    </div>
+  );
+}
+
+function PersonLanguageSkillFields(): React.JSX.Element {
+  const { personDraft } = useAdminFilemakerPersonEditPageStateContext();
+  const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
+  const languageSkills = personDraft.languageSkills ?? [];
+
+  const updateLanguageSkill = (
+    index: number,
+    patch: Partial<FilemakerPersonLanguageSkill>
+  ): void => {
+    updateDraft(personDraft, setPersonDraft, {
+      languageSkills: languageSkills.map(
+        (
+          skill: FilemakerPersonLanguageSkill,
+          currentIndex: number
+        ): FilemakerPersonLanguageSkill =>
+          currentIndex === index ? { ...skill, ...patch } : skill
+      ),
+    });
+  };
+
+  return (
+    <div className='space-y-3'>
+      <div className='flex items-center justify-between gap-3'>
+        <div>
+          <h3 className='text-sm font-semibold text-white'>Language skills</h3>
+          <p className='text-xs text-gray-500'>
+            Add spoken or written languages with a numeric proficiency level from 1 to 10.
+          </p>
+        </div>
+        <Button
+          type='button'
+          variant='outline'
+          size='sm'
+          className='gap-2'
+          onClick={(): void => {
+            updateDraft(personDraft, setPersonDraft, {
+              languageSkills: [...languageSkills, emptyLanguageSkill()],
+            });
+          }}
+        >
+          <Plus className='size-3.5' />
+          Add Language
+        </Button>
+      </div>
+      {languageSkills.length === 0 ? (
+        <div className='rounded-md border border-dashed border-border/60 p-3 text-xs text-gray-500'>
+          No language skills yet.
+        </div>
+      ) : (
+        languageSkills.map((skill: FilemakerPersonLanguageSkill, index: number) => (
+          <LanguageSkillFields
+            key={skill.id ?? index}
+            skill={skill}
+            index={index}
+            onUpdate={(patch: Partial<FilemakerPersonLanguageSkill>): void => {
+              updateLanguageSkill(index, patch);
+            }}
+            onRemove={(): void => {
+              updateDraft(personDraft, setPersonDraft, {
+                languageSkills: languageSkills.filter(
+                  (_entry: FilemakerPersonLanguageSkill, currentIndex: number): boolean =>
+                    currentIndex !== index
+                ),
+              });
+            }}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
 function JobExperienceFields(props: {
   experience: FilemakerPersonProfileJobExperience;
   index: number;
   onRemove: () => void;
   onUpdate: (patch: Partial<FilemakerPersonProfileJobExperience>) => void;
 }): React.JSX.Element {
+  const dateState = resolveExperienceDateState(props.experience);
+  const updateDateState = (
+    patch: Partial<{ endDate: string; isCurrent: boolean; startDate: string }>
+  ): void => {
+    const nextState = { ...dateState, ...patch };
+    const nextEndDate = nextState.isCurrent ? '' : nextState.endDate;
+    props.onUpdate({
+      startDate: nextState.startDate,
+      endDate: nextEndDate,
+      isCurrent: nextState.isCurrent,
+      period: buildExperiencePeriod({ ...nextState, endDate: nextEndDate }),
+    });
+  };
+
   return (
     <div className='rounded-md border border-border/60 bg-card/20 p-3'>
       <div className='mb-3 flex items-center justify-between gap-3'>
@@ -347,14 +632,46 @@ function JobExperienceFields(props: {
             aria-label={`Job experience ${props.index + 1} organization`}
           />
         </FormField>
-        <FormField label='Period'>
+        <FormField label='Start month'>
           <Input
-            value={props.experience.period}
+            type='month'
+            value={dateState.startDate}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              props.onUpdate({ period: event.target.value });
+              updateDateState({ startDate: event.target.value });
             }}
-            placeholder='Sep 2025 - Present'
-            aria-label={`Job experience ${props.index + 1} period`}
+            aria-label={`Job experience ${props.index + 1} start month`}
+          />
+        </FormField>
+        <FormField label='End month'>
+          <div className='space-y-2'>
+            <Input
+              type='month'
+              value={dateState.endDate}
+              disabled={dateState.isCurrent}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                updateDateState({ endDate: event.target.value });
+              }}
+              aria-label={`Job experience ${props.index + 1} end month`}
+            />
+            <label className='flex items-center gap-2 text-xs text-gray-300'>
+              <input
+                type='checkbox'
+                checked={dateState.isCurrent}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  updateDateState({ isCurrent: event.target.checked });
+                }}
+                aria-label={`Job experience ${props.index + 1} is current role`}
+                className='size-3.5 rounded border-border bg-background'
+              />
+              Present
+            </label>
+          </div>
+        </FormField>
+        <FormField label='Timeline label'>
+          <Input
+            value={buildExperiencePeriod(dateState)}
+            readOnly
+            aria-label={`Job experience ${props.index + 1} timeline label`}
           />
         </FormField>
         <FormField label='Location / mode'>
@@ -507,7 +824,17 @@ function EducationFields(props: {
             aria-label={`Education ${props.index + 1} institution`}
           />
         </FormField>
-        <FormField label='Period' className='md:col-span-2'>
+        <FormField label='Country of study'>
+          <Input
+            value={props.education.country ?? ''}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+              props.onUpdate({ country: event.target.value });
+            }}
+            placeholder='Poland'
+            aria-label={`Education ${props.index + 1} country of study`}
+          />
+        </FormField>
+        <FormField label='Period'>
           <Input
             value={props.education.period}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -630,6 +957,7 @@ export function PersonProfileCvSection(): React.JSX.Element {
   return (
     <FormSection title='Person Profile & CV' className='space-y-6 p-4'>
       <PersonProfileLinksAndCvFields />
+      <PersonLanguageSkillFields />
       <PersonProfileJobExperienceFields />
       <PersonProfileEducationFields />
     </FormSection>

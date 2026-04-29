@@ -8,17 +8,18 @@ import {
 import type { MenuSettings } from '@/shared/contracts/cms-menu';
 import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 
-import type { CSSProperties } from 'react';
+import { useMemo } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 type CmsPageShellProps = {
   menu: MenuSettings;
   theme: ThemeSettings;
   colorSchemes: Record<string, ColorSchemeColors>;
   showMenu?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
-export function CmsPageShell(props: CmsPageShellProps): React.ReactNode {
+export function CmsPageShell(props: CmsPageShellProps): ReactNode {
   const { menu, theme, colorSchemes, showMenu = true, children } = props;
 
   const menuVisible = menu.showMenu && showMenu;
@@ -41,7 +42,7 @@ export function CmsPageShell(props: CmsPageShellProps): React.ReactNode {
 }
 
 function useMemoContentStyle(theme: ThemeSettings, menuVisible: boolean, menu: MenuSettings): CSSProperties {
-  return React.useMemo(() => {
+  return useMemo(() => {
     const { paddingTop, paddingRight, paddingBottom, paddingLeft } = getPadding(theme);
     const { marginTop, marginRight, marginBottom, marginLeft } = getMargin(theme);
 

@@ -8,6 +8,129 @@ import type { requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 const hasOwn = (record: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(record, key);
 
+const RUN_TRIGGER_CONTEXT_MAX_ARRAY_ITEMS = 12;
+const RUN_TRIGGER_CONTEXT_MAX_STRING_LENGTH = 4_000;
+const RUN_TRIGGER_CONTEXT_MAX_DEPTH = 10;
+const RUN_TRIGGER_CONTEXT_HEAVY_KEYS = new Set([
+  'cvs',
+  'harvestprofiles',
+  'importeddemands',
+  'importedprofiles',
+  'joblistings',
+  'linkedrecords',
+  'linkedanyparams',
+  'linkedanytexts',
+  'linkedbankaccounts',
+  'linkeddocuments',
+  'linkedevents',
+  'selectedlinks',
+  'selectedterms',
+  'sourceapplicationcontext',
+  'valuecatalog',
+]);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const isHeavyTriggerContextKey = (key: string): boolean => {
+  const normalized = key.trim().toLowerCase();
+  return (
+    RUN_TRIGGER_CONTEXT_HEAVY_KEYS.has(normalized) ||
+    /(?:^|[_-])base64(?:$|[_-])/i.test(key) ||
+    /(?:^|[_-])binary(?:$|[_-])/i.test(key) ||
+    /(?:^|[_-])blob(?:$|[_-])/i.test(key) ||
+    /(?:^|[_-])buffer(?:$|[_-])/i.test(key) ||
+    normalized === 'bodyhtml' ||
+    normalized === 'rawhtml'
+  );
+};
+
+const summarizeTriggerContextCollection = (value: unknown): Record<string, number> | null => {
+  if (Array.isArray(value)) return { count: value.length };
+  if (!isRecord(value)) return null;
+  const counts: Record<string, number> = {};
+  Object.entries(value).forEach(([key, entryValue]) => {
+    if (Array.isArray(entryValue)) counts[key] = entryValue.length;
+  });
+  return Object.keys(counts).length > 0 ? counts : null;
+};
+
+const summarizeTriggerContextLinkedRecords = (value: unknown): Record<string, unknown> | null => {
+  if (!isRecord(value)) return summarizeTriggerContextCollection(value);
+  const summary: Record<string, unknown> = {};
+  Object.entries(value).forEach(([key, entryValue]) => {
+    if (Array.isArray(entryValue)) summary[`${key}Count`] = entryValue.length;
+  });
+  const pickItems = (key: string, fields: string[]): void => {
+    const items = value[key];
+    if (!Array.isArray(items)) return;
+    summary[key] = items.slice(0, 4).map((item: unknown): Record<string, unknown> => {
+      const itemRecord = isRecord(item) ? item : {};
+      return fields.reduce<Record<string, unknown>>((picked, field) => {
+        const compacted = compactTriggerContextValue(itemRecord[field], 0);
+        if (compacted !== undefined && compacted !== null && compacted !== '') {
+          picked[field] = compacted;
+        }
+        return picked;
+      }, {});
+    });
+  };
+  pickItems('linkedEmails', ['email', 'value', 'label', 'type']);
+  pickItems('linkedWebsites', ['url', 'website', 'value', 'label', 'type']);
+  pickItems('linkedAddresses', ['city', 'country', 'street', 'postalCode', 'value', 'label']);
+  pickItems('linkedOccupations', ['title', 'role', 'company', 'organizationName', 'value', 'label']);
+  return Object.keys(summary).length > 0 ? summary : null;
+};
+
+const compactTriggerContextValue = (value: unknown, depth = 0): unknown => {
+  if (value === null || value === undefined) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > RUN_TRIGGER_CONTEXT_MAX_STRING_LENGTH
+      ? `${trimmed.slice(0, RUN_TRIGGER_CONTEXT_MAX_STRING_LENGTH).trim()}... [truncated]`
+      : trimmed;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return value;
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, RUN_TRIGGER_CONTEXT_MAX_ARRAY_ITEMS)
+      .map((entry: unknown): unknown => compactTriggerContextValue(entry, depth + 1))
+      .filter((entry: unknown): boolean => entry !== undefined);
+  }
+  if (!isRecord(value)) return undefined;
+  if (depth >= RUN_TRIGGER_CONTEXT_MAX_DEPTH) return {};
+
+  const next: Record<string, unknown> = {};
+  Object.entries(value).forEach(([key, entryValue]) => {
+    if (isHeavyTriggerContextKey(key)) {
+      const summary = key.trim().toLowerCase() === 'linkedrecords'
+        ? summarizeTriggerContextLinkedRecords(entryValue)
+        : summarizeTriggerContextCollection(entryValue);
+      if (summary !== null) next[`${key}Summary`] = summary;
+      return;
+    }
+    const compacted = compactTriggerContextValue(entryValue, depth + 1);
+    if (compacted !== undefined) next[key] = compacted;
+  });
+  return next;
+};
+
+export const compactRunTriggerContext = (
+  triggerContext: AiPathRunEnqueueRequest['triggerContext']
+): Record<string, unknown> | null => {
+  if (!isRecord(triggerContext)) return null;
+  const compacted = compactTriggerContextValue(triggerContext);
+  if (!isRecord(compacted)) return null;
+  const source = isRecord(compacted['source']) ? compacted['source'] : null;
+  if (source?.['location'] === 'filemaker_organization_job_application' && hasOwn(compacted, 'entityJson')) {
+    return {
+      ...compacted,
+      entity: null,
+    };
+  }
+  return compacted;
+};
+
 export type ContextBundle = {
   refs: { id: string; kind: 'static_node' | 'runtime_document'; providerId?: string; entityType?: string }[] | undefined;
   resolved: {
@@ -92,7 +215,7 @@ export function buildPathRunPayload(options: PathRunPayloadOptions): Parameters<
   const { access, data, nodes, edges, meta, pathName } = options;
   return {
     userId: access.userId, pathId: data.pathId, pathName, nodes, edges,
-    triggerEvent: data.triggerEvent, triggerNodeId: data.triggerNodeId, triggerContext: data.triggerContext ?? null,
+    triggerEvent: data.triggerEvent, triggerNodeId: data.triggerNodeId, triggerContext: compactRunTriggerContext(data.triggerContext ?? null),
     entityId: data.entityId ?? null, entityType: data.entityType ?? null, maxAttempts: data.maxAttempts,
     backoffMs: data.backoffMs, backoffMaxMs: data.backoffMaxMs, requestId: data.requestId,
     meta,

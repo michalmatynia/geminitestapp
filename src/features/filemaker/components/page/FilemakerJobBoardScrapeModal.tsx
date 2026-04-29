@@ -83,6 +83,7 @@ type ScrapeModalInitialState = {
 type ActiveScrapeRequest = {
   controller: AbortController;
   id: number;
+  mode: FilemakerJobBoardScrapeMode;
 };
 
 type LivePreviewState = {
@@ -161,6 +162,8 @@ const SCRAPER_SETTINGS_STORAGE_KEY = 'filemaker.job-board-scraper.settings.v1';
 const SCRAPER_SETTINGS_VERSION = 3;
 const SCRAPER_ACTIVE_RUN_STORAGE_KEY = 'filemaker.job-board-scraper.active-run-id.v1';
 const RUNTIME_RUN_POLL_INTERVAL_MS = 1000;
+const RUNTIME_RUN_POLL_MAX_INTERVAL_MS = 4000;
+const RUNTIME_RUN_POLL_IDLE_BACKOFF_AFTER_MS = 10_000;
 
 const jobBoardScrapeRunEndpoint = (runId: string): string =>
   `${FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT}/runs/${encodeURIComponent(runId)}`;
@@ -762,6 +765,7 @@ const readNullableString = (value: unknown): string | null => {
 
 const normalizeRuntimeStatus = (value: unknown): FilemakerJobBoardScrapeRuntimeStatus =>
   value === 'running' ||
+  value === 'paused' ||
   value === 'completed' ||
   value === 'failed' ||
   value === 'canceled'
@@ -771,7 +775,8 @@ const normalizeRuntimeStatus = (value: unknown): FilemakerJobBoardScrapeRuntimeS
 const isRuntimeRunActive = (
   run: FilemakerJobBoardScrapeRuntimeRun | null
 ): run is FilemakerJobBoardScrapeRuntimeRun =>
-  run !== null && (run.status === 'queued' || run.status === 'running');
+  run !== null &&
+  (run.status === 'queued' || run.status === 'running' || run.status === 'paused');
 
 const readNumber = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
@@ -1247,6 +1252,28 @@ const postScrapeRequest = async (
   return normalizeScrapeResponse(await response.json());
 };
 
+const postScrapeRuntimeStartRequest = async (
+  input: Omit<PostScrapeRequestInput, 'onEvent' | 'onRunId'>
+): Promise<FilemakerJobBoardScrapeRuntimeRun> => {
+  const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(buildRequest(input.draft, input.mode)),
+    signal: input.signal,
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+  const body = (await response.json()) as unknown;
+  const run = normalizeRuntimeRun(isRecord(body) ? body['run'] : null);
+  if (run !== null) return run;
+  const runId = response.headers.get('x-filemaker-job-board-scrape-run-id')?.trim() ?? '';
+  if (runId.length > 0) {
+    return buildClientRuntimeRun(runId, input.draft, input.mode);
+  }
+  throw new Error('Job-board scrape run was not created.');
+};
+
 const postSaveDraftsRequest = async (
   input: PostSaveDraftsRequestInput
 ): Promise<FilemakerJobBoardScrapeResponse> => {
@@ -1621,11 +1648,12 @@ export function FilemakerJobBoardScrapeModal(
     toast('Job-board scrape stopped.', { variant: 'default' });
   };
 
-  const startScrapeRequest = (): ActiveScrapeRequest | null => {
+  const startScrapeRequest = (mode: FilemakerJobBoardScrapeMode): ActiveScrapeRequest | null => {
     if (activeRequestRef.current !== null) return null;
     const request: ActiveScrapeRequest = {
       controller: new AbortController(),
       id: requestIdRef.current + 1,
+      mode,
     };
     requestIdRef.current = request.id;
     activeRequestRef.current = request;
@@ -1686,8 +1714,15 @@ export function FilemakerJobBoardScrapeModal(
     const run = normalizedSnapshot.run;
     setActiveRuntimeRun(run);
     if (run !== null) {
-      writeStoredRuntimeRunId(run.id);
-      setModeInFlight(isRuntimeRunActive(run) ? run.mode : null);
+      if (isRuntimeRunActive(run)) {
+        writeStoredRuntimeRunId(run.id);
+        setModeInFlight(run.mode);
+      } else {
+        if (readStoredRuntimeRunId() === run.id) {
+          removeStoredRuntimeRunId();
+        }
+        setModeInFlight(null);
+      }
     }
 
     const eventPreview = buildLivePreviewFromEvents(normalizedSnapshot.events);
@@ -1736,7 +1771,7 @@ export function FilemakerJobBoardScrapeModal(
     inFlightKey: string
   ): Promise<void> => {
     if (offers.length === 0 || isRunning || isSavingPreviewDrafts) return;
-    const request = startScrapeRequest();
+    const request = startScrapeRequest('import');
     if (request === null) return;
     setSaveDraftsInFlight(inFlightKey);
     try {
@@ -1898,7 +1933,7 @@ export function FilemakerJobBoardScrapeModal(
       toast('Provide a supported job-board category or offer link.', { variant: 'error' });
       return;
     }
-    const request = startScrapeRequest();
+    const request = startScrapeRequest(mode);
     if (request === null) return;
     setModeInFlight(mode);
     setResult(null);
@@ -1913,6 +1948,26 @@ export function FilemakerJobBoardScrapeModal(
     });
     try {
       await browserMode.persist();
+      if (mode === 'import') {
+        const run = await postScrapeRuntimeStartRequest({
+          draft,
+          mode,
+          signal: request.controller.signal,
+        });
+        if (isActiveScrapeRequest(request)) {
+          writeStoredRuntimeRunId(run.id);
+          setActiveRuntimeRun(run);
+          setModeInFlight(isRuntimeRunActive(run) ? run.mode : null);
+          setLivePreview((current) => ({
+            ...current,
+            messages: appendCapped(
+              current.messages,
+              'Import queued. Scraping will continue in the background.'
+            ),
+          }));
+        }
+        return;
+      }
       const nextResult = await postScrapeRequest({
         draft,
         mode,
@@ -1935,9 +1990,12 @@ export function FilemakerJobBoardScrapeModal(
   };
 
   const closeModal = (): void => {
-    activeRequestRef.current?.controller.abort();
-    activeRequestRef.current = null;
-    setModeInFlight(null);
+    const activeRequest = activeRequestRef.current;
+    if (activeRequest !== null && activeRequest.mode !== 'import') {
+      activeRequest.controller.abort();
+      activeRequestRef.current = null;
+      setModeInFlight(null);
+    }
     setSaveDraftsInFlight(null);
     props.onClose();
   };
@@ -1947,48 +2005,86 @@ export function FilemakerJobBoardScrapeModal(
       rehydratedRunIdRef.current = null;
       return undefined;
     }
-    const runId = readStoredRuntimeRunId();
-    if (runId === null || rehydratedRunIdRef.current === runId) return undefined;
-    rehydratedRunIdRef.current = runId;
+    const storedRunId = readStoredRuntimeRunId();
+    const rehydrateKey = storedRunId ?? 'latest-active-runtime-run';
+    if (rehydratedRunIdRef.current === rehydrateKey) return undefined;
+    rehydratedRunIdRef.current = rehydrateKey;
     const controller = new AbortController();
-    fetchRuntimeSnapshot(runId, controller.signal)
-      .then((snapshot) => {
-        applyRuntimeSnapshot(snapshot, { notifyCompletion: false });
-      })
-      .catch(async (error: unknown) => {
-        if (isAbortLikeError(error, controller.signal)) return;
-        if (isNotFoundResponseError(error)) {
-          removeStoredRuntimeRunId();
-          const latestSnapshot = await fetchLatestRuntimeSnapshot(controller.signal);
-          applyRuntimeSnapshot(latestSnapshot, { notifyCompletion: false });
+
+    const applyLatestActiveRun = async (): Promise<boolean> => {
+      const latestSnapshot = await fetchLatestRuntimeSnapshot(controller.signal);
+      if (!isRuntimeRunActive(latestSnapshot.run)) return false;
+      applyRuntimeSnapshot(latestSnapshot, { notifyCompletion: false });
+      return true;
+    };
+
+    void (async (): Promise<void> => {
+      try {
+        if (storedRunId === null) {
+          await applyLatestActiveRun();
           return;
         }
-        toast(error instanceof Error ? error.message : 'Failed to load job-board scrape run.', {
-          variant: 'error',
-        });
-      })
-      .catch((error: unknown) => {
+        let snapshot: FilemakerJobBoardScrapeRuntimeSnapshot;
+        try {
+          snapshot = await fetchRuntimeSnapshot(storedRunId, controller.signal);
+        } catch (error) {
+          if (isAbortLikeError(error, controller.signal)) return;
+          if (isNotFoundResponseError(error)) {
+            removeStoredRuntimeRunId();
+            await applyLatestActiveRun();
+            return;
+          }
+          throw error;
+        }
+        if (isRuntimeRunActive(snapshot.run)) {
+          applyRuntimeSnapshot(snapshot, { notifyCompletion: false });
+          return;
+        }
+        if (await applyLatestActiveRun()) return;
+        applyRuntimeSnapshot(snapshot, { notifyCompletion: true });
+      } catch (error) {
         if (isAbortLikeError(error, controller.signal)) return;
         toast(error instanceof Error ? error.message : 'Failed to load latest job-board scrape run.', {
           variant: 'error',
         });
-      });
+      }
+    })();
     return () => {
       controller.abort();
     };
   }, [applyRuntimeSnapshot, props.open, toast]);
 
   useEffect(() => {
-    if (!props.open || !isRuntimeRunActive(activeRuntimeRun)) return undefined;
+    if (!isRuntimeRunActive(activeRuntimeRun)) return undefined;
     if (activeRequestRef.current !== null) return undefined;
     let canceled = false;
     let timeoutId: number | null = null;
     const controller = new AbortController();
+    let lastFingerprint: string | null = null;
+    let lastChangeAt = Date.now();
+
+    const computeFingerprint = (snapshot: { events: ReadonlyArray<unknown>; run: { updatedAt?: string } | null }): string =>
+      `${snapshot.events.length}|${snapshot.run?.updatedAt ?? ''}`;
+
+    const nextDelay = (): number => {
+      const idleFor = Date.now() - lastChangeAt;
+      if (idleFor < RUNTIME_RUN_POLL_IDLE_BACKOFF_AFTER_MS) return RUNTIME_RUN_POLL_INTERVAL_MS;
+      const stretched = Math.min(
+        RUNTIME_RUN_POLL_MAX_INTERVAL_MS,
+        RUNTIME_RUN_POLL_INTERVAL_MS + Math.floor(idleFor / RUNTIME_RUN_POLL_IDLE_BACKOFF_AFTER_MS) * RUNTIME_RUN_POLL_INTERVAL_MS
+      );
+      return stretched;
+    };
 
     const poll = async (): Promise<void> => {
       try {
         const snapshot = await fetchRuntimeSnapshot(activeRuntimeRun.id, controller.signal);
         if (!canceled) {
+          const fingerprint = computeFingerprint(snapshot);
+          if (fingerprint !== lastFingerprint) {
+            lastFingerprint = fingerprint;
+            lastChangeAt = Date.now();
+          }
           applyRuntimeSnapshot(snapshot, { notifyCompletion: true });
         }
       } catch (error) {
@@ -2001,7 +2097,7 @@ export function FilemakerJobBoardScrapeModal(
       if (!canceled) {
         timeoutId = window.setTimeout(() => {
           void poll();
-        }, RUNTIME_RUN_POLL_INTERVAL_MS);
+        }, nextDelay());
       }
     };
 
@@ -2015,7 +2111,7 @@ export function FilemakerJobBoardScrapeModal(
       }
       controller.abort();
     };
-  }, [activeRuntimeRun, applyRuntimeSnapshot, modeInFlight, props.open, toast]);
+  }, [activeRuntimeRun, applyRuntimeSnapshot, modeInFlight, toast]);
 
   return (
     <FormModal

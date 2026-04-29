@@ -126,8 +126,7 @@ const parsePersistedHomeLessonCheckpointStore = (
           return masterySnapshot;
         }, {});
 
-        const newSnapshot = { ...snapshot, [identityKey]: normalizedLessonMastery }; return newSnapshot;
-        return snapshot;
+        return { ...snapshot, [identityKey]: normalizedLessonMastery };
       },
       {},
     );
@@ -201,13 +200,19 @@ export const persistKangurMobileHomeLessonCheckpoints = ({
   snapshot: KangurLessonMastery;
   storage: KangurClientStorageAdapter;
 }): void => {
-  const store = parsePersistedHomeLessonCheckpointStore(
+  if (!learnerIdentity) {
+    return;
+  }
+  const currentStore = parsePersistedHomeLessonCheckpointStore(
     storage.getItem(KANGUR_MOBILE_HOME_LESSON_CHECKPOINTS_STORAGE_KEY),
   );
-  store[learnerIdentity] = snapshot;
+  const updatedStore = {
+    ...currentStore,
+    [learnerIdentity]: snapshot,
+  };
   storage.setItem(
     KANGUR_MOBILE_HOME_LESSON_CHECKPOINTS_STORAGE_KEY,
-    JSON.stringify(store),
+    JSON.stringify(updatedStore),
   );
 };
 

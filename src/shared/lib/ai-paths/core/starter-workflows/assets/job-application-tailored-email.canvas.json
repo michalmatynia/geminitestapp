@@ -1,0 +1,445 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "kind": "canvas",
+  "path": {
+    "id": "path_job_application_tailored_email_v1",
+    "version": 1,
+    "name": "Create Application Email",
+    "description": "Create a tailored application email from a Person CV profile, job listing, and organisation context.",
+    "trigger": "Organisation Job Row - Create Application Email",
+    "updatedAt": "2026-04-29T00:00:00.000Z",
+    "executionMode": "server",
+    "flowIntensity": "medium",
+    "runMode": "block",
+    "strictFlowMode": true,
+    "isLocked": false,
+    "isActive": true
+  },
+  "nodes": [
+    {
+      "id": "node-trigger-job-application-prepare",
+      "type": "trigger",
+      "title": "Trigger: Create Application Email",
+      "description": "Fire job application preparation from the Organisation job row modal.",
+      "position": {
+        "x": 24,
+        "y": 240
+      },
+      "inputs": [],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
+      "config": {
+        "trigger": {
+          "event": "9c8e8686-7ad1-4377-8e3d-3f398f8f0aa0",
+          "contextMode": "trigger_only"
+        }
+      }
+    },
+    {
+      "id": "node-fetcher-job-application-prepare",
+      "type": "fetcher",
+      "title": "Fetcher: Trigger Context",
+      "description": "Resolve the job application context embedded by the modal.",
+      "position": {
+        "x": 240,
+        "y": 240
+      },
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "config": {
+        "fetcher": {
+          "sourceMode": "live_context",
+          "entityType": "custom",
+          "entityId": ""
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "trigger": {
+              "required": true
+            },
+            "context": {
+              "required": false
+            },
+            "meta": {
+              "required": false
+            },
+            "entityId": {
+              "required": false
+            },
+            "entityType": {
+              "required": false
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-parser-job-application-prepare",
+      "type": "parser",
+      "title": "JSON Parser",
+      "description": "Extract person, CV, job, organisation, and platform contexts.",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
+      "outputs": [
+        "bundle",
+        "personContext",
+        "jobContext",
+        "organizationContext",
+        "platformContext",
+        "generationRequest",
+        "outputContract"
+      ],
+      "config": {
+        "parser": {
+          "mappings": {
+            "personContext": "$.applicationContext.personContext",
+            "jobContext": "$.applicationContext.jobContext",
+            "organizationContext": "$.applicationContext.organizationContext",
+            "platformContext": "$.applicationContext.platformContext",
+            "generationRequest": "$.applicationContext.generationRequest",
+            "outputContract": "$.applicationContext.outputContract"
+          },
+          "outputMode": "bundle",
+          "presetId": "custom"
+        }
+      }
+    },
+    {
+      "id": "node-prompt-job-application-prepare",
+      "type": "prompt",
+      "title": "Application Email Prompt",
+      "description": "Build a grounded create application email prompt.",
+      "position": {
+        "x": 880,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "context"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
+      "config": {
+        "prompt": {
+          "template": "You are an expert career writer drafting a tailored job application email for a specific candidate, role, and organisation. Use ONLY the data provided in the bundle below.\n\nPerson context JSON: {{bundle.personContext}}\nJob listing context JSON: {{bundle.jobContext}}\nOrganisation context JSON: {{bundle.organizationContext}}\nPlatform context JSON: {{bundle.platformContext}}\nGeneration request JSON: {{bundle.generationRequest}}\n\nReturn ONLY valid JSON with this exact schema (no extra keys, no code fences):\n{\"applicationEmail\":{\"subject\":\"\",\"bodyMarkdown\":\"\",\"bodyText\":\"\",\"language\":\"\"},\"applicationNotes\":[\"\"],\"missingInformation\":[\"\"],\"confidence\":0}\n\nContent rules:\n1. Language. Detect the language of jobContext.listing (title + description) and write subject and body in that language. Echo the BCP-47 tag in applicationEmail.language (e.g. \"en\", \"pl\"). If undetectable, fall back to platformContext.preferredLanguage or \"en\".\n2. Subject. <= 70 characters, includes the role title from jobContext.listing.title, no emojis, no clickbait, no ALL CAPS.\n3. Body length. 110-180 words total. Use this structure:\n   - Salutation. Address a named contact from organizationContext.linkedPersons or organizationContext.linkedEmails when one is available with a clear role. Otherwise use a neutral form.\n   - Opener (1 sentence). Name the role and where the candidate saw it (jobContext.listing.sourceUrl or platformContext.integrationName when present).\n   - Two or three concrete match points (1 sentence each) drawn from personContext.person, personContext.cvs[*], or personContext.linkedRecords. Prefer items that align with jobContext.lexicon.selectedTechnologyTerms or listing.requirements/responsibilities. Quantify impact when the source data permits.\n   - Motivation (1 sentence) tied to a specific fact in organizationContext.organization, linkedRecords, valueCatalog, or harvestProfiles.\n   - CTA + sign-off. Propose interview availability; sign off with the candidate full name; include phone, email, or linkedinUrl from personContext.person only if present.\n4. Consistency. bodyMarkdown is the canonical body; bodyText is the same content rendered as plain text (no Markdown syntax). The wording must match.\n5. Grounding. Never claim experience, employers, education, technologies, certifications, languages, or achievements that are not in the provided context. If a hook is missing data (e.g. unknown hiring manager), use a neutral phrasing - do not invent a name.\n6. applicationNotes. 1-4 short bullets explaining tailoring choices (which job requirements or organisation facts each match point targets).\n7. missingInformation. Concrete data points whose absence weakened the draft (e.g. \"no recipient name in linkedPersons\").\n8. confidence. Self-assessment 0..1 based on how well the candidate evidence covers the listing requirements.\n9. Output JSON only. No markdown outside bodyMarkdown. No code fences. No commentary."
+        }
+      }
+    },
+    {
+      "id": "node-model-job-application-prepare",
+      "type": "model",
+      "title": "Application Email Model",
+      "description": "Model node for generating the create application email artifact.",
+      "position": {
+        "x": 1280,
+        "y": 240
+      },
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
+      "config": {
+        "model": {
+          "temperature": 0.25,
+          "maxTokens": 2000,
+          "vision": false,
+          "waitForResult": true,
+          "modelId": "gpt-oss:120b-cloud"
+        }
+      }
+    },
+    {
+      "id": "node-regex-job-application-prepare",
+      "type": "regex",
+      "title": "Regex JSON Extract",
+      "description": "Parse the application package JSON response.",
+      "position": {
+        "x": 1660,
+        "y": 240
+      },
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
+      "config": {
+        "regex": {
+          "pattern": "\\{[\\s\\S]*\\}",
+          "flags": "",
+          "mode": "extract_json",
+          "matchMode": "first_overall",
+          "groupBy": "match",
+          "outputMode": "object",
+          "includeUnmatched": false,
+          "unmatchedKey": "__unmatched__",
+          "splitLines": false,
+          "sampleText": "",
+          "aiPrompt": "",
+          "aiAutoRun": false,
+          "activeVariant": "manual",
+          "jsonIntegrityPolicy": "repair"
+        },
+        "runtime": {
+          "waitForInputs": true
+        }
+      }
+    },
+    {
+      "id": "node-db-insert-application-job-application-prepare",
+      "type": "database",
+      "title": "Persist Create Application Email Package",
+      "description": "Save the full generated job application package, including cover letter and context metadata.",
+      "position": {
+        "x": 2040,
+        "y": 392
+      },
+      "inputs": [
+        "value",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "bundle"
+      ],
+      "config": {
+        "database": {
+          "operation": "insert",
+          "entityType": "filemaker_job_application",
+          "mode": "replace",
+          "useMongoActions": true,
+          "actionCategory": "create",
+          "action": "insertOne",
+          "query": {
+            "provider": "mongodb",
+            "collection": "filemaker_job_applications",
+            "mode": "custom",
+            "preset": "by_id",
+            "field": "id",
+            "idType": "string",
+            "queryTemplate": "{\"_id\":\"ai-job-application-email-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-job-application-email-{{context.entityId}}-{{context.timestamp}}\",\"status\":\"draft\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"organizationName\":\"{{context.entityJson.applicationContext.organizationContext.organization.name}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"jobTitle\":\"{{context.entityJson.applicationContext.jobContext.listing.title}}\",\"integrationId\":\"{{context.entityJson.applicationContext.platformContext.integrationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"connectionId\":\"{{context.entityJson.applicationContext.platformContext.connectionId}}\",\"tailoredCvId\":null,\"tailoredCv\":null,\"coverLetter\":null,\"applicationEmail\":{{value.applicationEmail}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"source\":\"ai-path-job-application-tailored-email\",\"sourceEntityId\":\"{{context.entityId}}\",\"sourceApplicationContext\":{\"version\":{{context.entityJson.applicationContext.version}},\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"sourceEntityId\":\"{{context.entityId}}\"},\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
+            "limit": 1,
+            "sort": "",
+            "projection": "",
+            "single": true
+          },
+          "writeOutcomePolicy": {
+            "onZeroAffected": "fail"
+          }
+        },
+        "runtime": {
+          "waitForInputs": true,
+          "inputContracts": {
+            "value": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "node-view-job-application-prepare",
+      "type": "viewer",
+      "title": "Application Email Package",
+      "description": "Inspect the generated create application email artifact.",
+      "position": {
+        "x": 2440,
+        "y": 240
+      },
+      "inputs": [
+        "bundle",
+        "applicationPersistence",
+        "context",
+        "prompt",
+        "entityId",
+        "entityType",
+        "meta"
+      ],
+      "outputs": [],
+      "config": {
+        "viewer": {
+          "outputs": {
+            "bundle": "",
+            "applicationPersistence": "",
+            "context": "",
+            "prompt": "",
+            "entityId": "",
+            "entityType": "",
+            "meta": ""
+          }
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-trigger-fetcher-job-application-prepare",
+      "fromNodeId": "node-trigger-job-application-prepare",
+      "toNodeId": "node-fetcher-job-application-prepare",
+      "fromPort": "trigger",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-fetcher-parser-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-parser-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-parser-prompt-job-application-prepare",
+      "fromNodeId": "node-parser-job-application-prepare",
+      "toNodeId": "node-prompt-job-application-prepare",
+      "fromPort": "bundle",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-fetcher-prompt-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-prompt-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-model-job-application-prepare",
+      "fromNodeId": "node-prompt-job-application-prepare",
+      "toNodeId": "node-model-job-application-prepare",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-prompt-images-model-job-application-prepare",
+      "fromNodeId": "node-prompt-job-application-prepare",
+      "toNodeId": "node-model-job-application-prepare",
+      "fromPort": "images",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-fetcher-model-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-model-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-model-regex-job-application-prepare",
+      "fromNodeId": "node-model-job-application-prepare",
+      "toNodeId": "node-regex-job-application-prepare",
+      "fromPort": "result",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-regex-application-db-job-application-prepare",
+      "fromNodeId": "node-regex-job-application-prepare",
+      "toNodeId": "node-db-insert-application-job-application-prepare",
+      "fromPort": "value",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-fetcher-application-db-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-db-insert-application-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-regex-viewer-job-application-prepare",
+      "fromNodeId": "node-regex-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "value",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-application-db-viewer-job-application-prepare",
+      "fromNodeId": "node-db-insert-application-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "bundle",
+      "toPort": "applicationPersistence"
+    },
+    {
+      "id": "edge-fetcher-viewer-context-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-prompt-viewer-job-application-prepare",
+      "fromNodeId": "node-prompt-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "prompt",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-fetcher-entity-id-viewer-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "entityId",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-fetcher-entity-type-viewer-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "entityType",
+      "toPort": "entityType"
+    },
+    {
+      "id": "edge-fetcher-meta-viewer-job-application-prepare",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-view-job-application-prepare",
+      "fromPort": "meta",
+      "toPort": "meta"
+    }
+  ],
+  "execution": {
+    "parserSamples": {},
+    "updaterSamples": {},
+    "runtimeState": {
+      "inputs": {},
+      "outputs": {}
+    },
+    "lastRunAt": null,
+    "runCount": 0
+  },
+  "provenance": {
+    "source": "ai-paths",
+    "exportedAt": "2026-04-29T00:00:00.000Z",
+    "pathId": "path_job_application_tailored_email_v1"
+  }
+}

@@ -8,6 +8,7 @@ export type CvLeafBlockKind =
   | 'experience'
   | 'education'
   | 'skills'
+  | 'techStack'
   | 'languages'
   | 'customText'
   | 'divider'
@@ -52,6 +53,7 @@ export interface CvEducationBlock extends CvBlockBase {
   institution: string;
   degree: string;
   period: string;
+  country: string;
   description: string;
 }
 
@@ -61,10 +63,24 @@ export interface CvSkillsBlock extends CvBlockBase {
   items: string[];
 }
 
+export type CvTechStackItem = {
+  aliases?: string[];
+  iconUrl: string;
+  label: string;
+  lexiconTermId?: string;
+  normalizedLabel?: string;
+};
+
+export interface CvTechStackBlock extends CvBlockBase {
+  kind: 'techStack';
+  label: string;
+  items: CvTechStackItem[];
+}
+
 export interface CvLanguagesBlock extends CvBlockBase {
   kind: 'languages';
   label: string;
-  items: string[];
+  items: Array<string | { language: string; level: number }>;
 }
 
 export interface CvCustomTextBlock extends CvBlockBase {
@@ -121,6 +137,7 @@ export type CvLeafBlock =
   | CvExperienceBlock
   | CvEducationBlock
   | CvSkillsBlock
+  | CvTechStackBlock
   | CvLanguagesBlock
   | CvCustomTextBlock
   | CvDividerBlock
@@ -136,6 +153,7 @@ const LEAF_KINDS: ReadonlySet<CvLeafBlockKind> = new Set([
   'experience',
   'education',
   'skills',
+  'techStack',
   'languages',
   'customText',
   'divider',
@@ -203,6 +221,61 @@ const normalizeStringList = (input: unknown): string[] => {
   return values;
 };
 
+const normalizeTechStackItems = (input: unknown): CvTechStackItem[] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const values: CvTechStackItem[] = [];
+  input.forEach((entry: unknown): void => {
+    if (typeof entry !== 'object' || entry === null) return;
+    const item = entry as Partial<CvTechStackItem>;
+    const label = normalizeString(item.label).trim();
+    const key = label.toLowerCase();
+    if (label.length === 0 || seen.has(key)) return;
+    seen.add(key);
+    values.push({
+      label,
+      aliases: normalizeStringList(item.aliases),
+      iconUrl: normalizeString(item.iconUrl),
+      lexiconTermId: normalizeString(item.lexiconTermId) || undefined,
+      normalizedLabel: normalizeString(item.normalizedLabel).trim() || undefined,
+    });
+  });
+  return values;
+};
+
+const normalizeLanguageLevel = (value: unknown): number => {
+  const parsed = typeof value === 'number' ? value : Number(normalizeString(value));
+  if (!Number.isFinite(parsed)) return 5;
+  return Math.min(10, Math.max(1, Math.round(parsed)));
+};
+
+const normalizeLanguageItems = (input: unknown): CvLanguagesBlock['items'] => {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const values: CvLanguagesBlock['items'] = [];
+  input.forEach((entry: unknown): void => {
+    if (typeof entry === 'string') {
+      const label = normalizeString(entry).trim();
+      const key = label.toLowerCase();
+      if (label.length === 0 || seen.has(key)) return;
+      seen.add(key);
+      values.push(label);
+      return;
+    }
+    if (typeof entry !== 'object' || entry === null) return;
+    const record = entry as { language?: unknown; level?: unknown };
+    const language = normalizeString(record.language).trim();
+    const key = language.toLowerCase();
+    if (language.length === 0 || seen.has(key)) return;
+    seen.add(key);
+    values.push({
+      language,
+      level: normalizeLanguageLevel(record.level),
+    });
+  });
+  return values;
+};
+
 const normalizeSpacerHeight = (value: unknown): number => {
   const parsed = Math.trunc(Number(value));
   if (!Number.isFinite(parsed) || parsed <= 0) return 20;
@@ -265,6 +338,7 @@ export const createCvBlock = (kind: CvBlockKind, overrides?: Partial<CvBlock>): 
           'Institution',
         degree: normalizeString((overrides as Partial<CvEducationBlock> | undefined)?.degree),
         period: normalizeString((overrides as Partial<CvEducationBlock> | undefined)?.period),
+        country: normalizeString((overrides as Partial<CvEducationBlock> | undefined)?.country),
         description: normalizeString((overrides as Partial<CvEducationBlock> | undefined)?.description),
       };
     case 'skills':
@@ -274,13 +348,20 @@ export const createCvBlock = (kind: CvBlockKind, overrides?: Partial<CvBlock>): 
         label: normalizeString((overrides as Partial<CvSkillsBlock> | undefined)?.label) || 'Skills',
         items: normalizeStringList((overrides as Partial<CvSkillsBlock> | undefined)?.items),
       };
+    case 'techStack':
+      return {
+        id,
+        kind,
+        label: normalizeString((overrides as Partial<CvTechStackBlock> | undefined)?.label) || 'Tech stack',
+        items: normalizeTechStackItems((overrides as Partial<CvTechStackBlock> | undefined)?.items),
+      };
     case 'languages':
       return {
         id,
         kind,
         label:
           normalizeString((overrides as Partial<CvLanguagesBlock> | undefined)?.label) || 'Languages',
-        items: normalizeStringList((overrides as Partial<CvLanguagesBlock> | undefined)?.items),
+        items: normalizeLanguageItems((overrides as Partial<CvLanguagesBlock> | undefined)?.items),
       };
     case 'customText':
     {

@@ -200,6 +200,70 @@ describe('useTriggerButtons', () => {
     );
   });
 
+  it('merges trigger-button context metadata and passes the clicked button to context builders', async () => {
+    const metadataButton = {
+      ...BUTTON,
+      contextTemplate: {
+        jobApplicationArtifactKind: 'tailored_cv',
+        applicationContext: {
+          generationRequest: {
+            artifact: 'tailored_cv',
+          },
+        },
+      },
+    } satisfies AiTriggerButtonRecord;
+    const getEntityJson = vi.fn((button?: AiTriggerButtonRecord) => ({
+      id: 'custom-application-context',
+      buttonId: button?.id ?? null,
+    }));
+    const getTriggerExtras = vi.fn((button?: AiTriggerButtonRecord) => ({
+      applicationContext: {
+        resolvedForButtonId: button?.id ?? null,
+      },
+      outputContract: {
+        artifact: 'tailored_cv',
+      },
+    }));
+    useAiPathsTriggerButtonsQueryMock.mockReturnValue({
+      data: [metadataButton],
+      isLoading: false,
+    });
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'custom',
+        getEntityJson,
+        getTriggerExtras,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(metadataButton, { mode: 'click' });
+    });
+
+    expect(getTriggerExtras).toHaveBeenCalledWith(metadataButton);
+    expect(fireAiPathTriggerEventMock).toHaveBeenCalled();
+    const triggerArgs = fireAiPathTriggerEventMock.mock.calls[0]?.[0] as {
+      extras: Record<string, unknown>;
+      getEntityJson?: () => Record<string, unknown> | null;
+    };
+    expect(triggerArgs.extras).toEqual({
+      jobApplicationArtifactKind: 'tailored_cv',
+      applicationContext: {
+        resolvedForButtonId: metadataButton.id,
+      },
+      outputContract: {
+        artifact: 'tailored_cv',
+      },
+      mode: 'click',
+    });
+    expect(triggerArgs.getEntityJson?.()).toEqual({
+      id: 'custom-application-context',
+      buttonId: metadataButton.id,
+    });
+  });
+
   it('fires the marketplace-copy Debrand button through its bound AI Path workflow', async () => {
     const debrandButton = {
       ...BUTTON,
@@ -299,6 +363,30 @@ describe('useTriggerButtons', () => {
     expect(toastMock).toHaveBeenCalledWith(
       'Could not build trigger context for this AI Path trigger.',
       { variant: 'error' }
+    );
+  });
+
+  it('aborts when caller-provided trigger extras are not ready', async () => {
+    const getTriggerExtras = vi.fn(() => null);
+
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        getTriggerExtras,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(getTriggerExtras).toHaveBeenCalledWith(BUTTON);
+    expect(fireAiPathTriggerEventMock).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Trigger context is not ready for this AI Path trigger.',
+      { variant: 'warning' }
     );
   });
 

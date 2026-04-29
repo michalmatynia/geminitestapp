@@ -79,7 +79,7 @@ async function performRematch(options: RematchOptions): Promise<string | null> {
       queryClient.invalidateQueries({ queryKey: queryKeyBase.leaderboard }),
       queryClient.invalidateQueries({ queryKey: queryKeyBase.opponents }),
     ]);
-    return (resp as { session?: { id: string } })?.session?.id ?? null;
+    return (resp as { session?: { id: string } }).session?.id ?? null;
   } catch (err: unknown) {
     setActionError(toDuelsSummaryActionErrorMessage(err, copy));
     return null;
@@ -87,6 +87,20 @@ async function performRematch(options: RematchOptions): Promise<string | null> {
     setIsActionPending(false);
     setPendingOpponentLearnerId(null);
   }
+}
+
+function useSummaryIdentity(authSession: any) {
+  const learnerIdentity = useMemo(() => {
+    const user = authSession.user;
+    if (!user) return 'guest';
+    return user.activeLearner?.id ?? user.email ?? user.id;
+  }, [authSession.user]);
+
+  const activeLearnerId = authSession.user
+    ? authSession.user.activeLearner?.id ?? authSession.user.id
+    : null;
+
+  return { learnerIdentity, activeLearnerId };
 }
 
 export const useKangurMobileLearnerDuelsSummary = ({
@@ -102,32 +116,97 @@ export const useKangurMobileLearnerDuelsSummary = ({
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, setIsActionPending] = useState(false);
   const [pendingOpponentLearnerId, setPendingOpponentLearnerId] = useState<string | null>(null);
-  
-  const learnerIdentity = useMemo(() => authSession.user?.activeLearner?.id ?? authSession.user?.email ?? authSession.user?.id ?? 'guest', [authSession.user]);
-  const activeLearnerId = authSession.user?.activeLearner?.id ?? authSession.user?.id ?? null;
+
+  const { learnerIdentity, activeLearnerId } = useSummaryIdentity(authSession);
   const isAuthenticated = authSession.status === 'authenticated';
   const isRestoringAuth = isLoadingAuth && isAuthenticated === false;
 
-  const queryKeyBase = useMemo(() => ({
-    leaderboard: ['kangur-mobile', 'duels-summary', 'leaderboard', apiBaseUrl, learnerIdentity, leaderboardLimit, leaderboardLookbackDays] as const,
-    opponents: ['kangur-mobile', 'duels-summary', 'opponents', apiBaseUrl, learnerIdentity, opponentsLimit] as const,
-  }), [apiBaseUrl, learnerIdentity, leaderboardLimit, leaderboardLookbackDays, opponentsLimit]);
+  const queryKeyBase = useMemo(
+    () => ({
+      leaderboard: [
+        'kangur-mobile',
+        'duels-summary',
+        'leaderboard',
+        apiBaseUrl,
+        learnerIdentity,
+        leaderboardLimit,
+        leaderboardLookbackDays,
+      ] as const,
+      opponents: [
+        'kangur-mobile',
+        'duels-summary',
+        'opponents',
+        apiBaseUrl,
+        learnerIdentity,
+        opponentsLimit,
+      ] as const,
+    }),
+    [apiBaseUrl, learnerIdentity, leaderboardLimit, leaderboardLookbackDays, opponentsLimit],
+  );
 
-  const leaderboardQuery = useQuery({ enabled: isAuthenticated, queryKey: queryKeyBase.leaderboard, queryFn: async () => apiClient.getDuelLeaderboard({ limit: leaderboardLimit, lookbackDays: leaderboardLookbackDays }, { cache: 'no-store' }), staleTime: 30_000 });
-  const opponentsQuery = useQuery({ enabled: isAuthenticated, queryKey: queryKeyBase.opponents, queryFn: async () => apiClient.listDuelOpponents({ limit: opponentsLimit }, { cache: 'no-store' }), staleTime: 30_000 });
+  const leaderboardQuery = useQuery({
+    enabled: isAuthenticated,
+    queryKey: queryKeyBase.leaderboard,
+    queryFn: async () =>
+      apiClient.getDuelLeaderboard(
+        { limit: leaderboardLimit, lookbackDays: leaderboardLookbackDays },
+        { cache: 'no-store' },
+      ),
+    staleTime: 30_000,
+  });
+  const opponentsQuery = useQuery({
+    enabled: isAuthenticated,
+    queryKey: queryKeyBase.opponents,
+    queryFn: async () => apiClient.listDuelOpponents({ limit: opponentsLimit }, { cache: 'no-store' }),
+    staleTime: 30_000,
+  });
 
-  const { rank: currentRank, entry: currentEntry } = resolveLearnerRank(activeLearnerId ?? null, leaderboardQuery.data?.entries ?? []);
-  const opponents = useMemo(() => [...(opponentsQuery.data?.entries ?? [])].sort((l, r) => Date.parse(r.lastPlayedAt) - Date.parse(l.lastPlayedAt)).slice(0, opponentsLimit), [opponentsLimit, opponentsQuery.data?.entries]);
+  const { rank: currentRank, entry: currentEntry } = resolveLearnerRank(
+    activeLearnerId,
+    leaderboardQuery.data?.entries ?? [],
+  );
+
+  const opponents = useMemo(() => {
+    const data = opponentsQuery.data;
+    const rawEntries = data ? data.entries : [];
+    const entries = [...rawEntries];
+    entries.sort((l, r) => {
+      const leftTime = Date.parse(l.lastPlayedAt);
+      const rightTime = Date.parse(r.lastPlayedAt);
+      return rightTime - leftTime;
+    });
+    return entries.slice(0, opponentsLimit);
+  }, [opponentsLimit, opponentsQuery.data]);
 
   const createRematch = async (opponentLearnerId: string): Promise<string | null> => {
-    return performRematch({ apiClient, queryClient, queryKeyBase, opponentLearnerId, copy, setActionError, setIsActionPending, setPendingOpponentLearnerId });
+    return performRematch({
+      apiClient,
+      queryClient,
+      queryKeyBase,
+      opponentLearnerId,
+      copy,
+      setActionError,
+      setIsActionPending,
+      setPendingOpponentLearnerId,
+    });
   };
 
   return {
-    actionError, createRematch, currentEntry, currentRank,
-    error: toDuelsSummaryErrorMessage(opponentsQuery.error, copy) ?? toDuelsSummaryErrorMessage(leaderboardQuery.error, copy),
-    isActionPending, isAuthenticated, isLoading: isRestoringAuth || leaderboardQuery.isLoading || opponentsQuery.isLoading,
-    isRestoringAuth, opponents, pendingOpponentLearnerId,
-    refresh: async (): Promise<void> => { await Promise.all([leaderboardQuery.refetch(), opponentsQuery.refetch()]); },
+    actionError,
+    createRematch,
+    currentEntry,
+    currentRank,
+    error:
+      toDuelsSummaryErrorMessage(opponentsQuery.error, copy) ??
+      toDuelsSummaryErrorMessage(leaderboardQuery.error, copy),
+    isActionPending,
+    isAuthenticated,
+    isLoading: isRestoringAuth || leaderboardQuery.isLoading || opponentsQuery.isLoading,
+    isRestoringAuth,
+    opponents,
+    pendingOpponentLearnerId,
+    refresh: async (): Promise<void> => {
+      await Promise.all([leaderboardQuery.refetch(), opponentsQuery.refetch()]);
+    },
   };
 };

@@ -25,30 +25,71 @@ const hasBasePriceAdjustment = (group: PriceGroup): boolean =>
   (Number.isFinite(group.priceMultiplier) ? group.priceMultiplier : 1) !== 1 ||
   (Number.isFinite(group.addToPrice) ? group.addToPrice : 0) !== 0;
 
-const buildPriceGroupDescription = (group: PriceGroup, priceGroups: PriceGroup[]): string => {
-  const descriptionParts: string[] = [];
-  const trimmedDescription = group.description?.trim();
+const resolveSourceGroupLabel = (group: PriceGroup, priceGroups: readonly PriceGroup[]): string => {
+  const sourceGroup = findPriceGroupByIdentifier(priceGroups, group.sourceGroupId);
+  const normalizedSourceIdentifier = String(group.sourceGroupId ?? '').trim();
+  if (sourceGroup !== undefined) return `${sourceGroup.name} (${sourceGroup.currencyCode})`;
+  if (normalizedSourceIdentifier !== '') return `missing source group (${normalizedSourceIdentifier})`;
+  return 'missing source group';
+};
 
-  if (trimmedDescription) {
+const buildPriceGroupDescription = (
+  group: PriceGroup,
+  priceGroups: readonly PriceGroup[]
+): string => {
+  const descriptionParts: string[] = [];
+  const trimmedDescription = group.description?.trim() ?? '';
+
+  if (trimmedDescription !== '') {
     descriptionParts.push(trimmedDescription);
   }
 
   if (group.type === 'dependent') {
-    const sourceGroup = findPriceGroupByIdentifier(priceGroups, group.sourceGroupId);
-    const normalizedSourceIdentifier = String(group.sourceGroupId ?? '').trim();
-    const sourceGroupLabel = sourceGroup
-      ? `${sourceGroup.name} (${sourceGroup.currencyCode})`
-      : normalizedSourceIdentifier
-        ? `missing source group (${normalizedSourceIdentifier})`
-        : 'missing source group';
-
+    const sourceGroupLabel = resolveSourceGroupLabel(group, priceGroups);
     descriptionParts.push(`Depends on ${sourceGroupLabel} ${formatPriceAdjustment(group)}`);
   } else if (hasBasePriceAdjustment(group)) {
     descriptionParts.push(`Base price ${formatPriceAdjustment(group)}`);
   }
 
-  return descriptionParts.join(' · ') || 'No description';
+  return descriptionParts.length > 0 ? descriptionParts.join(' · ') : 'No description';
 };
+
+const buildDefaultGroupOptions = (
+  priceGroups: readonly PriceGroup[]
+): Array<LabeledOptionDto<string>> =>
+  priceGroups.map((group) => ({
+    value: group.id,
+    label: `${group.name} (${group.groupId})`,
+  }));
+
+const buildPriceGroupItems = (
+  priceGroups: readonly PriceGroup[]
+): Array<{
+  id: string;
+  title: React.JSX.Element;
+  subtitle: string;
+  description: string;
+  original: PriceGroup;
+}> =>
+  priceGroups.map((group) => ({
+    id: group.id,
+    title: (
+      <div className='flex items-center gap-2'>
+        <span>{group.name}</span>
+        {group.isDefault ? (
+          <Badge variant='success' className='text-[9px] h-4 px-1'>
+            Default
+          </Badge>
+        ) : null}
+        <Badge variant='neutral' className='text-[9px] h-4 px-1 font-mono'>
+          {group.groupId}
+        </Badge>
+      </div>
+    ),
+    subtitle: `${group.currencyCode} · ${group.type}`,
+    description: buildPriceGroupDescription(group, priceGroups),
+    original: group,
+  }));
 
 export function PriceGroupsSettings(): React.JSX.Element {
   const {
@@ -62,34 +103,11 @@ export function PriceGroupsSettings(): React.JSX.Element {
     onDeletePriceGroup,
   } = useProductSettingsPriceGroupsContext();
   const defaultGroupOptions = useMemo<Array<LabeledOptionDto<string>>>(
-    () =>
-      priceGroups.map((group: PriceGroup) => ({
-        value: group.id,
-        label: `${group.name} (${group.groupId})`,
-      })),
+    () => buildDefaultGroupOptions(priceGroups),
     [priceGroups]
   );
   const priceGroupItems = useMemo(
-    () =>
-      priceGroups.map((group: PriceGroup) => ({
-        id: group.id,
-        title: (
-          <div className='flex items-center gap-2'>
-            <span>{group.name}</span>
-            {group.isDefault && (
-              <Badge variant='success' className='text-[9px] h-4 px-1'>
-                Default
-              </Badge>
-            )}
-            <Badge variant='neutral' className='text-[9px] h-4 px-1 font-mono'>
-              {group.groupId}
-            </Badge>
-          </div>
-        ),
-        subtitle: `${group.currencyCode} · ${group.type}`,
-        description: buildPriceGroupDescription(group, priceGroups),
-        original: group,
-      })),
+    () => buildPriceGroupItems(priceGroups),
     [priceGroups]
   );
 
@@ -120,27 +138,50 @@ export function PriceGroupsSettings(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <FormSection
-        title='Default price group'
-        description='Required. Select one of the available price groups.'
-        variant='subtle'
-        className='p-4'
-      >
-        <div className='mt-4'>
-          <SelectSimple
-            size='sm'
-            value={defaultGroupId}
-            onValueChange={onDefaultGroupChange}
-            disabled={priceGroups.length === 0 || defaultGroupSaving}
-            options={defaultGroupOptions}
-            placeholder='Select default price group'
-            ariaLabel='Default price group'
-           title='Select default price group'/>
-          {defaultGroupSaving ? (
-            <p className='mt-2 text-xs text-gray-500'>Saving default...</p>
-          ) : null}
-        </div>
-      </FormSection>
+      <DefaultPriceGroupSection
+        defaultGroupId={defaultGroupId}
+        onDefaultGroupChange={onDefaultGroupChange}
+        defaultGroupSaving={defaultGroupSaving}
+        defaultGroupOptions={defaultGroupOptions}
+        hasPriceGroups={priceGroups.length > 0}
+      />
     </div>
+  );
+}
+
+function DefaultPriceGroupSection({
+  defaultGroupId,
+  onDefaultGroupChange,
+  defaultGroupSaving,
+  defaultGroupOptions,
+  hasPriceGroups,
+}: {
+  defaultGroupId: string;
+  onDefaultGroupChange: (groupId: string) => void;
+  defaultGroupSaving: boolean;
+  defaultGroupOptions: Array<LabeledOptionDto<string>>;
+  hasPriceGroups: boolean;
+}): React.JSX.Element {
+  return (
+    <FormSection
+      title='Default price group'
+      description='Required. Select one of the available price groups.'
+      variant='subtle'
+      className='p-4'
+    >
+      <div className='mt-4'>
+        <SelectSimple
+          size='sm'
+          value={defaultGroupId}
+          onValueChange={onDefaultGroupChange}
+          disabled={!hasPriceGroups || defaultGroupSaving}
+          options={defaultGroupOptions}
+          placeholder='Select default price group'
+          ariaLabel='Default price group'
+          title='Select default price group'
+        />
+        {defaultGroupSaving ? <p className='mt-2 text-xs text-gray-500'>Saving default...</p> : null}
+      </div>
+    </FormSection>
   );
 }

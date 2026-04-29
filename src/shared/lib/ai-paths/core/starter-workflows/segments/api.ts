@@ -129,6 +129,7 @@ const buildStarterTriggerButtonRecord = (
     label: preset.name,
     showLabel: true,
   },
+  contextTemplate: preset.contextTemplate ?? null,
   createdAt: timestamp,
   updatedAt: timestamp,
   sortIndex: preset.sortIndex ?? 0,

@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 
 import { useKangurMobileAuth } from '../../../auth/KangurMobileAuthContext';
-import { type KangurMobileCopy } from '../../../i18n/kangurMobileI18n';
+import { type KangurMobileLocale, type KangurMobileCopy } from '../../../i18n/kangurMobileI18n';
 import { type UseKangurMobileHomeDuelsPresenceResult } from '../../useKangurMobileHomeDuelsPresence';
 import { ActiveRivalCard } from '../../home-duel-section-cards';
 import { createKangurDuelsHref } from '../../../duels/duelsHref';
@@ -118,25 +118,19 @@ function RivalItem({
   );
 }
 
-export function AuthenticatedHomeActiveRivalsContent({
-  areDeferredHomePanelsReady,
-  areDeferredHomeDuelAdvancedReady,
+function ActiveRivalsList({
   presence,
   copy,
   locale,
+  activeDuelLearnerId,
   onChallenge,
-}: Props): React.JSX.Element {
-  const { session } = useKangurMobileAuth();
-  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
-
-  if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
-  if (!areDeferredHomeDuelAdvancedReady) return <DeferredDuelAdvancedSectionPlaceholder />;
-
-  if (presence.isRestoringAuth || presence.isLoading) return <RivalsLoading copy={copy} />;
-  if (presence.error !== null && presence.error !== '') return <RivalsError copy={copy} error={presence.error} refresh={() => { void presence.refresh(); }} />;
-
-  if (presence.entries.length === 0) return <RivalsEmpty copy={copy} />;
-
+}: {
+  presence: UseKangurMobileHomeDuelsPresenceResult;
+  copy: KangurMobileCopy;
+  locale: KangurMobileLocale;
+  activeDuelLearnerId: string | null;
+  onChallenge: (sessionId: string) => void;
+}): React.JSX.Element {
   return (
     <View style={{ gap: 10 }}>
         <Text style={{ color: '#475569', lineHeight: 20 }}>
@@ -166,5 +160,35 @@ export function AuthenticatedHomeActiveRivalsContent({
           label={copy({ de: 'Lobby öffnen', en: 'Open lobby', pl: 'Otwórz lobby' })}
         />
     </View>
+  );
+}
+
+export function AuthenticatedHomeActiveRivalsContent({
+  areDeferredHomePanelsReady,
+  areDeferredHomeDuelAdvancedReady,
+  presence,
+  copy,
+  locale,
+  onChallenge,
+}: Props): React.JSX.Element {
+  const { session } = useKangurMobileAuth();
+  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+
+  if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
+  if (!areDeferredHomeDuelAdvancedReady) return <DeferredDuelAdvancedSectionPlaceholder />;
+
+  if (presence.isRestoringAuth || presence.isLoading) return <RivalsLoading copy={copy} />;
+  if (presence.error !== null && presence.error !== '') return <RivalsError copy={copy} error={presence.error} refresh={() => { void presence.refresh(); }} />;
+
+  if (presence.entries.length === 0) return <RivalsEmpty copy={copy} />;
+
+  return (
+    <ActiveRivalsList 
+      presence={presence}
+      copy={copy}
+      locale={locale}
+      activeDuelLearnerId={activeDuelLearnerId}
+      onChallenge={onChallenge}
+    />
   );
 }

@@ -35,10 +35,17 @@ const composeCvFilename = (cv: FilemakerCv): string => {
 };
 
 const resolveCvHtml = (cv: FilemakerCv): string => {
+  if ((cv.bodyBlocks ?? []).length > 0) {
+    return compileCvBlocksToHtml(cv.bodyBlocks ?? [], {
+      highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
+    });
+  }
   if (cv.bodyHtml !== null && cv.bodyHtml.trim().length > 0) {
     return cv.bodyHtml;
   }
-  return compileCvBlocksToHtml(cv.bodyBlocks ?? []);
+  return compileCvBlocksToHtml(cv.bodyBlocks ?? [], {
+    highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
+  });
 };
 
 export async function createFilemakerCvPdfExport(

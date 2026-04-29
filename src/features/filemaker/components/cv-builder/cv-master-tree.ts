@@ -36,6 +36,7 @@ const labelForBlock = (block: CvBlock): string => {
     case 'experience': return block.title ? `Experience: ${block.title}` : 'Experience';
     case 'education': return block.institution ? `Education: ${block.institution}` : 'Education';
     case 'skills': return block.label || 'Skills';
+    case 'techStack': return block.label || 'Tech stack';
     case 'languages': return block.label || 'Languages';
     case 'customText': {
       const text = stripHtml(block.html);
@@ -146,6 +147,7 @@ const buildBlockFromNode = (node: MasterTreeNode, context: RebuildContext): CvBl
     case 'experience':
     case 'education':
     case 'skills':
+    case 'techStack':
     case 'languages':
     case 'customText':
     case 'divider':

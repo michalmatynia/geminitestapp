@@ -21,8 +21,8 @@ type TriggerButtonBarProps = {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
-  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
-  getTriggerExtras?: (() => Record<string, unknown> | null) | undefined;
+  getEntityJson?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
+  getTriggerExtras?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
   disabled?: boolean | undefined;
   showRunFeedback?: boolean | undefined;
   onRunQueued?:

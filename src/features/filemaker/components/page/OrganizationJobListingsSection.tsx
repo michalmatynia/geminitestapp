@@ -36,14 +36,21 @@ import {
 } from '@/shared/ui/primitives.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { DetailModal } from '@/shared/ui/templates.public';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { compileCvBlocksToHtml } from '../cv-builder/compile-cv-blocks';
 import {
   useAdminFilemakerOrganizationEditPageActionsContext,
   useAdminFilemakerOrganizationEditPageStateContext,
 } from '../../context/AdminFilemakerOrganizationEditPageContext';
 import { JobBoardOriginBadge } from '../shared/JobBoardOriginBadge';
-import { JobApplicationPreparationModal } from './JobApplicationPreparationModal';
+import {
+  JobApplicationPreparationModal,
+  type JobApplicationRunEntry,
+} from './JobApplicationPreparationModal';
+import { openFilemakerCvPdfPreview } from '../../cv-pdf-preview';
 import { createClientFilemakerId, formatTimestamp } from '../../pages/filemaker-page-utils';
 import {
   buildFilemakerLexiconTypeMetadata,
@@ -62,6 +69,7 @@ import {
 } from '../../settings';
 import type {
   FilemakerDatabase,
+  FilemakerCv,
   FilemakerEmailCampaign,
   FilemakerJobApplication,
   FilemakerJobApplicationStatus,
@@ -283,6 +291,46 @@ const formatNullableText = (value: string | null | undefined, fallback: string):
   return normalized.length > 0 ? normalized : fallback;
 };
 
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const composePlainDocumentPreviewHtml = (input: {
+  body: string;
+  meta: string;
+  title: string;
+}): string => {
+  const bodyLines = input.body
+    .split(/\r?\n/)
+    .map((line: string): string => line.trim())
+    .filter((line: string): boolean => line.length > 0)
+    .map((line: string): string => `<p>${escapeHtml(line)}</p>`)
+    .join('');
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(input.title)}</title>
+    <style>
+      @page{size:A4;margin:22mm;}
+      body{color:#111827;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.55;}
+      h1{font-size:20px;line-height:1.25;margin:0 0 8px;}
+      .meta{border-bottom:1px solid #d1d5db;color:#4b5563;margin-bottom:22px;padding-bottom:12px;}
+      p{margin:0 0 9px;}
+    </style>
+  </head>
+  <body>
+    <h1>${escapeHtml(input.title)}</h1>
+    <div class="meta">${escapeHtml(input.meta)}</div>
+    <main>${bodyLines.length > 0 ? bodyLines : '<p>No content was generated.</p>'}</main>
+  </body>
+</html>`;
+};
+
 const readDownloadFilename = (response: Response, fallback: string): string => {
   const contentDisposition = response.headers.get('Content-Disposition') ?? '';
   const quoted = /filename="([^"]+)"/i.exec(contentDisposition);
@@ -327,6 +375,21 @@ const composeCoverLetterText = (application: FilemakerJobApplication): string =>
     .join(' · ');
   return [subject, meta, body].filter((value: string): boolean => value.length > 0).join('\n\n');
 };
+
+const composeApplicationEmailText = (application: FilemakerJobApplication): string => {
+  const subject = formatNullableText(application.applicationEmail?.subject, 'Application email');
+  const body = formatNullableText(
+    application.applicationEmail?.bodyText ?? application.applicationEmail?.bodyMarkdown,
+    'No application email content was generated.'
+  );
+  return [subject, body].filter((value: string): boolean => value.length > 0).join('\n\n');
+};
+
+const composeApplicationMeta = (application: FilemakerJobApplication): string =>
+  [formatApplicationPerson(application), application.jobTitle, application.organizationName]
+    .map((value: string | null | undefined): string => value?.trim() ?? '')
+    .filter((value: string): boolean => value.length > 0)
+    .join(' · ');
 
 const normalizeExternalHref = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -380,6 +443,176 @@ const groupApplicationsByJobListing = (
   });
   return groups;
 };
+
+const formatJobApplicationArtifactKind = (
+  artifactKind: JobApplicationRunEntry['artifactKind']
+): string =>
+  artifactKind
+    .split('_')
+    .map((part: string): string => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
+
+const resolveJobApplicationArtifactLabel = (entry: JobApplicationRunEntry): string => {
+  const artifactLabel = entry.artifactLabel?.trim() ?? '';
+  return artifactLabel.length > 0
+    ? artifactLabel
+    : formatJobApplicationArtifactKind(entry.artifactKind);
+};
+const JOB_APPLICATION_ARTIFACT_SORT_ORDER: Record<JobApplicationRunEntry['artifactKind'], number> = {
+  tailored_cv: 0,
+  application_email: 1,
+  cover_letter: 2,
+};
+
+const JOB_APPLICATION_RUN_STATUS_LABELS: Record<JobApplicationRunEntry['status'], string> = {
+  completed: 'completed',
+  error: 'failed',
+  queued: 'queued',
+  running: 'running',
+  starting: 'starting',
+};
+
+const JOB_APPLICATION_RUN_ENTRIES_STORAGE_KEY = 'filemaker_job_application_run_entries_v1';
+const JOB_APPLICATION_RUN_ENTRY_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const JOB_APPLICATION_RUN_ENTRY_LIMIT = 100;
+const JOB_APPLICATION_RUN_ARTIFACTS = new Set<JobApplicationRunEntry['artifactKind']>([
+  'application_email',
+  'cover_letter',
+  'tailored_cv',
+]);
+const JOB_APPLICATION_RUN_STATUSES = new Set<JobApplicationRunEntry['status']>([
+  'completed',
+  'error',
+  'queued',
+  'running',
+  'starting',
+]);
+const JOB_APPLICATION_ACTIVE_RUN_STATUSES = new Set<JobApplicationRunEntry['status']>([
+  'queued',
+  'running',
+  'starting',
+]);
+const JOB_APPLICATION_RUN_POLL_INTERVAL_MS = 4_000;
+
+const normalizePolledAiPathRunStatus = (
+  status: unknown
+): JobApplicationRunEntry['status'] | null => {
+  if (typeof status !== 'string') return null;
+  const normalized = status.trim().toLowerCase();
+  if (['completed', 'success', 'succeeded'].includes(normalized)) return 'completed';
+  if (['canceled', 'cancelled', 'error', 'failed', 'failure'].includes(normalized)) return 'error';
+  if (['active', 'in_progress', 'processing', 'running', 'started'].includes(normalized)) {
+    return 'running';
+  }
+  if (['created', 'pending', 'queued', 'scheduled'].includes(normalized)) return 'queued';
+  return null;
+};
+
+const readPolledAiPathRunError = (run: Record<string, unknown>): string | null => {
+  const directError = run.error ?? run.errorMessage ?? run.failureReason;
+  if (typeof directError === 'string' && directError.trim().length > 0) return directError.trim();
+  const meta = readRecord(run.meta);
+  const metaError = meta?.error ?? meta?.errorMessage ?? meta?.failureReason;
+  return typeof metaError === 'string' && metaError.trim().length > 0 ? metaError.trim() : null;
+};
+
+const resolvePolledJobApplicationRunEntry = (
+  entry: JobApplicationRunEntry,
+  run: Record<string, unknown>
+): JobApplicationRunEntry | null => {
+  const status = normalizePolledAiPathRunStatus(run.status);
+  if (status === null) return null;
+  const runUpdatedAt = typeof run.updatedAt === 'string' ? run.updatedAt : null;
+  return {
+    ...entry,
+    error:
+      status === 'error' ? readPolledAiPathRunError(run) ?? entry.error ?? 'AI Path run failed.' : null,
+    status,
+    updatedAt: runUpdatedAt ?? (status !== entry.status ? new Date().toISOString() : entry.updatedAt),
+  };
+};
+
+const isStoredJobApplicationRunEntry = (value: unknown): value is JobApplicationRunEntry => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const entry = value as Partial<JobApplicationRunEntry>;
+  const context = entry.context;
+  return (
+    typeof entry.id === 'string' &&
+    JOB_APPLICATION_RUN_ARTIFACTS.has(entry.artifactKind as JobApplicationRunEntry['artifactKind']) &&
+    JOB_APPLICATION_RUN_STATUSES.has(entry.status as JobApplicationRunEntry['status']) &&
+    (entry.artifactLabel === undefined ||
+      entry.artifactLabel === null ||
+      typeof entry.artifactLabel === 'string') &&
+    (entry.runId === null || typeof entry.runId === 'string') &&
+    (entry.error === null || typeof entry.error === 'string') &&
+    typeof entry.updatedAt === 'string' &&
+    context !== undefined &&
+    typeof context.jobListingId === 'string' &&
+    typeof context.jobTitle === 'string' &&
+    typeof context.organizationId === 'string' &&
+    typeof context.personId === 'string'
+  );
+};
+
+const readStoredJobApplicationRunEntries = (): JobApplicationRunEntry[] => {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(JOB_APPLICATION_RUN_ENTRIES_STORAGE_KEY);
+    if (raw === null || raw.trim().length === 0) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    const now = Date.now();
+    return parsed
+      .filter(isStoredJobApplicationRunEntry)
+      .filter((entry: JobApplicationRunEntry): boolean => {
+        const updatedAt = Date.parse(entry.updatedAt);
+        return !Number.isFinite(updatedAt) || now - updatedAt <= JOB_APPLICATION_RUN_ENTRY_MAX_AGE_MS;
+      })
+      .slice(0, JOB_APPLICATION_RUN_ENTRY_LIMIT);
+  } catch (error) {
+    logClientError(error);
+    return [];
+  }
+};
+
+function JobApplicationRunStatusBadges({
+  entries,
+}: {
+  entries: JobApplicationRunEntry[];
+}): React.JSX.Element | null {
+  if (entries.length === 0) return null;
+  const sortedEntries = entries
+    .slice()
+    .sort(
+      (left: JobApplicationRunEntry, right: JobApplicationRunEntry): number =>
+        JOB_APPLICATION_ARTIFACT_SORT_ORDER[left.artifactKind] -
+        JOB_APPLICATION_ARTIFACT_SORT_ORDER[right.artifactKind]
+    );
+  return (
+    <div className='flex flex-wrap items-center gap-1'>
+      {sortedEntries.map((entry: JobApplicationRunEntry) => {
+        const label = resolveJobApplicationArtifactLabel(entry);
+        const status = JOB_APPLICATION_RUN_STATUS_LABELS[entry.status];
+        const title = [label, status, entry.runId ? `Run ${entry.runId}` : null, entry.error]
+          .filter((value: string | null): value is string => value !== null && value.length > 0)
+          .join(' · ');
+        const variant =
+          entry.status === 'completed'
+            ? 'success'
+            : entry.status === 'error'
+              ? 'error'
+              : entry.status === 'running'
+                ? 'processing'
+                : 'pending';
+        return (
+          <Badge key={entry.id} variant={variant} title={title}>
+            {label} {status}
+          </Badge>
+        );
+      })}
+    </div>
+  );
+}
 
 function JobApplicationsInline({
   applications,
@@ -473,15 +706,49 @@ function ApplicationPackageModal({
   const { toast } = useToast();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingCoverLetterPdf, setIsExportingCoverLetterPdf] = useState(false);
+  const [isPreviewingCvPdf, setIsPreviewingCvPdf] = useState(false);
   const cvHref = application !== null ? cvApplicationHref(application) : null;
   const jobHref = application !== null ? getApplicationJobHref(application, jobListing) : null;
   const notes = application?.applicationNotes ?? [];
   const missingInformation = application?.missingInformation ?? [];
   const skills = application?.tailoredCv?.skills ?? [];
+  const hasApplicationEmail =
+    (application?.applicationEmail?.subject?.trim() ?? '').length > 0 ||
+    (application?.applicationEmail?.bodyMarkdown?.trim() ?? '').length > 0 ||
+    (application?.applicationEmail?.bodyText?.trim() ?? '').length > 0;
   const canExportPdf =
     application?.tailoredCvId !== null &&
     application?.tailoredCvId !== undefined &&
     application.tailoredCvId.trim().length > 0;
+
+  const handlePreviewCvPdf = async (): Promise<void> => {
+    if (!application || !canExportPdf) return;
+    setIsPreviewingCvPdf(true);
+    try {
+      const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(application.tailoredCvId ?? '')}`);
+      if (!response.ok) throw new Error(`Failed to load CV preview (${response.status}).`);
+      const payload = (await response.json()) as { cv?: FilemakerCv };
+      const cv = payload.cv;
+      if (!cv) throw new Error('CV preview data was not returned.');
+      const html =
+        cv.bodyBlocks !== null && cv.bodyBlocks.length > 0
+          ? compileCvBlocksToHtml(cv.bodyBlocks, {
+              highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
+            })
+          : cv.bodyHtml;
+      if (html === null || html.trim().length === 0) {
+        throw new Error('CV preview content is empty.');
+      }
+      openFilemakerCvPdfPreview(html);
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to preview CV PDF.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsPreviewingCvPdf(false);
+    }
+  };
 
   const handleExportPdf = async (): Promise<void> => {
     if (!application || !canExportPdf) return;
@@ -489,7 +756,7 @@ function ApplicationPackageModal({
     try {
       const response = await fetch('/api/filemaker/cvs/export-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ cvId: application.tailoredCvId }),
       });
       if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
@@ -504,6 +771,50 @@ function ApplicationPackageModal({
       });
     } finally {
       setIsExportingPdf(false);
+    }
+  };
+
+  const handlePreviewCoverLetter = (): void => {
+    if (!application) return;
+    try {
+      const subject = formatNullableText(application.coverLetter?.subject, 'Cover letter');
+      openFilemakerCvPdfPreview(
+        composePlainDocumentPreviewHtml({
+          title: subject,
+          meta: composeApplicationMeta(application),
+          body: formatNullableText(
+            application.coverLetter?.bodyMarkdown,
+            'No cover letter content was generated.'
+          ),
+        })
+      );
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to preview cover letter.', {
+        variant: 'error',
+      });
+    }
+  };
+
+  const handlePreviewApplicationEmail = (): void => {
+    if (!application) return;
+    try {
+      const subject = formatNullableText(application.applicationEmail?.subject, 'Application email');
+      openFilemakerCvPdfPreview(
+        composePlainDocumentPreviewHtml({
+          title: subject,
+          meta: composeApplicationMeta(application),
+          body: formatNullableText(
+            application.applicationEmail?.bodyText ?? application.applicationEmail?.bodyMarkdown,
+            'No application email content was generated.'
+          ),
+        })
+      );
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to preview application email.', {
+        variant: 'error',
+      });
     }
   };
 
@@ -556,6 +867,20 @@ function ApplicationPackageModal({
             >
               Open CV
             </a>
+          ) : null}
+          {canExportPdf ? (
+            <Button
+              type='button'
+              variant='outline'
+              onClick={(): void => {
+                void handlePreviewCvPdf();
+              }}
+              disabled={isMutating || isPreviewingCvPdf}
+              className='gap-1.5'
+            >
+              {!isPreviewingCvPdf ? <Eye className='h-3.5 w-3.5' aria-hidden='true' /> : null}
+              {isPreviewingCvPdf ? 'Previewing...' : 'Preview CV PDF'}
+            </Button>
           ) : null}
           {canExportPdf ? (
             <Button
@@ -630,6 +955,17 @@ function ApplicationPackageModal({
                       variant='outline'
                       size='sm'
                       className='h-8 gap-1.5'
+                      onClick={handlePreviewCoverLetter}
+                      disabled={isMutating}
+                    >
+                      <Eye className='h-3.5 w-3.5' aria-hidden='true' />
+                      Preview
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-8 gap-1.5'
                       onClick={handleDownloadCoverLetterText}
                       disabled={isMutating}
                     >
@@ -665,6 +1001,62 @@ function ApplicationPackageModal({
                   </pre>
                 </div>
               </section>
+
+              {hasApplicationEmail ? (
+                <section className='space-y-2'>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <h4 className='text-sm font-semibold text-white'>Application email</h4>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-8 gap-1.5'
+                        onClick={handlePreviewApplicationEmail}
+                        disabled={isMutating}
+                      >
+                        <Eye className='h-3.5 w-3.5' aria-hidden='true' />
+                        Preview
+                      </Button>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        className='h-8 gap-1.5'
+                        onClick={(): void => {
+                          const filename = createDownloadFilename(
+                            application.applicationEmail?.subject,
+                            application.id
+                          );
+                          downloadBlob(
+                            new Blob([composeApplicationEmailText(application)], {
+                              type: 'text/plain;charset=utf-8',
+                            }),
+                            `${filename}.txt`
+                          );
+                          toast('Application email text downloaded.', { variant: 'success' });
+                        }}
+                        disabled={isMutating}
+                      >
+                        <Download className='h-3.5 w-3.5' aria-hidden='true' />
+                        Download Text
+                      </Button>
+                    </div>
+                  </div>
+                  <div className='rounded-md border border-border/50 bg-background/30 p-3'>
+                    <div className='mb-2 text-sm font-medium text-gray-100'>
+                      {formatNullableText(application.applicationEmail?.subject, 'Application email')}
+                    </div>
+                    <pre className='whitespace-pre-wrap text-xs leading-5 text-gray-300'>
+                      {formatNullableText(
+                        application.applicationEmail?.bodyText ??
+                          application.applicationEmail?.bodyMarkdown,
+                        'No application email content was generated.'
+                      )}
+                    </pre>
+                  </div>
+                </section>
+              ) : null}
 
               <section className='space-y-2'>
                 <h4 className='text-sm font-semibold text-white'>Tailored CV</h4>
@@ -730,6 +1122,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const { jobListings, organization } = useAdminFilemakerOrganizationEditPageStateContext();
   const { setJobListings } = useAdminFilemakerOrganizationEditPageActionsContext();
   const [applicationListingId, setApplicationListingId] = useState<string | null>(null);
+  const [jobApplicationRunEntries, setJobApplicationRunEntries] = useState<
+    JobApplicationRunEntry[]
+  >(readStoredJobApplicationRunEntries);
   const [selectedPreparedApplicationId, setSelectedPreparedApplicationId] = useState<string | null>(
     null
   );
@@ -743,6 +1138,17 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawJobApplicationSettings = settingsStore.get(FILEMAKER_JOB_APPLICATION_SETTINGS_KEY);
   const organizationId = organization?.id ?? '';
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        JOB_APPLICATION_RUN_ENTRIES_STORAGE_KEY,
+        JSON.stringify(jobApplicationRunEntries.slice(0, JOB_APPLICATION_RUN_ENTRY_LIMIT))
+      );
+    } catch (error) {
+      logClientError(error);
+    }
+  }, [jobApplicationRunEntries]);
   const filemakerDatabase = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
   const jobApplicationSettings = useMemo(
     () => parseFilemakerJobApplicationSettings(rawJobApplicationSettings),
@@ -794,6 +1200,12 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         : null,
     [jobListings, selectedPreparedApplication]
   );
+  const handleJobApplicationRunEntryChange = useCallback((entry: JobApplicationRunEntry): void => {
+    setJobApplicationRunEntries((current: JobApplicationRunEntry[]): JobApplicationRunEntry[] => [
+      entry,
+      ...current.filter((candidate: JobApplicationRunEntry): boolean => candidate.id !== entry.id),
+    ]);
+  }, []);
 
   const loadApplications = useCallback(
     async (signal?: AbortSignal): Promise<void> => {
@@ -840,6 +1252,90 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
       controller.abort();
     };
   }, [loadApplications]);
+
+  useEffect(() => {
+    if (organizationId.trim().length === 0) return;
+    const pollableEntries = jobApplicationRunEntries.filter(
+      (entry: JobApplicationRunEntry): boolean =>
+        entry.context.organizationId === organizationId &&
+        entry.runId !== null &&
+        JOB_APPLICATION_ACTIVE_RUN_STATUSES.has(entry.status)
+    );
+    if (pollableEntries.length === 0) return;
+
+    const controller = new AbortController();
+    let isDisposed = false;
+    let isPolling = false;
+
+    const pollEntries = async (): Promise<void> => {
+      if (isPolling) return;
+      isPolling = true;
+      const updates = await Promise.all(
+        pollableEntries.map(async (entry: JobApplicationRunEntry): Promise<JobApplicationRunEntry | null> => {
+          if (entry.runId === null) return null;
+          try {
+            const response = await getAiPathRun(entry.runId, {
+              cache: 'no-store',
+              signal: controller.signal,
+              timeoutMs: 10_000,
+            });
+            if (!response.ok) return null;
+            const run = readRecord(response.data.run);
+            return run !== null ? resolvePolledJobApplicationRunEntry(entry, run) : null;
+          } catch (error) {
+            if (!controller.signal.aborted) logClientError(error);
+            return null;
+          }
+        })
+      );
+      isPolling = false;
+      if (isDisposed || controller.signal.aborted) return;
+
+      const updatesById = new Map(
+        updates
+          .filter((entry): entry is JobApplicationRunEntry => entry !== null)
+          .map((entry: JobApplicationRunEntry): [string, JobApplicationRunEntry] => [entry.id, entry])
+      );
+      if (updatesById.size === 0) return;
+
+      const shouldReloadApplications = Array.from(updatesById.values()).some(
+        (update: JobApplicationRunEntry): boolean =>
+          update.status === 'completed' &&
+          pollableEntries.some(
+            (entry: JobApplicationRunEntry): boolean =>
+              entry.id === update.id && entry.status !== 'completed'
+          )
+      );
+      setJobApplicationRunEntries((current: JobApplicationRunEntry[]): JobApplicationRunEntry[] => {
+        let changed = false;
+        const next = current.map((entry: JobApplicationRunEntry): JobApplicationRunEntry => {
+          const update = updatesById.get(entry.id);
+          if (update === undefined) return entry;
+          if (
+            entry.status === update.status &&
+            entry.error === update.error &&
+            entry.updatedAt === update.updatedAt
+          ) {
+            return entry;
+          }
+          changed = true;
+          return update;
+        });
+        return changed ? next : current;
+      });
+      if (shouldReloadApplications) void loadApplications();
+    };
+
+    void pollEntries();
+    const intervalId = window.setInterval(() => {
+      void pollEntries();
+    }, JOB_APPLICATION_RUN_POLL_INTERVAL_MS);
+    return () => {
+      isDisposed = true;
+      controller.abort();
+      window.clearInterval(intervalId);
+    };
+  }, [jobApplicationRunEntries, loadApplications, organizationId]);
 
   const addListing = useCallback((): void => {
     if (!organization) return;
@@ -1019,6 +1515,11 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
               editableLexiconTermIds
             );
             const applications = applicationsByJobListingId.get(listing.id) ?? [];
+            const runEntries = jobApplicationRunEntries.filter(
+              (entry: JobApplicationRunEntry): boolean =>
+                entry.context.organizationId === organization.id &&
+                entry.context.jobListingId === listing.id
+            );
             const targeted = listing.targetedCampaignIds.length > 0;
             return (
               <div
@@ -1095,6 +1596,8 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     </DropdownMenu>
                   </div>
                 </div>
+
+                <JobApplicationRunStatusBadges entries={runEntries} />
 
                 <div className='grid gap-3 md:grid-cols-2'>
                   <FormField label='Job title'>
@@ -1414,6 +1917,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         </div>
       )}
       <JobApplicationPreparationModal
+        filemakerDatabase={filemakerDatabase}
         initialJobListingId={applicationListingId}
         isOpen={applicationListingId !== null}
         jobListings={jobListings}
@@ -1422,7 +1926,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         onCreated={(): void => {
           void loadApplications();
         }}
+        onRunEntryChange={handleJobApplicationRunEntryChange}
         organization={organization}
+        runEntries={jobApplicationRunEntries}
       />
       <ApplicationPackageModal
         application={selectedPreparedApplication}

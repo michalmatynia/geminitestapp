@@ -141,8 +141,8 @@ interface UseTriggerButtonsOptions {
   location: AiTriggerButtonLocation;
   entityType: 'product' | 'note' | 'custom';
   entityId?: string | null | undefined;
-  getEntityJson?: (() => Record<string, unknown> | null) | undefined;
-  getTriggerExtras?: (() => Record<string, unknown> | null) | undefined;
+  getEntityJson?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
+  getTriggerExtras?: ((button?: AiTriggerButtonRecord) => Record<string, unknown> | null) | undefined;
   onRunQueued?:
     | ((args: {
         button: AiTriggerButtonRecord;
@@ -359,8 +359,17 @@ export function useTriggerButtons({
         ...prev,
         [button.id]: { status: 'running', progress: 0 },
       }));
-      const resolvedEntityId = resolveTriggerEntityId(entityId, getEntityJson);
-      let customExtras: Record<string, unknown> | null = null;
+      const getButtonEntityJson = getEntityJson
+        ? (): Record<string, unknown> | null => getEntityJson(button)
+        : undefined;
+      const resolvedEntityId = resolveTriggerEntityId(entityId, getButtonEntityJson);
+      const buttonContextTemplate =
+        button.contextTemplate &&
+        typeof button.contextTemplate === 'object' &&
+        !Array.isArray(button.contextTemplate)
+          ? button.contextTemplate
+          : null;
+      let customExtras: Record<string, unknown> | null = buttonContextTemplate;
 
       // Guard: if the caller signals an entity context (via explicit entityId prop or getEntityJson)
       // but resolution yields null, abort early rather than firing with no entity context.
@@ -380,13 +389,23 @@ export function useTriggerButtons({
 
       if (getTriggerExtras) {
         try {
-          const resolvedTriggerExtras = getTriggerExtras();
+          const resolvedTriggerExtras = getTriggerExtras(button);
+          if (resolvedTriggerExtras === null) {
+            toast('Trigger context is not ready for this AI Path trigger.', {
+              variant: 'warning',
+            });
+            setRunStates((prev) => ({ ...prev, [button.id]: { status: 'idle', progress: 0 } }));
+            return;
+          }
           if (
             resolvedTriggerExtras &&
             typeof resolvedTriggerExtras === 'object' &&
             !Array.isArray(resolvedTriggerExtras)
           ) {
-            customExtras = resolvedTriggerExtras;
+            customExtras = {
+              ...(buttonContextTemplate ?? {}),
+              ...resolvedTriggerExtras,
+            };
           }
         } catch (error) {
           logClientCatch(error, {
@@ -431,7 +450,7 @@ export function useTriggerButtons({
           preferredPathId: button.pathId ?? null,
           entityType,
           entityId: resolvedEntityId,
-          ...(getEntityJson ? { getEntityJson } : {}),
+          ...(getButtonEntityJson ? { getEntityJson: getButtonEntityJson } : {}),
           event: options.event,
           source: { tab: entityType, location },
           extras: {

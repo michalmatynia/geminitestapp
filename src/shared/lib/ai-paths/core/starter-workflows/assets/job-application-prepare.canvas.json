@@ -26,7 +26,10 @@
         "y": 240
       },
       "inputs": [],
-      "outputs": ["trigger", "triggerName"],
+      "outputs": [
+        "trigger",
+        "triggerName"
+      ],
       "config": {
         "trigger": {
           "event": "cb9f76f4-50d5-4d23-8f89-f11d4f7f81dd",
@@ -43,8 +46,19 @@
         "x": 240,
         "y": 240
       },
-      "inputs": ["trigger", "context", "meta", "entityId", "entityType"],
-      "outputs": ["context", "meta", "entityId", "entityType"],
+      "inputs": [
+        "trigger",
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
+      "outputs": [
+        "context",
+        "meta",
+        "entityId",
+        "entityType"
+      ],
       "config": {
         "fetcher": {
           "sourceMode": "live_context",
@@ -82,7 +96,10 @@
         "x": 500,
         "y": 240
       },
-      "inputs": ["entityJson", "context"],
+      "inputs": [
+        "entityJson",
+        "context"
+      ],
       "outputs": [
         "bundle",
         "personContext",
@@ -116,11 +133,17 @@
         "x": 880,
         "y": 240
       },
-      "inputs": ["bundle", "context"],
-      "outputs": ["prompt", "images"],
+      "inputs": [
+        "bundle",
+        "context"
+      ],
+      "outputs": [
+        "prompt",
+        "images"
+      ],
       "config": {
         "prompt": {
-          "template": "Create a tailored job application package from the provided database context.\n\nPerson context JSON: {{bundle.personContext}}\nJob listing context JSON: {{bundle.jobContext}}\nOrganisation context JSON: {{bundle.organizationContext}}\nPlatform context JSON: {{bundle.platformContext}}\nGeneration request JSON: {{bundle.generationRequest}}\n\nReturn ONLY valid JSON with this exact schema:\n{\"tailoredCv\":{\"title\":\"\",\"professionalSummary\":\"\",\"bodyText\":\"\",\"bodyMarkdown\":\"\",\"experienceHighlights\":[\"\"],\"educationHighlights\":[\"\"],\"skills\":[\"\"],\"preferencesMatch\":[\"\"]},\"coverLetter\":{\"subject\":\"\",\"bodyMarkdown\":\"\"},\"applicationNotes\":[\"\"],\"missingInformation\":[\"\"],\"confidence\":0}\n\nRules:\n1. Tailor the CV and cover letter to the specific job listing and organisation profile.\n2. Use only facts present in the person profile, person linked records, and existing CV database records.\n3. Prefer the person's education, experience, strengths, technical environment, and preferences when they are relevant.\n4. Do not claim employment history, education, technologies, languages, certifications, or achievements that are not in the context.\n5. Build tailoredCv.bodyText as a complete plain text CV and tailoredCv.bodyMarkdown as the same CV in markdown.\n6. If the job or organisation context is thin, explain the missing information in missingInformation instead of inventing it.\n7. Keep the cover letter professional, direct, and specific to the company and role.\n8. Return JSON only. No markdown outside bodyMarkdown fields, no code fences, no commentary."
+          "template": "Create a tailored job application package from the provided database context.\n\nPerson context JSON: {{bundle.personContext}}\nJob listing context JSON: {{bundle.jobContext}}\nOrganisation context JSON: {{bundle.organizationContext}}\nPlatform context JSON: {{bundle.platformContext}}\nGeneration request JSON: {{bundle.generationRequest}}\n\nReturn ONLY valid JSON with this exact schema:\n{\"tailoredCv\":{\"title\":\"\",\"professionalSummary\":\"\",\"bodyText\":\"\",\"bodyMarkdown\":\"\",\"bodyBlocks\":[{\"id\":\"ai-profile\",\"kind\":\"profileHeader\",\"name\":\"\",\"headline\":\"\",\"email\":\"\",\"phone\":\"\",\"location\":\"\",\"website\":\"\",\"linkedinUrl\":\"\",\"githubUrl\":\"\"},{\"id\":\"ai-summary\",\"kind\":\"summary\",\"text\":\"\"},{\"id\":\"ai-tech\",\"kind\":\"techStack\",\"label\":\"Tech stack\",\"items\":[{\"label\":\"\",\"iconUrl\":\"\",\"lexiconTermId\":\"\"}]},{\"id\":\"ai-skills\",\"kind\":\"skills\",\"label\":\"Skills\",\"items\":[\"\"]}],\"experienceHighlights\":[\"\"],\"educationHighlights\":[\"\"],\"skills\":[\"\"],\"preferencesMatch\":[\"\"]},\"coverLetter\":{\"subject\":\"\",\"bodyMarkdown\":\"\"},\"applicationNotes\":[\"\"],\"missingInformation\":[\"\"],\"confidence\":0}\n\nRules:\n1. Tailor the CV and cover letter to the specific job listing and organisation profile.\n2. Use only facts present in the person profile, person linked records, and existing CV database records.\n3. Prefer the person's education, experience, strengths, technical environment, and preferences when they are relevant.\n4. Do not claim employment history, education, technologies, languages, certifications, or achievements that are not in the context.\n5. Build tailoredCv.bodyText as a complete plain text CV, tailoredCv.bodyMarkdown as the same CV in markdown, and tailoredCv.bodyBlocks as valid Filemaker CV block JSON when creating a tailored CV.\n6. When jobContext.lexicon.selectedTechnologyTerms are relevant, include them in tailoredCv.bodyBlocks as a techStack block with label, iconUrl, and lexiconTermId so the CV PDF can highlight matching mentions. Every relevant technology item must carry label, iconUrl, and lexiconTermId.\n7. If the job or organisation context is thin, explain the missing information in missingInformation instead of inventing it.\n8. Keep the cover letter professional, direct, and specific to the company and role.\n9. Return JSON only. No markdown outside bodyMarkdown fields, no code fences, no commentary."
         }
       }
     },
@@ -133,14 +156,22 @@
         "x": 1280,
         "y": 240
       },
-      "inputs": ["prompt", "images", "context"],
-      "outputs": ["result", "jobId"],
+      "inputs": [
+        "prompt",
+        "images",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "jobId"
+      ],
       "config": {
         "model": {
           "temperature": 0.2,
           "maxTokens": 2200,
           "vision": false,
-          "waitForResult": true
+          "waitForResult": true,
+          "modelId": "gpt-oss:120b-cloud"
         }
       }
     },
@@ -153,8 +184,17 @@
         "x": 1660,
         "y": 240
       },
-      "inputs": ["value", "prompt", "regexCallback"],
-      "outputs": ["grouped", "matches", "value", "aiPrompt"],
+      "inputs": [
+        "value",
+        "prompt",
+        "regexCallback"
+      ],
+      "outputs": [
+        "grouped",
+        "matches",
+        "value",
+        "aiPrompt"
+      ],
       "config": {
         "regex": {
           "pattern": "\\{[\\s\\S]*\\}",
@@ -186,8 +226,14 @@
         "x": 2040,
         "y": 88
       },
-      "inputs": ["value", "context"],
-      "outputs": ["result", "bundle"],
+      "inputs": [
+        "value",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "bundle"
+      ],
       "config": {
         "database": {
           "operation": "insert",
@@ -203,7 +249,7 @@
             "preset": "by_id",
             "field": "id",
             "idType": "string",
-            "queryTemplate": "{\"_id\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"title\":\"{{value.tailoredCv.title}}\",\"status\":\"draft\",\"template\":\"classic\",\"bodyBlocks\":[],\"bodyHtml\":null,\"bodyText\":\"{{value.tailoredCv.bodyText}}\",\"bodyMarkdown\":\"{{value.tailoredCv.bodyMarkdown}}\",\"professionalSummary\":\"{{value.tailoredCv.professionalSummary}}\",\"experienceHighlights\":{{value.tailoredCv.experienceHighlights}},\"educationHighlights\":{{value.tailoredCv.educationHighlights}},\"skills\":{{value.tailoredCv.skills}},\"preferencesMatch\":{{value.tailoredCv.preferencesMatch}},\"source\":\"ai-path-job-application-prepare\",\"sourceEntityId\":\"{{context.entityId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
+            "queryTemplate": "{\"_id\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"title\":\"{{value.tailoredCv.title}}\",\"status\":\"draft\",\"template\":\"classic\",\"bodyBlocks\":{{value.tailoredCv.bodyBlocks}},\"bodyHtml\":null,\"bodyText\":\"{{value.tailoredCv.bodyText}}\",\"bodyMarkdown\":\"{{value.tailoredCv.bodyMarkdown}}\",\"professionalSummary\":\"{{value.tailoredCv.professionalSummary}}\",\"experienceHighlights\":{{value.tailoredCv.experienceHighlights}},\"educationHighlights\":{{value.tailoredCv.educationHighlights}},\"skills\":{{value.tailoredCv.skills}},\"preferencesMatch\":{{value.tailoredCv.preferencesMatch}},\"highlightTechnologyTerms\":{{context.entityJson.applicationContext.jobContext.lexicon.technologyMentionHighlighting.terms}},\"source\":\"ai-path-job-application-prepare\",\"sourceEntityId\":\"{{context.entityId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
             "limit": 1,
             "sort": "",
             "projection": "",
@@ -214,7 +260,15 @@
           }
         },
         "runtime": {
-          "waitForInputs": true
+          "waitForInputs": true,
+          "inputContracts": {
+            "value": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            }
+          }
         }
       }
     },
@@ -227,8 +281,14 @@
         "x": 2040,
         "y": 392
       },
-      "inputs": ["value", "context"],
-      "outputs": ["result", "bundle"],
+      "inputs": [
+        "value",
+        "context"
+      ],
+      "outputs": [
+        "result",
+        "bundle"
+      ],
       "config": {
         "database": {
           "operation": "insert",
@@ -244,7 +304,7 @@
             "preset": "by_id",
             "field": "id",
             "idType": "string",
-            "queryTemplate": "{\"_id\":\"ai-job-application-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-job-application-{{context.entityId}}-{{context.timestamp}}\",\"status\":\"draft\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"organizationName\":\"{{context.entityJson.applicationContext.organizationContext.organization.name}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"jobTitle\":\"{{context.entityJson.applicationContext.jobContext.listing.title}}\",\"integrationId\":\"{{context.entityJson.applicationContext.platformContext.integrationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"connectionId\":\"{{context.entityJson.applicationContext.platformContext.connectionId}}\",\"tailoredCvId\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"tailoredCv\":{{value.tailoredCv}},\"coverLetter\":{{value.coverLetter}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"source\":\"ai-path-job-application-prepare\",\"sourceEntityId\":\"{{context.entityId}}\",\"sourceApplicationContext\":{{context.entityJson.applicationContext}},\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
+            "queryTemplate": "{\"_id\":\"ai-job-application-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-job-application-{{context.entityId}}-{{context.timestamp}}\",\"status\":\"draft\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"organizationName\":\"{{context.entityJson.applicationContext.organizationContext.organization.name}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"jobTitle\":\"{{context.entityJson.applicationContext.jobContext.listing.title}}\",\"integrationId\":\"{{context.entityJson.applicationContext.platformContext.integrationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"connectionId\":\"{{context.entityJson.applicationContext.platformContext.connectionId}}\",\"tailoredCvId\":\"ai-filemaker-cv-{{context.entityId}}-{{context.timestamp}}\",\"tailoredCv\":{{value.tailoredCv}},\"coverLetter\":{{value.coverLetter}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"source\":\"ai-path-job-application-prepare\",\"sourceEntityId\":\"{{context.entityId}}\",\"sourceApplicationContext\":{\"version\":{{context.entityJson.applicationContext.version}},\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"sourceEntityId\":\"{{context.entityId}}\"},\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
             "limit": 1,
             "sort": "",
             "projection": "",
@@ -255,7 +315,15 @@
           }
         },
         "runtime": {
-          "waitForInputs": true
+          "waitForInputs": true,
+          "inputContracts": {
+            "value": {
+              "required": true
+            },
+            "context": {
+              "required": true
+            }
+          }
         }
       }
     },

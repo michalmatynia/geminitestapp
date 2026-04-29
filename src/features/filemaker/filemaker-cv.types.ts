@@ -1,4 +1,4 @@
-import type { CvBlock } from './components/cv-builder/cv-block-model';
+import type { CvBlock, CvTechStackItem } from './components/cv-builder/cv-block-model';
 
 export type FilemakerCvStatus = 'draft' | 'published' | 'archived';
 export type FilemakerCvTemplate = 'classic';
@@ -13,6 +13,8 @@ export type FilemakerCv = {
   bodyBlocks: CvBlock[] | null;
   bodyHtml: string | null;
   bodyText: string | null;
+  highlightTechnologyTerms?: CvTechStackItem[];
+  jobListingId?: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -54,6 +54,7 @@ export type FilemakerPersonMongoDocument = Document & {
   fullName?: string;
   githubUrl?: string;
   id: string;
+  languageSkills?: FilemakerPerson['languageSkills'];
   lastName: string;
   legacyDefaultAddressUuid?: string;
   legacyDefaultBankAccountUuid?: string;
@@ -146,6 +147,7 @@ export function toMongoFilemakerPerson(
       phoneNumbers: [],
       linkedinUrl: document.linkedinUrl,
       githubUrl: document.githubUrl,
+      languageSkills: document.languageSkills,
       profileEducation: document.profileEducation,
       profileJobExperience: document.profileJobExperience,
       cvHeadline: document.cvHeadline,

@@ -24,18 +24,18 @@ const resolveCategoryPathSegments = (
   const visitedIds = new Set<string>();
 
   let current: ProductCategory | undefined = category;
-  while (current) {
+  while (current !== undefined) {
     const currentId = resolveCategoryId(current.id);
-    if (!currentId || visitedIds.has(currentId)) break;
+    if (currentId === '' || visitedIds.has(currentId)) break;
     visitedIds.add(currentId);
 
     const label = normalizeCategorySegment(current.name);
-    if (label) {
+    if (label !== '') {
       segments.unshift(label);
     }
 
     const parentId = resolveCategoryId(current.parentId);
-    current = parentId ? categoryById.get(parentId) : undefined;
+    current = parentId !== '' ? categoryById.get(parentId) : undefined;
   }
 
   if (segments.length > 0) {
@@ -43,7 +43,7 @@ const resolveCategoryPathSegments = (
   }
 
   const fallbackLabel = normalizeCategorySegment(category.name);
-  return fallbackLabel ? [fallbackLabel] : [];
+  return fallbackLabel !== '' ? [fallbackLabel] : [];
 };
 
 export const buildLeafCategoryHierarchyEntries = (
@@ -54,11 +54,11 @@ export const buildLeafCategoryHierarchyEntries = (
 
   categories.forEach((category) => {
     const categoryId = resolveCategoryId(category.id);
-    if (!categoryId) return;
+    if (categoryId === '') return;
     categoryById.set(categoryId, category);
 
     const parentId = resolveCategoryId(category.parentId);
-    if (parentId) {
+    if (parentId !== '') {
       parentIds.add(parentId);
     }
   });
@@ -66,7 +66,7 @@ export const buildLeafCategoryHierarchyEntries = (
   return categories
     .filter((category) => {
       const categoryId = resolveCategoryId(category.id);
-      return Boolean(categoryId) && !parentIds.has(categoryId);
+      return categoryId !== '' && !parentIds.has(categoryId);
     })
     .map((category) => {
       const pathSegments = resolveCategoryPathSegments(category, categoryById);

@@ -41,7 +41,7 @@ export const normalizeComparableStringList = (values: ReadonlyArray<unknown>): s
   const unique = new Set<string>();
   values.forEach((value: unknown) => {
     const normalized = normalizeComparableString(value);
-    if (!normalized) return;
+    if (normalized === '') return;
     unique.add(normalized);
   });
   return Array.from(unique);
@@ -49,7 +49,7 @@ export const normalizeComparableStringList = (values: ReadonlyArray<unknown>): s
 
 export const normalizeComparableNullableString = (value: unknown): string | null => {
   const normalized = normalizeComparableString(value);
-  return normalized || null;
+  return normalized !== '' ? normalized : null;
 };
 
 export const normalizeComparableParameterValues = (
@@ -63,7 +63,7 @@ export const normalizeComparableParameterValues = (
         normalizeComparableString(entry.parameterId)
       );
       return {
-        parameterId: normalizedParameterId || '',
+        parameterId: normalizedParameterId,
         value: resolveStoredParameterValue(valuesByLanguage, directValue),
         ...(Object.keys(valuesByLanguage).length > 0 ? { valuesByLanguage } : {}),
         ...(entry.skipParameterInference === true ? { skipParameterInference: true } : {}),
@@ -85,20 +85,20 @@ export const normalizeComparableCustomFieldValues = (
     })
   );
 
+const toComparableRecord = (value: unknown): Record<string, unknown> => {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+};
+
 export const toComparableImageSlot = (slot: unknown): string => {
-  if (!slot || typeof slot !== 'object') return '';
-  const slotRecord = slot as { type?: unknown; data?: unknown };
+  const slotRecord = toComparableRecord(slot);
+  if (Object.keys(slotRecord).length === 0) return '';
+
   if (slotRecord.type === 'existing') {
-    const existingRecord =
-      slotRecord.data && typeof slotRecord.data === 'object'
-        ? (slotRecord.data as Record<string, unknown>)
-        : {};
+    const existingRecord = toComparableRecord(slotRecord['data']);
     return `existing:${normalizeComparableString(existingRecord['id'])}`;
   }
-  const fileRecord =
-    slotRecord.data && typeof slotRecord.data === 'object'
-      ? (slotRecord.data as Record<string, unknown>)
-      : {};
+  const fileRecord = toComparableRecord(slotRecord['data']);
   const sizeValue = fileRecord['size'];
   const lastModifiedValue = fileRecord['lastModified'];
   return [

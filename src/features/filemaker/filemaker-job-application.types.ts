@@ -21,6 +21,12 @@ export type FilemakerJobApplicationCoverLetter = {
   subject: string | null;
 };
 
+export type FilemakerJobApplicationEmail = {
+  bodyMarkdown: string | null;
+  bodyText: string | null;
+  subject: string | null;
+};
+
 export type FilemakerJobApplication = {
   id: string;
   status: FilemakerJobApplicationStatus;
@@ -36,6 +42,7 @@ export type FilemakerJobApplication = {
   tailoredCvId: string | null;
   tailoredCv: FilemakerJobApplicationTailoredCv | null;
   coverLetter: FilemakerJobApplicationCoverLetter | null;
+  applicationEmail: FilemakerJobApplicationEmail | null;
   applicationNotes: string[];
   missingInformation: string[];
   confidence: number | null;

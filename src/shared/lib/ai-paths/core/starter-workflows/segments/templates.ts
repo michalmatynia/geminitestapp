@@ -2,12 +2,22 @@
 
 import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
 import {
-  JOB_APPLICATION_PREPARE_PATH_ID,
-  JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID,
-  JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_COVER_LETTER_PATH_ID,
+  JOB_APPLICATION_COVER_LETTER_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_COVER_LETTER_TRIGGER_NAME,
+  JOB_APPLICATION_COVER_LETTER_TRIGGER_SORT_INDEX,
   JOB_APPLICATION_PREPARE_TRIGGER_LOCATION,
-  JOB_APPLICATION_PREPARE_TRIGGER_NAME,
-  JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
+  JOB_APPLICATION_TAILORED_CV_PATH_ID,
+  JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME,
+  JOB_APPLICATION_TAILORED_CV_TRIGGER_SORT_INDEX,
+  JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_NAME,
+  JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_SORT_INDEX,
 } from '@/shared/lib/ai-paths/job-application-prepare';
 import {
   JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
@@ -36,7 +46,9 @@ import {
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
-import jobApplicationPrepareAsset from '../assets/job-application-prepare.canvas.json';
+import jobApplicationCoverLetterAsset from '../assets/job-application-cover-letter.canvas.json';
+import jobApplicationTailoredCvAsset from '../assets/job-application-tailored-cv.canvas.json';
+import jobApplicationTailoredEmailAsset from '../assets/job-application-tailored-email.canvas.json';
 import jobBoardLexiconClassificationAsset from '../assets/job-board-lexicon-classification.canvas.json';
 import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canvas.json';
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
@@ -94,34 +106,183 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     },
   },
   {
-    templateId: JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID,
-    name: 'Prepare Job Application',
+    templateId: JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID,
+    name: 'Create Tailored CV',
     description:
-      'Create a tailored CV and cover letter from a Persons profile, job listing, and organisation profile.',
-    semanticAsset: jobApplicationPrepareAsset as CanvasSemanticDocument,
+      'Create a tailored CV from a Persons profile, job listing, organisation profile, and lexicon terms.',
+    semanticAsset: jobApplicationTailoredCvAsset as CanvasSemanticDocument,
     seedPolicy: {
       autoSeed: true,
-      defaultPathId: JOB_APPLICATION_PREPARE_PATH_ID,
+      defaultPathId: JOB_APPLICATION_TAILORED_CV_PATH_ID,
       isActive: true,
       isLocked: false,
-      sortOrder: JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
+      sortOrder: JOB_APPLICATION_TAILORED_CV_TRIGGER_SORT_INDEX,
       includeInCanonicalSeed: true,
     },
     triggerButtonPresets: [
       {
-        id: JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID,
-        name: JOB_APPLICATION_PREPARE_TRIGGER_NAME,
-        pathId: JOB_APPLICATION_PREPARE_PATH_ID,
+        id: JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+        name: JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME,
+        pathId: JOB_APPLICATION_TAILORED_CV_PATH_ID,
         locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
-        display: buildTriggerDisplay(JOB_APPLICATION_PREPARE_TRIGGER_NAME),
+        display: buildTriggerDisplay(JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME),
+        contextTemplate: {
+          jobApplicationArtifactKind: 'tailored_cv',
+          applicationContext: {
+            generationRequest: {
+              artifact: 'tailored_cv',
+              artifacts: ['tailored_cv', 'cv_pdf_preview'],
+              language: 'match_job_listing',
+              runtime: 'redis',
+              promptGoal:
+                'Prepare a tailored CV and previewable CV PDF source for this person, job listing, and organisation.',
+            },
+            outputContract: {
+              tailoredCv: {
+                title: 'string',
+                professionalSummary: 'string',
+                bodyText: 'string',
+                bodyMarkdown: 'string',
+                language: 'string; BCP-47 tag matching the job listing language',
+                experienceHighlights: 'string[]',
+                educationHighlights: 'string[]',
+                skills: 'string[]',
+                preferencesMatch: 'string[]',
+                bodyBlocks:
+                  'CvBlock[]; include a techStack block only for technologies explicitly mentioned in the generated CV or job listing; linked items carry label, iconUrl, and lexiconTermId from jobContext.lexicon.selectedTechnologyTerms',
+              },
+              applicationNotes: 'string[]',
+              missingInformation: 'string[]',
+              confidence: 'number',
+            },
+          },
+        },
         enabled: true,
         mode: 'click',
-        sortIndex: JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
+        sortIndex: JOB_APPLICATION_TAILORED_CV_TRIGGER_SORT_INDEX,
       },
     ],
     starterLineage: {
-      starterKey: 'job_application_prepare',
-      templateVersion: 1,
+      starterKey: 'job_application_tailored_cv',
+      templateVersion: 5,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+    },
+  },
+  {
+    templateId: JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+    name: 'Create Application Email',
+    description:
+      'Create a tailored application email from a Persons profile, job listing, and organisation profile.',
+    semanticAsset: jobApplicationTailoredEmailAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_BUTTON_ID,
+        name: JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_NAME,
+        pathId: JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+        locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_NAME),
+        contextTemplate: {
+          jobApplicationArtifactKind: 'application_email',
+          applicationContext: {
+            generationRequest: {
+              artifact: 'application_email',
+              artifacts: ['application_email'],
+              language: 'match_job_listing',
+              runtime: 'redis',
+              promptGoal:
+                'Prepare a tailored application email for this person, job listing, and organisation.',
+            },
+            outputContract: {
+              applicationEmail: {
+                subject: 'string',
+                bodyMarkdown: 'string',
+                bodyText: 'string',
+                language: 'string; BCP-47 tag matching the job listing language',
+              },
+              applicationNotes: 'string[]',
+              missingInformation: 'string[]',
+              confidence: 'number',
+            },
+          },
+        },
+        enabled: true,
+        mode: 'click',
+        sortIndex: JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_SORT_INDEX,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'job_application_tailored_email',
+      templateVersion: 5,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+    },
+  },
+  {
+    templateId: JOB_APPLICATION_COVER_LETTER_STARTER_TEMPLATE_ID,
+    name: 'Create Cover Letter',
+    description:
+      'Create a tailored cover letter from a Persons profile, job listing, and organisation profile.',
+    semanticAsset: jobApplicationCoverLetterAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: JOB_APPLICATION_COVER_LETTER_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: JOB_APPLICATION_COVER_LETTER_TRIGGER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID,
+        name: JOB_APPLICATION_COVER_LETTER_TRIGGER_NAME,
+        pathId: JOB_APPLICATION_COVER_LETTER_PATH_ID,
+        locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(JOB_APPLICATION_COVER_LETTER_TRIGGER_NAME),
+        contextTemplate: {
+          jobApplicationArtifactKind: 'cover_letter',
+          applicationContext: {
+            generationRequest: {
+              artifact: 'cover_letter',
+              artifacts: ['cover_letter'],
+              language: 'match_job_listing',
+              runtime: 'redis',
+              promptGoal:
+                'Prepare a tailored cover letter for this person, job listing, and organisation.',
+            },
+            outputContract: {
+              coverLetter: {
+                subject: 'string',
+                bodyMarkdown: 'string',
+                bodyText: 'string',
+                language: 'string; BCP-47 tag matching the job listing language',
+              },
+              applicationNotes: 'string[]',
+              missingInformation: 'string[]',
+              confidence: 'number',
+            },
+          },
+        },
+        enabled: true,
+        mode: 'click',
+        sortIndex: JOB_APPLICATION_COVER_LETTER_TRIGGER_SORT_INDEX,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'job_application_cover_letter',
+      templateVersion: 5,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

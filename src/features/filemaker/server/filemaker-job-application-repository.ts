@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Collection, Document } from 'mongodb';
+import type { Collection, Document, Filter } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -8,6 +8,7 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type {
   FilemakerJobApplication,
   FilemakerJobApplicationCoverLetter,
+  FilemakerJobApplicationEmail,
   FilemakerJobApplicationStatus,
   FilemakerJobApplicationTailoredCv,
 } from '../filemaker-job-application.types';
@@ -15,7 +16,8 @@ import type {
 export const FILEMAKER_JOB_APPLICATIONS_COLLECTION = 'filemaker_job_applications';
 
 export type FilemakerJobApplicationMongoDocument = Document & {
-  _id?: unknown;
+  _id: string;
+  applicationEmail?: unknown;
   applicationNotes?: unknown;
   confidence?: unknown;
   connectionId?: unknown;
@@ -96,8 +98,7 @@ const normalizeRecord = (value: unknown): Record<string, unknown> | null =>
 const normalizeId = (document: FilemakerJobApplicationMongoDocument): string => {
   const id = normalizeString(document.id);
   if (id !== null) return id;
-  if (document._id !== null && document._id !== undefined) return String(document._id);
-  return '';
+  return document._id;
 };
 
 const toTailoredCv = (value: unknown): FilemakerJobApplicationTailoredCv | null => {
@@ -124,6 +125,16 @@ const toCoverLetter = (value: unknown): FilemakerJobApplicationCoverLetter | nul
   };
 };
 
+const toApplicationEmail = (value: unknown): FilemakerJobApplicationEmail | null => {
+  const record = normalizeRecord(value);
+  if (record === null) return null;
+  return {
+    bodyMarkdown: normalizeString(record['bodyMarkdown']),
+    bodyText: normalizeString(record['bodyText']),
+    subject: normalizeString(record['subject']),
+  };
+};
+
 const toFilemakerJobApplication = (
   document: FilemakerJobApplicationMongoDocument
 ): FilemakerJobApplication => ({
@@ -141,6 +152,7 @@ const toFilemakerJobApplication = (
   tailoredCvId: normalizeString(document.tailoredCvId),
   tailoredCv: toTailoredCv(document.tailoredCv),
   coverLetter: toCoverLetter(document.coverLetter),
+  applicationEmail: toApplicationEmail(document.applicationEmail),
   applicationNotes: normalizeStringArray(document.applicationNotes),
   missingInformation: normalizeStringArray(document.missingInformation),
   confidence: normalizeNumber(document.confidence),
@@ -177,14 +189,14 @@ const normalizeLimit = (value: number | undefined): number => {
 export const listMongoFilemakerJobApplications = async (
   input: ListMongoFilemakerJobApplicationsInput
 ): Promise<FilemakerJobApplication[]> => {
-  const filter: Record<string, string> = {};
+  const filter: Filter<FilemakerJobApplicationMongoDocument> = {};
   const organizationId = normalizeString(input.organizationId);
   const jobListingId = normalizeString(input.jobListingId);
   const personId = normalizeString(input.personId);
 
-  if (organizationId !== null) filter.organizationId = organizationId;
-  if (jobListingId !== null) filter.jobListingId = jobListingId;
-  if (personId !== null) filter.personId = personId;
+  if (organizationId !== null) filter['organizationId'] = organizationId;
+  if (jobListingId !== null) filter['jobListingId'] = jobListingId;
+  if (personId !== null) filter['personId'] = personId;
 
   if (Object.keys(filter).length === 0) return [];
 

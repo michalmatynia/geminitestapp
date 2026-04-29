@@ -73,34 +73,40 @@ export const ProductFormMetadataContext = createContext<ProductFormMetadataConte
   null
 );
 
+type ProductFormMetadataProviderProps = {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  initialCatalogId?: string;
+  onInteraction?: () => void;
+};
+
+const resolveInitialCatalogIds = (
+  draft: ProductDraft | null | undefined,
+  initialCatalogId: string | undefined
+): string[] | undefined => {
+  if (draft?.catalogIds !== undefined && draft.catalogIds.length > 0) return draft.catalogIds;
+  if (initialCatalogId !== undefined && initialCatalogId !== '') return [initialCatalogId];
+  return undefined;
+};
+
 export function ProductFormMetadataProvider({
   children,
   product,
   draft,
   initialCatalogId,
   onInteraction,
-}: {
-  children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
-  initialCatalogId?: string;
-  onInteraction?: () => void;
-}) {
+}: ProductFormMetadataProviderProps): React.JSX.Element {
   const metadata = useProductMetadata({
     product,
     initialCatalogId,
-    initialCatalogIds:
-      draft?.catalogIds && draft.catalogIds.length > 0
-        ? draft.catalogIds
-        : initialCatalogId
-          ? [initialCatalogId]
-          : undefined,
+    initialCatalogIds: resolveInitialCatalogIds(draft, initialCatalogId),
     initialCategoryId: draft?.categoryId ?? null,
     initialTagIds: draft?.tagIds,
     initialProducerIds: draft?.producerIds,
   });
 
-  const value = useMemo(
+  const contextValue = useMemo(
     () => ({
       ...metadata,
       toggleCatalog: (id: string) => {
@@ -128,7 +134,7 @@ export function ProductFormMetadataProvider({
   );
 
   return (
-    <ProductFormMetadataContext.Provider value={value}>
+    <ProductFormMetadataContext.Provider value={contextValue}>
       {children}
     </ProductFormMetadataContext.Provider>
   );

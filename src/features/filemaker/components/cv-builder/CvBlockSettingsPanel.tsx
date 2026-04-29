@@ -35,6 +35,7 @@ const describeSelection = (block: CvBlock): string => {
     case 'experience': return fallbackText(block.title, 'Experience');
     case 'education': return fallbackText(block.institution, 'Education');
     case 'skills': return fallbackText(block.label, 'Skills');
+    case 'techStack': return fallbackText(block.label, 'Tech stack');
     case 'languages': return fallbackText(block.label, 'Languages');
     case 'customText': return fallbackText(block.label, 'Custom text');
     case 'divider': return 'Divider';

@@ -35,6 +35,9 @@ export const buildTriggerContext = (args: {
       sourceLocation: args.source?.location,
     });
   const embeddedEntitySnapshot = shouldEmbedEntitySnapshot ? sanitizedEntitySnapshot : null;
+  const shouldOmitDuplicateEntitySnapshot =
+    args.entityType === 'custom' &&
+    args.source?.location === 'filemaker_organization_job_application';
   const nativeEvent = args.event?.nativeEvent;
   const pointer = nativeEvent
     ? {
@@ -120,7 +123,7 @@ export const buildTriggerContext = (args: {
     },
     entityId: args.entityId ?? null,
     entityType: args.entityType,
-    entity: embeddedEntitySnapshot,
+    entity: shouldOmitDuplicateEntitySnapshot ? null : embeddedEntitySnapshot,
     ...(embeddedEntitySnapshot ? { entityJson: embeddedEntitySnapshot } : {}),
     ...(embeddedEntitySnapshot && args.entityType === 'product' && args.entityId
       ? { productId: args.entityId }

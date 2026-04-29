@@ -52,4 +52,27 @@ describe('filemaker CV repository', () => {
     expect(cv?.bodyHtml).toContain('Marketplace automation engineer');
     expect(cv?.bodyText).toBe('Ada Lovelace\nMarketplace automation engineer');
   });
+
+  it('recompiles generated plain text CVs instead of reusing stale stored HTML', async () => {
+    mocks.collectionMock.findOne.mockResolvedValue({
+      _id: 'cv-ai-1',
+      bodyBlocks: [],
+      bodyHtml: '<html><body><main class="cv-page">old decorative template</main></body></html>',
+      bodyText: 'Ada Lovelace\nMarketplace automation engineer',
+      createdAt: '2026-04-29T10:00:00.000Z',
+      id: 'cv-ai-1',
+      personId: 'person-1',
+      personName: 'Ada Lovelace',
+      status: 'draft',
+      template: 'classic',
+      title: 'Tailored CV',
+      updatedAt: '2026-04-29T10:00:00.000Z',
+    });
+
+    const cv = await getMongoFilemakerCvById('cv-ai-1');
+
+    expect(cv?.bodyHtml).toContain('Marketplace automation engineer');
+    expect(cv?.bodyHtml).not.toContain('old decorative template');
+    expect(cv?.bodyHtml).toContain('linear-gradient(180deg,#f7f9fc 0%,#eef3f8 100%)');
+  });
 });

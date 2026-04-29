@@ -243,6 +243,32 @@ describe('buildTriggerContext', () => {
     expect(ctx['productId']).toBe('product-1');
   });
 
+  it('embeds Filemaker job application context only under entityJson to avoid duplicate run payloads', () => {
+    const entityJson = {
+      id: 'org-1:job-1:person-1:application_package',
+      applicationContext: {
+        personContext: {
+          selectedPersonId: 'person-1',
+        },
+        jobContext: {
+          selectedJobListingId: 'job-1',
+        },
+      },
+    };
+
+    const ctx = buildTriggerContext({
+      triggerNode: TRIGGER_NODE,
+      triggerEventId: 'manual',
+      entityType: 'custom',
+      entityId: 'org-1:job-1:person-1:application_package',
+      entityJson,
+      source: { location: 'filemaker_organization_job_application' },
+    });
+
+    expect(ctx['entity']).toBeNull();
+    expect(ctx['entityJson']).toEqual(entityJson);
+  });
+
   // ── extras field ─────────────────────────────────────────────────────────
 
   it('includes triggerLabel in extras', () => {

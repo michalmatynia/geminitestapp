@@ -1,5 +1,3 @@
-import { View } from 'react-native';
-
 import type { KangurMobileHomeLessonCheckpointItem } from './useKangurMobileHomeLessonCheckpoints';
 import {
   DeferredHomeInsightsLessonPlanCard,

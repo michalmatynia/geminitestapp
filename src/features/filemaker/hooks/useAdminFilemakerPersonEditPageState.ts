@@ -156,6 +156,20 @@ const applyPersonAddresses = (
   };
 };
 
+const normalizePersonLanguageSkillLevel = (value: number): number =>
+  Math.min(10, Math.max(1, Math.round(value)));
+
+const normalizePersonLanguageSkills = (
+  value: FilemakerPerson['languageSkills'] | undefined
+): NonNullable<FilemakerPerson['languageSkills']> =>
+  (value ?? [])
+    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
+      ...(skill.id?.trim() ? { id: skill.id.trim() } : {}),
+      language: skill.language.trim(),
+      level: normalizePersonLanguageSkillLevel(skill.level),
+    }))
+    .filter((skill): boolean => skill.language.length > 0);
+
 export type AdminFilemakerPersonEditPageContextValue = {
   isCreateMode: boolean;
   person: (FilemakerPerson | MongoFilemakerPerson) | null;
@@ -449,6 +463,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     const defaultAddress = normalizedAddresses.find(
       (address): boolean => address.addressId === defaultAddressId
     );
+    const normalizedLanguageSkills = normalizePersonLanguageSkills(personDraft.languageSkills);
 
     if (isCreateMode) {
       const now = new Date().toISOString();
@@ -469,6 +484,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         phoneNumbers: personDraft.phoneNumbers ?? [],
         linkedinUrl: personDraft.linkedinUrl ?? '',
         githubUrl: personDraft.githubUrl ?? '',
+        languageSkills: normalizedLanguageSkills,
         profileEducation: personDraft.profileEducation ?? [],
         profileJobExperience: personDraft.profileJobExperience ?? [],
         cvHeadline: personDraft.cvHeadline ?? '',
@@ -511,6 +527,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
             countryId: defaultAddress?.countryId ?? personDraft.countryId ?? '',
             firstName: nextFirstName,
             githubUrl: personDraft.githubUrl ?? '',
+            languageSkills: normalizedLanguageSkills,
             lastName: nextLastName,
             linkedinUrl: personDraft.linkedinUrl ?? '',
             postalCode: defaultAddress?.postalCode ?? personDraft.postalCode ?? '',
@@ -550,6 +567,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
           ? {
               ...p,
               ...personDraft,
+              languageSkills: normalizedLanguageSkills,
               addressId: defaultAddress?.addressId ?? '',
               street: defaultAddress?.street ?? '',
               streetNumber: defaultAddress?.streetNumber ?? '',

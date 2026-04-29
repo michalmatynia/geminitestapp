@@ -28,7 +28,7 @@ const SEMANTIC_TRANSITION_NOTICE_CONFIG: Partial<
     tone: 'info',
     title: 'Semantic Metadata Detected',
     buildBody: ({ currentTitle }) =>
-      currentTitle
+      currentTitle !== null && currentTitle !== ''
         ? `This rule now matches "${currentTitle}" and will be saved with semantic metadata.`
         : null,
   },
@@ -36,7 +36,7 @@ const SEMANTIC_TRANSITION_NOTICE_CONFIG: Partial<
     tone: 'warning',
     title: 'Converted To Generic Rule',
     buildBody: ({ previousTitle }) =>
-      previousTitle
+      previousTitle !== null && previousTitle !== ''
         ? `This rule no longer matches "${previousTitle}" and will be saved as a generic custom validator.`
         : null,
   },
@@ -44,7 +44,7 @@ const SEMANTIC_TRANSITION_NOTICE_CONFIG: Partial<
     tone: 'info',
     title: 'Semantic Operation Migrated',
     buildBody: ({ previousTitle, currentTitle }) =>
-      previousTitle && currentTitle
+      previousTitle !== null && previousTitle !== '' && currentTitle !== null && currentTitle !== ''
         ? `This rule no longer matches "${previousTitle}" and now matches "${currentTitle}". Saving will migrate its semantic metadata.`
         : null,
   },
@@ -52,7 +52,7 @@ const SEMANTIC_TRANSITION_NOTICE_CONFIG: Partial<
     tone: 'info',
     title: 'Semantic Metadata Updated',
     buildBody: ({ currentTitle }) =>
-      currentTitle
+      currentTitle !== null && currentTitle !== ''
         ? `This rule still matches "${currentTitle}", but its semantic metadata has been updated to reflect the edited shape.`
         : null,
   },
@@ -68,12 +68,12 @@ export const buildSemanticTransitionNotice = ({
   currentTitle: string | null;
 }): SemanticTransitionNotice | null => {
   const config = SEMANTIC_TRANSITION_NOTICE_CONFIG[kind];
-  if (!config) {
+  if (config === undefined) {
     return null;
   }
 
   const body = config.buildBody({ previousTitle, currentTitle });
-  return body
+  return body !== null && body !== ''
     ? {
         tone: config.tone,
         title: config.title,

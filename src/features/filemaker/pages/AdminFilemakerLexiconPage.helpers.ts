@@ -17,6 +17,7 @@ import {
 
 export type FilemakerLexiconFormState = {
   category: FilemakerLexiconTermCategory;
+  iconUrl?: string;
   label: string;
 };
 
@@ -28,6 +29,7 @@ export type FilemakerLexiconEditorState = {
 
 export const DEFAULT_FILEMAKER_LEXICON_FORM: FilemakerLexiconFormState = {
   category: 'other',
+  iconUrl: '',
   label: '',
 };
 
@@ -102,6 +104,7 @@ const includesLexiconQuery = (
       row.term.label,
       row.term.normalizedLabel,
       row.term.typeKey,
+      row.term.iconUrl ?? '',
       formatFilemakerLexiconCategory(row.term.typeKey, typeMetadata),
       row.term.sourceSite ?? '',
       row.term.sourceProvider ?? '',
@@ -212,6 +215,7 @@ const createFilemakerLexiconTermFromForm = (
     normalizedLabel: normalizeFilemakerLexiconKey(label),
     typeKey: input.form.category,
     category: input.form.category,
+    iconUrl: input.form.iconUrl,
     updatedAt: input.now,
   });
 };
@@ -229,7 +233,13 @@ const getExistingLexiconTermFields = (
   now: string
 ): Pick<
   FilemakerLexiconTerm,
-  'createdAt' | 'firstSeenAt' | 'lastSeenAt' | 'occurrenceCount' | 'sourceProvider' | 'sourceSite'
+  | 'createdAt'
+  | 'firstSeenAt'
+  | 'iconUrl'
+  | 'lastSeenAt'
+  | 'occurrenceCount'
+  | 'sourceProvider'
+  | 'sourceSite'
 > => {
   if (editing === null) {
     return {
@@ -240,6 +250,7 @@ const getExistingLexiconTermFields = (
   return {
     createdAt: editing.createdAt,
     firstSeenAt: editing.firstSeenAt,
+    iconUrl: editing.iconUrl,
     lastSeenAt: editing.lastSeenAt,
     occurrenceCount: editing.occurrenceCount,
     sourceProvider: editing.sourceProvider,

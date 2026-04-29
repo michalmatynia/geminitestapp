@@ -57,6 +57,7 @@ export function resolveDatabaseInsertPayload({
       templates: [{ name: 'insertTemplate', template: insertTemplate }],
       templateContext,
       currentValue: templateInputValue,
+      allowEmptyArrays: true,
     });
     if (!templateGuardrail.ok) {
       const errorMessage = templateGuardrail.message;

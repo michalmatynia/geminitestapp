@@ -118,10 +118,39 @@ const parseRuntimeConfigJson = (rawValue: string): Record<string, unknown> => {
       detail: error instanceof Error ? error.message : String(error),
     });
   }
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw badRequestError('Runtime config must be a JSON object.');
   }
   return parsed as Record<string, unknown>;
+};
+
+const validateDatabaseRuntimeConfig = (parsed: Record<string, unknown>): string => {
+  const result = databaseRuntimeConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    throw badRequestError('Invalid database runtimeConfig.', {
+      issues: result.error.issues.map((issue) => issue.message),
+    });
+  }
+  return JSON.stringify(result.data);
+};
+
+const validateAiRuntimeConfig = (parsed: Record<string, unknown>): string => {
+  const result = aiRuntimeConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    throw badRequestError('Invalid AI runtimeConfig.', {
+      issues: result.error.issues.map((issue) => issue.message),
+    });
+  }
+  return JSON.stringify(result.data);
+};
+
+const validateRuntimeConfigByType = (
+  runtimeType: ProductValidationRuntimeType,
+  parsed: Record<string, unknown>
+): string => {
+  if (runtimeType === 'database_query') return validateDatabaseRuntimeConfig(parsed);
+  if (runtimeType === 'ai_prompt') return validateAiRuntimeConfig(parsed);
+  throw badRequestError(`Unsupported runtime type "${runtimeType}".`);
 };
 
 export const validateAndNormalizeRuntimeConfig = ({
@@ -133,33 +162,36 @@ export const validateAndNormalizeRuntimeConfig = ({
   runtimeType: ProductValidationRuntimeType;
   runtimeConfig: string | null;
 }): string | null => {
-  if (!runtimeEnabled || runtimeType === 'none') return null;
-  if (runtimeConfig === null || runtimeConfig === undefined || runtimeConfig === '') {
+  if (runtimeEnabled === false || runtimeType === 'none') return null;
+  if (runtimeConfig === null || runtimeConfig === '') {
     throw badRequestError('runtimeConfig is required when runtime is enabled.');
   }
 
   const parsed = parseRuntimeConfigJson(runtimeConfig);
-  if ((runtimeType as string) === 'database_query') {
-    const result = databaseRuntimeConfigSchema.safeParse(parsed);
-    if (!result.success) {
-      throw badRequestError('Invalid database runtimeConfig.', {
-        issues: result.error.issues.map((issue) => issue.message),
-      });
-    }
-    return JSON.stringify(result.data);
-  }
+  return validateRuntimeConfigByType(runtimeType, parsed);
+};
 
-  if ((runtimeType as string) === 'ai_prompt') {
-    const result = aiRuntimeConfigSchema.safeParse(parsed);
-    if (!result.success) {
-      throw badRequestError('Invalid AI runtimeConfig.', {
-        issues: result.error.issues.map((issue) => issue.message),
-      });
-    }
-    return JSON.stringify(result.data);
-  }
+const parseDatabaseRuntimeConfigForEvaluation = (
+  parsed: Record<string, unknown>
+): Record<string, unknown> | null => {
+  const result = databaseRuntimeConfigSchema.safeParse(parsed);
+  return result.success ? (result.data as Record<string, unknown>) : null;
+};
 
-  throw badRequestError(`Unsupported runtime type "${runtimeType}".`);
+const parseAiRuntimeConfigForEvaluation = (
+  parsed: Record<string, unknown>
+): Record<string, unknown> | null => {
+  const result = aiRuntimeConfigSchema.safeParse(parsed);
+  return result.success ? (result.data as Record<string, unknown>) : null;
+};
+
+const parseRuntimeConfigForEvaluationByType = (
+  runtimeType: ProductValidationRuntimeType,
+  parsed: Record<string, unknown>
+): Record<string, unknown> | null => {
+  if (runtimeType === 'database_query') return parseDatabaseRuntimeConfigForEvaluation(parsed);
+  if (runtimeType === 'ai_prompt') return parseAiRuntimeConfigForEvaluation(parsed);
+  return null;
 };
 
 export const parseRuntimeConfigForEvaluation = ({
@@ -169,23 +201,15 @@ export const parseRuntimeConfigForEvaluation = ({
   runtimeType: ProductValidationRuntimeType;
   runtimeConfig: string | null;
 }): Record<string, unknown> | null => {
-  if (runtimeConfig === null || runtimeConfig === undefined || runtimeConfig === '' || runtimeType === 'none') {
+  if (runtimeConfig === null || runtimeConfig === '' || runtimeType === 'none') {
     return null;
   }
   try {
-    const parsed = JSON.parse(runtimeConfig) as unknown;
+    const parsed: unknown = JSON.parse(runtimeConfig);
     if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
       return null;
     }
-    if ((runtimeType as string) === 'database_query') {
-      const result = databaseRuntimeConfigSchema.safeParse(parsed);
-      return result.success ? (result.data as Record<string, unknown>) : null;
-    }
-    if ((runtimeType as string) === 'ai_prompt') {
-      const result = aiRuntimeConfigSchema.safeParse(parsed);
-      return result.success ? (result.data as Record<string, unknown>) : null;
-    }
-    return null;
+    return parseRuntimeConfigForEvaluationByType(runtimeType, parsed as Record<string, unknown>);
   } catch (error) {
     logClientError(error);
     return null;

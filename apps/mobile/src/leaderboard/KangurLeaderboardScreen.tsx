@@ -12,6 +12,19 @@ import { useKangurMobileLeaderboardDuels } from './useKangurMobileLeaderboardDue
 import { LeaderboardStatsSection } from './components/LeaderboardStatsSection';
 import { LeaderboardStatus } from './components/LeaderboardStatus';
 
+function LeaderboardNavigation({ copy }: { copy: ReturnType<typeof useKangurMobileI18n>['copy'] }): React.JSX.Element {
+  return (
+    <View style={{ alignSelf: 'stretch', gap: 10 }}>
+      <Text onPress={() => {}} style={{ color: '#1d4ed8', fontWeight: '700' }}>
+        {copy({ de: 'Tagesplan jetzt', en: 'Daily plan now', pl: 'Plan dnia teraz' })}
+      </Text>
+      <Text onPress={() => {}} style={{ color: '#1d4ed8', fontWeight: '700' }}>
+        {copy({ de: 'Duell-Lobby öffnen', en: 'Open duel lobby', pl: 'Otwórz lobby pojedynków' })}
+      </Text>
+    </View>
+  );
+}
+
 export function KangurLeaderboardScreen(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
   const {
@@ -56,20 +69,7 @@ export function KangurLeaderboardScreen(): React.JSX.Element {
             visibleCount={visibleCount}
           />
 
-          <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            <Text
-              onPress={() => {}}
-              style={{ color: '#1d4ed8', fontWeight: '700' }}
-            >
-              {copy({ de: 'Tagesplan jetzt', en: 'Daily plan now', pl: 'Plan dnia teraz' })}
-            </Text>
-            <Text
-              onPress={() => {}}
-              style={{ color: '#1d4ed8', fontWeight: '700' }}
-            >
-              {copy({ de: 'Duell-Lobby öffnen', en: 'Open duel lobby', pl: 'Otwórz lobby pojedynków' })}
-            </Text>
-          </View>
+          <LeaderboardNavigation copy={copy} />
         </View>
 
         <LeaderboardStatus 

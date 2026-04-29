@@ -66,6 +66,9 @@ export async function patchHandler(
     ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
+    ...(parsed.data.contextTemplate !== undefined
+      ? { contextTemplate: parsed.data.contextTemplate ?? null }
+      : {}),
     display: buildCanonicalTriggerButtonDisplay(nextName, nextDisplayMode),
     updatedAt: now,
   };

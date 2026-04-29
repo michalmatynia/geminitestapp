@@ -66,9 +66,7 @@ function ChallengesError({
           en: 'Refresh challenges',
           pl: 'Odśwież wyzwania',
         })}
-        onPress={() => {
-          void refresh();
-        }}
+        onPress={refresh}
       />
     </View>
   );
@@ -101,6 +99,47 @@ function ChallengesEmpty({ copy }: { copy: ReturnType<typeof useKangurMobileI18n
   );
 }
 
+function ChallengesList({
+  invites,
+  copy,
+  locale,
+  duelInviteShareError,
+  sharingDuelSessionId,
+  onShare,
+}: {
+  invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: string;
+  duelInviteShareError: string | null;
+  sharingDuelSessionId: string | null;
+  onShare: (sessionId: string) => Promise<void>;
+}): React.JSX.Element {
+  if (invites.isRestoringAuth || invites.isLoading) return <ChallengesLoading copy={copy} />;
+  if (invites.isDeferred && invites.outgoingChallenges.length === 0) return <ChallengesDeferred copy={copy} />;
+  if (invites.error !== null && invites.error !== '') {
+    return <ChallengesError copy={copy} error={invites.error} refresh={invites.refresh} />;
+  }
+  if (invites.outgoingChallenges.length === 0) return <ChallengesEmpty copy={copy} />;
+
+  return (
+    <View style={{ gap: 12 }}>
+      {duelInviteShareError !== null && duelInviteShareError !== '' && (
+        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelInviteShareError}</Text>
+      )}
+      {invites.outgoingChallenges.map((entry) => (
+        <OutgoingChallengeCard
+          key={entry.sessionId}
+          copy={copy}
+          entry={entry}
+          isSharing={sharingDuelSessionId === entry.sessionId}
+          locale={locale as any}
+          onShare={() => onShare(entry.sessionId)}
+        />
+      ))}
+    </View>
+  );
+}
+
 export function AuthenticatedHomeOutgoingChallengesContent({
   areDeferredHomePanelsReady,
   areDeferredHomeDuelSecondaryReady,
@@ -114,34 +153,14 @@ export function AuthenticatedHomeOutgoingChallengesContent({
   if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
   if (!areDeferredHomeDuelSecondaryReady) return <DeferredDuelAdvancedSectionPlaceholder />;
 
-  const renderContent = (): React.JSX.Element => {
-    if (invites.isRestoringAuth || invites.isLoading) return <ChallengesLoading copy={copy} />;
-    if (invites.isDeferred && invites.outgoingChallenges.length === 0) return <ChallengesDeferred copy={copy} />;
-    if (invites.error !== null && invites.error !== '') {
-      return <ChallengesError copy={copy} error={invites.error} refresh={invites.refresh} />;
-    }
-    if (invites.outgoingChallenges.length === 0) return <ChallengesEmpty copy={copy} />;
-
-    return (
-      <View style={{ gap: 12 }}>
-        {duelInviteShareError !== null && duelInviteShareError !== '' && (
-          <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{duelInviteShareError}</Text>
-        )}
-        {invites.outgoingChallenges.map((entry) => (
-          <OutgoingChallengeCard
-            key={entry.sessionId}
-            copy={copy}
-            entry={entry}
-            isSharing={sharingDuelSessionId === entry.sessionId}
-            locale={locale}
-            onShare={() => {
-              void onShare(entry.sessionId);
-            }}
-          />
-        ))}
-      </View>
-    );
-  };
-
-  return renderContent();
+  return (
+    <ChallengesList 
+      invites={invites}
+      copy={copy}
+      locale={locale}
+      duelInviteShareError={duelInviteShareError}
+      sharingDuelSessionId={sharingDuelSessionId}
+      onShare={onShare}
+    />
+  );
 }

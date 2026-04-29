@@ -12,10 +12,10 @@ import {
   FormActions,
   FormField,
   FormSection,
-  SelectSimple,
 } from '@/shared/ui/forms-and-actions.public';
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
 import { Badge, Button, Input, useToast } from '@/shared/ui/primitives.public';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { CvBlockPicker } from '../components/cv-builder/CvBlockPicker';
@@ -117,7 +117,13 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     };
   }, [cvId]);
 
-  const previewHtml = useMemo(() => compileCvBlocksToHtml(blocks), [blocks]);
+  const previewHtml = useMemo(
+    () =>
+      compileCvBlocksToHtml(blocks, {
+        highlightedTechnologyTerms: state.cv?.highlightTechnologyTerms ?? [],
+      }),
+    [blocks, state.cv?.highlightTechnologyTerms]
+  );
   const personId = state.cv?.personId ?? routePersonId;
 
   const applyLoadedCv = useCallback((cv: FilemakerCv): void => {
@@ -133,7 +139,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     if (state.cv === null) throw new Error('CV is not loaded.');
     const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(state.cv.id)}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         bodyBlocks: blocks,
         status,
@@ -184,7 +190,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
       const savedCv = await persistCurrentCv();
       const response = await fetch('/api/filemaker/cvs/export-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ cvId: savedCv.id }),
       });
       if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
@@ -294,16 +300,27 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
             />
           </FormField>
           <FormField label='Status'>
-            <SelectSimple
+            <select
               value={status}
-              onChange={(value: string): void => {
-                if (value === 'draft' || value === 'published' || value === 'archived') {
-                  setStatus(value);
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>): void => {
+                const nextStatus = event.target.value;
+                if (
+                  nextStatus === 'draft' ||
+                  nextStatus === 'published' ||
+                  nextStatus === 'archived'
+                ) {
+                  setStatus(nextStatus);
                 }
               }}
-              options={STATUS_OPTIONS}
-              ariaLabel='CV status'
-            />
+              aria-label='CV status'
+              className='h-9 w-full rounded-md border border-foreground/10 bg-transparent px-3 py-2 text-sm text-foreground/90 transition-colors focus:border-foreground/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2'
+            >
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </FormField>
         </div>
       </FormSection>

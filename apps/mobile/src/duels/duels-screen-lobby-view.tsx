@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { type KangurMobileLocale, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
 import {
   KangurMobileCard as Card,
   KangurMobileScrollScreen,
@@ -27,8 +27,8 @@ import { DuelLobbyRoomsPanel } from './DuelLobbyRoomsPanel';
 import { type UseKangurMobileDuelLobbyChatResult as DuelChatState } from './useKangurMobileDuelLobbyChat';
 import { type UseKangurMobileDuelsLobbyResult as DuelLobbyState } from './useKangurMobileDuelsLobby';
 
-type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
-type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
+type DuelCopy = KangurMobileCopy;
+type DuelLocale = KangurMobileLocale;
 
 type DuelsLobbyViewProps = {
   activeLearnerId: string | null;

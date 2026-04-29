@@ -3,6 +3,7 @@
 import { normalizeAddressFields } from '@/shared/lib/filemaker/entity-builders';
 
 import { normalizeString } from './filemaker-settings.helpers';
+import { resolveFilemakerTechnologyIconUrl } from './technology-icons';
 import {
   type FilemakerAddressLink,
   type FilemakerAddressOwnerKind,
@@ -1234,6 +1235,7 @@ export const createFilemakerLexiconTerm = (input: {
   category?: unknown;
   sourceSite?: unknown;
   sourceProvider?: unknown;
+  iconUrl?: unknown;
   firstSeenAt?: unknown;
   lastSeenAt?: unknown;
   occurrenceCount?: unknown;
@@ -1247,10 +1249,15 @@ export const createFilemakerLexiconTerm = (input: {
     requestedNormalizedLabel.length > 0 ? requestedNormalizedLabel : label.toLowerCase();
   const sourceSite = normalizeString(input.sourceSite);
   const sourceProvider = normalizeString(input.sourceProvider);
+  const requestedIconUrl = normalizeString(input.iconUrl);
   const firstSeenAt = normalizeString(input.firstSeenAt);
   const lastSeenAt = normalizeString(input.lastSeenAt);
   const occurrenceCount = Number(input.occurrenceCount);
   const typeKey = normalizeLexiconTermCategory(input.typeKey ?? input.category);
+  const iconUrl =
+    typeKey === 'technology'
+      ? resolveFilemakerTechnologyIconUrl(label, requestedIconUrl)
+      : requestedIconUrl;
   return {
     id: normalizeString(input.id),
     label,
@@ -1259,6 +1266,7 @@ export const createFilemakerLexiconTerm = (input: {
     category: typeKey,
     ...(sourceSite.length > 0 ? { sourceSite } : {}),
     ...(sourceProvider.length > 0 ? { sourceProvider } : {}),
+    ...(iconUrl.length > 0 ? { iconUrl } : {}),
     ...(firstSeenAt.length > 0 ? { firstSeenAt } : {}),
     ...(lastSeenAt.length > 0 ? { lastSeenAt } : {}),
     occurrenceCount:

@@ -47,6 +47,7 @@ type ResolveWriteTemplateGuardrailInput = {
   templates: WriteTemplateSource[];
   templateContext: Record<string, unknown>;
   currentValue: unknown;
+  allowEmptyArrays?: boolean;
 };
 
 type ResolveWriteTemplateGuardrailResult =
@@ -112,10 +113,10 @@ const normalizeTokenRoot = (token: string): string => {
 const isSystemRoot = (root: string): boolean =>
   SYSTEM_ROOT_PREFIXES.some((prefix: string): boolean => root.startsWith(prefix));
 
-const isEmptyTemplateValue = (value: unknown): boolean => {
+const isEmptyTemplateValue = (value: unknown, allowEmptyArrays = false): boolean => {
   if (value === undefined || value === null) return true;
   if (typeof value === 'string') return value.trim().length === 0;
-  if (Array.isArray(value)) return value.length === 0;
+  if (Array.isArray(value)) return allowEmptyArrays ? false : value.length === 0;
   if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length === 0;
   return false;
 };
@@ -327,6 +328,7 @@ const inspectWriteTemplates = ({
   templates,
   templateContext,
   currentValue,
+  allowEmptyArrays = false,
 }: ResolveWriteTemplateGuardrailInput): WriteTemplateInspection => {
   const missing: WriteTemplateTokenDiagnostic[] = [];
   const empty: WriteTemplateTokenDiagnostic[] = [];
@@ -371,7 +373,7 @@ const inspectWriteTemplates = ({
         });
         return;
       }
-      if (isEmptyTemplateValue(value)) {
+      if (isEmptyTemplateValue(value, allowEmptyArrays)) {
         empty.push({
           template: name,
           token,

@@ -7,6 +7,7 @@ import React, { startTransition, useCallback, useEffect, useMemo, useState } fro
 
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { compileCvBlocksToHtml } from '../cv-builder/compile-cv-blocks';
@@ -61,6 +62,7 @@ const formatCvTitle = (cv: FilemakerCv): string => {
 export function PersonCvsSection(): React.JSX.Element {
   const {
     editableAddresses,
+    database,
     emails,
     linkedAnyTexts,
     linkedContracts,
@@ -80,6 +82,7 @@ export function PersonCvsSection(): React.JSX.Element {
   });
   const [isCreating, setIsCreating] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isExportingGeneratedPdf, setIsExportingGeneratedPdf] = useState(false);
   const [exportingCvId, setExportingCvId] = useState<string | null>(null);
 
   const personId = person?.id ?? '';
@@ -146,6 +149,7 @@ export function PersonCvsSection(): React.JSX.Element {
       phoneNumbers: personDraft.phoneNumbers ?? person.phoneNumbers,
       linkedinUrl: personDraft.linkedinUrl ?? person.linkedinUrl ?? '',
       githubUrl: personDraft.githubUrl ?? person.githubUrl ?? '',
+      languageSkills: personDraft.languageSkills ?? person.languageSkills ?? [],
       profileEducation: personDraft.profileEducation ?? person.profileEducation ?? [],
       profileJobExperience: personDraft.profileJobExperience ?? person.profileJobExperience ?? [],
       cvHeadline: personDraft.cvHeadline ?? person.cvHeadline ?? '',
@@ -166,6 +170,8 @@ export function PersonCvsSection(): React.JSX.Element {
       contracts: linkedContracts,
       documents: linkedDocuments,
       emails,
+      lexiconTerms: database.lexiconTerms,
+      lexiconValidationPatterns: database.lexiconValidationPatterns,
       occupations: linkedOccupations,
       person: seedPerson,
       phoneNumbers,
@@ -178,6 +184,8 @@ export function PersonCvsSection(): React.JSX.Element {
     };
   }, [
     buildCvSeedPerson,
+    database.lexiconTerms,
+    database.lexiconValidationPatterns,
     editableAddresses,
     emails,
     linkedAnyTexts,
@@ -193,7 +201,7 @@ export function PersonCvsSection(): React.JSX.Element {
   const createCv = useCallback(async (input: CvCreatePayload): Promise<FilemakerCv> => {
     const response = await fetch('/api/filemaker/cvs', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         bodyBlocks: input.bodyBlocks,
         personId: input.personId,
@@ -235,8 +243,12 @@ export function PersonCvsSection(): React.JSX.Element {
   }, [createCvFromProfile, openCv, toast]);
 
   const previewCvPdf = useCallback(
-    (cv: Pick<FilemakerCv, 'bodyBlocks'>): void => {
-      openFilemakerCvPdfPreview(compileCvBlocksToHtml(cv.bodyBlocks));
+    (cv: Pick<FilemakerCv, 'bodyBlocks' | 'highlightTechnologyTerms'>): void => {
+      openFilemakerCvPdfPreview(
+        compileCvBlocksToHtml(cv.bodyBlocks, {
+          highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
+        })
+      );
     },
     []
   );
@@ -244,7 +256,7 @@ export function PersonCvsSection(): React.JSX.Element {
   const exportCvPdf = useCallback(async (cv: FilemakerCv): Promise<void> => {
     const response = await fetch('/api/filemaker/cvs/export-pdf', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ cvId: cv.id }),
     });
     if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
@@ -287,6 +299,23 @@ export function PersonCvsSection(): React.JSX.Element {
     }
   }, [buildCvCreatePayloadFromProfile, createCv, previewCvPdf, toast]);
 
+  const handleGenerateAndExportPdf = useCallback(async (): Promise<void> => {
+    setIsExportingGeneratedPdf(true);
+    try {
+      const payload = buildCvCreatePayloadFromProfile();
+      const cv = await createCv(payload);
+      await exportCvPdf(cv);
+      toast('CV PDF exported.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to export CV PDF.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsExportingGeneratedPdf(false);
+    }
+  }, [buildCvCreatePayloadFromProfile, createCv, exportCvPdf, toast]);
+
   const handlePreviewPdf = useCallback(
     (cv: FilemakerCv): void => {
       try {
@@ -307,7 +336,7 @@ export function PersonCvsSection(): React.JSX.Element {
         type='button'
         variant='default'
         size='sm'
-        disabled={isCreating || isGeneratingPdf || person === null}
+        disabled={isCreating || isGeneratingPdf || isExportingGeneratedPdf || person === null}
         loading={isGeneratingPdf}
         loadingText='Generating...'
         onClick={() => {
@@ -322,7 +351,22 @@ export function PersonCvsSection(): React.JSX.Element {
         type='button'
         variant='outline'
         size='sm'
-        disabled={isCreating || isGeneratingPdf || person === null}
+        disabled={isCreating || isGeneratingPdf || isExportingGeneratedPdf || person === null}
+        loading={isExportingGeneratedPdf}
+        loadingText='Exporting...'
+        onClick={() => {
+          void handleGenerateAndExportPdf();
+        }}
+        className='gap-2'
+      >
+        {!isExportingGeneratedPdf ? <Download className='size-3.5' /> : null}
+        Export PDF CV
+      </Button>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        disabled={isCreating || isGeneratingPdf || isExportingGeneratedPdf || person === null}
         loading={isCreating}
         loadingText='Creating...'
         onClick={() => {

@@ -295,6 +295,24 @@ const loadSettingsJobListings = async (): Promise<FilemakerJobListing[]> => {
   }
 };
 
+export const listSettingsFilemakerJobListingsForOrganizationIds = async (
+  organizationIds: ReadonlyArray<string | null | undefined>
+): Promise<FilemakerJobListing[]> => {
+  const ownerIds = new Set(
+    organizationIds
+      .map((organizationId: string | null | undefined): string => organizationId?.trim() ?? '')
+      .filter((organizationId: string): boolean => organizationId.length > 0)
+  );
+  if (ownerIds.size === 0) return [];
+
+  const listingsById = new Map<string, FilemakerJobListing>();
+  (await loadSettingsJobListings()).forEach((listing: FilemakerJobListing): void => {
+    if (!ownerIds.has(listing.organizationId.trim())) return;
+    listingsById.set(listing.id, listing);
+  });
+  return Array.from(listingsById.values());
+};
+
 const loadJobListingCountByOrganizationId = async (): Promise<Map<string, number>> =>
   (await loadSettingsJobListings()).reduce<Map<string, number>>((counts, listing) => {
     const organizationId = listing.organizationId.trim();

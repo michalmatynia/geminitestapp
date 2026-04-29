@@ -77,6 +77,7 @@ const RUN_FINGERPRINT_KEY_PREFIX = 'filemaker:job-board-scrape:run-fingerprint';
 const LATEST_RUN_KEY = 'filemaker:job-board-scrape:latest-run';
 const RUN_TTL_SECONDS = 60 * 60 * 24 * 7;
 const EVENT_LIMIT = 500;
+const MEMORY_RUN_LIMIT = 100;
 const CANCEL_POLL_INTERVAL_MS = 1_000;
 const ACTIVE_RUN_CLAIM_WAIT_MS = 50;
 const ACTIVE_RUN_CLAIM_WAIT_ATTEMPTS = 10;
@@ -103,14 +104,16 @@ const nowIso = (): string => new Date().toISOString();
 const isTerminalStatus = (status: FilemakerJobBoardScrapeRuntimeStatus): boolean =>
   TERMINAL_STATUSES.has(status);
 
+const SCRAPE_ABORT_MESSAGE = 'Job-board scrape stopped.';
+
 const createAbortError = (): Error => {
-  const error = new Error('Job-board scrape stopped.');
+  const error = new Error(SCRAPE_ABORT_MESSAGE);
   error.name = 'AbortError';
   return error;
 };
 
 const isAbortError = (error: unknown): boolean =>
-  error instanceof Error && (error.name === 'AbortError' || error.message.includes('stopped'));
+  error instanceof Error && error.name === 'AbortError';
 
 const isDraftSaveRequest = (
   request: JobBoardScrapeRuntimeRequest
@@ -157,12 +160,25 @@ const parseEvents = (values: string[]): FilemakerJobBoardScrapeLiveEvent[] =>
     }
   });
 
+const evictTerminalMemoryRuns = (): void => {
+  if (memoryRuns.size <= MEMORY_RUN_LIMIT) return;
+  for (const [id, snapshot] of memoryRuns) {
+    if (memoryRuns.size <= MEMORY_RUN_LIMIT) break;
+    if (id === memoryLatestRunId) continue;
+    if (snapshot.run !== null && !isTerminalStatus(snapshot.run.status)) continue;
+    memoryRuns.delete(id);
+    memoryRunFingerprintsByRunId.delete(id);
+  }
+};
+
 const storeRun = async (run: FilemakerJobBoardScrapeRuntimeRun): Promise<void> => {
   const redis = getRedisClient();
   if (redis === null) {
     const current = memoryRuns.get(run.id) ?? { events: [], run: null };
+    memoryRuns.delete(run.id);
     memoryRuns.set(run.id, { ...current, run: { ...run } });
     memoryLatestRunId = run.id;
+    evictTerminalMemoryRuns();
     return;
   }
   await redis.set(runKey(run.id), JSON.stringify(run), 'EX', RUN_TTL_SECONDS);
@@ -453,6 +469,17 @@ const startRuntimeCancellationWatcher = (
   };
 };
 
+const PAUSE_POLL_INTERVAL_MS = 750;
+
+const waitWhilePausedFromStore = async (runId: string, signal: AbortSignal): Promise<void> => {
+  while (!signal.aborted) {
+    const snapshot = await readFilemakerJobBoardScrapeRun(runId);
+    const status = snapshot.run?.status;
+    if (status !== 'paused') return;
+    await sleep(PAUSE_POLL_INTERVAL_MS);
+  }
+};
+
 const runScraperInRuntime = async (
   data: JobBoardScrapeRuntimeJob,
   signal: AbortSignal
@@ -463,6 +490,7 @@ const runScraperInRuntime = async (
       await appendRunEvent(data.runId, event);
     },
     signal,
+    waitWhilePaused: () => waitWhilePausedFromStore(data.runId, signal),
   };
   return isDraftSaveRequest(data.request)
     ? saveFilemakerJobBoardScrapeDrafts(data.request, runOptions)
@@ -660,5 +688,53 @@ export const cancelFilemakerJobBoardScrapeRun = async (
   return {
     events: [...snapshot.events, stoppedEvent],
     run: canceledRun,
+  };
+};
+
+export const pauseFilemakerJobBoardScrapeRun = async (
+  runId: string
+): Promise<FilemakerJobBoardScrapeRuntimeSnapshot> => {
+  const snapshot = await readFilemakerJobBoardScrapeRun(runId);
+  const run = snapshot.run;
+  if (run === null) {
+    throw notFoundError('Job-board scrape run not found.', { runId });
+  }
+  if (isTerminalStatus(run.status) || run.status === 'paused') {
+    return snapshot;
+  }
+  const pausedRun = await updateRun(run, { status: 'paused' });
+  const pausedEvent: FilemakerJobBoardScrapeLiveEvent = {
+    at: nowIso(),
+    message: 'Job-board scrape paused.',
+    type: 'status',
+  };
+  await appendRunEvent(run.id, pausedEvent);
+  return {
+    events: [...snapshot.events, pausedEvent],
+    run: pausedRun,
+  };
+};
+
+export const resumeFilemakerJobBoardScrapeRun = async (
+  runId: string
+): Promise<FilemakerJobBoardScrapeRuntimeSnapshot> => {
+  const snapshot = await readFilemakerJobBoardScrapeRun(runId);
+  const run = snapshot.run;
+  if (run === null) {
+    throw notFoundError('Job-board scrape run not found.', { runId });
+  }
+  if (run.status !== 'paused') {
+    return snapshot;
+  }
+  const resumedRun = await updateRun(run, { status: 'running' });
+  const resumedEvent: FilemakerJobBoardScrapeLiveEvent = {
+    at: nowIso(),
+    message: 'Job-board scrape resumed.',
+    type: 'status',
+  };
+  await appendRunEvent(run.id, resumedEvent);
+  return {
+    events: [...snapshot.events, resumedEvent],
+    run: resumedRun,
   };
 };

@@ -3,7 +3,7 @@ import { type TriggerEventEntityType } from '@/shared/contracts/ai-trigger-butto
 
 import { toRecord } from './trigger-event-utils';
 
-export const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 6;
+export const TRIGGER_ENTITY_SNAPSHOT_MAX_DEPTH = 10;
 export const TRIGGER_ENTITY_OMITTED_VALUE = '[omitted_large_field]';
 export const TRIGGER_ENTITY_HEAVY_KEY_PATTERNS: RegExp[] = [
   /^imagebase64s?$/i,

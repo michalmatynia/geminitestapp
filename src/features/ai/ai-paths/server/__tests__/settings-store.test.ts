@@ -772,6 +772,119 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(debrandButton?.['updatedAt']).not.toBe('2026-04-01T00:00:00.000Z');
   });
 
+  it('upgrades legacy starter trigger button context metadata', () => {
+    const fullySeeded = seedCanonicalStarterWorkflows([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+    const staleRecords = fullySeeded.map((record) => {
+      if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
+      const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+      return {
+        ...record,
+        value: JSON.stringify(
+          parsed.map((button) =>
+            button['id'] === 'f6c91a90-5d44-4db2-83f3-3ccf687cab11'
+              ? {
+                  ...button,
+                  contextTemplate: {
+                    jobApplicationArtifactKind: 'tailored_cv',
+                  },
+                  updatedAt: '2026-04-01T00:00:00.000Z',
+                }
+              : button
+          )
+        ),
+      };
+    });
+
+    const refreshed = seedCanonicalStarterWorkflows(staleRecords);
+    const triggerButtonsRecord = refreshed.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    const tailoredCvButton = triggerButtons.find(
+      (button) => button['id'] === 'f6c91a90-5d44-4db2-83f3-3ccf687cab11'
+    );
+    const contextTemplate = tailoredCvButton?.['contextTemplate'] as
+      | Record<string, unknown>
+      | undefined;
+
+    expect(refreshed.affectedCount).toBe(1);
+    expect(contextTemplate).toEqual(
+      expect.objectContaining({
+        jobApplicationArtifactKind: 'tailored_cv',
+        applicationContext: expect.objectContaining({
+          generationRequest: expect.any(Object),
+          outputContract: expect.any(Object),
+        }),
+      })
+    );
+    expect(tailoredCvButton?.['updatedAt']).not.toBe('2026-04-01T00:00:00.000Z');
+  });
+
+  it('preserves UI-owned starter trigger button context metadata', () => {
+    const fullySeeded = seedCanonicalStarterWorkflows([
+      {
+        key: AI_PATHS_INDEX_KEY,
+        value: '[]',
+      },
+      {
+        key: AI_PATHS_TRIGGER_BUTTONS_KEY,
+        value: '[]',
+      },
+    ]).nextRecords;
+    const customRecords = fullySeeded.map((record) => {
+      if (record.key !== AI_PATHS_TRIGGER_BUTTONS_KEY) return record;
+      const parsed = JSON.parse(record.value) as Array<Record<string, unknown>>;
+      return {
+        ...record,
+        value: JSON.stringify(
+          parsed.map((button) =>
+            button['id'] === 'f6c91a90-5d44-4db2-83f3-3ccf687cab11'
+              ? {
+                  ...button,
+                  contextTemplate: {
+                    jobApplicationArtifactKind: 'tailored_cv',
+                    applicationContext: {
+                      customUiPrompt: 'Keep this UI-authored metadata',
+                    },
+                    customUiKey: true,
+                  },
+                }
+              : button
+          )
+        ),
+      };
+    });
+
+    const refreshed = seedCanonicalStarterWorkflows(customRecords);
+    const triggerButtonsRecord = refreshed.nextRecords.find(
+      (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
+    );
+    if (!triggerButtonsRecord) throw new Error('Expected trigger buttons record');
+    const triggerButtons = JSON.parse(triggerButtonsRecord.value) as Array<Record<string, unknown>>;
+    const tailoredCvButton = triggerButtons.find(
+      (button) => button['id'] === 'f6c91a90-5d44-4db2-83f3-3ccf687cab11'
+    );
+
+    expect(refreshed.affectedCount).toBe(0);
+    expect(tailoredCvButton?.['contextTemplate']).toEqual({
+      jobApplicationArtifactKind: 'tailored_cv',
+      applicationContext: {
+        customUiPrompt: 'Keep this UI-authored metadata',
+      },
+      customUiKey: true,
+    });
+  });
+
   it('does not rewrite existing starter configs without explicit upgrade actions', () => {
     const template = getStarterWorkflowTemplateById('starter_parameter_inference');
     if (!template) throw new Error('Missing starter_parameter_inference template');

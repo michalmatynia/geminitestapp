@@ -112,6 +112,7 @@ export const aiTriggerButtonRecordValidatorSchema = z
     locations: z.array(aiTriggerButtonLocationSchema).min(1),
     mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema),
     display: aiTriggerButtonDisplayModeSchema,
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
     createdAt: z.string().trim().min(1),
     updatedAt: z.string().trim().min(1),
     sortIndex: z.number().int(),
@@ -127,6 +128,7 @@ export const aiTriggerButtonCreatePayloadSchema = z
     locations: z.array(aiTriggerButtonLocationSchema).min(1),
     mode: aiTriggerButtonModeSchema.optional().default('click'),
     display: aiTriggerButtonDisplayModeSchema.optional().default('icon_label'),
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
   })
   .strict();
 
@@ -139,6 +141,7 @@ export const aiTriggerButtonUpdatePayloadSchema = z
     locations: z.array(aiTriggerButtonLocationSchema).min(1).optional(),
     mode: aiTriggerButtonModeSchema.optional(),
     display: aiTriggerButtonDisplayModeSchema.optional(),
+    contextTemplate: z.record(z.string(), z.unknown()).nullable().optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import type {
   KangurDuelChoice,
   KangurDuelPlayer,
@@ -106,6 +106,161 @@ function getLearnerId(user: { activeLearner?: { id: string }; email?: string; id
   return user?.activeLearner?.id ?? user?.email ?? user?.id ?? 'guest';
 }
 
+function useDuelQueries({
+  apiClient,
+  hasSessionId,
+  isAuthenticated,
+  isSpectating,
+  normalizedSessionId,
+  playerKey,
+  spectatorKey,
+  spectatorId,
+}: {
+  apiClient: DuelApiClient;
+  hasSessionId: boolean;
+  isAuthenticated: boolean;
+  isSpectating: boolean;
+  normalizedSessionId: string;
+  playerKey: readonly unknown[];
+  spectatorKey: readonly unknown[];
+  spectatorId: string;
+}): {
+  playerQuery: UseQueryResult<KangurDuelStateResponse, Error>;
+  spectatorQuery: UseQueryResult<KangurDuelSpectatorStateResponse, Error>;
+} {
+  const playerQuery = useQuery<KangurDuelStateResponse, Error>({
+    enabled: hasSessionId && isAuthenticated && !isSpectating,
+    queryKey: playerKey,
+    queryFn: async (): Promise<KangurDuelStateResponse> =>
+      apiClient.getDuelState(normalizedSessionId, { cache: 'no-store' }),
+    refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
+    staleTime: 2_000,
+  });
+
+  const spectatorQuery = useQuery<KangurDuelSpectatorStateResponse, Error>({
+    enabled: hasSessionId && isSpectating,
+    queryKey: spectatorKey,
+    queryFn: async (): Promise<KangurDuelSpectatorStateResponse> =>
+      apiClient.getDuelSpectatorState(normalizedSessionId, { spectatorId }, { cache: 'no-store' }),
+    refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
+    staleTime: 2_000,
+  });
+
+  return { playerQuery, spectatorQuery };
+}
+
+function useDuelHeartbeat({
+  apiClient,
+  duelSession,
+  hasSessionId,
+  isAuthenticated,
+  isSpectating,
+  normalizedSessionId,
+  playerKey,
+  queryClient,
+}: {
+  apiClient: DuelApiClient;
+  duelSession: KangurDuelSession | null;
+  hasSessionId: boolean;
+  isAuthenticated: boolean;
+  isSpectating: boolean;
+  normalizedSessionId: string;
+  playerKey: readonly unknown[];
+  queryClient: QueryClient;
+}): void {
+  useEffect(() => {
+    const isInactive =
+      !hasSessionId ||
+      !isAuthenticated ||
+      duelSession === null ||
+      duelSession.status === 'completed' ||
+      duelSession.status === 'aborted';
+    if (isSpectating || isInactive) return undefined;
+
+    const intervalId = safeSetInterval(() => {
+      void apiClient
+        .heartbeatDuel(
+          { clientTimestamp: new Date().toISOString(), sessionId: normalizedSessionId },
+          { cache: 'no-store' },
+        )
+        .then((resp) => {
+          queryClient.setQueryData(playerKey, resp);
+        })
+        .catch(() => {});
+    }, MOBILE_DUEL_HEARTBEAT_MS);
+    return () => {
+      safeClearInterval(intervalId);
+    };
+  }, [
+    apiClient,
+    duelSession,
+    hasSessionId,
+    isAuthenticated,
+    isSpectating,
+    normalizedSessionId,
+    playerKey,
+    queryClient,
+  ]);
+}
+
+type DuelStateResolution = {
+  duelSession: KangurDuelSession | null;
+  player: KangurDuelPlayer | null;
+  isRestoringAuth: boolean;
+  isLoading: boolean;
+  spectatorCount: number;
+};
+
+function resolveSpectatorState(
+  spectatorQuery: UseQueryResult<KangurDuelSpectatorStateResponse, Error>,
+  isRestoringAuth: boolean,
+): DuelStateResolution {
+  const duelSession = spectatorQuery.data?.session ?? null;
+  return {
+    duelSession,
+    player: null,
+    isRestoringAuth,
+    isLoading: spectatorQuery.isLoading,
+    spectatorCount: duelSession?.spectatorCount ?? 0,
+  };
+}
+
+function resolvePlayerState(
+  playerQuery: UseQueryResult<KangurDuelStateResponse, Error>,
+  isRestoringAuth: boolean,
+): DuelStateResolution {
+  const duelSession = playerQuery.data?.session ?? null;
+  return {
+    duelSession,
+    player: playerQuery.data?.player ?? null,
+    isRestoringAuth,
+    isLoading: isRestoringAuth || playerQuery.isLoading,
+    spectatorCount: duelSession?.spectatorCount ?? 0,
+  };
+}
+
+function useDuelStateResolution({
+  isSpectating,
+  playerQuery,
+  spectatorQuery,
+  isLoadingAuth,
+  isAuthenticated,
+}: {
+  isSpectating: boolean;
+  playerQuery: UseQueryResult<KangurDuelStateResponse, Error>;
+  spectatorQuery: UseQueryResult<KangurDuelSpectatorStateResponse, Error>;
+  isLoadingAuth: boolean;
+  isAuthenticated: boolean;
+}): DuelStateResolution {
+  const isRestoringAuth = isLoadingAuth && !isAuthenticated;
+
+  if (isSpectating) {
+    return resolveSpectatorState(spectatorQuery, isRestoringAuth);
+  }
+
+  return resolvePlayerState(playerQuery, isRestoringAuth);
+}
+
 export const useKangurMobileDuelSession = (
   sessionId: string | null,
   options: { spectate?: boolean } = {},
@@ -115,7 +270,7 @@ export const useKangurMobileDuelSession = (
   const { apiBaseUrl, apiClient: rawApiClient } = useKangurMobileRuntime();
   const apiClient = rawApiClient as DuelApiClient;
   const { isLoadingAuth, session: authSession } = useKangurMobileAuth();
-  
+
   const [actionError, setActionError] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState(false);
   const [spectatorId] = useState(createMobileDuelSpectatorId);
@@ -129,49 +284,34 @@ export const useKangurMobileDuelSession = (
   const playerKey = ['kangur-mobile', 'duels', 'session', apiBaseUrl, learnerId, normalizedSessionId] as const;
   const spectatorKey = ['kangur-mobile', 'duels', 'spectator-session', apiBaseUrl, normalizedSessionId, spectatorId] as const;
 
-  const playerQuery = useQuery<KangurDuelStateResponse, Error>({
-    enabled: hasSessionId && isAuthenticated && !isSpectating,
-    queryKey: playerKey,
-    queryFn: async (): Promise<KangurDuelStateResponse> => apiClient.getDuelState(normalizedSessionId, { cache: 'no-store' }),
-    refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
-    staleTime: 2_000,
+  const { playerQuery, spectatorQuery } = useDuelQueries({
+    apiClient, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerKey, spectatorKey, spectatorId
   });
 
-  const spectatorQuery = useQuery<KangurDuelSpectatorStateResponse, Error>({
-    enabled: hasSessionId && isSpectating,
-    queryKey: spectatorKey,
-    queryFn: async (): Promise<KangurDuelSpectatorStateResponse> => apiClient.getDuelSpectatorState(normalizedSessionId, { spectatorId }, { cache: 'no-store' }),
-    refetchInterval: MOBILE_DUEL_SESSION_POLL_MS,
-    staleTime: 2_000,
+  const { duelSession, player, isRestoringAuth, isLoading, spectatorCount } = useDuelStateResolution({
+    isSpectating, playerQuery, spectatorQuery, isLoadingAuth, isAuthenticated
   });
 
-  const duelSession = isSpectating ? spectatorQuery.data?.session ?? null : playerQuery.data?.session ?? null;
-  const player = isSpectating ? null : playerQuery.data?.player ?? null;
   const currentQuestion = resolveCurrentQuestion(duelSession, isSpectating, player);
 
-  useEffect(() => {
-    const isInactive = !hasSessionId || !isAuthenticated || duelSession === null || duelSession.status === 'completed' || duelSession.status === 'aborted';
-    if (isSpectating || isInactive) return undefined;
-
-    const intervalId = safeSetInterval(() => {
-      void apiClient.heartbeatDuel({ clientTimestamp: new Date().toISOString(), sessionId: normalizedSessionId }, { cache: 'no-store' })
-        .then((resp) => { queryClient.setQueryData(playerKey, resp); }).catch(() => {});
-    }, MOBILE_DUEL_HEARTBEAT_MS);
-    return () => { safeClearInterval(intervalId); };
-  }, [apiClient, duelSession, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerKey, queryClient]);
+  useDuelHeartbeat({
+    apiClient, duelSession, hasSessionId, isAuthenticated, isSpectating, normalizedSessionId, playerKey, queryClient
+  });
 
   const actions = useDuelActions({
     apiClient, copy, queryClient, playerKey, spectatorKey, isSpectating, normalizedSessionId, currentQuestion, setIsMutating, setActionError
   });
 
+  const error = toSessionErrorMessage(isSpectating ? spectatorQuery.error : playerQuery.error, copy({ de: 'Fehler', en: 'Error', pl: 'Błąd' }), copy);
+
   return {
     actionError,
     currentQuestion,
-    error: toSessionErrorMessage(isSpectating ? spectatorQuery.error : playerQuery.error, copy({ de: 'Fehler', en: 'Error', pl: 'Błąd' }), copy),
+    error,
     isAuthenticated,
-    isLoading: isSpectating ? spectatorQuery.isLoading : (isLoadingAuth && !isAuthenticated) || playerQuery.isLoading,
+    isLoading,
     isMutating,
-    isRestoringAuth: isLoadingAuth && !isAuthenticated,
+    isRestoringAuth,
     isSpectating,
     leaveSession: actions.leaveSession,
     player,
@@ -180,7 +320,7 @@ export const useKangurMobileDuelSession = (
     },
     sendReaction: actions.sendReaction,
     session: duelSession,
-    spectatorCount: duelSession?.spectatorCount ?? 0,
+    spectatorCount,
     submitAnswer: actions.submitAnswer,
   };
 };

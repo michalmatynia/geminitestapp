@@ -22,6 +22,7 @@ export type StarterWorkflowTriggerPreset = {
   mode?: 'click' | 'toggle' | 'execute_path' | 'open_chat' | 'open_url' | 'copy_text';
   enabled?: boolean;
   display?: AiTriggerButtonDisplay;
+  contextTemplate?: Record<string, unknown> | null;
   sortIndex?: number;
 };
 

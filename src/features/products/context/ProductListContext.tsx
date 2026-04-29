@@ -24,6 +24,7 @@ import { useProductListSubContexts } from './hooks/useProductListSubContexts';
 import {
   createProductListRowRuntimeStore,
   EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT,
+  type ProductListRowRuntimeStoreState,
   type ProductListRowRuntimeStore,
 } from './hooks/useProductListRowRuntimeStore';
 import type {
@@ -64,16 +65,22 @@ type ProductListProviderProps = {
   children: React.ReactNode;
 };
 
-const createProductListStrictContext = <T,>(hookName: string, displayName: string) => {
+type ProductListSubContexts = ReturnType<typeof useProductListSubContexts>;
+
+const createProductListStrictContext = <T,>(
+  hookName: string,
+  displayName: string
+): ReturnType<typeof createStrictContext<T>> => {
   // Use a global registry to ensure that even if this module is executed multiple times
   // (e.g., due to dynamic imports in some bundlers like Turbopack), the context objects
   // remain stable. This prevents \"must be used within a Provider\" errors caused by
   // context object identity mismatches.
   const registryKey = `__PRODUCT_LIST_CONTEXT_${hookName}`;
-  const globalObj = (typeof window !== 'undefined' ? (window as unknown as Record<string, unknown>) : (global as unknown as Record<string, unknown>));
-  
-  if (globalObj[registryKey]) {
-    return globalObj[registryKey] as ReturnType<typeof createStrictContext<T>>;
+  const globalObj = globalThis as unknown as Record<string, unknown>;
+  const existingContext = globalObj[registryKey];
+
+  if (existingContext !== undefined) {
+    return existingContext as ReturnType<typeof createStrictContext<T>>;
   }
 
   const result = createStrictContext<T>({
@@ -173,18 +180,30 @@ export function ProductListProvider({
   value,
   children,
 }: ProductListProviderProps): React.JSX.Element {
-  const {
-    filtersValue,
-    selectionValue,
-    tableValue,
-    alertsValue,
-    actionsValue,
-    headerActionsValue,
-    rowActionsValue,
-    rowVisualsValue,
-    modalsValue,
-  } = useProductListSubContexts(value);
+  const subContexts = useProductListSubContexts(value);
+  const rowRuntimeStoreState = useProductListRowRuntimeStoreState(value);
 
+  const rowRuntimeStoreRef = useRef<ProductListRowRuntimeStore | null>(null);
+  rowRuntimeStoreRef.current ??= createProductListRowRuntimeStore(rowRuntimeStoreState);
+  const rowRuntimeStore = rowRuntimeStoreRef.current;
+
+  useEffect(() => {
+    rowRuntimeStore.setState(rowRuntimeStoreState);
+  }, [rowRuntimeStore, rowRuntimeStoreState]);
+
+  return (
+    <ProductListContextProviders
+      subContexts={subContexts}
+      rowRuntimeStore={rowRuntimeStore}
+    >
+      {children}
+    </ProductListContextProviders>
+  );
+}
+
+const useProductListRowRuntimeStoreState = (
+  value: ProductListProviderValue
+): ProductListRowRuntimeStoreState => {
   const productIds = useMemo(() => value.data.map((product) => product.id), [value.data]);
   const visibleProductIdSet = useMemo(() => new Set(productIds), [productIds]);
 
@@ -224,21 +243,36 @@ export function ProductListProvider({
       badgeState.traderaBadgeStatuses,
       badgeState.playwrightProgrammableBadgeIds,
       badgeState.playwrightProgrammableBadgeStatuses,
+      badgeState.vintedBadgeIds,
+      badgeState.vintedBadgeStatuses,
       value.queuedProductIds,
       value.productAiRunStatusByProductId,
       value.productScanRunStatusByProductId,
     ]
   );
+  return rowRuntimeStoreState;
+};
 
-  const rowRuntimeStoreRef = useRef<ProductListRowRuntimeStore | null>(null);
-  if (!rowRuntimeStoreRef.current) {
-    rowRuntimeStoreRef.current = createProductListRowRuntimeStore(rowRuntimeStoreState);
-  }
-
-  useEffect(() => {
-    rowRuntimeStoreRef.current?.setState(rowRuntimeStoreState);
-  }, [rowRuntimeStoreState]);
-
+function ProductListContextProviders({
+  subContexts,
+  rowRuntimeStore,
+  children,
+}: {
+  subContexts: ProductListSubContexts;
+  rowRuntimeStore: ProductListRowRuntimeStore;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const {
+    filtersValue,
+    selectionValue,
+    tableValue,
+    alertsValue,
+    actionsValue,
+    headerActionsValue,
+    rowActionsValue,
+    rowVisualsValue,
+    modalsValue,
+  } = subContexts;
   return (
     <ProductListAlertsContext.Provider value={alertsValue}>
       <ProductListFiltersContext.Provider value={filtersValue}>
@@ -248,7 +282,7 @@ export function ProductListProvider({
               <ProductListHeaderActionsContext.Provider value={headerActionsValue}>
                 <ProductListRowActionsContext.Provider value={rowActionsValue}>
                   <ProductListRowVisualsContext.Provider value={rowVisualsValue}>
-                    <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStoreRef.current}>
+                    <ProductListRowRuntimeStoreContext.Provider value={rowRuntimeStore}>
                       <ProductListModalsContext.Provider value={modalsValue}>
                         {children}
                       </ProductListModalsContext.Provider>

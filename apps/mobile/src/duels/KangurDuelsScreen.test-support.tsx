@@ -1,4 +1,5 @@
 import React from 'react';
+import type { RenderResult } from '@testing-library/react';
 import { render } from '@testing-library/react';
 import { vi } from 'vitest';
 
@@ -35,6 +36,32 @@ export const {
   useKangurMobileLessonCheckpointsMock,
 } = duelsScreenTestMocks;
 
+type PrimitiveProps = {
+  accessibilityLabel?: string;
+  accessibilityLiveRegion?: string;
+  accessibilityRole?: string;
+  testID?: string;
+  [key: string]: unknown;
+};
+
+const getAccessibilityProps = (props: PrimitiveProps): Record<string, unknown> => {
+  const { testID, accessibilityLabel, accessibilityRole, accessibilityLiveRegion } = props;
+  const target: Record<string, unknown> = {};
+
+  const addProp = (val: string | undefined, key: string): void => {
+    if (typeof val === 'string' && val.length > 0) {
+      target[key] = val;
+    }
+  };
+
+  addProp(testID, 'data-testid');
+  addProp(accessibilityLabel, 'aria-label');
+  addProp(accessibilityRole, 'role');
+  addProp(accessibilityLiveRegion, 'aria-live');
+
+  return target;
+};
+
 vi.mock('react-native', () => {
   const getMappedProps = (props: Record<string, unknown>): Record<string, unknown> => {
     const {
@@ -46,22 +73,12 @@ vi.mock('react-native', () => {
       secureTextEntry,
       testID,
       ...rest
-    } = props;
+    } = props as PrimitiveProps;
 
-    const mapped: Record<string, unknown> = { ...rest };
-
-    if (typeof testID === 'string' && testID.length > 0) {
-      mapped['data-testid'] = testID;
-    }
-    if (typeof accessibilityLabel === 'string' && accessibilityLabel.length > 0) {
-      mapped['aria-label'] = accessibilityLabel;
-    }
-    if (typeof accessibilityRole === 'string' && accessibilityRole.length > 0) {
-      mapped['role'] = accessibilityRole;
-    }
-    if (typeof accessibilityLiveRegion === 'string' && accessibilityLiveRegion.length > 0) {
-      mapped['aria-live'] = accessibilityLiveRegion;
-    }
+    const mapped: Record<string, unknown> = {
+      ...rest,
+      ...getAccessibilityProps({ testID, accessibilityLabel, accessibilityRole, accessibilityLiveRegion }),
+    };
 
     if (typeof onPress === 'function') {
       mapped.onClick = onPress;
@@ -103,27 +120,11 @@ vi.mock('react-native-safe-area-context', () => {
       children,
       testID,
       ...props
-    }: React.PropsWithChildren<
-      Record<string, unknown> & {
-        accessibilityLabel?: string;
-        accessibilityLiveRegion?: 'off' | 'none' | 'polite' | 'assertive';
-        accessibilityRole?: string;
-        testID?: string;
-      }
-    >) => {
-      const elementProps: Record<string, unknown> = { ...props };
-      if (typeof testID === 'string' && testID.length > 0) {
-        elementProps['data-testid'] = testID;
-      }
-      if (typeof accessibilityLabel === 'string' && accessibilityLabel.length > 0) {
-        elementProps['aria-label'] = accessibilityLabel;
-      }
-      if (typeof accessibilityRole === 'string' && accessibilityRole.length > 0) {
-        elementProps['role'] = accessibilityRole;
-      }
-      if (typeof accessibilityLiveRegion === 'string' && accessibilityLiveRegion.length > 0) {
-        elementProps['aria-live'] = accessibilityLiveRegion;
-      }
+    }: React.PropsWithChildren<PrimitiveProps>) => {
+      const elementProps: Record<string, unknown> = {
+        ...props,
+        ...getAccessibilityProps({ testID, accessibilityLabel, accessibilityRole, accessibilityLiveRegion }),
+      };
 
       return React.createElement(tagName, elementProps, children);
     };
@@ -136,7 +137,7 @@ vi.mock('react-native-safe-area-context', () => {
 
 vi.mock('expo-router', () => ({
   Link: ({ children }: React.PropsWithChildren): React.JSX.Element | null =>
-    (children as React.JSX.Element) ?? null,
+    (children as React.JSX.Element | null) ?? null,
   useLocalSearchParams: duelsScreenTestMocks.useLocalSearchParamsMock,
   useRouter: duelsScreenTestMocks.useRouterMock,
 }));
@@ -182,7 +183,7 @@ vi.mock('../lessons/useKangurMobileLessonCheckpoints', () => ({
 
 import { KangurDuelsScreen } from './KangurDuelsScreen';
 
-export const renderDuelsScreen = (locale: 'pl' | 'en' | 'de' = 'pl') =>
+export const renderDuelsScreen = (locale: 'pl' | 'en' | 'de' = 'pl'): RenderResult =>
   render(
     <KangurMobileI18nProvider locale={locale}>
       <KangurDuelsScreen />

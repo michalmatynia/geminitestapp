@@ -35,6 +35,9 @@ export function useCvLayerPanel({
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
 
+  const onSelectBlockRef = useRef(onSelectBlock);
+  onSelectBlockRef.current = onSelectBlock;
+
   const adapter = useMemo<MasterFolderTreeAdapterV3>(
     () =>
       createCvMasterTreeAdapter({
@@ -55,6 +58,23 @@ export function useCvLayerPanel({
     instanceId: 'filemaker_cv_builder',
     runtime,
   });
+  const controllerRef = useRef(controller);
+  controllerRef.current = controller;
+  const lastExternalSelectedIdRef = useRef<string | null>(selectedBlockId ?? null);
+  const controllerForView = useMemo<ReturnType<typeof useFolderTreeInstanceV2>>(
+    () =>
+      ({
+        ...controller,
+        selectNode: (nodeId: Parameters<typeof controller.selectNode>[0]) => {
+          const result = controller.selectNode(nodeId);
+          const selectedId = nodeId ?? null;
+          lastExternalSelectedIdRef.current = selectedId;
+          onSelectBlockRef.current(selectedId);
+          return result;
+        },
+      }) as ReturnType<typeof useFolderTreeInstanceV2>,
+    [controller]
+  );
 
   const lastProjectedSignatureRef = useRef<string>(JSON.stringify(initialNodes));
   useEffect(() => {
@@ -62,20 +82,19 @@ export function useCvLayerPanel({
     const signature = JSON.stringify(projected);
     if (signature === lastProjectedSignatureRef.current) return;
     lastProjectedSignatureRef.current = signature;
-    void controller.replaceNodes(projected, 'external_sync');
-  }, [blocks, controller]);
+    void controllerRef.current.replaceNodes(projected, 'external_sync');
+  }, [blocks]);
 
   useEffect(() => {
-    if (controller.selectedNodeId !== selectedBlockId) {
-      onSelectBlock(controller.selectedNodeId);
-    }
-  }, [controller.selectedNodeId, onSelectBlock, selectedBlockId]);
+    const selectedId = selectedBlockId ?? null;
+    if (selectedId === lastExternalSelectedIdRef.current) return;
+    lastExternalSelectedIdRef.current = selectedId;
 
-  useEffect(() => {
-    if (selectedBlockId !== controller.selectedNodeId) {
-      controller.selectNode(selectedBlockId);
+    const controllerSelectedNodeId = controllerRef.current.selectedNodeId ?? null;
+    if (selectedId !== controllerSelectedNodeId) {
+      controllerRef.current.selectNode(selectedId);
     }
-  }, [controller, selectedBlockId]);
+  }, [selectedBlockId]);
 
-  return { controller, runtime };
+  return { controller: controllerForView, runtime };
 }

@@ -144,7 +144,7 @@ type CompetitionModeCardProps = {
   item: {
     mode: KangurMobileCompetitionMode;
     questionCount: number;
-    pointTier: string;
+    pointTier: '3' | '4' | '5' | 'mixed';
   };
   locale: KangurMobileLocale;
   onPress: () => void;
@@ -166,7 +166,7 @@ export function CompetitionModeCard({
           tone={SUCCESS_TONE}
         />
         <StatusPill
-          label={formatCompetitionTierLabel(item.pointTier as any, locale)}
+          label={formatCompetitionTierLabel(item.pointTier, locale)}
           tone={WARNING_TONE}
         />
       </View>

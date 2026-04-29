@@ -304,6 +304,22 @@ const normalizePatchStringList = (value: string[] | undefined): string[] | undef
 
 const normalizePatchString = (value: string | undefined): string | undefined => value?.trim();
 
+const normalizePatchLanguageSkillLevel = (value: number): number =>
+  Math.min(10, Math.max(1, Math.round(value)));
+
+const normalizePatchLanguageSkills = (
+  value: FilemakerPerson['languageSkills'] | undefined
+): FilemakerPerson['languageSkills'] | undefined => {
+  if (value === undefined) return undefined;
+  return value
+    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
+      ...(skill.id?.trim() ? { id: skill.id.trim() } : {}),
+      language: skill.language.trim(),
+      level: normalizePatchLanguageSkillLevel(skill.level),
+    }))
+    .filter((skill): boolean => skill.language.length > 0);
+};
+
 const resolvePatchFullName = (
   existing: FilemakerPersonMongoDocument,
   firstName: string | undefined,
@@ -337,6 +353,7 @@ const buildMongoFilemakerPersonUpdate = (
     firstName,
     fullName,
     githubUrl: normalizePatchString(patch.githubUrl),
+    languageSkills: normalizePatchLanguageSkills(patch.languageSkills),
     lastName,
     linkedinUrl: normalizePatchString(patch.linkedinUrl),
     postalCode: normalizePatchString(patch.postalCode),

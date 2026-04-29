@@ -228,6 +228,13 @@ const extractPromptTemplateTokens = (template: string): string[] =>
     .map((match) => String(match[1] ?? match[2] ?? '').trim())
     .filter((token: string): boolean => token.length > 0);
 
+const resolveTemplateRootPorts = (template: string, connectedPorts: Set<string>): string[] => {
+  const roots = extractPromptTemplateTokens(template)
+    .map((token: string): string => token.split(/[.\[\]:]/)[0]?.trim() ?? '')
+    .filter((root: string): boolean => root.length > 0 && connectedPorts.has(root));
+  return Array.from(new Set(roots));
+};
+
 const resolvePromptTemplateTopLevelPort = (token: string): string =>
   normalizePortName(token.split('.')[0] ?? token);
 
@@ -565,8 +572,15 @@ export const evaluateInputReadiness = (
   }
 
   if (operation === 'insert') {
-    const hasTemplatePayload = Boolean(dbConfig.query?.queryTemplate?.trim());
+    const templatePayload =
+      typeof dbConfig.query?.queryTemplate === 'string' ? dbConfig.query.queryTemplate.trim() : '';
+    const hasTemplatePayload = templatePayload.length > 0;
     if (hasTemplatePayload) {
+      const templateRequiredPorts = resolveTemplateRootPorts(templatePayload, connectedPorts);
+      if (templateRequiredPorts.length > 0) {
+        markWaitingPorts(templateRequiredPorts, false);
+        return toReadiness(waitingOnPorts.size === 0);
+      }
       return toReadiness(true);
     }
     const payloadPorts = ['value', 'payload'];

@@ -38,6 +38,12 @@ const personProfileJobExperiencePatchSchema = z.object({
   highlights: z.array(z.string()).optional(),
 });
 
+const personLanguageSkillPatchSchema = z.object({
+  id: z.string().optional(),
+  language: z.string(),
+  level: z.number().int().min(1).max(10),
+});
+
 const personAddressPatchSchema = z.object({
   addressId: z.string(),
   city: z.string(),
@@ -65,6 +71,7 @@ const personPatchSchema = z.object({
   cvSelectedTechnicalEnvironment: z.array(z.string()).optional(),
   firstName: z.string().optional(),
   githubUrl: z.string().optional(),
+  languageSkills: z.array(personLanguageSkillPatchSchema).optional(),
   lastName: z.string().optional(),
   linkedinUrl: z.string().optional(),
   postalCode: z.string().optional(),

@@ -53,6 +53,28 @@ describe('resolveWriteTemplateGuardrail', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('allows empty arrays when insert payload templates explicitly opt in', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'insertTemplate',
+          template:
+            '{"applicationNotes":{{value.applicationNotes}},"missingInformation":{{value.missingInformation}}}',
+        },
+      ],
+      templateContext: {
+        value: {
+          applicationNotes: [],
+          missingInformation: [],
+        },
+      },
+      currentValue: null,
+      allowEmptyArrays: true,
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
   it('resolves nested tokens from JSON-string context values', () => {
     const result = resolveWriteTemplateGuardrail({
       templates: [

@@ -125,7 +125,7 @@ const createExistingEditorState = (
   term: FilemakerLexiconTerm
 ): FilemakerLexiconEditorState => ({
   editing: term,
-  form: { category: term.typeKey, label: term.label },
+  form: { category: term.typeKey, iconUrl: term.iconUrl ?? '', label: term.label },
   open: true,
 });
 

@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n, type KangurMobileLocalizedValue } from '../i18n/kangurMobileI18n';
 import { KangurMobileCard as Card, KangurMobileFilterChip } from '../shared/KangurMobileUi';
 import { ActionButton, AutoRefreshChip, LobbyEntryCard, MessageCard } from './duels-primitives';
 import { type KangurDuelLobbyEntry } from '@kangur/contracts/kangur-duels';
@@ -11,7 +11,6 @@ import {
   formatStatusLabel,
   localizeDuelText,
 } from './utils/duels-ui';
-import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 type DuelLocale = ReturnType<typeof useKangurMobileI18n>['locale'];

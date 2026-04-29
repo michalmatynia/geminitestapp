@@ -8,48 +8,86 @@ import {
 import { handleParser } from '@/shared/lib/ai-paths/core/runtime/handlers/transform/parser';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import {
-  JOB_APPLICATION_PREPARE_PATH_ID,
-  JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID,
-  JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID,
   JOB_APPLICATION_PREPARE_TRIGGER_LOCATION,
+  JOB_APPLICATION_COVER_LETTER_PATH_ID,
+  JOB_APPLICATION_COVER_LETTER_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_TAILORED_CV_PATH_ID,
+  JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_BUTTON_ID,
 } from '@/shared/lib/ai-paths/job-application-prepare';
 
 describe('starter job application preparation workflow', () => {
-  it('ships a canonical trigger button bound to the starter path', () => {
+  it('ships separate canonical trigger buttons for each application artifact', () => {
     const bundle = materializeStarterWorkflowSeedBundle('auto_seed');
-    const triggerButton = bundle.triggerButtons.find(
-      (button) => button.id === JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID
-    );
 
-    expect(triggerButton).toEqual(
-      expect.objectContaining({
-        name: 'Create Application',
-        pathId: JOB_APPLICATION_PREPARE_PATH_ID,
-        locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
-        mode: 'click',
-      })
+    expect(bundle.triggerButtons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+          name: 'Create Tailored CV',
+          pathId: JOB_APPLICATION_TAILORED_CV_PATH_ID,
+          locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+          mode: 'click',
+        }),
+        expect.objectContaining({
+          id: JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_BUTTON_ID,
+          name: 'Create Application Email',
+          pathId: JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+          locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+          mode: 'click',
+        }),
+        expect.objectContaining({
+          id: JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID,
+          name: 'Create Cover Letter',
+          pathId: JOB_APPLICATION_COVER_LETTER_PATH_ID,
+          locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+          mode: 'click',
+        }),
+      ])
     );
   });
 
-  it('materializes the canonical path with the matching trigger event id', () => {
-    const entry = getStarterWorkflowTemplateById(JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID);
-    if (!entry) throw new Error('Missing starter_job_application_prepare entry');
+  it('materializes each canonical path with the matching trigger event id', () => {
+    const expectations = [
+      {
+        pathId: JOB_APPLICATION_TAILORED_CV_PATH_ID,
+        templateId: JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID,
+        triggerId: JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+      },
+      {
+        pathId: JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+        templateId: JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+        triggerId: JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_BUTTON_ID,
+      },
+      {
+        pathId: JOB_APPLICATION_COVER_LETTER_PATH_ID,
+        templateId: JOB_APPLICATION_COVER_LETTER_STARTER_TEMPLATE_ID,
+        triggerId: JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID,
+      },
+    ];
 
-    const config = materializeStarterWorkflowPathConfig(entry, {
-      pathId: JOB_APPLICATION_PREPARE_PATH_ID,
-      seededDefault: true,
+    expectations.forEach((expectation) => {
+      const entry = getStarterWorkflowTemplateById(expectation.templateId);
+      if (!entry) throw new Error(`Missing ${expectation.templateId} entry`);
+
+      const config = materializeStarterWorkflowPathConfig(entry, {
+        pathId: expectation.pathId,
+        seededDefault: true,
+      });
+      const triggerNodes = config.nodes.filter((node) => node.type === 'trigger');
+
+      expect(triggerNodes).toHaveLength(1);
+      expect(triggerNodes[0]?.config?.trigger?.event).toBe(expectation.triggerId);
     });
-    const triggerNodes = config.nodes.filter((node) => node.type === 'trigger');
-
-    expect(triggerNodes).toHaveLength(1);
-    expect(triggerNodes[0]?.config?.trigger?.event).toBe(
-      JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID
-    );
   });
 
   it('parses person, job, organisation, and platform context from the trigger entity', async () => {
-    const entry = getStarterWorkflowTemplateById(JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID);
-    if (!entry) throw new Error('Missing starter_job_application_prepare entry');
+    const entry = getStarterWorkflowTemplateById(JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID);
+    if (!entry) throw new Error('Missing starter_job_application_tailored_cv entry');
 
     const config = materializeStarterWorkflowPathConfig(entry, {
       pathId: 'path_starter_job_application_parser_runtime',
@@ -82,10 +120,11 @@ describe('starter job application preparation workflow', () => {
                 connectionId: 'connection-pracuj',
               },
               generationRequest: {
-                artifacts: ['tailored_cv', 'cover_letter'],
+                artifact: 'tailored_cv',
+                artifacts: ['tailored_cv', 'cv_pdf_preview'],
               },
               outputContract: {
-                coverLetter: { bodyMarkdown: 'string' },
+                tailoredCv: { bodyBlocks: 'CvBlock[]' },
               },
             },
           },
@@ -116,9 +155,9 @@ describe('starter job application preparation workflow', () => {
     );
   });
 
-  it('materializes a runnable AI Path graph for the application package', () => {
-    const entry = getStarterWorkflowTemplateById(JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID);
-    if (!entry) throw new Error('Missing starter_job_application_prepare entry');
+  it('materializes a runnable AI Path graph for the tailored CV package', () => {
+    const entry = getStarterWorkflowTemplateById(JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID);
+    if (!entry) throw new Error('Missing starter_job_application_tailored_cv entry');
 
     const config = materializeStarterWorkflowPathConfig(entry, {
       pathId: 'path_starter_job_application_runtime',
@@ -135,12 +174,14 @@ describe('starter job application preparation workflow', () => {
       mode: 'full',
     });
 
-    expect(promptNode?.config?.prompt?.template).toContain('Tailor the CV and cover letter');
-    expect(promptNode?.config?.prompt?.template).toContain('bodyText');
-    expect(modelNode?.title).toBe('CV & Cover Letter Model');
+    expect(promptNode?.config?.prompt?.template).toContain('tailored CV');
+    expect(promptNode?.config?.prompt?.template).toContain('bodyBlocks');
+    expect(promptNode?.config?.prompt?.template).toContain('lexicon');
+    expect(promptNode?.config?.prompt?.template).toContain('BCP-47');
+    expect(modelNode?.title).toBe('Tailored CV Model');
     expect(modelNode?.config?.model).toEqual(
       expect.objectContaining({
-        maxTokens: 2200,
+        maxTokens: 3500,
         waitForResult: true,
       })
     );
@@ -160,8 +201,56 @@ describe('starter job application preparation workflow', () => {
       databaseNodes.find(
         (node) => node.config?.database?.query?.collection === 'filemaker_job_applications'
       )?.config?.database?.query?.queryTemplate
-    ).toContain('tailoredCvId');
+    ).toContain('applicationEmail');
+    expect(
+      databaseNodes.find((node) => node.config?.database?.query?.collection === 'filemaker_cvs')
+        ?.config?.database?.query?.queryTemplate
+    ).toContain('bodyBlocks');
     expect(report.shouldBlock).toBe(false);
     expect(report.compileReport.errors).toBe(0);
+  });
+
+  it('materializes runnable AI Path graphs for email and cover letter packages', () => {
+    const expectations = [
+      {
+        expectedPrompt: 'tailored job application email',
+        expectedTemplateField: 'applicationEmail',
+        templateId: JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+      },
+      {
+        expectedPrompt: 'tailored cover letter',
+        expectedTemplateField: 'coverLetter',
+        templateId: JOB_APPLICATION_COVER_LETTER_STARTER_TEMPLATE_ID,
+      },
+    ];
+
+    expectations.forEach((expectation) => {
+      const entry = getStarterWorkflowTemplateById(expectation.templateId);
+      if (!entry) throw new Error(`Missing ${expectation.templateId} entry`);
+
+      const config = materializeStarterWorkflowPathConfig(entry, {
+        pathId: `${expectation.templateId}_runtime`,
+      });
+      const promptNode = config.nodes.find((node) => node.type === 'prompt');
+      const databaseNodes = config.nodes.filter((node) => node.type === 'database');
+      const report = evaluateRunPreflight({
+        nodes: config.nodes,
+        edges: config.edges,
+        aiPathsValidation: { enabled: true },
+        strictFlowMode: true,
+        mode: 'full',
+      });
+
+      expect(promptNode?.config?.prompt?.template).toContain(expectation.expectedPrompt);
+      expect(databaseNodes).toHaveLength(1);
+      expect(databaseNodes[0]?.config?.database?.query?.collection).toBe(
+        'filemaker_job_applications'
+      );
+      expect(databaseNodes[0]?.config?.database?.query?.queryTemplate).toContain(
+        expectation.expectedTemplateField
+      );
+      expect(report.shouldBlock).toBe(false);
+      expect(report.compileReport.errors).toBe(0);
+    });
   });
 });

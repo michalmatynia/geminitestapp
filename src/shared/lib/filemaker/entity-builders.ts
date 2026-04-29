@@ -129,6 +129,7 @@ type FilemakerPersonProfileEducation = NonNullable<FilemakerPerson['profileEduca
 type FilemakerPersonProfileJobExperience = NonNullable<
   FilemakerPerson['profileJobExperience']
 >[number];
+type FilemakerPersonLanguageSkill = NonNullable<FilemakerPerson['languageSkills']>[number];
 
 const normalizeProfileEducation = (value: unknown): FilemakerPersonProfileEducation[] => {
   if (!Array.isArray(value)) return [];
@@ -186,6 +187,38 @@ const normalizeProfileJobExperience = (value: unknown): FilemakerPersonProfileJo
       (
         entry: FilemakerPersonProfileJobExperience | null
       ): entry is FilemakerPersonProfileJobExperience => entry !== null
+    );
+};
+
+const normalizeLanguageSkillLevel = (value: unknown): number => {
+  const numeric = typeof value === 'number' ? value : Number(normalizeString(value));
+  if (!Number.isFinite(numeric)) return 1;
+  return Math.min(10, Math.max(1, Math.round(numeric)));
+};
+
+const normalizeLanguageSkills = (value: unknown): FilemakerPersonLanguageSkill[] => {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value
+    .map((entry: unknown): FilemakerPersonLanguageSkill | null => {
+      if (entry === null || typeof entry !== 'object') return null;
+      const record = entry as Record<string, unknown>;
+      const language = normalizeString(record['language']);
+      if (language.length === 0) return null;
+      const key = language.toLowerCase();
+      if (seen.has(key)) return null;
+      seen.add(key);
+      return {
+        ...(normalizeOptionalString(record['id']) !== undefined
+          ? { id: normalizeOptionalString(record['id']) }
+          : {}),
+        language,
+        level: normalizeLanguageSkillLevel(record['level']),
+      };
+    })
+    .filter(
+      (entry: FilemakerPersonLanguageSkill | null): entry is FilemakerPersonLanguageSkill =>
+        entry !== null
     );
 };
 
@@ -289,6 +322,7 @@ export const createFilemakerPerson = (input: {
   phoneNumbers?: unknown;
   linkedinUrl?: unknown;
   githubUrl?: unknown;
+  languageSkills?: unknown;
   profileEducation?: unknown;
   profileJobExperience?: unknown;
   cvHeadline?: unknown;
@@ -309,6 +343,7 @@ export const createFilemakerPerson = (input: {
   });
   const linkedinUrl = normalizeOptionalString(input.linkedinUrl);
   const githubUrl = normalizeOptionalString(input.githubUrl);
+  const languageSkills = normalizeLanguageSkills(input.languageSkills);
   const profileEducation = normalizeProfileEducation(input.profileEducation);
   const profileJobExperience = normalizeProfileJobExperience(input.profileJobExperience);
   const cvHeadline = normalizeOptionalString(input.cvHeadline);
@@ -331,6 +366,7 @@ export const createFilemakerPerson = (input: {
     phoneNumbers: normalizePhoneNumbers(input.phoneNumbers),
     ...(linkedinUrl !== undefined ? { linkedinUrl } : {}),
     ...(githubUrl !== undefined ? { githubUrl } : {}),
+    ...(languageSkills.length > 0 ? { languageSkills } : {}),
     ...(profileEducation.length > 0 ? { profileEducation } : {}),
     ...(profileJobExperience.length > 0 ? { profileJobExperience } : {}),
     ...(cvHeadline !== undefined ? { cvHeadline } : {}),

@@ -91,6 +91,7 @@ export const filemakerPersonProfileEducationSchema = z.object({
   degree: z.string(),
   institution: z.string(),
   period: z.string(),
+  country: z.string().optional(),
   description: z.string().optional(),
 });
 
@@ -104,6 +105,9 @@ export const filemakerPersonProfileJobExperienceSchema = z.object({
   title: z.string(),
   organization: z.string(),
   period: z.string(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isCurrent: z.boolean().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
   highlights: z.array(z.string()).optional(),
@@ -113,6 +117,17 @@ export type FilemakerPersonProfileJobExperienceDto = z.infer<
   typeof filemakerPersonProfileJobExperienceSchema
 >;
 export type FilemakerPersonProfileJobExperience = FilemakerPersonProfileJobExperienceDto;
+
+export const filemakerPersonLanguageSkillSchema = z.object({
+  id: z.string().optional(),
+  language: z.string(),
+  level: z.number().int().min(1).max(10),
+});
+
+export type FilemakerPersonLanguageSkillDto = z.infer<
+  typeof filemakerPersonLanguageSkillSchema
+>;
+export type FilemakerPersonLanguageSkill = FilemakerPersonLanguageSkillDto;
 
 export const filemakerPersonSchema = dtoBaseSchema.extend({
   firstName: z.string(),
@@ -129,6 +144,7 @@ export const filemakerPersonSchema = dtoBaseSchema.extend({
   phoneNumbers: z.array(z.string()),
   linkedinUrl: z.string().optional(),
   githubUrl: z.string().optional(),
+  languageSkills: z.array(filemakerPersonLanguageSkillSchema).optional(),
   profileEducation: z.array(filemakerPersonProfileEducationSchema).optional(),
   profileJobExperience: z.array(filemakerPersonProfileJobExperienceSchema).optional(),
   cvHeadline: z.string().optional(),
@@ -411,6 +427,7 @@ export const filemakerLexiconTermSchema = dtoBaseSchema.extend({
   category: filemakerLexiconTermCategorySchema.default('other'),
   sourceSite: z.string().optional(),
   sourceProvider: z.string().optional(),
+  iconUrl: z.string().optional(),
   firstSeenAt: z.string().nullable().optional(),
   lastSeenAt: z.string().nullable().optional(),
   occurrenceCount: z.number().int().nonnegative().default(0),

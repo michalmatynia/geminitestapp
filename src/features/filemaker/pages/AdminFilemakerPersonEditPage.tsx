@@ -20,6 +20,7 @@ import {
   AdminFilemakerPersonEditPageProvider,
   useAdminFilemakerPersonEditPageStateContext,
 } from '../context/AdminFilemakerPersonEditPageContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
 
 const resolvePersonEditPageItemName = (
   isCreateMode: boolean,
@@ -48,22 +49,33 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
       onCancel={() => startTransition(() => { router.push('/admin/filemaker/persons'); })}
       isSaving={updateSetting.isPending}
     >
-      <PersonBasicInfoSection />
-      <PersonAddressesSection />
-      <PersonProfileCvSection />
-      {isCreateMode ? null : (
-        <>
-          <PersonCvsSection />
-          <PersonBankAccountsSection />
-          <PersonContractsSection />
-          <PersonDocumentsSection />
-          <PersonOccupationsSection />
-          <PersonAnyTextsSection />
-          <PersonAnyParamsSection />
-          <PersonEmailsSection />
-          <PersonWebsitesSection />
-        </>
-      )}
+      <Tabs defaultValue='details' className='w-full space-y-4'>
+        <TabsList className='bg-card/40' aria-label='Person page tabs'>
+          <TabsTrigger value='details'>Person Details</TabsTrigger>
+          <TabsTrigger value='cv-profile'>CV Profile</TabsTrigger>
+          {!isCreateMode ? <TabsTrigger value='linked-records'>Linked Records</TabsTrigger> : null}
+        </TabsList>
+        <TabsContent value='details' className='m-0 space-y-4 outline-none'>
+          <PersonBasicInfoSection />
+          <PersonAddressesSection />
+        </TabsContent>
+        <TabsContent value='cv-profile' className='m-0 space-y-4 outline-none'>
+          <PersonProfileCvSection />
+          {isCreateMode ? null : <PersonCvsSection />}
+        </TabsContent>
+        {!isCreateMode ? (
+          <TabsContent value='linked-records' className='m-0 space-y-4 outline-none'>
+            <PersonBankAccountsSection />
+            <PersonContractsSection />
+            <PersonDocumentsSection />
+            <PersonOccupationsSection />
+            <PersonAnyTextsSection />
+            <PersonAnyParamsSection />
+            <PersonEmailsSection />
+            <PersonWebsitesSection />
+          </TabsContent>
+        ) : null}
+      </Tabs>
       {/* More sections will be added here */}
     </FilemakerPartyEditPageLayout>
   );

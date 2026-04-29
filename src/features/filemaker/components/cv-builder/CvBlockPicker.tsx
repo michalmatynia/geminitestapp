@@ -33,6 +33,7 @@ const PALETTE: Array<{ kind: CvBlockKind; label: string }> = [
   { kind: 'experience', label: 'Experience' },
   { kind: 'education', label: 'Education' },
   { kind: 'skills', label: 'Skills' },
+  { kind: 'techStack', label: 'Tech stack' },
   { kind: 'languages', label: 'Languages' },
   { kind: 'customText', label: 'Text' },
   { kind: 'divider', label: 'Divider' },

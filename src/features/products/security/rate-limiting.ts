@@ -16,6 +16,24 @@ type RateLimitEntry = {
   requests: number[];
 };
 
+const resolveHeaderIp = (value: string | null): string | null => {
+  if (value === null) return null;
+
+  const trimmedValue = value.trim();
+  if (trimmedValue === '') return null;
+
+  const firstIp = trimmedValue.split(',')[0]?.trim() ?? '';
+  return firstIp !== '' ? firstIp : null;
+};
+
+const resolveRequestIp = (req: NextRequest): string | null => {
+  if (!('ip' in req)) return null;
+  if (typeof req.ip !== 'string') return null;
+
+  const trimmedIp = req.ip.trim();
+  return trimmedIp !== '' ? trimmedIp : null;
+};
+
 export class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map<string, RateLimitEntry>();
   private config: Required<RateLimitConfig>;
@@ -91,20 +109,12 @@ export class RateLimiter {
     const forwarded: string | null = req.headers.get('x-forwarded-for');
     const realIP: string | null = req.headers.get('x-real-ip');
 
-    if (forwarded) {
-      const firstIp: string | undefined = forwarded.split(',')[0];
-      return firstIp ? firstIp.trim() : 'unknown';
-    }
-
-    if (realIP) {
-      return realIP;
-    }
-
-    // Fallback if req.ip is not available or is undefined
-    if ('ip' in req && typeof req.ip === 'string' && req.ip) {
-      return req.ip;
-    }
-    return 'unknown';
+    return (
+      resolveHeaderIp(forwarded) ??
+      resolveHeaderIp(realIP) ??
+      resolveRequestIp(req) ??
+      'unknown'
+    );
   }
 
   cleanup(): void {

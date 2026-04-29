@@ -15,6 +15,10 @@ interface ProductBulkSyncResultsModalProps {
   products: ProductWithImages[];
 }
 
+type ProductBulkSyncItem = ProductSyncBulkResponse['items'][number];
+type ProductBulkSyncTotals = ProductSyncBulkResponse['totals'];
+type ProductNameLookup = ReadonlyMap<string, string>;
+
 const statusVariant = (
   status: 'success' | 'skipped' | 'failed'
 ): 'success' | 'neutral' | 'error' => {
@@ -23,16 +27,34 @@ const statusVariant = (
   return 'error';
 };
 
+const normalizeProductName = (product: ProductWithImages): string => {
+  if (product.name_en !== '') return product.name_en;
+  if (product.name_pl !== '') return product.name_pl;
+  if (product.name_de !== '') return product.name_de;
+  return product.id;
+};
+
+const buildProductNamesById = (products: readonly ProductWithImages[]): ProductNameLookup =>
+  new Map(products.map((product) => [product.id, normalizeProductName(product)]));
+
+const resolveResultsSubtitle = (
+  response: ProductSyncBulkResponse | null,
+  totals: ProductBulkSyncTotals
+): string => {
+  if (response === null) return 'No results yet.';
+  return `${response.profileName}: ${totals.success} succeeded, ${totals.skipped} skipped, ${totals.failed} failed (of ${totals.requested})`;
+};
+
+const formatSyncChanges = (changes: readonly string[]): string =>
+  changes.length > 0 ? changes.join(', ') : '—';
+
 export function ProductBulkSyncResultsModal(
   props: ProductBulkSyncResultsModalProps
 ): React.JSX.Element {
   const { isOpen, onClose, response, products } = props;
 
   const productNamesById = useMemo(
-    () =>
-      new Map(
-        products.map((p: ProductWithImages) => [p.id, p.name_en || p.name_pl || p.name_de || p.id])
-      ),
+    () => buildProductNamesById(products),
     [products]
   );
 
@@ -43,11 +65,7 @@ export function ProductBulkSyncResultsModal(
       isOpen={isOpen}
       onClose={onClose}
       title='Base.com Sync Results'
-      subtitle={
-        response
-          ? `${response.profileName}: ${totals.success} succeeded, ${totals.skipped} skipped, ${totals.failed} failed (of ${totals.requested})`
-          : 'No results yet.'
-      }
+      subtitle={resolveResultsSubtitle(response, totals)}
       size='lg'
       footer={
         <Button type='button' variant='outline' onClick={onClose}>
@@ -55,49 +73,71 @@ export function ProductBulkSyncResultsModal(
         </Button>
       }
     >
-      {!response || response.items.length === 0 ? (
-        <p className='text-sm text-muted-foreground'>No items to show.</p>
-      ) : (
-        <div className='overflow-hidden rounded-md border border-border/60'>
-          <table className='w-full text-xs'>
-            <thead className='bg-muted/40 text-left'>
-              <tr>
-                <th className='px-3 py-2 font-medium'>Product</th>
-                <th className='px-3 py-2 font-medium'>Status</th>
-                <th className='px-3 py-2 font-medium'>Local changes</th>
-                <th className='px-3 py-2 font-medium'>Base changes</th>
-                <th className='px-3 py-2 font-medium'>Message</th>
-              </tr>
-            </thead>
-            <tbody>
-              {response.items.map((item) => (
-                <tr key={item.productId} className='border-t border-border/60'>
-                  <td className='px-3 py-2'>
-                    <div className='font-medium text-gray-200 truncate max-w-[220px]'>
-                      {productNamesById.get(item.productId) ?? item.productId}
-                    </div>
-                    <div className='font-mono text-[10px] text-gray-500'>{item.productId}</div>
-                  </td>
-                  <td className='px-3 py-2'>
-                    <Badge variant={statusVariant(item.status)} className='uppercase text-[10px]'>
-                      {item.status}
-                    </Badge>
-                  </td>
-                  <td className='px-3 py-2 text-gray-300'>
-                    {item.localChanges.length > 0 ? item.localChanges.join(', ') : '—'}
-                  </td>
-                  <td className='px-3 py-2 text-gray-300'>
-                    {item.baseChanges.length > 0 ? item.baseChanges.join(', ') : '—'}
-                  </td>
-                  <td className='px-3 py-2 text-gray-400'>
-                    {item.errorMessage ?? item.message ?? '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <ProductBulkSyncResultsTable response={response} productNamesById={productNamesById} />
     </AppModal>
+  );
+}
+
+function ProductBulkSyncResultsTable({
+  response,
+  productNamesById,
+}: {
+  response: ProductSyncBulkResponse | null;
+  productNamesById: ProductNameLookup;
+}): React.JSX.Element {
+  if (response === null || response.items.length === 0) {
+    return <p className='text-sm text-muted-foreground'>No items to show.</p>;
+  }
+
+  return (
+    <div className='overflow-hidden rounded-md border border-border/60'>
+      <table className='w-full text-xs'>
+        <thead className='bg-muted/40 text-left'>
+          <tr>
+            <th className='px-3 py-2 font-medium'>Product</th>
+            <th className='px-3 py-2 font-medium'>Status</th>
+            <th className='px-3 py-2 font-medium'>Local changes</th>
+            <th className='px-3 py-2 font-medium'>Base changes</th>
+            <th className='px-3 py-2 font-medium'>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          {response.items.map((item) => (
+            <ProductBulkSyncResultsRow
+              key={item.productId}
+              item={item}
+              productNamesById={productNamesById}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ProductBulkSyncResultsRow({
+  item,
+  productNamesById,
+}: {
+  item: ProductBulkSyncItem;
+  productNamesById: ProductNameLookup;
+}): React.JSX.Element {
+  return (
+    <tr className='border-t border-border/60'>
+      <td className='px-3 py-2'>
+        <div className='font-medium text-gray-200 truncate max-w-[220px]'>
+          {productNamesById.get(item.productId) ?? item.productId}
+        </div>
+        <div className='font-mono text-[10px] text-gray-500'>{item.productId}</div>
+      </td>
+      <td className='px-3 py-2'>
+        <Badge variant={statusVariant(item.status)} className='uppercase text-[10px]'>
+          {item.status}
+        </Badge>
+      </td>
+      <td className='px-3 py-2 text-gray-300'>{formatSyncChanges(item.localChanges)}</td>
+      <td className='px-3 py-2 text-gray-300'>{formatSyncChanges(item.baseChanges)}</td>
+      <td className='px-3 py-2 text-gray-400'>{item.errorMessage ?? item.message ?? '—'}</td>
+    </tr>
   );
 }

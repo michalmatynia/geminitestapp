@@ -14,6 +14,8 @@ const cvPatchSchema = z.object({
   bodyBlocks: z.unknown().optional(),
   bodyHtml: z.string().nullable().optional(),
   bodyText: z.string().nullable().optional(),
+  highlightTechnologyTerms: z.unknown().optional(),
+  jobListingId: z.string().nullable().optional(),
   status: z.enum(['draft', 'published', 'archived']).optional(),
   template: z.enum(['classic']).optional(),
   title: z.string().optional(),

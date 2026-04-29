@@ -5,6 +5,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 /* eslint-disable max-lines-per-function */
 
 import { OrganizationJobListingsSection } from '../components/page/OrganizationJobListingsSection';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import {
+  JOB_APPLICATION_PREPARE_TRIGGER_LOCATION,
+  JOB_APPLICATION_TAILORED_CV_PATH_ID,
+  JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME,
+} from '@/shared/lib/ai-paths/job-application-prepare';
 import {
   createDefaultFilemakerDatabase,
   createFilemakerJobListing,
@@ -19,6 +26,7 @@ import type { FilemakerJobApplication, FilemakerJobListing, FilemakerOrganizatio
 const mocks = vi.hoisted(() => ({
   fireAiPathTriggerEvent: vi.fn(),
   settingsGet: vi.fn(),
+  triggerButtonsQuery: vi.fn(),
   useActionsContext: vi.fn(),
   useStateContext: vi.fn(),
 }));
@@ -240,6 +248,10 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathQueries', () => ({
+  useAiPathsTriggerButtonsQuery: () => mocks.triggerButtonsQuery(),
+}));
+
 vi.mock('../context/AdminFilemakerOrganizationEditPageContext', () => ({
   useAdminFilemakerOrganizationEditPageActionsContext: () => mocks.useActionsContext(),
   useAdminFilemakerOrganizationEditPageStateContext: () => mocks.useStateContext(),
@@ -257,6 +269,40 @@ const organization: FilemakerOrganization = {
   countryId: '',
   createdAt: '2026-04-01T10:00:00.000Z',
   updatedAt: '2026-04-01T10:00:00.000Z',
+};
+
+const jobApplicationTailoredCvTriggerButton: AiTriggerButtonRecord = {
+  id: JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
+  name: JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME,
+  iconId: null,
+  pathId: JOB_APPLICATION_TAILORED_CV_PATH_ID,
+  enabled: true,
+  locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+  mode: 'click',
+  display: {
+    label: JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME,
+    showLabel: true,
+  },
+  contextTemplate: {
+    jobApplicationArtifactKind: 'tailored_cv',
+    applicationContext: {
+      generationRequest: {
+        artifact: 'tailored_cv',
+        artifacts: ['tailored_cv', 'cv_pdf_preview'],
+        language: 'match_job_listing',
+        runtime: 'redis',
+        promptGoal: 'Prepare a tailored CV.',
+      },
+      outputContract: {
+        tailoredCv: {
+          title: 'string',
+        },
+      },
+    },
+  },
+  createdAt: '2026-04-29T10:00:00.000Z',
+  updatedAt: '2026-04-29T10:00:00.000Z',
+  sortIndex: 60,
 };
 
 const createSettingsValue = (): string => {
@@ -331,6 +377,11 @@ describe('OrganizationJobListingsSection', () => {
       args.onFinished?.();
     });
     mocks.settingsGet.mockReset();
+    mocks.triggerButtonsQuery.mockReset();
+    mocks.triggerButtonsQuery.mockReturnValue({
+      data: [jobApplicationTailoredCvTriggerButton],
+      isLoading: false,
+    });
     mocks.useActionsContext.mockReset();
     mocks.useStateContext.mockReset();
     jobApplicationsPayload = { applications: [] };
@@ -428,6 +479,25 @@ describe('OrganizationJobListingsSection', () => {
               lastName: 'Hopper',
               cvProfessionalSummary: 'Computer scientist with compiler experience.',
             },
+          });
+        }
+        if (href.includes('/api/filemaker/organizations/org-1')) {
+          return createJsonResponse({
+            harvestProfiles: [],
+            importedDemands: [],
+            importedProfiles: [],
+            linkedAddresses: [{ addressId: 'address-org-1', city: 'Warsaw' }],
+            linkedAnyParams: [],
+            linkedAnyTexts: [],
+            linkedBankAccounts: [],
+            linkedDocuments: [],
+            linkedEmails: [],
+            linkedEvents: [],
+            linkedPersons: [],
+            linkedWebsites: [],
+            organization,
+            relationshipSummary: null,
+            valueCatalog: [],
           });
         }
         if (href.includes('/api/filemaker/cvs')) {
@@ -660,6 +730,11 @@ describe('OrganizationJobListingsSection', () => {
             subject: 'Application for FileMaker Consultant',
             bodyMarkdown: 'I can help Acme Hiring automate marketplace workflows.',
           },
+          applicationEmail: {
+            subject: 'Application - FileMaker Consultant',
+            bodyMarkdown: 'Please find my tailored CV and cover letter attached.',
+            bodyText: 'Please find my tailored CV and cover letter attached.',
+          },
           applicationNotes: ['Use Pracuj.pl authenticated profile.'],
           missingInformation: ['Confirm preferred salary range.'],
           confidence: 0.86,
@@ -711,8 +786,10 @@ describe('OrganizationJobListingsSection', () => {
       'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001'
     );
     expect(screen.getByRole('button', { name: 'Export CV PDF' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download Text' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Preview CV PDF' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Download Text' })).toHaveLength(2);
     expect(screen.getByRole('button', { name: 'Export PDF' })).toBeInTheDocument();
+    expect(screen.getByText('Application - FileMaker Consultant')).toBeInTheDocument();
     expect(screen.getByText('86% confidence')).toBeInTheDocument();
     expect(
       screen.getByText('Ada has strong marketplace workflow automation experience.')
@@ -775,7 +852,11 @@ describe('OrganizationJobListingsSection', () => {
       expect(screen.getByLabelText('Person context')).toHaveValue('person-1');
     });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => {
+      expect(screen.getByText('Application context ready.')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: JOB_APPLICATION_TAILORED_CV_TRIGGER_NAME }));
 
     await waitFor(() => {
       expect(mocks.fireAiPathTriggerEvent).toHaveBeenCalledTimes(1);
@@ -794,12 +875,13 @@ describe('OrganizationJobListingsSection', () => {
     const personContext = context['personContext'] as Record<string, unknown>;
     const jobContext = context['jobContext'] as Record<string, unknown>;
     const organizationContext = context['organizationContext'] as Record<string, unknown>;
+    const generationRequest = context['generationRequest'] as Record<string, unknown>;
 
     expect(args).toMatchObject({
       entityType: 'custom',
-      preferredPathId: 'path_job_application_prepare_v1',
+      preferredPathId: JOB_APPLICATION_TAILORED_CV_PATH_ID,
       source: { location: 'filemaker_organization_job_application' },
-      triggerEventId: 'cb9f76f4-50d5-4d23-8f89-f11d4f7f81dd',
+      triggerEventId: JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
     });
     expect((personContext['person'] as Record<string, unknown>)['fullName']).toBe('Ada Lovelace');
     expect(personContext['cvs']).toEqual([
@@ -810,6 +892,14 @@ describe('OrganizationJobListingsSection', () => {
     ]);
     expect((jobContext['listing'] as FilemakerJobListing).title).toBe('FileMaker Consultant');
     expect((organizationContext['organization'] as FilemakerOrganization).name).toBe('Acme Hiring');
+    expect((organizationContext['linkedRecords'] as Record<string, unknown>)['linkedAddresses']).toEqual([
+      expect.objectContaining({ addressId: 'address-org-1' }),
+    ]);
+    expect(generationRequest['artifacts']).toEqual([
+      'tailored_cv',
+      'cv_pdf_preview',
+    ]);
+    expect(generationRequest['artifact']).toBe('tailored_cv');
     expect(args.extras['applicationContext']).toEqual(context);
   });
 });

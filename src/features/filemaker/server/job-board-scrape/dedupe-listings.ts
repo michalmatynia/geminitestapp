@@ -44,6 +44,28 @@ export const normalizeSourceUrlForDedupe = (value: unknown): string => {
   }
 };
 
+const isReliableSourceUrlForListingDedupe = (value: unknown): boolean => {
+  const normalized = normalizeJobBoardSourceUrl(value) ?? toStringValue(value);
+  if (normalized.length === 0) return false;
+  try {
+    const parsed = new URL(normalized);
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
+    const pathname = parsed.pathname;
+    if (hostname === 'pracuj.pl' || hostname.endsWith('.pracuj.pl')) {
+      return /,oferta,/iu.test(pathname);
+    }
+    if (hostname === 'justjoin.it' || hostname.endsWith('.justjoin.it')) {
+      return /\/job-offer\//iu.test(pathname);
+    }
+    if (hostname === 'nofluffjobs.com' || hostname.endsWith('.nofluffjobs.com')) {
+      return /\/(?:pl\/)?job\//iu.test(pathname);
+    }
+    return false;
+  } catch {
+    return false;
+  }
+};
+
 export const listingSourceMatchesOfferSource = (
   listing: FilemakerJobListing,
   offer: FilemakerJobBoardScrapedOffer
@@ -81,7 +103,10 @@ const listingMatchesOfferExternalId = (
 const listingMatchesOfferSourceUrl = (
   listing: FilemakerJobListing,
   offerSourceUrl: string
-): boolean => samePresentValue(normalizeSourceUrlForDedupe(listing.sourceUrl), offerSourceUrl);
+): boolean =>
+  isReliableSourceUrlForListingDedupe(listing.sourceUrl) &&
+  isReliableSourceUrlForListingDedupe(offerSourceUrl) &&
+  samePresentValue(normalizeSourceUrlForDedupe(listing.sourceUrl), offerSourceUrl);
 
 export const listingMatchesSourceIdentity = (
   listing: FilemakerJobListing,
@@ -153,3 +178,23 @@ export const findExistingListingIndexBySourceIdentity = (
   listings.findIndex((listing: FilemakerJobListing): boolean =>
     listingMatchesSourceIdentity(listing, identity)
   );
+
+const LISTING_ADDRESS_FIELDS = [
+  'addressId',
+  'city',
+  'country',
+  'countryId',
+  'postalCode',
+  'street',
+  'streetNumber',
+] as const;
+
+export const listingAddressFieldsEqual = (
+  left: FilemakerJobListing,
+  right: FilemakerJobListing
+): boolean => {
+  for (const field of LISTING_ADDRESS_FIELDS) {
+    if (left[field] !== right[field]) return false;
+  }
+  return true;
+};

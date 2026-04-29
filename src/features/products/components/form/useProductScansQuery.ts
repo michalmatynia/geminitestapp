@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
@@ -11,6 +11,8 @@ import type {
 } from '@/shared/contracts/product-scans';
 import { useState, useCallback } from 'react';
 import type { ProductScanAmazonCandidatePreview } from '@/features/products/lib/product-scan-amazon-candidates';
+
+const PRODUCT_SCAN_ACTIVE_REFETCH_MS = 5_000;
 
 export type ProductScansQueryResult = {
   scans: ProductScanRecord[];
@@ -26,57 +28,100 @@ export type ProductScansQueryResult = {
   isDeletingScanId: string | null;
 };
 
-export function useProductScansQuery(productId: string): ProductScansQueryResult {
-  const queryClient = useQueryClient();
-  const [isDeletingScanId, setIsDeletingScanId] = useState<string | null>(null);
-  const [extractingAmazonCandidateScanId, setExtractingAmazonCandidateScanId] =
-    useState<string | null>(null);
-  const [extractingAmazonCandidateUrl, setExtractingAmazonCandidateUrl] =
-    useState<string | null>(null);
+const hasActiveProductScans = (scansData: unknown): boolean =>
+  Array.isArray(scansData) &&
+  scansData.some((scan: ProductScanRecord) => isProductScanActiveStatus(scan.status));
 
-  const query = useQuery<ProductScanListResponse, Error>({
-    queryKey: QUERY_KEYS.products.scans(productId),
-    enabled: productId !== '',
-    queryFn: async (): Promise<ProductScanListResponse> =>
-      api.get<ProductScanListResponse>(`/api/v2/products/${productId}/scans`, {
-        cache: 'no-store',
-      }),
-    refetchInterval: (q) => {
-      const scansData = q.state.data?.scans;
-      if (!Array.isArray(scansData)) return false;
-      return scansData.some((scan) => isProductScanActiveStatus(scan.status)) ? 5_000 : false;
-    },
-  });
+const invalidateProductScansQuery = async (
+  queryClient: QueryClient,
+  productId: string
+): Promise<void> => {
+  await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.scans(productId) });
+};
+
+const shouldSkipAmazonCandidateExtraction = ({
+  extractingAmazonCandidateScanId,
+  productId,
+  scan,
+}: {
+  extractingAmazonCandidateScanId: string | null;
+  productId: string;
+  scan: ProductScanRecord;
+}): boolean =>
+  extractingAmazonCandidateScanId !== null || productId === '' || scan.provider !== 'amazon';
+
+const requiresTrackableAmazonCandidateScanId = (
+  status: ProductScanAmazonExtractCandidateResponse['status']
+): boolean => status === 'queued' || status === 'running' || status === 'already_running';
+
+const hasTrackableScanId = (scanId: unknown): boolean =>
+  typeof scanId === 'string' && scanId.trim().length > 0;
+
+const assertTrackableAmazonCandidateResponse = (
+  response: ProductScanAmazonExtractCandidateResponse
+): void => {
+  if (
+    requiresTrackableAmazonCandidateScanId(response.status) &&
+    hasTrackableScanId(response.scanId) === false
+  ) {
+    throw new Error('Amazon candidate extraction did not return a trackable scan id.');
+  }
+};
+
+const useDeleteProductScan = ({
+  productId,
+  queryClient,
+}: {
+  productId: string;
+  queryClient: QueryClient;
+}): {
+  isDeletingScanId: string | null;
+  handleDeleteScan: (scanId: string) => Promise<void>;
+} => {
+  const [isDeletingScanId, setIsDeletingScanId] = useState<string | null>(null);
 
   const handleDeleteScan = async (scanId: string): Promise<void> => {
     if (isDeletingScanId !== null) return;
     setIsDeletingScanId(scanId);
     try {
       await api.delete(`/api/v2/products/scans/${scanId}`);
-      await queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.scans(productId) });
+      await invalidateProductScansQuery(queryClient, productId);
     } catch {
-       // Handled implicitly
+      // Handled implicitly
     } finally {
       setIsDeletingScanId(null);
     }
   };
+
+  return { isDeletingScanId, handleDeleteScan };
+};
+
+const useExtractAmazonCandidate = ({
+  productId,
+  queryClient,
+}: {
+  productId: string;
+  queryClient: QueryClient;
+}): Pick<
+  ProductScansQueryResult,
+  'extractingAmazonCandidateScanId' | 'extractingAmazonCandidateUrl' | 'handleExtractAmazonCandidate'
+> => {
+  const [extractingAmazonCandidateScanId, setExtractingAmazonCandidateScanId] =
+    useState<string | null>(null);
+  const [extractingAmazonCandidateUrl, setExtractingAmazonCandidateUrl] =
+    useState<string | null>(null);
 
   const handleExtractAmazonCandidate = useCallback(
     async (
       scan: ProductScanRecord,
       candidate: ProductScanAmazonCandidatePreview
     ): Promise<void> => {
-      if (
-        extractingAmazonCandidateScanId !== null ||
-        productId === '' ||
-        scan.provider !== 'amazon'
-      ) {
+      if (shouldSkipAmazonCandidateExtraction({ extractingAmazonCandidateScanId, productId, scan })) {
         return;
       }
 
       setExtractingAmazonCandidateScanId(scan.id);
       setExtractingAmazonCandidateUrl(candidate.url);
-
       try {
         const response = await api.post<ProductScanAmazonExtractCandidateResponse>(
           '/api/v2/products/scans/amazon/extract-candidate',
@@ -88,19 +133,8 @@ export function useProductScansQuery(productId: string): ProductScansQueryResult
             candidateId: candidate.matchedImageId ?? candidate.id,
           }
         );
-
-        if (
-          (response.status === 'queued' ||
-            response.status === 'running' ||
-            response.status === 'already_running') &&
-          (typeof response.scanId !== 'string' || response.scanId.trim().length === 0)
-        ) {
-          throw new Error('Amazon candidate extraction did not return a trackable scan id.');
-        }
-
-        await queryClient.invalidateQueries({
-          queryKey: QUERY_KEYS.products.scans(productId),
-        });
+        assertTrackableAmazonCandidateResponse(response);
+        await invalidateProductScansQuery(queryClient, productId);
       } finally {
         setExtractingAmazonCandidateScanId(null);
         setExtractingAmazonCandidateUrl(null);
@@ -108,6 +142,34 @@ export function useProductScansQuery(productId: string): ProductScansQueryResult
     },
     [extractingAmazonCandidateScanId, productId, queryClient]
   );
+
+  return {
+    extractingAmazonCandidateScanId,
+    extractingAmazonCandidateUrl,
+    handleExtractAmazonCandidate,
+  };
+};
+
+export function useProductScansQuery(productId: string): ProductScansQueryResult {
+  const queryClient = useQueryClient();
+  const { isDeletingScanId, handleDeleteScan } = useDeleteProductScan({ productId, queryClient });
+  const {
+    extractingAmazonCandidateScanId,
+    extractingAmazonCandidateUrl,
+    handleExtractAmazonCandidate,
+  } = useExtractAmazonCandidate({ productId, queryClient });
+
+  const query = useQuery<ProductScanListResponse, Error>({
+    queryKey: QUERY_KEYS.products.scans(productId),
+    enabled: productId !== '',
+    queryFn: async (): Promise<ProductScanListResponse> =>
+      api.get<ProductScanListResponse>(`/api/v2/products/${productId}/scans`, {
+        cache: 'no-store',
+      }),
+    refetchInterval: (q) => {
+      return hasActiveProductScans(q.state.data?.scans) ? PRODUCT_SCAN_ACTIVE_REFETCH_MS : false;
+    },
+  });
 
   const { refetch: queryRefetch } = query;
   const handleRefetch = useCallback((): void => {

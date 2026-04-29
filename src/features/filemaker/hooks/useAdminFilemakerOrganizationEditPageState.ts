@@ -89,6 +89,7 @@ type MongoFilemakerOrganizationState = {
   linkedDocuments: FilemakerDocument[];
   linkedEmails: FilemakerEmail[];
   linkedEvents: MongoFilemakerEvent[];
+  linkedJobListings: FilemakerJobListing[];
   linkedPersons: MongoFilemakerPerson[];
   linkedWebsites: MongoFilemakerWebsite[];
   organization: FilemakerOrganization | null;
@@ -107,6 +108,7 @@ type MongoFilemakerOrganizationResponse = {
   linkedDocuments?: FilemakerDocument[];
   linkedEmails?: FilemakerEmail[];
   linkedEvents?: MongoFilemakerEvent[];
+  linkedJobListings?: FilemakerJobListing[];
   linkedPersons?: MongoFilemakerPerson[];
   linkedWebsites?: MongoFilemakerWebsite[];
   relationshipSummary?: FilemakerPartySnapshot | null;
@@ -130,11 +132,22 @@ const EMPTY_MONGO_ORGANIZATION_STATE: MongoFilemakerOrganizationState = {
   linkedDocuments: [],
   linkedEmails: [],
   linkedEvents: [],
+  linkedJobListings: [],
   linkedPersons: [],
   linkedWebsites: [],
   organization: null,
   relationshipSummary: null,
   valueCatalog: [],
+};
+
+const uniqueNonEmptyStrings = (values: ReadonlyArray<string | null | undefined>): string[] => {
+  const seen = new Set<string>();
+  values.forEach((value: string | null | undefined): void => {
+    const normalized = value?.trim() ?? '';
+    if (normalized.length === 0) return;
+    seen.add(normalized);
+  });
+  return Array.from(seen);
 };
 
 const applyOrganizationAddresses = (
@@ -279,9 +292,13 @@ const applyOrganizationLegacyDemands = (
 const applyOrganizationJobListings = (
   database: FilemakerDatabase,
   organizationId: string,
-  listings: FilemakerJobListing[]
+  listings: FilemakerJobListing[],
+  replaceOrganizationIds: readonly string[] = [organizationId]
 ): FilemakerDatabase => {
   const now = new Date().toISOString();
+  const ownerIdsToReplace = new Set(
+    uniqueNonEmptyStrings([organizationId, ...replaceOrganizationIds])
+  );
   const nextListings = listings
     .filter((listing: FilemakerJobListing): boolean => listing.title.trim().length > 0)
     .map((listing: FilemakerJobListing): FilemakerJobListing =>
@@ -301,11 +318,60 @@ const applyOrganizationJobListings = (
     ...database,
     jobListings: [
       ...database.jobListings.filter(
-        (listing: FilemakerJobListing): boolean => listing.organizationId !== organizationId
+        (listing: FilemakerJobListing): boolean =>
+          !ownerIdsToReplace.has(listing.organizationId.trim())
       ),
       ...nextListings,
     ],
   });
+};
+
+const resolveOrganizationJobListingOwnerIds = (input: {
+  mongoOrganization: FilemakerOrganization | null;
+  mongoOrganizationLookupId: string;
+  organization: FilemakerOrganization | null;
+  settingsOrganization: FilemakerOrganization | null;
+}): string[] =>
+  uniqueNonEmptyStrings([
+    input.organization?.id,
+    input.organization?.legacyUuid,
+    input.settingsOrganization?.id,
+    input.settingsOrganization?.legacyUuid,
+    input.mongoOrganization?.id,
+    input.mongoOrganization?.legacyUuid,
+    input.mongoOrganizationLookupId,
+  ]);
+
+const resolvePrimaryOrganizationJobListingOwnerId = (input: {
+  mongoOrganization: FilemakerOrganization | null;
+  mongoOrganizationLookupId: string;
+  organization: FilemakerOrganization | null;
+  settingsOrganization: FilemakerOrganization | null;
+}): string =>
+  uniqueNonEmptyStrings([
+    input.mongoOrganization?.id,
+    input.settingsOrganization?.legacyUuid,
+    input.organization?.id,
+    input.mongoOrganizationLookupId,
+  ])[0] ?? '';
+
+const resolveOrganizationJobListings = (input: {
+  database: FilemakerDatabase;
+  linkedJobListings: FilemakerJobListing[];
+  ownerIds: readonly string[];
+}): FilemakerJobListing[] => {
+  const listingsById = new Map<string, FilemakerJobListing>();
+  input.ownerIds.forEach((ownerId: string): void => {
+    getFilemakerJobListingsForOrganization(input.database, ownerId).forEach(
+      (listing: FilemakerJobListing): void => {
+        listingsById.set(listing.id, listing);
+      }
+    );
+  });
+  input.linkedJobListings.forEach((listing: FilemakerJobListing): void => {
+    listingsById.set(listing.id, listing);
+  });
+  return Array.from(listingsById.values());
 };
 
 const parseMongoFilemakerOrganizationResponse = async (
@@ -332,6 +398,7 @@ const toLoadedMongoOrganizationState = (
   linkedDocuments: response.linkedDocuments ?? [],
   linkedEmails: response.linkedEmails ?? [],
   linkedEvents: response.linkedEvents ?? [],
+  linkedJobListings: response.linkedJobListings ?? [],
   linkedPersons: response.linkedPersons ?? [],
   linkedWebsites: response.linkedWebsites ?? [],
   organization: response.organization,
@@ -514,6 +581,36 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     mongoOrganization: mongoOrganizationState.organization,
     settingsOrganization,
   });
+  const organizationJobListingOwnerIds = useMemo(
+    () =>
+      resolveOrganizationJobListingOwnerIds({
+        mongoOrganization: mongoOrganizationState.organization,
+        mongoOrganizationLookupId,
+        organization,
+        settingsOrganization,
+      }),
+    [
+      mongoOrganizationLookupId,
+      mongoOrganizationState.organization,
+      organization,
+      settingsOrganization,
+    ]
+  );
+  const organizationJobListingOwnerId = useMemo(
+    () =>
+      resolvePrimaryOrganizationJobListingOwnerId({
+        mongoOrganization: mongoOrganizationState.organization,
+        mongoOrganizationLookupId,
+        organization,
+        settingsOrganization,
+      }),
+    [
+      mongoOrganizationLookupId,
+      mongoOrganizationState.organization,
+      organization,
+      settingsOrganization,
+    ]
+  );
   const isLoading =
     settingsStore.isLoading ||
     (!isCreateMode && settingsOrganization === null && mongoOrganizationState.isLoading);
@@ -612,7 +709,13 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
           ? settingsDemandRows
           : toLegacyDemandRows(organization.id, mongoOrganizationState.importedDemands)
       );
-      setJobListings(getFilemakerJobListingsForOrganization(database, organization.id));
+      setJobListings(
+        resolveOrganizationJobListings({
+          database,
+          linkedJobListings: mongoOrganizationState.linkedJobListings,
+          ownerIds: organizationJobListingOwnerIds,
+        })
+      );
     }
   }, [
     countries,
@@ -622,7 +725,9 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     mongoOrganizationState.importedDemands,
     mongoOrganizationState.linkedAddresses,
     mongoOrganizationState.linkedEvents,
+    mongoOrganizationState.linkedJobListings,
     organization,
+    organizationJobListingOwnerIds,
     organizationSource,
     database,
   ]);
@@ -807,8 +912,9 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       try {
         const nextSettingsDatabase = applyOrganizationJobListings(
           database,
-          organization.id,
-          jobListings
+          organizationJobListingOwnerId || organization.id,
+          jobListings,
+          organizationJobListingOwnerIds
         );
         const response = await fetch(
           `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
@@ -890,7 +996,12 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       organization.id,
       legacyDemandRows
     );
-    nextDatabase = applyOrganizationJobListings(nextDatabase, organization.id, jobListings);
+    nextDatabase = applyOrganizationJobListings(
+      nextDatabase,
+      organizationJobListingOwnerId || organization.id,
+      jobListings,
+      organizationJobListingOwnerIds
+    );
 
     await persistDatabase(nextDatabase, 'Organization updated.');
     router.push('/admin/filemaker/organizations');
@@ -903,6 +1014,8 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     jobListings,
     legacyDemandRows,
     organization,
+    organizationJobListingOwnerId,
+    organizationJobListingOwnerIds,
     organizationSource,
     orgDraft,
     persistDatabase,

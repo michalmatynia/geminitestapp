@@ -53,6 +53,77 @@ const toComparableStringList = (value: unknown): string[] => {
 const areComparableStringListsEqual = (left: string[], right: string[]): boolean =>
   left.length === right.length && left.every((value, index) => value === right[index]);
 
+const applyCategoryReplacement = ({
+  resolvedReplacement,
+  getCurrentFieldValue,
+  setCategoryId,
+}: {
+  resolvedReplacement: Extract<ResolvedValidatorFieldReplacement, { kind: 'category' }>;
+  getCurrentFieldValue: ValidatorFieldReplacementApplyApi['getCurrentFieldValue'];
+  setCategoryId: ValidatorFieldReplacementApplyApi['setCategoryId'];
+}): boolean => {
+  const currentCategoryValue = toComparableFieldString(getCurrentFieldValue('categoryId'));
+  if (currentCategoryValue !== resolvedReplacement.comparableValue) {
+    setCategoryId(resolvedReplacement.value);
+  }
+  return true;
+};
+
+const applyNumberReplacement = ({
+  resolvedReplacement,
+  getCurrentFieldValue,
+  setFormFieldValue,
+}: {
+  resolvedReplacement: Extract<ResolvedValidatorFieldReplacement, { kind: 'number' }>;
+  getCurrentFieldValue: ValidatorFieldReplacementApplyApi['getCurrentFieldValue'];
+  setFormFieldValue: ValidatorFieldReplacementApplyApi['setFormFieldValue'];
+}): boolean => {
+  const formFieldName = resolvedReplacement.fieldName as keyof ProductFormData;
+  const currentNumeric = getCurrentFieldValue(formFieldName);
+  if (
+    typeof currentNumeric !== 'number' ||
+    !Number.isFinite(currentNumeric) ||
+    currentNumeric !== resolvedReplacement.value
+  ) {
+    setFormFieldValue(formFieldName, resolvedReplacement.value);
+  }
+  return true;
+};
+
+const applyProducersReplacement = ({
+  resolvedReplacement,
+  getCurrentFieldValue,
+  setProducerIds,
+}: {
+  resolvedReplacement: Extract<ResolvedValidatorFieldReplacement, { kind: 'producers' }>;
+  getCurrentFieldValue: ValidatorFieldReplacementApplyApi['getCurrentFieldValue'];
+  setProducerIds: ValidatorFieldReplacementApplyApi['setProducerIds'];
+}): boolean => {
+  const currentProducerIds = toComparableStringList(getCurrentFieldValue('producerIds'));
+  const nextProducerIds = Array.from(new Set(resolvedReplacement.value.slice().sort()));
+  if (!areComparableStringListsEqual(currentProducerIds, nextProducerIds)) {
+    setProducerIds(resolvedReplacement.value);
+  }
+  return true;
+};
+
+const applyStandardFieldReplacement = ({
+  resolvedReplacement,
+  getCurrentFieldValue,
+  setFormFieldValue,
+}: {
+  resolvedReplacement: Extract<ResolvedValidatorFieldReplacement, { kind: 'text' }>;
+  getCurrentFieldValue: ValidatorFieldReplacementApplyApi['getCurrentFieldValue'];
+  setFormFieldValue: ValidatorFieldReplacementApplyApi['setFormFieldValue'];
+}): boolean => {
+  const formFieldName = resolvedReplacement.fieldName as keyof ProductFormData;
+  const currentValue = toComparableFieldString(getCurrentFieldValue(formFieldName));
+  if (currentValue !== resolvedReplacement.comparableValue) {
+    setFormFieldValue(formFieldName, resolvedReplacement.value);
+  }
+  return true;
+};
+
 export const applyResolvedValidatorFieldReplacement = (
   input: ApplyResolvedValidatorFieldReplacementInput
 ): boolean => {
@@ -65,41 +136,22 @@ export const applyResolvedValidatorFieldReplacement = (
   } = input;
 
   if (resolvedReplacement.kind === 'category') {
-    const currentCategoryValue = toComparableFieldString(getCurrentFieldValue('categoryId'));
-    if (currentCategoryValue !== resolvedReplacement.comparableValue) {
-      setCategoryId(resolvedReplacement.value);
-    }
-    return true;
+    return applyCategoryReplacement({ resolvedReplacement, getCurrentFieldValue, setCategoryId });
   }
 
   if (resolvedReplacement.kind === 'number') {
-    const formFieldName = resolvedReplacement.fieldName as keyof ProductFormData;
-    const currentNumeric = getCurrentFieldValue(formFieldName);
-    if (
-      typeof currentNumeric !== 'number' ||
-      !Number.isFinite(currentNumeric) ||
-      currentNumeric !== resolvedReplacement.value
-    ) {
-      setFormFieldValue(formFieldName, resolvedReplacement.value);
-    }
-    return true;
+    return applyNumberReplacement({ resolvedReplacement, getCurrentFieldValue, setFormFieldValue });
   }
 
   if (resolvedReplacement.kind === 'producers') {
-    const currentProducerIds = toComparableStringList(getCurrentFieldValue('producerIds'));
-    const nextProducerIds = Array.from(new Set(resolvedReplacement.value.slice().sort()));
-    if (!areComparableStringListsEqual(currentProducerIds, nextProducerIds)) {
-      setProducerIds(resolvedReplacement.value);
-    }
-    return true;
+    return applyProducersReplacement({ resolvedReplacement, getCurrentFieldValue, setProducerIds });
   }
 
-  const formFieldName = resolvedReplacement.fieldName as keyof ProductFormData;
-  const currentValue = toComparableFieldString(getCurrentFieldValue(formFieldName));
-  if (currentValue !== resolvedReplacement.comparableValue) {
-    setFormFieldValue(formFieldName, resolvedReplacement.value);
-  }
-  return true;
+  return applyStandardFieldReplacement({
+    resolvedReplacement,
+    getCurrentFieldValue,
+    setFormFieldValue,
+  });
 };
 
 export const doesResolvedValidatorFieldReplacementMatchCurrentValue = ({

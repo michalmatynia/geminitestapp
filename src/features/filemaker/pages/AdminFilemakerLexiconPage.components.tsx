@@ -29,6 +29,7 @@ import {
   type FilemakerLexiconTypeOption,
 } from './AdminFilemakerLexiconPage.type-metadata';
 import { FilemakerLexiconTypesModal } from './AdminFilemakerLexiconTypesModal';
+import { resolveFilemakerTechnologyIconUrl } from '../technology-icons';
 
 type FilemakerLexiconTypeEditorViewState = {
   changeDraft: (
@@ -379,6 +380,10 @@ export function FilemakerLexiconEditorModal(
 ): React.JSX.Element {
   const normalizedLabel = normalizeFilemakerLexiconKey(props.editor.form.label);
   const title = props.editor.editing === null ? 'Create Lexicon Term' : 'Edit Lexicon Term';
+  const iconPreviewUrl =
+    props.editor.form.category === 'technology' && props.editor.form.label.trim().length > 0
+      ? resolveFilemakerTechnologyIconUrl(props.editor.form.label, props.editor.form.iconUrl)
+      : (props.editor.form.iconUrl ?? '').trim();
   return (
     <FormModal
       open={props.editor.open}
@@ -409,6 +414,27 @@ export function FilemakerLexiconEditorModal(
             }}
           />
         </FormField>
+        <FormField label='Tech image icon URL'>
+          <Input
+            value={props.editor.form.iconUrl ?? ''}
+            onChange={(event) => props.onChange({ iconUrl: event.target.value })}
+            placeholder='https://cdn.simpleicons.org/react/334155'
+          />
+        </FormField>
+        {iconPreviewUrl.length > 0 ? (
+          <div className='flex items-center gap-3 rounded border border-border/50 bg-muted/10 px-3 py-2 text-xs text-muted-foreground'>
+            <img
+              src={iconPreviewUrl}
+              alt=''
+              className='size-8 rounded border border-border/50 bg-background object-contain p-1'
+            />
+            <span>
+              {props.editor.form.category === 'technology'
+                ? 'Technology icon preview. Leave URL empty to use the generated default.'
+                : 'Icon preview.'}
+            </span>
+          </div>
+        ) : null}
         <div className='rounded border border-border/50 bg-muted/10 px-3 py-2 text-xs text-muted-foreground'>
           Normalized key: {normalizedLabel.length > 0 ? normalizedLabel : 'empty'}
         </div>
@@ -463,7 +489,16 @@ export const createFilemakerLexiconColumns = (
 function TermLabelCell(props: { row: FilemakerLexiconTermRow }): React.JSX.Element {
   return (
     <div className='min-w-0'>
-      <div className='truncate text-sm font-medium'>{props.row.term.label}</div>
+      <div className='flex min-w-0 items-center gap-2'>
+        {props.row.term.iconUrl ? (
+          <img
+            src={props.row.term.iconUrl}
+            alt=''
+            className='size-5 shrink-0 rounded border border-border/50 bg-background object-contain p-0.5'
+          />
+        ) : null}
+        <div className='truncate text-sm font-medium'>{props.row.term.label}</div>
+      </div>
       <div className='truncate pt-0.5 text-[11px] text-muted-foreground'>
         {props.row.term.normalizedLabel}
       </div>

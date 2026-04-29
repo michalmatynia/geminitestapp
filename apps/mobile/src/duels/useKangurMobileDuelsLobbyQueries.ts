@@ -92,6 +92,8 @@ export interface DuelApiClient {
   searchDuels: (query: string, params: { limit: number }, options: { cache: string }) => Promise<KangurDuelSearchResponse>;
   listDuelLobbyChat: (params: { limit: number }, options: { cache: string }) => Promise<KangurDuelLobbyChatListResponse>;
   sendDuelLobbyChatMessage: (input: KangurDuelLobbyChatCreateInput, options: { cache: string }) => Promise<KangurDuelLobbyChatSendResponse>;
+  createDuel: (input: unknown, options: { cache: string }) => Promise<KangurDuelStateResponse>;
+  joinDuel: (input: unknown, options: { cache: string }) => Promise<KangurDuelStateResponse>;
 }
 
 export function useLobbyQuery(apiClient: DuelApiClient, apiBaseUrl: string, learnerIdentity: string): UseQueryResult<KangurDuelLobbyResponse> {

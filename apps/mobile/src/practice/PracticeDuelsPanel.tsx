@@ -12,7 +12,7 @@ type PracticeDuelsState = ReturnType<typeof useKangurMobilePracticeDuels>;
 export function PracticeDuelsPanel({
   copy,
   locale,
-  localeTag,
+  _localeTag,
   openDuelSession,
   practiceDuels,
 }: {

@@ -182,6 +182,13 @@ const buildRunGraphValidationConfig = (
   updatedAt: new Date().toISOString(),
 });
 
+const compactPersistedRunMeta = (
+  meta: Record<string, unknown>
+): Record<string, unknown> => {
+  const { preflightRuntimeHints: _preflightRuntimeHints, ...rest } = meta;
+  return rest;
+};
+
 const assertCanonicalRunGraph = ({
   input,
   rawNodes,
@@ -314,7 +321,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     }
     const runtimeFingerprint = getAiPathsRuntimeFingerprint();
     const meta = withRuntimeFingerprintMeta({
-      ...(input.meta ?? {}),
+      ...compactPersistedRunMeta(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
       runRepository: {
         collection: repoSelection.collection,

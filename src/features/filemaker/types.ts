@@ -155,6 +155,8 @@ export type {
   FilemakerPhoneNumberLinkDto,
   FilemakerPerson,
   FilemakerPersonDto,
+  FilemakerPersonLanguageSkill,
+  FilemakerPersonLanguageSkillDto,
   FilemakerPersonProfileEducation,
   FilemakerPersonProfileEducationDto,
   FilemakerPersonProfileJobExperience,
@@ -229,6 +231,7 @@ export type {
 export type {
   FilemakerJobApplication,
   FilemakerJobApplicationCoverLetter,
+  FilemakerJobApplicationEmail,
   FilemakerJobApplicationListResponse,
   FilemakerJobApplicationResponse,
   FilemakerJobApplicationStatus,

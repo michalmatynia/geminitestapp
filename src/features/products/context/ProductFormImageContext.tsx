@@ -64,6 +64,18 @@ export type ProductFormImageActionsContextType = Pick<
 
 export const ProductFormImageContext = createContext<ProductFormImageContextType | null>(null);
 
+type ProductFormImageProviderProps = {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  uploading: boolean;
+  uploadError: string | null;
+  uploadSuccess: boolean;
+  onInteraction?: () => void;
+};
+
+type ProductFormImageProviderValueArgs = Omit<ProductFormImageProviderProps, 'children'>;
+
 export function ProductFormImageProvider({
   children,
   product,
@@ -72,18 +84,34 @@ export function ProductFormImageProvider({
   uploadError,
   uploadSuccess,
   onInteraction,
-}: {
-  children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
-  uploading: boolean;
-  uploadError: string | null;
-  uploadSuccess: boolean;
-  onInteraction?: () => void;
-}) {
+}: ProductFormImageProviderProps): React.JSX.Element {
+  const contextValue = useProductFormImageProviderValue({
+    product,
+    draft,
+    uploading,
+    uploadError,
+    uploadSuccess,
+    onInteraction,
+  });
+
+  return (
+    <ProductFormImageContext.Provider value={contextValue}>
+      {children}
+    </ProductFormImageContext.Provider>
+  );
+}
+
+const useProductFormImageProviderValue = ({
+  product,
+  draft,
+  uploading,
+  uploadError,
+  uploadSuccess,
+  onInteraction,
+}: ProductFormImageProviderValueArgs): ProductFormImageContextType => {
   const images = useProductImages(product, draft?.imageLinks);
 
-  const value = useMemo(
+  return useMemo<ProductFormImageContextType>(
     () => ({
       ...images,
       productId: product?.id ?? null,
@@ -119,18 +147,14 @@ export function ProductFormImageProvider({
         onInteraction?.();
         images.setImageLinkAt(index, value);
       },
-      setImageBase64At: (index: number, value: string) => {
+      setImageBase64At: (index: number, nextValue: string) => {
         onInteraction?.();
-        images.setImageBase64At(index, value);
+        images.setImageBase64At(index, nextValue);
       },
     }),
     [images, product?.id, uploading, uploadError, uploadSuccess, onInteraction]
   );
-
-  return (
-    <ProductFormImageContext.Provider value={value}>{children}</ProductFormImageContext.Provider>
-  );
-}
+};
 
 const useRequiredProductFormImageContext = (): ProductFormImageContextType => {
   const context = useContext(ProductFormImageContext);

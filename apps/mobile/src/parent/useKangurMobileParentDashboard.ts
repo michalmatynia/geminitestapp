@@ -161,6 +161,68 @@ const buildAssignmentMonitoring = (
     },
   );
 
+const buildDashboardResult = ({
+  activeLearner,
+  assignmentItems,
+  assignmentMonitoring,
+  assignmentsQuery,
+  canAccessDashboard,
+  copy,
+  isAuthenticated,
+  isLoadingAuth,
+  isAuthorized,
+  learners,
+  parentDisplayName,
+  progressQuery,
+  recentResultItems,
+  recentResults,
+  refreshDashboard,
+  resultsError,
+  selectLearner,
+  selectionError,
+  snapshot,
+  supportsLearnerCredentials,
+  switchingLearnerId,
+  selectedLearnerId,
+}: any): UseKangurMobileParentDashboardResult => ({
+  activeLearner,
+  assignmentItems,
+  assignmentMonitoring,
+  assignmentsError:
+    assignmentsQuery.error instanceof Error
+      ? copy({
+          de: 'Die Aufgaben des Lernenden konnten nicht geladen werden.',
+          en: 'Could not load learner assignments.',
+          pl: 'Nie udało się pobrać zadań ucznia.',
+        })
+      : null,
+  canAccessDashboard,
+  isAuthenticated,
+  isLoadingAssignments: Boolean(isAuthorized && assignmentsQuery.isLoading),
+  isLoadingAuth,
+  isLoadingProgress: Boolean(isAuthorized && progressQuery.isLoading),
+  isLoadingResults: recentResults.isLoading,
+  learners,
+  parentDisplayName,
+  progressError:
+    progressQuery.error instanceof Error
+      ? copy({
+          de: 'Der Lernfortschritt konnte nicht geladen werden.',
+          en: 'Could not load learner progress.',
+          pl: 'Nie udało się pobrać postępu ucznia.',
+        })
+      : null,
+  recentResultItems,
+  refreshDashboard,
+  resultsError,
+  selectLearner,
+  selectedLearnerId,
+  selectionError,
+  snapshot,
+  supportsLearnerCredentials,
+  switchingLearnerId,
+});
+
 export const useKangurMobileParentDashboard =
   (): UseKangurMobileParentDashboardResult => {
     const { copy, locale } = useKangurMobileI18n();
@@ -297,94 +359,28 @@ export const useKangurMobileParentDashboard =
       resultsError = recentResults.error;
     }
 
-    return {
+    return buildDashboardResult({
       activeLearner,
       assignmentItems,
       assignmentMonitoring,
-      assignmentsError:
-        assignmentsQuery.error instanceof Error
-          ? copy({
-              de: 'Die Aufgaben des Lernenden konnten nicht geladen werden.',
-              en: 'Could not load learner assignments.',
-              pl: 'Nie udało się pobrać zadań ucznia.',
-            })
-          : null,
+      assignmentsQuery,
       canAccessDashboard,
+      copy,
       isAuthenticated,
-      isLoadingAssignments: Boolean(
-        isAuthorized && assignmentsQuery.isLoading,
-      ),
       isLoadingAuth,
-      isLoadingProgress: Boolean(
-        isAuthorized && progressQuery.isLoading,
-      ),
-      isLoadingResults: recentResults.isLoading,
+      isAuthorized,
       learners,
       parentDisplayName,
-      progressError:
-        progressQuery.error instanceof Error
-          ? copy({
-              de: 'Der Lernfortschritt konnte nicht geladen werden.',
-              en: 'Could not load learner progress.',
-              pl: 'Nie udało się pobrać postępu ucznia.',
-            })
-          : null,
+      progressQuery,
       recentResultItems,
-      refreshDashboard: async () => {
-        await Promise.all([
-          isAuthorized
-            ? progressQuery.refetch()
-            : Promise.resolve(),
-          isAuthorized
-            ? assignmentsQuery.refetch()
-            : Promise.resolve(),
-          isAuthorized
-            ? recentResults.refresh()
-            : Promise.resolve(),
-        ]);
-      },
+      recentResults,
+      refreshDashboard,
       resultsError,
-      selectLearner: async (learnerId: string) => {
-        const normalizedLearnerId = learnerId.trim();
-        if (!canAccessDashboard || normalizedLearnerId === '' || normalizedLearnerId === selectedLearnerId) {
-          return;
-        }
-
-        const previousLearnerId = storage.getItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
-        const normalizedPreviousLearnerId =
-          typeof previousLearnerId === 'string' && previousLearnerId.trim().length > 0
-            ? previousLearnerId
-            : null;
-        setSelectionError(null);
-        setSwitchingLearnerId(normalizedLearnerId);
-
-        try {
-          storage.setItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY, normalizedLearnerId);
-          await refreshSession();
-        } catch {
-          if (normalizedPreviousLearnerId !== null) {
-            storage.setItem(
-              KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY,
-              normalizedPreviousLearnerId,
-            );
-          } else {
-            storage.removeItem(KANGUR_MOBILE_ACTIVE_LEARNER_STORAGE_KEY);
-          }
-          setSelectionError(
-            copy({
-              de: 'Der aktive Lernende konnte nicht gewechselt werden.',
-              en: 'Could not switch the active learner.',
-              pl: 'Nie udało się przełączyć aktywnego ucznia.',
-            }),
-          );
-        } finally {
-          setSwitchingLearnerId(null);
-        }
-      },
-      selectedLearnerId,
+      selectLearner,
       selectionError,
       snapshot,
       supportsLearnerCredentials,
       switchingLearnerId,
-    };
+      selectedLearnerId,
+    });
   };

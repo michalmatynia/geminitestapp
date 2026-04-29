@@ -1,5 +1,5 @@
 import type { KangurPracticeOperation } from '@kangur/core';
-import type { KangurProgressState, KangurScore } from '@kangur/contracts/kangur';
+import type { KangurScore } from '@kangur/contracts/kangur';
 
 type PracticeSyncScoreMatchInput = {
   expectedCorrectAnswers: number;

@@ -22,6 +22,7 @@ import type {
   CvSpacerBlock,
   CvStackBlock,
   CvSummaryBlock,
+  CvTechStackBlock,
 } from './cv-block-model';
 
 interface EditorProps<TBlock extends CvBlock> {
@@ -189,6 +190,16 @@ export function ExperienceBlockEditor({
           className='h-9'
         />
       </FormField>
+      <FormField label='Country of study' className='md:col-span-2'>
+        <Input
+          value={block.country ?? ''}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            onUpdate({ country: event.target.value });
+          }}
+          aria-label='CV education country of study'
+          className='h-9'
+        />
+      </FormField>
       <FormField label='Description' className='md:col-span-2'>
         <Textarea
           value={block.description}
@@ -311,12 +322,66 @@ export function LanguagesBlockEditor({
       </FormField>
       <FormField label='Items'>
         <Textarea
-          value={block.items.join('\n')}
+          value={block.items
+            .map((item) => typeof item === 'string' ? item : `${item.language} - ${item.level}/10`)
+            .join('\n')}
           rows={5}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
             onUpdate({ items: parseLines(event.target.value) });
           }}
           aria-label='CV language items'
+        />
+      </FormField>
+    </div>
+  );
+}
+
+const serializeTechStackItems = (items: CvTechStackBlock['items']): string =>
+  items
+    .map((item): string =>
+      item.iconUrl.trim().length > 0 ? `${item.label} | ${item.iconUrl}` : item.label
+    )
+    .join('\n');
+
+const parseTechStackItems = (value: string): CvTechStackBlock['items'] =>
+  value
+    .split(/\r?\n/)
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0)
+    .map((entry: string): CvTechStackBlock['items'][number] => {
+      const [label = '', ...iconParts] = entry.split(/\s*\|\s*/);
+      return {
+        label: label.trim(),
+        iconUrl: iconParts.join(' | ').trim(),
+      };
+    })
+    .filter((item): boolean => item.label.length > 0);
+
+export function TechStackBlockEditor({
+  block,
+  onUpdate,
+}: EditorProps<CvTechStackBlock>): React.JSX.Element {
+  return (
+    <div className='grid gap-3'>
+      <FormField label='Label'>
+        <Input
+          value={block.label}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            onUpdate({ label: event.target.value });
+          }}
+          aria-label='CV tech stack label'
+          className='h-9'
+        />
+      </FormField>
+      <FormField label='Items'>
+        <Textarea
+          value={serializeTechStackItems(block.items)}
+          rows={6}
+          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+            onUpdate({ items: parseTechStackItems(event.target.value) });
+          }}
+          aria-label='CV tech stack items'
+          placeholder='React | https://cdn.simpleicons.org/react/334155'
         />
       </FormField>
     </div>
@@ -605,6 +670,8 @@ export function CvBlockEditor({
       return <EducationBlockEditor block={block} onUpdate={onUpdate} />;
     case 'skills':
       return <SkillsBlockEditor block={block} onUpdate={onUpdate} />;
+    case 'techStack':
+      return <TechStackBlockEditor block={block} onUpdate={onUpdate} />;
     case 'languages':
       return <LanguagesBlockEditor block={block} onUpdate={onUpdate} />;
     case 'customText':

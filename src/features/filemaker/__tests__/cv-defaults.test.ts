@@ -1,8 +1,31 @@
 import { describe, expect, it } from 'vitest';
 
 import { compileCvBlocksToHtml, compileCvBlocksToPlainText } from '../components/cv-builder/compile-cv-blocks';
-import type { CvSectionBlock } from '../components/cv-builder/cv-block-model';
+import type { CvBlock, CvSectionBlock, CvTechStackBlock } from '../components/cv-builder/cv-block-model';
 import { buildDefaultFilemakerCvBlocks } from '../cv-defaults';
+import type { FilemakerLexiconTerm } from '../types';
+
+const lexiconTechnologyTerm = (id: string, label: string): FilemakerLexiconTerm => ({
+  id,
+  label,
+  normalizedLabel: label.toLowerCase(),
+  typeKey: 'technology',
+  category: 'technology',
+  occurrenceCount: 1,
+  createdAt: '2026-04-29T00:00:00.000Z',
+  updatedAt: '2026-04-29T00:00:00.000Z',
+});
+
+const findTechStack = (blocks: CvBlock[]): CvTechStackBlock | null => {
+  for (const block of blocks) {
+    if (block.kind === 'techStack') return block;
+    if ('children' in block) {
+      const match = findTechStack(block.children as CvBlock[]);
+      if (match) return match;
+    }
+  }
+  return null;
+};
 
 describe('buildDefaultFilemakerCvBlocks', () => {
   it('builds a CV from person profile and CV-specific fields', () => {
@@ -64,5 +87,40 @@ describe('buildDefaultFilemakerCvBlocks', () => {
     expect(
       generatedSections.every((section) => section.paddingX === 0 && section.paddingY === 0)
     ).toBe(true);
+  });
+
+  it('adds only validated and mentioned lexicon technologies to the selected tech stack', () => {
+    const blocks = buildDefaultFilemakerCvBlocks({
+      lexiconTerms: [
+        lexiconTechnologyTerm('term-ai', 'AI'),
+        lexiconTechnologyTerm('term-docker', 'Docker'),
+        lexiconTechnologyTerm('term-react', 'React'),
+        lexiconTechnologyTerm('term-typescript', 'TypeScript'),
+      ],
+      person: {
+        city: '',
+        country: '',
+        cvCoreStrengths: ['React application delivery'],
+        cvProfessionalSummary: 'Builds marketplace products with TypeScript.',
+        cvSelectedTechnicalEnvironment: [
+          'AI products, React applications, and educational technology',
+        ],
+        firstName: 'Ada',
+        githubUrl: '',
+        languageSkills: [],
+        lastName: 'Lovelace',
+        linkedinUrl: '',
+        phoneNumbers: [],
+        profileEducation: [],
+        profileJobExperience: [],
+      },
+    });
+
+    const techStack = findTechStack(blocks);
+    expect(techStack?.items.map((item) => item.label)).toEqual(['TypeScript', 'React']);
+    expect(techStack?.items.map((item) => item.lexiconTermId)).toEqual([
+      'term-typescript',
+      'term-react',
+    ]);
   });
 });

@@ -104,6 +104,7 @@ type CentralizedScrapeResult = {
 type FilemakerJobBoardScrapeRunOptions = {
   onEvent?: FilemakerJobBoardScrapeLiveEventEmitter;
   signal?: AbortSignal;
+  waitWhilePaused?: () => Promise<void>;
 };
 
 type ClassificationPillBuildResult = {
@@ -133,6 +134,7 @@ type ScrapeProgressHandlers = {
   }) => Promise<void> | void;
   onStatus?: (message: string) => Promise<void> | void;
   onWarning?: (warning: string) => Promise<void> | void;
+  waitWhilePaused?: () => Promise<void>;
 };
 
 const DEFAULT_WARNINGS: string[] = [];
@@ -214,6 +216,7 @@ const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedO
 import {
   findExistingListingIndex,
   findExistingListingIndexBySourceIdentity,
+  listingAddressFieldsEqual,
   normalizeNameForMatch,
 } from './job-board-scrape/dedupe-listings';
 
@@ -829,7 +832,7 @@ const applyOfferAddressToDatabaseJobListing = (
       }),
       postalCode: addressRecord.address.postalCode,
     };
-    listingChanged = JSON.stringify(listing) !== JSON.stringify(nextListing);
+    listingChanged = !listingAddressFieldsEqual(listing, nextListing);
     if (listingChanged) {
       database.jobListings.splice(listingIndex, 1, nextListing);
     }
@@ -1595,7 +1598,7 @@ export const applyFilemakerJobBoardLexiconClassifications = async (
   if (changed) {
     const persisted = await upsertFilemakerCampaignSettingValue(
       FILEMAKER_DATABASE_KEY,
-      JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
+      JSON.stringify(toPersistedFilemakerDatabase(database))
     );
     if (!persisted) {
       throw internalError('Failed to persist job-board lexicon classifications.');
@@ -1642,126 +1645,64 @@ const applyImport = async ({
       existingSourceIndex >= 0 ? database.jobListings[existingSourceIndex] : undefined;
     const companyNameKey = normalizeNameForMatch(offer.companyName);
     const companyKey = buildScrapedCompanyIdentityKey(offer);
-    if (existingSourceListing !== undefined && options.duplicateStrategy === 'skip') {
-      let duplicateListing = existingSourceListing;
-      const existingOrganization =
-        database.organizations.find(
-          (organization: FilemakerOrganization): boolean =>
-            organization.id === duplicateListing.organizationId
-        ) ?? null;
-      const existingOrganizationMatches =
-        existingOrganization !== null &&
-        organizationMatchesScrapedCompany({
-          companyIdentityKey: companyKey,
-          companyNameKey,
-          offer,
-          organization: existingOrganization,
-        });
-      if (
-        !existingOrganizationMatches &&
-        companyKey.length > 0 &&
-        !isSuspiciousJobBoardCompanyName(offer.companyName)
-      ) {
-        const companyCandidate = await getOrCreateScrapedCompanyCandidate({
-          companyKey,
-          createdCandidatesByCompanyKey,
-          database,
-          offer,
-        });
-        changed = changed || companyCandidate.created || companyCandidate.profileUpdated;
-        counters.createdOrganizations += companyCandidate.created ? 1 : 0;
-        counters.updatedOrganizations +=
-          !companyCandidate.created && companyCandidate.profileUpdated ? 1 : 0;
-        counters.profileUpdates += companyCandidate.profileUpdated ? 1 : 0;
-        duplicateListing = createFilemakerJobListing({
-          ...duplicateListing,
-          organizationId: companyCandidate.candidate.organization.id,
-          updatedAt: new Date().toISOString(),
-        });
-        database.jobListings.splice(existingSourceIndex, 1, duplicateListing);
+    const existingSourceOrganization =
+      existingSourceListing === undefined
+        ? null
+        : database.organizations.find(
+            (organization: FilemakerOrganization): boolean =>
+              organization.id === existingSourceListing.organizationId
+          ) ?? null;
+    const existingSourceOrganizationMatches =
+      existingSourceOrganization !== null &&
+      organizationMatchesScrapedCompany({
+        companyIdentityKey: companyKey,
+        companyNameKey,
+        offer,
+        organization: existingSourceOrganization,
+      });
+    const existingSourceIndexForCompany = existingSourceOrganizationMatches
+      ? existingSourceIndex
+      : -1;
+    if (
+      existingSourceListing !== undefined &&
+      existingSourceOrganizationMatches &&
+      existingSourceOrganization !== null &&
+      options.duplicateStrategy === 'skip'
+    ) {
+      const duplicateListing = existingSourceListing;
+      const profileUpdated = applyOfferProfileToDatabaseOrganization(
+        database,
+        existingSourceOrganization.id,
+        offer
+      );
+      if (profileUpdated) {
         changed = true;
-        const match: FilemakerJobBoardOrganizationMatch = {
-          confidence: 100,
-          organizationId: companyCandidate.candidate.organization.id,
-          organizationName: companyCandidate.candidate.organization.name,
-          reason: companyCandidate.created
-            ? 'created from scraped job-board employer'
-            : 'same scraped employer in current import',
-        };
+        counters.updatedOrganizations += 1;
+        counters.profileUpdates += 1;
+        const updatedOrganization = database.organizations.find(
+          (organization: FilemakerOrganization): boolean =>
+            organization.id === existingSourceOrganization.id
+        );
+        if (updatedOrganization !== undefined) {
+          await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
+        }
         await emitWriteResult(
           onWrite,
-          companyCandidate.created ? 'organization_created' : 'organization_linked',
-          { listingId: duplicateListing.id, match, offer, reason: null, status: 'preview' },
-          companyCandidate.profileUpdated
-        );
-        if (!companyCandidate.created && companyCandidate.profileUpdated) {
-          await emitWriteResult(
-            onWrite,
-            'organization_profile_updated',
-            { listingId: duplicateListing.id, match, offer, reason: null, status: 'updated' },
-            true
-          );
-        }
-        const reassignedProfileUpdated = applyOfferProfileToDatabaseOrganization(
-          database,
-          companyCandidate.candidate.organization.id,
-          offer
-        );
-        if (reassignedProfileUpdated) {
-          changed = true;
-          counters.updatedOrganizations += 1;
-          counters.profileUpdates += 1;
-          const updatedOrganization = database.organizations.find(
-            (organization: FilemakerOrganization): boolean =>
-              organization.id === companyCandidate.candidate.organization.id
-          );
-          if (updatedOrganization !== undefined) {
-            companyCandidate.candidate.organization = updatedOrganization;
-            await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
-          }
-          await emitWriteResult(
-            onWrite,
-            'organization_profile_updated',
-            { listingId: duplicateListing.id, match, offer, reason: null, status: 'updated' },
-            true
-          );
-        }
-      }
-      if (existingOrganizationMatches && existingOrganization !== null) {
-        const profileUpdated = applyOfferProfileToDatabaseOrganization(
-          database,
-          existingOrganization.id,
-          offer
-        );
-        if (profileUpdated) {
-          changed = true;
-          counters.updatedOrganizations += 1;
-          counters.profileUpdates += 1;
-          const updatedOrganization = database.organizations.find(
-            (organization: FilemakerOrganization): boolean =>
-              organization.id === existingOrganization.id
-          );
-          if (updatedOrganization !== undefined) {
-            await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
-          }
-          await emitWriteResult(
-            onWrite,
-            'organization_profile_updated',
-            {
-              listingId: duplicateListing.id,
-              match: {
-                confidence: 100,
-                organizationId: existingOrganization.id,
-                organizationName: existingOrganization.name,
-                reason: 'existing listing source identity',
-              },
-              offer,
-              reason: null,
-              status: 'updated',
+          'organization_profile_updated',
+          {
+            listingId: duplicateListing.id,
+            match: {
+              confidence: 100,
+              organizationId: existingSourceOrganization.id,
+              organizationName: existingSourceOrganization.name,
+              reason: 'existing listing source identity matched scraped employer',
             },
-            true
-          );
-        }
+            offer,
+            reason: null,
+            status: 'updated',
+          },
+          true
+        );
       }
       const result = buildExistingListingSkippedResult(
         database,
@@ -1899,8 +1840,8 @@ const applyImport = async ({
       offer
     );
     const existingIndex =
-      options.duplicateStrategy === 'update' && existingSourceIndex >= 0
-        ? existingSourceIndex
+      options.duplicateStrategy === 'update' && existingSourceIndexForCompany >= 0
+        ? existingSourceIndexForCompany
         : matchedExistingIndex;
     const existing = existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
     if (existing && options.duplicateStrategy === 'skip') {
@@ -2220,6 +2161,25 @@ const collectOfferLinks = async (
   if (urls.length === 0 && isDirectOfferUrlForScrape(options.sourceUrl, provider)) {
     urls.push(options.sourceUrl);
   }
+  if (urls.length === 0) {
+    const deterministicCollected = await collectJobBoardOfferUrlsDeterministically(collectOptions);
+    const deterministicUrls = uniqueStrings(
+      deterministicCollected.links.map((link) => link.url)
+    );
+    if (deterministicUrls.length > 0) {
+      return {
+        provider,
+        runId: collected.runId ?? deterministicCollected.runId,
+        sourceSite: deterministicCollected.sourceSite,
+        urls: deterministicUrls.slice(0, options.maxOffers),
+        warnings: [
+          ...collected.warnings,
+          'Browser link collection returned no offer links; deterministic fallback was used.',
+          ...deterministicCollected.warnings,
+        ],
+      };
+    }
+  }
   return {
     provider,
     runId: collected.runId,
@@ -2227,6 +2187,50 @@ const collectOfferLinks = async (
     urls: urls.slice(0, options.maxOffers),
     warnings: collected.warnings,
   };
+};
+
+type ProbeArgs = Parameters<typeof probeJobBoardOffer>[0];
+
+const probeJobBoardOfferWithRetry = async (input: {
+  attempts: number;
+  onWarning?: ScrapeProgressHandlers['onWarning'];
+  probeArgs: ProbeArgs;
+  signal?: AbortSignal;
+  url: string;
+}): Promise<Awaited<ReturnType<typeof probeJobBoardOffer>>> => {
+  let lastError: unknown = null;
+  for (let attempt = 1; attempt <= input.attempts; attempt += 1) {
+    throwIfScrapeAborted(input.signal);
+    try {
+      return await probeJobBoardOffer(input.probeArgs);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') throw error;
+      lastError = error;
+      if (attempt < input.attempts) {
+        const message = error instanceof Error ? error.message : String(error);
+        await input.onWarning?.(
+          `Offer probe attempt ${attempt}/${input.attempts} failed for ${input.url}: ${message}. Retrying.`
+        );
+        const delay = Math.min(2 ** (attempt - 1) * 500, 4000);
+        await sleep(delay);
+        continue;
+      }
+    }
+  }
+  if (input.probeArgs.extractionPath === 'playwright_ai') {
+    throwIfScrapeAborted(input.signal);
+    await input.onWarning?.(
+      `Browser offer extraction failed for ${input.url}; trying deterministic fallback.`
+    );
+    return probeJobBoardOffer({
+      ...input.probeArgs,
+      extractionPath: 'deterministic',
+      forcePlaywright: false,
+    });
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(`Offer probe failed after ${input.attempts} attempts for ${input.url}.`);
 };
 
 const scrapeOffersViaJobBoardSequencer = async (
@@ -2260,36 +2264,57 @@ const scrapeOffersViaJobBoardSequencer = async (
 
   for (const [index, url] of collected.urls.entries()) {
     throwIfScrapeAborted(signal);
+    if (progress.waitWhilePaused) {
+      await progress.waitWhilePaused();
+      throwIfScrapeAborted(signal);
+    }
     await progress.onStatus?.(
       `Scraping offer ${index + 1} of ${collected.urls.length}: ${url}`
     );
-    const probe = await probeJobBoardOffer({
-      extractionPath: options.extractionPath,
-      forcePlaywright: options.extractionPath !== 'deterministic',
-      headless: options.headless,
-      humanizeMouse: options.humanizeMouse,
-      personaId: options.personaId,
-      provider: collected.provider,
-      sourceUrl: url,
-      timeoutMs: options.timeoutMs,
-    });
-    runId = runId ?? probe.runId;
-    const offer = offerFromEvaluation({
-      evaluation: probe.evaluation,
-      finalUrl: probe.finalUrl,
-      options,
-      provider: probe.provider,
-      snapshot: probe.snapshot,
-      sourceSite: probe.sourceSite,
-      validationPatterns: database.lexiconValidationPatterns,
-    });
-    if (offer) {
-      offers.push(offer);
-      await progress.onOffer?.({ index: index + 1, offer, total: collected.urls.length });
-    } else {
-      const warning = probe.error ?? `Could not extract a job offer from ${url}.`;
+    let probe: Awaited<ReturnType<typeof probeJobBoardOffer>> | null = null;
+    try {
+      probe = await probeJobBoardOfferWithRetry({
+        attempts: 3,
+        onWarning: progress.onWarning,
+        probeArgs: {
+          extractionPath: options.extractionPath,
+          forcePlaywright: options.extractionPath !== 'deterministic',
+          headless: options.headless,
+          humanizeMouse: options.humanizeMouse,
+          personaId: options.personaId,
+          provider: collected.provider,
+          sourceUrl: url,
+          timeoutMs: options.timeoutMs,
+        },
+        signal,
+        url,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') throw error;
+      const message = error instanceof Error ? error.message : String(error);
+      const warning = `Offer probe failed permanently for ${url}: ${message}.`;
       warnings.push(warning);
       await progress.onWarning?.(warning);
+    }
+    if (probe !== null) {
+      runId = runId ?? probe.runId;
+      const offer = offerFromEvaluation({
+        evaluation: probe.evaluation,
+        finalUrl: probe.finalUrl,
+        options,
+        provider: probe.provider,
+        snapshot: probe.snapshot,
+        sourceSite: probe.sourceSite,
+        validationPatterns: database.lexiconValidationPatterns,
+      });
+      if (offer) {
+        offers.push(offer);
+        await progress.onOffer?.({ index: index + 1, offer, total: collected.urls.length });
+      } else {
+        const warning = probe.error ?? `Could not extract a job offer from ${url}.`;
+        warnings.push(warning);
+        await progress.onWarning?.(warning);
+      }
     }
     throwIfScrapeAborted(signal);
     await sleep(options.delayMs);
@@ -2334,13 +2359,13 @@ export const saveFilemakerJobBoardScrapeDrafts = async (
     onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),
     options,
   });
-  let verificationDatabase = normalizeFilemakerDatabase(database);
+  let verificationDatabase: FilemakerDatabase = database;
   if (imported.changed) {
     throwIfScrapeAborted(signal);
     await emitLiveEvent(onEvent, { message: 'Persisting imported job listings.', type: 'status' });
     const persisted = await upsertFilemakerCampaignSettingValue(
       FILEMAKER_DATABASE_KEY,
-      JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
+      JSON.stringify(toPersistedFilemakerDatabase(database))
     );
     if (!persisted) {
       throw internalError('Failed to persist imported job-board listings.');
@@ -2396,6 +2421,7 @@ export const runFilemakerJobBoardScrape = async (
     options,
     database,
     {
+      waitWhilePaused: runOptions.waitWhilePaused,
       onLinks: (input) =>
         emitLiveEvent(onEvent, {
           provider: input.provider,
@@ -2452,13 +2478,13 @@ export const runFilemakerJobBoardScrape = async (
     });
     importCounters = imported.counters;
     results = [...scraped.skippedResults, ...imported.results];
-    let verificationDatabase = normalizeFilemakerDatabase(database);
+    let verificationDatabase: FilemakerDatabase = database;
     if (imported.changed) {
       throwIfScrapeAborted(signal);
       await emitLiveEvent(onEvent, { message: 'Persisting imported job listings.', type: 'status' });
       const persisted = await upsertFilemakerCampaignSettingValue(
         FILEMAKER_DATABASE_KEY,
-        JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
+        JSON.stringify(toPersistedFilemakerDatabase(database))
       );
       if (!persisted) {
         throw internalError('Failed to persist imported job-board listings.');

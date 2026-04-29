@@ -18,8 +18,14 @@ type FilemakerJobBoardScrapeLiveEventInput =
       : never
     : never;
 
+export const isJobBoardScrapeAbortError = (error: unknown): boolean =>
+  error instanceof Error && error.name === 'AbortError';
+
 export const throwIfScrapeAborted = (signal: AbortSignal | undefined): void => {
   if (signal === undefined || signal.aborted === false) return;
+  if (typeof signal.throwIfAborted === 'function') {
+    signal.throwIfAborted();
+  }
   const error = new Error('Job-board scrape stopped.');
   error.name = 'AbortError';
   throw error;

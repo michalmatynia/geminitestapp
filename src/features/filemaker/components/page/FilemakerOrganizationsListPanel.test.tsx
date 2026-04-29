@@ -426,6 +426,7 @@ describe('FilemakerOrganizationsListPanel', () => {
       'aria-pressed',
       'true'
     );
+    expect(within(tableHeader).getByRole('button', { name: /Updated At/i })).toBeInTheDocument();
     expect(within(tableHeader).getByRole('button', { name: /Events/i })).toBeInTheDocument();
     expect(within(tableHeader).getByRole('button', { name: /Jobs/i })).toBeInTheDocument();
     expect(
@@ -458,9 +459,15 @@ describe('FilemakerOrganizationsListPanel', () => {
         name: /Jobs/i,
       })
     );
+    await user.click(
+      within(screen.getByTestId('organization-table-header')).getByRole('button', {
+        name: /Updated At/i,
+      })
+    );
 
     expect(onSortChange).toHaveBeenCalledWith('eventCount_desc');
     expect(onSortChange).toHaveBeenCalledWith('jobListingCount_desc');
+    expect(onSortChange).toHaveBeenCalledWith('updatedAt_desc');
   });
 
   it('renders product-style organization selection actions', () => {

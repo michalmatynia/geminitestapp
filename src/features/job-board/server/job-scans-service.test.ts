@@ -71,13 +71,22 @@ describe('probeJobBoardOffer', () => {
       html: snapshotHtml({
         companyLinks: [companyUrl],
         companyProfile: {
+          facts: [
+            { label: 'Company Address', value: 'Konstruktorska 12A, 02-673 Warszawa, Poland' },
+            { label: 'Industry', value: 'Software' },
+            { label: 'Company size', value: '201-500' },
+          ],
           plainText: 'Acme builds commerce software for enterprise teams.',
           sections: [{ heading: 'O firmie', text: 'Acme builds commerce software.' }],
           title: 'Acme - profil pracodawcy',
           url: companyUrl,
           websiteUrls: ['https://acme.example'],
         },
-        facts: [{ label: 'Miejsce pracy', value: 'Warszawa' }],
+        facts: [
+          { label: 'Miejsce pracy', value: 'Warszawa' },
+          { label: 'Posted at', value: '2026-04-28T09:00:00.000Z' },
+          { label: 'Expires at', value: '2026-05-28T23:59:59.000Z' },
+        ],
         headings: ['Frontend Developer'],
         provider: 'pracuj_pl',
         sections: [{ heading: 'Opis stanowiska', text: 'Build interfaces for merchants.' }],
@@ -112,15 +121,20 @@ describe('probeJobBoardOffer', () => {
     expect(result.error).toBeNull();
     expect(result.evaluation).toMatchObject({
       company: {
+        addressLine: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
         description: 'Acme builds commerce software.',
         domain: 'acme.example',
+        industry: 'Software',
         name: 'Acme',
         profileUrl: companyUrl,
+        size: '201-500',
         website: 'https://acme.example',
       },
       listing: {
         city: 'Warszawa',
         description: 'Build interfaces for merchants.',
+        expiresAt: '2026-05-28T23:59:59.000Z',
+        postedAt: '2026-04-28T09:00:00.000Z',
         title: 'Frontend Developer',
       },
     });

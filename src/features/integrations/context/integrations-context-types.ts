@@ -28,6 +28,8 @@ export const createEmptyConnectionForm = (): ConnectionFormState => ({
   scanner1688MinimumCandidateScore: '',
   scanner1688MaxExtractedImages: '',
   scanner1688AllowUrlImageSearchFallback: false,
+  jobApplicationPersonId: '',
+  jobApplicationPersonName: '',
   traderaBrowserMode: 'builtin',
   traderaCategoryStrategy: 'mapper',
   playwrightListingScript: '',

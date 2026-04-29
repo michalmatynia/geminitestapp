@@ -68,6 +68,10 @@ const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
   { value: 'cms_page_header', label: 'CMS: Page Header' },
   { value: 'cms_block_header', label: 'CMS: Block Header' },
   { value: 'admin_dashboard', label: 'Admin: Dashboard' },
+  {
+    value: 'filemaker_organization_job_application',
+    label: 'FileMaker: Organisation Job Application',
+  },
 ];
 
 const MODE_OPTIONS: Array<LabeledOptionDto<string>> = [

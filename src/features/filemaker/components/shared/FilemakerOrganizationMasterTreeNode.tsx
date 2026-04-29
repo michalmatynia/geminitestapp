@@ -224,6 +224,21 @@ function OrganizationCreatedAtColumn(props: {
   );
 }
 
+function OrganizationUpdatedAtColumn(props: {
+  organization: FilemakerOrganization;
+}): React.JSX.Element {
+  const updatedAtLabel = formatTimestamp(props.organization.updatedAt);
+
+  return (
+    <div
+      className='hidden w-44 shrink-0 cursor-default justify-end text-right text-xs font-medium text-gray-200 md:flex'
+      aria-label={`Updated at ${updatedAtLabel}`}
+    >
+      <span className='inline-block cursor-text select-text'>{updatedAtLabel}</span>
+    </div>
+  );
+}
+
 function OrganizationRelationCountColumn(props: {
   count: number;
   label: string;
@@ -302,6 +317,7 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
       />
       <OrganizationRelationCountColumn count={eventCount} label='Events' widthClassName='w-20' />
       <OrganizationRelationCountColumn count={jobListingCount} label='Jobs' widthClassName='w-16' />
+      <OrganizationUpdatedAtColumn organization={organization} />
       <OrganizationCreatedAtColumn organization={organization} />
       <Button
         type='button'
@@ -429,6 +445,22 @@ function FilemakerOrganizationEventLinkNode(
   );
 }
 
+const jobListingDatePart = (label: string, value: string | null | undefined): string => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? `${label}: ${normalized}` : '';
+};
+
+const jobListingDescription = (jobListing: FilemakerJobListing | null): string => {
+  if (jobListing === null) return 'Open organization job listing';
+  const location = jobListing.location?.trim() ?? '';
+  const parts = [
+    location,
+    jobListingDatePart('Posted', jobListing.postedAt),
+    jobListingDatePart('Expires', jobListing.expiresAt),
+  ].filter((part: string): boolean => part.length > 0);
+  return parts.length > 0 ? parts.join(' | ') : 'Open organization job listing';
+};
+
 function FilemakerOrganizationJobListingLinkNode(
   props: Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'node' | 'select'> & {
     jobListing: FilemakerJobListing | null;
@@ -439,13 +471,10 @@ function FilemakerOrganizationJobListingLinkNode(
   }
 ): React.JSX.Element {
   const { jobListing, jobListingId, onOpenJobListing, organizationId } = props;
-  const jobListingLocation = jobListing?.location?.trim() ?? '';
   return (
     <OrganizationRelationLinkNode
       {...props}
-      description={
-        jobListingLocation.length > 0 ? jobListingLocation : 'Open organization job listing'
-      }
+      description={jobListingDescription(jobListing)}
       icon={<BriefcaseBusiness className='size-4' aria-hidden='true' />}
       label={jobListing?.title ?? props.node.name}
       metaBadge={jobListing?.status}

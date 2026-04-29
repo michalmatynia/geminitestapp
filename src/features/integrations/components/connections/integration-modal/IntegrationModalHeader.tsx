@@ -5,13 +5,24 @@ import { Badge } from '@/shared/ui/primitives.public';
 import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
 export function IntegrationModalHeader(): React.JSX.Element {
-  const { integrationName, isTradera, isVinted, is1688, showPlaywright, isAllegro, isBaselinker } =
+  const {
+    integrationName,
+    isTradera,
+    isVinted,
+    is1688,
+    isPracuj,
+    showPlaywright,
+    isAllegro,
+    isBaselinker,
+  } =
     useIntegrationModalViewContext();
+  const showBrowserBadge =
+    showPlaywright && [isTradera, isVinted, is1688, isPracuj].some((value) => value);
 
   return (
     <div className='flex items-center'>
       {integrationName} Integration
-      {(isTradera || isVinted || is1688) && showPlaywright && (
+      {showBrowserBadge && (
         <Badge
           variant='warning'
           className='ml-2 h-auto px-1.5 py-0 text-[10px] font-normal uppercase tracking-wider'

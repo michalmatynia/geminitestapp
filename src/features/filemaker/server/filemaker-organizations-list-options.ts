@@ -9,6 +9,8 @@ export type FilemakerOrganizationParentFilter = 'all' | 'root' | 'child';
 export type FilemakerOrganizationSortOption =
   | 'createdAt_desc'
   | 'createdAt_asc'
+  | 'updatedAt_desc'
+  | 'updatedAt_asc'
   | 'eventCount_desc'
   | 'eventCount_asc'
   | 'jobListingCount_desc'
@@ -22,6 +24,8 @@ export const DEFAULT_FILEMAKER_ORGANIZATION_SORT: FilemakerOrganizationSortOptio
 const SUPPORTED_ORGANIZATION_SORT_OPTIONS = new Set<string>([
   'createdAt_desc',
   'createdAt_asc',
+  'updatedAt_desc',
+  'updatedAt_asc',
   'eventCount_desc',
   'eventCount_asc',
   'jobListingCount_desc',

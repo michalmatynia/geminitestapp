@@ -3,9 +3,6 @@ import { type NextRequest } from 'next/server';
 import type { FilemakerJobBoardScrapeLiveEvent } from '@/features/filemaker/filemaker-job-board-scrape-contracts';
 import { requireFilemakerMailAdminSession } from '@/features/filemaker/server/filemaker-mail-access';
 import {
-  saveFilemakerJobBoardScrapeDrafts,
-} from '@/features/filemaker/server/filemaker-job-board-scrape';
-import {
   enqueueFilemakerJobBoardScrapeRun,
   readFilemakerJobBoardScrapeRun,
 } from '@/features/filemaker/server/filemaker-job-board-scrape-runtime';
@@ -29,9 +26,6 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const wantsLiveStream = (body: unknown): boolean =>
   isRecord(body) && body['stream'] === true;
-
-const wantsDraftSave = (body: unknown): boolean =>
-  isRecord(body) && body['action'] === 'save_drafts';
 
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Job-board scrape failed.';
@@ -129,10 +123,6 @@ const streamFilemakerJobBoardScrapeRun = (
 export async function postHandler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   await requireFilemakerMailAdminSession();
   const body = await readOptionalJsonBody(req);
-  if (wantsDraftSave(body)) {
-    const result = await saveFilemakerJobBoardScrapeDrafts(body);
-    return Response.json(result);
-  }
   const started = await enqueueFilemakerJobBoardScrapeRun(body);
   if (wantsLiveStream(body)) {
     return streamFilemakerJobBoardScrapeRun(started.run.id, req.signal);

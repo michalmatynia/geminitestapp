@@ -102,7 +102,7 @@ function useDuelActions(deps: DuelActionsDeps): DuelActions {
   return { leaveSession, sendReaction, submitAnswer };
 }
 
-function getLearnerId(user: any): string {
+function getLearnerId(user: { activeLearner?: { id: string }; email?: string; id?: string } | null): string {
   return user?.activeLearner?.id ?? user?.email ?? user?.id ?? 'guest';
 }
 

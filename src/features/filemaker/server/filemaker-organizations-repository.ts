@@ -6,7 +6,7 @@ import type { Collection, Document, Filter, Sort } from 'mongodb';
 import { notFoundError } from '@/shared/errors/app-error';
 import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 
-import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../types';
 import { parseFilemakerDatabase } from '../settings';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
@@ -40,6 +40,7 @@ export type FilemakerOrganizationsListResult = {
   };
   limit: number;
   linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>;
+  linkedJobListingsByOrganizationId: Record<string, FilemakerJobListing[]>;
   organizations: FilemakerOrganization[];
   page: number;
   pageSize: number;
@@ -198,6 +199,8 @@ const buildOrganizationFilter = (input: {
 
 const buildOrganizationSort = (sort: FilemakerOrganizationSortOption): Sort => {
   if (sort === 'createdAt_asc') return { createdAt: 1, name: 1, _id: 1 };
+  if (sort === 'updatedAt_asc') return { updatedAt: 1, name: 1, _id: 1 };
+  if (sort === 'updatedAt_desc') return { updatedAt: -1, name: 1, _id: 1 };
   if (sort === 'eventCount_asc') return { eventCount: 1, name: 1, _id: 1 };
   if (sort === 'eventCount_desc') return { eventCount: -1, name: 1, _id: 1 };
   if (sort === 'jobListingCount_asc') return { jobListingCount: 1, name: 1, _id: 1 };
@@ -252,23 +255,26 @@ const buildEventCountAggregationStages = (): Document[] => [
   { $project: { eventCountLookup: 0 } },
 ];
 
-const loadJobListingCountByOrganizationId = async (): Promise<Map<string, number>> => {
+const loadSettingsJobListings = async (): Promise<FilemakerJobListing[]> => {
   const storedValue = await readFilemakerCampaignSettingValue(FILEMAKER_DATABASE_KEY);
-  if (storedValue === null) return new Map();
+  if (storedValue === null) return [];
   try {
     const database = parseFilemakerDatabase(
       decodeSettingValue(FILEMAKER_DATABASE_KEY, storedValue)
     );
-    return database.jobListings.reduce<Map<string, number>>((counts, listing) => {
-      const organizationId = listing.organizationId.trim();
-      if (organizationId.length === 0) return counts;
-      counts.set(organizationId, (counts.get(organizationId) ?? 0) + 1);
-      return counts;
-    }, new Map());
+    return database.jobListings;
   } catch {
-    return new Map();
+    return [];
   }
 };
+
+const loadJobListingCountByOrganizationId = async (): Promise<Map<string, number>> =>
+  (await loadSettingsJobListings()).reduce<Map<string, number>>((counts, listing) => {
+    const organizationId = listing.organizationId.trim();
+    if (organizationId.length === 0) return counts;
+    counts.set(organizationId, (counts.get(organizationId) ?? 0) + 1);
+    return counts;
+  }, new Map());
 
 const buildJobListingCountAggregationStage = (
   countsByOrganizationId: ReadonlyMap<string, number>
@@ -308,6 +314,7 @@ const buildListResult = (input: {
   collectionCount: number;
   documents: FilemakerOrganizationMongoDocument[];
   linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>;
+  linkedJobListingsByOrganizationId: Record<string, FilemakerJobListing[]>;
   options: FilemakerOrganizationsListOptions;
   page: number;
   totalCount: number;
@@ -324,6 +331,7 @@ const buildListResult = (input: {
   },
   limit: input.options.pageSize,
   linkedEventsByOrganizationId: input.linkedEventsByOrganizationId,
+  linkedJobListingsByOrganizationId: input.linkedJobListingsByOrganizationId,
   organizations: input.documents.map(toFilemakerOrganization),
   page: input.page,
   pageSize: input.options.pageSize,
@@ -423,6 +431,26 @@ const loadLinkedEventsByOrganizationDocuments = async (
   );
 };
 
+const loadLinkedJobListingsByOrganizationDocuments = async (
+  documents: FilemakerOrganizationMongoDocument[]
+): Promise<Record<string, FilemakerJobListing[]>> => {
+  if (documents.length === 0) return {};
+  const organizationIds = new Set(
+    documents.map((document: FilemakerOrganizationMongoDocument): string => document.id)
+  );
+  const entries = (await loadSettingsJobListings()).reduce<
+    Record<string, FilemakerJobListing[]>
+  >((byOrganizationId, listing) => {
+    const organizationId = listing.organizationId.trim();
+    if (!organizationIds.has(organizationId)) return byOrganizationId;
+    return {
+      ...byOrganizationId,
+      [organizationId]: [...(byOrganizationId[organizationId] ?? []), listing],
+    };
+  }, {});
+  return entries;
+};
+
 const listOrganizationsWithStandardSort = async (input: {
   collection: Collection<FilemakerOrganizationMongoDocument>;
   collectionCount: number;
@@ -494,11 +522,15 @@ export const listMongoFilemakerOrganizations = async (
   const linkedEventsByOrganizationId = await loadLinkedEventsByOrganizationDocuments(
     pageResult.documents
   );
+  const linkedJobListingsByOrganizationId = await loadLinkedJobListingsByOrganizationDocuments(
+    pageResult.documents
+  );
 
   return buildListResult({
     collectionCount,
     documents: pageResult.documents,
     linkedEventsByOrganizationId,
+    linkedJobListingsByOrganizationId,
     options,
     page: pageResult.page,
     totalCount: pageResult.totalCount,

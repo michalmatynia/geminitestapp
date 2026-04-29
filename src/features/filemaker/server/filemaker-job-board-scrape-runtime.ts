@@ -37,7 +37,9 @@ import { createHash, randomUUID } from 'crypto';
 
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
+  filemakerJobBoardScrapeDraftSaveRequestSchema,
   filemakerJobBoardScrapeRequestSchema,
+  type FilemakerJobBoardScrapeDraftSaveRequest,
   type FilemakerJobBoardScrapeLiveEvent,
   type FilemakerJobBoardScrapeRequest,
   type FilemakerJobBoardScrapeResponse,
@@ -52,11 +54,18 @@ import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
-import { runFilemakerJobBoardScrape } from './filemaker-job-board-scrape';
+import {
+  runFilemakerJobBoardScrape,
+  saveFilemakerJobBoardScrapeDrafts,
+} from './filemaker-job-board-scrape';
+
+type JobBoardScrapeRuntimeRequest =
+  | FilemakerJobBoardScrapeDraftSaveRequest
+  | FilemakerJobBoardScrapeRequest;
 
 type JobBoardScrapeRuntimeJob = {
   fingerprint: string;
-  request: FilemakerJobBoardScrapeRequest;
+  request: JobBoardScrapeRuntimeRequest;
   runId: string;
 };
 type RedisClient = NonNullable<ReturnType<typeof getRedisClient>>;
@@ -103,7 +112,15 @@ const createAbortError = (): Error => {
 const isAbortError = (error: unknown): boolean =>
   error instanceof Error && (error.name === 'AbortError' || error.message.includes('stopped'));
 
-const buildRequestFingerprint = (request: FilemakerJobBoardScrapeRequest): string => {
+const isDraftSaveRequest = (
+  request: JobBoardScrapeRuntimeRequest
+): request is FilemakerJobBoardScrapeDraftSaveRequest => 'action' in request;
+
+const requestMode = (
+  request: JobBoardScrapeRuntimeRequest
+): FilemakerJobBoardScrapeRequest['mode'] => (isDraftSaveRequest(request) ? 'import' : request.mode);
+
+const buildRequestFingerprint = (request: JobBoardScrapeRuntimeRequest): string => {
   const payload = {
     ...request,
     selectedOrganizationIds: [...request.selectedOrganizationIds].sort(),
@@ -365,7 +382,7 @@ export const readLatestFilemakerJobBoardScrapeRun =
 
 const buildQueuedRun = (
   runId: string,
-  request: FilemakerJobBoardScrapeRequest
+  request: JobBoardScrapeRuntimeRequest
 ): FilemakerJobBoardScrapeRuntimeRun => {
   const timestamp = nowIso();
   return {
@@ -373,7 +390,7 @@ const buildQueuedRun = (
     createdAt: timestamp,
     error: null,
     id: runId,
-    mode: request.mode,
+    mode: requestMode(request),
     result: null,
     sourceUrl: request.sourceUrl,
     startedAt: null,
@@ -436,14 +453,26 @@ const startRuntimeCancellationWatcher = (
 const runScraperInRuntime = async (
   data: JobBoardScrapeRuntimeJob,
   signal: AbortSignal
-): Promise<FilemakerJobBoardScrapeResponse> =>
-  runFilemakerJobBoardScrape(data.request, {
-    onEvent: async (event) => {
+): Promise<FilemakerJobBoardScrapeResponse> => {
+  const runOptions = {
+    onEvent: async (event: FilemakerJobBoardScrapeLiveEvent) => {
       await assertNotCanceled(data.runId);
       await appendRunEvent(data.runId, event);
     },
     signal,
-  });
+  };
+  return isDraftSaveRequest(data.request)
+    ? saveFilemakerJobBoardScrapeDrafts(data.request, runOptions)
+    : runFilemakerJobBoardScrape(data.request, runOptions);
+};
+
+const parseRuntimeRequest = (rawInput: unknown): JobBoardScrapeRuntimeRequest => {
+  const draftSave = filemakerJobBoardScrapeDraftSaveRequestSchema.safeParse(rawInput);
+  if (draftSave.success) return draftSave.data;
+  const scrape = filemakerJobBoardScrapeRequestSchema.safeParse(rawInput);
+  if (scrape.success) return scrape.data;
+  throw badRequestError('Invalid job-board scrape request.', { issues: scrape.error.issues });
+};
 
 const completeRuntimeRun = async (
   fingerprint: string,
@@ -570,11 +599,7 @@ const startDetachedMemoryRuntimeJob = (data: JobBoardScrapeRuntimeJob): void => 
 export const enqueueFilemakerJobBoardScrapeRun = async (
   rawInput: unknown
 ): Promise<FilemakerJobBoardScrapeRuntimeStartResponse> => {
-  const parsed = filemakerJobBoardScrapeRequestSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    throw badRequestError('Invalid job-board scrape request.', { issues: parsed.error.issues });
-  }
-  const request = parsed.data;
+  const request = parseRuntimeRequest(rawInput);
   if (request.organizationScope === 'selected' && request.selectedOrganizationIds.length === 0) {
     throw badRequestError('Select at least one organisation or use all organisations.');
   }

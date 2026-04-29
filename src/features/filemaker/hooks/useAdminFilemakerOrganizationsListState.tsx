@@ -361,6 +361,7 @@ const selectedOrganizationIdsFromState = (
 const buildOrganizationRelationMaps = (
   organizations: FilemakerOrganization[],
   linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>,
+  linkedJobListingsByOrganizationId: Record<string, FilemakerJobListing[]>,
   rawDatabase: string | null
 ): {
   eventsById: Map<string, FilemakerEvent>;
@@ -378,7 +379,10 @@ const buildOrganizationRelationMaps = (
       eventsById.set(event.id, event);
     });
   const jobListingsById = new Map<string, FilemakerJobListing>(
-    database.jobListings.map(
+    [
+      ...database.jobListings,
+      ...Object.values(linkedJobListingsByOrganizationId).flat(),
+    ].map(
       (listing: FilemakerJobListing): [string, FilemakerJobListing] => [listing.id, listing]
     )
   );
@@ -391,7 +395,18 @@ const buildOrganizationRelationMaps = (
         ? settingsEvents
         : (linkedEventsByOrganizationId[organization.id] ?? []);
     if (events.length > 0) eventsByOrganizationId.set(organization.id, events);
-    const jobListings = getFilemakerJobListingsForOrganization(database, organization.id);
+    const jobListingsByListingId = new Map<string, FilemakerJobListing>();
+    getFilemakerJobListingsForOrganization(database, organization.id).forEach(
+      (listing: FilemakerJobListing): void => {
+        jobListingsByListingId.set(listing.id, listing);
+      }
+    );
+    (linkedJobListingsByOrganizationId[organization.id] ?? []).forEach(
+      (listing: FilemakerJobListing): void => {
+        jobListingsByListingId.set(listing.id, listing);
+      }
+    );
+    const jobListings = Array.from(jobListingsByListingId.values());
     if (jobListings.length > 0) jobListingsByOrganizationId.set(organization.id, jobListings);
   });
   return {
@@ -451,9 +466,15 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       buildOrganizationRelationMaps(
         organizations,
         mongoOrganizations.linkedEventsByOrganizationId,
+        mongoOrganizations.linkedJobListingsByOrganizationId,
         rawDatabase ?? null
       ),
-    [mongoOrganizations.linkedEventsByOrganizationId, organizations, rawDatabase]
+    [
+      mongoOrganizations.linkedEventsByOrganizationId,
+      mongoOrganizations.linkedJobListingsByOrganizationId,
+      organizations,
+      rawDatabase,
+    ]
   );
   const nodes = useMemo(
     () =>
@@ -603,6 +624,8 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const selectedOrganizationCount = selectedOrganizationIdsFromState(organizationSelection).length;
   const handleJobBoardScrapeCompleted = useCallback((): void => {
     settingsStore.refetch();
+    setSort('updatedAt_desc');
+    setPage(1);
     setOrganizationsRefreshKey((current) => current + 1);
   }, [settingsStore]);
   const setAdvancedFilterState = useCallback((value: string, presetId: string | null): void => {

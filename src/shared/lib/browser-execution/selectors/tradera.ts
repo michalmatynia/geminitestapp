@@ -193,6 +193,9 @@ const TRADERA_SELECTOR_REGISTRY_ROLE_OVERRIDES: Partial<Record<string, SelectorR
   QUANTITY_SELECTORS: 'input',
   EAN_SELECTORS: 'input',
   BRAND_SELECTORS: 'input',
+  TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS: 'input',
+  TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS: 'trigger',
+  TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS: 'submit',
   WEIGHT_SELECTORS: 'input',
   WIDTH_SELECTORS: 'input',
   LENGTH_SELECTORS: 'input',
@@ -281,6 +284,19 @@ export const EMAIL_VERIFICATION_CODE_INPUT_SELECTORS = [
 
 export const TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS =
   EMAIL_VERIFICATION_CODE_INPUT_SELECTORS;
+
+export const EMAIL_VERIFICATION_REQUEST_SELECTORS = [
+  'button:has-text("Skicka kod")',
+  'button:has-text("Skicka verifieringskod")',
+  'button:has-text("Skicka engångskod")',
+  'button:has-text("Send code")',
+  'button:has-text("Send verification code")',
+  '[role="button"]:has-text("Skicka kod")',
+  '[role="button"]:has-text("Send code")',
+] as const;
+
+export const TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS =
+  EMAIL_VERIFICATION_REQUEST_SELECTORS;
 
 export const EMAIL_VERIFICATION_SUBMIT_SELECTORS = [
   'button[type="submit"]',
@@ -1047,6 +1063,27 @@ export const TRADERA_SELECTOR_REGISTRY_DEFINITIONS: TraderaSelectorRegistryDefin
     kind: 'selectors',
     description: 'Login submission buttons.',
     value: [...LOGIN_BUTTON_SELECTORS],
+  }),
+  defineRegistryEntry({
+    key: 'TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS',
+    group: 'auth',
+    kind: 'selectors',
+    description: 'One-time email verification code inputs.',
+    value: [...TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS],
+  }),
+  defineRegistryEntry({
+    key: 'TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS',
+    group: 'auth',
+    kind: 'selectors',
+    description: 'Buttons that request a Tradera email verification code.',
+    value: [...TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS],
+  }),
+  defineRegistryEntry({
+    key: 'TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS',
+    group: 'auth',
+    kind: 'selectors',
+    description: 'Buttons that submit a Tradera email verification code.',
+    value: [...TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS],
   }),
   defineRegistryEntry({
     key: 'COOKIE_ACCEPT_SELECTORS',

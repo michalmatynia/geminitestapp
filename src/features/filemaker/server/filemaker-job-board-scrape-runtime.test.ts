@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   runFilemakerJobBoardScrapeMock: vi.fn(),
+  saveFilemakerJobBoardScrapeDraftsMock: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
@@ -29,6 +30,7 @@ vi.mock('@/shared/lib/queue', () => ({
 
 vi.mock('./filemaker-job-board-scrape', () => ({
   runFilemakerJobBoardScrape: mocks.runFilemakerJobBoardScrapeMock,
+  saveFilemakerJobBoardScrapeDrafts: mocks.saveFilemakerJobBoardScrapeDraftsMock,
 }));
 
 import {
@@ -95,6 +97,16 @@ describe('filemaker job-board scrape runtime', () => {
         return successfulResponse;
       }
     );
+    mocks.saveFilemakerJobBoardScrapeDraftsMock.mockResolvedValue({
+      ...successfulResponse,
+      mode: 'import',
+      summary: {
+        ...successfulResponse.summary,
+        createdListings: 1,
+        scrapedOffers: 1,
+        verifiedListings: 1,
+      },
+    });
   });
 
   it('returns a queued run immediately and completes through the runtime store', async () => {
@@ -192,5 +204,66 @@ describe('filemaker job-board scrape runtime', () => {
     expect(mocks.runFilemakerJobBoardScrapeMock).toHaveBeenCalledTimes(1);
 
     await cancelFilemakerJobBoardScrapeRun(first.run.id);
+  });
+
+  it('runs scraped draft saves through the runtime store', async () => {
+    const started = await enqueueFilemakerJobBoardScrapeRun({
+      action: 'save_drafts',
+      duplicateStrategy: 'update',
+      importStrategy: 'create_unmatched',
+      minimumMatchConfidence: 85,
+      offers: [
+        {
+          companyName: 'Acme Inc',
+          companyProfile: '',
+          companyProfileUrl: null,
+          description: 'Build interfaces',
+          expiresAt: null,
+          location: 'Warszawa',
+          postedAt: null,
+          salaryCurrency: null,
+          salaryMax: null,
+          salaryMin: null,
+          salaryPeriod: 'monthly',
+          salaryText: '',
+          sourceExternalId: '1001',
+          sourceSite: 'pracuj.pl',
+          sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+          pills: [],
+          title: 'Frontend Developer',
+        },
+      ],
+      organizationScope: 'all',
+      provider: 'pracuj_pl',
+      selectedOrganizationIds: [],
+      sourceUrl,
+      status: 'open',
+    });
+
+    expect(started.run.mode).toBe('import');
+    await waitForDetachedRuntime();
+
+    const snapshot = await readFilemakerJobBoardScrapeRun(started.run.id);
+    expect(snapshot.run).toMatchObject({
+      result: expect.objectContaining({
+        mode: 'import',
+        summary: expect.objectContaining({
+          createdListings: 1,
+          verifiedListings: 1,
+        }),
+      }),
+      status: 'completed',
+    });
+    expect(mocks.saveFilemakerJobBoardScrapeDraftsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'save_drafts',
+        duplicateStrategy: 'update',
+      }),
+      expect.objectContaining({
+        onEvent: expect.any(Function),
+        signal: expect.any(AbortSignal),
+      })
+    );
+    expect(mocks.runFilemakerJobBoardScrapeMock).not.toHaveBeenCalled();
   });
 });

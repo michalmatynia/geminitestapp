@@ -120,4 +120,32 @@ describe('PlaywrightTabContent', () => {
       '/admin/settings/scanner'
     );
   });
+
+  it('shows Pracuj.pl browser-session ownership copy instead of scanner settings', () => {
+    useIntegrationsDataMock.mockReturnValue({
+      activeIntegration: { id: 'integration-pracuj', slug: 'pracuj-pl', name: 'Pracuj.pl' },
+      connections: [{ id: 'connection-pracuj-1' }],
+      playwrightPersonas: [],
+      playwrightPersonasLoading: false,
+    });
+    useIntegrationsFormMock.mockReturnValue({
+      editingConnectionId: 'connection-pracuj-1',
+    });
+    useIntegrationsActionsMock.mockReturnValue({
+      handleResetListingScript: vi.fn(),
+    });
+    usePlaywrightActionsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    render(<PlaywrightTabContent />);
+
+    expect(screen.getByText('Pracuj.pl browser session settings')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open Scanner Settings' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Manage personas' })).toHaveAttribute(
+      'href',
+      '/admin/settings/playwright'
+    );
+  });
 });

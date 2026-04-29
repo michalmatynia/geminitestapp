@@ -100,6 +100,8 @@ type IntegrationConnectionDocument = {
   linkedinTokenUpdatedAt?: Date | null;
   linkedinPersonUrn?: string | null;
   linkedinProfileUrl?: string | null;
+  jobApplicationPersonId?: string | null;
+  jobApplicationPersonName?: string | null;
   baseApiToken?: string | null;
   baseTokenUpdatedAt?: Date | null;
   baseLastInventoryId?: string | null;

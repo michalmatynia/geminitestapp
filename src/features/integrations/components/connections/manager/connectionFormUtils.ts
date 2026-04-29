@@ -22,6 +22,8 @@ export const toConnectionFormState = (connection: IntegrationConnection): Connec
       : '',
   scanner1688AllowUrlImageSearchFallback:
     connection.scanner1688AllowUrlImageSearchFallback ?? false,
+  jobApplicationPersonId: connection.jobApplicationPersonId ?? '',
+  jobApplicationPersonName: connection.jobApplicationPersonName ?? '',
   traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
   traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
   playwrightListingScript: connection.playwrightListingScript ?? '',

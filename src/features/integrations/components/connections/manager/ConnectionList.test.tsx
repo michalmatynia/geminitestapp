@@ -10,12 +10,14 @@ const {
   useIntegrationsTestingMock,
   useIntegrationsActionsMock,
   handleVintedManualLoginMock,
+  handlePracujManualLoginMock,
 } = vi.hoisted(() => ({
   useIntegrationsDataMock: vi.fn(),
   useIntegrationsFormMock: vi.fn(),
   useIntegrationsTestingMock: vi.fn(),
   useIntegrationsActionsMock: vi.fn(),
   handleVintedManualLoginMock: vi.fn(),
+  handlePracujManualLoginMock: vi.fn(),
 }));
 
 vi.mock('@/features/integrations/context/IntegrationsContext', () => ({
@@ -117,6 +119,8 @@ describe('ConnectionList', () => {
       handleAllegroTest: vi.fn(),
       handleTraderaManualLogin: vi.fn(),
       handleVintedManualLogin: handleVintedManualLoginMock,
+      handle1688ManualLogin: vi.fn(),
+      handlePracujManualLogin: handlePracujManualLoginMock,
     });
   });
 
@@ -132,6 +136,40 @@ describe('ConnectionList', () => {
       expect.objectContaining({
         id: 'conn-vinted-1',
         name: 'Vinted Browser',
+      })
+    );
+  });
+
+  it('opens the Pracuj.pl login window action for job-search platform sessions', () => {
+    useIntegrationsDataMock.mockReturnValue({
+      activeIntegration: {
+        id: 'integration-pracuj-1',
+        slug: 'pracuj-pl',
+      },
+      connections: [
+        {
+          id: 'conn-pracuj-1',
+          integrationId: 'integration-pracuj-1',
+          name: 'Pracuj.pl Profile',
+          username: '',
+          jobApplicationPersonId: 'person-1',
+          jobApplicationPersonName: 'Ada Lovelace',
+        },
+      ],
+    });
+
+    render(<ConnectionList />);
+
+    expect(screen.getByText('Pracuj.pl Profile')).toBeInTheDocument();
+    expect(screen.getByText('Session-based browser login')).toBeInTheDocument();
+    expect(screen.getByText('Person: Ada Lovelace')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Login window' }));
+
+    expect(handlePracujManualLoginMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'conn-pracuj-1',
+        name: 'Pracuj.pl Profile',
       })
     );
   });

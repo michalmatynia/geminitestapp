@@ -10,6 +10,7 @@ import {
   createTraderaScriptedListingPlaywrightInstance,
   persistPlaywrightConnectionStorageState,
   runPlaywrightConnectionNativeTask,
+  type PlaywrightEngineRunInstance,
 } from '@/features/playwright/server';
 import {
   buildPlaywrightListingResult,
@@ -218,11 +219,13 @@ const buildManagedQuicklistRuntimeSettingsOverrides = (
     : undefined;
 
 const refreshTraderaAuthenticatedConnectionForScriptedRun = async ({
+  authInstance,
   connection,
   listing,
   systemSettings,
   browserMode,
 }: {
+  authInstance?: PlaywrightEngineRunInstance;
   connection: IntegrationConnectionRecord;
   listing: ProductListing;
   systemSettings: TraderaSystemSettings;
@@ -234,11 +237,13 @@ const refreshTraderaAuthenticatedConnectionForScriptedRun = async ({
   await runPlaywrightConnectionNativeTask<void>({
     connection,
     runtimeActionKey: 'tradera_auth',
-    instance: createTraderaStandardListingPlaywrightInstance({
-      connectionId: connection.id,
-      integrationId: connection.integrationId,
-      listingId: listing.id,
-    }),
+    instance:
+      authInstance ??
+      createTraderaStandardListingPlaywrightInstance({
+        connectionId: connection.id,
+        integrationId: connection.integrationId,
+        listingId: listing.id,
+      }),
     requestedBrowserMode: browserMode,
     execute: async (session) => {
       const { context, page } = session;
@@ -835,6 +840,18 @@ export const runTraderaBrowserCheckStatus = async ({
     selectorRuntimeResolution.runtime,
     statusCheckExecutionStepsInit
   );
+  const authenticatedConnection =
+    await refreshTraderaAuthenticatedConnectionForScriptedRun({
+      authInstance: createTraderaListingStatusScrapePlaywrightInstance({
+        connectionId: connection.id,
+        integrationId: connection.integrationId,
+        listingId: listing.id,
+      }),
+      connection,
+      listing,
+      systemSettings: resolvedSystemSettings,
+      browserMode,
+    });
 
   const result = await runPlaywrightScrapeScript({
     script: statusCheckScript,
@@ -847,7 +864,7 @@ export const runTraderaBrowserCheckStatus = async ({
       rawDescriptionEn: verificationDescriptionEn,
       baseProductId: verificationBaseProductId,
     },
-    connection,
+    connection: authenticatedConnection,
     instance: createTraderaListingStatusScrapePlaywrightInstance({
       connectionId: connection.id,
       integrationId: connection.integrationId,

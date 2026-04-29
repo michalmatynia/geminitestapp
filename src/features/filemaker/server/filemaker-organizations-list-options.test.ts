@@ -15,6 +15,9 @@ describe('resolveOrganizationListOptions', () => {
   it('accepts supported organization sort options', () => {
     expect(resolveOrganizationListOptions({ sort: 'name_asc' }).sort).toBe('name_asc');
     expect(resolveOrganizationListOptions({ sort: 'createdAt_asc' }).sort).toBe('createdAt_asc');
+    expect(resolveOrganizationListOptions({ sort: 'updatedAt_desc' }).sort).toBe(
+      'updatedAt_desc'
+    );
     expect(resolveOrganizationListOptions({ sort: 'eventCount_desc' }).sort).toBe(
       'eventCount_desc'
     );
@@ -24,7 +27,7 @@ describe('resolveOrganizationListOptions', () => {
   });
 
   it('falls back to newest first for unsupported organization sort options', () => {
-    expect(resolveOrganizationListOptions({ sort: 'updatedAt_desc' }).sort).toBe(
+    expect(resolveOrganizationListOptions({ sort: 'updatedAt_latest' }).sort).toBe(
       DEFAULT_FILEMAKER_ORGANIZATION_SORT
     );
   });

@@ -3,7 +3,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { auth, findAuthUserById } from '@/features/auth/server';
-import { isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
+import {
+  isPlaywrightProgrammableSlug,
+  isPracujPlIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -20,11 +23,14 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { optionalTrimmedQueryString } from '@/shared/lib/api/query-schema';
+import { resolveJobApplicationPersonFields } from '../../_shared/job-application-person-fields';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
   username: z.string().trim().optional(),
   password: z.string().trim().optional(),
+  jobApplicationPersonId: z.string().trim().nullable().optional(),
+  jobApplicationPersonName: z.string().trim().nullable().optional(),
   playwrightIdentityProfile: z.never().optional(),
   playwrightHeadless: z.never().optional(),
   playwrightSlowMo: z.never().optional(),
@@ -163,6 +169,9 @@ export async function putHandler(
   const isVintedIntegration = Boolean(
     integration && (integration.slug ?? '').trim().toLowerCase() === 'vinted'
   );
+  const isPracujIntegration = Boolean(
+    integration && isPracujPlIntegrationSlug(integration.slug)
+  );
   const isPlaywrightProgrammableIntegration = Boolean(
     integration && isPlaywrightProgrammableSlug(integration.slug)
   );
@@ -179,6 +188,7 @@ export async function putHandler(
     integration &&
     integration.slug !== 'baselinker' &&
     !isVintedIntegration &&
+    !isPracujIntegration &&
     !isPlaywrightProgrammableIntegration &&
     typeof normalizedUsername === 'string' &&
     !normalizedUsername
@@ -195,6 +205,10 @@ export async function putHandler(
     traderaBrowserMode: resolvedTraderaBrowserMode,
     playwrightListingScript: normalizedPlaywrightListingScript,
   });
+
+  const jobApplicationPersonFields = await resolveJobApplicationPersonFields(
+    data.jobApplicationPersonId
+  );
 
   const connection = await repo.updateConnection(id, {
     name: data.name,
@@ -213,6 +227,7 @@ export async function putHandler(
         };
       })()
       : {}),
+    ...jobApplicationPersonFields,
     ...(data.resetPlaywrightOverrides ? PLAYWRIGHT_OVERRIDE_RESET_VALUES : {}),
     ...(typeof data.traderaBrowserMode === 'string' || data.traderaBrowserMode === null
       ? { traderaBrowserMode: data.traderaBrowserMode ?? 'builtin' }
@@ -344,6 +359,8 @@ export async function putHandler(
     linkedinScope: connection.linkedinScope ?? null,
     linkedinPersonUrn: connection.linkedinPersonUrn ?? null,
     linkedinProfileUrl: connection.linkedinProfileUrl ?? null,
+    jobApplicationPersonId: connection.jobApplicationPersonId ?? null,
+    jobApplicationPersonName: connection.jobApplicationPersonName ?? null,
     traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
     traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: connection.playwrightListingScript ?? null,

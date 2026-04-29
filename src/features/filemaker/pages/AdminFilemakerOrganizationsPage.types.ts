@@ -5,7 +5,7 @@ import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import type { OrganizationAdvancedFilterPreset } from '../filemaker-organization-advanced-filters';
-import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../types';
 
 export type OrganizationSelectionState = Record<string, boolean>;
 
@@ -15,6 +15,8 @@ export type OrganizationParentFilter = 'all' | 'root' | 'child';
 export type OrganizationSortOption =
   | 'createdAt_desc'
   | 'createdAt_asc'
+  | 'updatedAt_desc'
+  | 'updatedAt_asc'
   | 'eventCount_desc'
   | 'eventCount_asc'
   | 'jobListingCount_desc'
@@ -35,6 +37,7 @@ export type MongoFilemakerOrganizationsResponse = {
   filters: OrganizationFilters;
   limit: number;
   linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>;
+  linkedJobListingsByOrganizationId: Record<string, FilemakerJobListing[]>;
   organizations: FilemakerOrganization[];
   page: number;
   pageSize: number;
@@ -100,6 +103,8 @@ export const ORGANIZATION_SORT_OPTIONS: Array<{
 }> = [
   { label: 'Created At: Newest First', value: 'createdAt_desc' },
   { label: 'Created At: Oldest First', value: 'createdAt_asc' },
+  { label: 'Updated At: Newest First', value: 'updatedAt_desc' },
+  { label: 'Updated At: Oldest First', value: 'updatedAt_asc' },
   { label: 'Events: Most First', value: 'eventCount_desc' },
   { label: 'Events: Fewest First', value: 'eventCount_asc' },
   { label: 'Jobs: Most First', value: 'jobListingCount_desc' },
@@ -121,6 +126,7 @@ export const EMPTY_ORGANIZATIONS_RESPONSE: MongoFilemakerOrganizationsResponse =
   filters: createDefaultOrganizationFilters(),
   limit: DEFAULT_ORGANIZATION_PAGE_SIZE,
   linkedEventsByOrganizationId: {},
+  linkedJobListingsByOrganizationId: {},
   organizations: [],
   page: 1,
   pageSize: DEFAULT_ORGANIZATION_PAGE_SIZE,

@@ -2,7 +2,7 @@
 
 import { Plus } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
-import React, { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -26,6 +26,7 @@ import {
   filterFilemakerLexiconTermRows,
   getFilemakerLexiconCreateCategory,
   hasDuplicateFilemakerLexiconTerm,
+  parseFilemakerLexiconCategoryFilter,
   toFilemakerLexiconTermRows,
   upsertFilemakerLexiconTermInDatabase,
   withDeletedFilemakerLexiconTerm,
@@ -109,6 +110,42 @@ const useFilemakerLexiconRows = (
   );
 };
 
+const readUrlLexiconFilters = (): {
+  categoryFilter: FilemakerLexiconTermCategory | 'all';
+  query: string;
+} => {
+  if (typeof window === 'undefined') return { categoryFilter: 'all', query: '' };
+  const params = new URLSearchParams(window.location.search);
+  return {
+    categoryFilter: parseFilemakerLexiconCategoryFilter(params.get('category') ?? 'all'),
+    query: params.get('query') ?? '',
+  };
+};
+
+const useUrlBackedLexiconFilters = (): {
+  categoryFilter: FilemakerLexiconTermCategory | 'all';
+  query: string;
+  setCategoryFilter: React.Dispatch<React.SetStateAction<FilemakerLexiconTermCategory | 'all'>>;
+  setQuery: React.Dispatch<React.SetStateAction<string>>;
+} => {
+  const initialFilters = readUrlLexiconFilters;
+  const [query, setQuery] = useState(() => initialFilters().query);
+  const [categoryFilter, setCategoryFilter] = useState<FilemakerLexiconTermCategory | 'all'>(
+    () => initialFilters().categoryFilter
+  );
+  useEffect(() => {
+    const syncFromLocation = (): void => {
+      const filters = readUrlLexiconFilters();
+      setQuery(filters.query);
+      setCategoryFilter(filters.categoryFilter);
+    };
+    window.addEventListener('popstate', syncFromLocation);
+    syncFromLocation();
+    return () => window.removeEventListener('popstate', syncFromLocation);
+  }, []);
+  return { categoryFilter, query, setCategoryFilter, setQuery };
+};
+
 const useFilemakerLexiconEditor = (
   input: UseFilemakerLexiconEditorInput
 ): FilemakerLexiconEditorController => {
@@ -169,8 +206,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
   const { confirm, ConfirmationModal } = useConfirm();
-  const [query, setQuery] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<FilemakerLexiconTermCategory | 'all'>('all');
+  const { categoryFilter, query, setCategoryFilter, setQuery } = useUrlBackedLexiconFilters();
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
   const filteredRows = useFilemakerLexiconRows(database, categoryFilter, query);

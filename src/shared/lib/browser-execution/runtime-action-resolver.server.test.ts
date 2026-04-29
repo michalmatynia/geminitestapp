@@ -122,7 +122,10 @@ describe('runtime-action-resolver.server', () => {
         runtimeKey: 'tradera_check_status',
         blocks: [
           { id: 'block_1', kind: 'runtime_step', refId: 'browser_open', enabled: true, label: null },
-          { id: 'block_2', kind: 'runtime_step', refId: 'resolve_status', enabled: true, label: null },
+          { id: 'block_2', kind: 'runtime_step', refId: 'auth_check', enabled: true, label: null },
+          { id: 'block_3', kind: 'runtime_step', refId: 'auth_login', enabled: true, label: null },
+          { id: 'block_4', kind: 'runtime_step', refId: 'auth_manual', enabled: true, label: null },
+          { id: 'block_5', kind: 'runtime_step', refId: 'resolve_status', enabled: true, label: null },
         ],
         stepSetIds: [],
         personaId: null,
@@ -133,6 +136,9 @@ describe('runtime-action-resolver.server', () => {
 
     await expect(buildResolvedActionSteps('tradera_check_status')).resolves.toEqual([
       { id: 'browser_open', label: 'Open browser', status: 'pending', message: null },
+      { id: 'auth_check', label: 'Validate session', status: 'pending', message: null },
+      { id: 'auth_login', label: 'Automated login', status: 'pending', message: null },
+      { id: 'auth_manual', label: 'Manual login', status: 'pending', message: null },
       { id: 'resolve_status', label: 'Resolve listing status', status: 'pending', message: null },
     ]);
   });

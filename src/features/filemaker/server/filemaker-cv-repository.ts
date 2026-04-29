@@ -73,8 +73,39 @@ const compileBody = (blocks: CvBlock[]): { bodyHtml: string | null; bodyText: st
   };
 };
 
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const plainTextToHtml = (value: string): string =>
+  value
+    .split(/\r?\n/)
+    .map((line: string): string => line.trim())
+    .filter((line: string): boolean => line.length > 0)
+    .map((line: string): string => `<p>${escapeHtml(line)}</p>`)
+    .join('');
+
+const buildPlainTextFallbackBlocks = (bodyText: string | null | undefined): CvBlock[] => {
+  const normalized = bodyText?.trim() ?? '';
+  if (normalized.length === 0) return [];
+  return [
+    {
+      id: 'ai-generated-cv-body',
+      kind: 'customText',
+      label: 'Generated CV',
+      html: plainTextToHtml(normalized),
+    },
+  ];
+};
+
 const toFilemakerCv = (document: FilemakerCvMongoDocument): FilemakerCv => {
-  const blocks = normalizeCvBlocks(document.bodyBlocks);
+  const storedBlocks = normalizeCvBlocks(document.bodyBlocks);
+  const blocks =
+    storedBlocks.length > 0 ? storedBlocks : buildPlainTextFallbackBlocks(document.bodyText);
   const compiled = blocks.length > 0 ? compileBody(blocks) : { bodyHtml: null, bodyText: null };
   return {
     id: document.id,

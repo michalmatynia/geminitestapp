@@ -41,18 +41,23 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormModal: ({
     actions,
     children,
+    onClose,
     onSave,
     open,
     saveText,
   }: {
     actions?: React.ReactNode;
     children?: React.ReactNode;
+    onClose: () => void;
     onSave: () => void;
     open?: boolean;
     saveText?: string;
   }) =>
     open ? (
       <div role='dialog'>
+        <button type='button' onClick={onClose}>
+          Close
+        </button>
         <button type='button' onClick={onSave}>
           {saveText ?? 'Save'}
         </button>
@@ -501,6 +506,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(screen.getByLabelText('Provider')).toHaveValue('justjoin_it');
     expect(screen.getByLabelText('Scraper path')).toHaveValue('deterministic');
     expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
+    expect(screen.queryByRole('option', { name: 'Skip existing' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Action browser mode' })).toHaveAttribute(
       'aria-pressed',
       'true'
@@ -531,9 +537,36 @@ describe('FilemakerJobBoardScrapeModal', () => {
     );
 
     expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
+    expect(screen.queryByRole('option', { name: 'Skip existing' })).toBeNull();
     expect(screen.getByPlaceholderText(/pracuj\.pl\/praca/)).toHaveValue(
       'https://www.pracuj.pl/praca/it;kw'
     );
+  });
+
+  it('migrates current saved skip-duplicate scraper settings to update existing', () => {
+    window.localStorage.setItem(
+      'filemaker.job-board-scraper.settings.v1',
+      JSON.stringify({
+        version: 3,
+        draft: {
+          duplicateStrategy: 'skip',
+          sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+        },
+      })
+    );
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
+    expect(screen.queryByRole('option', { name: 'Skip existing' })).toBeNull();
   });
 
   it('uses and saves the shared Job Board Offer Scrape browser mode setting', async () => {
@@ -634,9 +667,9 @@ describe('FilemakerJobBoardScrapeModal', () => {
         companyProfile: 'Acme Inc builds commerce software.',
         companyProfileUrl: 'https://www.pracuj.pl/pracodawcy/acme,1001',
         description: 'Build interfaces',
-        expiresAt: null,
+        expiresAt: '2026-05-28T23:59:59.000Z',
         location: 'Warszawa',
-        postedAt: null,
+        postedAt: '2026-04-28T09:00:00.000Z',
         salaryCurrency: 'PLN',
         salaryMax: 18000,
         salaryMin: 12000,
@@ -645,7 +678,15 @@ describe('FilemakerJobBoardScrapeModal', () => {
         sourceExternalId: '1001',
         sourceSite: 'pracuj.pl',
         sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
-        pills: [],
+        pills: [
+          {
+            category: 'contract_type',
+            label: 'contract of employment',
+            position: 1,
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+          },
+        ],
         title: 'Frontend Developer',
       },
       reason: null,
@@ -713,6 +754,20 @@ describe('FilemakerJobBoardScrapeModal', () => {
     await waitFor(() => expect(screen.getByText('Live scrape preview')).toBeInTheDocument());
     expect(screen.getByText('Discovered links')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: offerResult.offer.sourceUrl })).toBeInTheDocument();
+    expect(screen.getAllByText('Posted: 2026-04-28T09:00:00.000Z').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Expires: 2026-05-28T23:59:59.000Z').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('link', { name: 'Company profile' })[0]).toHaveAttribute(
+      'href',
+      'https://www.pracuj.pl/pracodawcy/acme,1001'
+    );
+    expect(screen.getAllByRole('link', { name: 'Offer source' })[0]).toHaveAttribute(
+      'href',
+      offerResult.offer.sourceUrl
+    );
+    expect(screen.getAllByRole('link', { name: 'contract of employment' })[0]).toHaveAttribute(
+      'href',
+      '/admin/filemaker/lexicon?category=contract_type&query=contract+of+employment'
+    );
     expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Acme Inc builds commerce software/).length).toBeGreaterThan(0);
     const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
@@ -917,6 +972,18 @@ describe('FilemakerJobBoardScrapeModal', () => {
         verifiedListings: 1,
       },
     };
+    const saveRun = {
+      completedAt: '2026-04-28T10:00:03.000Z',
+      createdAt: '2026-04-28T10:00:02.000Z',
+      error: null,
+      id: 'save-run-1',
+      mode: 'import',
+      result: saveResponse,
+      sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+      startedAt: '2026-04-28T10:00:02.100Z',
+      status: 'completed',
+      updatedAt: '2026-04-28T10:00:03.000Z',
+    };
     const events = [
       {
         at: '2026-04-28T10:00:00.000Z',
@@ -933,7 +1000,31 @@ describe('FilemakerJobBoardScrapeModal', () => {
     ];
     const fetchMock = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
-      if (body['action'] === 'save_drafts') return Response.json(saveResponse);
+      if (body['action'] === 'save_drafts') {
+        const saveEvents = [
+          {
+            at: '2026-04-28T10:00:02.000Z',
+            message: 'Saving scraped job-board drafts.',
+            type: 'status',
+          },
+          {
+            at: '2026-04-28T10:00:03.000Z',
+            result: saveResponse,
+            type: 'done',
+          },
+          {
+            at: '2026-04-28T10:00:03.100Z',
+            run: saveRun,
+            type: 'run',
+          },
+        ];
+        return new Response(saveEvents.map((event) => JSON.stringify(event)).join('\n'), {
+          headers: {
+            'content-type': 'application/x-ndjson; charset=utf-8',
+            'x-filemaker-job-board-scrape-run-id': 'save-run-1',
+          },
+        });
+      }
       return new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
         headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
       });
@@ -966,15 +1057,93 @@ describe('FilemakerJobBoardScrapeModal', () => {
       duplicateStrategy: 'update',
       importStrategy: 'create_unmatched',
       sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
+      stream: true,
     });
-    expect(saveRequest.stream).toBeUndefined();
     expect(saveRequest.offers).toHaveLength(1);
     expect(saveRequest.offers[0]).toMatchObject({
       sourceUrl: offerResult.offer.sourceUrl,
       title: 'Frontend Developer',
     });
     await waitFor(() => expect(screen.getAllByText('created').length).toBeGreaterThan(0));
+    expect(screen.getByText('Run completed')).toBeInTheDocument();
+    expect(
+      window.localStorage.getItem('filemaker.job-board-scraper.active-run-id.v1')
+    ).toBe('save-run-1');
     expect(onCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('aborts an in-flight scraped draft save stream when the modal closes', async () => {
+    const user = userEvent.setup();
+    const onClose = vi.fn();
+    const offerResult = buildPreviewOfferResult({ externalId: '1001' });
+    const streamedResponse = {
+      ...successfulResponse,
+      offers: [offerResult],
+      summary: {
+        ...successfulResponse.summary,
+        matchedOffers: 1,
+        scrapedOffers: 1,
+      },
+    };
+    const previewEvents = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        index: 1,
+        result: offerResult,
+        total: 1,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    let saveSignal: AbortSignal | undefined;
+    const fetchMock = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      if (body['action'] === 'save_drafts') {
+        saveSignal = init?.signal ?? undefined;
+        return new Promise<Response>((_resolve, reject) => {
+          saveSignal?.addEventListener(
+            'abort',
+            () => {
+              reject(new DOMException('Aborted', 'AbortError'));
+            },
+            { once: true }
+          );
+        });
+      }
+      return new Response(previewEvents.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={onClose}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(screen.getByText('Scraped offers')).toBeInTheDocument());
+    await user.click(screen.getAllByRole('button', { name: /^Save$/ })[0]);
+    await waitFor(() => expect(saveSignal).toBeDefined());
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(saveSignal?.aborted).toBe(true);
   });
 
   it('saves an individual scraped draft from its not saved row action', async () => {
@@ -1352,6 +1521,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(request).toMatchObject({
+      duplicateStrategy: 'update',
       mode: 'import',
       organizationScope: 'all',
       selectedOrganizationIds: [],

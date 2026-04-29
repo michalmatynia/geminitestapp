@@ -666,6 +666,45 @@ const readFirstJsonLdString = (...values: unknown[]): string | null => {
   return null;
 };
 
+const readJsonLdAddressLine = (address: Record<string, unknown> | null): string | null => {
+  if (address === null) return null;
+  const streetAddress = readFirstJsonLdString(
+    address['streetAddress'],
+    address['addressLine'],
+    address['name']
+  );
+  const postalCode = readFirstJsonLdString(address['postalCode']);
+  const locality = readFirstJsonLdString(address['addressLocality']);
+  const region = readFirstJsonLdString(address['addressRegion']);
+  const country = readFirstJsonLdString(address['addressCountry']);
+  return readFirstJsonLdString(
+    [streetAddress, [postalCode, locality].filter(Boolean).join(' '), region, country]
+      .filter(Boolean)
+      .join(', ')
+  );
+};
+
+const jsonLdAddressFacts = (
+  address: Record<string, unknown> | null,
+  labelPrefix = ''
+): Array<{ label: string; value: string }> => {
+  if (address === null) return [];
+  const addressLine = readJsonLdAddressLine(address);
+  const streetAddress = readFirstJsonLdString(address['streetAddress']);
+  const postalCode = readFirstJsonLdString(address['postalCode']);
+  const locality = readFirstJsonLdString(address['addressLocality']);
+  const region = readFirstJsonLdString(address['addressRegion']);
+  const country = readFirstJsonLdString(address['addressCountry']);
+  return [
+    ...(addressLine ? [{ label: `${labelPrefix}Address`, value: addressLine }] : []),
+    ...(streetAddress ? [{ label: `${labelPrefix}Street address`, value: streetAddress }] : []),
+    ...(postalCode ? [{ label: `${labelPrefix}Postal code`, value: postalCode }] : []),
+    ...(locality ? [{ label: `${labelPrefix}City`, value: locality }] : []),
+    ...(region ? [{ label: `${labelPrefix}Region`, value: region }] : []),
+    ...(country ? [{ label: `${labelPrefix}Country`, value: country }] : []),
+  ];
+};
+
 const isDeterministicOfferUrl = (value: string, provider: JobBoardProvider): boolean => {
   if (!isJobBoardOfferUrl(value, provider)) return false;
   if (provider !== 'pracuj_pl') return true;
@@ -749,11 +788,20 @@ const buildPlainHtmlStructuredSnapshot = (
     ? asRecord(rawJobLocation[0])
     : asRecord(rawJobLocation);
   const jobAddress = asRecord(jobLocation?.['address']);
+  const companyAddress = asRecord(hiringOrganization?.['address']);
   const companyName = readFirstJsonLdString(hiringOrganization?.['name']);
   const companyUrl = readFirstJsonLdString(
     hiringOrganization?.['sameAs'],
     hiringOrganization?.['url']
   );
+  const companyDescription = readFirstJsonLdString(hiringOrganization?.['description']);
+  const companyIndustry = readFirstJsonLdString(hiringOrganization?.['industry']);
+  const companySize = readFirstJsonLdString(
+    hiringOrganization?.['numberOfEmployees'],
+    hiringOrganization?.['employee']
+  );
+  const datePosted = readFirstJsonLdString(jobPosting?.['datePosted']);
+  const validThrough = readFirstJsonLdString(jobPosting?.['validThrough']);
   const location = readFirstJsonLdString(
     jobAddress?.['addressLocality'],
     jobAddress?.['addressRegion'],
@@ -769,11 +817,16 @@ const buildPlainHtmlStructuredSnapshot = (
     canonical,
     companyLinks: normalizeStringArray([companyUrl]),
     companyProfile:
-      companyName || companyUrl
+      companyName || companyUrl || companyAddress !== null
         ? {
-            facts: companyName ? [{ label: 'Company', value: companyName }] : [],
+            facts: [
+              ...(companyName ? [{ label: 'Company', value: companyName }] : []),
+              ...(companyIndustry ? [{ label: 'Industry', value: companyIndustry }] : []),
+              ...(companySize ? [{ label: 'Company size', value: companySize }] : []),
+              ...jsonLdAddressFacts(companyAddress, 'Company '),
+            ],
             headings: companyName ? [companyName] : [],
-            plainText: null,
+            plainText: companyDescription,
             sections: [],
             title: companyName,
             url: companyUrl,
@@ -783,6 +836,9 @@ const buildPlainHtmlStructuredSnapshot = (
     facts: [
       ...(companyName ? [{ label: 'Company', value: companyName }] : []),
       ...(location ? [{ label: 'Location', value: location }] : []),
+      ...jsonLdAddressFacts(jobAddress),
+      ...(datePosted ? [{ label: 'Posted at', value: datePosted }] : []),
+      ...(validThrough ? [{ label: 'Expires at', value: validThrough }] : []),
     ],
     headings: normalizeStringArray([listingTitle, ...headings]),
     jsonLd,

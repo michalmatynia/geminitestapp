@@ -283,6 +283,7 @@ export const runTraderaBrowserListingStandard = async ({
             case 'waiting_for_login_entry':
             case 'waiting_for_login_controls':
             case 'submitting_login':
+            case 'requesting_email_verification_code':
             case 'waiting_for_email_verification_code':
             case 'submitting_email_verification_code':
             case 'waiting_for_post_login':

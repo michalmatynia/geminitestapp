@@ -7,6 +7,7 @@ import {
   isVintedIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
+  isPracujPlIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
   useIntegrationsData,
@@ -20,6 +21,7 @@ type UseIntegrationTabsResult = {
   isTradera: boolean;
   isVinted: boolean;
   is1688: boolean;
+  isPracuj: boolean;
   isAllegro: boolean;
   isLinkedIn: boolean;
   isBaselinker: boolean;
@@ -43,6 +45,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
       isTradera: false,
       isVinted: false,
       is1688: false,
+      isPracuj: false,
       isAllegro: false,
       isLinkedIn: false,
       isBaselinker: false,
@@ -57,10 +60,11 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
   const is1688 = is1688IntegrationSlug(integrationSlug);
+  const isPracuj = isPracujPlIntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
-  const showPlaywright = isTradera || isVinted || is1688;
+  const showPlaywright = isTradera || isVinted || is1688 || isPracuj;
   const showAllegroConsole = isAllegro;
   const showBaseConsole = isBaselinker;
   const activeConnection =
@@ -75,6 +79,7 @@ export function useIntegrationTabs(): UseIntegrationTabsResult {
     isTradera,
     isVinted,
     is1688,
+    isPracuj,
     isAllegro,
     isLinkedIn,
     isBaselinker,

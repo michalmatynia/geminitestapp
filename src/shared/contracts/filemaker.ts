@@ -350,6 +350,8 @@ export const filemakerJobListingSchema = dtoBaseSchema.extend({
   sourceExternalId: z.string().optional(),
   sourceSite: z.string().optional(),
   sourceUrl: z.string().optional(),
+  postedAt: z.string().nullable().optional(),
+  expiresAt: z.string().nullable().optional(),
   scrapedAt: z.string().nullable().optional(),
   lexiconTermIds: z.array(z.string()).default([]),
 });

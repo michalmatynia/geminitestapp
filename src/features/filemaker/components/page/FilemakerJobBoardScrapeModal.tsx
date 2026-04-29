@@ -78,6 +78,8 @@ type LivePreviewState = {
   writes: FilemakerJobBoardScrapeWriteResult[];
 };
 
+type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
+
 const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'delayMs',
   'duplicateStrategy',
@@ -125,7 +127,6 @@ const IMPORT_STRATEGY_OPTIONS = [
 
 const DUPLICATE_STRATEGY_OPTIONS = [
   { value: 'update', label: 'Update existing' },
-  { value: 'skip', label: 'Skip existing' },
   { value: 'add', label: 'Always add' },
 ] as const;
 
@@ -154,6 +155,71 @@ const createEmptyLivePreviewState = (): LivePreviewState => ({
   writes: [],
 });
 
+const lexiconPillHref = (pill: ScrapedOfferPill): string => {
+  const params = new URLSearchParams({
+    category: pill.category,
+    query: pill.label,
+  });
+  return `/admin/filemaker/lexicon?${params.toString()}`;
+};
+
+function ScrapedOfferPillLinks(props: { pills: ScrapedOfferPill[] }): React.JSX.Element | null {
+  if (props.pills.length === 0) return null;
+  return (
+    <div className='mt-2 flex flex-wrap gap-1'>
+      {props.pills.slice(0, 8).map((pill, pillIndex) => (
+        <Badge
+          key={`${pill.category}-${pill.position}-${pillIndex}-${pill.label}`}
+          variant='outline'
+        >
+          <a
+            href={lexiconPillHref(pill)}
+            className='hover:underline'
+            title={`Open lexicon term: ${pill.label}`}
+          >
+            {pill.label}
+          </a>
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+function ScrapedOfferMetadata(props: {
+  offer: FilemakerJobBoardScrapedOffer;
+}): React.JSX.Element | null {
+  const postedAt = props.offer.postedAt?.trim() ?? '';
+  const expiresAt = props.offer.expiresAt?.trim() ?? '';
+  const companyProfileUrl = props.offer.companyProfileUrl?.trim() ?? '';
+  const sourceUrl = props.offer.sourceUrl.trim();
+  const hasMetadata =
+    postedAt.length > 0 ||
+    expiresAt.length > 0 ||
+    companyProfileUrl.length > 0 ||
+    sourceUrl.length > 0;
+  if (!hasMetadata) return null;
+  return (
+    <div className='mt-2 flex flex-wrap gap-1'>
+      {postedAt.length > 0 ? <Badge variant='outline'>Posted: {postedAt}</Badge> : null}
+      {expiresAt.length > 0 ? <Badge variant='outline'>Expires: {expiresAt}</Badge> : null}
+      {companyProfileUrl.length > 0 ? (
+        <Badge variant='outline'>
+          <a href={companyProfileUrl} target='_blank' rel='noreferrer' className='hover:underline'>
+            Company profile
+          </a>
+        </Badge>
+      ) : null}
+      {sourceUrl.length > 0 ? (
+        <Badge variant='outline'>
+          <a href={sourceUrl} target='_blank' rel='noreferrer' className='hover:underline'>
+            Offer source
+          </a>
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
 type LivePreviewStatusLabel = 'Finished' | 'Ready' | 'Running';
 
 type PostScrapeRequestInput = {
@@ -168,7 +234,10 @@ type PostScrapeRequestInput = {
 type PostSaveDraftsRequestInput = {
   draft: ScrapeDraft;
   offers: FilemakerJobBoardScrapedOffer[];
+  onEvent: (event: FilemakerJobBoardScrapeLiveEvent) => void;
+  onRunId?: (runId: string) => void;
   selectedOrganizationIds: string[];
+  signal: AbortSignal;
 };
 
 const resolveLivePreviewStatusLabel = (
@@ -199,6 +268,10 @@ const readStoredChoice = <T extends string>(
   allowed: readonly T[],
   fallback: T
 ): T => (typeof value === 'string' && allowed.includes(value as T) ? (value as T) : fallback);
+
+const toImportDuplicateStrategy = (
+  strategy: FilemakerJobBoardDuplicateStrategy
+): FilemakerJobBoardDuplicateStrategy => (strategy === 'skip' ? 'update' : strategy);
 
 const areDraftSettingsEqual = (left: ScrapeDraft, right: ScrapeDraft): boolean =>
   SCRAPE_DRAFT_SETTINGS_KEYS.every((key) => left[key] === right[key]);
@@ -231,7 +304,7 @@ const buildRequest = (
   selectedOrganizationIds: string[]
 ): FilemakerJobBoardScrapeRequest => ({
   delayMs: toNumber(draft.delayMs, 750),
-  duplicateStrategy: draft.duplicateStrategy,
+  duplicateStrategy: toImportDuplicateStrategy(draft.duplicateStrategy),
   extractDescriptions: draft.extractDescriptions,
   extractSalaries: draft.extractSalaries,
   extractionPath: draft.extractionPath,
@@ -767,15 +840,27 @@ const postScrapeRequest = async (
 const postSaveDraftsRequest = async (
   input: PostSaveDraftsRequestInput
 ): Promise<FilemakerJobBoardScrapeResponse> => {
+  const request = buildDraftSaveRequest(
+    input.draft,
+    input.selectedOrganizationIds,
+    input.offers
+  );
   const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-    body: JSON.stringify(
-      buildDraftSaveRequest(input.draft, input.selectedOrganizationIds, input.offers)
-    ),
+    body: JSON.stringify({ ...request, stream: true }),
+    signal: input.signal,
   });
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
+  }
+  const runId = response.headers.get('x-filemaker-job-board-scrape-run-id')?.trim() ?? '';
+  if (runId.length > 0) {
+    input.onRunId?.(runId);
+  }
+  const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
+  if (contentType.includes('application/x-ndjson')) {
+    return readLiveScrapeStream(response, input.onEvent);
   }
   return normalizeScrapeResponse(await response.json());
 };
@@ -840,7 +925,7 @@ const normalizeSavedDraft = (
 
   return {
     delayMs: readStoredString(saved['delayMs'], fallback.delayMs),
-    duplicateStrategy: version === 2 && duplicateStrategy === 'skip' ? 'update' : duplicateStrategy,
+    duplicateStrategy: toImportDuplicateStrategy(duplicateStrategy),
     extractDescriptions: readStoredBoolean(saved['extractDescriptions'], fallback.extractDescriptions),
     extractSalaries: readStoredBoolean(saved['extractSalaries'], fallback.extractSalaries),
     extractionPath: readStoredChoice(
@@ -1173,20 +1258,30 @@ export function FilemakerJobBoardScrapeModal(
     inFlightKey: string
   ): Promise<void> => {
     if (offers.length === 0 || isRunning || isSavingPreviewDrafts) return;
+    const request = startScrapeRequest();
+    if (request === null) return;
     setSaveDraftsInFlight(inFlightKey);
     try {
       const nextResult = await postSaveDraftsRequest({
         draft,
         offers: offers.map((item) => item.offer),
+        onEvent: handleLiveEvent,
+        onRunId: (runId) => {
+          writeStoredRuntimeRunId(runId);
+          setActiveRuntimeRun(buildClientRuntimeRun(runId, draft, 'import'));
+        },
         selectedOrganizationIds: props.selectedOrganizationIds,
+        signal: request.controller.signal,
       });
-      handleDraftSaveSuccess(nextResult);
+      if (isActiveScrapeRequest(request)) handleDraftSaveSuccess(nextResult);
     } catch (error) {
+      if (isAbortLikeError(error, request.controller.signal)) return;
       toast(error instanceof Error ? error.message : 'Failed to save scraped job drafts.', {
         variant: 'error',
       });
     } finally {
       setSaveDraftsInFlight(null);
+      finishScrapeRequest(request);
     }
   };
 
@@ -1703,18 +1798,8 @@ export function FilemakerJobBoardScrapeModal(
                           {item.offer.companyProfile}
                         </p>
                       ) : null}
-                      {item.offer.pills.length > 0 ? (
-                        <div className='mt-2 flex flex-wrap gap-1'>
-                          {item.offer.pills.slice(0, 8).map((pill, pillIndex) => (
-                            <Badge
-                              key={`${pill.category}-${pill.position}-${pillIndex}-${pill.label}`}
-                              variant='outline'
-                            >
-                              {pill.label}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
+                      <ScrapedOfferMetadata offer={item.offer} />
+                      <ScrapedOfferPillLinks pills={item.offer.pills} />
                     </div>
                   ))}
                 </div>
@@ -1793,18 +1878,13 @@ export function FilemakerJobBoardScrapeModal(
                   {item.reason !== null ? (
                     <div className='mt-1 text-xs text-muted-foreground'>{item.reason}</div>
                   ) : null}
-                  {item.offer.pills.length > 0 ? (
-                    <div className='mt-2 flex flex-wrap gap-1'>
-                      {item.offer.pills.slice(0, 8).map((pill, pillIndex) => (
-                        <Badge
-                          key={`${pill.category}-${pill.position}-${pillIndex}-${pill.label}`}
-                          variant='outline'
-                        >
-                          {pill.label}
-                        </Badge>
-                      ))}
-                    </div>
+                  {item.offer.companyProfile.trim().length > 0 ? (
+                    <p className='mt-1 max-h-10 overflow-hidden text-xs text-muted-foreground'>
+                      {item.offer.companyProfile}
+                    </p>
                   ) : null}
+                  <ScrapedOfferMetadata offer={item.offer} />
+                  <ScrapedOfferPillLinks pills={item.offer.pills} />
                 </div>
               ))}
             </div>

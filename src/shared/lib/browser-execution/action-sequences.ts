@@ -92,10 +92,7 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
   ],
 
   tradera_check_status: [
-    'browser_preparation',
-    'browser_open',
-    'cookie_accept',
-    'auth_check',
+    ...BROWSER_AND_AUTH,
     'overview_open',
     'search_active',
     'inspect_active',

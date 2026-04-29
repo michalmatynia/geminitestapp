@@ -46,6 +46,8 @@ const toIntegrationConnectionBasic = (
   traderaApiUserId: connection.traderaApiUserId ?? null,
   traderaApiSandbox: connection.traderaApiSandbox ?? false,
   baseLastInventoryId: connection.baseLastInventoryId ?? null,
+  jobApplicationPersonId: connection.jobApplicationPersonId ?? null,
+  jobApplicationPersonName: connection.jobApplicationPersonName ?? null,
 });
 
 export function getIntegrationRepository(): IntegrationRepository {

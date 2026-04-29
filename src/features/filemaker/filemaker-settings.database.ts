@@ -1161,6 +1161,8 @@ export const normalizeFilemakerDatabase = (
         sourceExternalId: normalizeString(entry['sourceExternalId']),
         sourceSite: normalizeString(entry['sourceSite']),
         sourceUrl: normalizeString(entry['sourceUrl']),
+        postedAt: normalizeString(entry['postedAt']),
+        expiresAt: normalizeString(entry['expiresAt']),
         scrapedAt: normalizeString(entry['scrapedAt']),
         lexiconTermIds: entry['lexiconTermIds'],
         createdAt: createdAt.length > 0 ? createdAt : undefined,

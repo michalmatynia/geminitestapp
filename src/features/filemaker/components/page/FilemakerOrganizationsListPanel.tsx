@@ -254,6 +254,9 @@ function OrganizationFiltersPanel(props: {
 const nextCreatedAtSort = (sort: OrganizationSortOption): OrganizationSortOption =>
   sort === 'createdAt_desc' ? 'createdAt_asc' : 'createdAt_desc';
 
+const nextUpdatedAtSort = (sort: OrganizationSortOption): OrganizationSortOption =>
+  sort === 'updatedAt_desc' ? 'updatedAt_asc' : 'updatedAt_desc';
+
 const nextEventCountSort = (sort: OrganizationSortOption): OrganizationSortOption =>
   sort === 'eventCount_desc' ? 'eventCount_asc' : 'eventCount_desc';
 
@@ -293,6 +296,7 @@ function OrganizationTableHeader(props: OrganizationListState): React.JSX.Elemen
   const isJobListingCountSort =
     props.sort === 'jobListingCount_asc' || props.sort === 'jobListingCount_desc';
   const isCreatedAtSort = props.sort === 'createdAt_asc' || props.sort === 'createdAt_desc';
+  const isUpdatedAtSort = props.sort === 'updatedAt_asc' || props.sort === 'updatedAt_desc';
 
   return (
     <div
@@ -319,6 +323,13 @@ function OrganizationTableHeader(props: OrganizationListState): React.JSX.Elemen
           isActive={isJobListingCountSort}
           label='Jobs'
           onClick={(): void => props.onSortChange(nextJobListingCountSort(props.sort))}
+        />
+      </div>
+      <div className='hidden w-36 shrink-0 justify-end md:flex md:w-44'>
+        <OrganizationSortHeaderButton
+          isActive={isUpdatedAtSort}
+          label='Updated At'
+          onClick={(): void => props.onSortChange(nextUpdatedAtSort(props.sort))}
         />
       </div>
       <div className='w-36 shrink-0 text-right md:w-44'>

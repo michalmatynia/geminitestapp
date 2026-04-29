@@ -215,3 +215,10 @@ export type {
   FilemakerCvStatus,
   FilemakerCvTemplate,
 } from './filemaker-cv.types';
+
+export type {
+  FilemakerJobApplication,
+  FilemakerJobApplicationCoverLetter,
+  FilemakerJobApplicationListResponse,
+  FilemakerJobApplicationTailoredCv,
+} from './filemaker-job-application.types';

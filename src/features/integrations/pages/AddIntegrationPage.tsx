@@ -122,7 +122,7 @@ export default function AddIntegrationPage(): React.JSX.Element {
     <AdminIntegrationsPageLayout
       title='Add Integrations'
       current='Add'
-      description='Select a marketplace connection to add to your map.'
+      description='Select a marketplace or job-search connection to add to your map.'
     >
       <SimpleSettingsList
         items={AVAILABLE_INTEGRATIONS.map((integration) => ({

@@ -1,7 +1,6 @@
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { getKangurHomeAuthBoundaryViewModel, type KangurHomeAuthBoundaryViewModel } from './homeAuthBoundary';
 import { SectionCard } from './homeScreenPrimitives';
 import {
   useHomeScreenDeferredPanelGroup,
@@ -11,10 +10,9 @@ import {
   type KangurMobileHomeLessonCheckpointItem,
 } from './useKangurMobileHomeLessonCheckpoints';
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
-import { type KangurMobileAuthMode } from '../auth/mobileAuthMode';
+
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
-import type { KangurAuthSession } from '@kangur/platform';
 import {
   HOME_ACCOUNT_DETAILS_PANEL_GROUP,
   HOME_DUEL_PANEL_SEQUENCE,
@@ -35,9 +33,7 @@ import {
   DeferredAuthenticatedHomeScoreState,
   HomeDebugProofOperationState,
   HomeHeroLatestLessonCheckpointState,
-  type HomeRecentResultsViewModel,
   type HomeScoreViewModel,
-  type HomeTrainingFocusViewModel,
   LiveAuthenticatedHomeScoreState,
 } from './home-screen-score-state';
 
@@ -49,22 +45,24 @@ import {
   HomeTrainingFocusSection,
 } from './components';
 
-function DebugProofSection({ copy, homeDebugProof }: { copy: ReturnType<typeof useKangurMobileI18n>['copy']; homeDebugProof: any }): React.JSX.Element | null {
+function DebugProofSection({ _copy, homeDebugProof }: { copy: ReturnType<typeof useKangurMobileI18n>['copy']; homeDebugProof: { operationLabel: string; checks: { label: string; status: 'ready' | 'info' | 'missing'; detail: string }[] } | null }): React.JSX.Element | null {
   if (!__DEV__ || homeDebugProof === null) return null;
 
   const renderDebugCheck = (check: { label: string; status: 'ready' | 'info' | 'missing'; detail: string }): React.JSX.Element => {
-    const statusColors = {
+    const statusColors: Record<'ready' | 'info' | 'missing', { bg: string; border: string; text: string }> = {
       ready: { bg: '#ecfdf5', border: '#a7f3d0', text: '#166534' },
       info: { bg: '#eff6ff', border: '#bfdbfe', text: '#1e3a8a' },
       missing: { bg: '#fff7ed', border: '#fed7aa', text: '#991b1b' },
     };
     const { bg, border } = statusColors[check.status];
-    const statusText =
-      check.status === 'ready'
-        ? copy({ de: 'bereit', en: 'ready', pl: 'gotowe' })
-        : check.status === 'info'
-        ? copy({ de: 'läuft', en: 'in progress', pl: 'w toku' })
-        : copy({ de: 'fehlt', en: 'missing', pl: 'brak' });
+    const getStatusText = (status: 'ready' | 'info' | 'missing'): string => {
+      switch (status) {
+        case 'ready': return _copy({ de: 'bereit', en: 'ready', pl: 'gotowe' });
+        case 'info': return _copy({ de: 'läuft', en: 'in progress', pl: 'w toku' });
+        default: return _copy({ de: 'fehlt', en: 'missing', pl: 'brak' });
+      }
+    };
+    const statusText = getStatusText(check.status);
 
     return (
       <View key={check.label} style={{ backgroundColor: bg, borderColor: border, borderRadius: 18, borderWidth: 1, gap: 4, padding: 12 }}>
@@ -96,8 +94,8 @@ function HomeInsightsSection({
   areDeferredHomeInsightsReady: boolean;
   initialRecentLessonCheckpoints: KangurMobileHomeLessonCheckpointItem[];
   isLiveHomeProgressReady: boolean;
-  recentResults: any;
-  trainingFocus: any;
+  recentResults: { error: string | null; isLoading: boolean; isRestoringAuth: boolean; results: any[] };
+  trainingFocus: { isEnabled: boolean };
 }): React.JSX.Element | null {
   if (!areDeferredHomeInsightsReady) return <DeferredHomeInsightsCard />;
   return (
@@ -107,8 +105,8 @@ function HomeInsightsSection({
       recentResults={{
         error: recentResults.error,
         isDeferred: !trainingFocus.isEnabled,
-        isLoading: recentResults.isLoading,
-        isRestoringAuth: recentResults.isRestoringAuth,
+        isLoading: Boolean(recentResults.isLoading),
+        isRestoringAuth: Boolean(recentResults.isRestoringAuth),
         results: recentResults.results,
       }}
     />
@@ -156,17 +154,17 @@ const RenderHomeScreenContent = ({
 }: {
   viewModel: HomeScoreViewModel;
   copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-  initialLatestLessonCheckpoint: any;
+  initialLatestLessonCheckpoint: unknown;
   isLiveHomeProgressReady: boolean;
   apiBaseUrl: string;
   apiBaseUrlSource: string;
   areDeferredHomeAccountDetailsReady: boolean;
   areDeferredHomeAccountSignInReady: boolean;
   areDeferredHomeAccountSummaryReady: boolean;
-  authBoundary: any;
+  authBoundary: unknown;
   authError: any;
-  authMode: any;
-  sessionStatus: any;
+  authMode: unknown;
+  sessionStatus: unknown;
   shouldShowLearnerCredentialsForm: boolean;
   handleSignIn: () => void;
   handleSignInWithLearnerCredentials: (l: string, p: string) => Promise<void>;
@@ -184,7 +182,7 @@ const RenderHomeScreenContent = ({
   session: any;
   isLoadingAuth: boolean;
   areDeferredHomeInsightsReady: boolean;
-  initialRecentLessonCheckpoints: any;
+  initialRecentLessonCheckpoints: unknown;
   shouldRenderCombinedHomeHeroPlaceholder: boolean;
   activeDuelLearnerId: string | null;
   areDeferredHomeDuelAdvancedReady: boolean;
@@ -354,8 +352,7 @@ export function HomeScreenContent({
     supportsLearnerCredentials &&
     !isRestoringLearnerSession &&
     session.status !== 'authenticated';
-  const authBoundary = areDeferredHomeAccountSummaryReady
-    ? getKangurHomeAuthBoundaryViewModel({
+  const authBoundary = areDeferredHomeAccountSummaryReady ? getKangurHomeAuthBoundaryViewModel({
         authError,
         developerAutoSignInEnabled,
         hasAttemptedDeveloperAutoSignIn,

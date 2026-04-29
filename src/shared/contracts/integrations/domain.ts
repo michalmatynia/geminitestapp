@@ -27,6 +27,8 @@ export const integrationConnectionBasicSchema = z.object({
   traderaApiUserId: z.number().nullable().optional(),
   traderaApiSandbox: z.boolean().nullable().optional(),
   baseLastInventoryId: z.string().nullable().optional(),
+  jobApplicationPersonId: z.string().nullable().optional(),
+  jobApplicationPersonName: z.string().nullable().optional(),
   playwrightStorageStateUpdatedAt: z.string().nullable().optional(),
 });
 

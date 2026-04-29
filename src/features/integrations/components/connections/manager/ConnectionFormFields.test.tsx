@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createEmptyConnectionForm } from '@/features/integrations/context/integrations-context-types';
 
@@ -76,6 +76,8 @@ vi.mock('@/shared/ui/navigation-and-layout.public', () => ({
 
 import { ConnectionFormFields } from './ConnectionFormFields';
 
+const fetchMock = vi.fn();
+
 function renderFields(integrationSlug: string): void {
   function Wrapper(): React.JSX.Element {
     const [form, setForm] = React.useState(createEmptyConnectionForm());
@@ -94,6 +96,27 @@ function renderFields(integrationSlug: string): void {
 }
 
 describe('ConnectionFormFields', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        persons: [
+          {
+            id: 'person-1',
+            fullName: 'Ada Lovelace',
+            cvProfessionalSummary: 'Analytical engineer',
+          },
+        ],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it('shows scripted Tradera browser controls without persisting a managed script body by default', () => {
     renderFields('tradera');
 
@@ -143,6 +166,38 @@ describe('ConnectionFormFields', () => {
       )
     ).toHaveLength(2);
     expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
+  });
+
+  it('shows optional Pracuj.pl credential fields for reusable job-application sessions', async () => {
+    renderFields('pracuj-pl');
+
+    expect(screen.getByLabelText('Integration name (e.g. Pracuj.pl Profile)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pracuj.pl email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Pracuj.pl password (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search Persons')).toBeInTheDocument();
+    expect(screen.getByLabelText('Person profile for job applications')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
+      )
+    ).toHaveLength(2);
+    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
+    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+  });
+
+  it('selects a Persons profile for Pracuj.pl job applications', async () => {
+    renderFields('pracuj-pl');
+
+    expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+
+    const personSelect = screen.getByLabelText(
+      'Person profile for job applications'
+    ) as HTMLSelectElement;
+    fireEvent.change(personSelect, {
+      target: { value: 'person-1' },
+    });
+
+    expect(personSelect.value).toBe('person-1');
   });
 
   it('shows 1688 profile fields and keeps search mode in sync with URL fallback', () => {

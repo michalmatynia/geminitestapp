@@ -9,6 +9,7 @@ const {
   listPlaywrightProgrammableConnectionsMock,
   encryptSecretMock,
   fetchResolvedPlaywrightRuntimeActionsMock,
+  getMongoFilemakerPersonByIdMock,
 } = vi.hoisted(() => ({
   parseJsonBodyMock: vi.fn(),
   listConnectionsMock: vi.fn(),
@@ -18,6 +19,7 @@ const {
   listPlaywrightProgrammableConnectionsMock: vi.fn(),
   encryptSecretMock: vi.fn(),
   fetchResolvedPlaywrightRuntimeActionsMock: vi.fn(),
+  getMongoFilemakerPersonByIdMock: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/api/parse-json', () => ({
@@ -48,6 +50,10 @@ vi.mock('@/features/playwright/server', async (importOriginal) => {
       listPlaywrightProgrammableConnectionsMock(...args),
   };
 });
+
+vi.mock('@/features/filemaker/server', () => ({
+  getMongoFilemakerPersonById: (...args: unknown[]) => getMongoFilemakerPersonByIdMock(...args),
+}));
 
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
 import { getHandler, postHandler } from './handler';
@@ -429,6 +435,105 @@ describe('integration connections handler', () => {
     expect(payload).toMatchObject({
       id: 'conn-vinted-1',
       name: 'Vinted Browser',
+    });
+  });
+
+  it('allows creating a Pracuj.pl job-search connection without credentials', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-pracuj-1',
+      slug: 'pracuj-pl',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Pracuj.pl Profile',
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-pracuj-1',
+      integrationId: 'integration-pracuj-1',
+      name: 'Pracuj.pl Profile',
+      username: undefined,
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightStorageStateUpdatedAt: null,
+      playwrightPersonaId: null,
+      traderaBrowserMode: 'builtin',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await postHandler(
+      new Request('http://localhost/api/v2/integrations/integration-pracuj-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-pracuj-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-pracuj-1', {
+      name: 'Pracuj.pl Profile',
+    });
+    expect(encryptSecretMock).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      id: 'conn-pracuj-1',
+      name: 'Pracuj.pl Profile',
+    });
+  });
+
+  it('resolves and stores a Persons profile for Pracuj.pl job applications', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-pracuj-1',
+      slug: 'pracuj-pl',
+    });
+    getMongoFilemakerPersonByIdMock.mockResolvedValue({
+      id: 'person-1',
+      firstName: 'Ada',
+      lastName: 'Lovelace',
+      fullName: 'Ada Lovelace',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'Pracuj.pl Profile',
+        jobApplicationPersonId: 'person-1',
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-pracuj-1',
+      integrationId: 'integration-pracuj-1',
+      name: 'Pracuj.pl Profile',
+      username: undefined,
+      jobApplicationPersonId: 'person-1',
+      jobApplicationPersonName: 'Ada Lovelace',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+    });
+
+    const response = await postHandler(
+      new Request('http://localhost/api/v2/integrations/integration-pracuj-1/connections', {
+        method: 'POST',
+      }) as never,
+      {} as never,
+      { id: 'integration-pracuj-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(getMongoFilemakerPersonByIdMock).toHaveBeenCalledWith('person-1');
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-pracuj-1', {
+      name: 'Pracuj.pl Profile',
+      jobApplicationPersonId: 'person-1',
+      jobApplicationPersonName: 'Ada Lovelace',
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-pracuj-1',
+      jobApplicationPersonId: 'person-1',
+      jobApplicationPersonName: 'Ada Lovelace',
     });
   });
 

@@ -5,7 +5,7 @@ import { TraderaSequencer } from '@/shared/lib/browser-execution/sequencers/Trad
 import { StepTracker } from '@/shared/lib/browser-execution/step-tracker';
 import { decryptSecret } from '@/shared/lib/security/encryption';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
-import { internalError } from '@/shared/errors/app-error';
+import { internalError, isAppError } from '@/shared/errors/app-error';
 import {
   TRADERA_LOGIN_SUCCESS_SELECTORS,
   TRADERA_LOGIN_FORM_SELECTORS,
@@ -13,6 +13,7 @@ import {
   PASSWORD_SELECTORS,
   LOGIN_BUTTON_SELECTORS,
   TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS,
+  TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS,
   TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS,
   TRADERA_AUTH_ERROR_SELECTORS,
   TRADERA_CAPTCHA_HINTS,
@@ -66,6 +67,7 @@ export type TraderaEnsureLoggedInStatus =
   | 'waiting_for_login_entry'
   | 'waiting_for_login_controls'
   | 'submitting_login'
+  | 'requesting_email_verification_code'
   | 'waiting_for_email_verification_code'
   | 'submitting_email_verification_code'
   | 'waiting_for_post_login'
@@ -193,6 +195,10 @@ export const readTraderaAuthState = async (page: Page): Promise<TraderaAuthState
   const loginFormVisible = Boolean(
     await findVisibleLocator(page, [...TRADERA_LOGIN_FORM_SELECTORS])
   );
+  const emailVerificationDetected = Boolean(
+    (await findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS)) ||
+      (await findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS))
+  );
   const cookieConsentVisible = Boolean(
     await findVisibleLocator(page, [...TRADERA_COOKIE_ACCEPT_SELECTORS])
   );
@@ -205,6 +211,7 @@ export const readTraderaAuthState = async (page: Page): Promise<TraderaAuthState
     ));
   const manualVerificationDetected =
     captchaDetected ||
+    emailVerificationDetected ||
     includesAnyHint(normalizedErrorText, TRADERA_MANUAL_VERIFICATION_TEXT_HINTS) ||
     includesAnyHint(normalizedUrl, TRADERA_MANUAL_VERIFICATION_URL_HINTS);
   const knownAuthenticatedUrl = isKnownAuthenticatedTraderaUrl(normalizedUrl);
@@ -214,6 +221,7 @@ export const readTraderaAuthState = async (page: Page): Promise<TraderaAuthState
   if (cookieConsentVisible) matchedSignals.push('cookie-consent');
   if (knownAuthenticatedUrl) matchedSignals.push('authenticated-url');
   if (captchaDetected) matchedSignals.push('captcha');
+  if (emailVerificationDetected) matchedSignals.push('email-verification');
   if (manualVerificationDetected && !captchaDetected) {
     matchedSignals.push('manual-verification');
   }
@@ -339,25 +347,42 @@ const waitForTraderaLoginControls = async (
   });
 };
 
-const waitForTraderaEmailVerificationControls = async (
+type TraderaEmailVerificationChallenge =
+  | {
+      kind: 'code_entry';
+      codeInput: Locator;
+      submitButton: Locator | null;
+    }
+  | {
+      kind: 'code_request';
+      requestButton: Locator;
+    };
+
+const waitForTraderaEmailVerificationChallenge = async (
   page: Page,
   timeoutMs = 10_000
-): Promise<{
-  codeInput: Locator;
-  submitButton: Locator | null;
-} | null> => {
+): Promise<TraderaEmailVerificationChallenge | null> => {
   const maxAttempts = Math.max(1, Math.ceil(timeoutMs / 300));
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const [codeInput, submitButton] = await Promise.all([
+    const [codeInput, submitButton, requestButton] = await Promise.all([
       findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS),
       findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS),
+      findVisibleLocator(page, TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS),
     ]);
 
     if (codeInput) {
       return {
+        kind: 'code_entry',
         codeInput,
         submitButton,
+      };
+    }
+
+    if (requestButton) {
+      return {
+        kind: 'code_request',
+        requestButton,
       };
     }
 
@@ -625,12 +650,37 @@ export const ensureLoggedIn = async (
         });
         authFlowState.currentAuthState = postLoginAuthState;
         if (
-          postLoginAuthState.resolution === 'manual_verification_required' &&
+          postLoginAuthState.resolution !== 'authenticated' &&
           !postLoginAuthState.captchaDetected
         ) {
-          const verificationControls = await waitForTraderaEmailVerificationControls(page);
           const emailAddress = connection.username?.trim() ?? '';
-          if (verificationControls !== null && emailAddress.length > 0) {
+          let challenge = await waitForTraderaEmailVerificationChallenge(page);
+          let verificationRequestedAfter = credentialSubmittedAt;
+
+          if (challenge?.kind === 'code_request') {
+            emitStatus({
+              status: 'requesting_email_verification_code',
+              message: 'Requesting Tradera email verification code.',
+              authState: postLoginAuthState,
+            });
+            verificationRequestedAfter = new Date().toISOString();
+            await Promise.allSettled([
+              page.waitForNavigation({
+                waitUntil: 'domcontentloaded',
+                timeout: 20_000,
+              }),
+              clickWithTraderaHumanizedInput({
+                page,
+                locator: challenge.requestButton,
+                inputBehavior: options.inputBehavior,
+              }),
+            ]);
+            await waitOnPage(page, 1500);
+            await acceptTraderaCookies(page);
+            challenge = await waitForTraderaEmailVerificationChallenge(page);
+          }
+
+          if (challenge?.kind === 'code_entry' && emailAddress.length > 0) {
             emitStatus({
               status: 'waiting_for_email_verification_code',
               message: 'Waiting for Tradera email verification code.',
@@ -638,12 +688,12 @@ export const ensureLoggedIn = async (
             });
             const verificationCode = await resolveTraderaEmailVerificationCode({
               emailAddress,
-              requestedAfter: credentialSubmittedAt,
+              requestedAfter: verificationRequestedAfter,
             });
             if (verificationCode !== null) {
               await fillWithTraderaHumanizedInput({
                 page,
-                locator: verificationControls.codeInput,
+                locator: challenge.codeInput,
                 value: verificationCode.code,
                 inputBehavior: options.inputBehavior,
               });
@@ -657,10 +707,10 @@ export const ensureLoggedIn = async (
                   waitUntil: 'domcontentloaded',
                   timeout: 20_000,
                 }),
-                verificationControls.submitButton
+                challenge.submitButton
                   ? clickWithTraderaHumanizedInput({
                       page,
-                      locator: verificationControls.submitButton,
+                      locator: challenge.submitButton,
                       inputBehavior: options.inputBehavior,
                     })
                   : page.keyboard.press('Enter'),
@@ -691,5 +741,22 @@ export const ensureLoggedIn = async (
     },
   });
 
-  await sequencer.run();
+  try {
+    await sequencer.run();
+  } catch (error) {
+    const executionSteps = tracker.getSteps();
+    if (isAppError(error)) {
+      throw error.withMeta({ executionSteps });
+    }
+
+    if (error instanceof Error) {
+      const metadataCarrier = error as Error & { meta?: Record<string, unknown> };
+      metadataCarrier.meta = {
+        ...(metadataCarrier.meta ?? {}),
+        executionSteps,
+      };
+    }
+
+    throw error;
+  }
 };

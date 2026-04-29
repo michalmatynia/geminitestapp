@@ -1125,6 +1125,98 @@ describe('processTraderaListingJob', () => {
     );
   });
 
+  it('persists auth execution steps when a live status check fails during authorisation', async () => {
+    const updateListingMock = vi.fn();
+    findProductListingByIdAcrossProvidersMock.mockResolvedValue({
+      listing: {
+        id: 'listing-check-status-auth-failure',
+        productId: 'product-1',
+        connectionId: 'connection-1',
+        integrationId: 'integration-1',
+        status: 'active',
+        externalListingId: 'external-1',
+        marketplaceData: {
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/1',
+          tradera: {
+            pendingExecution: {
+              action: 'check_status',
+              requestId: 'job-check-status-auth-failure',
+            },
+          },
+        },
+      },
+      repository: {
+        updateListingStatus: vi.fn(),
+        updateListing: updateListingMock,
+        appendExportHistory: vi.fn(),
+      },
+    });
+    runTraderaBrowserCheckStatusMock.mockRejectedValue(
+      internalError('AUTH_REQUIRED: Stored Tradera session expired.', {
+        requestedBrowserMode: 'headed',
+        executionSteps: [
+          {
+            id: 'auth_check',
+            label: 'Validate Tradera session',
+            status: 'error',
+            message: 'AUTH_REQUIRED: Stored Tradera session expired.',
+          },
+          {
+            id: 'auth_login',
+            label: 'Automated login',
+            status: 'pending',
+            message: null,
+          },
+        ],
+      })
+    );
+
+    await expect(
+      processTraderaListingJob({
+        listingId: 'listing-check-status-auth-failure',
+        action: 'check_status',
+        source: 'manual',
+        jobId: 'job-check-status-auth-failure',
+      })
+    ).rejects.toThrow('Tradera login requires manual verification. Open login window and retry.');
+
+    expect(updateListingMock).toHaveBeenCalledWith(
+      'listing-check-status-auth-failure',
+      expect.objectContaining({
+        lastStatusCheckAt: expect.any(Date),
+        marketplaceData: expect.objectContaining({
+          marketplace: 'tradera',
+          listingUrl: 'https://www.tradera.com/item/1',
+          tradera: expect.objectContaining({
+            pendingExecution: null,
+            lastExecution: expect.objectContaining({
+              requestId: 'job-check-status-auth-failure',
+              action: 'check_status',
+              ok: false,
+              error: 'Tradera login requires manual verification. Open login window and retry.',
+              errorCategory: 'AUTH',
+              metadata: expect.objectContaining({
+                requestedBrowserMode: 'headed',
+                executionSteps: [
+                  expect.objectContaining({
+                    id: 'auth_check',
+                    status: 'error',
+                  }),
+                  expect.objectContaining({
+                    id: 'auth_login',
+                    status: 'pending',
+                  }),
+                ],
+              }),
+            }),
+          }),
+        }),
+      })
+    );
+    expect(updateListingMock.mock.calls[0]?.[1]).not.toHaveProperty('status');
+  });
+
   it('persists AppError metadata on failure', async () => {
     const updateListingStatusMock = vi.fn();
     const updateListingMock = vi.fn();

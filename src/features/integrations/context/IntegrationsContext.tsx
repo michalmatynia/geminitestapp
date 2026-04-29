@@ -208,6 +208,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       handleTraderaManualLogin: actions.handleTraderaManualLogin,
       handleVintedManualLogin: actions.handleVintedManualLogin,
       handle1688ManualLogin: actions.handle1688ManualLogin,
+      handlePracujManualLogin: actions.handlePracujManualLogin,
       handleAllegroAuthorize: actions.handleAllegroAuthorize,
       handleAllegroDisconnect: actions.handleAllegroDisconnect,
       handleAllegroSandboxToggle: actions.handleAllegroSandboxToggle,

@@ -106,6 +106,8 @@ export const buildTraderaCheckStatusScript = (
 
   if (!resolvedSearchTitle) {
     skipStep('auth_check', 'Skipped because no searchable English title was available.');
+    skipStep('auth_login', 'Skipped because no searchable English title was available.');
+    skipStep('auth_manual', 'Skipped because no searchable English title was available.');
     updateStep('overview_open', 'error', 'No English title was available for Tradera section search.');
     skipStep('cookie_accept', 'Skipped because no searchable English title was available.');
     skipStep('search_active', 'Skipped because no searchable English title was available.');
@@ -147,6 +149,8 @@ export const buildTraderaCheckStatusScript = (
     const normalizedUrl = page.url().trim().toLowerCase();
     if (normalizedUrl.includes('/login')) {
       updateStep('auth_check', 'error', 'Stored Tradera session redirected to the Tradera login page.');
+      updateStep('auth_login', 'error', 'Tradera redirected to login after the status-check auth preflight.');
+      skipStep('auth_manual', 'Skipped because automated Tradera auth did not produce an active session.');
       skipStep('overview_open', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('search_active', 'Skipped because Tradera seller overview could not be accessed.');
       skipStep('inspect_active', 'Skipped because Tradera seller overview could not be accessed.');
@@ -167,6 +171,8 @@ export const buildTraderaCheckStatusScript = (
       return;
     }
     updateStep('auth_check', 'success', 'Stored Tradera session could access the seller overview.');
+    skipStep('auth_login', 'Tradera session was already active for status check.');
+    skipStep('auth_manual', 'Manual login was not needed for status check.');
     updateStep('overview_open', 'success', 'Tradera seller overview opened successfully.');
 
     let matchedResult = null;

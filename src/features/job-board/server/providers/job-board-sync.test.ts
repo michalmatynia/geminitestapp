@@ -222,10 +222,26 @@ describe('job-board-sync', () => {
               "description": "<p>Build APIs for merchants.</p>",
               "hiringOrganization": {
                 "name": "Acme Tech",
-                "sameAs": "https://acme.example"
+                "sameAs": "https://acme.example",
+                "description": "Acme builds commerce systems.",
+                "industry": "Software",
+                "address": {
+                  "streetAddress": "Konstruktorska 12A",
+                  "postalCode": "02-673",
+                  "addressLocality": "Warszawa",
+                  "addressCountry": "Poland"
+                }
               },
+              "datePosted": "2026-04-28T09:00:00.000Z",
+              "validThrough": "2026-05-28T23:59:59.000Z",
               "jobLocation": {
-                "address": { "addressLocality": "Warszawa" }
+                "address": {
+                  "streetAddress": "Puławska 180",
+                  "postalCode": "02-670",
+                  "addressLocality": "Warszawa",
+                  "addressRegion": "Masovian",
+                  "addressCountry": "Poland"
+                }
               }
             }
           </script>
@@ -241,10 +257,24 @@ describe('job-board-sync', () => {
 
     expect(snapshot).toMatchObject({
       companyLinks: ['https://acme.example'],
-      facts: [
+      companyProfile: {
+        facts: expect.arrayContaining([
+          { label: 'Company', value: 'Acme Tech' },
+          { label: 'Industry', value: 'Software' },
+          {
+            label: 'Company Address',
+            value: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
+          },
+        ]),
+        plainText: 'Acme builds commerce systems.',
+      },
+      facts: expect.arrayContaining([
         { label: 'Company', value: 'Acme Tech' },
         { label: 'Location', value: 'Warszawa' },
-      ],
+        { label: 'Address', value: 'Puławska 180, 02-670 Warszawa, Masovian, Poland' },
+        { label: 'Posted at', value: '2026-04-28T09:00:00.000Z' },
+        { label: 'Expires at', value: '2026-05-28T23:59:59.000Z' },
+      ]),
       headings: ['Senior Node Developer'],
       sections: [{ heading: 'Description', text: 'Build APIs for merchants.' }],
       url: 'https://justjoin.it/job-offer/acme-senior-node',

@@ -10,6 +10,7 @@ export type IntegrationModalViewContextValue = {
   isTradera: boolean;
   isVinted: boolean;
   is1688: boolean;
+  isPracuj: boolean;
   isAllegro: boolean;
   isLinkedIn: boolean;
   isBaselinker: boolean;

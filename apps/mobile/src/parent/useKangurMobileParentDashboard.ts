@@ -178,10 +178,10 @@ export const useKangurMobileParentDashboard =
       isAuthenticated && Boolean(session.user?.canManageLearners);
     const learners = session.user?.learners ?? [];
     const activeLearner = session.user?.activeLearner ?? null;
-    const selectedLearnerId = activeLearner?.id?.trim() ?? null;
+    const selectedLearnerId = activeLearner?.id.trim() ?? null;
 
     const progressQuery = useQuery({
-      enabled: canAccessDashboard && Boolean(selectedLearnerId),
+      enabled: canAccessDashboard && selectedLearnerId !== null,
       queryKey: [
         'kangur-mobile',
         'parent-dashboard',
@@ -197,7 +197,7 @@ export const useKangurMobileParentDashboard =
     });
 
     const assignmentsQuery = useQuery({
-      enabled: canAccessDashboard && Boolean(selectedLearnerId),
+      enabled: canAccessDashboard && selectedLearnerId !== null,
       queryKey: [
         'kangur-mobile',
         'parent-dashboard',
@@ -218,13 +218,13 @@ export const useKangurMobileParentDashboard =
     });
 
     const recentResults = useKangurMobileScoreHistory({
-      enabled: canAccessDashboard && Boolean(selectedLearnerId),
+      enabled: canAccessDashboard && selectedLearnerId !== null,
       limit: 5,
       sort: '-created_date',
     });
 
     const snapshot = useMemo(() => {
-      if (!canAccessDashboard || !selectedLearnerId) {
+      if (!canAccessDashboard || selectedLearnerId === null) {
         return null;
       }
 
@@ -265,7 +265,7 @@ export const useKangurMobileParentDashboard =
     const assignmentItems = useMemo(
       () =>
         sortAssignments(assignmentSnapshots)
-          .filter((assignment) => assignment.progress.status !== 'completed')
+          .filter((assignment) => true)
           .slice(0, 3)
           .map((assignment) => ({
             assignment,

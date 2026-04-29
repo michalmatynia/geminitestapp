@@ -15,6 +15,7 @@ const {
   humanizedClickMock,
   humanizedFillMock,
   validateTraderaQuickListProductConfigMock,
+  handlePracujBrowserTestMock,
   chromiumLaunchMock,
   browserNewContextMock,
   contextSetDefaultTimeoutMock,
@@ -50,6 +51,7 @@ const {
   humanizedClickMock: vi.fn(),
   humanizedFillMock: vi.fn(),
   validateTraderaQuickListProductConfigMock: vi.fn(),
+  handlePracujBrowserTestMock: vi.fn(),
   chromiumLaunchMock: vi.fn(),
   browserNewContextMock: vi.fn(),
   contextSetDefaultTimeoutMock: vi.fn(),
@@ -141,6 +143,10 @@ vi.mock('@/features/integrations/services/tradera-listing/tradera-auth-email-cod
     resolveTraderaEmailVerificationCodeMock(...args),
 }));
 
+vi.mock('./handler.pracuj-browser', () => ({
+  handlePracujBrowserTest: (...args: unknown[]) => handlePracujBrowserTestMock(...args),
+}));
+
 import { postTestConnectionHandler } from './handler';
 
 describe('integration connection test handler', () => {
@@ -186,6 +192,9 @@ describe('integration connection test handler', () => {
       categoryMapping: { reason: 'mapped', mapping: {} },
       shippingGroupResolution: { reason: 'mapped', shippingPriceEur: 5 },
     });
+    handlePracujBrowserTestMock.mockResolvedValue(
+      Response.json({ ok: true, steps: [], sessionReady: true })
+    );
 
     decryptSecretMock.mockImplementation((value: string) => {
       if (value === 'state-secret') {
@@ -700,6 +709,34 @@ describe('integration connection test handler', () => {
       )
     ).rejects.toThrow(
       'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.'
+    );
+    expect(chromiumLaunchMock).not.toHaveBeenCalled();
+  });
+
+  it('routes Pracuj.pl connections to the job-search browser handler', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-1',
+      slug: 'pracuj-pl',
+      name: 'Pracuj.pl',
+    });
+
+    const response = await postTestConnectionHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/integration-1/connections/connection-1/test',
+        { method: 'POST' }
+      ),
+      {} as never,
+      { id: 'integration-1', connectionId: 'connection-1' }
+    );
+
+    const payload = (await response.json()) as { ok: boolean; sessionReady?: boolean };
+
+    expect(payload).toMatchObject({ ok: true, sessionReady: true });
+    expect(handlePracujBrowserTestMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        connection: expect.objectContaining({ id: 'connection-1' }),
+        manualMode: true,
+      })
     );
     expect(chromiumLaunchMock).not.toHaveBeenCalled();
   });

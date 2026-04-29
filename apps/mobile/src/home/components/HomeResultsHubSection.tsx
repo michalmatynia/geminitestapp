@@ -72,6 +72,55 @@ function ResultsHubEmpty(): React.JSX.Element {
   );
 }
 
+function ResultsHubSummaryActions({
+  copy,
+  onShowDetails,
+}: {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  onShowDetails: () => void;
+}): React.JSX.Element {
+  return (
+    <>
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Wir bereiten die Schnellaktionen fur die letzten Ergebnisse fur den nachsten Startschritt vor. Du kannst sie sofort öffnen, wenn du möchtest.',
+          en: 'Preparing the recent result quick actions for the next home step. You can open them immediately if you want.',
+          pl: 'Przygotowujemy szczegóły ostatnich wyników na kolejny etap ekranu startowego. Możesz otworzyć je od razu, jeśli chcesz.',
+        })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <PrimaryButton
+          hint={copy({
+            de: 'Zeigt die letzten Ergebnisse mit Trainings- und Verlaufsaktionen an.',
+            en: 'Shows the recent results with practice and history actions.',
+            pl: 'Pokazuje ostatnie wyniki z akcjami treningu i historii.',
+          })}
+          label={copy({
+            de: 'Letzte Ergebnisse zeigen',
+            en: 'Show recent results',
+            pl: 'Pokaż ostatnie wyniki',
+          })}
+          onPress={onShowDetails}
+        />
+        <OutlineLink
+          fullWidth={false}
+          href={RESULTS_ROUTE}
+          hint={copy({
+            de: 'Öffnet den vollständigen Ergebnisverlauf.',
+            en: 'Opens the full results history.',
+            pl: 'Otwiera pełną historię wyników.',
+          })}
+          label={copy({
+            de: 'Vollständigen Verlauf öffnen',
+            en: 'Open full history',
+            pl: 'Otwórz pełną historię',
+          })}
+        />
+      </View>
+    </>
+  );
+}
+
 function ResultsHubSummary({
   areActionsReady,
   latestResult,
@@ -102,44 +151,7 @@ function ResultsHubSummary({
       {!areActionsReady ? (
         <DeferredResultsHubActionsPlaceholder />
       ) : (
-        <>
-          <Text style={{ color: '#475569', lineHeight: 20 }}>
-            {copy({
-              de: 'Wir bereiten die Schnellaktionen fur die letzten Ergebnisse fur den nachsten Startschritt vor. Du kannst sie sofort öffnen, wenn du möchtest.',
-              en: 'Preparing the recent result quick actions for the next home step. You can open them immediately if you want.',
-              pl: 'Przygotowujemy szczegóły ostatnich wyników na kolejny etap ekranu startowego. Możesz otworzyć je od razu, jeśli chcesz.',
-            })}
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <PrimaryButton
-              hint={copy({
-                de: 'Zeigt die letzten Ergebnisse mit Trainings- und Verlaufsaktionen an.',
-                en: 'Shows the recent results with practice and history actions.',
-                pl: 'Pokazuje ostatnie wyniki z akcjami treningu i historii.',
-              })}
-              label={copy({
-                de: 'Letzte Ergebnisse zeigen',
-                en: 'Show recent results',
-                pl: 'Pokaż ostatnie wyniki',
-              })}
-              onPress={onShowDetails}
-            />
-            <OutlineLink
-              fullWidth={false}
-              href={RESULTS_ROUTE}
-              hint={copy({
-                de: 'Öffnet den vollständigen Ergebnisverlauf.',
-                en: 'Opens the full results history.',
-                pl: 'Otwiera pełną historię wyników.',
-              })}
-              label={copy({
-                de: 'Vollständigen Verlauf öffnen',
-                en: 'Open full history',
-                pl: 'Otwórz pełną historię',
-              })}
-            />
-          </View>
-        </>
+        <ResultsHubSummaryActions copy={copy} onShowDetails={onShowDetails} />
       )}
     </View>
   );
@@ -234,35 +246,21 @@ export function HomeResultsHubSection({
 }: HomeRecentResultsSectionProps): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
   const [hasRequestedDetailedResults, setHasRequestedDetailedResults] = useState(false);
-  const [
-    areSummaryReady,
-    areActionsReady,
-    areCardsReady,
-  ] = useHomeScreenDeferredPanelSequence(HOME_RESULTS_HUB_PANEL_SEQUENCE, false);
+  const [areSummaryReady, areActionsReady, areCardsReady] = useHomeScreenDeferredPanelSequence(HOME_RESULTS_HUB_PANEL_SEQUENCE, false);
 
   const shouldRenderDetailedResults = (areSummaryReady && areActionsReady && areCardsReady) || hasRequestedDetailedResults;
   const latestResult = recentResults.results.length > 0 ? recentResults.results[0] : null;
 
-  const renderContent = (): React.JSX.Element => {
-    if (recentResults.isRestoringAuth || recentResults.isLoading) {
-      return <ResultsHubLoading />;
-    }
-    if (recentResults.isDeferred && recentResults.results.length === 0) {
-      return <ResultsHubDeferredPlaceholder />;
-    }
-    if (recentResults.error !== null) {
-      return (
-        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>
-          {recentResults.error}
-        </Text>
-      );
-    }
-    if (recentResults.results.length === 0) {
-      return <ResultsHubEmpty />;
-    }
-    if (!areSummaryReady) {
-      return <DeferredResultsHubSummaryPlaceholder />;
-    }
+  const renderLoading = (): React.JSX.Element => {
+    if (recentResults.isRestoringAuth || recentResults.isLoading) return <ResultsHubLoading />;
+    if (recentResults.isDeferred && recentResults.results.length === 0) return <ResultsHubDeferredPlaceholder />;
+    if (recentResults.error !== null) return <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{recentResults.error}</Text>;
+    return <ResultsHubEmpty />;
+  };
+
+  const renderReadyContent = (): React.JSX.Element => {
+    if (recentResults.results.length === 0) return <ResultsHubEmpty />;
+    if (!areSummaryReady) return <DeferredResultsHubSummaryPlaceholder />;
     if (!shouldRenderDetailedResults) {
       return (
         <ResultsHubSummary
@@ -274,6 +272,13 @@ export function HomeResultsHubSection({
       );
     }
     return <ResultsHubDetailedList results={recentResults.results} />;
+  };
+
+  const renderContent = (): React.JSX.Element => {
+    if (recentResults.isRestoringAuth || recentResults.isLoading || (recentResults.isDeferred && recentResults.results.length === 0) || recentResults.error !== null) {
+      return renderLoading();
+    }
+    return renderReadyContent();
   };
 
   return (

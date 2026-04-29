@@ -13,6 +13,60 @@ import {
   DeferredHomeInsightsRecentLessonsDetails,
 } from '../home-screen-deferred';
 
+function LessonsList({
+  copy,
+  areDeferredHomeInsightRecentLessonsDetailsReady,
+  recentCheckpoints,
+  primaryCheckpoint,
+}: {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  areDeferredHomeInsightRecentLessonsDetailsReady: boolean;
+  recentCheckpoints: KangurMobileHomeLessonCheckpointItem[];
+  primaryCheckpoint: KangurMobileHomeLessonCheckpointItem | null;
+}): React.JSX.Element {
+  if (recentCheckpoints.length === 0) {
+    return (
+      <Text style={{ color: '#475569', lineHeight: 20 }}>
+        {copy({
+          de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit die letzten Lektionen hier erscheinen.',
+          en: 'There are no saved checkpoints yet. Open a lesson and save the first checkpoint so recent lessons appear here.',
+          pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.',
+        })}
+      </Text>
+    );
+  }
+
+  if (!areDeferredHomeInsightRecentLessonsDetailsReady && primaryCheckpoint) {
+    return (
+      <View style={{ gap: 12 }}>
+        <LessonCheckpointCard item={primaryCheckpoint} />
+        <DeferredHomeInsightsRecentLessonsDetails />
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ gap: 12 }}>
+      {recentCheckpoints.map((item) => (
+        <LessonCheckpointCard key={item.componentId} item={item} />
+      ))}
+      <OutlineLink
+        href={LESSONS_ROUTE}
+        hint={copy({
+          de: 'Öffnet den vollständigen Lektionskatalog.',
+          en: 'Opens the full lessons catalog.',
+          pl: 'Otwiera pełny katalog lekcji.',
+        })}
+        label={copy({
+          de: 'Alle Lektionen öffnen',
+          en: 'Open all lessons',
+          pl: 'Otwórz wszystkie lekcje',
+        })}
+      />
+    </View>
+  );
+}
+
 export function HomeSecondaryRecentLessonsSection({
   recentCheckpoints,
 }: {
@@ -40,39 +94,12 @@ export function HomeSecondaryRecentLessonsSection({
           pl: 'Każdy lokalnie zapisany checkpoint albo ukończenie lekcji pojawia się tutaj od razu, aby można było ze startu wrócić do ostatnio zapisanej lekcji.',
         })}
       </Text>
-      {recentCheckpoints.length === 0 ? (
-        <Text style={{ color: '#475569', lineHeight: 20 }}>
-          {copy({
-            de: 'Es gibt noch keine gespeicherten Checkpoints. Öffne eine Lektion und speichere den ersten Stand, damit die letzten Lektionen hier erscheinen.',
-            en: 'There are no saved checkpoints yet. Open a lesson and save the first checkpoint so recent lessons appear here.',
-            pl: 'Nie ma jeszcze zapisanych checkpointów. Otwórz lekcję i zapisz pierwszy stan, aby ostatnie lekcje pojawiły się tutaj.',
-          })}
-        </Text>
-      ) : !areDeferredHomeInsightRecentLessonsDetailsReady && primaryCheckpoint ? (
-        <View style={{ gap: 12 }}>
-          <LessonCheckpointCard item={primaryCheckpoint} />
-          <DeferredHomeInsightsRecentLessonsDetails />
-        </View>
-      ) : (
-        <View style={{ gap: 12 }}>
-          {recentCheckpoints.map((item) => (
-            <LessonCheckpointCard key={item.componentId} item={item} />
-          ))}
-          <OutlineLink
-            href={LESSONS_ROUTE}
-            hint={copy({
-              de: 'Öffnet den vollständigen Lektionskatalog.',
-              en: 'Opens the full lessons catalog.',
-              pl: 'Otwiera pełny katalog lekcji.',
-            })}
-            label={copy({
-              de: 'Alle Lektionen öffnen',
-              en: 'Open all lessons',
-              pl: 'Otwórz wszystkie lekcje',
-            })}
-          />
-        </View>
-      )}
+      <LessonsList
+        copy={copy}
+        areDeferredHomeInsightRecentLessonsDetailsReady={areDeferredHomeInsightRecentLessonsDetailsReady}
+        recentCheckpoints={recentCheckpoints}
+        primaryCheckpoint={primaryCheckpoint}
+      />
     </SectionCard>
   );
 }

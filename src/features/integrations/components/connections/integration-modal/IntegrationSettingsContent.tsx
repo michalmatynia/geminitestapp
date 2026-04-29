@@ -140,6 +140,15 @@ const resolve1688Settings = (connection: unknown): Scanner1688SettingsSnapshot =
   };
 };
 
+const resolveJobApplicationPersonLabel = (
+  connection: IntegrationConnection | null
+): string | null => {
+  const personName = connection?.jobApplicationPersonName?.trim() ?? '';
+  if (personName.length > 0) return personName;
+  const personId = connection?.jobApplicationPersonId?.trim() ?? '';
+  return personId.length > 0 ? personId : null;
+};
+
 function BrowserSessionCard({
   sessionMeta,
   onOpenSessionModal,
@@ -178,6 +187,7 @@ export function IntegrationSettingsContent(): React.JSX.Element {
     isTradera,
     isVinted,
     is1688,
+    isPracuj,
     showPlaywright,
     activeConnection,
     onOpenSessionModal,
@@ -190,11 +200,16 @@ export function IntegrationSettingsContent(): React.JSX.Element {
     activeConnection && typeof activeConnection === 'object'
       ? (activeConnection as IntegrationConnection)
       : null;
+  const jobApplicationPersonLabel = resolveJobApplicationPersonLabel(activeConnectionRecord);
   const showTraderaBrowserSettings = isTradera && showPlaywright && Boolean(activeConnection);
   const showVintedBrowserSettings = isVinted && showPlaywright && Boolean(activeConnection);
   const show1688BrowserSettings = is1688 && showPlaywright && Boolean(activeConnection);
+  const showPracujBrowserSettings = isPracuj && showPlaywright && Boolean(activeConnection);
   const showBrowserAutomationSettings =
-    showTraderaBrowserSettings || showVintedBrowserSettings || show1688BrowserSettings;
+    showTraderaBrowserSettings ||
+    showVintedBrowserSettings ||
+    show1688BrowserSettings ||
+    showPracujBrowserSettings;
 
   return (
     <div>
@@ -410,6 +425,69 @@ export function IntegrationSettingsContent(): React.JSX.Element {
                 <div className='mt-1 text-white'>
                   {scanner1688Settings.maxExtractedImages ?? 'Global default'}
                 </div>
+              </div>
+            </div>
+
+            <BrowserSessionCard
+              sessionMeta={sessionMeta}
+              onOpenSessionModal={onOpenSessionModal}
+            />
+          </div>
+          <div className='mt-4'>
+            <PlaywrightTabContent />
+          </div>
+        </>
+      )}
+
+      {showPracujBrowserSettings && (
+        <>
+          <div className='mt-4 space-y-4 rounded-md border border-border/60 bg-card/30 p-4 text-xs text-gray-300'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <div className='space-y-1'>
+                <p className='text-sm font-semibold text-white'>Pracuj.pl job applications</p>
+                <p>
+                  Store a reusable Playwright candidate-session profile for Pracuj.pl so job
+                  application runs can start already authenticated.
+                </p>
+              </div>
+              {activeConnectionRecord && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={(): void => setEditingConnection(activeConnectionRecord)}
+                >
+                  Edit active connection
+                </Button>
+              )}
+            </div>
+
+            <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
+              <div className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-400'>Login method</div>
+                <div className='mt-1 text-white'>
+                  {activeConnectionRecord?.username?.trim()
+                    ? 'Credentials + reusable session'
+                    : 'Session-only browser login'}
+                </div>
+              </div>
+              <div className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-400'>Browser session</div>
+                <div className='mt-1 text-white'>
+                  {sessionMeta.hasPlaywrightStorageState ? 'Stored' : 'Missing'}
+                </div>
+              </div>
+              <div className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-400'>Session updated</div>
+                <div className='mt-1 text-white'>
+                  {sessionMeta.playwrightStorageStateUpdatedAt
+                    ? new Date(sessionMeta.playwrightStorageStateUpdatedAt).toLocaleString()
+                    : '—'}
+                </div>
+              </div>
+              <div className='rounded-md border border-border/60 bg-card/40 px-3 py-2'>
+                <div className='text-[10px] uppercase tracking-wide text-gray-400'>Person profile</div>
+                <div className='mt-1 text-white'>{jobApplicationPersonLabel ?? 'Not selected'}</div>
               </div>
             </div>
 

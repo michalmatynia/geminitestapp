@@ -6,7 +6,15 @@ import { useRouter } from 'nextjs-toploader/app';
 import { useEffect } from 'react';
 
 import { useIntegrationList } from '@/features/integrations/hooks/useIntegrationList';
-import { Button, Badge, Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/primitives.public';
+import {
+  Badge,
+  Button,
+  Card,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui/primitives.public';
 import { ListPanel } from '@/shared/ui/navigation-and-layout.public';
 import { StatusBadge } from '@/shared/ui/data-display.public';
 
@@ -15,7 +23,6 @@ export function IntegrationList(): React.JSX.Element {
   const {
     handleIntegrationClick,
     integrationSlugs,
-    hasIntegrations,
     traderaDefinition,
     allegroDefinition,
     vintedDefinition,
@@ -90,6 +97,9 @@ export function IntegrationList(): React.JSX.Element {
         'Connect a reusable Pracuj.pl candidate profile for authenticated job applications.',
     },
   ];
+  const hasMarketplaceIntegrations = marketplaceNodes.some((item) =>
+    integrationSlugs.includes(item.slug)
+  );
 
   return (
     <ListPanel
@@ -159,8 +169,10 @@ export function IntegrationList(): React.JSX.Element {
                       </Badge>
                     );
                   })}
-                  {!hasIntegrations && (
-                    <div className='text-xs text-gray-500'>No integrations added yet.</div>
+                  {!hasMarketplaceIntegrations && (
+                    <div className='text-xs text-gray-500'>
+                      No marketplace integrations added yet.
+                    </div>
                   )}
                 </div>
               </div>

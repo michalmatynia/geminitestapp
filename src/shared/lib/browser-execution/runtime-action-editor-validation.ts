@@ -11,6 +11,11 @@ const TRADERA_QUICKLIST_RUNTIME_KEYS = new Set<ActionSequenceKey>([
 ]);
 
 const TRADERA_QUICKLIST_FORM_STEP_IDS = new Set<StepId>(STEP_GROUPS.TRADERA_FORM);
+const TRADERA_CHECK_STATUS_AUTH_STEP_IDS = [
+  'auth_check',
+  'auth_login',
+  'auth_manual',
+] satisfies StepId[];
 
 const unique = (values: string[]): string[] => [...new Set(values)];
 
@@ -160,6 +165,49 @@ const collectTraderaQuicklistPublishErrors = (
   return errors;
 };
 
+const collectTraderaCheckStatusErrors = (
+  stepIds: StepId[],
+  runtimeKey: ActionSequenceKey
+): string[] => {
+  if (runtimeKey !== 'tradera_check_status') {
+    return [];
+  }
+
+  const missingAuthSteps = TRADERA_CHECK_STATUS_AUTH_STEP_IDS.filter(
+    (stepId) => !stepIds.includes(stepId)
+  );
+  if (missingAuthSteps.length > 0) {
+    return [
+      `Runtime action "${runtimeKey}" must include auth_check, auth_login, and auth_manual.`,
+    ];
+  }
+
+  const authCheckIndex = stepIds.indexOf('auth_check');
+  const authLoginIndex = stepIds.indexOf('auth_login');
+  const authManualIndex = stepIds.indexOf('auth_manual');
+  if (!(authCheckIndex < authLoginIndex && authLoginIndex < authManualIndex)) {
+    return [
+      `Runtime action "${runtimeKey}" must place auth_check before auth_login before auth_manual.`,
+    ];
+  }
+
+  const overviewOpenIndex = stepIds.indexOf('overview_open');
+  if (overviewOpenIndex === -1) {
+    return [];
+  }
+
+  const authStepAfterOverview = TRADERA_CHECK_STATUS_AUTH_STEP_IDS.find(
+    (stepId) => stepIds.indexOf(stepId) > overviewOpenIndex
+  );
+  if (authStepAfterOverview !== undefined) {
+    return [
+      `Runtime action "${runtimeKey}" must place auth_check, auth_login, and auth_manual before overview_open.`,
+    ];
+  }
+
+  return [];
+};
+
 export function validateRuntimeActionEditorBlocks(input: {
   blocks: PlaywrightActionBlock[];
   runtimeKey: ActionSequenceKey;
@@ -171,5 +219,6 @@ export function validateRuntimeActionEditorBlocks(input: {
     ...collectRuntimeActionShapeErrors(blocks, runtimeKey),
     ...collectRuntimeActionSequenceErrors(enabledRuntimeStepIds, runtimeKey),
     ...collectTraderaQuicklistErrors(enabledRuntimeStepIds, runtimeKey),
+    ...collectTraderaCheckStatusErrors(enabledRuntimeStepIds, runtimeKey),
   ];
 }

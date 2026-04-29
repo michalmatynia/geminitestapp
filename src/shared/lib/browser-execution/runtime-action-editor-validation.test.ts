@@ -102,6 +102,36 @@ describe('runtime-action-editor-validation', () => {
     );
   });
 
+  it('requires auth recovery steps for Tradera check-status manifests', () => {
+    const errors = validateRuntimeActionEditorBlocks({
+      runtimeKey: 'tradera_check_status',
+      blocks: getSeedBlocks('tradera_check_status').filter(
+        (block) => block.refId !== 'auth_login'
+      ),
+    });
+
+    expect(errors).toContain(
+      'Runtime action "tradera_check_status" must include auth_check, auth_login, and auth_manual.'
+    );
+  });
+
+  it('requires check-status auth steps to stay in login-recovery order', () => {
+    const blocks = getSeedBlocks('tradera_check_status');
+    const authLoginIndex = blocks.findIndex((block) => block.refId === 'auth_login');
+    const authManualIndex = blocks.findIndex((block) => block.refId === 'auth_manual');
+    const [authManualBlock] = blocks.splice(authManualIndex, 1);
+    blocks.splice(authLoginIndex, 0, authManualBlock as PlaywrightActionBlock);
+
+    const errors = validateRuntimeActionEditorBlocks({
+      runtimeKey: 'tradera_check_status',
+      blocks,
+    });
+
+    expect(errors).toContain(
+      'Runtime action "tradera_check_status" must place auth_check before auth_login before auth_manual.'
+    );
+  });
+
   it('rejects non-runtime blocks inside runtime actions', () => {
     const blocks = [
       ...getSeedBlocks('tradera_quicklist_list'),

@@ -4,7 +4,8 @@ import React from 'react';
 
 import {
   is1688IntegrationSlug,
-  isTraderaBrowserIntegrationSlug,
+  isBrowserAutomationIntegrationSlug,
+  isPracujPlIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -19,6 +20,36 @@ import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { SimpleSettingsList } from '@/shared/ui/templates.public';
 
 import { ConnectionEditModal } from './ConnectionEditModal';
+
+const resolveConnectionPersonLabel = (connection: IntegrationConnection): string => {
+  const personName = connection.jobApplicationPersonName?.trim() ?? '';
+  if (personName.length > 0) return personName;
+  return connection.jobApplicationPersonId?.trim() ?? '';
+};
+
+const resolveConnectionDescription = (
+  connection: IntegrationConnection,
+  activeConnectionId: string | null
+): React.ReactNode => {
+  const personLabel = resolveConnectionPersonLabel(connection);
+  const isActive = activeConnectionId === connection.id;
+  if (personLabel.length === 0 && !isActive) return undefined;
+
+  return (
+    <div className='flex flex-wrap items-center gap-2'>
+      {personLabel.length > 0 && (
+        <span className='text-[10px] uppercase tracking-wide text-sky-300 font-bold'>
+          Person: {personLabel}
+        </span>
+      )}
+      {isActive && (
+        <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>
+          Active connection
+        </span>
+      )}
+    </div>
+  );
+};
 
 export function ConnectionList(): React.JSX.Element {
   const [connectionToEdit, setConnectionToEdit] = React.useState<IntegrationConnection | null>(
@@ -36,15 +67,16 @@ export function ConnectionList(): React.JSX.Element {
     handleTraderaManualLogin,
     handleVintedManualLogin,
     handle1688ManualLogin,
+    handlePracujManualLogin,
   } = useIntegrationsActions();
 
   if (!activeIntegration) return <></>;
 
   const integrationSlug = activeIntegration.slug;
-  const isTraderaBrowser = isTraderaBrowserIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
   const is1688 = is1688IntegrationSlug(integrationSlug);
-  const isBrowserAutomation = isTraderaBrowser || isVinted || is1688;
+  const isPracuj = isPracujPlIntegrationSlug(integrationSlug);
+  const isBrowserAutomation = isBrowserAutomationIntegrationSlug(integrationSlug);
   const isAllegro = integrationSlug === 'allegro';
   const isBaselinker = integrationSlug === 'baselinker';
 
@@ -56,13 +88,8 @@ export function ConnectionList(): React.JSX.Element {
           title: connection.name,
           subtitle:
             connection.username?.trim() ||
-            (isVinted || is1688 ? 'Session-based browser login' : undefined),
-          description:
-            editingConnectionId === connection.id ? (
-              <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>
-                Active connection
-              </span>
-            ) : undefined,
+            (isVinted || is1688 || isPracuj ? 'Session-based browser login' : undefined),
+          description: resolveConnectionDescription(connection, editingConnectionId),
           original: connection,
         }))}
         emptyMessage='No connections yet.'
@@ -109,6 +136,7 @@ export function ConnectionList(): React.JSX.Element {
                 onClick={(): void => {
                   if (is1688) void handle1688ManualLogin(item.original);
                   else if (isVinted) void handleVintedManualLogin(item.original);
+                  else if (isPracuj) void handlePracujManualLogin(item.original);
                   else void handleTraderaManualLogin(item.original);
                 }}
                 disabled={isTesting}

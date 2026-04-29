@@ -37,6 +37,8 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   linkedinPersonUrn: z.string().nullable().optional(),
   linkedinProfileUrl: z.string().nullable().optional(),
   hasLinkedInAccessToken: z.boolean().optional(),
+  jobApplicationPersonId: z.string().trim().nullable().optional(),
+  jobApplicationPersonName: z.string().trim().nullable().optional(),
   baseApiToken: z.string().nullable().optional(),
   hasBaseApiToken: z.boolean().optional(),
   baseTokenUpdatedAt: z.string().nullable().optional(),
@@ -171,6 +173,8 @@ export type ConnectionFormState = {
   scanner1688MinimumCandidateScore: string;
   scanner1688MaxExtractedImages: string;
   scanner1688AllowUrlImageSearchFallback: boolean;
+  jobApplicationPersonId: string;
+  jobApplicationPersonName: string;
   traderaBrowserMode: 'builtin' | 'scripted';
   traderaCategoryStrategy: 'mapper' | 'top_suggested';
   playwrightListingScript: string;

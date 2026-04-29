@@ -2,10 +2,11 @@ import { Text, View } from 'react-native';
 import { KangurMobileCard as Card, KangurMobileLinkButton as LinkButton } from '../../shared/KangurMobileUi';
 import { LessonCheckpointRow, LESSONS_ROUTE } from '../daily-plan-primitives';
 import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type UseKangurMobileLessonCheckpointsResult, type KangurMobileLessonCheckpointItem } from '../useKangurMobileLessonCheckpoints';
 
 interface DailyPlanCheckpointsSectionProps {
     copy: KangurMobileCopy;
-    lessonCheckpoints: any;
+    lessonCheckpoints: UseKangurMobileLessonCheckpointsResult;
 }
 
 export function DailyPlanCheckpointsSection({
@@ -29,7 +30,7 @@ export function DailyPlanCheckpointsSection({
                 </Text>
             ) : (
                 <View style={{ gap: 12 }}>
-                    {lessonCheckpoints.recentCheckpoints.map((item: any) => (
+                    {lessonCheckpoints.recentCheckpoints.map((item: KangurMobileLessonCheckpointItem) => (
                         <LessonCheckpointRow key={item.componentId} item={item} />
                     ))}
                     <LinkButton href={LESSONS_ROUTE} label={copy({ de: 'Lektionen öffnen', en: 'Open lessons', pl: 'Otwórz lekcje' })} />

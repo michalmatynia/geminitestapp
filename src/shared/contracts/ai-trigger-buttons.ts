@@ -23,6 +23,7 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'cms_page_header',
   'cms_block_header',
   'admin_dashboard',
+  'filemaker_organization_job_application',
 ]);
 
 export type AiTriggerButtonLocation = z.infer<typeof aiTriggerButtonLocationSchema>;

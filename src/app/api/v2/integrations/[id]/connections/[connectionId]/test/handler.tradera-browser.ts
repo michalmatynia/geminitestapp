@@ -17,6 +17,7 @@ import {
   PASSWORD_SELECTORS,
   TITLE_SELECTORS,
   TRADERA_EMAIL_VERIFICATION_CODE_INPUT_SELECTORS,
+  TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS,
   TRADERA_EMAIL_VERIFICATION_SUBMIT_SELECTORS,
   USERNAME_SELECTORS,
 } from '@/features/integrations/services/tradera-listing/config';
@@ -258,6 +259,25 @@ export async function handleTraderaBrowserTest(
         ),
       };
     };
+    const findEmailVerificationRequestButton = async (
+      timeoutMs = 10_000
+    ): Promise<Locator | null> => {
+      const maxAttempts = Math.max(1, Math.ceil(timeoutMs / 300));
+
+      for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+        const requestButton = await findVisibleLocator(
+          activePage,
+          TRADERA_EMAIL_VERIFICATION_REQUEST_SELECTORS
+        );
+        if (requestButton !== null) {
+          return requestButton;
+        }
+
+        await activePage.waitForTimeout(300).catch(() => undefined);
+      }
+
+      return null;
+    };
     const fillAndSubmitLoginCredentials = async (
       username: string,
       password: string,
@@ -298,7 +318,30 @@ export async function handleTraderaBrowserTest(
         return true;
       }
 
-      const verificationControls = await findEmailVerificationControls();
+      let verificationControls = await findEmailVerificationControls(1000);
+      let verificationRequestedAfter = requestedAfter;
+      if (verificationControls === null) {
+        const requestButton = await findEmailVerificationRequestButton();
+        if (requestButton !== null) {
+          pushStep(
+            stepLabel,
+            'pending',
+            'Requesting Tradera verification code by email.'
+          );
+          verificationRequestedAfter = new Date().toISOString();
+          await Promise.allSettled([
+            activePage.waitForNavigation({
+              waitUntil: 'domcontentloaded',
+              timeout: 20_000,
+            }),
+            utils.humanizedClick(requestButton),
+          ]);
+          await activePage.waitForTimeout(1500).catch(() => undefined);
+          await acceptCookies();
+          verificationControls = await findEmailVerificationControls();
+        }
+      }
+
       if (verificationControls === null || loginUsername.length === 0) {
         return false;
       }
@@ -310,7 +353,7 @@ export async function handleTraderaBrowserTest(
       );
       const verificationCode = await resolveTraderaEmailVerificationCode({
         emailAddress: loginUsername,
-        requestedAfter,
+        requestedAfter: verificationRequestedAfter,
         timeoutMs: Math.min(manualLoginTimeoutMs, 120_000),
       });
       if (verificationCode === null) {

@@ -4,6 +4,24 @@ import type { JobScanEvaluation, JobScanStep } from '@/shared/contracts/job-boar
 
 import type { JobBoardStructuredSnapshot } from '../providers/job-board-sync';
 
+type SnapshotFallbackContext = {
+  addressLine: string | null;
+  applyUrl: string | null;
+  city: string | null;
+  companyName: string | null;
+  companyProfile: NonNullable<JobBoardStructuredSnapshot['companyProfile']> | null;
+  country: string | null;
+  expiresAt: string | null;
+  facts: Array<{ label: string; value: string }>;
+  listingTitle: string | null;
+  postalCode: string | null;
+  postedAt: string | null;
+  profileText: string | null;
+  region: string | null;
+  snapshot: JobBoardStructuredSnapshot;
+  website: string | null;
+};
+
 export const normalizeProbeText = (value: unknown): string =>
   typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
 
@@ -68,58 +86,141 @@ export const hostnameFromUrl = (value: string | null): string | null => {
   }
 };
 
+const combinedFacts = (
+  snapshot: JobBoardStructuredSnapshot
+): Array<{ label: string; value: string }> => [
+  ...(snapshot.facts ?? []),
+  ...(snapshot.companyProfile?.facts ?? []),
+];
+
+const snapshotCompanyName = (
+  facts: Array<{ label: string; value: string }>,
+  companyProfile: SnapshotFallbackContext['companyProfile']
+): string | null => {
+  const profileTitle = cleanCompanyProfileTitle(companyProfile?.title);
+  return firstNonEmpty([
+    snapshotFactValue(facts, [/^pracodawca$/i, /^firma$/i, /^company$/i, /^employer$/i, /^nazwa$/i]),
+    profileTitle,
+  ]);
+};
+
+const snapshotListingTitle = (snapshot: JobBoardStructuredSnapshot): string | null =>
+  firstNonEmpty([
+    cleanListingTitle(snapshot.headings?.[0]),
+    cleanListingTitle(snapshot.ogTitle),
+    cleanListingTitle(snapshot.title),
+  ]);
+
+const snapshotCity = (snapshot: JobBoardStructuredSnapshot): string | null =>
+  snapshotFactValue(snapshot.facts, [/lokalizacja/i, /miejsce pracy/i, /city/i, /location/i]);
+
+const snapshotAddressFields = (
+  facts: Array<{ label: string; value: string }>
+): Pick<SnapshotFallbackContext, 'addressLine' | 'country' | 'postalCode' | 'region'> => ({
+  addressLine: snapshotFactValue(facts, [
+    /^address$/i,
+    /company address/i,
+    /street address/i,
+    /adres/i,
+    /siedziba/i,
+    /headquarters/i,
+  ]),
+  country: snapshotFactValue(facts, [/country/i, /kraj/i]),
+  postalCode: snapshotFactValue(facts, [/postal/i, /kod pocztowy/i]),
+  region: snapshotFactValue(facts, [/region/i, /wojew/i, /province/i]),
+});
+
+const snapshotDateFields = (
+  facts: Array<{ label: string; value: string }>
+): Pick<SnapshotFallbackContext, 'expiresAt' | 'postedAt'> => ({
+  expiresAt: snapshotFactValue(facts, [
+    /expires/i,
+    /valid through/i,
+    /valid until/i,
+    /deadline/i,
+    /wazna/i,
+    /ważna/i,
+    /termin/i,
+  ]),
+  postedAt: snapshotFactValue(facts, [
+    /posted/i,
+    /date posted/i,
+    /publication/i,
+    /opublikow/i,
+    /data publikacji/i,
+  ]),
+});
+
+const buildSnapshotFallbackContext = (
+  snapshot: JobBoardStructuredSnapshot
+): SnapshotFallbackContext => {
+  const companyProfile = snapshot.companyProfile ?? null;
+  const facts = combinedFacts(snapshot);
+  const address = snapshotAddressFields(facts);
+  const dates = snapshotDateFields(facts);
+  return {
+    ...address,
+    ...dates,
+    applyUrl: firstNonEmpty(snapshot.applyUrls ?? []),
+    city: snapshotCity(snapshot),
+    companyName: snapshotCompanyName(facts, companyProfile),
+    companyProfile,
+    facts,
+    listingTitle: snapshotListingTitle(snapshot),
+    profileText: clipProbeText(
+      firstSnapshotSectionText(companyProfile?.sections) ?? companyProfile?.plainText,
+      8_000
+    ),
+    snapshot,
+    website: firstNonEmpty(companyProfile?.websiteUrls ?? []),
+  };
+};
+
+const hasSnapshotFallbackData = (context: SnapshotFallbackContext): boolean =>
+  context.listingTitle !== null || context.companyName !== null || context.profileText !== null;
+
+const buildFallbackCompany = (context: SnapshotFallbackContext): Record<string, unknown> => ({
+  addressLine: context.addressLine,
+  city: context.city,
+  country: context.country,
+  description: context.profileText,
+  domain: hostnameFromUrl(context.website),
+  industry: snapshotFactValue(context.facts, [/industry/i, /branża/i, /branza/i]),
+  name: context.companyName,
+  postalCode: context.postalCode,
+  profileUrl: context.companyProfile?.url ?? firstNonEmpty(context.snapshot.companyLinks ?? []),
+  size: snapshotFactValue(context.facts, [/company size/i, /size/i, /employees/i, /pracownik/i]),
+  website: context.website,
+});
+
+const buildFallbackListing = (context: SnapshotFallbackContext): Record<string, unknown> => ({
+  applyUrl: context.applyUrl,
+  benefits: [],
+  city: context.city,
+  country: 'Poland',
+  description:
+    firstSnapshotSectionText(context.snapshot.sections) ?? clipProbeText(context.snapshot.plainText),
+  expiresAt: context.expiresAt,
+  postedAt: context.postedAt,
+  region: context.region,
+  requirements: [],
+  responsibilities: [],
+  salary: null,
+  technologies: [],
+  title: context.listingTitle,
+});
+
 export const buildSnapshotFallbackEvaluation = (
   snapshot: JobBoardStructuredSnapshot | null,
   finalUrl: string,
   evaluatedAt: string
 ): JobScanEvaluation => {
   if (snapshot === null) return null;
-  const companyProfile = snapshot.companyProfile ?? null;
-  const profileText = clipProbeText(
-    firstSnapshotSectionText(companyProfile?.sections) ?? companyProfile?.plainText,
-    8_000
-  );
-  const profileTitle = cleanCompanyProfileTitle(companyProfile?.title);
-  const companyName = firstNonEmpty([
-    snapshotFactValue(snapshot.facts, [/pracodawca/i, /firma/i, /company/i, /employer/i]),
-    snapshotFactValue(companyProfile?.facts, [/nazwa/i, /firma/i, /company/i, /employer/i]),
-    profileTitle,
-  ]);
-  const listingTitle = firstNonEmpty([
-    cleanListingTitle(snapshot.headings?.[0]),
-    cleanListingTitle(snapshot.ogTitle),
-    cleanListingTitle(snapshot.title),
-  ]);
-  const city = snapshotFactValue(snapshot.facts, [
-    /lokalizacja/i,
-    /miejsce pracy/i,
-    /city/i,
-    /location/i,
-  ]);
-  const applyUrl = firstNonEmpty(snapshot.applyUrls ?? []);
-  const website = firstNonEmpty(companyProfile?.websiteUrls ?? []);
-
-  if (listingTitle === null && companyName === null && profileText === null) return null;
+  const context = buildSnapshotFallbackContext(snapshot);
+  if (!hasSnapshotFallbackData(context)) return null;
   return {
-    company: {
-      name: companyName,
-      description: profileText,
-      profileUrl: companyProfile?.url ?? firstNonEmpty(snapshot.companyLinks ?? []),
-      website,
-      domain: hostnameFromUrl(website),
-    },
-    listing: {
-      title: listingTitle,
-      description: firstSnapshotSectionText(snapshot.sections) ?? clipProbeText(snapshot.plainText),
-      city,
-      country: 'Poland',
-      salary: null,
-      applyUrl,
-      requirements: [],
-      responsibilities: [],
-      benefits: [],
-      technologies: [],
-    },
+    company: buildFallbackCompany(context),
+    listing: buildFallbackListing(context),
     confidence: 0.62,
     modelId: 'job-board-snapshot-fallback',
     error: null,
@@ -142,6 +243,20 @@ const mergeEvaluationRecord = (
   return merged;
 };
 
+const hasListingTitle = (listing: Record<string, unknown> | null): boolean => {
+  const title = listing?.['title'];
+  return typeof title === 'string' && title.trim().length > 0;
+};
+
+const mergedError = (
+  primary: NonNullable<JobScanEvaluation>,
+  fallback: NonNullable<JobScanEvaluation>,
+  listing: Record<string, unknown> | null
+): string | null => {
+  if (hasListingTitle(listing)) return null;
+  return primary.error ?? fallback.error;
+};
+
 export const mergeJobScanEvaluations = (
   primary: JobScanEvaluation,
   fallback: JobScanEvaluation
@@ -150,13 +265,12 @@ export const mergeJobScanEvaluations = (
   if (primary === null) return fallback;
   const listing = mergeEvaluationRecord(fallback.listing, primary.listing);
   const company = mergeEvaluationRecord(fallback.company, primary.company);
-  const hasTitle = typeof listing?.['title'] === 'string' && listing['title'].trim().length > 0;
   return {
     company,
     listing,
     confidence: primary.confidence ?? fallback.confidence,
     modelId: primary.modelId ?? fallback.modelId,
-    error: hasTitle ? null : primary.error ?? fallback.error,
+    error: mergedError(primary, fallback, listing),
     evaluatedAt: primary.evaluatedAt ?? fallback.evaluatedAt,
   };
 };

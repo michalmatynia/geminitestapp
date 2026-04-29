@@ -278,11 +278,27 @@ const getLastConfirmPayload = (): ConfirmPayload => {
 describe('AdminFilemakerLexiconPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.history.replaceState(null, '', '/admin/filemaker/lexicon');
     updateSettingMutateAsyncMock.mockResolvedValue(undefined);
     getSettingMock.mockImplementation((key: string) => {
       if (key !== FILEMAKER_DATABASE_KEY) return undefined;
       return serializeDatabase(createLexiconTestDatabase());
     });
+  });
+
+  it('uses URL query parameters as the initial lexicon filter', () => {
+    window.history.replaceState(
+      null,
+      '',
+      '/admin/filemaker/lexicon?category=contract_type&query=B2B'
+    );
+
+    render(<AdminFilemakerLexiconPage />);
+
+    expect(screen.getByLabelText('Lexicon category')).toHaveValue('contract_type');
+    expect(screen.getByLabelText('Search lexicon terms')).toHaveValue('B2B');
+    expect(screen.getByText('B2B contract')).toBeInTheDocument();
+    expect(screen.queryByText('full office work')).toBeNull();
   });
 
   it('renders lexicon terms with category filtering and usage counts', () => {

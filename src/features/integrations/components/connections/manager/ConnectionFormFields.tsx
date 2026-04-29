@@ -4,8 +4,10 @@ import React from 'react';
 
 import {
   is1688IntegrationSlug,
+  isJobSearchPlatformIntegrationSlug,
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
+  isPracujPlIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
@@ -13,6 +15,8 @@ import type { ConnectionFormState } from '@/features/integrations/context/integr
 import { Button, Checkbox, Input, Label, Textarea } from '@/shared/ui/primitives.public';
 import { FormField, SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { UI_CENTER_ROW_SPACED_CLASSNAME } from '@/shared/ui/navigation-and-layout.public';
+
+import { ConnectionPersonProfileField } from './ConnectionPersonProfileField';
 
 const TRADERA_CATEGORY_STRATEGY_OPTIONS = [
   { value: 'mapper', label: 'Category mapper (strict mapped category)' },
@@ -59,6 +63,8 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
   const isVinted = isVintedIntegrationSlug(integrationSlug);
   const is1688 = is1688IntegrationSlug(integrationSlug);
+  const isPracuj = isPracujPlIntegrationSlug(integrationSlug);
+  const isJobSearchPlatform = isJobSearchPlatformIntegrationSlug(integrationSlug);
 
   const connectionNamePlaceholder = isAllegro
     ? 'Integration name (e.g. Allegro Main)'
@@ -66,11 +72,13 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'Integration name (e.g. LinkedIn Main)'
       : isVinted
         ? 'Integration name (e.g. Vinted Browser)'
-      : is1688
+        : is1688
           ? 'Integration name (e.g. 1688 Main)'
-      : isBaselinker
-        ? 'Integration name (e.g. Main Baselinker)'
-        : 'Integration name (e.g. John\'s Tradera)';
+          : isPracuj
+            ? 'Integration name (e.g. Pracuj.pl Profile)'
+            : isBaselinker
+              ? 'Integration name (e.g. Main Baselinker)'
+              : 'Integration name (e.g. John\'s Tradera)';
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'
@@ -78,11 +86,13 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'LinkedIn client ID'
       : isVinted
         ? 'Vinted email (optional)'
-      : is1688
+        : is1688
           ? '1688 account label (optional)'
-      : isBaselinker
-        ? 'Account name (optional)'
-        : 'Tradera username';
+          : isPracuj
+            ? 'Pracuj.pl email (optional)'
+            : isBaselinker
+              ? 'Account name (optional)'
+              : 'Tradera username';
 
   const usernamePlaceholder = isAllegro
     ? 'Allegro client ID'
@@ -90,11 +100,13 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'LinkedIn client ID'
       : isVinted
         ? 'Vinted email (optional)'
-      : is1688
+        : is1688
           ? '1688 account label (optional)'
-      : isBaselinker
-        ? 'Account name (for reference)'
-        : 'Tradera username';
+          : isPracuj
+            ? 'Pracuj.pl email (optional)'
+            : isBaselinker
+              ? 'Account name (for reference)'
+              : 'Tradera username';
 
   const passwordLabel = isAllegro
     ? 'Allegro client secret'
@@ -102,11 +114,13 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
       ? 'LinkedIn client secret'
       : isVinted
         ? 'Vinted password (optional)'
-      : is1688
+        : is1688
           ? '1688 password (optional)'
-      : isBaselinker
-        ? 'Baselinker API token'
-        : 'Tradera password';
+          : isPracuj
+            ? 'Pracuj.pl password (optional)'
+            : isBaselinker
+              ? 'Baselinker API token'
+              : 'Tradera password';
 
   const passwordPlaceholder = isCreateMode
     ? isAllegro
@@ -115,11 +129,13 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
         ? 'LinkedIn client secret'
         : isVinted
           ? 'Vinted password (optional)'
-        : is1688
+          : is1688
             ? '1688 password (optional)'
-        : isBaselinker
-          ? 'Baselinker API token'
-          : 'Tradera password'
+            : isPracuj
+              ? 'Pracuj.pl password (optional)'
+              : isBaselinker
+                ? 'Baselinker API token'
+                : 'Tradera password'
     : isAllegro
       ? 'New client secret (leave blank to keep)'
       : isLinkedIn
@@ -128,10 +144,12 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           ? 'New Vinted password (leave blank to keep)'
           : is1688
             ? 'New 1688 password (leave blank to keep)'
-      : 'New password (leave blank to keep)';
+            : isPracuj
+              ? 'New Pracuj.pl password (leave blank to keep)'
+              : 'New password (leave blank to keep)';
 
   const browserSessionCredentialDescription =
-    isVinted || is1688
+    isVinted || is1688 || isPracuj
       ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
       : undefined;
 
@@ -185,6 +203,20 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
           }
          aria-label={passwordPlaceholder} title={passwordPlaceholder}/>
       </FormField>
+      {isJobSearchPlatform && (
+        <ConnectionPersonProfileField
+          idPrefix={idPrefix}
+          value={form.jobApplicationPersonId}
+          selectedLabel={form.jobApplicationPersonName}
+          onChange={(personId, personName): void =>
+            setForm((prev) => ({
+              ...prev,
+              jobApplicationPersonId: personId,
+              jobApplicationPersonName: personName,
+            }))
+          }
+        />
+      )}
       {is1688 && (
         <>
           <FormField

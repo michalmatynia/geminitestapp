@@ -182,6 +182,7 @@ export function IntegrationModal(): React.JSX.Element {
       isTradera: tabs.isTradera,
       isVinted: tabs.isVinted,
       is1688: tabs.is1688,
+      isPracuj: tabs.isPracuj,
       isAllegro: tabs.isAllegro,
       isLinkedIn: tabs.isLinkedIn,
       isBaselinker: tabs.isBaselinker,

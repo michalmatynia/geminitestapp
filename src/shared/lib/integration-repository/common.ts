@@ -437,6 +437,8 @@ export const toConnectionRecord = (doc: unknown): IntegrationConnectionRecord =>
     linkedinTokenUpdatedAt: toIsoStringOrNull(d['linkedinTokenUpdatedAt']),
     linkedinPersonUrn: (d['linkedinPersonUrn'] as string) ?? null,
     linkedinProfileUrl: (d['linkedinProfileUrl'] as string) ?? null,
+    jobApplicationPersonId: (d['jobApplicationPersonId'] as string) ?? null,
+    jobApplicationPersonName: (d['jobApplicationPersonName'] as string) ?? null,
     baseApiToken: (d['baseApiToken'] as string) ?? null,
     baseTokenUpdatedAt: toIsoStringOrNull(d['baseTokenUpdatedAt']),
     baseLastInventoryId: (d['baseLastInventoryId'] as string) ?? null,

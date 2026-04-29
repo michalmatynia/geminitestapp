@@ -147,12 +147,14 @@ describe('ACTION_SEQUENCES', () => {
     expect(getActionStepIds('vinted_relist')).not.toContain('sync_check');
   });
 
-  it('tradera_check_status includes browser_preparation before opening the overview flow', () => {
-    expect(getActionStepIds('tradera_check_status').slice(0, 4)).toEqual([
+  it('tradera_check_status includes browser preparation and auth before opening the overview flow', () => {
+    expect(getActionStepIds('tradera_check_status').slice(0, 6)).toEqual([
       'browser_preparation',
       'browser_open',
       'cookie_accept',
       'auth_check',
+      'auth_login',
+      'auth_manual',
     ]);
   });
 

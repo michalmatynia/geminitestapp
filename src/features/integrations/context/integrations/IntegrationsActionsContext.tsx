@@ -16,6 +16,7 @@ export interface IntegrationsActions {
   handleTraderaManualLogin: (connection: IntegrationConnection) => Promise<void>;
   handleVintedManualLogin: (connection: IntegrationConnection) => Promise<void>;
   handle1688ManualLogin: (connection: IntegrationConnection) => Promise<void>;
+  handlePracujManualLogin: (connection: IntegrationConnection) => Promise<void>;
   handleAllegroAuthorize: () => void;
   handleAllegroDisconnect: () => Promise<void>;
   handleAllegroSandboxToggle: (value: boolean) => Promise<void>;

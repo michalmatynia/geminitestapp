@@ -113,6 +113,8 @@ export const AUTO_UPDATED_AT_COLLECTIONS = new Set<string>([
   'product_listings',
   'product_ai_jobs',
   'product_producer_assignments',
+  'filemaker_cvs',
+  'filemaker_job_applications',
   'integrations',
   'integration_connections',
   'settings',

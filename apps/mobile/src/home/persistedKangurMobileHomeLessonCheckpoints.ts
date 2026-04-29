@@ -37,7 +37,7 @@ export type KangurMobileHomeLessonCheckpointItem = {
 type PersistedHomeLessonCheckpointsStore = Record<string, KangurLessonMastery>;
 
 const resolveTimestamp = (value: string | null): number => {
-  if (!value) {
+  if (value === null || value === '') {
     return Number.NEGATIVE_INFINITY;
   }
 
@@ -96,14 +96,14 @@ const parsePersistedHomeLessonCheckpointStore = (
   rawSnapshot: string | null,
 ): PersistedHomeLessonCheckpointsStore => {
   const normalizedRawSnapshot = rawSnapshot?.trim() ?? '';
-  if (!normalizedRawSnapshot) {
+  if (normalizedRawSnapshot.length === 0) {
     return {};
   }
 
   try {
     const parsedSnapshot = JSON.parse(normalizedRawSnapshot) as unknown;
     if (
-      !parsedSnapshot ||
+      Boolean(parsedSnapshot) === false ||
       typeof parsedSnapshot !== 'object' ||
       Array.isArray(parsedSnapshot)
     ) {
@@ -112,7 +112,7 @@ const parsePersistedHomeLessonCheckpointStore = (
 
     return Object.entries(parsedSnapshot).reduce<PersistedHomeLessonCheckpointsStore>(
       (snapshot, [identityKey, value]) => {
-        if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        if (Boolean(value) === false || typeof value !== 'object' || Array.isArray(value)) {
           return snapshot;
         }
 
@@ -126,7 +126,7 @@ const parsePersistedHomeLessonCheckpointStore = (
           return masterySnapshot;
         }, {});
 
-        snapshot[identityKey] = normalizedLessonMastery;
+        const newSnapshot = { ...snapshot, [identityKey]: normalizedLessonMastery }; return newSnapshot;
         return snapshot;
       },
       {},

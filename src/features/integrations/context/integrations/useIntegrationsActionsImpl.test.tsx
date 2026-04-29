@@ -188,6 +188,66 @@ describe('useIntegrationsActionsImpl', () => {
     expect(payload).not.toHaveProperty('password');
   });
 
+  it('allows creating a Pracuj.pl browser connection without username or password', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      username: '   ',
+      password: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'Pracuj.pl Profile',
+        }),
+      })
+    );
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('persists the selected Persons profile for Pracuj.pl job applications', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      jobApplicationPersonId: 'person-1',
+      jobApplicationPersonName: 'Ada Lovelace',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'Pracuj.pl Profile',
+          jobApplicationPersonId: 'person-1',
+          jobApplicationPersonName: 'Ada Lovelace',
+        }),
+      })
+    );
+  });
+
   it('persists 1688 profile fields without requiring credentials', async () => {
     const activeIntegration = createIntegration('1688');
     const args = createArgs(activeIntegration);
@@ -262,6 +322,36 @@ describe('useIntegrationsActionsImpl', () => {
         manualTimeoutMs: 300000,
       },
       timeoutMs: 360000,
+    });
+  });
+
+  it('starts the Pracuj.pl manual login flow for job-search sessions', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const connection = {
+      id: 'connection-pracuj',
+      integrationId: activeIntegration.id,
+      name: 'Pracuj.pl Profile',
+      username: '',
+      createdAt: '2026-04-02T00:00:00.000Z',
+      updatedAt: '2026-04-02T00:00:00.000Z',
+    } as IntegrationConnection;
+    const args = {
+      ...createArgs(activeIntegration),
+      connections: [connection],
+    };
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+
+    await result.current.handlePracujManualLogin(connection);
+
+    expect(testConnectionMutateAsyncMock).toHaveBeenCalledWith({
+      integrationId: activeIntegration.id,
+      connectionId: 'connection-pracuj',
+      type: 'test',
+      body: {
+        mode: 'manual',
+        manualTimeoutMs: 240000,
+      },
+      timeoutMs: 300000,
     });
   });
 

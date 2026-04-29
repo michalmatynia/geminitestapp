@@ -17,7 +17,7 @@ const MOBILE_HOME_DUELS_PRESENCE_DISPLAY_LIMIT = 4;
 const MOBILE_HOME_DUELS_PRESENCE_QUERY_LIMIT = 6;
 const MOBILE_HOME_DUELS_PRESENCE_POLL_MS = 20_000;
 
-type UseKangurMobileHomeDuelsPresenceResult = {
+export type UseKangurMobileHomeDuelsPresenceResult = {
   actionError: string | null;
   createPrivateChallenge: (opponentLearnerId: string) => Promise<string | null>;
   entries: KangurDuelLobbyPresenceEntry[];

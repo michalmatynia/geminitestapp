@@ -47,6 +47,7 @@ import {
   runFilemakerJobBoardScrape,
   saveFilemakerJobBoardScrapeDrafts,
 } from './filemaker-job-board-scrape';
+import { normalizeScrapedDateValue } from './job-board-scrape/offer-from-evaluation';
 
 const sourceUrl = 'https://www.pracuj.pl/praca/it;kw';
 const offerUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001';
@@ -80,16 +81,18 @@ const settingsDatabase = (overrides: Record<string, unknown> = {}): string =>
     ...overrides,
   });
 
-const createCollection = () => ({
+const createCollection = (
+  documents: Array<Record<string, unknown>> = [
+    {
+      id: 'org-1',
+      name: 'Acme Inc',
+      tradingName: null,
+    },
+  ]
+) => ({
   find: vi.fn(() => ({
     limit: vi.fn(() => ({
-      toArray: vi.fn(async () => [
-        {
-          id: 'org-1',
-          name: 'Acme Inc',
-          tradingName: null,
-        },
-      ]),
+      toArray: vi.fn(async () => documents),
     })),
   })),
   updateOne: vi.fn(async () => ({ acknowledged: true, modifiedCount: 1, upsertedCount: 0 })),
@@ -138,8 +141,8 @@ describe('runFilemakerJobBoardScrape', () => {
             period: 'monthly',
             raw: '12 000 - 18 000 PLN',
           },
-          postedAt: null,
-          expiresAt: null,
+          postedAt: '2026-04-28T09:00:00.000Z',
+          expiresAt: '2026-05-28T23:59:59.000Z',
         },
         confidence: 0.94,
         modelId: 'model-1',
@@ -155,6 +158,18 @@ describe('runFilemakerJobBoardScrape', () => {
       sourceUrl: offerUrl,
       steps: [],
     });
+  });
+
+  it('normalizes relative visible job-board dates against a reference date', () => {
+    const referenceDate = new Date('2026-04-29T12:00:00.000Z');
+
+    expect(normalizeScrapedDateValue('Opublikowano dzisiaj', referenceDate)).toBe('2026-04-29');
+    expect(normalizeScrapedDateValue('Dodano wczoraj', referenceDate)).toBe('2026-04-28');
+    expect(normalizeScrapedDateValue('Posted 2 days ago', referenceDate)).toBe('2026-04-27');
+    expect(normalizeScrapedDateValue('opublikowano 3 dni temu', referenceDate)).toBe(
+      '2026-04-26'
+    );
+    expect(normalizeScrapedDateValue('posted 6 hours ago', referenceDate)).toBe('2026-04-29');
   });
 
   it('previews offers through the centralized job-board pracuj collector and probe', async () => {
@@ -389,13 +404,896 @@ describe('runFilemakerJobBoardScrape', () => {
       name: 'Acme Inc',
     });
     expect(persisted.jobListings[0]).toMatchObject({
+      expiresAt: '2026-05-28T23:59:59.000Z',
       organizationId: 'org-1',
+      postedAt: '2026-04-28T09:00:00.000Z',
       salaryCurrency: 'PLN',
       sourceSite: 'pracuj.pl',
       sourceUrl: offerUrl,
       title: 'Developer',
     });
     expect(mocks.readFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('stores evaluator listing metadata as reusable lexicon pills', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          contractType: 'b2b',
+          employmentType: 'full-time',
+          experienceLevel: 'senior',
+          workMode: 'remote',
+          technologies: ['React', 'TypeScript'],
+          benefits: ['private medical care'],
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-listing-lexicon',
+      snapshot: { provider: 'pracuj_pl' },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdLexiconTerms: 7,
+      createdListings: 1,
+      linkedLexiconTerms: 7,
+    });
+    expect(result.offers[0]?.offer.pills).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'contract_type', label: 'B2B contract' }),
+        expect.objectContaining({ category: 'employment_type', label: 'full-time' }),
+        expect.objectContaining({ category: 'experience_level', label: 'senior' }),
+        expect.objectContaining({ category: 'work_mode', label: 'remote work' }),
+        expect.objectContaining({ category: 'technology', label: 'React' }),
+        expect.objectContaining({ category: 'technology', label: 'TypeScript' }),
+        expect.objectContaining({ category: 'benefit', label: 'private medical care' }),
+      ])
+    );
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'technology', label: 'React' }),
+        expect.objectContaining({ category: 'technology', label: 'TypeScript' }),
+        expect.objectContaining({ category: 'benefit', label: 'private medical care' }),
+      ])
+    );
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(7);
+  });
+
+  it('stores sequencer snapshot facts as reusable lexicon pills', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.84,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-snapshot-lexicon',
+      snapshot: {
+        facts: [
+          { label: 'Employment type', value: 'FULL_TIME' },
+          { label: 'Work mode', value: 'HYBRID' },
+          { label: 'Experience level', value: 'Senior' },
+          { label: 'Technologies', value: 'React, TypeScript' },
+          { label: 'Benefits', value: 'private medical care' },
+        ],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdLexiconTerms: 6,
+      createdListings: 1,
+      linkedLexiconTerms: 6,
+    });
+    expect(result.offers[0]?.offer.pills).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'employment_type', label: 'full-time' }),
+        expect.objectContaining({ category: 'work_mode', label: 'hybrid' }),
+        expect.objectContaining({ category: 'experience_level', label: 'Senior' }),
+        expect.objectContaining({ category: 'technology', label: 'React' }),
+        expect.objectContaining({ category: 'technology', label: 'TypeScript' }),
+        expect.objectContaining({ category: 'benefit', label: 'private medical care' }),
+      ])
+    );
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(6);
+  });
+
+  it('normalizes visible Polish posted and expiry dates before persisting listings', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-dates',
+      snapshot: {
+        facts: [
+          { label: 'Opublikowano', value: 'Opublikowano 28 kwietnia 2026' },
+          { label: 'Ważna do', value: 'Oferta ważna do 28 maja 2026' },
+        ],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      expiresAt: '2026-05-28',
+      organizationId: 'org-1',
+      postedAt: '2026-04-28',
+      sourceUrl: offerUrl,
+      title: 'Developer',
+    });
+  });
+
+  it('fills posted and expiry dates from sequencer plain text when visible facts are missing', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.84,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-plain-text-dates',
+      snapshot: {
+        plainText:
+          'Frontend Developer Acme Inc Opublikowano 28 kwietnia 2026 Oferta ważna do 28 maja 2026 Aplikuj teraz',
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer).toMatchObject({
+      expiresAt: '2026-05-28',
+      postedAt: '2026-04-28',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      expiresAt: '2026-05-28',
+      postedAt: '2026-04-28',
+    });
+  });
+
+  it('fills salary fields from JobPosting JSON-LD when the evaluator misses salary data', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-jsonld-salary',
+      snapshot: {
+        jsonLd: [
+          JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'JobPosting',
+            title: 'Developer',
+            baseSalary: {
+              '@type': 'MonetaryAmount',
+              currency: 'PLN',
+              value: {
+                '@type': 'QuantitativeValue',
+                minValue: 12_000,
+                maxValue: 18_000,
+                unitText: 'MONTH',
+              },
+            },
+          }),
+        ],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 18_000,
+      salaryMin: 12_000,
+      salaryPeriod: 'monthly',
+      salaryText: '12000 - 18000 PLN MONTH',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 18_000,
+      salaryMin: 12_000,
+      salaryPeriod: 'monthly',
+    });
+  });
+
+  it('fills salary fields from visible sequencer salary facts when JSON-LD is missing', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-fact-salary',
+      snapshot: {
+        facts: [{ label: 'Wynagrodzenie', value: '120 - 160 zł / godz.' }],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 160,
+      salaryMin: 120,
+      salaryPeriod: 'hourly',
+      salaryText: '120 - 160 zł / godz.',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 160,
+      salaryMin: 120,
+      salaryPeriod: 'hourly',
+    });
+  });
+
+  it('fills salary fields from visible sequencer salary pills with compact k amounts', async () => {
+    const justJoinSourceUrl = 'https://justjoin.it/';
+    const justJoinOfferUrl = 'https://justjoin.it/job-offer/acme-developer';
+    mocks.collectJobBoardOfferUrlsMock.mockResolvedValueOnce({
+      links: [{ title: 'Developer', url: justJoinOfferUrl }],
+      provider: 'justjoin_it',
+      runId: 'collect-run-justjoin-salary',
+      sourceSite: 'justjoin.it',
+      sourceUrl: justJoinSourceUrl,
+      visitedUrls: [justJoinSourceUrl],
+      warnings: [],
+    });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: justJoinOfferUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'justjoin_it',
+      runId: 'offer-run-pill-salary',
+      snapshot: {
+        pills: ['18k - 24k PLN net/month', 'remote'],
+        provider: 'justjoin_it',
+      },
+      sourceSite: 'justjoin.it',
+      sourceUrl: justJoinOfferUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      provider: 'justjoin_it',
+      sourceUrl: justJoinSourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 24_000,
+      salaryMin: 18_000,
+      salaryPeriod: 'monthly',
+      salaryText: '18k - 24k PLN net/month',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 24_000,
+      salaryMin: 18_000,
+      salaryPeriod: 'monthly',
+    });
+  });
+
+  it('fills salary fields from salary lines in sequencer plain text snapshots', async () => {
+    const noFluffSourceUrl = 'https://nofluffjobs.com/pl';
+    const noFluffOfferUrl = 'https://nofluffjobs.com/pl/job/backend-dev-acme';
+    mocks.collectJobBoardOfferUrlsMock.mockResolvedValueOnce({
+      links: [{ title: 'Backend Developer', url: noFluffOfferUrl }],
+      provider: 'nofluffjobs',
+      runId: 'collect-run-nofluff-salary',
+      sourceSite: 'nofluffjobs.com',
+      sourceUrl: noFluffSourceUrl,
+      visitedUrls: [noFluffSourceUrl],
+      warnings: [],
+    });
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Backend Developer',
+          description: 'Build APIs',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.83,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: noFluffOfferUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'nofluffjobs',
+      runId: 'offer-run-plain-text-salary',
+      snapshot: {
+        plainText:
+          'Backend Developer Acme Inc. Experience senior. Salary 20 000 - 28 000 PLN net/month. Benefits private medical care.',
+        provider: 'nofluffjobs',
+      },
+      sourceSite: 'nofluffjobs.com',
+      sourceUrl: noFluffOfferUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      provider: 'nofluffjobs',
+      sourceUrl: noFluffSourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 28_000,
+      salaryMin: 20_000,
+      salaryPeriod: 'monthly',
+    });
+    expect(result.offers[0].offer.salaryText).toContain('Salary 20 000 - 28 000 PLN net/month');
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      salaryCurrency: 'PLN',
+      salaryMax: 28_000,
+      salaryMin: 20_000,
+      salaryPeriod: 'monthly',
+    });
+  });
+
+  it('creates offers from sequencer snapshot data when the evaluator returns no fields', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: null,
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-snapshot-fallback',
+      snapshot: {
+        facts: [{ label: 'Location', value: 'Kraków' }],
+        companyProfile: {
+          facts: [
+            { label: 'KRS', value: '0000123456' },
+            { label: 'REGON', value: '012345678' },
+          ],
+          headings: ['Acme Inc'],
+          plainText: null,
+          sections: [],
+          title: 'Acme Inc',
+          url: null,
+          websiteUrls: [],
+        },
+        jsonLd: [
+          JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'JobPosting',
+            title: 'Snapshot Backend Developer',
+            datePosted: '2026-04-20',
+            validThrough: '2026-05-20',
+            hiringOrganization: {
+              '@type': 'Organization',
+              name: 'Acme Inc',
+              url: 'https://acme.example/careers',
+              description: 'Acme builds enterprise commerce systems.',
+              industry: 'Enterprise software',
+              numberOfEmployees: 250,
+              taxID: '5210123456',
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: 'Konstruktorska 12A',
+                postalCode: '02-673',
+                addressLocality: 'Warszawa',
+                addressCountry: 'Poland',
+              },
+            },
+            jobLocation: {
+              '@type': 'Place',
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: 'Rynek 1',
+                postalCode: '31-042',
+                addressLocality: 'Kraków',
+                addressRegion: 'Małopolskie',
+                addressCountry: 'Poland',
+              },
+            },
+          }),
+        ],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      matchedOffers: 1,
+      skippedOffers: 0,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0]).toMatchObject({
+      expiresAt: '2026-05-20',
+      location: 'Kraków',
+      organizationId: 'org-1',
+      postedAt: '2026-04-20',
+      sourceUrl: offerUrl,
+      title: 'Snapshot Backend Developer',
+    });
+    expect(persisted.organizations[0]).toMatchObject({
+      jobBoardCompanyProfileUrl: 'https://acme.example/careers',
+    });
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Description: Acme builds enterprise commerce systems.'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Website: https://acme.example/careers'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Industry: Enterprise software'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('Company size: 250');
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('NIP: 5210123456');
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('KRS: 0000123456');
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('REGON: 012345678');
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Address: Konstruktorska 12A, 02-673 Warszawa, Poland'
+    );
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'address',
+          label: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
+        }),
+      ])
+    );
+  });
+
+  it('falls back to sequencer job sections for scraped offer descriptions', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: '',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.88,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-description-fallback',
+      snapshot: {
+        facts: [],
+        provider: 'pracuj_pl',
+        sections: [
+          {
+            heading: 'Opis stanowiska',
+            text: 'Build merchant dashboards from the sequencer snapshot.',
+          },
+          {
+            heading: 'Wymagania',
+            text: 'React, TypeScript, and production ownership.',
+          },
+          {
+            heading: 'Informacje o firmie',
+            text: 'Company background for Acme should remain in the profile area.',
+          },
+        ],
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary.createdListings).toBe(1);
+    expect(result.offers[0].offer.description).toContain('Opis stanowiska');
+    expect(result.offers[0].offer.description).toContain(
+      'Build merchant dashboards from the sequencer snapshot.'
+    );
+    expect(result.offers[0].offer.description).toContain('Wymagania');
+    expect(result.offers[0].offer.description).not.toContain('Company background for Acme');
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.jobListings[0].description).toContain(
+      'Build merchant dashboards from the sequencer snapshot.'
+    );
+    expect(persisted.jobListings[0].description).toContain(
+      'React, TypeScript, and production ownership.'
+    );
+  });
+
+  it('extracts organisation addresses from company profile text when structured address data is missing', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.82,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-profile-text-address',
+      snapshot: {
+        companyProfile: {
+          facts: [],
+          headings: ['Acme Inc'],
+          plainText:
+            'Dane firmy. Strona internetowa: https://acme.example. Branża: IT consulting. Zatrudnienie: 201-500 pracowników. Adres siedziby: Prosta 20, 00-850 Warszawa. NIP 5210123456.',
+          sections: [],
+          title: 'Acme Inc',
+          url: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+          websiteUrls: [],
+        },
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      addressUpdates: 1,
+      createdListings: 1,
+      matchedOffers: 1,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.addresses[0]).toMatchObject({
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '00-850',
+      street: 'Prosta',
+      streetNumber: '20',
+    });
+    expect(persisted.organizations[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      displayAddressId: persisted.addresses[0].id,
+      id: 'org-1',
+    });
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Address: Prosta 20, 00-850 Warszawa, Poland'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Website: https://acme.example'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('Industry: IT consulting');
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Company size: 201-500 pracowników'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('NIP: 5210123456');
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'address',
+          label: 'Prosta 20, 00-850 Warszawa, Poland',
+        }),
+      ])
+    );
+  });
+
+  it('extracts organisation addresses from company profile text without postal codes', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.82,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-profile-text-address-no-postal',
+      snapshot: {
+        companyProfile: {
+          facts: [],
+          headings: ['Acme Inc'],
+          plainText:
+            'Dane firmy. Adres siedziby: Puławska 180, Mokotów, Warszawa(Masovian). Branża: IT consulting.',
+          sections: [],
+          title: 'Acme Inc',
+          url: 'https://www.pracuj.pl/pracodawcy/acme,1001',
+          websiteUrls: [],
+        },
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      addressUpdates: 1,
+      createdListings: 1,
+      matchedOffers: 1,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.addresses[0]).toMatchObject({
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '',
+      street: 'Puławska',
+      streetNumber: '180',
+    });
+    expect(persisted.organizations[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      displayAddressId: persisted.addresses[0].id,
+      id: 'org-1',
+    });
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Address: Puławska 180, Mokotów, Warszawa(Masovian)'
+    );
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'address',
+          label: 'Puławska 180, Mokotów, Warszawa(Masovian)',
+        }),
+      ])
+    );
+  });
+
+  it('upserts settings-only matched organisations into Mongo for the Organisation list', async () => {
+    const mongoCollection = createCollection([]);
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(mongoCollection);
+    mocks.readFilemakerCampaignSettingValueMock
+      .mockResolvedValueOnce(
+        settingsDatabase({
+          organizations: [
+            {
+              id: 'org-1',
+              name: 'Acme Inc',
+              createdAt: '2020-01-01T00:00:00.000Z',
+              updatedAt: '2020-01-01T00:00:00.000Z',
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(null);
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      matchedOffers: 1,
+      verifiedListings: 1,
+    });
+    expect(mongoCollection.updateOne).toHaveBeenCalledWith(
+      { id: 'org-1' },
+      {
+        $set: expect.objectContaining({
+          id: 'org-1',
+          name: 'Acme Inc',
+          updatedBy: 'filemaker:job-board-scrape',
+        }),
+        $setOnInsert: expect.objectContaining({
+          _id: 'org-1',
+          createdAt: expect.any(String),
+        }),
+      },
+      { upsert: true }
+    );
+    const update = mongoCollection.updateOne.mock.calls[0]?.[1] as {
+      $setOnInsert?: { createdAt?: string };
+    };
+    expect(update.$setOnInsert?.createdAt).not.toBe('2020-01-01T00:00:00.000Z');
   });
 
   it('saves already scraped offer drafts without collecting or probing again', async () => {
@@ -594,6 +1492,7 @@ describe('runFilemakerJobBoardScrape', () => {
       city: 'Warszawa',
       country: 'Poland',
       countryId: 'PL',
+      postalCode: '',
       street: 'Puławska',
       streetNumber: '180',
     });
@@ -683,6 +1582,12 @@ describe('runFilemakerJobBoardScrape', () => {
         company: {
           name: 'New Employer',
           description: 'New Employer builds digital products for enterprise clients.',
+          website: 'https://new-employer.example',
+          size: '201-500',
+          addressLine: 'Konstruktorska 12A',
+          city: 'Warszawa',
+          postalCode: '02-673',
+          country: 'Poland',
           profileUrl: 'https://www.pracuj.pl/pracodawcy/new-employer,123',
         },
         listing: {
@@ -690,8 +1595,8 @@ describe('runFilemakerJobBoardScrape', () => {
           description: 'Build interfaces',
           city: 'Kraków',
           salary: null,
-          postedAt: null,
-          expiresAt: null,
+          postedAt: '2026-04-27T09:00:00.000Z',
+          expiresAt: '2026-05-27T23:59:59.000Z',
         },
         confidence: 0.91,
         modelId: 'model-1',
@@ -749,14 +1654,33 @@ describe('runFilemakerJobBoardScrape', () => {
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
     expect(persisted.organizations[0]).toMatchObject({
       name: 'New Employer',
-      jobBoardCompanyProfile: 'New Employer builds digital products for enterprise clients.',
       jobBoardCompanyProfileUrl: 'https://www.pracuj.pl/pracodawcy/new-employer,123',
     });
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Description: New Employer builds digital products for enterprise clients.'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Website: https://new-employer.example'
+    );
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('Company size: 201-500');
+    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+      'Address: Konstruktorska 12A, 02-673 Warszawa, Poland'
+    );
     expect(persisted.jobListings[0]).toMatchObject({
+      expiresAt: '2026-05-27T23:59:59.000Z',
       organizationId: persisted.organizations[0].id,
+      postedAt: '2026-04-27T09:00:00.000Z',
       title: 'Frontend Developer',
       sourceUrl: offerUrl,
     });
+    expect(persisted.lexiconTerms).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          category: 'address',
+          label: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
+        }),
+      ])
+    );
   });
 
   it('probes a direct offer URL when link collection returns no category links', async () => {

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getFilemakerJobListingsForOrganizationMock: vi.fn(),
   parseFilemakerDatabaseMock: vi.fn(),
   pushMock: vi.fn(),
+  settingsRefetchMock: vi.fn(),
   toastMock: vi.fn(),
   withCsrfHeadersMock: vi.fn(),
 }));
@@ -26,7 +27,7 @@ vi.mock('@/shared/lib/security/csrf-client', () => ({
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: vi.fn(() => null),
-    refetch: vi.fn(),
+    refetch: mocks.settingsRefetchMock,
   }),
 }));
 
@@ -70,6 +71,7 @@ const listResponse = {
   },
   limit: 48,
   linkedEventsByOrganizationId: {},
+  linkedJobListingsByOrganizationId: {},
   organizations: [
     {
       addressId: '',
@@ -92,6 +94,24 @@ const listResponse = {
   totalCount: 1,
   totalCountIsExact: true,
   totalPages: 1,
+};
+
+const linkedJobListing = {
+  createdAt: '2026-04-28T10:05:00.000Z',
+  description: 'Build commerce software',
+  id: 'listing-1',
+  lexiconTermIds: [],
+  location: 'Warszawa',
+  organizationId: 'org-1',
+  salaryMax: null,
+  salaryMin: null,
+  salaryPeriod: 'monthly',
+  sourceSite: 'pracuj.pl',
+  sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+  status: 'open',
+  targetedCampaignIds: [],
+  title: 'Frontend Developer',
+  updatedAt: '2026-04-28T10:05:00.000Z',
 };
 
 const scrapeResponse = {
@@ -196,6 +216,57 @@ describe('useAdminFilemakerOrganizationsListState', () => {
       const urls = fetchMock.mock.calls.map(([input]) => String(input));
       expect(urls.some((url) => url.includes('sort=name_asc'))).toBe(true);
     });
+  });
+
+  it('refreshes job-board imports by updated time so changed organisations surface first', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(listResponse);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onJobBoardScrapeCompleted();
+    });
+
+    expect(mocks.settingsRefetchMock).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map(([input]) => String(input));
+      expect(urls.some((url) => url.includes('sort=updatedAt_desc'))).toBe(true);
+    });
+    expect(result.current.sort).toBe('updatedAt_desc');
+  });
+
+  it('uses job listings returned by the organizations API before settings refresh catches up', async () => {
+    const responseWithJobListings = {
+      ...listResponse,
+      linkedJobListingsByOrganizationId: {
+        'org-1': [linkedJobListing],
+      },
+    };
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(responseWithJobListings);
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(mocks.buildFilemakerOrganizationListNodesMock).toHaveBeenCalled());
+    const options = mocks.buildFilemakerOrganizationListNodesMock.mock.calls.at(-1)?.[1] as {
+      jobListingsByOrganizationId?: Map<string, unknown[]>;
+    };
+    expect(options.jobListingsByOrganizationId?.get('org-1')).toEqual([linkedJobListing]);
   });
 
   it('launches organization email scrape with CSRF headers and reports the result', async () => {

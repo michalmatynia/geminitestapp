@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React from 'react';
 
 import {
+  isPracujPlIntegrationSlug,
   isPlaywrightProgrammableSlug,
   isTraderaBrowserIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -27,7 +28,8 @@ const resolveSequencerDescription = (integrationSlug: string | null | undefined)
   })();
 
 const resolveOwnershipCopy = (
-  usesSequencerManagedActions: boolean
+  usesSequencerManagedActions: boolean,
+  integrationSlug: string | null | undefined
 ): {
   title: string;
   description: string;
@@ -48,6 +50,18 @@ const resolveOwnershipCopy = (
     };
   }
 
+  if (isPracujPlIntegrationSlug(integrationSlug)) {
+    return {
+      title: 'Pracuj.pl browser session settings',
+      description:
+        'This connection stores reusable browser authentication for Pracuj.pl job applications. Manage shared browser personas from Playwright settings.',
+      primaryHref: '/admin/settings/playwright',
+      primaryLabel: 'Manage personas',
+      secondaryHref: null,
+      secondaryLabel: null,
+    };
+  }
+
   return {
     title: 'Browser automation settings moved out of Integrations',
     description:
@@ -61,7 +75,10 @@ const resolveOwnershipCopy = (
 
 export function PlaywrightTabContent(): React.JSX.Element {
   const model = usePlaywrightTabContentModel();
-  const ownershipCopy = resolveOwnershipCopy(model.usesSequencerManagedActions);
+  const ownershipCopy = resolveOwnershipCopy(
+    model.usesSequencerManagedActions,
+    model.activeIntegrationSlug
+  );
 
   return (
     <>

@@ -5,20 +5,14 @@ const {
   enqueueFilemakerJobBoardScrapeRunMock,
   readFilemakerJobBoardScrapeRunMock,
   requireFilemakerMailAdminSessionMock,
-  saveFilemakerJobBoardScrapeDraftsMock,
 } = vi.hoisted(() => ({
   enqueueFilemakerJobBoardScrapeRunMock: vi.fn(),
   readFilemakerJobBoardScrapeRunMock: vi.fn(),
   requireFilemakerMailAdminSessionMock: vi.fn(),
-  saveFilemakerJobBoardScrapeDraftsMock: vi.fn(),
 }));
 
 vi.mock('@/features/filemaker/server/filemaker-mail-access', () => ({
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
-}));
-
-vi.mock('@/features/filemaker/server/filemaker-job-board-scrape', () => ({
-  saveFilemakerJobBoardScrapeDrafts: saveFilemakerJobBoardScrapeDraftsMock,
 }));
 
 vi.mock('@/features/filemaker/server/filemaker-job-board-scrape-runtime', () => ({
@@ -49,31 +43,6 @@ describe('filemaker job-board scrape handler', () => {
     readFilemakerJobBoardScrapeRunMock.mockResolvedValue({
       events: [],
       run: { ...queuedRun, completedAt: '2026-04-28T10:01:00.000Z', status: 'completed' },
-    });
-    saveFilemakerJobBoardScrapeDraftsMock.mockResolvedValue({
-      browserMode: 'headless',
-      mode: 'import',
-      offers: [],
-      provider: 'justjoin_it',
-      runId: null,
-      sourceSite: 'justjoin.it',
-      sourceUrl: 'https://justjoin.it/job-offers/all-locations/javascript',
-      summary: {
-        addressUpdates: 0,
-        createdListings: 0,
-        createdLexiconTerms: 0,
-        createdOrganizations: 0,
-        linkedLexiconTerms: 0,
-        matchedOffers: 0,
-        profileUpdates: 0,
-        scrapedOffers: 0,
-        skippedOffers: 0,
-        unmatchedOffers: 0,
-        updatedOrganizations: 0,
-        updatedListings: 0,
-        verifiedListings: 0,
-      },
-      warnings: [],
     });
   });
 
@@ -107,7 +76,7 @@ describe('filemaker job-board scrape handler', () => {
     });
   });
 
-  it('routes scraped draft save requests to the draft save service', async () => {
+  it('queues scraped draft save requests in the job-board runtime', async () => {
     const body = {
       action: 'save_drafts',
       offers: [
@@ -143,11 +112,14 @@ describe('filemaker job-board scrape handler', () => {
       { params: {} } as Parameters<typeof postHandler>[1]
     );
 
-    expect(saveFilemakerJobBoardScrapeDraftsMock).toHaveBeenCalledWith(body);
-    expect(enqueueFilemakerJobBoardScrapeRunMock).not.toHaveBeenCalled();
+    expect(enqueueFilemakerJobBoardScrapeRunMock).toHaveBeenCalledWith(body);
+    expect(response.status).toBe(202);
+    expect(response.headers.get('x-filemaker-job-board-scrape-run-id')).toBe('run-1');
     await expect(response.json()).resolves.toMatchObject({
-      mode: 'import',
-      runId: null,
+      run: {
+        id: 'run-1',
+        status: 'queued',
+      },
     });
   });
 

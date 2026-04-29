@@ -8,9 +8,10 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
 import {
   toFilemakerOrganizationEventNodeId,
+  toFilemakerOrganizationJobListingNodeId,
   toFilemakerOrganizationNodeId,
 } from '../../entity-master-tree';
-import type { FilemakerEvent, FilemakerOrganization } from '../../types';
+import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../../types';
 import { FilemakerOrganizationMasterTreeNode } from './FilemakerOrganizationMasterTreeNode';
 
 vi.mock('@/shared/ui/primitives.public', () => ({
@@ -77,6 +78,24 @@ const eventFixture: FilemakerEvent = {
   updatedAt: timestamp,
 };
 
+const jobListingFixture: FilemakerJobListing = {
+  id: 'job-1',
+  organizationId: 'org-1',
+  title: 'Frontend Developer',
+  description: 'Build interfaces.',
+  location: 'Warszawa',
+  salaryMin: null,
+  salaryMax: null,
+  salaryPeriod: 'monthly',
+  status: 'open',
+  targetedCampaignIds: [],
+  postedAt: '2026-04-28T09:00:00.000Z',
+  expiresAt: '2026-05-28T23:59:59.000Z',
+  lexiconTermIds: [],
+  createdAt: timestamp,
+  updatedAt: timestamp,
+};
+
 const createRenderInput = (
   overrides: Partial<FolderTreeViewportRenderNodeInput> = {}
 ): FolderTreeViewportRenderNodeInput => ({
@@ -120,7 +139,7 @@ const renderOrganizationNode = (
   const props = {
     ...createRenderInput(overrides),
     eventsById: new Map<string, FilemakerEvent>([['event-1', eventFixture]]),
-    jobListingsById: new Map(),
+    jobListingsById: new Map<string, FilemakerJobListing>([['job-1', jobListingFixture]]),
     organizationById: new Map<string, FilemakerOrganization>([['org-1', organizationFixture]]),
     organizationEmailScrapeState: {},
     organizationWebsiteSocialScrapeState: {},
@@ -201,6 +220,7 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
 
     const formattedTimestamp = new Date(timestamp).toLocaleString();
     expect(screen.getByLabelText(`Created at ${formattedTimestamp}`)).toBeInTheDocument();
+    expect(screen.getByLabelText(`Updated at ${formattedTimestamp}`)).toBeInTheDocument();
   });
 
   it('keeps relation counts in fixed columns so created dates stay aligned', () => {
@@ -213,6 +233,32 @@ describe('FilemakerOrganizationMasterTreeNode', () => {
     expect(jobsColumn).toHaveClass('w-16', 'cursor-default');
     expect(within(eventsColumn).getByText('Events 1')).toBeInTheDocument();
     expect(within(jobsColumn).queryByText(/Jobs/u)).toBeNull();
+  });
+
+  it('shows job listing dates on organization job relation nodes', () => {
+    renderOrganizationNode({
+      node: {
+        id: toFilemakerOrganizationJobListingNodeId('org-1', 'job-1'),
+        type: 'file',
+        kind: 'filemaker_organization_job_listing',
+        parentId: toFilemakerOrganizationNodeId('org-1'),
+        name: 'Frontend Developer',
+        path: 'organizations/Acme Inc/jobs/Frontend Developer',
+        sortOrder: 0,
+        metadata: {
+          entity: 'filemaker_organization_job_listing',
+          organizationId: 'org-1',
+          rawId: 'job-1',
+        },
+        children: [],
+      },
+    });
+
+    expect(
+      screen.getByText(
+        'Warszawa | Posted: 2026-04-28T09:00:00.000Z | Expires: 2026-05-28T23:59:59.000Z'
+      )
+    ).toBeInTheDocument();
   });
 
   it('launches website/social/email scraping from the row action without navigating', async () => {

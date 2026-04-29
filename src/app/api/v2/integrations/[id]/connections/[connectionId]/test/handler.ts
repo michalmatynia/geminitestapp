@@ -2,11 +2,13 @@ import { handleLinkedinApiTest } from './handler.linkedin';
 import { handleVintedBrowserTest } from './handler.vinted-browser';
 import { handleTraderaBrowserTest } from './handler.tradera-browser';
 import { handle1688BrowserTest } from './handler.1688-browser';
+import { handlePracujBrowserTest } from './handler.pracuj-browser';
 import { type ConnectionTestContext } from './types';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import {
   is1688IntegrationSlug,
+  isPracujPlIntegrationSlug,
   isTraderaBrowserIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
@@ -133,6 +135,10 @@ export async function postTestConnectionHandler(
 
   if (is1688IntegrationSlug(integration.slug)) {
     return handle1688BrowserTest(ctx);
+  }
+
+  if (isPracujPlIntegrationSlug(integration.slug)) {
+    return handlePracujBrowserTest(ctx);
   }
 
   if (isTraderaBrowserIntegrationSlug(integration.slug)) {

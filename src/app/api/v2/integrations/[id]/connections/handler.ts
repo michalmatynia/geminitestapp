@@ -1,7 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { is1688IntegrationSlug, isPlaywrightProgrammableSlug } from '@/features/integrations/constants/slugs';
+import {
+  is1688IntegrationSlug,
+  isPlaywrightProgrammableSlug,
+  isPracujPlIntegrationSlug,
+} from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import {
@@ -18,12 +22,15 @@ import {
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { resolveJobApplicationPersonFields } from '../../_shared/job-application-person-fields';
 
 const createConnectionSchema = z
   .object({
     name: z.string().trim().min(1),
     username: z.string().trim().optional(),
     password: z.string().trim().optional(),
+    jobApplicationPersonId: z.string().trim().nullable().optional(),
+    jobApplicationPersonName: z.string().trim().nullable().optional(),
     playwrightIdentityProfile: z.never().optional(),
     playwrightHeadless: z.never().optional(),
     playwrightSlowMo: z.never().optional(),
@@ -81,6 +88,7 @@ const createConnectionSchema = z
   .strict();
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+
 /**
  * GET /api/v2/integrations/[id]/connections
  * Fetch connections for an integration.
@@ -123,6 +131,8 @@ export async function getHandler(
     linkedinScope: connection.linkedinScope ?? null,
     linkedinPersonUrn: connection.linkedinPersonUrn ?? null,
     linkedinProfileUrl: connection.linkedinProfileUrl ?? null,
+    jobApplicationPersonId: connection.jobApplicationPersonId ?? null,
+    jobApplicationPersonName: connection.jobApplicationPersonName ?? null,
 
     hasBaseApiToken: Boolean(connection.baseApiToken),
     baseTokenUpdatedAt: connection.baseTokenUpdatedAt,
@@ -200,6 +210,7 @@ export async function postHandler(
   const isBaseIntegration = BASE_INTEGRATION_SLUGS.has(integrationSlug);
   const isVintedIntegration = integrationSlug === 'vinted';
   const is1688Integration = is1688IntegrationSlug(integration.slug);
+  const isPracujIntegration = isPracujPlIntegrationSlug(integration.slug);
   const isPlaywrightProgrammableIntegration = isPlaywrightProgrammableSlug(integration.slug);
   if (isPlaywrightProgrammableIntegration) {
     return NextResponse.json(
@@ -221,6 +232,7 @@ export async function postHandler(
     integrationSlug !== 'baselinker' &&
     !isVintedIntegration &&
     !is1688Integration &&
+    !isPracujIntegration &&
     !isPlaywrightProgrammableIntegration &&
     !normalizedUsername
   ) {
@@ -229,7 +241,13 @@ export async function postHandler(
       integrationSlug: integration.slug,
     });
   }
-  if (!isVintedIntegration && !is1688Integration && !isPlaywrightProgrammableIntegration && !normalizedPassword) {
+  if (
+    !isVintedIntegration &&
+    !is1688Integration &&
+    !isPracujIntegration &&
+    !isPlaywrightProgrammableIntegration &&
+    !normalizedPassword
+  ) {
     throw badRequestError('Password/Token is required for this integration.', {
       integrationId,
       integrationSlug: integration.slug,
@@ -243,13 +261,18 @@ export async function postHandler(
   });
 
   const encryptedPassword = normalizedPassword ? encryptSecret(normalizedPassword) : null;
+  const jobApplicationPersonFields = await resolveJobApplicationPersonFields(
+    data.jobApplicationPersonId
+  );
 
   const created = await repo.createConnection(integrationId, {
     name: data.name,
-    ...(normalizedUsername || (!isVintedIntegration && !isPlaywrightProgrammableIntegration)
+    ...(normalizedUsername ||
+    (!isVintedIntegration && !isPracujIntegration && !isPlaywrightProgrammableIntegration)
       ? { username: normalizedUsername }
       : {}),
     ...(encryptedPassword ? { password: encryptedPassword } : {}),
+    ...jobApplicationPersonFields,
     ...(isBaseIntegration && encryptedPassword
       ? {
         baseApiToken: encryptedPassword,
@@ -382,6 +405,8 @@ export async function postHandler(
     linkedinScope: created.linkedinScope ?? null,
     linkedinPersonUrn: created.linkedinPersonUrn ?? null,
     linkedinProfileUrl: created.linkedinProfileUrl ?? null,
+    jobApplicationPersonId: created.jobApplicationPersonId ?? null,
+    jobApplicationPersonName: created.jobApplicationPersonName ?? null,
     traderaBrowserMode: created.traderaBrowserMode ?? 'builtin',
     traderaCategoryStrategy: created.traderaCategoryStrategy ?? 'mapper',
     playwrightListingScript: created.playwrightListingScript ?? null,

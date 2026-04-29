@@ -1,6 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React, { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /* eslint-disable max-lines-per-function */
 
@@ -16,6 +16,7 @@ import {
 import type { FilemakerJobListing, FilemakerOrganization } from '../types';
 
 const mocks = vi.hoisted(() => ({
+  fireAiPathTriggerEvent: vi.fn(),
   settingsGet: vi.fn(),
   useActionsContext: vi.fn(),
   useStateContext: vi.fn(),
@@ -129,12 +130,16 @@ vi.mock('@/shared/ui/primitives.public', () => ({
     children,
     onClick,
     disabled,
+    title,
+    'aria-label': ariaLabel,
   }: {
     children: React.ReactNode;
     onClick?: React.MouseEventHandler<HTMLButtonElement>;
     disabled?: boolean;
+    title?: string;
+    'aria-label'?: string;
   }) => (
-    <button type='button' onClick={onClick} disabled={disabled}>
+    <button type='button' onClick={onClick} disabled={disabled} title={title} aria-label={ariaLabel}>
       {children}
     </button>
   ),
@@ -180,6 +185,36 @@ vi.mock('@/shared/ui/primitives.public', () => ({
       aria-label={ariaLabel}
     />
   ),
+}));
+
+vi.mock('@/shared/ui/templates.public', () => ({
+  DetailModal: ({
+    children,
+    footer,
+    isOpen,
+    subtitle,
+    title,
+  }: {
+    children: React.ReactNode;
+    footer?: React.ReactNode;
+    isOpen: boolean;
+    subtitle?: React.ReactNode;
+    title: React.ReactNode;
+  }) =>
+    isOpen ? (
+      <div role='dialog' aria-label={String(title)}>
+        <h3>{title}</h3>
+        {subtitle !== undefined && subtitle !== null ? <p>{subtitle}</p> : null}
+        {children}
+        {footer}
+      </div>
+    ) : null,
+}));
+
+vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
+  useAiPathTriggerEvent: () => ({
+    fireAiPathTriggerEvent: mocks.fireAiPathTriggerEvent,
+  }),
 }));
 
 vi.mock('../context/AdminFilemakerOrganizationEditPageContext', () => ({
@@ -232,6 +267,14 @@ const createCampaignsValue = (): string =>
     ],
   });
 
+const createJsonResponse = (payload: unknown): Response =>
+  new Response(JSON.stringify(payload), {
+    headers: { 'Content-Type': 'application/json' },
+    status: 200,
+  });
+
+let jobApplicationsPayload: { applications: unknown[] } = { applications: [] };
+
 function JobListingsHarness(props: {
   initialJobListings?: FilemakerJobListing[];
 }): React.JSX.Element {
@@ -255,6 +298,91 @@ function JobListingsHarness(props: {
 }
 
 describe('OrganizationJobListingsSection', () => {
+  beforeEach(() => {
+    mocks.fireAiPathTriggerEvent.mockReset();
+    mocks.fireAiPathTriggerEvent.mockImplementation(async (args: {
+      onFinished?: () => void;
+      onSuccess?: (runId: string) => void;
+    }) => {
+      args.onSuccess?.('run-job-application-1');
+      args.onFinished?.();
+    });
+    mocks.settingsGet.mockReset();
+    mocks.useActionsContext.mockReset();
+    mocks.useStateContext.mockReset();
+    jobApplicationsPayload = { applications: [] };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string | URL | Request) => {
+        const href = String(url);
+        if (href.includes('/api/filemaker/job-applications')) {
+          return createJsonResponse(jobApplicationsPayload);
+        }
+        if (href.includes('/api/v2/integrations/with-connections')) {
+          return createJsonResponse([
+            {
+              id: 'integration-pracuj',
+              name: 'Pracuj.pl',
+              slug: 'pracuj-pl',
+              connections: [
+                {
+                  id: 'connection-pracuj',
+                  name: 'Main Pracuj',
+                  integrationId: 'integration-pracuj',
+                  jobApplicationPersonId: 'person-1',
+                  jobApplicationPersonName: 'Ada Lovelace',
+                },
+              ],
+            },
+          ]);
+        }
+        if (href.includes('/api/filemaker/persons/person-1')) {
+          return createJsonResponse({
+            linkedAddresses: [],
+            linkedAnyParams: [],
+            linkedAnyTexts: [],
+            linkedBankAccounts: [],
+            linkedContracts: [],
+            linkedDocuments: [],
+            linkedOccupations: [],
+            linkedWebsites: [],
+            person: {
+              id: 'person-1',
+              fullName: 'Ada Lovelace',
+              firstName: 'Ada',
+              lastName: 'Lovelace',
+              cvProfessionalSummary: 'Software engineer with marketplace experience.',
+            },
+          });
+        }
+        if (href.includes('/api/filemaker/cvs')) {
+          return createJsonResponse({
+            cvs: [
+              {
+                id: 'cv-1',
+                personId: 'person-1',
+                title: 'Primary CV',
+                bodyText: 'Existing CV text',
+              },
+            ],
+          });
+        }
+        if (href.includes('/api/filemaker/persons')) {
+          return createJsonResponse({
+            persons: [
+              {
+                id: 'person-1',
+                fullName: 'Ada Lovelace',
+                cvProfessionalSummary: 'Software engineer with marketplace experience.',
+              },
+            ],
+          });
+        }
+        return createJsonResponse({});
+      })
+    );
+  });
+
   it('adds a job listing and records targeted email campaigns', () => {
     mocks.settingsGet.mockImplementation((key: string) => {
       if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
@@ -325,5 +453,163 @@ describe('OrganizationJobListingsSection', () => {
     const state = JSON.parse(screen.getByTestId('job-listings-state').textContent) as
       FilemakerJobListing[];
     expect(state[0]?.lexiconTermIds).toEqual(['term-contract', 'term-office']);
+  });
+
+  it('opens the application preparation modal from a job row with the Pracuj.pl default person', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            location: 'Warsaw',
+          }),
+        ]}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Prepare application for FileMaker Consultant/i })
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Prepare application' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Person context')).toHaveValue('person-1');
+    });
+    expect(screen.getByLabelText('Job listing context')).toHaveValue('job-1');
+    expect(screen.getByLabelText('Organisation context')).toHaveValue('org-1');
+    expect(screen.getByText('Pracuj.pl · Main Pracuj')).toBeInTheDocument();
+  });
+
+  it('lists prepared application packages for the matching job listing', async () => {
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-1',
+          status: 'draft',
+          personId: 'person-1',
+          personName: 'Ada Lovelace',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          integrationId: 'integration-pracuj',
+          integrationSlug: 'pracuj-pl',
+          connectionId: 'connection-pracuj',
+          tailoredCvId: 'cv-ai-1',
+          tailoredCv: { title: 'Ada Lovelace - FileMaker Consultant' },
+          coverLetter: {
+            subject: 'Application for FileMaker Consultant',
+            bodyMarkdown: 'I can help Acme Hiring automate marketplace workflows.',
+          },
+          applicationNotes: [],
+          missingInformation: [],
+          confidence: 0.86,
+          source: 'ai-path-job-application-prepare',
+          sourceEntityId: 'org-1:job-1:person-1',
+          sourceApplicationContext: {},
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T10:00:00.000Z',
+        },
+      ],
+    };
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+          }),
+        ]}
+      />
+    );
+
+    expect(await screen.findByText('Prepared applications')).toBeInTheDocument();
+    expect(screen.getByText('Application for FileMaker Consultant')).toBeInTheDocument();
+    expect(screen.getByText(/I can help Acme Hiring/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open CV' })).toHaveAttribute(
+      'href',
+      '/admin/filemaker/persons/person-1/cvs/cv-ai-1'
+    );
+  });
+
+  it('fires the job application AI Path with person CV, job, and organisation context', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            description: 'Build marketplace workflow automations.',
+            location: 'Warsaw',
+          }),
+        ]}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Prepare application for FileMaker Consultant/i })
+    );
+    await waitFor(() => {
+      expect(screen.getByLabelText('Person context')).toHaveValue('person-1');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }));
+
+    await waitFor(() => {
+      expect(mocks.fireAiPathTriggerEvent).toHaveBeenCalledTimes(1);
+    });
+
+    const [args] = mocks.fireAiPathTriggerEvent.mock.calls[0] as Array<{
+      entityType: string;
+      extras: Record<string, unknown>;
+      getEntityJson: () => Record<string, unknown> | null;
+      preferredPathId: string;
+      source: { location?: string };
+      triggerEventId: string;
+    }>;
+    const entityJson = args.getEntityJson();
+    const context = entityJson?.['applicationContext'] as Record<string, unknown>;
+    const personContext = context['personContext'] as Record<string, unknown>;
+    const jobContext = context['jobContext'] as Record<string, unknown>;
+    const organizationContext = context['organizationContext'] as Record<string, unknown>;
+
+    expect(args).toMatchObject({
+      entityType: 'custom',
+      preferredPathId: 'path_job_application_prepare_v1',
+      source: { location: 'filemaker_organization_job_application' },
+      triggerEventId: 'cb9f76f4-50d5-4d23-8f89-f11d4f7f81dd',
+    });
+    expect((personContext['person'] as Record<string, unknown>)['fullName']).toBe('Ada Lovelace');
+    expect(personContext['cvs']).toEqual([
+      expect.objectContaining({
+        id: 'cv-1',
+        title: 'Primary CV',
+      }),
+    ]);
+    expect((jobContext['listing'] as FilemakerJobListing).title).toBe('FileMaker Consultant');
+    expect((organizationContext['organization'] as FilemakerOrganization).name).toBe('Acme Hiring');
+    expect(args.extras['applicationContext']).toEqual(context);
   });
 });

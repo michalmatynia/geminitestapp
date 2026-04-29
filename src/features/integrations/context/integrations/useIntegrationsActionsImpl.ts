@@ -4,8 +4,10 @@ import { useCallback, useState } from 'react';
 
 import {
   is1688IntegrationSlug,
+  isJobSearchPlatformIntegrationSlug,
   isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
+  isPracujPlIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -140,6 +142,10 @@ export function useIntegrationsActionsImpl(args: {
     const isTraderaBrowserIntegration = isTraderaIntegration;
     const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
     const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
+    const isPracujIntegration = isPracujPlIntegrationSlug(args.activeIntegration.slug);
+    const isJobSearchPlatformIntegration = isJobSearchPlatformIntegrationSlug(
+      args.activeIntegration.slug
+    );
     const isBaselinkerIntegration = args.activeIntegration.slug === 'baselinker';
     const isLinkedInIntegration = isLinkedInIntegrationSlug(args.activeIntegration.slug);
     const requestedConnectionId = options.connectionId?.trim() || null;
@@ -157,6 +163,7 @@ export function useIntegrationsActionsImpl(args: {
       !isLinkedInIntegration &&
       !isVintedIntegration &&
       !is1688Integration &&
+      !isPracujIntegration &&
       !normalizedUsername
     ) {
       toast('Username is required for this integration.', { variant: 'error' });
@@ -171,19 +178,33 @@ export function useIntegrationsActionsImpl(args: {
       !isLinkedInIntegration &&
       !isVintedIntegration &&
       !is1688Integration &&
+      !isPracujIntegration &&
       !formData.password.trim()
     ) {
       toast('Password/Token is required.', { variant: 'error' });
       return null;
     }
+    const normalizedJobApplicationPersonId = formData.jobApplicationPersonId.trim();
+    const normalizedJobApplicationPersonName = formData.jobApplicationPersonName.trim();
     const payload: Record<string, unknown> = {
       name: normalizedName,
       ...(normalizedUsername ||
       !isCreateMode ||
-      (!isVintedIntegration && !is1688Integration)
+      (!isVintedIntegration && !is1688Integration && !isPracujIntegration)
         ? { username: normalizedUsername }
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),
+      ...(isJobSearchPlatformIntegration
+        ? {
+            jobApplicationPersonId:
+              normalizedJobApplicationPersonId.length > 0 ? normalizedJobApplicationPersonId : null,
+            jobApplicationPersonName:
+              normalizedJobApplicationPersonId.length > 0 &&
+              normalizedJobApplicationPersonName.length > 0
+                ? normalizedJobApplicationPersonName
+                : null,
+          }
+        : {}),
       ...(is1688Integration
         ? {
             scanner1688StartUrl: formData.scanner1688StartUrl.trim() || null,
@@ -424,6 +445,11 @@ export function useIntegrationsActionsImpl(args: {
     handleConnectionTest(c, 'test', '1688 manual login test', {
       body: { mode: 'manual', manualTimeoutMs: 300000 },
       timeoutMs: 360000,
+    });
+  const handlePracujManualLogin = (c: IntegrationConnection) =>
+    handleConnectionTest(c, 'test', 'Pracuj.pl manual login test', {
+      body: { mode: 'manual', manualTimeoutMs: 240000 },
+      timeoutMs: 300000,
     });
 
   const handleAllegroAuthorize = (): void => {
@@ -667,6 +693,7 @@ export function useIntegrationsActionsImpl(args: {
     handleTraderaManualLogin,
     handleVintedManualLogin,
     handle1688ManualLogin,
+    handlePracujManualLogin,
     handleAllegroAuthorize,
     handleAllegroDisconnect,
     handleAllegroSandboxToggle,

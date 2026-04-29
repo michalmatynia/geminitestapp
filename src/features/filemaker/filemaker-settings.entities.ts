@@ -463,6 +463,8 @@ export const createFilemakerJobListing = (input: {
   sourceExternalId?: unknown;
   sourceSite?: unknown;
   sourceUrl?: unknown;
+  postedAt?: unknown;
+  expiresAt?: unknown;
   scrapedAt?: unknown;
   lexiconTermIds?: unknown;
   createdAt?: string | null | undefined;
@@ -478,6 +480,8 @@ export const createFilemakerJobListing = (input: {
   const sourceExternalId = normalizeString(input.sourceExternalId);
   const sourceSite = normalizeString(input.sourceSite);
   const sourceUrl = normalizeString(input.sourceUrl);
+  const postedAt = normalizeString(input.postedAt);
+  const expiresAt = normalizeString(input.expiresAt);
   return {
     id: normalizeString(input.id),
     organizationId: normalizeString(input.organizationId),
@@ -494,6 +498,8 @@ export const createFilemakerJobListing = (input: {
     ...(sourceExternalId.length > 0 ? { sourceExternalId } : {}),
     ...(sourceSite.length > 0 ? { sourceSite } : {}),
     ...(sourceUrl.length > 0 ? { sourceUrl } : {}),
+    ...(postedAt.length > 0 ? { postedAt } : {}),
+    ...(expiresAt.length > 0 ? { expiresAt } : {}),
     ...(scrapedAt.length > 0 ? { scrapedAt } : {}),
     lexiconTermIds: normalizeStringList(input.lexiconTermIds),
     createdAt: input.createdAt ?? now,

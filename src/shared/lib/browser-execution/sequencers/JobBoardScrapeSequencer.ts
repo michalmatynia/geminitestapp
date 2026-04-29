@@ -784,6 +784,125 @@ export class JobBoardScrapeSequencer {
           factKeys.add(factKey);
           facts.push({ label: normalizedLabel, value: normalizedValue });
         };
+        const asRecord = (value: unknown): Record<string, unknown> | null =>
+          value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+        const firstRecord = (value: unknown): Record<string, unknown> | null => {
+          if (Array.isArray(value)) return asRecord(value[0]);
+          return asRecord(value);
+        };
+        const readFirst = (...values: unknown[]): string => {
+          for (const value of values) {
+            const candidates = Array.isArray(value) ? value : [value];
+            for (const candidate of candidates) {
+              const normalized = normalizeText(candidate);
+              if (normalized) return normalized;
+            }
+          }
+          return '';
+        };
+        const readJsonLdRecords = (): Array<Record<string, unknown>> => {
+          const records: Array<Record<string, unknown>> = [];
+          const visit = (value: unknown): void => {
+            if (Array.isArray(value)) {
+              value.forEach(visit);
+              return;
+            }
+            const record = asRecord(value);
+            if (record === null) return;
+            records.push(record);
+            visit(record['@graph']);
+            visit(record['itemListElement']);
+          };
+          Array.from(document.querySelectorAll('script[type="application/ld+json"]')).forEach(
+            (script) => {
+              try {
+                visit(JSON.parse(script.textContent ?? 'null'));
+              } catch {
+                // Malformed JSON-LD is common enough; visible text extraction still runs.
+              }
+            }
+          );
+          return records;
+        };
+        const typeMatches = (record: Record<string, unknown>, expected: string): boolean => {
+          const rawType = record['@type'];
+          const values = Array.isArray(rawType) ? rawType : [rawType];
+          return values.some(
+            (value) => normalizeText(value).toLowerCase() === expected.toLowerCase()
+          );
+        };
+        const addAddressFacts = (
+          labelPrefix: string,
+          address: Record<string, unknown> | null
+        ): void => {
+          if (address === null) return;
+          const street = readFirst(address['streetAddress'], address['addressLine'], address['name']);
+          const postalCode = readFirst(address['postalCode']);
+          const city = readFirst(address['addressLocality'], address['locality']);
+          const region = readFirst(address['addressRegion'], address['region']);
+          const country = readFirst(address['addressCountry'], address['country']);
+          const cityLine = [postalCode, city].filter(Boolean).join(' ');
+          const fullAddress = [street, cityLine, region, country].filter(Boolean).join(', ');
+          addFact(`${labelPrefix}Address`, fullAddress);
+          addFact(`${labelPrefix}Street address`, street);
+          addFact(`${labelPrefix}Postal code`, postalCode);
+          addFact(`${labelPrefix}City`, city);
+          addFact(`${labelPrefix}Region`, region);
+          addFact(`${labelPrefix}Country`, country);
+        };
+        const addVisibleDateFacts = (): void => {
+          const datePatterns = [
+            {
+              label: 'Expires at',
+              pattern:
+                /(?:wazna do|ważna do|valid until|valid through|expires|deadline|termin aplikowania)\s*:?\s*(.{4,90})/i,
+            },
+            {
+              label: 'Posted at',
+              pattern:
+                /(?:opublikowano|data publikacji|published|date posted|posted)\s*:?\s*(.{4,90})/i,
+            },
+          ];
+          Array.from((root ?? document).querySelectorAll('li, p, div, span'))
+            .slice(0, 360)
+            .forEach((item) => {
+              if (!isVisible(item)) return;
+              const text = normalizeText(item.textContent ?? '');
+              if (!text || text.length > 180) return;
+              datePatterns.forEach(({ label, pattern }) => {
+                const match = text.match(pattern);
+                if (match) addFact(label, match[1] ?? '');
+              });
+            });
+        };
+        const addJsonLdFacts = (): void => {
+          readJsonLdRecords().forEach((record) => {
+            if (typeMatches(record, 'JobPosting')) {
+              addFact('Posted at', readFirst(record['datePosted']));
+              addFact('Expires at', readFirst(record['validThrough']));
+              addFact('Employment type', readFirst(record['employmentType']));
+              const hiringOrganization = firstRecord(record['hiringOrganization']);
+              addFact('Company', readFirst(hiringOrganization?.['name']));
+              addFact('Industry', readFirst(hiringOrganization?.['industry']));
+              addFact('Company size', readFirst(hiringOrganization?.['numberOfEmployees']));
+              addFact('Company description', readFirst(hiringOrganization?.['description']));
+              addAddressFacts('Company ', firstRecord(hiringOrganization?.['address']));
+              const locations = Array.isArray(record['jobLocation'])
+                ? record['jobLocation']
+                : [record['jobLocation']];
+              locations.forEach((location) => {
+                const locationRecord = asRecord(location);
+                addAddressFacts('', firstRecord(locationRecord?.['address']) ?? locationRecord);
+              });
+            } else if (typeMatches(record, 'Organization')) {
+              addFact('Company', readFirst(record['name']));
+              addFact('Industry', readFirst(record['industry']));
+              addFact('Company size', readFirst(record['numberOfEmployees']));
+              addFact('Company description', readFirst(record['description']));
+              addAddressFacts('Company ', firstRecord(record['address']));
+            }
+          });
+        };
 
         for (const dl of Array.from((root ?? document).querySelectorAll('dl')).slice(0, 20)) {
           let lastTerm = '';
@@ -897,6 +1016,8 @@ export class JobBoardScrapeSequencer {
             .map((text) => clipText(text, 4000)),
           5
         );
+        addJsonLdFacts();
+        addVisibleDateFacts();
         const plainText = clipText(root?.textContent ?? document.body?.textContent ?? '', 14_000);
         const snapshot = {
           url: window.location.href,
@@ -1098,6 +1219,100 @@ export class JobBoardScrapeSequencer {
         factKeys.add(key);
         facts.push({ label: normalizedLabel, value: normalizedValue });
       };
+      const asRecord = (value: unknown): Record<string, unknown> | null =>
+        value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+      const firstRecord = (value: unknown): Record<string, unknown> | null => {
+        if (Array.isArray(value)) return asRecord(value[0]);
+        return asRecord(value);
+      };
+      const readFirst = (...values: unknown[]): string => {
+        for (const value of values) {
+          const candidates = Array.isArray(value) ? value : [value];
+          for (const candidate of candidates) {
+            const normalized = normalizeText(candidate);
+            if (normalized) return normalized;
+          }
+        }
+        return '';
+      };
+      const readJsonLdRecords = (): Array<Record<string, unknown>> => {
+        const records: Array<Record<string, unknown>> = [];
+        const visit = (value: unknown): void => {
+          if (Array.isArray(value)) {
+            value.forEach(visit);
+            return;
+          }
+          const record = asRecord(value);
+          if (record === null) return;
+          records.push(record);
+          visit(record['@graph']);
+        };
+        Array.from(document.querySelectorAll('script[type="application/ld+json"]')).forEach(
+          (script) => {
+            try {
+              visit(JSON.parse(script.textContent ?? 'null'));
+            } catch {
+              // Profile pages may include malformed embedded JSON-LD.
+            }
+          }
+        );
+        return records;
+      };
+      const typeMatches = (record: Record<string, unknown>, expected: string): boolean => {
+        const rawType = record['@type'];
+        const values = Array.isArray(rawType) ? rawType : [rawType];
+        return values.some(
+          (value) => normalizeText(value).toLowerCase() === expected.toLowerCase()
+        );
+      };
+      const addAddressFacts = (
+        labelPrefix: string,
+        address: Record<string, unknown> | null
+      ): void => {
+        if (address === null) return;
+        const street = readFirst(address['streetAddress'], address['addressLine'], address['name']);
+        const postalCode = readFirst(address['postalCode']);
+        const city = readFirst(address['addressLocality'], address['locality']);
+        const region = readFirst(address['addressRegion'], address['region']);
+        const country = readFirst(address['addressCountry'], address['country']);
+        const cityLine = [postalCode, city].filter(Boolean).join(' ');
+        const fullAddress = [street, cityLine, region, country].filter(Boolean).join(', ');
+        addFact(`${labelPrefix}Address`, fullAddress);
+        addFact(`${labelPrefix}Street address`, street);
+        addFact(`${labelPrefix}Postal code`, postalCode);
+        addFact(`${labelPrefix}City`, city);
+        addFact(`${labelPrefix}Region`, region);
+        addFact(`${labelPrefix}Country`, country);
+      };
+      const addProfileJsonLdFacts = (): void => {
+        readJsonLdRecords().forEach((record) => {
+          if (!typeMatches(record, 'Organization') && !typeMatches(record, 'Corporation')) return;
+          addFact('Company', readFirst(record['name']));
+          addFact('Industry', readFirst(record['industry']));
+          addFact('Company size', readFirst(record['numberOfEmployees']));
+          addFact('Company description', readFirst(record['description']));
+          addFact('NIP', readFirst(record['taxID'], record['vatID']));
+          addAddressFacts('Company ', firstRecord(record['address']));
+        });
+      };
+      const addVisibleIdentifierFacts = (): void => {
+        const patterns = [
+          { label: 'NIP', pattern: /\bNIP\s*:?\s*([0-9 -]{10,})/i },
+          { label: 'KRS', pattern: /\bKRS\s*:?\s*([0-9 -]{6,})/i },
+          { label: 'REGON', pattern: /\bREGON\s*:?\s*([0-9 -]{9,})/i },
+        ];
+        Array.from((root ?? document).querySelectorAll('li, p, div, span'))
+          .slice(0, 360)
+          .forEach((item) => {
+            if (!isVisible(item)) return;
+            const text = normalizeText(item.textContent ?? '');
+            if (!text || text.length > 180) return;
+            patterns.forEach(({ label, pattern }) => {
+              const match = text.match(pattern);
+              if (match) addFact(label, match[1] ?? '');
+            });
+          });
+      };
 
       for (const dl of Array.from((root ?? document).querySelectorAll('dl')).slice(0, 20)) {
         let lastTerm = '';
@@ -1142,8 +1357,10 @@ export class JobBoardScrapeSequencer {
             return /(strona|website|www|http|kontakt|contact)/i.test(`${label} ${href}`) ? href : '';
           })
           .filter(Boolean),
-        10
+          10
       );
+      addProfileJsonLdFacts();
+      addVisibleIdentifierFacts();
 
       return {
         facts: facts.slice(0, 40),

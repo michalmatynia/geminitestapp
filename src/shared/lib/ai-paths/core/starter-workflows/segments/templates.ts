@@ -1,4 +1,14 @@
+/* eslint-disable max-lines */
+
 import type { CanvasSemanticDocument } from '@/shared/contracts/ai-paths-semantic-grammar';
+import {
+  JOB_APPLICATION_PREPARE_PATH_ID,
+  JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_PREPARE_TRIGGER_LOCATION,
+  JOB_APPLICATION_PREPARE_TRIGGER_NAME,
+  JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
+} from '@/shared/lib/ai-paths/job-application-prepare';
 import {
   MARKETPLACE_COPY_DEBRAND_PATH_ID,
   MARKETPLACE_COPY_DEBRAND_STARTER_TEMPLATE_ID,
@@ -18,6 +28,7 @@ import {
 import descriptionInferenceLiteAsset from '../assets/description-inference-lite.canvas.json';
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
+import jobApplicationPrepareAsset from '../assets/job-application-prepare.canvas.json';
 import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canvas.json';
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
 import parameterValueInferenceAsset from '../assets/parameter-value-inference.canvas.json';
@@ -71,6 +82,41 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
       versionedOverlayScope: 'any_provenance_path',
       lowOverlapReplacementMode: 'any_resolved',
       lowOverlapStructuralMatcher: hasParameterInferencePromptStructure,
+    },
+  },
+  {
+    templateId: JOB_APPLICATION_PREPARE_STARTER_TEMPLATE_ID,
+    name: 'Prepare Job Application',
+    description:
+      'Create a tailored CV and cover letter from a Persons profile, job listing, and organisation profile.',
+    semanticAsset: jobApplicationPrepareAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: JOB_APPLICATION_PREPARE_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID,
+        name: JOB_APPLICATION_PREPARE_TRIGGER_NAME,
+        pathId: JOB_APPLICATION_PREPARE_PATH_ID,
+        locations: [JOB_APPLICATION_PREPARE_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(JOB_APPLICATION_PREPARE_TRIGGER_NAME),
+        enabled: true,
+        mode: 'click',
+        sortIndex: JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'job_application_prepare',
+      templateVersion: 1,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
     },
   },
   {

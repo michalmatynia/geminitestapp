@@ -169,6 +169,8 @@ export const databaseConfigSchema = z.object({
   mode: z.enum(['replace', 'append']).optional(),
   updateStrategy: z.enum(['one', 'many']).optional(),
   updatePayloadMode: z.enum(['mapping', 'custom']).optional(),
+  upsert: z.boolean().optional(),
+  returnDocument: z.enum(['before', 'after']).optional(),
   useMongoActions: z.boolean().optional(),
   actionCategory: z.enum(['create', 'read', 'update', 'delete', 'aggregate']).optional(),
   action: z

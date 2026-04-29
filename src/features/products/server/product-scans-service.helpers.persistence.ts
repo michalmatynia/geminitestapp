@@ -24,13 +24,101 @@ import {
   createPersistedProductScanStep,
 } from './product-scans-service.helpers.steps';
 
+const waitForPersistRetry = async (attempt: number): Promise<void> => {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 100 * attempt);
+  });
+};
+
+const updateProductScanWithRetry = async (
+  scan: ProductScanRecord,
+  updates: Partial<ProductScanRecord>,
+  attempt: number = 1
+): Promise<ProductScanRecord> => {
+  try {
+    const result = await updateProductScan(scan.id, updates);
+    if (result === null) {
+      throw new Error(`Product scan ${scan.id} could not be updated.`);
+    }
+    return normalizeProductScanRecord(result);
+  } catch (error) {
+    if (attempt >= PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS) {
+      throw error;
+    }
+    await waitForPersistRetry(attempt);
+    return await updateProductScanWithRetry(scan, updates, attempt + 1);
+  }
+};
+
+const reportPersistFailure = (
+  scan: ProductScanRecord,
+  updates: Partial<ProductScanRecord>,
+  error: unknown
+): void => {
+  const effectiveEngineRunId =
+    readOptionalString(updates.engineRunId) ?? readOptionalString(scan.engineRunId);
+
+  void ErrorSystem.captureException(error, {
+    service: 'product-scans.service',
+    action: 'persistSynchronizedScan',
+    scanId: scan.id,
+    productId: scan.productId,
+    engineRunId: effectiveEngineRunId,
+  });
+};
+
+const resolveQueuedScanSteps = (
+  scan: ProductScanRecord,
+  input: {
+    stepKey?: string;
+    stepLabel?: string;
+    stepStatus?: ProductScanRecord['steps'][number]['status'];
+    message?: string | null;
+    asinUpdateMessage?: string | null;
+  }
+): ProductScanRecord['steps'] => {
+  if (input.stepKey === undefined) {
+    return scan.steps;
+  }
+
+  return resolvePersistedProductScanSteps(scan, [
+    createPersistedProductScanStep({
+      key: input.stepKey,
+      label: input.stepLabel ?? 'Update',
+      status: input.stepStatus ?? 'completed',
+      message: input.message ?? input.asinUpdateMessage,
+    }),
+  ]);
+};
+
+const buildDirectQueuedScanUpdates = (
+  scan: ProductScanRecord,
+  input: {
+    status?: ProductScanRecord['status'];
+    engineRunId?: string | null;
+    error?: string | null;
+    asinUpdateStatus?: ProductScanRecord['asinUpdateStatus'];
+    asinUpdateMessage?: string | null;
+    completedAt?: string | null;
+    message?: string | null;
+    stepKey?: string;
+    stepLabel?: string;
+    stepStatus?: ProductScanRecord['steps'][number]['status'];
+  }
+): Partial<ProductScanRecord> => ({
+  status: input.status ?? scan.status,
+  engineRunId: input.engineRunId ?? scan.engineRunId,
+  error: input.error ?? scan.error,
+  asinUpdateStatus: input.asinUpdateStatus ?? scan.asinUpdateStatus,
+  asinUpdateMessage: input.asinUpdateMessage ?? scan.asinUpdateMessage,
+  completedAt: input.completedAt ?? scan.completedAt,
+  steps: resolveQueuedScanSteps(scan, input),
+});
+
 export const persistSynchronizedScan = async (
   scan: ProductScanRecord,
   updates: Partial<ProductScanRecord>
 ): Promise<ProductScanRecord> => {
-  let attempt = 0;
-  let lastError: unknown = null;
-
   const truncatedUpdates = {
     ...updates,
     error: readOptionalString(updates.error, PRODUCT_SCAN_ERROR_MAX_LENGTH),
@@ -41,34 +129,12 @@ export const persistSynchronizedScan = async (
     matchedImageId: readOptionalString(updates.matchedImageId, PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH),
   };
 
-  while (attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS) {
-    try {
-      const result = await updateProductScan(scan.id, truncatedUpdates);
-      if (result === null) {
-        throw new Error(`Product scan ${scan.id} could not be updated.`);
-      }
-      return normalizeProductScanRecord(result);
-    } catch (error) {
-      attempt++;
-      lastError = error;
-      if (attempt < PRODUCT_SCAN_SYNC_PERSIST_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
-      }
-    }
+  try {
+    return await updateProductScanWithRetry(scan, truncatedUpdates);
+  } catch (error) {
+    reportPersistFailure(scan, updates, error);
+    return normalizeProductScanRecord({ ...scan, ...truncatedUpdates });
   }
-
-  const effectiveEngineRunId =
-    readOptionalString(updates.engineRunId) ?? readOptionalString(scan.engineRunId);
-
-  void ErrorSystem.captureException(lastError, {
-    service: 'product-scans.service',
-    action: 'persistSynchronizedScan',
-    scanId: scan.id,
-    productId: scan.productId,
-    engineRunId: effectiveEngineRunId,
-  });
-
-  return normalizeProductScanRecord({ ...scan, ...truncatedUpdates });
 };
 
 export const persistFailedSynchronization = async (
@@ -103,24 +169,5 @@ export const tryDirectQueuedScanUpdate = async (
     return null;
   }
 
-  const nextSteps = input.stepKey
-    ? resolvePersistedProductScanSteps(scan, [
-        createPersistedProductScanStep({
-          key: input.stepKey,
-          label: input.stepLabel ?? 'Update',
-          status: input.stepStatus ?? 'completed',
-          message: input.message ?? input.asinUpdateMessage,
-        }),
-      ])
-    : scan.steps;
-
-  return await persistSynchronizedScan(scan, {
-    status: input.status ?? scan.status,
-    engineRunId: input.engineRunId ?? scan.engineRunId,
-    error: input.error ?? scan.error,
-    asinUpdateStatus: input.asinUpdateStatus ?? scan.asinUpdateStatus,
-    asinUpdateMessage: input.asinUpdateMessage ?? scan.asinUpdateMessage,
-    completedAt: input.completedAt ?? scan.completedAt,
-    steps: nextSteps,
-  });
+  return await persistSynchronizedScan(scan, buildDirectQueuedScanUpdates(scan, input));
 };

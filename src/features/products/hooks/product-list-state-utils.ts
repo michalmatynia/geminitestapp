@@ -69,7 +69,7 @@ const toMillis = (value: unknown): number | null => {
   }
   if (typeof value === 'string') {
     const trimmed = value.trim();
-    if (!trimmed) return null;
+    if (trimmed.length === 0) return null;
     const parsed = Date.parse(trimmed);
     return Number.isNaN(parsed) ? null : parsed;
   }
@@ -110,7 +110,7 @@ const resolveComparableLocalizedText = (
   const directValue = toTrimmedString(
     (product as Record<string, unknown>)[`${prefix}_${locale}`]
   );
-  if (directValue) return directValue;
+  if (directValue.length > 0) return directValue;
 
   const localizedRecord = toRecord((product as Record<string, unknown>)[prefix]);
   return toTrimmedString(localizedRecord?.[locale]);
@@ -162,9 +162,9 @@ export const buildCategoryNameById = (
     if (!Array.isArray(categories)) continue;
     for (const category of categories) {
       const categoryId = resolveCategoryRecordId(category);
-      if (!categoryId || map.has(categoryId)) continue;
+      if (categoryId.length === 0 || map.has(categoryId)) continue;
       const label = resolveCategoryLabelByLocale(category, locale);
-      if (!label) continue;
+      if (label.length === 0) continue;
       map.set(categoryId, label);
     }
   }
@@ -176,7 +176,7 @@ export const resolveProductCategoryDisplayLabel = (
   categoryNameById: ReadonlyMap<string, string>
 ): string => {
   const normalizedCategoryId = toTrimmedString(categoryId);
-  if (!normalizedCategoryId) return 'Unassigned';
+  if (normalizedCategoryId.length === 0) return 'Unassigned';
 
   return resolveCategoryDisplayLabel(
     normalizedCategoryId,
@@ -187,10 +187,10 @@ export const resolveProductCategoryDisplayLabel = (
 
 export const resolveProductCategoryId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.categoryId);
-  if (direct) return direct;
+  if (direct.length > 0) return direct;
 
   const categoryRecord = resolveProductCategoryRecord(product);
-  if (!categoryRecord) return '';
+  if (categoryRecord === null) return '';
 
   return resolveCategoryRecordIdValue(categoryRecord);
 };
@@ -200,17 +200,17 @@ export const resolveProductCatalogId = (product: ProductWithImages): string => {
   if (Array.isArray(catalogs)) {
     const first = catalogs[0] as Record<string, unknown> | undefined;
     const relationCatalogId = resolveCatalogRelationIdValue(first);
-    if (relationCatalogId) {
+    if (relationCatalogId.length > 0) {
       return relationCatalogId;
     }
   }
 
   const direct = toTrimmedString(product.catalogId);
-  if (direct) return direct;
+  if (direct.length > 0) return direct;
 
   const categoryRecord = resolveProductCategoryRecord(product);
   const categoryCatalogId = toTrimmedString(categoryRecord?.['catalogId']);
-  if (categoryCatalogId) return categoryCatalogId;
+  if (categoryCatalogId.length > 0) return categoryCatalogId;
 
   return '';
 };

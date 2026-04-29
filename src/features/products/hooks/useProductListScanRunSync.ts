@@ -26,6 +26,19 @@ const TERMINAL_SCAN_FEEDBACK_TTL_MS = 15_000;
 const TERMINAL_SCAN_FEEDBACK_CLOCK_MS = 1_000;
 const EMPTY_PRODUCT_SCAN_RUN_STATUS_BY_PRODUCT_ID = new Map<string, ProductScanRunFeedback>();
 
+const areFeedbackEntriesEqual = (
+  left: ProductScanRunFeedback,
+  right: ProductScanRunFeedback
+): boolean =>
+  [
+    left.scanId === right.scanId,
+    left.status === right.status,
+    left.updatedAt === right.updatedAt,
+    left.label === right.label,
+    left.variant === right.variant,
+    left.badgeClassName === right.badgeClassName,
+  ].every((isEqual) => isEqual === true);
+
 const areFeedbackMapsEqual = (
   left: ReadonlyMap<string, ProductScanRunFeedback>,
   right: ReadonlyMap<string, ProductScanRunFeedback>
@@ -35,17 +48,7 @@ const areFeedbackMapsEqual = (
 
   for (const [productId, nextFeedback] of right) {
     const prevFeedback = left.get(productId);
-    if (!prevFeedback) {
-      return false;
-    }
-    if (
-      prevFeedback.scanId !== nextFeedback.scanId ||
-      prevFeedback.status !== nextFeedback.status ||
-      prevFeedback.updatedAt !== nextFeedback.updatedAt ||
-      prevFeedback.label !== nextFeedback.label ||
-      prevFeedback.variant !== nextFeedback.variant ||
-      prevFeedback.badgeClassName !== nextFeedback.badgeClassName
-    ) {
+    if (prevFeedback === undefined || !areFeedbackEntriesEqual(prevFeedback, nextFeedback)) {
       return false;
     }
   }
@@ -91,21 +94,14 @@ const resolveRefetchInterval = (scans: readonly ProductScanRecord[]): number | f
   return false;
 };
 
-export function useProductListScanRunSync({
-  enabled = true,
-  productIds,
+const useProductScanRunStatusQuery = ({
+  enabled,
+  normalizedProductIds,
 }: {
-  enabled?: boolean;
-  productIds: readonly string[];
-}): ReadonlyMap<string, ProductScanRunFeedback> {
-  const normalizedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
-  const productIdsKey = normalizedProductIds.join('\u0000');
-  const [now, setNow] = useState(() => Date.now());
-  const [productScanRunStatusByProductId, setProductScanRunStatusByProductId] = useState<
-    ReadonlyMap<string, ProductScanRunFeedback>
-  >(() => EMPTY_PRODUCT_SCAN_RUN_STATUS_BY_PRODUCT_ID);
-
-  const scansQuery = useQuery<ProductScanListResponse>({
+  enabled: boolean;
+  normalizedProductIds: readonly string[];
+}): ReturnType<typeof useQuery<ProductScanListResponse>> =>
+  useQuery<ProductScanListResponse>({
     queryKey: QUERY_KEYS.products.scansLatest(normalizedProductIds),
     enabled: enabled && normalizedProductIds.length > 0,
     queryFn: async () =>
@@ -120,8 +116,26 @@ export function useProductListScanRunSync({
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     retry: 1,
-    refetchInterval: (query) =>
-      resolveRefetchInterval(query.state.data?.scans ?? []),
+    refetchInterval: (query) => resolveRefetchInterval(query.state.data?.scans ?? []),
+  });
+
+export function useProductListScanRunSync({
+  enabled = true,
+  productIds,
+}: {
+  enabled?: boolean;
+  productIds: readonly string[];
+}): ReadonlyMap<string, ProductScanRunFeedback> {
+  const normalizedProductIds = useMemo(() => normalizeProductIds(productIds), [productIds]);
+  const productIdsKey = normalizedProductIds.join('\u0000');
+  const [now, setNow] = useState(() => Date.now());
+  const [productScanRunStatusByProductId, setProductScanRunStatusByProductId] = useState<
+    ReadonlyMap<string, ProductScanRunFeedback>
+  >(() => EMPTY_PRODUCT_SCAN_RUN_STATUS_BY_PRODUCT_ID);
+
+  const scansQuery = useProductScanRunStatusQuery({
+    enabled,
+    normalizedProductIds,
   });
 
   useEffect(() => {
@@ -145,7 +159,7 @@ export function useProductListScanRunSync({
   useEffect(() => {
     const scans = scansQuery.data?.scans ?? [];
     if (!enabled || normalizedProductIds.length === 0) {
-      return;
+      return undefined;
     }
 
     if (
@@ -153,7 +167,7 @@ export function useProductListScanRunSync({
         (scan) => !isProductScanActiveStatus(scan.status) && shouldShowTerminalFeedback(scan, Date.now())
       )
     ) {
-      return;
+      return undefined;
     }
 
     const timer: SafeTimerId = safeSetInterval(() => {

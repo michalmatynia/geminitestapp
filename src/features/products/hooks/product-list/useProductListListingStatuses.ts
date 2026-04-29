@@ -20,6 +20,55 @@ import {
 } from '@/features/products/hooks/product-list-state-utils';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
+type ProductListListingStatusesResult = {
+  visibleListingBadgeStatuses: Map<string, string>;
+};
+
+type UseProductListListingStatusesInput = {
+  data: ProductWithImages[];
+  integrationBadgeStatuses: Map<string, string>;
+  traderaBadgeStatuses: Map<string, string>;
+  playwrightProgrammableBadgeStatuses: Map<string, string>;
+  vintedBadgeStatuses: Map<string, string>;
+  visibleProductIdSet: Set<string>;
+  triggerJobCompletionHighlight: (productId: string) => void;
+};
+
+const setNormalizedListingStatus = (
+  statuses: Map<string, string>,
+  productId: string,
+  source: string,
+  status: string | undefined
+): void => {
+  const normalizedStatus = normalizeListingStatus(status);
+  if (normalizedStatus.length > 0) {
+    statuses.set(`${productId}:${source}`, normalizedStatus);
+  }
+};
+
+const collectCompletedProductIds = ({
+  previousStatuses,
+  visibleListingBadgeStatuses,
+  visibleProductIdSet,
+}: {
+  previousStatuses: Map<string, string>;
+  visibleListingBadgeStatuses: Map<string, string>;
+  visibleProductIdSet: Set<string>;
+}): Set<string> => {
+  const completedProductIds = new Set<string>();
+  previousStatuses.forEach((previousStatus: string, key: string) => {
+    if (!LISTING_IN_FLIGHT_STATUSES.has(previousStatus)) return;
+
+    const currentStatus = visibleListingBadgeStatuses.get(key);
+    if (currentStatus === undefined || !LISTING_COMPLETED_STATUSES.has(currentStatus)) return;
+
+    const productId = key.split(':')[0];
+    if (productId === undefined || productId.length === 0 || !visibleProductIdSet.has(productId)) return;
+    completedProductIds.add(productId);
+  });
+  return completedProductIds;
+};
+
 export function useProductListListingStatuses({
   data,
   integrationBadgeStatuses,
@@ -28,58 +77,33 @@ export function useProductListListingStatuses({
   vintedBadgeStatuses,
   visibleProductIdSet,
   triggerJobCompletionHighlight,
-}: {
-  data: ProductWithImages[];
-  integrationBadgeStatuses: Map<string, string>;
-  traderaBadgeStatuses: Map<string, string>;
-  playwrightProgrammableBadgeStatuses: Map<string, string>;
-  vintedBadgeStatuses: Map<string, string>;
-  visibleProductIdSet: Set<string>;
-  triggerJobCompletionHighlight: (productId: string) => void;
-}) {
+}: UseProductListListingStatusesInput): ProductListListingStatusesResult {
   const previousListingBadgeStatusesRef = useRef<Map<string, string> | null>(null);
 
   const visibleListingBadgeStatuses = useMemo(() => {
     const statuses = new Map<string, string>();
     for (const product of data) {
-      const baseStatus = normalizeListingStatus(integrationBadgeStatuses.get(product.id));
-      if (baseStatus) {
-        statuses.set(`${product.id}:base`, baseStatus);
-      }
-      const traderaStatus = normalizeListingStatus(traderaBadgeStatuses.get(product.id));
-      if (traderaStatus) {
-        statuses.set(`${product.id}:tradera`, traderaStatus);
-      }
-      const playwrightProgrammableStatus = normalizeListingStatus(
+      setNormalizedListingStatus(statuses, product.id, 'base', integrationBadgeStatuses.get(product.id));
+      setNormalizedListingStatus(statuses, product.id, 'tradera', traderaBadgeStatuses.get(product.id));
+      setNormalizedListingStatus(
+        statuses,
+        product.id,
+        'playwright-programmable',
         playwrightProgrammableBadgeStatuses.get(product.id)
       );
-      if (playwrightProgrammableStatus) {
-        statuses.set(`${product.id}:playwright-programmable`, playwrightProgrammableStatus);
-      }
-      const vintedStatus = normalizeListingStatus(vintedBadgeStatuses.get(product.id));
-      if (vintedStatus) {
-        statuses.set(`${product.id}:vinted`, vintedStatus);
-      }
+      setNormalizedListingStatus(statuses, product.id, 'vinted', vintedBadgeStatuses.get(product.id));
     }
     return statuses;
   }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses, vintedBadgeStatuses]);
 
   useEffect(() => {
     const previousStatuses = previousListingBadgeStatusesRef.current;
-    if (previousStatuses) {
-      const completedProductIds = new Set<string>();
-
-      previousStatuses.forEach((previousStatus: string, key: string) => {
-        if (!LISTING_IN_FLIGHT_STATUSES.has(previousStatus)) return;
-
-        const currentStatus = visibleListingBadgeStatuses.get(key);
-        if (!currentStatus || !LISTING_COMPLETED_STATUSES.has(currentStatus)) return;
-
-        const productId = key.split(':')[0];
-        if (!productId || !visibleProductIdSet.has(productId)) return;
-        completedProductIds.add(productId);
+    if (previousStatuses !== null) {
+      const completedProductIds = collectCompletedProductIds({
+        previousStatuses,
+        visibleListingBadgeStatuses,
+        visibleProductIdSet,
       });
-
       completedProductIds.forEach((productId: string) => {
         triggerJobCompletionHighlight(productId);
       });

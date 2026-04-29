@@ -118,6 +118,30 @@ type RetainedActionRunStepLike = {
   warning?: string | null;
 };
 
+const PRODUCT_SCAN_STEP_STATUS_BY_RUNTIME_STATUS: Readonly<Record<string, ProductScanStep['status']>> = {
+  cancelled: 'skipped',
+  completed: 'completed',
+  error: 'failed',
+  failed: 'failed',
+  running: 'running',
+  skipped: 'skipped',
+  success: 'completed',
+  succeeded: 'completed',
+};
+
+const BROWSER_EXECUTION_STATUS_BY_RUNTIME_STATUS: Readonly<
+  Record<string, BrowserExecutionStepStatus>
+> = {
+  cancelled: 'skipped',
+  completed: 'success',
+  error: 'error',
+  failed: 'error',
+  running: 'running',
+  skipped: 'skipped',
+  success: 'success',
+  succeeded: 'success',
+};
+
 const isBridgeStepId = (value: string): value is Supplier1688ProbeScanRuntimeStepId =>
   SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEP_IDS.includes(
     value as Supplier1688ProbeScanRuntimeStepId
@@ -127,29 +151,21 @@ const normalizeProductScanStepStatus = (
   status: string | null | undefined,
   error: unknown
 ): ProductScanStep['status'] => {
-  if (status === 'succeeded' || status === 'success' || status === 'completed') {
-    return 'completed';
-  }
-  if (status === 'failed' || status === 'error' || error != null) {
+  if (error !== null && error !== undefined) {
     return 'failed';
   }
-  if (status === 'skipped' || status === 'cancelled') {
-    return 'skipped';
-  }
-  if (status === 'running') {
-    return 'running';
-  }
-  return 'pending';
+
+  return status === null || status === undefined
+    ? 'pending'
+    : PRODUCT_SCAN_STEP_STATUS_BY_RUNTIME_STATUS[status] ?? 'pending';
 };
 
 const normalizeRuntimeStatus = (
   status: string | null | undefined
 ): BrowserExecutionStepStatus => {
-  if (status === 'succeeded' || status === 'success' || status === 'completed') return 'success';
-  if (status === 'failed' || status === 'error') return 'error';
-  if (status === 'skipped' || status === 'cancelled') return 'skipped';
-  if (status === 'running') return 'running';
-  return 'pending';
+  return status === null || status === undefined
+    ? 'pending'
+    : BROWSER_EXECUTION_STATUS_BY_RUNTIME_STATUS[status] ?? 'pending';
 };
 
 const toStringOrNull = (value: unknown): string | null =>
@@ -212,10 +228,10 @@ const resolveBridgeEntry = (
     toStringOrNull(step.type),
   ];
   for (const candidate of candidates) {
-    if (!candidate) continue;
+    if (candidate === null) continue;
     if (isBridgeStepId(candidate)) return SUPPLIER_1688_PRODUCT_STEP_BRIDGE[candidate];
     const alias = SUPPLIER_1688_PRODUCT_STEP_ALIASES[candidate];
-    if (alias) return alias;
+    if (alias !== undefined) return alias;
   }
   return null;
 };
@@ -228,6 +244,24 @@ const toMessage = (step: RetainedActionRunStepLike): string | null =>
   toStringOrNull(step.label) ??
   toStringOrNull(step.name);
 
+const resolveStepDetails = (
+  step: RetainedActionRunStepLike
+): ProductScanStep['details'] => {
+  const selectorKey = toStringOrNull(step.selectorKey);
+  const selector = toStringOrNull(step.selector);
+  const parentStepId = toStringOrNull(step.parentStepId);
+  return [
+    selectorKey !== null ? { label: 'Selector key', value: selectorKey } : null,
+    selector !== null ? { label: 'Selector', value: selector } : null,
+    typeof step.order === 'number' ? { label: 'Action-run order', value: String(step.order) } : null,
+    parentStepId !== null ? { label: 'Parent step', value: parentStepId } : null,
+  ].filter((entry): entry is ProductScanStep['details'][number] => entry !== null);
+};
+
+const resolveStepWarning = (step: RetainedActionRunStepLike): string | null =>
+  toStringOrNull(step.warning) ??
+  (normalizeRuntimeStatus(step.status) === 'error' ? toStringOrNull(step.error) : null);
+
 export const mapSupplier1688ActionRunStepToProductScanStep = (
   step: RetainedActionRunStepLike
 ): ProductScanStep | null => {
@@ -235,17 +269,6 @@ export const mapSupplier1688ActionRunStepToProductScanStep = (
   if (bridge === null) {
     return null;
   }
-
-  const selectorKey = toStringOrNull(step.selectorKey);
-  const selector = toStringOrNull(step.selector);
-  const details = [
-    selectorKey ? { label: 'Selector key', value: selectorKey } : null,
-    selector ? { label: 'Selector', value: selector } : null,
-    typeof step.order === 'number' ? { label: 'Action-run order', value: String(step.order) } : null,
-    toStringOrNull(step.parentStepId)
-      ? { label: 'Parent step', value: toStringOrNull(step.parentStepId) }
-      : null,
-  ].filter((entry): entry is ProductScanStep['details'][number] => entry !== null);
 
   return {
     key: bridge.key,
@@ -256,10 +279,8 @@ export const mapSupplier1688ActionRunStepToProductScanStep = (
     inputSource: null,
     status: normalizeProductScanStepStatus(step.status, step.error),
     message: toMessage(step),
-    warning:
-      toStringOrNull(step.warning) ??
-      (normalizeRuntimeStatus(step.status) === 'error' ? toStringOrNull(step.error) : null),
-    details,
+    warning: resolveStepWarning(step),
+    details: resolveStepDetails(step),
     url: toStringOrNull(step.url),
     startedAt: step.startedAt ?? null,
     completedAt: step.completedAt ?? null,

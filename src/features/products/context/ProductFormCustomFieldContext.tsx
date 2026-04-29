@@ -42,6 +42,15 @@ export type ProductFormCustomFieldActionsContextType = Pick<
 export const ProductFormCustomFieldContext =
   createContext<ProductFormCustomFieldContextType | null>(null);
 
+type ProductFormCustomFieldProviderProps = {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  onInteraction?: () => void;
+};
+
+type CustomFieldValueSetter = React.Dispatch<React.SetStateAction<ProductCustomFieldValue[]>>;
+
 const serializeCustomFieldValues = (value: ProductCustomFieldValue[]): string =>
   JSON.stringify(normalizeProductCustomFieldValues(value));
 
@@ -59,19 +68,76 @@ const replaceCustomFieldValue = (
   return next;
 };
 
-export function ProductFormCustomFieldProvider({
-  children,
-  product,
-  draft,
+const createSetTextValue = ({
   onInteraction,
+  setCustomFieldValues,
 }: {
-  children: React.ReactNode;
-  product?: ProductWithImages;
-  draft?: ProductDraft | null;
   onInteraction?: () => void;
-}) {
-  const customFieldsQuery = useCustomFields();
-  const resolvedDefinitions = customFieldsQuery.data;
+  setCustomFieldValues: CustomFieldValueSetter;
+}): ProductFormCustomFieldActionsContextType['setTextValue'] =>
+  (fieldId: string, textValue: string): void => {
+    const normalizedFieldId = fieldId.trim();
+    if (normalizedFieldId.length === 0) return;
+
+    onInteraction?.();
+    setCustomFieldValues((prev: ProductCustomFieldValue[]): ProductCustomFieldValue[] => {
+      const existing = prev.find((entry: ProductCustomFieldValue) => entry.fieldId === normalizedFieldId);
+      const nextValue = textValue.trim();
+
+      if (existing === undefined && nextValue.length === 0) {
+        return prev;
+      }
+
+      return replaceCustomFieldValue(prev, {
+        fieldId: normalizedFieldId,
+        textValue: nextValue.length > 0 ? textValue : '',
+      });
+    });
+  };
+
+const createToggleSelectedOption = ({
+  onInteraction,
+  setCustomFieldValues,
+}: {
+  onInteraction?: () => void;
+  setCustomFieldValues: CustomFieldValueSetter;
+}): ProductFormCustomFieldActionsContextType['toggleSelectedOption'] =>
+  (fieldId: string, optionId: string, checked: boolean): void => {
+    const normalizedFieldId = fieldId.trim();
+    const normalizedOptionId = optionId.trim();
+    if (normalizedFieldId.length === 0 || normalizedOptionId.length === 0) return;
+
+    onInteraction?.();
+    setCustomFieldValues((prev: ProductCustomFieldValue[]): ProductCustomFieldValue[] => {
+      const existing = prev.find((entry: ProductCustomFieldValue) => entry.fieldId === normalizedFieldId);
+      const currentOptionIds = normalizeProductCustomFieldSelectedOptionIds(
+        existing?.selectedOptionIds ?? []
+      );
+      const nextOptionIds = checked
+        ? [...currentOptionIds, normalizedOptionId]
+        : currentOptionIds.filter((id: string): boolean => id !== normalizedOptionId);
+      const normalizedOptionIds = normalizeProductCustomFieldSelectedOptionIds(nextOptionIds);
+
+      if (existing === undefined && normalizedOptionIds.length === 0) {
+        return prev;
+      }
+
+      return replaceCustomFieldValue(prev, {
+        fieldId: normalizedFieldId,
+        selectedOptionIds: normalizedOptionIds,
+      });
+    });
+  };
+
+const useCustomFieldValuesState = ({
+  draft,
+  product,
+  resolvedDefinitions,
+}: {
+  draft?: ProductDraft | null;
+  product?: ProductWithImages;
+  resolvedDefinitions: ProductCustomFieldDefinition[] | undefined;
+}): [ProductCustomFieldValue[], CustomFieldValueSetter] => {
   const sourceCustomFieldValues = useMemo(
     (): ProductCustomFieldValue[] =>
       Array.isArray(resolvedDefinitions)
@@ -86,7 +152,6 @@ export function ProductFormCustomFieldProvider({
     (): string => serializeCustomFieldValues(sourceCustomFieldValues),
     [sourceCustomFieldValues]
   );
-
   const [customFieldValues, setCustomFieldValues] =
     useState<ProductCustomFieldValue[]>(sourceCustomFieldValues);
   const adoptedCustomFieldValuesKeyRef = useRef<string>(sourceCustomFieldValuesKey);
@@ -112,67 +177,34 @@ export function ProductFormCustomFieldProvider({
       const filtered = filterProductCustomFieldValuesByDefinitions(current, resolvedDefinitions);
       const currentKey = serializeCustomFieldValues(current);
       const filteredKey = serializeCustomFieldValues(filtered);
-      if (currentKey === filteredKey) {
-        return current;
-      }
-      return filtered;
+      return currentKey === filteredKey ? current : filtered;
     });
   }, [resolvedDefinitions]);
 
+  return [customFieldValues, setCustomFieldValues];
+};
+
+export function ProductFormCustomFieldProvider({
+  children,
+  product,
+  draft,
+  onInteraction,
+}: ProductFormCustomFieldProviderProps): React.JSX.Element {
+  const customFieldsQuery = useCustomFields();
+  const resolvedDefinitions = customFieldsQuery.data;
+  const [customFieldValues, setCustomFieldValues] = useCustomFieldValuesState({
+    draft,
+    product,
+    resolvedDefinitions,
+  });
+
   const value = useMemo((): ProductFormCustomFieldContextType => {
-    const setTextValue = (fieldId: string, value: string): void => {
-      const normalizedFieldId = fieldId.trim();
-      if (!normalizedFieldId) return;
-
-      onInteraction?.();
-      setCustomFieldValues((prev: ProductCustomFieldValue[]): ProductCustomFieldValue[] => {
-        const existing = prev.find((entry: ProductCustomFieldValue) => entry.fieldId === normalizedFieldId);
-        const nextValue = value.trim();
-
-        if (!existing && nextValue.length === 0) {
-          return prev;
-        }
-
-        return replaceCustomFieldValue(prev, {
-          fieldId: normalizedFieldId,
-          textValue: nextValue.length > 0 ? value : '',
-        });
-      });
-    };
-
-    const toggleSelectedOption = (fieldId: string, optionId: string, checked: boolean): void => {
-      const normalizedFieldId = fieldId.trim();
-      const normalizedOptionId = optionId.trim();
-      if (!normalizedFieldId || !normalizedOptionId) return;
-
-      onInteraction?.();
-      setCustomFieldValues((prev: ProductCustomFieldValue[]): ProductCustomFieldValue[] => {
-        const existing = prev.find((entry: ProductCustomFieldValue) => entry.fieldId === normalizedFieldId);
-        const currentOptionIds = normalizeProductCustomFieldSelectedOptionIds(
-          existing?.selectedOptionIds ?? []
-        );
-        const nextOptionIds = checked
-          ? [...currentOptionIds, normalizedOptionId]
-          : currentOptionIds.filter((id: string): boolean => id !== normalizedOptionId);
-        const normalizedOptionIds = normalizeProductCustomFieldSelectedOptionIds(nextOptionIds);
-
-        if (!existing && normalizedOptionIds.length === 0) {
-          return prev;
-        }
-
-        return replaceCustomFieldValue(prev, {
-          fieldId: normalizedFieldId,
-          selectedOptionIds: normalizedOptionIds,
-        });
-      });
-    };
-
     return {
-      customFields: customFieldsQuery.data || [],
+      customFields: customFieldsQuery.data ?? [],
       customFieldsLoading: customFieldsQuery.isLoading,
       customFieldValues,
-      setTextValue,
-      toggleSelectedOption,
+      setTextValue: createSetTextValue({ onInteraction, setCustomFieldValues }),
+      toggleSelectedOption: createToggleSelectedOption({ onInteraction, setCustomFieldValues }),
     };
   }, [customFieldsQuery.data, customFieldsQuery.isLoading, customFieldValues, onInteraction]);
 

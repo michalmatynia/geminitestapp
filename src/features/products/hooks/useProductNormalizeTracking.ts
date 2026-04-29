@@ -2,11 +2,122 @@
 
 import { useEffect, useState } from 'react';
 
-import { extractNormalizeProductNameResultFromAiPathRunDetail } from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
+import {
+  extractNormalizeProductNameResultFromAiPathRunDetail,
+  type NormalizeProductNameAiPathResult,
+} from '@/features/products/lib/extractNormalizeProductNameFromAiPathRunDetail';
 import { getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
-import { subscribeToTrackedAiPathRun } from '@/shared/lib/ai-paths/client-run-tracker';
+import {
+  subscribeToTrackedAiPathRun,
+  type TrackedAiPathRunSnapshot,
+} from '@/shared/lib/ai-paths/client-run-tracker';
 
 import type { NormalizeCompletionState } from '../components/ProductModals.types';
+
+type NormalizeRunIdSetter = React.Dispatch<React.SetStateAction<string | null>>;
+type NormalizeCompletionSetter = React.Dispatch<
+  React.SetStateAction<NormalizeCompletionState | null>
+>;
+type NormalizeActiveRef = { current: boolean };
+
+const createNormalizeResultCompletion = (
+  runId: string,
+  result: NormalizeProductNameAiPathResult
+): NormalizeCompletionState => ({
+  kind: 'result',
+  runId,
+  result,
+});
+
+const createNormalizeErrorCompletion = (
+  runId: string,
+  error: string
+): NormalizeCompletionState => ({
+  kind: 'error',
+  runId,
+  error,
+});
+
+const resolveTerminalNormalizeError = (
+  snapshot: TrackedAiPathRunSnapshot,
+  trackedRunId: string
+): NormalizeCompletionState =>
+  createNormalizeErrorCompletion(
+    trackedRunId,
+    snapshot.errorMessage ??
+      `Normalize failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`
+  );
+
+const resolveFetchedNormalizeCompletion = async (
+  trackedRunId: string,
+  activeRef: NormalizeActiveRef
+): Promise<NormalizeCompletionState | null> => {
+  const response = await getAiPathRunResult(trackedRunId, { timeoutMs: 60_000 });
+  if (activeRef.current === false) {
+    return null;
+  }
+
+  if (response.ok === false) {
+    const error = response.error !== ''
+      ? response.error
+      : 'Normalize failed: unable to load the completed AI Path run result.';
+    return createNormalizeErrorCompletion(trackedRunId, error);
+  }
+
+  const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
+  return normalizeResult !== null
+    ? createNormalizeResultCompletion(trackedRunId, normalizeResult)
+    : createNormalizeErrorCompletion(
+        trackedRunId,
+        'Normalize failed: the AI Path did not return a normalized English title.'
+      );
+};
+
+const resolveCompletedNormalizeCompletion = async (
+  snapshot: TrackedAiPathRunSnapshot,
+  trackedRunId: string,
+  activeRef: NormalizeActiveRef
+): Promise<NormalizeCompletionState | null> => {
+  const streamedNormalizeResult = snapshot.run !== null && snapshot.run !== undefined
+    ? extractNormalizeProductNameResultFromAiPathRunDetail({ run: snapshot.run })
+    : null;
+  if (streamedNormalizeResult !== null) {
+    return createNormalizeResultCompletion(trackedRunId, streamedNormalizeResult);
+  }
+
+  return await resolveFetchedNormalizeCompletion(trackedRunId, activeRef);
+};
+
+const resolveNormalizeCompletion = async (
+  snapshot: TrackedAiPathRunSnapshot,
+  trackedRunId: string,
+  activeRef: NormalizeActiveRef
+): Promise<NormalizeCompletionState | null> =>
+  snapshot.status === 'completed'
+    ? await resolveCompletedNormalizeCompletion(snapshot, trackedRunId, activeRef)
+    : resolveTerminalNormalizeError(snapshot, trackedRunId);
+
+const handleNormalizeTerminalSnapshot = async ({
+  activeRef,
+  setPendingNormalizeCompletion,
+  setPendingNormalizeRunId,
+  snapshot,
+  trackedRunId,
+}: {
+  activeRef: NormalizeActiveRef;
+  setPendingNormalizeCompletion: NormalizeCompletionSetter;
+  setPendingNormalizeRunId: NormalizeRunIdSetter;
+  snapshot: TrackedAiPathRunSnapshot;
+  trackedRunId: string;
+}): Promise<void> => {
+  const completion = await resolveNormalizeCompletion(snapshot, trackedRunId, activeRef);
+  if (activeRef.current === false || completion === null) {
+    return;
+  }
+
+  setPendingNormalizeCompletion(completion);
+  setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
+};
 
 export function useProductNormalizeTracking(args: {
   isOpen: boolean;
@@ -23,7 +134,9 @@ export function useProductNormalizeTracking(args: {
     useState<NormalizeCompletionState | null>(null);
 
   useEffect(() => {
-    if (pendingNormalizeRunId === null || shouldApplyNormalizeResultLocally === false) return;
+    if (pendingNormalizeRunId === null || shouldApplyNormalizeResultLocally === false) {
+      return undefined;
+    }
 
     const activeRef = { current: true };
     let terminalHandled = false;
@@ -33,65 +146,13 @@ export function useProductNormalizeTracking(args: {
       if (activeRef.current === false || terminalHandled === true || snapshot.trackingState !== 'stopped') return;
       terminalHandled = true;
 
-      void (async (): Promise<void> => {
-        if (snapshot.status !== 'completed') {
-          if (activeRef.current === true) {
-            setPendingNormalizeCompletion({
-              kind: 'error',
-              runId: trackedRunId,
-              error:
-                snapshot.errorMessage ??
-                `Normalize failed: the AI Path run ${snapshot.status.replace(/_/g, ' ')}.`,
-            });
-            setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
-          }
-          return;
-        }
-
-        const streamedNormalizeResult = snapshot.run
-          ? extractNormalizeProductNameResultFromAiPathRunDetail({ run: snapshot.run })
-          : null;
-        if (streamedNormalizeResult !== null) {
-          setPendingNormalizeCompletion({
-            kind: 'result',
-            runId: trackedRunId,
-            result: streamedNormalizeResult,
-          });
-          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
-          return;
-        }
-
-        const response = await getAiPathRunResult(trackedRunId, { timeoutMs: 60_000 });
-        if (activeRef.current === false) return;
-        if (response.ok === false) {
-          setPendingNormalizeCompletion({
-            kind: 'error',
-            runId: trackedRunId,
-            error:
-              response.error !== '' ?
-              response.error :
-              'Normalize failed: unable to load the completed AI Path run result.',
-          });
-          setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
-          return;
-        }
-
-        const normalizeResult = extractNormalizeProductNameResultFromAiPathRunDetail(response.data);
-        setPendingNormalizeCompletion(
-          normalizeResult !== null
-            ? {
-                kind: 'result',
-                runId: trackedRunId,
-                result: normalizeResult,
-              }
-            : {
-                kind: 'error',
-                runId: trackedRunId,
-                error: 'Normalize failed: the AI Path did not return a normalized English title.',
-              }
-        );
-        setPendingNormalizeRunId((current) => (current === trackedRunId ? null : current));
-      })();
+      void handleNormalizeTerminalSnapshot({
+        activeRef,
+        setPendingNormalizeCompletion,
+        setPendingNormalizeRunId,
+        snapshot,
+        trackedRunId,
+      });
     });
 
     return () => {

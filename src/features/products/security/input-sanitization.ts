@@ -30,17 +30,17 @@ export class InputSanitizer {
     let sanitized = input;
 
     // Strip whitespace if requested
-    if (options.stripWhitespace) {
+    if (options.stripWhitespace === true) {
       sanitized = sanitized.trim();
     }
 
     // Enforce max length
-    if (options.maxLength && sanitized.length > options.maxLength) {
+    if (typeof options.maxLength === 'number' && sanitized.length > options.maxLength) {
       sanitized = sanitized.substring(0, options.maxLength);
     }
 
     // Handle HTML content
-    if (options.allowHtml) {
+    if (options.allowHtml === true) {
       // DOMPurify not available - simple HTML sanitization
       sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
     } else {
@@ -68,28 +68,28 @@ export class InputSanitizer {
     obj: T,
     fieldOptions: Partial<Record<keyof T, SanitizationOptions>> = {}
   ): T {
-    const sanitized = {} as T;
+    const sanitized: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(obj)) {
-      const options = fieldOptions[key as keyof T] || {};
+      const options = fieldOptions[key as keyof T] ?? {};
 
       if (typeof value === 'string') {
-        sanitized[key as keyof T] = this.sanitizeString(value, options) as T[keyof T];
+        sanitized[key] = this.sanitizeString(value, options);
       } else if (Array.isArray(value)) {
-        sanitized[key as keyof T] = value.map((item: unknown) =>
+        sanitized[key] = value.map((item: unknown) =>
           typeof item === 'string' ? this.sanitizeString(item, options) : item
-        ) as T[keyof T];
-      } else if (value && typeof value === 'object') {
-        sanitized[key as keyof T] = this.sanitizeObject(
+        );
+      } else if (value !== null && typeof value === 'object') {
+        sanitized[key] = this.sanitizeObject(
           value as Record<string, unknown>,
           {}
-        ) as T[keyof T];
+        );
       } else {
-        sanitized[key as keyof T] = value as T[keyof T];
+        sanitized[key] = value;
       }
     }
 
-    return sanitized;
+    return sanitized as T;
   }
 
   static validateEmail(email: string): boolean {
@@ -158,6 +158,33 @@ export function withInputSanitization<T extends Record<string, unknown>>(
   return InputSanitizer.sanitizeObject(data, rules);
 }
 
+const validateSkuField = (data: Record<string, unknown>, errors: string[]): void => {
+  const sku: string | undefined = typeof data['sku'] === 'string' ? data['sku'] : undefined;
+  if (sku !== undefined && sku.length > 0 && !InputSanitizer.validateSku(sku)) {
+    errors.push('Invalid SKU format');
+  }
+};
+
+const validateSupplierLinkField = (data: Record<string, unknown>, errors: string[]): void => {
+  const supplierLink: string | undefined =
+    typeof data['supplierLink'] === 'string' ? data['supplierLink'] : undefined;
+  if (supplierLink !== undefined && supplierLink.length > 0 && !InputSanitizer.validateUrl(supplierLink)) {
+    errors.push('Invalid supplier URL');
+  }
+};
+
+const validateNonNegativeNumberField = (
+  data: Record<string, unknown>,
+  field: string,
+  message: string,
+  errors: string[]
+): void => {
+  const value: unknown = data[field];
+  if (value !== undefined && (typeof value !== 'number' || value < 0)) {
+    errors.push(message);
+  }
+};
+
 // Validation helpers
 export function validateProductInput(data: Record<string, unknown>): {
   isValid: boolean;
@@ -165,26 +192,10 @@ export function validateProductInput(data: Record<string, unknown>): {
 } {
   const errors: string[] = [];
 
-  const sku: string | undefined = typeof data['sku'] === 'string' ? data['sku'] : undefined;
-  if (sku && !InputSanitizer.validateSku(sku)) {
-    errors.push('Invalid SKU format');
-  }
-
-  const supplierLink: string | undefined =
-    typeof data['supplierLink'] === 'string' ? data['supplierLink'] : undefined;
-  if (supplierLink && !InputSanitizer.validateUrl(supplierLink)) {
-    errors.push('Invalid supplier URL');
-  }
-
-  const price: unknown = data['price'];
-  if (price !== undefined && (typeof price !== 'number' || price < 0)) {
-    errors.push('Invalid price value');
-  }
-
-  const stock: unknown = data['stock'];
-  if (stock !== undefined && (typeof stock !== 'number' || stock < 0)) {
-    errors.push('Invalid stock value');
-  }
+  validateSkuField(data, errors);
+  validateSupplierLinkField(data, errors);
+  validateNonNegativeNumberField(data, 'price', 'Invalid price value', errors);
+  validateNonNegativeNumberField(data, 'stock', 'Invalid stock value', errors);
 
   return {
     isValid: errors.length === 0,

@@ -17,12 +17,15 @@ const resolveApplicationId = (params: JobApplicationCoverLetterPdfParams): strin
 };
 
 export async function postHandler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: JobApplicationCoverLetterPdfParams
 ): Promise<Response> {
   await requireFilemakerMailAdminSession();
+  const url = new URL(req.url);
+  const coverLetterVersionId = url.searchParams.get('coverLetterVersionId')?.trim() ?? null;
   return createFilemakerJobApplicationCoverLetterPdfResponse({
     applicationId: resolveApplicationId(params),
+    coverLetterVersionId,
   });
 }

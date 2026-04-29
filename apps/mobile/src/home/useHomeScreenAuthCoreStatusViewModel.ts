@@ -17,11 +17,9 @@ export function useHomeScreenAuthCoreStatusViewModel({
   const canOpenParentDashboard =
     session.status === 'authenticated' && Boolean(session.user?.canManageLearners);
 
-  const activeDuelLearnerId = resolveHomeScreenActiveDuelLearnerId(session.user);
-
   return {
     isRestoringLearnerSession,
     canOpenParentDashboard,
-    activeDuelLearnerId,
+    activeDuelLearnerId: resolveHomeScreenActiveDuelLearnerId(session.user),
   };
 }

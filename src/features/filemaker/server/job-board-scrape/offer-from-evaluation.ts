@@ -3,7 +3,10 @@ import 'server-only';
 
 import type { JobScanEvaluation } from '@/shared/contracts/job-board';
 import type { JobBoardStructuredSnapshot } from '@/features/job-board/server/providers/job-board-sync';
-import type { JobBoardProvider } from '@/shared/lib/job-board/job-board-providers';
+import {
+  isJobBoardOfferUrl,
+  type JobBoardProvider,
+} from '@/shared/lib/job-board/job-board-providers';
 
 import { extractJobBoardExternalIdFromUrl } from '@/features/job-board/server/providers/job-board-sync';
 
@@ -441,6 +444,16 @@ const firstCleanCompanyName = (values: readonly unknown[]): string | null => {
   return null;
 };
 
+const isReliableScrapedOfferUrl = (value: string, provider: JobBoardProvider): boolean => {
+  if (!isJobBoardOfferUrl(value, provider)) return false;
+  if (provider !== 'pracuj_pl') return true;
+  try {
+    return /,oferta,/iu.test(new URL(value).pathname);
+  } catch {
+    return false;
+  }
+};
+
 const formatDateParts = (input: {
   day: number;
   month: number;
@@ -683,24 +696,6 @@ const JOB_BOARD_COMPANY_IDENTITY_HOSTS = [
   'youtube.com',
   'youtu.be',
 ] as const;
-
-const isKnownJobBoardCompanyHost = (hostname: string): boolean =>
-  JOB_BOARD_COMPANY_IDENTITY_HOSTS.some(
-    (host: string): boolean => hostname === host || hostname.endsWith(`.${host}`)
-  );
-
-const companyNameFromCompanyWebsiteUrl = (value: string | null | undefined): string | null => {
-  const normalized = normalizeCompanyUrl(value);
-  if (normalized === null) return null;
-  try {
-    const url = new URL(normalized);
-    const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
-    if (hostname.length === 0 || isKnownJobBoardCompanyHost(hostname)) return null;
-    return hostname;
-  } catch {
-    return null;
-  }
-};
 
 const companyNameFromSnapshotCompanyUrls = (
   snapshot: JobBoardStructuredSnapshot | null | undefined
@@ -1100,7 +1095,6 @@ const companyAddressCandidates = (input: {
   snapshot?: JobBoardStructuredSnapshot | null;
 }): string[] =>
   uniqueStrings([
-    addressFromRecord(input.company) ?? '',
     addressFromRecord(jsonLdHiringOrganization(input.snapshot)) ?? '',
     ...addressFacts(input.snapshot),
     ...snapshotTextAddressCandidates(input.snapshot),
@@ -1136,7 +1130,6 @@ const companyProfileFieldValue = (
   const field = COMPANY_PROFILE_FIELDS.find((entry): boolean => entry.key === key);
   if (field === undefined) return null;
   return (
-    recordFirstNullableString(input.company, [field.key]) ??
     firstJsonLdOrganizationValue(input.snapshot, field.jsonLdKeys) ??
     snapshotFactValue(input.snapshot, field.factKeywords) ??
     firstSnapshotTextProfileValue(input.snapshot, field.key)
@@ -1156,15 +1149,15 @@ const companyInformationFromSources = (input: {
   const logoUrl = normalizeCompanyUrl(companyProfileFieldValue(input, 'logoUrl'));
   return {
     companyAddress: companyAddressCandidates(input)[0] ?? '',
-    companyCity: recordFirstNullableString(input.company, COMPANY_CITY_KEYS) ?? '',
-    companyCountry: recordFirstNullableString(input.company, COMPANY_COUNTRY_KEYS) ?? '',
+    companyCity: '',
+    companyCountry: '',
     companyEmail: companyProfileFieldValue(input, 'email'),
     companyIndustry: companyProfileFieldValue(input, 'industry') ?? '',
     companyKrs: companyProfileFieldValue(input, 'krs') ?? '',
     companyLogoUrl: logoUrl,
     companyPhone: companyProfileFieldValue(input, 'phone'),
-    companyPostalCode: recordFirstNullableString(input.company, COMPANY_POSTAL_KEYS) ?? '',
-    companyRegion: recordFirstNullableString(input.company, COMPANY_REGION_KEYS) ?? '',
+    companyPostalCode: '',
+    companyRegion: '',
     companyRegon: companyProfileFieldValue(input, 'regon') ?? '',
     companySize: companyProfileFieldValue(input, 'size') ?? '',
     companyTaxId: companyProfileFieldValue(input, 'nip') ?? '',
@@ -1181,8 +1174,7 @@ const profileLinesFromCompany = (input: {
   addProfileLine(
     lines,
     'Description',
-    recordFirstNullableString(input.company, ['description']) ??
-      firstJsonLdOrganizationValue(input.snapshot, ['description']) ??
+    firstJsonLdOrganizationValue(input.snapshot, ['description']) ??
       snapshotCompanyDescription(input.snapshot)
   );
   COMPANY_PROFILE_FIELDS.forEach((field) => {
@@ -1198,10 +1190,6 @@ const profileLinesFromCompany = (input: {
   addProfileLine(lines, 'Profile URL', profileUrl);
   addCompanyRelatedUrlLines(lines, input.snapshot, [website, profileUrl]);
   addProfileLine(lines, 'Address', companyAddressCandidates(input)[0]);
-  addProfileLine(lines, 'City', recordFirstNullableString(input.company, COMPANY_CITY_KEYS));
-  addProfileLine(lines, 'Region', recordFirstNullableString(input.company, COMPANY_REGION_KEYS));
-  addProfileLine(lines, 'Postal code', recordFirstNullableString(input.company, COMPANY_POSTAL_KEYS));
-  addProfileLine(lines, 'Country', recordFirstNullableString(input.company, COMPANY_COUNTRY_KEYS));
   lines.push(...factLines(input.snapshot?.companyProfile?.facts, 'Profile '));
   lines.push(...factLines(input.snapshot?.facts));
   addProfileLine(lines, 'Profile text', input.snapshot?.companyProfile?.plainText, 4_000);
@@ -1878,37 +1866,38 @@ const identityFromSources = (input: {
   company: Record<string, unknown> | null;
   listing: Record<string, unknown> | null;
   snapshot?: JobBoardStructuredSnapshot | null;
-}): { companyName: string; title: string } => {
+}): { companyName: string; companyNameEvidence: 'model' | 'none' | 'page'; title: string } => {
   const listingTitle = recordString(input.listing, 'title');
   const title =
     listingTitle.length > 0 ? listingTitle : firstSnapshotListingTitle(input.snapshot) ?? '';
-  const rawCompanyName =
-    firstCleanCompanyName([
-      recordFirstNullableString(input.listing, [
-        'companyName',
-        'employerName',
-        'employer',
-        'company',
-        'organizationName',
-        'hiringOrganizationName',
-      ]),
-      recordFirstNullableString(input.company, [
-        'name',
-        'legalName',
-        'displayName',
-        'tradingName',
-        'organizationName',
-      ]),
-      companyNameFromSnapshotCompanyUrls(input.snapshot),
-      companyNameFromSnapshotCompanyProfile(input.snapshot),
-      firstSnapshotCompanyName(input.snapshot),
-      companyNameFromPracujProfileUrl(
-        recordFirstNullableString(input.company, ['profileUrl']) ??
-          firstSnapshotCompanyUrl(input.snapshot)
-      ),
-    ]) ?? '';
+  const pageCompanyName = firstCleanCompanyName([
+    companyNameFromSnapshotCompanyUrls(input.snapshot),
+    companyNameFromSnapshotCompanyProfile(input.snapshot),
+    firstSnapshotCompanyName(input.snapshot),
+    companyNameFromPracujProfileUrl(firstSnapshotCompanyUrl(input.snapshot)),
+  ]);
+  const modelCompanyName = firstCleanCompanyName([
+    recordFirstNullableString(input.listing, [
+      'companyName',
+      'employerName',
+      'employer',
+      'company',
+      'organizationName',
+      'hiringOrganizationName',
+    ]),
+    recordFirstNullableString(input.company, [
+      'name',
+      'legalName',
+      'displayName',
+      'tradingName',
+      'organizationName',
+    ]),
+  ]);
+  const rawCompanyName = pageCompanyName ?? modelCompanyName ?? '';
   const companyName = isGenericJobBoardCompanyName(rawCompanyName) ? '' : rawCompanyName;
-  return { companyName, title };
+  const companyNameEvidence =
+    companyName.length === 0 ? 'none' : pageCompanyName !== null ? 'page' : 'model';
+  return { companyName, companyNameEvidence, title };
 };
 
 export const offerFromEvaluation = (input: {
@@ -1924,17 +1913,23 @@ export const offerFromEvaluation = (input: {
   const listing = asRecord(evaluation?.listing);
   const company = asRecord(evaluation?.company);
   const sourceUrl = normalizeJobBoardSourceUrl(input.finalUrl);
-  const { companyName, title } = identityFromSources({ company, listing, snapshot: input.snapshot });
+  if (sourceUrl === null || !isReliableScrapedOfferUrl(sourceUrl, input.provider)) return null;
+  const { companyName, companyNameEvidence, title } = identityFromSources({
+    company,
+    listing,
+    snapshot: input.snapshot,
+  });
   const companyInformation = companyInformationFromSources({ company, listing, snapshot: input.snapshot });
-  const companyProfileUrl =
-    recordFirstNullableString(company, ['profileUrl']) ?? firstSnapshotCompanyUrl(input.snapshot);
+  const snapshotCompanyProfileUrl = firstSnapshotCompanyUrl(input.snapshot);
+  const companyProfileUrl = snapshotCompanyProfileUrl;
+  const profileCompanyName = companyNameFromPracujProfileUrl(companyProfileUrl);
+  const snapshotProfileCompanyName = companyNameFromPracujProfileUrl(snapshotCompanyProfileUrl);
   const resolvedCompanyName =
     companyName.length > 0
       ? companyName
-      : companyNameFromPracujProfileUrl(companyProfileUrl) ??
-        companyNameFromCompanyWebsiteUrl(companyProfileUrl) ??
-        companyNameFromCompanyWebsiteUrl(companyInformation.companyWebsiteUrl);
-  if (sourceUrl === null || title.length === 0 || resolvedCompanyName === null) return null;
+      : profileCompanyName;
+  if (title.length === 0 || resolvedCompanyName === null) return null;
+  if (companyNameEvidence === 'model' && snapshotProfileCompanyName === null) return null;
   const salary = salaryFromSources({ extractSalaries: input.options.extractSalaries, listing, snapshot: input.snapshot });
   const companyProfile = buildCompanyProfile({ company, listing, snapshot: input.snapshot });
   const dates = dateRangeFromSources({ listing, snapshot: input.snapshot });

@@ -72,6 +72,10 @@ import type {
   FilemakerCv,
   FilemakerEmailCampaign,
   FilemakerJobApplication,
+  FilemakerJobApplicationActiveArtifacts,
+  FilemakerJobApplicationApplyRun,
+  FilemakerJobApplicationApplyRunResponse,
+  FilemakerJobApplicationArtifactVersion,
   FilemakerJobApplicationStatus,
   FilemakerJobListing,
   FilemakerJobListingSalaryPeriod,
@@ -261,9 +265,23 @@ type JobApplicationsState = {
   isLoading: boolean;
 };
 
+type PreparedApplicationArtifactVersions = {
+  applicationEmail: FilemakerJobApplication[];
+  coverLetter: FilemakerJobApplication[];
+  tailoredCv: FilemakerJobApplication[];
+};
+
+type PreparedJobApplication = FilemakerJobApplication & {
+  applicationIds: string[];
+  artifactVersions: PreparedApplicationArtifactVersions;
+  canonicalApplicationKey: string;
+};
+
 const formatApplicationTitle = (application: FilemakerJobApplication): string => {
   const subject = application.coverLetter?.subject?.trim() ?? '';
   if (subject.length > 0) return subject;
+  const emailSubject = application.applicationEmail?.subject?.trim() ?? '';
+  if (emailSubject.length > 0) return emailSubject;
   const cvTitle = application.tailoredCv?.title?.trim() ?? '';
   if (cvTitle.length > 0) return cvTitle;
   const jobTitle = application.jobTitle?.trim() ?? '';
@@ -277,13 +295,284 @@ const formatApplicationPerson = (application: FilemakerJobApplication): string =
 
 const formatApplicationPreview = (application: FilemakerJobApplication): string => {
   const body = application.coverLetter?.bodyMarkdown?.trim() ?? '';
-  if (body.length === 0) return 'Cover letter draft created.';
-  return body.length > 180 ? `${body.slice(0, 180).trim()}...` : body;
+  if (body.length > 0) {
+    return body.length > 180 ? `${body.slice(0, 180).trim()}...` : body;
+  }
+  const emailBody = (
+    application.applicationEmail?.bodyText ??
+    application.applicationEmail?.bodyMarkdown ??
+    ''
+  ).trim();
+  if (emailBody.length > 0) {
+    return emailBody.length > 180 ? `${emailBody.slice(0, 180).trim()}...` : emailBody;
+  }
+  const cvSummary = application.tailoredCv?.professionalSummary?.trim() ?? '';
+  if (cvSummary.length > 0) {
+    return cvSummary.length > 180 ? `${cvSummary.slice(0, 180).trim()}...` : cvSummary;
+  }
+  if (application.applicationEmail !== null) return 'Application email draft created.';
+  if (application.tailoredCv !== null) return 'Tailored CV draft created.';
+  return 'Application draft created.';
 };
 
 const formatApplicationConfidence = (application: FilemakerJobApplication): string => {
   if (application.confidence === null) return 'Confidence not set';
   return `${Math.round(application.confidence * 100)}% confidence`;
+};
+
+const toApplicationTimestamp = (application: FilemakerJobApplication): number => {
+  const updatedAt = Date.parse(application.updatedAt);
+  if (Number.isFinite(updatedAt)) return updatedAt;
+  const createdAt = Date.parse(application.createdAt);
+  return Number.isFinite(createdAt) ? createdAt : 0;
+};
+
+const compareApplicationsByFreshness = (
+  left: FilemakerJobApplication,
+  right: FilemakerJobApplication
+): number => toApplicationTimestamp(right) - toApplicationTimestamp(left);
+
+const hasTailoredCvArtifact = (application: FilemakerJobApplication): boolean =>
+  (application.tailoredCvId?.trim().length ?? 0) > 0 || application.tailoredCv !== null;
+
+const hasCoverLetterArtifact = (application: FilemakerJobApplication): boolean =>
+  (application.coverLetter?.subject?.trim().length ?? 0) > 0 ||
+  (application.coverLetter?.bodyMarkdown?.trim().length ?? 0) > 0;
+
+const hasApplicationEmailArtifact = (application: FilemakerJobApplication): boolean =>
+  (application.applicationEmail?.subject?.trim().length ?? 0) > 0 ||
+  (application.applicationEmail?.bodyMarkdown?.trim().length ?? 0) > 0 ||
+  (application.applicationEmail?.bodyText?.trim().length ?? 0) > 0;
+
+const normalizePayloadString = (value: unknown): string | null =>
+  typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+
+const normalizePayloadStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .map((entry: unknown): string | null => normalizePayloadString(entry))
+        .filter((entry): entry is string => entry !== null)
+    : [];
+
+const normalizeTailoredCvPayload = (
+  value: unknown
+): FilemakerJobApplication['tailoredCv'] => {
+  const payload = readRecord(value);
+  const record = readRecord(payload?.['tailoredCv']) ?? payload;
+  if (record === null) return null;
+  return {
+    bodyMarkdown: normalizePayloadString(record['bodyMarkdown']),
+    bodyText: normalizePayloadString(record['bodyText']),
+    educationHighlights: normalizePayloadStringArray(record['educationHighlights']),
+    experienceHighlights: normalizePayloadStringArray(record['experienceHighlights']),
+    preferencesMatch: normalizePayloadStringArray(record['preferencesMatch']),
+    professionalSummary: normalizePayloadString(record['professionalSummary']),
+    skills: normalizePayloadStringArray(record['skills']),
+    title: normalizePayloadString(record['title']),
+  };
+};
+
+const normalizeCoverLetterPayload = (
+  value: unknown
+): FilemakerJobApplication['coverLetter'] => {
+  const payload = readRecord(value);
+  const record = readRecord(payload?.['coverLetter']) ?? payload;
+  if (record === null) return null;
+  return {
+    bodyMarkdown: normalizePayloadString(record['bodyMarkdown']),
+    subject: normalizePayloadString(record['subject']),
+  };
+};
+
+const normalizeApplicationEmailPayload = (
+  value: unknown
+): FilemakerJobApplication['applicationEmail'] => {
+  const payload = readRecord(value);
+  const record = readRecord(payload?.['applicationEmail']) ?? payload;
+  if (record === null) return null;
+  return {
+    bodyMarkdown: normalizePayloadString(record['bodyMarkdown']),
+    bodyText: normalizePayloadString(record['bodyText']),
+    subject: normalizePayloadString(record['subject']),
+  };
+};
+
+const createArtifactApplicationFromPersistedVersion = (
+  application: FilemakerJobApplication,
+  version: FilemakerJobApplicationArtifactVersion
+): FilemakerJobApplication => {
+  const baseVersionFields: FilemakerJobApplication = {
+    ...application,
+    id: version.id,
+    applicationEmail: null,
+    applicationNotes: version.applicationNotes,
+    artifactKind: version.kind,
+    artifactVersionCreatedAt: version.createdAt,
+    artifactVersionId: version.id,
+    artifactVersionNumber: version.version,
+    confidence: version.confidence,
+    coverLetter: null,
+    createdAt: version.createdAt ?? application.createdAt,
+    missingInformation: version.missingInformation,
+    storageApplicationId: application.storageApplicationId ?? application.id,
+    tailoredCv: null,
+    tailoredCvId: null,
+    updatedAt: version.createdAt ?? application.updatedAt,
+  };
+  if (version.kind === 'tailored_cv') {
+    return {
+      ...baseVersionFields,
+      tailoredCv: normalizeTailoredCvPayload(version.payload),
+      tailoredCvId:
+        version.linkedRecordId ??
+        normalizePayloadString(readRecord(version.payload)?.['tailoredCvId']),
+    };
+  }
+  if (version.kind === 'cover_letter') {
+    return {
+      ...baseVersionFields,
+      coverLetter: normalizeCoverLetterPayload(version.payload),
+    };
+  }
+  return {
+    ...baseVersionFields,
+    applicationEmail: normalizeApplicationEmailPayload(version.payload),
+  };
+};
+
+const expandApplicationForVersionGrouping = (
+  application: FilemakerJobApplication
+): FilemakerJobApplication[] => {
+  const persistedVersions = application.artifactVersions ?? application.persistedArtifactVersions;
+  if (persistedVersions === null || persistedVersions === undefined) return [application];
+  const versionApplications = [
+    ...persistedVersions.tailoredCv.map(
+      (version: FilemakerJobApplicationArtifactVersion): FilemakerJobApplication =>
+        createArtifactApplicationFromPersistedVersion(application, version)
+    ),
+    ...persistedVersions.coverLetter.map(
+      (version: FilemakerJobApplicationArtifactVersion): FilemakerJobApplication =>
+        createArtifactApplicationFromPersistedVersion(application, version)
+    ),
+    ...persistedVersions.applicationEmail.map(
+      (version: FilemakerJobApplicationArtifactVersion): FilemakerJobApplication =>
+        createArtifactApplicationFromPersistedVersion(application, version)
+    ),
+  ];
+  if (versionApplications.length === 0) return [application];
+  return [
+    {
+      ...application,
+      applicationEmail: null,
+      coverLetter: null,
+      storageApplicationId: application.storageApplicationId ?? application.id,
+      tailoredCv: null,
+      tailoredCvId: null,
+    },
+    ...versionApplications,
+  ];
+};
+
+const mergeUniqueStringArrays = (...arrays: string[][]): string[] => {
+  const values = new Set<string>();
+  arrays.forEach((array: string[]): void => {
+    array.forEach((value: string): void => {
+      const normalized = value.trim();
+      if (normalized.length > 0) values.add(normalized);
+    });
+  });
+  return Array.from(values);
+};
+
+const buildPreparedApplicationKey = (application: FilemakerJobApplication): string => {
+  const canonicalApplicationKey = application.canonicalApplicationKey?.trim() ?? '';
+  if (canonicalApplicationKey.length > 0) return canonicalApplicationKey;
+  const personId = application.personId.trim();
+  const organizationId = application.organizationId.trim();
+  const jobListingId = application.jobListingId.trim();
+  if (personId.length === 0 || organizationId.length === 0 || jobListingId.length === 0) {
+    return `legacy:${application.id}`;
+  }
+  const integrationKey =
+    application.integrationSlug?.trim() ||
+    application.integrationId?.trim() ||
+    application.connectionId?.trim() ||
+    'default';
+  return [personId, organizationId, jobListingId, integrationKey].join('::');
+};
+
+const createPreparedJobApplication = (
+  canonicalApplicationKey: string,
+  applications: FilemakerJobApplication[]
+): PreparedJobApplication | null => {
+  const sortedApplications = applications.slice().sort(compareApplicationsByFreshness);
+  const storageApplication =
+    applications.find((application: FilemakerJobApplication): boolean => {
+      const persistedVersions = application.artifactVersions ?? application.persistedArtifactVersions;
+      return persistedVersions !== null && persistedVersions !== undefined;
+    }) ?? null;
+  const baseApplication = storageApplication ?? sortedApplications[0] ?? null;
+  if (baseApplication === null) return null;
+  const artifactVersions: PreparedApplicationArtifactVersions = {
+    applicationEmail: sortedApplications.filter(hasApplicationEmailArtifact),
+    coverLetter: sortedApplications.filter(hasCoverLetterArtifact),
+    tailoredCv: sortedApplications.filter(hasTailoredCvArtifact),
+  };
+  const latestCv =
+    artifactVersions.tailoredCv.find(
+      (application: FilemakerJobApplication): boolean =>
+        application.id === baseApplication.activeArtifacts?.tailoredCvVersionId
+    ) ??
+    artifactVersions.tailoredCv[0] ??
+    null;
+  const latestCoverLetter =
+    artifactVersions.coverLetter.find(
+      (application: FilemakerJobApplication): boolean =>
+        application.id === baseApplication.activeArtifacts?.coverLetterVersionId
+    ) ??
+    artifactVersions.coverLetter[0] ??
+    null;
+  const latestApplicationEmail =
+    artifactVersions.applicationEmail.find(
+      (application: FilemakerJobApplication): boolean =>
+        application.id === baseApplication.activeArtifacts?.applicationEmailVersionId
+    ) ??
+    artifactVersions.applicationEmail[0] ??
+    null;
+  const earliestApplication = sortedApplications[sortedApplications.length - 1] ?? baseApplication;
+
+  const storageApplicationIds = Array.from(
+    new Set(
+      sortedApplications.map((application: FilemakerJobApplication): string =>
+        application.storageApplicationId?.trim() || application.id
+      )
+    )
+  );
+
+  return {
+    ...baseApplication,
+    id: `prepared:${canonicalApplicationKey}`,
+    applicationIds: storageApplicationIds,
+    artifactVersions,
+    canonicalApplicationKey,
+    applicationEmail: latestApplicationEmail?.applicationEmail ?? null,
+    applicationNotes: mergeUniqueStringArrays(
+      ...sortedApplications.map((application: FilemakerJobApplication): string[] => application.applicationNotes)
+    ),
+    confidence:
+      latestCv?.confidence ??
+      latestCoverLetter?.confidence ??
+      latestApplicationEmail?.confidence ??
+      baseApplication.confidence,
+    coverLetter: latestCoverLetter?.coverLetter ?? null,
+    createdAt: earliestApplication.createdAt,
+    missingInformation: mergeUniqueStringArrays(
+      ...sortedApplications.map((application: FilemakerJobApplication): string[] => application.missingInformation)
+    ),
+    tailoredCv: latestCv?.tailoredCv ?? null,
+    tailoredCvId: latestCv?.tailoredCvId ?? null,
+    updatedAt: sortedApplications[0]?.updatedAt ?? baseApplication.updatedAt,
+  };
 };
 
 const formatNullableText = (value: string | null | undefined, fallback: string): string => {
@@ -391,6 +680,29 @@ const composeApplicationMeta = (application: FilemakerJobApplication): string =>
     .filter((value: string): boolean => value.length > 0)
     .join(' · ');
 
+const isActiveApplicationApplyRun = (run: FilemakerJobApplicationApplyRun | null): boolean =>
+  run?.status === 'queued' || run?.status === 'running';
+
+const formatApplicationApplyRunStatus = (
+  status: FilemakerJobApplicationApplyRun['status']
+): string =>
+  status
+    .split('_')
+    .map((part: string): string => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
+    .join(' ');
+
+const resolveApplicationApplyButtonLabel = (
+  run: FilemakerJobApplicationApplyRun | null,
+  isApplying: boolean
+): string => {
+  if (isApplying) return 'Starting...';
+  if (run?.status === 'auth_required') return 'Auth required';
+  if (run?.status === 'awaiting_review') return 'Awaiting review';
+  if (run?.status === 'submitted') return 'Submitted';
+  if (run?.status === 'failed') return 'Retry apply';
+  return isActiveApplicationApplyRun(run) ? 'Applying...' : 'Apply';
+};
+
 const normalizeExternalHref = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -432,9 +744,24 @@ const cvApplicationHref = (application: FilemakerJobApplication): string | null 
 
 const groupApplicationsByJobListing = (
   applications: FilemakerJobApplication[]
-): Map<string, FilemakerJobApplication[]> => {
-  const groups = new Map<string, FilemakerJobApplication[]>();
-  applications.forEach((application: FilemakerJobApplication): void => {
+): Map<string, PreparedJobApplication[]> => {
+  const canonicalGroups = new Map<string, FilemakerJobApplication[]>();
+  applications.flatMap(expandApplicationForVersionGrouping).forEach((application: FilemakerJobApplication): void => {
+    const canonicalKey = buildPreparedApplicationKey(application);
+    const group = canonicalGroups.get(canonicalKey) ?? [];
+    group.push(application);
+    canonicalGroups.set(canonicalKey, group);
+  });
+
+  const preparedApplications = Array.from(canonicalGroups.entries())
+    .map(([canonicalKey, groupApplications]): PreparedJobApplication | null =>
+      createPreparedJobApplication(canonicalKey, groupApplications)
+    )
+    .filter((application): application is PreparedJobApplication => application !== null)
+    .sort(compareApplicationsByFreshness);
+
+  const groups = new Map<string, PreparedJobApplication[]>();
+  preparedApplications.forEach((application: PreparedJobApplication): void => {
     const jobListingId = application.jobListingId.trim();
     if (jobListingId.length === 0) return;
     const group = groups.get(jobListingId) ?? [];
@@ -617,23 +944,51 @@ function JobApplicationRunStatusBadges({
 function JobApplicationsInline({
   applications,
   jobListing,
+  isCollapsingLegacy,
+  onCollapseLegacy,
   onOpenApplication,
 }: {
-  applications: FilemakerJobApplication[];
+  applications: PreparedJobApplication[];
+  isCollapsingLegacy: boolean;
   jobListing: FilemakerJobListing;
+  onCollapseLegacy: (jobListingId: string) => void;
   onOpenApplication: (applicationId: string) => void;
 }): React.JSX.Element | null {
   if (applications.length === 0) return null;
+  const hasCollapsibleLegacyApplications = applications.some(
+    (application: PreparedJobApplication): boolean => application.applicationIds.length > 1
+  );
   return (
     <div className='rounded-md border border-border/40 bg-background/20 p-3'>
-      <div className='mb-2 flex items-center gap-2 text-xs font-semibold text-gray-200'>
-        <FileText className='h-3.5 w-3.5 text-emerald-300' aria-hidden='true' />
-        Prepared applications
+      <div className='mb-2 flex flex-wrap items-center justify-between gap-2'>
+        <div className='flex items-center gap-2 text-xs font-semibold text-gray-200'>
+          <FileText className='h-3.5 w-3.5 text-emerald-300' aria-hidden='true' />
+          Prepared applications
+        </div>
+        {hasCollapsibleLegacyApplications ? (
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            className='h-7 gap-1.5 text-[11px]'
+            disabled={isCollapsingLegacy}
+            onClick={(): void => onCollapseLegacy(jobListing.id)}
+            title='Collapse legacy separate generated rows into one application container'
+          >
+            {isCollapsingLegacy ? (
+              <Loader2 className='h-3 w-3 animate-spin' aria-hidden='true' />
+            ) : null}
+            Collapse legacy
+          </Button>
+        ) : null}
       </div>
       <div className='space-y-2'>
-        {applications.slice(0, 3).map((application: FilemakerJobApplication) => {
+        {applications.slice(0, 3).map((application: PreparedJobApplication) => {
           const cvHref = cvApplicationHref(application);
           const jobHref = getApplicationJobHref(application, jobListing);
+          const cvVersionCount = application.artifactVersions.tailoredCv.length;
+          const coverLetterVersionCount = application.artifactVersions.coverLetter.length;
+          const emailVersionCount = application.artifactVersions.applicationEmail.length;
           return (
             <div
               key={application.id}
@@ -677,6 +1032,17 @@ function JobApplicationsInline({
                   ) : null}
                 </div>
               </div>
+              <div className='mt-2 flex flex-wrap gap-1'>
+                {cvVersionCount > 0 ? (
+                  <Badge variant='outline'>CV v{cvVersionCount}</Badge>
+                ) : null}
+                {coverLetterVersionCount > 0 ? (
+                  <Badge variant='outline'>Cover letter v{coverLetterVersionCount}</Badge>
+                ) : null}
+                {emailVersionCount > 0 ? (
+                  <Badge variant='outline'>Email v{emailVersionCount}</Badge>
+                ) : null}
+              </div>
               <p className='mt-1 line-clamp-2 text-xs text-gray-400'>
                 {formatApplicationPreview(application)}
               </p>
@@ -688,44 +1054,445 @@ function JobApplicationsInline({
   );
 }
 
+const formatPreparedApplicationVersionLabel = (
+  application: FilemakerJobApplication,
+  index: number,
+  total: number
+): string => {
+  const versionNumber = application.artifactVersionNumber ?? total - index;
+  const source = application.source?.replace(/^ai-path-job-application-/u, '').replace(/-/gu, ' ');
+  return [
+    index === 0 ? `Latest v${versionNumber}` : `v${versionNumber}`,
+    formatTimestamp(application.createdAt),
+    source,
+  ]
+    .filter((value: string | null | undefined): value is string => (value ?? '').trim().length > 0)
+    .join(' · ');
+};
+
+function PreparedArtifactVersionPicker({
+  label,
+  onValueChange,
+  value,
+  versions,
+}: {
+  label: string;
+  onValueChange: (value: string) => void;
+  value: string;
+  versions: FilemakerJobApplication[];
+}): React.JSX.Element | null {
+  if (versions.length === 0) return null;
+  if (versions.length === 1) {
+    return (
+      <div className='rounded-md border border-border/50 bg-background/30 px-3 py-2'>
+        <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500'>
+          {label}
+        </div>
+        <Badge variant='outline'>Latest v1</Badge>
+      </div>
+    );
+  }
+  return (
+    <FormField label={label}>
+      <SelectSimple
+        value={value}
+        onValueChange={onValueChange}
+        options={versions.map((version: FilemakerJobApplication, index: number) => ({
+          value: version.id,
+          label: formatPreparedApplicationVersionLabel(version, index, versions.length),
+        }))}
+        ariaLabel={label}
+      />
+    </FormField>
+  );
+}
+
+function PreparedArtifactVersionHistoryGroup({
+  activeVersionId,
+  label,
+  onSelect,
+  versions,
+}: {
+  activeVersionId: string;
+  label: string;
+  onSelect: (value: string) => void;
+  versions: FilemakerJobApplication[];
+}): React.JSX.Element | null {
+  if (versions.length === 0) return null;
+  return (
+    <div className='space-y-1'>
+      <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500'>
+        {label}
+      </div>
+      <div className='space-y-1'>
+        {versions.map((version: FilemakerJobApplication, index: number): React.JSX.Element => {
+          const isActive = version.id === activeVersionId;
+          return (
+            <button
+              key={version.id}
+              type='button'
+              className={`flex w-full items-center justify-between gap-2 rounded-md border px-2 py-1.5 text-left text-xs transition ${
+                isActive
+                  ? 'border-emerald-400/70 bg-emerald-500/10 text-emerald-100'
+                  : 'border-border/50 bg-background/30 text-gray-300 hover:border-border hover:bg-white/5'
+              }`}
+              onClick={(): void => onSelect(version.id)}
+            >
+              <span className='min-w-0 truncate'>
+                {formatPreparedApplicationVersionLabel(version, index, versions.length)}
+              </span>
+              {isActive ? <Badge variant='success'>Active</Badge> : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PreparedApplicationVersionHistory({
+  applicationEmailVersions,
+  coverLetterVersions,
+  cvVersions,
+  onApplicationEmailSelect,
+  onCoverLetterSelect,
+  onCvSelect,
+  selectedApplicationEmailVersionId,
+  selectedCoverLetterVersionId,
+  selectedCvVersionId,
+}: {
+  applicationEmailVersions: FilemakerJobApplication[];
+  coverLetterVersions: FilemakerJobApplication[];
+  cvVersions: FilemakerJobApplication[];
+  onApplicationEmailSelect: (value: string) => void;
+  onCoverLetterSelect: (value: string) => void;
+  onCvSelect: (value: string) => void;
+  selectedApplicationEmailVersionId: string;
+  selectedCoverLetterVersionId: string;
+  selectedCvVersionId: string;
+}): React.JSX.Element | null {
+  if (
+    applicationEmailVersions.length === 0 &&
+    coverLetterVersions.length === 0 &&
+    cvVersions.length === 0
+  ) {
+    return null;
+  }
+  return (
+    <section className='space-y-3'>
+      <h4 className='text-sm font-semibold text-white'>Version history</h4>
+      <PreparedArtifactVersionHistoryGroup
+        activeVersionId={selectedCvVersionId}
+        label='CV'
+        versions={cvVersions}
+        onSelect={onCvSelect}
+      />
+      <PreparedArtifactVersionHistoryGroup
+        activeVersionId={selectedCoverLetterVersionId}
+        label='Cover letter'
+        versions={coverLetterVersions}
+        onSelect={onCoverLetterSelect}
+      />
+      <PreparedArtifactVersionHistoryGroup
+        activeVersionId={selectedApplicationEmailVersionId}
+        label='Email'
+        versions={applicationEmailVersions}
+        onSelect={onApplicationEmailSelect}
+      />
+    </section>
+  );
+}
+
+const createVisiblePreparedApplication = ({
+  application,
+  applicationEmailVersion,
+  coverLetterVersion,
+  tailoredCvVersion,
+}: {
+  application: PreparedJobApplication;
+  applicationEmailVersion: FilemakerJobApplication | null;
+  coverLetterVersion: FilemakerJobApplication | null;
+  tailoredCvVersion: FilemakerJobApplication | null;
+}): PreparedJobApplication => {
+  const applicationNotes = mergeUniqueStringArrays(
+    tailoredCvVersion?.applicationNotes ?? [],
+    coverLetterVersion?.applicationNotes ?? [],
+    applicationEmailVersion?.applicationNotes ?? []
+  );
+  const missingInformation = mergeUniqueStringArrays(
+    tailoredCvVersion?.missingInformation ?? [],
+    coverLetterVersion?.missingInformation ?? [],
+    applicationEmailVersion?.missingInformation ?? []
+  );
+  return {
+    ...application,
+    applicationEmail: applicationEmailVersion?.applicationEmail ?? application.applicationEmail,
+    applicationNotes: applicationNotes.length > 0 ? applicationNotes : application.applicationNotes,
+    confidence:
+      tailoredCvVersion?.confidence ??
+      coverLetterVersion?.confidence ??
+      applicationEmailVersion?.confidence ??
+      application.confidence,
+    coverLetter: coverLetterVersion?.coverLetter ?? application.coverLetter,
+    missingInformation:
+      missingInformation.length > 0 ? missingInformation : application.missingInformation,
+    tailoredCv: tailoredCvVersion?.tailoredCv ?? application.tailoredCv,
+    tailoredCvId: tailoredCvVersion?.tailoredCvId ?? application.tailoredCvId,
+  };
+};
+
 function ApplicationPackageModal({
   application,
   isMutating,
   jobListing,
   onClose,
   onDelete,
+  onActiveArtifactsChange,
   onStatusChange,
 }: {
-  application: FilemakerJobApplication | null;
+  application: PreparedJobApplication | null;
   isMutating: boolean;
   jobListing: FilemakerJobListing | null;
   onClose: () => void;
   onDelete: (applicationId: string) => void;
+  onActiveArtifactsChange: (
+    applicationId: string,
+    activeArtifacts: FilemakerJobApplicationActiveArtifacts
+  ) => void;
   onStatusChange: (applicationId: string, status: FilemakerJobApplicationStatus) => void;
 }): React.JSX.Element {
   const { toast } = useToast();
+  const [appliedStatusSyncRunId, setAppliedStatusSyncRunId] = useState<string | null>(null);
+  const [applyRun, setApplyRun] = useState<FilemakerJobApplicationApplyRun | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingCoverLetterPdf, setIsExportingCoverLetterPdf] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [isPreviewingCvPdf, setIsPreviewingCvPdf] = useState(false);
-  const cvHref = application !== null ? cvApplicationHref(application) : null;
-  const jobHref = application !== null ? getApplicationJobHref(application, jobListing) : null;
-  const notes = application?.applicationNotes ?? [];
-  const missingInformation = application?.missingInformation ?? [];
-  const skills = application?.tailoredCv?.skills ?? [];
+  const cvVersions = application?.artifactVersions.tailoredCv ?? [];
+  const coverLetterVersions = application?.artifactVersions.coverLetter ?? [];
+  const applicationEmailVersions = application?.artifactVersions.applicationEmail ?? [];
+  const latestCvVersionId = cvVersions[0]?.id ?? '';
+  const latestCoverLetterVersionId = coverLetterVersions[0]?.id ?? '';
+  const latestApplicationEmailVersionId = applicationEmailVersions[0]?.id ?? '';
+  const resolveInitialVersionId = (
+    versions: FilemakerJobApplication[],
+    preferredVersionId: string | null | undefined,
+    fallbackVersionId: string
+  ): string =>
+    preferredVersionId !== null &&
+    preferredVersionId !== undefined &&
+    versions.some((version: FilemakerJobApplication): boolean => version.id === preferredVersionId)
+      ? preferredVersionId
+      : fallbackVersionId;
+  const [selectedCvVersionId, setSelectedCvVersionId] = useState('');
+  const [selectedCoverLetterVersionId, setSelectedCoverLetterVersionId] = useState('');
+  const [selectedApplicationEmailVersionId, setSelectedApplicationEmailVersionId] = useState('');
+  useEffect(() => {
+    setSelectedCvVersionId(
+      resolveInitialVersionId(
+        cvVersions,
+        application?.activeArtifacts?.tailoredCvVersionId,
+        latestCvVersionId
+      )
+    );
+    setSelectedCoverLetterVersionId(
+      resolveInitialVersionId(
+        coverLetterVersions,
+        application?.activeArtifacts?.coverLetterVersionId,
+        latestCoverLetterVersionId
+      )
+    );
+    setSelectedApplicationEmailVersionId(
+      resolveInitialVersionId(
+        applicationEmailVersions,
+        application?.activeArtifacts?.applicationEmailVersionId,
+        latestApplicationEmailVersionId
+      )
+    );
+  }, [
+    application?.activeArtifacts?.applicationEmailVersionId,
+    application?.activeArtifacts?.coverLetterVersionId,
+    application?.activeArtifacts?.tailoredCvVersionId,
+    application?.id,
+    applicationEmailVersions,
+    coverLetterVersions,
+    cvVersions,
+    latestApplicationEmailVersionId,
+    latestCoverLetterVersionId,
+    latestCvVersionId,
+  ]);
+  const persistActiveArtifacts = (patch: Partial<FilemakerJobApplicationActiveArtifacts>): void => {
+    if (application === null || application.applicationIds.length !== 1) return;
+    onActiveArtifactsChange(application.applicationIds[0]!, {
+      applicationEmailVersionId: selectedApplicationEmailVersionId || null,
+      coverLetterVersionId: selectedCoverLetterVersionId || null,
+      tailoredCvVersionId: selectedCvVersionId || null,
+      ...patch,
+    });
+  };
+  const handleCvVersionChange = (value: string): void => {
+    setSelectedCvVersionId(value);
+    persistActiveArtifacts({ tailoredCvVersionId: value || null });
+  };
+  const handleCoverLetterVersionChange = (value: string): void => {
+    setSelectedCoverLetterVersionId(value);
+    persistActiveArtifacts({ coverLetterVersionId: value || null });
+  };
+  const handleApplicationEmailVersionChange = (value: string): void => {
+    setSelectedApplicationEmailVersionId(value);
+    persistActiveArtifacts({ applicationEmailVersionId: value || null });
+  };
+  const selectedCvVersion =
+    cvVersions.find(
+      (version: FilemakerJobApplication): boolean => version.id === selectedCvVersionId
+    ) ??
+    cvVersions[0] ??
+    null;
+  const selectedCoverLetterVersion =
+    coverLetterVersions.find(
+      (version: FilemakerJobApplication): boolean => version.id === selectedCoverLetterVersionId
+    ) ??
+    coverLetterVersions[0] ??
+    null;
+  const selectedApplicationEmailVersion =
+    applicationEmailVersions.find(
+      (version: FilemakerJobApplication): boolean =>
+        version.id === selectedApplicationEmailVersionId
+    ) ??
+    applicationEmailVersions[0] ??
+    null;
+  const visibleApplication =
+    application !== null
+      ? createVisiblePreparedApplication({
+          application,
+          applicationEmailVersion: selectedApplicationEmailVersion,
+          coverLetterVersion: selectedCoverLetterVersion,
+          tailoredCvVersion: selectedCvVersion,
+        })
+      : null;
+  const totalArtifactVersionCount =
+    cvVersions.length + coverLetterVersions.length + applicationEmailVersions.length;
+  const applyApplicationId =
+    application !== null && application.applicationIds.length === 1
+      ? application.applicationIds[0] ?? null
+      : null;
+  const cvHref = visibleApplication !== null ? cvApplicationHref(visibleApplication) : null;
+  const jobHref =
+    visibleApplication !== null ? getApplicationJobHref(visibleApplication, jobListing) : null;
+  const notes = visibleApplication?.applicationNotes ?? [];
+  const missingInformation = visibleApplication?.missingInformation ?? [];
+  const skills = visibleApplication?.tailoredCv?.skills ?? [];
   const hasApplicationEmail =
-    (application?.applicationEmail?.subject?.trim() ?? '').length > 0 ||
-    (application?.applicationEmail?.bodyMarkdown?.trim() ?? '').length > 0 ||
-    (application?.applicationEmail?.bodyText?.trim() ?? '').length > 0;
+    (visibleApplication?.applicationEmail?.subject?.trim() ?? '').length > 0 ||
+    (visibleApplication?.applicationEmail?.bodyMarkdown?.trim() ?? '').length > 0 ||
+    (visibleApplication?.applicationEmail?.bodyText?.trim() ?? '').length > 0;
   const canExportPdf =
-    application?.tailoredCvId !== null &&
-    application?.tailoredCvId !== undefined &&
-    application.tailoredCvId.trim().length > 0;
+    visibleApplication?.tailoredCvId !== null &&
+    visibleApplication?.tailoredCvId !== undefined &&
+    visibleApplication.tailoredCvId.trim().length > 0;
+  const latestApplyStep = applyRun?.steps[applyRun.steps.length - 1] ?? null;
+  const applyButtonLabel = resolveApplicationApplyButtonLabel(applyRun, isApplying);
+
+  const loadLatestApplyRun = useCallback(
+    async (targetApplicationId: string, options?: { silent?: boolean }): Promise<void> => {
+      try {
+        const response = await fetch(
+          `/api/filemaker/job-applications/${encodeURIComponent(targetApplicationId)}/apply`
+        );
+        if (!response.ok) throw new Error(`Failed to load apply run (${response.status}).`);
+        const payload = (await response.json()) as FilemakerJobApplicationApplyRunResponse;
+        setApplyRun(payload.run ?? null);
+      } catch (error: unknown) {
+        logClientError(error);
+        if (options?.silent !== true) {
+          toast(error instanceof Error ? error.message : 'Failed to load application apply run.', {
+            variant: 'error',
+          });
+        }
+      }
+    },
+    [toast]
+  );
+
+  useEffect(() => {
+    setApplyRun(null);
+    setAppliedStatusSyncRunId(null);
+    if (applyApplicationId === null) return;
+    void loadLatestApplyRun(applyApplicationId, { silent: true });
+  }, [applyApplicationId, loadLatestApplyRun]);
+
+  useEffect(() => {
+    if (applyApplicationId === null || !isActiveApplicationApplyRun(applyRun)) return undefined;
+    const intervalId = window.setInterval(() => {
+      void loadLatestApplyRun(applyApplicationId, { silent: true });
+    }, 2500);
+    return (): void => window.clearInterval(intervalId);
+  }, [applyApplicationId, applyRun, loadLatestApplyRun]);
+
+  useEffect(() => {
+    if (
+      applyApplicationId === null ||
+      applyRun?.status !== 'submitted' ||
+      appliedStatusSyncRunId === applyRun.id ||
+      application?.status === 'applied'
+    ) {
+      return;
+    }
+    setAppliedStatusSyncRunId(applyRun.id);
+    onStatusChange(applyApplicationId, 'applied');
+  }, [
+    application?.status,
+    appliedStatusSyncRunId,
+    applyApplicationId,
+    applyRun?.id,
+    applyRun?.status,
+    onStatusChange,
+  ]);
+
+  const handleApply = async (): Promise<void> => {
+    if (visibleApplication === null || applyApplicationId === null) return;
+    setIsApplying(true);
+    try {
+      const response = await fetch(
+        `/api/filemaker/job-applications/${encodeURIComponent(applyApplicationId)}/apply`,
+        {
+          method: 'POST',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            activeArtifacts: {
+              applicationEmailVersionId:
+                selectedApplicationEmailVersionId.length > 0
+                  ? selectedApplicationEmailVersionId
+                  : null,
+              coverLetterVersionId:
+                selectedCoverLetterVersionId.length > 0 ? selectedCoverLetterVersionId : null,
+              tailoredCvVersionId: selectedCvVersionId.length > 0 ? selectedCvVersionId : null,
+            },
+            mode: 'submit',
+          }),
+        }
+      );
+      if (!response.ok) throw new Error(`Failed to start application apply run (${response.status}).`);
+      const payload = (await response.json()) as FilemakerJobApplicationApplyRunResponse;
+      setApplyRun(payload.run ?? null);
+      toast('Application apply run started.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to start application apply run.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   const handlePreviewCvPdf = async (): Promise<void> => {
-    if (!application || !canExportPdf) return;
+    if (!visibleApplication || !canExportPdf) return;
     setIsPreviewingCvPdf(true);
     try {
-      const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(application.tailoredCvId ?? '')}`);
+      const response = await fetch(
+        `/api/filemaker/cvs/${encodeURIComponent(visibleApplication.tailoredCvId ?? '')}`
+      );
       if (!response.ok) throw new Error(`Failed to load CV preview (${response.status}).`);
       const payload = (await response.json()) as { cv?: FilemakerCv };
       const cv = payload.cv;
@@ -751,16 +1518,19 @@ function ApplicationPackageModal({
   };
 
   const handleExportPdf = async (): Promise<void> => {
-    if (!application || !canExportPdf) return;
+    if (!visibleApplication || !canExportPdf) return;
     setIsExportingPdf(true);
     try {
       const response = await fetch('/api/filemaker/cvs/export-pdf', {
         method: 'POST',
         headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ cvId: application.tailoredCvId }),
+        body: JSON.stringify({ cvId: visibleApplication.tailoredCvId }),
       });
       if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
-      const fallbackTitle = formatNullableText(application.tailoredCv?.title, application.id);
+      const fallbackTitle = formatNullableText(
+        visibleApplication.tailoredCv?.title,
+        visibleApplication.id
+      );
       const filename = readDownloadFilename(response, `${fallbackTitle}.pdf`);
       downloadBlob(await response.blob(), filename);
       toast('CV PDF exported.', { variant: 'success' });
@@ -775,15 +1545,15 @@ function ApplicationPackageModal({
   };
 
   const handlePreviewCoverLetter = (): void => {
-    if (!application) return;
+    if (!visibleApplication) return;
     try {
-      const subject = formatNullableText(application.coverLetter?.subject, 'Cover letter');
+      const subject = formatNullableText(visibleApplication.coverLetter?.subject, 'Cover letter');
       openFilemakerCvPdfPreview(
         composePlainDocumentPreviewHtml({
           title: subject,
-          meta: composeApplicationMeta(application),
+          meta: composeApplicationMeta(visibleApplication),
           body: formatNullableText(
-            application.coverLetter?.bodyMarkdown,
+            visibleApplication.coverLetter?.bodyMarkdown,
             'No cover letter content was generated.'
           ),
         })
@@ -797,15 +1567,19 @@ function ApplicationPackageModal({
   };
 
   const handlePreviewApplicationEmail = (): void => {
-    if (!application) return;
+    if (!visibleApplication) return;
     try {
-      const subject = formatNullableText(application.applicationEmail?.subject, 'Application email');
+      const subject = formatNullableText(
+        visibleApplication.applicationEmail?.subject,
+        'Application email'
+      );
       openFilemakerCvPdfPreview(
         composePlainDocumentPreviewHtml({
           title: subject,
-          meta: composeApplicationMeta(application),
+          meta: composeApplicationMeta(visibleApplication),
           body: formatNullableText(
-            application.applicationEmail?.bodyText ?? application.applicationEmail?.bodyMarkdown,
+            visibleApplication.applicationEmail?.bodyText ??
+              visibleApplication.applicationEmail?.bodyMarkdown,
             'No application email content was generated.'
           ),
         })
@@ -819,25 +1593,41 @@ function ApplicationPackageModal({
   };
 
   const handleDownloadCoverLetterText = (): void => {
-    if (!application) return;
-    const fallbackTitle = createDownloadFilename(application.coverLetter?.subject, application.id);
+    if (!visibleApplication) return;
+    const fallbackTitle = createDownloadFilename(
+      visibleApplication.coverLetter?.subject,
+      visibleApplication.id
+    );
     downloadBlob(
-      new Blob([composeCoverLetterText(application)], { type: 'text/plain;charset=utf-8' }),
+      new Blob([composeCoverLetterText(visibleApplication)], {
+        type: 'text/plain;charset=utf-8',
+      }),
       `${fallbackTitle}.txt`
     );
     toast('Cover letter text downloaded.', { variant: 'success' });
   };
 
   const handleExportCoverLetterPdf = async (): Promise<void> => {
-    if (!application) return;
+    if (!visibleApplication || selectedCoverLetterVersion === null) return;
     setIsExportingCoverLetterPdf(true);
     try {
+      const coverLetterApplicationId =
+        selectedCoverLetterVersion.storageApplicationId?.trim() ||
+        selectedCoverLetterVersion.id;
+      const query = selectedCoverLetterVersion.artifactVersionId
+        ? `?coverLetterVersionId=${encodeURIComponent(selectedCoverLetterVersion.artifactVersionId)}`
+        : '';
       const response = await fetch(
-        `/api/filemaker/job-applications/${encodeURIComponent(application.id)}/cover-letter-pdf`,
+        `/api/filemaker/job-applications/${encodeURIComponent(
+          coverLetterApplicationId
+        )}/cover-letter-pdf${query}`,
         { method: 'POST' }
       );
       if (!response.ok) throw new Error(`Failed to export cover letter (${response.status}).`);
-      const fallbackTitle = createDownloadFilename(application.coverLetter?.subject, application.id);
+      const fallbackTitle = createDownloadFilename(
+        visibleApplication.coverLetter?.subject,
+        visibleApplication.id
+      );
       const filename = readDownloadFilename(response, `${fallbackTitle}.pdf`);
       downloadBlob(await response.blob(), filename);
       toast('Cover letter PDF exported.', { variant: 'success' });
@@ -904,8 +1694,28 @@ function ApplicationPackageModal({
               className='inline-flex h-9 items-center gap-1.5 rounded-md border border-border/70 px-3 text-sm text-gray-100 hover:bg-white/5'
             >
               <ExternalLink className='h-3.5 w-3.5' aria-hidden='true' />
-              Apply
+              Open source
             </a>
+          ) : null}
+          {application !== null ? (
+            <Button
+              type='button'
+              onClick={(): void => {
+                void handleApply();
+              }}
+              disabled={
+                isMutating ||
+                isApplying ||
+                isActiveApplicationApplyRun(applyRun) ||
+                applyApplicationId === null
+              }
+              className='gap-1.5'
+            >
+              {isApplying || isActiveApplicationApplyRun(applyRun) ? (
+                <Loader2 className='h-3.5 w-3.5 animate-spin' aria-hidden='true' />
+              ) : null}
+              {applyButtonLabel}
+            </Button>
           ) : null}
           {application !== null ? (
             <Button
@@ -927,9 +1737,63 @@ function ApplicationPackageModal({
         <div className='space-y-4'>
           <div className='flex flex-wrap gap-2 text-xs text-gray-400'>
             <Badge variant='outline'>{application.status}</Badge>
-            <Badge variant='outline'>{formatApplicationConfidence(application)}</Badge>
-            <Badge variant='outline'>{formatApplicationPerson(application)}</Badge>
+            <Badge variant='outline'>
+              {formatApplicationConfidence(visibleApplication ?? application)}
+            </Badge>
+            <Badge variant='outline'>{formatApplicationPerson(visibleApplication ?? application)}</Badge>
             <Badge variant='outline'>{formatTimestamp(application.createdAt)}</Badge>
+            <Badge variant='outline'>
+              {totalArtifactVersionCount} generated version
+              {totalArtifactVersionCount === 1 ? '' : 's'}
+            </Badge>
+          </div>
+
+          {applyRun !== null ? (
+            <div className='rounded-md border border-border/70 bg-black/20 p-3 text-sm text-gray-200'>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant='outline'>{formatApplicationApplyRunStatus(applyRun.status)}</Badge>
+                <span className='text-xs text-gray-400'>{formatTimestamp(applyRun.updatedAt)}</span>
+                {applyRun.confirmationUrl !== null ? (
+                  <a
+                    href={applyRun.confirmationUrl}
+                    target='_blank'
+                    rel='noreferrer'
+                    className='text-xs text-primary hover:underline'
+                  >
+                    Confirmation
+                  </a>
+                ) : null}
+              </div>
+              {latestApplyStep !== null ? (
+                <p className='mt-2 text-xs text-gray-400'>
+                  {latestApplyStep.label}: {latestApplyStep.detail}
+                </p>
+              ) : null}
+              {applyRun.error !== null ? (
+                <p className='mt-2 text-xs text-red-300'>{applyRun.error}</p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className='grid gap-3 md:grid-cols-3'>
+            <PreparedArtifactVersionPicker
+              label='CV version'
+              value={selectedCvVersionId}
+              versions={cvVersions}
+              onValueChange={handleCvVersionChange}
+            />
+            <PreparedArtifactVersionPicker
+              label='Cover letter version'
+              value={selectedCoverLetterVersionId}
+              versions={coverLetterVersions}
+              onValueChange={handleCoverLetterVersionChange}
+            />
+            <PreparedArtifactVersionPicker
+              label='Email version'
+              value={selectedApplicationEmailVersionId}
+              versions={applicationEmailVersions}
+              onValueChange={handleApplicationEmailVersionChange}
+            />
           </div>
 
           <FormField label='Application status'>
@@ -991,11 +1855,11 @@ function ApplicationPackageModal({
                 </div>
                 <div className='rounded-md border border-border/50 bg-background/30 p-3'>
                   <div className='mb-2 text-sm font-medium text-gray-100'>
-                    {formatNullableText(application.coverLetter?.subject, 'Cover letter')}
+                    {formatNullableText(visibleApplication?.coverLetter?.subject, 'Cover letter')}
                   </div>
                   <pre className='whitespace-pre-wrap text-xs leading-5 text-gray-300'>
                     {formatNullableText(
-                      application.coverLetter?.bodyMarkdown,
+                      visibleApplication?.coverLetter?.bodyMarkdown,
                       'No cover letter content was generated.'
                     )}
                   </pre>
@@ -1025,13 +1889,20 @@ function ApplicationPackageModal({
                         className='h-8 gap-1.5'
                         onClick={(): void => {
                           const filename = createDownloadFilename(
-                            application.applicationEmail?.subject,
-                            application.id
+                            visibleApplication?.applicationEmail?.subject,
+                            visibleApplication?.id ?? application.id
                           );
                           downloadBlob(
-                            new Blob([composeApplicationEmailText(application)], {
-                              type: 'text/plain;charset=utf-8',
-                            }),
+                            new Blob(
+                              [
+                                visibleApplication !== null
+                                  ? composeApplicationEmailText(visibleApplication)
+                                  : '',
+                              ],
+                              {
+                                type: 'text/plain;charset=utf-8',
+                              }
+                            ),
                             `${filename}.txt`
                           );
                           toast('Application email text downloaded.', { variant: 'success' });
@@ -1045,12 +1916,15 @@ function ApplicationPackageModal({
                   </div>
                   <div className='rounded-md border border-border/50 bg-background/30 p-3'>
                     <div className='mb-2 text-sm font-medium text-gray-100'>
-                      {formatNullableText(application.applicationEmail?.subject, 'Application email')}
+                      {formatNullableText(
+                        visibleApplication?.applicationEmail?.subject,
+                        'Application email'
+                      )}
                     </div>
                     <pre className='whitespace-pre-wrap text-xs leading-5 text-gray-300'>
                       {formatNullableText(
-                        application.applicationEmail?.bodyText ??
-                          application.applicationEmail?.bodyMarkdown,
+                        visibleApplication?.applicationEmail?.bodyText ??
+                          visibleApplication?.applicationEmail?.bodyMarkdown,
                         'No application email content was generated.'
                       )}
                     </pre>
@@ -1062,11 +1936,11 @@ function ApplicationPackageModal({
                 <h4 className='text-sm font-semibold text-white'>Tailored CV</h4>
                 <div className='rounded-md border border-border/50 bg-background/30 p-3'>
                   <div className='mb-2 text-sm font-medium text-gray-100'>
-                    {formatNullableText(application.tailoredCv?.title, 'Tailored CV')}
+                    {formatNullableText(visibleApplication?.tailoredCv?.title, 'Tailored CV')}
                   </div>
                   <p className='text-xs leading-5 text-gray-300'>
                     {formatNullableText(
-                      application.tailoredCv?.professionalSummary,
+                      visibleApplication?.tailoredCv?.professionalSummary,
                       'No professional summary was generated.'
                     )}
                   </p>
@@ -1084,6 +1958,18 @@ function ApplicationPackageModal({
             </div>
 
             <aside className='space-y-3'>
+              <PreparedApplicationVersionHistory
+                applicationEmailVersions={applicationEmailVersions}
+                coverLetterVersions={coverLetterVersions}
+                cvVersions={cvVersions}
+                selectedApplicationEmailVersionId={selectedApplicationEmailVersionId}
+                selectedCoverLetterVersionId={selectedCoverLetterVersionId}
+                selectedCvVersionId={selectedCvVersionId}
+                onApplicationEmailSelect={handleApplicationEmailVersionChange}
+                onCoverLetterSelect={handleCoverLetterVersionChange}
+                onCvSelect={handleCvVersionChange}
+              />
+
               <section className='space-y-2'>
                 <h4 className='text-sm font-semibold text-white'>Notes</h4>
                 {notes.length > 0 ? (
@@ -1118,6 +2004,7 @@ function ApplicationPackageModal({
 }
 
 export function OrganizationJobListingsSection(): React.JSX.Element | null {
+  const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const { jobListings, organization } = useAdminFilemakerOrganizationEditPageStateContext();
   const { setJobListings } = useAdminFilemakerOrganizationEditPageActionsContext();
@@ -1126,6 +2013,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     JobApplicationRunEntry[]
   >(readStoredJobApplicationRunEntries);
   const [selectedPreparedApplicationId, setSelectedPreparedApplicationId] = useState<string | null>(
+    null
+  );
+  const [collapsingLegacyJobListingId, setCollapsingLegacyJobListingId] = useState<string | null>(
     null
   );
   const [isMutatingApplication, setIsMutatingApplication] = useState(false);
@@ -1182,13 +2072,28 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     () => groupApplicationsByJobListing(applicationsState.applications),
     [applicationsState.applications]
   );
+  const preparedApplications = useMemo(
+    () => Array.from(applicationsByJobListingId.values()).flat(),
+    [applicationsByJobListingId]
+  );
+  const preparedApplicationsById = useMemo(
+    () =>
+      new Map(
+        preparedApplications.map(
+          (application: PreparedJobApplication): [string, PreparedJobApplication] => [
+            application.id,
+            application,
+          ]
+        )
+      ),
+    [preparedApplications]
+  );
   const selectedPreparedApplication = useMemo(
     () =>
-      applicationsState.applications.find(
-        (application: FilemakerJobApplication): boolean =>
-          application.id === selectedPreparedApplicationId
-      ) ?? null,
-    [applicationsState.applications, selectedPreparedApplicationId]
+      selectedPreparedApplicationId !== null
+        ? preparedApplicationsById.get(selectedPreparedApplicationId) ?? null
+        : null,
+    [preparedApplicationsById, selectedPreparedApplicationId]
   );
   const selectedPreparedJobListing = useMemo(
     () =>
@@ -1222,7 +2127,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         const response = await fetch(
           `/api/filemaker/job-applications?organizationId=${encodeURIComponent(
             organizationId
-          )}&limit=100`,
+          )}&limit=100&normalizeLegacy=1`,
           signal ? { signal } : undefined
         );
         if (!response.ok) throw new Error(`Failed to load applications (${response.status}).`);
@@ -1377,16 +2282,77 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     ): Promise<void> => {
       setIsMutatingApplication(true);
       try {
+        const targetApplicationIds =
+          preparedApplicationsById.get(applicationId)?.applicationIds ?? [applicationId];
+        const nextApplications = await Promise.all(
+          targetApplicationIds.map(async (targetApplicationId: string): Promise<FilemakerJobApplication> => {
+            const response = await fetch(
+              `/api/filemaker/job-applications/${encodeURIComponent(targetApplicationId)}`,
+              {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status }),
+              }
+            );
+            if (!response.ok) {
+              throw new Error(`Failed to update application (${response.status}).`);
+            }
+            const payload = (await response.json()) as {
+              application?: FilemakerJobApplication;
+            };
+            if (payload.application === undefined) {
+              throw new Error('Application update response did not include an application.');
+            }
+            return payload.application;
+          })
+        );
+        const nextApplicationsById = new Map(
+          nextApplications.map(
+            (application: FilemakerJobApplication): [string, FilemakerJobApplication] => [
+              application.id,
+              application,
+            ]
+          )
+        );
+        if (nextApplicationsById.size > 0) {
+          setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+            ...current,
+            applications: current.applications.map(
+              (application: FilemakerJobApplication): FilemakerJobApplication =>
+                nextApplicationsById.get(application.id) ?? application
+            ),
+          }));
+        }
+      } catch (error: unknown) {
+        logClientError(error);
+        setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+          ...current,
+          error: error instanceof Error ? error.message : 'Failed to update application.',
+        }));
+      } finally {
+        setIsMutatingApplication(false);
+      }
+    },
+    [preparedApplicationsById]
+  );
+
+  const handleApplicationActiveArtifactsChange = useCallback(
+    async (
+      applicationId: string,
+      activeArtifacts: FilemakerJobApplicationActiveArtifacts
+    ): Promise<void> => {
+      setIsMutatingApplication(true);
+      try {
         const response = await fetch(
           `/api/filemaker/job-applications/${encodeURIComponent(applicationId)}`,
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status }),
+            body: JSON.stringify({ activeArtifacts }),
           }
         );
         if (!response.ok) {
-          throw new Error(`Failed to update application (${response.status}).`);
+          throw new Error(`Failed to update active application versions (${response.status}).`);
         }
         const payload = (await response.json()) as {
           application?: FilemakerJobApplication;
@@ -1405,7 +2371,10 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         logClientError(error);
         setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
           ...current,
-          error: error instanceof Error ? error.message : 'Failed to update application.',
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to update active application versions.',
         }));
       } finally {
         setIsMutatingApplication(false);
@@ -1414,20 +2383,76 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     []
   );
 
+  const handleCollapseLegacyApplications = useCallback(
+    async (jobListingId: string): Promise<void> => {
+      if (organizationId.trim().length === 0 || jobListingId.trim().length === 0) return;
+      const shouldCollapse = window.confirm(
+        'Collapse legacy generated rows for this job listing into one prepared application container? The separate legacy rows are removed after their CV, cover letter, and email versions are copied into version history.'
+      );
+      if (!shouldCollapse) return;
+      setCollapsingLegacyJobListingId(jobListingId);
+      try {
+        const response = await fetch('/api/filemaker/job-applications/collapse-legacy', {
+          method: 'POST',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ organizationId, jobListingId }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to collapse legacy applications (${response.status}).`);
+        }
+        const payload = (await response.json()) as {
+          canonicalApplicationsCreated?: number;
+          canonicalApplicationsUpdated?: number;
+          legacyApplicationsDeleted?: number;
+          legacyGroupsSkipped?: number;
+        };
+        const createdCount = payload.canonicalApplicationsCreated ?? 0;
+        const updatedCount = payload.canonicalApplicationsUpdated ?? 0;
+        const deletedCount = payload.legacyApplicationsDeleted ?? 0;
+        const skippedCount = payload.legacyGroupsSkipped ?? 0;
+        const containerCount = createdCount + updatedCount;
+        await loadApplications();
+        toast(
+          `Collapsed ${deletedCount} legacy row${deletedCount === 1 ? '' : 's'} into ${containerCount} application container${containerCount === 1 ? '' : 's'} (${createdCount} created, ${updatedCount} updated${skippedCount > 0 ? `, ${skippedCount} skipped` : ''}).`,
+          { variant: 'success' }
+        );
+      } catch (error: unknown) {
+        logClientError(error);
+        setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+          ...current,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to collapse legacy applications.',
+        }));
+      } finally {
+        setCollapsingLegacyJobListingId(null);
+      }
+    },
+    [loadApplications, organizationId, toast]
+  );
+
   const handleApplicationDelete = useCallback(async (applicationId: string): Promise<void> => {
     setIsMutatingApplication(true);
     try {
-      const response = await fetch(
-        `/api/filemaker/job-applications/${encodeURIComponent(applicationId)}`,
-        { method: 'DELETE' }
+      const targetApplicationIds =
+        preparedApplicationsById.get(applicationId)?.applicationIds ?? [applicationId];
+      await Promise.all(
+        targetApplicationIds.map(async (targetApplicationId: string): Promise<void> => {
+          const response = await fetch(
+            `/api/filemaker/job-applications/${encodeURIComponent(targetApplicationId)}`,
+            { method: 'DELETE' }
+          );
+          if (!response.ok) {
+            throw new Error(`Failed to delete application (${response.status}).`);
+          }
+        })
       );
-      if (!response.ok) {
-        throw new Error(`Failed to delete application (${response.status}).`);
-      }
+      const deletedIds = new Set(targetApplicationIds);
       setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
         ...current,
         applications: current.applications.filter(
-          (application: FilemakerJobApplication): boolean => application.id !== applicationId
+          (application: FilemakerJobApplication): boolean => !deletedIds.has(application.id)
         ),
       }));
       setSelectedPreparedApplicationId(null);
@@ -1440,7 +2465,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     } finally {
       setIsMutatingApplication(false);
     }
-  }, []);
+  }, [preparedApplicationsById]);
 
   if (!organization) return null;
 
@@ -1527,6 +2552,41 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                 id={`job-listing-${encodeURIComponent(listing.id)}`}
                 className='space-y-4 rounded-md border border-border/60 bg-card/20 p-4'
               >
+                <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3'>
+                  <div className='flex min-w-0 items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200'>
+                    <FileText className='h-3.5 w-3.5' aria-hidden='true' />
+                    Prepare application
+                  </div>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-8 gap-1.5'
+                    onClick={(): void => setApplicationListingId(listing.id)}
+                    aria-label={`Prepare application for ${
+                      listing.title.trim().length > 0
+                        ? listing.title
+                        : `Job listing ${index + 1}`
+                    }`}
+                    title='Prepare application'
+                  >
+                    <FileText className='h-3.5 w-3.5' aria-hidden='true' />
+                    Prepare
+                  </Button>
+                </div>
+
+                <JobApplicationRunStatusBadges entries={runEntries} />
+
+                <JobApplicationsInline
+                  applications={applications}
+                  jobListing={listing}
+                  isCollapsingLegacy={collapsingLegacyJobListingId === listing.id}
+                  onCollapseLegacy={(jobListingId: string): void => {
+                    void handleCollapseLegacyApplications(jobListingId);
+                  }}
+                  onOpenApplication={setSelectedPreparedApplicationId}
+                />
+
                 <div className='flex flex-wrap items-center justify-between gap-2'>
                   <div className='flex min-w-0 flex-wrap items-center gap-2'>
                     <Badge variant={targeted ? 'success' : 'warning'}>
@@ -1551,22 +2611,6 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     ) : null}
                   </div>
                   <div className='flex flex-wrap items-center gap-2'>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      className='h-8 gap-1.5'
-                      onClick={(): void => setApplicationListingId(listing.id)}
-                      aria-label={`Prepare application for ${
-                        listing.title.trim().length > 0
-                          ? listing.title
-                          : `Job listing ${index + 1}`
-                      }`}
-                      title='Prepare application'
-                    >
-                      <FileText className='h-3.5 w-3.5' aria-hidden='true' />
-                      Prepare
-                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -1596,8 +2640,6 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     </DropdownMenu>
                   </div>
                 </div>
-
-                <JobApplicationRunStatusBadges entries={runEntries} />
 
                 <div className='grid gap-3 md:grid-cols-2'>
                   <FormField label='Job title'>
@@ -1906,11 +2948,6 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     />
                   </FormField>
                 </div>
-                <JobApplicationsInline
-                  applications={applications}
-                  jobListing={listing}
-                  onOpenApplication={setSelectedPreparedApplicationId}
-                />
               </div>
             );
           })}
@@ -1937,6 +2974,12 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         onClose={(): void => setSelectedPreparedApplicationId(null)}
         onDelete={(applicationId: string): void => {
           void handleApplicationDelete(applicationId);
+        }}
+        onActiveArtifactsChange={(
+          applicationId: string,
+          activeArtifacts: FilemakerJobApplicationActiveArtifacts
+        ): void => {
+          void handleApplicationActiveArtifactsChange(applicationId, activeArtifacts);
         }}
         onStatusChange={(applicationId: string, status: FilemakerJobApplicationStatus): void => {
           void handleApplicationStatusChange(applicationId, status);

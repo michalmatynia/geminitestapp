@@ -5,12 +5,20 @@ import {
   deleteMongoFilemakerJobApplication,
   requireFilemakerMailAdminSession,
   requireMongoFilemakerJobApplicationById,
+  updateMongoFilemakerJobApplicationActiveArtifacts,
   updateMongoFilemakerJobApplicationStatus,
 } from '@/features/filemaker/server';
 import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui/api';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const jobApplicationPatchSchema = z.object({
+  activeArtifacts: z
+    .object({
+      applicationEmailVersionId: z.string().trim().nullable().optional(),
+      coverLetterVersionId: z.string().trim().nullable().optional(),
+      tailoredCvVersionId: z.string().trim().nullable().optional(),
+    })
+    .optional(),
   status: z.enum(['draft', 'ready', 'applied', 'rejected', 'archived']).optional(),
 });
 
@@ -48,15 +56,22 @@ export async function patchHandler(
   if (!result.ok) return result.response;
 
   const applicationId = resolveApplicationId(params);
-  if (result.data.status === undefined) {
+  if (result.data.status === undefined && result.data.activeArtifacts === undefined) {
     const application = await requireMongoFilemakerJobApplicationById(applicationId);
     return Response.json({ application });
   }
 
-  const application = await updateMongoFilemakerJobApplicationStatus(
-    applicationId,
-    result.data.status
-  );
+  let application =
+    result.data.status !== undefined
+      ? await updateMongoFilemakerJobApplicationStatus(applicationId, result.data.status)
+      : await requireMongoFilemakerJobApplicationById(applicationId);
+  if (result.data.activeArtifacts !== undefined) {
+    application = await updateMongoFilemakerJobApplicationActiveArtifacts(applicationId, {
+      applicationEmailVersionId: result.data.activeArtifacts.applicationEmailVersionId ?? null,
+      coverLetterVersionId: result.data.activeArtifacts.coverLetterVersionId ?? null,
+      tailoredCvVersionId: result.data.activeArtifacts.tailoredCvVersionId ?? null,
+    });
+  }
   return Response.json({ application });
 }
 

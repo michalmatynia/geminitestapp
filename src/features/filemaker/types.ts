@@ -230,6 +230,13 @@ export type {
 
 export type {
   FilemakerJobApplication,
+  FilemakerJobApplicationApplyRun,
+  FilemakerJobApplicationApplyRunArtifacts,
+  FilemakerJobApplicationApplyRunMode,
+  FilemakerJobApplicationApplyRunResponse,
+  FilemakerJobApplicationApplyRunStatus,
+  FilemakerJobApplicationApplyRunStep,
+  FilemakerJobApplicationApplyRunStepStatus,
   FilemakerJobApplicationCoverLetter,
   FilemakerJobApplicationEmail,
   FilemakerJobApplicationListResponse,

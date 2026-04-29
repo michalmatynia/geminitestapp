@@ -19,6 +19,7 @@ import {
 
 import {
   getLatestEventTimestamp,
+  isTerminalRunStatus,
   normalizeRunEvents,
   normalizeRunNodes,
   refreshRunDetailErrorSummary,
@@ -35,6 +36,7 @@ interface JobQueueRealtimeParams {
   queueStatus: QueueStatus | undefined;
   refetchQueueData: JobQueueRefetchData;
   rememberVisibleOptimisticRun: (run: AiPathRunRecord) => void;
+  runs: AiPathRunRecord[];
   runDetails: Record<string, RunDetail | null>;
   setRunDetails: Dispatch<SetStateAction<Record<string, RunDetail | null>>>;
 }
@@ -57,6 +59,7 @@ export function useJobQueueRealtime({
   queueStatus,
   refetchQueueData,
   rememberVisibleOptimisticRun,
+  runs,
   runDetails,
   setRunDetails,
 }: JobQueueRealtimeParams): JobQueueRealtimeResult {
@@ -236,11 +239,24 @@ export function useJobQueueRealtime({
   ]);
 
   useEffect(() => {
+    const visibleRunsById = new Map(runs.map((run) => [run.id, run]));
+
     streamSourcesRef.current.forEach((source, runId) => {
       if (!expandedRunIds.has(runId)) {
         source.close();
         streamSourcesRef.current.delete(runId);
         setStreamStatuses((prev) => ({ ...prev, [runId]: 'stopped' }));
+        return;
+      }
+
+      const detailRun = runDetails[runId]?.run ?? visibleRunsById.get(runId) ?? null;
+      if (isTerminalRunStatus(detailRun?.status)) {
+        source.close();
+        streamSourcesRef.current.delete(runId);
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'stopped') return prev;
+          return { ...prev, [runId]: 'stopped' };
+        });
       }
     });
 
@@ -249,6 +265,14 @@ export function useJobQueueRealtime({
       if (pausedStreams.has(runId)) return;
 
       const existing = runDetails[runId];
+      const detailRun = existing?.run ?? visibleRunsById.get(runId) ?? null;
+      if (isTerminalRunStatus(detailRun?.status)) {
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'stopped') return prev;
+          return { ...prev, [runId]: 'stopped' };
+        });
+        return;
+      }
       const since = existing ? getLatestEventTimestamp(existing.events) : null;
       const params = new URLSearchParams();
       if (since) params.set('since', since);
@@ -354,7 +378,7 @@ export function useJobQueueRealtime({
       source.addEventListener('done', cleanup);
       source.addEventListener('error', cleanup);
     });
-  }, [expandedRunIds, pausedStreams, runDetails, setRunDetails]);
+  }, [expandedRunIds, pausedStreams, runDetails, runs, setRunDetails]);
 
   return {
     handleToggleStream,

@@ -83,7 +83,9 @@ export async function executeMongoCollectionUpdate({
     filter: nextResolvedFilter,
     update: updateDoc,
     ...(idType !== undefined ? { idType: idType as string } : {}),
+    ...(dbConfig.upsert !== undefined ? { upsert: dbConfig.upsert } : {}),
     ...(action === 'findOneAndUpdate' ? { returnDocument: 'after' as const } : {}),
+    ...(dbConfig.returnDocument !== undefined ? { returnDocument: dbConfig.returnDocument } : {}),
   });
   executed.updater.add(node.id);
   if (!updateResult.ok) {
@@ -148,6 +150,9 @@ export async function executeMongoCollectionUpdate({
     typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
       ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
       : 1;
+  const upsertedId = (updateResult.data as Record<string, unknown> | null)?.['upsertedId'];
+  const displayAffectedCount =
+    modifiedCount > 0 || upsertedId === null || upsertedId === undefined ? modifiedCount : 1;
   if (
     debugPayload['parameterInferenceGuard'] &&
     typeof debugPayload['parameterInferenceGuard'] === 'object'
@@ -155,12 +160,12 @@ export async function executeMongoCollectionUpdate({
     (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
       targetPath: parameterTargetPath,
       count: coerceArrayLike(updates[parameterTargetPath]).length,
-      modifiedCount,
+      modifiedCount: displayAffectedCount,
     };
   }
   if (writeOutcome.status !== 'warning') {
     toast(
-      `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
+      `Entity updated in ${collection} (${displayAffectedCount} row${displayAffectedCount === 1 ? '' : 's'}).`,
       { variant: 'success' }
     );
   }

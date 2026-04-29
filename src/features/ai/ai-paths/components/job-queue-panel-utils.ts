@@ -406,3 +406,14 @@ export const getExecutionVariant = (execution: RunExecutionKind): StatusVariant 
 
 export const isRunningStatus = (status: unknown): boolean =>
   typeof status === 'string' && status.trim().toLowerCase() === 'running';
+
+export const isTerminalRunStatus = (status: unknown): boolean => {
+  if (typeof status !== 'string') return false;
+  const normalized = status.trim().toLowerCase();
+  return (
+    normalized === 'completed' ||
+    normalized === 'failed' ||
+    normalized === 'canceled' ||
+    normalized === 'cancelled'
+  );
+};

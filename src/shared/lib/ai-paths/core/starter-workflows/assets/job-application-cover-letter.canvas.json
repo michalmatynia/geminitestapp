@@ -228,7 +228,8 @@
       },
       "inputs": [
         "value",
-        "context"
+        "context",
+        "entityId"
       ],
       "outputs": [
         "result",
@@ -236,12 +237,12 @@
       ],
       "config": {
         "database": {
-          "operation": "insert",
+          "operation": "update",
           "entityType": "filemaker_job_application",
           "mode": "replace",
           "useMongoActions": true,
-          "actionCategory": "create",
-          "action": "insertOne",
+          "actionCategory": "update",
+          "action": "updateOne",
           "query": {
             "provider": "mongodb",
             "collection": "filemaker_job_applications",
@@ -249,7 +250,7 @@
             "preset": "by_id",
             "field": "id",
             "idType": "string",
-            "queryTemplate": "{\"_id\":\"ai-job-application-cover-letter-{{context.entityId}}-{{context.timestamp}}\",\"id\":\"ai-job-application-cover-letter-{{context.entityId}}-{{context.timestamp}}\",\"status\":\"draft\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"organizationName\":\"{{context.entityJson.applicationContext.organizationContext.organization.name}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"jobTitle\":\"{{context.entityJson.applicationContext.jobContext.listing.title}}\",\"integrationId\":\"{{context.entityJson.applicationContext.platformContext.integrationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"connectionId\":\"{{context.entityJson.applicationContext.platformContext.connectionId}}\",\"tailoredCvId\":null,\"tailoredCv\":null,\"coverLetter\":{{value.coverLetter}},\"applicationEmail\":null,\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"source\":\"ai-path-job-application-cover-letter\",\"sourceEntityId\":\"{{context.entityId}}\",\"sourceApplicationContext\":{\"version\":{{context.entityJson.applicationContext.version}},\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"sourceEntityId\":\"{{context.entityId}}\"},\"createdAt\":\"{{context.timestamp}}\",\"updatedAt\":\"{{context.timestamp}}\"}",
+            "queryTemplate": "{\"canonicalApplicationKey\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}::{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}::{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}::{{context.entityJson.applicationContext.platformContext.integrationSlug}}\"}",
             "limit": 1,
             "sort": "",
             "projection": "",
@@ -257,7 +258,10 @@
           },
           "writeOutcomePolicy": {
             "onZeroAffected": "fail"
-          }
+          },
+          "upsert": true,
+          "updatePayloadMode": "custom",
+          "updateTemplate": "{\"$setOnInsert\":{\"_id\":\"ai-job-application-{{context.entityJson.applicationContext.personContext.selectedPersonId}}-{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}-{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}-{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"id\":\"ai-job-application-{{context.entityJson.applicationContext.personContext.selectedPersonId}}-{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}-{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}-{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"status\":\"draft\",\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"canonicalApplicationKey\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}::{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}::{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}::{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"createdAt\":\"{{context.timestamp}}\"},\"$set\":{\"personName\":\"{{context.entityJson.applicationContext.personContext.person.fullName}}\",\"organizationName\":\"{{context.entityJson.applicationContext.organizationContext.organization.name}}\",\"jobTitle\":\"{{context.entityJson.applicationContext.jobContext.listing.title}}\",\"integrationId\":\"{{context.entityJson.applicationContext.platformContext.integrationId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"connectionId\":\"{{context.entityJson.applicationContext.platformContext.connectionId}}\",\"canonicalApplicationKey\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}::{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}::{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}::{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"source\":\"ai-path-job-application-cover-letter\",\"sourceEntityId\":\"{{context.entityId}}\",\"sourceApplicationContext\":{\"version\":{{context.entityJson.applicationContext.version}},\"personId\":\"{{context.entityJson.applicationContext.personContext.selectedPersonId}}\",\"organizationId\":\"{{context.entityJson.applicationContext.organizationContext.selectedOrganizationId}}\",\"jobListingId\":\"{{context.entityJson.applicationContext.jobContext.selectedJobListingId}}\",\"integrationSlug\":\"{{context.entityJson.applicationContext.platformContext.integrationSlug}}\",\"sourceEntityId\":\"{{context.entityId}}\"},\"updatedAt\":\"{{context.timestamp}}\",\"activeArtifacts.coverLetterVersionId\":\"ai-job-application-cover-letter-{{context.entityId}}-{{context.timestamp}}\",\"coverLetter\":{{value.coverLetter}}},\"$inc\":{\"artifactVersionCounters.coverLetter\":1},\"$push\":{\"artifactVersions.coverLetter\":{\"id\":\"ai-job-application-cover-letter-{{context.entityId}}-{{context.timestamp}}\",\"kind\":\"cover_letter\",\"linkedRecordId\":null,\"payload\":{{value.coverLetter}},\"applicationNotes\":{{value.applicationNotes}},\"missingInformation\":{{value.missingInformation}},\"confidence\":{{value.confidence}},\"sourceRunId\":\"{{context.entityId}}\",\"createdAt\":\"{{context.timestamp}}\"}}}"
         },
         "runtime": {
           "waitForInputs": true,
@@ -267,6 +271,9 @@
             },
             "context": {
               "required": true
+            },
+            "entityId": {
+              "required": false
             }
           }
         }
@@ -312,119 +319,162 @@
       "fromNodeId": "node-trigger-job-application-prepare",
       "toNodeId": "node-fetcher-job-application-prepare",
       "fromPort": "trigger",
-      "toPort": "trigger"
+      "toPort": "trigger",
+      "from": "node-trigger-job-application-prepare",
+      "to": "node-fetcher-job-application-prepare"
     },
     {
       "id": "edge-fetcher-parser-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-parser-job-application-prepare",
       "fromPort": "context",
-      "toPort": "context"
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-parser-job-application-prepare"
     },
     {
       "id": "edge-parser-prompt-job-application-prepare",
       "fromNodeId": "node-parser-job-application-prepare",
       "toNodeId": "node-prompt-job-application-prepare",
       "fromPort": "bundle",
-      "toPort": "bundle"
+      "toPort": "bundle",
+      "from": "node-parser-job-application-prepare",
+      "to": "node-prompt-job-application-prepare"
     },
     {
       "id": "edge-fetcher-prompt-context-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-prompt-job-application-prepare",
       "fromPort": "context",
-      "toPort": "context"
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-prompt-job-application-prepare"
     },
     {
       "id": "edge-prompt-model-job-application-prepare",
       "fromNodeId": "node-prompt-job-application-prepare",
       "toNodeId": "node-model-job-application-prepare",
       "fromPort": "prompt",
-      "toPort": "prompt"
+      "toPort": "prompt",
+      "from": "node-prompt-job-application-prepare",
+      "to": "node-model-job-application-prepare"
     },
     {
       "id": "edge-prompt-images-model-job-application-prepare",
       "fromNodeId": "node-prompt-job-application-prepare",
       "toNodeId": "node-model-job-application-prepare",
       "fromPort": "images",
-      "toPort": "images"
+      "toPort": "images",
+      "from": "node-prompt-job-application-prepare",
+      "to": "node-model-job-application-prepare"
     },
     {
       "id": "edge-fetcher-model-context-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-model-job-application-prepare",
       "fromPort": "context",
-      "toPort": "context"
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-model-job-application-prepare"
     },
     {
       "id": "edge-model-regex-job-application-prepare",
       "fromNodeId": "node-model-job-application-prepare",
       "toNodeId": "node-regex-job-application-prepare",
       "fromPort": "result",
-      "toPort": "value"
+      "toPort": "value",
+      "from": "node-model-job-application-prepare",
+      "to": "node-regex-job-application-prepare"
     },
     {
       "id": "edge-regex-application-db-job-application-prepare",
       "fromNodeId": "node-regex-job-application-prepare",
       "toNodeId": "node-db-insert-application-job-application-prepare",
       "fromPort": "value",
-      "toPort": "value"
+      "toPort": "value",
+      "from": "node-regex-job-application-prepare",
+      "to": "node-db-insert-application-job-application-prepare"
     },
     {
       "id": "edge-fetcher-application-db-context-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-db-insert-application-job-application-prepare",
       "fromPort": "context",
-      "toPort": "context"
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-db-insert-application-job-application-prepare"
     },
     {
       "id": "edge-regex-viewer-job-application-prepare",
       "fromNodeId": "node-regex-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "value",
-      "toPort": "bundle"
+      "toPort": "bundle",
+      "from": "node-regex-job-application-prepare",
+      "to": "node-view-job-application-prepare"
     },
     {
       "id": "edge-application-db-viewer-job-application-prepare",
       "fromNodeId": "node-db-insert-application-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "bundle",
-      "toPort": "applicationPersistence"
+      "toPort": "applicationPersistence",
+      "from": "node-db-insert-application-job-application-prepare",
+      "to": "node-view-job-application-prepare"
     },
     {
       "id": "edge-fetcher-viewer-context-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "context",
-      "toPort": "context"
+      "toPort": "context",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
     },
     {
       "id": "edge-prompt-viewer-job-application-prepare",
       "fromNodeId": "node-prompt-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "prompt",
-      "toPort": "prompt"
+      "toPort": "prompt",
+      "from": "node-prompt-job-application-prepare",
+      "to": "node-view-job-application-prepare"
     },
     {
       "id": "edge-fetcher-entity-id-viewer-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "entityId",
-      "toPort": "entityId"
+      "toPort": "entityId",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
     },
     {
       "id": "edge-fetcher-entity-type-viewer-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "entityType",
-      "toPort": "entityType"
+      "toPort": "entityType",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
     },
     {
       "id": "edge-fetcher-meta-viewer-job-application-prepare",
       "fromNodeId": "node-fetcher-job-application-prepare",
       "toNodeId": "node-view-job-application-prepare",
       "fromPort": "meta",
-      "toPort": "meta"
+      "toPort": "meta",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-view-job-application-prepare"
+    },
+    {
+      "id": "edge-fetcher-insert-application-job-application-prepare-entity-id",
+      "fromNodeId": "node-fetcher-job-application-prepare",
+      "toNodeId": "node-db-insert-application-job-application-prepare",
+      "fromPort": "entityId",
+      "toPort": "entityId",
+      "from": "node-fetcher-job-application-prepare",
+      "to": "node-db-insert-application-job-application-prepare"
     }
   ],
   "execution": {

@@ -313,6 +313,18 @@ export const listSettingsFilemakerJobListingsForOrganizationIds = async (
   return Array.from(listingsById.values());
 };
 
+export const getSettingsFilemakerJobListingById = async (
+  jobListingId: string
+): Promise<FilemakerJobListing | null> => {
+  const normalizedJobListingId = jobListingId.trim();
+  if (normalizedJobListingId.length === 0) return null;
+  return (
+    (await loadSettingsJobListings()).find(
+      (listing: FilemakerJobListing): boolean => listing.id === normalizedJobListingId
+    ) ?? null
+  );
+};
+
 const loadJobListingCountByOrganizationId = async (): Promise<Map<string, number>> =>
   (await loadSettingsJobListings()).reduce<Map<string, number>>((counts, listing) => {
     const organizationId = listing.organizationId.trim();

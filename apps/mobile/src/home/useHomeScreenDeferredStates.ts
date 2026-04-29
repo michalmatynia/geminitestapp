@@ -29,56 +29,28 @@ export function useHomeScreenDeferredStates(): {
   areDeferredHomeNavigationExtendedReady: boolean;
 } {
   const [
-    areDeferredHomePanelsReady,
-    areDeferredHomeDuelSecondaryReady,
-    areDeferredHomeDuelInvitesReady,
-    areDeferredHomeDuelAdvancedReady,
+    areDeferredHomePanelsReady, areDeferredHomeDuelSecondaryReady,
+    areDeferredHomeDuelInvitesReady, areDeferredHomeDuelAdvancedReady,
   ] = useHomeScreenDeferredPanelSequence(HOME_DUEL_PANEL_SEQUENCE, false);
-
   const [areDeferredHomeInsightsReady, areDeferredHomeScoreRefreshReady] =
-    useHomeScreenDeferredPanelSequence(
-      HOME_INSIGHT_SCORE_REFRESH_SEQUENCE,
-      !areDeferredHomePanelsReady,
-    );
-
+    useHomeScreenDeferredPanelSequence(HOME_INSIGHT_SCORE_REFRESH_SEQUENCE, !areDeferredHomePanelsReady);
   const [areDeferredHomeHeroScoresReady, areDeferredHomeTrainingFocusDetailsReady] =
-    useHomeScreenDeferredPanelGroup(
-      HOME_SCORE_DETAILS_PANEL_GROUP,
-      !areDeferredHomePanelsReady,
-    );
-
-  const [
-    areDeferredHomeHeroIntroReady,
-    areDeferredHomeHeroDetailsReady,
-    areDeferredHomeAccountSummaryReady,
-  ] = useHomeScreenDeferredPanelGroup(HOME_PRIMARY_SURFACE_PANEL_GROUP, false);
-
+    useHomeScreenDeferredPanelGroup(HOME_SCORE_DETAILS_PANEL_GROUP, !areDeferredHomePanelsReady);
+  const [areDeferredHomeHeroIntroReady, areDeferredHomeHeroDetailsReady, areDeferredHomeAccountSummaryReady] =
+    useHomeScreenDeferredPanelGroup(HOME_PRIMARY_SURFACE_PANEL_GROUP, false);
   const [areDeferredHomeAccountDetailsReady, areDeferredHomeAccountSignInReady] =
-    useHomeScreenDeferredPanelGroup(
-      HOME_ACCOUNT_DETAILS_PANEL_GROUP,
-      !areDeferredHomeAccountSummaryReady,
-    );
-
-  const [
-    areDeferredHomeNavigationSecondaryReady,
-    areDeferredHomeNavigationExtendedReady,
-  ] = useHomeScreenDeferredPanelSequence(HOME_NAVIGATION_PANEL_SEQUENCE, false);
+    useHomeScreenDeferredPanelGroup(HOME_ACCOUNT_DETAILS_PANEL_GROUP, !areDeferredHomeAccountSummaryReady);
+  const [areDeferredHomeNavigationSecondaryReady, areDeferredHomeNavigationExtendedReady] =
+    useHomeScreenDeferredPanelSequence(HOME_NAVIGATION_PANEL_SEQUENCE, false);
 
   return {
-    areDeferredHomePanelsReady,
-    areDeferredHomeDuelSecondaryReady,
-    areDeferredHomeDuelInvitesReady,
-    areDeferredHomeDuelAdvancedReady,
-    areDeferredHomeInsightsReady,
-    areDeferredHomeScoreRefreshReady,
-    areDeferredHomeHeroScoresReady,
-    areDeferredHomeTrainingFocusDetailsReady,
-    areDeferredHomeHeroIntroReady,
-    areDeferredHomeHeroDetailsReady,
-    areDeferredHomeAccountSummaryReady,
-    areDeferredHomeAccountDetailsReady,
-    areDeferredHomeAccountSignInReady,
-    areDeferredHomeNavigationSecondaryReady,
+    areDeferredHomePanelsReady, areDeferredHomeDuelSecondaryReady,
+    areDeferredHomeDuelInvitesReady, areDeferredHomeDuelAdvancedReady,
+    areDeferredHomeInsightsReady, areDeferredHomeScoreRefreshReady,
+    areDeferredHomeHeroScoresReady, areDeferredHomeTrainingFocusDetailsReady,
+    areDeferredHomeHeroIntroReady, areDeferredHomeHeroDetailsReady,
+    areDeferredHomeAccountSummaryReady, areDeferredHomeAccountDetailsReady,
+    areDeferredHomeAccountSignInReady, areDeferredHomeNavigationSecondaryReady,
     areDeferredHomeNavigationExtendedReady,
   };
 }

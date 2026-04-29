@@ -1,13 +1,20 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { listMongoFilemakerJobApplicationsMock, requireFilemakerMailAdminSessionMock } =
+const {
+  collapseLegacyMongoFilemakerJobApplicationsForListingMock,
+  listMongoFilemakerJobApplicationsMock,
+  requireFilemakerMailAdminSessionMock,
+} =
   vi.hoisted(() => ({
+    collapseLegacyMongoFilemakerJobApplicationsForListingMock: vi.fn(),
     listMongoFilemakerJobApplicationsMock: vi.fn(),
     requireFilemakerMailAdminSessionMock: vi.fn(),
   }));
 
 vi.mock('@/features/filemaker/server', () => ({
+  collapseLegacyMongoFilemakerJobApplicationsForListing:
+    collapseLegacyMongoFilemakerJobApplicationsForListingMock,
   listMongoFilemakerJobApplications: listMongoFilemakerJobApplicationsMock,
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
 }));
@@ -17,6 +24,12 @@ import { getHandler } from './handler';
 describe('filemaker job applications handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    collapseLegacyMongoFilemakerJobApplicationsForListingMock.mockResolvedValue({
+      canonicalApplicationsCreated: 0,
+      canonicalApplicationsUpdated: 0,
+      legacyApplicationsDeleted: 0,
+      legacyGroupsSkipped: 0,
+    });
     requireFilemakerMailAdminSessionMock.mockResolvedValue(undefined);
     listMongoFilemakerJobApplicationsMock.mockResolvedValue([
       {

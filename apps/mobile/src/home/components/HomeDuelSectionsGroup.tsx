@@ -80,6 +80,60 @@ function LeaderboardSection({
   );
 }
 
+function HomeDuelMainSections({
+  isAuthenticated,
+  areDeferredHomeDuelAdvancedReady,
+  areDeferredHomeDuelInvitesReady,
+  areDeferredHomeDuelSecondaryReady,
+  areDeferredHomePanelsReady,
+}: {
+  isAuthenticated: boolean;
+  areDeferredHomeDuelAdvancedReady: boolean;
+  areDeferredHomeDuelInvitesReady: boolean;
+  areDeferredHomeDuelSecondaryReady: boolean;
+  areDeferredHomePanelsReady: boolean;
+}): React.JSX.Element {
+  const PrivateDuelSectionGroup = isAuthenticated
+    ? AuthenticatedHomePrivateDuelSectionGroup
+    : AnonymousHomePrivateDuelSectionGroup;
+
+  return (
+    <PrivateDuelSectionGroup
+      areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+      areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
+      areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
+      areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+    />
+  );
+}
+
+function HomeDuelRematchesSection({
+  isAuthenticated,
+  areDeferredHomeDuelAdvancedReady,
+  areDeferredHomeDuelInvitesReady,
+  areDeferredHomeDuelSecondaryReady,
+  areDeferredHomePanelsReady,
+}: {
+  isAuthenticated: boolean;
+  areDeferredHomeDuelAdvancedReady: boolean;
+  areDeferredHomeDuelInvitesReady: boolean;
+  areDeferredHomeDuelSecondaryReady: boolean;
+  areDeferredHomePanelsReady: boolean;
+}): React.JSX.Element {
+  const RematchesSection = isAuthenticated
+    ? AuthenticatedHomeRematchesSection
+    : AnonymousHomeRematchesSection;
+
+  return (
+    <RematchesSection
+      areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+      areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
+      areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
+      areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+    />
+  );
+}
+
 export function HomeDuelSectionsGroup({
   areDeferredHomePanelsReady,
   areDeferredHomeDuelAdvancedReady,
@@ -95,37 +149,31 @@ export function HomeDuelSectionsGroup({
     return <DeferredHomeActivitySectionsCard />;
   }
 
-  const PrivateDuelSectionGroup = isAuthenticated
-    ? AuthenticatedHomePrivateDuelSectionGroup
-    : AnonymousHomePrivateDuelSectionGroup;
-
-  const RematchesSection = isAuthenticated
-    ? AuthenticatedHomeRematchesSection
-    : AnonymousHomeRematchesSection;
-
   return (
     <>
-      <PrivateDuelSectionGroup
+      <HomeDuelMainSections
         areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
         areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
         areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
         areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-      />
-      <LiveDuelsSection
-        copy={copy}
-        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
         isAuthenticated={isAuthenticated}
       />
-      <RematchesSection
+      <LiveDuelsSection
+        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+        copy={copy}
+        isAuthenticated={isAuthenticated}
+      />
+      <HomeDuelRematchesSection
         areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
         areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
         areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
         areDeferredHomePanelsReady={areDeferredHomePanelsReady}
+        isAuthenticated={isAuthenticated}
       />
       <LeaderboardSection
-        copy={copy}
-        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
         activeDuelLearnerId={activeDuelLearnerId}
+        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
+        copy={copy}
         isAuthenticated={isAuthenticated}
       />
     </>

@@ -33,17 +33,25 @@ const MIME_TYPE_TO_EXTENSION: Readonly<Record<string, string>> = {
   'video/webm': 'webm',
 };
 
+const firstNonEmptyString = (values: readonly string[]): string | null => {
+  for (const value of values) {
+    if (value.length > 0) {
+      return value;
+    }
+  }
+  return null;
+};
+
 const resolveArtifactKey = (
   artifact: Pick<PlaywrightEngineRunRecord['artifacts'][number], 'kind' | 'name' | 'path'>,
   index: number
 ): string => {
   const parsed = parse(artifact.path.split('/').pop() ?? '');
+  const artifactKind = artifact.kind?.trim() ?? '';
   const stem =
-    parsed.name.trim() ||
-    artifact.name.trim() ||
-    artifact.kind?.trim() ||
+    firstNonEmptyString([parsed.name.trim(), artifact.name.trim(), artifactKind]) ??
     `artifact-${index}`;
-  const kind = artifact.kind?.trim() || 'artifact';
+  const kind = artifactKind.length > 0 ? artifactKind : 'artifact';
   return `${index.toString().padStart(2, '0')}-${kind}-${stem}`;
 };
 
@@ -72,7 +80,7 @@ export function createAmazonScanDiagnosticEmitter(
   if (!enabled) {
     return {
       enabled: false,
-      emit: async () => undefined,
+      emit: () => Promise.resolve(),
     };
   }
 
@@ -91,6 +99,33 @@ export function createAmazonScanDiagnosticEmitter(
     },
   };
 }
+
+const collectAmazonScanRunDiagnosticArtifact = async (
+  run: Pick<PlaywrightEngineRunRecord, 'artifacts' | 'runId'>,
+  artifact: PlaywrightEngineRunRecord['artifacts'][number],
+  index: number
+): Promise<readonly [string, AmazonScanDiagnosticArtifact] | null> => {
+  const fileName = artifact.path.split('/').pop()?.trim() ?? '';
+  if (fileName.length === 0) {
+    return null;
+  }
+
+  const artifactResult = await readPlaywrightEngineArtifact({
+    runId: run.runId,
+    fileName,
+  });
+  if (artifactResult === null) {
+    return null;
+  }
+
+  return [
+    resolveArtifactKey(artifact, index),
+    amazonScanDiagnosticArtifact.binary(
+      new Uint8Array(artifactResult.content),
+      resolveArtifactExtension(artifact)
+    ),
+  ];
+};
 
 /**
  * Helpers that package the values the orchestrator already has into
@@ -118,24 +153,11 @@ export const resolveAmazonScanDiagnosticCapture = (
 export async function collectAmazonScanRunDiagnosticArtifacts(
   run: Pick<PlaywrightEngineRunRecord, 'artifacts' | 'runId'>
 ): Promise<Record<string, AmazonScanDiagnosticArtifact>> {
-  const output: Record<string, AmazonScanDiagnosticArtifact> = {};
   const artifacts = Array.isArray(run.artifacts) ? run.artifacts : [];
-  for (const [index, artifact] of artifacts.entries()) {
-    const fileName = artifact.path.split('/').pop()?.trim() ?? '';
-    if (fileName.length === 0) {
-      continue;
-    }
-    const artifactResult = await readPlaywrightEngineArtifact({
-      runId: run.runId,
-      fileName,
-    });
-    if (!artifactResult) {
-      continue;
-    }
-    output[resolveArtifactKey(artifact, index)] = amazonScanDiagnosticArtifact.binary(
-      new Uint8Array(artifactResult.content),
-      resolveArtifactExtension(artifact)
-    );
-  }
-  return output;
+  const entries = await Promise.all(
+    artifacts.map((artifact, index) =>
+      collectAmazonScanRunDiagnosticArtifact(run, artifact, index)
+    )
+  );
+  return Object.fromEntries(entries.filter((entry) => entry !== null));
 }

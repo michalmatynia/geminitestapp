@@ -96,7 +96,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'parameter_inference',
-      templateVersion: 16,
+      templateVersion: 18,
       canonicalGraphHashes: PARAMETER_INFERENCE_ADDITIONAL_GRAPH_HASHES,
     },
     upgradePolicy: {
@@ -164,7 +164,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_cv',
-      templateVersion: 5,
+      templateVersion: 13,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
@@ -223,7 +223,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_email',
-      templateVersion: 5,
+      templateVersion: 11,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
@@ -282,7 +282,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_cover_letter',
-      templateVersion: 5,
+      templateVersion: 11,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

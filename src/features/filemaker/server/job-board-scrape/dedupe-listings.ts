@@ -66,32 +66,6 @@ const isReliableSourceUrlForListingDedupe = (value: unknown): boolean => {
   }
 };
 
-export const listingSourceMatchesOfferSource = (
-  listing: FilemakerJobListing,
-  offer: FilemakerJobBoardScrapedOffer
-): boolean => {
-  const listingSourceSite = normalizeSourceSiteForDedupe(listing.sourceSite);
-  const offerSourceSite = normalizeSourceSiteForDedupe(offer.sourceSite);
-  return (
-    listingSourceSite.length === 0 ||
-    offerSourceSite.length === 0 ||
-    listingSourceSite === offerSourceSite
-  );
-};
-
-export const listingSourceMatchesIdentitySource = (
-  listing: FilemakerJobListing,
-  identity: ListingSourceIdentity
-): boolean => {
-  const listingSourceSite = normalizeSourceSiteForDedupe(listing.sourceSite);
-  const identitySourceSite = normalizeSourceSiteForDedupe(identity.sourceSite);
-  return (
-    listingSourceSite.length === 0 ||
-    identitySourceSite.length === 0 ||
-    listingSourceSite === identitySourceSite
-  );
-};
-
 const samePresentValue = (left: string, right: string): boolean =>
   left.length > 0 && right.length > 0 && left === right;
 
@@ -112,14 +86,17 @@ export const listingMatchesSourceIdentity = (
   listing: FilemakerJobListing,
   identity: ListingSourceIdentity
 ): boolean => {
-  if (!listingSourceMatchesIdentitySource(listing, identity)) return false;
+  const listingSourceSite = normalizeSourceSiteForDedupe(listing.sourceSite);
+  const identitySourceSite = normalizeSourceSiteForDedupe(identity.sourceSite);
+  const sourceSitesMatch =
+    listingSourceSite.length > 0 &&
+    identitySourceSite.length > 0 &&
+    listingSourceSite === identitySourceSite;
   const sourceExternalId = normalizeExternalIdForDedupe(identity.sourceExternalId);
   const sourceUrl = normalizeSourceUrlForDedupe(identity.sourceUrl);
   if (sourceExternalId.length === 0 && sourceUrl.length === 0) return false;
-  return (
-    listingMatchesOfferExternalId(listing, sourceExternalId) ||
-    listingMatchesOfferSourceUrl(listing, sourceUrl)
-  );
+  if (listingMatchesOfferSourceUrl(listing, sourceUrl)) return true;
+  return sourceSitesMatch && listingMatchesOfferExternalId(listing, sourceExternalId);
 };
 
 const listingMatchesOfferTitle = (
@@ -142,9 +119,19 @@ const listingMatchesOffer = (input: {
   titleKey: string;
 }): boolean => {
   if (input.listing.organizationId !== input.organizationId) return false;
-  if (!listingSourceMatchesOfferSource(input.listing, input.offer)) return false;
-  if (listingMatchesOfferExternalId(input.listing, input.offerExternalId)) return true;
   if (listingMatchesOfferSourceUrl(input.listing, input.offerSourceUrl)) return true;
+  const listingSourceSite = normalizeSourceSiteForDedupe(input.listing.sourceSite);
+  const offerSourceSite = normalizeSourceSiteForDedupe(input.offer.sourceSite);
+  const sourceSitesMatch =
+    listingSourceSite.length > 0 &&
+    offerSourceSite.length > 0 &&
+    listingSourceSite === offerSourceSite;
+  if (
+    sourceSitesMatch &&
+    listingMatchesOfferExternalId(input.listing, input.offerExternalId)
+  ) {
+    return true;
+  }
   if (input.hasSourceIdentity) return false;
   return listingMatchesOfferTitle(input.listing, input.titleKey);
 };
@@ -177,6 +164,14 @@ export const findExistingListingIndexBySourceIdentity = (
 ): number =>
   listings.findIndex((listing: FilemakerJobListing): boolean =>
     listingMatchesSourceIdentity(listing, identity)
+  );
+
+export const findExistingListingIndexesBySourceIdentity = (
+  listings: readonly FilemakerJobListing[],
+  identity: ListingSourceIdentity
+): number[] =>
+  listings.flatMap((listing: FilemakerJobListing, index: number): number[] =>
+    listingMatchesSourceIdentity(listing, identity) ? [index] : []
   );
 
 const LISTING_ADDRESS_FIELDS = [

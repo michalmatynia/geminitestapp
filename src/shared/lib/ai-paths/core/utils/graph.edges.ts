@@ -28,9 +28,29 @@ export const sanitizeEdgesDetailed = (
     const first = typeof value === 'string' ? value.trim() : '';
     return first.length > 0 ? first : null;
   };
+  const resolveLegacyString = (edge: Edge, key: string): string | undefined => {
+    const value = (edge as Record<string, unknown>)[key];
+    if (typeof value !== 'string') return undefined;
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : undefined;
+  };
   const resolvePort = (value: string | null | undefined): string | null => {
     const normalized = typeof value === 'string' ? normalizePortName(value) : '';
     return normalized.length > 0 ? normalized : null;
+  };
+  const resolveFirstNodeId = (...values: Array<string | undefined>): string | null => {
+    for (const value of values) {
+      const resolved = resolveNodeId(value);
+      if (resolved !== null) return resolved;
+    }
+    return null;
+  };
+  const resolveFirstPort = (...values: Array<string | null | undefined>): string | null => {
+    for (const value of values) {
+      const resolved = resolvePort(value);
+      if (resolved !== null) return resolved;
+    }
+    return null;
   };
   const toCanonicalEdge = (
     edge: Edge,
@@ -52,7 +72,13 @@ export const sanitizeEdgesDetailed = (
       | 'invalid_edge_incompatible_connection'
       | 'duplicate_edge_dropped',
     edge: Edge,
-    message: string
+    message: string,
+    resolved?: {
+      fromNodeId?: string | null;
+      fromPort?: string | null;
+      toNodeId?: string | null;
+      toPort?: string | null;
+    }
   ): void => {
     dropped.push({
       code,
@@ -60,21 +86,30 @@ export const sanitizeEdgesDetailed = (
       message,
       edgeId: edge.id,
       metadata: {
-        from: edge.from ?? null,
-        to: edge.to ?? null,
-        fromPort: edge.fromPort ?? null,
-        toPort: edge.toPort ?? null,
+        from: resolved?.fromNodeId ?? edge.from ?? edge.source ?? null,
+        to: resolved?.toNodeId ?? edge.to ?? edge.target ?? null,
+        fromPort: resolved?.fromPort ?? edge.fromPort ?? edge.sourceHandle ?? null,
+        toPort: resolved?.toPort ?? edge.toPort ?? edge.targetHandle ?? null,
       },
     });
   };
   edgeList.forEach((edge: Edge): void => {
-    const fromNodeId = resolveNodeId(edge.from);
-    const toNodeId = resolveNodeId(edge.to);
+    const fromNodeId = resolveFirstNodeId(
+      edge.from,
+      edge.source,
+      resolveLegacyString(edge, 'fromNodeId')
+    );
+    const toNodeId = resolveFirstNodeId(
+      edge.to,
+      edge.target,
+      resolveLegacyString(edge, 'toNodeId')
+    );
     if (!fromNodeId || !toNodeId) {
       addDroppedEdge(
         'invalid_edge_missing_node',
         edge,
-        `Dropped edge "${edge.id}": source and target node ids must be present.`
+        `Dropped edge "${edge.id}": source and target node ids must be present.`,
+        { fromNodeId, toNodeId }
       );
       return;
     }
@@ -84,18 +119,32 @@ export const sanitizeEdgesDetailed = (
       addDroppedEdge(
         'invalid_edge_missing_node',
         edge,
-        `Dropped edge "${edge.id}": source or target node does not exist.`
+        `Dropped edge "${edge.id}": source or target node does not exist.`,
+        { fromNodeId, toNodeId }
       );
       return;
     }
-    const fromPort = resolvePort(edge.fromPort) ?? undefined;
-    const toPort = resolvePort(edge.toPort) ?? undefined;
+    const fromPort =
+      resolveFirstPort(
+        edge.fromPort,
+        edge.sourceHandle,
+        resolveLegacyString(edge, 'sourcePort'),
+        resolveLegacyString(edge, 'fromHandle')
+      ) ?? undefined;
+    const toPort =
+      resolveFirstPort(
+        edge.toPort,
+        edge.targetHandle,
+        resolveLegacyString(edge, 'targetPort'),
+        resolveLegacyString(edge, 'toHandle')
+      ) ?? undefined;
 
     if (!fromPort || !toPort) {
       addDroppedEdge(
         'invalid_edge_missing_port',
         edge,
-        `Dropped edge "${edge.id}": source and target ports must be specified.`
+        `Dropped edge "${edge.id}": source and target ports must be specified.`,
+        { fromNodeId, fromPort: fromPort ?? null, toNodeId, toPort: toPort ?? null }
       );
       return;
     }
@@ -104,7 +153,8 @@ export const sanitizeEdgesDetailed = (
       addDroppedEdge(
         'invalid_edge_missing_port',
         edge,
-        `Dropped edge "${edge.id}": source or target port does not exist on the referenced node.`
+        `Dropped edge "${edge.id}": source or target port does not exist on the referenced node.`,
+        { fromNodeId, fromPort, toNodeId, toPort }
       );
       return;
     }
@@ -113,7 +163,8 @@ export const sanitizeEdgesDetailed = (
       addDroppedEdge(
         'invalid_edge_incompatible_connection',
         edge,
-        `Dropped edge "${edge.id}": ${from.title ?? from.id}.${fromPort} cannot connect to ${to.title ?? to.id}.${toPort}.`
+        `Dropped edge "${edge.id}": ${from.title ?? from.id}.${fromPort} cannot connect to ${to.title ?? to.id}.${toPort}.`,
+        { fromNodeId, fromPort, toNodeId, toPort }
       );
       return;
     }
@@ -123,7 +174,8 @@ export const sanitizeEdgesDetailed = (
       addDroppedEdge(
         'duplicate_edge_dropped',
         edge,
-        `Dropped duplicate edge "${edge.id}": ${fromNodeId}.${fromPort} -> ${toNodeId}.${toPort}.`
+        `Dropped duplicate edge "${edge.id}": ${fromNodeId}.${fromPort} -> ${toNodeId}.${toPort}.`,
+        { fromNodeId, fromPort, toNodeId, toPort }
       );
       return;
     }

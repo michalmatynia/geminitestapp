@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { hydrateRoot } from 'react-dom/client';
 import { renderToString } from 'react-dom/server';
@@ -30,6 +30,7 @@ const mocks = vi.hoisted(() => ({
 
 let JobQueueProvider: typeof import('../JobQueueContext').JobQueueProvider;
 let useJobQueueState: typeof import('../JobQueueContext').useJobQueueState;
+let eventSourceUrls: string[] = [];
 
 vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
@@ -106,15 +107,30 @@ function ExpandedRunProbe(): React.JSX.Element {
   return <div data-testid='expanded-runs'>{Array.from(expandedRunIds).sort().join(',') || 'empty'}</div>;
 }
 
+function StreamStatusProbe({ runId }: { runId: string }): React.JSX.Element {
+  const { expandedRunIds, streamStatuses } = useJobQueueState();
+
+  return (
+    <div data-testid='stream-status'>
+      {`${expandedRunIds.has(runId) ? 'expanded' : 'collapsed'}:${streamStatuses[runId] ?? 'unset'}`}
+    </div>
+  );
+}
+
 describe('JobQueueProvider enqueue event listeners', () => {
   beforeEach(async () => {
     class MockEventSource {
+      constructor(url: string) {
+        eventSourceUrls.push(url);
+      }
+
       close(): void {}
       addEventListener(): void {}
       removeEventListener(): void {}
     }
 
     resetOptimisticQueue();
+    eventSourceUrls = [];
     mocks.usePathnameMock.mockReset();
     mocks.toastMock.mockReset();
     mocks.createListQueryV2Mock.mockReset();
@@ -285,6 +301,37 @@ describe('JobQueueProvider enqueue event listeners', () => {
 
     expect(screen.getByTestId('expanded-runs')).toHaveTextContent('run-from-link');
     expect(mocks.getAiPathRunMock).not.toHaveBeenCalled();
+  });
+
+  it('does not open a live stream for an already terminal expanded run', async () => {
+    jobQueueRunsData = {
+      runs: [
+        {
+          id: 'terminal-run',
+          status: 'completed',
+          pathId: 'path-1',
+          pathName: 'Path 1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+        } as AiPathRunRecord,
+      ],
+      total: 1,
+    };
+
+    await act(async () => {
+      render(
+        <JobQueueProvider initialSearchQuery='terminal-run' initialExpandedRunId='terminal-run'>
+          <StreamStatusProbe runId='terminal-run' />
+        </JobQueueProvider>
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:stopped');
+    });
+    expect(eventSourceUrls).toEqual([]);
   });
 
   it('refreshes queue only for valid window enqueue events', () => {

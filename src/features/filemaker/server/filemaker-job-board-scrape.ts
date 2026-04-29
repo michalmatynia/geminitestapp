@@ -215,7 +215,7 @@ const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedO
 
 import {
   findExistingListingIndex,
-  findExistingListingIndexBySourceIdentity,
+  findExistingListingIndexesBySourceIdentity,
   listingAddressFieldsEqual,
   normalizeNameForMatch,
 } from './job-board-scrape/dedupe-listings';
@@ -403,19 +403,6 @@ const companyNameFromPracujEmployerProfileUrl = (value: unknown): string | null 
   }
 };
 
-const companyNameFromWebsiteUrl = (value: unknown): string | null => {
-  const normalized = normalizeJobBoardSourceUrl(value);
-  if (normalized === null) return null;
-  try {
-    const url = new URL(normalized);
-    const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
-    if (hostname.length === 0 || isKnownJobBoardHost(url)) return null;
-    return hostname;
-  } catch {
-    return null;
-  }
-};
-
 const isDomainLikeCompanyName = (value: unknown): boolean =>
   /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/iu.test(normalizeString(value));
 
@@ -429,25 +416,16 @@ const shouldUseScrapedCompanyNameForOrganization = (
   return isDomainLikeCompanyName(organization.name);
 };
 
-const domainLikeCompanyNameKey = (value: unknown): string => {
-  const normalized = normalizeString(value).toLowerCase();
-  if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/iu.test(normalized)) return '';
-  const rootLabel = normalized.split('.')[0] ?? '';
-  return normalizeNameForMatch(rootLabel.replace(/-/gu, ' '));
-};
-
 const resolveScrapedCompanyDisplayName = (
   offer: FilemakerJobBoardScrapedOffer
 ): string | null => {
+  const profileName = companyNameFromPracujEmployerProfileUrl(offer.companyProfileUrl);
+  if (profileName !== null) return profileName;
   const scrapedName = normalizeString(offer.companyName);
   if (scrapedName.length > 0 && !isSuspiciousJobBoardCompanyName(scrapedName)) {
     return scrapedName;
   }
-  return (
-    companyNameFromPracujEmployerProfileUrl(offer.companyProfileUrl) ??
-    companyNameFromWebsiteUrl(offer.companyProfileUrl) ??
-    companyNameFromWebsiteUrl(offer.companyWebsiteUrl)
-  );
+  return null;
 };
 
 const offerWithResolvedCompanyName = (
@@ -490,20 +468,6 @@ const companyIdentityKeysFromUrl = (value: unknown): string[] => {
   }
 };
 
-const companyNameKeyFromUrlHost = (value: unknown): string => {
-  const normalized = normalizeCompanyIdentityUrl(value);
-  if (normalized.length === 0) return '';
-  try {
-    const parsed = new URL(normalized);
-    const hostname = parsed.hostname.toLowerCase().replace(/^www\./u, '');
-    if (/pracuj\.pl$/iu.test(hostname)) return '';
-    const rootLabel = hostname.split('.')[0] ?? '';
-    return normalizeNameForMatch(rootLabel.replace(/-/gu, ' '));
-  } catch {
-    return '';
-  }
-};
-
 const buildScrapedCompanyIdentityKey = (offer: FilemakerJobBoardScrapedOffer): string => {
   const registryCandidates: Array<[string, unknown]> = [
     ['tax', offer.companyTaxId],
@@ -514,30 +478,15 @@ const buildScrapedCompanyIdentityKey = (offer: FilemakerJobBoardScrapedOffer): s
     const normalized = normalizeCompanyIdentityValue(value);
     if (normalized.length > 0) return `${kind}:${normalized}`;
   }
-  const profileUrlKey = companyIdentityKeysFromUrl(offer.companyProfileUrl)[0];
+  const profileUrlKey = companyIdentityKeysFromUrl(offer.companyProfileUrl).find(
+    (key: string): boolean => key.startsWith('profile:')
+  );
   if (profileUrlKey !== undefined) return profileUrlKey;
-  const websiteUrlKey = companyIdentityKeysFromUrl(offer.companyWebsiteUrl)[0];
-  if (websiteUrlKey !== undefined) return websiteUrlKey;
   const nameKey = normalizeNameForMatch(offer.companyName);
-  if (nameKey.length > 0 && !isSuspiciousJobBoardCompanyName(offer.companyName)) {
+  if (nameKey.length >= 3 && !isSuspiciousJobBoardCompanyName(offer.companyName)) {
     return `name:${nameKey}`;
   }
   return '';
-};
-
-const buildScrapedCompanyLookupKeys = (offer: FilemakerJobBoardScrapedOffer): Set<string> => {
-  const keys = new Set<string>();
-  const identityKey = buildScrapedCompanyIdentityKey(offer);
-  const nameKey = normalizeNameForMatch(offer.companyName);
-  const profileHostNameKey = companyNameKeyFromUrlHost(offer.companyProfileUrl);
-  const websiteHostNameKey = companyNameKeyFromUrlHost(offer.companyWebsiteUrl);
-  if (identityKey.length > 0) keys.add(identityKey);
-  if (nameKey.length > 0 && !isSuspiciousJobBoardCompanyName(offer.companyName)) {
-    keys.add(`name:${nameKey}`);
-  }
-  if (profileHostNameKey.length >= 4) keys.add(`name:${profileHostNameKey}`);
-  if (websiteHostNameKey.length >= 4) keys.add(`name:${websiteHostNameKey}`);
-  return keys;
 };
 
 const buildOrganizationCompanyIdentityKeys = (
@@ -549,23 +498,14 @@ const buildOrganizationCompanyIdentityKeys = (
   const regon = normalizeCompanyIdentityValue(organization.regon);
   const nameKey = normalizeNameForMatch(organization.name);
   const tradingNameKey = normalizeNameForMatch(organization.tradingName ?? '');
-  const domainNameKey = domainLikeCompanyNameKey(organization.name);
-  const profileHostNameKey = companyNameKeyFromUrlHost(organization.jobBoardCompanyProfileUrl);
-  const websiteHostNameKey = companyNameKeyFromUrlHost(organization.jobBoardCompanyWebsiteUrl);
   if (tax.length > 0) keys.add(`tax:${tax}`);
   if (krs.length > 0) keys.add(`krs:${krs}`);
   if (regon.length > 0) keys.add(`regon:${regon}`);
-  companyIdentityKeysFromUrl(organization.jobBoardCompanyProfileUrl).forEach((key: string) =>
-    keys.add(key)
-  );
-  companyIdentityKeysFromUrl(organization.jobBoardCompanyWebsiteUrl).forEach((key: string) =>
-    keys.add(key)
-  );
+  companyIdentityKeysFromUrl(organization.jobBoardCompanyProfileUrl).forEach((key: string) => {
+    if (key.startsWith('profile:')) keys.add(key);
+  });
   if (nameKey.length > 0) keys.add(`name:${nameKey}`);
   if (tradingNameKey.length > 0) keys.add(`name:${tradingNameKey}`);
-  if (domainNameKey.length >= 4) keys.add(`name:${domainNameKey}`);
-  if (profileHostNameKey.length >= 4) keys.add(`name:${profileHostNameKey}`);
-  if (websiteHostNameKey.length >= 4) keys.add(`name:${websiteHostNameKey}`);
   return keys;
 };
 
@@ -582,7 +522,7 @@ const organizationMatchesScrapedCompany = (input: {
     return true;
   }
   return (
-    input.companyNameKey.length > 0 &&
+    input.companyNameKey.length >= 3 &&
     !isSuspiciousJobBoardCompanyName(input.offer.companyName) &&
     buildOrganizationCompanyIdentityKeys(input.organization).has(`name:${input.companyNameKey}`)
   );
@@ -894,12 +834,15 @@ const getOrCreateScrapedCompanyCandidate = async (args: {
     return { candidate: existingCandidate, created: false, profileUpdated: false };
   }
 
-  const lookupKeys = buildScrapedCompanyLookupKeys(args.offer);
+  const companyIdentityKey = buildScrapedCompanyIdentityKey(args.offer);
+  const companyNameKey = normalizeNameForMatch(args.offer.companyName);
   const existingOrganizationIndex = args.database.organizations.findIndex(
-    (organization: FilemakerOrganization): boolean =>
-      Array.from(lookupKeys).some((key: string): boolean =>
-        buildOrganizationCompanyIdentityKeys(organization).has(key)
-      )
+    (organization: FilemakerOrganization): boolean => organizationMatchesScrapedCompany({
+      companyIdentityKey,
+      companyNameKey,
+      offer: args.offer,
+      organization,
+    })
   );
   if (existingOrganizationIndex >= 0) {
     const existingOrganization = args.database.organizations[existingOrganizationIndex];
@@ -1521,18 +1464,40 @@ const resolveClassificationListingId = (
   offer: FilemakerJobBoardScrapedOffer,
   listingId: string | null
 ): string | null => {
-  if (
-    listingId !== null &&
-    database.jobListings.some((listing: FilemakerJobListing): boolean => listing.id === listingId)
-  ) {
-    return listingId;
+  const listingMatchesOfferOrganization = (listing: FilemakerJobListing): boolean => {
+    const organization = database.organizations.find(
+      (entry: FilemakerOrganization): boolean => entry.id === listing.organizationId
+    );
+    if (organization === undefined) return false;
+    const companyIdentityKey = buildScrapedCompanyIdentityKey(offer);
+    if (companyIdentityKey.length === 0) return false;
+    return organizationMatchesScrapedCompany({
+      companyIdentityKey,
+      companyNameKey: normalizeNameForMatch(offer.companyName),
+      offer,
+      organization,
+    });
+  };
+  if (listingId !== null) {
+    const explicitListing = database.jobListings.find(
+      (listing: FilemakerJobListing): boolean => listing.id === listingId
+    );
+    if (explicitListing !== undefined && listingMatchesOfferOrganization(explicitListing)) {
+      return explicitListing.id;
+    }
   }
-  const sourceIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
+  const sourceIndexes = findExistingListingIndexesBySourceIdentity(database.jobListings, {
     sourceExternalId: offer.sourceExternalId,
     sourceSite: offer.sourceSite,
     sourceUrl: offer.sourceUrl,
   });
-  return sourceIndex >= 0 ? database.jobListings[sourceIndex]?.id ?? null : null;
+  const sourceListing = sourceIndexes
+    .map((index: number): FilemakerJobListing | undefined => database.jobListings[index])
+    .find(
+      (listing: FilemakerJobListing | undefined): listing is FilemakerJobListing =>
+        listing !== undefined && listingMatchesOfferOrganization(listing)
+    );
+  return sourceListing?.id ?? null;
 };
 
 const upsertClassifiedPillsToLexicon = (
@@ -1560,15 +1525,16 @@ export const applyFilemakerJobBoardLexiconClassifications = async (
     });
   }
   const input = parsed.data;
+  const offer = offerWithResolvedCompanyName(input.offer);
   const { database } = await loadFilemakerDatabase();
   const classificationResult = buildOfferWithClassifiedPills(
     database,
-    input.offer,
+    offer,
     input.classifications
   );
   const resolvedListingId = resolveClassificationListingId(
     database,
-    input.offer,
+    offer,
     input.listingId
   );
   let createdLexiconTerms = 0;
@@ -1628,41 +1594,70 @@ const applyImport = async ({
   changed: boolean;
   counters: ImportCounters;
   results: FilemakerJobBoardScrapeOfferResult[];
+  warnings: string[];
 }> => {
   let changed = false;
   const counters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
   const createdCandidatesByCompanyKey = new Map<string, ScrapedCompanyCandidate>();
   const results: FilemakerJobBoardScrapeOfferResult[] = [];
+  const warnings: string[] = [];
 
   for (const rawOffer of offers) {
     const offer = offerWithResolvedCompanyName(rawOffer);
-    const existingSourceIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
+    const existingSourceIndexes = findExistingListingIndexesBySourceIdentity(database.jobListings, {
       sourceExternalId: offer.sourceExternalId,
       sourceSite: offer.sourceSite,
       sourceUrl: offer.sourceUrl,
     });
-    const existingSourceListing =
-      existingSourceIndex >= 0 ? database.jobListings[existingSourceIndex] : undefined;
     const companyNameKey = normalizeNameForMatch(offer.companyName);
     const companyKey = buildScrapedCompanyIdentityKey(offer);
-    const existingSourceOrganization =
-      existingSourceListing === undefined
-        ? null
-        : database.organizations.find(
-            (organization: FilemakerOrganization): boolean =>
-              organization.id === existingSourceListing.organizationId
-          ) ?? null;
-    const existingSourceOrganizationMatches =
-      existingSourceOrganization !== null &&
-      organizationMatchesScrapedCompany({
-        companyIdentityKey: companyKey,
-        companyNameKey,
-        offer,
-        organization: existingSourceOrganization,
-      });
-    const existingSourceIndexForCompany = existingSourceOrganizationMatches
-      ? existingSourceIndex
-      : -1;
+    const isPracujSource = /pracuj/iu.test(
+      `${normalizeString(offer.sourceSite)} ${normalizeString(offer.sourceUrl)}`
+    );
+    const isNameOnlyCompanyIdentity = companyKey.startsWith('name:');
+    const hasEmployerProfileIdentity = buildScrapedCompanyIdentityKey({
+      ...offer,
+      companyName: '',
+    }).startsWith('profile:');
+    const existingSourceCandidates = existingSourceIndexes.flatMap((index: number) => {
+      const listing = database.jobListings[index];
+      if (listing === undefined) return [];
+      const organization =
+        database.organizations.find(
+          (entry: FilemakerOrganization): boolean => entry.id === listing.organizationId
+        ) ?? null;
+      const organizationMatches =
+        organization !== null &&
+        organizationMatchesScrapedCompany({
+          companyIdentityKey: companyKey,
+          companyNameKey,
+          offer,
+          organization,
+        });
+      return [{ index, listing, organization, organizationMatches }];
+    });
+    const matchingExistingSourceCandidate =
+      existingSourceCandidates.find((candidate): boolean => candidate.organizationMatches) ?? null;
+    const selectedExistingSourceCandidate =
+      matchingExistingSourceCandidate ?? existingSourceCandidates[0] ?? null;
+    const existingSourceIndex = selectedExistingSourceCandidate?.index ?? -1;
+    const existingSourceListing = selectedExistingSourceCandidate?.listing;
+    const existingSourceOrganization = selectedExistingSourceCandidate?.organization ?? null;
+    const existingSourceOrganizationMatches = matchingExistingSourceCandidate !== null;
+    const existingSourceIndexForCompany = matchingExistingSourceCandidate?.index ?? -1;
+    const mismatchedExistingSourceCount = existingSourceCandidates.filter(
+      (candidate): boolean => !candidate.organizationMatches
+    ).length;
+    if (matchingExistingSourceCandidate !== null && mismatchedExistingSourceCount > 0) {
+      warnings.push(
+        `Found ${mismatchedExistingSourceCount} stale source duplicate${mismatchedExistingSourceCount === 1 ? '' : 's'} for ${offer.title} under another organisation.`
+      );
+    }
+    if (existingSourceListing !== undefined && !existingSourceOrganizationMatches) {
+      warnings.push(
+        `Ignored existing source match for ${offer.title} because it belongs to a different organisation.`
+      );
+    }
     if (
       existingSourceListing !== undefined &&
       existingSourceOrganizationMatches &&
@@ -1735,20 +1730,25 @@ const applyImport = async ({
     if (
       companyNameKey.length === 0 ||
       companyKey.length === 0 ||
+      (isPracujSource && isNameOnlyCompanyIdentity && !hasEmployerProfileIdentity) ||
       isSuspiciousJobBoardCompanyName(offer.companyName)
     ) {
+      const reason =
+        companyNameKey.length === 0
+          ? 'Scraped employer name is empty, so no organisation was created.'
+          : companyKey.length === 0
+            ? 'Scraped employer identity is not reliable enough to create an organisation.'
+            : isPracujSource && isNameOnlyCompanyIdentity && !hasEmployerProfileIdentity
+              ? 'Pracuj.pl employer identity is name-only with no employer profile URL, so no organisation was created.'
+              : 'Scraped employer name looks like job-board directory metadata, so no organisation was created.';
       const result: FilemakerJobBoardScrapeOfferResult = {
         listingId: null,
         match: null,
         offer,
-        reason:
-          companyNameKey.length === 0
-            ? 'Scraped employer name is empty, so no organisation was created.'
-            : companyKey.length === 0
-              ? 'Scraped employer identity is not reliable enough to create an organisation.'
-            : 'Scraped employer name looks like job-board directory metadata, so no organisation was created.',
+        reason,
         status: 'unmatched',
       };
+      warnings.push(`${offer.title}: ${reason}`);
       results.push(result);
       await emitWriteResult(onWrite, 'offer_unmatched', result, false);
       continue;
@@ -1759,9 +1759,26 @@ const applyImport = async ({
       database,
       offer,
     });
-    const matchedCandidate = companyCandidate.candidate;
-    const createdOrganization = companyCandidate.created;
-    const createdOrganizationProfileUpdated = companyCandidate.profileUpdated;
+    let matchedCandidate = companyCandidate.candidate;
+    let createdOrganization = companyCandidate.created;
+    let createdOrganizationProfileUpdated = companyCandidate.profileUpdated;
+    if (
+      !organizationMatchesScrapedCompany({
+        companyIdentityKey: companyKey,
+        companyNameKey,
+        offer,
+        organization: matchedCandidate.organization,
+      })
+    ) {
+      warnings.push(
+        `Created a separate organisation for ${offer.title} because the matched organisation did not match the scraped employer.`
+      );
+      const createdOrganizationRecord = createUnmatchedOrganization(database, offer);
+      matchedCandidate = { organization: createdOrganizationRecord };
+      createdCandidatesByCompanyKey.set(companyKey, matchedCandidate);
+      createdOrganization = true;
+      createdOrganizationProfileUpdated = hasScrapedCompanyInformation(offer);
+    }
     const match: FilemakerJobBoardOrganizationMatch = {
       confidence: 100,
       organizationId: matchedCandidate.organization.id,
@@ -1833,6 +1850,52 @@ const applyImport = async ({
     );
     if (updatedOrganization !== undefined) {
       await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
+    }
+    const sourceProvider = resolveJobBoardProvider(offer.sourceUrl, options.provider);
+    const hasReliableDirectSourceUrl =
+      sourceProvider !== null && isDirectOfferUrlForScrape(offer.sourceUrl, sourceProvider);
+    if (
+      existingSourceListing !== undefined &&
+      !existingSourceOrganizationMatches &&
+      hasReliableDirectSourceUrl
+    ) {
+      const relocatedListing = toJobListing({
+        existing: existingSourceListing,
+        offer,
+        options,
+        organizationId: match.organizationId,
+      });
+      database.jobListings.splice(existingSourceIndex, 1, relocatedListing);
+      changed = true;
+      const result: FilemakerJobBoardScrapeOfferResult = {
+        listingId: relocatedListing.id,
+        match,
+        offer,
+        reason: 'Moved existing listing from mismatched organisation to scraped employer.',
+        status: 'updated',
+      };
+      results.push(result);
+      warnings.push(
+        `Moved ${offer.title} from a mismatched organisation to ${match.organizationName}.`
+      );
+      await emitWriteResult(onWrite, 'listing_updated', result, false);
+      const addressApply = applyOfferAddressToDatabaseJobListing(
+        database,
+        relocatedListing.id,
+        offer
+      );
+      if (addressApply.changed) {
+        changed = true;
+        counters.addressUpdates += 1;
+        await emitWriteResult(onWrite, 'listing_address_updated', result, false);
+      }
+      const lexicon = applyOfferLexiconToListing(database, relocatedListing.id, offer);
+      if (lexicon.changed) {
+        counters.createdLexiconTerms += lexicon.createdTerms;
+        counters.linkedLexiconTerms += lexicon.linkedTerms;
+        await emitWriteResult(onWrite, 'listing_lexicon_linked', result, false);
+      }
+      continue;
     }
     const matchedExistingIndex = findExistingListingIndex(
       database.jobListings,
@@ -1925,7 +1988,7 @@ const applyImport = async ({
     changed = true;
   }
 
-  return { changed, counters, results };
+  return { changed, counters, results, warnings: uniqueStrings(warnings) };
 };
 
 const verifyImportedResults = (
@@ -2359,6 +2422,9 @@ export const saveFilemakerJobBoardScrapeDrafts = async (
     onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),
     options,
   });
+  for (const warning of imported.warnings) {
+    await emitLiveEvent(onEvent, { type: 'warning', warning });
+  }
   let verificationDatabase: FilemakerDatabase = database;
   if (imported.changed) {
     throwIfScrapeAborted(signal);
@@ -2378,7 +2444,7 @@ export const saveFilemakerJobBoardScrapeDrafts = async (
   for (const warning of importVerification.warnings) {
     await emitLiveEvent(onEvent, { type: 'warning', warning });
   }
-  const warnings = uniqueStrings(importVerification.warnings);
+  const warnings = uniqueStrings([...imported.warnings, ...importVerification.warnings]);
   const response: FilemakerJobBoardScrapeResponse = {
     browserMode: effectiveHeadless ? 'headless' : 'headed',
     mode: 'import',
@@ -2467,6 +2533,7 @@ export const runFilemakerJobBoardScrape = async (
   let results = previewResults;
   let importCounters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
   let importVerification: ImportVerification = { ...EMPTY_IMPORT_VERIFICATION };
+  let importWarnings: string[] = [];
   if (options.mode === 'import') {
     throwIfScrapeAborted(signal);
     await emitLiveEvent(onEvent, { message: 'Importing scraped offers.', type: 'status' });
@@ -2476,6 +2543,10 @@ export const runFilemakerJobBoardScrape = async (
       onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),
       options,
     });
+    for (const warning of imported.warnings) {
+      await emitLiveEvent(onEvent, { type: 'warning', warning });
+    }
+    importWarnings = imported.warnings;
     importCounters = imported.counters;
     results = [...scraped.skippedResults, ...imported.results];
     let verificationDatabase: FilemakerDatabase = database;
@@ -2499,7 +2570,11 @@ export const runFilemakerJobBoardScrape = async (
     }
   }
 
-  const warnings = uniqueStrings([...scraped.warnings, ...importVerification.warnings]);
+  const warnings = uniqueStrings([
+    ...scraped.warnings,
+    ...importWarnings,
+    ...importVerification.warnings,
+  ]);
 
   const response: FilemakerJobBoardScrapeResponse = {
     browserMode: effectiveHeadless ? 'headless' : 'headed',

@@ -208,6 +208,7 @@ export function useJobQueueRuntime({
     queueStatus: queueStatusQuery.data?.status,
     refetchQueueData,
     rememberVisibleOptimisticRun,
+    runs: visibleRunsPayload.runs,
     runDetails,
     setRunDetails,
   });

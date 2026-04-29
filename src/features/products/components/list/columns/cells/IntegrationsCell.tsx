@@ -22,13 +22,14 @@ import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils/ui-utils';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+import { TraderaQuickListButton } from '../buttons/TraderaQuickListButton';
+
 const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
   () => import('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar').then((mod) => mod.TriggerButtonBar),
   { ssr: false, loading: () => null }
 );
 
 const BaseQuickExportButton = dynamic(() => import('../buttons/BaseQuickExportButton').then((mod) => mod.BaseQuickExportButton), { ssr: false, loading: () => null });
-const TraderaQuickListButton = dynamic(() => import('../buttons/TraderaQuickListButton').then((mod) => mod.TraderaQuickListButton), { ssr: false, loading: () => null });
 const VintedQuickListButton = dynamic(() => import('../buttons/VintedQuickListButton').then((mod) => mod.VintedQuickListButton), { ssr: false, loading: () => null });
 const TraderaStatusButton = dynamic(() => import('../buttons/TraderaStatusButton').then((mod) => mod.TraderaStatusButton), { ssr: false, loading: () => null });
 const VintedStatusButton = dynamic(() => import('../buttons/VintedStatusButton').then((mod) => mod.VintedStatusButton), { ssr: false, loading: () => null });

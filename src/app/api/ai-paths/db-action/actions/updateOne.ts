@@ -13,5 +13,10 @@ export const runMongoAction = async (ctx: MongoActionContext, normalizedFilter: 
     nextUpdateDoc as UpdateFilter<Document>, 
     { upsert: Boolean(ctx.upsert) }
   );
-  return withProviderPayload(ctx.provider, ctx.requestedProvider, { matchedCount: result.matchedCount, modifiedCount: result.modifiedCount, upsertedId: result.upsertedId ?? null });
+  return withProviderPayload(ctx.provider, ctx.requestedProvider, {
+    matchedCount: result.matchedCount,
+    modifiedCount: result.modifiedCount,
+    upsertedCount: result.upsertedCount,
+    upsertedId: result.upsertedId ?? null,
+  });
 };

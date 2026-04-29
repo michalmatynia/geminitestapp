@@ -67,6 +67,8 @@ type ReadNumericCounters = {
   modifiedCount: number | null;
   deletedCount: number | null;
   insertedCount: number | null;
+  upsertedCount: number | null;
+  upsertedId: unknown;
   count: number | null;
 };
 
@@ -428,6 +430,8 @@ const readWriteCounters = (result: unknown): ReadNumericCounters => {
     modifiedCount: readNumericField(payload, 'modifiedCount'),
     deletedCount: readNumericField(payload, 'deletedCount'),
     insertedCount: readNumericField(payload, 'insertedCount'),
+    upsertedCount: readNumericField(payload, 'upsertedCount'),
+    upsertedId: payload['upsertedId'],
     count: readNumericField(payload, 'count'),
   };
 };
@@ -464,6 +468,14 @@ const resolveAffectedCount = (
     actionLower.includes('andupdate') ||
     actionLower.startsWith('replace');
   if (treatAsUpdate) {
+    const upsertedCount =
+      counters.upsertedCount ?? (counters.upsertedId !== null && counters.upsertedId !== undefined ? 1 : null);
+    if (upsertedCount !== null && upsertedCount > 0) {
+      return {
+        affectedCount: upsertedCount,
+        isZeroAffected: false,
+      };
+    }
     if (counters.modifiedCount !== null) {
       return {
         affectedCount: counters.modifiedCount,

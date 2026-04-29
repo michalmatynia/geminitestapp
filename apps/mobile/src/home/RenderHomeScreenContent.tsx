@@ -3,14 +3,10 @@ import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import type { KangurScore } from '@kangur/contracts/kangur';
-import {
-  HomeDuelSectionsGroup,
-  HomeHeroSection,
-  HomeTrainingFocusSection,
-} from './components';
+import { HomeHeroSection } from './components';
 import { DebugProofSection } from './components/DebugProofSection';
-import { HomeInsightsSection } from './components/HomeInsightsSection';
 import { HomeStartupContent, type HomeStartupContentProps } from './components/HomeStartupContent';
+import { HomeSecondaryContent } from './components/HomeSecondaryContent';
 import {
   HomeHeroLatestLessonCheckpointState,
   type HomeScoreViewModel,
@@ -91,55 +87,9 @@ function HomeHeroStatefulSection({
   );
 }
 
-function HomeSecondaryContent(props: RenderHomeScreenContentProps): React.JSX.Element {
-  const {
-    copy,
-    sessionStatus,
-    areDeferredHomePanelsReady,
-    initialRecentLessonCheckpoints,
-    isLiveHomeProgressReady,
-    areDeferredHomeInsightsReady,
-    activeDuelLearnerId,
-    areDeferredHomeDuelAdvancedReady,
-    areDeferredHomeDuelInvitesReady,
-    areDeferredHomeDuelSecondaryReady,
-    areDeferredHomeTrainingFocusDetailsReady,
-    shouldRenderCombinedHomeStartupPlaceholder,
-    viewModel,
-  } = props;
-  const { recentResults, trainingFocus } = viewModel;
-
-  return (
-    <>
-      <HomeDuelSectionsGroup
-        activeDuelLearnerId={activeDuelLearnerId}
-        areDeferredHomeDuelAdvancedReady={areDeferredHomeDuelAdvancedReady}
-        areDeferredHomeDuelInvitesReady={areDeferredHomeDuelInvitesReady}
-        areDeferredHomeDuelSecondaryReady={areDeferredHomeDuelSecondaryReady}
-        areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-        copy={copy}
-        isAuthenticated={sessionStatus === 'authenticated'}
-        shouldRenderCombinedHomeStartupPlaceholder={shouldRenderCombinedHomeStartupPlaceholder}
-      />
-      <HomeTrainingFocusSection
-        areDeferredHomePanelsReady={areDeferredHomePanelsReady}
-        areDeferredHomeTrainingFocusDetailsReady={areDeferredHomeTrainingFocusDetailsReady}
-        copy={copy}
-        trainingFocus={trainingFocus}
-      />
-      <HomeInsightsSection
-        areDeferredHomeInsightsReady={areDeferredHomeInsightsReady}
-        initialRecentLessonCheckpoints={initialRecentLessonCheckpoints}
-        isLiveHomeProgressReady={isLiveHomeProgressReady}
-        recentResults={recentResults}
-        trainingFocus={trainingFocus}
-      />
-    </>
-  );
-}
-
 function HomeScreenMainContent(props: RenderHomeScreenContentProps): React.JSX.Element {
   const {
+    viewModel,
     copy,
     isLiveHomeProgressReady,
     sessionStatus,
@@ -150,7 +100,6 @@ function HomeScreenMainContent(props: RenderHomeScreenContentProps): React.JSX.E
     isLoadingAuth,
     shouldRenderCombinedHomeHeroPlaceholder,
     initialLatestLessonCheckpoint,
-    viewModel,
   } = props;
   const { homeDebugProof, homeHeroFocusHref, homeHeroFocusLabel, homeHeroRecentResult, recentResults } = viewModel;
 

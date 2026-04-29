@@ -390,6 +390,38 @@ describe('OrganizationJobListingsSection', () => {
       vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
         const href = String(url);
         const method = init?.method ?? 'GET';
+        if (href.includes('/api/filemaker/job-applications/application-1/apply')) {
+          if (method === 'POST') {
+            return createJsonResponse({
+              run: {
+                id: 'apply-run-1',
+                applicationId: 'application-1',
+                organizationId: 'org-1',
+                personId: 'person-1',
+                jobListingId: 'job-1',
+                integrationId: 'integration-pracuj',
+                integrationSlug: 'pracuj-pl',
+                connectionId: 'connection-pracuj',
+                sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+                mode: 'submit',
+                status: 'queued',
+                artifactVersionIds: {
+                  applicationEmailVersionId: null,
+                  coverLetterVersionId: null,
+                  tailoredCvVersionId: null,
+                },
+                confirmationUrl: null,
+                error: null,
+                steps: [],
+                createdAt: '2026-04-29T10:00:00.000Z',
+                startedAt: null,
+                completedAt: null,
+                updatedAt: '2026-04-29T10:00:00.000Z',
+              },
+            });
+          }
+          return createJsonResponse({ run: null });
+        }
         if (href.includes('/api/filemaker/job-applications/application-1')) {
           if (method === 'PATCH') {
             const body =
@@ -781,10 +813,11 @@ describe('OrganizationJobListingsSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'View' }));
 
     expect(screen.getByRole('dialog', { name: 'Prepared application' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Apply' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Open source' })).toHaveAttribute(
       'href',
       'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001'
     );
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Export CV PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Preview CV PDF' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Download Text' })).toHaveLength(2);
@@ -796,6 +829,19 @@ describe('OrganizationJobListingsSection', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Use Pracuj.pl authenticated profile.')).toBeInTheDocument();
     expect(screen.getByText('Confirm preferred salary range.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications/application-1/apply',
+        expect.objectContaining({
+          body: expect.stringContaining('"mode":"submit"'),
+          method: 'POST',
+        })
+      );
+    });
+    expect(await screen.findByText('Queued')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Application status'), {
       target: { value: 'applied' },
@@ -822,6 +868,68 @@ describe('OrganizationJobListingsSection', () => {
       expect.objectContaining({ method: 'DELETE' })
     );
     expect(screen.queryByText('Prepared applications')).not.toBeInTheDocument();
+  });
+
+  it('surfaces email-only prepared application packages in the job listing summary', async () => {
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-email-1',
+          status: 'draft',
+          personId: 'person-1',
+          personName: 'Ada Lovelace',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          integrationId: 'integration-pracuj',
+          integrationSlug: 'pracuj-pl',
+          connectionId: 'connection-pracuj',
+          tailoredCvId: null,
+          tailoredCv: null,
+          coverLetter: null,
+          applicationEmail: {
+            subject: 'Application - FileMaker Consultant',
+            bodyMarkdown: 'Please find my tailored application details attached.',
+            bodyText: 'Please find my tailored application details attached.',
+          },
+          applicationNotes: [],
+          missingInformation: [],
+          confidence: 0.82,
+          source: 'ai-path-job-application-tailored-email',
+          sourceEntityId: 'org-1:job-1:person-1:application_package',
+          sourceApplicationContext: {},
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T10:00:00.000Z',
+        },
+      ],
+    };
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    expect(await screen.findByText('Prepared applications')).toBeInTheDocument();
+    expect(screen.getByText('Application - FileMaker Consultant')).toBeInTheDocument();
+    expect(
+      screen.getByText('Please find my tailored application details attached.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Cover letter draft created.')).not.toBeInTheDocument();
   });
 
   it('fires the job application AI Path with person CV, job, and organisation context', async () => {

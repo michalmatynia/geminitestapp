@@ -47,6 +47,7 @@ import {
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
+import { TraderaQuickListButton } from './columns/buttons/TraderaQuickListButton';
 import { ProductListActivityPill } from './ProductListActivityPill';
 import { ProductListStatusIcons } from './ProductListStatusIcons';
 
@@ -71,17 +72,6 @@ const BaseQuickExportButton = dynamic(
   () =>
     import('./columns/buttons/BaseQuickExportButton').then(
       (mod: typeof import('./columns/buttons/BaseQuickExportButton')) => mod.BaseQuickExportButton
-    ),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
-
-const TraderaQuickListButton = dynamic(
-  () =>
-    import('./columns/buttons/TraderaQuickListButton').then(
-      (mod: typeof import('./columns/buttons/TraderaQuickListButton')) => mod.TraderaQuickListButton
     ),
   {
     ssr: false,

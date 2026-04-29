@@ -97,6 +97,16 @@ vi.mock('next/dynamic', () => ({
   },
 }));
 
+vi.mock('./columns/buttons/TraderaQuickListButton', () => ({
+  TraderaQuickListButton: (props: Record<string, unknown>) => {
+    traderaQuickListButtonMock(props);
+    if (props.showTraderaBadge) {
+      return null;
+    }
+    return <button type='button'>T+</button>;
+  },
+}));
+
 vi.mock('@/features/products/ui', () => ({
   ActionMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Badge: ({

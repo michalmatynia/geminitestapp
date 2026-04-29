@@ -2,11 +2,16 @@ import 'server-only';
 
 import { createPdfDownloadResponse, renderHtmlToPdfBuffer } from '@/features/pdf-export/server';
 
-import type { FilemakerJobApplication } from '../filemaker-job-application.types';
+import type {
+  FilemakerJobApplication,
+  FilemakerJobApplicationArtifactVersion,
+  FilemakerJobApplicationCoverLetter,
+} from '../filemaker-job-application.types';
 import { requireMongoFilemakerJobApplicationById } from './filemaker-job-application-repository';
 
 export type FilemakerJobApplicationCoverLetterPdfInput = {
   applicationId: string;
+  coverLetterVersionId?: string | null;
 };
 
 export type FilemakerJobApplicationCoverLetterPdfExportResult = {
@@ -28,6 +33,59 @@ const escapeHtml = (value: string): string =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+const normalizeString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const readRecord = (value: unknown): Record<string, unknown> | null =>
+  value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+
+const toCoverLetterFromPayload = (value: unknown): FilemakerJobApplicationCoverLetter | null => {
+  const payload = readRecord(value);
+  const record = readRecord(payload?.['coverLetter']) ?? payload;
+  if (record === null) return null;
+  return {
+    bodyMarkdown: normalizeString(record['bodyMarkdown']),
+    subject: normalizeString(record['subject']),
+  };
+};
+
+const selectCoverLetterVersion = (
+  application: FilemakerJobApplication,
+  coverLetterVersionId?: string | null
+): FilemakerJobApplicationArtifactVersion | null => {
+  const versions = application.persistedArtifactVersions?.coverLetter ?? [];
+  if (versions.length === 0) return null;
+  const requestedVersionId = coverLetterVersionId?.trim() ?? '';
+  if (requestedVersionId.length > 0) {
+    return versions.find((version) => version.id === requestedVersionId) ?? null;
+  }
+  const activeVersionId = application.activeArtifacts?.coverLetterVersionId?.trim() ?? '';
+  if (activeVersionId.length > 0) {
+    return versions.find((version) => version.id === activeVersionId) ?? versions[0] ?? null;
+  }
+  return versions[0] ?? null;
+};
+
+const applyCoverLetterVersion = (
+  application: FilemakerJobApplication,
+  coverLetterVersionId?: string | null
+): FilemakerJobApplication => {
+  const version = selectCoverLetterVersion(application, coverLetterVersionId);
+  if (version === null) return application;
+  return {
+    ...application,
+    applicationNotes: version.applicationNotes,
+    confidence: version.confidence,
+    coverLetter: toCoverLetterFromPayload(version.payload) ?? application.coverLetter,
+    missingInformation: version.missingInformation,
+  };
+};
 
 const composeCoverLetterFilename = (application: FilemakerJobApplication): string => {
   const person = normalizeFilenamePart(application.personName ?? application.personId);
@@ -111,7 +169,10 @@ const renderCoverLetterHtml = (application: FilemakerJobApplication): string => 
 export async function createFilemakerJobApplicationCoverLetterPdfExport(
   input: FilemakerJobApplicationCoverLetterPdfInput
 ): Promise<FilemakerJobApplicationCoverLetterPdfExportResult> {
-  const application = await requireMongoFilemakerJobApplicationById(input.applicationId);
+  const application = applyCoverLetterVersion(
+    await requireMongoFilemakerJobApplicationById(input.applicationId),
+    input.coverLetterVersionId
+  );
   return {
     filename: composeCoverLetterFilename(application),
     pdfBuffer: await renderHtmlToPdfBuffer({ html: renderCoverLetterHtml(application) }),

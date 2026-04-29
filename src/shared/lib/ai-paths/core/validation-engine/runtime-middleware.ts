@@ -48,6 +48,213 @@ const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
 
 const getNodeLabel = (node: AiNode): string => node.title?.trim() || node.id;
 
+const readEdgeString = (edge: Edge, key: string): string | null => {
+  const value = (edge as Record<string, unknown>)[key];
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const readEdgeFromNodeId = (edge: Edge): string | null =>
+  readEdgeString(edge, 'from') ??
+  readEdgeString(edge, 'source') ??
+  readEdgeString(edge, 'fromNodeId');
+
+const readEdgeToNodeId = (edge: Edge): string | null =>
+  readEdgeString(edge, 'to') ??
+  readEdgeString(edge, 'target') ??
+  readEdgeString(edge, 'toNodeId');
+
+const readEdgeFromPort = (edge: Edge): string | null =>
+  readEdgeString(edge, 'fromPort') ??
+  readEdgeString(edge, 'sourceHandle') ??
+  readEdgeString(edge, 'sourcePort') ??
+  readEdgeString(edge, 'fromHandle');
+
+const readEdgeToPort = (edge: Edge): string | null =>
+  readEdgeString(edge, 'toPort') ??
+  readEdgeString(edge, 'targetHandle') ??
+  readEdgeString(edge, 'targetPort') ??
+  readEdgeString(edge, 'toHandle');
+
+const DATABASE_WRITE_IDENTITY_PORTS = new Set(['id', 'entityId', 'productId']);
+const DATABASE_WRITE_EXPLICIT_PORTS = new Set([
+  'id',
+  'entityId',
+  'productId',
+  'value',
+  'context',
+  'bundle',
+  'meta',
+]);
+
+const isDatabaseUpdateOrDeleteNode = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isObjectRecord(databaseConfig)) return false;
+  const operation = databaseConfig['operation'];
+  return operation === 'update' || operation === 'delete';
+};
+
+const buildRuntimeValidationEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
+  let nextEdges: Edge[] | null = null;
+  nodes.forEach((node: AiNode): void => {
+    if (!isDatabaseUpdateOrDeleteNode(node)) return;
+    const incoming = edges.filter((edge: Edge): boolean => readEdgeToNodeId(edge) === node.id);
+    const hasIdentityEdge = incoming.some((edge: Edge): boolean => {
+      const port = readEdgeToPort(edge);
+      return port !== null && DATABASE_WRITE_IDENTITY_PORTS.has(port);
+    });
+    if (hasIdentityEdge) return;
+    const explicitEdge = incoming.find((edge: Edge): boolean => {
+      const port = readEdgeToPort(edge);
+      return port !== null && DATABASE_WRITE_EXPLICIT_PORTS.has(port);
+    });
+    if (explicitEdge === undefined) return;
+    const sourceNodeId = readEdgeFromNodeId(explicitEdge);
+    if (sourceNodeId === null) return;
+    const syntheticEdge: Edge = {
+      id: `runtime-validation-identity-${node.id}`,
+      from: sourceNodeId,
+      to: node.id,
+      fromPort: readEdgeFromPort(explicitEdge) ?? 'value',
+      toPort: 'entityId',
+      label: 'Runtime validation identity wiring',
+      type: 'runtime-validation',
+    };
+    nextEdges = [...(nextEdges ?? edges), syntheticEdge];
+  });
+  return nextEdges ?? edges;
+};
+
+const nodeHasExplicitDatabaseWriteWiring = (nodeId: string | null | undefined, edges: Edge[]): boolean => {
+  if (!nodeId) return false;
+  return edges.some((edge: Edge): boolean => {
+    if (readEdgeToNodeId(edge) !== nodeId) return false;
+    const port = readEdgeToPort(edge);
+    return port !== null && DATABASE_WRITE_EXPLICIT_PORTS.has(port);
+  });
+};
+
+const databaseQueryTemplateHasExplicitIdentity = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isObjectRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isObjectRecord(queryConfig)) return false;
+  const queryTemplate = queryConfig['queryTemplate'];
+  if (typeof queryTemplate !== 'string') return false;
+  const normalizedTemplate = queryTemplate.trim();
+  if (normalizedTemplate.length === 0 || normalizedTemplate === '{}') return false;
+  return (
+    normalizedTemplate.includes('{{context.') ||
+    normalizedTemplate.includes('{{value.') ||
+    normalizedTemplate.includes('{{entityId') ||
+    normalizedTemplate.includes('{{productId') ||
+    normalizedTemplate.includes('{{id')
+  );
+};
+
+const nodeDeclaresExplicitDatabaseWriteInput = (node: AiNode): boolean =>
+  (node.inputs ?? []).some((port: string): boolean => DATABASE_WRITE_EXPLICIT_PORTS.has(port));
+
+const nodeHasSafeDatabaseWriteIdentity = (
+  node: AiNode | undefined,
+  edges: Edge[]
+): boolean => {
+  if (!node) return false;
+  if (nodeHasExplicitDatabaseWriteWiring(node.id, edges)) return true;
+  return nodeDeclaresExplicitDatabaseWriteInput(node) && databaseQueryTemplateHasExplicitIdentity(node);
+};
+
+const databaseWriteNodeIdsWithoutExplicitWiring = (nodes: AiNode[], edges: Edge[]): string[] =>
+  nodes
+    .filter(isDatabaseUpdateOrDeleteNode)
+    .map((node: AiNode): string => node.id)
+    .filter(
+      (nodeId: string): boolean => {
+        const node = nodes.find((candidate: AiNode): boolean => candidate.id === nodeId);
+        return !nodeHasSafeDatabaseWriteIdentity(node, edges);
+      }
+    );
+
+const removeSatisfiedDatabaseWriteIdentityRule = (
+  config: AiPathsValidationConfig,
+  nodes: AiNode[],
+  edges: Edge[]
+): AiPathsValidationConfig => {
+  const databaseWriteNodeIds = nodes
+    .filter(isDatabaseUpdateOrDeleteNode)
+    .map((node: AiNode): string => node.id);
+  if (databaseWriteNodeIds.length === 0) return config;
+  if (databaseWriteNodeIdsWithoutExplicitWiring(nodes, edges).length > 0) return config;
+  const rules = config.rules ?? [];
+  const nextRules = rules.filter(
+    (rule): boolean => rule.id !== 'database.update.identity_wired'
+  );
+  return nextRules.length === rules.length
+    ? config
+    : {
+        ...config,
+        rules: nextRules,
+      };
+};
+
+const isDatabaseWriteIdentityFinding = (finding: AiPathsValidationFinding): boolean => {
+  const haystack = [
+    finding.ruleId,
+    finding.message,
+    ...(finding.failedConditionIds ?? []),
+  ]
+    .join(' ')
+    .toLowerCase();
+  return (
+    haystack.includes('database.update.identity_wired') ||
+    haystack.includes('database_write_missing_identity_inputs') ||
+    haystack.includes('explicit identity wiring') ||
+    haystack.includes('hidden fallback updates')
+  );
+};
+
+const filterRuntimeValidationFindings = (
+  findings: AiPathsValidationFinding[],
+  nodes: AiNode[],
+  edges: Edge[]
+): AiPathsValidationFinding[] =>
+  findings.filter((finding: AiPathsValidationFinding): boolean => {
+    if (!isDatabaseWriteIdentityFinding(finding)) return true;
+    if (finding.nodeId) {
+      return !nodeHasSafeDatabaseWriteIdentity(
+        nodes.find((candidate: AiNode): boolean => candidate.id === finding.nodeId),
+        edges
+      );
+    }
+    if (databaseWriteNodeIdsWithoutExplicitWiring(nodes, edges).length > 0) return true;
+    return false;
+  });
+
+const buildReportFromFilteredFindings = (
+  report: ReturnType<typeof evaluateAiPathsValidationAtStage>,
+  findings: AiPathsValidationFinding[]
+): ReturnType<typeof evaluateAiPathsValidationAtStage> => {
+  const severityCounts = findings.reduce(
+    (
+      counts: Record<'error' | 'warning' | 'info', number>,
+      finding: AiPathsValidationFinding
+    ): Record<'error' | 'warning' | 'info', number> => ({
+      ...counts,
+      [finding.severity]: counts[finding.severity] + 1,
+    }),
+    { error: 0, info: 0, warning: 0 }
+  );
+  return {
+    ...report,
+    blocked: report.blocked && findings.length > 0 && severityCounts.error > 0,
+    failedRules: findings.length,
+    findings,
+    severityCounts,
+    shouldWarn: report.shouldWarn && findings.length > 0,
+  };
+};
+
 const describeExpectedKind = (kind: ResolvedNodePortContract['kind']): string => {
   switch (kind) {
     case 'image_url':
@@ -351,6 +558,12 @@ export const createAiPathsRuntimeValidationMiddleware = ({
 }: CreateAiPathsRuntimeValidationMiddlewareInput): RuntimeValidationMiddleware | undefined => {
   const normalizedConfig = normalizeAiPathsValidationConfig(config);
   if (!normalizedConfig.enabled) return undefined;
+  const validationEdges = buildRuntimeValidationEdges(nodes, edges);
+  const runtimeValidationConfig = removeSatisfiedDatabaseWriteIdentityRule(
+    normalizedConfig,
+    nodes,
+    validationEdges
+  );
 
   const issueLimit =
     typeof maxIssuesPerDecision === 'number' && Number.isFinite(maxIssuesPerDecision)
@@ -364,13 +577,17 @@ export const createAiPathsRuntimeValidationMiddleware = ({
       nodeInputs,
       nodeOutputs,
     });
-    const report = evaluateAiPathsValidationAtStage({
+    const rawReport = evaluateAiPathsValidationAtStage({
       nodes,
-      edges,
-      config: normalizedConfig,
+      edges: validationEdges,
+      config: runtimeValidationConfig,
       stage,
       ...(node ? { node } : {}),
     });
+    const report = buildReportFromFilteredFindings(
+      rawReport,
+      filterRuntimeValidationFindings(rawReport.findings, nodes, validationEdges)
+    );
 
     const hasRuleFailures = report.enabled && report.rulesEvaluated > 0 && report.failedRules > 0;
     if (!hasRuleFailures && builtInIssues.length === 0) {

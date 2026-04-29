@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, Download } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import type { Row } from '@tanstack/react-table';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
@@ -10,19 +10,32 @@ import {
   useProductListRowVisualsContext,
 } from '@/features/products/context/ProductListContext';
 import type { ProductListRowRuntimeContextType } from '@/features/products/context/ProductListContext';
-import { getDocumentationTooltip } from '@/shared/lib/documentation/tooltips';
-import { DOCUMENTATION_MODULE_IDS } from '@/shared/contracts/documentation';
 import { Badge } from '@/shared/ui/badge';
 import { Tooltip } from '@/shared/ui/tooltip';
 import {
   getProductListDisplayName,
+  hasFilledMarketplaceCopy,
+  hasEnglishProductDescription,
+  hasEnglishProductTitle,
+  hasPolishProductDescription,
   hasImportedProductOrigin,
+  hasPolishProductTitle,
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
 } from '../product-column-utils';
 import { ProductListActivityPill } from '../../ProductListActivityPill';
+import { ProductListStatusIcons } from '../../ProductListStatusIcons';
 
 type ShippingInfo = { autoLabel: string, autoRuleLabel: string, conflictLabel: string, manualMissingLabel: string };
+type NameCellStatusState = {
+  isImported: boolean;
+  hasMarketplaceCopy: boolean;
+  hasEnglishTitle: boolean;
+  hasEnglishDescription: boolean;
+  hasPolishTitle: boolean;
+  hasPolishDescription: boolean;
+  hasStatusRow: boolean;
+};
 
 function resolveAutoShipping(product: ProductWithImages, categoryNameById: ReadonlyMap<string, string>): { autoLabel: string, autoRuleLabel: string } {
   const isAuto = product.shippingGroupSource === 'category_rule';
@@ -133,31 +146,62 @@ function NameCellBasicInfo({ product }: { product: ProductWithImages }): React.J
   );
 }
 
-function NameCellDocBadge({ isImported }: { isImported: boolean }): React.JSX.Element | null {
-  const docTooltip = getDocumentationTooltip(DOCUMENTATION_MODULE_IDS.products, 'product_imported_badge') ?? 'Imported product';
-  
-  if (!isImported) return null;
-  return (
-    <Tooltip content={docTooltip}>
-      <button type='button' aria-label='Imported product' title='Imported product' className='inline-flex rounded-sm border-0 bg-transparent p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950'><Download className='size-3 text-blue-400' aria-hidden='true' /></button>
-    </Tooltip>
-  );
+function resolveNameCellStatusState(product: ProductWithImages, runtime: ProductListRowRuntimeContextType): NameCellStatusState {
+  const isImported = hasImportedProductOrigin(product);
+  const hasMarketplaceCopy = hasFilledMarketplaceCopy(product);
+  const hasEnglishTitle = hasEnglishProductTitle(product);
+  const hasEnglishDescription = hasEnglishProductDescription(product);
+  const hasPolishTitle = hasPolishProductTitle(product);
+  const hasPolishDescription = hasPolishProductDescription(product);
+  const hasStatusIcons = [
+    isImported ||
+    hasMarketplaceCopy,
+    hasEnglishTitle,
+    hasEnglishDescription,
+    hasPolishTitle,
+    hasPolishDescription,
+  ].includes(true);
+  const hasActivity = runtime.productAiRunFeedback !== null || runtime.productScanRunFeedback !== null;
+
+  return {
+    isImported,
+    hasMarketplaceCopy,
+    hasEnglishTitle,
+    hasEnglishDescription,
+    hasPolishTitle,
+    hasPolishDescription,
+    hasStatusRow: hasStatusIcons || product.archived === true || hasActivity,
+  };
 }
 
 function NameCellSecondaryInfo({ product, runtime, categoryLabel, ship }: { product: ProductWithImages, runtime: ProductListRowRuntimeContextType, categoryLabel: string, ship: ShippingInfo }): React.JSX.Element {
   const categoryToneClass = isUnassignedProductCategoryLabel(categoryLabel)
     ? 'text-rose-300/80 hover:text-rose-200/85'
     : '';
+  const status = resolveNameCellStatusState(product, runtime);
 
   return (
-    <div className='mt-1 flex min-w-0 items-center gap-1.5 text-sm text-gray-500'>
-      <NameCellBasicInfo product={product} />
-      <span aria-hidden='true' className='text-gray-600'>|</span>
-      <Tooltip content={categoryLabel}><button type='button' className={`max-w-[14rem] truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${categoryToneClass}`} aria-label={categoryLabel} title={categoryLabel}>{categoryLabel}</button></Tooltip>
-      <NameCellShipping ship={ship} />
-      <NameCellDocBadge isImported={hasImportedProductOrigin(product)} />
-      {product.archived === true && <Badge variant='removed' icon={<Archive className='size-3' />}>Archived</Badge>}
-      <NameCellActivity runtime={runtime} />
+    <div className='mt-1 min-w-0 space-y-1'>
+      <div data-product-list-summary-row className='flex min-w-0 items-center gap-1.5 text-sm text-gray-500'>
+        <NameCellBasicInfo product={product} />
+        <span aria-hidden='true' className='text-gray-600'>|</span>
+        <Tooltip content={categoryLabel}><button type='button' className={`max-w-[14rem] truncate rounded-sm border-0 bg-transparent p-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${categoryToneClass}`} aria-label={categoryLabel} title={categoryLabel}>{categoryLabel}</button></Tooltip>
+        <NameCellShipping ship={ship} />
+      </div>
+      {status.hasStatusRow ? (
+        <div data-product-list-status-icons className='flex min-h-4 flex-wrap items-center gap-1.5'>
+          <ProductListStatusIcons
+            isImported={status.isImported}
+            hasMarketplaceCopy={status.hasMarketplaceCopy}
+            hasEnglishTitle={status.hasEnglishTitle}
+            hasEnglishDescription={status.hasEnglishDescription}
+            hasPolishTitle={status.hasPolishTitle}
+            hasPolishDescription={status.hasPolishDescription}
+          />
+          {product.archived === true && <Badge variant='removed' icon={<Archive className='size-3' />}>Archived</Badge>}
+          <NameCellActivity runtime={runtime} />
+        </div>
+      ) : null}
     </div>
   );
 }

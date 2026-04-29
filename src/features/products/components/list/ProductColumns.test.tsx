@@ -1107,6 +1107,53 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
   });
 
+  it('renders product status icons below the name summary row', () => {
+    const product = createProduct({
+      baseProductId: 'base-123',
+      importSource: 'base',
+      description_en: 'English description',
+      name_pl: 'Wisiorek Gamingowy',
+      description_pl: 'Polski opis',
+      shippingGroupSource: 'category_rule',
+      shippingGroupMatchedCategoryRuleIds: ['category-1'],
+      shippingGroup: {
+        id: 'shipping-group-1',
+        name: 'Jewellery 7 EUR',
+        description: null,
+        catalogId: 'catalog-1',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 7,
+        autoAssignCategoryIds: ['category-1'],
+      },
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['tradera'],
+          title: 'Marketplace title',
+          description: 'Marketplace description',
+        },
+      ],
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const { container } = render(nameColumn.cell({ row: { original: product } } as never));
+
+    const summaryRow = container.querySelector('[data-product-list-summary-row]');
+    const statusRow = container.querySelector('[data-product-list-status-icons]');
+
+    expect(screen.getByText('Auto ship: Jewellery 7 EUR')).toBeInTheDocument();
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+    expect(screen.getByLabelText('Marketplace copy filled')).toBeInTheDocument();
+    expect(screen.getByLabelText('English title and description filled')).toHaveTextContent('EN');
+    expect(screen.getByLabelText('Polish title and description filled')).toHaveTextContent('PL');
+    expect(summaryRow).not.toBeNull();
+    expect(statusRow).not.toBeNull();
+    expect(summaryRow?.nextElementSibling).toBe(statusRow);
+  });
+
   it('renders the imported badge for detached Base imports without sync linkage', () => {
     const product = createProduct({
       baseProductId: null,

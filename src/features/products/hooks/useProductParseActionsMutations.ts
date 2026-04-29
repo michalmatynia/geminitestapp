@@ -1,9 +1,12 @@
 'use client';
 
+import type { QueryClient } from '@tanstack/react-query';
+
 import {
   markParsedTraderaMatchesClosed,
   matchProductParseActions,
 } from '@/features/products/api/products';
+import type { ListingBadgesPayload } from '@/shared/contracts/integrations/listings';
 import type {
   ProductParseActionsMarkTraderaClosedRequest,
   ProductParseActionsMarkTraderaClosedResponse,
@@ -15,6 +18,31 @@ import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { invalidateProductsAndCounts } from './productCache';
+
+const setClosedTraderaBadges = (
+  queryClient: QueryClient,
+  productIds: readonly string[]
+): void => {
+  if (productIds.length === 0) return;
+  const closedProductIds = new Set(productIds);
+  queryClient.setQueriesData<ListingBadgesPayload>(
+    { queryKey: QUERY_KEYS.integrations.productListingsBadges() },
+    (current) => {
+      if (!current) return current;
+      let changed = false;
+      const next: ListingBadgesPayload = { ...current };
+
+      for (const productId of closedProductIds) {
+        const currentEntry = current[productId];
+        if (currentEntry === undefined || currentEntry.tradera === 'closed') continue;
+        next[productId] = { ...currentEntry, tradera: 'closed' };
+        changed = true;
+      }
+
+      return changed ? next : current;
+    }
+  );
+};
 
 export function useMatchProductParseActions(): UpdateMutation<
   ProductParseActionsMatchResponse,
@@ -56,8 +84,14 @@ export function useMarkParsedTraderaMatchesClosed(): UpdateMutation<
       tags: ['products', 'parse-actions', 'tradera', 'closed'],
       description: 'Marks matched Tradera listings closed from pasted action text.',
     },
-    invalidate: async (queryClient, _response, request) => {
+    invalidate: async (queryClient, response, request) => {
+      const closedProductIds = new Set(
+        response.results
+          .filter((result) => result.status === 'updated' || result.status === 'skipped')
+          .map((result) => result.productId)
+      );
       const productIds = Array.from(new Set(request.matches.map((match) => match.productId)));
+      setClosedTraderaBadges(queryClient, Array.from(closedProductIds));
       await Promise.all([
         invalidateProductsAndCounts(queryClient),
         queryClient.invalidateQueries({

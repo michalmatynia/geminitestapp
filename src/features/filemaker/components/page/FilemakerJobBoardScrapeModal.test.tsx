@@ -1027,15 +1027,31 @@ describe('FilemakerJobBoardScrapeModal', () => {
     const validationPatterns = lexiconContext?.['validationPatterns'] as
       | Array<Record<string, unknown>>
       | undefined;
+    const directValidationPatterns = lexiconContext?.['directValidationPatterns'] as
+      | Array<Record<string, unknown>>
+      | undefined;
     const knownTerms = lexiconContext?.['knownTerms'] as
       | Array<Record<string, unknown>>
       | undefined;
     expect(validationPatterns?.length).toBeGreaterThan(0);
-    expect(validationPatterns?.some((pattern) => pattern['targetTypeKey'] === 'technology')).toBe(
-      true
-    );
+    expect(
+      validationPatterns?.some(
+        (pattern) =>
+          pattern['id'] === 'filemaker-lexicon-validation-pattern-clean-technology' &&
+          pattern['targetTypeKey'] === 'technology'
+      )
+    ).toBe(true);
+    expect(
+      directValidationPatterns?.some(
+        (pattern) =>
+          pattern['id'] === 'filemaker-lexicon-validation-pattern-clean-technology' &&
+          pattern['directlyApplicableToUnclassified'] === true &&
+          pattern['classificationPolicy'] === 'classify'
+      )
+    ).toBe(true);
     expect(knownTerms?.slice(0, 2)).toEqual([
       expect.objectContaining({
+        classificationRole: 'authoritative',
         label: 'React',
         normalizedLabel: 'react',
         occurrenceCount: 12,
@@ -1043,6 +1059,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
         typeKey: 'technology',
       }),
       expect.objectContaining({
+        classificationRole: 'authoritative',
         label: 'React',
         normalizedLabel: 'react',
         occurrenceCount: 2,

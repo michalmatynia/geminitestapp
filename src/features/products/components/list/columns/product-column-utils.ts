@@ -216,6 +216,35 @@ export const resolveEffectiveDefaultPriceGroupId = (
 
 export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
   typeof product.importSource === 'string' && product.importSource.trim().length > 0;
+
+export const hasFilledMarketplaceCopy = (product: ProductWithImages): boolean => {
+  const overrides = Array.isArray(product.marketplaceContentOverrides)
+    ? product.marketplaceContentOverrides
+    : [];
+
+  return overrides.some((entry) => {
+    const hasIntegration = Array.isArray(entry.integrationIds)
+      ? entry.integrationIds.some((integrationId: string) => toTrimmedString(integrationId) !== '')
+      : false;
+    const hasCopy = toTrimmedString(entry.title) !== '' || toTrimmedString(entry.description) !== '';
+
+    return hasIntegration && hasCopy;
+  });
+};
+
+export const hasEnglishProductTitle = (product: ProductWithImages): boolean =>
+  Boolean(getProductNameValue(product, 'name_en'));
+
+export const hasEnglishProductDescription = (product: ProductWithImages): boolean =>
+  toTrimmedString(product.description_en) !== '' ||
+  toTrimmedString(toRecord(product.description)?.['en']) !== '';
+
+export const hasPolishProductTitle = (product: ProductWithImages): boolean =>
+  Boolean(getProductNameValue(product, 'name_pl'));
+
+export const hasPolishProductDescription = (product: ProductWithImages): boolean =>
+  toTrimmedString(product.description_pl) !== '' ||
+  toTrimmedString(toRecord(product.description)?.['pl']) !== '';
 import {
   SUCCESS_STATUSES,
   CLOSED_STATUSES,

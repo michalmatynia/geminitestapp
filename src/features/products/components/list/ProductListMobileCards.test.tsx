@@ -583,7 +583,7 @@ describe('ProductListMobileCards', () => {
 
     render(<ProductListMobileCards />);
 
-    expect(screen.queryByText('Imported')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Imported product')).not.toBeInTheDocument();
   });
 
   it('renders the imported badge for products with explicit import provenance', () => {
@@ -600,7 +600,7 @@ describe('ProductListMobileCards', () => {
 
     render(<ProductListMobileCards />);
 
-    expect(screen.getByText('Imported')).toBeInTheDocument();
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
   });
 
   it('renders the imported badge for detached Base imports without a linked Base id', () => {
@@ -617,7 +617,34 @@ describe('ProductListMobileCards', () => {
 
     render(<ProductListMobileCards />);
 
-    expect(screen.getByText('Imported')).toBeInTheDocument();
+    expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
+  });
+
+  it('renders marketplace copy and Polish title icons on mobile cards', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          description_en: 'English description',
+          name_pl: 'Brelok',
+          description_pl: 'Polski opis',
+          marketplaceContentOverrides: [
+            {
+              integrationIds: ['tradera'],
+              title: 'Marketplace title',
+              description: 'Marketplace description',
+            },
+          ],
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByLabelText('Marketplace copy filled')).toBeInTheDocument();
+    expect(screen.getByLabelText('English title and description filled')).toHaveTextContent('EN');
+    expect(screen.getByLabelText('Polish title and description filled')).toHaveTextContent('PL');
   });
 
   it('renders the archived badge for archived products', () => {

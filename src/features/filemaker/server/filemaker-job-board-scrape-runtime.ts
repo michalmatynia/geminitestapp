@@ -123,7 +123,10 @@ const requestMode = (
 const buildRequestFingerprint = (request: JobBoardScrapeRuntimeRequest): string => {
   const payload = {
     ...request,
-    selectedOrganizationIds: [...request.selectedOrganizationIds].sort(),
+    importStrategy: 'create_unmatched',
+    minimumMatchConfidence: 85,
+    organizationScope: 'all',
+    selectedOrganizationIds: [],
     sourceUrl: request.sourceUrl.trim().toLowerCase(),
   };
   return createHash('sha256').update(JSON.stringify(payload)).digest('hex');
@@ -600,9 +603,6 @@ export const enqueueFilemakerJobBoardScrapeRun = async (
   rawInput: unknown
 ): Promise<FilemakerJobBoardScrapeRuntimeStartResponse> => {
   const request = parseRuntimeRequest(rawInput);
-  if (request.organizationScope === 'selected' && request.selectedOrganizationIds.length === 0) {
-    throw badRequestError('Select at least one organisation or use all organisations.');
-  }
   const fingerprint = buildRequestFingerprint(request);
   const activeRun = await readActiveRunByFingerprint(fingerprint);
   if (activeRun !== null) {

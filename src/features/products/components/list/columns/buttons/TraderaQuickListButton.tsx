@@ -64,20 +64,33 @@ export function TraderaQuickListButton(props: {
   const createListingMutation = useCreateListingMutation(product.id);
   const [submitting, setSubmitting] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
+  const [trackClosedQuickListAttempt, setTrackClosedQuickListAttempt] = useState(false);
 
   const { resolveConnection, enableDefaultScriptedConnection } = useTraderaQuickExportConnection(product.id);
+  const normalizedServerTraderaStatus = normalizeMarketplaceStatus(traderaStatus);
+  const isClosedTraderaStatus = normalizedServerTraderaStatus === 'closed';
+  const quickListFeedbackStatus = isClosedTraderaStatus ? 'not_started' : traderaStatus;
+  const quickListFeedbackShowsAuthoritativeBadge = isClosedTraderaStatus
+    ? !trackClosedQuickListAttempt
+    : showTraderaBadge;
   const {
     localFeedback,
-    localFeedbackStatus,
     setFeedbackStatus,
     hasServerStatus,
     serverStatusInFlight,
     normalizedTraderaStatus,
-  } = useTraderaQuickExportFeedback(product.id, traderaStatus, showTraderaBadge);
-  useTraderaQuickExportPolling(product.id, localFeedback, setFeedbackStatus);
+  } = useTraderaQuickExportFeedback(
+    product.id,
+    quickListFeedbackStatus,
+    quickListFeedbackShowsAuthoritativeBadge
+  );
+  const effectiveLocalFeedback =
+    isClosedTraderaStatus && !trackClosedQuickListAttempt ? null : localFeedback;
+  const effectiveLocalFeedbackStatus = effectiveLocalFeedback?.status ?? null;
+  useTraderaQuickExportPolling(product.id, effectiveLocalFeedback, setFeedbackStatus);
 
-  const localFeedbackRef = useRef(localFeedback);
-  localFeedbackRef.current = localFeedback;
+  const localFeedbackRef = useRef(effectiveLocalFeedback);
+  localFeedbackRef.current = effectiveLocalFeedback;
   const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
     customFieldDefinitions: customFieldsQuery.data,
     customFieldValues: product.customFields,
@@ -86,7 +99,7 @@ export function TraderaQuickListButton(props: {
 
   // Flash checkmark for 3s when status transitions to completed
   useEffect(() => {
-    if (localFeedbackStatus === 'completed') {
+    if (effectiveLocalFeedbackStatus === 'completed') {
       setShowCheckmark(true);
       const timerId = window.setTimeout(() => setShowCheckmark(false), 3000);
       return () => {
@@ -95,11 +108,20 @@ export function TraderaQuickListButton(props: {
     }
     setShowCheckmark(false);
     return undefined;
-  }, [localFeedbackStatus]);
+  }, [effectiveLocalFeedbackStatus]);
+
+  useEffect(() => {
+    if (!isClosedTraderaStatus) {
+      setTrackClosedQuickListAttempt(false);
+    }
+  }, [isClosedTraderaStatus]);
 
   const handleClick = useCallback(async (): Promise<void> => {
-    if (submitting || localFeedbackStatus === 'queued') return;
+    if (submitting || effectiveLocalFeedbackStatus === 'queued') return;
 
+    if (isClosedTraderaStatus) {
+      setTrackClosedQuickListAttempt(true);
+    }
     setSubmitting(true);
     setFeedbackStatus('processing');
     let attemptedRecoveryTarget:
@@ -258,8 +280,9 @@ export function TraderaQuickListButton(props: {
     }
   }, [
     createListingMutation,
+    effectiveLocalFeedbackStatus,
     enableDefaultScriptedConnection,
-    localFeedbackStatus,
+    isClosedTraderaStatus,
     onOpenIntegrations,
     prefetchListings,
     product.id,
@@ -270,17 +293,17 @@ export function TraderaQuickListButton(props: {
     toast,
   ]);
 
-  if (showTraderaBadge && normalizedTraderaStatus !== 'closed') {
+  if (showTraderaBadge && !isClosedTraderaStatus) {
     return null;
   }
 
   const resolvedButtonStatus = resolveMarketplaceStatusWithLocalFeedback({
     serverStatus: normalizedTraderaStatus,
-    localFeedbackStatus,
+    localFeedbackStatus: effectiveLocalFeedbackStatus,
     submitting,
   });
   const shouldUseFilledMarketplaceTone =
-    hasServerStatus || localFeedbackStatus !== null;
+    hasServerStatus || effectiveLocalFeedbackStatus !== null;
   const isFailureState = FAILURE_STATUSES.has(
     normalizeMarketplaceStatus(resolvedButtonStatus)
   );
@@ -290,11 +313,11 @@ export function TraderaQuickListButton(props: {
     isFailureState
       ? createTraderaRecoveryContext({
           status: resolvedButtonStatus,
-          runId: localFeedback?.runId ?? null,
-          failureReason: localFeedback?.failureReason ?? null,
-          requestId: localFeedback?.requestId ?? null,
-          integrationId: localFeedback?.integrationId ?? null,
-          connectionId: localFeedback?.connectionId ?? null,
+          runId: effectiveLocalFeedback?.runId ?? null,
+          failureReason: effectiveLocalFeedback?.failureReason ?? null,
+          requestId: effectiveLocalFeedback?.requestId ?? null,
+          integrationId: effectiveLocalFeedback?.integrationId ?? null,
+          connectionId: effectiveLocalFeedback?.connectionId ?? null,
         })
       : undefined;
   let resolvedLabel = 'One-click export to Tradera';
@@ -306,7 +329,7 @@ export function TraderaQuickListButton(props: {
   const disableQuickListAction =
     isTraderaMarketplaceExcluded ||
     (!isFailureState &&
-      (submitting || localFeedbackStatus === 'queued' || serverStatusInFlight));
+      (submitting || effectiveLocalFeedbackStatus === 'queued' || serverStatusInFlight));
   const shouldPrefetchListings = !disableQuickListAction;
   const resolvedToneClass = isTraderaMarketplaceExcluded
     ? 'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500'
@@ -339,7 +362,7 @@ export function TraderaQuickListButton(props: {
         isTraderaMarketplaceExcluded
           ? 'Tradera quick export is disabled because Market Exclusion -> Tradera is checked.'
           : `${resolvedLabel} (${resolvedButtonStatus}${
-              traderaStatus.length > 0 ? ` / ${traderaStatus}` : ''
+              traderaStatus.length > 0 && !isClosedTraderaStatus ? ` / ${traderaStatus}` : ''
             })`
       }
       className={cn(

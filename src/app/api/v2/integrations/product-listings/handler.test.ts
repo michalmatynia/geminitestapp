@@ -119,6 +119,42 @@ describe('integration product listings handler', () => {
     });
   });
 
+  it('surfaces a newer closed Tradera listing over an older active listing', async () => {
+    listProductListingsByProductIdsMock.mockResolvedValue([
+      {
+        id: 'listing-active',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+      {
+        id: 'listing-closed',
+        productId: 'product-1',
+        integrationId: 'integration-tradera-1',
+        status: 'closed',
+        updatedAt: '2026-04-02T18:10:00.000Z',
+      },
+    ]);
+
+    const response = await getHandler(
+      new NextRequest(
+        'http://localhost:3000/api/v2/integrations/product-listings?productIds=product-1'
+      ),
+      {
+        query: { productIds: ['product-1'] },
+      } as never
+    );
+
+    const payload = await response.json();
+
+    expect(payload).toEqual({
+      'product-1': {
+        tradera: 'closed',
+      },
+    });
+  });
+
   it('surfaces processing while a Tradera live status check is pending', async () => {
     listProductListingsByProductIdsMock.mockResolvedValue([
       {

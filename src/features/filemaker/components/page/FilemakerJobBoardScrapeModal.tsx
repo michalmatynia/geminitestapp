@@ -12,7 +12,6 @@ import {
   type FilemakerJobBoardDuplicateStrategy,
   type FilemakerJobBoardImportStrategy,
   type FilemakerJobBoardLexiconClassificationApplyResponse,
-  type FilemakerJobBoardOrganizationScope,
   type FilemakerJobBoardScrapeExtractionPath,
   type FilemakerJobBoardScrapeLiveEvent,
   type FilemakerJobBoardScrapeMode,
@@ -73,8 +72,6 @@ type ScrapeDraft = {
   importStrategy: FilemakerJobBoardImportStrategy;
   maxOffers: string;
   maxPages: string;
-  minimumMatchConfidence: string;
-  organizationScope: FilemakerJobBoardOrganizationScope;
   personaId: string;
   provider: FilemakerJobBoardScrapeProvider;
   sourceUrl: string;
@@ -104,6 +101,7 @@ type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
 type ScrapedOfferUnclassifiedPill =
   FilemakerJobBoardScrapedOffer['unclassifiedPills'][number];
 type LexiconKnownTermContextEntry = Record<string, unknown> & {
+  classificationRole: 'authoritative' | 'supporting_only';
   label: string;
   normalizedLabel: string;
   occurrenceCount: number;
@@ -124,7 +122,10 @@ type LexiconTypeContextEntry = Record<string, unknown> & {
   sortOrder: number;
 };
 type LexiconValidationPatternContextEntry = Record<string, unknown> & {
+  classificationPolicy: 'classify' | 'keep_unclassified';
   confidence: number;
+  directlyApplicableToUnclassified: boolean;
+  id: string;
   label: string;
   matchMode: string;
   notes: string | undefined;
@@ -135,6 +136,7 @@ type LexiconValidationPatternContextEntry = Record<string, unknown> & {
   version: number;
 };
 type LexiconContext = Record<string, unknown> & {
+  directValidationPatterns: LexiconValidationPatternContextEntry[];
   knownTerms: LexiconKnownTermContextEntry[];
   rules: string[];
   types: LexiconTypeContextEntry[];
@@ -152,8 +154,6 @@ const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'importStrategy',
   'maxOffers',
   'maxPages',
-  'minimumMatchConfidence',
-  'organizationScope',
   'personaId',
   'provider',
   'sourceUrl',
@@ -175,7 +175,7 @@ const JOB_BOARD_SCRAPE_CLASSIFICATIONS_ENDPOINT =
   `${FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT}/classifications`;
 const JOB_BOARD_LEXICON_CLASSIFICATION_RESULT_NODE_ID =
   'node-regex-job-board-lexicon-classification';
-const JOB_BOARD_LEXICON_CONTEXT_ENGINE_VERSION = 'filemaker-job-board-lexicon:v3';
+const JOB_BOARD_LEXICON_CONTEXT_ENGINE_VERSION = 'filemaker-job-board-lexicon:v4';
 
 const jobBoardScrapeRunCancelEndpoint = (runId: string): string =>
   `${jobBoardScrapeRunEndpoint(runId)}/cancel`;
@@ -188,8 +188,7 @@ const PROVIDER_OPTIONS = [
 ] as const;
 
 const IMPORT_STRATEGY_OPTIONS = [
-  { value: 'matched_only', label: 'Skip unmatched' },
-  { value: 'create_unmatched', label: 'Create organisations' },
+  { value: 'create_unmatched', label: 'Create scraped employers' },
 ] as const;
 
 const DUPLICATE_STRATEGY_OPTIONS = [
@@ -339,6 +338,7 @@ const buildLexiconTypesContext = (
 };
 
 const buildKnownTermIndex = (database: FilemakerDatabase): Array<{
+  classificationRole: 'authoritative' | 'supporting_only';
   label: string;
   normalizedLabel: string;
   occurrenceCount: number;
@@ -350,6 +350,10 @@ const buildKnownTermIndex = (database: FilemakerDatabase): Array<{
     .sort((left, right) => right.occurrenceCount - left.occurrenceCount)
     .slice(0, 300)
     .map((term) => ({
+      classificationRole:
+        term.typeKey === 'address' || term.typeKey === 'other'
+          ? 'supporting_only'
+          : 'authoritative',
       label: term.label,
       normalizedLabel: term.normalizedLabel,
       occurrenceCount: term.occurrenceCount,
@@ -357,18 +361,24 @@ const buildKnownTermIndex = (database: FilemakerDatabase): Array<{
       typeKey: term.typeKey,
     }));
 
-const buildLexiconContext = (
-  database: FilemakerDatabase,
-  typeMetadata: FilemakerLexiconTypeMetadataMap
-): LexiconContext => ({
-  knownTerms: buildKnownTermIndex(database),
-  types: buildLexiconTypesContext(database, typeMetadata),
-  validationPatterns: database.lexiconValidationPatterns
+const isDirectUnclassifiedValidationPattern = (sourceScope: string): boolean =>
+  sourceScope === 'all' || sourceScope === 'unclassified';
+
+const buildValidationPatternContext = (
+  database: FilemakerDatabase
+): LexiconValidationPatternContextEntry[] =>
+  database.lexiconValidationPatterns
     .filter((pattern) => pattern.enabled)
     .slice()
     .sort((left, right) => left.priority - right.priority)
     .map((pattern) => ({
+      classificationPolicy:
+        pattern.targetTypeKey === 'address' || pattern.targetTypeKey === 'other'
+          ? 'keep_unclassified'
+          : 'classify',
       confidence: pattern.confidence,
+      directlyApplicableToUnclassified: isDirectUnclassifiedValidationPattern(pattern.sourceScope),
+      id: pattern.id,
       label: pattern.label,
       matchMode: pattern.matchMode,
       notes: pattern.notes,
@@ -377,21 +387,37 @@ const buildLexiconContext = (
       sourceScope: pattern.sourceScope,
       targetTypeKey: pattern.targetTypeKey,
       version: pattern.version,
-    })),
-  validationPatternUsage:
-    'Apply patterns in ascending priority. For unclassified scrape pills, sourceScope all and unclassified are directly applicable; other source scopes are supporting context only unless the pill reason/source clearly matches them.',
-  rules: [
-    'Classify only supplied unclassified pill labels and keep labels byte-for-byte identical.',
-    'Exact normalized matches in knownTerms win before semantic guessing.',
-    'Use validationPatterns as the editable source of truth after exact knownTerms matches.',
-    'Use other only when no specific lexicon type, exact term, or validation pattern fits.',
-    'Use action ignore for provider UI text, assistant labels, tracking text, or noise.',
-    'Do not classify regions, city names, or voivodeships as technology.',
-    'Classify technologies only when the label is an actual language, tool, framework, platform, library, database, cloud, or stack.',
-    'Do not invent labels or type keys.',
-    'When evidence is weak, prefer action ignore or typeKey other with confidence below 0.65.',
-  ],
-});
+    }));
+
+const buildLexiconContext = (
+  database: FilemakerDatabase,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): LexiconContext => {
+  const validationPatterns = buildValidationPatternContext(database);
+  return {
+    directValidationPatterns: validationPatterns.filter(
+      (pattern) => pattern.directlyApplicableToUnclassified
+    ),
+    knownTerms: buildKnownTermIndex(database),
+    types: buildLexiconTypesContext(database, typeMetadata),
+    validationPatterns,
+    validationPatternUsage:
+      'Apply directValidationPatterns to unclassified pills in ascending priority after authoritative exact knownTerms. Patterns with classificationPolicy keep_unclassified should not enrich lexicon terms. Other validationPatterns describe scrape extraction behavior and are supporting context only.',
+    rules: [
+      'Classify only supplied unclassified pill labels and keep labels byte-for-byte identical.',
+      'Exact normalized matches in knownTerms with classificationRole authoritative win before semantic guessing.',
+      'Treat knownTerms with typeKey other or address as supporting evidence only; do not let polluted Other terms override direct validation patterns.',
+      'Use directValidationPatterns as the editable source of truth after authoritative exact knownTerms.',
+      'If a direct validation pattern has classificationPolicy keep_unclassified, return action ignore or typeKey other with confidence below 0.65 and include matchedValidationPatternId.',
+      'Use other only when no specific lexicon type, authoritative exact term, or direct validation pattern fits.',
+      'Use action ignore for provider UI text, assistant labels, tracking text, or noise.',
+      'Do not classify regions, city names, or voivodeships as technology.',
+      'Classify technologies only when the label is an actual language, tool, framework, platform, library, database, cloud, or stack.',
+      'Do not invent labels, pattern IDs, or type keys.',
+      'When evidence is weak, prefer action ignore or typeKey other with confidence below 0.65.',
+    ],
+  };
+};
 
 const buildUnclassifiedPillContext = (
   offer: FilemakerJobBoardScrapedOffer
@@ -470,6 +496,18 @@ const buildLexiconContextRegistryBundle = (
         kind: 'items',
         title: 'Lexicon Types',
         items: buildLexiconTypesContext(database, typeMetadata),
+      },
+      {
+        id: 'known-terms',
+        kind: 'items',
+        title: 'Known Terms',
+        items: lexiconContext.knownTerms,
+      },
+      {
+        id: 'direct-validation-patterns',
+        kind: 'items',
+        title: 'Direct Validation Patterns',
+        items: lexiconContext.directValidationPatterns,
       },
       {
         id: 'validation-patterns',
@@ -614,7 +652,7 @@ const isNotFoundResponseError = (error: unknown): boolean =>
 const buildRequest = (
   draft: ScrapeDraft,
   mode: FilemakerJobBoardScrapeMode,
-  selectedOrganizationIds: string[]
+  _selectedOrganizationIds: string[]
 ): FilemakerJobBoardScrapeRequest => ({
   delayMs: toNumber(draft.delayMs, 750),
   duplicateStrategy: toImportDuplicateStrategy(draft.duplicateStrategy),
@@ -626,12 +664,12 @@ const buildRequest = (
   importStrategy: draft.importStrategy,
   maxOffers: toNumber(draft.maxOffers, 25),
   maxPages: toNumber(draft.maxPages, 2),
-  minimumMatchConfidence: toNumber(draft.minimumMatchConfidence, 85),
+  minimumMatchConfidence: 85,
   mode,
-  organizationScope: draft.organizationScope,
+  organizationScope: 'all',
   personaId: draft.personaId.trim().length > 0 ? draft.personaId.trim() : null,
   provider: draft.provider,
-  selectedOrganizationIds: draft.organizationScope === 'selected' ? selectedOrganizationIds : [],
+  selectedOrganizationIds: [],
   sourceUrl: draft.sourceUrl.trim(),
   status: draft.status,
   timeoutMs: toNumber(draft.timeoutMs, 180_000),
@@ -685,7 +723,7 @@ const formatOfferStatus = (status: FilemakerJobBoardScrapeOfferResult['status'])
   status === 'preview' ? 'not saved' : status;
 
 const formatWriteAction = (write: FilemakerJobBoardScrapeWriteResult): string => {
-  if (write.action === 'organization_address_updated') return 'Organisation address updated';
+  if (write.action === 'listing_address_updated') return 'Listing address updated';
   if (write.action === 'organization_created') return 'Organisation created';
   if (write.action === 'organization_linked') return 'Organisation linked';
   if (write.action === 'organization_profile_updated') return 'Company profile updated';
@@ -1318,8 +1356,6 @@ const defaultDraft = (_selectedOrganizationCount: number): ScrapeDraft => ({
   importStrategy: 'create_unmatched',
   maxOffers: '25',
   maxPages: '2',
-  minimumMatchConfidence: '85',
-  organizationScope: 'all',
   personaId: '',
   provider: 'auto',
   sourceUrl: '',
@@ -1362,11 +1398,6 @@ const normalizeSavedDraft = (
     ),
     maxOffers: readStoredString(saved['maxOffers'], fallback.maxOffers),
     maxPages: readStoredString(saved['maxPages'], fallback.maxPages),
-    minimumMatchConfidence: readStoredString(
-      saved['minimumMatchConfidence'],
-      fallback.minimumMatchConfidence
-    ),
-    organizationScope: 'all',
     personaId: readStoredString(saved['personaId'], fallback.personaId),
     provider: readStoredChoice(
       saved['provider'],

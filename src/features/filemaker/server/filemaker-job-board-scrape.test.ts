@@ -199,14 +199,11 @@ describe('runFilemakerJobBoardScrape', () => {
       })
     );
     expect(result.summary).toMatchObject({
-      matchedOffers: 1,
+      matchedOffers: 0,
       scrapedOffers: 1,
     });
     expect(result.offers[0]).toMatchObject({
-      match: {
-        organizationId: 'org-1',
-        organizationName: 'Acme Inc',
-      },
+      match: null,
       offer: {
         companyName: 'Acme Inc',
         sourceUrl: offerUrl,
@@ -658,7 +655,7 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(result.browserMode).toBe('headed');
   });
 
-  it('imports matched offers into Filemaker job listings', async () => {
+  it('imports scraped offers into Filemaker job listings under scraped employer organisations', async () => {
     const result = await runFilemakerJobBoardScrape({
       mode: 'import',
       sourceUrl,
@@ -670,13 +667,14 @@ describe('runFilemakerJobBoardScrape', () => {
       expect.any(String)
     );
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    const organizationId = result.offers[0]?.match?.organizationId;
     expect(persisted.organizations[0]).toMatchObject({
-      id: 'org-1',
+      id: organizationId,
       name: 'Acme Inc',
     });
     expect(persisted.jobListings[0]).toMatchObject({
       expiresAt: '2026-05-28T23:59:59.000Z',
-      organizationId: 'org-1',
+      organizationId,
       postedAt: '2026-04-28T09:00:00.000Z',
       salaryCurrency: 'PLN',
       sourceSite: 'pracuj.pl',
@@ -916,7 +914,7 @@ describe('runFilemakerJobBoardScrape', () => {
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
     expect(persisted.jobListings[0]).toMatchObject({
       expiresAt: '2026-05-28',
-      organizationId: 'org-1',
+      organizationId: result.offers[0]?.match?.organizationId,
       postedAt: '2026-04-28',
       sourceUrl: offerUrl,
       title: 'Developer',
@@ -1492,43 +1490,47 @@ describe('runFilemakerJobBoardScrape', () => {
       skippedOffers: 0,
     });
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    const organizationId = result.offers[0]?.match?.organizationId;
+    const organization = persisted.organizations.find(
+      (entry: { id?: string }) => entry.id === organizationId
+    );
     expect(persisted.jobListings[0]).toMatchObject({
       expiresAt: '2026-05-20',
       location: 'Kraków',
-      organizationId: 'org-1',
+      organizationId,
       postedAt: '2026-04-20',
       sourceUrl: offerUrl,
       title: 'Snapshot Backend Developer',
     });
-    expect(persisted.organizations[0]).toMatchObject({
+    expect(organization).toMatchObject({
       jobBoardCompanyProfileUrl: 'https://acme.example/careers',
     });
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Description: Acme builds enterprise commerce systems.'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Website: https://acme.example'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Profile URL: https://acme.example/careers'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Social URL: https://www.linkedin.com/company/acme-inc'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Social URL: https://www.facebook.com/acmeinc'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Social URL: https://github.com/acme'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Industry: Enterprise software'
     );
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('Company size: 250');
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('NIP: 5210123456');
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('KRS: 0000123456');
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('REGON: 012345678');
-    expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
+    expect(organization.jobBoardCompanyProfile).toContain('Company size: 250');
+    expect(organization.jobBoardCompanyProfile).toContain('NIP: 5210123456');
+    expect(organization.jobBoardCompanyProfile).toContain('KRS: 0000123456');
+    expect(organization.jobBoardCompanyProfile).toContain('REGON: 012345678');
+    expect(organization.jobBoardCompanyProfile).toContain(
       'Address: Konstruktorska 12A, 02-673 Warszawa, Poland'
     );
     expect(persisted.lexiconTerms).not.toEqual(
@@ -1603,7 +1605,7 @@ describe('runFilemakerJobBoardScrape', () => {
     );
   });
 
-  it('extracts organisation addresses from company profile text when structured address data is missing', async () => {
+  it('extracts job listing addresses from company profile text when structured address data is missing', async () => {
     mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
       error: null,
       evaluation: {
@@ -1663,10 +1665,20 @@ describe('runFilemakerJobBoardScrape', () => {
       street: 'Prosta',
       streetNumber: '20',
     });
-    expect(persisted.organizations[0]).toMatchObject({
+    expect(persisted.jobListings[0]).toMatchObject({
       addressId: persisted.addresses[0].id,
-      displayAddressId: persisted.addresses[0].id,
-      id: 'org-1',
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '00-850',
+      street: 'Prosta',
+      streetNumber: '20',
+    });
+    expect(persisted.addressLinks[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      isDefault: true,
+      ownerId: persisted.jobListings[0].id,
+      ownerKind: 'job_listing',
     });
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Address: Prosta 20, 00-850 Warszawa, Poland'
@@ -1690,7 +1702,7 @@ describe('runFilemakerJobBoardScrape', () => {
     );
   });
 
-  it('extracts organisation addresses from company profile text without postal codes', async () => {
+  it('extracts job listing addresses from company profile text without postal codes', async () => {
     mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
       error: null,
       evaluation: {
@@ -1750,10 +1762,20 @@ describe('runFilemakerJobBoardScrape', () => {
       street: 'Puławska',
       streetNumber: '180',
     });
-    expect(persisted.organizations[0]).toMatchObject({
+    expect(persisted.jobListings[0]).toMatchObject({
       addressId: persisted.addresses[0].id,
-      displayAddressId: persisted.addresses[0].id,
-      id: 'org-1',
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '',
+      street: 'Puławska',
+      streetNumber: '180',
+    });
+    expect(persisted.addressLinks[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      isDefault: true,
+      ownerId: persisted.jobListings[0].id,
+      ownerKind: 'job_listing',
     });
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Address: Puławska 180, Mokotów, Warszawa(Masovian)'
@@ -1763,7 +1785,7 @@ describe('runFilemakerJobBoardScrape', () => {
     );
   });
 
-  it('extracts organisation addresses from company profile text without district or postal code', async () => {
+  it('extracts job listing addresses from company profile text without district or postal code', async () => {
     mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
       error: null,
       evaluation: {
@@ -1823,12 +1845,27 @@ describe('runFilemakerJobBoardScrape', () => {
       street: 'Puławska',
       streetNumber: '180',
     });
+    expect(persisted.jobListings[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '',
+      street: 'Puławska',
+      streetNumber: '180',
+    });
+    expect(persisted.addressLinks[0]).toMatchObject({
+      addressId: persisted.addresses[0].id,
+      isDefault: true,
+      ownerId: persisted.jobListings[0].id,
+      ownerKind: 'job_listing',
+    });
     expect(persisted.lexiconTerms).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
   });
 
-  it('upserts settings-only matched organisations into Mongo for the Organisation list', async () => {
+  it('creates scraped employer organisations instead of matching settings-only organisations', async () => {
     const mongoCollection = createCollection([]);
     mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(mongoCollection);
     mocks.readFilemakerCampaignSettingValueMock
@@ -1853,19 +1890,23 @@ describe('runFilemakerJobBoardScrape', () => {
 
     expect(result.summary).toMatchObject({
       createdListings: 1,
+      createdOrganizations: 1,
       matchedOffers: 1,
       verifiedListings: 1,
     });
+    const organizationId = result.offers[0]?.match?.organizationId;
+    expect(organizationId).toEqual(expect.stringContaining('filemaker-job-board-organization-'));
+    expect(organizationId).not.toBe('org-1');
     expect(mongoCollection.updateOne).toHaveBeenCalledWith(
-      { id: 'org-1' },
+      { id: organizationId },
       {
         $set: expect.objectContaining({
-          id: 'org-1',
+          id: organizationId,
           name: 'Acme Inc',
           updatedBy: 'filemaker:job-board-scrape',
         }),
         $setOnInsert: expect.objectContaining({
-          _id: 'org-1',
+          _id: organizationId,
           createdAt: expect.any(String),
         }),
       },
@@ -1915,26 +1956,55 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(mocks.probeJobBoardOfferMock).not.toHaveBeenCalled();
     expect(result.summary).toMatchObject({
       createdListings: 1,
+      createdOrganizations: 1,
       matchedOffers: 1,
       scrapedOffers: 1,
       verifiedListings: 1,
     });
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
     expect(persisted.jobListings[0]).toMatchObject({
-      organizationId: 'org-1',
       sourceUrl: offerUrl,
       title: 'Developer',
     });
+    expect(persisted.jobListings[0].organizationId).toEqual(result.offers[0]?.match?.organizationId);
+    expect(persisted.jobListings[0].organizationId).not.toBe('org-1');
   });
 
   it('skips existing listings when manually saving scraped drafts with skip selected', async () => {
     mocks.readFilemakerCampaignSettingValueMock
       .mockResolvedValueOnce(
         settingsDatabase({
+          addresses: [
+            {
+              id: 'address-warszawa',
+              city: 'Warszawa',
+              country: 'Poland',
+              countryId: 'PL',
+              postalCode: '',
+              street: '',
+              streetNumber: '',
+            },
+          ],
+          addressLinks: [
+            {
+              id: 'address-link-listing-1',
+              addressId: 'address-warszawa',
+              isDefault: true,
+              ownerId: 'listing-1',
+              ownerKind: 'job_listing',
+            },
+          ],
           jobListings: [
             {
               id: 'listing-1',
+              addressId: 'address-warszawa',
+              city: 'Warszawa',
+              country: 'Poland',
+              countryId: 'PL',
               organizationId: 'org-1',
+              postalCode: '',
+              street: '',
+              streetNumber: '',
               title: 'Developer',
               description: 'Existing listing',
               sourceExternalId: '1001',
@@ -1995,7 +2065,7 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 
-  it('stores scraped job-board pills as lexicon terms and maps the first Pracuj pill to an organisation address', async () => {
+  it('stores scraped job-board pills as lexicon terms and maps scraped location to a job listing address', async () => {
     const events: Array<Record<string, unknown>> = [];
     mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
       error: null,
@@ -2049,13 +2119,12 @@ describe('runFilemakerJobBoardScrape', () => {
 
     expect(result.summary).toMatchObject({
       addressUpdates: 1,
-      createdLexiconTerms: 6,
+      createdLexiconTerms: 5,
       createdListings: 1,
-      linkedLexiconTerms: 6,
+      linkedLexiconTerms: 5,
       verifiedListings: 1,
     });
     expect(result.offers[0]?.offer.pills.map((pill) => pill.category)).toEqual([
-      'address',
       'contract_type',
       'employment_type',
       'experience_level',
@@ -2071,25 +2140,29 @@ describe('runFilemakerJobBoardScrape', () => {
       street: 'Puławska',
       streetNumber: '180',
     });
-    expect(persisted.organizations[0]).toMatchObject({
+    expect(persisted.jobListings[0]).toMatchObject({
       addressId: persisted.addresses[0].id,
-      displayAddressId: persisted.addresses[0].id,
-      id: 'org-1',
+      city: 'Warszawa',
+      country: 'Poland',
+      countryId: 'PL',
+      postalCode: '',
+      street: 'Puławska',
+      streetNumber: '180',
     });
     expect(persisted.addressLinks[0]).toMatchObject({
       addressId: persisted.addresses[0].id,
       isDefault: true,
-      ownerId: 'org-1',
-      ownerKind: 'organization',
+      ownerId: persisted.jobListings[0].id,
+      ownerKind: 'job_listing',
     });
-    expect(persisted.lexiconTerms).toHaveLength(6);
-    expect(persisted.jobListingLexiconLinks).toHaveLength(6);
-    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(6);
+    expect(persisted.lexiconTerms).toHaveLength(5);
+    expect(persisted.jobListingLexiconLinks).toHaveLength(5);
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(5);
     expect(events).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           type: 'write',
-          write: expect.objectContaining({ action: 'organization_address_updated' }),
+          write: expect.objectContaining({ action: 'listing_address_updated' }),
         }),
         expect.objectContaining({
           type: 'write',
@@ -2287,6 +2360,20 @@ describe('runFilemakerJobBoardScrape', () => {
         ],
         lexiconTerms: [
           {
+            id: 'filemaker-lexicon-term-other-react',
+            createdAt: '2026-04-28T00:00:00.000Z',
+            updatedAt: '2026-04-28T00:00:00.000Z',
+            label: 'React',
+            normalizedLabel: 'react',
+            typeKey: 'other',
+            category: 'other',
+            sourceSite: 'pracuj.pl',
+            sourceProvider: 'pracuj.pl',
+            firstSeenAt: '2026-04-28T00:00:00.000Z',
+            lastSeenAt: '2026-04-28T00:00:00.000Z',
+            occurrenceCount: 50,
+          },
+          {
             id: 'filemaker-lexicon-term-technology-react',
             createdAt: '2026-04-28T00:00:00.000Z',
             updatedAt: '2026-04-28T00:00:00.000Z',
@@ -2360,18 +2447,109 @@ describe('runFilemakerJobBoardScrape', () => {
       expect.objectContaining({ category: 'technology', label: 'React', typeKey: 'technology' }),
     ]);
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
-    expect(persisted.lexiconTerms).toEqual([
+    expect(persisted.lexiconTerms).toEqual(expect.arrayContaining([
       expect.objectContaining({
         label: 'React',
         normalizedLabel: 'react',
         occurrenceCount: 8,
         typeKey: 'technology',
       }),
-    ]);
+      expect.objectContaining({
+        label: 'React',
+        normalizedLabel: 'react',
+        occurrenceCount: 50,
+        typeKey: 'other',
+      }),
+    ]));
     expect(persisted.jobListingLexiconLinks).toEqual([
       expect.objectContaining({
         jobListingId: 'listing-1',
         sourceValue: 'React',
+        typeKey: 'technology',
+      }),
+    ]);
+  });
+
+  it('uses direct validation patterns even when the AI returns Other with low confidence', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Frontend Developer',
+            description: 'Build products',
+            location: 'Wrocław',
+            sourceExternalId: '1001',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+            lexiconTermIds: [],
+          },
+        ],
+      })
+    );
+
+    const result = await applyFilemakerJobBoardLexiconClassifications({
+      listingId: 'listing-1',
+      runId: 'ai-run-1',
+      classifications: [
+        {
+          action: 'classify',
+          confidence: 0.2,
+          label: 'React',
+          normalizedLabel: 'React',
+          reason: 'Model was unsure.',
+          typeKey: 'other',
+        },
+      ],
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: '',
+        companyProfileUrl: null,
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Wrocław',
+        pills: [],
+        postedAt: null,
+        salaryCurrency: null,
+        salaryMax: null,
+        salaryMin: null,
+        salaryPeriod: 'monthly',
+        salaryText: '',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: offerUrl,
+        title: 'Frontend Developer',
+        unclassifiedPills: [
+          {
+            label: 'React',
+            position: 0,
+            reason: 'raw other pill',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+          },
+        ],
+      },
+    });
+
+    expect(result).toMatchObject({
+      summary: {
+        acceptedClassifications: 1,
+        createdLexiconTerms: 1,
+        linkedLexiconTerms: 1,
+        persisted: true,
+        rejectedClassifications: 0,
+      },
+    });
+    expect(result.offer.pills).toEqual([
+      expect.objectContaining({ category: 'technology', label: 'React', typeKey: 'technology' }),
+    ]);
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.lexiconTerms).toEqual([
+      expect.objectContaining({
+        label: 'React',
+        normalizedLabel: 'react',
         typeKey: 'technology',
       }),
     ]);
@@ -2712,10 +2890,37 @@ describe('runFilemakerJobBoardScrape', () => {
   it('skips duplicate listings without persisting unchanged imports', async () => {
     mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(
       settingsDatabase({
+        addresses: [
+          {
+            id: 'address-warszawa',
+            city: 'Warszawa',
+            country: 'Poland',
+            countryId: 'PL',
+            postalCode: '',
+            street: '',
+            streetNumber: '',
+          },
+        ],
+        addressLinks: [
+          {
+            id: 'address-link-listing-1',
+            addressId: 'address-warszawa',
+            isDefault: true,
+            ownerId: 'listing-1',
+            ownerKind: 'job_listing',
+          },
+        ],
         jobListings: [
           {
             id: 'listing-1',
+            addressId: 'address-warszawa',
+            city: 'Warszawa',
+            country: 'Poland',
+            countryId: 'PL',
             organizationId: 'org-1',
+            postalCode: '',
+            street: '',
+            streetNumber: '',
             title: 'Developer',
             description: 'Existing listing',
             sourceExternalId: '1001',
@@ -2748,10 +2953,37 @@ describe('runFilemakerJobBoardScrape', () => {
   it('matches existing listings by normalized source URL when skipping duplicates', async () => {
     mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue(
       settingsDatabase({
+        addresses: [
+          {
+            id: 'address-warszawa',
+            city: 'Warszawa',
+            country: 'Poland',
+            countryId: 'PL',
+            postalCode: '',
+            street: '',
+            streetNumber: '',
+          },
+        ],
+        addressLinks: [
+          {
+            id: 'address-link-listing-normalized-url',
+            addressId: 'address-warszawa',
+            isDefault: true,
+            ownerId: 'listing-normalized-url',
+            ownerKind: 'job_listing',
+          },
+        ],
         jobListings: [
           {
             id: 'listing-normalized-url',
+            addressId: 'address-warszawa',
+            city: 'Warszawa',
+            country: 'Poland',
+            countryId: 'PL',
             organizationId: 'org-1',
+            postalCode: '',
+            street: '',
+            streetNumber: '',
             title: 'Developer',
             description: 'Existing listing',
             sourceSite: 'pracuj.pl',

@@ -21,6 +21,9 @@ describe('buildListProjectStage', () => {
       name_en: 1,
       name_pl: 1,
       name_de: 1,
+      description_en: 1,
+      description_pl: 1,
+      marketplaceContentOverrides: 1,
     });
   });
 

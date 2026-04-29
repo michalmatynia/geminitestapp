@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { Archive, Download } from 'lucide-react';
+import { Archive } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { memo, useCallback, type ReactNode } from 'react';
 
@@ -37,12 +37,18 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 import {
   getProductDisplayName,
   getProductListDisplayName,
+  hasFilledMarketplaceCopy,
+  hasEnglishProductDescription,
+  hasEnglishProductTitle,
+  hasPolishProductDescription,
   hasImportedProductOrigin,
+  hasPolishProductTitle,
   getImageFilepath,
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
 } from './columns/product-column-utils';
 import { ProductListActivityPill } from './ProductListActivityPill';
+import { ProductListStatusIcons } from './ProductListStatusIcons';
 
 type ProductListRowActionsContextValue = ReturnType<typeof useProductListRowActionsContext>;
 type ProductListRowVisualsContextValue = ReturnType<typeof useProductListRowVisualsContext>;
@@ -214,6 +220,11 @@ type ProductListMobileCardResolvedProps = {
   rowRuntime: ProductListRowRuntimeValue;
   nameValue: string;
   isImported: boolean;
+  hasMarketplaceCopy: boolean;
+  hasEnglishTitle: boolean;
+  hasEnglishDescription: boolean;
+  hasPolishTitle: boolean;
+  hasPolishDescription: boolean;
   skuLabel: string;
   duplicateSkuCount: number | null;
   duplicateSkuTitle: string | null;
@@ -243,6 +254,11 @@ const renderProductListMobileCard = ({
   rowRuntime,
   nameValue,
   isImported,
+  hasMarketplaceCopy,
+  hasEnglishTitle,
+  hasEnglishDescription,
+  hasPolishTitle,
+  hasPolishDescription,
   skuLabel,
   duplicateSkuCount,
   duplicateSkuTitle,
@@ -286,6 +302,14 @@ const renderProductListMobileCard = ({
     productAiRunFeedback,
     productScanRunFeedback,
   } = rowRuntime;
+  const hasStatusIcons = [
+    isImported ||
+    hasMarketplaceCopy,
+    hasEnglishTitle,
+    hasEnglishDescription,
+    hasPolishTitle,
+    hasPolishDescription,
+  ].includes(true);
 
   return (
     <li
@@ -358,18 +382,21 @@ const renderProductListMobileCard = ({
                 <div className='truncate'>{missingManualShippingLabel}</div>
               </div>
             ) : null}
-            {(product.archived || isImported || productAiRunFeedback || productScanRunFeedback) && (
-              <div className='flex flex-wrap items-center gap-2'>
+            {(product.archived || hasStatusIcons || productAiRunFeedback || productScanRunFeedback) && (
+              <div data-product-list-status-icons className='flex flex-wrap items-center gap-2'>
+                <ProductListStatusIcons
+                  isImported={isImported}
+                  hasMarketplaceCopy={hasMarketplaceCopy}
+                  hasEnglishTitle={hasEnglishTitle}
+                  hasEnglishDescription={hasEnglishDescription}
+                  hasPolishTitle={hasPolishTitle}
+                  hasPolishDescription={hasPolishDescription}
+                />
                 {product.archived ? (
                   <Badge variant='removed' icon={<Archive className='size-3' />}>
                     Archived
                   </Badge>
                 ) : null}
-                {isImported && (
-                  <Badge variant='info' icon={<Download className='size-3' />}>
-                    Imported
-                  </Badge>
-                )}
                 {productAiRunFeedback ? (
                   <ProductListActivityPill
                     config={{
@@ -575,6 +602,11 @@ const ProductListMobileCard = memo(({
   const nameKey = rowVisuals.productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
   const isImported = hasImportedProductOrigin(product);
+  const hasMarketplaceCopy = hasFilledMarketplaceCopy(product);
+  const hasEnglishTitle = hasEnglishProductTitle(product);
+  const hasEnglishDescription = hasEnglishProductDescription(product);
+  const hasPolishTitle = hasPolishProductTitle(product);
+  const hasPolishDescription = hasPolishProductDescription(product);
   const skuLabel = product.sku?.trim() || 'No SKU';
   const duplicateSkuCount =
     typeof product.duplicateSkuCount === 'number' && product.duplicateSkuCount > 1
@@ -646,6 +678,11 @@ const ProductListMobileCard = memo(({
     rowRuntime,
     nameValue,
     isImported,
+    hasMarketplaceCopy,
+    hasEnglishTitle,
+    hasEnglishDescription,
+    hasPolishTitle,
+    hasPolishDescription,
     skuLabel,
     duplicateSkuCount,
     duplicateSkuTitle,

@@ -8,26 +8,44 @@ import type { FilemakerJobBoardScrapedOffer } from '../../filemaker-job-board-sc
 import { toIdToken } from '../../filemaker-settings.helpers';
 import { normalizeLexiconKey, normalizeLexiconLabel } from './normalizers';
 
-export const findOfferAddressValue = (offer: FilemakerJobBoardScrapedOffer): string | null => {
-  const location = normalizeLexiconLabel(offer.location ?? '');
-  if (location.length > 0) return location;
-  return null;
+const PROFILE_ADDRESS_LINE_RE = /^Address:\s*(.+)$/imu;
+
+const hasStreetAddressSignal = (value: string): boolean =>
+  /\b[0-9]{2}-[0-9]{3}\b/u.test(value) ||
+  /(?:^|,\s*)(?:ul\.?|ulica|al\.?|aleja|pl\.?|plac|rondo|street|road)\s+/iu.test(value) ||
+  /[\p{L}. -]+\s+[0-9]+[0-9A-Za-z/ -]*(?:,|$)/u.test(value);
+
+const findOfferProfileAddressValue = (offer: FilemakerJobBoardScrapedOffer): string | null => {
+  const match = offer.companyProfile.match(PROFILE_ADDRESS_LINE_RE);
+  const address = normalizeLexiconLabel(match?.[1] ?? '');
+  return address.length > 0 ? address : null;
 };
 
 export const cleanAddressCity = (value: string): string =>
   normalizeLexiconLabel(value.replace(/\([^)]*\)/g, ''));
 
+const isRemoteLocationPart = (value: string): boolean => {
+  const key = normalizeLexiconKey(value);
+  return (
+    key.includes('praca zdalna') ||
+    key.includes('rekrutacja zdalna') ||
+    key.includes('remote') ||
+    key.includes('cala polska')
+  );
+};
+
 const normalizeAddressParts = (value: string): string[] =>
   normalizeLexiconLabel(value)
     .split(',')
     .map((part) => normalizeLexiconLabel(part))
-    .filter(Boolean);
+    .filter((part) => part.length > 0 && !isRemoteLocationPart(part));
 
 const parseStreetPart = (value: string): Pick<FilemakerAddress, 'street' | 'streetNumber'> => {
   const streetMatch = value.match(/^(.+?)\s+([0-9]+[0-9A-Za-z/ -]*)$/);
+  if (streetMatch === null) return { street: '', streetNumber: '' };
   return {
-    street: normalizeLexiconLabel(streetMatch?.[1] ?? value),
-    streetNumber: normalizeLexiconLabel(streetMatch?.[2] ?? ''),
+    street: normalizeLexiconLabel(streetMatch[1] ?? ''),
+    streetNumber: normalizeLexiconLabel(streetMatch[2] ?? ''),
   };
 };
 
@@ -79,6 +97,34 @@ export const parseScrapedAddressPill = (
     street,
     streetNumber,
   };
+};
+
+const isSpecificAddressCandidate = (value: string): boolean => {
+  const parsed = parseScrapedAddressPill(value);
+  if (parsed === null) return false;
+  return parsed.street.length > 0 || parsed.postalCode.length > 0;
+};
+
+const findOfferPillAddressValue = (offer: FilemakerJobBoardScrapedOffer): string | null => {
+  const pillAddress = [...offer.unclassifiedPills, ...offer.pills]
+    .map((pill) => normalizeLexiconLabel(pill.label))
+    .find((label) => label.length > 0 && isSpecificAddressCandidate(label));
+  return pillAddress ?? null;
+};
+
+export const findOfferAddressValue = (offer: FilemakerJobBoardScrapedOffer): string | null => {
+  const pillAddress = findOfferPillAddressValue(offer);
+  if (pillAddress !== null) return pillAddress;
+  const location = normalizeLexiconLabel(offer.location ?? '');
+  const profileAddress = findOfferProfileAddressValue(offer);
+  if (
+    profileAddress !== null &&
+    (location.length === 0 || !hasStreetAddressSignal(location))
+  ) {
+    return profileAddress;
+  }
+  if (location.length > 0) return location;
+  return profileAddress;
 };
 
 export const addressComparisonKey = (

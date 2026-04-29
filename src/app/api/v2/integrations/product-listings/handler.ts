@@ -208,6 +208,16 @@ const buildPayload = async (
     }
 
     const shouldReplace = (() => {
+      if (
+        marketplace === 'tradera' &&
+        (currentMeta.status === 'closed' || nextMeta.status === 'closed')
+      ) {
+        if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+          return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+        }
+        return nextMeta.status === 'closed' && currentMeta.status !== 'closed';
+      }
+
       if (currentMeta.success !== nextMeta.success) {
         return nextMeta.success;
       }

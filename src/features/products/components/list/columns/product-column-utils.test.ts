@@ -3,6 +3,11 @@ import { describe, expect, it } from 'vitest';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import {
+  hasFilledMarketplaceCopy,
+  hasEnglishProductDescription,
+  hasEnglishProductTitle,
+  hasPolishProductDescription,
+  hasPolishProductTitle,
   resolveEffectiveDefaultPriceGroupId,
   resolveMarketplaceStatusWithLocalFeedback,
 } from './product-column-utils';
@@ -124,5 +129,95 @@ describe('resolveMarketplaceStatusWithLocalFeedback', () => {
         localFeedbackStatus: 'completed',
       })
     ).toBe('active');
+  });
+});
+
+describe('product list status helpers', () => {
+  it('detects marketplace copy only when an assigned override has title or description text', () => {
+    expect(
+      hasFilledMarketplaceCopy(
+        createProduct({
+          marketplaceContentOverrides: [
+            {
+              integrationIds: ['tradera'],
+              title: '  ',
+              description: null,
+            },
+          ],
+        })
+      )
+    ).toBe(false);
+
+    expect(
+      hasFilledMarketplaceCopy(
+        createProduct({
+          marketplaceContentOverrides: [
+            {
+              integrationIds: ['tradera'],
+              title: '',
+              description: ' Marketplace description ',
+            },
+          ],
+        })
+      )
+    ).toBe(true);
+  });
+
+  it('detects direct and nested English titles', () => {
+    expect(hasEnglishProductTitle(createProduct({ name_en: ' Keychain ' }))).toBe(true);
+    expect(
+      hasEnglishProductTitle(
+        createProduct({
+          name: { en: 'Pendant', pl: null, de: null },
+          name_en: null,
+        })
+      )
+    ).toBe(true);
+    expect(
+      hasEnglishProductTitle(createProduct({ name: { en: '', pl: null, de: null }, name_en: ' ' }))
+    ).toBe(false);
+  });
+
+  it('detects direct and nested English descriptions', () => {
+    expect(
+      hasEnglishProductDescription(createProduct({ description_en: ' English description ' }))
+    ).toBe(true);
+    expect(
+      hasEnglishProductDescription(
+        createProduct({
+          description: { en: 'Description', pl: null, de: null },
+          description_en: null,
+        })
+      )
+    ).toBe(true);
+    expect(hasEnglishProductDescription(createProduct({ description_en: ' ' }))).toBe(false);
+  });
+
+  it('detects direct and nested Polish titles', () => {
+    expect(hasPolishProductTitle(createProduct({ name_pl: ' Brelok ' }))).toBe(true);
+    expect(
+      hasPolishProductTitle(
+        createProduct({
+          name: { en: 'Keychain', pl: 'Wisiorek', de: null },
+          name_pl: null,
+        })
+      )
+    ).toBe(true);
+    expect(hasPolishProductTitle(createProduct({ name_pl: ' ' }))).toBe(false);
+  });
+
+  it('detects direct and nested Polish descriptions', () => {
+    expect(hasPolishProductDescription(createProduct({ description_pl: ' Polski opis ' }))).toBe(
+      true
+    );
+    expect(
+      hasPolishProductDescription(
+        createProduct({
+          description: { en: '', pl: 'Opis', de: null },
+          description_pl: null,
+        })
+      )
+    ).toBe(true);
+    expect(hasPolishProductDescription(createProduct({ description_pl: ' ' }))).toBe(false);
   });
 });

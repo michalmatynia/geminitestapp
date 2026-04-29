@@ -15,10 +15,10 @@ export const FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT =
 
 export const filemakerJobBoardScrapeModeSchema = z.enum(['preview', 'import']);
 export const filemakerJobBoardOrganizationScopeSchema = z.enum(['all', 'selected']);
-export const filemakerJobBoardImportStrategySchema = z.enum([
-  'matched_only',
-  'create_unmatched',
-]);
+export const filemakerJobBoardImportStrategySchema = z.preprocess(
+  (value: unknown): unknown => (value === 'matched_only' ? 'create_unmatched' : value),
+  z.enum(['create_unmatched'])
+);
 export const filemakerJobBoardDuplicateStrategySchema = z.enum(['skip', 'update', 'add']);
 export const filemakerJobBoardScrapeExtractionPathSchema = z.enum([
   'playwright_ai',
@@ -298,10 +298,10 @@ export type FilemakerJobBoardScrapeRuntimeStartResponse = {
 };
 
 export type FilemakerJobBoardScrapeWriteAction =
-  | 'organization_address_updated'
   | 'organization_created'
   | 'organization_linked'
   | 'organization_profile_updated'
+  | 'listing_address_updated'
   | 'listing_lexicon_linked'
   | 'listing_created'
   | 'listing_updated'

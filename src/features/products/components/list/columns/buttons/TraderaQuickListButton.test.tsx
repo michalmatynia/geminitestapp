@@ -261,8 +261,34 @@ describe('TraderaQuickListButton', () => {
 
     const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
     expect(button).not.toBeDisabled();
-    expect(button.className).toContain('border-blue-700/80');
-    expect(button).toHaveAttribute('title', 'One-click export to Tradera (closed / closed)');
+    expect(button.className).toContain('border-gray-500/50');
+    expect(button.className).not.toContain('border-blue-700/80');
+    expect(button).toHaveAttribute('title', 'One-click export to Tradera (not_started)');
+  });
+
+  it('ignores stale queued quick-list feedback after a Tradera listing is marked closed', async () => {
+    window.sessionStorage.setItem(
+      'tradera-quick-list-feedback',
+      JSON.stringify({
+        'product-1': {
+          productId: 'product-1',
+          status: 'queued',
+          requestId: 'job-tradera-stale',
+          expiresAt: Date.now() + 60_000,
+        },
+      })
+    );
+
+    renderButton({ showTraderaBadge: true, traderaStatus: 'closed' });
+
+    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
+    expect(button).not.toBeDisabled();
+    expect(button.className).toContain('border-gray-500/50');
+    expect(button.className).not.toContain('border-amber-400/70');
+
+    await waitFor(() => {
+      expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toBeNull();
+    });
   });
 
   it('disables one-click export when Market Exclusion includes Tradera', () => {

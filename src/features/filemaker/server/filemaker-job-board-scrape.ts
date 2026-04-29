@@ -1,5 +1,5 @@
 import 'server-only';
-/* eslint-disable max-lines, max-lines-per-function, complexity, no-await-in-loop, max-params, no-param-reassign */
+/* eslint-disable max-lines, max-lines-per-function, complexity, no-await-in-loop, max-params */
 
 import { randomUUID } from 'crypto';
 
@@ -66,15 +66,13 @@ type LoadedDatabase = {
   rawValue: string | null;
 };
 
-import {
-  buildCandidate,
-  findBestMatch,
-  normalizeNameForMatch,
-  type OrganizationCandidate,
-} from './job-board-scrape/match-organizations';
+import { normalizeNameForMatch } from './job-board-scrape/match-organizations';
+
+type ScrapedCompanyCandidate = {
+  organization: FilemakerOrganization;
+};
 
 type ApplyImportInput = {
-  candidates: OrganizationCandidate[];
   database: FilemakerDatabase;
   onWrite?: (write: FilemakerJobBoardScrapeWriteResult) => Promise<void> | void;
   options: FilemakerJobBoardScrapeRequest;
@@ -396,17 +394,20 @@ const applyOfferAddressToDatabaseJobListing = (
   );
   let listingChanged = false;
   if (shouldSetDefaultAddress) {
-    const nextListing = createFilemakerJobListing({
-      ...listing,
-      addressId: addressRecord.address.id,
-      city: addressRecord.address.city,
-      country: addressRecord.address.country,
-      countryId: addressRecord.address.countryId,
+    const nextListing = {
+      ...createFilemakerJobListing({
+        ...listing,
+        addressId: addressRecord.address.id,
+        city: addressRecord.address.city,
+        country: addressRecord.address.country,
+        countryId: addressRecord.address.countryId,
+        postalCode: addressRecord.address.postalCode,
+        street: addressRecord.address.street,
+        streetNumber: addressRecord.address.streetNumber,
+        updatedAt: new Date().toISOString(),
+      }),
       postalCode: addressRecord.address.postalCode,
-      street: addressRecord.address.street,
-      streetNumber: addressRecord.address.streetNumber,
-      updatedAt: new Date().toISOString(),
-    });
+    };
     listingChanged = JSON.stringify(listing) !== JSON.stringify(nextListing);
     if (listingChanged) {
       database.jobListings.splice(listingIndex, 1, nextListing);
@@ -453,80 +454,24 @@ const ensureOrganizationInDatabase = (
   return true;
 };
 
-const isOrganizationInScrapeScope = (
-  organizationId: string,
-  options: FilemakerJobBoardScrapeRequest
-): boolean =>
-  options.organizationScope !== 'selected' || options.selectedOrganizationIds.includes(organizationId);
-
 const toOptionalMongoString = (value: unknown): string | undefined => {
   const normalized = normalizeString(value);
   return normalized.length > 0 ? normalized : undefined;
 };
 
-const toCandidateOrganization = (value: unknown): FilemakerOrganization | null => {
-  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
-    return null;
-  }
-  const record = value as Record<string, unknown>;
-  const id = normalizeString(record['id'] ?? record['_id']);
-  const name = normalizeString(record['name']);
-  if (id.length === 0 || name.length === 0) return null;
-  return createFilemakerOrganization({
-    id,
-    name,
-    tradingName: toOptionalMongoString(record['tradingName']),
-    jobBoardCompanyProfile: toOptionalMongoString(record['jobBoardCompanyProfile']),
-    jobBoardCompanyProfileUrl: toOptionalMongoString(record['jobBoardCompanyProfileUrl']),
-    jobBoardCompanyProfileScrapedAt:
-      toOptionalMongoString(record['jobBoardCompanyProfileScrapedAt']) ?? null,
-  });
-};
-
-const loadOrganizationCandidates = async (
-  database: FilemakerDatabase,
-  options: FilemakerJobBoardScrapeRequest
-): Promise<OrganizationCandidate[]> => {
-  const organizationsById = new Map<string, FilemakerOrganization>();
-  database.organizations.forEach((organization: FilemakerOrganization): void => {
-    if (isOrganizationInScrapeScope(organization.id, options)) {
-      organizationsById.set(organization.id, organization);
-    }
-  });
-
-  try {
-    const collection = await getFilemakerOrganizationsCollection();
-    const documents = await collection.find({}).limit(10_000).toArray();
-    documents.forEach((document: unknown): void => {
-      const organization = toCandidateOrganization(document);
-      if (
-        organization !== null &&
-        isOrganizationInScrapeScope(organization.id, options) &&
-        !organizationsById.has(organization.id)
-      ) {
-        organizationsById.set(organization.id, organization);
-      }
-    });
-  } catch {
-    // Settings-backed organizations are enough when Mongo is unavailable.
-  }
-
-  return Array.from(organizationsById.values()).map(buildCandidate);
-};
-
 const getOrCreateScrapedCompanyCandidate = async (args: {
   companyKey: string;
-  createdCandidatesByCompanyKey: Map<string, OrganizationCandidate>;
+  createdCandidatesByCompanyKey: Map<string, ScrapedCompanyCandidate>;
   database: FilemakerDatabase;
   offer: FilemakerJobBoardScrapedOffer;
-}): Promise<{ candidate: OrganizationCandidate; created: boolean; profileUpdated: boolean }> => {
+}): Promise<{ candidate: ScrapedCompanyCandidate; created: boolean; profileUpdated: boolean }> => {
   const existingCandidate = args.createdCandidatesByCompanyKey.get(args.companyKey);
   if (existingCandidate !== undefined) {
     return { candidate: existingCandidate, created: false, profileUpdated: false };
   }
 
   const createdOrganizationRecord = createUnmatchedOrganization(args.database, args.offer);
-  const candidate = buildCandidate(createdOrganizationRecord);
+  const candidate: ScrapedCompanyCandidate = { organization: createdOrganizationRecord };
   args.createdCandidatesByCompanyKey.set(args.companyKey, candidate);
   await upsertMongoOrganizationForJobBoardImport(candidate.organization);
   return {
@@ -693,9 +638,6 @@ const buildWriteMessage = (
   result: FilemakerJobBoardScrapeOfferResult
 ): string => {
   const organizationName = result.match?.organizationName ?? result.offer.companyName;
-  if (action === 'organization_address_updated') {
-    return `Updated organisation address for ${organizationName}.`;
-  }
   if (action === 'organization_created') {
     return `Created organisation ${organizationName}.`;
   }
@@ -704,6 +646,9 @@ const buildWriteMessage = (
   }
   if (action === 'organization_profile_updated') {
     return `Updated company profile for ${organizationName}.`;
+  }
+  if (action === 'listing_address_updated') {
+    return `Updated job listing address for ${result.offer.title}.`;
   }
   if (action === 'listing_created') {
     return `Created job listing ${result.offer.title}.`;
@@ -717,7 +662,7 @@ const buildWriteMessage = (
   if (action === 'listing_lexicon_linked') {
     return `Linked job-board lexicon terms for ${result.offer.title}.`;
   }
-  return `No organisation matched ${result.offer.companyName}.`;
+  return result.reason ?? `No organisation was created for ${result.offer.companyName}.`;
 };
 
 const emitWriteResult = async (
@@ -954,29 +899,31 @@ const exactLexiconMatchesForClassification = (
     .sort((left, right) => right.occurrenceCount - left.occurrenceCount);
 };
 
+type ClassificationTypeResolution = {
+  authoritative: boolean;
+  reason: string | null;
+  typeKey: FilemakerJobBoardLexiconClassification['typeKey'] | null;
+};
+
 const resolveAuthoritativeClassificationType = (
   database: FilemakerDatabase,
   classification: FilemakerJobBoardLexiconClassification,
   candidate: FilemakerJobBoardScrapedOffer['unclassifiedPills'][number]
-): { reason: string | null; typeKey: FilemakerJobBoardLexiconClassification['typeKey'] | null } => {
-  if (classification.action === 'ignore' || isIgnoredClassificationNoise(candidate.label)) {
-    return { reason: 'ignored noise or provider UI text', typeKey: null };
-  }
-  if (classification.typeKey === 'other') {
-    return { reason: 'kept as unclassified because model returned Other', typeKey: null };
+): ClassificationTypeResolution => {
+  if (isIgnoredClassificationNoise(candidate.label)) {
+    return { authoritative: false, reason: 'ignored noise or provider UI text', typeKey: null };
   }
 
   const exactMatches = exactLexiconMatchesForClassification(database, candidate.label);
-  const nonAddressExactMatches = exactMatches.filter(
-    (term: FilemakerLexiconTerm): boolean => term.typeKey !== 'address'
+  const authoritativeExactMatches = exactMatches.filter(
+    (term: FilemakerLexiconTerm): boolean =>
+      term.typeKey !== 'address' && term.typeKey !== 'other'
   );
-  if (nonAddressExactMatches.length > 0) {
-    const modelMatchedTerm = nonAddressExactMatches.find(
-      (term) => term.typeKey === classification.typeKey
-    );
+  if (authoritativeExactMatches.length > 0) {
     return {
-      reason: 'matched existing lexicon term',
-      typeKey: (modelMatchedTerm ?? nonAddressExactMatches[0])?.typeKey ?? classification.typeKey,
+      authoritative: true,
+      reason: 'matched authoritative existing lexicon term',
+      typeKey: authoritativeExactMatches[0]?.typeKey ?? classification.typeKey,
     };
   }
 
@@ -986,18 +933,38 @@ const resolveAuthoritativeClassificationType = (
   );
   if (patternClassification !== null) {
     if (patternClassification.typeKey === 'other' || patternClassification.typeKey === 'address') {
-      return { reason: `matched validation pattern ${patternClassification.pattern.id} as Other`, typeKey: null };
+      return {
+        authoritative: true,
+        reason:
+          `matched validation pattern ${patternClassification.pattern.id} as ${patternClassification.typeKey}`,
+        typeKey: null,
+      };
     }
     return {
+      authoritative: true,
       reason: `matched validation pattern ${patternClassification.pattern.id}`,
       typeKey: patternClassification.typeKey,
     };
   }
 
-  if (classification.typeKey === 'address') {
-    return { reason: 'Address classifications are stored as structured address fields', typeKey: null };
+  if (classification.action === 'ignore') {
+    return { authoritative: false, reason: 'model returned ignore', typeKey: null };
   }
-  return { reason: null, typeKey: classification.typeKey };
+  if (classification.typeKey === 'other') {
+    return {
+      authoritative: false,
+      reason: 'kept as unclassified because model returned Other',
+      typeKey: null,
+    };
+  }
+  if (classification.typeKey === 'address') {
+    return {
+      authoritative: false,
+      reason: 'Address classifications are stored as structured address fields',
+      typeKey: null,
+    };
+  }
+  return { authoritative: false, reason: null, typeKey: classification.typeKey };
 };
 
 const buildClassifiedOfferPill = (
@@ -1018,7 +985,10 @@ const buildOfferWithClassifiedPills = (
   classifications: readonly FilemakerJobBoardLexiconClassification[]
 ): ClassificationPillBuildResult => {
   const warnings: string[] = [];
-  const candidatesByKey = new Map<string, FilemakerJobBoardScrapedOffer['unclassifiedPills'][number]>();
+  const candidatesByKey = new Map<
+    string,
+    FilemakerJobBoardScrapedOffer['unclassifiedPills'][number]
+  >();
   offer.unclassifiedPills.forEach((candidate) => {
     const key = classificationKey(candidate.label);
     if (key.length > 0 && !candidatesByKey.has(key)) {
@@ -1037,15 +1007,20 @@ const buildOfferWithClassifiedPills = (
       warnings.push(`Ignored classification for unknown pill "${classification.label}".`);
       return;
     }
-    if (classification.confidence < CLASSIFICATION_CONFIDENCE_THRESHOLD) {
-      rejectedCount += 1;
-      warnings.push(`Kept "${candidate.label}" unclassified because confidence was too low.`);
-      return;
-    }
     const authoritative = resolveAuthoritativeClassificationType(database, classification, candidate);
     if (authoritative.typeKey === null) {
       rejectedCount += 1;
-      warnings.push(`Kept "${candidate.label}" unclassified: ${authoritative.reason ?? 'not classifiable'}.`);
+      warnings.push(
+        `Kept "${candidate.label}" unclassified: ${authoritative.reason ?? 'not classifiable'}.`
+      );
+      return;
+    }
+    if (
+      !authoritative.authoritative &&
+      classification.confidence < CLASSIFICATION_CONFIDENCE_THRESHOLD
+    ) {
+      rejectedCount += 1;
+      warnings.push(`Kept "${candidate.label}" unclassified because confidence was too low.`);
       return;
     }
     const acceptedKey = `${authoritative.typeKey}:${classificationKey(candidate.label)}`;
@@ -1184,7 +1159,6 @@ export const applyFilemakerJobBoardLexiconClassifications = async (
 };
 
 const applyImport = async ({
-  candidates,
   database,
   onWrite,
   offers,
@@ -1196,8 +1170,7 @@ const applyImport = async ({
 }> => {
   let changed = false;
   const counters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
-  const candidateList = [...candidates];
-  const createdCandidatesByCompanyKey = new Map<string, OrganizationCandidate>();
+  const createdCandidatesByCompanyKey = new Map<string, ScrapedCompanyCandidate>();
   const results: FilemakerJobBoardScrapeOfferResult[] = [];
 
   for (const offer of offers) {
@@ -1272,6 +1245,7 @@ const applyImport = async ({
       if (addressApply.changed) {
         changed = true;
         counters.addressUpdates += 1;
+        await emitWriteResult(onWrite, 'listing_address_updated', result, false);
       }
       const lexicon = applyOfferLexiconToListing(database, duplicateListing.id, offer);
       if (lexicon.changed) {
@@ -1283,94 +1257,58 @@ const applyImport = async ({
       continue;
     }
 
-    let match: FilemakerJobBoardOrganizationMatch | null = null;
-    let matchedCandidate: OrganizationCandidate | null = null;
-    const currentRunCandidate =
-      companyKey.length > 0 ? createdCandidatesByCompanyKey.get(companyKey) : undefined;
-    if (currentRunCandidate !== undefined) {
-      matchedCandidate = currentRunCandidate;
-      match = {
-        confidence: 100,
-        organizationId: currentRunCandidate.organization.id,
-        organizationName: currentRunCandidate.organization.name,
-        reason: 'same scraped employer in current import',
-      };
-    }
-    if (!match) {
-      match = findBestMatch(offer, candidateList, options.minimumMatchConfidence);
-      matchedCandidate =
-        match === null
-          ? null
-          : candidateList.find(
-              (candidate: OrganizationCandidate): boolean =>
-                candidate.organization.id === match?.organizationId
-            ) ?? null;
-    }
-    let createdOrganization = false;
-    let createdOrganizationProfileUpdated = false;
-    if (!match && options.importStrategy === 'create_unmatched') {
-      if (isSuspiciousJobBoardCompanyName(offer.companyName)) {
-        const result: FilemakerJobBoardScrapeOfferResult = {
-          listingId: null,
-          match: null,
-          offer,
-          reason:
-            'Scraped employer name looks like job-board directory metadata, so no organisation was created.',
-          status: 'unmatched',
-        };
-        results.push(result);
-        await emitWriteResult(onWrite, 'offer_unmatched', result, false);
-        continue;
-      }
-      const createdOrganizationRecord = createUnmatchedOrganization(database, offer);
-      const candidate = buildCandidate(createdOrganizationRecord);
-      candidateList.push(candidate);
-      if (companyKey.length > 0) {
-        createdCandidatesByCompanyKey.set(companyKey, candidate);
-      }
-      matchedCandidate = candidate;
-      match = {
-        confidence: 100,
-        organizationId: candidate.organization.id,
-        organizationName: candidate.organization.name,
-        reason: 'created from scraped job-board employer',
-      };
-      changed = true;
-      createdOrganization = true;
-      counters.createdOrganizations += 1;
-      if (offer.companyProfile.trim().length > 0) {
-        createdOrganizationProfileUpdated = true;
-        counters.profileUpdates += 1;
-      }
-      const organizationResult: FilemakerJobBoardScrapeOfferResult = {
-        listingId: null,
-        match,
-        offer,
-        reason: null,
-        status: 'created',
-      };
-      await emitWriteResult(
-        onWrite,
-        'organization_created',
-        organizationResult,
-        createdOrganizationProfileUpdated
-      );
-      await upsertMongoOrganizationForJobBoardImport(candidate.organization);
-    }
-    if (!match) {
+    if (companyKey.length === 0 || isSuspiciousJobBoardCompanyName(offer.companyName)) {
       const result: FilemakerJobBoardScrapeOfferResult = {
         listingId: null,
         match: null,
         offer,
-        reason: 'No organisation matched the employer name.',
+        reason:
+          companyKey.length === 0
+            ? 'Scraped employer name is empty, so no organisation was created.'
+            : 'Scraped employer name looks like job-board directory metadata, so no organisation was created.',
         status: 'unmatched',
       };
       results.push(result);
       await emitWriteResult(onWrite, 'offer_unmatched', result, false);
       continue;
     }
+    const companyCandidate = await getOrCreateScrapedCompanyCandidate({
+      companyKey,
+      createdCandidatesByCompanyKey,
+      database,
+      offer,
+    });
+    const matchedCandidate = companyCandidate.candidate;
+    const createdOrganization = companyCandidate.created;
+    const createdOrganizationProfileUpdated = companyCandidate.profileUpdated;
+    const match: FilemakerJobBoardOrganizationMatch = {
+      confidence: 100,
+      organizationId: matchedCandidate.organization.id,
+      organizationName: matchedCandidate.organization.name,
+      reason: createdOrganization
+        ? 'created from scraped job-board employer'
+        : 'same scraped employer in current import',
+    };
+    if (createdOrganization) {
+      changed = true;
+      counters.createdOrganizations += 1;
+      counters.profileUpdates += createdOrganizationProfileUpdated ? 1 : 0;
+      await emitWriteResult(
+        onWrite,
+        'organization_created',
+        { listingId: null, match, offer, reason: null, status: 'created' },
+        createdOrganizationProfileUpdated
+      );
+    } else {
+      await emitWriteResult(
+        onWrite,
+        'organization_linked',
+        { listingId: null, match, offer, reason: null, status: 'preview' },
+        false
+      );
+    }
 
-    if (matchedCandidate && ensureOrganizationInDatabase(database, matchedCandidate.organization)) {
+    if (ensureOrganizationInDatabase(database, matchedCandidate.organization)) {
       changed = true;
       await emitWriteResult(
         onWrite,
@@ -1379,9 +1317,7 @@ const applyImport = async ({
         false
       );
     }
-    if (matchedCandidate) {
-      await upsertMongoOrganizationForJobBoardImport(matchedCandidate.organization);
-    }
+    await upsertMongoOrganizationForJobBoardImport(matchedCandidate.organization);
     const profileUpdated = applyOfferProfileToDatabaseOrganization(
       database,
       match.organizationId,
@@ -1401,7 +1337,15 @@ const applyImport = async ({
       );
     }
     await upsertMongoOrganizationProfile(match.organizationId, offer);
-    const existingIndex = findExistingListingIndex(database.jobListings, match.organizationId, offer);
+    const matchedExistingIndex = findExistingListingIndex(
+      database.jobListings,
+      match.organizationId,
+      offer
+    );
+    const existingIndex =
+      options.duplicateStrategy === 'update' && existingSourceIndex >= 0
+        ? existingSourceIndex
+        : matchedExistingIndex;
     const existing = existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
     if (existing && options.duplicateStrategy === 'skip') {
       const result: FilemakerJobBoardScrapeOfferResult = {
@@ -1417,6 +1361,7 @@ const applyImport = async ({
       if (addressApply.changed) {
         changed = true;
         counters.addressUpdates += 1;
+        await emitWriteResult(onWrite, 'listing_address_updated', result, false);
       }
       const lexicon = applyOfferLexiconToListing(database, existing.id, offer);
       if (lexicon.changed) {
@@ -1449,6 +1394,7 @@ const applyImport = async ({
       if (addressApply.changed) {
         changed = true;
         counters.addressUpdates += 1;
+        await emitWriteResult(onWrite, 'listing_address_updated', result, false);
       }
       const lexicon = applyOfferLexiconToListing(database, listing.id, offer);
       if (lexicon.changed) {
@@ -1470,6 +1416,7 @@ const applyImport = async ({
       const addressApply = applyOfferAddressToDatabaseJobListing(database, listing.id, offer);
       if (addressApply.changed) {
         counters.addressUpdates += 1;
+        await emitWriteResult(onWrite, 'listing_address_updated', result, false);
       }
       const lexicon = applyOfferLexiconToListing(database, listing.id, offer);
       if (lexicon.changed) {
@@ -1584,15 +1531,15 @@ const toDraftSaveImportOptions = (
     extractSalaries: true,
     headless: null,
     humanizeMouse: true,
-    importStrategy: input.importStrategy,
+    importStrategy: 'create_unmatched',
     maxOffers: input.offers.length,
     maxPages: 1,
-    minimumMatchConfidence: input.minimumMatchConfidence,
+    minimumMatchConfidence: 85,
     mode: 'import',
-    organizationScope: input.organizationScope,
+    organizationScope: 'all',
     personaId: null,
     provider: input.provider,
-    selectedOrganizationIds: input.selectedOrganizationIds,
+    selectedOrganizationIds: [],
     sourceUrl: input.sourceUrl,
     status: input.status,
     timeoutMs: 180_000,
@@ -1851,10 +1798,8 @@ export const saveFilemakerJobBoardScrapeDrafts = async (
   const sourceSite = resolveDraftSaveSourceSite(input, provider);
   throwIfScrapeAborted(signal);
   const { database } = await loadFilemakerDatabase();
-  const candidates = await loadOrganizationCandidates(database, options);
   throwIfScrapeAborted(signal);
   const imported = await applyImport({
-    candidates,
     database,
     offers: input.offers,
     onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),
@@ -1917,7 +1862,6 @@ export const runFilemakerJobBoardScrape = async (
 
   await emitLiveEvent(onEvent, { message: 'Loading FileMaker database.', type: 'status' });
   const { database } = await loadFilemakerDatabase();
-  const candidates = await loadOrganizationCandidates(database, options);
   throwIfScrapeAborted(signal);
   const scraped = await scrapeOffersViaJobBoardSequencer(
     options,
@@ -1934,10 +1878,7 @@ export const runFilemakerJobBoardScrape = async (
       onOffer: (input) =>
         emitLiveEvent(onEvent, {
           index: input.index,
-          result: buildOfferResult(
-            input.offer,
-            findBestMatch(input.offer, candidates, options.minimumMatchConfidence)
-          ),
+          result: buildOfferResult(input.offer, null),
           total: input.total,
           type: 'offer',
         }),
@@ -1965,9 +1906,7 @@ export const runFilemakerJobBoardScrape = async (
   );
   const previewResults = [
     ...scraped.skippedResults,
-    ...scraped.offers.map((offer) =>
-      buildOfferResult(offer, findBestMatch(offer, candidates, options.minimumMatchConfidence))
-    ),
+    ...scraped.offers.map((offer) => buildOfferResult(offer, null)),
   ];
 
   let results = previewResults;
@@ -1977,7 +1916,6 @@ export const runFilemakerJobBoardScrape = async (
     throwIfScrapeAborted(signal);
     await emitLiveEvent(onEvent, { message: 'Importing scraped offers.', type: 'status' });
     const imported = await applyImport({
-      candidates,
       database,
       offers: scraped.offers,
       onWrite: (write) => emitLiveEvent(onEvent, { type: 'write', write }),

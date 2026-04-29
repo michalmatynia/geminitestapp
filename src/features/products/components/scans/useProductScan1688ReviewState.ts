@@ -32,7 +32,7 @@ const readReviewedBlockedScanIds = (): string[] => {
 
   try {
     const rawValue = window.localStorage.getItem(PRODUCT_SCAN_1688_REVIEWED_STORAGE_KEY);
-    if (!rawValue) {
+    if (rawValue === null || rawValue === '') {
       return [];
     }
 

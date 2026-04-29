@@ -53,10 +53,10 @@ export const resolveProductAiRunFeedbackForList = (args: {
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
 }): ProductAiRunFeedback | null => {
   const trackerFeedback = args.productAiRunStatusByProductId?.get(args.productId) ?? null;
-  if (trackerFeedback) {
+  if (trackerFeedback !== null) {
     return trackerFeedback;
   }
-  if (!args.queuedProductIds?.has(args.productId)) {
+  if (args.queuedProductIds?.has(args.productId) !== true) {
     return null;
   }
 
@@ -75,7 +75,7 @@ export const buildProductAiRunFeedbackFromSnapshot = (
   }
 ): ProductAiRunFeedback | null => {
   if (
-    (!options?.allowStopped && snapshot.trackingState === 'stopped') ||
+    (options?.allowStopped !== true && snapshot.trackingState === 'stopped') ||
     !isProductAiRunFeedbackStatus(snapshot.status)
   ) {
     return null;

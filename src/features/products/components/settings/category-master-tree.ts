@@ -28,7 +28,7 @@ export const fromCategoryMasterNodeId = (value: string): string | null =>
 
 export const decodeCategoryMasterNodeId = (value: string): CategoryMasterNodeRef | null => {
   const categoryId = fromCategoryMasterNodeId(value);
-  if (!categoryId) return null;
+  if (categoryId === null || categoryId === '') return null;
   return {
     entity: 'category',
     id: categoryId,
@@ -38,7 +38,7 @@ export const decodeCategoryMasterNodeId = (value: string): CategoryMasterNodeRef
 
 const buildPath = (parentPath: string, name: string): string => {
   const trimmedName = name.trim();
-  if (!parentPath) return trimmedName;
+  if (parentPath === '') return trimmedName;
   return `${parentPath}/${trimmedName}`;
 };
 

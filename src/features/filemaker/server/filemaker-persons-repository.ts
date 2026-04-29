@@ -302,6 +302,8 @@ const stripUndefinedFields = <T extends Record<string, unknown>>(input: T): Part
 const normalizePatchStringList = (value: string[] | undefined): string[] | undefined =>
   value?.map((entry: string): string => entry.trim());
 
+const normalizePatchString = (value: string | undefined): string | undefined => value?.trim();
+
 const resolvePatchFullName = (
   existing: FilemakerPersonMongoDocument,
   firstName: string | undefined,
@@ -318,23 +320,30 @@ const buildMongoFilemakerPersonUpdate = (
   patch: Partial<FilemakerPerson>,
   now: string
 ): Partial<FilemakerPersonMongoDocument> => {
-  const firstName = patch.firstName?.trim();
-  const lastName = patch.lastName?.trim();
+  const firstName = normalizePatchString(patch.firstName);
+  const lastName = normalizePatchString(patch.lastName);
   const fullName = resolvePatchFullName(existing, firstName, lastName);
   return stripUndefinedFields({
+    addressId: normalizePatchString(patch.addressId),
+    city: normalizePatchString(patch.city),
+    country: normalizePatchString(patch.country),
+    countryId: normalizePatchString(patch.countryId),
     cvCoreStrengths: normalizePatchStringList(patch.cvCoreStrengths),
-    cvHeadline: patch.cvHeadline?.trim(),
-    cvProfessionalSummary: patch.cvProfessionalSummary?.trim(),
+    cvHeadline: normalizePatchString(patch.cvHeadline),
+    cvProfessionalSummary: normalizePatchString(patch.cvProfessionalSummary),
     cvSelectedTechnicalEnvironment: normalizePatchStringList(
       patch.cvSelectedTechnicalEnvironment
     ),
     firstName,
     fullName,
-    githubUrl: patch.githubUrl?.trim(),
+    githubUrl: normalizePatchString(patch.githubUrl),
     lastName,
-    linkedinUrl: patch.linkedinUrl?.trim(),
+    linkedinUrl: normalizePatchString(patch.linkedinUrl),
+    postalCode: normalizePatchString(patch.postalCode),
     profileEducation: patch.profileEducation,
     profileJobExperience: patch.profileJobExperience,
+    street: normalizePatchString(patch.street),
+    streetNumber: normalizePatchString(patch.streetNumber),
     updatedAt: now,
   });
 };

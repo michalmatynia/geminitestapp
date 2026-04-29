@@ -172,6 +172,54 @@ describe('useAdminFilemakerPersonEditPageState', () => {
     expect(persistedDatabase.persons[0]?.lastName).toBe('Kowalska');
   });
 
+  it('persists linked address fields for settings-backed persons', async () => {
+    const { result } = renderHook(() => useAdminFilemakerPersonEditPageState());
+
+    await waitFor(() => {
+      expect(result.current.person?.id).toBe('person-1');
+    });
+
+    act(() => {
+      result.current.setEditableAddresses([
+        {
+          addressId: 'address-1',
+          city: 'Warsaw',
+          country: 'Poland',
+          countryId: 'PL',
+          isDefault: true,
+          postalCode: '00-001',
+          street: 'Marszalkowska',
+          streetNumber: '1',
+        },
+      ]);
+    });
+
+    await act(async () => {
+      await result.current.handleSave();
+    });
+
+    const [persistCall] = mocks.updateSettingMutateAsync.mock.calls[0] ?? [];
+    const persistedDatabase = JSON.parse(String(persistCall?.value ?? '{}'));
+    expect(persistedDatabase.persons[0]).toMatchObject({
+      addressId: 'address-1',
+    });
+    expect(persistedDatabase.addresses).toEqual([
+      expect.objectContaining({
+        id: 'address-1',
+        city: 'Warsaw',
+        street: 'Marszalkowska',
+      }),
+    ]);
+    expect(persistedDatabase.addressLinks).toEqual([
+      expect.objectContaining({
+        addressId: 'address-1',
+        isDefault: true,
+        ownerId: 'person-1',
+        ownerKind: 'person',
+      }),
+    ]);
+  });
+
   it('resolves linked emails through emailLinks without duplicating the email record', async () => {
     mocks.settingsGet.mockImplementation((key: string) =>
       key === FILEMAKER_DATABASE_KEY ? JSON.stringify(databaseWithSharedEmailFixture) : null

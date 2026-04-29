@@ -16,6 +16,23 @@ const readOptionalString = (value: unknown): string | null =>
 export const productScanBufferToDataUrl = (content: Buffer, mimeType: string): string =>
   `data:${mimeType};base64,${content.toString('base64')}`;
 
+const resolveImageMimeType = (candidate: string): string => {
+  const extension = path.extname(candidate).toLowerCase();
+  if (extension === '.png') return 'image/png';
+  if (extension === '.webp') return 'image/webp';
+  if (extension === '.gif') return 'image/gif';
+  return 'image/jpeg';
+};
+
+const readLocalImageCandidateAsDataUrl = async (candidate: string): Promise<string | null> => {
+  try {
+    const content = await fs.readFile(candidate);
+    return productScanBufferToDataUrl(content, resolveImageMimeType(candidate));
+  } catch {
+    return null;
+  }
+};
+
 const readLocalImageAsDataUrl = async (source: string): Promise<string | null> => {
   const candidates = [source];
   if (path.isAbsolute(source) === false) {
@@ -25,25 +42,8 @@ const readLocalImageAsDataUrl = async (source: string): Promise<string | null> =
     candidates.push(getDiskPathFromPublicPath(source));
   }
 
-  for (const candidate of candidates) {
-    try {
-      const content = await fs.readFile(candidate);
-      const extension = path.extname(candidate).toLowerCase();
-      const mimeType =
-        extension === '.png'
-          ? 'image/png'
-          : extension === '.webp'
-            ? 'image/webp'
-            : extension === '.gif'
-              ? 'image/gif'
-              : 'image/jpeg';
-      return productScanBufferToDataUrl(content, mimeType);
-    } catch {
-      continue;
-    }
-  }
-
-  return null;
+  const dataUrls = await Promise.all(candidates.map(readLocalImageCandidateAsDataUrl));
+  return dataUrls.find((dataUrl): dataUrl is string => dataUrl !== null) ?? null;
 };
 
 const readRemoteImageAsDataUrl = async (source: string): Promise<string | null> => {

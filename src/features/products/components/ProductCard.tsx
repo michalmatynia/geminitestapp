@@ -19,14 +19,15 @@ interface ProductCardProps {
 
 function resolveProductImageUrl(product: ProductWithImages): string | null {
   const images = Array.isArray(product.images) ? product.images : [];
-  return images[0]?.imageFile?.filepath ?? null;
+  const firstImage = images[0];
+  return firstImage === undefined ? null : firstImage.imageFile.filepath;
 }
 
 function resolveProductDisplayName(product: ProductWithImages, locale: string, fallback: string): string {
   const localized = resolveLocalizedText(product.name, locale);
   if (typeof localized === 'string' && localized.trim() !== '') return localized;
 
-  const suffix = locale.split('-')[0] ?? locale;
+  const suffix = locale.split('-')[0];
   const legacy = (product as Record<string, unknown>)[`name_${suffix}`];
   if (typeof legacy === 'string' && legacy.trim() !== '') return legacy;
 
@@ -37,7 +38,12 @@ function resolveProductDisplayName(product: ProductWithImages, locale: string, f
 
 function formatProductPrice(price: number | null, locale: string): string {
   if (typeof price !== 'number') return '—';
-  const tag = locale === 'pl' ? 'pl-PL' : (locale === 'de' ? 'de-DE' : 'en-US');
+  let tag = 'en-US';
+  if (locale === 'pl') {
+    tag = 'pl-PL';
+  } else if (locale === 'de') {
+    tag = 'de-DE';
+  }
   return new Intl.NumberFormat(tag, { style: 'currency', currency: 'USD' }).format(price);
 }
 

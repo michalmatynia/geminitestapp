@@ -24,6 +24,51 @@ type ProductScanExpansionPanelsProps = {
   extractingCandidateUrl: string | null;
 };
 
+function ProductScanCandidatePanel({
+  ready,
+  scan,
+  extractingCandidateUrl,
+  onExtractAmazonCandidate,
+}: {
+  ready: boolean;
+  scan: ProductScanRecord;
+  extractingCandidateUrl: string | null;
+  onExtractAmazonCandidate: (
+    scan: ProductScanRecord,
+    candidate: ProductScanAmazonCandidatePreview
+  ) => Promise<void>;
+}): React.JSX.Element | null {
+  if (ready === false) return null;
+
+  return (
+    <div className='mt-3 space-y-3'>
+      <ProductScanAmazonCandidateSelectionPanel
+        scan={scan}
+        extractingCandidateUrl={extractingCandidateUrl}
+        onExtractCandidate={(candidate) => onExtractAmazonCandidate(scan, candidate)}
+      />
+    </div>
+  );
+}
+
+function ProductScanExtractedFieldsPanel({
+  expanded,
+  scan,
+  productFormBindings,
+}: {
+  expanded: boolean;
+  scan: ProductScanRecord;
+  productFormBindings: ProductFormBindings;
+}): React.JSX.Element | null {
+  if (expanded === false) return null;
+
+  return (
+    <div className='mt-3 space-y-3'>
+      <ProductScanAmazonExtractedFieldsPanel scan={scan} formBindings={productFormBindings} />
+    </div>
+  );
+}
+
 export function ProductScanExpansionPanels({
   scan,
   isAmazonScan,
@@ -40,21 +85,18 @@ export function ProductScanExpansionPanels({
 
   return (
     <>
-      {candidateSelectionReady ? (
-        <div className='mt-3 space-y-3'>
-          <ProductScanAmazonCandidateSelectionPanel
-            scan={scan}
-            extractingCandidateUrl={extractingCandidateUrl}
-            onExtractCandidate={(candidate) => onExtractAmazonCandidate(scan, candidate)}
-          />
-        </div>
-      ) : null}
+      <ProductScanCandidatePanel
+        ready={candidateSelectionReady}
+        scan={scan}
+        extractingCandidateUrl={extractingCandidateUrl}
+        onExtractAmazonCandidate={onExtractAmazonCandidate}
+      />
 
-      {extractedFieldsExpanded === true && isAmazonScan === true ? (
-        <div className='mt-3 space-y-3'>
-          <ProductScanAmazonExtractedFieldsPanel scan={scan} formBindings={productFormBindings} />
-        </div>
-      ) : null}
+      <ProductScanExtractedFieldsPanel
+        expanded={extractedFieldsExpanded === true && isAmazonScan === true}
+        scan={scan}
+        productFormBindings={productFormBindings}
+      />
 
       {diagnosticsExpanded === true ? (
         <div className='mt-3 space-y-3'>

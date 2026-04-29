@@ -23,6 +23,7 @@ export * from './server/filemaker-party-snapshot-repository';
 export {
   listMongoFilemakerAddressesForOrganization,
   listMongoFilemakerAddressesForOwner,
+  updateMongoFilemakerAddressesForOwner,
 } from './server/filemaker-organizations-mongo';
 export * from './server/campaign-runtime';
 export * from './server/campaign-mail-filing-repair';

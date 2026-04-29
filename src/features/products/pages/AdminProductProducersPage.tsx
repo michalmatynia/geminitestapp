@@ -42,7 +42,7 @@ export function AdminProductProducersPage(): React.JSX.Element {
         isSaving={ctrl.saveMutation.isPending} 
       />
 
-      {ConfirmationModal ? <ConfirmationModal /> : null}
+      <ConfirmationModal />
     </AdminProductsPageLayout>
   );
 }

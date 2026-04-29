@@ -6,7 +6,7 @@ const resolveFirstTrimmedRecordValue = (
   record: Record<string, unknown> | null | undefined,
   keys: readonly string[]
 ): string => {
-  if (!record) {
+  if (record === null || record === undefined) {
     return '';
   }
 
@@ -17,7 +17,7 @@ const resolveFirstTrimmedRecordValue = (
     }
 
     const trimmed = value.trim();
-    if (trimmed) {
+    if (trimmed !== '') {
       return trimmed;
     }
   }
@@ -38,7 +38,7 @@ export const resolveCatalogRelationIdValue = (
   record: Record<string, unknown> | null | undefined
 ): string => {
   const directCatalogId = resolveFirstTrimmedRecordValue(record, CATALOG_ID_FIELDS);
-  if (directCatalogId) {
+  if (directCatalogId !== '') {
     return directCatalogId;
   }
 
@@ -57,7 +57,7 @@ export const resolveCategoryDisplayLabel = (
   opaqueCategoryIdPattern: RegExp
 ): string => {
   const label = categoryNameById.get(categoryId)?.trim() ?? '';
-  if (label) {
+  if (label !== '') {
     return label;
   }
 

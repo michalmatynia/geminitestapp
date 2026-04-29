@@ -38,13 +38,13 @@ export function useProductCategoryTree(catalogId?: string): ListQuery<ProductCat
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<ProductCategoryWithChildren[]> => {
-      if (!catalogId) return [];
+      if (typeof catalogId !== 'string' || catalogId === '') return [];
       return await api.get<ProductCategoryWithChildren[]>(
         `/api/v2/products/categories/tree?catalogId=${encodeURIComponent(catalogId)}`,
         { cache: 'no-store' }
       );
     },
-    enabled: Boolean(catalogId),
+    enabled: typeof catalogId === 'string' && catalogId !== '',
     meta: {
       source: 'products.hooks.useProductCategoryTree',
       operation: 'list',

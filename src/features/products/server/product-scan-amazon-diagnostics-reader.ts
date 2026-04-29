@@ -29,33 +29,42 @@ const resolveMime = (filename: string): string => {
   return EXTENSION_TO_MIME[ext] ?? 'application/octet-stream';
 };
 
+const readArtifactListing = async (
+  directory: string,
+  filename: string
+): Promise<AmazonScanDiagnosticArtifactListing | null> => {
+  if (!SAFE_ARTIFACT_FILENAME_RE.test(filename)) return null;
+  try {
+    const stats = await stat(join(directory, filename));
+    if (stats.isFile() === false) return null;
+    return {
+      filename,
+      sizeBytes: stats.size,
+      mtime: stats.mtime.toISOString(),
+      mimeType: resolveMime(filename),
+    };
+  } catch {
+    return null;
+  }
+};
+
 export async function listAmazonScanDiagnosticArtifacts(
   scanId: string
 ): Promise<AmazonScanDiagnosticArtifactListing[]> {
   const directory = resolveAmazonScanDiagnosticsDirectory(scanId);
-  if (!directory) return [];
+  if (directory === null || directory === '') return [];
   let entries: string[];
   try {
     entries = await readdir(directory);
   } catch {
     return [];
   }
-  const out: AmazonScanDiagnosticArtifactListing[] = [];
-  for (const filename of entries) {
-    if (!SAFE_ARTIFACT_FILENAME_RE.test(filename)) continue;
-    try {
-      const stats = await stat(join(directory, filename));
-      if (!stats.isFile()) continue;
-      out.push({
-        filename,
-        sizeBytes: stats.size,
-        mtime: stats.mtime.toISOString(),
-        mimeType: resolveMime(filename),
-      });
-    } catch {
-      // skip unreadable entries
-    }
-  }
+  const results = await Promise.all(
+    entries.map((filename) => readArtifactListing(directory, filename))
+  );
+  const out = results.filter(
+    (item): item is AmazonScanDiagnosticArtifactListing => item !== null
+  );
   return out.sort((a, b) => a.filename.localeCompare(b.filename));
 }
 
@@ -71,7 +80,7 @@ export async function readAmazonScanDiagnosticArtifact(
 ): Promise<AmazonScanDiagnosticArtifactFile | null> {
   if (!SAFE_ARTIFACT_FILENAME_RE.test(filename)) return null;
   const directory = resolveAmazonScanDiagnosticsDirectory(scanId);
-  if (!directory) return null;
+  if (directory === null || directory === '') return null;
   try {
     const content = await readFile(join(directory, filename));
     return { filename, content, mimeType: resolveMime(filename) };

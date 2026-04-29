@@ -19,33 +19,20 @@ export default function ProductFormScans(): React.JSX.Element {
   const productId = (ctx.product?.id ?? '').trim();
 
   const state = useProductFormScansState(productId);
-  const {
-    scans,
-    isFetching,
-    refetch,
-    handleDeleteScan,
-    handleExtractAmazonCandidate,
-    extractingAmazonCandidateScanId,
-    extractingAmazonCandidateUrl,
-    isDeletingScanId,
-  } = useProductScansQuery(productId);
+  const scanQuery = useProductScansQuery(productId);
   const { isBlockedScanReviewed, markBlockedScanReviewed, clearBlockedScanReviewed } = useProductScan1688ReviewState();
 
-  const supplierBindings = useSupplier1688FormBindings({ getValues: ctx.getValues, setValue: ctx.setValue, productFormImages: ctx.productFormImages });
-  const productBindings = useProductGeneralFormBindings({
-    getValues: ctx.getValues, setValue: ctx.setValue, parameters: ctx.parameters, parameterValues: ctx.parameterValues,
-    addParameterValue: ctx.addParameterValue, updateParameterId: ctx.updateParameterId, updateParameterValue: ctx.updateParameterValue,
-    customFields: ctx.customFields, customFieldValues: ctx.customFieldValues, setTextValue: ctx.setTextValue, toggleSelectedOption: ctx.toggleSelectedOption,
-  });
+  const supplierBindings = useSupplier1688FormBindings(ctx);
+  const productBindings = useProductGeneralFormBindings(ctx);
 
   const connectionNamesById = useProductFormConnectionNames();
   const productName = useProductFormScanProductName(ctx.product);
-  const { recommendedAmazonScan, recommended1688Scan, recommendedAmazonExtractedScanId } = useProductRecommendedScans(scans);
+  const { recommendedAmazonScan, recommended1688Scan, recommendedAmazonExtractedScanId } = useProductRecommendedScans(scanQuery.scans);
 
   const isAmazonExtractedExpanded = recommendedAmazonExtractedScanId !== null && state.expandedExtractedFieldScanIds.has(recommendedAmazonExtractedScanId);
   const is1688BlockedReviewed = recommended1688Scan !== null && isBlockedScanReviewed(recommended1688Scan.id);
 
-  const preferred1688Scans = scans.filter((s) => s.provider === '1688');
+  const preferred1688Scans = scanQuery.scans.filter((s) => s.provider === '1688');
 
   return (
     <div className='space-y-6'>
@@ -63,16 +50,16 @@ export default function ProductFormScans(): React.JSX.Element {
       />
 
       <ProductFormScansHistory
-        scans={scans}
+        scans={scanQuery.scans}
         productName={productName}
-        activeScansCount={scans.filter((s) => s.status === 'running' || s.status === 'queued' || s.status === 'enqueuing').length}
-        isFetching={isFetching}
-        onRefetch={refetch}
+        activeScansCount={scanQuery.scans.filter((s) => s.status === 'running' || s.status === 'queued' || s.status === 'enqueuing').length}
+        isFetching={scanQuery.isFetching}
+        onRefetch={scanQuery.refetch}
         expandedScanIds={state.expandedScanIds}
         expandedDiagnosticScanIds={state.expandedDiagnosticScanIds}
         expandedExtractedFieldScanIds={state.expandedExtractedFieldScanIds}
-        isDeletingScanId={isDeletingScanId}
-        onDelete={(id): void => { handleDeleteScan(id).catch(() => { /* no-op */ }); }}
+        isDeletingScanId={scanQuery.isDeletingScanId}
+        onDelete={(id): void => { scanQuery.handleDeleteScan(id).catch(() => { /* no-op */ }); }}
         onToggleSteps={state.toggleScanSteps}
         onToggleExtractedFields={state.toggleExtractedFields}
         onToggleDiagnostics={state.toggleDiagnostics}
@@ -82,9 +69,9 @@ export default function ProductFormScans(): React.JSX.Element {
         clearBlockedScanReviewed={clearBlockedScanReviewed}
         supplier1688FormBindings={supplierBindings}
         productFormBindings={productBindings}
-        onExtractAmazonCandidate={handleExtractAmazonCandidate}
-        extractingAmazonCandidateScanId={extractingAmazonCandidateScanId}
-        extractingAmazonCandidateUrl={extractingAmazonCandidateUrl}
+        onExtractAmazonCandidate={scanQuery.handleExtractAmazonCandidate}
+        extractingAmazonCandidateScanId={scanQuery.extractingAmazonCandidateScanId}
+        extractingAmazonCandidateUrl={scanQuery.extractingAmazonCandidateUrl}
       />
 
       <ProductFormScansModal provider={state.scanModalProvider} onClose={(): void => state.setScanModalProvider(null)} productId={productId} product={ctx.product} />

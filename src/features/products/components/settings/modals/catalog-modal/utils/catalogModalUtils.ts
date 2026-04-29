@@ -23,7 +23,11 @@ export function moveLanguage(
   const nextIdx = direction === 'up' ? idx - 1 : idx + 1;
   if (nextIdx < 0 || nextIdx >= selectedIds.length) return selectedIds;
   const next = [...selectedIds];
-  [next[idx], next[nextIdx]] = [next[nextIdx]!, next[idx]!];
+  const current = next[idx];
+  const target = next[nextIdx];
+  if (current === undefined || target === undefined) return selectedIds;
+  next[idx] = target;
+  next[nextIdx] = current;
   return next;
 }
 

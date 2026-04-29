@@ -24,7 +24,11 @@ const PRODUCT_EDITOR_QUERY_KEYS = [
   'studioSourceSlotId',
 ] as const;
 
-export function useProductListUrlSync() {
+type ProductListUrlSync = {
+  clearProductEditorQueryParams: () => void;
+};
+
+export function useProductListUrlSync(): ProductListUrlSync {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -33,14 +37,14 @@ export function useProductListUrlSync() {
       typeof window !== 'undefined' ? window.location.search : ''
     );
     let changed = false;
-    PRODUCT_EDITOR_QUERY_KEYS.forEach((key) => {
-      if (!params.has(key)) return;
+    for (const key of PRODUCT_EDITOR_QUERY_KEYS) {
+      if (!params.has(key)) continue;
       params.delete(key);
       changed = true;
-    });
-    if (!changed) return;
+    }
+    if (changed === false) return;
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    router.replace(query === '' ? pathname : `${pathname}?${query}`, { scroll: false });
   }, [pathname, router]);
 
   return {

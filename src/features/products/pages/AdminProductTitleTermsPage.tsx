@@ -150,7 +150,9 @@ export function AdminProductTitleTermsPage(): React.JSX.Element {
         isLoading={ctrl.isLoading}
         catalogNameById={ctrl.catalogNameById}
         openEdit={ctrl.openEdit}
-        deleteTerm={ctrl.deleteTerm}
+        deleteTerm={(term) => {
+          void ctrl.deleteTerm(term);
+        }}
       />
 
       <TitleTermEditorModal

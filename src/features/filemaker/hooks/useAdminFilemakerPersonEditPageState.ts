@@ -13,10 +13,16 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
-import { createClientFilemakerId, decodeRouteParam } from '../pages/filemaker-page-utils';
+import {
+  createClientFilemakerId,
+  decodeRouteParam,
+  hasAddressFields,
+} from '../pages/filemaker-page-utils';
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY,
+  createFilemakerAddress,
+  createFilemakerAddressLink,
   createFilemakerPerson,
   getFilemakerAddressById,
   getFilemakerAddressLinksForOwner,
@@ -60,6 +66,7 @@ type MongoFilemakerPersonResponse = {
   linkedBankAccounts?: FilemakerBankAccount[];
   linkedContracts?: FilemakerContract[];
   linkedDocuments?: FilemakerDocument[];
+  linkedEmails?: FilemakerEmail[];
   linkedOccupations?: FilemakerPersonOccupation[];
   linkedWebsites?: MongoFilemakerWebsite[];
   person: MongoFilemakerPerson;
@@ -96,6 +103,58 @@ const toEditableAddress = (
   legacyCountryUuid: address.legacyCountryUuid,
   legacyUuid: address.legacyUuid,
 });
+
+type PreparedPersonAddress = EditableAddress;
+
+const applyPersonAddresses = (
+  database: FilemakerDatabase,
+  personId: string,
+  addresses: PreparedPersonAddress[]
+): FilemakerDatabase => {
+  const addressById = new Map(database.addresses.map((address) => [address.id, address]));
+  addresses.forEach((address: PreparedPersonAddress): void => {
+    const existing = addressById.get(address.addressId);
+    addressById.set(
+      address.addressId,
+      createFilemakerAddress({
+        id: address.addressId,
+        street: address.street,
+        streetNumber: address.streetNumber,
+        city: address.city,
+        postalCode: address.postalCode,
+        country: address.country,
+        countryId: address.countryId,
+        countryValueId: address.countryValueId ?? existing?.countryValueId,
+        countryValueLabel: address.countryValueLabel ?? existing?.countryValueLabel,
+        createdAt: existing?.createdAt,
+        legacyCountryUuid: address.legacyCountryUuid ?? existing?.legacyCountryUuid,
+        legacyUuid: address.legacyUuid ?? existing?.legacyUuid,
+        updatedAt: new Date().toISOString(),
+      })
+    );
+  });
+
+  const addressLinks = addresses.map((address: PreparedPersonAddress) =>
+    createFilemakerAddressLink({
+      id: `filemaker-address-link-person-${personId}-${address.addressId}`,
+      ownerKind: 'person',
+      ownerId: personId,
+      addressId: address.addressId,
+      isDefault: address.isDefault,
+    })
+  );
+
+  return {
+    ...database,
+    addresses: Array.from(addressById.values()),
+    addressLinks: [
+      ...database.addressLinks.filter(
+        (link): boolean => !(link.ownerKind === 'person' && link.ownerId === personId)
+      ),
+      ...addressLinks,
+    ],
+  };
+};
 
 export type AdminFilemakerPersonEditPageContextValue = {
   isCreateMode: boolean;
@@ -153,6 +212,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
   const [mongoLinkedBankAccounts, setMongoLinkedBankAccounts] = useState<FilemakerBankAccount[]>([]);
   const [mongoLinkedContracts, setMongoLinkedContracts] = useState<FilemakerContract[]>([]);
   const [mongoLinkedDocuments, setMongoLinkedDocuments] = useState<FilemakerDocument[]>([]);
+  const [mongoLinkedEmails, setMongoLinkedEmails] = useState<FilemakerEmail[]>([]);
   const [mongoLinkedOccupations, setMongoLinkedOccupations] = useState<
     FilemakerPersonOccupation[]
   >([]);
@@ -182,6 +242,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       setMongoLinkedBankAccounts([]);
       setMongoLinkedContracts([]);
       setMongoLinkedDocuments([]);
+      setMongoLinkedEmails([]);
       setMongoLinkedOccupations([]);
       setMongoLinkedAddresses([]);
       setMongoLinkedWebsites([]);
@@ -202,6 +263,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         setMongoLinkedBankAccounts(response.linkedBankAccounts ?? []);
         setMongoLinkedContracts(response.linkedContracts ?? []);
         setMongoLinkedDocuments(response.linkedDocuments ?? []);
+        setMongoLinkedEmails(response.linkedEmails ?? []);
         setMongoLinkedOccupations(response.linkedOccupations ?? []);
         setMongoLinkedAddresses(response.linkedAddresses ?? []);
         setMongoLinkedWebsites(response.linkedWebsites ?? []);
@@ -216,6 +278,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         setMongoLinkedBankAccounts([]);
         setMongoLinkedContracts([]);
         setMongoLinkedDocuments([]);
+        setMongoLinkedEmails([]);
         setMongoLinkedOccupations([]);
         setMongoLinkedAddresses([]);
         setMongoLinkedWebsites([]);
@@ -295,10 +358,10 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     }
   }, [countries, countryById, isCreateMode, mongoLinkedAddresses, mongoPerson, person, database]);
 
-  const emails = useMemo(
-    () => (person ? getFilemakerEmailsForParty(database, 'person', person.id) : []),
-    [database, person]
-  );
+  const emails = useMemo(() => {
+    if (mongoPerson !== null) return mongoLinkedEmails;
+    return person ? getFilemakerEmailsForParty(database, 'person', person.id) : [];
+  }, [database, mongoLinkedEmails, mongoPerson, person]);
   const websites = mongoLinkedWebsites;
   const linkedAnyParams = mongoLinkedAnyParams;
   const linkedAnyTexts = mongoLinkedAnyTexts;
@@ -337,20 +400,70 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     }
 
     let nextDatabase = database;
+    const preparedAddresses = editableAddresses.map((address: EditableAddress) => {
+      const normalizedCountryId = address.countryId.trim();
+      return {
+        addressId: address.addressId.trim(),
+        street: address.street.trim(),
+        streetNumber: address.streetNumber.trim(),
+        city: address.city.trim(),
+        postalCode: address.postalCode.trim(),
+        countryId: normalizedCountryId,
+        country: resolveFilemakerCountryName(
+          normalizedCountryId,
+          address.country,
+          countries,
+          countryById
+        ),
+        countryValueId: address.countryValueId,
+        countryValueLabel: address.countryValueLabel,
+        isDefault: address.isDefault,
+        legacyCountryUuid: address.legacyCountryUuid,
+        legacyUuid: address.legacyUuid,
+      };
+    });
+    const hasInvalidAddress = preparedAddresses.some(
+      (address): boolean =>
+        !hasAddressFields(
+          address.street,
+          address.streetNumber,
+          address.city,
+          address.postalCode,
+          address.countryId
+        )
+    );
+    if (hasInvalidAddress) {
+      toast('Every linked address requires street, street number, city, postal code, and country.', {
+        variant: 'error',
+      });
+      return;
+    }
+    const defaultAddressId =
+      preparedAddresses.find((address): boolean => address.isDefault)?.addressId ??
+      preparedAddresses[0]?.addressId ??
+      '';
+    const normalizedAddresses = preparedAddresses.map((address) => ({
+      ...address,
+      isDefault: address.addressId === defaultAddressId,
+    }));
+    const defaultAddress = normalizedAddresses.find(
+      (address): boolean => address.addressId === defaultAddressId
+    );
 
     if (isCreateMode) {
       const now = new Date().toISOString();
+      const newPersonId = createClientFilemakerId('person');
       const newPerson = createFilemakerPerson({
-        id: createClientFilemakerId('person'),
+        id: newPersonId,
         firstName: nextFirstName,
         lastName: nextLastName,
-        addressId: '',
-        street: personDraft.street ?? '',
-        streetNumber: personDraft.streetNumber ?? '',
-        city: personDraft.city ?? '',
-        postalCode: personDraft.postalCode ?? '',
-        country: personDraft.country ?? '',
-        countryId: personDraft.countryId ?? '',
+        addressId: defaultAddress?.addressId ?? '',
+        street: defaultAddress?.street ?? '',
+        streetNumber: defaultAddress?.streetNumber ?? '',
+        city: defaultAddress?.city ?? '',
+        postalCode: defaultAddress?.postalCode ?? '',
+        country: defaultAddress?.country ?? '',
+        countryId: defaultAddress?.countryId ?? '',
         nip: personDraft.nip ?? '',
         regon: personDraft.regon ?? '',
         phoneNumbers: personDraft.phoneNumbers ?? [],
@@ -369,6 +482,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         ...nextDatabase,
         persons: [...nextDatabase.persons, newPerson],
       };
+      nextDatabase = applyPersonAddresses(nextDatabase, newPersonId, normalizedAddresses);
 
       await persistDatabase(nextDatabase, 'Person created.');
       startTransition(() => {
@@ -390,17 +504,31 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
             cvHeadline: personDraft.cvHeadline ?? '',
             cvProfessionalSummary: personDraft.cvProfessionalSummary ?? '',
             cvSelectedTechnicalEnvironment: personDraft.cvSelectedTechnicalEnvironment ?? [],
+            addressId: defaultAddress?.addressId ?? personDraft.addressId ?? '',
+            addresses: normalizedAddresses,
+            city: defaultAddress?.city ?? personDraft.city ?? '',
+            country: defaultAddress?.country ?? personDraft.country ?? '',
+            countryId: defaultAddress?.countryId ?? personDraft.countryId ?? '',
             firstName: nextFirstName,
             githubUrl: personDraft.githubUrl ?? '',
             lastName: nextLastName,
             linkedinUrl: personDraft.linkedinUrl ?? '',
+            postalCode: defaultAddress?.postalCode ?? personDraft.postalCode ?? '',
             profileEducation: personDraft.profileEducation ?? [],
             profileJobExperience: personDraft.profileJobExperience ?? [],
+            street: defaultAddress?.street ?? personDraft.street ?? '',
+            streetNumber: defaultAddress?.streetNumber ?? personDraft.streetNumber ?? '',
           }),
         });
         if (!response.ok) throw new Error(`Failed to save person (${response.status}).`);
-        const payload = (await response.json()) as { person: MongoFilemakerPerson };
+        const payload = (await response.json()) as {
+          linkedAddresses?: FilemakerAddress[];
+          person: MongoFilemakerPerson;
+        };
         setMongoPerson(payload.person);
+        if (payload.linkedAddresses !== undefined) {
+          setMongoLinkedAddresses(payload.linkedAddresses);
+        }
         toast('Person updated.', { variant: 'success' });
         startTransition(() => {
           router.push('/admin/filemaker/persons');
@@ -414,10 +542,24 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       return;
     }
 
+    nextDatabase = applyPersonAddresses(nextDatabase, person.id, normalizedAddresses);
     nextDatabase = {
       ...nextDatabase,
       persons: nextDatabase.persons.map((p) =>
-        p.id === person.id ? { ...p, ...personDraft, updatedAt: new Date().toISOString() } : p
+        p.id === person.id
+          ? {
+              ...p,
+              ...personDraft,
+              addressId: defaultAddress?.addressId ?? '',
+              street: defaultAddress?.street ?? '',
+              streetNumber: defaultAddress?.streetNumber ?? '',
+              city: defaultAddress?.city ?? '',
+              postalCode: defaultAddress?.postalCode ?? '',
+              country: defaultAddress?.country ?? '',
+              countryId: defaultAddress?.countryId ?? '',
+              updatedAt: new Date().toISOString(),
+            }
+          : p
       ),
     };
 
@@ -425,13 +567,60 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     startTransition(() => {
       router.push('/admin/filemaker/persons');
     });
-  }, [database, isCreateMode, mongoPerson, person, personDraft, persistDatabase, router, toast]);
+  }, [
+    countries,
+    countryById,
+    database,
+    editableAddresses,
+    isCreateMode,
+    mongoPerson,
+    person,
+    personDraft,
+    persistDatabase,
+    router,
+    toast,
+  ]);
 
   const handleExtractEmails = useCallback(async (): Promise<void> => {
     if (person === null || emailExtractionText.trim().length === 0) return;
 
     const promptSettings = settingsStore.get(FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY);
     const rules = parseFilemakerEmailParserRulesFromPromptSettings(promptSettings);
+
+    if (mongoPerson !== null) {
+      setIsMongoPersonSaving(true);
+      try {
+        const response = await fetch(
+          `/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}/emails`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              parserRules: rules,
+              text: emailExtractionText,
+            }),
+          }
+        );
+        if (!response.ok) throw new Error(`Failed to extract emails (${response.status}).`);
+        const payload = (await response.json()) as {
+          createdEmailCount: number;
+          linkedEmailCount: number;
+          emails: FilemakerEmail[];
+        };
+        setMongoLinkedEmails(payload.emails);
+        toast(
+          `Extracted ${payload.createdEmailCount} new emails and linked ${payload.linkedEmailCount} emails.`,
+          { variant: 'success' }
+        );
+        setEmailExtractionText('');
+      } catch (error: unknown) {
+        logClientError(error);
+        toast('Failed to extract and link emails.', { variant: 'error' });
+      } finally {
+        setIsMongoPersonSaving(false);
+      }
+      return;
+    }
 
     const {
       database: nextDatabase,
@@ -449,7 +638,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`
     );
     setEmailExtractionText('');
-  }, [database, person, emailExtractionText, persistDatabase, settingsStore]);
+  }, [database, person, mongoPerson, emailExtractionText, persistDatabase, settingsStore, toast]);
 
   return {
     isCreateMode,

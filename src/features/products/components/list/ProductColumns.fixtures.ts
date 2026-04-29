@@ -4,8 +4,8 @@ type MockWithReturnValue = {
   mockReturnValue: (value: unknown) => unknown;
 };
 
-export const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
-  ({
+export const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages => {
+  const product: ProductWithImages = {
     id: 'product-1',
     sku: 'KEYCHA1212',
     baseProductId: null,
@@ -46,7 +46,9 @@ export const createProduct = (overrides: Partial<ProductWithImages> = {}): Produ
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
     ...overrides,
-  }) as ProductWithImages;
+  };
+  return product;
+};
 
 export const createRowVisualsContext = (
   overrides: Record<string, unknown> = {}

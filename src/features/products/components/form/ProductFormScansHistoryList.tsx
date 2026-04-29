@@ -31,6 +31,22 @@ type ProductFormScansHistoryListProps = {
   extractingAmazonCandidateUrl: string | null;
 };
 
+function ProductFormScansEmptyHistory(): React.JSX.Element {
+  return (
+    <div className='flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/5 px-4 text-center'>
+      <p className='text-sm font-medium text-muted-foreground'>No scan history available.</p>
+      <p className='text-xs text-muted-foreground/60'>Start a new scan to discover product information.</p>
+    </div>
+  );
+}
+
+const sortProductScansByCreatedAtDesc = (scans: ProductScanRecord[]): ProductScanRecord[] =>
+  [...scans].sort((a, b) => {
+    const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : 0;
+    const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : 0;
+    return timeB - timeA;
+  });
+
 export function ProductFormScansHistoryList({
   scans,
   productName,
@@ -53,19 +69,10 @@ export function ProductFormScansHistoryList({
   extractingAmazonCandidateUrl,
 }: ProductFormScansHistoryListProps): React.JSX.Element {
   if (scans.length === 0) {
-    return (
-      <div className='flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/60 bg-muted/5 px-4 text-center'>
-        <p className='text-sm font-medium text-muted-foreground'>No scan history available.</p>
-        <p className='text-xs text-muted-foreground/60'>Start a new scan to discover product information.</p>
-      </div>
-    );
+    return <ProductFormScansEmptyHistory />;
   }
 
-  const sortedScans = [...scans].sort((a, b) => {
-    const timeA = typeof a.createdAt === 'string' ? new Date(a.createdAt).getTime() : 0;
-    const timeB = typeof b.createdAt === 'string' ? new Date(b.createdAt).getTime() : 0;
-    return timeB - timeA;
-  });
+  const sortedScans = sortProductScansByCreatedAtDesc(scans);
 
   return (
     <div className='grid gap-4'>

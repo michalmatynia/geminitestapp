@@ -158,9 +158,7 @@ export const handleCreateNameMirrorPolishSequence = async (args: {
   });
 
   try {
-    for (const payload of bundle.patterns) {
-      await createPattern.mutateAsync(payload);
-    }
+    await Promise.all(bundle.patterns.map((payload) => createPattern.mutateAsync(payload)));
 
     notifySuccess('English -> Polish name mirror sequence created.');
   } catch (error) {

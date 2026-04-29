@@ -11,7 +11,7 @@ export {
 
 export const normalizeAmazonAsin = (value: unknown): string | null => {
   const normalized = normalizeOptionalProductScanString(value)?.toUpperCase() ?? null;
-  if (!normalized) return null;
+  if (normalized === null || normalized === '') return null;
   return /^[A-Z0-9]{10}$/.test(normalized) ? normalized : null;
 };
 
@@ -47,7 +47,7 @@ export const resolveDetectedAmazonAsinOutcome = (input: {
   detectedAsin: string | null | undefined;
 }): AmazonAsinResolution => {
   const detectedAsin = normalizeAmazonAsin(input.detectedAsin);
-  if (!detectedAsin) {
+  if (detectedAsin === null) {
     return {
       scanStatus: 'failed',
       asinUpdateStatus: 'failed',
@@ -57,7 +57,7 @@ export const resolveDetectedAmazonAsinOutcome = (input: {
   }
 
   const existingAsin = normalizeAmazonAsin(input.existingAsin);
-  if (!existingAsin) {
+  if (existingAsin === null) {
     return {
       scanStatus: 'completed',
       asinUpdateStatus: 'updated',

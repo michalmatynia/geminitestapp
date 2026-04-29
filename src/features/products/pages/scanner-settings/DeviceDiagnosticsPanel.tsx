@@ -1,7 +1,9 @@
+import type { JSX } from 'react';
+
 import { Badge } from '@/shared/ui/primitives.public';
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 
-export function DeviceDiagnosticsPanel({ status }: { status: string }) {
+export function DeviceDiagnosticsPanel({ status }: { status: string }): JSX.Element {
   return (
     <FormSection title='Device Diagnostics' className='p-4'>
       <div className='flex items-center gap-2'>

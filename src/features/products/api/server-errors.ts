@@ -40,7 +40,7 @@ function extractRequestDiagnostics(args: unknown[]): RequestDiagnostics {
 function resolveHttpStatus(error: unknown): number {
   if (error instanceof ApiErrorBuilder) {
     const code = error.build().error.code;
-    return ErrorStatusCodes[code] ?? 500;
+    return ErrorStatusCodes[code];
   }
   if (error instanceof AppError) {
     return error.httpStatus;
@@ -68,7 +68,7 @@ export function withErrorHandling<T extends unknown[]>(handler: (...args: T) => 
 
       if (error instanceof ApiErrorBuilder || error instanceof Error) {
         return createVersionedErrorResponse(error, status, requestId);
-      } 
+      }
 
       const fallback = new Error('An unknown error occurred');
       return createVersionedErrorResponse(fallback, 500, requestId);

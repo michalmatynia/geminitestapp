@@ -38,6 +38,8 @@ function isProductsListRoute(pathname: string): boolean {
   return (
     pathname === '/admin/products' ||
     pathname === '/admin/filemaker/organizations' ||
+    pathname === '/admin/filemaker/persons' ||
+    pathname.startsWith('/admin/filemaker/persons/') ||
     pathname === '/admin/validator' ||
     pathname === '/admin/validator/lists' ||
     pathname === '/admin/ai-paths/queue' ||

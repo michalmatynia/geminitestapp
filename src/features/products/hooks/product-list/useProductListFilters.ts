@@ -14,6 +14,12 @@ import { useCallback } from 'react';
 
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 
+type ProductListFilters = {
+  handleSetPageSize: (size: number) => void;
+  handleSetAdvancedFilter: (value: string) => void;
+  handleSetAdvancedFilterState: (value: string, presetId: string | null) => void;
+};
+
 export function useProductListFilters({
   updatePageSize,
   persistAppliedAdvancedFilterState,
@@ -23,7 +29,7 @@ export function useProductListFilters({
     advancedFilter: string;
     presetId: string | null;
   }) => Promise<void>;
-}) {
+}): ProductListFilters {
   const handleSetPageSize = useCallback(
     (size: number) => {
       const normalizedPageSize = normalizeProductPageSize(size, 12);

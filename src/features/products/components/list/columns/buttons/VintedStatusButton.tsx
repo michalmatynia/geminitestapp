@@ -18,6 +18,40 @@ import {
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
+const buildVintedRecoveryContext = ({
+  effectiveStatus,
+  persistedFeedback,
+}: {
+  effectiveStatus: string;
+  persistedFeedback: ReturnType<typeof readPersistedVintedQuickListFeedback>;
+}): ProductListingsRecoveryContext | undefined => {
+  if (!FAILURE_STATUSES.has(effectiveStatus)) return undefined;
+  if (persistedFeedback === null) {
+    return createVintedRecoveryContext({
+      status: effectiveStatus,
+      runId: null,
+      failureReason: null,
+      requestId: null,
+      integrationId: null,
+      connectionId: null,
+    });
+  }
+
+  return createVintedRecoveryContext({
+    status: effectiveStatus,
+    runId: persistedFeedback.runId ?? null,
+    failureReason: persistedFeedback.failureReason ?? null,
+    requestId: persistedFeedback.requestId ?? null,
+    integrationId: persistedFeedback.integrationId ?? null,
+    connectionId: persistedFeedback.connectionId ?? null,
+  });
+};
+
+const resolveVintedStatusLabel = (effectiveStatus: string): string =>
+  FAILURE_STATUSES.has(effectiveStatus)
+    ? `Open Vinted recovery options (${effectiveStatus}).`
+    : `Manage Vinted listing (${effectiveStatus}).`;
+
 export function VintedStatusButton(props: {
   productId: string;
   status: string;
@@ -31,20 +65,8 @@ export function VintedStatusButton(props: {
     serverStatus: normalizedStatus,
     localFeedbackStatus: persistedFeedback?.status ?? null,
   });
-  const isEffectiveFailureState = FAILURE_STATUSES.has(effectiveStatus);
-  const recoveryContext: ProductListingsRecoveryContext | undefined = isEffectiveFailureState
-    ? createVintedRecoveryContext({
-        status: effectiveStatus,
-        runId: persistedFeedback?.runId ?? null,
-        failureReason: persistedFeedback?.failureReason ?? null,
-        requestId: persistedFeedback?.requestId ?? null,
-        integrationId: persistedFeedback?.integrationId ?? null,
-        connectionId: persistedFeedback?.connectionId ?? null,
-      })
-    : undefined;
-  const label = isEffectiveFailureState
-    ? `Open Vinted recovery options (${effectiveStatus}).`
-    : `Manage Vinted listing (${effectiveStatus}).`;
+  const recoveryContext = buildVintedRecoveryContext({ effectiveStatus, persistedFeedback });
+  const label = resolveVintedStatusLabel(effectiveStatus);
 
   return (
     <Button

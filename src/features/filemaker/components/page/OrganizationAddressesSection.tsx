@@ -1,5 +1,7 @@
 'use client';
 
+/* eslint-disable max-lines */
+
 import React, { useCallback, useMemo, useState } from 'react';
 
 import type { LabeledOptionWithDescriptionDto } from '@/shared/contracts/base';

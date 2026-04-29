@@ -1,6 +1,6 @@
 /* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/consistent-type-imports */
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, type RenderResult } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -148,7 +148,7 @@ import { TraderaQuickListButton } from './TraderaQuickListButton';
 
 const renderButton = (
   overrides?: Partial<React.ComponentProps<typeof TraderaQuickListButton>>
-) => {
+): RenderResult => {
   const queryClient = createBaseQuickExportTestQueryClient();
   const props: React.ComponentProps<typeof TraderaQuickListButton> = {
     product: product as ProductWithImages,

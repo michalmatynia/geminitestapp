@@ -15,18 +15,21 @@ const productOrdersImportKeys = {
 };
 
 export function useBaseOrderImportStatuses(connectionId: string): ListQuery<BaseOrderImportStatusOption> {
-  const queryKey = productOrdersImportKeys.statuses(connectionId || null);
+  const trimmedConnectionId = connectionId.trim();
+  const queryKey = productOrdersImportKeys.statuses(
+    trimmedConnectionId === '' ? null : trimmedConnectionId
+  );
   return createListQueryV2({
     queryKey,
     queryFn: async (): Promise<BaseOrderImportStatusOption[]> => {
-      if (!connectionId.trim()) return [];
+      if (trimmedConnectionId === '') return [];
       const response = await api.get<{ statuses: BaseOrderImportStatusOption[] }>(
         '/api/v2/products/orders-import/statuses',
         { params: { connectionId } }
       );
-      return response.statuses ?? [];
+      return response.statuses;
     },
-    enabled: Boolean(connectionId.trim()),
+    enabled: trimmedConnectionId !== '',
     staleTime: 5 * 60 * 1_000,
     meta: {
       source: 'products.hooks.useBaseOrderImportStatuses',

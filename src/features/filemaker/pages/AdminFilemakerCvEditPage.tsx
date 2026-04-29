@@ -1,8 +1,8 @@
 'use client';
 
-/* eslint-disable complexity, max-lines-per-function */
+/* eslint-disable complexity, max-lines, max-lines-per-function */
 
-import { Download, Save } from 'lucide-react';
+import { Download, Eye, Save } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
@@ -24,6 +24,7 @@ import { CvLayerPanel } from '../components/cv-builder/CvLayerPanel';
 import { compileCvBlocksToHtml } from '../components/cv-builder/compile-cv-blocks';
 import type { CvBlock } from '../components/cv-builder/cv-block-model';
 import { normalizeCvBlocks } from '../components/cv-builder/cv-block-model';
+import { openFilemakerCvPdfPreview } from '../cv-pdf-preview';
 import type { FilemakerCv, FilemakerCvStatus } from '../filemaker-cv.types';
 import { decodeRouteParam, formatTimestamp } from './filemaker-page-utils';
 
@@ -165,6 +166,17 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     }
   }, [persistCurrentCv, state.cv, toast]);
 
+  const handlePreviewPdf = useCallback((): void => {
+    try {
+      openFilemakerCvPdfPreview(previewHtml);
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to preview CV PDF.', {
+        variant: 'error',
+      });
+    }
+  }, [previewHtml, toast]);
+
   const handleExportPdf = useCallback(async (): Promise<void> => {
     if (state.cv === null) return;
     setIsExporting(true);
@@ -232,6 +244,16 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
             isSaving={isSaving}
             saveIcon={<Save className='size-3.5' />}
           >
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={handlePreviewPdf}
+              className='gap-2'
+            >
+              <Eye className='size-3.5' />
+              Preview PDF
+            </Button>
             <Button
               type='button'
               variant='outline'

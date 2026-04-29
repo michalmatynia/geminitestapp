@@ -181,29 +181,41 @@ export class StandardErrors {
 }
 
 // Error response helpers
+const attachRequestId = (builder: ApiErrorBuilder, requestId?: string): ApiErrorBuilder => {
+  if (typeof requestId === 'string' && requestId !== '') {
+    builder.withRequestId(requestId);
+  }
+  return builder;
+};
+
+const resolveErrorMessage = (error: Error): string =>
+  typeof error.message === 'string' && error.message !== ''
+    ? error.message
+    : 'An unexpected error occurred';
+
+const buildGenericErrorBuilder = (error: Error): ApiErrorBuilder => {
+  const category = classifyError(error);
+  const builder = new ApiErrorBuilder('SERVER_ERROR', resolveErrorMessage(error)).withCategory(
+    category
+  );
+
+  if (process.env['NODE_ENV'] === 'development') {
+    builder.withDetails([{ message: error.message, code: 'INTERNAL_ERROR' }]);
+  }
+
+  return builder;
+};
+
 export function createVersionedErrorResponse(
   error: Error | ApiErrorBuilder,
   status: number = 500,
   requestId?: string
 ): Response {
   if (error instanceof ApiErrorBuilder) {
-    if (typeof requestId === 'string' && requestId !== '') error.withRequestId(requestId);
-    return error.toResponse(status);
+    return attachRequestId(error, requestId).toResponse(status);
   }
 
-  // Handle generic errors
-  const category = classifyError(error);
-  const msg = (typeof error.message === 'string' && error.message !== '') ? error.message : 'An unexpected error occurred';
-  const builder = new ApiErrorBuilder('SERVER_ERROR', msg).withCategory(category);
-
-  if (typeof requestId === 'string' && requestId !== '') builder.withRequestId(requestId);
-
-  // In development, include error details
-  if (process.env['NODE_ENV'] === 'development') {
-    builder.withDetails([{ message: error.message, code: 'INTERNAL_ERROR' }]);
-  }
-
-  return builder.toResponse(status);
+  return attachRequestId(buildGenericErrorBuilder(error), requestId).toResponse(status);
 }
 
 // HTTP status code mapping

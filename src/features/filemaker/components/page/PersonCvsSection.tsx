@@ -1,20 +1,23 @@
 'use client';
 
-/* eslint-disable complexity, max-lines-per-function */
+/* eslint-disable complexity, max-lines, max-lines-per-function */
 
-import { Download, ExternalLink, FileText, Loader2, Plus } from 'lucide-react';
+import { Download, ExternalLink, Eye, FileText, Loader2, Plus } from 'lucide-react';
 import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { FormSection } from '@/shared/ui/forms-and-actions.public';
 import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import { compileCvBlocksToHtml } from '../cv-builder/compile-cv-blocks';
 import { useAdminFilemakerPersonEditPageStateContext } from '../../context/AdminFilemakerPersonEditPageContext';
+import { openFilemakerCvPdfPreview } from '../../cv-pdf-preview';
 import {
   buildDefaultFilemakerCvBlocks,
   resolveFilemakerCvPersonName,
   type FilemakerCvProfileSeed,
 } from '../../cv-defaults';
+import type { CvBlock } from '../cv-builder/cv-block-model';
 import type { FilemakerCv } from '../../filemaker-cv.types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
@@ -22,6 +25,12 @@ type CvListState = {
   cvs: FilemakerCv[];
   error: string | null;
   isLoading: boolean;
+};
+
+type CvCreatePayload = {
+  bodyBlocks: CvBlock[];
+  personId: string;
+  title: string;
 };
 
 const readDownloadFilename = (response: Response, fallback: string): string => {
@@ -132,9 +141,9 @@ export function PersonCvsSection(): React.JSX.Element {
     return {
       firstName: personDraft.firstName ?? person.firstName,
       lastName: personDraft.lastName ?? person.lastName,
-      city: personDraft.city ?? person.city ?? '',
-      country: personDraft.country ?? person.country ?? '',
-      phoneNumbers: personDraft.phoneNumbers ?? person.phoneNumbers ?? [],
+      city: personDraft.city ?? person.city,
+      country: personDraft.country ?? person.country,
+      phoneNumbers: personDraft.phoneNumbers ?? person.phoneNumbers,
       linkedinUrl: personDraft.linkedinUrl ?? person.linkedinUrl ?? '',
       githubUrl: personDraft.githubUrl ?? person.githubUrl ?? '',
       profileEducation: personDraft.profileEducation ?? person.profileEducation ?? [],
@@ -147,7 +156,7 @@ export function PersonCvsSection(): React.JSX.Element {
     };
   }, [person, personDraft]);
 
-  const createCvFromProfile = useCallback(async (): Promise<FilemakerCv> => {
+  const buildCvCreatePayloadFromProfile = useCallback((): CvCreatePayload => {
     if (person === null) throw new Error('Person is not loaded.');
     const seedPerson = buildCvSeedPerson();
     if (seedPerson === null) throw new Error('Person profile is not loaded.');
@@ -162,13 +171,33 @@ export function PersonCvsSection(): React.JSX.Element {
       phoneNumbers,
       websites,
     });
+    return {
+      bodyBlocks,
+      personId: person.id,
+      title: `${personName} CV`,
+    };
+  }, [
+    buildCvSeedPerson,
+    editableAddresses,
+    emails,
+    linkedAnyTexts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
+    person,
+    personName,
+    phoneNumbers,
+    websites,
+  ]);
+
+  const createCv = useCallback(async (input: CvCreatePayload): Promise<FilemakerCv> => {
     const response = await fetch('/api/filemaker/cvs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        bodyBlocks,
-        personId: person.id,
-        title: `${personName} CV`,
+        bodyBlocks: input.bodyBlocks,
+        personId: input.personId,
+        title: input.title,
       }),
     });
     if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
@@ -183,19 +212,11 @@ export function PersonCvsSection(): React.JSX.Element {
       isLoading: false,
     }));
     return payload.cv;
-  }, [
-    buildCvSeedPerson,
-    editableAddresses,
-    emails,
-    linkedAnyTexts,
-    linkedContracts,
-    linkedDocuments,
-    linkedOccupations,
-    person,
-    personName,
-    phoneNumbers,
-    websites,
-  ]);
+  }, []);
+
+  const createCvFromProfile = useCallback(async (): Promise<FilemakerCv> => {
+    return createCv(buildCvCreatePayloadFromProfile());
+  }, [buildCvCreatePayloadFromProfile, createCv]);
 
   const handleCreateCv = useCallback(async (): Promise<void> => {
     setIsCreating(true);
@@ -212,6 +233,13 @@ export function PersonCvsSection(): React.JSX.Element {
       setIsCreating(false);
     }
   }, [createCvFromProfile, openCv, toast]);
+
+  const previewCvPdf = useCallback(
+    (cv: Pick<FilemakerCv, 'bodyBlocks'>): void => {
+      openFilemakerCvPdfPreview(compileCvBlocksToHtml(cv.bodyBlocks));
+    },
+    []
+  );
 
   const exportCvPdf = useCallback(async (cv: FilemakerCv): Promise<void> => {
     const response = await fetch('/api/filemaker/cvs/export-pdf', {
@@ -245,9 +273,10 @@ export function PersonCvsSection(): React.JSX.Element {
   const handleGeneratePdf = useCallback(async (): Promise<void> => {
     setIsGeneratingPdf(true);
     try {
-      const cv = await createCvFromProfile();
-      await exportCvPdf(cv);
-      toast('CV PDF generated.', { variant: 'success' });
+      const payload = buildCvCreatePayloadFromProfile();
+      previewCvPdf({ bodyBlocks: payload.bodyBlocks });
+      await createCv(payload);
+      toast('CV PDF preview opened.', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to generate CV PDF.', {
@@ -256,7 +285,21 @@ export function PersonCvsSection(): React.JSX.Element {
     } finally {
       setIsGeneratingPdf(false);
     }
-  }, [createCvFromProfile, exportCvPdf, toast]);
+  }, [buildCvCreatePayloadFromProfile, createCv, previewCvPdf, toast]);
+
+  const handlePreviewPdf = useCallback(
+    (cv: FilemakerCv): void => {
+      try {
+        previewCvPdf(cv);
+      } catch (error: unknown) {
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Failed to preview CV PDF.', {
+          variant: 'error',
+        });
+      }
+    },
+    [previewCvPdf, toast]
+  );
 
   const actions = (
     <div className='flex flex-wrap items-center gap-2'>
@@ -272,7 +315,7 @@ export function PersonCvsSection(): React.JSX.Element {
         }}
         className='gap-2'
       >
-        {!isGeneratingPdf ? <Download className='size-3.5' /> : null}
+        {!isGeneratingPdf ? <Eye className='size-3.5' /> : null}
         Generate PDF CV
       </Button>
       <Button
@@ -326,6 +369,19 @@ export function PersonCvsSection(): React.JSX.Element {
                 <Badge variant='outline' className='h-5 text-[10px]'>
                   {cv.status}
                 </Badge>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='icon'
+                  className='size-7'
+                  aria-label={`Preview ${formatCvTitle(cv)} PDF`}
+                  title={`Preview ${formatCvTitle(cv)} PDF`}
+                  onClick={() => {
+                    handlePreviewPdf(cv);
+                  }}
+                >
+                  <Eye className='size-3.5' />
+                </Button>
                 <Button
                   type='button'
                   variant='outline'

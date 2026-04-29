@@ -123,6 +123,13 @@ export const resolveProductScanAmazonCandidateUrls = (
   return urls.length > 0 ? urls : resolveProductScanAmazonCandidatePreviews(scan).map((candidate) => candidate.url);
 };
 
+const hasMissingAmazonDetails = (
+  scan: ProductScanAmazonCandidateSelectionScan
+): boolean => scan?.amazonDetails === null || scan?.amazonDetails === undefined;
+
+const hasMissingAmazonAsin = (scan: ProductScanAmazonCandidateSelectionScan): boolean =>
+  typeof scan?.asin !== 'string' || scan.asin.trim().length === 0;
+
 export const isProductScanAmazonCandidateSelectionReady = (
   scan: ProductScanAmazonCandidateSelectionScan
 ): boolean => {
@@ -137,7 +144,7 @@ export const isProductScanAmazonCandidateSelectionReady = (
 
   return (
     resolveProductScanAmazonCandidatePreviews(scan).length > 0 &&
-    (scan.amazonDetails === null || scan.amazonDetails === undefined) &&
-    (typeof scan.asin !== 'string' || scan.asin.trim().length === 0)
+    hasMissingAmazonDetails(scan) &&
+    hasMissingAmazonAsin(scan)
   );
 };

@@ -1,5 +1,7 @@
 import 'server-only';
 
+/* eslint-disable max-lines */
+
 import type { Collection, Db, Document } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -249,38 +251,40 @@ const upsertMongoFilemakerAddresses = async (
 
 const deleteUnlinkedMongoFilemakerAddressLinks = async (
   db: Db,
-  organizationId: string,
+  ownerKind: FilemakerAddressOwnerKind,
+  ownerId: string,
   addressIds: string[]
 ): Promise<void> => {
   await db.collection<FilemakerAddressLinkMongoDocument>(FILEMAKER_ADDRESS_LINKS_COLLECTION)
     .deleteMany({
-      ownerKind: 'organization',
-      ownerId: organizationId,
+      ownerKind,
+      ownerId,
       ...(addressIds.length > 0 ? { addressId: { $nin: addressIds } } : {}),
     });
 };
 
 const upsertMongoFilemakerAddressLinks = async (
   db: Db,
-  organizationId: string,
-  addresses: MongoFilemakerOrganizationAddressPatch[]
+  ownerKind: FilemakerAddressOwnerKind,
+  ownerId: string,
+  addresses: MongoFilemakerAddressPatch[]
 ): Promise<void> => {
   if (addresses.length === 0) return;
   await db.collection<FilemakerAddressLinkMongoDocument>(FILEMAKER_ADDRESS_LINKS_COLLECTION)
     .bulkWrite(
-      addresses.map((address: MongoFilemakerOrganizationAddressPatch) => ({
+      addresses.map((address: MongoFilemakerAddressPatch) => ({
         updateOne: {
           filter: {
-            ownerKind: 'organization',
-            ownerId: organizationId,
+            ownerKind,
+            ownerId,
             addressId: address.addressId,
           },
           update: {
             $set: {
               addressId: address.addressId,
               isDefault: address.isDefault,
-              ownerId: organizationId,
-              ownerKind: 'organization',
+              ownerId,
+              ownerKind,
             },
           },
           upsert: true,
@@ -290,22 +294,30 @@ const upsertMongoFilemakerAddressLinks = async (
     );
 };
 
-export const updateMongoFilemakerAddressesForOrganization = async (
-  organization: FilemakerOrganization,
-  addresses: MongoFilemakerOrganizationAddressPatch[]
+export const updateMongoFilemakerAddressesForOwner = async (
+  ownerKind: FilemakerAddressOwnerKind,
+  ownerId: string,
+  addresses: MongoFilemakerAddressPatch[]
 ): Promise<FilemakerAddress[]> => {
   const db = await getMongoDb();
   const now = new Date().toISOString();
   const normalizedAddresses = normalizeAddressPatches(addresses);
   const addressIds = normalizedAddresses.map(
-    (address: MongoFilemakerOrganizationAddressPatch): string => address.addressId
+    (address: MongoFilemakerAddressPatch): string => address.addressId
   );
 
   await upsertMongoFilemakerAddresses(db, normalizedAddresses, now);
-  await deleteUnlinkedMongoFilemakerAddressLinks(db, organization.id, addressIds);
-  await upsertMongoFilemakerAddressLinks(db, organization.id, normalizedAddresses);
+  await deleteUnlinkedMongoFilemakerAddressLinks(db, ownerKind, ownerId, addressIds);
+  await upsertMongoFilemakerAddressLinks(db, ownerKind, ownerId, normalizedAddresses);
 
-  return listMongoFilemakerAddressesForOrganization(organization);
+  return listMongoFilemakerAddressesForOwner(ownerKind, ownerId);
+};
+
+export const updateMongoFilemakerAddressesForOrganization = async (
+  organization: FilemakerOrganization,
+  addresses: MongoFilemakerOrganizationAddressPatch[]
+): Promise<FilemakerAddress[]> => {
+  return updateMongoFilemakerAddressesForOwner('organization', organization.id, addresses);
 };
 
 export const listMongoFilemakerAddressesForOwner = async (

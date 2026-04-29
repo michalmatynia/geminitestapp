@@ -186,6 +186,46 @@ const cloneReferenceCvProfile = (): Partial<FilemakerPerson> => ({
   ),
 });
 
+const hasArrayEntries = (values: unknown): boolean => Array.isArray(values) && values.length > 0;
+
+const isMichalMatyniaDraft = (personDraft: Partial<FilemakerPerson>): boolean => {
+  const firstName = (personDraft.firstName ?? '').trim().toLocaleLowerCase('pl-PL');
+  const lastName = (personDraft.lastName ?? '').trim().toLocaleLowerCase('pl-PL');
+  return firstName === 'micha\u0142' && lastName === 'matynia';
+};
+
+const mergeMissingReferenceCvProfile = (
+  current: Partial<FilemakerPerson>
+): Partial<FilemakerPerson> => {
+  const reference = cloneReferenceCvProfile();
+  return {
+    ...current,
+    firstName: current.firstName?.trim() ? current.firstName : reference.firstName,
+    lastName: current.lastName?.trim() ? current.lastName : reference.lastName,
+    city: current.city?.trim() ? current.city : reference.city,
+    country: current.country?.trim() ? current.country : reference.country,
+    phoneNumbers: hasArrayEntries(current.phoneNumbers)
+      ? current.phoneNumbers
+      : reference.phoneNumbers,
+    cvHeadline: current.cvHeadline?.trim() ? current.cvHeadline : reference.cvHeadline,
+    cvProfessionalSummary: current.cvProfessionalSummary?.trim()
+      ? current.cvProfessionalSummary
+      : reference.cvProfessionalSummary,
+    cvCoreStrengths: hasArrayEntries(current.cvCoreStrengths)
+      ? current.cvCoreStrengths
+      : reference.cvCoreStrengths,
+    cvSelectedTechnicalEnvironment: hasArrayEntries(current.cvSelectedTechnicalEnvironment)
+      ? current.cvSelectedTechnicalEnvironment
+      : reference.cvSelectedTechnicalEnvironment,
+    profileJobExperience: hasArrayEntries(current.profileJobExperience)
+      ? current.profileJobExperience
+      : reference.profileJobExperience,
+    profileEducation: hasArrayEntries(current.profileEducation)
+      ? current.profileEducation
+      : reference.profileEducation,
+  };
+};
+
 function PersonProfileLinksAndCvFields(): React.JSX.Element {
   const { personDraft } = useAdminFilemakerPersonEditPageStateContext();
   const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
@@ -565,26 +605,30 @@ function PersonProfileEducationFields(): React.JSX.Element {
 }
 
 export function PersonProfileCvSection(): React.JSX.Element {
+  const { personDraft } = useAdminFilemakerPersonEditPageStateContext();
   const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
 
-  const actions = (
-    <Button
-      type='button'
-      variant='outline'
-      size='sm'
-      onClick={(): void => {
-        setPersonDraft((current: Partial<FilemakerPerson>): Partial<FilemakerPerson> => ({
-          ...current,
-          ...cloneReferenceCvProfile(),
-        }));
-      }}
-    >
-      Prefill Reference CV
-    </Button>
-  );
+  React.useEffect((): void => {
+    if (!isMichalMatyniaDraft(personDraft)) return;
+    if (
+      hasArrayEntries(personDraft.profileJobExperience) &&
+      hasArrayEntries(personDraft.profileEducation)
+    ) {
+      return;
+    }
+    setPersonDraft((current: Partial<FilemakerPerson>): Partial<FilemakerPerson> =>
+      isMichalMatyniaDraft(current) ? mergeMissingReferenceCvProfile(current) : current
+    );
+  }, [
+    personDraft.firstName,
+    personDraft.lastName,
+    personDraft.profileEducation,
+    personDraft.profileJobExperience,
+    setPersonDraft,
+  ]);
 
   return (
-    <FormSection title='Person Profile & CV' actions={actions} className='space-y-6 p-4'>
+    <FormSection title='Person Profile & CV' className='space-y-6 p-4'>
       <PersonProfileLinksAndCvFields />
       <PersonProfileJobExperienceFields />
       <PersonProfileEducationFields />

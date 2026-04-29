@@ -52,6 +52,34 @@ const collectProductListDebugSnapshotChanges = (
   return changes;
 };
 
+const logDebugSnapshotChange = ({
+  previousSnapshot,
+  debugSnapshot,
+}: {
+  previousSnapshot: ProductListDebugSnapshot | null;
+  debugSnapshot: ProductListDebugSnapshot;
+}): void => {
+  const hasPreviousSnapshot = previousSnapshot !== null;
+  const changes = hasPreviousSnapshot
+    ? collectProductListDebugSnapshotChanges(previousSnapshot, debugSnapshot)
+    : {};
+  if (hasPreviousSnapshot && Object.keys(changes).length === 0) {
+    return;
+  }
+
+  logProductListDebug(
+    hasPreviousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
+    {
+      snapshot: debugSnapshot,
+      ...(hasPreviousSnapshot ? { changes } : {}),
+    },
+    {
+      dedupeKey: hasPreviousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
+      throttleMs: hasPreviousSnapshot ? 400 : 0,
+    }
+  );
+};
+
 export function useProductListDebugLogging(args: {
   enabled: boolean;
   snapshot: ProductListDebugSnapshot;
@@ -66,24 +94,7 @@ export function useProductListDebugLogging(args: {
     }
 
     const previousSnapshot = previousDebugSnapshotRef.current;
-    const changes = previousSnapshot
-      ? collectProductListDebugSnapshotChanges(previousSnapshot, debugSnapshot)
-      : {};
-    if (previousSnapshot && Object.keys(changes).length === 0) {
-      return;
-    }
-
-    logProductListDebug(
-      previousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
-      {
-        snapshot: debugSnapshot,
-        ...(previousSnapshot ? { changes } : {}),
-      },
-      {
-        dedupeKey: previousSnapshot ? 'product-list-state-change' : 'product-list-state-init',
-        throttleMs: previousSnapshot ? 400 : 0,
-      }
-    );
+    logDebugSnapshotChange({ previousSnapshot, debugSnapshot });
     previousDebugSnapshotRef.current = debugSnapshot;
   }, [debugSnapshot, enabled]);
 }

@@ -19,7 +19,7 @@ export async function validateProductCreateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
 ): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
-  if (options.skipValidation) {
+  if (options.skipValidation === true) {
     return { success: true, data: toValidationPayload(formData) };
   }
 
@@ -27,7 +27,7 @@ export async function validateProductCreateMiddleware(
   const result = await validateProductCreate(data);
 
   if (!result.success) {
-    if (options.customErrorHandler) {
+    if (typeof options.customErrorHandler === 'function') {
       return { success: false, response: options.customErrorHandler(result.errors) };
     }
     const fieldErrors: Record<string, string[]> = {};
@@ -49,7 +49,7 @@ export async function validateProductUpdateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
 ): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
-  if (options.skipValidation) {
+  if (options.skipValidation === true) {
     return { success: true, data: toValidationPayload(formData) };
   }
 
@@ -57,7 +57,7 @@ export async function validateProductUpdateMiddleware(
   const result = await validateProductUpdate(data);
 
   if (!result.success) {
-    if (options.customErrorHandler) {
+    if (typeof options.customErrorHandler === 'function') {
       return { success: false, response: options.customErrorHandler(result.errors) };
     }
     const fieldErrors: Record<string, string[]> = {};

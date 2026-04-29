@@ -14,6 +14,16 @@ export const AUTO_ACCEPT_MAX_TRACKED_ENTITIES = 10;
 export const resolveBooleanStateAction = (next: SetStateAction<boolean>, current: boolean): boolean =>
   typeof next === 'function' ? (next as (prev: boolean) => boolean)(current) : next;
 
+const resolvePreferredLatestProduct = (
+  list: ProductWithImages[],
+  normalizedCurrentProductId: string
+): ProductWithImages | null => {
+  if (normalizedCurrentProductId === '') {
+    return list[0] ?? null;
+  }
+  return list.find((item: ProductWithImages) => item.id !== normalizedCurrentProductId) ?? null;
+};
+
 export const resolveLatestProductValidatorSourceValues = ({
   products,
   currentProductId,
@@ -31,9 +41,7 @@ export const resolveLatestProductValidatorSourceValues = ({
   const normalizedCurrentProductId =
     typeof currentProductId === 'string' ? currentProductId.trim() : '';
 
-  const preferred = normalizedCurrentProductId
-    ? (list.find((item: ProductWithImages) => item.id !== normalizedCurrentProductId) ?? null)
-    : (list[0] ?? null);
+  const preferred = resolvePreferredLatestProduct(list, normalizedCurrentProductId);
 
-  return preferred ? { ...preferred } : null;
+  return preferred === null ? null : { ...preferred };
 };

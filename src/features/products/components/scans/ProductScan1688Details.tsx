@@ -76,7 +76,7 @@ function build1688ActionRunHistoryHref(runId: string): string {
 
 function resolvePriceFromPrices(prices: ProductScanSupplierPrice[]): string | null {
   const f = Array.isArray(prices) ? prices[0] : null;
-  if (!f) return null;
+  if (f === null || f === undefined) return null;
 
   const moq = (typeof f.moq === 'string' && f.moq !== '') ? `MOQ ${f.moq}` : null;
   return buildInlineSummary(f.amount, f.currency, moq);
@@ -264,6 +264,36 @@ function resolveResolvedScanId(scanId: string | null | undefined, scan: ProductS
   return null;
 }
 
+function resolveConnectionLabel(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+function ProductScan1688ActionRunBanner({
+  actionRunId,
+}: {
+  actionRunId: string | null;
+}): React.JSX.Element | null {
+  if (actionRunId === null) return null;
+
+  return (
+    <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950'>
+      <span>
+        Playwright Step Sequencer run retained for this 1688 probe:
+        {' '}
+        <span className='font-mono'>{actionRunId}</span>
+      </span>
+      <a
+        className='font-medium underline decoration-sky-400 underline-offset-2 hover:text-sky-700'
+        href={build1688ActionRunHistoryHref(actionRunId)}
+      >
+        Open run history
+      </a>
+    </div>
+  );
+}
+
 export function ProductScan1688Details(props: ProductScan1688DetailsProps): React.JSX.Element | null {
   const { scan } = props;
   if (!hasProductScan1688Details(scan)) return null;
@@ -271,28 +301,13 @@ export function ProductScan1688Details(props: ProductScan1688DetailsProps): Reac
   const resScanId = resolveResolvedScanId(props.scanId, scan as ProductScanRecord);
   const details = scan.supplierDetails;
   const priceSum = resolvePriceSummary(details);
-  const connectionLabel = props.connectionLabel;
-  const cLab = (typeof connectionLabel === 'string' && connectionLabel.trim() !== '') ? connectionLabel.trim() : null;
+  const cLab = resolveConnectionLabel(props.connectionLabel);
   const actionRunId = resolve1688ActionRunId(scan);
 
   return (
     <div className='space-y-3 rounded-md border border-border/50 bg-background/70 px-3 py-3'>
       <ProductScan1688QualitySummary scan={scan} />
-      {actionRunId ? (
-        <div className='flex flex-wrap items-center justify-between gap-2 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-950'>
-          <span>
-            Playwright Step Sequencer run retained for this 1688 probe:
-            {' '}
-            <span className='font-mono'>{actionRunId}</span>
-          </span>
-          <a
-            className='font-medium underline decoration-sky-400 underline-offset-2 hover:text-sky-700'
-            href={build1688ActionRunHistoryHref(actionRunId)}
-          >
-            Open run history
-          </a>
-        </div>
-      ) : null}
+      <ProductScan1688ActionRunBanner actionRunId={actionRunId} />
       <ProductScan1688SummaryLine details={details} probe={scan.supplierProbe} connectionLabel={cLab} priceSummary={priceSum} />
       <ProductScan1688DetailsGrid details={details} probe={scan.supplierProbe} scanUrl={scan.url} scanTitle={scan.title} connectionLabel={cLab} />
       <ProductScan1688CandidateUrlsList scanId={resScanId} urls={resolveSupplierCandidateUrls(scan)} />

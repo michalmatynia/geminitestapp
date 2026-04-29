@@ -11,9 +11,11 @@ import {
   listMongoFilemakerBankAccountsForPerson,
   listMongoFilemakerContractsForPerson,
   listMongoFilemakerDocumentsForPerson,
+  listMongoFilemakerEmailsForPerson,
   listMongoFilemakerPersonOccupationsForPerson,
   listMongoFilemakerWebsitesForPerson,
   requireFilemakerMailAdminSession,
+  updateMongoFilemakerAddressesForOwner,
   updateMongoFilemakerPerson,
 } from '@/features/filemaker/server';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -36,7 +38,27 @@ const personProfileJobExperiencePatchSchema = z.object({
   highlights: z.array(z.string()).optional(),
 });
 
+const personAddressPatchSchema = z.object({
+  addressId: z.string(),
+  city: z.string(),
+  country: z.string().optional(),
+  countryId: z.string().optional(),
+  countryValueId: z.string().optional(),
+  countryValueLabel: z.string().optional(),
+  isDefault: z.boolean(),
+  legacyCountryUuid: z.string().optional(),
+  legacyUuid: z.string().optional(),
+  postalCode: z.string(),
+  street: z.string(),
+  streetNumber: z.string(),
+});
+
 const personPatchSchema = z.object({
+  addressId: z.string().optional(),
+  addresses: z.array(personAddressPatchSchema).optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+  countryId: z.string().optional(),
   cvCoreStrengths: z.array(z.string()).optional(),
   cvHeadline: z.string().optional(),
   cvProfessionalSummary: z.string().optional(),
@@ -45,8 +67,11 @@ const personPatchSchema = z.object({
   githubUrl: z.string().optional(),
   lastName: z.string().optional(),
   linkedinUrl: z.string().optional(),
+  postalCode: z.string().optional(),
   profileEducation: z.array(personProfileEducationPatchSchema).optional(),
   profileJobExperience: z.array(personProfileJobExperiencePatchSchema).optional(),
+  street: z.string().optional(),
+  streetNumber: z.string().optional(),
 });
 
 const resolvePersonId = (ctx: ApiHandlerContext): string => {
@@ -68,6 +93,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     linkedBankAccounts,
     linkedContracts,
     linkedDocuments,
+    linkedEmails,
     linkedOccupations,
     linkedWebsites,
   ] = await Promise.all([
@@ -77,6 +103,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     listMongoFilemakerBankAccountsForPerson(person),
     listMongoFilemakerContractsForPerson(person),
     listMongoFilemakerDocumentsForPerson(person),
+    listMongoFilemakerEmailsForPerson(person),
     listMongoFilemakerPersonOccupationsForPerson(person),
     listMongoFilemakerWebsitesForPerson(person),
   ]);
@@ -87,6 +114,7 @@ export async function getHandler(_req: NextRequest, ctx: ApiHandlerContext): Pro
     linkedBankAccounts,
     linkedContracts,
     linkedDocuments,
+    linkedEmails,
     linkedOccupations,
     linkedWebsites,
     person,
@@ -103,6 +131,11 @@ export async function patchHandler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!result.ok) {
     return result.response;
   }
-  const person = await updateMongoFilemakerPerson(resolvePersonId(ctx), result.data);
-  return Response.json({ person });
+  const { addresses, ...personPatch } = result.data;
+  const person = await updateMongoFilemakerPerson(resolvePersonId(ctx), personPatch);
+  const linkedAddresses =
+    addresses === undefined
+      ? undefined
+      : await updateMongoFilemakerAddressesForOwner('person', person.id, addresses);
+  return Response.json({ linkedAddresses, person });
 }

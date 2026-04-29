@@ -36,38 +36,20 @@ export const buildCandidate = (organization: FilemakerOrganization): Organizatio
   };
 };
 
-export const scoreTokens = (left: string[], right: string[]): number => {
-  if (left.length === 0 || right.length === 0) return 0;
-  const rightSet = new Set(right);
-  const overlap = left.filter((token) => rightSet.has(token)).length;
-  return Math.round((overlap / Math.max(left.length, right.length)) * 100);
-};
-
 export const scoreCandidate = (
   companyName: string,
   candidate: OrganizationCandidate
 ): FilemakerJobBoardOrganizationMatch | null => {
   const normalizedCompany = normalizeNameForMatch(companyName);
   if (normalizedCompany.length === 0) return null;
-  let best = 0;
-  let reason = 'token overlap';
-  candidate.normalizedNames.forEach((name: string): void => {
-    if (name === normalizedCompany) {
-      best = Math.max(best, 100);
-      reason = 'exact name match';
-    } else if (name.includes(normalizedCompany) || normalizedCompany.includes(name)) {
-      best = Math.max(best, 92);
-      reason = 'contained name match';
-    } else {
-      best = Math.max(best, scoreTokens(tokenizeName(normalizedCompany), candidate.tokens));
-    }
-  });
-  if (best <= 0) return null;
+  if (!candidate.normalizedNames.some((name: string): boolean => name === normalizedCompany)) {
+    return null;
+  }
   return {
-    confidence: best,
+    confidence: 100,
     organizationId: candidate.organization.id,
     organizationName: candidate.organization.name,
-    reason,
+    reason: 'exact scraped employer name match',
   };
 };
 

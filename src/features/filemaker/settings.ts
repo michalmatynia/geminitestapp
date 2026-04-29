@@ -55,10 +55,12 @@ export {
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
   createDefaultFilemakerLexiconTypes,
+  createDefaultFilemakerLexiconValidationPatterns,
   createFilemakerJobListing,
   createFilemakerJobListingLexiconLink,
   createFilemakerLexiconTerm,
   createFilemakerLexiconType,
+  createFilemakerLexiconValidationPattern,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
@@ -68,6 +70,7 @@ export {
   createFilemakerValueParameter,
   createFilemakerValueParameterLink,
   FILEMAKER_LEXICON_TYPE_DEFINITIONS,
+  FILEMAKER_LEXICON_VALIDATION_PATTERN_DEFINITIONS,
   formatFilemakerAddress,
 } from './filemaker-settings.entities';
 export * from './settings/campaign-factories';

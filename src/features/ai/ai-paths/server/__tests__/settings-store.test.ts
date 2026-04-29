@@ -19,6 +19,16 @@ import {
   materializeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import {
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_TITLE,
+  JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_BUTTON_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_LOCATION,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_NAME,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_SORT_INDEX,
+} from '@/shared/lib/ai-paths/job-board-lexicon-classification';
+import {
   MARKETPLACE_COPY_DEBRAND_PATH_ID,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION,
@@ -33,6 +43,31 @@ const buildEmptyStarterSettings = () => [
 
 const buildCanonicalStarterRecords = () =>
   seedCanonicalStarterWorkflows(buildEmptyStarterSettings()).nextRecords;
+
+const readJobBoardClassificationModelNode = (
+  records: Array<{ key: string; value: string }>
+): Record<string, unknown> => {
+  const configRecord = records.find(
+    (record) =>
+      record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID}`
+  );
+  if (!configRecord) throw new Error('Expected job-board classification config record');
+  const config = JSON.parse(configRecord.value) as Record<string, unknown>;
+  const nodes = Array.isArray(config['nodes']) ? (config['nodes'] as Array<Record<string, unknown>>) : [];
+  const modelNodes = nodes.filter((node) => node['type'] === 'model');
+  const modelNode =
+    nodes.find((node) => node['id'] === JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID) ??
+    (modelNodes.length === 1 ? modelNodes[0] : null);
+  if (!modelNode) throw new Error('Expected job-board classification model node');
+  return modelNode;
+};
+
+const readModelNodeModelConfig = (modelNode: Record<string, unknown>): Record<string, unknown> => {
+  const config = modelNode['config'];
+  if (!config || typeof config !== 'object') return {};
+  const model = (config as Record<string, unknown>)['model'];
+  return model && typeof model === 'object' ? (model as Record<string, unknown>) : {};
+};
 
 describe('settings-store flag preservation and maintenance-only starter policy', () => {
   it('preserves path activation and lock flags when seeded defaults are rewritten', () => {
@@ -110,6 +145,17 @@ describe('settings-store flag preservation and maintenance-only starter policy',
         (record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_marketplace_copy_debrand_v1`
       )
     ).toBe(true);
+    expect(
+      seeded.nextRecords.some(
+        (record) =>
+          record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID}`
+      )
+    ).toBe(true);
+    const classificationModelNode = readJobBoardClassificationModelNode(seeded.nextRecords);
+    expect(classificationModelNode['title']).toBe(JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_TITLE);
+    expect(readModelNodeModelConfig(classificationModelNode)['modelId']).toBe(
+      JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID
+    );
 
     const triggerButtonsRecord = seeded.nextRecords.find(
       (record) => record.key === AI_PATHS_TRIGGER_BUTTONS_KEY
@@ -128,6 +174,123 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(
       triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
     ).toBe(true);
+    expect(
+      triggerButtons.find(
+        (button) => button['id'] === JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_BUTTON_ID
+      )
+    ).toEqual(
+      expect.objectContaining({
+        id: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_BUTTON_ID,
+        name: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_NAME,
+        pathId: JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+        locations: [JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_LOCATION],
+        sortIndex: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_SORT_INDEX,
+      })
+    );
+  });
+
+  it('backfills the job-board classify model node with the AI Brain gpt-oss selection', () => {
+    const seeded = ensureStarterWorkflowDefaults(buildEmptyStarterSettings()).nextRecords;
+    const staleRecords = seeded.map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID}`) {
+        return record;
+      }
+      const config = JSON.parse(record.value) as Record<string, unknown>;
+      const nodes = Array.isArray(config['nodes']) ? (config['nodes'] as Array<Record<string, unknown>>) : [];
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...config,
+          nodes: nodes.map((node) => {
+            if (
+              node['id'] !== JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID &&
+              node['type'] !== 'model'
+            ) {
+              return node;
+            }
+            const configRecord =
+              node['config'] && typeof node['config'] === 'object'
+                ? { ...(node['config'] as Record<string, unknown>) }
+                : {};
+            const model =
+              configRecord['model'] && typeof configRecord['model'] === 'object'
+                ? { ...(configRecord['model'] as Record<string, unknown>) }
+                : {};
+            delete model['modelId'];
+            return {
+              ...node,
+              title: 'GPT-120 Classification Model',
+              config: {
+                ...configRecord,
+                model,
+              },
+            };
+          }),
+        }),
+      };
+    });
+
+    const refreshed = ensureStarterWorkflowDefaults(staleRecords);
+    const classificationModelNode = readJobBoardClassificationModelNode(refreshed.nextRecords);
+
+    expect(refreshed.affectedCount).toBeGreaterThan(0);
+    expect(classificationModelNode['title']).toBe(JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_TITLE);
+    expect(readModelNodeModelConfig(classificationModelNode)['modelId']).toBe(
+      JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID
+    );
+  });
+
+  it('preserves an explicit user-selected job-board classify AI Brain model', () => {
+    const seeded = ensureStarterWorkflowDefaults(buildEmptyStarterSettings()).nextRecords;
+    const customModelId = 'user-selected-ai-brain-model';
+    const customRecords = seeded.map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID}`) {
+        return record;
+      }
+      const config = JSON.parse(record.value) as Record<string, unknown>;
+      const nodes = Array.isArray(config['nodes'])
+        ? (config['nodes'] as Array<Record<string, unknown>>)
+        : [];
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...config,
+          nodes: nodes.map((node) => {
+            if (
+              node['id'] !== JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID &&
+              node['type'] !== 'model'
+            ) {
+              return node;
+            }
+            const configRecord =
+              node['config'] && typeof node['config'] === 'object'
+                ? { ...(node['config'] as Record<string, unknown>) }
+                : {};
+            const model =
+              configRecord['model'] && typeof configRecord['model'] === 'object'
+                ? { ...(configRecord['model'] as Record<string, unknown>) }
+                : {};
+            return {
+              ...node,
+              title: 'User selected classification model',
+              config: {
+                ...configRecord,
+                model: {
+                  ...model,
+                  modelId: customModelId,
+                },
+              },
+            };
+          }),
+        }),
+      };
+    });
+
+    const refreshed = ensureStarterWorkflowDefaults(customRecords);
+    const classificationModelNode = readJobBoardClassificationModelNode(refreshed.nextRecords);
+
+    expect(refreshed.affectedCount).toBe(0);
+    expect(readModelNodeModelConfig(classificationModelNode)['modelId']).toBe(customModelId);
   });
 
   it('restores the canonical marketplace copy debrand row trigger when it is removed from auto-seeded settings', () => {
@@ -419,6 +582,12 @@ describe('settings-store flag preservation and maintenance-only starter policy',
       )
     ).toBe(true);
     expect(
+      restored.nextRecords.some(
+        (record) =>
+          record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID}`
+      )
+    ).toBe(true);
+    expect(
       restored.nextRecords.some((record) => record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}path_96708d`)
     ).toBe(true);
 
@@ -435,6 +604,11 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     ).toBe(true);
     expect(
       triggerButtons.some((button) => button['id'] === 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4')
+    ).toBe(true);
+    expect(
+      triggerButtons.some(
+        (button) => button['id'] === JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_BUTTON_ID
+      )
     ).toBe(true);
   });
 

@@ -17,4 +17,12 @@ describe('productFilterSchema pageSize clamp', () => {
     expect(productFilterSchema.parse({ archived: 'true' }).archived).toBe(true);
     expect(productFilterSchema.parse({ archived: 'false' }).archived).toBe(false);
   });
+
+  it('parses product id filters from comma-separated querystring input', () => {
+    const parsed = productFilterSchema.parse({
+      ids: ' product-1,product-2,product-1 ,, ',
+    });
+
+    expect(parsed.ids).toEqual(['product-1', 'product-2']);
+  });
 });

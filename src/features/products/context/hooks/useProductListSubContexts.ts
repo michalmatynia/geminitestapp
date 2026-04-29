@@ -75,6 +75,9 @@ export function useProductListSubContexts(
       setBaseExported: value.setBaseExported,
       includeArchived: value.includeArchived,
       setIncludeArchived: value.setIncludeArchived,
+      parsedMatchProductIds: value.parsedMatchProductIds,
+      setParsedMatchProductIds: value.setParsedMatchProductIds,
+      clearParsedMatchProductIds: value.clearParsedMatchProductIds,
     }),
     [
       value.page,
@@ -126,6 +129,9 @@ export function useProductListSubContexts(
       value.setBaseExported,
       value.includeArchived,
       value.setIncludeArchived,
+      value.parsedMatchProductIds,
+      value.setParsedMatchProductIds,
+      value.clearParsedMatchProductIds,
     ]
   );
 

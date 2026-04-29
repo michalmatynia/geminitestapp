@@ -1,4 +1,5 @@
 import type { ColumnDef } from '@tanstack/react-table';
+/* eslint-disable max-lines, max-lines-per-function */
 import { BookOpen, Pencil, Trash2 } from 'lucide-react';
 import type React from 'react';
 
@@ -7,7 +8,11 @@ import { FormField, FormModal, SearchInput, SelectSimple } from '@/shared/ui/for
 import { Badge, Button, Input } from '@/shared/ui/primitives.public';
 import { PanelHeader, StandardDataTablePanel } from '@/shared/ui/templates.public';
 
-import type { FilemakerLexiconTerm, FilemakerLexiconTermCategory } from '../types';
+import type {
+  FilemakerLexiconTerm,
+  FilemakerLexiconTermCategory,
+  FilemakerLexiconValidationPattern,
+} from '../types';
 import { formatTimestamp } from './filemaker-page-utils';
 import {
   normalizeFilemakerLexiconKey,
@@ -53,6 +58,15 @@ type FilemakerLexiconPageViewProps = {
   query: string;
   setQuery: (value: string) => void;
   typeEditor: FilemakerLexiconTypeEditorViewState;
+  patternEditor: {
+    addPattern: () => void;
+    changePattern: (id: string, patch: Partial<FilemakerLexiconValidationPattern>) => void;
+    close: () => void;
+    drafts: FilemakerLexiconValidationPattern[];
+    open: boolean;
+    removePattern: (id: string) => void;
+    save: () => Promise<void>;
+  };
 };
 
 export function FilemakerLexiconPageView(
@@ -104,8 +118,213 @@ export function FilemakerLexiconPageView(
         }}
         open={props.typeEditor.open}
       />
+      <FilemakerLexiconValidationPatternsModal
+        drafts={props.patternEditor.drafts}
+        editCategoryOptions={props.editCategoryOptions}
+        isSaving={props.isLoading}
+        onAdd={props.patternEditor.addPattern}
+        onChange={props.patternEditor.changePattern}
+        onClose={props.patternEditor.close}
+        onRemove={props.patternEditor.removePattern}
+        onSave={() => {
+          void props.patternEditor.save();
+        }}
+        open={props.patternEditor.open}
+      />
       <ConfirmationModal />
     </div>
+  );
+}
+
+const VALIDATION_PATTERN_MATCH_MODE_OPTIONS = [
+  { label: 'Regex', value: 'regex' },
+  { label: 'Partial', value: 'partial' },
+  { label: 'Contains', value: 'contains' },
+  { label: 'Exact', value: 'exact' },
+] as const;
+
+const VALIDATION_PATTERN_SOURCE_SCOPE_OPTIONS = [
+  { label: 'All', value: 'all' },
+  { label: 'Address candidate', value: 'address_candidate' },
+  { label: 'Listing field', value: 'listing_field' },
+  { label: 'Listing field benefit', value: 'listing_field_benefit' },
+  { label: 'Listing field contract', value: 'listing_field_contract' },
+  { label: 'Listing field employment', value: 'listing_field_employment' },
+  { label: 'Listing field experience', value: 'listing_field_experience' },
+  { label: 'Listing field language', value: 'listing_field_language' },
+  { label: 'Listing field requirement', value: 'listing_field_requirement' },
+  { label: 'Listing field responsibility', value: 'listing_field_responsibility' },
+  { label: 'Listing field salary', value: 'listing_field_salary' },
+  { label: 'Listing field technology', value: 'listing_field_technology' },
+  { label: 'Listing field work mode', value: 'listing_field_work_mode' },
+  { label: 'Section', value: 'section' },
+  { label: 'Section heading', value: 'section_heading' },
+  { label: 'Section value', value: 'section_value' },
+  { label: 'Snapshot fact', value: 'snapshot_fact' },
+  { label: 'Snapshot pill', value: 'snapshot_pill' },
+  { label: 'Unclassified', value: 'unclassified' },
+] as const;
+
+function FilemakerLexiconValidationPatternsModal(props: {
+  drafts: FilemakerLexiconValidationPattern[];
+  editCategoryOptions: FilemakerLexiconTypeOption[];
+  isSaving: boolean;
+  onAdd: () => void;
+  onChange: (id: string, patch: Partial<FilemakerLexiconValidationPattern>) => void;
+  onClose: () => void;
+  onRemove: (id: string) => void;
+  onSave: () => void;
+  open: boolean;
+}): React.JSX.Element {
+  return (
+    <FormModal
+      open={props.open}
+      onClose={props.onClose}
+      title='Lexicon Validation Patterns'
+      subtitle='Editable initial-classification rules applied before scraped pills become lexicon terms.'
+      onSave={props.onSave}
+      isSaving={props.isSaving}
+      saveText='Save patterns'
+      size='xl'
+      actions={
+        <Button type='button' variant='outline' size='sm' onClick={props.onAdd}>
+          Add pattern
+        </Button>
+      }
+    >
+      <div className='space-y-3'>
+        {props.drafts.map((pattern) => (
+          <div
+            key={pattern.id}
+            className='rounded-lg border border-border/60 bg-muted/10 p-3'
+          >
+            <div className='mb-3 flex justify-end'>
+              <Badge variant={pattern.system ? 'secondary' : 'default'}>
+                {pattern.system ? 'Built-in' : 'Custom'}
+              </Badge>
+            </div>
+            <div className='grid grid-cols-1 gap-3 lg:grid-cols-12'>
+              <FormField label='Enabled' className='lg:col-span-1'>
+                <Input
+                  type='checkbox'
+                  checked={pattern.enabled}
+                  onChange={(event) =>
+                    props.onChange(pattern.id, { enabled: event.target.checked })
+                  }
+                  aria-label={`Enable ${pattern.label}`}
+                />
+              </FormField>
+              <FormField label='Priority' className='lg:col-span-1'>
+                <Input
+                  type='number'
+                  min='0'
+                  value={pattern.priority}
+                  onChange={(event) => {
+                    const priority = Number(event.target.value);
+                    props.onChange(pattern.id, {
+                      priority: Number.isFinite(priority) ? priority : 0,
+                    });
+                  }}
+                />
+              </FormField>
+              <FormField label='Label' className='lg:col-span-4'>
+                <Input
+                  value={pattern.label}
+                  onChange={(event) =>
+                    props.onChange(pattern.id, { label: event.target.value })
+                  }
+                />
+              </FormField>
+              <FormField label='Target type' className='lg:col-span-2'>
+                <SelectSimple
+                  ariaLabel={`${pattern.label} target type`}
+                  value={pattern.targetTypeKey}
+                  options={props.editCategoryOptions}
+                  onValueChange={(value) =>
+                    props.onChange(pattern.id, {
+                      targetTypeKey: value as FilemakerLexiconValidationPattern['targetTypeKey'],
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label='Mode' className='lg:col-span-2'>
+                <SelectSimple
+                  ariaLabel={`${pattern.label} match mode`}
+                  value={pattern.matchMode}
+                  options={[...VALIDATION_PATTERN_MATCH_MODE_OPTIONS]}
+                  onValueChange={(value) =>
+                    props.onChange(pattern.id, {
+                      matchMode: value as FilemakerLexiconValidationPattern['matchMode'],
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label='Scope' className='lg:col-span-2'>
+                <SelectSimple
+                  ariaLabel={`${pattern.label} source scope`}
+                  value={pattern.sourceScope}
+                  options={[...VALIDATION_PATTERN_SOURCE_SCOPE_OPTIONS]}
+                  onValueChange={(value) =>
+                    props.onChange(pattern.id, {
+                      sourceScope: value as FilemakerLexiconValidationPattern['sourceScope'],
+                    })
+                  }
+                />
+              </FormField>
+              <FormField label='Pattern' className='lg:col-span-8'>
+                <Input
+                  value={pattern.pattern}
+                  onChange={(event) =>
+                    props.onChange(pattern.id, { pattern: event.target.value })
+                  }
+                  placeholder='regex, contains text, or exact value'
+                />
+              </FormField>
+              <FormField label='Confidence' className='lg:col-span-2'>
+                <Input
+                  type='number'
+                  min='0'
+                  max='1'
+                  step='0.01'
+                  value={pattern.confidence}
+                  onChange={(event) => {
+                    const confidence = Number(event.target.value);
+                    props.onChange(pattern.id, {
+                      confidence: Math.max(0, Math.min(1, Number.isFinite(confidence) ? confidence : 0)),
+                    });
+                  }}
+                />
+              </FormField>
+              <div className='flex items-end justify-end lg:col-span-2'>
+                <Button
+                  type='button'
+                  variant='destructive'
+                  size='sm'
+                  disabled={pattern.system && !pattern.enabled}
+                  onClick={() => props.onRemove(pattern.id)}
+                >
+                  {pattern.system ? (pattern.enabled ? 'Disable' : 'Disabled') : 'Remove'}
+                </Button>
+              </div>
+              <FormField label='Notes' className='lg:col-span-12'>
+                <Input
+                  value={pattern.notes ?? ''}
+                  onChange={(event) =>
+                    props.onChange(pattern.id, { notes: event.target.value })
+                  }
+                  placeholder='Why this pattern exists.'
+                />
+              </FormField>
+            </div>
+          </div>
+        ))}
+        {props.drafts.length === 0 ? (
+          <div className='rounded border border-dashed border-border/70 p-4 text-sm text-muted-foreground'>
+            No validation patterns configured.
+          </div>
+        ) : null}
+      </div>
+    </FormModal>
   );
 }
 

@@ -104,6 +104,37 @@ describe('TraderaStatusButton', () => {
     expect(onOpenListings).not.toHaveBeenCalled();
   });
 
+  it('keeps closed Tradera status manageable with the closed tone', () => {
+    window.sessionStorage.clear();
+    useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
+
+    const onOpenListings = vi.fn();
+    const prefetchListings = vi.fn();
+
+    render(
+      <TraderaStatusButton
+        productId='product-1'
+        status='closed'
+        prefetchListings={prefetchListings}
+        onOpenListings={onOpenListings}
+      />
+    );
+
+    const button = screen.getByRole('button', {
+      name: 'Manage Tradera listing (closed).',
+    });
+
+    expect(button).not.toBeDisabled();
+    expect(button.className).toContain('border-blue-700/80');
+
+    fireEvent.mouseEnter(button);
+    fireEvent.focus(button);
+    fireEvent.click(button);
+
+    expect(prefetchListings).toHaveBeenCalledTimes(2);
+    expect(onOpenListings).toHaveBeenCalledWith(undefined);
+  });
+
   it('reuses persisted quick-export recovery context for auth_required statuses', () => {
     useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
     window.sessionStorage.setItem(

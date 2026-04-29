@@ -6,10 +6,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
+  filemakerJobBoardLexiconClassificationApplyResponseSchema,
   type FilemakerJobBoardScrapeProvider,
   type FilemakerJobBoardScrapeDraftSaveRequest,
   type FilemakerJobBoardDuplicateStrategy,
   type FilemakerJobBoardImportStrategy,
+  type FilemakerJobBoardLexiconClassificationApplyResponse,
   type FilemakerJobBoardOrganizationScope,
   type FilemakerJobBoardScrapeExtractionPath,
   type FilemakerJobBoardScrapeLiveEvent,
@@ -24,6 +26,18 @@ import {
   type FilemakerJobBoardScrapedOffer,
 } from '@/features/filemaker/filemaker-job-board-scrape-contracts';
 import type { FilemakerJobListingStatus } from '@/features/filemaker/types';
+import type {
+  ContextRegistryResolutionBundle,
+  ContextRuntimeDocument,
+} from '@/shared/contracts/ai-context-registry';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
+import {
+  type TrackedAiPathRunSnapshot,
+  subscribeToTrackedAiPathRun,
+} from '@/shared/lib/ai-paths/client-run-tracker';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { getAiPathRunResult } from '@/shared/lib/ai-paths/api/client';
+import { ContextRegistryPageProvider } from '@/shared/lib/ai-context-registry/page-context';
 import { extractMutationErrorMessage } from '@/shared/lib/mutation-error-handler';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -38,6 +52,7 @@ import {
   type FilemakerLexiconTypeMetadataMap,
 } from '../../pages/AdminFilemakerLexiconPage.type-metadata';
 import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../../settings';
+import type { FilemakerDatabase, FilemakerLexiconTerm } from '../../types';
 import { useJobBoardScrapeBrowserModeSetting } from './useJobBoardScrapeBrowserModeSetting';
 
 type FilemakerJobBoardScrapeModalProps = {
@@ -69,7 +84,6 @@ type ScrapeDraft = {
 
 type ScrapeModalInitialState = {
   draft: ScrapeDraft;
-  organizationScopeTouched: boolean;
 };
 
 type ActiveScrapeRequest = {
@@ -87,6 +101,46 @@ type LivePreviewState = {
 };
 
 type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
+type ScrapedOfferUnclassifiedPill =
+  FilemakerJobBoardScrapedOffer['unclassifiedPills'][number];
+type LexiconKnownTermContextEntry = Record<string, unknown> & {
+  label: string;
+  normalizedLabel: string;
+  occurrenceCount: number;
+  sourceSite: string | undefined;
+  typeKey: string;
+};
+type LexiconTypeSampleTermContextEntry = Record<string, unknown> & {
+  label: string;
+  normalizedLabel: string;
+  occurrenceCount: number;
+  sourceSite: string | undefined;
+};
+type LexiconTypeContextEntry = Record<string, unknown> & {
+  description: string;
+  key: string;
+  label: string;
+  sampleTerms: LexiconTypeSampleTermContextEntry[];
+  sortOrder: number;
+};
+type LexiconValidationPatternContextEntry = Record<string, unknown> & {
+  confidence: number;
+  label: string;
+  matchMode: string;
+  notes: string | undefined;
+  pattern: string;
+  priority: number;
+  sourceScope: string;
+  targetTypeKey: string;
+  version: number;
+};
+type LexiconContext = Record<string, unknown> & {
+  knownTerms: LexiconKnownTermContextEntry[];
+  rules: string[];
+  types: LexiconTypeContextEntry[];
+  validationPatterns: LexiconValidationPatternContextEntry[];
+  validationPatternUsage: string;
+};
 
 const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'delayMs',
@@ -117,6 +171,11 @@ const jobBoardScrapeRunEndpoint = (runId: string): string =>
 
 const JOB_BOARD_SCRAPE_LATEST_RUN_ENDPOINT =
   `${FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT}/runs/latest`;
+const JOB_BOARD_SCRAPE_CLASSIFICATIONS_ENDPOINT =
+  `${FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT}/classifications`;
+const JOB_BOARD_LEXICON_CLASSIFICATION_RESULT_NODE_ID =
+  'node-regex-job-board-lexicon-classification';
+const JOB_BOARD_LEXICON_CONTEXT_ENGINE_VERSION = 'filemaker-job-board-lexicon:v3';
 
 const jobBoardScrapeRunCancelEndpoint = (runId: string): string =>
   `${jobBoardScrapeRunEndpoint(runId)}/cancel`;
@@ -134,7 +193,7 @@ const IMPORT_STRATEGY_OPTIONS = [
 ] as const;
 
 const DUPLICATE_STRATEGY_OPTIONS = [
-  { value: 'update', label: 'Update existing' },
+  { value: 'skip', label: 'Skip existing' },
   { value: 'add', label: 'Always add' },
 ] as const;
 
@@ -227,6 +286,218 @@ function ScrapedOfferPillLinks(props: {
   );
 }
 
+function ScrapedOfferUnclassifiedPills(props: {
+  offer: FilemakerJobBoardScrapedOffer;
+}): React.JSX.Element | null {
+  if (props.offer.unclassifiedPills.length === 0) return null;
+  return (
+    <div className='mt-2 flex flex-wrap items-center gap-1'>
+      <span className='text-[11px] font-medium uppercase text-muted-foreground'>
+        Unclassified
+      </span>
+      {props.offer.unclassifiedPills.slice(0, 24).map((pill, pillIndex) => (
+        <Badge key={`${pill.position}-${pillIndex}-${pill.label}`} variant='secondary'>
+          {pill.label}
+        </Badge>
+      ))}
+    </div>
+  );
+}
+
+const buildClassificationEntityId = (offer: FilemakerJobBoardScrapedOffer): string =>
+  `filemaker-job-board-offer:${offer.sourceUrl}`;
+
+const buildLexiconTypesContext = (
+  database: FilemakerDatabase,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): LexiconTypeContextEntry[] => {
+  const termsByType = new Map<string, FilemakerLexiconTerm[]>();
+  database.lexiconTerms.forEach((term) => {
+    const existing = termsByType.get(term.typeKey) ?? [];
+    existing.push(term);
+    termsByType.set(term.typeKey, existing);
+  });
+
+  return Array.from(typeMetadata.values())
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((type) => ({
+      description: type.description ?? '',
+      key: type.key,
+      label: type.label,
+      sampleTerms: (termsByType.get(type.key) ?? [])
+        .slice()
+        .sort((left, right) => right.occurrenceCount - left.occurrenceCount)
+        .slice(0, 32)
+        .map((term) => ({
+          label: term.label,
+          normalizedLabel: term.normalizedLabel,
+          occurrenceCount: term.occurrenceCount,
+          sourceSite: term.sourceSite,
+        })),
+      sortOrder: type.sortOrder,
+    }));
+};
+
+const buildKnownTermIndex = (database: FilemakerDatabase): Array<{
+  label: string;
+  normalizedLabel: string;
+  occurrenceCount: number;
+  sourceSite: string | undefined;
+  typeKey: string;
+}> =>
+  database.lexiconTerms
+    .slice()
+    .sort((left, right) => right.occurrenceCount - left.occurrenceCount)
+    .slice(0, 300)
+    .map((term) => ({
+      label: term.label,
+      normalizedLabel: term.normalizedLabel,
+      occurrenceCount: term.occurrenceCount,
+      sourceSite: term.sourceSite,
+      typeKey: term.typeKey,
+    }));
+
+const buildLexiconContext = (
+  database: FilemakerDatabase,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): LexiconContext => ({
+  knownTerms: buildKnownTermIndex(database),
+  types: buildLexiconTypesContext(database, typeMetadata),
+  validationPatterns: database.lexiconValidationPatterns
+    .filter((pattern) => pattern.enabled)
+    .slice()
+    .sort((left, right) => left.priority - right.priority)
+    .map((pattern) => ({
+      confidence: pattern.confidence,
+      label: pattern.label,
+      matchMode: pattern.matchMode,
+      notes: pattern.notes,
+      pattern: pattern.pattern,
+      priority: pattern.priority,
+      sourceScope: pattern.sourceScope,
+      targetTypeKey: pattern.targetTypeKey,
+      version: pattern.version,
+    })),
+  validationPatternUsage:
+    'Apply patterns in ascending priority. For unclassified scrape pills, sourceScope all and unclassified are directly applicable; other source scopes are supporting context only unless the pill reason/source clearly matches them.',
+  rules: [
+    'Classify only supplied unclassified pill labels and keep labels byte-for-byte identical.',
+    'Exact normalized matches in knownTerms win before semantic guessing.',
+    'Use validationPatterns as the editable source of truth after exact knownTerms matches.',
+    'Use other only when no specific lexicon type, exact term, or validation pattern fits.',
+    'Use action ignore for provider UI text, assistant labels, tracking text, or noise.',
+    'Do not classify regions, city names, or voivodeships as technology.',
+    'Classify technologies only when the label is an actual language, tool, framework, platform, library, database, cloud, or stack.',
+    'Do not invent labels or type keys.',
+    'When evidence is weak, prefer action ignore or typeKey other with confidence below 0.65.',
+  ],
+});
+
+const buildUnclassifiedPillContext = (
+  offer: FilemakerJobBoardScrapedOffer
+): Array<ScrapedOfferUnclassifiedPill & {
+  nearbyClassifiedPills: ScrapedOfferPill[];
+  sourceHint: string;
+}> =>
+  offer.unclassifiedPills.map((pill) => ({
+    ...pill,
+    nearbyClassifiedPills: offer.pills
+      .filter((classifiedPill) => Math.abs(classifiedPill.position - pill.position) <= 3)
+      .slice(0, 8),
+    sourceHint: [
+      pill.reason,
+      offer.sourceSite,
+      offer.location.length > 0 ? `offer location: ${offer.location}` : '',
+      offer.title.length > 0 ? `offer title: ${offer.title}` : '',
+    ]
+      .filter((value) => value.trim().length > 0)
+      .join(' | '),
+  }));
+
+const buildClassificationEntityJson = (
+  item: FilemakerJobBoardScrapeOfferResult,
+  database: FilemakerDatabase,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): Record<string, unknown> => ({
+  id: buildClassificationEntityId(item.offer),
+  type: 'filemaker_job_board_scraped_offer',
+  classificationInput: {
+    listingId: item.listingId,
+    match: item.match,
+    offer: {
+      companyName: item.offer.companyName,
+      description: item.offer.description,
+      location: item.offer.location,
+      sourceSite: item.offer.sourceSite,
+      sourceUrl: item.offer.sourceUrl,
+      title: item.offer.title,
+    },
+    classifiedPills: item.offer.pills,
+    unclassifiedPills: buildUnclassifiedPillContext(item.offer),
+  },
+  lexiconContext: buildLexiconContext(database, typeMetadata),
+  offer: item.offer,
+  outputContract: {
+    schema:
+      '{"classifications":[{"label":"string","normalizedLabel":"string","typeKey":"FileMaker lexicon type key","confidence":0.0,"reason":"string","evidence":"string","matchedLexiconTerm":"string optional","matchedValidationPatternId":"string optional","action":"classify|ignore"}]}',
+  },
+});
+
+const buildLexiconContextRegistryBundle = (
+  item: FilemakerJobBoardScrapeOfferResult,
+  database: FilemakerDatabase,
+  typeMetadata: FilemakerLexiconTypeMetadataMap
+): ContextRegistryResolutionBundle => {
+  const documentId = `filemaker-job-board-lexicon-context:${item.offer.sourceUrl}`;
+  const lexiconContext = buildLexiconContext(database, typeMetadata);
+  const document: ContextRuntimeDocument = {
+    id: documentId,
+    kind: 'runtime_document',
+    entityType: 'filemaker_job_board_scraped_offer',
+    title: 'FileMaker Job Board Lexicon Context',
+    summary:
+      'Valid FileMaker lexicon types and representative existing terms for classifying scraped job-board pills.',
+    tags: ['filemaker', 'job-board', 'lexicon', 'classification'],
+    relatedNodeIds: [],
+    facts: {
+      sourceUrl: item.offer.sourceUrl,
+      sourceSite: item.offer.sourceSite,
+      unclassifiedPillCount: item.offer.unclassifiedPills.length,
+    },
+    sections: [
+      {
+        id: 'lexicon-types',
+        kind: 'items',
+        title: 'Lexicon Types',
+        items: buildLexiconTypesContext(database, typeMetadata),
+      },
+      {
+        id: 'validation-patterns',
+        kind: 'items',
+        title: 'Validation Patterns',
+        items: lexiconContext.validationPatterns,
+      },
+    ],
+    provenance: {
+      source: 'filemaker-job-board-scrape-modal',
+    },
+  };
+  return {
+    refs: [
+      {
+        id: documentId,
+        kind: 'runtime_document',
+        providerId: 'filemaker-job-board-scrape',
+        entityType: 'filemaker_job_board_scraped_offer',
+      },
+    ],
+    nodes: [],
+    documents: [document],
+    truncated: false,
+    engineVersion: JOB_BOARD_LEXICON_CONTEXT_ENGINE_VERSION,
+  };
+};
+
 function ScrapedOfferMetadata(props: {
   offer: FilemakerJobBoardScrapedOffer;
 }): React.JSX.Element | null {
@@ -313,7 +584,7 @@ const readStoredChoice = <T extends string>(
 
 const toImportDuplicateStrategy = (
   strategy: FilemakerJobBoardDuplicateStrategy
-): FilemakerJobBoardDuplicateStrategy => (strategy === 'skip' ? 'update' : strategy);
+): FilemakerJobBoardDuplicateStrategy => (strategy === 'add' ? 'add' : 'skip');
 
 const areDraftSettingsEqual = (left: ScrapeDraft, right: ScrapeDraft): boolean =>
   SCRAPE_DRAFT_SETTINGS_KEYS.every((key) => left[key] === right[key]);
@@ -407,6 +678,9 @@ const mergeLiveOffers = (
     offers
   );
 
+const mergeUniqueStrings = (left: string[], right: string[]): string[] =>
+  Array.from(new Set([...left, ...right]));
+
 const formatOfferStatus = (status: FilemakerJobBoardScrapeOfferResult['status']): string =>
   status === 'preview' ? 'not saved' : status;
 
@@ -453,7 +727,9 @@ const normalizeRuntimeStatus = (value: unknown): FilemakerJobBoardScrapeRuntimeS
     ? value
     : 'queued';
 
-const isRuntimeRunActive = (run: FilemakerJobBoardScrapeRuntimeRun | null): boolean =>
+const isRuntimeRunActive = (
+  run: FilemakerJobBoardScrapeRuntimeRun | null
+): run is FilemakerJobBoardScrapeRuntimeRun =>
   run !== null && (run.status === 'queued' || run.status === 'running');
 
 const readNumber = (value: unknown): number =>
@@ -508,6 +784,32 @@ const normalizeOfferPills = (
   });
 };
 
+const normalizeUnclassifiedPills = (
+  value: unknown,
+  fallbackSourceSite: string,
+  fallbackSourceUrl: string
+): ScrapedOfferUnclassifiedPill[] => {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item, index) => {
+    if (!isRecord(item)) return [];
+    const label = readString(item['label']).trim();
+    if (label.length === 0) return [];
+    const position = item['position'];
+    const reason = readString(item['reason']).trim();
+    const sourceSite = readString(item['sourceSite']).trim();
+    const sourceUrl = readString(item['sourceUrl']).trim();
+    return [
+      {
+        label,
+        position: typeof position === 'number' && Number.isFinite(position) ? position : index,
+        reason: reason.length > 0 ? reason : 'unclassified',
+        sourceSite: sourceSite.length > 0 ? sourceSite : fallbackSourceSite,
+        sourceUrl: sourceUrl.length > 0 ? sourceUrl : fallbackSourceUrl,
+      },
+    ];
+  });
+};
+
 const normalizeOfferMatch = (
   value: unknown
 ): FilemakerJobBoardScrapeOfferResult['match'] => {
@@ -526,6 +828,8 @@ const normalizeOfferMatch = (
 const normalizeOfferResult = (value: unknown): FilemakerJobBoardScrapeOfferResult => {
   const record = isRecord(value) ? value : {};
   const offer = isRecord(record['offer']) ? record['offer'] : {};
+  const sourceSite = readString(offer['sourceSite']);
+  const sourceUrl = readString(offer['sourceUrl']);
   return {
     listingId: readNullableString(record['listingId']),
     match: normalizeOfferMatch(record['match']),
@@ -544,9 +848,14 @@ const normalizeOfferResult = (value: unknown): FilemakerJobBoardScrapeOfferResul
       salaryPeriod: normalizeSalaryPeriod(offer['salaryPeriod']),
       salaryText: readString(offer['salaryText']),
       sourceExternalId: readNullableString(offer['sourceExternalId']),
-      sourceSite: readString(offer['sourceSite']),
-      sourceUrl: readString(offer['sourceUrl']),
+      sourceSite,
+      sourceUrl,
       title: readString(offer['title']),
+      unclassifiedPills: normalizeUnclassifiedPills(
+        offer['unclassifiedPills'],
+        sourceSite,
+        sourceUrl
+      ),
     },
     reason: readNullableString(record['reason']),
     status: normalizeOfferStatus(record['status']),
@@ -909,6 +1218,80 @@ const postSaveDraftsRequest = async (
   return normalizeScrapeResponse(await response.json());
 };
 
+const readObjectRecord = (value: unknown): Record<string, unknown> | null =>
+  isRecord(value) ? value : null;
+
+const extractClassificationArray = (value: unknown): unknown[] | null => {
+  if (!isRecord(value)) return null;
+  const classifications = value['classifications'];
+  return Array.isArray(classifications) ? classifications : null;
+};
+
+const extractClassificationOutputFromNodeOutputs = (
+  outputs: Record<string, unknown>
+): unknown[] | null => {
+  const preferredNode = readObjectRecord(outputs[JOB_BOARD_LEXICON_CLASSIFICATION_RESULT_NODE_ID]);
+  const preferredValue = preferredNode ? extractClassificationArray(preferredNode['value']) : null;
+  if (preferredValue !== null) return preferredValue;
+
+  for (const nodeOutput of Object.values(outputs)) {
+    const record = readObjectRecord(nodeOutput);
+    if (!record) continue;
+    const direct = extractClassificationArray(record['value']);
+    if (direct !== null) return direct;
+    const bundle = extractClassificationArray(record['bundle']);
+    if (bundle !== null) return bundle;
+  }
+  return null;
+};
+
+const extractClassificationOutputFromRun = (run: AiPathRunRecord): unknown[] | null => {
+  const runtimeState = readObjectRecord(run.runtimeState);
+  const outputs = readObjectRecord(runtimeState?.['outputs']);
+  return outputs !== null ? extractClassificationOutputFromNodeOutputs(outputs) : null;
+};
+
+const loadClassificationOutputFromRun = async (runId: string): Promise<unknown[]> => {
+  const result = await getAiPathRunResult(runId, { cache: 'no-store' });
+  if (!result.ok) {
+    throw new Error(
+      result.error.length > 0 ? result.error : 'Failed to load AI Path classification result.'
+    );
+  }
+  const classifications = extractClassificationOutputFromRun(result.data.run);
+  if (classifications === null || classifications.length === 0) {
+    throw new Error('AI Path run did not return lexicon classifications.');
+  }
+  return classifications;
+};
+
+const postClassificationApplyRequest = async (input: {
+  classifications: unknown[];
+  item: FilemakerJobBoardScrapeOfferResult;
+  runId: string;
+}): Promise<FilemakerJobBoardLexiconClassificationApplyResponse> => {
+  const response = await fetch(JOB_BOARD_SCRAPE_CLASSIFICATIONS_ENDPOINT, {
+    method: 'POST',
+    headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({
+      classifications: input.classifications,
+      listingId: input.item.listingId,
+      offer: input.item.offer,
+      runId: input.runId,
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+  const parsed = filemakerJobBoardLexiconClassificationApplyResponseSchema.safeParse(
+    await response.json()
+  );
+  if (!parsed.success) {
+    throw new Error('Invalid job-board lexicon classification response.');
+  }
+  return parsed.data;
+};
+
 const resultMessage = (result: FilemakerJobBoardScrapeResponse): string => {
   if (result.mode === 'preview') {
     return `Preview found ${result.summary.scrapedOffers} offer${result.summary.scrapedOffers === 1 ? '' : 's'} and ${result.summary.matchedOffers} match${result.summary.matchedOffers === 1 ? '' : 'es'}.`;
@@ -925,9 +1308,9 @@ const formatActionUpdatedAt = (value: string): string | null => {
   }).format(new Date(timestamp));
 };
 
-const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
+const defaultDraft = (_selectedOrganizationCount: number): ScrapeDraft => ({
   delayMs: '750',
-  duplicateStrategy: 'update',
+  duplicateStrategy: 'skip',
   extractDescriptions: true,
   extractSalaries: true,
   extractionPath: 'playwright_ai',
@@ -936,7 +1319,7 @@ const defaultDraft = (selectedOrganizationCount: number): ScrapeDraft => ({
   maxOffers: '25',
   maxPages: '2',
   minimumMatchConfidence: '85',
-  organizationScope: selectedOrganizationCount > 0 ? 'selected' : 'all',
+  organizationScope: 'all',
   personaId: '',
   provider: 'auto',
   sourceUrl: '',
@@ -955,12 +1338,6 @@ const normalizeSavedDraft = (
   if (version !== 2 && version !== SCRAPER_SETTINGS_VERSION) return null;
   const saved = value['draft'];
   const fallback = defaultDraft(selectedOrganizationCount);
-  const organizationScope = readStoredChoice(
-    saved['organizationScope'],
-    ['selected', 'all'] as const,
-    fallback.organizationScope
-  );
-
   const duplicateStrategy = readStoredChoice(
     saved['duplicateStrategy'],
     DUPLICATE_STRATEGY_OPTIONS.map((option) => option.value),
@@ -989,8 +1366,7 @@ const normalizeSavedDraft = (
       saved['minimumMatchConfidence'],
       fallback.minimumMatchConfidence
     ),
-    organizationScope:
-      selectedOrganizationCount === 0 && organizationScope === 'selected' ? 'all' : organizationScope,
+    organizationScope: 'all',
     personaId: readStoredString(saved['personaId'], fallback.personaId),
     provider: readStoredChoice(
       saved['provider'],
@@ -1032,10 +1408,53 @@ const writeSavedDraft = (draft: ScrapeDraft): boolean => {
 
 const createInitialState = (selectedOrganizationCount: number): ScrapeModalInitialState => {
   const savedDraft = readSavedDraft(selectedOrganizationCount);
-  return savedDraft
-    ? { draft: savedDraft, organizationScopeTouched: true }
-    : { draft: defaultDraft(selectedOrganizationCount), organizationScopeTouched: false };
+  return savedDraft ? { draft: savedDraft } : { draft: defaultDraft(selectedOrganizationCount) };
 };
+
+function ScrapedOfferClassifyTrigger(props: {
+  database: FilemakerDatabase;
+  disabled: boolean;
+  item: FilemakerJobBoardScrapeOfferResult;
+  onRunQueued: (args: { item: FilemakerJobBoardScrapeOfferResult; runId: string }) => void;
+  typeMetadata: FilemakerLexiconTypeMetadataMap;
+}): React.JSX.Element | null {
+  if (props.item.offer.unclassifiedPills.length === 0) return null;
+  const entityId = buildClassificationEntityId(props.item.offer);
+  const getEntityJson = (): Record<string, unknown> =>
+    buildClassificationEntityJson(props.item, props.database, props.typeMetadata);
+  const getTriggerExtras = (): Record<string, unknown> => ({
+    filemakerJobBoardLexiconClassification: {
+      listingId: props.item.listingId,
+      sourceSite: props.item.offer.sourceSite,
+      sourceUrl: props.item.offer.sourceUrl,
+      unclassifiedPillCount: props.item.offer.unclassifiedPills.length,
+    },
+  });
+
+  return (
+    <ContextRegistryPageProvider
+      pageId='filemaker:job-board-scrape'
+      title='FileMaker Job Board Scrape'
+      resolved={buildLexiconContextRegistryBundle(
+        props.item,
+        props.database,
+        props.typeMetadata
+      )}
+    >
+      <TriggerButtonBar
+        location='filemaker_job_board_scraped_offer'
+        entityType='custom'
+        entityId={entityId}
+        getEntityJson={getEntityJson}
+        getTriggerExtras={getTriggerExtras}
+        disabled={props.disabled}
+        showRunFeedback
+        onRunQueued={({ runId }) => props.onRunQueued({ item: props.item, runId })}
+        className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-xs'
+      />
+    </ContextRegistryPageProvider>
+  );
+}
 
 export function FilemakerJobBoardScrapeModal(
   props: FilemakerJobBoardScrapeModalProps
@@ -1046,9 +1465,6 @@ export function FilemakerJobBoardScrapeModal(
   const [initialState] = useState(() => createInitialState(props.selectedOrganizationCount));
   const [draft, setDraft] = useState<ScrapeDraft>(initialState.draft);
   const [savedDraftBaseline, setSavedDraftBaseline] = useState<ScrapeDraft>(initialState.draft);
-  const [organizationScopeTouched, setOrganizationScopeTouched] = useState(
-    initialState.organizationScopeTouched
-  );
   const [modeInFlight, setModeInFlight] = useState<FilemakerJobBoardScrapeMode | null>(null);
   const [saveDraftsInFlight, setSaveDraftsInFlight] = useState<string | null>(null);
   const [result, setResult] = useState<FilemakerJobBoardScrapeResponse | null>(null);
@@ -1058,6 +1474,7 @@ export function FilemakerJobBoardScrapeModal(
     createEmptyLivePreviewState()
   );
   const activeRequestRef = useRef<ActiveScrapeRequest | null>(null);
+  const classificationRunSubscriptionsRef = useRef<Map<string, () => void>>(new Map());
   const notifiedRuntimeRunIdsRef = useRef<Set<string>>(new Set());
   const rehydratedRunIdRef = useRef<string | null>(null);
   const requestIdRef = useRef(0);
@@ -1067,8 +1484,8 @@ export function FilemakerJobBoardScrapeModal(
     () => buildFilemakerLexiconTypeMetadata(filemakerDatabase),
     [filemakerDatabase]
   );
-  const selectedScopeDisabled = props.selectedOrganizationCount === 0;
   const activeRuntimeRunIsRunning = isRuntimeRunActive(activeRuntimeRun);
+  const activeScrapeMode = modeInFlight ?? activeRuntimeRun?.mode ?? null;
   const isRunning = modeInFlight !== null || activeRuntimeRunIsRunning;
   const isSavingPreviewDrafts = saveDraftsInFlight !== null;
   const isSavingRuntimeSettings = browserMode.isSaving;
@@ -1097,41 +1514,14 @@ export function FilemakerJobBoardScrapeModal(
     !isSavingPreviewDrafts &&
     !isSavingRuntimeSettings;
 
-  useEffect(() => {
-    if (!props.open) return;
-    setDraft((current) => {
-      if (props.selectedOrganizationCount === 0 && current.organizationScope === 'selected') {
-        return { ...current, organizationScope: 'all' };
-      }
-      if (
-        !organizationScopeTouched &&
-        props.selectedOrganizationCount > 0 &&
-        current.organizationScope === 'all'
-      ) {
-        return { ...current, organizationScope: 'selected' };
-      }
-      return current;
-    });
-  }, [organizationScopeTouched, props.open, props.selectedOrganizationCount]);
-
   useEffect(
     () => () => {
       activeRequestRef.current?.controller.abort();
       activeRequestRef.current = null;
+      classificationRunSubscriptionsRef.current.forEach((unsubscribe) => unsubscribe());
+      classificationRunSubscriptionsRef.current.clear();
     },
     []
-  );
-
-  const organizationScopeOptions = useMemo(
-    () => [
-      {
-        value: 'selected',
-        label: `Selected (${props.selectedOrganizationCount})`,
-        disabled: selectedScopeDisabled,
-      },
-      { value: 'all', label: 'All organisations' },
-    ],
-    [props.selectedOrganizationCount, selectedScopeDisabled]
   );
 
   const updateDraft = <K extends keyof ScrapeDraft>(key: K, value: ScrapeDraft[K]): void => {
@@ -1356,6 +1746,117 @@ export function FilemakerJobBoardScrapeModal(
     setLivePreview((current) => reduceLivePreviewEvent(current, event));
   };
 
+  const unsubscribeClassificationRun = useCallback((runId: string): void => {
+    const unsubscribe = classificationRunSubscriptionsRef.current.get(runId);
+    if (unsubscribe === undefined) return;
+    unsubscribe();
+    classificationRunSubscriptionsRef.current.delete(runId);
+  }, []);
+
+  const applyClassifiedOfferResponse = useCallback((
+    item: FilemakerJobBoardScrapeOfferResult,
+    response: FilemakerJobBoardLexiconClassificationApplyResponse
+  ): void => {
+    const updatedItem: FilemakerJobBoardScrapeOfferResult = {
+      ...item,
+      listingId: response.listingId ?? item.listingId,
+      offer: response.offer,
+    };
+    const acceptedCount = response.summary.acceptedClassifications;
+    const message =
+      acceptedCount === 1
+        ? `Classified 1 scraped lexicon pill for ${response.offer.title}.`
+        : `Classified ${acceptedCount} scraped lexicon pills for ${response.offer.title}.`;
+
+    setLivePreview((current) => ({
+      ...current,
+      messages: appendCapped(current.messages, message),
+      offers: mergeLiveOffer(current.offers, updatedItem),
+      warnings: mergeUniqueStrings(current.warnings, response.warnings).slice(-6),
+    }));
+    setResult((current) =>
+      current === null
+        ? current
+        : {
+            ...current,
+            offers: mergeLiveOffer(current.offers, updatedItem),
+            summary: {
+              ...current.summary,
+              createdLexiconTerms:
+                current.summary.createdLexiconTerms + response.summary.createdLexiconTerms,
+              linkedLexiconTerms:
+                current.summary.linkedLexiconTerms + response.summary.linkedLexiconTerms,
+            },
+            warnings: mergeUniqueStrings(current.warnings, response.warnings),
+          }
+    );
+    toast(message, {
+      variant: acceptedCount > 0 ? 'success' : 'default',
+    });
+  }, [toast]);
+
+  const handleClassificationRunQueued = useCallback((
+    input: { item: FilemakerJobBoardScrapeOfferResult; runId: string }
+  ): void => {
+    const runId = input.runId.trim();
+    if (runId.length === 0) return;
+    unsubscribeClassificationRun(runId);
+    setLivePreview((current) => ({
+      ...current,
+      messages: appendCapped(
+        current.messages,
+        `Classifying scraped lexicon pills for ${input.item.offer.title}.`
+      ),
+    }));
+    const unsubscribe = subscribeToTrackedAiPathRun(
+      runId,
+      (snapshot: TrackedAiPathRunSnapshot) => {
+        if (snapshot.status === 'queued' || snapshot.status === 'running') return;
+        unsubscribeClassificationRun(runId);
+        if (snapshot.status !== 'completed') {
+          const message =
+            snapshot.errorMessage ??
+            `AI Path lexicon classification ${snapshot.status}.`;
+          setLivePreview((current) => ({
+            ...current,
+            warnings: appendCapped(current.warnings, message, 6),
+          }));
+          toast(message, { variant: snapshot.status === 'failed' ? 'error' : 'default' });
+          return;
+        }
+        void (async (): Promise<void> => {
+          try {
+            const classifications = await loadClassificationOutputFromRun(runId);
+            const response = await postClassificationApplyRequest({
+              classifications,
+              item: input.item,
+              runId,
+            });
+            applyClassifiedOfferResponse(input.item, response);
+          } catch (error) {
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Failed to apply job-board lexicon classifications.';
+            setLivePreview((current) => ({
+              ...current,
+              warnings: appendCapped(current.warnings, message, 6),
+            }));
+            toast(message, { variant: 'error' });
+          }
+        })();
+      },
+      {
+        initialSnapshot: {
+          entityId: buildClassificationEntityId(input.item.offer),
+          entityType: 'custom',
+          status: 'queued',
+        },
+      }
+    );
+    classificationRunSubscriptionsRef.current.set(runId, unsubscribe);
+  }, [applyClassifiedOfferResponse, toast, unsubscribeClassificationRun]);
+
   const runScrape = async (mode: FilemakerJobBoardScrapeMode): Promise<void> => {
     if (sourceUrlMissing) {
       toast('Provide a supported job-board category or offer link.', { variant: 'error' });
@@ -1417,14 +1918,14 @@ export function FilemakerJobBoardScrapeModal(
     const controller = new AbortController();
     fetchRuntimeSnapshot(runId, controller.signal)
       .then((snapshot) => {
-        applyRuntimeSnapshot(snapshot, { notifyCompletion: true });
+        applyRuntimeSnapshot(snapshot, { notifyCompletion: false });
       })
       .catch(async (error: unknown) => {
         if (isAbortLikeError(error, controller.signal)) return;
         if (isNotFoundResponseError(error)) {
           removeStoredRuntimeRunId();
           const latestSnapshot = await fetchLatestRuntimeSnapshot(controller.signal);
-          applyRuntimeSnapshot(latestSnapshot, { notifyCompletion: true });
+          applyRuntimeSnapshot(latestSnapshot, { notifyCompletion: false });
           return;
         }
         toast(error instanceof Error ? error.message : 'Failed to load job-board scrape run.', {
@@ -1488,58 +1989,68 @@ export function FilemakerJobBoardScrapeModal(
       title='Job Board Scraper'
       subtitle='Centralized job-board offer scraping.'
       onSave={() => {
-        void runScrape('preview');
+        void saveSettings();
       }}
-      saveText='Preview'
-      saveIcon={<Search className='h-4 w-4' />}
-      isSaving={isRunning || isSavingRuntimeSettings || isSavingPreviewDrafts}
+      saveText='Save settings'
+      saveIcon={<Save className='h-4 w-4' />}
+      isSaving={isSavingRuntimeSettings}
       isSaveDisabled={
-        sourceUrlMissing || isRunning || isSavingRuntimeSettings || isSavingPreviewDrafts
+        !hasSettingsUnsavedChanges ||
+        isRunning ||
+        isSavingRuntimeSettings ||
+        isSavingPreviewDrafts
       }
+      hasUnsavedChanges={hasSettingsUnsavedChanges}
       size='xl'
       actions={
         <div className='flex flex-wrap items-center gap-2'>
-          {isRunning ? (
-            <Button
-              type='button'
-              variant='warning'
-              size='sm'
-              onClick={() => {
-                void stopScrape();
-              }}
-            >
-              <Square className='h-4 w-4' />
-              Stop
-            </Button>
-          ) : null}
           <Button
             type='button'
+            variant={isRunning && activeScrapeMode === 'preview' ? 'warning' : 'outline'}
             size='sm'
             onClick={() => {
-              void saveSettings();
+              if (isRunning && activeScrapeMode === 'preview') {
+                void stopScrape();
+                return;
+              }
+              void runScrape('preview');
             }}
             disabled={
-              !hasSettingsUnsavedChanges ||
-              isRunning ||
-              isSavingRuntimeSettings ||
-              isSavingPreviewDrafts
+              (isRunning && activeScrapeMode !== 'preview') ||
+              (!isRunning &&
+                (sourceUrlMissing || isSavingRuntimeSettings || isSavingPreviewDrafts))
             }
-            variant={hasSettingsUnsavedChanges ? 'success' : 'outline'}
           >
-            <Save className='h-4 w-4' />
-            {isSavingRuntimeSettings ? 'Saving...' : 'Save settings'}
+            {isRunning && activeScrapeMode === 'preview' ? (
+              <Square className='h-4 w-4' />
+            ) : (
+              <Search className='h-4 w-4' />
+            )}
+            {isRunning && activeScrapeMode === 'preview' ? 'Stop' : 'Preview'}
           </Button>
           <Button
             type='button'
-            variant='success'
+            variant={isRunning && activeScrapeMode === 'import' ? 'warning' : 'success'}
             size='sm'
             onClick={() => {
+              if (isRunning && activeScrapeMode === 'import') {
+                void stopScrape();
+                return;
+              }
               void runScrape('import');
             }}
-            disabled={sourceUrlMissing || isRunning || isSavingRuntimeSettings || isSavingPreviewDrafts}
+            disabled={
+              (isRunning && activeScrapeMode !== 'import') ||
+              (!isRunning &&
+                (sourceUrlMissing || isSavingRuntimeSettings || isSavingPreviewDrafts))
+            }
           >
-            <Play className='h-4 w-4' />
-            {modeInFlight === 'import' ? 'Importing...' : 'Import'}
+            {isRunning && activeScrapeMode === 'import' ? (
+              <Square className='h-4 w-4' />
+            ) : (
+              <Play className='h-4 w-4' />
+            )}
+            {isRunning && activeScrapeMode === 'import' ? 'Stop' : 'Import'}
           </Button>
         </div>
       }
@@ -1553,7 +2064,7 @@ export function FilemakerJobBoardScrapeModal(
           />
         </FormField>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4'>
           <FormField label='Provider'>
             <SelectSimple
               ariaLabel='Provider'
@@ -1572,24 +2083,13 @@ export function FilemakerJobBoardScrapeModal(
               }
             />
           </FormField>
-          <FormField label='Organisation scope'>
-            <SelectSimple
-              ariaLabel='Organisation scope'
-              value={draft.organizationScope}
-              options={organizationScopeOptions}
-              onValueChange={(value) => {
-                setOrganizationScopeTouched(true);
-                updateDraft('organizationScope', value as FilemakerJobBoardOrganizationScope);
-              }}
-            />
-          </FormField>
-          <FormField label='Unmatched employers'>
-            <SelectSimple
-              ariaLabel='Unmatched employers'
-              value={draft.importStrategy}
-              options={IMPORT_STRATEGY_OPTIONS}
-              onValueChange={(value) => updateDraft('importStrategy', value as FilemakerJobBoardImportStrategy)}
-            />
+          <FormField
+            label='Organisation source'
+            description='Imported listings attach to organisations created from scraped company names.'
+          >
+            <div className='flex h-10 items-center rounded-md border border-border/60 bg-muted/20 px-3 text-sm text-muted-foreground'>
+              Scraped company per listing
+            </div>
           </FormField>
           <FormField label='Duplicates'>
             <SelectSimple
@@ -1637,7 +2137,7 @@ export function FilemakerJobBoardScrapeModal(
           </div>
         ) : null}
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <FormField label='Max pages'>
             <Input
               type='number'
@@ -1654,15 +2154,6 @@ export function FilemakerJobBoardScrapeModal(
               max={250}
               value={draft.maxOffers}
               onChange={(event) => updateDraft('maxOffers', event.target.value)}
-            />
-          </FormField>
-          <FormField label='Match confidence'>
-            <Input
-              type='number'
-              min={50}
-              max={100}
-              value={draft.minimumMatchConfidence}
-              onChange={(event) => updateDraft('minimumMatchConfidence', event.target.value)}
             />
           </FormField>
           <FormField label='Status'>
@@ -1820,6 +2311,13 @@ export function FilemakerJobBoardScrapeModal(
                           <Badge variant={item.match ? 'success' : 'secondary'}>
                             {formatOfferStatus(item.status)}
                           </Badge>
+                          <ScrapedOfferClassifyTrigger
+                            database={filemakerDatabase}
+                            disabled={isRunning || isSavingPreviewDrafts || isSavingRuntimeSettings}
+                            item={item}
+                            onRunQueued={handleClassificationRunQueued}
+                            typeMetadata={lexiconTypeMetadata}
+                          />
                           {item.status === 'preview' ? (
                             <Button
                               type='button'
@@ -1854,6 +2352,7 @@ export function FilemakerJobBoardScrapeModal(
                         pills={item.offer.pills}
                         typeMetadata={lexiconTypeMetadata}
                       />
+                      <ScrapedOfferUnclassifiedPills offer={item.offer} />
                     </div>
                   ))}
                 </div>
@@ -1920,9 +2419,18 @@ export function FilemakerJobBoardScrapeModal(
                 >
                   <div className='flex flex-wrap items-center justify-between gap-2'>
                     <span className='font-medium'>{item.offer.title}</span>
-                    <Badge variant={item.match ? 'success' : 'secondary'}>
-                      {formatOfferStatus(item.status)}
-                    </Badge>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <Badge variant={item.match ? 'success' : 'secondary'}>
+                        {formatOfferStatus(item.status)}
+                      </Badge>
+                      <ScrapedOfferClassifyTrigger
+                        database={filemakerDatabase}
+                        disabled={isRunning || isSavingPreviewDrafts || isSavingRuntimeSettings}
+                        item={item}
+                        onRunQueued={handleClassificationRunQueued}
+                        typeMetadata={lexiconTypeMetadata}
+                      />
+                    </div>
                   </div>
                   <div className='mt-1 text-xs text-muted-foreground'>
                     {item.offer.companyName}
@@ -1942,6 +2450,7 @@ export function FilemakerJobBoardScrapeModal(
                     pills={item.offer.pills}
                     typeMetadata={lexiconTypeMetadata}
                   />
+                  <ScrapedOfferUnclassifiedPills offer={item.offer} />
                 </div>
               ))}
             </div>

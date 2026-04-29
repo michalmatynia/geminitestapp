@@ -7,14 +7,17 @@ import {
   batchEditProducts,
   bulkSetProductsArchivedState,
   createProduct,
-  updateProduct,
   deleteProduct,
+  queueMarketplaceCopyDebrandBatch,
+  updateProduct,
 } from '@/features/products/api/products';
 import type {
   ProductBatchEditRequest,
   ProductBatchEditResponse,
   ProductBulkArchiveResponse,
   ProductBulkImagesBase64Response,
+  ProductMarketplaceCopyDebrandBatchRequest,
+  ProductMarketplaceCopyDebrandBatchResponse,
   ProductWithImages,
 } from '@/shared/contracts/products';
 import type { ProductPatchInput } from '@/shared/contracts/products/io';
@@ -293,6 +296,37 @@ export function useBulkEditProductFields(): UpdateMutation<
     },
     invalidate: async (queryClient, response) => {
       if (response?.dryRun) return;
+      await Promise.all([
+        invalidateProductsAndCounts(queryClient),
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.products.details(),
+          refetchType: 'none',
+        }),
+      ]);
+    },
+  });
+}
+
+export function useQueueMarketplaceCopyDebrandBatch(): UpdateMutation<
+  ProductMarketplaceCopyDebrandBatchResponse,
+  ProductMarketplaceCopyDebrandBatchRequest
+> {
+  return createUpdateMutationV2({
+    mutationFn: async (
+      request: ProductMarketplaceCopyDebrandBatchRequest
+    ): Promise<ProductMarketplaceCopyDebrandBatchResponse> =>
+      queueMarketplaceCopyDebrandBatch(request),
+    mutationKey: QUERY_KEYS.products.all,
+    meta: {
+      source: 'products.hooks.useQueueMarketplaceCopyDebrandBatch',
+      operation: 'update',
+      resource: 'products.marketplace-copy-debrand.bulk',
+      domain: 'products',
+      mutationKey: QUERY_KEYS.products.all,
+      tags: ['products', 'marketplace-copy', 'debrand', 'bulk'],
+      description: 'Queues marketplace copy debrand batch operations.',
+    },
+    invalidate: async (queryClient) => {
       await Promise.all([
         invalidateProductsAndCounts(queryClient),
         queryClient.invalidateQueries({

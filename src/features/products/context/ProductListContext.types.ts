@@ -63,6 +63,9 @@ export interface ProductListContextType {
   setBaseExported: (value: '' | 'true' | 'false') => void;
   includeArchived: boolean;
   setIncludeArchived: (value: boolean) => void;
+  parsedMatchProductIds: string[];
+  setParsedMatchProductIds: (ids: string[]) => void;
+  clearParsedMatchProductIds: () => void;
   data: ProductWithImages[];
   isLoading: boolean;
   loadError: string | null;
@@ -204,6 +207,9 @@ export interface ProductListFiltersContextType {
   setBaseExported: (value: '' | 'true' | 'false') => void;
   includeArchived: boolean;
   setIncludeArchived: (value: boolean) => void;
+  parsedMatchProductIds: string[];
+  setParsedMatchProductIds: (ids: string[]) => void;
+  clearParsedMatchProductIds: () => void;
 }
 
 export interface ProductListSelectionContextType {

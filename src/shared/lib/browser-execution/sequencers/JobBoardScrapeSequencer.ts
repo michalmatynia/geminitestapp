@@ -965,6 +965,43 @@ export class JobBoardScrapeSequencer {
           .filter(Boolean);
 
         const linkCandidates = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+        const normalizeCompanyLabelKey = (value: string): string =>
+          normalizeText(value)
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, ' ')
+            .trim();
+        const isGenericCompanyLinkLabel = (value: string): boolean => {
+          const key = normalizeCompanyLabelKey(value);
+          return (
+            key.length === 0 ||
+            key === 'company' ||
+            key === 'company profile' ||
+            key === 'employer' ||
+            key === 'employer profile' ||
+            key === 'o firmie' ||
+            key === 'pracodawca' ||
+            key === 'pracodawcy' ||
+            key === 'profil firmy' ||
+            key === 'profil pracodawcy' ||
+            key === 'zobacz profil' ||
+            key === 'zobacz profil firmy' ||
+            key === 'zobacz profil pracodawcy' ||
+            key.startsWith('informacje i opinie o pracodawcach')
+          );
+        };
+        linkCandidates.slice(0, 240).forEach((link) => {
+          const href = link.href || '';
+          const label = normalizeText(link.textContent ?? '');
+          if (!/(pracodawcy|employer|company|profil|firma|firmy)/i.test(`${href} ${label}`)) {
+            return;
+          }
+          if (label.length < 2 || label.length > 120 || isGenericCompanyLinkLabel(label)) {
+            return;
+          }
+          addFact('Company', label);
+        });
         const applyUrls = unique(
           linkCandidates
             .map((link) => {

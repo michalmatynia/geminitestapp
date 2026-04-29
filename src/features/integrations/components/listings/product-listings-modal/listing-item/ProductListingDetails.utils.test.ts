@@ -169,6 +169,7 @@ describe('ProductListingDetails.utils', () => {
     expect(resolveHistoryAction(fields)).toBe('sync');
     expect(resolveDisplayHistoryFields(fields)).toEqual(['title', 'description']);
     expect(formatHistoryAction('move_to_unsold')).toBe('End listing');
+    expect(formatHistoryAction('parse_mark_closed')).toBe('Parse close');
   });
 
   it('prefers live Tradera duplicate fields over persisted listing metadata', () => {

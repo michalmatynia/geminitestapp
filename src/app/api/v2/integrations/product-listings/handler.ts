@@ -150,6 +150,7 @@ const buildPayload = async (
     pending: 3,
     queued: 3,
     queued_relist: 3,
+    closed: 2,
     unsold: 2,
     ended: 2,
     failed: 1,

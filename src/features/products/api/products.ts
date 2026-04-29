@@ -6,6 +6,12 @@ import {
   type ProductBatchEditRequest,
   type ProductBatchEditResponse,
   type ProductBulkArchiveResponse,
+  type ProductMarketplaceCopyDebrandBatchRequest,
+  type ProductMarketplaceCopyDebrandBatchResponse,
+  type ProductParseActionsMarkTraderaClosedRequest,
+  type ProductParseActionsMarkTraderaClosedResponse,
+  type ProductParseActionsMatchRequest,
+  type ProductParseActionsMatchResponse,
   type ProductWithImages,
   type ProductsPagedResult,
 } from '@/shared/contracts/products';
@@ -16,10 +22,12 @@ const PRODUCT_READ_TIMEOUT_MS = 60_000;
 const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 
 function buildGetOptions(filters: ProductFilter, signal?: AbortSignal, fresh?: boolean): ApiClientOptions {
+  const { ids, ...restFilters } = filters;
   const options: ApiClientOptions = {
     params: {
       ...(fresh === true ? { fresh: 1 } : {}),
-      ...filters,
+      ...restFilters,
+      ...(ids !== undefined && ids.length > 0 ? { ids: ids.join(',') } : {}),
     },
     cache: 'no-store',
     timeout: PRODUCT_READ_TIMEOUT_MS,
@@ -125,6 +133,38 @@ export async function batchEditProducts(
   return api.post<ProductBatchEditResponse>('/api/v2/products/batch-edit', request, {
     timeout: PRODUCT_WRITE_TIMEOUT_MS,
   });
+}
+
+export async function queueMarketplaceCopyDebrandBatch(
+  request: ProductMarketplaceCopyDebrandBatchRequest
+): Promise<ProductMarketplaceCopyDebrandBatchResponse> {
+  return api.post<ProductMarketplaceCopyDebrandBatchResponse>(
+    '/api/v2/products/marketplace-copy-debrand/batch',
+    request,
+    {
+      timeout: PRODUCT_WRITE_TIMEOUT_MS,
+    }
+  );
+}
+
+export async function matchProductParseActions(
+  request: ProductParseActionsMatchRequest
+): Promise<ProductParseActionsMatchResponse> {
+  return api.post<ProductParseActionsMatchResponse>('/api/v2/products/parse-actions/match', request, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
+}
+
+export async function markParsedTraderaMatchesClosed(
+  request: ProductParseActionsMarkTraderaClosedRequest
+): Promise<ProductParseActionsMarkTraderaClosedResponse> {
+  return api.post<ProductParseActionsMarkTraderaClosedResponse>(
+    '/api/v2/products/parse-actions/tradera/mark-closed',
+    request,
+    {
+      timeout: PRODUCT_WRITE_TIMEOUT_MS,
+    }
+  );
 }
 
 export async function getProductById(id: string): Promise<ProductWithImages> {

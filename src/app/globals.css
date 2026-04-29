@@ -447,6 +447,14 @@
   [data-admin-menu] button {
     cursor: pointer;
   }
+  .app-search-input::-webkit-search-cancel-button,
+  .app-search-input::-webkit-search-decoration,
+  .app-search-input::-webkit-search-results-button,
+  .app-search-input::-webkit-search-results-decoration {
+    display: none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
   h1,
   h2,
   h3,

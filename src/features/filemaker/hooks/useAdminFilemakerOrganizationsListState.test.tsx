@@ -98,7 +98,7 @@ const listResponse = {
   page: 1,
   pageSize: 48,
   query: '',
-  sort: 'createdAt_desc',
+  sort: 'updatedAt_desc',
   totalCount: 1,
   totalCountIsExact: true,
   totalPages: 1,
@@ -198,7 +198,7 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     }));
   });
 
-  it('loads organizations newest first by default and refetches when sorting changes', async () => {
+  it('loads organizations by newest update first by default and refetches when sorting changes', async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.startsWith('/api/filemaker/organizations?')) {
@@ -213,8 +213,8 @@ describe('useAdminFilemakerOrganizationsListState', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     const firstListUrl = String(fetchMock.mock.calls[0]?.[0] ?? '');
-    expect(firstListUrl).toContain('sort=createdAt_desc');
-    expect(result.current.sort).toBe('createdAt_desc');
+    expect(firstListUrl).toContain('sort=updatedAt_desc');
+    expect(result.current.sort).toBe('updatedAt_desc');
 
     act(() => {
       result.current.onSortChange('name_asc');

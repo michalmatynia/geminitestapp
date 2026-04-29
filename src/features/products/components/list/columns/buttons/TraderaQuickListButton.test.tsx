@@ -256,6 +256,15 @@ describe('TraderaQuickListButton', () => {
     expect(button.className).not.toContain('border-cyan-400/70');
   });
 
+  it('keeps one-click export available beside a closed Tradera badge', () => {
+    renderButton({ showTraderaBadge: true, traderaStatus: 'closed' });
+
+    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
+    expect(button).not.toBeDisabled();
+    expect(button.className).toContain('border-blue-700/80');
+    expect(button).toHaveAttribute('title', 'One-click export to Tradera (closed / closed)');
+  });
+
   it('disables one-click export when Market Exclusion includes Tradera', () => {
     const prefetchListings = vi.fn();
     renderButton({

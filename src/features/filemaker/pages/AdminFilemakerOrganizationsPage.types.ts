@@ -97,16 +97,16 @@ export type OrganizationListState = {
 };
 
 export const DEFAULT_ORGANIZATION_PAGE_SIZE = 48;
-export const DEFAULT_ORGANIZATION_SORT: OrganizationSortOption = 'createdAt_desc';
+export const DEFAULT_ORGANIZATION_SORT: OrganizationSortOption = 'updatedAt_desc';
 export const ORGANIZATION_PAGE_SIZE_OPTIONS = [24, 48, 96, 200];
 export const ORGANIZATION_SORT_OPTIONS: Array<{
   label: string;
   value: OrganizationSortOption;
 }> = [
-  { label: 'Created At: Newest First', value: 'createdAt_desc' },
-  { label: 'Created At: Oldest First', value: 'createdAt_asc' },
   { label: 'Updated At: Newest First', value: 'updatedAt_desc' },
   { label: 'Updated At: Oldest First', value: 'updatedAt_asc' },
+  { label: 'Created At: Newest First', value: 'createdAt_desc' },
+  { label: 'Created At: Oldest First', value: 'createdAt_asc' },
   { label: 'Events: Most First', value: 'eventCount_desc' },
   { label: 'Events: Fewest First', value: 'eventCount_asc' },
   { label: 'Jobs: Most First', value: 'jobListingCount_desc' },

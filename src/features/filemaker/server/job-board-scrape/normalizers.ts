@@ -1,12 +1,34 @@
 import 'server-only';
+/* eslint-disable max-lines */
 
-import type { FilemakerLexiconTermCategory } from '@/shared/contracts/filemaker';
+import type {
+  FilemakerLexiconTermCategory,
+  FilemakerLexiconValidationPattern,
+  FilemakerLexiconValidationPatternSourceScope,
+} from '@/shared/contracts/filemaker';
 import type { JobBoardStructuredSnapshot } from '@/features/job-board/server/providers/job-board-sync';
 import type { JobBoardProvider } from '@/shared/lib/job-board/job-board-providers';
 
 import type {
   FilemakerJobBoardScrapedOffer,
+  FilemakerJobBoardUnclassifiedPill,
 } from '../../filemaker-job-board-scrape-contracts';
+import {
+  isProviderNoisePill,
+  normalizeLexiconKey,
+  normalizeLexiconLabel,
+} from './lexicon-rules';
+import {
+  classifyFilemakerLexiconLabelWithPatterns,
+  filemakerLexiconValidationPatternSourceMatches,
+  resolveFilemakerLexiconValidationPatterns,
+} from './lexicon-validation-patterns';
+
+export {
+  looksLikeAddressPill,
+  normalizeLexiconKey,
+  normalizeLexiconLabel,
+} from './lexicon-rules';
 
 type LexiconPillCandidate = {
   category: FilemakerLexiconTermCategory;
@@ -52,66 +74,120 @@ export const normalizeJobBoardSourceUrl = (value: unknown): string | null => {
   }
 };
 
-export const normalizeLexiconLabel = (value: string): string =>
-  value.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+const benefitSplitLabelsFromPatterns = (
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined,
+  sourceScope: FilemakerLexiconValidationPatternSourceScope
+): string[] => {
+  const key = normalizeLexiconKey(label);
+  const seen = new Set<string>();
+  return resolveFilemakerLexiconValidationPatterns(validationPatterns)
+    .filter(
+      (pattern) =>
+        pattern.targetTypeKey === 'benefit' &&
+        (pattern.matchMode === 'contains' || pattern.matchMode === 'exact') &&
+        filemakerLexiconValidationPatternSourceMatches(pattern, sourceScope)
+    )
+    .map((pattern) => normalizeLexiconLabel(pattern.pattern))
+    .filter((patternLabel) => patternLabel.length > 0)
+    .filter((patternLabel) => key.includes(normalizeLexiconKey(patternLabel)))
+    .sort(
+      (left, right) =>
+        key.indexOf(normalizeLexiconKey(left)) - key.indexOf(normalizeLexiconKey(right))
+    )
+    .filter((patternLabel) => {
+      const patternKey = normalizeLexiconKey(patternLabel);
+      if (seen.has(patternKey)) return false;
+      seen.add(patternKey);
+      return true;
+    });
+};
 
-export const normalizeLexiconKey = (value: string): string =>
-  normalizeLexiconLabel(value)
-    .toLowerCase()
-    .replace(/ł/g, 'l')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+const splitRawBenefitPillLabels = (
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined,
+  sourceScope: FilemakerLexiconValidationPatternSourceScope
+): string[] => {
+  const matches = benefitSplitLabelsFromPatterns(label, validationPatterns, sourceScope);
+  return matches.length > 0 ? matches : [label];
+};
 
-export const looksLikeAddressPill = (value: string): boolean =>
-  /\d/.test(value) && value.includes(',') && normalizeLexiconKey(value).split(' ').length >= 3;
+const splitRawTechnologyPillLabelsWithPatterns = (
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined,
+  sourceScope: FilemakerLexiconValidationPatternSourceScope
+): string[] => {
+  const parts = label
+    .split(/[,;|/]+/u)
+    .map(normalizeLexiconLabel)
+    .filter((part) => part.length > 0 && part.length <= 80);
+  if (parts.length < 2) return [label];
+  const allTechnology = parts.every(
+    (part) =>
+      classifyFilemakerLexiconLabelWithPatterns(validationPatterns, {
+        label: part,
+        sourceScope,
+      })?.typeKey === 'technology'
+  );
+  return allTechnology ? parts : [label];
+};
 
-const PILL_CATEGORY_RULES: Array<{
-  category: FilemakerLexiconTermCategory;
-  pattern: RegExp;
-}> = [
-  { category: 'salary', pattern: /salary|wynagrodzenie|widełki|widelki|pln|eur|usd|gbp|chf|czk|sek|nok|dkk|zł|zl|€|£|\$/ },
-  {
-    category: 'contract_type',
-    pattern: /\bb2b\b|contract of employment|employment contract|umowa o prace|mandate|zlecenie/,
-  },
-  { category: 'employment_type', pattern: /full time|part time|pelny etat|czesc etatu|etat/ },
-  { category: 'experience_level', pattern: /junior|mid|regular|senior|expert|manager|specialist|specjalista/ },
-  { category: 'work_mode', pattern: /remote|hybrid|office|onsite|zdalna|hybrydowa|biur/ },
-  { category: 'language', pattern: /english|angielski|polish|polski|german|niemiecki|french|francuski|spanish|hiszpanski/ },
-  { category: 'start_date', pattern: /immediate|asap|od zaraz|employment|start/ },
-];
+const shouldPreserveRawOfferPillLabel = (
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
+): boolean =>
+  classifyFilemakerLexiconLabelWithPatterns(validationPatterns, {
+    label,
+    sourceScope: 'snapshot_pill',
+  })?.typeKey === 'other';
 
-const SECTION_CATEGORY_RULES: Array<{
-  category: FilemakerLexiconTermCategory;
-  pattern: RegExp;
-}> = [
-  { category: 'requirement', pattern: /requirements?|wymagania|oczekujemy|must have|nice to have|kwalifikacje|qualifications|profile kandydata/ },
-  { category: 'responsibility', pattern: /responsibilit|obowiazki|obowiązki|zadania|zakres obowiazkow|zakres obowiązków|what you will do|role/ },
-  { category: 'technology', pattern: /technolog|technologie|technology|technologies|tech stack|stack|narzedzia|narzędzia/ },
-  { category: 'benefit', pattern: /benefits?|benefity|oferujemy|we offer|perks|pakiet benefitow|pakiet benefitów/ },
-  { category: 'language', pattern: /languages?|jezyki|języki|znajomosc jezykow|znajomość języków/ },
-  { category: 'company_attribute', pattern: /about company|about us|o firmie|company|pracodawca|industry|branza|branża/ },
-];
+const splitRawOfferPillLabels = (
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
+): string[] =>
+  shouldPreserveRawOfferPillLabel(label, validationPatterns)
+    ? [label]
+    : splitRawTechnologyPillLabelsWithPatterns(
+        label,
+        validationPatterns,
+        'snapshot_pill'
+      ).flatMap((part) =>
+        splitRawBenefitPillLabels(part, validationPatterns, 'snapshot_pill')
+      );
 
-const looksLikeKnownAddressPill = (label: string, normalized: string): boolean =>
-  looksLikeAddressPill(label) &&
-  /(ul|street|avenue|aleja|warszawa|krakow|wroclaw|poznan|gdansk|lodz)/i.test(normalized);
+const resolveCandidateCategory = (
+  category: FilemakerLexiconTermCategory,
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined,
+  sourceScope: FilemakerLexiconValidationPatternSourceScope
+): FilemakerLexiconTermCategory => {
+  if (sourceScope === 'section_value') return category;
+  const patternClassification = classifyFilemakerLexiconLabelWithPatterns(
+    validationPatterns,
+    { label, sourceScope }
+  );
+  if (patternClassification !== null) return patternClassification.typeKey;
+  return category;
+};
 
+/* eslint-disable max-params */
 export const classifyOfferPill = (
   label: string,
   position: number,
-  provider: JobBoardProvider
+  provider: JobBoardProvider,
+  validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null,
+  sourceScope: FilemakerLexiconValidationPatternSourceScope = 'snapshot_pill'
 ): FilemakerLexiconTermCategory => {
-  const normalized = normalizeLexiconKey(label);
-  if (provider === 'pracuj_pl' && position === 0 && looksLikeAddressPill(label)) {
-    return 'address';
-  }
-  if (looksLikeKnownAddressPill(label, normalized)) return 'address';
-  return PILL_CATEGORY_RULES.find((rule) => rule.pattern.test(normalized))?.category ?? 'other';
+  void position;
+  void provider;
+  const patternClassification = classifyFilemakerLexiconLabelWithPatterns(
+    validationPatterns,
+    { label, sourceScope }
+  );
+  if (patternClassification !== null) return patternClassification.typeKey;
+  return 'other';
 };
+/* eslint-enable max-params */
 
 export const snapshotPillValues = (
   snapshot: JobBoardStructuredSnapshot | null | undefined
@@ -119,24 +195,6 @@ export const snapshotPillValues = (
   const values = snapshot?.pills ?? [];
   return uniqueStrings(values.map(normalizeLexiconLabel)).slice(0, 48);
 };
-
-const SNAPSHOT_FACT_CATEGORY_KEYWORDS: Array<{
-  category: FilemakerLexiconTermCategory;
-  labels: string[];
-}> = [
-  { category: 'address', labels: ['address', 'adres', 'company address', 'headquarters', 'office', 'siedziba'] },
-  { category: 'contract_type', labels: ['contract', 'contract type', 'typ umowy', 'umowa'] },
-  { category: 'employment_type', labels: ['employment type', 'wymiar pracy', 'etat'] },
-  { category: 'experience_level', labels: ['experience', 'experience level', 'level', 'poziom', 'seniority'] },
-  { category: 'work_mode', labels: ['mode', 'tryb pracy', 'work mode'] },
-  { category: 'technology', labels: ['stack', 'technologies', 'technology', 'technologia', 'technologie'] },
-  { category: 'benefit', labels: ['benefit', 'benefits', 'benefity'] },
-  { category: 'requirement', labels: ['requirements', 'requirement', 'wymagania', 'kwalifikacje', 'qualifications'] },
-  { category: 'responsibility', labels: ['responsibilities', 'responsibility', 'obowiazki', 'obowiązki', 'zadania'] },
-  { category: 'language', labels: ['language', 'languages', 'jezyk', 'język', 'jezyki', 'języki'] },
-  { category: 'salary', labels: ['salary', 'salary range', 'compensation', 'wynagrodzenie', 'widełki', 'widelki'] },
-  { category: 'company_attribute', labels: ['company size', 'industry', 'branza', 'branża', 'sector', 'sektor'] },
-];
 
 const normalizeSnapshotFactPillLabel = (value: string): string => {
   const normalized = normalizeLexiconLabel(value.replace(/_/g, ' '));
@@ -148,36 +206,51 @@ const normalizeSnapshotFactPillLabel = (value: string): string => {
 };
 
 const categoryForSnapshotFactLabel = (
-  label: string
+  label: string,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
 ): FilemakerLexiconTermCategory | null => {
-  const normalized = normalizeLexiconKey(label);
-  const category = SNAPSHOT_FACT_CATEGORY_KEYWORDS.find((entry) =>
-    entry.labels.some((keyword) => normalized.includes(keyword))
+  const patternClassification = classifyFilemakerLexiconLabelWithPatterns(
+    validationPatterns,
+    { label, sourceScope: 'snapshot_fact' }
   );
-  return category?.category ?? null;
+  return patternClassification?.typeKey ?? null;
 };
 
 const snapshotFactPillCandidates = (
-  snapshot: JobBoardStructuredSnapshot | null | undefined
+  snapshot: JobBoardStructuredSnapshot | null | undefined,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
 ): LexiconPillCandidate[] => {
   const facts = [...(snapshot?.facts ?? []), ...(snapshot?.companyProfile?.facts ?? [])];
   return facts.flatMap((fact) => {
-    const category = categoryForSnapshotFactLabel(fact.label);
+    const category = categoryForSnapshotFactLabel(fact.label, validationPatterns);
     if (category === null) return [];
     return normalizeLexiconLabel(fact.value)
       .split(/[,;|]/)
       .map(normalizeSnapshotFactPillLabel)
       .filter((label) => label.length > 0 && label.length <= 120)
-      .map((label) => ({ category, label }));
+      .map((label) => ({
+        category: resolveCandidateCategory(
+          category,
+          label,
+          validationPatterns,
+          'snapshot_fact'
+        ),
+        label,
+      }));
   });
 };
 
 const categoryForSectionHeading = (
-  heading: string | null | undefined
+  heading: string | null | undefined,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
 ): FilemakerLexiconTermCategory | null => {
-  const normalized = normalizeLexiconKey(heading ?? '');
-  if (normalized.length === 0) return null;
-  return SECTION_CATEGORY_RULES.find((rule) => rule.pattern.test(normalized))?.category ?? null;
+  const label = normalizeLexiconLabel(heading ?? '');
+  if (label.length === 0) return null;
+  const patternClassification = classifyFilemakerLexiconLabelWithPatterns(
+    validationPatterns,
+    { label, sourceScope: 'section_heading' }
+  );
+  return patternClassification?.typeKey ?? null;
 };
 
 const normalizeSectionPillLabel = (value: string): string =>
@@ -188,11 +261,18 @@ const normalizeSectionPillLabel = (value: string): string =>
       .replace(/\s+[;,.]$/u, '')
   );
 
+const maxSectionPillLabelLength = (category: FilemakerLexiconTermCategory): number => {
+  if (category === 'requirement' || category === 'responsibility') return 500;
+  if (category === 'company_attribute') return 300;
+  return 140;
+};
+
 const sectionTermLabels = (text: string, category: FilemakerLexiconTermCategory): string[] => {
   const normalized = text.replace(/\u00a0/g, ' ');
   const separators = category === 'technology' || category === 'benefit'
     ? /\n+|[•●▪]|;|\|/u
     : /\n+|[•●▪]/u;
+  const maxLength = maxSectionPillLabelLength(category);
   return uniqueStrings(
     normalized
       .split(separators)
@@ -202,53 +282,112 @@ const sectionTermLabels = (text: string, category: FilemakerLexiconTermCategory)
           : [part]
       )
       .map(normalizeSectionPillLabel)
-      .filter((label) => label.length >= 2 && label.length <= 140)
+      .filter((label) => label.length >= 2 && label.length <= maxLength)
   ).slice(0, 24);
 };
 
 const snapshotSectionPillCandidates = (
-  snapshot: JobBoardStructuredSnapshot | null | undefined
+  snapshot: JobBoardStructuredSnapshot | null | undefined,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
 ): LexiconPillCandidate[] =>
   (snapshot?.sections ?? []).flatMap((section) => {
-    const category = categoryForSectionHeading(section.heading);
+    const category = categoryForSectionHeading(section.heading, validationPatterns);
     if (category === null) return [];
-    return sectionTermLabels(section.text, category).map((label) => ({ category, label }));
+    return sectionTermLabels(section.text, category)
+      .flatMap((label) =>
+        category === 'benefit'
+          ? splitRawBenefitPillLabels(label, validationPatterns, 'section_value')
+          : [label]
+      )
+      .map((label) => ({
+        category: resolveCandidateCategory(category, label, validationPatterns, 'section_value'),
+        label,
+      }));
   });
 
 const pillKey = (category: FilemakerLexiconTermCategory, label: string): string =>
   `${category}:${normalizeLexiconKey(label)}`;
 
-export const buildScrapedOfferPills = (input: {
+const unclassifiedPillKey = (label: string): string => normalizeLexiconKey(label);
+
+export type ScrapedOfferLexiconExtraction = {
+  pills: FilemakerJobBoardScrapedOffer['pills'];
+  unclassifiedPills: FilemakerJobBoardUnclassifiedPill[];
+};
+
+// eslint-disable-next-line max-lines-per-function
+export const buildScrapedOfferLexiconExtraction = (input: {
   provider: JobBoardProvider;
   snapshot: JobBoardStructuredSnapshot | null | undefined;
   sourceSite: string;
   sourceUrl: string;
-}): FilemakerJobBoardScrapedOffer['pills'] => {
+  validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null;
+}): ScrapedOfferLexiconExtraction => {
   const seen = new Set<string>();
-  const snapshotPills = snapshotPillValues(input.snapshot).flatMap((label, index) => {
-    const category = classifyOfferPill(label, index, input.provider);
-    const key = pillKey(category, label);
-    if (seen.has(key)) return [];
-    seen.add(key);
-    return [
-      {
-        category,
-        typeKey: category,
+  const seenTypedLabels = new Set<string>();
+  const seenUnclassified = new Set<string>();
+  const snapshotPills = snapshotPillValues(input.snapshot)
+    .flatMap((label) => splitRawOfferPillLabels(label, input.validationPatterns))
+    .flatMap((label, index) => {
+      if (isProviderNoisePill(label, input.provider)) return [];
+      const category = classifyOfferPill(
         label,
-        position: index,
-        sourceSite: input.sourceSite,
-        sourceUrl: input.sourceUrl,
-      },
-    ];
-  });
+        index,
+        input.provider,
+        input.validationPatterns,
+        'snapshot_pill'
+      );
+      if (category === 'other' || category === 'address') return [];
+      const key = pillKey(category, label);
+      if (seen.has(key)) return [];
+      seen.add(key);
+      seenTypedLabels.add(unclassifiedPillKey(label));
+      return [
+        {
+          category,
+          typeKey: category,
+          label,
+          position: index,
+          sourceSite: input.sourceSite,
+          sourceUrl: input.sourceUrl,
+        },
+      ];
+    });
+  const unclassifiedPills = snapshotPillValues(input.snapshot)
+    .flatMap((label) => splitRawOfferPillLabels(label, input.validationPatterns))
+    .flatMap((label, index): FilemakerJobBoardUnclassifiedPill[] => {
+      if (isProviderNoisePill(label, input.provider)) return [];
+      const category = classifyOfferPill(
+        label,
+        index,
+        input.provider,
+        input.validationPatterns,
+        'snapshot_pill'
+      );
+      if (category !== 'other') return [];
+      const key = unclassifiedPillKey(label);
+      if (key.length === 0 || seenUnclassified.has(key)) return [];
+      seenUnclassified.add(key);
+      return [
+        {
+          label,
+          position: index,
+          reason: 'unclassified',
+          sourceSite: input.sourceSite,
+          sourceUrl: input.sourceUrl,
+        },
+      ];
+    });
   const typedCandidates = [
-    ...snapshotFactPillCandidates(input.snapshot),
-    ...snapshotSectionPillCandidates(input.snapshot),
+    ...snapshotFactPillCandidates(input.snapshot, input.validationPatterns),
+    ...snapshotSectionPillCandidates(input.snapshot, input.validationPatterns),
   ];
   const factPills = typedCandidates.flatMap((candidate, index) => {
+    if (candidate.category === 'address' || candidate.category === 'other') return [];
     const key = pillKey(candidate.category, candidate.label);
     if (seen.has(key)) return [];
     seen.add(key);
+    seenTypedLabels.add(unclassifiedPillKey(candidate.label));
     return [
       {
         category: candidate.category,
@@ -260,8 +399,23 @@ export const buildScrapedOfferPills = (input: {
       },
     ];
   });
-  return [...snapshotPills, ...factPills].slice(0, 100);
+  const pills = [...snapshotPills, ...factPills].slice(0, 100);
+  return {
+    pills,
+    unclassifiedPills: unclassifiedPills
+      .filter((pill) => !seenTypedLabels.has(unclassifiedPillKey(pill.label)))
+      .slice(0, 100),
+  };
 };
+
+export const buildScrapedOfferPills = (input: {
+  provider: JobBoardProvider;
+  snapshot: JobBoardStructuredSnapshot | null | undefined;
+  sourceSite: string;
+  sourceUrl: string;
+  validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null;
+}): FilemakerJobBoardScrapedOffer['pills'] =>
+  buildScrapedOfferLexiconExtraction(input).pills;
 
 export const clipProfileText = (value: string, max = 8_000): string =>
   value.length > max ? `${value.slice(0, Math.max(0, max - 3))}...` : value;

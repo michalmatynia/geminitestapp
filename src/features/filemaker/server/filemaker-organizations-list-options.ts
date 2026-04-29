@@ -19,7 +19,7 @@ export type FilemakerOrganizationSortOption =
   | 'name_desc';
 
 export const DEFAULT_FILEMAKER_ORGANIZATION_SORT: FilemakerOrganizationSortOption =
-  'createdAt_desc';
+  'updatedAt_desc';
 
 const SUPPORTED_ORGANIZATION_SORT_OPTIONS = new Set<string>([
   'createdAt_desc',

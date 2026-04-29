@@ -97,7 +97,16 @@ export const getAiNav = (handlers: { onOpenChat: React.MouseEventHandler<HTMLAnc
   label: 'AI',
   href: '/admin/ai-paths',
   icon: <GitBranchIcon className='size-4' />,
+  required: true,
   children: [
+    {
+      id: 'ai/ai-paths',
+      label: 'Canvas',
+      href: '/admin/ai-paths',
+      icon: <GitBranchIcon className='size-4' />,
+      keywords: ['ai paths', 'canvas', 'workflow', 'graph'],
+      required: true,
+    },
     {
       id: 'ai/chatbot',
       label: 'Chatbot',

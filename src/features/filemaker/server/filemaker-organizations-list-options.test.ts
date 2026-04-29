@@ -8,7 +8,7 @@ import {
 } from './filemaker-organizations-list-options';
 
 describe('resolveOrganizationListOptions', () => {
-  it('defaults organization sorting to newest first', () => {
+  it('defaults organization sorting to newest updates first', () => {
     expect(resolveOrganizationListOptions({}).sort).toBe(DEFAULT_FILEMAKER_ORGANIZATION_SORT);
   });
 
@@ -26,7 +26,7 @@ describe('resolveOrganizationListOptions', () => {
     );
   });
 
-  it('falls back to newest first for unsupported organization sort options', () => {
+  it('falls back to newest updates first for unsupported organization sort options', () => {
     expect(resolveOrganizationListOptions({ sort: 'updatedAt_latest' }).sort).toBe(
       DEFAULT_FILEMAKER_ORGANIZATION_SORT
     );

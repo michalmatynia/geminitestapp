@@ -148,6 +148,28 @@ describe('v2 products catch-all route module', () => {
     expect(batchEditIndex).toBeLessThan(genericProductIdIndex);
   });
 
+  it('registers parse action routes before the generic product id route', () => {
+    const matchRoute =
+      "{ pattern: ['parse-actions', 'match'], loader: () => import('../parse-actions/match/route-handler') },";
+    const markClosedRoute =
+      "{ pattern: ['parse-actions', 'tradera', 'mark-closed'], loader: () => import('../parse-actions/tradera/mark-closed/route-handler') },";
+    const genericProductIdRoute =
+      "{ pattern: [param('id')], loader: () => import('../[id]/route-handler') },";
+
+    expect(routeSource).toContain(matchRoute);
+    expect(routeSource).toContain(markClosedRoute);
+
+    const matchIndex = routeSource.indexOf(matchRoute);
+    const markClosedIndex = routeSource.indexOf(markClosedRoute);
+    const genericProductIdIndex = routeSource.indexOf(genericProductIdRoute);
+
+    expect(matchIndex).toBeGreaterThan(-1);
+    expect(markClosedIndex).toBeGreaterThan(-1);
+    expect(genericProductIdIndex).toBeGreaterThan(-1);
+    expect(matchIndex).toBeLessThan(genericProductIdIndex);
+    expect(markClosedIndex).toBeLessThan(genericProductIdIndex);
+  });
+
   it('routes sync profile creation and lets the handler resolve a missing inventory id', async () => {
     expect(
       getPathSegments(

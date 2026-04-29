@@ -2,16 +2,17 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type { FilemakerAddress } from '../../types';
+import type { FilemakerAddress, FilemakerAddressOwnerKind } from '../../types';
 import type { FilemakerJobBoardScrapedOffer } from '../../filemaker-job-board-scrape-contracts';
 
 import { toIdToken } from '../../filemaker-settings.helpers';
 import { normalizeLexiconKey, normalizeLexiconLabel } from './normalizers';
 
-export const findOfferAddressPill = (
-  offer: FilemakerJobBoardScrapedOffer
-): FilemakerJobBoardScrapedOffer['pills'][number] | null =>
-  offer.pills.find((pill) => pill.typeKey === 'address') ?? null;
+export const findOfferAddressValue = (offer: FilemakerJobBoardScrapedOffer): string | null => {
+  const location = normalizeLexiconLabel(offer.location ?? '');
+  if (location.length > 0) return location;
+  return null;
+};
 
 export const cleanAddressCity = (value: string): string =>
   normalizeLexiconLabel(value.replace(/\([^)]*\)/g, ''));
@@ -90,17 +91,18 @@ export const addressComparisonKey = (
   );
 
 export const buildJobBoardAddressId = (
-  organizationId: string,
+  ownerId: string,
   address: Pick<FilemakerAddress, 'city' | 'country' | 'postalCode' | 'street' | 'streetNumber'>
 ): string => {
-  const token = toIdToken(`${organizationId}-${addressComparisonKey(address)}`);
+  const token = toIdToken(`${ownerId}-${addressComparisonKey(address)}`);
   return `filemaker-address-job-board-${token.length > 0 ? token : randomUUID()}`;
 };
 
 export const buildJobBoardAddressLinkId = (
-  organizationId: string,
+  ownerKind: FilemakerAddressOwnerKind,
+  ownerId: string,
   addressId: string
 ): string => {
-  const token = toIdToken(`organization-${organizationId}-${addressId}`);
+  const token = toIdToken(`${ownerKind}-${ownerId}-${addressId}`);
   return `filemaker-address-link-${token.length > 0 ? token : randomUUID()}`;
 };

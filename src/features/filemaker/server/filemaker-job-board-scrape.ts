@@ -1,5 +1,5 @@
 import 'server-only';
-/* eslint-disable max-lines, max-lines-per-function, complexity, no-await-in-loop */
+/* eslint-disable max-lines, max-lines-per-function, complexity, no-await-in-loop, max-params, no-param-reassign */
 
 import { randomUUID } from 'crypto';
 
@@ -20,8 +20,11 @@ import {
 } from '@/shared/lib/job-board/job-board-providers';
 
 import {
+  filemakerJobBoardLexiconClassificationApplyRequestSchema,
   filemakerJobBoardScrapeDraftSaveRequestSchema,
   filemakerJobBoardScrapeRequestSchema,
+  type FilemakerJobBoardLexiconClassification,
+  type FilemakerJobBoardLexiconClassificationApplyResponse,
   type FilemakerJobBoardOrganizationMatch,
   type FilemakerJobBoardDuplicateStrategy,
   type FilemakerJobBoardScrapeDraftSaveRequest,
@@ -57,7 +60,6 @@ import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
 } from './campaign-settings-store';
-import { toFilemakerOrganization } from './filemaker-organizations-mongo';
 
 type LoadedDatabase = {
   database: FilemakerDatabase;
@@ -97,6 +99,7 @@ type CentralizedScrapeResult = {
   offers: FilemakerJobBoardScrapedOffer[];
   provider: JobBoardProvider;
   runId: string | null;
+  skippedResults: FilemakerJobBoardScrapeOfferResult[];
   sourceSite: string;
   warnings: string[];
 };
@@ -104,6 +107,13 @@ type CentralizedScrapeResult = {
 type FilemakerJobBoardScrapeRunOptions = {
   onEvent?: FilemakerJobBoardScrapeLiveEventEmitter;
   signal?: AbortSignal;
+};
+
+type ClassificationPillBuildResult = {
+  acceptedPills: FilemakerJobBoardScrapedOffer['pills'];
+  rejectedCount: number;
+  updatedOffer: FilemakerJobBoardScrapedOffer;
+  warnings: string[];
 };
 
 type ScrapeProgressHandlers = {
@@ -117,6 +127,12 @@ type ScrapeProgressHandlers = {
     index: number;
     offer: FilemakerJobBoardScrapedOffer;
     total: number;
+  }) => Promise<void> | void;
+  onSkippedExisting?: (input: {
+    index: number;
+    result: FilemakerJobBoardScrapeOfferResult;
+    total: number;
+    url: string;
   }) => Promise<void> | void;
   onStatus?: (message: string) => Promise<void> | void;
   onWarning?: (warning: string) => Promise<void> | void;
@@ -150,7 +166,11 @@ import {
   normalizeLexiconKey,
   uniqueStrings,
 } from './job-board-scrape/normalizers';
-import { offerFromEvaluation } from './job-board-scrape/offer-from-evaluation';
+import { classifyFilemakerLexiconLabelWithPatterns } from './job-board-scrape/lexicon-validation-patterns';
+import {
+  isSuspiciousJobBoardCompanyName,
+  offerFromEvaluation,
+} from './job-board-scrape/offer-from-evaluation';
 
 const loadFilemakerDatabase = async (): Promise<LoadedDatabase> => {
   const rawValue = await readFilemakerCampaignSettingValue(FILEMAKER_DATABASE_KEY);
@@ -160,7 +180,7 @@ const loadFilemakerDatabase = async (): Promise<LoadedDatabase> => {
   const decoded = decodeSettingValue(FILEMAKER_DATABASE_KEY, rawValue);
   try {
     return {
-      database: normalizeFilemakerDatabase(JSON.parse(decoded) as unknown),
+      database: normalizeFilemakerDatabase(JSON.parse(decoded) as FilemakerDatabase),
       rawValue,
     };
   } catch {
@@ -182,47 +202,6 @@ const loadPersistedVerificationDatabase = async (
 };
 
 
-const listMongoCandidateOrganizations = async (
-  selectedOrganizationIds: readonly string[],
-  selectedOnly: boolean
-): Promise<FilemakerOrganization[]> => {
-  try {
-    const collection = await getFilemakerOrganizationsCollection();
-    const filter =
-      selectedOnly && selectedOrganizationIds.length > 0
-        ? { id: { $in: [...selectedOrganizationIds] } }
-        : {};
-    const documents = await collection.find(filter).limit(10_000).toArray();
-    return documents.map(toFilemakerOrganization);
-  } catch {
-    return [];
-  }
-};
-
-const loadOrganizationCandidates = async (
-  database: FilemakerDatabase,
-  options: FilemakerJobBoardScrapeRequest
-): Promise<OrganizationCandidate[]> => {
-  const selectedOnly = options.organizationScope === 'selected';
-  const selectedIds = new Set(options.selectedOrganizationIds);
-  const organizationsById = new Map<string, FilemakerOrganization>();
-  database.organizations.forEach((organization: FilemakerOrganization): void => {
-    if (!selectedOnly || selectedIds.has(organization.id)) {
-      organizationsById.set(organization.id, organization);
-    }
-  });
-  const mongoOrganizations = await listMongoCandidateOrganizations(
-    options.selectedOrganizationIds,
-    selectedOnly
-  );
-  mongoOrganizations.forEach((organization: FilemakerOrganization): void => {
-    if (!selectedOnly || selectedIds.has(organization.id)) {
-      organizationsById.set(organization.id, organization);
-    }
-  });
-  return Array.from(organizationsById.values()).map(buildCandidate);
-};
-
 const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedOffer): string => {
   const sourceSite = offer.sourceSite.length > 0 ? offer.sourceSite : 'job-board';
   let stablePart =
@@ -234,7 +213,10 @@ const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedO
   return `filemaker-job-board-job-${slug.length > 0 ? slug : randomUUID()}`;
 };
 
-import { findExistingListingIndex } from './job-board-scrape/dedupe-listings';
+import {
+  findExistingListingIndex,
+  findExistingListingIndexBySourceIdentity,
+} from './job-board-scrape/dedupe-listings';
 
 const toJobListing = (input: {
   existing?: FilemakerJobListing;
@@ -249,9 +231,17 @@ const toJobListing = (input: {
     title: input.offer.title,
     description: input.offer.description,
     location: input.offer.location,
+    addressId: input.existing?.addressId,
+    street: input.existing?.street,
+    streetNumber: input.existing?.streetNumber,
+    city: input.existing?.city,
+    postalCode: input.existing?.postalCode,
+    country: input.existing?.country,
+    countryId: input.existing?.countryId,
     salaryCurrency: input.offer.salaryCurrency ?? undefined,
     salaryMax: input.offer.salaryMax,
     salaryMin: input.offer.salaryMin,
+    salaryText: input.offer.salaryText,
     salaryPeriod: input.offer.salaryPeriod,
     status: input.existing?.status ?? input.options.status,
     targetedCampaignIds: input.existing?.targetedCampaignIds ?? [],
@@ -313,11 +303,11 @@ import {
   addressComparisonKey,
   buildJobBoardAddressId,
   buildJobBoardAddressLinkId,
-  findOfferAddressPill,
+  findOfferAddressValue,
   parseScrapedAddressPill,
 } from './job-board-scrape/address';
 
-type OrganizationAddressApplyResult = {
+type AddressApplyResult = {
   address: FilemakerAddress | null;
   assignedDefault: boolean;
   changed: boolean;
@@ -326,7 +316,7 @@ type OrganizationAddressApplyResult = {
 
 const ensureAddressRecord = (
   database: FilemakerDatabase,
-  organizationId: string,
+  ownerId: string,
   parsedAddress: Pick<
     FilemakerAddress,
     'city' | 'country' | 'countryId' | 'postalCode' | 'street' | 'streetNumber'
@@ -338,23 +328,24 @@ const ensureAddressRecord = (
   );
   if (existing !== undefined) return { address: existing, created: false };
   const address = createFilemakerAddress({
-    id: buildJobBoardAddressId(organizationId, parsedAddress),
+    id: buildJobBoardAddressId(ownerId, parsedAddress),
     ...parsedAddress,
   });
   database.addresses.push(address);
   return { address, created: true };
 };
 
-const ensureOrganizationAddressLink = (
+const ensureAddressLink = (
   database: FilemakerDatabase,
-  organizationId: string,
+  ownerKind: FilemakerAddressLink['ownerKind'],
+  ownerId: string,
   addressId: string,
   isDefault: boolean
 ): boolean => {
   const existingIndex = database.addressLinks.findIndex(
     (link: FilemakerAddressLink): boolean =>
-      link.ownerKind === 'organization' &&
-      link.ownerId === organizationId &&
+      link.ownerKind === ownerKind &&
+      link.ownerId === ownerId &&
       link.addressId === addressId
   );
   if (existingIndex >= 0) {
@@ -369,9 +360,9 @@ const ensureOrganizationAddressLink = (
   }
   database.addressLinks.push(
     createFilemakerAddressLink({
-      id: buildJobBoardAddressLinkId(organizationId, addressId),
-      ownerKind: 'organization',
-      ownerId: organizationId,
+      id: buildJobBoardAddressLinkId(ownerKind, ownerId, addressId),
+      ownerKind,
+      ownerId,
       addressId,
       isDefault,
     })
@@ -379,57 +370,52 @@ const ensureOrganizationAddressLink = (
   return true;
 };
 
-const applyOfferAddressToDatabaseOrganization = (
+const applyOfferAddressToDatabaseJobListing = (
   database: FilemakerDatabase,
-  organizationId: string,
+  listingId: string,
   offer: FilemakerJobBoardScrapedOffer
-): OrganizationAddressApplyResult => {
-  const addressPill = findOfferAddressPill(offer);
-  if (addressPill === null) return { address: null, assignedDefault: false, changed: false };
-  const parsedAddress = parseScrapedAddressPill(addressPill.label);
+): AddressApplyResult => {
+  const addressValue = findOfferAddressValue(offer);
+  if (addressValue === null) return { address: null, assignedDefault: false, changed: false };
+  const parsedAddress = parseScrapedAddressPill(addressValue);
   if (parsedAddress === null) return { address: null, assignedDefault: false, changed: false };
-  const index = database.organizations.findIndex(
-    (organization: FilemakerOrganization): boolean => organization.id === organizationId
+  const listingIndex = database.jobListings.findIndex(
+    (listing: FilemakerJobListing): boolean => listing.id === listingId
   );
-  if (index < 0) return { address: null, assignedDefault: false, changed: false };
-  const organization = database.organizations[index];
-  if (organization === undefined) return { address: null, assignedDefault: false, changed: false };
-  const addressRecord = ensureAddressRecord(database, organizationId, parsedAddress);
-  const shouldSetDefaultAddress = normalizeString(organization.addressId).length === 0;
-  const shouldSetDisplayAddress = normalizeString(organization.displayAddressId).length === 0;
-  const linkChanged = ensureOrganizationAddressLink(
+  if (listingIndex < 0) return { address: null, assignedDefault: false, changed: false };
+  const listing = database.jobListings[listingIndex];
+  if (listing === undefined) return { address: null, assignedDefault: false, changed: false };
+  const addressRecord = ensureAddressRecord(database, listingId, parsedAddress);
+  const shouldSetDefaultAddress = normalizeString(listing.addressId).length === 0;
+  const linkChanged = ensureAddressLink(
     database,
-    organizationId,
+    'job_listing',
+    listingId,
     addressRecord.address.id,
     shouldSetDefaultAddress
   );
-  const nextOrganization = createFilemakerOrganization({
-    ...organization,
-    ...(shouldSetDefaultAddress ? { addressId: addressRecord.address.id } : {}),
-    ...(shouldSetDisplayAddress ? { displayAddressId: addressRecord.address.id } : {}),
-    ...(shouldSetDefaultAddress
-      ? {
-          city: addressRecord.address.city,
-          country: addressRecord.address.country,
-          countryId: addressRecord.address.countryId,
-          postalCode: addressRecord.address.postalCode,
-          street: addressRecord.address.street,
-          streetNumber: addressRecord.address.streetNumber,
-        }
-      : {}),
-    updatedAt: new Date().toISOString(),
-    updatedBy: 'filemaker:job-board-scrape',
-  });
-  const organizationChanged =
-    JSON.stringify(organization) !== JSON.stringify(nextOrganization) &&
-    (shouldSetDefaultAddress || shouldSetDisplayAddress);
-  if (organizationChanged) {
-    database.organizations.splice(index, 1, nextOrganization);
+  let listingChanged = false;
+  if (shouldSetDefaultAddress) {
+    const nextListing = createFilemakerJobListing({
+      ...listing,
+      addressId: addressRecord.address.id,
+      city: addressRecord.address.city,
+      country: addressRecord.address.country,
+      countryId: addressRecord.address.countryId,
+      postalCode: addressRecord.address.postalCode,
+      street: addressRecord.address.street,
+      streetNumber: addressRecord.address.streetNumber,
+      updatedAt: new Date().toISOString(),
+    });
+    listingChanged = JSON.stringify(listing) !== JSON.stringify(nextListing);
+    if (listingChanged) {
+      database.jobListings.splice(listingIndex, 1, nextListing);
+    }
   }
   return {
     address: addressRecord.address,
     assignedDefault: shouldSetDefaultAddress,
-    changed: addressRecord.created || linkChanged || organizationChanged,
+    changed: addressRecord.created || linkChanged || listingChanged,
   };
 };
 
@@ -467,9 +453,87 @@ const ensureOrganizationInDatabase = (
   return true;
 };
 
+const isOrganizationInScrapeScope = (
+  organizationId: string,
+  options: FilemakerJobBoardScrapeRequest
+): boolean =>
+  options.organizationScope !== 'selected' || options.selectedOrganizationIds.includes(organizationId);
+
 const toOptionalMongoString = (value: unknown): string | undefined => {
   const normalized = normalizeString(value);
   return normalized.length > 0 ? normalized : undefined;
+};
+
+const toCandidateOrganization = (value: unknown): FilemakerOrganization | null => {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const id = normalizeString(record['id'] ?? record['_id']);
+  const name = normalizeString(record['name']);
+  if (id.length === 0 || name.length === 0) return null;
+  return createFilemakerOrganization({
+    id,
+    name,
+    tradingName: toOptionalMongoString(record['tradingName']),
+    jobBoardCompanyProfile: toOptionalMongoString(record['jobBoardCompanyProfile']),
+    jobBoardCompanyProfileUrl: toOptionalMongoString(record['jobBoardCompanyProfileUrl']),
+    jobBoardCompanyProfileScrapedAt:
+      toOptionalMongoString(record['jobBoardCompanyProfileScrapedAt']) ?? null,
+  });
+};
+
+const loadOrganizationCandidates = async (
+  database: FilemakerDatabase,
+  options: FilemakerJobBoardScrapeRequest
+): Promise<OrganizationCandidate[]> => {
+  const organizationsById = new Map<string, FilemakerOrganization>();
+  database.organizations.forEach((organization: FilemakerOrganization): void => {
+    if (isOrganizationInScrapeScope(organization.id, options)) {
+      organizationsById.set(organization.id, organization);
+    }
+  });
+
+  try {
+    const collection = await getFilemakerOrganizationsCollection();
+    const documents = await collection.find({}).limit(10_000).toArray();
+    documents.forEach((document: unknown): void => {
+      const organization = toCandidateOrganization(document);
+      if (
+        organization !== null &&
+        isOrganizationInScrapeScope(organization.id, options) &&
+        !organizationsById.has(organization.id)
+      ) {
+        organizationsById.set(organization.id, organization);
+      }
+    });
+  } catch {
+    // Settings-backed organizations are enough when Mongo is unavailable.
+  }
+
+  return Array.from(organizationsById.values()).map(buildCandidate);
+};
+
+const getOrCreateScrapedCompanyCandidate = async (args: {
+  companyKey: string;
+  createdCandidatesByCompanyKey: Map<string, OrganizationCandidate>;
+  database: FilemakerDatabase;
+  offer: FilemakerJobBoardScrapedOffer;
+}): Promise<{ candidate: OrganizationCandidate; created: boolean; profileUpdated: boolean }> => {
+  const existingCandidate = args.createdCandidatesByCompanyKey.get(args.companyKey);
+  if (existingCandidate !== undefined) {
+    return { candidate: existingCandidate, created: false, profileUpdated: false };
+  }
+
+  const createdOrganizationRecord = createUnmatchedOrganization(args.database, args.offer);
+  const candidate = buildCandidate(createdOrganizationRecord);
+  args.createdCandidatesByCompanyKey.set(args.companyKey, candidate);
+  await upsertMongoOrganizationForJobBoardImport(candidate.organization);
+  return {
+    candidate,
+    created: true,
+    profileUpdated: args.offer.companyProfile.trim().length > 0,
+  };
 };
 
 const compactMongoSetFields = (
@@ -553,36 +617,6 @@ const upsertMongoOrganizationProfile = async (
   }
 };
 
-const upsertMongoOrganizationAddress = async (
-  organizationId: string,
-  address: FilemakerAddress | null
-): Promise<void> => {
-  if (address === null) return;
-  try {
-    const now = new Date().toISOString();
-    const collection = await getFilemakerOrganizationsCollection();
-    await collection.updateOne(
-      { id: organizationId },
-      {
-        $set: {
-          addressId: address.id,
-          city: address.city,
-          country: address.country,
-          countryId: address.countryId,
-          displayAddressId: address.id,
-          postalCode: address.postalCode,
-          street: address.street,
-          streetNumber: address.streetNumber,
-          updatedAt: now,
-          updatedBy: 'filemaker:job-board-scrape',
-        },
-      }
-    );
-  } catch {
-    // Settings persistence remains the source of truth in non-Mongo test/dev environments.
-  }
-};
-
 const buildOfferResult = (
   offer: FilemakerJobBoardScrapedOffer,
   match: FilemakerJobBoardOrganizationMatch | null
@@ -592,6 +626,66 @@ const buildOfferResult = (
   offer,
   reason: null,
   status: 'preview',
+});
+
+const buildExistingListingOffer = (
+  database: FilemakerDatabase,
+  listing: FilemakerJobListing,
+  sourceSite: string,
+  sourceUrl: string
+): FilemakerJobBoardScrapedOffer => {
+  const organization = database.organizations.find(
+    (entry: FilemakerOrganization): boolean => entry.id === listing.organizationId
+  );
+  return {
+    companyName: organization?.name ?? 'Existing organisation',
+    companyProfile: organization?.jobBoardCompanyProfile ?? '',
+    companyProfileUrl: organization?.jobBoardCompanyProfileUrl ?? null,
+    description: listing.description,
+    expiresAt: listing.expiresAt ?? null,
+    location: listing.location ?? '',
+    postedAt: listing.postedAt ?? null,
+    salaryCurrency: listing.salaryCurrency ?? null,
+    salaryMax: listing.salaryMax ?? null,
+    salaryMin: listing.salaryMin ?? null,
+    salaryPeriod: listing.salaryPeriod,
+    salaryText: '',
+    sourceExternalId: listing.sourceExternalId ?? null,
+    sourceSite: (listing.sourceSite ?? '').length > 0 ? listing.sourceSite ?? '' : sourceSite,
+    sourceUrl: (listing.sourceUrl ?? '').length > 0 ? listing.sourceUrl ?? '' : sourceUrl,
+    pills: [],
+    unclassifiedPills: [],
+    title: listing.title.length > 0 ? listing.title : 'Existing job listing',
+  };
+};
+
+const buildExistingListingMatch = (
+  database: FilemakerDatabase,
+  listing: FilemakerJobListing
+): FilemakerJobBoardOrganizationMatch | null => {
+  const organization = database.organizations.find(
+    (entry: FilemakerOrganization): boolean => entry.id === listing.organizationId
+  );
+  if (organization === undefined) return null;
+  return {
+    confidence: 100,
+    organizationId: organization.id,
+    organizationName: organization.name,
+    reason: 'existing listing source identity',
+  };
+};
+
+const buildExistingListingSkippedResult = (
+  database: FilemakerDatabase,
+  listing: FilemakerJobListing,
+  sourceSite: string,
+  sourceUrl: string
+): FilemakerJobBoardScrapeOfferResult => ({
+  listingId: listing.id,
+  match: buildExistingListingMatch(database, listing),
+  offer: buildExistingListingOffer(database, listing, sourceSite, sourceUrl),
+  reason: `A matching ${sourceSite.length > 0 ? sourceSite : 'job-board'} listing already exists.`,
+  status: 'skipped',
 });
 
 const buildWriteMessage = (
@@ -689,6 +783,32 @@ const upsertLexiconTerm = (
     database.lexiconTerms.splice(existingIndex, 1, next);
     return { created: false, term: next, updated: true };
   }
+  const otherIndex =
+    typeKey !== 'other'
+      ? database.lexiconTerms.findIndex(
+          (term: FilemakerLexiconTerm): boolean =>
+            term.typeKey === 'other' && term.normalizedLabel === normalizedLabel
+        )
+      : -1;
+  if (otherIndex >= 0) {
+    const existing = database.lexiconTerms[otherIndex];
+    if (existing === undefined) {
+      throw internalError('Other lexicon term index resolved without a term.');
+    }
+    const next = createFilemakerLexiconTerm({
+      ...existing,
+      label: existing.label.trim().length > 0 ? existing.label : pill.label,
+      typeKey,
+      category: typeKey,
+      sourceSite: existing.sourceSite ?? pill.sourceSite,
+      sourceProvider: existing.sourceProvider ?? sourceProvider,
+      lastSeenAt: now,
+      occurrenceCount: existing.occurrenceCount + 1,
+      updatedAt: now,
+    });
+    database.lexiconTerms.splice(otherIndex, 1, next);
+    return { created: false, term: next, updated: true };
+  }
   const term = createFilemakerLexiconTerm({
     id: buildLexiconTermId(typeKey, normalizedLabel),
     label: pill.label,
@@ -711,11 +831,37 @@ const ensureJobListingLexiconLink = (
   term: FilemakerLexiconTerm,
   pill: FilemakerJobBoardScrapedOffer['pills'][number]
 ): boolean => {
-  const exists = database.jobListingLexiconLinks.some(
+  const existingIndex = database.jobListingLexiconLinks.findIndex(
     (link: FilemakerJobListingLexiconLink): boolean =>
       link.jobListingId === jobListingId && link.lexiconTermId === term.id
   );
-  if (exists) return false;
+  const typeKey = scrapedPillTypeKey(pill);
+  if (existingIndex >= 0) {
+    const existing = database.jobListingLexiconLinks[existingIndex];
+    if (existing === undefined) return false;
+    const next = createFilemakerJobListingLexiconLink({
+      ...existing,
+      sourceSite: pill.sourceSite,
+      sourceUrl: pill.sourceUrl,
+      sourceValue: pill.label,
+      typeKey,
+      category: typeKey,
+      position: pill.position,
+      updatedAt: new Date().toISOString(),
+    });
+    if (
+      existing.sourceSite === next.sourceSite &&
+      existing.sourceUrl === next.sourceUrl &&
+      existing.sourceValue === next.sourceValue &&
+      existing.typeKey === next.typeKey &&
+      existing.category === next.category &&
+      existing.position === next.position
+    ) {
+      return false;
+    }
+    database.jobListingLexiconLinks.splice(existingIndex, 1, next);
+    return true;
+  }
   database.jobListingLexiconLinks.push(
     createFilemakerJobListingLexiconLink({
       id: buildJobListingLexiconLinkId(jobListingId, term.id),
@@ -724,8 +870,8 @@ const ensureJobListingLexiconLink = (
       sourceSite: pill.sourceSite,
       sourceUrl: pill.sourceUrl,
       sourceValue: pill.label,
-      typeKey: scrapedPillTypeKey(pill),
-      category: scrapedPillTypeKey(pill),
+      typeKey,
+      category: typeKey,
       position: pill.position,
     })
   );
@@ -762,14 +908,15 @@ const applyOfferLexiconToListing = (
   listingId: string,
   offer: FilemakerJobBoardScrapedOffer
 ): OfferLexiconApplyResult => {
-  if (offer.pills.length === 0) {
+  const lexiconPills = offer.pills;
+  if (lexiconPills.length === 0) {
     return { changed: false, createdTerms: 0, linkedTerms: 0 };
   }
   const termIds: string[] = [];
   let createdTerms = 0;
   let linkedTerms = 0;
   let changed = false;
-  for (const pill of offer.pills) {
+  for (const pill of lexiconPills) {
     const termResult = upsertLexiconTerm(database, pill, offer.sourceSite);
     if (termResult.created) createdTerms += 1;
     if (termResult.updated) changed = true;
@@ -783,6 +930,257 @@ const applyOfferLexiconToListing = (
     changed = true;
   }
   return { changed, createdTerms, linkedTerms };
+};
+
+const CLASSIFICATION_CONFIDENCE_THRESHOLD = 0.65;
+
+const classificationKey = (value: string): string => normalizeLexiconKey(value);
+
+const isIgnoredClassificationNoise = (label: string): boolean =>
+  /(?:asystent\s+pracuj\.pl|assistant|apply\s+button|save\s+offer|obserwuj|aplikuj)/iu.test(label);
+
+const exactLexiconMatchesForClassification = (
+  database: FilemakerDatabase,
+  label: string
+): FilemakerLexiconTerm[] => {
+  const key = classificationKey(label);
+  if (key.length === 0) return [];
+  return database.lexiconTerms
+    .filter((term) => {
+      const termLabel =
+        term.normalizedLabel.trim().length > 0 ? term.normalizedLabel : term.label;
+      return classificationKey(termLabel) === key;
+    })
+    .sort((left, right) => right.occurrenceCount - left.occurrenceCount);
+};
+
+const resolveAuthoritativeClassificationType = (
+  database: FilemakerDatabase,
+  classification: FilemakerJobBoardLexiconClassification,
+  candidate: FilemakerJobBoardScrapedOffer['unclassifiedPills'][number]
+): { reason: string | null; typeKey: FilemakerJobBoardLexiconClassification['typeKey'] | null } => {
+  if (classification.action === 'ignore' || isIgnoredClassificationNoise(candidate.label)) {
+    return { reason: 'ignored noise or provider UI text', typeKey: null };
+  }
+  if (classification.typeKey === 'other') {
+    return { reason: 'kept as unclassified because model returned Other', typeKey: null };
+  }
+
+  const exactMatches = exactLexiconMatchesForClassification(database, candidate.label);
+  const nonAddressExactMatches = exactMatches.filter(
+    (term: FilemakerLexiconTerm): boolean => term.typeKey !== 'address'
+  );
+  if (nonAddressExactMatches.length > 0) {
+    const modelMatchedTerm = nonAddressExactMatches.find(
+      (term) => term.typeKey === classification.typeKey
+    );
+    return {
+      reason: 'matched existing lexicon term',
+      typeKey: (modelMatchedTerm ?? nonAddressExactMatches[0])?.typeKey ?? classification.typeKey,
+    };
+  }
+
+  const patternClassification = classifyFilemakerLexiconLabelWithPatterns(
+    database.lexiconValidationPatterns,
+    { label: candidate.label, sourceScope: 'unclassified' }
+  );
+  if (patternClassification !== null) {
+    if (patternClassification.typeKey === 'other' || patternClassification.typeKey === 'address') {
+      return { reason: `matched validation pattern ${patternClassification.pattern.id} as Other`, typeKey: null };
+    }
+    return {
+      reason: `matched validation pattern ${patternClassification.pattern.id}`,
+      typeKey: patternClassification.typeKey,
+    };
+  }
+
+  if (classification.typeKey === 'address') {
+    return { reason: 'Address classifications are stored as structured address fields', typeKey: null };
+  }
+  return { reason: null, typeKey: classification.typeKey };
+};
+
+const buildClassifiedOfferPill = (
+  candidate: FilemakerJobBoardScrapedOffer['unclassifiedPills'][number],
+  typeKey: FilemakerJobBoardLexiconClassification['typeKey']
+): FilemakerJobBoardScrapedOffer['pills'][number] => ({
+  category: typeKey,
+  typeKey,
+  label: candidate.label,
+  position: candidate.position,
+  sourceSite: candidate.sourceSite,
+  sourceUrl: candidate.sourceUrl,
+});
+
+const buildOfferWithClassifiedPills = (
+  database: FilemakerDatabase,
+  offer: FilemakerJobBoardScrapedOffer,
+  classifications: readonly FilemakerJobBoardLexiconClassification[]
+): ClassificationPillBuildResult => {
+  const warnings: string[] = [];
+  const candidatesByKey = new Map<string, FilemakerJobBoardScrapedOffer['unclassifiedPills'][number]>();
+  offer.unclassifiedPills.forEach((candidate) => {
+    const key = classificationKey(candidate.label);
+    if (key.length > 0 && !candidatesByKey.has(key)) {
+      candidatesByKey.set(key, candidate);
+    }
+  });
+  const acceptedKeys = new Set<string>();
+  const acceptedPills: FilemakerJobBoardScrapedOffer['pills'] = [];
+  let rejectedCount = 0;
+
+  classifications.forEach((classification) => {
+    const outputKey = classificationKey(classification.normalizedLabel ?? classification.label);
+    const candidate = candidatesByKey.get(outputKey);
+    if (candidate === undefined) {
+      rejectedCount += 1;
+      warnings.push(`Ignored classification for unknown pill "${classification.label}".`);
+      return;
+    }
+    if (classification.confidence < CLASSIFICATION_CONFIDENCE_THRESHOLD) {
+      rejectedCount += 1;
+      warnings.push(`Kept "${candidate.label}" unclassified because confidence was too low.`);
+      return;
+    }
+    const authoritative = resolveAuthoritativeClassificationType(database, classification, candidate);
+    if (authoritative.typeKey === null) {
+      rejectedCount += 1;
+      warnings.push(`Kept "${candidate.label}" unclassified: ${authoritative.reason ?? 'not classifiable'}.`);
+      return;
+    }
+    const acceptedKey = `${authoritative.typeKey}:${classificationKey(candidate.label)}`;
+    if (acceptedKeys.has(acceptedKey)) return;
+    acceptedKeys.add(acceptedKey);
+    acceptedPills.push(buildClassifiedOfferPill(candidate, authoritative.typeKey));
+  });
+
+  const existingKeys = new Set(
+    offer.pills.map((pill) => `${pill.typeKey}:${classificationKey(pill.label)}`)
+  );
+  const mergedPills = [...offer.pills];
+  acceptedPills.forEach((pill) => {
+    const key = `${pill.typeKey}:${classificationKey(pill.label)}`;
+    if (existingKeys.has(key)) return;
+    existingKeys.add(key);
+    mergedPills.push(pill);
+  });
+  const acceptedCandidateKeys = new Set(acceptedPills.map((pill) => classificationKey(pill.label)));
+
+  return {
+    acceptedPills,
+    rejectedCount,
+    updatedOffer: {
+      ...offer,
+      pills: mergedPills.slice(0, 100),
+      unclassifiedPills: offer.unclassifiedPills.filter(
+        (pill) => !acceptedCandidateKeys.has(classificationKey(pill.label))
+      ),
+    },
+    warnings: uniqueStrings(warnings),
+  };
+};
+
+const resolveClassificationListingId = (
+  database: FilemakerDatabase,
+  offer: FilemakerJobBoardScrapedOffer,
+  listingId: string | null
+): string | null => {
+  if (
+    listingId !== null &&
+    database.jobListings.some((listing: FilemakerJobListing): boolean => listing.id === listingId)
+  ) {
+    return listingId;
+  }
+  const sourceIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
+    sourceExternalId: offer.sourceExternalId,
+    sourceSite: offer.sourceSite,
+    sourceUrl: offer.sourceUrl,
+  });
+  return sourceIndex >= 0 ? database.jobListings[sourceIndex]?.id ?? null : null;
+};
+
+const upsertClassifiedPillsToLexicon = (
+  database: FilemakerDatabase,
+  pills: FilemakerJobBoardScrapedOffer['pills'],
+  sourceProvider: string
+): { changed: boolean; createdTerms: number } => {
+  let changed = false;
+  let createdTerms = 0;
+  pills.forEach((pill) => {
+    const result = upsertLexiconTerm(database, pill, sourceProvider);
+    if (result.created) createdTerms += 1;
+    if (result.updated) changed = true;
+  });
+  return { changed, createdTerms };
+};
+
+export const applyFilemakerJobBoardLexiconClassifications = async (
+  rawInput: unknown
+): Promise<FilemakerJobBoardLexiconClassificationApplyResponse> => {
+  const parsed = filemakerJobBoardLexiconClassificationApplyRequestSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    throw badRequestError('Invalid job-board lexicon classification request.', {
+      issues: parsed.error.issues,
+    });
+  }
+  const input = parsed.data;
+  const { database } = await loadFilemakerDatabase();
+  const classificationResult = buildOfferWithClassifiedPills(
+    database,
+    input.offer,
+    input.classifications
+  );
+  const resolvedListingId = resolveClassificationListingId(
+    database,
+    input.offer,
+    input.listingId
+  );
+  let createdLexiconTerms = 0;
+  let linkedLexiconTerms = 0;
+  let changed = false;
+  const warnings = [...classificationResult.warnings];
+
+  if (classificationResult.acceptedPills.length > 0 && resolvedListingId !== null) {
+    const lexicon = applyOfferLexiconToListing(database, resolvedListingId, {
+      ...input.offer,
+      pills: classificationResult.acceptedPills,
+    });
+    createdLexiconTerms = lexicon.createdTerms;
+    linkedLexiconTerms = lexicon.linkedTerms;
+    changed = lexicon.changed;
+  } else if (classificationResult.acceptedPills.length > 0) {
+    const lexicon = upsertClassifiedPillsToLexicon(
+      database,
+      classificationResult.acceptedPills,
+      input.offer.sourceSite
+    );
+    createdLexiconTerms = lexicon.createdTerms;
+    changed = lexicon.changed;
+    warnings.push('No saved listing was found; lexicon terms were enriched for the preview offer.');
+  }
+
+  if (changed) {
+    const persisted = await upsertFilemakerCampaignSettingValue(
+      FILEMAKER_DATABASE_KEY,
+      JSON.stringify(toPersistedFilemakerDatabase(normalizeFilemakerDatabase(database)))
+    );
+    if (!persisted) {
+      throw internalError('Failed to persist job-board lexicon classifications.');
+    }
+  }
+
+  return {
+    listingId: resolvedListingId,
+    offer: classificationResult.updatedOffer,
+    summary: {
+      acceptedClassifications: classificationResult.acceptedPills.length,
+      createdLexiconTerms,
+      linkedLexiconTerms,
+      persisted: changed,
+      rejectedClassifications: classificationResult.rejectedCount,
+    },
+    warnings: uniqueStrings(warnings),
+  };
 };
 
 const applyImport = async ({
@@ -799,16 +1197,138 @@ const applyImport = async ({
   let changed = false;
   const counters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
   const candidateList = [...candidates];
+  const createdCandidatesByCompanyKey = new Map<string, OrganizationCandidate>();
   const results: FilemakerJobBoardScrapeOfferResult[] = [];
 
   for (const offer of offers) {
-    let match = findBestMatch(offer, candidateList, options.minimumMatchConfidence);
+    const existingSourceIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
+      sourceExternalId: offer.sourceExternalId,
+      sourceSite: offer.sourceSite,
+      sourceUrl: offer.sourceUrl,
+    });
+    const existingSourceListing =
+      existingSourceIndex >= 0 ? database.jobListings[existingSourceIndex] : undefined;
+    const companyKey = normalizeNameForMatch(offer.companyName);
+    if (existingSourceListing !== undefined && options.duplicateStrategy === 'skip') {
+      let duplicateListing = existingSourceListing;
+      const existingOrganization =
+        database.organizations.find(
+          (organization: FilemakerOrganization): boolean =>
+            organization.id === duplicateListing.organizationId
+        ) ?? null;
+      const existingOrganizationMatches =
+        existingOrganization !== null &&
+        companyKey.length > 0 &&
+        normalizeNameForMatch(existingOrganization.name) === companyKey;
+      if (
+        !existingOrganizationMatches &&
+        companyKey.length > 0 &&
+        !isSuspiciousJobBoardCompanyName(offer.companyName)
+      ) {
+        const companyCandidate = await getOrCreateScrapedCompanyCandidate({
+          companyKey,
+          createdCandidatesByCompanyKey,
+          database,
+          offer,
+        });
+        changed = changed || companyCandidate.created;
+        counters.createdOrganizations += companyCandidate.created ? 1 : 0;
+        counters.profileUpdates += companyCandidate.profileUpdated ? 1 : 0;
+        duplicateListing = createFilemakerJobListing({
+          ...duplicateListing,
+          organizationId: companyCandidate.candidate.organization.id,
+          updatedAt: new Date().toISOString(),
+        });
+        database.jobListings.splice(existingSourceIndex, 1, duplicateListing);
+        changed = true;
+        const match: FilemakerJobBoardOrganizationMatch = {
+          confidence: 100,
+          organizationId: companyCandidate.candidate.organization.id,
+          organizationName: companyCandidate.candidate.organization.name,
+          reason: companyCandidate.created
+            ? 'created from scraped job-board employer'
+            : 'same scraped employer in current import',
+        };
+        await emitWriteResult(
+          onWrite,
+          companyCandidate.created ? 'organization_created' : 'organization_linked',
+          { listingId: duplicateListing.id, match, offer, reason: null, status: 'preview' },
+          companyCandidate.profileUpdated
+        );
+      }
+      const result = buildExistingListingSkippedResult(
+        database,
+        duplicateListing,
+        offer.sourceSite,
+        offer.sourceUrl
+      );
+      results.push(result);
+      await emitWriteResult(onWrite, 'listing_skipped', result, false);
+      const addressApply = applyOfferAddressToDatabaseJobListing(
+        database,
+        duplicateListing.id,
+        offer
+      );
+      if (addressApply.changed) {
+        changed = true;
+        counters.addressUpdates += 1;
+      }
+      const lexicon = applyOfferLexiconToListing(database, duplicateListing.id, offer);
+      if (lexicon.changed) {
+        changed = true;
+        counters.createdLexiconTerms += lexicon.createdTerms;
+        counters.linkedLexiconTerms += lexicon.linkedTerms;
+        await emitWriteResult(onWrite, 'listing_lexicon_linked', result, false);
+      }
+      continue;
+    }
+
+    let match: FilemakerJobBoardOrganizationMatch | null = null;
+    let matchedCandidate: OrganizationCandidate | null = null;
+    const currentRunCandidate =
+      companyKey.length > 0 ? createdCandidatesByCompanyKey.get(companyKey) : undefined;
+    if (currentRunCandidate !== undefined) {
+      matchedCandidate = currentRunCandidate;
+      match = {
+        confidence: 100,
+        organizationId: currentRunCandidate.organization.id,
+        organizationName: currentRunCandidate.organization.name,
+        reason: 'same scraped employer in current import',
+      };
+    }
+    if (!match) {
+      match = findBestMatch(offer, candidateList, options.minimumMatchConfidence);
+      matchedCandidate =
+        match === null
+          ? null
+          : candidateList.find(
+              (candidate: OrganizationCandidate): boolean =>
+                candidate.organization.id === match?.organizationId
+            ) ?? null;
+    }
     let createdOrganization = false;
     let createdOrganizationProfileUpdated = false;
     if (!match && options.importStrategy === 'create_unmatched') {
+      if (isSuspiciousJobBoardCompanyName(offer.companyName)) {
+        const result: FilemakerJobBoardScrapeOfferResult = {
+          listingId: null,
+          match: null,
+          offer,
+          reason:
+            'Scraped employer name looks like job-board directory metadata, so no organisation was created.',
+          status: 'unmatched',
+        };
+        results.push(result);
+        await emitWriteResult(onWrite, 'offer_unmatched', result, false);
+        continue;
+      }
       const createdOrganizationRecord = createUnmatchedOrganization(database, offer);
       const candidate = buildCandidate(createdOrganizationRecord);
       candidateList.push(candidate);
+      if (companyKey.length > 0) {
+        createdCandidatesByCompanyKey.set(companyKey, candidate);
+      }
+      matchedCandidate = candidate;
       match = {
         confidence: 100,
         organizationId: candidate.organization.id,
@@ -850,10 +1370,6 @@ const applyImport = async ({
       continue;
     }
 
-    const matchedCandidate = candidateList.find(
-      (candidate: OrganizationCandidate): boolean =>
-        candidate.organization.id === match.organizationId
-    );
     if (matchedCandidate && ensureOrganizationInDatabase(database, matchedCandidate.organization)) {
       changed = true;
       await emitWriteResult(
@@ -885,25 +1401,6 @@ const applyImport = async ({
       );
     }
     await upsertMongoOrganizationProfile(match.organizationId, offer);
-    const addressApply = applyOfferAddressToDatabaseOrganization(
-      database,
-      match.organizationId,
-      offer
-    );
-    if (addressApply.changed) {
-      changed = true;
-      counters.addressUpdates += 1;
-      if (addressApply.assignedDefault) {
-        await upsertMongoOrganizationAddress(match.organizationId, addressApply.address);
-      }
-      await emitWriteResult(
-        onWrite,
-        'organization_address_updated',
-        { listingId: null, match, offer, reason: null, status: 'updated' },
-        false
-      );
-    }
-
     const existingIndex = findExistingListingIndex(database.jobListings, match.organizationId, offer);
     const existing = existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
     if (existing && options.duplicateStrategy === 'skip') {
@@ -916,6 +1413,11 @@ const applyImport = async ({
       };
       results.push(result);
       await emitWriteResult(onWrite, 'listing_skipped', result, false);
+      const addressApply = applyOfferAddressToDatabaseJobListing(database, existing.id, offer);
+      if (addressApply.changed) {
+        changed = true;
+        counters.addressUpdates += 1;
+      }
       const lexicon = applyOfferLexiconToListing(database, existing.id, offer);
       if (lexicon.changed) {
         changed = true;
@@ -943,6 +1445,11 @@ const applyImport = async ({
       };
       results.push(result);
       await emitWriteResult(onWrite, 'listing_updated', result, false);
+      const addressApply = applyOfferAddressToDatabaseJobListing(database, listing.id, offer);
+      if (addressApply.changed) {
+        changed = true;
+        counters.addressUpdates += 1;
+      }
       const lexicon = applyOfferLexiconToListing(database, listing.id, offer);
       if (lexicon.changed) {
         counters.createdLexiconTerms += lexicon.createdTerms;
@@ -960,6 +1467,10 @@ const applyImport = async ({
       };
       results.push(result);
       await emitWriteResult(onWrite, 'listing_created', result, false);
+      const addressApply = applyOfferAddressToDatabaseJobListing(database, listing.id, offer);
+      if (addressApply.changed) {
+        counters.addressUpdates += 1;
+      }
       const lexicon = applyOfferLexiconToListing(database, listing.id, offer);
       if (lexicon.changed) {
         counters.createdLexiconTerms += lexicon.createdTerms;
@@ -981,13 +1492,14 @@ const verifyImportedResults = (
   let verifiedListings = 0;
 
   for (const result of results) {
-    if (result.match !== null) {
+    const match = result.match;
+    if (match !== null) {
       const organization = database.organizations.find(
-        (entry: FilemakerOrganization): boolean => entry.id === result.match.organizationId
+        (entry: FilemakerOrganization): boolean => entry.id === match.organizationId
       );
       if (organization === undefined) {
         warnings.push(
-          `Import verification could not find organisation ${result.match.organizationName}.`
+          `Import verification could not find organisation ${match.organizationName}.`
         );
       } else if (
         result.offer.companyProfile.trim().length > 0 &&
@@ -1060,7 +1572,7 @@ const buildSummary = (
 
 const resolveDraftSaveDuplicateStrategy = (
   strategy: FilemakerJobBoardDuplicateStrategy
-): FilemakerJobBoardDuplicateStrategy => (strategy === 'add' ? 'add' : 'update');
+): FilemakerJobBoardDuplicateStrategy => strategy;
 
 const toDraftSaveImportOptions = (
   input: FilemakerJobBoardScrapeDraftSaveRequest
@@ -1216,6 +1728,7 @@ const collectOfferLinks = async (
 
 const scrapeOffersViaJobBoardSequencer = async (
   options: FilemakerJobBoardScrapeRequest,
+  database: FilemakerDatabase,
   progress: ScrapeProgressHandlers = {},
   signal?: AbortSignal
 ): Promise<CentralizedScrapeResult> => {
@@ -1224,6 +1737,7 @@ const scrapeOffersViaJobBoardSequencer = async (
   const collected = await collectOfferLinks(options);
   throwIfScrapeAborted(signal);
   const offers: FilemakerJobBoardScrapedOffer[] = [];
+  const skippedResults: FilemakerJobBoardScrapeOfferResult[] = [];
   const warnings = [...collected.warnings];
   let runId = collected.runId;
   await progress.onLinks?.({
@@ -1243,6 +1757,33 @@ const scrapeOffersViaJobBoardSequencer = async (
 
   for (const [index, url] of collected.urls.entries()) {
     throwIfScrapeAborted(signal);
+    if (options.duplicateStrategy !== 'add') {
+      const existingIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
+        sourceSite: collected.sourceSite,
+        sourceUrl: url,
+      });
+      const existingListing =
+        existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
+      if (existingListing !== undefined) {
+        const result = buildExistingListingSkippedResult(
+          database,
+          existingListing,
+          collected.sourceSite,
+          url
+        );
+        skippedResults.push(result);
+        await progress.onStatus?.(
+          `Skipping existing offer ${index + 1} of ${collected.urls.length}: ${url}`
+        );
+        await progress.onSkippedExisting?.({
+          index: index + 1,
+          result,
+          total: collected.urls.length,
+          url,
+        });
+        continue;
+      }
+    }
     await progress.onStatus?.(
       `Scraping offer ${index + 1} of ${collected.urls.length}: ${url}`
     );
@@ -1264,6 +1805,7 @@ const scrapeOffersViaJobBoardSequencer = async (
       provider: probe.provider,
       snapshot: probe.snapshot,
       sourceSite: probe.sourceSite,
+      validationPatterns: database.lexiconValidationPatterns,
     });
     if (offer) {
       offers.push(offer);
@@ -1281,6 +1823,7 @@ const scrapeOffersViaJobBoardSequencer = async (
     offers,
     provider: collected.provider,
     runId,
+    skippedResults,
     sourceSite: collected.sourceSite,
     warnings,
   };
@@ -1301,9 +1844,6 @@ export const saveFilemakerJobBoardScrapeDrafts = async (
   const onEvent = runOptions.onEvent;
   const signal = runOptions.signal;
   throwIfScrapeAborted(signal);
-  if (options.organizationScope === 'selected' && options.selectedOrganizationIds.length === 0) {
-    throw badRequestError('Select at least one organisation or use all organisations.');
-  }
 
   await emitLiveEvent(onEvent, { message: 'Saving scraped job-board drafts.', type: 'status' });
   const effectiveHeadless = await resolveEffectiveHeadless(options.headless);
@@ -1363,23 +1903,25 @@ export const runFilemakerJobBoardScrape = async (
   if (!parsed.success) {
     throw badRequestError('Invalid job-board scrape request.', { issues: parsed.error.issues });
   }
-  const options = parsed.data;
+  const parsedOptions = parsed.data;
+  const options: FilemakerJobBoardScrapeRequest = {
+    ...parsedOptions,
+    duplicateStrategy: parsedOptions.duplicateStrategy,
+  };
   const onEvent = runOptions.onEvent;
   const signal = runOptions.signal;
   throwIfScrapeAborted(signal);
   await emitLiveEvent(onEvent, { message: 'Preparing job-board scraper.', type: 'status' });
   const effectiveHeadless = await resolveEffectiveHeadless(options.headless);
   throwIfScrapeAborted(signal);
-  if (options.organizationScope === 'selected' && options.selectedOrganizationIds.length === 0) {
-    throw badRequestError('Select at least one organisation or use all organisations.');
-  }
 
-  await emitLiveEvent(onEvent, { message: 'Loading FileMaker organisations.', type: 'status' });
+  await emitLiveEvent(onEvent, { message: 'Loading FileMaker database.', type: 'status' });
   const { database } = await loadFilemakerDatabase();
   const candidates = await loadOrganizationCandidates(database, options);
   throwIfScrapeAborted(signal);
   const scraped = await scrapeOffersViaJobBoardSequencer(
     options,
+    database,
     {
       onLinks: (input) =>
         emitLiveEvent(onEvent, {
@@ -1399,14 +1941,34 @@ export const runFilemakerJobBoardScrape = async (
           total: input.total,
           type: 'offer',
         }),
+      onSkippedExisting: async (input) => {
+        await emitLiveEvent(onEvent, {
+          index: input.index,
+          result: input.result,
+          total: input.total,
+          type: 'offer',
+        });
+        await emitLiveEvent(onEvent, {
+          type: 'write',
+          write: {
+            action: 'listing_skipped',
+            message: buildWriteMessage('listing_skipped', input.result),
+            profileUpdated: false,
+            result: input.result,
+          },
+        });
+      },
       onStatus: (message) => emitLiveEvent(onEvent, { message, type: 'status' }),
       onWarning: (warning) => emitLiveEvent(onEvent, { type: 'warning', warning }),
     },
     signal
   );
-  const previewResults = scraped.offers.map((offer) =>
-    buildOfferResult(offer, findBestMatch(offer, candidates, options.minimumMatchConfidence))
-  );
+  const previewResults = [
+    ...scraped.skippedResults,
+    ...scraped.offers.map((offer) =>
+      buildOfferResult(offer, findBestMatch(offer, candidates, options.minimumMatchConfidence))
+    ),
+  ];
 
   let results = previewResults;
   let importCounters: ImportCounters = { ...EMPTY_IMPORT_COUNTERS };
@@ -1422,7 +1984,7 @@ export const runFilemakerJobBoardScrape = async (
       options,
     });
     importCounters = imported.counters;
-    results = imported.results;
+    results = [...scraped.skippedResults, ...imported.results];
     let verificationDatabase = normalizeFilemakerDatabase(database);
     if (imported.changed) {
       throwIfScrapeAborted(signal);

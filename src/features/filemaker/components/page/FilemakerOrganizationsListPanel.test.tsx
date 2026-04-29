@@ -329,7 +329,7 @@ const createProps = (
   renderNode: vi.fn(),
   selectedOrganizationCount: 0,
   shownCount: 12,
-  sort: 'createdAt_desc',
+  sort: 'updatedAt_desc',
   totalCount: 42,
   totalCountIsExact: true,
   totalPages: 3,
@@ -424,11 +424,11 @@ describe('FilemakerOrganizationsListPanel', () => {
 
     const tableHeader = screen.getByTestId('organization-table-header');
     expect(within(tableHeader).getByRole('button', { name: /Name/i })).toBeInTheDocument();
-    expect(within(tableHeader).getByRole('button', { name: /Created At/i })).toHaveAttribute(
+    expect(within(tableHeader).getByRole('button', { name: /Updated At/i })).toHaveAttribute(
       'aria-pressed',
       'true'
     );
-    expect(within(tableHeader).getByRole('button', { name: /Updated At/i })).toBeInTheDocument();
+    expect(within(tableHeader).getByRole('button', { name: /Created At/i })).toBeInTheDocument();
     expect(within(tableHeader).getByRole('button', { name: /Events/i })).toBeInTheDocument();
     expect(within(tableHeader).getByRole('button', { name: /Jobs/i })).toBeInTheDocument();
     expect(
@@ -469,7 +469,7 @@ describe('FilemakerOrganizationsListPanel', () => {
 
     expect(onSortChange).toHaveBeenCalledWith('eventCount_desc');
     expect(onSortChange).toHaveBeenCalledWith('jobListingCount_desc');
-    expect(onSortChange).toHaveBeenCalledWith('updatedAt_desc');
+    expect(onSortChange).toHaveBeenCalledWith('updatedAt_asc');
   });
 
   it('renders product-style organization selection actions', () => {

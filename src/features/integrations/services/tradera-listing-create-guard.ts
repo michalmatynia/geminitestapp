@@ -8,6 +8,7 @@ const TRADERA_STALE_QUEUED_LISTING_MS = 10 * 60 * 1000;
 const NON_BLOCKING_LISTING_STATUSES = new Set([
   'failed',
   'auth_required',
+  'closed',
   'ended',
   'expired',
   'unsold',
@@ -105,6 +106,9 @@ const findLinkedTraderaListing = (
 ): ProductListingWithDetails | undefined =>
   productListings.find((listing) => {
     if (listing.connectionId !== connectionId) {
+      return false;
+    }
+    if (normalizeStatus(listing.status) === 'closed') {
       return false;
     }
 

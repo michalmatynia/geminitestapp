@@ -1,6 +1,7 @@
 'use client';
+/* eslint-disable max-lines, max-lines-per-function */
 
-import { Plus, SlidersHorizontal } from 'lucide-react';
+import { Plus, SlidersHorizontal, Workflow } from 'lucide-react';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 
@@ -11,8 +12,17 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-actions';
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../settings';
-import type { FilemakerDatabase, FilemakerLexiconTerm, FilemakerLexiconTermCategory } from '../types';
+import {
+  createFilemakerLexiconValidationPattern,
+  FILEMAKER_DATABASE_KEY,
+  parseFilemakerDatabase,
+} from '../settings';
+import type {
+  FilemakerDatabase,
+  FilemakerLexiconTerm,
+  FilemakerLexiconTermCategory,
+  FilemakerLexiconValidationPattern,
+} from '../types';
 import {
   createFilemakerLexiconColumns,
   FilemakerLexiconPageView,
@@ -59,16 +69,28 @@ type UseFilemakerLexiconEditorInput = {
   toast: ReturnType<typeof useToast>['toast'];
 };
 
+type FilemakerLexiconPatternEditorController = {
+  addPattern: () => void;
+  changePattern: (id: string, patch: Partial<FilemakerLexiconValidationPattern>) => void;
+  close: () => void;
+  drafts: FilemakerLexiconValidationPattern[];
+  open: boolean;
+  openEditor: () => void;
+  removePattern: (id: string) => void;
+  save: () => Promise<void>;
+};
+
 const buildLexiconPageActions = (
   router: ReturnType<typeof useRouter>,
   openCreate: () => void,
-  openTypes: () => void
+  openTypes: () => void,
+  openPatterns: () => void
 ): PanelAction[] => [
   {
     key: 'create-lexicon-term',
     label: 'Create Term',
     icon: <Plus className='size-4' />,
-    variant: 'success',
+    variant: 'default',
     onClick: openCreate,
   },
   {
@@ -77,6 +99,13 @@ const buildLexiconPageActions = (
     icon: <SlidersHorizontal className='size-4' />,
     variant: 'outline',
     onClick: openTypes,
+  },
+  {
+    key: 'manage-lexicon-validation-patterns',
+    label: 'Manage Patterns',
+    icon: <Workflow className='size-4' />,
+    variant: 'outline',
+    onClick: openPatterns,
   },
   ...buildFilemakerNavActions(router, 'lexicon'),
 ];
@@ -216,6 +245,88 @@ const useFilemakerLexiconEditor = (
   return { changeEditorForm, closeEditor, deleteTerm, editor, openCreate, openEdit, saveEditor };
 };
 
+const useFilemakerLexiconPatternEditor = (input: {
+  database: FilemakerDatabase;
+  persistDatabase: PersistFilemakerLexiconDatabase;
+}): FilemakerLexiconPatternEditorController => {
+  const { database, persistDatabase } = input;
+  const [open, setOpen] = useState(false);
+  const [drafts, setDrafts] = useState<FilemakerLexiconValidationPattern[]>([]);
+  const openEditor = useCallback((): void => {
+    setDrafts(database.lexiconValidationPatterns);
+    setOpen(true);
+  }, [database.lexiconValidationPatterns]);
+  const close = useCallback((): void => setOpen(false), []);
+  const changePattern = useCallback(
+    (id: string, patch: Partial<FilemakerLexiconValidationPattern>): void => {
+      setDrafts((current) =>
+        current.map((pattern) => {
+          if (pattern.id !== id) return pattern;
+          const onlyToggledEnabled =
+            Object.keys(patch).length === 1 &&
+            Object.prototype.hasOwnProperty.call(patch, 'enabled');
+          return {
+            ...pattern,
+            ...patch,
+            system: pattern.system && onlyToggledEnabled ? pattern.system : false,
+          };
+        })
+      );
+    },
+    []
+  );
+  const addPattern = useCallback((): void => {
+    const now = new Date().toISOString();
+    setDrafts((current) => [
+      ...current,
+      createFilemakerLexiconValidationPattern({
+        id: createClientFilemakerId('filemaker-lexicon-validation-pattern'),
+        label: 'New validation pattern',
+        enabled: true,
+        priority:
+          current.length > 0
+            ? Math.max(...current.map((pattern) => pattern.priority)) + 10
+            : 100,
+        matchMode: 'regex',
+        pattern: '',
+        targetTypeKey: 'other',
+        sourceScope: 'all',
+        confidence: 0.8,
+        system: false,
+        createdAt: now,
+        updatedAt: now,
+      }),
+    ]);
+  }, []);
+  const removePattern = useCallback((id: string): void => {
+    setDrafts((current) =>
+      current.flatMap((pattern) => {
+        if (pattern.id !== id) return [pattern];
+        return pattern.system ? [{ ...pattern, enabled: false }] : [];
+      })
+    );
+  }, []);
+  const save = useCallback(async (): Promise<void> => {
+    const now = new Date().toISOString();
+    await persistDatabase(
+      {
+        ...database,
+        lexiconValidationPatterns: drafts
+          .filter((pattern) => pattern.label.trim().length > 0 && pattern.pattern.trim().length > 0)
+          .map((pattern) =>
+            createFilemakerLexiconValidationPattern({
+              ...pattern,
+              updatedAt: now,
+            })
+          ),
+      },
+      'Lexicon validation patterns updated.'
+    );
+    close();
+  }, [close, database, drafts, persistDatabase]);
+  return { addPattern, changePattern, close, drafts, open, openEditor, removePattern, save };
+};
+
 export function AdminFilemakerLexiconPage(): React.JSX.Element {
   const router = useRouter();
   const settingsStore = useSettingsStore();
@@ -234,6 +345,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
     updateSetting,
   });
   const typeEditor = useFilemakerLexiconTypeEditor({ database, persistDatabase, toast });
+  const patternEditor = useFilemakerLexiconPatternEditor({ database, persistDatabase });
   const editor = useFilemakerLexiconEditor({
     categoryFilter,
     confirm,
@@ -251,8 +363,14 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
     [editor.deleteTerm, editor.openEdit, typeMetadata]
   );
   const actions = useMemo(
-    () => buildLexiconPageActions(router, editor.openCreate, typeEditor.openEditor),
-    [editor.openCreate, router, typeEditor.openEditor]
+    () =>
+      buildLexiconPageActions(
+        router,
+        editor.openCreate,
+        typeEditor.openEditor,
+        patternEditor.openEditor
+      ),
+    [editor.openCreate, patternEditor.openEditor, router, typeEditor.openEditor]
   );
   return (
     <FilemakerLexiconPageView
@@ -272,6 +390,7 @@ export function AdminFilemakerLexiconPage(): React.JSX.Element {
       query={query}
       setQuery={setQuery}
       typeEditor={typeEditor}
+      patternEditor={patternEditor}
     />
   );
 }

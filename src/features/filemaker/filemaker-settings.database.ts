@@ -7,11 +7,13 @@ import {
   createFilemakerEmailLink,
   createFilemakerEvent,
   createFilemakerEventOrganizationLink,
+  createDefaultFilemakerLexiconValidationPatterns,
   createDefaultFilemakerLexiconTypes,
   createFilemakerJobListing,
   createFilemakerJobListingLexiconLink,
   createFilemakerLexiconTerm,
   createFilemakerLexiconType,
+  createFilemakerLexiconValidationPattern,
   createFilemakerOrganization,
   createFilemakerOrganizationLegacyDemand,
   createFilemakerPerson,
@@ -41,6 +43,7 @@ import {
   type FilemakerJobListingLexiconLink,
   type FilemakerLexiconTerm,
   type FilemakerLexiconType,
+  type FilemakerLexiconValidationPattern,
   type FilemakerOrganization,
   type FilemakerOrganizationLegacyDemand,
   type FilemakerPartyKind,
@@ -91,6 +94,7 @@ export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
   organizationLegacyDemands: [],
   jobListings: [],
   lexiconTypes: createDefaultFilemakerLexiconTypes(),
+  lexiconValidationPatterns: createDefaultFilemakerLexiconValidationPatterns(),
   lexiconTerms: [],
   jobListingLexiconLinks: [],
 });
@@ -262,11 +266,13 @@ const isAddressOwnerPresent = (
   personIds: Set<string>,
   organizationIds: Set<string>,
   eventIds: Set<string>,
+  jobListingIds: Set<string>,
   ownerKind: FilemakerAddressOwnerKind,
   ownerId: string
 ): boolean => {
   if (ownerKind === 'person') return personIds.has(ownerId);
   if (ownerKind === 'organization') return organizationIds.has(ownerId);
+  if (ownerKind === 'job_listing') return jobListingIds.has(ownerId);
   return eventIds.has(ownerId);
 };
 
@@ -350,6 +356,10 @@ export const normalizeFilemakerDatabase = (
   );
   const rawJobListings = getRecordList('jobListings', valueRecord['jobListings']);
   const rawLexiconTypes = getRecordList('lexiconTypes', valueRecord['lexiconTypes']);
+  const rawLexiconValidationPatterns = getRecordList(
+    'lexiconValidationPatterns',
+    valueRecord['lexiconValidationPatterns']
+  );
   const rawLexiconTerms = getRecordList('lexiconTerms', valueRecord['lexiconTerms']);
   const rawJobListingLexiconLinks = getRecordList(
     'jobListingLexiconLinks',
@@ -502,6 +512,11 @@ export const normalizeFilemakerDatabase = (
     })
     .filter((entry: FilemakerEvent | null): entry is FilemakerEvent => Boolean(entry));
 
+  const rawJobListingOwnerIds = new Set<string>(
+    rawJobListings
+      .map((entry: Record<string, unknown>): string => normalizeString(entry['id']))
+      .filter((id: string): boolean => id.length > 0)
+  );
   const addressLinkIds = new Set<string>();
   const addressRelationKeys = new Set<string>();
   const groupedAddressLinks = new Map<string, FilemakerAddressLink[]>();
@@ -516,7 +531,12 @@ export const normalizeFilemakerDatabase = (
     updatedAt?: string | null | undefined;
   }): void => {
     const ownerKindRaw = normalizeString(input.ownerKind).toLowerCase();
-    if (ownerKindRaw !== 'person' && ownerKindRaw !== 'organization' && ownerKindRaw !== 'event') {
+    if (
+      ownerKindRaw !== 'person' &&
+      ownerKindRaw !== 'organization' &&
+      ownerKindRaw !== 'event' &&
+      ownerKindRaw !== 'job_listing'
+    ) {
       return;
     }
     const ownerKind = ownerKindRaw;
@@ -524,7 +544,16 @@ export const normalizeFilemakerDatabase = (
     const addressId = normalizeString(input.addressId);
     if (!ownerId || !addressId) return;
     if (!addressesById.has(addressId)) return;
-    if (!isAddressOwnerPresent(personIds, organizationIds, eventIds, ownerKind, ownerId)) {
+    if (
+      !isAddressOwnerPresent(
+        personIds,
+        organizationIds,
+        eventIds,
+        rawJobListingOwnerIds,
+        ownerKind,
+        ownerId
+      )
+    ) {
       return;
     }
 
@@ -1134,6 +1163,67 @@ export const normalizeFilemakerDatabase = (
     }
   );
 
+  const lexiconValidationPatternsById = new Map<string, FilemakerLexiconValidationPattern>(
+    createDefaultFilemakerLexiconValidationPatterns().map(
+      (
+        pattern: FilemakerLexiconValidationPattern
+      ): [string, FilemakerLexiconValidationPattern] => [pattern.id, pattern]
+    )
+  );
+  rawLexiconValidationPatterns.forEach((entry: Record<string, unknown>): void => {
+    const requestedId = normalizeString(entry['id']);
+    if (requestedId.length === 0) return;
+    const existing = lexiconValidationPatternsById.get(requestedId);
+    const label = normalizeString(entry['label']);
+    const patternValue = normalizeString(entry['pattern']);
+    const createdAt = normalizeString(entry['createdAt']);
+    const updatedAt = normalizeString(entry['updatedAt']);
+    const storedVersion = Number(entry['version']);
+    const isUntouchedExistingSeed =
+      existing !== undefined && (updatedAt.length === 0 || updatedAt === existing.updatedAt);
+    const isOutdatedSystemSeed =
+      existing !== undefined &&
+      entry['system'] !== false &&
+      (!Number.isFinite(storedVersion) || storedVersion < existing.version);
+    const defaultPattern =
+      (isUntouchedExistingSeed || isOutdatedSystemSeed) &&
+      entry['system'] !== false &&
+      existing !== undefined
+        ? existing
+        : null;
+    const resolvedPatternValue = defaultPattern?.pattern ?? patternValue;
+    if ((label.length === 0 && existing === undefined) || resolvedPatternValue.length === 0) return;
+    const pattern = createFilemakerLexiconValidationPattern({
+      id: requestedId,
+      label: defaultPattern?.label ?? (label.length > 0 ? label : existing?.label),
+      enabled: defaultPattern !== null
+        ? entry['enabled'] ?? defaultPattern.enabled
+        : entry['enabled'] ?? existing?.enabled ?? true,
+      version: defaultPattern?.version ?? entry['version'] ?? existing?.version,
+      priority: defaultPattern?.priority ?? entry['priority'] ?? existing?.priority,
+      matchMode: defaultPattern?.matchMode ?? entry['matchMode'] ?? existing?.matchMode,
+      pattern: resolvedPatternValue,
+      targetTypeKey: defaultPattern?.targetTypeKey ?? entry['targetTypeKey'] ?? existing?.targetTypeKey,
+      sourceScope: defaultPattern?.sourceScope ?? entry['sourceScope'] ?? existing?.sourceScope,
+      confidence: defaultPattern?.confidence ?? entry['confidence'] ?? existing?.confidence,
+      notes: defaultPattern?.notes ?? entry['notes'] ?? existing?.notes,
+      system: defaultPattern !== null ? true : entry['system'] ?? existing?.system ?? false,
+      createdAt: defaultPattern?.createdAt ?? (createdAt.length > 0 ? createdAt : existing?.createdAt),
+      updatedAt: defaultPattern?.updatedAt ?? (updatedAt.length > 0 ? updatedAt : existing?.updatedAt),
+    });
+    lexiconValidationPatternsById.set(pattern.id, pattern);
+  });
+  const lexiconValidationPatterns = Array.from(lexiconValidationPatternsById.values()).sort(
+    (
+      left: FilemakerLexiconValidationPattern,
+      right: FilemakerLexiconValidationPattern
+    ): number => {
+      const priorityCompare = left.priority - right.priority;
+      if (priorityCompare !== 0) return priorityCompare;
+      return left.label.localeCompare(right.label);
+    }
+  );
+
   const lexiconTermIds = new Set<string>();
   const lexiconTermKeys = new Set<string>();
   const lexiconTerms: FilemakerLexiconTerm[] = [];
@@ -1203,6 +1293,9 @@ export const normalizeFilemakerDatabase = (
       baseId
     );
     jobListingIds.add(id);
+    const defaultAddressId =
+      defaultAddressIdByOwner.get(`job_listing:${id}`) ?? normalizeString(entry['addressId']);
+    const resolvedAddress = addressesById.get(defaultAddressId);
     jobListings.push(
       createFilemakerJobListing({
         id,
@@ -1210,9 +1303,17 @@ export const normalizeFilemakerDatabase = (
         title,
         description: normalizeString(entry['description']),
         location: normalizeString(entry['location']),
+        addressId: resolvedAddress?.id ?? defaultAddressId,
+        street: resolvedAddress?.street ?? normalizeString(entry['street']),
+        streetNumber: resolvedAddress?.streetNumber ?? normalizeString(entry['streetNumber']),
+        city: resolvedAddress?.city ?? normalizeString(entry['city']),
+        postalCode: resolvedAddress?.postalCode ?? normalizeString(entry['postalCode']),
+        country: resolvedAddress?.country ?? normalizeString(entry['country']),
+        countryId: resolvedAddress?.countryId ?? normalizeString(entry['countryId']),
         salaryMin: entry['salaryMin'],
         salaryMax: entry['salaryMax'],
         salaryCurrency: normalizeString(entry['salaryCurrency']),
+        salaryText: normalizeString(entry['salaryText']),
         salaryPeriod: normalizeString(entry['salaryPeriod']),
         status: normalizeString(entry['status']),
         targetedCampaignIds: entry['targetedCampaignIds'],
@@ -1290,6 +1391,7 @@ export const normalizeFilemakerDatabase = (
     organizationLegacyDemands,
     jobListings,
     lexiconTypes,
+    lexiconValidationPatterns,
     lexiconTerms,
     jobListingLexiconLinks,
   };

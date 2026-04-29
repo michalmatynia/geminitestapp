@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function, complexity, max-depth, no-param-reassign, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 import { serializeAiTriggerButtonsRaw } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { PathConfig } from '@/shared/contracts/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
@@ -19,6 +20,12 @@ import type {
   AiPathTemplateRegistryEntry,
   StarterWorkflowTriggerPreset,
 } from '@/shared/lib/ai-paths/core/starter-workflows/segments/types';
+import {
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_TITLE,
+  JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+} from '@/shared/lib/ai-paths/job-board-lexicon-classification';
 
 import {
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -194,6 +201,65 @@ const backfillStarterRefreshTimestamps = (config: PathConfig): PathConfig => {
   };
 };
 
+const normalizeModelId = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const applyJobBoardClassificationModelSelection = (
+  config: PathConfig
+): { changed: boolean; config: PathConfig } => {
+  if (config.id !== JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID) {
+    return { changed: false, config };
+  }
+
+  let changed = false;
+  const modelNodeCount = (config.nodes ?? []).filter((node) => node.type === 'model').length;
+  const nodes = (config.nodes ?? []).map((node) => {
+    const isClassificationModelNode =
+      node.type === 'model' &&
+      (node.id === JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID || modelNodeCount === 1);
+    if (!isClassificationModelNode) {
+      return node;
+    }
+
+    const currentModelId = normalizeModelId(node.config?.model?.modelId);
+    if (
+      currentModelId.length > 0 &&
+      currentModelId !== JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID
+    ) {
+      return node;
+    }
+
+    const currentModel = node.config?.model;
+    const nextModel = {
+      temperature: currentModel?.temperature ?? 0.1,
+      maxTokens: currentModel?.maxTokens ?? 1400,
+      vision: currentModel?.vision ?? false,
+      ...(currentModel?.waitForResult !== undefined
+        ? { waitForResult: currentModel.waitForResult }
+        : { waitForResult: true }),
+      ...(currentModel?.systemPrompt !== undefined
+        ? { systemPrompt: currentModel.systemPrompt }
+        : {}),
+      modelId: JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID,
+    };
+    const nextNode: typeof node = {
+      ...node,
+      title: JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_TITLE,
+      config: {
+        ...(node.config ?? {}),
+        model: nextModel,
+      },
+    };
+    changed =
+      changed ||
+      node.title !== nextNode.title ||
+      normalizeModelId(node.config?.model?.modelId) !== JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_ID;
+    return nextNode;
+  });
+
+  return changed ? { changed, config: { ...config, nodes } } : { changed: false, config };
+};
+
 const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | null => {
   const resolution = resolveStarterWorkflowForPathConfig(config);
   if (!resolution) return null;
@@ -218,6 +284,30 @@ const buildCanonicalStarterConfigRaw = (args: {
     pathId: args.pathId,
     rawConfig: JSON.stringify(args.canonicalConfig),
     fallbackName: args.canonicalConfig.name,
+    applyStarterWorkflowUpgrade: false,
+  }).config;
+  const withModelSelection = applyJobBoardClassificationModelSelection(materialized).config;
+  return JSON.stringify(sanitizePathConfig(withModelSelection));
+};
+
+const buildStarterModelSelectionRewrite = (args: {
+  existingRaw: string | undefined;
+  pathId: string;
+}): string | null => {
+  if (args.pathId !== JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID || !args.existingRaw) {
+    return null;
+  }
+
+  const parsedExisting = parsePathConfigRecord(args.existingRaw);
+  if (!parsedExisting) return null;
+
+  const applied = applyJobBoardClassificationModelSelection(parsedExisting);
+  if (!applied.changed) return null;
+
+  const materialized = materializeStoredTriggerPathConfig({
+    pathId: args.pathId,
+    rawConfig: JSON.stringify(applied.config),
+    fallbackName: applied.config.name,
     applyStarterWorkflowUpgrade: false,
   }).config;
   return JSON.stringify(sanitizePathConfig(materialized));
@@ -444,6 +534,15 @@ const ensureStarterWorkflowEntries = (
           currentConfigRaw = canonicalRewrite;
           affectedCount += 1;
         }
+      }
+      const modelSelectionRewrite = buildStarterModelSelectionRewrite({
+        existingRaw: existingConfig.value,
+        pathId: defaultPathId,
+      });
+      if (modelSelectionRewrite && modelSelectionRewrite !== existingConfig.value) {
+        existingConfig.value = modelSelectionRewrite;
+        currentConfigRaw = modelSelectionRewrite;
+        affectedCount += 1;
       }
     }
 

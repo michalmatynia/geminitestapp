@@ -9,6 +9,7 @@ import {
   Eye,
   FileText,
   Loader2,
+  MoreVertical,
   Plus,
   RefreshCw,
   Trash2,
@@ -22,7 +23,17 @@ import {
   MultiSelect,
   SelectSimple,
 } from '@/shared/ui/forms-and-actions.public';
-import { Badge, Button, Input, Textarea, useToast } from '@/shared/ui/primitives.public';
+import {
+  Badge,
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  Input,
+  Textarea,
+  useToast,
+} from '@/shared/ui/primitives.public';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { DetailModal } from '@/shared/ui/templates.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
@@ -120,6 +131,50 @@ const groupLexiconTermsByCategory = (
     );
 };
 
+const RESPONSIBILITY_ITEM_START_RE =
+  /(Tworzenie|Budowanie|Integracja|Wsparcie|Dbanie|Optymalizacja|Debugowanie|Rozw[oó]j|Projektowanie|Implementacja|Utrzymanie|Wsp[oó]łpraca|Przygotowywanie|Prowadzenie|Analiza|Testowanie|Dokumentowanie|Creating|Building|Integrating|Supporting|Maintaining|Designing|Implementing|Optimizing|Debugging|Developing|Updating)\b/giu;
+
+const RESPONSIBILITY_HEADING_RE =
+  /^(tw[oó]j zakres obowi[aą]zk[oó]w|zakres obowi[aą]zk[oó]w|responsibilities|your responsibilities|role responsibilities)\s*/iu;
+
+const splitResponsibilityTermLabel = (label: string): string[] => {
+  const normalized = label.replace(/\s+/g, ' ').trim();
+  if (normalized.length === 0) return [];
+  const withoutHeading = normalized.replace(RESPONSIBILITY_HEADING_RE, '').trim();
+  const withBreaks = withoutHeading
+    .replace(RESPONSIBILITY_ITEM_START_RE, '\n$1')
+    .replace(/([.!?])\s+/g, '$1\n');
+  const items = withBreaks
+    .split(/\n+|[;•]+/u)
+    .map((item: string): string => item.trim())
+    .filter((item: string): boolean => item.length > 0);
+  return items.length > 0 ? items : [normalized];
+};
+
+function ResponsibilityLexiconTerms(props: {
+  terms: FilemakerLexiconTerm[];
+}): React.JSX.Element {
+  return (
+    <ul className='mt-1 list-disc space-y-1 pl-4 text-xs leading-relaxed text-gray-300'>
+      {props.terms.flatMap((term: FilemakerLexiconTerm): React.JSX.Element[] =>
+        splitResponsibilityTermLabel(term.label).map(
+          (item: string, itemIndex: number): React.JSX.Element => (
+            <li key={`${term.id}-${itemIndex}`}>
+              <a
+                href={lexiconTermHref(term)}
+                className='underline-offset-4 hover:text-white hover:underline'
+                title={`Open Responsibility lexicon term: ${term.label}`}
+              >
+                {item}
+              </a>
+            </li>
+          )
+        )
+      )}
+    </ul>
+  );
+}
+
 const addMissingCampaignOptions = (
   options: MultiSelectOption[],
   selectedCampaignIds: string[]
@@ -153,6 +208,7 @@ const buildLexiconOptions = (
   typeMetadata: FilemakerLexiconTypeMetadataMap
 ): MultiSelectOption[] =>
   database.lexiconTerms
+    .filter((term: FilemakerLexiconTerm): boolean => term.typeKey !== 'address')
     .slice()
     .sort((left: FilemakerLexiconTerm, right: FilemakerLexiconTerm): number => {
       const typeCompare = compareFilemakerLexiconTypeKeys(
@@ -169,7 +225,8 @@ const formatSalary = (listing: FilemakerJobListing): string => {
   const currency = listing.salaryCurrency ?? '';
   const min = listing.salaryMin ?? null;
   const max = listing.salaryMax ?? null;
-  if (min === null && max === null) return 'Salary not set';
+  const salaryText = listing.salaryText?.trim() ?? '';
+  if (min === null && max === null) return salaryText.length > 0 ? salaryText : 'Salary not set';
   if (min !== null && max !== null) return `${min}-${max} ${currency}`.trim();
   if (min !== null) return `From ${min} ${currency}`.trim();
   return `Up to ${max ?? ''} ${currency}`.trim();
@@ -940,13 +997,19 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
               campaignOptions,
               listing.targetedCampaignIds
             );
-            const lexiconSelectOptions = addMissingLexiconOptions(
-              lexiconOptions,
-              listing.lexiconTermIds
-            );
             const selectedLexiconTerms = listing.lexiconTermIds
               .map((termId: string): FilemakerLexiconTerm | undefined => lexiconTermsById.get(termId))
-              .filter((term): term is FilemakerLexiconTerm => term !== undefined);
+              .filter(
+                (term): term is FilemakerLexiconTerm =>
+                  term !== undefined && term.typeKey !== 'address'
+              );
+            const editableLexiconTermIds = selectedLexiconTerms.map(
+              (term: FilemakerLexiconTerm): string => term.id
+            );
+            const lexiconSelectOptions = addMissingLexiconOptions(
+              lexiconOptions,
+              editableLexiconTermIds
+            );
             const applications = applicationsByJobListingId.get(listing.id) ?? [];
             const targeted = listing.targetedCampaignIds.length > 0;
             return (
@@ -990,16 +1053,33 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       <FileText className='h-3.5 w-3.5' aria-hidden='true' />
                       Prepare
                     </Button>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      className='h-8 gap-1.5'
-                      onClick={(): void => removeListing(listing.id)}
-                    >
-                      <Trash2 className='h-3.5 w-3.5' aria-hidden='true' />
-                      Remove
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-8 w-8 p-0'
+                          aria-label={`Open actions for ${
+                            listing.title.trim().length > 0
+                              ? listing.title
+                              : `Job listing ${index + 1}`
+                          }`}
+                          title='Job listing actions'
+                        >
+                          <MoreVertical className='h-3.5 w-3.5' aria-hidden='true' />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end' className='z-[95] w-44'>
+                        <DropdownMenuItem
+                          className='gap-2 text-rose-300 focus:text-rose-200'
+                          onSelect={(): void => removeListing(listing.id)}
+                        >
+                          <Trash2 className='h-3.5 w-3.5' aria-hidden='true' />
+                          Remove listing
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
 
@@ -1036,6 +1116,66 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       }
                       placeholder='e.g. Warsaw / Remote'
                       aria-label={`Job listing ${index + 1} location`}
+                    />
+                  </FormField>
+                  <FormField label='City'>
+                    <Input
+                      value={listing.city ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { city: event.target.value })
+                      }
+                      placeholder='e.g. Warsaw'
+                      aria-label={`Job listing ${index + 1} city`}
+                    />
+                  </FormField>
+                  <FormField label='Street'>
+                    <Input
+                      value={listing.street ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { street: event.target.value })
+                      }
+                      placeholder='Street'
+                      aria-label={`Job listing ${index + 1} street`}
+                    />
+                  </FormField>
+                  <FormField label='Street number'>
+                    <Input
+                      value={listing.streetNumber ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { streetNumber: event.target.value })
+                      }
+                      placeholder='No.'
+                      aria-label={`Job listing ${index + 1} street number`}
+                    />
+                  </FormField>
+                  <FormField label='Postal code'>
+                    <Input
+                      value={listing.postalCode ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { postalCode: event.target.value })
+                      }
+                      placeholder='00-000'
+                      aria-label={`Job listing ${index + 1} postal code`}
+                    />
+                  </FormField>
+                  <FormField label='Country'>
+                    <Input
+                      value={listing.country ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { country: event.target.value })
+                      }
+                      placeholder='Poland'
+                      aria-label={`Job listing ${index + 1} country`}
+                    />
+                  </FormField>
+                  <FormField label='Country ID'>
+                    <Input
+                      value={listing.countryId ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { countryId: event.target.value })
+                      }
+                      placeholder='PL'
+                      aria-label={`Job listing ${index + 1} country ID`}
                     />
                   </FormField>
                   <FormField label='Salary period'>
@@ -1106,9 +1246,19 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       aria-label={`Job listing ${index + 1} salary currency`}
                     />
                   </FormField>
+                  <FormField label='Salary text'>
+                    <Input
+                      value={listing.salaryText ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { salaryText: event.target.value })
+                      }
+                      placeholder='e.g. 16 000 - 24 000 PLN net + VAT / month'
+                      aria-label={`Job listing ${index + 1} salary text`}
+                    />
+                  </FormField>
                   <FormField label='Lexicon tags'>
                     <MultiSelect
-                      selected={listing.lexiconTermIds}
+                      selected={editableLexiconTermIds}
                       options={lexiconSelectOptions}
                       onChange={(termIds: string[]): void =>
                         updateListing(listing.id, { lexiconTermIds: termIds })
@@ -1125,24 +1275,35 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                           selectedLexiconTerms,
                           lexiconTypeMetadata
                         ).map((group) => (
-                          <div key={group.typeKey} className='flex flex-wrap items-center gap-1'>
+                          <div
+                            key={group.typeKey}
+                            className={
+                              group.typeKey === 'responsibility'
+                                ? 'space-y-1'
+                                : 'flex flex-wrap items-center gap-1'
+                            }
+                          >
                             <span className='text-[11px] font-medium uppercase text-muted-foreground'>
                               {formatFilemakerLexiconCategory(group.typeKey, lexiconTypeMetadata)}
                             </span>
-                            {group.terms.map((term: FilemakerLexiconTerm) => (
-                              <Badge key={term.id} variant='outline'>
-                                <a
-                                  href={lexiconTermHref(term)}
-                                  className='hover:underline'
-                                  title={`Open ${formatFilemakerLexiconCategory(
-                                    term.typeKey,
-                                    lexiconTypeMetadata
-                                  )} lexicon term: ${term.label}`}
-                                >
-                                  {term.label}
-                                </a>
-                              </Badge>
-                            ))}
+                            {group.typeKey === 'responsibility' ? (
+                              <ResponsibilityLexiconTerms terms={group.terms} />
+                            ) : (
+                              group.terms.map((term: FilemakerLexiconTerm) => (
+                                <Badge key={term.id} variant='outline'>
+                                  <a
+                                    href={lexiconTermHref(term)}
+                                    className='hover:underline'
+                                    title={`Open ${formatFilemakerLexiconCategory(
+                                      term.typeKey,
+                                      lexiconTypeMetadata
+                                    )} lexicon term: ${term.label}`}
+                                  >
+                                    {term.label}
+                                  </a>
+                                </Badge>
+                              ))
+                            )}
                           </div>
                         ))}
                       </div>

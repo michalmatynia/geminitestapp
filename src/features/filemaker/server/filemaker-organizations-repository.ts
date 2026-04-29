@@ -198,16 +198,16 @@ const buildOrganizationFilter = (input: {
 };
 
 const buildOrganizationSort = (sort: FilemakerOrganizationSortOption): Sort => {
+  if (sort === 'createdAt_desc') return { createdAt: -1, updatedAt: -1, name: 1, _id: 1 };
   if (sort === 'createdAt_asc') return { createdAt: 1, name: 1, _id: 1 };
   if (sort === 'updatedAt_asc') return { updatedAt: 1, name: 1, _id: 1 };
-  if (sort === 'updatedAt_desc') return { updatedAt: -1, name: 1, _id: 1 };
+  if (sort === 'updatedAt_desc') return { updatedAt: -1, createdAt: -1, name: 1, _id: 1 };
   if (sort === 'eventCount_asc') return { eventCount: 1, name: 1, _id: 1 };
   if (sort === 'eventCount_desc') return { eventCount: -1, name: 1, _id: 1 };
   if (sort === 'jobListingCount_asc') return { jobListingCount: 1, name: 1, _id: 1 };
   if (sort === 'jobListingCount_desc') return { jobListingCount: -1, name: 1, _id: 1 };
   if (sort === 'name_asc') return { name: 1, _id: 1 };
-  if (sort === 'name_desc') return { name: -1, _id: 1 };
-  return { createdAt: -1, name: 1, _id: 1 };
+  return { name: -1, _id: 1 };
 };
 
 const isRelationCountSort = (sort: FilemakerOrganizationSortOption): boolean =>

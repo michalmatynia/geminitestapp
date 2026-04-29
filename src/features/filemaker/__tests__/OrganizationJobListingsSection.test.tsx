@@ -146,6 +146,22 @@ vi.mock('@/shared/ui/primitives.public', () => ({
       {children}
     </button>
   ),
+  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+    <div role='menu'>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+  }: {
+    children: React.ReactNode;
+    onSelect?: () => void;
+  }) => (
+    <button type='button' role='menuitem' onClick={onSelect}>
+      {children}
+    </button>
+  ),
+  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Input: ({
     value,
     onChange,
@@ -420,6 +436,35 @@ describe('OrganizationJobListingsSection', () => {
         return createJsonResponse({});
       })
     );
+  });
+
+  it('removes an individual job listing from the organization state through the row actions menu', () => {
+    const firstListing = createFilemakerJobListing({
+      id: 'listing-1',
+      organizationId: organization.id,
+      title: 'FileMaker Consultant',
+      description: 'Consulting role',
+      status: 'open',
+    });
+    const secondListing = createFilemakerJobListing({
+      id: 'listing-2',
+      organizationId: organization.id,
+      title: 'Database Developer',
+      description: 'Database role',
+      status: 'open',
+    });
+
+    render(<JobListingsHarness initialJobListings={[firstListing, secondListing]} />);
+
+    expect(screen.getByText('FileMaker Consultant')).toBeInTheDocument();
+    expect(screen.getByText('Database Developer')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('menuitem', { name: /Remove listing/i })[0]);
+
+    expect(screen.queryByText('FileMaker Consultant')).not.toBeInTheDocument();
+    expect(screen.getByText('Database Developer')).toBeInTheDocument();
+    expect(screen.getByTestId('job-listings-state')).toHaveTextContent('listing-2');
+    expect(screen.getByTestId('job-listings-state')).not.toHaveTextContent('listing-1');
   });
 
   it('adds a job listing and records targeted email campaigns', () => {

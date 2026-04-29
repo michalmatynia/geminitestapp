@@ -11,10 +11,14 @@ import type {
   FilemakerJobBoardScrapeRequest,
   FilemakerJobBoardScrapedOffer,
 } from '../../filemaker-job-board-scrape-contracts';
+import type {
+  FilemakerLexiconValidationPattern,
+  FilemakerLexiconValidationPatternSourceScope,
+} from '../../types';
 
 import {
   asRecord,
-  buildScrapedOfferPills,
+  buildScrapedOfferLexiconExtraction,
   clipProfileText,
   normalizeLexiconLabel,
   normalizeLexiconKey,
@@ -26,6 +30,7 @@ import {
   toStringValue,
   uniqueStrings,
 } from './normalizers';
+import { classifyFilemakerLexiconLabelWithPatterns } from './lexicon-validation-patterns';
 
 type ScrapedOfferPill = FilemakerJobBoardScrapedOffer['pills'][number];
 
@@ -87,6 +92,34 @@ const COMPANY_NAME_FACT_KEYS = [
   'pracodawca',
 ] as const;
 
+const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
+  'company profile',
+  'employer profile',
+  'employers',
+  'informacje i opinie o pracodawcach',
+  'pracodawca',
+  'pracodawcy',
+  'profile pracodawcow',
+  'profil pracodawcy',
+]);
+
+const normalizeCompanyNameGuardKey = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const isGenericJobBoardCompanyName = (value: string): boolean => {
+  const key = normalizeCompanyNameGuardKey(value);
+  return (
+    GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
+    key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('profile pracodawcow')
+  );
+};
+
 const LOCATION_FACT_KEYWORDS = [
   'city',
   'job location',
@@ -109,20 +142,6 @@ const SALARY_CURRENCY_RE = /\b(PLN|EUR|USD|GBP|CHF|CZK|SEK|NOK|DKK)\b|zł|zl|€
 const SALARY_TEXT_HINT_RE =
   /salary|compensation|pay|wynagrodzenie|widełki|widelki|PLN|EUR|USD|GBP|CHF|CZK|SEK|NOK|DKK|zł|zl|€|£|\$|netto|brutto|gross|net|\/\s*(?:h|hour|godz|mies|month)|per\s+(?:hour|month|year)/iu;
 const SALARY_NUMBER_RE = /\b\d+(?:[ \u00a0.]?\d{3})*(?:[,.]\d+)?\s*k?\b/giu;
-
-const CONTRACT_TYPE_LABELS: Record<string, string> = {
-  b2b: 'B2B contract',
-  contract_of_specific_task: 'contract of specific task',
-  employment: 'contract of employment',
-  internship: 'internship',
-  mandate: 'mandate contract',
-};
-
-const WORK_MODE_LABELS: Record<string, string> = {
-  hybrid: 'hybrid work',
-  onsite: 'office work',
-  remote: 'remote work',
-};
 
 const MONTH_NUMBER_BY_TOKEN: Record<string, string> = {
   april: '04',
@@ -333,11 +352,45 @@ const cleanSnapshotTitle = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const GENERIC_EMPLOYER_DIRECTORY_PATTERNS = [
+  /\binformacje i opinie o pracodawc/u,
+  /\bprofile? pracodawc/u,
+  /\bopinie o pracodawc/u,
+  /\bpracodawcy profile pracodawc/u,
+];
+
+export const isSuspiciousJobBoardCompanyName = (value: unknown): boolean => {
+  const normalized = normalizeProfileValue(value);
+  if (normalized.length === 0) return true;
+  const key = normalizeLexiconKey(normalized);
+  if (isGenericJobBoardCompanyName(normalized)) return true;
+  if (GENERIC_EMPLOYER_DIRECTORY_PATTERNS.some((pattern) => pattern.test(key))) {
+    return true;
+  }
+  if (
+    /^poznan(?: wielkopolskie)? poznan poland$/.test(key) ||
+    /^warszawa(?: mazowieckie)? warszawa poland$/.test(key) ||
+    /^krakow(?: malopolskie)? krakow poland$/.test(key)
+  ) {
+    return true;
+  }
+  return false;
+};
+
 const cleanCompanyName = (value: unknown): string | null => {
   const normalized = normalizeProfileValue(value)
     .replace(/\s*[-|]\s*(profil pracodawcy|pracodawca|kariera|career|jobs?).*$/i, '')
     .trim();
+  if (isSuspiciousJobBoardCompanyName(normalized)) return null;
   return normalized.length > 0 ? normalized : null;
+};
+
+const firstCleanCompanyName = (values: readonly unknown[]): string | null => {
+  for (const value of values) {
+    const cleaned = cleanCompanyName(value);
+    if (cleaned !== null) return cleaned;
+  }
+  return null;
 };
 
 const formatDateParts = (input: {
@@ -522,6 +575,67 @@ const firstSnapshotCompanyUrl = (
     },
     ['profileUrl', 'companyLink', 'jsonLdUrl', 'website']
   );
+
+const companyNameFromPracujProfileUrl = (value: string | null | undefined): string | null => {
+  if (value === null || value === undefined) return null;
+  try {
+    const url = new URL(value);
+    if (!/pracuj\.pl$/iu.test(url.hostname.replace(/^www\./iu, ''))) return null;
+    const parts = url.pathname.split('/').filter(Boolean);
+    const employerIndex = parts.findIndex((part: string): boolean =>
+      normalizeCompanyNameGuardKey(part) === 'pracodawcy'
+    );
+    const slugPart = employerIndex >= 0 ? parts[employerIndex + 1] : null;
+    if (slugPart === null || slugPart === undefined) return null;
+    const slug = decodeURIComponent(slugPart).split(',')[0] ?? '';
+    const normalized = slug
+      .replace(/[-_]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (normalized.length < 3 || isGenericJobBoardCompanyName(normalized)) return null;
+    return normalized.replace(/\b[^\s]/gu, (letter: string): string => letter.toUpperCase());
+  } catch {
+    return null;
+  }
+};
+
+const COMPANY_PROFILE_NAME_FACT_KEYS = new Set([
+  'company',
+  'employer',
+  'firma',
+  'name',
+  'nazwa',
+  'nazwa firmy',
+  'organization',
+  'organisation',
+  'pracodawca',
+]);
+
+const companyNameFactCandidates = (facts: unknown): unknown[] => {
+  if (!Array.isArray(facts)) return [];
+  return facts.flatMap((fact: unknown): unknown[] => {
+    const record = asRecord(fact);
+    if (record === null) return [];
+    const label = normalizeLexiconKey(toStringValue(record['label']));
+    if (!COMPANY_PROFILE_NAME_FACT_KEYS.has(label)) return [];
+    return [record['value']];
+  });
+};
+
+const companyNameFromSnapshotCompanyProfile = (
+  snapshot: JobBoardStructuredSnapshot | null | undefined
+): string | null => {
+  const profile = asRecord(snapshot?.companyProfile);
+  if (profile === null) return null;
+  const headings = Array.isArray(profile['headings']) ? profile['headings'] : [];
+  return firstCleanCompanyName([
+    ...companyNameFactCandidates(profile['facts']),
+    ...headings,
+    profile['title'],
+    profile['ogTitle'],
+    companyNameFromPracujProfileUrl(toStringValue(profile['url'])),
+  ]);
+};
 
 const firstSnapshotWebsite = (
   snapshot: JobBoardStructuredSnapshot | null | undefined
@@ -916,6 +1030,21 @@ const normalizedRecordValue = (
   return value.length > 0 && value !== 'unknown' ? value : null;
 };
 
+const CONTRACT_TYPE_LABELS: Record<string, string> = {
+  b2b: 'B2B contract',
+  contract_of_employment: 'contract of employment',
+  employment_contract: 'contract of employment',
+  mandate_contract: 'contract of mandate',
+};
+
+const WORK_MODE_LABELS: Record<string, string> = {
+  hybrid: 'hybrid work',
+  office: 'office work',
+  onsite: 'office work',
+  on_site: 'office work',
+  remote: 'remote work',
+};
+
 const labelFromLookup = (
   value: string | null,
   labels: Record<string, string>
@@ -936,9 +1065,35 @@ const normalizedStringArray = (value: unknown): string[] => {
   );
 };
 
+const resolveListingFieldPillCategory = (
+  fallbackCategory: ScrapedOfferPill['category'],
+  label: string,
+  sourceScope: FilemakerLexiconValidationPatternSourceScope,
+  validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined
+): ScrapedOfferPill['category'] =>
+  classifyFilemakerLexiconLabelWithPatterns(validationPatterns, {
+    label,
+    sourceScope,
+  })?.typeKey ?? fallbackCategory;
+
+const dedupeOfferPills = (pills: ScrapedOfferPill[]): ScrapedOfferPill[] => {
+  const seen = new Set<string>();
+  return pills.flatMap((pill): ScrapedOfferPill[] => {
+    const key = `${pill.typeKey}:${normalizeLexiconKey(pill.label)}`;
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [pill];
+  });
+};
+
+// eslint-disable-next-line max-lines-per-function
 const listingFieldPillValues = (input: {
   listing: Record<string, unknown> | null;
-}): Array<{ category: ScrapedOfferPill['category']; label: string }> => {
+}): Array<{
+  category: ScrapedOfferPill['category'];
+  label: string;
+  sourceScope: FilemakerLexiconValidationPatternSourceScope;
+}> => {
   const contractType = labelFromLookup(
     normalizedRecordValue(input.listing, 'contractType') ??
       normalizedRecordValue(input.listing, 'contract'),
@@ -954,30 +1109,94 @@ const listingFieldPillValues = (input: {
   const experienceLevel =
     normalizedRecordValue(input.listing, 'experienceLevel') ??
     normalizedRecordValue(input.listing, 'seniority');
+  const employmentTypePills =
+    employmentType !== null
+      ? [
+          {
+            category: 'employment_type' as const,
+            label: employmentType,
+            sourceScope: 'listing_field_employment' as const,
+          },
+        ]
+      : [];
   return [
-    ...(contractType !== null ? [{ category: 'contract_type' as const, label: contractType }] : []),
-    ...(employmentType !== null
-      ? [{ category: 'employment_type' as const, label: employmentType }]
+    ...(contractType !== null
+      ? [
+          {
+            category: 'contract_type' as const,
+            label: contractType,
+            sourceScope: 'listing_field_contract' as const,
+          },
+        ]
       : []),
+    ...employmentTypePills,
     ...(experienceLevel !== null
-      ? [{ category: 'experience_level' as const, label: experienceLevel }]
+      ? [
+          {
+            category: 'experience_level' as const,
+            label: experienceLevel,
+            sourceScope: 'listing_field_experience' as const,
+          },
+        ]
       : []),
-    ...(workMode !== null ? [{ category: 'work_mode' as const, label: workMode }] : []),
+    ...(workMode !== null
+      ? [
+          {
+            category: 'work_mode' as const,
+            label: workMode,
+            sourceScope: 'listing_field_work_mode' as const,
+          },
+        ]
+      : []),
     ...normalizedStringArray(input.listing?.['technologies'])
       .slice(0, 24)
-      .map((label) => ({ category: 'technology' as const, label })),
+      .map((label) => ({
+        category: 'technology' as const,
+        label,
+        sourceScope: 'listing_field_technology' as const,
+      })),
     ...normalizedStringArray(input.listing?.['benefits'])
       .slice(0, 24)
-      .map((label) => ({ category: 'benefit' as const, label })),
+      .map((label) => ({
+        category: 'benefit' as const,
+        label,
+        sourceScope: 'listing_field_benefit' as const,
+      })),
     ...normalizedStringArray(input.listing?.['requirements'])
       .slice(0, 24)
-      .map((label) => ({ category: 'requirement' as const, label })),
+      .map((label) => ({
+        category: 'requirement' as const,
+        label,
+        sourceScope: 'listing_field_requirement' as const,
+      })),
     ...normalizedStringArray(input.listing?.['responsibilities'])
       .slice(0, 24)
-      .map((label) => ({ category: 'responsibility' as const, label })),
+      .map((label) => ({
+        category: 'responsibility' as const,
+        label,
+        sourceScope: 'listing_field_responsibility' as const,
+      })),
+    ...normalizedStringArray(input.listing?.['salary'])
+      .slice(0, 8)
+      .map((label) => ({
+        category: 'salary' as const,
+        label,
+        sourceScope: 'listing_field_salary' as const,
+      })),
+    ...normalizedStringArray(input.listing?.['salaryText'])
+      .slice(0, 8)
+      .map((label) => ({
+        category: 'salary' as const,
+        label,
+        sourceScope: 'listing_field_salary' as const,
+      })),
     ...normalizedStringArray(input.listing?.['languages'])
       .slice(0, 12)
-      .map((label) => ({ category: 'language' as const, label })),
+      .map((label) => ({
+        category: 'language' as const,
+        label,
+        sourceScope: 'listing_field_language' as const,
+      })),
   ];
 };
 
@@ -985,56 +1204,70 @@ const scrapedOfferPillKey = (pill: Pick<ScrapedOfferPill, 'category' | 'label'> 
   typeKey?: ScrapedOfferPill['typeKey'];
 }): string => `${pill.typeKey ?? pill.category}:${normalizeLexiconKey(pill.label)}`;
 
-const buildOfferPills = (input: {
-  addressCandidates: string[];
+const buildListingFieldPills = (input: {
+  baseOffset: number;
   listing: Record<string, unknown> | null;
-  provider: JobBoardProvider;
-  snapshot: JobBoardStructuredSnapshot | null | undefined;
+  seen: Set<string>;
   sourceSite: string;
   sourceUrl: string;
-}): ScrapedOfferPill[] => {
-  const basePills = buildScrapedOfferPills({
-    provider: input.provider,
-    snapshot: input.snapshot,
-    sourceSite: input.sourceSite,
-    sourceUrl: input.sourceUrl,
-  });
-  const seen = new Set(basePills.map(scrapedOfferPillKey));
-  const listingPills = listingFieldPillValues({ listing: input.listing }).flatMap(
-    (candidate, index): ScrapedOfferPill[] => {
-      const normalized = normalizeLexiconLabel(candidate.label);
-      const key = scrapedOfferPillKey({ category: candidate.category, label: normalized });
-      if (normalized.length === 0 || seen.has(key)) return [];
-      seen.add(key);
-      return [
-        {
-          category: candidate.category,
-          typeKey: candidate.category,
-          label: normalized,
-          position: basePills.length + index,
-          sourceSite: input.sourceSite,
-          sourceUrl: input.sourceUrl,
-        },
-      ];
-    }
-  );
-  const addressPills = input.addressCandidates.flatMap((label, index): ScrapedOfferPill[] => {
-    const normalized = normalizeLexiconLabel(label);
-    const key = scrapedOfferPillKey({ category: 'address', label: normalized });
-    if (normalized.length === 0 || seen.has(key)) return [];
-    seen.add(key);
+  validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null;
+}): ScrapedOfferPill[] =>
+  listingFieldPillValues({ listing: input.listing }).flatMap((candidate, index): ScrapedOfferPill[] => {
+    const normalized = normalizeLexiconLabel(candidate.label);
+    const category = resolveListingFieldPillCategory(
+      candidate.category,
+      normalized,
+      candidate.sourceScope,
+      input.validationPatterns
+    );
+    if (category === 'address' || category === 'other') return [];
+    const key = scrapedOfferPillKey({ category, label: normalized });
+    if (normalized.length === 0 || input.seen.has(key)) return [];
+    input.seen.add(key);
     return [
       {
-        category: 'address',
-        typeKey: 'address',
+        category,
+        typeKey: category,
         label: normalized,
-        position: basePills.length + listingPills.length + index,
+        position: input.baseOffset + index,
         sourceSite: input.sourceSite,
         sourceUrl: input.sourceUrl,
       },
     ];
   });
-  return [...basePills, ...listingPills, ...addressPills].slice(0, 100);
+
+const buildOfferPills = (input: {
+  listing: Record<string, unknown> | null;
+  provider: JobBoardProvider;
+  snapshot: JobBoardStructuredSnapshot | null | undefined;
+  sourceSite: string;
+  sourceUrl: string;
+  validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null;
+}): {
+  pills: ScrapedOfferPill[];
+  unclassifiedPills: FilemakerJobBoardScrapedOffer['unclassifiedPills'];
+} => {
+  const baseLexicon = buildScrapedOfferLexiconExtraction({
+    provider: input.provider,
+    snapshot: input.snapshot,
+    sourceSite: input.sourceSite,
+    sourceUrl: input.sourceUrl,
+    validationPatterns: input.validationPatterns,
+  });
+  const basePills = baseLexicon.pills;
+  const seen = new Set(basePills.map(scrapedOfferPillKey));
+  const listingPills = buildListingFieldPills({
+    baseOffset: basePills.length,
+    listing: input.listing,
+    seen,
+    sourceSite: input.sourceSite,
+    sourceUrl: input.sourceUrl,
+    validationPatterns: input.validationPatterns,
+  });
+  return {
+    pills: dedupeOfferPills([...basePills, ...listingPills]).slice(0, 100),
+    unclassifiedPills: baseLexicon.unclassifiedPills,
+  };
 };
 
 type SalaryFields = Pick<
@@ -1223,14 +1456,30 @@ export const salaryFromListing = (
 ): SalaryFields => {
   if (!extractSalaries) return emptySalaryFields();
   const salary = asRecord(listing?.['salary']);
+  const salaryRaw = recordString(salary, 'raw');
+  const salaryPlainText = recordString(salary, 'text');
+  const listingSalaryText = recordString(listing, 'salaryText');
+  const listingSalaryRaw = recordString(listing, 'salaryRaw');
+  const fallbackSalaryText = salary === null ? recordString(listing, 'salary') : '';
+  const salaryText = [
+    salaryRaw,
+    salaryPlainText,
+    listingSalaryText,
+    listingSalaryRaw,
+    fallbackSalaryText,
+  ].find((value) => value.length > 0) ?? '';
   const fields = {
     salaryCurrency: recordNullableString(salary, 'currency'),
     salaryMax: toNullableNumber(salary?.['max']),
     salaryMin: toNullableNumber(salary?.['min']),
     salaryPeriod: normalizeSalaryPeriod(salary?.['period']),
-    salaryText: recordString(salary, 'raw'),
+    salaryText,
   };
-  return hasSalaryValue(fields) ? fields : emptySalaryFields();
+  if (hasSalaryValue(fields)) {
+    if (fields.salaryMin !== null || fields.salaryMax !== null) return fields;
+    return salaryFromText(salaryText) ?? fields;
+  }
+  return salaryFromText(salaryText) ?? emptySalaryFields();
 };
 
 const salaryFromSources = (input: {
@@ -1367,11 +1616,31 @@ const identityFromSources = (input: {
   const listingTitle = recordString(input.listing, 'title');
   const title =
     listingTitle.length > 0 ? listingTitle : firstSnapshotListingTitle(input.snapshot) ?? '';
-  const companyRecordName = recordString(input.company, 'name');
-  const companyName =
-    companyRecordName.length > 0
-      ? companyRecordName
-      : firstSnapshotCompanyName(input.snapshot) ?? '';
+  const rawCompanyName =
+    firstCleanCompanyName([
+      recordFirstNullableString(input.listing, [
+        'companyName',
+        'employerName',
+        'employer',
+        'company',
+        'organizationName',
+        'hiringOrganizationName',
+      ]),
+      recordFirstNullableString(input.company, [
+        'name',
+        'legalName',
+        'displayName',
+        'tradingName',
+        'organizationName',
+      ]),
+      companyNameFromSnapshotCompanyProfile(input.snapshot),
+      firstSnapshotCompanyName(input.snapshot),
+      companyNameFromPracujProfileUrl(
+        recordFirstNullableString(input.company, ['profileUrl']) ??
+          firstSnapshotCompanyUrl(input.snapshot)
+      ),
+    ]) ?? '';
+  const companyName = isGenericJobBoardCompanyName(rawCompanyName) ? '' : rawCompanyName;
   return { companyName, title };
 };
 
@@ -1382,6 +1651,7 @@ export const offerFromEvaluation = (input: {
   provider: JobBoardProvider;
   snapshot?: JobBoardStructuredSnapshot | null;
   sourceSite: string;
+  validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null;
 }): FilemakerJobBoardScrapedOffer | null => {
   const evaluation = input.evaluation;
   const listing = asRecord(evaluation?.listing);
@@ -1390,9 +1660,16 @@ export const offerFromEvaluation = (input: {
   const { companyName, title } = identityFromSources({ company, listing, snapshot: input.snapshot });
   if (sourceUrl === null || title.length === 0 || companyName.length === 0) return null;
   const salary = salaryFromSources({ extractSalaries: input.options.extractSalaries, listing, snapshot: input.snapshot });
-  const addressCandidates = companyAddressCandidates({ company, listing, snapshot: input.snapshot });
   const companyProfile = buildCompanyProfile({ company, listing, snapshot: input.snapshot });
   const dates = dateRangeFromSources({ listing, snapshot: input.snapshot });
+  const lexiconExtraction = buildOfferPills({
+    listing,
+    provider: input.provider,
+    snapshot: input.snapshot,
+    sourceSite: input.sourceSite,
+    sourceUrl,
+    validationPatterns: input.validationPatterns,
+  });
   return {
     companyName,
     companyProfile,
@@ -1414,14 +1691,8 @@ export const offerFromEvaluation = (input: {
     sourceExternalId: extractJobBoardExternalIdFromUrl(sourceUrl, input.provider),
     sourceSite: input.sourceSite,
     sourceUrl,
-    pills: buildOfferPills({
-      addressCandidates,
-      listing,
-      provider: input.provider,
-      snapshot: input.snapshot,
-      sourceSite: input.sourceSite,
-      sourceUrl,
-    }),
+    pills: lexiconExtraction.pills,
     title,
+    unclassifiedPills: lexiconExtraction.unclassifiedPills,
   };
 };

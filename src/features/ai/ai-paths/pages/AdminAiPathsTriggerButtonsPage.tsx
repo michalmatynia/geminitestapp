@@ -72,6 +72,10 @@ const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
     value: 'filemaker_organization_job_application',
     label: 'FileMaker: Organisation Job Application',
   },
+  {
+    value: 'filemaker_job_board_scraped_offer',
+    label: 'FileMaker: Scraped Job Offer',
+  },
 ];
 
 const MODE_OPTIONS: Array<LabeledOptionDto<string>> = [

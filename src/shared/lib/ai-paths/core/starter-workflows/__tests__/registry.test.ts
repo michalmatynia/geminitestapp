@@ -9,6 +9,11 @@ import {
   upgradeStarterWorkflowPathConfig,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import {
+  JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_STARTER_TEMPLATE_ID,
+} from '@/shared/lib/ai-paths/job-board-lexicon-classification';
+import {
   buildPathConfigFromTemplate,
   PATH_TEMPLATES,
 } from '@/shared/lib/ai-paths/core/utils/path-templates';
@@ -568,6 +573,32 @@ describe('starter workflow registry', () => {
         ).toBe('');
       });
     });
+  });
+
+  it('materializes the job-board classify prompt with lexicon context decision order', () => {
+    const config = materializeStarterWorkflowPathConfig(
+      getStarterWorkflowTemplateByIdOrThrow(JOB_BOARD_LEXICON_CLASSIFICATION_STARTER_TEMPLATE_ID),
+      {
+        pathId: JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+        seededDefault: false,
+      }
+    );
+    const promptNode = findNodeByType(config, 'prompt');
+    const modelNode = config.nodes.find(
+      (node) => node.id === JOB_BOARD_LEXICON_CLASSIFICATION_MODEL_NODE_ID
+    );
+    const promptTemplate =
+      typeof promptNode?.config?.prompt?.template === 'string'
+        ? promptNode.config.prompt.template
+        : '';
+
+    expect(promptTemplate).toContain('lexiconContext.knownTerms');
+    expect(promptTemplate).toContain('lexiconContext.validationPatterns');
+    expect(promptTemplate).toContain('matchedLexiconTerm');
+    expect(promptTemplate).toContain('matchedValidationPatternId');
+    expect(promptTemplate).toContain('Asystent Pracuj.pl');
+    expect(promptTemplate).toContain('Lower Silesia');
+    expect(modelNode?.config?.model?.modelId ?? '').toBe('');
   });
 
   it('materializes a canonical starter bundle that includes all canonical seed workflows', () => {

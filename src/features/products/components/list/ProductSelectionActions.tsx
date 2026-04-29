@@ -4,6 +4,7 @@ import {
   Archive,
   Copy,
   Download,
+  FileSearch,
   FileUp,
   Image as ImageIcon,
   Search,
@@ -11,6 +12,7 @@ import {
   Save,
   Send,
   SlidersHorizontal,
+  Sparkles,
   Store,
   Trash2,
   Upload,
@@ -34,12 +36,15 @@ import {
   useBulkSetProductsArchivedState,
   useBulkConvertImagesToBase64,
   useBulkEditProductFields,
+  useQueueMarketplaceCopyDebrandBatch,
 } from '@/features/products/hooks/useProductsMutations';
 import { useBulkProductBaseSyncMutation } from '@/features/product-sync/hooks/useProductBaseSync';
 import { useTraderaMassQuickExport } from '@/features/products/hooks/product-list/useTraderaMassQuickExport';
 import { useVintedMassQuickExport } from '@/features/products/hooks/product-list/useVintedMassQuickExport';
 import { ProductScanModal } from '@/features/products/components/list/ProductScanModal';
 import { ProductBatchEditModal } from '@/features/products/components/list/ProductBatchEditModal';
+import { ProductMarketplaceCopyDebrandBatchModal } from '@/features/products/components/list/ProductMarketplaceCopyDebrandBatchModal';
+import { ProductParseActionsModal } from '@/features/products/components/list/ProductParseActionsModal';
 import { ProductBulkSyncResultsModal } from '@/features/products/components/list/ProductBulkSyncResultsModal';
 import { ProductBulkSyncSetupModal } from '@/features/products/components/list/ProductBulkSyncSetupModal';
 import type {
@@ -91,6 +96,9 @@ export const ProductSelectionActions = memo(() => {
     activeAdvancedFilterPresetId,
     advancedFilterPresets,
     includeArchived,
+    parsedMatchProductIds,
+    setParsedMatchProductIds,
+    clearParsedMatchProductIds,
     setAdvancedFilterPresets,
     setAdvancedFilterState,
   } = useProductListFiltersContext();
@@ -112,6 +120,10 @@ export const ProductSelectionActions = memo(() => {
     useBulkSetProductsArchivedState();
   const { mutateAsync: batchEditProductFields, isPending: isBatchEditingProductFields } =
     useBulkEditProductFields();
+  const {
+    mutateAsync: queueMarketplaceCopyDebrandBatch,
+    isPending: isQueueingMarketplaceCopyDebrandBatch,
+  } = useQueueMarketplaceCopyDebrandBatch();
   const { mutateAsync: runBulkBaseSync, isPending: isRunningBulkBaseSync } =
     useBulkProductBaseSyncMutation();
   const { execute: executeTraderaMassExport, isRunning: isTraderaMassExportRunning } =
@@ -124,6 +136,11 @@ export const ProductSelectionActions = memo(() => {
   const [productScanProductIds, setProductScanProductIds] = useState<string[]>([]);
   const [isBatchEditOpen, setIsBatchEditOpen] = useState(false);
   const [batchEditProductIds, setBatchEditProductIds] = useState<string[]>([]);
+  const [isMarketplaceCopyDebrandOpen, setIsMarketplaceCopyDebrandOpen] = useState(false);
+  const [marketplaceCopyDebrandProductIds, setMarketplaceCopyDebrandProductIds] = useState<
+    string[]
+  >([]);
+  const [isParseActionsOpen, setIsParseActionsOpen] = useState(false);
   const [bulkSyncResults, setBulkSyncResults] = useState<ProductSyncBulkResponse | null>(null);
   const [bulkSyncResultProducts, setBulkSyncResultProducts] = useState<typeof data>([]);
   const [isBulkSyncResultsOpen, setIsBulkSyncResultsOpen] = useState(false);
@@ -299,11 +316,72 @@ export const ProductSelectionActions = memo(() => {
     setIsBatchEditOpen(true);
   }, [rowSelection, toast]);
 
+  const handleOpenMarketplaceCopyDebrand = useCallback((): void => {
+    const selectedProductIds = Object.keys(rowSelection).filter(
+      (id: string): boolean => rowSelection[id] === true
+    );
+    if (selectedProductIds.length === 0) {
+      toast('Please select products to debrand.', { variant: 'error' });
+      return;
+    }
+    setMarketplaceCopyDebrandProductIds(selectedProductIds);
+    setIsMarketplaceCopyDebrandOpen(true);
+  }, [rowSelection, toast]);
+
+  const handleSubmitMarketplaceCopyDebrand = useCallback(
+    async (integrationId: string): Promise<void> => {
+      if (marketplaceCopyDebrandProductIds.length === 0) return;
+      try {
+        const response = await queueMarketplaceCopyDebrandBatch({
+          productIds: marketplaceCopyDebrandProductIds,
+          integrationId,
+        });
+        toast(
+          `Queued runtime Debrand for ${response.requested} product${
+            response.requested === 1 ? '' : 's'
+          } on ${response.integrationName}.`,
+          { variant: 'success' }
+        );
+        setRowSelection({});
+        setIsMarketplaceCopyDebrandOpen(false);
+      } catch (error) {
+        logClientError(error);
+        toast(
+          error instanceof Error
+            ? error.message
+            : 'Failed to queue runtime Debrand for selected products.',
+          { variant: 'error' }
+        );
+      }
+    },
+    [marketplaceCopyDebrandProductIds, queueMarketplaceCopyDebrandBatch, setRowSelection, toast]
+  );
+
   const handleSubmitBatchEdit = useCallback(
     async (request: ProductBatchEditRequest): Promise<ProductBatchEditResponse> =>
       batchEditProductFields(request),
     [batchEditProductFields]
   );
+
+  const handleFindParsedMatches = useCallback(
+    (productIds: string[]): void => {
+      setParsedMatchProductIds(productIds);
+      setRowSelection({});
+      setIsParseActionsOpen(false);
+      toast(
+        `Filtered product list to ${productIds.length} parsed match${
+          productIds.length === 1 ? '' : 'es'
+        }.`,
+        { variant: 'success' }
+      );
+    },
+    [setParsedMatchProductIds, setRowSelection, toast]
+  );
+
+  const handleClearParsedMatches = useCallback((): void => {
+    clearParsedMatchProductIds();
+    setRowSelection({});
+  }, [clearParsedMatchProductIds, setRowSelection]);
 
   const handleBatchEditApplied = useCallback(
     (response: ProductBatchEditResponse): void => {
@@ -687,6 +765,16 @@ export const ProductSelectionActions = memo(() => {
               {isBatchEditingProductFields ? 'Editing product fields...' : 'Edit Product Fields'}
             </DropdownMenuItem>
             <DropdownMenuItem
+              onClick={handleOpenMarketplaceCopyDebrand}
+              className='cursor-pointer gap-2'
+              disabled={isQueueingMarketplaceCopyDebrandBatch || selectedCount === 0}
+            >
+              <Sparkles className='h-4 w-4' />
+              {isQueueingMarketplaceCopyDebrandBatch
+                ? 'Queueing runtime Debrand...'
+                : 'Runtime Debrand'}
+            </DropdownMenuItem>
+            <DropdownMenuItem
               onClick={() => {
                 void handleBulkBaseSync();
               }}
@@ -708,6 +796,18 @@ export const ProductSelectionActions = memo(() => {
             </DropdownMenuItem>
           </>
         }
+        afterBatchActions={
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={() => setIsParseActionsOpen(true)}
+            className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
+          >
+            <FileSearch className='h-3.5 w-3.5' />
+            Parse Actions
+          </Button>
+        }
         rightActions={
           <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto'>
             {activePreset ? (
@@ -715,6 +815,15 @@ export const ProductSelectionActions = memo(() => {
                 label={activePreset.name}
                 active
                 onClick={() => setAdvancedFilterState('', null)}
+                icon={X}
+                className='h-8 max-w-[240px] w-full sm:w-auto'
+              />
+            ) : null}
+            {parsedMatchProductIds.length > 0 ? (
+              <Chip
+                label={`Parsed matches: ${parsedMatchProductIds.length}`}
+                active
+                onClick={handleClearParsedMatches}
                 icon={X}
                 className='h-8 max-w-[240px] w-full sm:w-auto'
               />
@@ -930,6 +1039,23 @@ export const ProductSelectionActions = memo(() => {
         isSubmitting={isBatchEditingProductFields}
         onSubmit={handleSubmitBatchEdit}
         onApplied={handleBatchEditApplied}
+      />
+      <ProductMarketplaceCopyDebrandBatchModal
+        isOpen={isMarketplaceCopyDebrandOpen}
+        onClose={() => {
+          if (isQueueingMarketplaceCopyDebrandBatch) return;
+          setIsMarketplaceCopyDebrandOpen(false);
+        }}
+        selectedCount={marketplaceCopyDebrandProductIds.length}
+        isSubmitting={isQueueingMarketplaceCopyDebrandBatch}
+        onSubmit={(integrationId) => {
+          void handleSubmitMarketplaceCopyDebrand(integrationId);
+        }}
+      />
+      <ProductParseActionsModal
+        isOpen={isParseActionsOpen}
+        onClose={() => setIsParseActionsOpen(false)}
+        onFindMatches={handleFindParsedMatches}
       />
       <ProductBulkSyncSetupModal
         isOpen={isBulkSyncSetupOpen}

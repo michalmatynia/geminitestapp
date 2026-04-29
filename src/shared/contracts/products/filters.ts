@@ -424,6 +424,25 @@ const getAdvancedFilterPayloadValidationError = (value: string): string | null =
 
 const PRODUCT_FILTER_PAGE_SIZE_DEFAULT = 20;
 const PRODUCT_FILTER_PAGE_SIZE_MAX = 48;
+const PRODUCT_FILTER_IDS_MAX = 500;
+
+const normalizeProductFilterIds = (value: unknown): string[] | undefined => {
+  let rawValues: unknown[] = [];
+  if (Array.isArray(value)) {
+    rawValues = value;
+  } else if (typeof value === 'string') {
+    rawValues = value.split(',');
+  }
+  const ids = Array.from(
+    new Set(
+      rawValues
+        .map((entry: unknown): string => (typeof entry === 'string' ? entry.trim() : ''))
+        .filter((entry: string): boolean => entry.length > 0)
+    )
+  );
+
+  return ids.length > 0 ? ids.slice(0, PRODUCT_FILTER_IDS_MAX) : undefined;
+};
 
 export const productFilterSchema = commonListQuerySchema.extend({
   pageSize: z.preprocess((value: unknown) => {
@@ -438,6 +457,10 @@ export const productFilterSchema = commonListQuerySchema.extend({
     }
     return Math.min(PRODUCT_FILTER_PAGE_SIZE_MAX, parsed);
   }, z.number().int().min(1).max(PRODUCT_FILTER_PAGE_SIZE_MAX).default(PRODUCT_FILTER_PAGE_SIZE_DEFAULT)),
+  ids: z.preprocess(
+    normalizeProductFilterIds,
+    z.array(z.string().trim().min(1)).max(PRODUCT_FILTER_IDS_MAX).optional()
+  ),
   id: z.string().trim().optional(),
   idMatchMode: z.enum(['exact', 'partial']).optional(),
   sku: z.string().trim().optional(),

@@ -61,7 +61,7 @@ const STATUS_VARIANT_ENTRIES: Array<{
     variant: 'error',
   },
   {
-    statuses: ['removed', 'archived', 'deleted', 'ended', 'unsold', 'closed'],
+    statuses: ['removed', 'archived', 'deleted', 'ended', 'unsold'],
     variant: 'removed',
   },
   {
@@ -69,7 +69,7 @@ const STATUS_VARIANT_ENTRIES: Array<{
     variant: 'processing',
   },
   {
-    statuses: ['info'],
+    statuses: ['info', 'closed'],
     variant: 'info',
   },
   {

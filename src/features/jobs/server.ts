@@ -68,6 +68,12 @@ export {
   processProductAiJob,
   getQueueStatus,
 } from '@/server/queues/product-ai';
+export {
+  enqueueProductMarketplaceCopyDebrandBatchJob,
+  processProductMarketplaceCopyDebrandBatchJob,
+  startProductMarketplaceCopyDebrandBatchQueue,
+  stopProductMarketplaceCopyDebrandBatchQueue,
+} from '@/server/queues/products';
 
 export { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
 export { startProductSyncBackfillQueue, stopProductSyncBackfillQueue, enqueueProductSyncBackfillJob } from '@/server/queues/product-sync';

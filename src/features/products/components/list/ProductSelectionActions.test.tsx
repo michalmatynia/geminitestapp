@@ -8,11 +8,17 @@ const {
   setSelectedProductsArchivedStateMock,
   executeTraderaMassExportMock,
   executeVintedMassExportMock,
+  marketplaceCopyDebrandBatchModalMock,
+  parseActionsModalMock,
   productScanModalMock,
+  queueMarketplaceCopyDebrandBatchMock,
+  setParsedMatchProductIdsMock,
+  clearParsedMatchProductIdsMock,
   traderaStatusCheckModalMock,
   useBulkSetProductsArchivedStateMock,
   useBulkConvertImagesToBase64Mock,
   useBulkEditProductFieldsMock,
+  useQueueMarketplaceCopyDebrandBatchMock,
   useBulkProductBaseSyncMutationMock,
   useProductListFiltersContextMock,
   useProductListSelectionContextMock,
@@ -22,11 +28,17 @@ const {
   setSelectedProductsArchivedStateMock: vi.fn(),
   executeTraderaMassExportMock: vi.fn(),
   executeVintedMassExportMock: vi.fn(),
+  marketplaceCopyDebrandBatchModalMock: vi.fn(),
+  parseActionsModalMock: vi.fn(),
   productScanModalMock: vi.fn(),
+  queueMarketplaceCopyDebrandBatchMock: vi.fn(),
+  setParsedMatchProductIdsMock: vi.fn(),
+  clearParsedMatchProductIdsMock: vi.fn(),
   traderaStatusCheckModalMock: vi.fn(),
   useBulkSetProductsArchivedStateMock: vi.fn(),
   useBulkConvertImagesToBase64Mock: vi.fn(),
   useBulkEditProductFieldsMock: vi.fn(),
+  useQueueMarketplaceCopyDebrandBatchMock: vi.fn(),
   useBulkProductBaseSyncMutationMock: vi.fn(),
   useProductListFiltersContextMock: vi.fn(),
   useProductListSelectionContextMock: vi.fn(),
@@ -48,6 +60,7 @@ vi.mock('@/features/products/hooks/useProductsMutations', () => ({
   useBulkSetProductsArchivedState: () => useBulkSetProductsArchivedStateMock(),
   useBulkConvertImagesToBase64: () => useBulkConvertImagesToBase64Mock(),
   useBulkEditProductFields: () => useBulkEditProductFieldsMock(),
+  useQueueMarketplaceCopyDebrandBatch: () => useQueueMarketplaceCopyDebrandBatchMock(),
 }));
 
 vi.mock('@/features/product-sync/hooks/useProductBaseSync', () => ({
@@ -83,6 +96,45 @@ vi.mock('@/features/products/components/list/ProductScanModal', () => ({
   },
 }));
 
+vi.mock('@/features/products/components/list/ProductMarketplaceCopyDebrandBatchModal', () => ({
+  ProductMarketplaceCopyDebrandBatchModal: (props: {
+    isOpen: boolean;
+    selectedCount: number;
+    onSubmit: (integrationId: string) => void;
+  }) => {
+    marketplaceCopyDebrandBatchModalMock(props);
+    return props.isOpen ? (
+      <div role='dialog'>
+        <span>{props.selectedCount} products selected</span>
+        <button type='button' onClick={() => props.onSubmit('integration-allegro')}>
+          Queue runtime Debrand
+        </button>
+      </div>
+    ) : null;
+  },
+}));
+
+vi.mock('@/features/products/components/list/ProductParseActionsModal', () => ({
+  ProductParseActionsModal: (props: {
+    isOpen: boolean;
+    onClose: () => void;
+    onFindMatches: (productIds: string[]) => void;
+  }) => {
+    parseActionsModalMock(props);
+    return props.isOpen ? (
+      <div role='dialog'>
+        <span>Parse Actions Modal</span>
+        <button type='button' onClick={() => props.onFindMatches(['product-1', 'product-2'])}>
+          Find Parsed Matches
+        </button>
+        <button type='button' onClick={props.onClose}>
+          Close Parse Actions
+        </button>
+      </div>
+    ) : null;
+  },
+}));
+
 vi.mock('@/features/products/components/list/ProductBulkSyncResultsModal', () => ({
   ProductBulkSyncResultsModal: () => null,
 }));
@@ -93,14 +145,17 @@ vi.mock('@/features/products/components/list/ProductBulkSyncSetupModal', () => (
 
 vi.mock('@/shared/ui/selection-bar', () => ({
   SelectionBar: ({
+    afterBatchActions,
     actions,
     rightActions,
   }: {
+    afterBatchActions?: React.ReactNode;
     actions?: React.ReactNode;
     rightActions?: React.ReactNode;
   }) => (
     <div>
       <div>{actions}</div>
+      <div>{afterBatchActions}</div>
       <div>{rightActions}</div>
     </div>
   ),
@@ -255,6 +310,9 @@ describe('ProductSelectionActions', () => {
       activeAdvancedFilterPresetId: null,
       advancedFilterPresets: [],
       includeArchived: false,
+      parsedMatchProductIds: [],
+      setParsedMatchProductIds: setParsedMatchProductIdsMock,
+      clearParsedMatchProductIds: clearParsedMatchProductIdsMock,
       setAdvancedFilterPresets: vi.fn(),
       setAdvancedFilterState: vi.fn(),
     });
@@ -268,6 +326,10 @@ describe('ProductSelectionActions', () => {
     });
     useBulkEditProductFieldsMock.mockReturnValue({
       mutateAsync: vi.fn(),
+      isPending: false,
+    });
+    useQueueMarketplaceCopyDebrandBatchMock.mockReturnValue({
+      mutateAsync: queueMarketplaceCopyDebrandBatchMock,
       isPending: false,
     });
     useBulkProductBaseSyncMutationMock.mockReturnValue({
@@ -353,6 +415,9 @@ describe('ProductSelectionActions', () => {
       activeAdvancedFilterPresetId: null,
       advancedFilterPresets: [],
       includeArchived: true,
+      parsedMatchProductIds: [],
+      setParsedMatchProductIds: setParsedMatchProductIdsMock,
+      clearParsedMatchProductIds: clearParsedMatchProductIdsMock,
       setAdvancedFilterPresets: vi.fn(),
       setAdvancedFilterState: vi.fn(),
     });
@@ -397,6 +462,9 @@ describe('ProductSelectionActions', () => {
       activeAdvancedFilterPresetId: null,
       advancedFilterPresets: [],
       includeArchived: true,
+      parsedMatchProductIds: [],
+      setParsedMatchProductIds: setParsedMatchProductIdsMock,
+      clearParsedMatchProductIds: clearParsedMatchProductIdsMock,
       setAdvancedFilterPresets: vi.fn(),
       setAdvancedFilterState: vi.fn(),
     });
@@ -443,6 +511,100 @@ describe('ProductSelectionActions', () => {
     expect(screen.getByText('Operation 1')).toBeInTheDocument();
   });
 
+  it('opens the runtime Debrand modal with the selected product count', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Runtime Debrand' }));
+
+    expect(marketplaceCopyDebrandBatchModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        selectedCount: 2,
+      })
+    );
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('opens the parse actions modal from the products toolbar', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Parse Actions' }));
+
+    expect(parseActionsModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+      })
+    );
+    expect(screen.getByText('Parse Actions Modal')).toBeInTheDocument();
+  });
+
+  it('filters the product list to parsed matches from the parse actions modal', async () => {
+    const setRowSelectionMock = vi.fn();
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [{ id: 'product-1' }, { id: 'product-2' }],
+      rowSelection: {
+        'product-1': true,
+      },
+      setRowSelection: setRowSelectionMock,
+      onSelectAllGlobal: vi.fn(),
+      loadingGlobal: false,
+      onDeleteSelected: vi.fn(),
+      onAddToMarketplace: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Parse Actions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Find Parsed Matches' }));
+
+    await waitFor(() => {
+      expect(setParsedMatchProductIdsMock).toHaveBeenCalledWith(['product-1', 'product-2']);
+      expect(setRowSelectionMock).toHaveBeenCalledWith({});
+      expect(parseActionsModalMock).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          isOpen: false,
+        })
+      );
+    });
+  });
+
+  it('queues runtime Debrand for selected products and clears selection', async () => {
+    const setRowSelectionMock = vi.fn();
+    queueMarketplaceCopyDebrandBatchMock.mockResolvedValue({
+      status: 'queued',
+      jobId: 'batch-job-1',
+      requested: 2,
+      integrationId: 'integration-allegro',
+      integrationSlug: 'allegro',
+      integrationName: 'Allegro',
+    });
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [{ id: 'product-1' }, { id: 'product-2' }],
+      rowSelection: {
+        'product-1': true,
+        'product-2': true,
+      },
+      setRowSelection: setRowSelectionMock,
+      onSelectAllGlobal: vi.fn(),
+      loadingGlobal: false,
+      onDeleteSelected: vi.fn(),
+      onAddToMarketplace: vi.fn(),
+    });
+
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Runtime Debrand' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Queue runtime Debrand' }));
+
+    await waitFor(() => {
+      expect(queueMarketplaceCopyDebrandBatchMock).toHaveBeenCalledWith({
+        productIds: ['product-1', 'product-2'],
+        integrationId: 'integration-allegro',
+      });
+      expect(setRowSelectionMock).toHaveBeenCalledWith({});
+    });
+  });
+
   it('deletes a saved advanced filter preset from the menu', async () => {
     const preset: ProductAdvancedFilterPreset = {
       id: 'preset-1',
@@ -473,6 +635,9 @@ describe('ProductSelectionActions', () => {
       activeAdvancedFilterPresetId: preset.id,
       advancedFilterPresets: [preset],
       includeArchived: false,
+      parsedMatchProductIds: [],
+      setParsedMatchProductIds: setParsedMatchProductIdsMock,
+      clearParsedMatchProductIds: clearParsedMatchProductIdsMock,
       setAdvancedFilterPresets: setAdvancedFilterPresetsMock,
       setAdvancedFilterState: setAdvancedFilterStateMock,
     });
@@ -517,6 +682,9 @@ describe('ProductSelectionActions', () => {
       activeAdvancedFilterPresetId: preset.id,
       advancedFilterPresets: [preset],
       includeArchived: false,
+      parsedMatchProductIds: [],
+      setParsedMatchProductIds: setParsedMatchProductIdsMock,
+      clearParsedMatchProductIds: clearParsedMatchProductIdsMock,
       setAdvancedFilterPresets: setAdvancedFilterPresetsMock,
       setAdvancedFilterState: setAdvancedFilterStateMock,
     });

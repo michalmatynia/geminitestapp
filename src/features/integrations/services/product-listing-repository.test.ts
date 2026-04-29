@@ -164,7 +164,19 @@ describe('product-listing-repository mongodb indexes', () => {
 
     const filter = countDocumentsMock.mock.calls[0][0];
     expect(filter.$and).toContainEqual({
-      status: { $nin: ['failed', 'auth_required', 'ended', 'expired', 'sold', 'removed', 'cancelled'] },
+      status: {
+        $nin: [
+          'failed',
+          'auth_required',
+          'closed',
+          'ended',
+          'expired',
+          'unsold',
+          'sold',
+          'removed',
+          'cancelled',
+        ],
+      },
     });
   });
 

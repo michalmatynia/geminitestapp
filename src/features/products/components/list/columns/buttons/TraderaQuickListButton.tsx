@@ -270,7 +270,7 @@ export function TraderaQuickListButton(props: {
     toast,
   ]);
 
-  if (showTraderaBadge) {
+  if (showTraderaBadge && normalizedTraderaStatus !== 'closed') {
     return null;
   }
 

@@ -218,6 +218,7 @@ export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
   typeof product.importSource === 'string' && product.importSource.trim().length > 0;
 import {
   SUCCESS_STATUSES,
+  CLOSED_STATUSES,
   PENDING_STATUSES,
   PROCESSING_STATUSES,
   FAILURE_STATUSES,
@@ -226,6 +227,7 @@ import {
 
 export {
   SUCCESS_STATUSES,
+  CLOSED_STATUSES,
   PENDING_STATUSES,
   PROCESSING_STATUSES,
   FAILURE_STATUSES,
@@ -291,6 +293,9 @@ export const getStatusToneClass = (value: string): string => {
   if (PROCESSING_STATUSES.has(normalized)) {
     return 'border-cyan-400/60 text-cyan-200 hover:border-cyan-300/70 hover:text-cyan-100';
   }
+  if (CLOSED_STATUSES.has(normalized)) {
+    return 'border-blue-500/70 text-blue-200 hover:border-blue-400/80 hover:text-blue-100';
+  }
   if (FAILURE_STATUSES.has(normalized)) {
     return 'border-rose-400/60 text-rose-200 hover:border-rose-300/70 hover:text-rose-100';
   }
@@ -314,6 +319,9 @@ export const getMarketplaceButtonClass = (
   }
   if (PROCESSING_STATUSES.has(normalized)) {
     return 'border-cyan-400/70 bg-cyan-500/15 text-cyan-100 hover:border-cyan-300/80 hover:bg-cyan-500/25';
+  }
+  if (CLOSED_STATUSES.has(normalized)) {
+    return 'border-blue-700/80 bg-blue-950/45 text-blue-100 hover:border-blue-600/90 hover:bg-blue-900/45';
   }
   if (FAILURE_STATUSES.has(normalized)) {
     return 'border-rose-400/70 bg-rose-500/15 text-rose-100 hover:border-rose-300/80 hover:bg-rose-500/25';

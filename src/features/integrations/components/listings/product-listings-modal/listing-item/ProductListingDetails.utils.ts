@@ -70,6 +70,8 @@ export const formatHistoryAction = (
       return 'End listing';
     case 'check_status':
       return 'Status check';
+    case 'parse_mark_closed':
+      return 'Parse close';
     case 'relist':
       return 'Relist';
     case 'list':

@@ -71,6 +71,25 @@ export function AdminSidebar({
   sidebarClassName: string;
   handleToggleCollapse: () => void;
 }): React.ReactNode {
+  const sidebarCollapseControl = (
+    <Button
+      variant='ghost'
+      onClick={handleToggleCollapse}
+      className='h-9 w-9 shrink-0 rounded-full p-2 hover:bg-muted/40'
+      aria-controls='admin-sidebar'
+      aria-expanded={!isMenuCollapsed}
+      aria-label={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}
+      title={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}
+    >
+      <ChevronLeftIcon
+        className={`transition-transform duration-300 ${
+          isMenuCollapsed ? 'rotate-180' : ''
+        }`}
+        aria-hidden='true'
+      />
+    </Button>
+  );
+
   return (
     <aside
       ref={focusTrapRef}
@@ -81,31 +100,9 @@ export function AdminSidebar({
       data-scroll-focus-ignore='true'
     >
       {!isMenuHidden ? (
-        <>
-          <div
-            className={`flex items-center mb-4 ${isMenuCollapsed ? 'justify-center' : 'justify-end'}`}
-          >
-            <Button
-              variant='ghost'
-              onClick={handleToggleCollapse}
-              className='p-2 rounded-full hover:bg-muted/40'
-              aria-controls='admin-sidebar'
-              aria-expanded={!isMenuCollapsed}
-              aria-label={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}
-              title={isMenuCollapsed ? 'Expand admin sidebar' : 'Collapse admin sidebar'}
-            >
-              <ChevronLeftIcon
-                className={`transition-transform duration-300 ${
-                  isMenuCollapsed ? 'rotate-180' : ''
-                }`}
-                aria-hidden='true'
-              />
-            </Button>
-          </div>
-          <div className='flex-1 overflow-y-auto pr-1' data-scroll-focus-ignore='true'>
-            <Menu />
-          </div>
-        </>
+        <div className='flex-1 overflow-y-auto pr-1' data-scroll-focus-ignore='true'>
+          <Menu sidebarCollapseControl={sidebarCollapseControl} />
+        </div>
       ) : null}
     </aside>
   );

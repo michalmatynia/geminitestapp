@@ -39,7 +39,7 @@ describe('filemaker organizations handler', () => {
       page: 1,
       pageSize: 48,
       query: '',
-      sort: 'createdAt_desc',
+      sort: 'updatedAt_desc',
       totalCount: 2,
       totalCountIsExact: true,
       totalPages: 1,

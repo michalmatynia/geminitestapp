@@ -6,6 +6,12 @@ import type { FilemakerJobBoardScrapedOffer } from '../../filemaker-job-board-sc
 import { normalizeJobBoardSourceUrl, toStringValue } from './normalizers';
 import { normalizeNameForMatch } from './match-organizations';
 
+export type ListingSourceIdentity = {
+  sourceExternalId?: unknown;
+  sourceSite?: unknown;
+  sourceUrl?: unknown;
+};
+
 export const normalizeDedupeKey = (value: string): string => normalizeNameForMatch(value);
 
 export const normalizeSourceSiteForDedupe = (value: unknown): string =>
@@ -42,6 +48,19 @@ export const listingSourceMatchesOfferSource = (
   );
 };
 
+export const listingSourceMatchesIdentitySource = (
+  listing: FilemakerJobListing,
+  identity: ListingSourceIdentity
+): boolean => {
+  const listingSourceSite = normalizeSourceSiteForDedupe(listing.sourceSite);
+  const identitySourceSite = normalizeSourceSiteForDedupe(identity.sourceSite);
+  return (
+    listingSourceSite.length === 0 ||
+    identitySourceSite.length === 0 ||
+    listingSourceSite === identitySourceSite
+  );
+};
+
 const samePresentValue = (left: string, right: string): boolean =>
   left.length > 0 && right.length > 0 && left === right;
 
@@ -54,6 +73,20 @@ const listingMatchesOfferSourceUrl = (
   listing: FilemakerJobListing,
   offerSourceUrl: string
 ): boolean => samePresentValue(normalizeSourceUrlForDedupe(listing.sourceUrl), offerSourceUrl);
+
+export const listingMatchesSourceIdentity = (
+  listing: FilemakerJobListing,
+  identity: ListingSourceIdentity
+): boolean => {
+  if (!listingSourceMatchesIdentitySource(listing, identity)) return false;
+  const sourceExternalId = normalizeExternalIdForDedupe(identity.sourceExternalId);
+  const sourceUrl = normalizeSourceUrlForDedupe(identity.sourceUrl);
+  if (sourceExternalId.length === 0 && sourceUrl.length === 0) return false;
+  return (
+    listingMatchesOfferExternalId(listing, sourceExternalId) ||
+    listingMatchesOfferSourceUrl(listing, sourceUrl)
+  );
+};
 
 const listingMatchesOfferTitle = (
   listing: FilemakerJobListing,
@@ -103,3 +136,11 @@ export const findExistingListingIndex = (
     })
   );
 };
+
+export const findExistingListingIndexBySourceIdentity = (
+  listings: readonly FilemakerJobListing[],
+  identity: ListingSourceIdentity
+): number =>
+  listings.findIndex((listing: FilemakerJobListing): boolean =>
+    listingMatchesSourceIdentity(listing, identity)
+  );

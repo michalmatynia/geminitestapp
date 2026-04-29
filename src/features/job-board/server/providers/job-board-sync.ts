@@ -794,6 +794,38 @@ const collectOfferLinksFromHtml = (
   ]);
 };
 
+const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
+  'company profile',
+  'employer profile',
+  'employers',
+  'informacje i opinie o pracodawcach',
+  'pracodawca',
+  'pracodawcy',
+  'profile pracodawcow',
+  'profil pracodawcy',
+]);
+
+const normalizeCompanyNameGuardKey = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const cleanStructuredCompanyName = (value: string | null): string | null => {
+  if (value === null) return null;
+  const key = normalizeCompanyNameGuardKey(value);
+  if (
+    GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
+    key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('profile pracodawcow')
+  ) {
+    return null;
+  }
+  return value;
+};
+
 const buildPlainHtmlStructuredSnapshot = (
   html: string,
   fallbackUrl: string | null
@@ -821,7 +853,9 @@ const buildPlainHtmlStructuredSnapshot = (
     : asRecord(rawJobLocation);
   const jobAddress = asRecord(jobLocation?.['address']);
   const companyAddress = asRecord(hiringOrganization?.['address']);
-  const companyName = readFirstJsonLdString(hiringOrganization?.['name']);
+  const companyName = cleanStructuredCompanyName(
+    readFirstJsonLdString(hiringOrganization?.['name'])
+  );
   const companyUrls = readJsonLdStrings(hiringOrganization?.['url'], hiringOrganization?.['sameAs']);
   const companyUrl = companyUrls[0] ?? null;
   const companyDescription = readFirstJsonLdString(hiringOrganization?.['description']);

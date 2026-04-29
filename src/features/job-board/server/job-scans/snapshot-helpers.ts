@@ -46,6 +46,39 @@ export const cleanCompanyProfileTitle = (value: unknown): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
+  'company profile',
+  'employer profile',
+  'employers',
+  'informacje i opinie o pracodawcach',
+  'pracodawca',
+  'pracodawcy',
+  'profile pracodawcow',
+  'profil pracodawcy',
+]);
+
+const normalizeCompanyNameGuardKey = (value: string): string =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const cleanSnapshotCompanyName = (value: unknown): string | null => {
+  const normalized = normalizeProbeText(value);
+  if (normalized.length === 0) return null;
+  const key = normalizeCompanyNameGuardKey(normalized);
+  if (
+    GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
+    key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('profile pracodawcow')
+  ) {
+    return null;
+  }
+  return normalized;
+};
+
 export const cleanListingTitle = (value: unknown): string | null => {
   const normalized = normalizeProbeText(value)
     .replace(/\s*[-|]\s*(oferta pracy|job offer|praca).*$/i, '')
@@ -99,8 +132,10 @@ const snapshotCompanyName = (
 ): string | null => {
   const profileTitle = cleanCompanyProfileTitle(companyProfile?.title);
   return firstNonEmpty([
-    snapshotFactValue(facts, [/^pracodawca$/i, /^firma$/i, /^company$/i, /^employer$/i, /^nazwa$/i]),
-    profileTitle,
+    cleanSnapshotCompanyName(
+      snapshotFactValue(facts, [/^pracodawca$/i, /^firma$/i, /^company$/i, /^employer$/i, /^nazwa$/i])
+    ),
+    cleanSnapshotCompanyName(profileTitle),
   ]);
 };
 

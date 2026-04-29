@@ -1,6 +1,7 @@
 export const normalizeMarketplaceStatus = (value: string): string => value.trim().toLowerCase();
 
 export const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+export const CLOSED_STATUSES = new Set(['closed']);
 export const PENDING_STATUSES = new Set([
   'warning',
   'pending',

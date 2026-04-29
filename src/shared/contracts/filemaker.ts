@@ -67,7 +67,12 @@ export const filemakerAddressSchema = dtoBaseSchema.extend({
 export type FilemakerAddressDto = z.infer<typeof filemakerAddressSchema>;
 export type FilemakerAddress = FilemakerAddressDto;
 
-export const filemakerAddressOwnerKindSchema = z.enum(['person', 'organization', 'event']);
+export const filemakerAddressOwnerKindSchema = z.enum([
+  'person',
+  'organization',
+  'event',
+  'job_listing',
+]);
 export type FilemakerAddressOwnerKindDto = z.infer<typeof filemakerAddressOwnerKindSchema>;
 export type FilemakerAddressOwnerKind = FilemakerAddressOwnerKindDto;
 
@@ -327,6 +332,64 @@ export type FilemakerLexiconTermCategoryDto = z.infer<
 >;
 export type FilemakerLexiconTermCategory = FilemakerLexiconTermCategoryDto;
 
+export const filemakerLexiconValidationPatternMatchModeSchema = z.enum([
+  'contains',
+  'exact',
+  'partial',
+  'regex',
+]);
+export type FilemakerLexiconValidationPatternMatchModeDto = z.infer<
+  typeof filemakerLexiconValidationPatternMatchModeSchema
+>;
+export type FilemakerLexiconValidationPatternMatchMode =
+  FilemakerLexiconValidationPatternMatchModeDto;
+
+export const filemakerLexiconValidationPatternSourceScopeSchema = z.enum([
+  'all',
+  'address_candidate',
+  'listing_field',
+  'listing_field_benefit',
+  'listing_field_contract',
+  'listing_field_employment',
+  'listing_field_experience',
+  'listing_field_language',
+  'listing_field_requirement',
+  'listing_field_responsibility',
+  'listing_field_salary',
+  'listing_field_technology',
+  'listing_field_work_mode',
+  'section',
+  'section_heading',
+  'section_value',
+  'snapshot_fact',
+  'snapshot_pill',
+  'unclassified',
+]);
+export type FilemakerLexiconValidationPatternSourceScopeDto = z.infer<
+  typeof filemakerLexiconValidationPatternSourceScopeSchema
+>;
+export type FilemakerLexiconValidationPatternSourceScope =
+  FilemakerLexiconValidationPatternSourceScopeDto;
+
+export const filemakerLexiconValidationPatternSchema = dtoBaseSchema.extend({
+  label: z.string(),
+  enabled: z.boolean().default(true),
+  version: z.number().int().nonnegative().default(1),
+  priority: z.number().int().nonnegative().default(100),
+  matchMode: filemakerLexiconValidationPatternMatchModeSchema.default('regex'),
+  pattern: z.string(),
+  targetTypeKey: filemakerLexiconTypeKeySchema,
+  sourceScope: filemakerLexiconValidationPatternSourceScopeSchema.default('all'),
+  confidence: z.number().min(0).max(1).default(1),
+  notes: z.string().optional(),
+  system: z.boolean().default(true),
+});
+
+export type FilemakerLexiconValidationPatternDto = z.infer<
+  typeof filemakerLexiconValidationPatternSchema
+>;
+export type FilemakerLexiconValidationPattern = FilemakerLexiconValidationPatternDto;
+
 export const filemakerLexiconTermSchema = dtoBaseSchema.extend({
   label: z.string(),
   normalizedLabel: z.string(),
@@ -363,9 +426,17 @@ export const filemakerJobListingSchema = dtoBaseSchema.extend({
   title: z.string(),
   description: z.string(),
   location: z.string().optional(),
+  addressId: z.string().optional(),
+  street: z.string().optional(),
+  streetNumber: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
+  countryId: z.string().optional(),
   salaryMin: z.number().nonnegative().nullable().optional(),
   salaryMax: z.number().nonnegative().nullable().optional(),
   salaryCurrency: z.string().optional(),
+  salaryText: z.string().optional(),
   salaryPeriod: filemakerJobListingSalaryPeriodSchema.default('monthly'),
   status: filemakerJobListingStatusSchema.default('draft'),
   targetedCampaignIds: z.array(z.string()).default([]),
@@ -1045,6 +1116,7 @@ export const filemakerDatabaseSchema = z.object({
   organizationLegacyDemands: z.array(filemakerOrganizationLegacyDemandSchema).default([]),
   jobListings: z.array(filemakerJobListingSchema).default([]),
   lexiconTypes: z.array(filemakerLexiconTypeSchema).default([]),
+  lexiconValidationPatterns: z.array(filemakerLexiconValidationPatternSchema).default([]),
   lexiconTerms: z.array(filemakerLexiconTermSchema).default([]),
   jobListingLexiconLinks: z.array(filemakerJobListingLexiconLinkSchema).default([]),
 });

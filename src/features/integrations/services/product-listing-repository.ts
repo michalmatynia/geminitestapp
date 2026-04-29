@@ -366,6 +366,7 @@ const mongoRepository: ProductListingRepository = {
     const terminalStatuses = [
       'failed',
       'auth_required',
+      'closed',
       'ended',
       'expired',
       'unsold',

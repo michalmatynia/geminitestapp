@@ -1,4 +1,5 @@
 import { z } from 'zod';
+/* eslint-disable max-lines */
 
 import {
   filemakerJobListingStatusSchema,
@@ -54,7 +55,7 @@ const jobBoardSourceUrlSchema = z.string().trim().url().refine(
 
 export const filemakerJobBoardScrapeRequestSchema = z.object({
   delayMs: z.number().int().min(0).max(10_000).default(750),
-  duplicateStrategy: filemakerJobBoardDuplicateStrategySchema.default('update'),
+  duplicateStrategy: filemakerJobBoardDuplicateStrategySchema.default('skip'),
   extractDescriptions: z.boolean().default(true),
   extractSalaries: z.boolean().default(true),
   extractionPath: filemakerJobBoardScrapeExtractionPathSchema.default('playwright_ai'),
@@ -108,6 +109,14 @@ export const filemakerJobBoardScrapedPillSchema = z
     return { ...pill, typeKey, category: typeKey };
   });
 
+export const filemakerJobBoardUnclassifiedPillSchema = z.object({
+  label: z.string().trim().min(1),
+  position: z.number().int().nonnegative().default(0),
+  reason: z.string().trim().default('unclassified'),
+  sourceSite: z.string().trim().default(''),
+  sourceUrl: jobBoardSourceUrlSchema,
+});
+
 export const filemakerJobBoardScrapedOfferSchema = z.object({
   companyName: z.string().trim().min(1),
   companyProfile: z.string().default(''),
@@ -125,7 +134,40 @@ export const filemakerJobBoardScrapedOfferSchema = z.object({
   sourceSite: z.string().trim().default(''),
   sourceUrl: jobBoardSourceUrlSchema,
   pills: z.array(filemakerJobBoardScrapedPillSchema).max(100).default([]),
+  unclassifiedPills: z.array(filemakerJobBoardUnclassifiedPillSchema).max(100).default([]),
   title: z.string().trim().min(1),
+});
+
+export const filemakerJobBoardLexiconClassificationSchema = z.object({
+  action: z.enum(['classify', 'ignore']).default('classify'),
+  confidence: z.number().min(0).max(1).default(1),
+  evidence: z.string().trim().optional(),
+  label: z.string().trim().min(1),
+  matchedLexiconTerm: z.string().trim().optional(),
+  matchedValidationPatternId: z.string().trim().optional(),
+  normalizedLabel: z.string().trim().optional(),
+  reason: z.string().trim().default(''),
+  typeKey: filemakerLexiconTypeKeySchema,
+});
+
+export const filemakerJobBoardLexiconClassificationApplyRequestSchema = z.object({
+  classifications: z.array(filemakerJobBoardLexiconClassificationSchema).min(1).max(100),
+  listingId: z.string().trim().min(1).nullable().optional().default(null),
+  offer: filemakerJobBoardScrapedOfferSchema,
+  runId: z.string().trim().min(1).nullable().optional().default(null),
+});
+
+export const filemakerJobBoardLexiconClassificationApplyResponseSchema = z.object({
+  listingId: z.string().trim().min(1).nullable(),
+  offer: filemakerJobBoardScrapedOfferSchema,
+  summary: z.object({
+    acceptedClassifications: z.number().int().nonnegative(),
+    createdLexiconTerms: z.number().int().nonnegative(),
+    linkedLexiconTerms: z.number().int().nonnegative(),
+    persisted: z.boolean(),
+    rejectedClassifications: z.number().int().nonnegative(),
+  }),
+  warnings: z.array(z.string()),
 });
 
 export const filemakerJobBoardScrapeDraftSaveRequestSchema =
@@ -152,8 +194,24 @@ export type FilemakerJobBoardScrapedPill = z.infer<
   typeKey: FilemakerLexiconTypeKey;
 };
 
+export type FilemakerJobBoardUnclassifiedPill = z.infer<
+  typeof filemakerJobBoardUnclassifiedPillSchema
+>;
+
 export type FilemakerJobBoardScrapedOffer = z.infer<
   typeof filemakerJobBoardScrapedOfferSchema
+>;
+
+export type FilemakerJobBoardLexiconClassification = z.infer<
+  typeof filemakerJobBoardLexiconClassificationSchema
+>;
+
+export type FilemakerJobBoardLexiconClassificationApplyRequest = z.infer<
+  typeof filemakerJobBoardLexiconClassificationApplyRequestSchema
+>;
+
+export type FilemakerJobBoardLexiconClassificationApplyResponse = z.infer<
+  typeof filemakerJobBoardLexiconClassificationApplyResponseSchema
 >;
 
 export type FilemakerJobBoardScrapeDraftSaveRequest = z.infer<

@@ -11,6 +11,13 @@ export type FilemakerJobBoardScrapeLiveEventEmitter = (
   event: FilemakerJobBoardScrapeLiveEvent
 ) => void | Promise<void>;
 
+type FilemakerJobBoardScrapeLiveEventInput =
+  FilemakerJobBoardScrapeLiveEvent extends infer Event
+    ? Event extends unknown
+      ? Omit<Event, 'at'>
+      : never
+    : never;
+
 export const throwIfScrapeAborted = (signal: AbortSignal | undefined): void => {
   if (signal === undefined || signal.aborted === false) return;
   const error = new Error('Job-board scrape stopped.');
@@ -20,7 +27,7 @@ export const throwIfScrapeAborted = (signal: AbortSignal | undefined): void => {
 
 export const emitLiveEvent = async (
   onEvent: FilemakerJobBoardScrapeLiveEventEmitter | undefined,
-  event: Omit<FilemakerJobBoardScrapeLiveEvent, 'at'>
+  event: FilemakerJobBoardScrapeLiveEventInput
 ): Promise<void> => {
   if (!onEvent) return;
   const liveEvent: FilemakerJobBoardScrapeLiveEvent = {

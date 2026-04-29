@@ -68,6 +68,9 @@ const isAddressOwnerPresentInDatabase = (
   if (ownerKind === 'organization') {
     return database.organizations.some((organization): boolean => organization.id === ownerId);
   }
+  if (ownerKind === 'job_listing') {
+    return database.jobListings.some((listing): boolean => listing.id === ownerId);
+  }
   return database.events.some((event): boolean => event.id === ownerId);
 };
 

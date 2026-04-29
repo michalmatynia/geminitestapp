@@ -119,7 +119,12 @@ describe('listMongoFilemakerOrganizations', () => {
       sort: 'updatedAt_desc',
     });
 
-    expect(findChain.sort).toHaveBeenCalledWith({ updatedAt: -1, name: 1, _id: 1 });
+    expect(findChain.sort).toHaveBeenCalledWith({
+      updatedAt: -1,
+      createdAt: -1,
+      name: 1,
+      _id: 1,
+    });
     expect(result.organizations).toEqual([
       expect.objectContaining({
         id: 'org-1',

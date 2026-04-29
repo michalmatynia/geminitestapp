@@ -27,6 +27,7 @@ import {
   startKangurSocialSchedulerQueue,
 } from '@/server/queues/kangur';
 import { startProductAiJobQueue } from '@/server/queues/product-ai';
+import { startProductMarketplaceCopyDebrandBatchQueue } from '@/server/queues/products';
 import { startProductSyncSchedulerQueue } from '@/server/queues/product-sync';
 import { startDatabaseBackupSchedulerQueue } from '@/shared/lib/db/workers/databaseBackupSchedulerQueue';
 import { startSystemLogAlertsQueue } from '@/shared/lib/observability/workers/systemLogAlertsQueue';
@@ -50,6 +51,7 @@ const STARTUP_GATED_QUEUE_NAMES = [
   'case-resolver-ocr',
   'ai-insights',
   'tradera-relist-scheduler',
+  'product-marketplace-copy-debrand-batch',
 ] as const;
 const KANGUR_SOCIAL_QUEUE_NAMES = [
   'kangur-social-scheduler',
@@ -81,6 +83,7 @@ const FEATURE_AWARE_STARTERS = [
   startImageStudioSequenceQueue,
   startCaseResolverOcrQueue,
   startFilemakerJobBoardScrapeQueue,
+  startProductMarketplaceCopyDebrandBatchQueue,
 ] as const satisfies readonly QueueStarter[];
 
 const parseEnvBoolean = (value: string | undefined): boolean | null => {

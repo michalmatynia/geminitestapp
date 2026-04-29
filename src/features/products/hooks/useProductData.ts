@@ -41,6 +41,15 @@ const isValidAdvancedFilterPayload = (payload: string): boolean => {
   }
 };
 
+const normalizeProductIdList = (ids: string[]): string[] =>
+  Array.from(
+    new Set(
+      ids
+        .map((id: string): string => id.trim())
+        .filter((id: string): boolean => id.length > 0)
+    )
+  );
+
 // --- Queries ---
 
 export type { UseProductsFilters };
@@ -108,6 +117,9 @@ export interface ProductDataHookResult {
   setBaseExported: (value: '' | 'true' | 'false') => void;
   includeArchived: boolean;
   setIncludeArchived: (value: boolean) => void;
+  parsedMatchProductIds: string[];
+  setParsedMatchProductIds: (ids: string[]) => void;
+  clearParsedMatchProductIds: () => void;
   loadError: Error | null;
   isLoading: boolean;
   isFetching: boolean;
@@ -147,6 +159,7 @@ export function useProductData({
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const [includeArchived, setIncludeArchived] = useState(false);
+  const [parsedMatchProductIds, setParsedMatchProductIdsState] = useState<string[]>([]);
   const hasInitialized = useRef(false);
   const [filtersInitialized, setFiltersInitialized] = useState(true);
 
@@ -187,33 +200,47 @@ export function useProductData({
   }, [search]);
 
   const queriesEnabled = filtersInitialized;
+  const parsedMatchProductIdsKey = parsedMatchProductIds.join('\0');
 
   const filters: UseProductsFilters = useMemo(
-    () => ({
-      search: debouncedSearch || undefined,
-      id: productId || undefined,
-      idMatchMode: productId ? idMatchMode : undefined,
-      sku: sku || undefined,
-      description: description || undefined,
-      categoryId: categoryId || undefined,
-      minPrice,
-      maxPrice,
-      stockValue,
-      stockOperator: stockValue !== undefined ? stockOperator || 'eq' : undefined,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
-      advancedFilter: advancedFilter || undefined,
-      page,
-      pageSize,
-      catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
-      searchLanguage: (searchLanguage || undefined) as
+    () => {
+      const normalizedSearchLanguage = (searchLanguage || undefined) as
         | 'name_en'
         | 'name_pl'
         | 'name_de'
-        | undefined,
-      baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
-      archived: includeArchived ? undefined : false,
-    }),
+        | undefined;
+
+      if (parsedMatchProductIds.length > 0) {
+        return {
+          ids: parsedMatchProductIds,
+          page,
+          pageSize,
+          searchLanguage: normalizedSearchLanguage,
+        };
+      }
+
+      return {
+        search: debouncedSearch || undefined,
+        id: productId || undefined,
+        idMatchMode: productId ? idMatchMode : undefined,
+        sku: sku || undefined,
+        description: description || undefined,
+        categoryId: categoryId || undefined,
+        minPrice,
+        maxPrice,
+        stockValue,
+        stockOperator: stockValue !== undefined ? stockOperator || 'eq' : undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        advancedFilter: advancedFilter || undefined,
+        page,
+        pageSize,
+        catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
+        searchLanguage: normalizedSearchLanguage,
+        baseExported: baseExported === 'true' ? true : baseExported === 'false' ? false : undefined,
+        archived: includeArchived ? undefined : false,
+      };
+    },
     [
       debouncedSearch,
       productId,
@@ -234,6 +261,7 @@ export function useProductData({
       searchLanguage,
       baseExported,
       includeArchived,
+      parsedMatchProductIds,
     ]
   );
 
@@ -272,6 +300,7 @@ export function useProductData({
     catalogFilter,
     baseExported,
     includeArchived,
+    parsedMatchProductIdsKey,
     pageSize,
   ]);
 
@@ -330,6 +359,12 @@ export function useProductData({
     []
   );
   const handleSetIncludeArchived = useCallback((value: boolean) => setIncludeArchived(value), []);
+  const handleSetParsedMatchProductIds = useCallback((ids: string[]) => {
+    setParsedMatchProductIdsState(normalizeProductIdList(ids));
+  }, []);
+  const handleClearParsedMatchProductIds = useCallback(() => {
+    setParsedMatchProductIdsState([]);
+  }, []);
 
   return {
     data: productsWithCountQuery.products,
@@ -372,6 +407,9 @@ export function useProductData({
     setBaseExported: handleSetBaseExported,
     includeArchived,
     setIncludeArchived: handleSetIncludeArchived,
+    parsedMatchProductIds,
+    setParsedMatchProductIds: handleSetParsedMatchProductIds,
+    clearParsedMatchProductIds: handleClearParsedMatchProductIds,
     loadError,
     isLoading: productsWithCountQuery.isLoading,
     isFetching: productsWithCountQuery.isFetching,

@@ -10,6 +10,14 @@ import {
   JOB_APPLICATION_PREPARE_TRIGGER_SORT_INDEX,
 } from '@/shared/lib/ai-paths/job-application-prepare';
 import {
+  JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_STARTER_TEMPLATE_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_BUTTON_ID,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_LOCATION,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_NAME,
+  JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_SORT_INDEX,
+} from '@/shared/lib/ai-paths/job-board-lexicon-classification';
+import {
   MARKETPLACE_COPY_DEBRAND_PATH_ID,
   MARKETPLACE_COPY_DEBRAND_STARTER_TEMPLATE_ID,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
@@ -29,6 +37,7 @@ import descriptionInferenceLiteAsset from '../assets/description-inference-lite.
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
 import jobApplicationPrepareAsset from '../assets/job-application-prepare.canvas.json';
+import jobBoardLexiconClassificationAsset from '../assets/job-board-lexicon-classification.canvas.json';
 import marketplaceCopyDebrandAsset from '../assets/marketplace-copy-debrand.canvas.json';
 import parameterInferenceAsset from '../assets/parameter-inference.canvas.json';
 import parameterValueInferenceAsset from '../assets/parameter-value-inference.canvas.json';
@@ -112,6 +121,41 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_prepare',
+      templateVersion: 1,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+    },
+  },
+  {
+    templateId: JOB_BOARD_LEXICON_CLASSIFICATION_STARTER_TEMPLATE_ID,
+    name: 'Job Board Lexicon Classification',
+    description:
+      'Classify unclassified scraped job-board pills into FileMaker lexicon types.',
+    semanticAsset: jobBoardLexiconClassificationAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_BUTTON_ID,
+        name: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_NAME,
+        pathId: JOB_BOARD_LEXICON_CLASSIFICATION_PATH_ID,
+        locations: [JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_NAME),
+        enabled: true,
+        mode: 'click',
+        sortIndex: JOB_BOARD_LEXICON_CLASSIFICATION_TRIGGER_SORT_INDEX,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'job_board_lexicon_classification',
       templateVersion: 1,
       canonicalGraphHashes: [],
     },

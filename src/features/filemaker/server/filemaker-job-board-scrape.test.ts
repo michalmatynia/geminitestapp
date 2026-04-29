@@ -44,6 +44,7 @@ vi.mock('./filemaker-organizations-mongo', () => ({
 import { defaultPlaywrightActionExecutionSettings } from '@/shared/contracts/playwright-steps';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 import {
+  applyFilemakerJobBoardLexiconClassifications,
   runFilemakerJobBoardScrape,
   saveFilemakerJobBoardScrapeDrafts,
 } from './filemaker-job-board-scrape';
@@ -240,6 +241,276 @@ describe('runFilemakerJobBoardScrape', () => {
         sourceUrl: offerUrl,
       })
     );
+  });
+
+  it('skips already stored offer URLs before probing the offer page', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Developer',
+            description: 'Existing listing',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+          },
+        ],
+      })
+    );
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'preview',
+      sourceUrl,
+    });
+
+    expect(mocks.probeJobBoardOfferMock).not.toHaveBeenCalled();
+    expect(result.summary).toMatchObject({
+      scrapedOffers: 1,
+      skippedOffers: 1,
+    });
+    expect(result.offers[0]).toMatchObject({
+      listingId: 'listing-1',
+      status: 'skipped',
+      match: {
+        organizationId: 'org-1',
+        organizationName: 'Acme Inc',
+      },
+    });
+  });
+
+  it('does not pre-skip existing offer URLs when always add is selected', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Developer',
+            description: 'Existing listing',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+          },
+        ],
+      })
+    );
+
+    const result = await runFilemakerJobBoardScrape({
+      duplicateStrategy: 'add',
+      maxOffers: 5,
+      mode: 'preview',
+      sourceUrl,
+    });
+
+    expect(mocks.probeJobBoardOfferMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceUrl: offerUrl,
+      })
+    );
+    expect(result.summary).toMatchObject({
+      scrapedOffers: 1,
+      skippedOffers: 0,
+    });
+    expect(result.offers[0]).toMatchObject({
+      status: 'preview',
+      offer: {
+        sourceUrl: offerUrl,
+      },
+    });
+  });
+
+  it('creates a new organisation instead of attaching unrelated offers to a short Ch match', async () => {
+    mocks.readFilemakerCampaignSettingValueMock
+      .mockResolvedValueOnce(
+        settingsDatabase({
+          organizations: [
+            {
+              id: 'org-ch',
+              name: 'Ch',
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(null);
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(
+      createCollection([
+        {
+          id: 'org-ch',
+          name: 'Ch',
+          tradingName: null,
+        },
+      ])
+    );
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Tech Company' },
+        listing: {
+          title: 'Backend Developer',
+          description: 'Build platforms',
+          city: 'Krakow',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-1',
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      createdOrganizations: 1,
+      matchedOffers: 1,
+    });
+    expect(result.offers[0]?.match).toMatchObject({
+      organizationName: 'Tech Company',
+      reason: 'created from scraped job-board employer',
+    });
+    expect(result.offers[0]?.match?.organizationId).not.toBe('org-ch');
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.organizations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'org-ch', name: 'Ch' }),
+        expect.objectContaining({ name: 'Tech Company' }),
+      ])
+    );
+    expect(persisted.jobListings[0]).toMatchObject({
+      organizationId: result.offers[0]?.match?.organizationId,
+      title: 'Backend Developer',
+    });
+  });
+
+  it('uses structured hiring organization instead of Pracuj employer-directory metadata', async () => {
+    const badEmployerName =
+      'Informacje i opinie o pracodawcach – profile pracodawców Poznań(wielkopolskie), Poznań, Poland';
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: badEmployerName },
+        listing: {
+          title: 'Backend Developer',
+          description: 'Build vessel management integrations',
+          city: 'Poznań',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-real-employer',
+      snapshot: {
+        jsonLd: [
+          JSON.stringify({
+            '@type': 'JobPosting',
+            hiringOrganization: {
+              '@type': 'Organization',
+              name: 'Baltic Logistics SA',
+              url: 'https://www.pracuj.pl/pracodawcy/baltic-logistics,123',
+            },
+            title: 'Backend Developer',
+          }),
+        ],
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      createdOrganizations: 1,
+      matchedOffers: 1,
+    });
+    expect(result.offers[0]?.offer.companyName).toBe('Baltic Logistics SA');
+    expect(result.offers[0]?.match).toMatchObject({
+      organizationName: 'Baltic Logistics SA',
+      reason: 'created from scraped job-board employer',
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.organizations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Baltic Logistics SA' })])
+    );
+    expect(persisted.organizations).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: badEmployerName })])
+    );
+  });
+
+  it('does not create an organisation when Pracuj directory metadata is the only employer name', async () => {
+    const badEmployerName =
+      'Informacje i opinie o pracodawcach – profile pracodawców Poznań(wielkopolskie), Poznań, Poland';
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: badEmployerName },
+        listing: {
+          title: 'Backend Developer',
+          description: 'Build vessel management integrations',
+          city: 'Poznań',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-bad-employer',
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 0,
+      createdOrganizations: 0,
+      matchedOffers: 0,
+      scrapedOffers: 0,
+    });
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 
   it('falls back to Playwright link collection when the combined path finds no deterministic links', async () => {
@@ -542,6 +813,63 @@ describe('runFilemakerJobBoardScrape', () => {
     );
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
     expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(6);
+  });
+
+  it('does not persist raw Pracuj location and assistant pills as Other lexicon terms', async () => {
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Acme Inc' },
+        listing: {
+          title: 'Frontend Developer',
+          description: 'Build products',
+          city: 'Wrocław',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.84,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-pracuj-noisy-pills',
+      snapshot: {
+        pills: ['React', 'TypeScript', 'Lower Silesia', 'Asystent Pracuj.pl'],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdLexiconTerms: 2,
+      createdListings: 1,
+      linkedLexiconTerms: 2,
+    });
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.lexiconTerms).toEqual([
+      expect.objectContaining({ category: 'technology', typeKey: 'technology', label: 'React' }),
+      expect.objectContaining({
+        category: 'technology',
+        typeKey: 'technology',
+        label: 'TypeScript',
+      }),
+    ]);
+    expect(persisted.lexiconTerms.map((term: { label: string }) => term.label)).not.toEqual(
+      expect.arrayContaining(['Lower Silesia', 'Asystent Pracuj.pl'])
+    );
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(2);
   });
 
   it('normalizes visible Polish posted and expiry dates before persisting listings', async () => {
@@ -1203,13 +1531,8 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Address: Konstruktorska 12A, 02-673 Warszawa, Poland'
     );
-    expect(persisted.lexiconTerms).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          category: 'address',
-          label: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
-        }),
-      ])
+    expect(persisted.lexiconTerms).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
   });
 
@@ -1362,13 +1685,8 @@ describe('runFilemakerJobBoardScrape', () => {
       'Company size: 201-500 pracowników'
     );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain('NIP: 5210123456');
-    expect(persisted.lexiconTerms).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          category: 'address',
-          label: 'Prosta 20, 00-850 Warszawa, Poland',
-        }),
-      ])
+    expect(persisted.lexiconTerms).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
   });
 
@@ -1440,13 +1758,8 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Address: Puławska 180, Mokotów, Warszawa(Masovian)'
     );
-    expect(persisted.lexiconTerms).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          category: 'address',
-          label: 'Puławska 180, Mokotów, Warszawa(Masovian)',
-        }),
-      ])
+    expect(persisted.lexiconTerms).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
   });
 
@@ -1510,13 +1823,8 @@ describe('runFilemakerJobBoardScrape', () => {
       street: 'Puławska',
       streetNumber: '180',
     });
-    expect(persisted.lexiconTerms).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          category: 'address',
-          label: 'Puławska 180, Warszawa(Masovian)',
-        }),
-      ])
+    expect(persisted.lexiconTerms).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
   });
 
@@ -1619,7 +1927,7 @@ describe('runFilemakerJobBoardScrape', () => {
     });
   });
 
-  it('updates existing listings when manually saving scraped drafts with skip selected', async () => {
+  it('skips existing listings when manually saving scraped drafts with skip selected', async () => {
     mocks.readFilemakerCampaignSettingValueMock
       .mockResolvedValueOnce(
         settingsDatabase({
@@ -1676,21 +1984,15 @@ describe('runFilemakerJobBoardScrape', () => {
       createdListings: 0,
       matchedOffers: 1,
       scrapedOffers: 1,
-      skippedOffers: 0,
-      updatedListings: 1,
+      skippedOffers: 1,
+      updatedListings: 0,
       verifiedListings: 1,
     });
     expect(result.offers[0]).toMatchObject({
       listingId: 'listing-1',
-      status: 'updated',
+      status: 'skipped',
     });
-    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
-    expect(persisted.jobListings[0]).toMatchObject({
-      id: 'listing-1',
-      description: 'Updated description from preview',
-      sourceUrl: offerUrl,
-      title: 'Developer',
-    });
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
   });
 
   it('stores scraped job-board pills as lexicon terms and maps the first Pracuj pill to an organisation address', async () => {
@@ -1871,6 +2173,366 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(6);
   });
 
+  it('applies AI classified scraped Other pills to the listing lexicon', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Frontend Developer',
+            description: 'Build products',
+            location: 'Wrocław',
+            sourceExternalId: '1001',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+            lexiconTermIds: [],
+          },
+        ],
+      })
+    );
+
+    const result = await applyFilemakerJobBoardLexiconClassifications({
+      listingId: 'listing-1',
+      runId: 'ai-run-1',
+      classifications: [
+        {
+          confidence: 0.94,
+          label: 'React',
+          normalizedLabel: 'React',
+          reason: 'Framework/library',
+          typeKey: 'technology',
+        },
+      ],
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: '',
+        companyProfileUrl: null,
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Wrocław',
+        pills: [],
+        postedAt: null,
+        salaryCurrency: null,
+        salaryMax: null,
+        salaryMin: null,
+        salaryPeriod: 'monthly',
+        salaryText: '',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: offerUrl,
+        title: 'Frontend Developer',
+        unclassifiedPills: [
+          {
+            label: 'React',
+            position: 0,
+            reason: 'unclassified',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+          },
+        ],
+      },
+    });
+
+    expect(result).toMatchObject({
+      listingId: 'listing-1',
+      summary: {
+        acceptedClassifications: 1,
+        createdLexiconTerms: 1,
+        linkedLexiconTerms: 1,
+        persisted: true,
+        rejectedClassifications: 0,
+      },
+    });
+    expect(result.offer.pills).toEqual([
+      expect.objectContaining({ category: 'technology', label: 'React' }),
+    ]);
+    expect(result.offer.unclassifiedPills).toHaveLength(0);
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.lexiconTerms).toEqual([
+      expect.objectContaining({
+        category: 'technology',
+        label: 'React',
+        normalizedLabel: 'react',
+        typeKey: 'technology',
+      }),
+    ]);
+    expect(persisted.jobListingLexiconLinks).toEqual([
+      expect.objectContaining({
+        jobListingId: 'listing-1',
+        sourceValue: 'React',
+        typeKey: 'technology',
+      }),
+    ]);
+    expect(persisted.jobListings[0].lexiconTermIds).toHaveLength(1);
+  });
+
+  it('uses an existing lexicon term when the AI returns the wrong type', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Frontend Developer',
+            description: 'Build products',
+            location: 'Wrocław',
+            sourceExternalId: '1001',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+            lexiconTermIds: [],
+          },
+        ],
+        lexiconTerms: [
+          {
+            id: 'filemaker-lexicon-term-technology-react',
+            createdAt: '2026-04-28T00:00:00.000Z',
+            updatedAt: '2026-04-28T00:00:00.000Z',
+            label: 'React',
+            normalizedLabel: 'react',
+            typeKey: 'technology',
+            category: 'technology',
+            sourceSite: 'pracuj.pl',
+            sourceProvider: 'pracuj.pl',
+            firstSeenAt: '2026-04-28T00:00:00.000Z',
+            lastSeenAt: '2026-04-28T00:00:00.000Z',
+            occurrenceCount: 7,
+          },
+        ],
+      })
+    );
+
+    const result = await applyFilemakerJobBoardLexiconClassifications({
+      listingId: 'listing-1',
+      runId: 'ai-run-1',
+      classifications: [
+        {
+          action: 'classify',
+          confidence: 0.94,
+          label: 'React',
+          normalizedLabel: 'React',
+          reason: 'Model confused the pill with a perk.',
+          typeKey: 'benefit',
+        },
+      ],
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: '',
+        companyProfileUrl: null,
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Wrocław',
+        pills: [],
+        postedAt: null,
+        salaryCurrency: null,
+        salaryMax: null,
+        salaryMin: null,
+        salaryPeriod: 'monthly',
+        salaryText: '',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: offerUrl,
+        title: 'Frontend Developer',
+        unclassifiedPills: [
+          {
+            label: 'React',
+            position: 0,
+            reason: 'unclassified',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+          },
+        ],
+      },
+    });
+
+    expect(result).toMatchObject({
+      summary: {
+        acceptedClassifications: 1,
+        createdLexiconTerms: 0,
+        linkedLexiconTerms: 1,
+        persisted: true,
+        rejectedClassifications: 0,
+      },
+    });
+    expect(result.offer.pills).toEqual([
+      expect.objectContaining({ category: 'technology', label: 'React', typeKey: 'technology' }),
+    ]);
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.lexiconTerms).toEqual([
+      expect.objectContaining({
+        label: 'React',
+        normalizedLabel: 'react',
+        occurrenceCount: 8,
+        typeKey: 'technology',
+      }),
+    ]);
+    expect(persisted.jobListingLexiconLinks).toEqual([
+      expect.objectContaining({
+        jobListingId: 'listing-1',
+        sourceValue: 'React',
+        typeKey: 'technology',
+      }),
+    ]);
+  });
+
+  it('uses validation patterns to override wrongly classified location pills', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Frontend Developer',
+            description: 'Build products',
+            location: 'Wrocław',
+            sourceExternalId: '1001',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+            lexiconTermIds: [],
+          },
+        ],
+      })
+    );
+
+    const result = await applyFilemakerJobBoardLexiconClassifications({
+      listingId: 'listing-1',
+      runId: 'ai-run-1',
+      classifications: [
+        {
+          action: 'classify',
+          confidence: 0.94,
+          label: 'Lower Silesia',
+          normalizedLabel: 'Lower Silesia',
+          reason: 'Model confused a region with a stack item.',
+          typeKey: 'technology',
+        },
+      ],
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: '',
+        companyProfileUrl: null,
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Wrocław',
+        pills: [],
+        postedAt: null,
+        salaryCurrency: null,
+        salaryMax: null,
+        salaryMin: null,
+        salaryPeriod: 'monthly',
+        salaryText: '',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: offerUrl,
+        title: 'Frontend Developer',
+        unclassifiedPills: [
+          {
+            label: 'Lower Silesia',
+            position: 0,
+            reason: 'raw other pill',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+          },
+        ],
+      },
+    });
+
+    expect(result.summary).toMatchObject({
+      acceptedClassifications: 0,
+      createdLexiconTerms: 0,
+      linkedLexiconTerms: 0,
+      persisted: false,
+      rejectedClassifications: 1,
+    });
+    expect(result.offer.pills).toEqual([]);
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
+  });
+
+  it('does not persist ignored provider UI pills from AI classifications', async () => {
+    mocks.readFilemakerCampaignSettingValueMock.mockResolvedValueOnce(
+      settingsDatabase({
+        jobListings: [
+          {
+            id: 'listing-1',
+            organizationId: 'org-1',
+            title: 'Frontend Developer',
+            description: 'Build products',
+            location: 'Wrocław',
+            sourceExternalId: '1001',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+            status: 'open',
+            lexiconTermIds: [],
+          },
+        ],
+      })
+    );
+
+    const result = await applyFilemakerJobBoardLexiconClassifications({
+      listingId: 'listing-1',
+      runId: 'ai-run-1',
+      classifications: [
+        {
+          action: 'ignore',
+          confidence: 0.99,
+          label: 'Asystent Pracuj.pl',
+          normalizedLabel: 'Asystent Pracuj.pl',
+          reason: 'Provider UI text, not a job attribute.',
+          typeKey: 'technology',
+        },
+      ],
+      offer: {
+        companyName: 'Acme Inc',
+        companyProfile: '',
+        companyProfileUrl: null,
+        description: 'Build interfaces',
+        expiresAt: null,
+        location: 'Wrocław',
+        pills: [],
+        postedAt: null,
+        salaryCurrency: null,
+        salaryMax: null,
+        salaryMin: null,
+        salaryPeriod: 'monthly',
+        salaryText: '',
+        sourceExternalId: '1001',
+        sourceSite: 'pracuj.pl',
+        sourceUrl: offerUrl,
+        title: 'Frontend Developer',
+        unclassifiedPills: [
+          {
+            label: 'Asystent Pracuj.pl',
+            position: 0,
+            reason: 'raw other pill',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: offerUrl,
+          },
+        ],
+      },
+    });
+
+    expect(result).toMatchObject({
+      offer: {
+        pills: [],
+        unclassifiedPills: [expect.objectContaining({ label: 'Asystent Pracuj.pl' })],
+      },
+      summary: {
+        acceptedClassifications: 0,
+        createdLexiconTerms: 0,
+        linkedLexiconTerms: 0,
+        persisted: false,
+        rejectedClassifications: 1,
+      },
+    });
+    expect(result.warnings).toEqual([
+      'Kept "Asystent Pracuj.pl" unclassified: ignored noise or provider UI text.',
+    ]);
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).not.toHaveBeenCalled();
+  });
+
   it('verifies imports against the persisted FileMaker settings copy after writing', async () => {
     mocks.readFilemakerCampaignSettingValueMock
       .mockResolvedValueOnce(null)
@@ -2020,13 +2682,8 @@ describe('runFilemakerJobBoardScrape', () => {
       title: 'Frontend Developer',
       sourceUrl: offerUrl,
     });
-    expect(persisted.lexiconTerms).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          category: 'address',
-          label: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
-        }),
-      ])
+    expect(persisted.lexiconTerms).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
   });
 

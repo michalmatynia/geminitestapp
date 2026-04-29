@@ -194,6 +194,9 @@ export function useProductListState(): ProductListContextType & {
     setBaseExported,
     includeArchived,
     setIncludeArchived,
+    parsedMatchProductIds,
+    setParsedMatchProductIds,
+    clearParsedMatchProductIds,
     loadError,
     isLoading,
     isFetching,
@@ -248,6 +251,7 @@ export function useProductListState(): ProductListContextType & {
       catalogFilter,
       baseExported,
       includeArchived,
+      ids: parsedMatchProductIds.length > 0 ? parsedMatchProductIds : undefined,
       page,
       pageSize,
     },
@@ -270,6 +274,7 @@ export function useProductListState(): ProductListContextType & {
               catalogFilter,
               baseExported,
               includeArchived,
+              parsedMatchProductIdsCount: parsedMatchProductIds.length,
             },
           },
           {
@@ -551,6 +556,7 @@ export function useProductListState(): ProductListContextType & {
       hasDescription: description.length > 0,
       hasProductId: productId.length > 0,
       hasAdvancedFilter: advancedFilter.length > 0,
+      parsedMatchProductIdsCount: parsedMatchProductIds.length,
       baseExported,
       includeArchived,
       showTriggerRunFeedback,
@@ -632,6 +638,14 @@ export function useProductListState(): ProductListContextType & {
     setActionError(null);
   }, []);
   const handleSelectAllVisibleProducts = useCallback(async (): Promise<void> => {
+    if (parsedMatchProductIds.length > 0) {
+      await handleSelectAllGlobal({
+        ids: parsedMatchProductIds,
+        searchLanguage: preferences.nameLocale,
+      });
+      return;
+    }
+
     await handleSelectAllGlobal({
       search,
       id: productId || undefined,
@@ -663,6 +677,7 @@ export function useProductListState(): ProductListContextType & {
     idMatchMode,
     maxPrice,
     minPrice,
+    parsedMatchProductIds,
     preferences.nameLocale,
     productId,
     search,
@@ -720,6 +735,9 @@ export function useProductListState(): ProductListContextType & {
       setBaseExported,
       includeArchived,
       setIncludeArchived,
+      parsedMatchProductIds,
+      setParsedMatchProductIds,
+      clearParsedMatchProductIds,
       catalogs,
       loadError: loadError?.message || null,
       actionError,
@@ -863,6 +881,9 @@ export function useProductListState(): ProductListContextType & {
       setBaseExported,
       includeArchived,
       setIncludeArchived,
+      parsedMatchProductIds,
+      setParsedMatchProductIds,
+      clearParsedMatchProductIds,
       catalogs,
       loadError,
       actionError,

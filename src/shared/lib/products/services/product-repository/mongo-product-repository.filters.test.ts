@@ -607,6 +607,19 @@ describe('mongo-product-repository.filters', () => {
     expect(serialized).toContain('"$in":["product-1"]');
   });
 
+  it('builds mongo where clauses for a product id set', async () => {
+    const filter = await buildMongoWhere({
+      ids: ['product-1', 'product-2', 'product-1'],
+    });
+
+    expect(filter).toEqual({
+      $or: [
+        { id: { $in: ['product-1', 'product-2'] } },
+        { _id: { $in: ['product-1', 'product-2'] } },
+      ],
+    });
+  });
+
   it('filters archived products explicitly when the archived flag is provided', async () => {
     const archivedFalseFilter = await buildMongoWhere({
       archived: false,

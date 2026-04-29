@@ -408,6 +408,43 @@ describe('integration product listings handler', () => {
     expect(enqueueTraderaListingJobMock).not.toHaveBeenCalled();
   });
 
+  it('allows a new Tradera listing when the only linked row is closed', async () => {
+    listingExistsAcrossProvidersMock.mockResolvedValue(false);
+    listProductListingsByProductIdAcrossProvidersMock.mockResolvedValue([
+      {
+        id: 'listing-linked-closed-1',
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+        status: 'closed',
+        externalListingId: '721891408',
+        marketplaceData: {
+          listingUrl:
+            'https://www.tradera.com/en/item/292901/721891408/the-alien-4-cm-pin-alf',
+        },
+      },
+    ]);
+
+    const response = await postHandler(
+      new Request('http://localhost/api') as never,
+      {} as never,
+      { id: 'product-1' }
+    );
+
+    expect(response.status).toBe(201);
+    expect(createListingMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        connectionId: 'connection-tradera-1',
+      })
+    );
+    expect(enqueueTraderaListingJobMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        listingId: 'listing-1',
+        action: 'list',
+      })
+    );
+  });
+
   it('records pending Vinted runtime metadata when queueing a listing job', async () => {
     parseJsonBodyMock.mockResolvedValue({
       ok: true,

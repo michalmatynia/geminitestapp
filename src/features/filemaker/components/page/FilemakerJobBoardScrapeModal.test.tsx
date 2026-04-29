@@ -6,10 +6,13 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
+  getAiPathRunResultMock: vi.fn(),
   savePlaywrightActionsIsPending: false,
   savePlaywrightActionsMutateAsyncMock: vi.fn(),
   settingsGetMock: vi.fn(),
+  subscribeToTrackedAiPathRunMock: vi.fn(),
   toastMock: vi.fn(),
+  triggerButtonBarPropsMock: vi.fn(),
   usePlaywrightActionsMock: vi.fn(),
   withCsrfHeadersMock: vi.fn(),
 }));
@@ -32,6 +35,51 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   }),
 }));
 
+vi.mock('@/shared/lib/ai-context-registry/page-context', () => ({
+  ContextRegistryPageProvider: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('@/shared/lib/ai-paths/api/client', () => ({
+  getAiPathRunResult: (...args: unknown[]) => mocks.getAiPathRunResultMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
+  subscribeToTrackedAiPathRun: (...args: unknown[]) =>
+    mocks.subscribeToTrackedAiPathRunMock(...args),
+}));
+
+vi.mock('@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar', () => ({
+  TriggerButtonBar: (props: {
+    disabled?: boolean;
+    getEntityJson?: () => Record<string, unknown>;
+    location?: string;
+    onRunQueued?: (args: {
+      button: { id: string };
+      entityId: string | null;
+      entityType: 'custom';
+      runId: string;
+    }) => void;
+  }) => {
+    mocks.triggerButtonBarPropsMock(props);
+    return props.location === 'filemaker_job_board_scraped_offer' ? (
+      <button
+        type='button'
+        disabled={props.disabled}
+        onClick={() =>
+          props.onRunQueued?.({
+            button: { id: 'button-classify' },
+            entityId: 'entity-1',
+            entityType: 'custom',
+            runId: 'ai-run-1',
+          })
+        }
+      >
+        Classify
+      </button>
+    ) : null;
+  },
+}));
+
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormField: ({
     children,
@@ -48,6 +96,8 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   FormModal: ({
     actions,
     children,
+    hasUnsavedChanges,
+    isSaveDisabled,
     onClose,
     onSave,
     open,
@@ -55,6 +105,8 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
   }: {
     actions?: React.ReactNode;
     children?: React.ReactNode;
+    hasUnsavedChanges?: boolean;
+    isSaveDisabled?: boolean;
     onClose: () => void;
     onSave: () => void;
     open?: boolean;
@@ -65,7 +117,12 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
         <button type='button' onClick={onClose}>
           Close
         </button>
-        <button type='button' onClick={onSave}>
+        <button
+          type='button'
+          data-variant={hasUnsavedChanges ? 'success' : 'outline'}
+          disabled={isSaveDisabled}
+          onClick={onSave}
+        >
           {saveText ?? 'Save'}
         </button>
         {actions}
@@ -157,6 +214,7 @@ import {
 } from '@/shared/contracts/playwright-steps';
 import { JOB_BOARD_SCRAPE_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-board-runtime-constants';
 import { getPlaywrightRuntimeActionSeed } from '@/shared/lib/browser-execution/playwright-runtime-action-seeds';
+import { FILEMAKER_DATABASE_KEY } from '../../settings-constants';
 
 const successfulResponse = {
   browserMode: 'headless',
@@ -215,6 +273,7 @@ const buildPreviewOfferResult = (input: {
       input.sourceUrl ??
       `https://www.pracuj.pl/praca/developer-warszawa,oferta,${input.externalId}`,
     pills: [],
+    unclassifiedPills: [],
     title: input.title ?? 'Frontend Developer',
   },
   reason: null,
@@ -268,6 +327,9 @@ describe('FilemakerJobBoardScrapeModal', () => {
     mocks.savePlaywrightActionsIsPending = false;
     mocks.savePlaywrightActionsMutateAsyncMock.mockResolvedValue(undefined);
     mocks.settingsGetMock.mockReturnValue(undefined);
+    mocks.getAiPathRunResultMock.mockReset();
+    mocks.subscribeToTrackedAiPathRunMock.mockReset();
+    mocks.subscribeToTrackedAiPathRunMock.mockReturnValue(vi.fn());
     mocks.usePlaywrightActionsMock.mockReturnValue({
       data: [buildJobBoardAction(true)],
       isLoading: false,
@@ -280,7 +342,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     }));
   });
 
-  it('uses selected organisation scope when reopened with selected IDs', async () => {
+  it('uses scraped-company organisation source when reopened with selected IDs', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async () => Response.json(successfulResponse));
     vi.stubGlobal('fetch', fetchMock);
@@ -317,9 +379,9 @@ describe('FilemakerJobBoardScrapeModal', () => {
       extractionPath: 'playwright_ai',
       headless: null,
       mode: 'preview',
-      organizationScope: 'selected',
+      organizationScope: 'all',
       provider: 'auto',
-      selectedOrganizationIds: ['org-1', 'org-2'],
+      selectedOrganizationIds: [],
       sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
     });
     expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
@@ -424,7 +486,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(screen.getByText(/Steps: 10\/10/)).toBeInTheDocument();
   });
 
-  it('preserves an explicit all-organisations scope while selected IDs exist', async () => {
+  it('keeps scraped-company organisation source while selected IDs exist', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async () => Response.json(successfulResponse));
     vi.stubGlobal('fetch', fetchMock);
@@ -439,7 +501,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
       />
     );
 
-    await user.selectOptions(screen.getByLabelText('Organisation scope'), 'all');
+    expect(screen.getByText('Scraped company per listing')).toBeInTheDocument();
     await user.type(
       screen.getByPlaceholderText(/pracuj\.pl\/praca/),
       'https://www.pracuj.pl/praca/it;kw'
@@ -479,7 +541,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     );
     await user.selectOptions(screen.getByLabelText('Provider'), 'justjoin_it');
     await user.selectOptions(screen.getByLabelText('Scraper path'), 'deterministic');
-    await user.selectOptions(screen.getByLabelText('Duplicates'), 'update');
+    await user.selectOptions(screen.getByLabelText('Duplicates'), 'add');
     expect(screen.getByRole('button', { name: 'Save settings' })).not.toBeDisabled();
     expect(screen.getByRole('button', { name: 'Save settings' })).toHaveAttribute(
       'data-variant',
@@ -513,8 +575,8 @@ describe('FilemakerJobBoardScrapeModal', () => {
     );
     expect(screen.getByLabelText('Provider')).toHaveValue('justjoin_it');
     expect(screen.getByLabelText('Scraper path')).toHaveValue('deterministic');
-    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
-    expect(screen.queryByRole('option', { name: 'Skip existing' })).toBeNull();
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('add');
+    expect(screen.getByRole('option', { name: 'Skip existing' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Action browser mode' })).toHaveAttribute(
       'aria-pressed',
       'true'
@@ -522,7 +584,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(screen.getByText('Current: Headless')).toBeInTheDocument();
   });
 
-  it('migrates old saved skip-duplicate scraper settings to update existing', () => {
+  it('keeps old saved skip-duplicate scraper settings as skip existing', () => {
     window.localStorage.setItem(
       'filemaker.job-board-scraper.settings.v1',
       JSON.stringify({
@@ -544,14 +606,14 @@ describe('FilemakerJobBoardScrapeModal', () => {
       />
     );
 
-    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
-    expect(screen.queryByRole('option', { name: 'Skip existing' })).toBeNull();
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('skip');
+    expect(screen.getByRole('option', { name: 'Skip existing' })).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/pracuj\.pl\/praca/)).toHaveValue(
       'https://www.pracuj.pl/praca/it;kw'
     );
   });
 
-  it('migrates current saved skip-duplicate scraper settings to update existing', () => {
+  it('keeps current saved skip-duplicate scraper settings as skip existing', () => {
     window.localStorage.setItem(
       'filemaker.job-board-scraper.settings.v1',
       JSON.stringify({
@@ -573,8 +635,8 @@ describe('FilemakerJobBoardScrapeModal', () => {
       />
     );
 
-    expect(screen.getByLabelText('Duplicates')).toHaveValue('update');
-    expect(screen.queryByRole('option', { name: 'Skip existing' })).toBeNull();
+    expect(screen.getByLabelText('Duplicates')).toHaveValue('skip');
+    expect(screen.getByRole('option', { name: 'Skip existing' })).toBeInTheDocument();
   });
 
   it('uses and saves the shared Job Board Offer Scrape browser mode setting', async () => {
@@ -782,6 +844,257 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(request).toMatchObject({ mode: 'preview', stream: true });
   });
 
+  it('queues the Classify trigger and applies returned lexicon classifications', async () => {
+    const user = userEvent.setup();
+    mocks.settingsGetMock.mockImplementation((key: string) =>
+      key === FILEMAKER_DATABASE_KEY
+        ? JSON.stringify({
+            version: 2,
+            lexiconTerms: [
+              {
+                id: 'filemaker-lexicon-term-technology-react',
+                createdAt: '2026-04-28T00:00:00.000Z',
+                updatedAt: '2026-04-28T00:00:00.000Z',
+                label: 'React',
+                normalizedLabel: 'react',
+                typeKey: 'technology',
+                category: 'technology',
+                sourceSite: 'pracuj.pl',
+                sourceProvider: 'pracuj.pl',
+                firstSeenAt: '2026-04-28T00:00:00.000Z',
+                lastSeenAt: '2026-04-28T00:00:00.000Z',
+                occurrenceCount: 12,
+              },
+              {
+                id: 'filemaker-lexicon-term-benefit-react',
+                createdAt: '2026-04-28T00:00:00.000Z',
+                updatedAt: '2026-04-28T00:00:00.000Z',
+                label: 'React',
+                normalizedLabel: 'react',
+                typeKey: 'benefit',
+                category: 'benefit',
+                sourceSite: 'legacy-import',
+                sourceProvider: 'legacy-import',
+                firstSeenAt: '2026-04-28T00:00:00.000Z',
+                lastSeenAt: '2026-04-28T00:00:00.000Z',
+                occurrenceCount: 2,
+              },
+            ],
+          })
+        : undefined
+    );
+    const offerResult = {
+      ...buildPreviewOfferResult({ externalId: '1001' }),
+      offer: {
+        ...buildPreviewOfferResult({ externalId: '1001' }).offer,
+        unclassifiedPills: [
+          {
+            label: 'React',
+            position: 1,
+            reason: 'raw other pill',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001',
+          },
+        ],
+      },
+    } satisfies FilemakerJobBoardScrapeOfferResult;
+    const classifiedOffer = {
+      ...offerResult.offer,
+      pills: [
+        {
+          category: 'technology',
+          typeKey: 'technology',
+          label: 'React',
+          position: 1,
+          sourceSite: 'pracuj.pl',
+          sourceUrl: offerResult.offer.sourceUrl,
+        },
+      ],
+      unclassifiedPills: [],
+    };
+    const streamedResponse = {
+      ...successfulResponse,
+      offers: [offerResult],
+      summary: {
+        ...successfulResponse.summary,
+        matchedOffers: 1,
+        scrapedOffers: 1,
+      },
+    };
+    const events = [
+      {
+        at: '2026-04-28T10:00:00.000Z',
+        index: 1,
+        result: offerResult,
+        total: 1,
+        type: 'offer',
+      },
+      {
+        at: '2026-04-28T10:00:01.000Z',
+        result: streamedResponse,
+        type: 'done',
+      },
+    ];
+    mocks.getAiPathRunResultMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          id: 'ai-run-1',
+          status: 'completed',
+          createdAt: '2026-04-28T10:00:02.000Z',
+          updatedAt: '2026-04-28T10:00:03.000Z',
+          runtimeState: {
+            outputs: {
+              'node-regex-job-board-lexicon-classification': {
+                value: {
+                  classifications: [
+                    {
+                      confidence: 0.94,
+                      label: 'React',
+                      normalizedLabel: 'React',
+                      reason: 'Framework/library',
+                      typeKey: 'technology',
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    mocks.subscribeToTrackedAiPathRunMock.mockImplementation(
+      (_runId: string, listener: (snapshot: Record<string, unknown>) => void) => {
+        window.setTimeout(() => {
+          listener({
+            runId: 'ai-run-1',
+            status: 'completed',
+            updatedAt: '2026-04-28T10:00:03.000Z',
+            finishedAt: '2026-04-28T10:00:03.000Z',
+            errorMessage: null,
+            entityId: 'entity-1',
+            entityType: 'custom',
+            trackingState: 'stopped',
+            run: null,
+          });
+        }, 0);
+        return vi.fn();
+      }
+    );
+    const fetchMock = vi.fn((url: RequestInfo | URL, init?: RequestInit) => {
+      if (String(url).endsWith('/classifications')) {
+        return Response.json({
+          listingId: null,
+          offer: classifiedOffer,
+          summary: {
+            acceptedClassifications: 1,
+            createdLexiconTerms: 1,
+            linkedLexiconTerms: 0,
+            persisted: true,
+            rejectedClassifications: 0,
+          },
+          warnings: ['No saved listing was found; lexicon terms were enriched for the preview offer.'],
+        });
+      }
+      return new Response(events.map((event) => JSON.stringify(event)).join('\n'), {
+        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={vi.fn()}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await user.type(
+      screen.getByPlaceholderText(/pracuj\.pl\/praca/),
+      'https://www.pracuj.pl/praca/it;kw'
+    );
+    await user.click(screen.getByRole('button', { name: 'Preview' }));
+
+    await waitFor(() => expect(screen.getAllByText('Unclassified').length).toBeGreaterThan(0));
+    const triggerProps = mocks.triggerButtonBarPropsMock.mock.calls
+      .map((call) => call[0] as { getEntityJson?: () => Record<string, unknown>; location?: string })
+      .find((props) => props.location === 'filemaker_job_board_scraped_offer');
+    const entityJson = triggerProps?.getEntityJson?.();
+    const lexiconContext = entityJson?.['lexiconContext'] as Record<string, unknown> | undefined;
+    const validationPatterns = lexiconContext?.['validationPatterns'] as
+      | Array<Record<string, unknown>>
+      | undefined;
+    const knownTerms = lexiconContext?.['knownTerms'] as
+      | Array<Record<string, unknown>>
+      | undefined;
+    expect(validationPatterns?.length).toBeGreaterThan(0);
+    expect(validationPatterns?.some((pattern) => pattern['targetTypeKey'] === 'technology')).toBe(
+      true
+    );
+    expect(knownTerms?.slice(0, 2)).toEqual([
+      expect.objectContaining({
+        label: 'React',
+        normalizedLabel: 'react',
+        occurrenceCount: 12,
+        sourceSite: 'pracuj.pl',
+        typeKey: 'technology',
+      }),
+      expect.objectContaining({
+        label: 'React',
+        normalizedLabel: 'react',
+        occurrenceCount: 2,
+        sourceSite: 'legacy-import',
+        typeKey: 'benefit',
+      }),
+    ]);
+    expect(entityJson).toMatchObject({
+      classificationInput: {
+        unclassifiedPills: [
+          expect.objectContaining({
+            label: 'React',
+            nearbyClassifiedPills: expect.any(Array),
+            sourceHint: expect.stringContaining('raw other pill'),
+          }),
+        ],
+      },
+    });
+    await user.click(screen.getAllByRole('button', { name: 'Classify' })[0]);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    const classificationRequest = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
+    expect(String(fetchMock.mock.calls[1]?.[0])).toBe(
+      '/api/filemaker/organizations/job-board-scrape/classifications'
+    );
+    expect(classificationRequest).toMatchObject({
+      runId: 'ai-run-1',
+      classifications: [
+        {
+          confidence: 0.94,
+          label: 'React',
+          normalizedLabel: 'React',
+          typeKey: 'technology',
+        },
+      ],
+      offer: {
+        sourceUrl: offerResult.offer.sourceUrl,
+        unclassifiedPills: [expect.objectContaining({ label: 'React' })],
+      },
+    });
+    await waitFor(() =>
+      expect(screen.getAllByRole('link', { name: 'React' })[0]).toHaveAttribute(
+        'href',
+        '/admin/filemaker/lexicon?type=technology&query=React'
+      )
+    );
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Classified 1 scraped lexicon pill for Frontend Developer.',
+      { variant: 'success' }
+    );
+  });
+
   it('stores the Redis runtime run id from a streamed preview run', async () => {
     const user = userEvent.setup();
     const completedRun = buildRuntimeRun('completed', successfulResponse);
@@ -894,6 +1207,65 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(screen.getByText('Collecting job-board offer links.')).toBeInTheDocument();
     expect(screen.getAllByText('Frontend Developer').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+  });
+
+  it('does not replay import notifications when opening a previously completed runtime run', async () => {
+    const onCompleted = vi.fn();
+    const completedImportResponse: FilemakerJobBoardScrapeResponse = {
+      ...successfulResponse,
+      mode: 'import',
+      summary: {
+        ...successfulResponse.summary,
+        createdListings: 1,
+        scrapedOffers: 1,
+        verifiedListings: 1,
+      },
+    };
+    window.localStorage.setItem(
+      'filemaker.job-board-scraper.active-run-id.v1',
+      'runtime-run-1'
+    );
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        events: [
+          {
+            at: '2026-04-28T10:00:00.000Z',
+            run: buildRuntimeRun('completed', completedImportResponse),
+            type: 'run',
+          },
+          {
+            at: '2026-04-28T10:00:03.000Z',
+            result: completedImportResponse,
+            type: 'done',
+          },
+        ],
+        run: buildRuntimeRun('completed', completedImportResponse),
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <FilemakerJobBoardScrapeModal
+        open
+        onClose={vi.fn()}
+        onCompleted={onCompleted}
+        selectedOrganizationCount={0}
+        selectedOrganizationIds={[]}
+      />
+    );
+
+    await waitFor(() =>
+      expect(fetchMock).toHaveBeenCalledWith(
+        '/api/filemaker/organizations/job-board-scrape/runs/runtime-run-1',
+        expect.objectContaining({ method: 'GET' })
+      )
+    );
+    expect(screen.getByText('Run completed')).toBeInTheDocument();
+    expect(mocks.toastMock).not.toHaveBeenCalledWith(
+      'Imported 1 created, 0 updated, 0 skipped.',
+      expect.anything()
+    );
+    expect(onCompleted).not.toHaveBeenCalled();
   });
 
   it('falls back to the latest Redis runtime run when the stored run id is stale', async () => {
@@ -1062,7 +1434,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     const saveRequest = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
     expect(saveRequest).toMatchObject({
       action: 'save_drafts',
-      duplicateStrategy: 'update',
+      duplicateStrategy: 'skip',
       importStrategy: 'create_unmatched',
       sourceUrl: 'https://www.pracuj.pl/praca/it;kw',
       stream: true,
@@ -1529,7 +1901,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     const request = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
     expect(request).toMatchObject({
-      duplicateStrategy: 'update',
+      duplicateStrategy: 'skip',
       mode: 'import',
       organizationScope: 'all',
       selectedOrganizationIds: [],

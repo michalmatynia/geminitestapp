@@ -69,13 +69,17 @@ interface CandidateMatch {
   querySpecificity: number;
   pathLength: number;
   hrefLength: number;
+  idDepth: number;
+  idLength: number;
 }
 
 const compareCandidates = (a: CandidateMatch, b: CandidateMatch): number => {
   if (a.pathSpecificity !== b.pathSpecificity) return a.pathSpecificity - b.pathSpecificity;
   if (a.querySpecificity !== b.querySpecificity) return a.querySpecificity - b.querySpecificity;
   if (a.pathLength !== b.pathLength) return a.pathLength - b.pathLength;
-  return a.hrefLength - b.hrefLength;
+  if (a.hrefLength !== b.hrefLength) return a.hrefLength - b.hrefLength;
+  if (a.idDepth !== b.idDepth) return a.idDepth - b.idDepth;
+  return a.idLength - b.idLength;
 };
 
 const resolveMatch = (
@@ -105,6 +109,8 @@ const resolveMatch = (
     querySpecificity,
     pathLength: candidatePathname.length,
     hrefLength: href.length,
+    idDepth: entry.id.split('/').length,
+    idLength: entry.id.length,
   };
 };
 

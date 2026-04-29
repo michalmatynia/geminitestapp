@@ -10,6 +10,7 @@ import { buildMongoExpandedCategoryFilter } from './mongo-category-filter';
 import {
   appendAndCondition,
   buildProductIdFilter,
+  buildLookupFilterForIds,
   escapeRegex,
   parseAdvancedFilterGroup,
   toAdvancedBooleanValue,
@@ -577,6 +578,13 @@ export const buildMongoWhere = async (
   filters: ProductFilters
 ): Promise<Filter<ProductDocument>> => {
   let filter: Filter<ProductDocument> = {};
+
+  if (Array.isArray(filters.ids) && filters.ids.length > 0) {
+    filter = appendAndCondition(
+      filter,
+      buildLookupFilterForIds(filters.ids) as Filter<ProductDocument>
+    );
+  }
 
   if (filters.id) {
     const normalizedId = filters.id.trim();

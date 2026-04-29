@@ -298,7 +298,7 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
       <Checkbox
         checked={isSelectedForBatch}
         aria-label={`Select organization ${organization.name}`}
-        className='shrink-0'
+        className='shrink-0 cursor-pointer'
         onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
           event.stopPropagation();
         }}

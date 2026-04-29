@@ -13,6 +13,7 @@ import {
   type FilemakerPersonAddressFilter,
   type FilemakerPersonBankFilter,
   type FilemakerPersonOrganizationFilter,
+  type FilemakerPersonSortOption,
   type FilemakerPersonsListInput,
   type FilemakerPersonsListOptions,
 } from './filemaker-persons-list-options';
@@ -38,7 +39,9 @@ export type FilemakerPersonsListResult = {
   pageSize: number;
   persons: MongoFilemakerPerson[];
   query: string;
+  sort: FilemakerPersonSortOption;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 };
 
@@ -123,6 +126,27 @@ const buildPersonBaseFilter = (input: {
   return activeClauses.length > 0 ? { $and: activeClauses } : {};
 };
 
+const buildPersonSort = (sort: FilemakerPersonSortOption): Document => {
+  if (sort === 'createdAt_desc') {
+    return { createdAt: -1, updatedAt: -1, lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+  }
+  if (sort === 'createdAt_asc') {
+    return { createdAt: 1, updatedAt: 1, lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+  }
+  if (sort === 'updatedAt_asc') {
+    return { updatedAt: 1, createdAt: 1, lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+  }
+  if (sort === 'organizationLinkCount_desc') {
+    return { organizationLinkCount: -1, lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+  }
+  if (sort === 'organizationLinkCount_asc') {
+    return { organizationLinkCount: 1, lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+  }
+  if (sort === 'name_desc') return { lastName: -1, firstName: -1, fullName: -1, _id: 1 };
+  if (sort === 'name_asc') return { lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+  return { updatedAt: -1, createdAt: -1, lastName: 1, firstName: 1, fullName: 1, _id: 1 };
+};
+
 const buildAggregationPipeline = (input: {
   filter: Filter<FilemakerPersonMongoDocument>;
   options: FilemakerPersonsListOptions;
@@ -162,7 +186,8 @@ const buildAggregationPipeline = (input: {
     });
   }
   pipeline.push(
-    { $sort: { lastName: 1, firstName: 1, _id: 1 } },
+    { $addFields: { organizationLinkCount: { $size: '$organizationLinks' } } },
+    { $sort: buildPersonSort(input.options.sort) },
     {
       $facet: {
         metadata: [{ $count: 'totalCount' }],
@@ -196,7 +221,9 @@ const buildListResult = (input: {
   pageSize: input.options.pageSize,
   persons: input.documents.map(toMongoFilemakerPerson),
   query: input.options.query,
+  sort: input.options.sort,
   totalCount: input.totalCount,
+  totalCountIsExact: true,
   totalPages: input.totalPages,
 });
 
@@ -296,6 +323,7 @@ const buildMongoFilemakerPersonUpdate = (
   const fullName = resolvePatchFullName(existing, firstName, lastName);
   return stripUndefinedFields({
     cvCoreStrengths: normalizePatchStringList(patch.cvCoreStrengths),
+    cvHeadline: patch.cvHeadline?.trim(),
     cvProfessionalSummary: patch.cvProfessionalSummary?.trim(),
     cvSelectedTechnicalEnvironment: normalizePatchStringList(
       patch.cvSelectedTechnicalEnvironment

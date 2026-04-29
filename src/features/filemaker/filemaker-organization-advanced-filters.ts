@@ -16,9 +16,13 @@ export const organizationAdvancedFilterFieldSchema = z.enum([
   'legacyUuid',
   'legacyParentUuid',
   'updatedBy',
+  'jobBoardSourceSite',
+  'jobBoardSourceLabel',
+  'jobBoardSourceUrl',
   'createdAt',
   'updatedAt',
   'establishedDate',
+  'jobBoardScrapedAt',
   'hasAddress',
   'hasBank',
   'hasParent',
@@ -88,12 +92,16 @@ export const ORGANIZATION_ADVANCED_STRING_FIELDS = new Set<OrganizationAdvancedF
   'legacyUuid',
   'legacyParentUuid',
   'updatedBy',
+  'jobBoardSourceSite',
+  'jobBoardSourceLabel',
+  'jobBoardSourceUrl',
 ]);
 
 export const ORGANIZATION_ADVANCED_DATE_FIELDS = new Set<OrganizationAdvancedFilterField>([
   'createdAt',
   'updatedAt',
   'establishedDate',
+  'jobBoardScrapedAt',
 ]);
 
 export const ORGANIZATION_ADVANCED_BOOLEAN_FIELDS = new Set<OrganizationAdvancedFilterField>([
@@ -120,9 +128,13 @@ const ORGANIZATION_ADVANCED_FILTER_OPERATOR_COMPATIBILITY: Record<
   legacyUuid: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
   legacyParentUuid: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
   updatedBy: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  jobBoardSourceSite: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  jobBoardSourceLabel: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  jobBoardSourceUrl: ['contains', 'eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
   createdAt: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
   updatedAt: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
   establishedDate: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
+  jobBoardScrapedAt: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
   hasAddress: ['eq', 'neq'],
   hasBank: ['eq', 'neq'],
   hasParent: ['eq', 'neq'],

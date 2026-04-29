@@ -27,6 +27,12 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
 type MarketplaceBadgeKey = keyof MarketplaceBadgeEntry;
+type ListingBadgeCandidateMeta = {
+  status: string;
+  updatedAtMs: number;
+  rank: number;
+  success: boolean;
+};
 const shouldLogTiming = () => env.DEBUG_API_TIMING;
 
 const buildServerTiming = (entries: Record<string, number | null | undefined>): string => {
@@ -50,6 +56,54 @@ const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
 const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+const CLOSED_STATUS = 'closed';
+
+const shouldReplaceTraderaClosedCandidate = (
+  currentMeta: ListingBadgeCandidateMeta,
+  nextMeta: ListingBadgeCandidateMeta
+): boolean | null => {
+  const currentIsClosed = currentMeta.status === CLOSED_STATUS;
+  const nextIsClosed = nextMeta.status === CLOSED_STATUS;
+  if (!currentIsClosed && !nextIsClosed) return null;
+  if (currentIsClosed !== nextIsClosed) {
+    const otherMeta = currentIsClosed ? nextMeta : currentMeta;
+    if (!otherMeta.success) {
+      return nextIsClosed;
+    }
+  }
+  if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+    return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+  }
+  return nextIsClosed && !currentIsClosed;
+};
+
+const shouldReplaceMarketplaceBadgeCandidate = (
+  marketplace: MarketplaceBadgeKey,
+  currentMeta: ListingBadgeCandidateMeta,
+  nextMeta: ListingBadgeCandidateMeta
+): boolean => {
+  if (marketplace === 'tradera') {
+    const traderaClosedDecision = shouldReplaceTraderaClosedCandidate(currentMeta, nextMeta);
+    if (traderaClosedDecision !== null) return traderaClosedDecision;
+  }
+
+  if (currentMeta.success !== nextMeta.success) {
+    return nextMeta.success;
+  }
+
+  if (!currentMeta.success && !nextMeta.success) {
+    if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+    }
+    return nextMeta.rank > currentMeta.rank;
+  }
+
+  if (nextMeta.rank !== currentMeta.rank) {
+    return nextMeta.rank > currentMeta.rank;
+  }
+
+  return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+};
 
 const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadgeKey | null => {
   const normalized = (slug ?? '').trim().toLowerCase();
@@ -164,12 +218,7 @@ const buildPayload = async (
   const productsWithPendingTraderaStatusCheck = new Set<string>();
   const candidateMetaByKey = new Map<
     string,
-    {
-      status: string;
-      updatedAtMs: number;
-      rank: number;
-      success: boolean;
-    }
+    ListingBadgeCandidateMeta
   >();
   const assembleStart = performance.now();
   for (const listing of listings) {
@@ -207,34 +256,11 @@ const buildPayload = async (
       continue;
     }
 
-    const shouldReplace = (() => {
-      if (
-        marketplace === 'tradera' &&
-        (currentMeta.status === 'closed' || nextMeta.status === 'closed')
-      ) {
-        if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
-          return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
-        }
-        return nextMeta.status === 'closed' && currentMeta.status !== 'closed';
-      }
-
-      if (currentMeta.success !== nextMeta.success) {
-        return nextMeta.success;
-      }
-
-      if (!currentMeta.success && !nextMeta.success) {
-        if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
-          return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
-        }
-        return nextMeta.rank > currentMeta.rank;
-      }
-
-      if (nextMeta.rank !== currentMeta.rank) {
-        return nextMeta.rank > currentMeta.rank;
-      }
-
-      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
-    })();
+    const shouldReplace = shouldReplaceMarketplaceBadgeCandidate(
+      marketplace,
+      currentMeta,
+      nextMeta
+    );
 
     if (shouldReplace) {
       byProduct.set(listing.productId, {

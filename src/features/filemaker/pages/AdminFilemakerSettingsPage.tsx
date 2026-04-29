@@ -34,6 +34,7 @@ type FilemakerPersonOptionRecord = {
   city?: unknown;
   country?: unknown;
   cvCoreStrengths?: unknown;
+  cvHeadline?: unknown;
   cvProfessionalSummary?: unknown;
   firstName?: unknown;
   fullName?: unknown;
@@ -66,6 +67,7 @@ const readString = (value: unknown): string => (typeof value === 'string' ? valu
 const hasArrayEntries = (value: unknown): boolean => Array.isArray(value) && value.length > 0;
 
 const hasCvProfile = (person: FilemakerPersonOptionRecord): boolean =>
+  readString(person.cvHeadline).length > 0 ||
   readString(person.cvProfessionalSummary).length > 0 ||
   hasArrayEntries(person.cvCoreStrengths) ||
   hasArrayEntries(person.profileEducation) ||

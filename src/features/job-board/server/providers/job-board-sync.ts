@@ -772,7 +772,11 @@ const normalizePracujCompanyProfileUrl = (
     url.hash = '';
     const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
     if (!/pracuj\.pl$/iu.test(hostname)) return null;
-    if (!/\/(?:pracodawcy|pracodawca|firmy|firma|profil-pracodawcy)\//iu.test(url.pathname)) {
+    if (
+      !/\/(?:pracodawcy|pracodawca|firmy|firma|profil-pracodawcy|profil-pracodawcow|profile-pracodawcy|profile-pracodawcow)\//iu.test(
+        url.pathname
+      )
+    ) {
       return null;
     }
     return url.toString();
@@ -828,14 +832,26 @@ const collectOfferLinksFromHtml = (
 };
 
 const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
+  'company',
   'company profile',
+  'employer',
   'employer profile',
   'employers',
+  'firma',
+  'hiring organization',
   'informacje i opinie o pracodawcach',
+  'jobs',
+  'nazwa firmy',
   'odkrywaj najlepsze miejsca pracy',
+  'oferty pracy',
+  'organization',
+  'organisation',
+  'praca',
   'pracodawca',
   'pracodawcy',
+  'profil pracodawcow',
   'profile pracodawcow',
+  'profile pracodawcy',
   'profil pracodawcy',
 ]);
 
@@ -850,10 +866,15 @@ const normalizeCompanyNameGuardKey = (value: string): string =>
 const cleanStructuredCompanyName = (value: string | null): string | null => {
   if (value === null) return null;
   const key = normalizeCompanyNameGuardKey(value);
+  const compactAlphaNumeric = value.trim().replace(/[^\p{L}0-9]+/gu, '');
   if (
+    (/^[\p{L}]{1,2}$/u.test(compactAlphaNumeric) &&
+      value.trim() !== value.trim().toLocaleUpperCase()) ||
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
     key.startsWith('odkrywaj najlepsze miejsca pracy') ||
+    key.startsWith('pracodawca ') ||
+    key.startsWith('pracodawcy ') ||
     key.startsWith('profile pracodawcow')
   ) {
     return null;

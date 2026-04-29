@@ -1,6 +1,8 @@
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/explicit-function-return-type, @typescript-eslint/naming-convention, @typescript-eslint/no-non-null-assertion */
 import { describe, expect, it } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
+import { LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION } from '@/shared/contracts/products/validation';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
 import { encodeDynamicReplacementRecipe } from '@/shared/lib/products/utils/validator-replacement-recipe';
 import {
@@ -301,6 +303,33 @@ describe('buildFieldIssues', () => {
       validationScope: 'product_edit',
     });
     expect(issues['name_en']).toHaveLength(1);
+  });
+
+  it('does not emit field issues for parser-only validation patterns', () => {
+    const pattern = makePattern({
+      regex: '.+',
+      target: 'description',
+      message: 'Parse Actions: Tradera repeated title line.',
+      semanticState: {
+        version: LATEST_PRODUCT_VALIDATION_SEMANTIC_STATE_VERSION,
+        presetId: 'products.parse-actions.tradera.v1',
+        operation: 'parse_marketplace_listing_text',
+        sourceField: 'marketplaceText',
+        targetField: 'parsedRows',
+        tags: ['parse_actions', 'tradera', 'repeatedTitle'],
+        metadata: {
+          marketplace: 'tradera',
+          parserPatternRole: 'repeatedTitle',
+        },
+      },
+    });
+    const issues = buildFieldIssues({
+      values: { description_en: 'Correct product description.' },
+      patterns: [pattern],
+      latestProductValues: null,
+      validationScope: 'product_edit',
+    });
+    expect(issues).toEqual({});
   });
 
   it('handles SKU field', () => {

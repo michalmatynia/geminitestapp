@@ -10,7 +10,11 @@ import { Badge, Button, Card, useToast } from '@/shared/ui/primitives.public';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useAdminFilemakerPersonEditPageStateContext } from '../../context/AdminFilemakerPersonEditPageContext';
-import { buildDefaultFilemakerCvBlocks, resolveFilemakerCvPersonName } from '../../cv-defaults';
+import {
+  buildDefaultFilemakerCvBlocks,
+  resolveFilemakerCvPersonName,
+  type FilemakerCvProfileSeed,
+} from '../../cv-defaults';
 import type { FilemakerCv } from '../../filemaker-cv.types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
 
@@ -54,6 +58,7 @@ export function PersonCvsSection(): React.JSX.Element {
     linkedDocuments,
     linkedOccupations,
     person,
+    personDraft,
     phoneNumbers,
     router,
     websites,
@@ -65,12 +70,19 @@ export function PersonCvsSection(): React.JSX.Element {
     isLoading: true,
   });
   const [isCreating, setIsCreating] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [exportingCvId, setExportingCvId] = useState<string | null>(null);
 
   const personId = person?.id ?? '';
   const personName = useMemo(
-    () => (person !== null ? resolveFilemakerCvPersonName(person) : 'Person'),
-    [person]
+    () =>
+      person !== null
+        ? resolveFilemakerCvPersonName({
+            firstName: personDraft.firstName ?? person.firstName,
+            lastName: personDraft.lastName ?? person.lastName,
+          })
+        : 'Person',
+    [person, personDraft.firstName, personDraft.lastName]
   );
 
   useEffect(() => {
@@ -115,34 +127,82 @@ export function PersonCvsSection(): React.JSX.Element {
     [router]
   );
 
+  const buildCvSeedPerson = useCallback((): FilemakerCvProfileSeed['person'] | null => {
+    if (person === null) return null;
+    return {
+      firstName: personDraft.firstName ?? person.firstName,
+      lastName: personDraft.lastName ?? person.lastName,
+      city: personDraft.city ?? person.city ?? '',
+      country: personDraft.country ?? person.country ?? '',
+      phoneNumbers: personDraft.phoneNumbers ?? person.phoneNumbers ?? [],
+      linkedinUrl: personDraft.linkedinUrl ?? person.linkedinUrl ?? '',
+      githubUrl: personDraft.githubUrl ?? person.githubUrl ?? '',
+      profileEducation: personDraft.profileEducation ?? person.profileEducation ?? [],
+      profileJobExperience: personDraft.profileJobExperience ?? person.profileJobExperience ?? [],
+      cvHeadline: personDraft.cvHeadline ?? person.cvHeadline ?? '',
+      cvProfessionalSummary: personDraft.cvProfessionalSummary ?? person.cvProfessionalSummary ?? '',
+      cvCoreStrengths: personDraft.cvCoreStrengths ?? person.cvCoreStrengths ?? [],
+      cvSelectedTechnicalEnvironment:
+        personDraft.cvSelectedTechnicalEnvironment ?? person.cvSelectedTechnicalEnvironment ?? [],
+    };
+  }, [person, personDraft]);
+
+  const createCvFromProfile = useCallback(async (): Promise<FilemakerCv> => {
+    if (person === null) throw new Error('Person is not loaded.');
+    const seedPerson = buildCvSeedPerson();
+    if (seedPerson === null) throw new Error('Person profile is not loaded.');
+    const bodyBlocks = buildDefaultFilemakerCvBlocks({
+      addresses: editableAddresses,
+      anyTexts: linkedAnyTexts,
+      contracts: linkedContracts,
+      documents: linkedDocuments,
+      emails,
+      occupations: linkedOccupations,
+      person: seedPerson,
+      phoneNumbers,
+      websites,
+    });
+    const response = await fetch('/api/filemaker/cvs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        bodyBlocks,
+        personId: person.id,
+        title: `${personName} CV`,
+      }),
+    });
+    if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
+    const payload = (await response.json()) as { cv: FilemakerCv };
+    setState((current: CvListState): CvListState => ({
+      ...current,
+      cvs: [
+        payload.cv,
+        ...current.cvs.filter((existing: FilemakerCv): boolean => existing.id !== payload.cv.id),
+      ],
+      error: null,
+      isLoading: false,
+    }));
+    return payload.cv;
+  }, [
+    buildCvSeedPerson,
+    editableAddresses,
+    emails,
+    linkedAnyTexts,
+    linkedContracts,
+    linkedDocuments,
+    linkedOccupations,
+    person,
+    personName,
+    phoneNumbers,
+    websites,
+  ]);
+
   const handleCreateCv = useCallback(async (): Promise<void> => {
-    if (person === null) return;
     setIsCreating(true);
     try {
-      const bodyBlocks = buildDefaultFilemakerCvBlocks({
-        addresses: editableAddresses,
-        anyTexts: linkedAnyTexts,
-        contracts: linkedContracts,
-        documents: linkedDocuments,
-        emails,
-        occupations: linkedOccupations,
-        person,
-        phoneNumbers,
-        websites,
-      });
-      const response = await fetch('/api/filemaker/cvs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bodyBlocks,
-          personId: person.id,
-          title: `${personName} CV`,
-        }),
-      });
-      if (!response.ok) throw new Error(`Failed to create CV (${response.status}).`);
-      const payload = (await response.json()) as { cv: FilemakerCv };
+      const cv = await createCvFromProfile();
       toast('CV created.', { variant: 'success' });
-      openCv(payload.cv);
+      openCv(cv);
     } catch (error: unknown) {
       logClientError(error);
       toast(error instanceof Error ? error.message : 'Failed to create CV.', {
@@ -151,33 +211,24 @@ export function PersonCvsSection(): React.JSX.Element {
     } finally {
       setIsCreating(false);
     }
-  }, [
-    editableAddresses,
-    emails,
-    linkedAnyTexts,
-    linkedContracts,
-    linkedDocuments,
-    linkedOccupations,
-    openCv,
-    person,
-    personName,
-    phoneNumbers,
-    toast,
-    websites,
-  ]);
+  }, [createCvFromProfile, openCv, toast]);
+
+  const exportCvPdf = useCallback(async (cv: FilemakerCv): Promise<void> => {
+    const response = await fetch('/api/filemaker/cvs/export-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cvId: cv.id }),
+    });
+    if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
+    const filename = readDownloadFilename(response, `${formatCvTitle(cv)}.pdf`);
+    downloadBlob(await response.blob(), filename);
+  }, []);
 
   const handleExportPdf = useCallback(
     async (cv: FilemakerCv): Promise<void> => {
       setExportingCvId(cv.id);
       try {
-        const response = await fetch('/api/filemaker/cvs/export-pdf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cvId: cv.id }),
-        });
-        if (!response.ok) throw new Error(`Failed to export CV (${response.status}).`);
-        const filename = readDownloadFilename(response, `${formatCvTitle(cv)}.pdf`);
-        downloadBlob(await response.blob(), filename);
+        await exportCvPdf(cv);
         toast('CV PDF exported.', { variant: 'success' });
       } catch (error: unknown) {
         logClientError(error);
@@ -188,25 +239,58 @@ export function PersonCvsSection(): React.JSX.Element {
         setExportingCvId(null);
       }
     },
-    [toast]
+    [exportCvPdf, toast]
   );
 
+  const handleGeneratePdf = useCallback(async (): Promise<void> => {
+    setIsGeneratingPdf(true);
+    try {
+      const cv = await createCvFromProfile();
+      await exportCvPdf(cv);
+      toast('CV PDF generated.', { variant: 'success' });
+    } catch (error: unknown) {
+      logClientError(error);
+      toast(error instanceof Error ? error.message : 'Failed to generate CV PDF.', {
+        variant: 'error',
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  }, [createCvFromProfile, exportCvPdf, toast]);
+
   const actions = (
-    <Button
-      type='button'
-      variant='outline'
-      size='sm'
-      disabled={isCreating || person === null}
-      loading={isCreating}
-      loadingText='Creating...'
-      onClick={() => {
-        void handleCreateCv();
-      }}
-      className='gap-2'
-    >
-      {!isCreating ? <Plus className='size-3.5' /> : null}
-      New CV
-    </Button>
+    <div className='flex flex-wrap items-center gap-2'>
+      <Button
+        type='button'
+        variant='default'
+        size='sm'
+        disabled={isCreating || isGeneratingPdf || person === null}
+        loading={isGeneratingPdf}
+        loadingText='Generating...'
+        onClick={() => {
+          void handleGeneratePdf();
+        }}
+        className='gap-2'
+      >
+        {!isGeneratingPdf ? <Download className='size-3.5' /> : null}
+        Generate PDF CV
+      </Button>
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        disabled={isCreating || isGeneratingPdf || person === null}
+        loading={isCreating}
+        loadingText='Creating...'
+        onClick={() => {
+          void handleCreateCv();
+        }}
+        className='gap-2'
+      >
+        {!isCreating ? <Plus className='size-3.5' /> : null}
+        New CV
+      </Button>
+    </div>
   );
 
   let content: React.ReactNode;

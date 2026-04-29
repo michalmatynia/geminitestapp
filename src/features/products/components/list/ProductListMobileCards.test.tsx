@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/consistent-type-assertions, @typescript-eslint/consistent-type-imports, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 import { render, screen, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -400,6 +401,41 @@ describe('ProductListMobileCards', () => {
       'BL',
       'TR',
       'VR',
+    ]);
+  });
+
+  it('shows only the closed Tradera status button on mobile when the Tradera badge status is closed', () => {
+    useProductListRowRuntimeMock.mockReturnValue({
+      showMarketplaceBadge: true,
+      integrationStatus: 'completed',
+      showTraderaBadge: true,
+      traderaStatus: 'closed',
+      showVintedBadge: false,
+      vintedStatus: 'not_started',
+      showPlaywrightProgrammableBadge: false,
+      playwrightProgrammableStatus: 'not_started',
+      productAiRunFeedback: null,
+    });
+
+    render(<ProductListMobileCards />);
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Mobile integrations button row was not found.');
+    }
+
+    expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'closed',
+      })
+    );
+    expect(within(buttonRow).queryByRole('button', { name: 'T+' })).toBeNull();
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'V+',
     ]);
   });
 

@@ -45,6 +45,7 @@ export type FilemakerPersonMongoDocument = Document & {
   countryId?: string;
   createdAt?: string;
   cvCoreStrengths?: string[];
+  cvHeadline?: string;
   cvProfessionalSummary?: string;
   cvSelectedTechnicalEnvironment?: string[];
   dateOfBirth?: string;
@@ -147,6 +148,7 @@ export function toMongoFilemakerPerson(
       githubUrl: document.githubUrl,
       profileEducation: document.profileEducation,
       profileJobExperience: document.profileJobExperience,
+      cvHeadline: document.cvHeadline,
       cvProfessionalSummary: document.cvProfessionalSummary,
       cvCoreStrengths: document.cvCoreStrengths,
       cvSelectedTechnicalEnvironment: document.cvSelectedTechnicalEnvironment,

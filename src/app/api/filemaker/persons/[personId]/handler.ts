@@ -38,6 +38,7 @@ const personProfileJobExperiencePatchSchema = z.object({
 
 const personPatchSchema = z.object({
   cvCoreStrengths: z.array(z.string()).optional(),
+  cvHeadline: z.string().optional(),
   cvProfessionalSummary: z.string().optional(),
   cvSelectedTechnicalEnvironment: z.array(z.string()).optional(),
   firstName: z.string().optional(),

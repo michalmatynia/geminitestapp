@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
+import type * as ZodModule from 'zod';
 
 const {
   invalidateAllMock,
@@ -27,17 +28,17 @@ vi.mock('@/features/products/performance', () => ({
   },
 }));
 
-vi.mock('@/features/products/server', () => ({
-  formDataToObject: (...args: unknown[]) => formDataToObjectMock(...args),
-  productService: {
-    createProduct: (...args: unknown[]) => createProductMock(...args),
-  },
-  productFilterSchema: {
-    extend: vi.fn(() => ({
-      parse: vi.fn((value: unknown) => value),
-    })),
-  },
-}));
+vi.mock('@/features/products/server', async () => {
+  const { z } = await vi.importActual<typeof ZodModule>('zod');
+  return {
+    formDataToObject: (...args: unknown[]) => formDataToObjectMock(...args),
+    getProductDataProvider: vi.fn(),
+    productService: {
+      createProduct: (...args: unknown[]) => createProductMock(...args),
+    },
+    productFilterSchema: z.object({}).passthrough(),
+  };
+});
 
 vi.mock('@/features/products/validations/middleware', () => ({
   validateProductCreateMiddleware: (...args: unknown[]) => validateProductCreateMiddlewareMock(...args),
@@ -60,6 +61,15 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 import { postHandler } from './handler';
+
+const createContext = (userId: string | null = null): ApiHandlerContext => ({
+  requestId: 'test-request',
+  traceId: 'test-trace',
+  correlationId: 'test-correlation',
+  startTime: 0,
+  getElapsedMs: () => 0,
+  userId,
+});
 
 describe('products postHandler', () => {
   beforeEach(() => {
@@ -94,17 +104,15 @@ describe('products postHandler', () => {
         method: 'POST',
         body: formData,
       }),
-      {
-        userId: 'user-1',
-      } as ApiHandlerContext
+      createContext('user-1')
     );
 
     expect(validateProductCreateMiddlewareMock).toHaveBeenCalledTimes(1);
     expect(createProductMock).toHaveBeenCalledTimes(1);
-    const [submittedFormData, submittedOptions] = createProductMock.mock.calls[0] as [
+    const [submittedFormData, submittedOptions]: [
       FormData,
       { userId: string },
-    ];
+    ] = createProductMock.mock.calls[0];
     expect(submittedFormData.get('sku')).toBe('KEYCHA9999');
     expect(submittedFormData.getAll('catalogIds')).toEqual(['catalog-mentios']);
     expect(submittedOptions).toEqual({ userId: 'user-1' });

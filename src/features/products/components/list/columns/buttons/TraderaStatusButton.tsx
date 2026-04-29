@@ -20,13 +20,101 @@ import {
   resolveMarketplaceStatusWithLocalFeedback,
 } from '../product-column-utils';
 
-export function TraderaStatusButton(props: {
+type TraderaStatusButtonProps = {
   productId: string;
   status: string;
   prefetchListings: () => void;
   onOpenListings: (recoveryContext?: ProductListingsRecoveryContext) => void;
   customFieldValues?: unknown;
-}): React.JSX.Element {
+};
+
+type PersistedTraderaQuickListFeedback = {
+  runId?: string | null;
+  requestId?: string | null;
+  integrationId?: string | null;
+  connectionId?: string | null;
+};
+
+type TraderaRecoveryIdentifiers = {
+  runId: string | null;
+  requestId: string | null;
+  integrationId: string | null;
+  connectionId: string | null;
+};
+
+const DISABLED_TRADERA_STATUS_CLASS =
+  'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500';
+
+const DISABLED_TRADERA_STATUS_INTERACTION_CLASS =
+  'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40';
+
+const EMPTY_TRADERA_RECOVERY_IDENTIFIERS: TraderaRecoveryIdentifiers = {
+  runId: null,
+  requestId: null,
+  integrationId: null,
+  connectionId: null,
+};
+
+const resolveTraderaStatusLabel = ({
+  disableStatusAction,
+  isEffectiveFailureState,
+  effectiveStatus,
+}: {
+  disableStatusAction: boolean;
+  isEffectiveFailureState: boolean;
+  effectiveStatus: string;
+}): string => {
+  if (disableStatusAction) return `Tradera listing disabled (${effectiveStatus}).`;
+  if (isEffectiveFailureState) return `Open Tradera recovery options (${effectiveStatus}).`;
+  return `Manage Tradera listing (${effectiveStatus}).`;
+};
+
+const resolveTraderaStatusTitle = ({
+  isTraderaMarketplaceExcluded,
+  label,
+}: {
+  isTraderaMarketplaceExcluded: boolean;
+  label: string;
+}): string => {
+  if (isTraderaMarketplaceExcluded) {
+    return 'Tradera listing is disabled because Market Exclusion -> Tradera is checked.';
+  }
+  return label;
+};
+
+const resolveTraderaStatusToneClass = (
+  disableStatusAction: boolean,
+  effectiveStatus: string
+): string => {
+  if (disableStatusAction) return DISABLED_TRADERA_STATUS_CLASS;
+  return getMarketplaceButtonClass(effectiveStatus, true, 'tradera');
+};
+
+const resolveTraderaRecoveryIdentifiers = (
+  persistedFeedback: PersistedTraderaQuickListFeedback | null | undefined
+): TraderaRecoveryIdentifiers => {
+  if (!persistedFeedback) return EMPTY_TRADERA_RECOVERY_IDENTIFIERS;
+  return {
+    runId: persistedFeedback.runId ?? null,
+    requestId: persistedFeedback.requestId ?? null,
+    integrationId: persistedFeedback.integrationId ?? null,
+    connectionId: persistedFeedback.connectionId ?? null,
+  };
+};
+
+const createEffectiveRecoveryContext = (
+  effectiveStatus: string,
+  persistedFeedback: PersistedTraderaQuickListFeedback | null | undefined
+): ProductListingsRecoveryContext | undefined => {
+  if (!FAILURE_STATUSES.has(effectiveStatus)) return undefined;
+  const identifiers = resolveTraderaRecoveryIdentifiers(persistedFeedback);
+  return createTraderaRecoveryContext({
+    status: effectiveStatus,
+    ...identifiers,
+  });
+};
+
+export function TraderaStatusButton(props: TraderaStatusButtonProps): React.JSX.Element {
   const { productId, status, prefetchListings, onOpenListings, customFieldValues } = props;
   const customFieldsQuery = useCustomFields();
   const normalizedStatus = normalizeMarketplaceStatus(status);
@@ -35,31 +123,21 @@ export function TraderaStatusButton(props: {
     serverStatus: normalizedStatus,
     localFeedbackStatus: persistedFeedback?.status ?? null,
   });
-  const isEndedStatus = effectiveStatus === 'ended';
   const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
     customFieldDefinitions: customFieldsQuery.data,
     customFieldValues,
     marketplaceLabelOrAlias: 'Tradera',
   });
   const isEffectiveFailureState = FAILURE_STATUSES.has(effectiveStatus);
-  const recoveryContext: ProductListingsRecoveryContext | undefined = isEffectiveFailureState
-    ? createTraderaRecoveryContext({
-        status: effectiveStatus,
-        runId: persistedFeedback?.runId ?? null,
-        requestId: persistedFeedback?.requestId ?? null,
-        integrationId: persistedFeedback?.integrationId ?? null,
-        connectionId: persistedFeedback?.connectionId ?? null,
-      })
-    : undefined;
-  const disableStatusAction = isTraderaMarketplaceExcluded || isEndedStatus;
-  const label = disableStatusAction
-    ? `Tradera listing disabled (${effectiveStatus}).`
-    : isEffectiveFailureState
-      ? `Open Tradera recovery options (${effectiveStatus}).`
-      : `Manage Tradera listing (${effectiveStatus}).`;
-  const resolvedToneClass = disableStatusAction
-    ? 'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500'
-    : getMarketplaceButtonClass(effectiveStatus, true, 'tradera');
+  const recoveryContext = createEffectiveRecoveryContext(effectiveStatus, persistedFeedback);
+  const disableStatusAction = isTraderaMarketplaceExcluded;
+  const label = resolveTraderaStatusLabel({
+    disableStatusAction,
+    isEffectiveFailureState,
+    effectiveStatus,
+  });
+  const title = resolveTraderaStatusTitle({ isTraderaMarketplaceExcluded, label });
+  const resolvedToneClass = resolveTraderaStatusToneClass(disableStatusAction, effectiveStatus);
 
   return (
     <Button
@@ -76,18 +154,11 @@ export function TraderaStatusButton(props: {
       size='icon'
       disabled={disableStatusAction}
       aria-label={label}
-      title={
-        isTraderaMarketplaceExcluded
-          ? 'Tradera listing is disabled because Market Exclusion -> Tradera is checked.'
-          : isEndedStatus
-            ? 'Tradera listing is disabled because the latest listing status is ended.'
-            : label
-      }
+      title={title}
       className={cn(
         'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
         resolvedToneClass,
-        disableStatusAction &&
-          'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40'
+        disableStatusAction && DISABLED_TRADERA_STATUS_INTERACTION_CLASS
       )}
     >
       <span

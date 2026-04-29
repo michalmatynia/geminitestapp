@@ -14,7 +14,6 @@ import type {
   MongoFilemakerPerson,
   MongoFilemakerPersonOrganizationLink,
 } from '../../pages/AdminFilemakerPersonsPage.types';
-import { formatFilemakerAddress } from '../../settings';
 import { FilemakerLinkedEmailsField } from '../shared/FilemakerLinkedEmailsField';
 
 const isMongoFilemakerPerson = (value: unknown): value is MongoFilemakerPerson => {
@@ -50,39 +49,6 @@ function PersonLinkedOrganizationsField(): React.JSX.Element | null {
                   {label}
                 </Badge>
               </a>
-            );
-          })
-        )}
-      </div>
-    </FormField>
-  );
-}
-
-function PersonLinkedAddressesField(): React.JSX.Element {
-  const { editableAddresses } = useAdminFilemakerPersonEditPageStateContext();
-  const resolveAddressLabel = (address: (typeof editableAddresses)[number]): string => {
-    const formattedAddress = formatFilemakerAddress(address);
-    if (formattedAddress.length > 0) return formattedAddress;
-    const legacyUuid = address.legacyUuid?.trim() ?? '';
-    if (legacyUuid.length > 0) return legacyUuid;
-    return address.addressId;
-  };
-  return (
-    <FormField label='Linked Addresses' className='md:col-span-2'>
-      <div className='flex min-h-10 flex-wrap items-center gap-2 rounded-md border border-border bg-background px-3 py-2'>
-        {editableAddresses.length === 0 ? (
-          <span className='text-xs text-muted-foreground'>No linked addresses.</span>
-        ) : (
-          editableAddresses.map((address) => {
-            const label = resolveAddressLabel(address);
-            return (
-              <Badge
-                key={address.addressId}
-                variant={address.isDefault ? 'default' : 'outline'}
-                className='max-w-96 truncate text-[10px]'
-              >
-                {address.isDefault ? `Default: ${label}` : label}
-              </Badge>
             );
           })
         )}
@@ -127,7 +93,6 @@ export function PersonBasicInfoSection(): React.JSX.Element {
            aria-label='Business Registry Number' title='Business Registry Number'/>
         </FormField>
         <FilemakerLinkedEmailsField emails={emails} className='md:col-span-2' />
-        <PersonLinkedAddressesField />
         <PersonLinkedOrganizationsField />
       </div>
     </FormSection>

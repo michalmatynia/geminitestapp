@@ -7,6 +7,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 
 import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../types';
+import { resolveJobBoardOriginLabel } from '../job-board-origin';
 import { parseFilemakerDatabase } from '../settings';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
 import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
@@ -71,9 +72,21 @@ const ORGANIZATION_LIST_PROJECTION = {
   displayBankAccountId: 1,
   establishedDate: 1,
   id: 1,
+  jobBoardCompanyAddress: 1,
+  jobBoardCompanyEmail: 1,
+  jobBoardCompanyIndustry: 1,
+  jobBoardCompanyLogoUrl: 1,
+  jobBoardCompanyPhone: 1,
   jobBoardCompanyProfile: 1,
   jobBoardCompanyProfileScrapedAt: 1,
   jobBoardCompanyProfileUrl: 1,
+  jobBoardCompanyRegion: 1,
+  jobBoardCompanySize: 1,
+  jobBoardCompanyWebsiteUrl: 1,
+  jobBoardScrapedAt: 1,
+  jobBoardSourceLabel: 1,
+  jobBoardSourceSite: 1,
+  jobBoardSourceUrl: 1,
   krs: 1,
   legacyDefaultAddressUuid: 1,
   legacyDefaultBankAccountUuid: 1,
@@ -84,6 +97,7 @@ const ORGANIZATION_LIST_PROJECTION = {
   name: 1,
   parentOrganizationId: 1,
   postalCode: 1,
+  regon: 1,
   street: 1,
   streetNumber: 1,
   taxId: 1,
@@ -167,6 +181,19 @@ const buildOrganizationFilter = (input: {
         { tradingName: regex },
         { taxId: regex },
         { krs: regex },
+        { regon: regex },
+        { jobBoardCompanyWebsiteUrl: regex },
+        { jobBoardCompanyEmail: regex },
+        { jobBoardCompanyPhone: regex },
+        { jobBoardCompanyIndustry: regex },
+        { jobBoardCompanySize: regex },
+        { jobBoardCompanyAddress: regex },
+        { jobBoardCompanyRegion: regex },
+        { jobBoardCompanyProfileUrl: regex },
+        { jobBoardCompanyProfile: regex },
+        { jobBoardSourceLabel: regex },
+        { jobBoardSourceSite: regex },
+        { jobBoardSourceUrl: regex },
         { city: regex },
         { street: regex },
         { streetNumber: regex },
@@ -320,7 +347,33 @@ const buildListResult = (input: {
   totalCount: number;
   totalCountIsExact: boolean;
   totalPages: number;
-}): FilemakerOrganizationsListResult => ({
+}): FilemakerOrganizationsListResult => {
+  const organizations = input.documents.map(toFilemakerOrganization).map(
+    (organization: FilemakerOrganization): FilemakerOrganization => {
+      if (
+        (organization.jobBoardSourceSite ?? '').trim().length > 0 ||
+        (organization.jobBoardSourceUrl ?? '').trim().length > 0
+      ) {
+        return organization;
+      }
+      const listing = (input.linkedJobListingsByOrganizationId[organization.id] ?? []).find(
+        (candidate: FilemakerJobListing): boolean =>
+          (candidate.sourceSite ?? '').trim().length > 0 ||
+          (candidate.sourceUrl ?? '').trim().length > 0
+      );
+      if (listing === undefined) return organization;
+      return {
+        ...organization,
+        jobBoardSourceLabel: resolveJobBoardOriginLabel({
+          sourceSite: listing.sourceSite,
+          sourceUrl: listing.sourceUrl,
+        }),
+        jobBoardSourceSite: listing.sourceSite,
+        jobBoardSourceUrl: listing.sourceUrl,
+      };
+    }
+  );
+  return {
   collectionCount: input.collectionCount,
   filters: {
     address: input.options.addressFilter,
@@ -332,7 +385,7 @@ const buildListResult = (input: {
   limit: input.options.pageSize,
   linkedEventsByOrganizationId: input.linkedEventsByOrganizationId,
   linkedJobListingsByOrganizationId: input.linkedJobListingsByOrganizationId,
-  organizations: input.documents.map(toFilemakerOrganization),
+  organizations,
   page: input.page,
   pageSize: input.options.pageSize,
   query: input.options.query,
@@ -340,7 +393,8 @@ const buildListResult = (input: {
   totalCount: input.totalCount,
   totalCountIsExact: input.totalCountIsExact,
   totalPages: input.totalPages,
-});
+  };
+};
 
 const buildRelationCountSortPipeline = async (input: {
   filter: Filter<FilemakerOrganizationMongoDocument>;
@@ -607,9 +661,25 @@ const buildMongoFilemakerOrganizationUpdate = (
     country: patch.country ?? '',
     countryId: patch.countryId ?? '',
     establishedDate: patch.establishedDate,
+    jobBoardCompanyAddress: patch.jobBoardCompanyAddress,
+    jobBoardCompanyEmail: patch.jobBoardCompanyEmail,
+    jobBoardCompanyIndustry: patch.jobBoardCompanyIndustry,
+    jobBoardCompanyLogoUrl: patch.jobBoardCompanyLogoUrl,
+    jobBoardCompanyPhone: patch.jobBoardCompanyPhone,
+    jobBoardCompanyProfile: patch.jobBoardCompanyProfile,
+    jobBoardCompanyProfileScrapedAt: patch.jobBoardCompanyProfileScrapedAt,
+    jobBoardCompanyProfileUrl: patch.jobBoardCompanyProfileUrl,
+    jobBoardCompanyRegion: patch.jobBoardCompanyRegion,
+    jobBoardCompanySize: patch.jobBoardCompanySize,
+    jobBoardCompanyWebsiteUrl: patch.jobBoardCompanyWebsiteUrl,
+    jobBoardScrapedAt: patch.jobBoardScrapedAt,
+    jobBoardSourceLabel: patch.jobBoardSourceLabel,
+    jobBoardSourceSite: patch.jobBoardSourceSite,
+    jobBoardSourceUrl: patch.jobBoardSourceUrl,
     krs: patch.krs,
     name: patch.name ?? existing.name,
     postalCode: patch.postalCode ?? '',
+    regon: patch.regon,
     street: patch.street ?? '',
     streetNumber: patch.streetNumber ?? '',
     taxId: patch.taxId,

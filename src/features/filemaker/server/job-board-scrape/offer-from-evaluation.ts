@@ -93,14 +93,26 @@ const COMPANY_NAME_FACT_KEYS = [
 ] as const;
 
 const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
+  'company',
   'company profile',
   'employer profile',
+  'employer',
   'employers',
+  'firma',
+  'hiring organization',
   'informacje i opinie o pracodawcach',
+  'jobs',
+  'nazwa firmy',
   'odkrywaj najlepsze miejsca pracy',
+  'oferty pracy',
+  'organization',
+  'organisation',
+  'praca',
   'pracodawca',
   'pracodawcy',
+  'profil pracodawcow',
   'profile pracodawcow',
+  'profile pracodawcy',
   'profil pracodawcy',
 ]);
 
@@ -118,6 +130,8 @@ const isGenericJobBoardCompanyName = (value: string): boolean => {
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
     key.startsWith('odkrywaj najlepsze miejsca pracy') ||
+    key.startsWith('pracodawca ') ||
+    key.startsWith('pracodawcy ') ||
     key.startsWith('profile pracodawcow')
   );
 };
@@ -303,14 +317,27 @@ const JOB_RESPONSIBILITY_HEADING_RE =
   /^(tw[oó]j zakres obowi[aą]zk[oó]w|zakres obowi[aą]zk[oó]w|responsibilities|your responsibilities|role responsibilities)\s*/iu;
 
 const SOCIAL_COMPANY_URL_HOSTS = [
+  'ashbyhq.com',
+  'breezy.hr',
+  'erecruiter.pl',
   'facebook.com',
+  'greenhouse.io',
   'github.com',
   'gitlab.com',
   'instagram.com',
+  'justjoin.it',
+  'lever.co',
   'linkedin.com',
   'medium.com',
+  'nofluffjobs.com',
+  'nofluffjobs.pl',
+  'pracuj.pl',
+  'smartrecruiters.com',
+  'teamtailor.com',
   'tiktok.com',
+  'traffit.com',
   'twitter.com',
+  'workable.com',
   'x.com',
   'youtube.com',
   'youtu.be',
@@ -376,6 +403,13 @@ const GENERIC_EMPLOYER_DIRECTORY_PATTERNS = [
 export const isSuspiciousJobBoardCompanyName = (value: unknown): boolean => {
   const normalized = normalizeProfileValue(value);
   if (normalized.length === 0) return true;
+  const compactAlphaNumeric = normalized.replace(/[^\p{L}0-9]+/gu, '');
+  if (
+    /^[\p{L}]{1,2}$/u.test(compactAlphaNumeric) &&
+    normalized !== normalized.toLocaleUpperCase()
+  ) {
+    return true;
+  }
   const key = normalizeLexiconKey(normalized);
   if (isGenericJobBoardCompanyName(normalized)) return true;
   if (GENERIC_EMPLOYER_DIRECTORY_PATTERNS.some((pattern) => pattern.test(key))) {
@@ -602,6 +636,8 @@ const companyNameFromPracujProfileUrl = (value: string | null | undefined): stri
       'pracodawca',
       'pracodawcy',
       'profil pracodawcy',
+      'profil pracodawcow',
+      'profile pracodawcy',
       'profile pracodawcow',
     ]);
     const employerIndex = parts.findIndex((part: string): boolean =>
@@ -616,6 +652,51 @@ const companyNameFromPracujProfileUrl = (value: string | null | undefined): stri
       .trim();
     if (normalized.length < 3 || isSuspiciousJobBoardCompanyName(normalized)) return null;
     return normalized.replace(/\b[^\s]/gu, (letter: string): string => letter.toUpperCase());
+  } catch {
+    return null;
+  }
+};
+
+const JOB_BOARD_COMPANY_IDENTITY_HOSTS = [
+  'ashbyhq.com',
+  'breezy.hr',
+  'erecruiter.pl',
+  'facebook.com',
+  'greenhouse.io',
+  'github.com',
+  'gitlab.com',
+  'instagram.com',
+  'justjoin.it',
+  'lever.co',
+  'linkedin.com',
+  'medium.com',
+  'nofluffjobs.com',
+  'nofluffjobs.pl',
+  'pracuj.pl',
+  'smartrecruiters.com',
+  'teamtailor.com',
+  'tiktok.com',
+  'traffit.com',
+  'twitter.com',
+  'workable.com',
+  'x.com',
+  'youtube.com',
+  'youtu.be',
+] as const;
+
+const isKnownJobBoardCompanyHost = (hostname: string): boolean =>
+  JOB_BOARD_COMPANY_IDENTITY_HOSTS.some(
+    (host: string): boolean => hostname === host || hostname.endsWith(`.${host}`)
+  );
+
+const companyNameFromCompanyWebsiteUrl = (value: string | null | undefined): string | null => {
+  const normalized = normalizeCompanyUrl(value);
+  if (normalized === null) return null;
+  try {
+    const url = new URL(normalized);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
+    if (hostname.length === 0 || isKnownJobBoardCompanyHost(hostname)) return null;
+    return hostname;
   } catch {
     return null;
   }
@@ -680,16 +761,25 @@ const companyNameFromSnapshotCompanyProfile = (
 
 const firstSnapshotWebsite = (
   snapshot: JobBoardStructuredSnapshot | null | undefined
-): string | null =>
-  recordFirstNullableString(
-    {
-      website: snapshot?.companyProfile?.websiteUrls?.[0],
-      companyLink: snapshot?.companyLinks?.[0],
-      jsonLdUrl: firstJsonLdOrganizationValue(snapshot, ['url', 'sameAs']),
-      textWebsite: firstSnapshotTextProfileValue(snapshot, 'website'),
-    },
-    ['website', 'companyLink', 'jsonLdUrl', 'textWebsite']
-  );
+): string | null => {
+  const candidates = [
+    ...(snapshot?.companyProfile?.websiteUrls ?? []),
+    ...(snapshot?.companyLinks ?? []),
+    firstJsonLdOrganizationValue(snapshot, ['url', 'sameAs']),
+    firstSnapshotTextProfileValue(snapshot, 'website'),
+  ];
+  for (const candidate of candidates) {
+    const normalized = normalizeCompanyUrl(candidate);
+    if (
+      normalized !== null &&
+      companyNameFromPracujProfileUrl(normalized) === null &&
+      !isSocialCompanyUrl(normalized)
+    ) {
+      return normalized;
+    }
+  }
+  return null;
+};
 
 const flattenJsonLdRecords = (value: unknown): Array<Record<string, unknown>> => {
   if (Array.isArray(value)) {
@@ -1018,6 +1108,70 @@ const companyAddressCandidates = (input: {
     jsonLdJobLocationAddress(input.snapshot) ?? '',
   ]);
 
+type ScrapedCompanyInformation = Pick<
+  FilemakerJobBoardScrapedOffer,
+  | 'companyAddress'
+  | 'companyCity'
+  | 'companyCountry'
+  | 'companyEmail'
+  | 'companyIndustry'
+  | 'companyKrs'
+  | 'companyLogoUrl'
+  | 'companyPhone'
+  | 'companyPostalCode'
+  | 'companyRegion'
+  | 'companyRegon'
+  | 'companySize'
+  | 'companyTaxId'
+  | 'companyWebsiteUrl'
+>;
+
+const companyProfileFieldValue = (
+  input: {
+    company: Record<string, unknown> | null;
+    snapshot?: JobBoardStructuredSnapshot | null;
+  },
+  key: (typeof COMPANY_PROFILE_FIELDS)[number]['key']
+): string | null => {
+  const field = COMPANY_PROFILE_FIELDS.find((entry): boolean => entry.key === key);
+  if (field === undefined) return null;
+  return (
+    recordFirstNullableString(input.company, [field.key]) ??
+    firstJsonLdOrganizationValue(input.snapshot, field.jsonLdKeys) ??
+    snapshotFactValue(input.snapshot, field.factKeywords) ??
+    firstSnapshotTextProfileValue(input.snapshot, field.key)
+  );
+};
+
+const companyInformationFromSources = (input: {
+  company: Record<string, unknown> | null;
+  listing: Record<string, unknown> | null;
+  snapshot?: JobBoardStructuredSnapshot | null;
+}): ScrapedCompanyInformation => {
+  const explicitWebsite = normalizeCompanyUrl(companyProfileFieldValue(input, 'website'));
+  const website =
+    explicitWebsite !== null && companyNameFromPracujProfileUrl(explicitWebsite) === null
+      ? explicitWebsite
+      : normalizeCompanyUrl(firstSnapshotWebsite(input.snapshot));
+  const logoUrl = normalizeCompanyUrl(companyProfileFieldValue(input, 'logoUrl'));
+  return {
+    companyAddress: companyAddressCandidates(input)[0] ?? '',
+    companyCity: recordFirstNullableString(input.company, COMPANY_CITY_KEYS) ?? '',
+    companyCountry: recordFirstNullableString(input.company, COMPANY_COUNTRY_KEYS) ?? '',
+    companyEmail: companyProfileFieldValue(input, 'email'),
+    companyIndustry: companyProfileFieldValue(input, 'industry') ?? '',
+    companyKrs: companyProfileFieldValue(input, 'krs') ?? '',
+    companyLogoUrl: logoUrl,
+    companyPhone: companyProfileFieldValue(input, 'phone'),
+    companyPostalCode: recordFirstNullableString(input.company, COMPANY_POSTAL_KEYS) ?? '',
+    companyRegion: recordFirstNullableString(input.company, COMPANY_REGION_KEYS) ?? '',
+    companyRegon: companyProfileFieldValue(input, 'regon') ?? '',
+    companySize: companyProfileFieldValue(input, 'size') ?? '',
+    companyTaxId: companyProfileFieldValue(input, 'nip') ?? '',
+    companyWebsiteUrl: website,
+  };
+};
+
 const profileLinesFromCompany = (input: {
   company: Record<string, unknown> | null;
   listing: Record<string, unknown> | null;
@@ -1035,10 +1189,7 @@ const profileLinesFromCompany = (input: {
     addProfileLine(
       lines,
       field.label,
-      recordFirstNullableString(input.company, [field.key]) ??
-        firstJsonLdOrganizationValue(input.snapshot, field.jsonLdKeys) ??
-        snapshotFactValue(input.snapshot, field.factKeywords) ??
-        firstSnapshotTextProfileValue(input.snapshot, field.key)
+      companyProfileFieldValue(input, field.key)
     );
   });
   const website = firstSnapshotWebsite(input.snapshot);
@@ -1774,7 +1925,16 @@ export const offerFromEvaluation = (input: {
   const company = asRecord(evaluation?.company);
   const sourceUrl = normalizeJobBoardSourceUrl(input.finalUrl);
   const { companyName, title } = identityFromSources({ company, listing, snapshot: input.snapshot });
-  if (sourceUrl === null || title.length === 0 || companyName.length === 0) return null;
+  const companyInformation = companyInformationFromSources({ company, listing, snapshot: input.snapshot });
+  const companyProfileUrl =
+    recordFirstNullableString(company, ['profileUrl']) ?? firstSnapshotCompanyUrl(input.snapshot);
+  const resolvedCompanyName =
+    companyName.length > 0
+      ? companyName
+      : companyNameFromPracujProfileUrl(companyProfileUrl) ??
+        companyNameFromCompanyWebsiteUrl(companyProfileUrl) ??
+        companyNameFromCompanyWebsiteUrl(companyInformation.companyWebsiteUrl);
+  if (sourceUrl === null || title.length === 0 || resolvedCompanyName === null) return null;
   const salary = salaryFromSources({ extractSalaries: input.options.extractSalaries, listing, snapshot: input.snapshot });
   const companyProfile = buildCompanyProfile({ company, listing, snapshot: input.snapshot });
   const dates = dateRangeFromSources({ listing, snapshot: input.snapshot });
@@ -1787,10 +1947,10 @@ export const offerFromEvaluation = (input: {
     validationPatterns: input.validationPatterns,
   });
   return {
-    companyName,
+    companyName: resolvedCompanyName,
     companyProfile,
-    companyProfileUrl:
-      recordFirstNullableString(company, ['profileUrl']) ?? firstSnapshotCompanyUrl(input.snapshot),
+    companyProfileUrl,
+    ...companyInformation,
     description: offerDescriptionFromSources({
       extractDescriptions: input.options.extractDescriptions,
       listing,

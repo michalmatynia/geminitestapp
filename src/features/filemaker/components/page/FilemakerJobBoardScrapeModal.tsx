@@ -51,6 +51,7 @@ import {
 } from '../../pages/AdminFilemakerLexiconPage.type-metadata';
 import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../../settings';
 import type { FilemakerDatabase, FilemakerLexiconTerm } from '../../types';
+import { JobBoardOriginBadge } from '../shared/JobBoardOriginBadge';
 import { useJobBoardScrapeBrowserModeSetting } from './useJobBoardScrapeBrowserModeSetting';
 
 type FilemakerJobBoardScrapeModalProps = {
@@ -533,11 +534,17 @@ function ScrapedOfferMetadata(props: {
   const postedAt = props.offer.postedAt?.trim() ?? '';
   const expiresAt = props.offer.expiresAt?.trim() ?? '';
   const companyProfileUrl = props.offer.companyProfileUrl?.trim() ?? '';
+  const companyWebsiteUrl = props.offer.companyWebsiteUrl?.trim() ?? '';
+  const companyEmail = props.offer.companyEmail?.trim() ?? '';
+  const companyPhone = props.offer.companyPhone?.trim() ?? '';
   const sourceUrl = props.offer.sourceUrl.trim();
   const hasMetadata =
     postedAt.length > 0 ||
     expiresAt.length > 0 ||
     companyProfileUrl.length > 0 ||
+    companyWebsiteUrl.length > 0 ||
+    companyEmail.length > 0 ||
+    companyPhone.length > 0 ||
     sourceUrl.length > 0;
   if (!hasMetadata) return null;
   return (
@@ -551,6 +558,15 @@ function ScrapedOfferMetadata(props: {
           </a>
         </Badge>
       ) : null}
+      {companyWebsiteUrl.length > 0 ? (
+        <Badge variant='outline'>
+          <a href={companyWebsiteUrl} target='_blank' rel='noreferrer' className='hover:underline'>
+            Website
+          </a>
+        </Badge>
+      ) : null}
+      {companyEmail.length > 0 ? <Badge variant='outline'>Email: {companyEmail}</Badge> : null}
+      {companyPhone.length > 0 ? <Badge variant='outline'>Phone: {companyPhone}</Badge> : null}
       {sourceUrl.length > 0 ? (
         <Badge variant='outline'>
           <a href={sourceUrl} target='_blank' rel='noreferrer' className='hover:underline'>
@@ -862,7 +878,23 @@ const normalizeOfferResult = (value: unknown): FilemakerJobBoardScrapeOfferResul
       companyName: readString(offer['companyName']),
       companyProfile: readString(offer['companyProfile']),
       companyProfileUrl: readNullableString(offer['companyProfileUrl']),
+      companyWebsiteUrl: readNullableString(offer['companyWebsiteUrl']),
+      companyEmail: readNullableString(offer['companyEmail']),
+      companyPhone: readNullableString(offer['companyPhone']),
+      companyIndustry: readString(offer['companyIndustry']),
+      companySize: readString(offer['companySize']),
+      companyLogoUrl: readNullableString(offer['companyLogoUrl']),
+      companyTaxId: readString(offer['companyTaxId']),
+      companyKrs: readString(offer['companyKrs']),
+      companyRegon: readString(offer['companyRegon']),
+      companyAddress: readString(offer['companyAddress']),
+      companyCity: readString(offer['companyCity']),
+      companyRegion: readString(offer['companyRegion']),
+      companyPostalCode: readString(offer['companyPostalCode']),
+      companyCountry: readString(offer['companyCountry']),
       description: readString(offer['description']),
+      requirements: readString(offer['requirements']),
+      responsibilities: readString(offer['responsibilities']),
       expiresAt: readNullableString(offer['expiresAt']),
       location: readString(offer['location']),
       pills: normalizeOfferPills(offer['pills']),
@@ -2314,6 +2346,11 @@ export function FilemakerJobBoardScrapeModal(
                           <Badge variant={item.match ? 'success' : 'secondary'}>
                             {formatOfferStatus(item.status)}
                           </Badge>
+                          <JobBoardOriginBadge
+                            compact
+                            sourceSite={item.offer.sourceSite}
+                            sourceUrl={item.offer.sourceUrl}
+                          />
                           <ScrapedOfferClassifyTrigger
                             database={filemakerDatabase}
                             disabled={isRunning || isSavingPreviewDrafts || isSavingRuntimeSettings}
@@ -2340,7 +2377,6 @@ export function FilemakerJobBoardScrapeModal(
                       <div className='mt-1 text-xs text-muted-foreground'>
                         {item.offer.companyName}
                         {item.match ? ` -> ${item.match.organizationName}` : ''}
-                        {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
                       </div>
                       {item.reason !== null ? (
                         <div className='mt-1 text-xs text-muted-foreground'>{item.reason}</div>
@@ -2401,7 +2437,7 @@ export function FilemakerJobBoardScrapeModal(
           <div className='space-y-3 rounded-md border border-border/60 p-3'>
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='secondary'>{result.browserMode}</Badge>
-              <Badge variant='secondary'>{result.sourceSite}</Badge>
+              <JobBoardOriginBadge compact sourceSite={result.sourceSite} />
               <Badge variant='secondary'>{result.mode}</Badge>
               <Badge variant='secondary'>{result.summary.scrapedOffers} offers</Badge>
               <Badge variant='secondary'>{result.summary.matchedOffers} matched</Badge>
@@ -2426,6 +2462,11 @@ export function FilemakerJobBoardScrapeModal(
                       <Badge variant={item.match ? 'success' : 'secondary'}>
                         {formatOfferStatus(item.status)}
                       </Badge>
+                      <JobBoardOriginBadge
+                        compact
+                        sourceSite={item.offer.sourceSite}
+                        sourceUrl={item.offer.sourceUrl}
+                      />
                       <ScrapedOfferClassifyTrigger
                         database={filemakerDatabase}
                         disabled={isRunning || isSavingPreviewDrafts || isSavingRuntimeSettings}
@@ -2438,7 +2479,6 @@ export function FilemakerJobBoardScrapeModal(
                   <div className='mt-1 text-xs text-muted-foreground'>
                     {item.offer.companyName}
                     {item.match ? ` -> ${item.match.organizationName}` : ''}
-                    {item.offer.sourceSite.length > 0 ? ` · ${item.offer.sourceSite}` : ''}
                   </div>
                   {item.reason !== null ? (
                     <div className='mt-1 text-xs text-muted-foreground'>{item.reason}</div>

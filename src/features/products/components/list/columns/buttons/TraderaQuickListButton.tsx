@@ -1,380 +1,48 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { Check } from 'lucide-react';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 
-import {
-  integrationSelectionQueryKeys,
-  useCreateListingMutation,
-  createTraderaRecoveryContext,
-  ensureTraderaBrowserSession,
-  isTraderaBrowserAuthRequiredMessage,
-  preflightTraderaQuickListSession,
-} from '@/features/integrations/product-integrations-adapter';
-import type { ProductListingsRecoveryContext } from '@/shared/contracts/integrations/listings';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
-import { ApiError, api } from '@/shared/lib/api-client';
-import {
-  invalidateProductListingsAndBadges,
-  invalidateProducts,
-} from '@/shared/lib/query-invalidation';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import { hasProductMarketplaceExclusionSelection } from '@/shared/lib/products/utils/marketplace-exclusions';
 import { Button } from '@/shared/ui/button';
-import { useToast } from '@/shared/ui/toast';
-
 import { cn } from '@/shared/utils/ui-utils';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import {
-  FAILURE_STATUSES,
-  getMarketplaceButtonClass,
-  normalizeMarketplaceStatus,
-  resolveMarketplaceStatusWithLocalFeedback,
-} from '../product-column-utils';
+  useTraderaQuickListButtonModel,
+  type TraderaQuickListButtonProps,
+} from './useTraderaQuickListButtonModel';
 
-import {
-  useTraderaQuickExportConnection,
-  useTraderaQuickExportFeedback,
-  useTraderaQuickExportPolling,
-  type ResolvedTraderaQuickListContext,
-  type ResolvedTraderaBrowserConnection,
-} from '@/features/integrations/product-integrations-adapter';
-import { useCustomFields } from '@/features/products/hooks/useProductMetadataQueries';
-
-export function TraderaQuickListButton(props: {
-  product: ProductWithImages;
-  prefetchListings: () => void;
-  onOpenIntegrations?: ((recoveryContext?: ProductListingsRecoveryContext) => void) | undefined;
-  showTraderaBadge?: boolean;
-  traderaStatus?: string;
-}): React.JSX.Element | null {
-  const {
-    product,
-    prefetchListings,
-    onOpenIntegrations,
-    showTraderaBadge = false,
-    traderaStatus = 'not_started',
-  } = props;
-
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const customFieldsQuery = useCustomFields();
-  const createListingMutation = useCreateListingMutation(product.id);
-  const [submitting, setSubmitting] = useState(false);
-  const [showCheckmark, setShowCheckmark] = useState(false);
-  const [trackClosedQuickListAttempt, setTrackClosedQuickListAttempt] = useState(false);
-
-  const { resolveConnection, enableDefaultScriptedConnection } = useTraderaQuickExportConnection(product.id);
-  const normalizedServerTraderaStatus = normalizeMarketplaceStatus(traderaStatus);
-  const isClosedTraderaStatus = normalizedServerTraderaStatus === 'closed';
-  const quickListFeedbackStatus = isClosedTraderaStatus ? 'not_started' : traderaStatus;
-  const quickListFeedbackShowsAuthoritativeBadge = isClosedTraderaStatus
-    ? !trackClosedQuickListAttempt
-    : showTraderaBadge;
-  const {
-    localFeedback,
-    setFeedbackStatus,
-    hasServerStatus,
-    serverStatusInFlight,
-    normalizedTraderaStatus,
-  } = useTraderaQuickExportFeedback(
-    product.id,
-    quickListFeedbackStatus,
-    quickListFeedbackShowsAuthoritativeBadge
-  );
-  const effectiveLocalFeedback =
-    isClosedTraderaStatus && !trackClosedQuickListAttempt ? null : localFeedback;
-  const effectiveLocalFeedbackStatus = effectiveLocalFeedback?.status ?? null;
-  useTraderaQuickExportPolling(product.id, effectiveLocalFeedback, setFeedbackStatus);
-
-  const localFeedbackRef = useRef(effectiveLocalFeedback);
-  localFeedbackRef.current = effectiveLocalFeedback;
-  const isTraderaMarketplaceExcluded = hasProductMarketplaceExclusionSelection({
-    customFieldDefinitions: customFieldsQuery.data,
-    customFieldValues: product.customFields,
-    marketplaceLabelOrAlias: 'Tradera',
-  });
-
-  // Flash checkmark for 3s when status transitions to completed
-  useEffect(() => {
-    if (effectiveLocalFeedbackStatus === 'completed') {
-      setShowCheckmark(true);
-      const timerId = window.setTimeout(() => setShowCheckmark(false), 3000);
-      return () => {
-        window.clearTimeout(timerId);
-      };
-    }
-    setShowCheckmark(false);
-    return undefined;
-  }, [effectiveLocalFeedbackStatus]);
-
-  useEffect(() => {
-    if (!isClosedTraderaStatus) {
-      setTrackClosedQuickListAttempt(false);
-    }
-  }, [isClosedTraderaStatus]);
-
-  const handleClick = useCallback(async (): Promise<void> => {
-    if (submitting || effectiveLocalFeedbackStatus === 'queued') return;
-
-    if (isClosedTraderaStatus) {
-      setTrackClosedQuickListAttempt(true);
-    }
-    setSubmitting(true);
-    setFeedbackStatus('processing');
-    let attemptedRecoveryTarget:
-      | { integrationId: string; connectionId: string }
-      | undefined;
-
-    try {
-      const resolvedContext: ResolvedTraderaQuickListContext = await resolveConnection();
-      const resolvedConnection: ResolvedTraderaBrowserConnection | null =
-        resolvedContext.scriptedConnection ??
-        (await enableDefaultScriptedConnection(resolvedContext));
-      if (!resolvedConnection) {
-        setFeedbackStatus('failed');
-        toast(
-          'No Tradera browser connection configured for Quicklist. Add a Tradera browser connection first.',
-          { variant: 'error' }
-        );
-        onOpenIntegrations?.();
-        return;
-      }
-
-      const recoveryTarget = {
-        integrationId: resolvedConnection.integrationId,
-        connectionId: resolvedConnection.connection.id,
-      } as const;
-      attemptedRecoveryTarget = recoveryTarget;
-      setFeedbackStatus('processing', recoveryTarget);
-
-      const preflightResponse = await preflightTraderaQuickListSession({
-        integrationId: resolvedConnection.integrationId,
-        connectionId: resolvedConnection.connection.id,
-      });
-      if (!preflightResponse.ready) {
-        // Preflight failed — fall back to full manual session establishment
-        const manualSessionResponse = await ensureTraderaBrowserSession({
-          integrationId: resolvedConnection.integrationId,
-          connectionId: resolvedConnection.connection.id,
-        });
-        if (!manualSessionResponse.savedSession) {
-          setFeedbackStatus('failed', recoveryTarget);
-          toast(
-            'Tradera login session could not be saved. Complete login verification and retry.',
-            { variant: 'error' }
-          );
-          onOpenIntegrations?.(
-            createTraderaRecoveryContext({
-              status: 'auth_required',
-              runId: localFeedbackRef.current?.runId ?? null,
-              requestId: null,
-              integrationId: recoveryTarget.integrationId,
-              connectionId: recoveryTarget.connectionId,
-            })
-          );
-          return;
-        }
-        toast('Tradera login session refreshed.', { variant: 'success' });
-      }
-
-      const response = await createListingMutation.mutateAsync({
-        integrationId: resolvedConnection.integrationId,
-        connectionId: resolvedConnection.connection.id,
-      });
-
-      const listingId =
-        typeof response.id === 'string' && response.id.trim().length > 0
-          ? response.id.trim()
-          : null;
-      const queueJobId =
-        typeof response.queue?.jobId === 'string' &&
-        response.queue.jobId.trim().length > 0
-          ? response.queue.jobId.trim()
-          : null;
-      setFeedbackStatus('queued', {
-        ...recoveryTarget,
-        listingId,
-        requestId: queueJobId,
-      });
-      try {
-        await api.post(
-          '/api/v2/integrations/exports/tradera/default-connection',
-          { connectionId: resolvedConnection.connection.id }
-        );
-        queryClient.setQueryData(
-          normalizeQueryKey(
-            integrationSelectionQueryKeys.traderaDefaultConnection
-          ),
-          { connectionId: resolvedConnection.connection.id }
-        );
-      } catch (error: unknown) {
-        logClientCatch(error, {
-          source: 'TraderaQuickListButton',
-          action: 'persistPreferredConnection',
-          productId: product.id,
-          connectionId: resolvedConnection.connection.id,
-          level: 'warn',
-        });
-      }
-      toast(
-        queueJobId !== null
-          ? `Tradera listing queued (job ${queueJobId}).`
-          : 'Tradera listing queued.',
-        { variant: 'success' }
-      );
-      prefetchListings();
-      await invalidateProductListingsAndBadges(queryClient, product.id);
-      await invalidateProducts(queryClient);
-    } catch (error: unknown) {
-      if (
-        error instanceof ApiError &&
-        error.status === 409 &&
-        !isTraderaBrowserAuthRequiredMessage(error.message)
-      ) {
-        setFeedbackStatus(null);
-        const conflictMessage =
-          error.message.length > 0
-            ? error.message
-            : 'This product already has a Tradera listing on this account.';
-        toast(
-          conflictMessage,
-          { variant: 'error' }
-        );
-        onOpenIntegrations?.();
-        return;
-      }
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to queue Tradera listing.';
-      const authRequired = isTraderaBrowserAuthRequiredMessage(errorMessage);
-      setFeedbackStatus(
-        authRequired ? 'auth_required' : 'failed',
-        {
-          ...attemptedRecoveryTarget,
-          failureReason: authRequired ? null : errorMessage,
-        }
-      );
-      logClientCatch(error, {
-        source: 'TraderaQuickListButton',
-        action: 'quickList',
-        productId: product.id,
-      });
-      toast(errorMessage, { variant: 'error' });
-      if (authRequired && onOpenIntegrations && attemptedRecoveryTarget) {
-        onOpenIntegrations(
-          createTraderaRecoveryContext({
-            status: 'auth_required',
-            runId: localFeedbackRef.current?.runId ?? null,
-            requestId: localFeedbackRef.current?.requestId ?? null,
-            integrationId: attemptedRecoveryTarget.integrationId,
-            connectionId: attemptedRecoveryTarget.connectionId,
-          })
-        );
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  }, [
-    createListingMutation,
-    effectiveLocalFeedbackStatus,
-    enableDefaultScriptedConnection,
-    isClosedTraderaStatus,
-    onOpenIntegrations,
-    prefetchListings,
-    product.id,
-    queryClient,
-    resolveConnection,
-    setFeedbackStatus,
-    submitting,
-    toast,
-  ]);
-
-  if (showTraderaBadge && !isClosedTraderaStatus) {
-    return null;
-  }
-
-  const resolvedButtonStatus = resolveMarketplaceStatusWithLocalFeedback({
-    serverStatus: normalizedTraderaStatus,
-    localFeedbackStatus: effectiveLocalFeedbackStatus,
-    submitting,
-  });
-  const shouldUseFilledMarketplaceTone =
-    hasServerStatus || effectiveLocalFeedbackStatus !== null;
-  const isFailureState = FAILURE_STATUSES.has(
-    normalizeMarketplaceStatus(resolvedButtonStatus)
-  );
-  const isProcessingOrQueued =
-    resolvedButtonStatus === 'processing' || resolvedButtonStatus === 'queued';
-  const recoveryContext: ProductListingsRecoveryContext | undefined =
-    isFailureState
-      ? createTraderaRecoveryContext({
-          status: resolvedButtonStatus,
-          runId: effectiveLocalFeedback?.runId ?? null,
-          failureReason: effectiveLocalFeedback?.failureReason ?? null,
-          requestId: effectiveLocalFeedback?.requestId ?? null,
-          integrationId: effectiveLocalFeedback?.integrationId ?? null,
-          connectionId: effectiveLocalFeedback?.connectionId ?? null,
-        })
-      : undefined;
-  let resolvedLabel = 'One-click export to Tradera';
-  if (isTraderaMarketplaceExcluded) {
-    resolvedLabel = 'Tradera quick export disabled by Market Exclusion';
-  } else if (isFailureState) {
-    resolvedLabel = `Open Tradera recovery options (${resolvedButtonStatus}).`;
-  }
-  const disableQuickListAction =
-    isTraderaMarketplaceExcluded ||
-    (!isFailureState &&
-      (submitting || effectiveLocalFeedbackStatus === 'queued' || serverStatusInFlight));
-  const shouldPrefetchListings = !disableQuickListAction;
-  const resolvedToneClass = isTraderaMarketplaceExcluded
-    ? 'border-slate-700/35 bg-slate-950/40 text-slate-500 hover:border-slate-700/35 hover:bg-slate-950/40 hover:text-slate-500'
-    : getMarketplaceButtonClass(
-        resolvedButtonStatus,
-        shouldUseFilledMarketplaceTone,
-        'tradera'
-      );
+export function TraderaQuickListButton(
+  props: TraderaQuickListButtonProps
+): React.JSX.Element | null {
+  const model = useTraderaQuickListButtonModel(props);
+  if (!model.shouldRender) return null;
 
   return (
     <Button
       type='button'
       onClick={() => {
-        if (isTraderaMarketplaceExcluded) {
+        if (model.isTraderaMarketplaceExcluded) return;
+        if (model.isFailureState && props.onOpenIntegrations) {
+          props.onOpenIntegrations(model.recoveryContext);
           return;
         }
-        if (isFailureState && onOpenIntegrations) {
-          onOpenIntegrations(recoveryContext);
-          return;
-        }
-        handleClick().catch(() => undefined);
+        model.handleClick();
       }}
-      onMouseEnter={shouldPrefetchListings ? prefetchListings : undefined}
-      onFocus={shouldPrefetchListings ? prefetchListings : undefined}
+      onMouseEnter={model.shouldPrefetchListings ? model.prefetchListings : undefined}
+      onFocus={model.shouldPrefetchListings ? model.prefetchListings : undefined}
       variant='ghost'
       size='icon'
-      disabled={disableQuickListAction}
-      aria-label={resolvedLabel}
-      title={
-        isTraderaMarketplaceExcluded
-          ? 'Tradera quick export is disabled because Market Exclusion -> Tradera is checked.'
-          : `${resolvedLabel} (${resolvedButtonStatus}${
-              traderaStatus.length > 0 && !isClosedTraderaStatus ? ` / ${traderaStatus}` : ''
-            })`
-      }
+      disabled={model.disableQuickListAction}
+      aria-label={model.resolvedLabel}
+      title={model.title}
       className={cn(
         'relative size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
-        isProcessingOrQueued && 'animate-pulse',
-        resolvedToneClass,
-        isTraderaMarketplaceExcluded
-          ? 'cursor-not-allowed disabled:border-slate-700/35 disabled:bg-slate-950/40 disabled:text-slate-500 disabled:opacity-40'
-          : disableQuickListAction && 'cursor-not-allowed opacity-60'
+        model.isProcessingOrQueued && 'animate-pulse',
+        model.resolvedToneClass,
+        model.disabledInteractionClass
       )}
     >
-      {showCheckmark ? (
+      {model.showCheckmark ? (
         <Check className='h-3 w-3' aria-hidden='true' />
       ) : (
         <span
@@ -384,7 +52,7 @@ export function TraderaQuickListButton(props: {
           T+
         </span>
       )}
-      {isFailureState ? (
+      {model.isFailureState ? (
         <span
           aria-hidden='true'
           className='absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-rose-500'

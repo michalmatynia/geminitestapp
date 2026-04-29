@@ -2899,7 +2899,15 @@ describe('runFilemakerJobBoardScrape', () => {
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
     expect(persisted.organizations[0]).toMatchObject({
       name: 'New Employer',
+      city: 'Warszawa',
+      country: 'Poland',
+      jobBoardCompanyAddress: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
+      jobBoardCompanySize: '201-500',
+      jobBoardCompanyWebsiteUrl: 'https://new-employer.example',
       jobBoardCompanyProfileUrl: 'https://www.pracuj.pl/pracodawcy/new-employer,123',
+      postalCode: '02-673',
+      street: 'Konstruktorska',
+      streetNumber: '12A',
     });
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Description: New Employer builds digital products for enterprise clients.'

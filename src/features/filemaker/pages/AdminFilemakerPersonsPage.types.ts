@@ -9,6 +9,15 @@ import type { FilemakerPerson } from '../types';
 export type PersonAddressFilter = 'all' | 'with_address' | 'without_address';
 export type PersonBankFilter = 'all' | 'with_bank' | 'without_bank';
 export type PersonOrganizationFilter = 'all' | 'with_organizations' | 'without_organizations';
+export type PersonSortOption =
+  | 'createdAt_desc'
+  | 'createdAt_asc'
+  | 'updatedAt_desc'
+  | 'updatedAt_asc'
+  | 'organizationLinkCount_desc'
+  | 'organizationLinkCount_asc'
+  | 'name_asc'
+  | 'name_desc';
 
 export type MongoFilemakerPersonOrganizationLink = {
   id: string;
@@ -50,7 +59,9 @@ export type MongoFilemakerPersonsResponse = {
   pageSize: number;
   persons: MongoFilemakerPerson[];
   query: string;
+  sort: PersonSortOption;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 };
 
@@ -70,17 +81,34 @@ export type PersonListState = {
   onPageSizeChange: (value: number) => void;
   onQueryChange: (value: string) => void;
   onResetFilters: () => void;
+  onSortChange: (value: PersonSortOption) => void;
   page: number;
   pageSize: number;
   query: string;
   renderNode: (input: FolderTreeViewportRenderNodeInput) => React.ReactNode;
   shownCount: number;
+  sort: PersonSortOption;
   totalCount: number;
+  totalCountIsExact: boolean;
   totalPages: number;
 };
 
 export const DEFAULT_PERSON_PAGE_SIZE = 48;
+export const DEFAULT_PERSON_SORT: PersonSortOption = 'updatedAt_desc';
 export const PERSON_PAGE_SIZE_OPTIONS = [24, 48, 96, 200];
+export const PERSON_SORT_OPTIONS: Array<{
+  label: string;
+  value: PersonSortOption;
+}> = [
+  { label: 'Updated At: Newest First', value: 'updatedAt_desc' },
+  { label: 'Updated At: Oldest First', value: 'updatedAt_asc' },
+  { label: 'Created At: Newest First', value: 'createdAt_desc' },
+  { label: 'Created At: Oldest First', value: 'createdAt_asc' },
+  { label: 'Organisations: Most First', value: 'organizationLinkCount_desc' },
+  { label: 'Organisations: Fewest First', value: 'organizationLinkCount_asc' },
+  { label: 'Name: A-Z', value: 'name_asc' },
+  { label: 'Name: Z-A', value: 'name_desc' },
+];
 
 export const createDefaultPersonFilters = (): PersonFilters => ({
   address: 'all',
@@ -97,6 +125,8 @@ export const EMPTY_PERSONS_RESPONSE: MongoFilemakerPersonsResponse = {
   pageSize: DEFAULT_PERSON_PAGE_SIZE,
   persons: [],
   query: '',
+  sort: DEFAULT_PERSON_SORT,
   totalCount: 0,
+  totalCountIsExact: true,
   totalPages: 1,
 };

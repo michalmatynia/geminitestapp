@@ -60,6 +60,132 @@ const emptyEducation = (): FilemakerPersonProfileEducation => ({
   description: '',
 });
 
+const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
+  firstName: 'Micha\u0142',
+  lastName: 'Matynia',
+  city: 'Szczecin',
+  country: 'Poland',
+  phoneNumbers: ['+48 79898 5231'],
+  cvHeadline: 'Agentic Engineer | Full-Stack, Front-End & Integration Engineer',
+  cvProfessionalSummary:
+    'Engineer with 10+ years of experience across AI products, full-stack development, front-end engineering, e-commerce integrations, and database administration. Currently leading the development of StudiQ, a gamified learning product with AI-driven tutors. Strong hands-on background in product delivery, maintainable systems, user-facing experiences, automation, and remote collaboration.',
+  cvCoreStrengths: [
+    'AI products, agentic workflows, and educational technology',
+    'Next.js, React, TypeScript, front-end delivery, and CMS-driven experiences',
+    'Integration engineering, marketplace automation, Base.com, and AI-assisted workflows',
+    'Architecture ownership, testing, maintainability, and end-to-end product execution',
+  ],
+  cvSelectedTechnicalEnvironment: [
+    'Recent stack: Next.js, React, TypeScript, Expo / React Native, REST APIs, and monorepo-based product development',
+    'AI and automation: AI tutors, agentic workflows, OpenAI / Gemini / GPT integrations, Ollama, and prompt-driven tooling',
+    'Data, UI, and platform: MongoDB, Redis, BullMQ, TanStack Query, Tailwind CSS, Radix UI, CMS work, testing, and maintainable architecture',
+  ],
+  profileJobExperience: [
+    {
+      id: 'reference-cv-experience-studiq',
+      title: 'Agentic Engineer for StudiQ',
+      organization: 'studiqbeta.vercel.app (Self-employed)',
+      period: 'Sep 2025 - Present',
+      location: 'Szczecin, Poland | Remote',
+      description: '',
+      highlights: [
+        'Lead end-to-end development of StudiQ, a gamified learning product with AI-driven tutors.',
+        'Own architecture, implementation, and testing with strong emphasis on maintainability and long-term product quality.',
+        'Delivered configurable lesson systems, learner profiles, and interactive minigame experiences to increase engagement.',
+        'Build a cross-platform product environment spanning web, API, admin, and mobile-facing capabilities in a shared codebase.',
+      ],
+    },
+    {
+      id: 'reference-cv-experience-stargater',
+      title: 'Software Integration Engineer',
+      organization: 'Stargater.net (Freelance)',
+      period: 'Jun 2024 - May 2025',
+      location: 'Szczecin, Poland | Remote',
+      description: '',
+      highlights: [
+        'Designed and implemented e-commerce integration solutions to improve marketplace operations.',
+        'Configured Base.com integrations for a diverse product catalog across multiple sales channels.',
+        'Developed a custom AI-powered sub-integrator for one-click product listing and workflow automation.',
+        'Used Ollama and Gemma / GPT-based workflows to streamline post-production and operational tasks.',
+      ],
+    },
+    {
+      id: 'reference-cv-experience-lastminute',
+      title: 'Front End Developer',
+      organization: 'lastminute.com (Full-time)',
+      period: 'Jan 2022 - Mar 2024',
+      location: 'Remote',
+      description: '',
+      highlights: [
+        'Analyzed CMS issues and delivered improvements based on Jira tickets and product requirements.',
+        'Performed bug investigation and resolution work to improve website performance and user experience.',
+        'Implemented UI enhancements and front-end refinements using Next.js and React.',
+      ],
+    },
+    {
+      id: 'reference-cv-experience-milkbardesigners',
+      title: 'Full-Stack Developer',
+      organization: 'Milkbardesigners.com (Full-time)',
+      period: 'Oct 2012 - Mar 2020',
+      location: 'Szczecin, Poland | On-site',
+      description: '',
+      highlights: [
+        'Built applications designed to improve customer engagement and support new business acquisition.',
+        'Worked directly with clients to translate needs into practical digital solutions.',
+        'Delivered user-friendly front-end interfaces and robust back-end functionality supporting 3D architectural visualization work.',
+      ],
+    },
+    {
+      id: 'reference-cv-experience-pg',
+      title: 'Database Administrator',
+      organization: 'Procter & Gamble (Full-time)',
+      period: 'Jun 2007 - Aug 2010',
+      location: 'Dublin, Ireland | On-site',
+      description: '',
+      highlights: [
+        'Managed SQL database administration tasks with emphasis on reliability, performance, and operational continuity.',
+        'Monitored environments, diagnosed issues proactively, and carried out cleanup and maintenance activities.',
+        'Handled support tickets and client information management to improve response quality and user satisfaction.',
+      ],
+    },
+  ],
+  profileEducation: [
+    {
+      id: 'reference-cv-education-dalarna',
+      degree: "Master's Degree in Media & Communication",
+      institution: 'Dalarna University',
+      period: '2004 - 2005',
+      description: '',
+    },
+    {
+      id: 'reference-cv-education-szczecin',
+      degree: "Bachelor's Degree in English Language & Literature",
+      institution: 'University of Szczecin',
+      period: '2001 - 2003',
+      description: '',
+    },
+  ],
+};
+
+const cloneReferenceCvProfile = (): Partial<FilemakerPerson> => ({
+  ...REFERENCE_CV_PROFILE,
+  cvCoreStrengths: [...(REFERENCE_CV_PROFILE.cvCoreStrengths ?? [])],
+  cvSelectedTechnicalEnvironment: [
+    ...(REFERENCE_CV_PROFILE.cvSelectedTechnicalEnvironment ?? []),
+  ],
+  profileEducation: (REFERENCE_CV_PROFILE.profileEducation ?? []).map(
+    (education: FilemakerPersonProfileEducation): FilemakerPersonProfileEducation => ({
+      ...education,
+    })
+  ),
+  profileJobExperience: (REFERENCE_CV_PROFILE.profileJobExperience ?? []).map(
+    (experience: FilemakerPersonProfileJobExperience): FilemakerPersonProfileJobExperience => ({
+      ...experience,
+      highlights: [...(experience.highlights ?? [])],
+    })
+  ),
+});
+
 function PersonProfileLinksAndCvFields(): React.JSX.Element {
   const { personDraft } = useAdminFilemakerPersonEditPageStateContext();
   const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
@@ -84,6 +210,16 @@ function PersonProfileLinksAndCvFields(): React.JSX.Element {
           }}
           placeholder='https://github.com/...'
           aria-label='Person GitHub link'
+        />
+      </FormField>
+      <FormField label='CV headline' className='md:col-span-2'>
+        <Input
+          value={personDraft.cvHeadline ?? ''}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            updateDraft(personDraft, setPersonDraft, { cvHeadline: event.target.value });
+          }}
+          placeholder='Agentic Engineer | Full-Stack, Front-End & Integration Engineer'
+          aria-label='CV headline'
         />
       </FormField>
       <FormField label='Professional summary' className='md:col-span-2'>
@@ -429,8 +565,26 @@ function PersonProfileEducationFields(): React.JSX.Element {
 }
 
 export function PersonProfileCvSection(): React.JSX.Element {
+  const { setPersonDraft } = useAdminFilemakerPersonEditPageActionsContext();
+
+  const actions = (
+    <Button
+      type='button'
+      variant='outline'
+      size='sm'
+      onClick={(): void => {
+        setPersonDraft((current: Partial<FilemakerPerson>): Partial<FilemakerPerson> => ({
+          ...current,
+          ...cloneReferenceCvProfile(),
+        }));
+      }}
+    >
+      Prefill Reference CV
+    </Button>
+  );
+
   return (
-    <FormSection title='Person Profile & CV' className='space-y-6 p-4'>
+    <FormSection title='Person Profile & CV' actions={actions} className='space-y-6 p-4'>
       <PersonProfileLinksAndCvFields />
       <PersonProfileJobExperienceFields />
       <PersonProfileEducationFields />

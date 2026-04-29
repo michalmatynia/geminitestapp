@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function, @typescript-eslint/consistent-type-imports */
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -256,14 +257,10 @@ describe('TraderaQuickListButton', () => {
     expect(button.className).not.toContain('border-cyan-400/70');
   });
 
-  it('keeps one-click export available beside a closed Tradera badge', () => {
+  it('hides one-click export when a closed Tradera status badge is visible', () => {
     renderButton({ showTraderaBadge: true, traderaStatus: 'closed' });
 
-    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
-    expect(button).not.toBeDisabled();
-    expect(button.className).toContain('border-gray-500/50');
-    expect(button.className).not.toContain('border-blue-700/80');
-    expect(button).toHaveAttribute('title', 'One-click export to Tradera (not_started)');
+    expect(screen.queryByRole('button', { name: 'One-click export to Tradera' })).toBeNull();
   });
 
   it('ignores stale queued quick-list feedback after a Tradera listing is marked closed', async () => {
@@ -281,10 +278,7 @@ describe('TraderaQuickListButton', () => {
 
     renderButton({ showTraderaBadge: true, traderaStatus: 'closed' });
 
-    const button = screen.getByRole('button', { name: 'One-click export to Tradera' });
-    expect(button).not.toBeDisabled();
-    expect(button.className).toContain('border-gray-500/50');
-    expect(button.className).not.toContain('border-amber-400/70');
+    expect(screen.queryByRole('button', { name: 'One-click export to Tradera' })).toBeNull();
 
     await waitFor(() => {
       expect(window.sessionStorage.getItem('tradera-quick-list-feedback')).toBeNull();

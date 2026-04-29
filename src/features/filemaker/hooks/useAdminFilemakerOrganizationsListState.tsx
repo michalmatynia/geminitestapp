@@ -302,6 +302,7 @@ function useOrganizationActions(router: ReturnType<typeof useRouter>): {
 function useOrganizationRenderNode(
   eventsById: ReadonlyMap<string, FilemakerEvent>,
   jobListingsById: ReadonlyMap<string, FilemakerJobListing>,
+  jobListingsByOrganizationId: ReadonlyMap<string, readonly FilemakerJobListing[]>,
   organizations: FilemakerOrganization[],
   organizationEmailScrapeState: Record<string, boolean>,
   organizationWebsiteSocialScrapeState: Record<string, boolean>,
@@ -327,6 +328,7 @@ function useOrganizationRenderNode(
         {...input}
         eventsById={eventsById}
         jobListingsById={jobListingsById}
+        jobListingsByOrganizationId={jobListingsByOrganizationId}
         organizationEmailScrapeState={organizationEmailScrapeState}
         organizationWebsiteSocialScrapeState={organizationWebsiteSocialScrapeState}
         organizationSelection={organizationSelection}
@@ -343,6 +345,7 @@ function useOrganizationRenderNode(
     [
       eventsById,
       jobListingsById,
+      jobListingsByOrganizationId,
       onLaunchOrganizationEmailScrape,
       onLaunchOrganizationWebsiteSocialScrape,
       onDeleteOrganization,
@@ -647,6 +650,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   const renderNode = useOrganizationRenderNode(
     organizationRelations.eventsById,
     organizationRelations.jobListingsById,
+    organizationRelations.jobListingsByOrganizationId,
     organizations,
     organizationEmailScrapeState,
     organizationWebsiteSocialScrapeState,

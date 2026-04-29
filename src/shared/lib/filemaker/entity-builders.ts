@@ -19,6 +19,11 @@ const ORGANIZATION_OPTIONAL_STRING_FIELDS = [
   'displayAddressId',
   'displayBankAccountId',
   'establishedDate',
+  'jobBoardCompanyAddress',
+  'jobBoardCompanyEmail',
+  'jobBoardCompanyIndustry',
+  'jobBoardCompanyLogoUrl',
+  'jobBoardCompanyPhone',
   'krs',
   'legacyDefaultAddressUuid',
   'legacyDefaultBankAccountUuid',
@@ -28,11 +33,19 @@ const ORGANIZATION_OPTIONAL_STRING_FIELDS = [
   'legacyUuid',
   'parentOrganizationId',
   'taxId',
+  'regon',
   'tradingName',
   'updatedBy',
   'jobBoardCompanyProfile',
   'jobBoardCompanyProfileScrapedAt',
   'jobBoardCompanyProfileUrl',
+  'jobBoardCompanyRegion',
+  'jobBoardCompanySize',
+  'jobBoardCompanyWebsiteUrl',
+  'jobBoardScrapedAt',
+  'jobBoardSourceLabel',
+  'jobBoardSourceSite',
+  'jobBoardSourceUrl',
 ] as const;
 
 type OrganizationOptionalStringField = (typeof ORGANIZATION_OPTIONAL_STRING_FIELDS)[number];
@@ -278,6 +291,7 @@ export const createFilemakerPerson = (input: {
   githubUrl?: unknown;
   profileEducation?: unknown;
   profileJobExperience?: unknown;
+  cvHeadline?: unknown;
   cvProfessionalSummary?: unknown;
   cvCoreStrengths?: unknown;
   cvSelectedTechnicalEnvironment?: unknown;
@@ -297,6 +311,7 @@ export const createFilemakerPerson = (input: {
   const githubUrl = normalizeOptionalString(input.githubUrl);
   const profileEducation = normalizeProfileEducation(input.profileEducation);
   const profileJobExperience = normalizeProfileJobExperience(input.profileJobExperience);
+  const cvHeadline = normalizeOptionalString(input.cvHeadline);
   const cvProfessionalSummary = normalizeOptionalString(input.cvProfessionalSummary);
   const cvCoreStrengths = normalizeStringList(input.cvCoreStrengths);
   const cvSelectedTechnicalEnvironment = normalizeStringList(input.cvSelectedTechnicalEnvironment);
@@ -318,6 +333,7 @@ export const createFilemakerPerson = (input: {
     ...(githubUrl !== undefined ? { githubUrl } : {}),
     ...(profileEducation.length > 0 ? { profileEducation } : {}),
     ...(profileJobExperience.length > 0 ? { profileJobExperience } : {}),
+    ...(cvHeadline !== undefined ? { cvHeadline } : {}),
     ...(cvProfessionalSummary !== undefined ? { cvProfessionalSummary } : {}),
     ...(cvCoreStrengths.length > 0 ? { cvCoreStrengths } : {}),
     ...(cvSelectedTechnicalEnvironment.length > 0 ? { cvSelectedTechnicalEnvironment } : {}),

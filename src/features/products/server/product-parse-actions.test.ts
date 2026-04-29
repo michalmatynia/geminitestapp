@@ -1,7 +1,13 @@
+/* eslint-disable complexity, max-lines-per-function, @typescript-eslint/consistent-type-assertions */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductListing } from '@/shared/contracts/integrations/listings';
+import type {
+  CreateProductValidationPatternInput,
+  ProductValidationPattern,
+} from '@/shared/contracts/products/validation';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { buildTraderaParseActionValidationPatternPayloads } from '@/features/products/lib/parseActionsValidationPatterns';
 
 const {
   findListingsByExternalIdsMock,
@@ -10,6 +16,7 @@ const {
   getProductsMock,
   integrationServiceMock,
   listingRepositoryMock,
+  listValidationPatternsCachedMock,
 } = vi.hoisted(() => ({
   findListingsByExternalIdsMock: vi.fn(),
   getProductByIdMock: vi.fn(),
@@ -23,6 +30,7 @@ const {
     getListingsByProductIds: vi.fn(),
     updateListing: vi.fn(),
   },
+  listValidationPatternsCachedMock: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
@@ -45,6 +53,10 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
     getProductById: (...args: unknown[]) => getProductByIdMock(...args),
     getProducts: (...args: unknown[]) => getProductsMock(...args),
   },
+}));
+
+vi.mock('@/shared/lib/products/services/validation-pattern-runtime-cache', () => ({
+  listValidationPatternsCached: () => listValidationPatternsCachedMock(),
 }));
 
 import {
@@ -81,6 +93,69 @@ The Vessel | 4 cm | Metal | Gaming Pin | Hollow Knight
 Shipping EUR 7.00
 
 29 Apr 06:13`;
+
+const createValidationPattern = (
+  payload: CreateProductValidationPatternInput,
+  index: number
+): ProductValidationPattern => ({
+  id: `parse-pattern-${index + 1}`,
+  label: payload.label,
+  target: payload.target,
+  locale: payload.locale ?? null,
+  regex: payload.regex,
+  flags: payload.flags ?? null,
+  message: payload.message,
+  severity: payload.severity ?? 'warning',
+  enabled: payload.enabled ?? true,
+  replacementEnabled: payload.replacementEnabled ?? false,
+  replacementAutoApply: payload.replacementAutoApply ?? false,
+  skipNoopReplacementProposal: payload.skipNoopReplacementProposal ?? true,
+  replacementValue: payload.replacementValue ?? null,
+  replacementFields: payload.replacementFields ?? [],
+  replacementAppliesToScopes: payload.replacementAppliesToScopes ?? [
+    'draft_template',
+    'product_create',
+    'product_edit',
+  ],
+  runtimeEnabled: payload.runtimeEnabled ?? false,
+  runtimeType: payload.runtimeType ?? 'none',
+  runtimeConfig: payload.runtimeConfig ?? null,
+  postAcceptBehavior: payload.postAcceptBehavior ?? 'revalidate',
+  denyBehaviorOverride: payload.denyBehaviorOverride ?? null,
+  validationDebounceMs: payload.validationDebounceMs ?? 0,
+  sequenceGroupId: payload.sequenceGroupId ?? null,
+  sequenceGroupLabel: payload.sequenceGroupLabel ?? null,
+  sequenceGroupDebounceMs: payload.sequenceGroupDebounceMs ?? 0,
+  sequence: payload.sequence ?? null,
+  chainMode: payload.chainMode ?? 'continue',
+  maxExecutions: payload.maxExecutions ?? 1,
+  passOutputToNext: payload.passOutputToNext ?? true,
+  launchEnabled: payload.launchEnabled ?? false,
+  launchAppliesToScopes: payload.launchAppliesToScopes ?? [
+    'draft_template',
+    'product_create',
+    'product_edit',
+  ],
+  launchScopeBehavior: payload.launchScopeBehavior ?? 'gate',
+  launchSourceMode: payload.launchSourceMode ?? 'current_field',
+  launchSourceField: payload.launchSourceField ?? null,
+  launchOperator: payload.launchOperator ?? 'equals',
+  launchValue: payload.launchValue ?? null,
+  launchFlags: payload.launchFlags ?? null,
+  appliesToScopes: payload.appliesToScopes ?? [
+    'draft_template',
+    'product_create',
+    'product_edit',
+  ],
+  semanticState: payload.semanticState ?? null,
+  semanticAudit: null,
+  semanticAuditHistory: [],
+  createdAt: '2026-04-29T00:00:00.000Z',
+  updatedAt: '2026-04-29T00:00:00.000Z',
+});
+
+const createTraderaParseValidationPatterns = (): ProductValidationPattern[] =>
+  buildTraderaParseActionValidationPatternPayloads().map(createValidationPattern);
 
 const createProduct = (overrides: Partial<ProductWithImages> = {}): ProductWithImages =>
   ({
@@ -119,6 +194,7 @@ const createListing = (overrides: Partial<ProductListing> = {}): ProductListing 
 describe('product parse actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    listValidationPatternsCachedMock.mockResolvedValue(createTraderaParseValidationPatterns());
     integrationServiceMock.listIntegrations.mockResolvedValue([
       { id: 'integration-tradera', slug: 'tradera', name: 'Tradera' },
     ]);
@@ -126,8 +202,8 @@ describe('product parse actions', () => {
     listingRepositoryMock.getListingsByProductIds.mockResolvedValue([]);
   });
 
-  it('extracts Tradera listing titles, object numbers, prices, and closed status', () => {
-    const rows = parseTraderaProductActionText(sampleText);
+  it('extracts Tradera listing titles, object numbers, prices, and closed status', async () => {
+    const rows = await parseTraderaProductActionText(sampleText);
 
     expect(rows).toEqual([
       expect.objectContaining({

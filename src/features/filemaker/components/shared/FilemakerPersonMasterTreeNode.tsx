@@ -36,7 +36,7 @@ type PersonGroupNodeProps = Pick<
   stateClassName: string;
 };
 
-type PersonLeafNodeProps = Pick<FolderTreeViewportRenderNodeInput, 'depth' | 'select'> & {
+type PersonLeafNodeProps = Pick<FolderTreeViewportRenderNodeInput, 'depth'> & {
   onOpenPerson: (personId: string) => void;
   person: FilemakerPersonWithLinks;
   stateClassName: string;
@@ -105,7 +105,10 @@ function FilemakerPersonGroupNode(props: PersonGroupNodeProps): React.JSX.Elemen
 
   return (
     <div
-      className={cn('flex items-center gap-2 rounded px-2 py-1.5 text-sm transition', stateClassName)}
+      className={cn(
+        'flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-sm transition',
+        stateClassName
+      )}
       style={createTreeIndentStyle(depth)}
       role='button'
       tabIndex={0}
@@ -146,50 +149,116 @@ const formatOrganizationPreview = (person: FilemakerPersonWithLinks): string => 
   return remainingCount > 0 ? `${labels.join(', ')} +${remainingCount}` : labels.join(', ');
 };
 
-function FilemakerPersonLeafDetails(props: { person: FilemakerPersonWithLinks }): React.JSX.Element {
-  const { person } = props;
+function FilemakerPersonLeafDetails(props: {
+  onOpenPerson: (personId: string) => void;
+  person: FilemakerPersonWithLinks;
+}): React.JSX.Element {
+  const { onOpenPerson, person } = props;
   const organizationCount = person.organizationLinkCount ?? person.linkedOrganizations?.length ?? 0;
 
   return (
-    <div className='min-w-0 flex-1'>
-      <div className='truncate font-semibold text-white'>{getPersonDisplayName(person)}</div>
-      <div className='truncate text-xs text-gray-300'>{formatOrganizationPreview(person)}</div>
-      <div className='truncate text-[10px] text-gray-600'>
-        Organisations: {organizationCount} | Legacy UUID:{' '}
-        {formatOptionalPersonField(person.legacyUuid)} | Updated: {formatTimestamp(person.updatedAt)}
+    <div className='min-w-0 flex-1 cursor-default'>
+      <button
+        type='button'
+        className='inline-block max-w-full cursor-pointer select-text truncate align-top text-left font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
+          onOpenPerson(person.id);
+        }}
+      >
+        {getPersonDisplayName(person)}
+      </button>
+      <div className='cursor-default text-xs text-gray-300'>
+        <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
+          {formatOrganizationPreview(person)}
+        </span>
+      </div>
+      <div className='cursor-default text-[10px] text-gray-600'>
+        <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
+          Organisations: {organizationCount} | Legacy UUID:{' '}
+          {formatOptionalPersonField(person.legacyUuid)}
+          <span className='md:hidden'> | Created: {formatTimestamp(person.createdAt)}</span>
+          {' | '}Updated: {formatTimestamp(person.updatedAt)}
+        </span>
       </div>
     </div>
   );
 }
 
+function PersonOrganizationCountColumn(props: {
+  person: FilemakerPersonWithLinks;
+}): React.JSX.Element {
+  const organizationCount =
+    props.person.organizationLinkCount ?? props.person.linkedOrganizations?.length ?? 0;
+
+  return (
+    <div
+      className='hidden w-32 shrink-0 cursor-default justify-center md:flex'
+      aria-label={`Organisations: ${organizationCount}`}
+    >
+      {organizationCount > 0 ? (
+        <Badge variant='outline' className='h-5 max-w-full truncate text-[10px]'>
+          Organisations {organizationCount}
+        </Badge>
+      ) : null}
+    </div>
+  );
+}
+
+function PersonUpdatedAtColumn(props: {
+  person: FilemakerPersonWithLinks;
+}): React.JSX.Element {
+  const updatedAtLabel = formatTimestamp(props.person.updatedAt);
+
+  return (
+    <div
+      className='hidden w-44 shrink-0 cursor-default justify-end text-right text-xs font-medium text-gray-200 md:flex'
+      aria-label={`Updated at ${updatedAtLabel}`}
+    >
+      <span className='inline-block cursor-text select-text'>{updatedAtLabel}</span>
+    </div>
+  );
+}
+
+function PersonCreatedAtColumn(props: {
+  person: FilemakerPersonWithLinks;
+}): React.JSX.Element {
+  const createdAtLabel = formatTimestamp(props.person.createdAt);
+
+  return (
+    <div
+      className='hidden w-44 shrink-0 cursor-default text-right text-xs font-medium text-gray-200 md:block'
+      aria-label={`Created at ${createdAtLabel}`}
+    >
+      <span className='inline-block cursor-text select-text'>{createdAtLabel}</span>
+    </div>
+  );
+}
+
 function FilemakerPersonLeafNode(props: PersonLeafNodeProps): React.JSX.Element {
-  const { person, depth, select, stateClassName, onOpenPerson } = props;
+  const { person, depth, stateClassName, onOpenPerson } = props;
   const displayPersonLabel = getPersonDisplayName(person);
 
   return (
     <div
-      className={cn('flex items-center gap-2 rounded px-2 py-2 text-sm transition', stateClassName)}
+      className={cn(
+        'flex cursor-default items-center gap-2 rounded px-2 py-2 text-sm transition',
+        stateClassName
+      )}
       style={createTreeIndentStyle(depth)}
-      role='button'
-      tabIndex={0}
-      onClick={(event: React.MouseEvent<HTMLDivElement>): void => {
-        select(event);
-        onOpenPerson(person.id);
-      }}
-      onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-        if (!isTreeActivationKey(event)) return;
-        event.preventDefault();
-        onOpenPerson(person.id);
-      }}
     >
       <TreeNodeSpacer />
       <User className='size-4 shrink-0 text-blue-300' />
-      <FilemakerPersonLeafDetails person={person} />
+      <FilemakerPersonLeafDetails person={person} onOpenPerson={onOpenPerson} />
+      <PersonOrganizationCountColumn person={person} />
+      <PersonUpdatedAtColumn person={person} />
+      <PersonCreatedAtColumn person={person} />
       <Button
         type='button'
         variant='outline'
         size='icon'
-        className='size-7'
+        className='size-7 cursor-pointer'
         aria-label={`Edit person ${displayPersonLabel}`}
         title={`Edit person ${displayPersonLabel}`}
         onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
@@ -220,7 +289,6 @@ export function FilemakerPersonMasterTreeNode(
     <FilemakerPersonLeafNode
       person={person}
       depth={props.depth}
-      select={props.select}
       stateClassName={stateClassName}
       onOpenPerson={props.onOpenPerson}
     />

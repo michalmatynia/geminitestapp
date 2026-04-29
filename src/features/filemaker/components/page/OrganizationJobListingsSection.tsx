@@ -42,6 +42,7 @@ import {
   useAdminFilemakerOrganizationEditPageActionsContext,
   useAdminFilemakerOrganizationEditPageStateContext,
 } from '../../context/AdminFilemakerOrganizationEditPageContext';
+import { JobBoardOriginBadge } from '../shared/JobBoardOriginBadge';
 import { JobApplicationPreparationModal } from './JobApplicationPreparationModal';
 import { createClientFilemakerId, formatTimestamp } from '../../pages/filemaker-page-utils';
 import {
@@ -1035,6 +1036,11 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                         ? listing.title
                         : `Job listing ${index + 1}`}
                     </span>
+                    <JobBoardOriginBadge
+                      compact
+                      sourceSite={listing.sourceSite}
+                      sourceUrl={listing.sourceUrl}
+                    />
                     <span className='text-xs text-gray-500'>{formatSalary(listing)}</span>
                     {(listing.postedAt ?? '').trim().length > 0 ? (
                       <Badge variant='outline'>Posted {listing.postedAt}</Badge>
@@ -1123,6 +1129,26 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       }
                       placeholder='e.g. Warsaw / Remote'
                       aria-label={`Job listing ${index + 1} location`}
+                    />
+                  </FormField>
+                  <FormField label='Scrape source portal'>
+                    <Input
+                      value={listing.sourceSite ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { sourceSite: event.target.value })
+                      }
+                      placeholder='pracuj.pl'
+                      aria-label={`Job listing ${index + 1} scrape source portal`}
+                    />
+                  </FormField>
+                  <FormField label='Scrape source URL' className='md:col-span-2'>
+                    <Input
+                      value={listing.sourceUrl ?? ''}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        updateListing(listing.id, { sourceUrl: event.target.value })
+                      }
+                      placeholder='https://...'
+                      aria-label={`Job listing ${index + 1} scrape source URL`}
                     />
                   </FormField>
                   <FormField label='City'>

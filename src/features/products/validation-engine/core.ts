@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-depth, max-lines, max-lines-per-function, no-nested-ternary, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 // Validation engine core: deterministic helpers for validator pattern handling.
 // This module implements pattern normalization, sequence grouping, replacement
 // resolution, and safe execution guards used by both the simulator and runtime
@@ -47,6 +48,16 @@ type ResolvedReplacement = {
 } | null;
 
 const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMENT_FIELDS);
+const FIELD_VALIDATION_HIDDEN_SEMANTIC_OPERATIONS = new Set<string>([
+  'parse_marketplace_listing_text',
+]);
+
+const isPatternHiddenFromFieldValidation = (pattern: ProductValidationPattern): boolean => {
+  const semanticState = getProductValidationSemanticState(pattern);
+  if (semanticState === null) return false;
+  if (FIELD_VALIDATION_HIDDEN_SEMANTIC_OPERATIONS.has(semanticState.operation)) return true;
+  return semanticState.metadata?.['fieldValidation'] === 'disabled';
+};
 
 /**
  * Validator docs: see docs/validator/function-reference.md#core.normalizevalidationdebouncems
@@ -525,6 +536,77 @@ const shouldCollectPatternMatch = ({
   return isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope);
 };
 
+const shouldRunPatternAgainstValue = ({
+  value,
+  pattern,
+  validationScope,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  validationScope: ProductValidationInstanceScope;
+}): boolean =>
+  shouldLaunchPattern({
+    pattern,
+    validationScope,
+    fieldValue: value,
+    values: {},
+    latestProductValues: null,
+  });
+
+const compileValidationPatternRegex = (pattern: ProductValidationPattern): RegExp | null => {
+  try {
+    return new RegExp(pattern.regex, pattern.flags ?? undefined);
+  } catch (error) {
+    logClientError(error);
+    return null;
+  }
+};
+
+const toValidationPatternRegexMatch = (
+  pattern: ProductValidationPattern,
+  match: RegExpExecArray
+): ProductValidationPatternRegexMatch => {
+  const matchText = match[0];
+  return {
+    pattern,
+    patternId: pattern.id,
+    matchText,
+    index: match.index,
+    length: matchText.length,
+    captures: Array.from(match).slice(1),
+    groups: normalizeRegexMatchGroups(match.groups),
+  };
+};
+
+const collectCompiledRegexMatches = ({
+  value,
+  pattern,
+  regex,
+  maxMatches,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  regex: RegExp;
+  maxMatches: number;
+}): ProductValidationPatternRegexMatch[] => {
+  const matches: ProductValidationPatternRegexMatch[] = [];
+  const runtimeRegex = regex;
+  const canIterate = runtimeRegex.global || runtimeRegex.sticky;
+  let match: RegExpExecArray | null = null;
+  do {
+    match = runtimeRegex.exec(value);
+    if (match === null) break;
+    const nextMatch = toValidationPatternRegexMatch(pattern, match);
+    matches.push(nextMatch);
+    if (!canIterate) break;
+    if (nextMatch.matchText.length === 0) {
+      runtimeRegex.lastIndex += 1;
+    }
+  } while (matches.length < maxMatches);
+
+  return matches;
+};
+
 const collectMatchesForPattern = ({
   value,
   pattern,
@@ -536,49 +618,12 @@ const collectMatchesForPattern = ({
   validationScope: ProductValidationInstanceScope;
   maxMatches: number;
 }): ProductValidationPatternRegexMatch[] => {
-  if (
-    !shouldLaunchPattern({
-      pattern,
-      validationScope,
-      fieldValue: value,
-      values: {},
-      latestProductValues: null,
-    })
-  ) {
-    return [];
-  }
+  if (!shouldRunPatternAgainstValue({ value, pattern, validationScope })) return [];
 
-  let regex: RegExp;
-  try {
-    regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
-  } catch (error) {
-    logClientError(error);
-    return [];
-  }
+  const regex = compileValidationPatternRegex(pattern);
+  if (regex === null) return [];
 
-  const matches: ProductValidationPatternRegexMatch[] = [];
-  const canIterate = regex.global || regex.sticky;
-  let match: RegExpExecArray | null = null;
-  do {
-    match = regex.exec(value);
-    if (match === null) break;
-    const matchText = match[0] ?? '';
-    matches.push({
-      pattern,
-      patternId: pattern.id,
-      matchText,
-      index: match.index,
-      length: matchText.length,
-      captures: Array.from(match).slice(1),
-      groups: normalizeRegexMatchGroups(match.groups),
-    });
-    if (!canIterate) break;
-    if (matchText.length === 0) {
-      regex.lastIndex += 1;
-    }
-  } while (matches.length < maxMatches);
-
-  return matches;
+  return collectCompiledRegexMatches({ value, pattern, regex, maxMatches });
 };
 
 export const collectValidationPatternRegexMatches = ({
@@ -624,6 +669,7 @@ const buildStaticPatternPlans = ({
   const byTarget = new Map<ProductValidationTarget, StaticPatternPlan[]>();
   for (const pattern of orderedPatterns) {
     if (!pattern.enabled) continue;
+    if (isPatternHiddenFromFieldValidation(pattern)) continue;
     if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope)) continue;
     if (isRuntimePatternEnabled(pattern)) continue;
     const inSequenceGroup = isPatternInSequenceGroup(pattern, sequenceGroupCounts);

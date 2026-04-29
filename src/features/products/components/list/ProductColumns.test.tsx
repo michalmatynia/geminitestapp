@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines, max-lines-per-function, @typescript-eslint/consistent-type-assertions, @typescript-eslint/consistent-type-imports, @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions */
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -390,6 +391,46 @@ describe('ProductColumns queued badge', () => {
       'BL',
       'TR',
       'VR',
+    ]);
+  });
+
+  it('shows only the closed Tradera status button when the Tradera badge status is closed', async () => {
+    const product = createProduct();
+    useProductListRowRuntimeMock.mockReturnValue(
+      createRowRuntimeContext({
+        showTraderaBadge: true,
+        traderaStatus: 'closed',
+      })
+    );
+
+    const integrationsColumn = getProductColumns().find((column) => column.id === 'integrations');
+    if (!integrationsColumn || typeof integrationsColumn.cell !== 'function') {
+      throw new Error('Integrations column cell was not found.');
+    }
+
+    render(integrationsColumn.cell({ row: { original: product } } as never));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'TR' })).toBeInTheDocument();
+    });
+
+    const buttonRow = screen.getByRole('button', { name: 'View integrations' }).parentElement;
+    if (!buttonRow) {
+      throw new Error('Integrations button row was not found.');
+    }
+
+    expect(traderaStatusButtonMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: 'product-1',
+        status: 'closed',
+      })
+    );
+    expect(within(buttonRow).queryByRole('button', { name: 'T+' })).toBeNull();
+    expect(within(buttonRow).getAllByRole('button').map((button) => button.textContent?.trim())).toEqual([
+      '+',
+      'BL',
+      'TR',
+      'V+',
     ]);
   });
 

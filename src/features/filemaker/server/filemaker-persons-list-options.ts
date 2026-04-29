@@ -9,6 +9,28 @@ export type FilemakerPersonOrganizationFilter =
   | 'all'
   | 'with_organizations'
   | 'without_organizations';
+export type FilemakerPersonSortOption =
+  | 'createdAt_desc'
+  | 'createdAt_asc'
+  | 'updatedAt_desc'
+  | 'updatedAt_asc'
+  | 'organizationLinkCount_desc'
+  | 'organizationLinkCount_asc'
+  | 'name_asc'
+  | 'name_desc';
+
+export const DEFAULT_FILEMAKER_PERSON_SORT: FilemakerPersonSortOption = 'name_asc';
+
+const SUPPORTED_PERSON_SORT_OPTIONS = new Set<string>([
+  'createdAt_desc',
+  'createdAt_asc',
+  'updatedAt_desc',
+  'updatedAt_asc',
+  'organizationLinkCount_desc',
+  'organizationLinkCount_asc',
+  'name_asc',
+  'name_desc',
+]);
 
 export type FilemakerPersonsListInput = {
   address?: string | null;
@@ -18,6 +40,7 @@ export type FilemakerPersonsListInput = {
   page?: string | null;
   pageSize?: string | null;
   query?: string | null;
+  sort?: string | null;
   updatedBy?: string | null;
 };
 
@@ -28,6 +51,7 @@ export type FilemakerPersonsListOptions = {
   pageSize: number;
   query: string;
   requestedPage: string | null;
+  sort: FilemakerPersonSortOption;
   updatedBy: string;
 };
 
@@ -56,6 +80,11 @@ const normalizeBankFilter = (value: string): FilemakerPersonBankFilter =>
 const normalizeOrganizationFilter = (value: string): FilemakerPersonOrganizationFilter =>
   value === 'with_organizations' || value === 'without_organizations' ? value : 'all';
 
+const normalizePersonSort = (value: string): FilemakerPersonSortOption => {
+  if (SUPPORTED_PERSON_SORT_OPTIONS.has(value)) return value as FilemakerPersonSortOption;
+  return DEFAULT_FILEMAKER_PERSON_SORT;
+};
+
 export const resolvePersonListOptions = (
   input: FilemakerPersonsListInput
 ): FilemakerPersonsListOptions => {
@@ -68,6 +97,7 @@ export const resolvePersonListOptions = (
     pageSize: normalizePageSize(pageSize, limit),
     query: readOptionalString(input.query).trim(),
     requestedPage: input.page ?? null,
+    sort: normalizePersonSort(readOptionalString(input.sort)),
     updatedBy: readOptionalString(input.updatedBy).trim(),
   };
 };

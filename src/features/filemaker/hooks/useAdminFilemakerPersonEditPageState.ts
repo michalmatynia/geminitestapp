@@ -358,6 +358,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         githubUrl: personDraft.githubUrl ?? '',
         profileEducation: personDraft.profileEducation ?? [],
         profileJobExperience: personDraft.profileJobExperience ?? [],
+        cvHeadline: personDraft.cvHeadline ?? '',
         cvProfessionalSummary: personDraft.cvProfessionalSummary ?? '',
         cvCoreStrengths: personDraft.cvCoreStrengths ?? [],
         cvSelectedTechnicalEnvironment: personDraft.cvSelectedTechnicalEnvironment ?? [],
@@ -386,6 +387,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             cvCoreStrengths: personDraft.cvCoreStrengths ?? [],
+            cvHeadline: personDraft.cvHeadline ?? '',
             cvProfessionalSummary: personDraft.cvProfessionalSummary ?? '',
             cvSelectedTechnicalEnvironment: personDraft.cvSelectedTechnicalEnvironment ?? [],
             firstName: nextFirstName,

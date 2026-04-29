@@ -233,7 +233,7 @@ const matchParsedRow = async (
 export const matchParsedProductActions = async (
   text: string
 ): Promise<ProductParseActionsMatchResponse> => {
-  const rows = parseTraderaProductActionText(text);
+  const rows = await parseTraderaProductActionText(text);
   const traderaIntegrationIds = await resolveTraderaIntegrationIds();
   const listingsByExternalId = await groupTraderaListingsByExternalId(rows, traderaIntegrationIds);
   const matches = await Promise.all(

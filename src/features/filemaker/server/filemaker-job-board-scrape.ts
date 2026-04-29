@@ -56,6 +56,7 @@ import type {
   FilemakerLexiconTerm,
   FilemakerOrganization,
 } from '../types';
+import { resolveJobBoardOriginLabel } from '../job-board-origin';
 import {
   readFilemakerCampaignSettingValue,
   upsertFilemakerCampaignSettingValue,
@@ -159,6 +160,7 @@ import {
 } from './job-board-scrape/live-events';
 
 import {
+  normalizeJobBoardSourceUrl,
   normalizeLexiconKey,
   uniqueStrings,
 } from './job-board-scrape/normalizers';
@@ -262,27 +264,439 @@ const toJobListing = (input: {
   });
 };
 
+const optionalScrapedString = (value: unknown): string | undefined => {
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : undefined;
+};
+
+const scrapedOrExisting = (scraped: unknown, existing: unknown): string | undefined => {
+  const scrapedValue = optionalScrapedString(scraped);
+  if (scrapedValue !== undefined) return scrapedValue;
+  return optionalScrapedString(existing);
+};
+
+const fillEmptyOrganizationField = (existing: unknown, scraped: unknown): string | undefined => {
+  const existingValue = optionalScrapedString(existing);
+  if (existingValue !== undefined) return existingValue;
+  return optionalScrapedString(scraped);
+};
+
+const hasScrapedCompanyInformation = (offer: FilemakerJobBoardScrapedOffer): boolean =>
+  [
+    offer.companyProfile,
+    offer.companyProfileUrl,
+    offer.companyWebsiteUrl,
+    offer.companyEmail,
+    offer.companyPhone,
+    offer.companyIndustry,
+    offer.companySize,
+    offer.companyLogoUrl,
+    offer.companyTaxId,
+    offer.companyKrs,
+    offer.companyRegon,
+    offer.companyAddress,
+    offer.companyCity,
+    offer.companyRegion,
+    offer.companyPostalCode,
+    offer.companyCountry,
+    offer.sourceSite,
+    offer.sourceUrl,
+  ].some((value: unknown): boolean => normalizeString(value).length > 0);
+
+const normalizeCompanyIdentityValue = (value: unknown): string =>
+  normalizeString(value).toLowerCase().replace(/[^a-z0-9]+/g, '');
+
+const JOB_BOARD_COMPANY_IDENTITY_HOSTS = [
+  'ashbyhq.com',
+  'breezy.hr',
+  'erecruiter.pl',
+  'facebook.com',
+  'greenhouse.io',
+  'github.com',
+  'gitlab.com',
+  'instagram.com',
+  'justjoin.it',
+  'lever.co',
+  'linkedin.com',
+  'medium.com',
+  'nofluffjobs.com',
+  'nofluffjobs.pl',
+  'pracuj.pl',
+  'smartrecruiters.com',
+  'teamtailor.com',
+  'tiktok.com',
+  'traffit.com',
+  'twitter.com',
+  'workable.com',
+  'x.com',
+  'youtube.com',
+  'youtu.be',
+] as const;
+
+const isKnownJobBoardHost = (url: URL): boolean => {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
+  return JOB_BOARD_COMPANY_IDENTITY_HOSTS.some(
+    (host: string): boolean => hostname === host || hostname.endsWith(`.${host}`)
+  );
+};
+
+const isPracujEmployerProfileUrlWithSlug = (url: URL): boolean => {
+  const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
+  if (!/pracuj\.pl$/iu.test(hostname)) return true;
+  const employerPathKeys = new Set([
+    'firma',
+    'firmy',
+    'pracodawca',
+    'pracodawcy',
+    'profil pracodawcy',
+    'profil pracodawcow',
+    'profile pracodawcy',
+    'profile pracodawcow',
+  ]);
+  const parts = url.pathname.split('/').filter(Boolean);
+  const employerIndex = parts.findIndex((part: string): boolean =>
+    employerPathKeys.has(normalizeNameForMatch(decodeURIComponent(part)))
+  );
+  return employerIndex >= 0 && normalizeString(parts[employerIndex + 1]).length > 0;
+};
+
+const titleCaseScrapedCompanyName = (value: string): string =>
+  value
+    .replace(/[-_]+/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .replace(/\b[^\s]/gu, (letter: string): string => letter.toUpperCase());
+
+const companyNameFromPracujEmployerProfileUrl = (value: unknown): string | null => {
+  const normalized = normalizeJobBoardSourceUrl(value);
+  if (normalized === null) return null;
+  try {
+    const url = new URL(normalized);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
+    if (!/pracuj\.pl$/iu.test(hostname)) return null;
+    if (!isPracujEmployerProfileUrlWithSlug(url)) return null;
+    const employerPathKeys = new Set([
+      'firma',
+      'firmy',
+      'pracodawca',
+      'pracodawcy',
+      'profil pracodawcy',
+      'profil pracodawcow',
+      'profile pracodawcy',
+      'profile pracodawcow',
+    ]);
+    const parts = url.pathname.split('/').filter(Boolean);
+    const employerIndex = parts.findIndex((part: string): boolean =>
+      employerPathKeys.has(normalizeNameForMatch(decodeURIComponent(part)))
+    );
+    const slugPart = employerIndex >= 0 ? parts[employerIndex + 1] : undefined;
+    const slug = decodeURIComponent(slugPart ?? '').split(',')[0] ?? '';
+    const companyName = titleCaseScrapedCompanyName(slug);
+    return companyName.length > 0 && !isSuspiciousJobBoardCompanyName(companyName)
+      ? companyName
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const companyNameFromWebsiteUrl = (value: unknown): string | null => {
+  const normalized = normalizeJobBoardSourceUrl(value);
+  if (normalized === null) return null;
+  try {
+    const url = new URL(normalized);
+    const hostname = url.hostname.toLowerCase().replace(/^www\./u, '');
+    if (hostname.length === 0 || isKnownJobBoardHost(url)) return null;
+    return hostname;
+  } catch {
+    return null;
+  }
+};
+
+const isDomainLikeCompanyName = (value: unknown): boolean =>
+  /^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/iu.test(normalizeString(value));
+
+const shouldUseScrapedCompanyNameForOrganization = (
+  organization: FilemakerOrganization,
+  offer: FilemakerJobBoardScrapedOffer
+): boolean => {
+  if (isSuspiciousJobBoardCompanyName(offer.companyName)) return false;
+  if (isSuspiciousJobBoardCompanyName(organization.name)) return true;
+  if (isDomainLikeCompanyName(offer.companyName)) return false;
+  return isDomainLikeCompanyName(organization.name);
+};
+
+const domainLikeCompanyNameKey = (value: unknown): string => {
+  const normalized = normalizeString(value).toLowerCase();
+  if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/iu.test(normalized)) return '';
+  const rootLabel = normalized.split('.')[0] ?? '';
+  return normalizeNameForMatch(rootLabel.replace(/-/gu, ' '));
+};
+
+const resolveScrapedCompanyDisplayName = (
+  offer: FilemakerJobBoardScrapedOffer
+): string | null => {
+  const scrapedName = normalizeString(offer.companyName);
+  if (scrapedName.length > 0 && !isSuspiciousJobBoardCompanyName(scrapedName)) {
+    return scrapedName;
+  }
+  return (
+    companyNameFromPracujEmployerProfileUrl(offer.companyProfileUrl) ??
+    companyNameFromWebsiteUrl(offer.companyProfileUrl) ??
+    companyNameFromWebsiteUrl(offer.companyWebsiteUrl)
+  );
+};
+
+const offerWithResolvedCompanyName = (
+  offer: FilemakerJobBoardScrapedOffer
+): FilemakerJobBoardScrapedOffer => {
+  const companyName = resolveScrapedCompanyDisplayName(offer);
+  if (companyName === null || companyName === offer.companyName) return offer;
+  return { ...offer, companyName };
+};
+
+const normalizeCompanyIdentityUrl = (value: unknown): string => {
+  const normalized = normalizeJobBoardSourceUrl(value);
+  if (normalized === null) return '';
+  try {
+    const parsed = new URL(normalized);
+    if (!isPracujEmployerProfileUrlWithSlug(parsed)) return '';
+    if (isKnownJobBoardHost(parsed) && !/pracuj\.pl$/iu.test(parsed.hostname.replace(/^www\./u, ''))) {
+      return '';
+    }
+    parsed.hostname = parsed.hostname.toLowerCase().replace(/^www\./u, '');
+    parsed.hash = '';
+    parsed.search = '';
+    parsed.pathname = parsed.pathname.replace(/\/+$/u, '');
+    return parsed.toString().toLowerCase();
+  } catch {
+    return normalizeNameForMatch(normalized);
+  }
+};
+
+const companyIdentityKeysFromUrl = (value: unknown): string[] => {
+  const normalized = normalizeCompanyIdentityUrl(value);
+  if (normalized.length === 0) return [];
+  try {
+    const parsed = new URL(normalized);
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./u, '');
+    if (/pracuj\.pl$/iu.test(hostname)) return [`profile:${normalized}`];
+    return [`website:${hostname}`];
+  } catch {
+    return [`website:${normalized}`];
+  }
+};
+
+const companyNameKeyFromUrlHost = (value: unknown): string => {
+  const normalized = normalizeCompanyIdentityUrl(value);
+  if (normalized.length === 0) return '';
+  try {
+    const parsed = new URL(normalized);
+    const hostname = parsed.hostname.toLowerCase().replace(/^www\./u, '');
+    if (/pracuj\.pl$/iu.test(hostname)) return '';
+    const rootLabel = hostname.split('.')[0] ?? '';
+    return normalizeNameForMatch(rootLabel.replace(/-/gu, ' '));
+  } catch {
+    return '';
+  }
+};
+
+const buildScrapedCompanyIdentityKey = (offer: FilemakerJobBoardScrapedOffer): string => {
+  const registryCandidates: Array<[string, unknown]> = [
+    ['tax', offer.companyTaxId],
+    ['krs', offer.companyKrs],
+    ['regon', offer.companyRegon],
+  ];
+  for (const [kind, value] of registryCandidates) {
+    const normalized = normalizeCompanyIdentityValue(value);
+    if (normalized.length > 0) return `${kind}:${normalized}`;
+  }
+  const profileUrlKey = companyIdentityKeysFromUrl(offer.companyProfileUrl)[0];
+  if (profileUrlKey !== undefined) return profileUrlKey;
+  const websiteUrlKey = companyIdentityKeysFromUrl(offer.companyWebsiteUrl)[0];
+  if (websiteUrlKey !== undefined) return websiteUrlKey;
+  const nameKey = normalizeNameForMatch(offer.companyName);
+  if (nameKey.length > 0 && !isSuspiciousJobBoardCompanyName(offer.companyName)) {
+    return `name:${nameKey}`;
+  }
+  return '';
+};
+
+const buildScrapedCompanyLookupKeys = (offer: FilemakerJobBoardScrapedOffer): Set<string> => {
+  const keys = new Set<string>();
+  const identityKey = buildScrapedCompanyIdentityKey(offer);
+  const nameKey = normalizeNameForMatch(offer.companyName);
+  const profileHostNameKey = companyNameKeyFromUrlHost(offer.companyProfileUrl);
+  const websiteHostNameKey = companyNameKeyFromUrlHost(offer.companyWebsiteUrl);
+  if (identityKey.length > 0) keys.add(identityKey);
+  if (nameKey.length > 0 && !isSuspiciousJobBoardCompanyName(offer.companyName)) {
+    keys.add(`name:${nameKey}`);
+  }
+  if (profileHostNameKey.length >= 4) keys.add(`name:${profileHostNameKey}`);
+  if (websiteHostNameKey.length >= 4) keys.add(`name:${websiteHostNameKey}`);
+  return keys;
+};
+
+const buildOrganizationCompanyIdentityKeys = (
+  organization: FilemakerOrganization
+): Set<string> => {
+  const keys = new Set<string>();
+  const tax = normalizeCompanyIdentityValue(organization.taxId);
+  const krs = normalizeCompanyIdentityValue(organization.krs);
+  const regon = normalizeCompanyIdentityValue(organization.regon);
+  const nameKey = normalizeNameForMatch(organization.name);
+  const tradingNameKey = normalizeNameForMatch(organization.tradingName ?? '');
+  const domainNameKey = domainLikeCompanyNameKey(organization.name);
+  const profileHostNameKey = companyNameKeyFromUrlHost(organization.jobBoardCompanyProfileUrl);
+  const websiteHostNameKey = companyNameKeyFromUrlHost(organization.jobBoardCompanyWebsiteUrl);
+  if (tax.length > 0) keys.add(`tax:${tax}`);
+  if (krs.length > 0) keys.add(`krs:${krs}`);
+  if (regon.length > 0) keys.add(`regon:${regon}`);
+  companyIdentityKeysFromUrl(organization.jobBoardCompanyProfileUrl).forEach((key: string) =>
+    keys.add(key)
+  );
+  companyIdentityKeysFromUrl(organization.jobBoardCompanyWebsiteUrl).forEach((key: string) =>
+    keys.add(key)
+  );
+  if (nameKey.length > 0) keys.add(`name:${nameKey}`);
+  if (tradingNameKey.length > 0) keys.add(`name:${tradingNameKey}`);
+  if (domainNameKey.length >= 4) keys.add(`name:${domainNameKey}`);
+  if (profileHostNameKey.length >= 4) keys.add(`name:${profileHostNameKey}`);
+  if (websiteHostNameKey.length >= 4) keys.add(`name:${websiteHostNameKey}`);
+  return keys;
+};
+
+const organizationMatchesScrapedCompany = (input: {
+  companyIdentityKey: string;
+  companyNameKey: string;
+  offer: FilemakerJobBoardScrapedOffer;
+  organization: FilemakerOrganization;
+}): boolean => {
+  if (
+    input.companyIdentityKey.length > 0 &&
+    buildOrganizationCompanyIdentityKeys(input.organization).has(input.companyIdentityKey)
+  ) {
+    return true;
+  }
+  return (
+    input.companyNameKey.length > 0 &&
+    !isSuspiciousJobBoardCompanyName(input.offer.companyName) &&
+    buildOrganizationCompanyIdentityKeys(input.organization).has(`name:${input.companyNameKey}`)
+  );
+};
+
+const ORGANIZATION_PROFILE_COMPARE_FIELDS = [
+  'city',
+  'country',
+  'countryId',
+  'jobBoardCompanyEmail',
+  'jobBoardCompanyIndustry',
+  'jobBoardCompanyLogoUrl',
+  'jobBoardCompanyPhone',
+  'jobBoardCompanyProfile',
+  'jobBoardCompanyProfileScrapedAt',
+  'jobBoardCompanyProfileUrl',
+  'jobBoardCompanyAddress',
+  'jobBoardCompanyRegion',
+  'jobBoardCompanySize',
+  'jobBoardCompanyWebsiteUrl',
+  'jobBoardScrapedAt',
+  'jobBoardSourceLabel',
+  'jobBoardSourceSite',
+  'jobBoardSourceUrl',
+  'krs',
+  'name',
+  'postalCode',
+  'regon',
+  'street',
+  'streetNumber',
+  'taxId',
+] as const satisfies readonly (keyof FilemakerOrganization)[];
+
 const applyOfferProfileToOrganization = (
   organization: FilemakerOrganization,
   offer: FilemakerJobBoardScrapedOffer,
   now = new Date().toISOString()
 ): { changed: boolean; organization: FilemakerOrganization } => {
-  if (offer.companyProfile.trim().length === 0) {
+  if (!hasScrapedCompanyInformation(offer)) {
     return { changed: false, organization };
   }
+  const parsedAddress = parseScrapedAddressPill(offer.companyAddress ?? '');
+  const sourceLabel = resolveJobBoardOriginLabel({
+    sourceSite: offer.sourceSite,
+    sourceUrl: offer.sourceUrl,
+  });
+  const shouldReplaceName = shouldUseScrapedCompanyNameForOrganization(organization, offer);
   const next = createFilemakerOrganization({
     ...organization,
-    jobBoardCompanyProfile: offer.companyProfile,
-    jobBoardCompanyProfileUrl: offer.companyProfileUrl ?? undefined,
+    name: shouldReplaceName ? offer.companyName : organization.name,
+    street: fillEmptyOrganizationField(organization.street, parsedAddress?.street),
+    streetNumber: fillEmptyOrganizationField(organization.streetNumber, parsedAddress?.streetNumber),
+    city: fillEmptyOrganizationField(
+      organization.city,
+      offer.companyCity || parsedAddress?.city
+    ),
+    postalCode: fillEmptyOrganizationField(
+      organization.postalCode,
+      offer.companyPostalCode || parsedAddress?.postalCode
+    ),
+    country: fillEmptyOrganizationField(
+      organization.country,
+      offer.companyCountry || parsedAddress?.country
+    ),
+    countryId: fillEmptyOrganizationField(organization.countryId, parsedAddress?.countryId),
+    taxId: fillEmptyOrganizationField(organization.taxId, offer.companyTaxId),
+    krs: fillEmptyOrganizationField(organization.krs, offer.companyKrs),
+    regon: fillEmptyOrganizationField(organization.regon, offer.companyRegon),
+    jobBoardCompanyProfile: scrapedOrExisting(offer.companyProfile, organization.jobBoardCompanyProfile),
+    jobBoardCompanyProfileUrl: scrapedOrExisting(
+      offer.companyProfileUrl,
+      organization.jobBoardCompanyProfileUrl
+    ),
     jobBoardCompanyProfileScrapedAt: now,
+    jobBoardCompanyAddress: scrapedOrExisting(
+      offer.companyAddress,
+      organization.jobBoardCompanyAddress
+    ),
+    jobBoardCompanyRegion: scrapedOrExisting(
+      offer.companyRegion,
+      organization.jobBoardCompanyRegion
+    ),
+    jobBoardCompanyWebsiteUrl: scrapedOrExisting(
+      offer.companyWebsiteUrl,
+      organization.jobBoardCompanyWebsiteUrl
+    ),
+    jobBoardCompanyEmail: scrapedOrExisting(offer.companyEmail, organization.jobBoardCompanyEmail),
+    jobBoardCompanyPhone: scrapedOrExisting(offer.companyPhone, organization.jobBoardCompanyPhone),
+    jobBoardCompanyIndustry: scrapedOrExisting(
+      offer.companyIndustry,
+      organization.jobBoardCompanyIndustry
+    ),
+    jobBoardCompanySize: scrapedOrExisting(offer.companySize, organization.jobBoardCompanySize),
+    jobBoardCompanyLogoUrl: scrapedOrExisting(
+      offer.companyLogoUrl,
+      organization.jobBoardCompanyLogoUrl
+    ),
+    jobBoardScrapedAt: now,
+    jobBoardSourceLabel: fillEmptyOrganizationField(
+      organization.jobBoardSourceLabel,
+      sourceLabel
+    ),
+    jobBoardSourceSite: fillEmptyOrganizationField(
+      organization.jobBoardSourceSite,
+      offer.sourceSite
+    ),
+    jobBoardSourceUrl: fillEmptyOrganizationField(
+      organization.jobBoardSourceUrl,
+      offer.sourceUrl
+    ),
     updatedBy: 'filemaker:job-board-scrape',
     updatedAt: now,
   });
   return {
-    changed:
-      organization.jobBoardCompanyProfile !== next.jobBoardCompanyProfile ||
-      organization.jobBoardCompanyProfileUrl !== next.jobBoardCompanyProfileUrl ||
-      organization.jobBoardCompanyProfileScrapedAt !== next.jobBoardCompanyProfileScrapedAt,
+    changed: ORGANIZATION_PROFILE_COMPARE_FIELDS.some(
+      (field): boolean => organization[field] !== next[field]
+    ),
     organization: next,
   };
 };
@@ -477,6 +891,28 @@ const getOrCreateScrapedCompanyCandidate = async (args: {
     return { candidate: existingCandidate, created: false, profileUpdated: false };
   }
 
+  const lookupKeys = buildScrapedCompanyLookupKeys(args.offer);
+  const existingOrganizationIndex = args.database.organizations.findIndex(
+    (organization: FilemakerOrganization): boolean =>
+      Array.from(lookupKeys).some((key: string): boolean =>
+        buildOrganizationCompanyIdentityKeys(organization).has(key)
+      )
+  );
+  if (existingOrganizationIndex >= 0) {
+    const existingOrganization = args.database.organizations[existingOrganizationIndex];
+    if (existingOrganization !== undefined) {
+      const profileResult = applyOfferProfileToOrganization(existingOrganization, args.offer);
+      const organization = profileResult.organization;
+      if (profileResult.changed) {
+        args.database.organizations.splice(existingOrganizationIndex, 1, organization);
+        await upsertMongoOrganizationForJobBoardImport(organization);
+      }
+      const candidate: ScrapedCompanyCandidate = { organization };
+      args.createdCandidatesByCompanyKey.set(args.companyKey, candidate);
+      return { candidate, created: false, profileUpdated: profileResult.changed };
+    }
+  }
+
   const createdOrganizationRecord = createUnmatchedOrganization(args.database, args.offer);
   const candidate: ScrapedCompanyCandidate = { organization: createdOrganizationRecord };
   args.createdCandidatesByCompanyKey.set(args.companyKey, candidate);
@@ -484,7 +920,7 @@ const getOrCreateScrapedCompanyCandidate = async (args: {
   return {
     candidate,
     created: true,
-    profileUpdated: args.offer.companyProfile.trim().length > 0,
+    profileUpdated: hasScrapedCompanyInformation(args.offer),
   };
 };
 
@@ -511,9 +947,24 @@ const buildMongoOrganizationSetFields = (
       organization.jobBoardCompanyProfileScrapedAt
     ),
     jobBoardCompanyProfileUrl: toOptionalMongoString(organization.jobBoardCompanyProfileUrl),
+    jobBoardCompanyAddress: toOptionalMongoString(organization.jobBoardCompanyAddress),
+    jobBoardCompanyRegion: toOptionalMongoString(organization.jobBoardCompanyRegion),
+    jobBoardCompanyWebsiteUrl: toOptionalMongoString(organization.jobBoardCompanyWebsiteUrl),
+    jobBoardCompanyEmail: toOptionalMongoString(organization.jobBoardCompanyEmail),
+    jobBoardCompanyPhone: toOptionalMongoString(organization.jobBoardCompanyPhone),
+    jobBoardCompanyIndustry: toOptionalMongoString(organization.jobBoardCompanyIndustry),
+    jobBoardCompanySize: toOptionalMongoString(organization.jobBoardCompanySize),
+    jobBoardCompanyLogoUrl: toOptionalMongoString(organization.jobBoardCompanyLogoUrl),
+    jobBoardScrapedAt: toOptionalMongoString(organization.jobBoardScrapedAt),
+    jobBoardSourceLabel: toOptionalMongoString(organization.jobBoardSourceLabel),
+    jobBoardSourceSite: toOptionalMongoString(organization.jobBoardSourceSite),
+    jobBoardSourceUrl: toOptionalMongoString(organization.jobBoardSourceUrl),
     name: organization.name,
     postalCode: toOptionalMongoString(organization.postalCode),
+    regon: toOptionalMongoString(organization.regon),
     street: toOptionalMongoString(organization.street),
+    taxId: toOptionalMongoString(organization.taxId),
+    krs: toOptionalMongoString(organization.krs),
     streetNumber: toOptionalMongoString(organization.streetNumber),
     tradingName: toOptionalMongoString(organization.tradingName),
     updatedAt: now,
@@ -536,33 +987,6 @@ const upsertMongoOrganizationForJobBoardImport = async (
         },
       },
       { upsert: true }
-    );
-  } catch {
-    // Settings persistence is still useful in non-Mongo test/dev environments.
-  }
-};
-
-const upsertMongoOrganizationProfile = async (
-  organizationId: string,
-  offer: FilemakerJobBoardScrapedOffer
-): Promise<void> => {
-  if (offer.companyProfile.trim().length === 0) return;
-  try {
-    const now = new Date().toISOString();
-    const collection = await getFilemakerOrganizationsCollection();
-    await collection.updateOne(
-      { id: organizationId },
-      {
-        $set: {
-          jobBoardCompanyProfile: offer.companyProfile,
-          ...(offer.companyProfileUrl !== null
-            ? { jobBoardCompanyProfileUrl: offer.companyProfileUrl }
-            : {}),
-          jobBoardCompanyProfileScrapedAt: now,
-          updatedAt: now,
-          updatedBy: 'filemaker:job-board-scrape',
-        },
-      }
     );
   } catch {
     // Settings persistence is still useful in non-Mongo test/dev environments.
@@ -593,6 +1017,31 @@ const buildExistingListingOffer = (
     companyName: organization?.name ?? 'Existing organisation',
     companyProfile: organization?.jobBoardCompanyProfile ?? '',
     companyProfileUrl: organization?.jobBoardCompanyProfileUrl ?? null,
+    companyWebsiteUrl: organization?.jobBoardCompanyWebsiteUrl ?? null,
+    companyEmail: organization?.jobBoardCompanyEmail ?? null,
+    companyPhone: organization?.jobBoardCompanyPhone ?? null,
+    companyIndustry: organization?.jobBoardCompanyIndustry ?? '',
+    companySize: organization?.jobBoardCompanySize ?? '',
+    companyLogoUrl: organization?.jobBoardCompanyLogoUrl ?? null,
+    companyTaxId: organization?.taxId ?? '',
+    companyKrs: organization?.krs ?? '',
+    companyRegon: organization?.regon ?? '',
+    companyAddress:
+      organization?.jobBoardCompanyAddress ??
+      [
+        organization?.street,
+        organization?.streetNumber,
+        organization?.postalCode,
+        organization?.city,
+        organization?.country,
+      ]
+        .map((value: unknown): string => normalizeString(value))
+        .filter((value: string): boolean => value.length > 0)
+        .join(', '),
+    companyCity: organization?.city ?? '',
+    companyRegion: organization?.jobBoardCompanyRegion ?? '',
+    companyPostalCode: organization?.postalCode ?? '',
+    companyCountry: organization?.country ?? '',
     description: listing.description,
     requirements: listing.requirements,
     responsibilities: listing.responsibilities,
@@ -1182,7 +1631,8 @@ const applyImport = async ({
   const createdCandidatesByCompanyKey = new Map<string, ScrapedCompanyCandidate>();
   const results: FilemakerJobBoardScrapeOfferResult[] = [];
 
-  for (const offer of offers) {
+  for (const rawOffer of offers) {
+    const offer = offerWithResolvedCompanyName(rawOffer);
     const existingSourceIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
       sourceExternalId: offer.sourceExternalId,
       sourceSite: offer.sourceSite,
@@ -1190,7 +1640,8 @@ const applyImport = async ({
     });
     const existingSourceListing =
       existingSourceIndex >= 0 ? database.jobListings[existingSourceIndex] : undefined;
-    const companyKey = normalizeNameForMatch(offer.companyName);
+    const companyNameKey = normalizeNameForMatch(offer.companyName);
+    const companyKey = buildScrapedCompanyIdentityKey(offer);
     if (existingSourceListing !== undefined && options.duplicateStrategy === 'skip') {
       let duplicateListing = existingSourceListing;
       const existingOrganization =
@@ -1200,8 +1651,12 @@ const applyImport = async ({
         ) ?? null;
       const existingOrganizationMatches =
         existingOrganization !== null &&
-        companyKey.length > 0 &&
-        normalizeNameForMatch(existingOrganization.name) === companyKey;
+        organizationMatchesScrapedCompany({
+          companyIdentityKey: companyKey,
+          companyNameKey,
+          offer,
+          organization: existingOrganization,
+        });
       if (
         !existingOrganizationMatches &&
         companyKey.length > 0 &&
@@ -1213,8 +1668,10 @@ const applyImport = async ({
           database,
           offer,
         });
-        changed = changed || companyCandidate.created;
+        changed = changed || companyCandidate.created || companyCandidate.profileUpdated;
         counters.createdOrganizations += companyCandidate.created ? 1 : 0;
+        counters.updatedOrganizations +=
+          !companyCandidate.created && companyCandidate.profileUpdated ? 1 : 0;
         counters.profileUpdates += companyCandidate.profileUpdated ? 1 : 0;
         duplicateListing = createFilemakerJobListing({
           ...duplicateListing,
@@ -1237,6 +1694,74 @@ const applyImport = async ({
           { listingId: duplicateListing.id, match, offer, reason: null, status: 'preview' },
           companyCandidate.profileUpdated
         );
+        if (!companyCandidate.created && companyCandidate.profileUpdated) {
+          await emitWriteResult(
+            onWrite,
+            'organization_profile_updated',
+            { listingId: duplicateListing.id, match, offer, reason: null, status: 'updated' },
+            true
+          );
+        }
+        const reassignedProfileUpdated = applyOfferProfileToDatabaseOrganization(
+          database,
+          companyCandidate.candidate.organization.id,
+          offer
+        );
+        if (reassignedProfileUpdated) {
+          changed = true;
+          counters.updatedOrganizations += 1;
+          counters.profileUpdates += 1;
+          const updatedOrganization = database.organizations.find(
+            (organization: FilemakerOrganization): boolean =>
+              organization.id === companyCandidate.candidate.organization.id
+          );
+          if (updatedOrganization !== undefined) {
+            companyCandidate.candidate.organization = updatedOrganization;
+            await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
+          }
+          await emitWriteResult(
+            onWrite,
+            'organization_profile_updated',
+            { listingId: duplicateListing.id, match, offer, reason: null, status: 'updated' },
+            true
+          );
+        }
+      }
+      if (existingOrganizationMatches && existingOrganization !== null) {
+        const profileUpdated = applyOfferProfileToDatabaseOrganization(
+          database,
+          existingOrganization.id,
+          offer
+        );
+        if (profileUpdated) {
+          changed = true;
+          counters.updatedOrganizations += 1;
+          counters.profileUpdates += 1;
+          const updatedOrganization = database.organizations.find(
+            (organization: FilemakerOrganization): boolean =>
+              organization.id === existingOrganization.id
+          );
+          if (updatedOrganization !== undefined) {
+            await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
+          }
+          await emitWriteResult(
+            onWrite,
+            'organization_profile_updated',
+            {
+              listingId: duplicateListing.id,
+              match: {
+                confidence: 100,
+                organizationId: existingOrganization.id,
+                organizationName: existingOrganization.name,
+                reason: 'existing listing source identity',
+              },
+              offer,
+              reason: null,
+              status: 'updated',
+            },
+            true
+          );
+        }
       }
       const result = buildExistingListingSkippedResult(
         database,
@@ -1266,14 +1791,20 @@ const applyImport = async ({
       continue;
     }
 
-    if (companyKey.length === 0 || isSuspiciousJobBoardCompanyName(offer.companyName)) {
+    if (
+      companyNameKey.length === 0 ||
+      companyKey.length === 0 ||
+      isSuspiciousJobBoardCompanyName(offer.companyName)
+    ) {
       const result: FilemakerJobBoardScrapeOfferResult = {
         listingId: null,
         match: null,
         offer,
         reason:
-          companyKey.length === 0
+          companyNameKey.length === 0
             ? 'Scraped employer name is empty, so no organisation was created.'
+            : companyKey.length === 0
+              ? 'Scraped employer identity is not reliable enough to create an organisation.'
             : 'Scraped employer name looks like job-board directory metadata, so no organisation was created.',
         status: 'unmatched',
       };
@@ -1315,6 +1846,17 @@ const applyImport = async ({
         { listingId: null, match, offer, reason: null, status: 'preview' },
         false
       );
+      if (createdOrganizationProfileUpdated) {
+        changed = true;
+        counters.updatedOrganizations += 1;
+        counters.profileUpdates += 1;
+        await emitWriteResult(
+          onWrite,
+          'organization_profile_updated',
+          { listingId: null, match, offer, reason: null, status: 'updated' },
+          true
+        );
+      }
     }
 
     if (ensureOrganizationInDatabase(database, matchedCandidate.organization)) {
@@ -1345,7 +1887,12 @@ const applyImport = async ({
         true
       );
     }
-    await upsertMongoOrganizationProfile(match.organizationId, offer);
+    const updatedOrganization = database.organizations.find(
+      (organization: FilemakerOrganization): boolean => organization.id === match.organizationId
+    );
+    if (updatedOrganization !== undefined) {
+      await upsertMongoOrganizationForJobBoardImport(updatedOrganization);
+    }
     const matchedExistingIndex = findExistingListingIndex(
       database.jobListings,
       match.organizationId,
@@ -1713,33 +2260,6 @@ const scrapeOffersViaJobBoardSequencer = async (
 
   for (const [index, url] of collected.urls.entries()) {
     throwIfScrapeAborted(signal);
-    if (options.duplicateStrategy !== 'add') {
-      const existingIndex = findExistingListingIndexBySourceIdentity(database.jobListings, {
-        sourceSite: collected.sourceSite,
-        sourceUrl: url,
-      });
-      const existingListing =
-        existingIndex >= 0 ? database.jobListings[existingIndex] : undefined;
-      if (existingListing !== undefined) {
-        const result = buildExistingListingSkippedResult(
-          database,
-          existingListing,
-          collected.sourceSite,
-          url
-        );
-        skippedResults.push(result);
-        await progress.onStatus?.(
-          `Skipping existing offer ${index + 1} of ${collected.urls.length}: ${url}`
-        );
-        await progress.onSkippedExisting?.({
-          index: index + 1,
-          result,
-          total: collected.urls.length,
-          url,
-        });
-        continue;
-      }
-    }
     await progress.onStatus?.(
       `Scraping offer ${index + 1} of ${collected.urls.length}: ${url}`
     );

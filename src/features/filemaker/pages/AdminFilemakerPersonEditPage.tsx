@@ -6,6 +6,7 @@ import { PersonAnyParamsSection } from '../components/page/PersonAnyParamsSectio
 import { PersonAnyTextsSection } from '../components/page/PersonAnyTextsSection';
 import { PersonBankAccountsSection } from '../components/page/PersonBankAccountsSection';
 import { PersonBasicInfoSection } from '../components/page/PersonBasicInfoSection';
+import { PersonAddressesSection } from '../components/page/PersonAddressesSection';
 import { PersonContractsSection } from '../components/page/PersonContractsSection';
 import { PersonCvsSection } from '../components/page/PersonCvsSection';
 import { PersonDocumentsSection } from '../components/page/PersonDocumentsSection';
@@ -46,6 +47,7 @@ function AdminFilemakerPersonEditPageInner(): React.JSX.Element {
       isSaving={updateSetting.isPending}
     >
       <PersonBasicInfoSection />
+      <PersonAddressesSection />
       <PersonProfileCvSection />
       {isCreateMode ? null : (
         <>

@@ -40,14 +40,26 @@ export const clipProbeText = (value: unknown, max = 8_000): string | null => {
 };
 
 const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
+  'company',
   'company profile',
+  'employer',
   'employer profile',
   'employers',
+  'firma',
+  'hiring organization',
   'informacje i opinie o pracodawcach',
+  'jobs',
+  'nazwa firmy',
   'odkrywaj najlepsze miejsca pracy',
+  'oferty pracy',
+  'organization',
+  'organisation',
+  'praca',
   'pracodawca',
   'pracodawcy',
+  'profil pracodawcow',
   'profile pracodawcow',
+  'profile pracodawcy',
   'profil pracodawcy',
 ]);
 
@@ -59,15 +71,27 @@ const normalizeCompanyNameGuardKey = (value: string): string =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+const isShortWeakCompanyName = (value: string): boolean => {
+  const normalized = normalizeProbeText(value);
+  const compactAlphaNumeric = normalized.replace(/[^\p{L}0-9]+/gu, '');
+  return (
+    /^[\p{L}]{1,2}$/u.test(compactAlphaNumeric) &&
+    normalized !== normalized.toLocaleUpperCase()
+  );
+};
+
 export const cleanCompanyProfileTitle = (value: unknown): string | null => {
   const normalized = normalizeProbeText(value)
     .replace(/\s*[-|]\s*(profil pracodawcy|pracodawca|kariera|career|jobs).*$/i, '')
     .trim();
   const key = normalizeCompanyNameGuardKey(normalized);
   if (
+    isShortWeakCompanyName(normalized) ||
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
     key.startsWith('odkrywaj najlepsze miejsca pracy') ||
+    key.startsWith('pracodawca ') ||
+    key.startsWith('pracodawcy ') ||
     key.startsWith('profile pracodawcow')
   ) {
     return null;
@@ -80,9 +104,12 @@ const cleanSnapshotCompanyName = (value: unknown): string | null => {
   if (normalized.length === 0) return null;
   const key = normalizeCompanyNameGuardKey(normalized);
   if (
+    isShortWeakCompanyName(normalized) ||
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
     key.startsWith('odkrywaj najlepsze miejsca pracy') ||
+    key.startsWith('pracodawca ') ||
+    key.startsWith('pracodawcy ') ||
     key.startsWith('profile pracodawcow')
   ) {
     return null;

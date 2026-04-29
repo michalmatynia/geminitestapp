@@ -79,6 +79,27 @@ function normalizeStringFilters(filters: ProductFilterInput, normalized: Product
   assignDefined(normalized, 'catalogId', toOptionalString(filters['catalogId']));
 }
 
+function normalizeIdList(value: unknown): string[] | undefined {
+  let rawIds: unknown[] = [];
+  if (Array.isArray(value)) {
+    rawIds = value;
+  } else if (typeof value === 'string') {
+    rawIds = value.split(',');
+  }
+  const ids = Array.from(
+    new Set(
+      rawIds
+        .map((entry: unknown): string => (typeof entry === 'string' ? entry.trim() : ''))
+        .filter((entry: string): boolean => entry.length > 0)
+    )
+  );
+  return ids.length > 0 ? ids : undefined;
+}
+
+function normalizeListFilters(filters: ProductFilterInput, normalized: ProductFilters): void {
+  assignDefined(normalized, 'ids', normalizeIdList(filters['ids']));
+}
+
 function normalizeNumberFilters(filters: ProductFilterInput, normalized: ProductFilters): void {
   assignDefined(normalized, 'minPrice', toOptionalNumber(filters['minPrice']));
   assignDefined(normalized, 'maxPrice', toOptionalNumber(filters['maxPrice']));
@@ -112,6 +133,7 @@ export function normalizeFilters(filters: ProductFilterInput = {}): ProductFilte
 
   normalizePagination(filters, normalized);
   normalizeStringFilters(filters, normalized);
+  normalizeListFilters(filters, normalized);
   normalizeNumberFilters(filters, normalized);
   normalizeBooleanFilters(filters, normalized);
   normalizeEnumFilters(filters, normalized);

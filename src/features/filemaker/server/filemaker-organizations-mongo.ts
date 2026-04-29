@@ -31,6 +31,18 @@ export type FilemakerOrganizationMongoDocument = Document & {
   jobBoardCompanyProfile?: string;
   jobBoardCompanyProfileScrapedAt?: string | null;
   jobBoardCompanyProfileUrl?: string;
+  jobBoardCompanyAddress?: string;
+  jobBoardCompanyRegion?: string;
+  jobBoardCompanyWebsiteUrl?: string;
+  jobBoardCompanyEmail?: string;
+  jobBoardCompanyPhone?: string;
+  jobBoardCompanyIndustry?: string;
+  jobBoardCompanySize?: string;
+  jobBoardCompanyLogoUrl?: string;
+  jobBoardScrapedAt?: string | null;
+  jobBoardSourceLabel?: string;
+  jobBoardSourceSite?: string;
+  jobBoardSourceUrl?: string;
   krs?: string;
   legacyDefaultAddressUuid?: string;
   legacyDefaultBankAccountUuid?: string;
@@ -41,6 +53,7 @@ export type FilemakerOrganizationMongoDocument = Document & {
   name: string;
   parentOrganizationId?: string | null;
   postalCode?: string;
+  regon?: string;
   street?: string;
   streetNumber?: string;
   taxId?: string;
@@ -66,7 +79,7 @@ export type FilemakerAddressMongoDocument = Document & {
   updatedAt?: string;
 };
 
-export type MongoFilemakerOrganizationAddressPatch = {
+export type MongoFilemakerAddressPatch = {
   addressId: string;
   city: string;
   country?: string;
@@ -80,6 +93,8 @@ export type MongoFilemakerOrganizationAddressPatch = {
   street: string;
   streetNumber: string;
 };
+
+export type MongoFilemakerOrganizationAddressPatch = MongoFilemakerAddressPatch;
 
 type FilemakerAddressLinkMongoDocument = Document & {
   addressId: string;
@@ -116,6 +131,7 @@ export const toFilemakerOrganization = (
     countryId: document.countryId,
     taxId: document.taxId,
     krs: document.krs,
+    regon: document.regon,
     tradingName: document.tradingName,
     cooperationStatus: document.cooperationStatus,
     establishedDate: document.establishedDate,
@@ -133,6 +149,18 @@ export const toFilemakerOrganization = (
     jobBoardCompanyProfile: document.jobBoardCompanyProfile,
     jobBoardCompanyProfileUrl: document.jobBoardCompanyProfileUrl,
     jobBoardCompanyProfileScrapedAt: document.jobBoardCompanyProfileScrapedAt,
+    jobBoardCompanyAddress: document.jobBoardCompanyAddress,
+    jobBoardCompanyRegion: document.jobBoardCompanyRegion,
+    jobBoardCompanyWebsiteUrl: document.jobBoardCompanyWebsiteUrl,
+    jobBoardCompanyEmail: document.jobBoardCompanyEmail,
+    jobBoardCompanyPhone: document.jobBoardCompanyPhone,
+    jobBoardCompanyIndustry: document.jobBoardCompanyIndustry,
+    jobBoardCompanySize: document.jobBoardCompanySize,
+    jobBoardCompanyLogoUrl: document.jobBoardCompanyLogoUrl,
+    jobBoardScrapedAt: document.jobBoardScrapedAt,
+    jobBoardSourceLabel: document.jobBoardSourceLabel,
+    jobBoardSourceSite: document.jobBoardSourceSite,
+    jobBoardSourceUrl: document.jobBoardSourceUrl,
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
   });
@@ -162,7 +190,7 @@ export const toFilemakerAddress = (document: FilemakerAddressMongoDocument): Fil
 };
 
 const toAddressSetFields = (
-  address: MongoFilemakerOrganizationAddressPatch,
+  address: MongoFilemakerAddressPatch,
   now: string
 ): Partial<FilemakerAddressMongoDocument> => {
   const countryValueId = optionalMetadataString(address.countryValueId);
@@ -185,21 +213,21 @@ const toAddressSetFields = (
 };
 
 const normalizeAddressPatches = (
-  addresses: MongoFilemakerOrganizationAddressPatch[]
-): MongoFilemakerOrganizationAddressPatch[] =>
+  addresses: MongoFilemakerAddressPatch[]
+): MongoFilemakerAddressPatch[] =>
   addresses.filter(
-    (address: MongoFilemakerOrganizationAddressPatch): boolean =>
+    (address: MongoFilemakerAddressPatch): boolean =>
       address.addressId.trim().length > 0
   );
 
 const upsertMongoFilemakerAddresses = async (
   db: Db,
-  addresses: MongoFilemakerOrganizationAddressPatch[],
+  addresses: MongoFilemakerAddressPatch[],
   now: string
 ): Promise<void> => {
   if (addresses.length === 0) return;
   await db.collection<FilemakerAddressMongoDocument>(FILEMAKER_ADDRESSES_COLLECTION).bulkWrite(
-    addresses.map((address: MongoFilemakerOrganizationAddressPatch) => ({
+    addresses.map((address: MongoFilemakerAddressPatch) => ({
       updateOne: {
         filter: { id: address.addressId },
         update: {

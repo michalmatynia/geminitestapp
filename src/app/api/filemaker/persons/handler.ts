@@ -17,6 +17,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     page: url.searchParams.get('page'),
     pageSize: url.searchParams.get('pageSize'),
     query: url.searchParams.get('query'),
+    sort: url.searchParams.get('sort'),
     updatedBy: url.searchParams.get('updatedBy'),
   });
   return Response.json(result);

@@ -30,10 +30,13 @@ import {
 import { formatFilemakerAddress } from '../../settings';
 import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../../types';
 import { formatTimestamp } from '../../pages/filemaker-page-utils';
+import { JobBoardOriginBadge } from './JobBoardOriginBadge';
+import { resolveJobBoardOrigin } from '../../job-board-origin';
 
 type FilemakerOrganizationTreeNodeProps = FolderTreeViewportRenderNodeInput & {
   eventsById: ReadonlyMap<string, FilemakerEvent>;
   jobListingsById: ReadonlyMap<string, FilemakerJobListing>;
+  jobListingsByOrganizationId: ReadonlyMap<string, readonly FilemakerJobListing[]>;
   organizationById: Map<string, FilemakerOrganization>;
   organizationEmailScrapeState: Record<string, boolean>;
   organizationWebsiteSocialScrapeState: Record<string, boolean>;
@@ -62,6 +65,7 @@ type OrganizationLeafNodeProps = Pick<
   isEmailScrapeRunning: boolean;
   isSelectedForBatch: boolean;
   isWebsiteSocialScrapeRunning: boolean;
+  jobListings: readonly FilemakerJobListing[];
   jobListingCount: number;
   organization: FilemakerOrganization;
   stateClassName: string;
@@ -97,6 +101,21 @@ const createTreeIndentStyle = (depth: number): React.CSSProperties => ({
 
 const metadataNumber = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
+const firstNonEmptyString = (...values: Array<string | null | undefined>): string | undefined => {
+  for (const value of values) {
+    const normalized = value?.trim() ?? '';
+    if (normalized.length > 0) return normalized;
+  }
+  return undefined;
+};
+
+const jobBoardProfileOriginUrl = (organization: FilemakerOrganization): string | undefined => {
+  const sourceUrl = organization.jobBoardSourceUrl?.trim() ?? '';
+  if (sourceUrl.length > 0) return sourceUrl;
+  const profileUrl = organization.jobBoardCompanyProfileUrl?.trim() ?? '';
+  return /pracuj\.pl|justjoin\.it|nofluffjobs/iu.test(profileUrl) ? profileUrl : undefined;
+};
 
 function TreeNodeSpacer(): React.JSX.Element {
   return <span className='inline-flex size-5 shrink-0' aria-hidden='true' />;
@@ -169,25 +188,61 @@ function FilemakerOrganizationGroupNode(props: OrganizationGroupNodeProps): Reac
 }
 
 function FilemakerOrganizationLeafDetails(props: {
+  jobListings: readonly FilemakerJobListing[];
   organization: FilemakerOrganization;
   onOpenOrganization: (organizationId: string) => void;
 }): React.JSX.Element {
-  const { onOpenOrganization, organization } = props;
+  const { jobListings, onOpenOrganization, organization } = props;
   const tradingName = organization.tradingName?.trim() ?? '';
+  const originUrl = jobBoardProfileOriginUrl(organization);
+  const fallbackListing = jobListings.find(
+    (listing: FilemakerJobListing): boolean =>
+      (listing.sourceSite ?? '').trim().length > 0 ||
+      (listing.sourceUrl ?? '').trim().length > 0
+  );
+  const badgeSourceSite = firstNonEmptyString(
+    organization.jobBoardSourceSite,
+    fallbackListing?.sourceSite
+  );
+  const badgeSourceUrl = firstNonEmptyString(originUrl, fallbackListing?.sourceUrl);
+  const primaryOrigin = resolveJobBoardOrigin({
+    sourceLabel: organization.jobBoardSourceLabel,
+    sourceSite: badgeSourceSite,
+    sourceUrl: badgeSourceUrl,
+  });
+  const sourceLabels = new Set<string>();
+  if (primaryOrigin !== null) sourceLabels.add(primaryOrigin.label);
+  jobListings.forEach((listing: FilemakerJobListing): void => {
+    const origin = resolveJobBoardOrigin({
+      sourceSite: listing.sourceSite,
+      sourceUrl: listing.sourceUrl,
+    });
+    if (origin !== null) sourceLabels.add(origin.label);
+  });
+  const extraSourceCount = Math.max(0, sourceLabels.size - (primaryOrigin === null ? 0 : 1));
 
   return (
     <div className='min-w-0 flex-1 cursor-default'>
-      <button
-        type='button'
-        className='inline-block max-w-full cursor-pointer select-text truncate align-top text-left font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-        onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-          event.preventDefault();
-          event.stopPropagation();
-          onOpenOrganization(organization.id);
-        }}
-      >
-        {organization.name}
-      </button>
+      <div className='flex min-w-0 items-center gap-2'>
+        <button
+          type='button'
+          className='inline-block max-w-full cursor-pointer select-text truncate align-top text-left font-semibold text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+          onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+            event.preventDefault();
+            event.stopPropagation();
+            onOpenOrganization(organization.id);
+          }}
+        >
+          {organization.name}
+        </button>
+        <JobBoardOriginBadge
+          compact
+          extraCount={extraSourceCount}
+          sourceLabel={organization.jobBoardSourceLabel}
+          sourceSite={badgeSourceSite}
+          sourceUrl={badgeSourceUrl}
+        />
+      </div>
       {tradingName.length > 0 ? (
         <div className='cursor-default text-[11px] italic text-gray-400'>
           <span className='inline-block max-w-full cursor-text select-text truncate align-top'>
@@ -317,6 +372,7 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
       )}
       <Building2 className='size-4 shrink-0 text-blue-300' />
       <FilemakerOrganizationLeafDetails
+        jobListings={props.jobListings}
         organization={organization}
         onOpenOrganization={onOpenOrganization}
       />
@@ -435,6 +491,11 @@ function OrganizationRelationLinkNode(props: Pick<
           {normalizedMetaBadge}
         </Badge>
       ) : null}
+      <JobBoardOriginBadge
+        compact
+        sourceSite={jobListing?.sourceSite}
+        sourceUrl={jobListing?.sourceUrl}
+      />
       <ExternalLink className='size-3.5 shrink-0 text-gray-500' aria-hidden='true' />
     </div>
   );
@@ -589,6 +650,7 @@ export function FilemakerOrganizationMasterTreeNode(
       isWebsiteSocialScrapeRunning={
         props.organizationWebsiteSocialScrapeState[organization.id] === true
       }
+      jobListings={props.jobListingsByOrganizationId.get(organization.id) ?? []}
       jobListingCount={metadataNumber(node.metadata?.['jobListingCount'])}
       organization={organization}
       stateClassName={stateClassName}

@@ -30,6 +30,14 @@ type AddressActionHandlers = {
   updateSelectedAddress: (patch: Partial<EditableAddress>) => void;
 };
 
+type FilemakerAddressesSectionProps = {
+  countries: CountryOption[];
+  databaseAddresses: FilemakerAddress[];
+  editableAddresses: EditableAddress[];
+  setEditableAddresses: (value: React.SetStateAction<EditableAddress[]>) => void;
+  title?: string;
+};
+
 const toAddressOption = (address: EditableAddress): LabeledOptionWithDescriptionDto<string> => ({
   value: address.addressId,
   label: address.isDefault ? `Default - ${address.addressId}` : address.addressId,
@@ -266,36 +274,35 @@ function useAddressActionHandlers(input: {
   return { ...creationActions, ...selectedAddressActions, updateSelectedAddress };
 }
 
-export function OrganizationAddressesSection(): React.JSX.Element {
-  const { editableAddresses, database, countries } =
-    useAdminFilemakerOrganizationEditPageStateContext();
-  const { setEditableAddresses } = useAdminFilemakerOrganizationEditPageActionsContext();
+export function FilemakerAddressesSection(
+  props: FilemakerAddressesSectionProps
+): React.JSX.Element {
   const [attachAddressId, setAttachAddressId] = useState('');
-  const { selectedAddress, setSelectedAddressId } = useAddressSelection(editableAddresses);
+  const { selectedAddress, setSelectedAddressId } = useAddressSelection(props.editableAddresses);
   const { attachOptions, countryById, countryOptions, linkedOptions } = useAddressOptions({
-    countries,
-    databaseAddresses: database.addresses,
-    editableAddresses,
+    countries: props.countries,
+    databaseAddresses: props.databaseAddresses,
+    editableAddresses: props.editableAddresses,
   });
   const actions = useAddressActionHandlers({
     attachAddressId,
-    countries,
+    countries: props.countries,
     countryById,
-    databaseAddresses: database.addresses,
+    databaseAddresses: props.databaseAddresses,
     selectedAddress,
     setAttachAddressId,
-    setEditableAddresses,
+    setEditableAddresses: props.setEditableAddresses,
     setSelectedAddressId,
   });
 
   return (
-    <FormSection title='Addresses' className='space-y-4 p-4'>
+    <FormSection title={props.title ?? 'Addresses'} className='space-y-4 p-4'>
       <OrganizationAddressFormControls
         attachAddressId={attachAddressId}
         attachOptions={attachOptions}
         countryById={countryById}
         countryOptions={countryOptions}
-        linkedCount={editableAddresses.length}
+        linkedCount={props.editableAddresses.length}
         linkedOptions={linkedOptions}
         onAddAddress={actions.handleAddAddress}
         onAttachAddress={actions.handleAttachAddress}
@@ -304,9 +311,24 @@ export function OrganizationAddressesSection(): React.JSX.Element {
         selectedAddress={selectedAddress}
         setAttachAddressId={setAttachAddressId}
         setSelectedAddressId={setSelectedAddressId}
-        sharedCount={database.addresses.length}
+        sharedCount={props.databaseAddresses.length}
         updateSelectedAddress={actions.updateSelectedAddress}
       />
     </FormSection>
+  );
+}
+
+export function OrganizationAddressesSection(): React.JSX.Element {
+  const { editableAddresses, database, countries } =
+    useAdminFilemakerOrganizationEditPageStateContext();
+  const { setEditableAddresses } = useAdminFilemakerOrganizationEditPageActionsContext();
+
+  return (
+    <FilemakerAddressesSection
+      countries={countries}
+      databaseAddresses={database.addresses}
+      editableAddresses={editableAddresses}
+      setEditableAddresses={setEditableAddresses}
+    />
   );
 }

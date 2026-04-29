@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -73,8 +74,23 @@ describe('TraderaStatusButton', () => {
     expect(onOpenListings).not.toHaveBeenCalled();
   });
 
-  it('disables ended Tradera status actions even before custom fields are refreshed into the list row', () => {
-    useCustomFieldsMock.mockReturnValue({ data: [], isLoading: false });
+  it('keeps ended Tradera status actionable when Market Exclusion does not include Tradera', () => {
+    useCustomFieldsMock.mockReturnValue({
+      data: [
+        {
+          id: 'market-exclusion',
+          name: 'Market Exclusion',
+          type: 'checkbox_set',
+          options: [
+            { id: 'opt-allegro', label: 'Allegro' },
+            { id: 'opt-tradera', label: 'Tradera' },
+          ],
+          createdAt: '2026-04-01T00:00:00.000Z',
+          updatedAt: '2026-04-01T00:00:00.000Z',
+        },
+      ],
+      isLoading: false,
+    });
 
     const onOpenListings = vi.fn();
     const prefetchListings = vi.fn();
@@ -85,23 +101,37 @@ describe('TraderaStatusButton', () => {
         status='ended'
         prefetchListings={prefetchListings}
         onOpenListings={onOpenListings}
+        customFieldValues={[
+          {
+            fieldId: 'market-exclusion',
+            selectedOptionIds: ['opt-allegro'],
+          },
+        ]}
       />
     );
 
     const button = screen.getByRole('button', {
-      name: 'Tradera listing disabled (ended).',
+      name: 'Open Tradera recovery options (ended).',
     });
 
-    expect(button).toBeDisabled();
-    expect(button.className).toContain('disabled:opacity-40');
-    expect(button.className).toContain('bg-slate-950/40');
+    expect(button).not.toBeDisabled();
+    expect(button.className).toContain('border-rose-400/70');
 
     fireEvent.mouseEnter(button);
     fireEvent.focus(button);
     fireEvent.click(button);
 
-    expect(prefetchListings).not.toHaveBeenCalled();
-    expect(onOpenListings).not.toHaveBeenCalled();
+    expect(prefetchListings).toHaveBeenCalledTimes(2);
+    expect(onOpenListings).toHaveBeenCalledWith({
+      source: 'tradera_quick_export_failed',
+      integrationSlug: 'tradera',
+      status: 'ended',
+      runId: null,
+      failureReason: null,
+      requestId: null,
+      integrationId: null,
+      connectionId: null,
+    });
   });
 
   it('keeps closed Tradera status manageable with the closed tone', () => {

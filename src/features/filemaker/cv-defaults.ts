@@ -42,6 +42,7 @@ export type FilemakerCvProfileSeed = {
     | 'githubUrl'
     | 'profileEducation'
     | 'profileJobExperience'
+    | 'cvHeadline'
     | 'cvProfessionalSummary'
     | 'cvCoreStrengths'
     | 'cvSelectedTechnicalEnvironment'
@@ -103,11 +104,17 @@ const occupationPath = (occupation: FilemakerPersonOccupation): string => {
 
 const resolveHeadline = (
   occupations: FilemakerPersonOccupation[] = [],
-  profileJobExperience: FilemakerPersonProfileJobExperience[] = []
-): string =>
-  profileJobExperience.find((entry) => entry.title.trim().length > 0)?.title ??
-  occupations.map(occupationPath).find((entry: string): boolean => entry.trim().length > 0) ??
-  '';
+  profileJobExperience: FilemakerPersonProfileJobExperience[] = [],
+  cvHeadline?: string
+): string => {
+  const configuredHeadline = cvHeadline?.trim() ?? '';
+  if (configuredHeadline.length > 0) return configuredHeadline;
+  return (
+    profileJobExperience.find((entry) => entry.title.trim().length > 0)?.title ??
+    occupations.map(occupationPath).find((entry: string): boolean => entry.trim().length > 0) ??
+    ''
+  );
+};
 
 const resolvePrimaryEmail = (emails: FilemakerEmail[] = []): string =>
   emails.find((email: FilemakerEmail): boolean => email.email.trim().length > 0)?.email ?? '';
@@ -212,7 +219,7 @@ export const buildDefaultFilemakerCvBlocks = (seed: FilemakerCvProfileSeed): CvB
 
   const profileHeader = createCvBlock('profileHeader', {
     name: resolveFilemakerCvPersonName(seed.person),
-    headline: resolveHeadline(occupations, profileJobExperience),
+    headline: resolveHeadline(occupations, profileJobExperience, seed.person.cvHeadline),
     email: resolvePrimaryEmail(seed.emails),
     phone: resolvePrimaryPhone(seed.person, seed.phoneNumbers),
     location: resolveLocation(seed.person, seed.addresses),

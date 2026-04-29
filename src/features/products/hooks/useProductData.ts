@@ -41,6 +41,8 @@ const isValidAdvancedFilterPayload = (payload: string): boolean => {
   }
 };
 
+const PARSED_MATCH_PRODUCT_IDS_MAX = 500;
+
 const normalizeProductIdList = (ids: string[]): string[] =>
   Array.from(
     new Set(
@@ -48,7 +50,7 @@ const normalizeProductIdList = (ids: string[]): string[] =>
         .map((id: string): string => id.trim())
         .filter((id: string): boolean => id.length > 0)
     )
-  );
+  ).slice(0, PARSED_MATCH_PRODUCT_IDS_MAX);
 
 // --- Queries ---
 
@@ -201,6 +203,13 @@ export function useProductData({
 
   const queriesEnabled = filtersInitialized;
   const parsedMatchProductIdsKey = parsedMatchProductIds.join('\0');
+  const effectivePageSize = useMemo(
+    (): number =>
+      parsedMatchProductIds.length > 0
+        ? Math.min(PARSED_MATCH_PRODUCT_IDS_MAX, Math.max(pageSize, parsedMatchProductIds.length))
+        : pageSize,
+    [pageSize, parsedMatchProductIds.length]
+  );
 
   const filters: UseProductsFilters = useMemo(
     () => {
@@ -214,7 +223,7 @@ export function useProductData({
         return {
           ids: parsedMatchProductIds,
           page,
-          pageSize,
+          pageSize: effectivePageSize,
           searchLanguage: normalizedSearchLanguage,
         };
       }
@@ -257,6 +266,7 @@ export function useProductData({
       advancedFilter,
       page,
       pageSize,
+      effectivePageSize,
       catalogFilter,
       searchLanguage,
       baseExported,
@@ -277,8 +287,8 @@ export function useProductData({
   }, [productsWithCountQuery.error]);
 
   const totalPages = useMemo(() => {
-    return Math.ceil(productsWithCountQuery.total / pageSize);
-  }, [pageSize, productsWithCountQuery.total]);
+    return Math.ceil(productsWithCountQuery.total / effectivePageSize);
+  }, [effectivePageSize, productsWithCountQuery.total]);
 
   // Keep pagination valid when filters change.
   useEffect(() => {
@@ -360,8 +370,13 @@ export function useProductData({
   );
   const handleSetIncludeArchived = useCallback((value: boolean) => setIncludeArchived(value), []);
   const handleSetParsedMatchProductIds = useCallback((ids: string[]) => {
-    setParsedMatchProductIdsState(normalizeProductIdList(ids));
-  }, []);
+    const normalizedIds = normalizeProductIdList(ids);
+    setPage(1);
+    setParsedMatchProductIdsState(normalizedIds);
+    if (normalizedIds.length > 0) {
+      void refetchProductsAndCounts(queryClient);
+    }
+  }, [queryClient]);
   const handleClearParsedMatchProductIds = useCallback(() => {
     setParsedMatchProductIdsState([]);
   }, []);

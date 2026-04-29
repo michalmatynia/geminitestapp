@@ -11,6 +11,7 @@ import {
   createFilemakerLexiconTerm,
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_JOB_APPLICATION_SETTINGS_KEY,
   toPersistedFilemakerDatabase,
 } from '../settings';
 import type { FilemakerJobApplication, FilemakerJobListing, FilemakerOrganization } from '../types';
@@ -410,6 +411,25 @@ describe('OrganizationJobListingsSection', () => {
             },
           });
         }
+        if (href.includes('/api/filemaker/persons/person-2')) {
+          return createJsonResponse({
+            linkedAddresses: [],
+            linkedAnyParams: [],
+            linkedAnyTexts: [],
+            linkedBankAccounts: [],
+            linkedContracts: [],
+            linkedDocuments: [],
+            linkedOccupations: [],
+            linkedWebsites: [],
+            person: {
+              id: 'person-2',
+              fullName: 'Grace Hopper',
+              firstName: 'Grace',
+              lastName: 'Hopper',
+              cvProfessionalSummary: 'Computer scientist with compiler experience.',
+            },
+          });
+        }
         if (href.includes('/api/filemaker/cvs')) {
           return createJsonResponse({
             cvs: [
@@ -429,6 +449,11 @@ describe('OrganizationJobListingsSection', () => {
                 id: 'person-1',
                 fullName: 'Ada Lovelace',
                 cvProfessionalSummary: 'Software engineer with marketplace experience.',
+              },
+              {
+                id: 'person-2',
+                fullName: 'Grace Hopper',
+                cvProfessionalSummary: 'Computer scientist with compiler experience.',
               },
             ],
           });
@@ -569,6 +594,44 @@ describe('OrganizationJobListingsSection', () => {
     });
     expect(screen.getByLabelText('Job listing context')).toHaveValue('job-1');
     expect(screen.getByLabelText('Organisation context')).toHaveValue('org-1');
+    expect(screen.getByText('Pracuj.pl · Main Pracuj')).toBeInTheDocument();
+  });
+
+  it('preselects the Filemaker default person before the integration default', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            location: 'Warsaw',
+          }),
+        ]}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Prepare application for FileMaker Consultant/i })
+    );
+
+    expect(await screen.findByRole('dialog', { name: 'Prepare application' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Person context')).toHaveValue('person-2');
+    });
+    expect(screen.getByText('Filemaker default · Grace Hopper')).toBeInTheDocument();
     expect(screen.getByText('Pracuj.pl · Main Pracuj')).toBeInTheDocument();
   });
 

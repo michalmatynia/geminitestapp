@@ -66,8 +66,6 @@ type LoadedDatabase = {
   rawValue: string | null;
 };
 
-import { normalizeNameForMatch } from './job-board-scrape/match-organizations';
-
 type ScrapedCompanyCandidate = {
   organization: FilemakerOrganization;
 };
@@ -214,6 +212,7 @@ const buildListingId = (organizationId: string, offer: FilemakerJobBoardScrapedO
 import {
   findExistingListingIndex,
   findExistingListingIndexBySourceIdentity,
+  normalizeNameForMatch,
 } from './job-board-scrape/dedupe-listings';
 
 const toJobListing = (input: {
@@ -228,6 +227,14 @@ const toJobListing = (input: {
     organizationId: input.organizationId,
     title: input.offer.title,
     description: input.offer.description,
+    requirements:
+      input.offer.requirements?.trim().length
+        ? input.offer.requirements
+        : input.existing?.requirements,
+    responsibilities:
+      input.offer.responsibilities?.trim().length
+        ? input.offer.responsibilities
+        : input.existing?.responsibilities,
     location: input.offer.location,
     addressId: input.existing?.addressId,
     street: input.existing?.street,
@@ -587,6 +594,8 @@ const buildExistingListingOffer = (
     companyProfile: organization?.jobBoardCompanyProfile ?? '',
     companyProfileUrl: organization?.jobBoardCompanyProfileUrl ?? null,
     description: listing.description,
+    requirements: listing.requirements,
+    responsibilities: listing.responsibilities,
     expiresAt: listing.expiresAt ?? null,
     location: listing.location ?? '',
     postedAt: listing.postedAt ?? null,

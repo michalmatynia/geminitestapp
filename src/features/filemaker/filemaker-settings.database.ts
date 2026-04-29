@@ -1302,6 +1302,8 @@ export const normalizeFilemakerDatabase = (
         organizationId,
         title,
         description: normalizeString(entry['description']),
+        requirements: normalizeString(entry['requirements']),
+        responsibilities: normalizeString(entry['responsibilities']),
         location: normalizeString(entry['location']),
         addressId: resolvedAddress?.id ?? defaultAddressId,
         street: resolvedAddress?.street ?? normalizeString(entry['street']),

@@ -163,7 +163,7 @@ describe('ProductParseActionsModal', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Find Matches' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Find Products' })).toBeDisabled();
 
     fireEvent.change(screen.getByLabelText('Marketplace text'), {
       target: { value: 'pasted marketplace listing text' },
@@ -177,8 +177,11 @@ describe('ProductParseActionsModal', () => {
       });
     });
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Find 2 Matches' }));
+    expect(await screen.findByText('Unique products')).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: 'Find 2 Products (3 rows)' }));
 
-    expect(onFindMatches).toHaveBeenCalledWith(['product-1', 'product-2']);
+    expect(onFindMatches).toHaveBeenCalledWith(['product-1', 'product-2'], {
+      matchedRowCount: 3,
+    });
   });
 });

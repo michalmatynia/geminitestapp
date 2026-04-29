@@ -14,10 +14,21 @@ export const FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT =
   '/api/filemaker/organizations/job-board-scrape';
 
 export const filemakerJobBoardScrapeModeSchema = z.enum(['preview', 'import']);
-export const filemakerJobBoardOrganizationScopeSchema = z.enum(['all', 'selected']);
+export const filemakerJobBoardOrganizationScopeSchema = z.preprocess(
+  (value: unknown): unknown => (value === 'selected' ? 'all' : value),
+  z.enum(['all'])
+);
 export const filemakerJobBoardImportStrategySchema = z.preprocess(
   (value: unknown): unknown => (value === 'matched_only' ? 'create_unmatched' : value),
   z.enum(['create_unmatched'])
+);
+const filemakerDeprecatedJobBoardMatchConfidenceSchema = z.preprocess(
+  (value: unknown): unknown => (value === undefined ? undefined : 85),
+  z.number().int().min(50).max(100).default(85)
+);
+const filemakerDeprecatedJobBoardSelectedOrganizationIdsSchema = z.preprocess(
+  (): string[] => [],
+  z.array(z.string().trim().min(1)).max(500).default([])
 );
 export const filemakerJobBoardDuplicateStrategySchema = z.enum(['skip', 'update', 'add']);
 export const filemakerJobBoardScrapeExtractionPathSchema = z.enum([
@@ -64,12 +75,12 @@ export const filemakerJobBoardScrapeRequestSchema = z.object({
   importStrategy: filemakerJobBoardImportStrategySchema.default('create_unmatched'),
   maxOffers: z.number().int().min(1).max(250).default(50),
   maxPages: z.number().int().min(1).max(20).default(2),
-  minimumMatchConfidence: z.number().int().min(50).max(100).default(85),
+  minimumMatchConfidence: filemakerDeprecatedJobBoardMatchConfidenceSchema,
   mode: filemakerJobBoardScrapeModeSchema.default('preview'),
   organizationScope: filemakerJobBoardOrganizationScopeSchema.default('all'),
   personaId: z.string().trim().max(160).nullable().optional().default(null),
   provider: filemakerJobBoardScrapeProviderSchema.default('auto'),
-  selectedOrganizationIds: z.array(z.string().trim().min(1)).max(500).default([]),
+  selectedOrganizationIds: filemakerDeprecatedJobBoardSelectedOrganizationIdsSchema,
   sourceUrl: jobBoardSourceUrlSchema,
   status: filemakerJobListingStatusSchema.default('open'),
   timeoutMs: z.number().int().min(30_000).max(600_000).default(180_000),
@@ -122,6 +133,8 @@ export const filemakerJobBoardScrapedOfferSchema = z.object({
   companyProfile: z.string().default(''),
   companyProfileUrl: z.string().trim().url().nullable().default(null),
   description: z.string().default(''),
+  requirements: z.string().optional(),
+  responsibilities: z.string().optional(),
   expiresAt: z.string().trim().nullable().default(null),
   location: z.string().default(''),
   postedAt: z.string().trim().nullable().default(null),

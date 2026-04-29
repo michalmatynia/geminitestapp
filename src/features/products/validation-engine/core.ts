@@ -496,6 +496,122 @@ type StaticPatternPlan = {
   allowWithoutRegexMatch: boolean;
 };
 
+export type ProductValidationPatternRegexMatch = {
+  pattern: ProductValidationPattern;
+  patternId: string;
+  matchText: string;
+  index: number;
+  length: number;
+  captures: string[];
+  groups: Record<string, string>;
+};
+
+const normalizeRegexMatchGroups = (
+  groups: Record<string, string> | undefined
+): Record<string, string> => (groups === undefined ? {} : { ...groups });
+
+const shouldCollectPatternMatch = ({
+  pattern,
+  target,
+  validationScope,
+}: {
+  pattern: ProductValidationPattern;
+  target?: ProductValidationTarget | undefined;
+  validationScope: ProductValidationInstanceScope;
+}): boolean => {
+  if (!pattern.enabled) return false;
+  if (target !== undefined && pattern.target !== target) return false;
+  if (isRuntimePatternEnabled(pattern)) return false;
+  return isPatternEnabledForValidationScope(pattern.appliesToScopes, validationScope);
+};
+
+const collectMatchesForPattern = ({
+  value,
+  pattern,
+  validationScope,
+  maxMatches,
+}: {
+  value: string;
+  pattern: ProductValidationPattern;
+  validationScope: ProductValidationInstanceScope;
+  maxMatches: number;
+}): ProductValidationPatternRegexMatch[] => {
+  if (
+    !shouldLaunchPattern({
+      pattern,
+      validationScope,
+      fieldValue: value,
+      values: {},
+      latestProductValues: null,
+    })
+  ) {
+    return [];
+  }
+
+  let regex: RegExp;
+  try {
+    regex = new RegExp(pattern.regex, pattern.flags ?? undefined);
+  } catch (error) {
+    logClientError(error);
+    return [];
+  }
+
+  const matches: ProductValidationPatternRegexMatch[] = [];
+  const canIterate = regex.global || regex.sticky;
+  let match: RegExpExecArray | null = null;
+  do {
+    match = regex.exec(value);
+    if (match === null) break;
+    const matchText = match[0] ?? '';
+    matches.push({
+      pattern,
+      patternId: pattern.id,
+      matchText,
+      index: match.index,
+      length: matchText.length,
+      captures: Array.from(match).slice(1),
+      groups: normalizeRegexMatchGroups(match.groups),
+    });
+    if (!canIterate) break;
+    if (matchText.length === 0) {
+      regex.lastIndex += 1;
+    }
+  } while (matches.length < maxMatches);
+
+  return matches;
+};
+
+export const collectValidationPatternRegexMatches = ({
+  value,
+  patterns,
+  validationScope = 'product_create',
+  target,
+  maxMatchesPerPattern,
+}: {
+  value: string;
+  patterns: ProductValidationPattern[];
+  validationScope?: ProductValidationInstanceScope;
+  target?: ProductValidationTarget;
+  maxMatchesPerPattern?: number;
+}): ProductValidationPatternRegexMatch[] => {
+  if (value.length === 0 || patterns.length === 0) return [];
+
+  const orderedPatterns = sortValidatorPatterns(patterns);
+  return orderedPatterns.flatMap((pattern: ProductValidationPattern): ProductValidationPatternRegexMatch[] => {
+    if (!shouldCollectPatternMatch({ pattern, target, validationScope })) return [];
+    const maxMatches =
+      typeof maxMatchesPerPattern === 'number' && Number.isFinite(maxMatchesPerPattern)
+        ? Math.max(1, Math.floor(maxMatchesPerPattern))
+        : normalizePatternMaxExecutions(pattern);
+    return collectMatchesForPattern({
+      value,
+      pattern,
+      validationScope,
+      maxMatches,
+    });
+  });
+};
+
 const buildStaticPatternPlans = ({
   orderedPatterns,
   validationScope,

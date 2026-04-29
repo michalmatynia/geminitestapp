@@ -465,6 +465,64 @@ describe('runFilemakerJobBoardScrape', () => {
     );
   });
 
+  it('uses Pracuj employer profile URL instead of generic discovery page title', async () => {
+    const badEmployerName = 'Odkrywaj najlepsze miejsca pracy';
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: badEmployerName },
+        listing: {
+          title: 'Frontend Developer',
+          description: 'Build React applications',
+          city: 'Poznań',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-profile-url-employer',
+      snapshot: {
+        companyLinks: ['https://www.pracuj.pl/pracodawcy/acme-software,987'],
+        companyProfile: {
+          headings: [badEmployerName],
+          title: badEmployerName,
+          url: 'https://www.pracuj.pl/pracodawcy/acme-software,987',
+        },
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      createdOrganizations: 1,
+      matchedOffers: 1,
+    });
+    expect(result.offers[0]?.offer.companyName).toBe('Acme Software');
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.organizations).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Acme Software' })])
+    );
+    expect(persisted.organizations).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: badEmployerName })])
+    );
+  });
+
   it('does not create an organisation when Pracuj directory metadata is the only employer name', async () => {
     const badEmployerName =
       'Informacje i opinie o pracodawcach – profile pracodawców Poznań(wielkopolskie), Poznań, Poland';

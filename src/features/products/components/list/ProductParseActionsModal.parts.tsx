@@ -27,10 +27,10 @@ type ProductParseActionsBodyProps = {
 type ProductParseActionsFooterProps = {
   actionTargetCount: number;
   matchTargetCount: number;
+  matchedRowCount: number;
   isBusy: boolean;
   isParsing: boolean;
   isMarking: boolean;
-  onClose: () => void;
   onFindMatches: () => void;
   onMarkClosed: () => void;
   onParse: () => void;
@@ -57,6 +57,23 @@ const matchBadgeVariant = (
   return 'neutral';
 };
 
+const getConfirmedMatchedRows = (
+  preview: ProductParseActionsMatchResponse | null
+): ProductParseActionsMatchRow[] =>
+  preview?.rows.filter(
+    (row: ProductParseActionsMatchRow): boolean =>
+      row.matchStatus === 'confirmed' && row.product !== null
+  ) ?? [];
+
+const getUniqueConfirmedProductCount = (
+  preview: ProductParseActionsMatchResponse | null
+): number =>
+  new Set(
+    getConfirmedMatchedRows(preview).flatMap((row: ProductParseActionsMatchRow): string[] =>
+      row.product !== null ? [row.product.id] : []
+    )
+  ).size;
+
 const ProductParseActionsSummary = ({
   preview,
 }: {
@@ -65,14 +82,18 @@ const ProductParseActionsSummary = ({
   if (preview === null) return null;
 
   return (
-    <div className='grid gap-2 sm:grid-cols-3'>
+    <div className='grid gap-2 sm:grid-cols-4'>
       <div className='rounded-md border border-border/60 bg-card/40 p-3'>
         <div className='text-xs text-muted-foreground'>Parsed</div>
         <div className='text-lg font-semibold'>{preview.parsedCount}</div>
       </div>
       <div className='rounded-md border border-border/60 bg-card/40 p-3'>
-        <div className='text-xs text-muted-foreground'>Matched</div>
+        <div className='text-xs text-muted-foreground'>Matched rows</div>
         <div className='text-lg font-semibold'>{preview.matchedCount}</div>
+      </div>
+      <div className='rounded-md border border-border/60 bg-card/40 p-3'>
+        <div className='text-xs text-muted-foreground'>Unique products</div>
+        <div className='text-lg font-semibold'>{getUniqueConfirmedProductCount(preview)}</div>
       </div>
       <div className='rounded-md border border-border/60 bg-card/40 p-3'>
         <div className='text-xs text-muted-foreground'>Actionable</div>
@@ -161,18 +182,15 @@ const ProductParseActionsTable = ({
 export const ProductParseActionsFooter = ({
   actionTargetCount,
   matchTargetCount,
+  matchedRowCount,
   isBusy,
   isMarking,
   isParsing,
-  onClose,
   onFindMatches,
   onMarkClosed,
   onParse,
 }: ProductParseActionsFooterProps): React.JSX.Element => (
   <>
-    <Button type='button' variant='outline' onClick={onClose} disabled={isBusy}>
-      Close
-    </Button>
     <Button
       type='button'
       variant='outline'
@@ -193,7 +211,11 @@ export const ProductParseActionsFooter = ({
       className='gap-2'
     >
       <Search className='h-4 w-4' />
-      {matchTargetCount > 0 ? `Find ${matchTargetCount} Matches` : 'Find Matches'}
+      {matchTargetCount > 0
+        ? `Find ${matchTargetCount} Product${matchTargetCount === 1 ? '' : 's'}${
+            matchedRowCount > matchTargetCount ? ` (${matchedRowCount} rows)` : ''
+          }`
+        : 'Find Products'}
     </Button>
     <Button
       type='button'

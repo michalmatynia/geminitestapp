@@ -10,7 +10,6 @@ import {
   type FilemakerJobBoardScrapeProvider,
   type FilemakerJobBoardScrapeDraftSaveRequest,
   type FilemakerJobBoardDuplicateStrategy,
-  type FilemakerJobBoardImportStrategy,
   type FilemakerJobBoardLexiconClassificationApplyResponse,
   type FilemakerJobBoardScrapeExtractionPath,
   type FilemakerJobBoardScrapeLiveEvent,
@@ -58,8 +57,6 @@ type FilemakerJobBoardScrapeModalProps = {
   onClose: () => void;
   onCompleted: () => void;
   open: boolean;
-  selectedOrganizationCount: number;
-  selectedOrganizationIds: string[];
 };
 
 type ScrapeDraft = {
@@ -69,7 +66,6 @@ type ScrapeDraft = {
   extractSalaries: boolean;
   extractionPath: FilemakerJobBoardScrapeExtractionPath;
   humanizeMouse: boolean;
-  importStrategy: FilemakerJobBoardImportStrategy;
   maxOffers: string;
   maxPages: string;
   personaId: string;
@@ -151,7 +147,6 @@ const SCRAPE_DRAFT_SETTINGS_KEYS = [
   'extractSalaries',
   'extractionPath',
   'humanizeMouse',
-  'importStrategy',
   'maxOffers',
   'maxPages',
   'personaId',
@@ -185,10 +180,6 @@ const PROVIDER_OPTIONS = [
   { value: 'pracuj_pl', label: 'Pracuj.pl' },
   { value: 'justjoin_it', label: 'Just Join IT' },
   { value: 'nofluffjobs', label: 'No Fluff Jobs' },
-] as const;
-
-const IMPORT_STRATEGY_OPTIONS = [
-  { value: 'create_unmatched', label: 'Create scraped employers' },
 ] as const;
 
 const DUPLICATE_STRATEGY_OPTIONS = [
@@ -578,7 +569,6 @@ type PostScrapeRequestInput = {
   mode: FilemakerJobBoardScrapeMode;
   onEvent: (event: FilemakerJobBoardScrapeLiveEvent) => void;
   onRunId?: (runId: string) => void;
-  selectedOrganizationIds: string[];
   signal: AbortSignal;
 };
 
@@ -587,7 +577,6 @@ type PostSaveDraftsRequestInput = {
   offers: FilemakerJobBoardScrapedOffer[];
   onEvent: (event: FilemakerJobBoardScrapeLiveEvent) => void;
   onRunId?: (runId: string) => void;
-  selectedOrganizationIds: string[];
   signal: AbortSignal;
 };
 
@@ -651,8 +640,7 @@ const isNotFoundResponseError = (error: unknown): boolean =>
 
 const buildRequest = (
   draft: ScrapeDraft,
-  mode: FilemakerJobBoardScrapeMode,
-  _selectedOrganizationIds: string[]
+  mode: FilemakerJobBoardScrapeMode
 ): FilemakerJobBoardScrapeRequest => ({
   delayMs: toNumber(draft.delayMs, 750),
   duplicateStrategy: toImportDuplicateStrategy(draft.duplicateStrategy),
@@ -661,7 +649,7 @@ const buildRequest = (
   extractionPath: draft.extractionPath,
   headless: null,
   humanizeMouse: draft.humanizeMouse,
-  importStrategy: draft.importStrategy,
+  importStrategy: 'create_unmatched',
   maxOffers: toNumber(draft.maxOffers, 25),
   maxPages: toNumber(draft.maxPages, 2),
   minimumMatchConfidence: 85,
@@ -677,10 +665,9 @@ const buildRequest = (
 
 const buildDraftSaveRequest = (
   draft: ScrapeDraft,
-  selectedOrganizationIds: string[],
   offers: FilemakerJobBoardScrapedOffer[]
 ): FilemakerJobBoardScrapeDraftSaveRequest => {
-  const request = buildRequest(draft, 'import', selectedOrganizationIds);
+  const request = buildRequest(draft, 'import');
   return {
     action: 'save_drafts',
     duplicateStrategy: request.duplicateStrategy,
@@ -1209,7 +1196,7 @@ const postScrapeRequest = async (
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
-      ...buildRequest(input.draft, input.mode, input.selectedOrganizationIds),
+      ...buildRequest(input.draft, input.mode),
       stream: true,
     }),
     signal: input.signal,
@@ -1231,11 +1218,7 @@ const postScrapeRequest = async (
 const postSaveDraftsRequest = async (
   input: PostSaveDraftsRequestInput
 ): Promise<FilemakerJobBoardScrapeResponse> => {
-  const request = buildDraftSaveRequest(
-    input.draft,
-    input.selectedOrganizationIds,
-    input.offers
-  );
+  const request = buildDraftSaveRequest(input.draft, input.offers);
   const response = await fetch(FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT, {
     method: 'POST',
     headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
@@ -1346,14 +1329,13 @@ const formatActionUpdatedAt = (value: string): string | null => {
   }).format(new Date(timestamp));
 };
 
-const defaultDraft = (_selectedOrganizationCount: number): ScrapeDraft => ({
+const defaultDraft = (): ScrapeDraft => ({
   delayMs: '750',
   duplicateStrategy: 'skip',
   extractDescriptions: true,
   extractSalaries: true,
   extractionPath: 'playwright_ai',
   humanizeMouse: true,
-  importStrategy: 'create_unmatched',
   maxOffers: '25',
   maxPages: '2',
   personaId: '',
@@ -1363,17 +1345,14 @@ const defaultDraft = (_selectedOrganizationCount: number): ScrapeDraft => ({
   timeoutMs: '180000',
 });
 
-const normalizeSavedDraft = (
-  value: unknown,
-  selectedOrganizationCount: number
-): ScrapeDraft | null => {
+const normalizeSavedDraft = (value: unknown): ScrapeDraft | null => {
   if (!isRecord(value) || !isRecord(value['draft'])) {
     return null;
   }
   const version = readNumber(value['version']);
   if (version !== 2 && version !== SCRAPER_SETTINGS_VERSION) return null;
   const saved = value['draft'];
-  const fallback = defaultDraft(selectedOrganizationCount);
+  const fallback = defaultDraft();
   const duplicateStrategy = readStoredChoice(
     saved['duplicateStrategy'],
     DUPLICATE_STRATEGY_OPTIONS.map((option) => option.value),
@@ -1391,11 +1370,6 @@ const normalizeSavedDraft = (
       fallback.extractionPath
     ),
     humanizeMouse: readStoredBoolean(saved['humanizeMouse'], fallback.humanizeMouse),
-    importStrategy: readStoredChoice(
-      saved['importStrategy'],
-      IMPORT_STRATEGY_OPTIONS.map((option) => option.value),
-      fallback.importStrategy
-    ),
     maxOffers: readStoredString(saved['maxOffers'], fallback.maxOffers),
     maxPages: readStoredString(saved['maxPages'], fallback.maxPages),
     personaId: readStoredString(saved['personaId'], fallback.personaId),
@@ -1414,11 +1388,11 @@ const normalizeSavedDraft = (
   };
 };
 
-const readSavedDraft = (selectedOrganizationCount: number): ScrapeDraft | null => {
+const readSavedDraft = (): ScrapeDraft | null => {
   if (typeof window === 'undefined') return null;
   try {
     const raw = window.localStorage.getItem(SCRAPER_SETTINGS_STORAGE_KEY);
-    return raw !== null ? normalizeSavedDraft(JSON.parse(raw), selectedOrganizationCount) : null;
+    return raw !== null ? normalizeSavedDraft(JSON.parse(raw)) : null;
   } catch {
     return null;
   }
@@ -1437,9 +1411,9 @@ const writeSavedDraft = (draft: ScrapeDraft): boolean => {
   }
 };
 
-const createInitialState = (selectedOrganizationCount: number): ScrapeModalInitialState => {
-  const savedDraft = readSavedDraft(selectedOrganizationCount);
-  return savedDraft ? { draft: savedDraft } : { draft: defaultDraft(selectedOrganizationCount) };
+const createInitialState = (): ScrapeModalInitialState => {
+  const savedDraft = readSavedDraft();
+  return savedDraft ? { draft: savedDraft } : { draft: defaultDraft() };
 };
 
 function ScrapedOfferClassifyTrigger(props: {
@@ -1493,7 +1467,7 @@ export function FilemakerJobBoardScrapeModal(
   const { toast } = useToast();
   const settingsStore = useSettingsStore();
   const browserMode = useJobBoardScrapeBrowserModeSetting(props.open);
-  const [initialState] = useState(() => createInitialState(props.selectedOrganizationCount));
+  const [initialState] = useState(createInitialState);
   const [draft, setDraft] = useState<ScrapeDraft>(initialState.draft);
   const [savedDraftBaseline, setSavedDraftBaseline] = useState<ScrapeDraft>(initialState.draft);
   const [modeInFlight, setModeInFlight] = useState<FilemakerJobBoardScrapeMode | null>(null);
@@ -1742,7 +1716,6 @@ export function FilemakerJobBoardScrapeModal(
           writeStoredRuntimeRunId(runId);
           setActiveRuntimeRun(buildClientRuntimeRun(runId, draft, 'import'));
         },
-        selectedOrganizationIds: props.selectedOrganizationIds,
         signal: request.controller.signal,
       });
       if (isActiveScrapeRequest(request)) handleDraftSaveSuccess(nextResult);
@@ -1916,7 +1889,6 @@ export function FilemakerJobBoardScrapeModal(
           writeStoredRuntimeRunId(runId);
           setActiveRuntimeRun(buildClientRuntimeRun(runId, draft, mode));
         },
-        selectedOrganizationIds: props.selectedOrganizationIds,
         signal: request.controller.signal,
       });
       if (isActiveScrapeRequest(request)) handleScrapeSuccess(nextResult, mode);

@@ -425,6 +425,8 @@ export const filemakerJobListingSchema = dtoBaseSchema.extend({
   organizationId: z.string(),
   title: z.string(),
   description: z.string(),
+  requirements: z.string().optional(),
+  responsibilities: z.string().optional(),
   location: z.string().optional(),
   addressId: z.string().optional(),
   street: z.string().optional(),

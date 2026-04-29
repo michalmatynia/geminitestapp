@@ -23,7 +23,7 @@ import {
 type ProductParseActionsModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onFindMatches: (productIds: string[]) => void;
+  onFindMatches: (productIds: string[], meta: { matchedRowCount: number }) => void;
 };
 type MatchMutation = ReturnType<typeof useMatchProductParseActions>;
 type MarkClosedMutation = ReturnType<typeof useMarkParsedTraderaMatchesClosed>;
@@ -59,6 +59,12 @@ const buildMatchedProductIds = (
   });
   return Array.from(productIds);
 };
+
+const countMatchedRows = (preview: ProductParseActionsMatchResponse | null): number =>
+  preview?.rows.filter(
+    (row: ProductParseActionsMatchRow): boolean =>
+      row.matchStatus === 'confirmed' && row.product !== null
+  ).length ?? 0;
 
 const updateClosedPreview = (
   current: ProductParseActionsMatchResponse | null,
@@ -143,6 +149,7 @@ export function ProductParseActionsModal(
   const markClosedMutation = useMarkParsedTraderaMatchesClosed();
   const actionTargets = useMemo(() => buildActionTargets(preview), [preview]);
   const matchedProductIds = useMemo(() => buildMatchedProductIds(preview), [preview]);
+  const matchedRowCount = useMemo(() => countMatchedRows(preview), [preview]);
   const isBusy = matchMutation.isPending || markClosedMutation.isPending;
   const parse = (): void => {
     void runParsePreview({ text, matchMutation, setPreview, toast });
@@ -155,7 +162,7 @@ export function ProductParseActionsModal(
       toast('No confirmed product matches to find.', { variant: 'error' });
       return;
     }
-    onFindMatches(matchedProductIds);
+    onFindMatches(matchedProductIds, { matchedRowCount });
   };
 
   return (
@@ -170,10 +177,10 @@ export function ProductParseActionsModal(
         <ProductParseActionsFooter
           actionTargetCount={actionTargets.length}
           matchTargetCount={matchedProductIds.length}
+          matchedRowCount={matchedRowCount}
           isBusy={isBusy}
           isMarking={markClosedMutation.isPending}
           isParsing={matchMutation.isPending}
-          onClose={onClose}
           onFindMatches={findMatches}
           onMarkClosed={markClosed}
           onParse={parse}

@@ -175,7 +175,7 @@ describe('filemaker job-board scrape runtime', () => {
     expect(snapshot.run?.status).toBe('canceled');
   });
 
-  it('reuses an active run for an identical scrape request', async () => {
+  it('reuses an active run regardless of deprecated selected-organisation payload fields', async () => {
     let scraperSignal: AbortSignal | null = null;
     mocks.runFilemakerJobBoardScrapeMock.mockImplementationOnce(
       async (_request: unknown, options: { signal: AbortSignal }) => {
@@ -189,12 +189,16 @@ describe('filemaker job-board scrape runtime', () => {
     );
 
     const first = await enqueueFilemakerJobBoardScrapeRun({
+      minimumMatchConfidence: 50,
       mode: 'preview',
+      organizationScope: 'selected',
       selectedOrganizationIds: ['org-2', 'org-1'],
       sourceUrl,
     });
     const second = await enqueueFilemakerJobBoardScrapeRun({
+      minimumMatchConfidence: 100,
       mode: 'preview',
+      organizationScope: 'all',
       selectedOrganizationIds: ['org-1', 'org-2'],
       sourceUrl,
     });

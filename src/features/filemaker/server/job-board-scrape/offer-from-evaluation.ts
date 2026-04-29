@@ -97,6 +97,7 @@ const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
   'employer profile',
   'employers',
   'informacje i opinie o pracodawcach',
+  'odkrywaj najlepsze miejsca pracy',
   'pracodawca',
   'pracodawcy',
   'profile pracodawcow',
@@ -116,6 +117,7 @@ const isGenericJobBoardCompanyName = (value: string): boolean => {
   return (
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('odkrywaj najlepsze miejsca pracy') ||
     key.startsWith('profile pracodawcow')
   );
 };
@@ -287,6 +289,18 @@ const TEXT_ADDRESS_WITHOUT_POSTAL_RE =
 
 const JOB_DESCRIPTION_SECTION_RE =
   /opis|description|responsibil|obowiaz|obowiąz|wymagania|requirements|kwalifikacje|qualifications|benefits|benefity|oferujemy|zadania|role|scope|zakres/i;
+
+const JOB_REQUIREMENTS_SECTION_RE =
+  /wymagania|requirements|kwalifikacje|qualifications|must\s+have|nice\s+to\s+have|oczekujemy|profile\s+kandydata/i;
+
+const JOB_RESPONSIBILITIES_SECTION_RE =
+  /responsibil|obowiaz|obowiąz|zadania|role|scope|zakres|what\s+you\s+will\s+do/i;
+
+const JOB_RESPONSIBILITY_ITEM_START_RE =
+  /(Tworzenie|Budowanie|Integracja|Wsparcie|Dbanie|Optymalizacja|Debugowanie|Rozw[oó]j|Projektowanie|Implementacja|Utrzymanie|Wsp[oó]łpraca|Przygotowywanie|Prowadzenie|Analiza|Testowanie|Dokumentowanie|Creating|Building|Integrating|Supporting|Maintaining|Designing|Implementing|Optimizing|Debugging|Developing|Updating)\b/giu;
+
+const JOB_RESPONSIBILITY_HEADING_RE =
+  /^(tw[oó]j zakres obowi[aą]zk[oó]w|zakres obowi[aą]zk[oó]w|responsibilities|your responsibilities|role responsibilities)\s*/iu;
 
 const SOCIAL_COMPANY_URL_HOSTS = [
   'facebook.com',
@@ -582,8 +596,16 @@ const companyNameFromPracujProfileUrl = (value: string | null | undefined): stri
     const url = new URL(value);
     if (!/pracuj\.pl$/iu.test(url.hostname.replace(/^www\./iu, ''))) return null;
     const parts = url.pathname.split('/').filter(Boolean);
+    const employerPathKeys = new Set([
+      'firma',
+      'firmy',
+      'pracodawca',
+      'pracodawcy',
+      'profil pracodawcy',
+      'profile pracodawcow',
+    ]);
     const employerIndex = parts.findIndex((part: string): boolean =>
-      normalizeCompanyNameGuardKey(part) === 'pracodawcy'
+      employerPathKeys.has(normalizeCompanyNameGuardKey(part))
     );
     const slugPart = employerIndex >= 0 ? parts[employerIndex + 1] : null;
     if (slugPart === null || slugPart === undefined) return null;
@@ -592,11 +614,30 @@ const companyNameFromPracujProfileUrl = (value: string | null | undefined): stri
       .replace(/[-_]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-    if (normalized.length < 3 || isGenericJobBoardCompanyName(normalized)) return null;
+    if (normalized.length < 3 || isSuspiciousJobBoardCompanyName(normalized)) return null;
     return normalized.replace(/\b[^\s]/gu, (letter: string): string => letter.toUpperCase());
   } catch {
     return null;
   }
+};
+
+const companyNameFromSnapshotCompanyUrls = (
+  snapshot: JobBoardStructuredSnapshot | null | undefined
+): string | null => {
+  const profile = asRecord(snapshot?.companyProfile);
+  const profileWebsiteUrls = Array.isArray(profile?.['websiteUrls'])
+    ? profile?.['websiteUrls']
+    : [];
+  const candidates = [
+    profile?.['url'],
+    ...(snapshot?.companyLinks ?? []),
+    ...profileWebsiteUrls,
+  ];
+  for (const candidate of candidates) {
+    const companyName = companyNameFromPracujProfileUrl(toStringValue(candidate));
+    if (companyName !== null) return companyName;
+  }
+  return null;
 };
 
 const COMPANY_PROFILE_NAME_FACT_KEYS = new Set([
@@ -630,10 +671,10 @@ const companyNameFromSnapshotCompanyProfile = (
   const headings = Array.isArray(profile['headings']) ? profile['headings'] : [];
   return firstCleanCompanyName([
     ...companyNameFactCandidates(profile['facts']),
+    companyNameFromPracujProfileUrl(toStringValue(profile['url'])),
     ...headings,
     profile['title'],
     profile['ogTitle'],
-    companyNameFromPracujProfileUrl(toStringValue(profile['url'])),
   ]);
 };
 
@@ -1062,6 +1103,27 @@ const normalizedStringArray = (value: unknown): string[] => {
         typeof entry === 'string' ? entry.split(/[,;|]/).map(normalizeLexiconLabel) : []
       )
       .filter((entry) => entry.length > 0 && entry.length <= 120)
+  );
+};
+
+const normalizedTextBlockArray = (value: unknown, itemStartPattern?: RegExp): string[] => {
+  const values = Array.isArray(value) ? value : [value];
+  return uniqueStrings(
+    values
+      .flatMap((entry): string[] => {
+        const normalizedValue = normalizeDescriptionValue(entry);
+        const normalized =
+          itemStartPattern === undefined
+            ? normalizedValue
+            : normalizedValue
+                ?.replace(JOB_RESPONSIBILITY_HEADING_RE, '')
+                .replace(itemStartPattern, '\n$1');
+        if (normalized == null) return [];
+        return normalized
+          .split(/\n+|[•●▪]/u)
+          .map(normalizeLexiconLabel);
+      })
+      .filter((entry) => entry.length > 0)
   );
 };
 
@@ -1591,6 +1653,59 @@ const snapshotOfferDescriptionFromSections = (
   return clipProfileText(uniqueStrings(matchingSections).slice(0, 12).join('\n\n'), 20_000);
 };
 
+const snapshotOfferTextFromSections = (
+  snapshot: JobBoardStructuredSnapshot | null | undefined,
+  headingPattern: RegExp,
+  itemStartPattern?: RegExp
+): string | null => {
+  const matchingSections = (snapshot?.sections ?? [])
+    .filter((section) => headingPattern.test(`${section.heading ?? ''} ${section.text}`))
+    .map(snapshotOfferSectionText)
+    .flatMap((sectionText): string[] =>
+      sectionText === null ? [] : normalizedTextBlockArray(sectionText, itemStartPattern)
+    );
+  if (matchingSections.length === 0) return null;
+  return clipProfileText(uniqueStrings(matchingSections).slice(0, 48).join('\n'), 12_000);
+};
+
+const listingTextFromFields = (
+  listing: Record<string, unknown> | null,
+  keys: readonly string[],
+  itemStartPattern?: RegExp
+): string | null => {
+  const values = uniqueStrings(
+    keys.flatMap((key: string): string[] =>
+      normalizedTextBlockArray(listing?.[key], itemStartPattern)
+    )
+  );
+  if (values.length === 0) return null;
+  return clipProfileText(values.slice(0, 48).join('\n'), 12_000);
+};
+
+const offerRequirementsFromSources = (input: {
+  listing: Record<string, unknown> | null;
+  snapshot?: JobBoardStructuredSnapshot | null;
+}): string =>
+  listingTextFromFields(input.listing, ['requirements', 'qualifications', 'mustHave', 'niceToHave']) ??
+  snapshotOfferTextFromSections(input.snapshot, JOB_REQUIREMENTS_SECTION_RE) ??
+  '';
+
+const offerResponsibilitiesFromSources = (input: {
+  listing: Record<string, unknown> | null;
+  snapshot?: JobBoardStructuredSnapshot | null;
+}): string =>
+  listingTextFromFields(
+    input.listing,
+    ['responsibilities', 'duties', 'tasks', 'scope'],
+    JOB_RESPONSIBILITY_ITEM_START_RE
+  ) ??
+  snapshotOfferTextFromSections(
+    input.snapshot,
+    JOB_RESPONSIBILITIES_SECTION_RE,
+    JOB_RESPONSIBILITY_ITEM_START_RE
+  ) ??
+  '';
+
 const offerDescriptionFromSources = (input: {
   extractDescriptions: boolean;
   listing: Record<string, unknown> | null;
@@ -1633,6 +1748,7 @@ const identityFromSources = (input: {
         'tradingName',
         'organizationName',
       ]),
+      companyNameFromSnapshotCompanyUrls(input.snapshot),
       companyNameFromSnapshotCompanyProfile(input.snapshot),
       firstSnapshotCompanyName(input.snapshot),
       companyNameFromPracujProfileUrl(
@@ -1680,6 +1796,8 @@ export const offerFromEvaluation = (input: {
       listing,
       snapshot: input.snapshot,
     }),
+    requirements: offerRequirementsFromSources({ listing, snapshot: input.snapshot }),
+    responsibilities: offerResponsibilitiesFromSources({ listing, snapshot: input.snapshot }),
     expiresAt: dates.expiresAt,
     location: locationFromSources({ listing, snapshot: input.snapshot }),
     postedAt: dates.postedAt,

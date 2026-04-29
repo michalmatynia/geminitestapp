@@ -342,7 +342,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     }));
   });
 
-  it('uses scraped-company organisation source when reopened with selected IDs', async () => {
+  it('uses scraped-company organisation source when reopened', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async () => Response.json(successfulResponse));
     vi.stubGlobal('fetch', fetchMock);
@@ -352,8 +352,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open={false}
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -362,8 +360,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={2}
-        selectedOrganizationIds={['org-1', 'org-2']}
       />
     );
 
@@ -400,8 +396,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -431,8 +425,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -473,8 +465,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -486,7 +476,7 @@ describe('FilemakerJobBoardScrapeModal', () => {
     expect(screen.getByText(/Steps: 10\/10/)).toBeInTheDocument();
   });
 
-  it('keeps scraped-company organisation source while selected IDs exist', async () => {
+  it('keeps scraped-company organisation source for every scrape request', async () => {
     const user = userEvent.setup();
     const fetchMock = vi.fn(async () => Response.json(successfulResponse));
     vi.stubGlobal('fetch', fetchMock);
@@ -496,8 +486,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={2}
-        selectedOrganizationIds={['org-1', 'org-2']}
       />
     );
 
@@ -524,8 +512,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -565,8 +551,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -601,8 +585,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -630,8 +612,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -652,8 +632,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -696,8 +674,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -810,8 +786,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1007,8 +981,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1152,8 +1124,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1208,8 +1178,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1266,8 +1234,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={onCompleted}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1321,8 +1287,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1433,8 +1397,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={onCompleted}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1522,8 +1484,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={onClose}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1608,8 +1568,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1679,8 +1637,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1723,8 +1679,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={vi.fn()}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1829,8 +1783,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={onCompleted}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 
@@ -1865,8 +1817,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
           open
           onClose={vi.fn()}
           onCompleted={vi.fn()}
-          selectedOrganizationCount={0}
-          selectedOrganizationIds={[]}
         />
       );
 
@@ -1904,8 +1854,6 @@ describe('FilemakerJobBoardScrapeModal', () => {
         open
         onClose={vi.fn()}
         onCompleted={onCompleted}
-        selectedOrganizationCount={0}
-        selectedOrganizationIds={[]}
       />
     );
 

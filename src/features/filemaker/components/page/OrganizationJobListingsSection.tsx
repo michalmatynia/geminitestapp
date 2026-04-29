@@ -53,9 +53,11 @@ import {
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_EMAIL_CAMPAIGNS_KEY,
+  FILEMAKER_JOB_APPLICATION_SETTINGS_KEY,
   createFilemakerJobListing,
   parseFilemakerDatabase,
   parseFilemakerEmailCampaignRegistry,
+  parseFilemakerJobApplicationSettings,
 } from '../../settings';
 import type {
   FilemakerDatabase,
@@ -738,8 +740,13 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   });
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
+  const rawJobApplicationSettings = settingsStore.get(FILEMAKER_JOB_APPLICATION_SETTINGS_KEY);
   const organizationId = organization?.id ?? '';
   const filemakerDatabase = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const jobApplicationSettings = useMemo(
+    () => parseFilemakerJobApplicationSettings(rawJobApplicationSettings),
+    [rawJobApplicationSettings]
+  );
   const lexiconTypeMetadata = useMemo(
     () => buildFilemakerLexiconTypeMetadata(filemakerDatabase),
     [filemakerDatabase]
@@ -1347,6 +1354,28 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                       aria-label={`Job listing ${index + 1} description`}
                     />
                   </FormField>
+                  <FormField label='Job requirements' className='md:col-span-2'>
+                    <Textarea
+                      value={listing.requirements ?? ''}
+                      rows={5}
+                      onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                        updateListing(listing.id, { requirements: event.target.value })
+                      }
+                      placeholder='Candidate requirements, qualifications, and must-have skills.'
+                      aria-label={`Job listing ${index + 1} requirements`}
+                    />
+                  </FormField>
+                  <FormField label='Responsibilities' className='md:col-span-2'>
+                    <Textarea
+                      value={listing.responsibilities ?? ''}
+                      rows={5}
+                      onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+                        updateListing(listing.id, { responsibilities: event.target.value })
+                      }
+                      placeholder='Role duties and recurring responsibilities.'
+                      aria-label={`Job listing ${index + 1} responsibilities`}
+                    />
+                  </FormField>
                 </div>
                 <JobApplicationsInline
                   applications={applications}
@@ -1362,6 +1391,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         initialJobListingId={applicationListingId}
         isOpen={applicationListingId !== null}
         jobListings={jobListings}
+        jobApplicationSettings={jobApplicationSettings}
         onClose={(): void => setApplicationListingId(null)}
         onCreated={(): void => {
           void loadApplications();

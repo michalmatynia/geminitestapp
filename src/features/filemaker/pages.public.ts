@@ -4,6 +4,7 @@ export * from './pages/AdminFilemakerPersonsPage';
 export * from './pages/AdminFilemakerOrganizationsPage';
 export * from './pages/AdminFilemakerInvoicesPage';
 export * from './pages/AdminFilemakerInvoicePdfSettingsPage';
+export * from './pages/AdminFilemakerSettingsPage';
 export * from './pages/AdminFilemakerValuesPage';
 export * from './pages/AdminFilemakerValueEditPage';
 export * from './pages/AdminFilemakerLexiconPage';

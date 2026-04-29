@@ -17,6 +17,7 @@ export const getFilemakerNav = (): NavItem => ({
     { id: 'filemaker/mail-client', label: 'Email Client', href: '/admin/filemaker/mail-client' },
     { id: 'filemaker/emails', label: 'Email Records', href: '/admin/filemaker/emails' },
     { id: 'filemaker/list', label: 'Combined List', href: '/admin/filemaker/list' },
+    { id: 'filemaker/settings', label: 'Settings', href: '/admin/settings/filemaker' },
   ],
 });
 

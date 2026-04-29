@@ -17,6 +17,56 @@ type DuplicateSkuAggregateResult = {
   count: number;
 };
 
+const PRODUCT_ID_ORDER_FIELD = '__productIdOrder';
+
+const normalizeRequestedProductIds = (ids: string[] | undefined): string[] =>
+  Array.from(
+    new Set(
+      (ids ?? [])
+        .map((id: string): string => id.trim())
+        .filter((id: string): boolean => id.length > 0)
+    )
+  );
+
+const buildProductSortStages = (filters: ProductFilters): Document[] => {
+  const orderedIds = normalizeRequestedProductIds(filters.ids);
+  if (orderedIds.length === 0) {
+    return [{ $sort: { createdAt: -1 } }];
+  }
+
+  return [
+    {
+      $addFields: {
+        [PRODUCT_ID_ORDER_FIELD]: {
+          $let: {
+            vars: {
+              productIdIndex: { $indexOfArray: [orderedIds, '$id'] },
+              objectIdIndex: { $indexOfArray: [orderedIds, { $toString: '$_id' }] },
+            },
+            in: {
+              $cond: [
+                { $gte: ['$$productIdIndex', 0] },
+                '$$productIdIndex',
+                {
+                  $cond: [
+                    { $gte: ['$$objectIdIndex', 0] },
+                    '$$objectIdIndex',
+                    orderedIds.length,
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      },
+    },
+    { $sort: { [PRODUCT_ID_ORDER_FIELD]: 1, createdAt: -1 } },
+  ];
+};
+
+const hasExplicitProductIdOrder = (filters: ProductFilters): boolean =>
+  normalizeRequestedProductIds(filters.ids).length > 0;
+
 const normalizeSkuForDuplicateDetection = (sku: unknown): string | null => {
   if (typeof sku !== 'string') return null;
   const trimmed = sku.trim();
@@ -165,11 +215,12 @@ export const mongoProductReadImpl = {
     const limit = pageSize;
     const searchFilter = await buildMongoWhere(filters);
     const projectStage = buildListProjectStage(filters);
+    const sortStages = buildProductSortStages(filters);
 
     if (projectStage) {
       const pipeline: Document[] = [
         { $match: searchFilter },
-        { $sort: { createdAt: -1 } },
+        ...sortStages,
         { $skip: skip },
         { $limit: limit },
         { $project: projectStage },
@@ -184,6 +235,20 @@ export const mongoProductReadImpl = {
       );
 
       return projectedDocs.map((doc) => toProductResponse(doc));
+    }
+
+    if (hasExplicitProductIdOrder(filters)) {
+      const docs = await collection
+        .aggregate<WithId<ProductDocument>>([
+          { $match: searchFilter },
+          ...sortStages,
+          { $skip: skip },
+          { $limit: limit },
+        ])
+        .toArray();
+      const docsWithDuplicateSkuCounts = await attachDuplicateSkuCounts(docs, collection);
+
+      return docsWithDuplicateSkuCounts.map((doc) => toProductResponse(doc));
     }
 
     let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
@@ -203,6 +268,23 @@ export const mongoProductReadImpl = {
   ): Promise<string[]> {
     const collection = await getCollection();
     const searchFilter = await buildMongoWhere(filters);
+    const sortStages = buildProductSortStages(filters);
+
+    if (hasExplicitProductIdOrder(filters)) {
+      const docs = await collection
+        .aggregate<{ id?: string }>([
+          { $match: searchFilter },
+          ...sortStages,
+          { $project: { _id: 0, id: 1 } },
+        ])
+        .toArray();
+      return docs
+        .map((doc) =>
+          typeof doc.id === 'string' && doc.id.trim().length > 0 ? doc.id.trim() : null
+        )
+        .filter((id): id is string => id !== null);
+    }
+
     let cursor = collection
       .find(searchFilter, { projection: { _id: 0, id: 1 } })
       .sort({ createdAt: -1 });
@@ -239,6 +321,7 @@ export const mongoProductReadImpl = {
     const skip = (page - 1) * pageSize;
     const searchFilter = await buildMongoWhere(filters);
     const projectStage = buildListProjectStage(filters);
+    const sortStages = buildProductSortStages(filters);
 
     if (isEmptyFilter(searchFilter)) {
       const [docs, total] = await Promise.all([
@@ -246,7 +329,7 @@ export const mongoProductReadImpl = {
           if (projectStage) {
             const pipeline: Document[] = [
               { $match: searchFilter },
-              { $sort: { createdAt: -1 } },
+              ...sortStages,
               { $skip: skip },
               { $limit: pageSize },
               { $project: projectStage },
@@ -276,7 +359,7 @@ export const mongoProductReadImpl = {
     }
 
     const productsPipeline: Document[] = [
-      { $sort: { createdAt: -1 } },
+      ...sortStages,
       { $skip: skip },
       { $limit: pageSize },
     ];

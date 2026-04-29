@@ -64,6 +64,8 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/cms/builder': 'Visual page builder for CMS layouts.',
   '/admin/settings': 'System settings overview and quick access cards.',
   '/admin/settings/menu': 'Customize the admin menu structure and favorites.',
+  '/admin/settings/filemaker':
+    'Configure Filemaker defaults for job application preparation.',
   '/admin/settings/filemaker-invoice-pdf':
     'Edit Filemaker invoice PDF labels and default PDF language.',
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import { Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, Megaphone, ShieldAlert, Tags, Users } from 'lucide-react';
+import { Building2, BookOpen, CalendarDays, Database, FileText, Globe, Mail, Megaphone, Settings2, ShieldAlert, Tags, Users } from 'lucide-react';
 import React, { startTransition } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -40,6 +40,7 @@ const FILEMAKER_PAGE_ACTIONS = [
   { key: 'lexicon', label: 'Lexicon Page', href: '/admin/filemaker/lexicon', Icon: BookOpen },
   { key: 'emails', label: 'Email Records', href: '/admin/filemaker/emails', Icon: Mail },
   { key: 'websites', label: 'Websites', href: '/admin/filemaker/websites', Icon: Globe },
+  { key: 'settings', label: 'Settings', href: '/admin/settings/filemaker', Icon: Settings2 },
 ] as const;
 
 const buildFilemakerPageActions = (router: FilemakerPageRouter): PanelAction[] =>

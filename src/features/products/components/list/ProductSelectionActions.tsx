@@ -364,14 +364,20 @@ export const ProductSelectionActions = memo(() => {
   );
 
   const handleFindParsedMatches = useCallback(
-    (productIds: string[]): void => {
+    (productIds: string[], meta?: { matchedRowCount?: number }): void => {
       setParsedMatchProductIds(productIds);
       setRowSelection({});
       setIsParseActionsOpen(false);
+      const matchedRowCount =
+        typeof meta?.matchedRowCount === 'number' && Number.isFinite(meta.matchedRowCount)
+          ? meta.matchedRowCount
+          : productIds.length;
       toast(
-        `Filtered product list to ${productIds.length} parsed match${
-          productIds.length === 1 ? '' : 'es'
-        }.`,
+        matchedRowCount > productIds.length
+          ? `Filtered product list to ${productIds.length} unique parsed products from ${matchedRowCount} matched rows.`
+          : `Filtered product list to ${productIds.length} parsed product${
+              productIds.length === 1 ? '' : 's'
+            }.`,
         { variant: 'success' }
       );
     },
@@ -821,7 +827,7 @@ export const ProductSelectionActions = memo(() => {
             ) : null}
             {parsedMatchProductIds.length > 0 ? (
               <Chip
-                label={`Parsed matches: ${parsedMatchProductIds.length}`}
+                label={`Parsed products: ${parsedMatchProductIds.length}`}
                 active
                 onClick={handleClearParsedMatches}
                 icon={X}

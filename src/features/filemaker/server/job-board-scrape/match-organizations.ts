@@ -7,22 +7,13 @@ import type {
 } from '../../filemaker-job-board-scrape-contracts';
 
 import { uniqueStrings } from './normalizers';
+import { normalizeNameForMatch } from './dedupe-listings';
 
 export type OrganizationCandidate = {
   normalizedNames: string[];
   organization: FilemakerOrganization;
   tokens: string[];
 };
-
-export const normalizeNameForMatch = (value: string): string =>
-  value
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\b(spolka|sp|zoo|z o o|s a|sa|inc|ltd|llc|gmbh|fundacja|stowarzyszenie)\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 
 export const tokenizeName = (value: string): string[] =>
   uniqueStrings(normalizeNameForMatch(value).split(' ').filter((token) => token.length >= 3));

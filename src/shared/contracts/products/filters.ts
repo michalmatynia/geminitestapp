@@ -426,6 +426,19 @@ const PRODUCT_FILTER_PAGE_SIZE_DEFAULT = 20;
 const PRODUCT_FILTER_PAGE_SIZE_MAX = 48;
 const PRODUCT_FILTER_IDS_MAX = 500;
 
+const normalizeProductFilterPageSizeValue = (value: unknown): number => {
+  const parsed =
+    typeof value === 'number'
+      ? Math.trunc(value)
+      : typeof value === 'string'
+        ? Number.parseInt(value, 10)
+        : Number.NaN;
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return PRODUCT_FILTER_PAGE_SIZE_DEFAULT;
+  }
+  return Math.min(PRODUCT_FILTER_IDS_MAX, parsed);
+};
+
 const normalizeProductFilterIds = (value: unknown): string[] | undefined => {
   let rawValues: unknown[] = [];
   if (Array.isArray(value)) {
@@ -445,18 +458,10 @@ const normalizeProductFilterIds = (value: unknown): string[] | undefined => {
 };
 
 export const productFilterSchema = commonListQuerySchema.extend({
-  pageSize: z.preprocess((value: unknown) => {
-    const parsed =
-      typeof value === 'number'
-        ? Math.trunc(value)
-        : typeof value === 'string'
-          ? Number.parseInt(value, 10)
-          : Number.NaN;
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return PRODUCT_FILTER_PAGE_SIZE_DEFAULT;
-    }
-    return Math.min(PRODUCT_FILTER_PAGE_SIZE_MAX, parsed);
-  }, z.number().int().min(1).max(PRODUCT_FILTER_PAGE_SIZE_MAX).default(PRODUCT_FILTER_PAGE_SIZE_DEFAULT)),
+  pageSize: z.preprocess(
+    normalizeProductFilterPageSizeValue,
+    z.number().int().min(1).max(PRODUCT_FILTER_IDS_MAX).default(PRODUCT_FILTER_PAGE_SIZE_DEFAULT)
+  ),
   ids: z.preprocess(
     normalizeProductFilterIds,
     z.array(z.string().trim().min(1)).max(PRODUCT_FILTER_IDS_MAX).optional()
@@ -513,6 +518,14 @@ export const productFilterSchema = commonListQuerySchema.extend({
     }
     return value;
   }, z.boolean().optional()),
+}).transform((filters) => {
+  if (Array.isArray(filters.ids) && filters.ids.length > 0) {
+    return filters;
+  }
+  return {
+    ...filters,
+    pageSize: Math.min(filters.pageSize, PRODUCT_FILTER_PAGE_SIZE_MAX),
+  };
 });
 
 export type ProductFilter = z.infer<typeof productFilterSchema>;

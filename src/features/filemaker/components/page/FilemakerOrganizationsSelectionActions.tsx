@@ -65,8 +65,6 @@ type OrganizationFilterPresetActionsProps = Omit<
 
 function JobBoardScrapeAction(props: {
   onCompleted: () => void;
-  selectedOrganizationCount: number;
-  selectedOrganizationIds: string[];
 }): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -85,8 +83,6 @@ function JobBoardScrapeAction(props: {
         open={isOpen}
         onClose={(): void => setIsOpen(false)}
         onCompleted={props.onCompleted}
-        selectedOrganizationCount={props.selectedOrganizationCount}
-        selectedOrganizationIds={props.selectedOrganizationIds}
       />
     </>
   );
@@ -579,8 +575,6 @@ export function FilemakerOrganizationsSelectionActions(
           <OrganizationFilterPresetActions {...props} />
           <JobBoardScrapeAction
             onCompleted={props.onJobBoardScrapeCompleted}
-            selectedOrganizationCount={props.selectedOrganizationCount}
-            selectedOrganizationIds={selectedIds}
           />
         </>
       }

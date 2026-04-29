@@ -1309,6 +1309,8 @@ export const createFilemakerJobListing = (input: {
   organizationId: unknown;
   title: unknown;
   description?: unknown;
+  requirements?: unknown;
+  responsibilities?: unknown;
   location?: unknown;
   addressId?: unknown;
   street?: unknown;
@@ -1361,6 +1363,12 @@ export const createFilemakerJobListing = (input: {
     organizationId: normalizeString(input.organizationId),
     title: normalizeString(input.title),
     description: normalizeString(input.description),
+    ...(normalizeString(input.requirements).length > 0
+      ? { requirements: normalizeString(input.requirements) }
+      : {}),
+    ...(normalizeString(input.responsibilities).length > 0
+      ? { responsibilities: normalizeString(input.responsibilities) }
+      : {}),
     ...(location.length > 0 ? { location } : {}),
     ...(normalizeString(input.addressId).length > 0
       ? { addressId: normalizeString(input.addressId) }

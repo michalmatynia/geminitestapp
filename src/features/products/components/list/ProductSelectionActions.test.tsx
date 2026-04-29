@@ -118,13 +118,16 @@ vi.mock('@/features/products/components/list/ProductParseActionsModal', () => ({
   ProductParseActionsModal: (props: {
     isOpen: boolean;
     onClose: () => void;
-    onFindMatches: (productIds: string[]) => void;
+    onFindMatches: (productIds: string[], meta: { matchedRowCount: number }) => void;
   }) => {
     parseActionsModalMock(props);
     return props.isOpen ? (
       <div role='dialog'>
         <span>Parse Actions Modal</span>
-        <button type='button' onClick={() => props.onFindMatches(['product-1', 'product-2'])}>
+        <button
+          type='button'
+          onClick={() => props.onFindMatches(['product-1', 'product-2'], { matchedRowCount: 3 })}
+        >
           Find Parsed Matches
         </button>
         <button type='button' onClick={props.onClose}>

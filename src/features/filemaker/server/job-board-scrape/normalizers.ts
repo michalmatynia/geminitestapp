@@ -161,7 +161,6 @@ const resolveCandidateCategory = (
   validationPatterns: readonly FilemakerLexiconValidationPattern[] | null | undefined,
   sourceScope: FilemakerLexiconValidationPatternSourceScope
 ): FilemakerLexiconTermCategory => {
-  if (sourceScope === 'section_value') return category;
   const patternClassification = classifyFilemakerLexiconLabelWithPatterns(
     validationPatterns,
     { label, sourceScope }

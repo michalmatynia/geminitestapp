@@ -14,6 +14,7 @@ export * from './settings/removal-logic';
 export * from './settings/campaign-scheduling';
 export * from './settings/campaigns';
 export * from './filemaker-invoice-pdf-settings';
+export * from './filemaker-job-application-settings';
 
 export {
   normalizeFilemakerDatabase,

@@ -4,13 +4,22 @@ import type { FilemakerJobListing } from '../../types';
 import type { FilemakerJobBoardScrapedOffer } from '../../filemaker-job-board-scrape-contracts';
 
 import { normalizeJobBoardSourceUrl, toStringValue } from './normalizers';
-import { normalizeNameForMatch } from './match-organizations';
 
 export type ListingSourceIdentity = {
   sourceExternalId?: unknown;
   sourceSite?: unknown;
   sourceUrl?: unknown;
 };
+
+export const normalizeNameForMatch = (value: string): string =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\b(spolka|sp|zoo|z o o|s a|sa|inc|ltd|llc|gmbh|fundacja|stowarzyszenie)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export const normalizeDedupeKey = (value: string): string => normalizeNameForMatch(value);
 

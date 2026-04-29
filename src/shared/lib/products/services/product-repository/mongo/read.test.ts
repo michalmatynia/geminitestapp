@@ -101,4 +101,63 @@ describe('mongoProductReadImpl duplicate SKU enrichment', () => {
     expect(result.products[0]?.duplicateSkuCount).toBe(3);
     expect(aggregate).toHaveBeenCalledTimes(2);
   });
+
+  it('preserves explicit product id order for parsed-match list filters', async () => {
+    const aggregate = vi
+      .fn()
+      .mockReturnValueOnce({
+        toArray: vi.fn().mockResolvedValue([
+          {
+            products: [
+              {
+                _id: 'product-b',
+                id: 'product-b',
+                sku: 'B',
+                createdAt: new Date('2026-01-02T00:00:00.000Z'),
+                updatedAt: new Date('2026-01-02T00:00:00.000Z'),
+                catalogId: 'catalog-1',
+                name_en: 'Product B',
+                published: false,
+              },
+              {
+                _id: 'product-a',
+                id: 'product-a',
+                sku: 'A',
+                createdAt: new Date('2026-01-03T00:00:00.000Z'),
+                updatedAt: new Date('2026-01-03T00:00:00.000Z'),
+                catalogId: 'catalog-1',
+                name_en: 'Product A',
+                published: false,
+              },
+            ],
+            meta: [{ total: 2 }],
+          },
+        ]),
+      })
+      .mockReturnValueOnce({
+        toArray: vi.fn().mockResolvedValue([]),
+      });
+
+    const result = await mongoProductReadImpl.getProductsWithCount(
+      { ids: ['product-b', 'product-a'], page: 1, pageSize: 20 } as never,
+      async () =>
+        ({
+          aggregate,
+        }) as never
+    );
+
+    const firstPipeline = aggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
+    const facetStage = firstPipeline[1] as {
+      $facet: { products: Array<Record<string, unknown>> };
+    };
+
+    expect(facetStage.$facet.products[0]).toHaveProperty('$addFields');
+    expect(facetStage.$facet.products[1]).toEqual({
+      $sort: { __productIdOrder: 1, createdAt: -1 },
+    });
+    expect(JSON.stringify(facetStage.$facet.products[0])).toContain(
+      '"$indexOfArray":[["product-b","product-a"],"$id"]'
+    );
+    expect(result.products.map((product) => product.id)).toEqual(['product-b', 'product-a']);
+  });
 });

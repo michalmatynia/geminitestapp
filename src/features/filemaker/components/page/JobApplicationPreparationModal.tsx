@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
+import type { FilemakerJobApplicationSettings } from '../../filemaker-job-application-settings';
 import {
   JOB_APPLICATION_PREPARE_PATH_ID,
   JOB_APPLICATION_PREPARE_TRIGGER_BUTTON_ID,
@@ -26,6 +27,7 @@ type JobApplicationPreparationModalProps = {
   initialJobListingId: string | null;
   isOpen: boolean;
   jobListings: FilemakerJobListing[];
+  jobApplicationSettings: FilemakerJobApplicationSettings;
   onClose: () => void;
   onCreated?: () => void;
   organization: FilemakerOrganization;
@@ -120,12 +122,23 @@ const toPersonOptions = (payload: unknown): SelectSimpleOption[] => {
 
 const mergePersonOptions = (
   fetchedOptions: SelectSimpleOption[],
-  defaultConnection: JobApplicationConnection | null
+  defaultConnection: JobApplicationConnection | null,
+  jobApplicationSettings: FilemakerJobApplicationSettings
 ): SelectSimpleOption[] => {
   const optionsById = new Map<string, SelectSimpleOption>();
   fetchedOptions.forEach((option: SelectSimpleOption): void => {
     optionsById.set(option.value, option);
   });
+
+  const filemakerDefaultPersonId = jobApplicationSettings.defaultPersonId.trim();
+  if (filemakerDefaultPersonId.length > 0 && !optionsById.has(filemakerDefaultPersonId)) {
+    const label = jobApplicationSettings.defaultPersonName.trim();
+    optionsById.set(filemakerDefaultPersonId, {
+      value: filemakerDefaultPersonId,
+      label: label.length > 0 ? label : filemakerDefaultPersonId,
+      description: 'Filemaker default profile',
+    });
+  }
 
   const defaultPersonId = defaultConnection?.connection.jobApplicationPersonId?.trim() ?? '';
   if (defaultPersonId.length > 0 && !optionsById.has(defaultPersonId)) {
@@ -188,7 +201,10 @@ const fetchJson = async <T,>(url: string, signal?: AbortSignal): Promise<T> => {
   return (await response.json()) as T;
 };
 
-const buildPlatformContext = (connection: JobApplicationConnection | null): Record<string, unknown> => ({
+const buildPlatformContext = (
+  connection: JobApplicationConnection | null,
+  jobApplicationSettings: FilemakerJobApplicationSettings
+): Record<string, unknown> => ({
   integrationId: connection?.integration.id ?? null,
   integrationName: connection?.integration.name ?? null,
   integrationSlug: connection?.integration.slug ?? null,
@@ -196,12 +212,15 @@ const buildPlatformContext = (connection: JobApplicationConnection | null): Reco
   connectionName: connection?.connection.name ?? null,
   defaultPersonId: connection?.connection.jobApplicationPersonId ?? null,
   defaultPersonName: connection?.connection.jobApplicationPersonName ?? null,
+  filemakerDefaultPersonId: jobApplicationSettings.defaultPersonId || null,
+  filemakerDefaultPersonName: jobApplicationSettings.defaultPersonName || null,
 });
 
 export function JobApplicationPreparationModal({
   initialJobListingId,
   isOpen,
   jobListings,
+  jobApplicationSettings,
   onClose,
   onCreated,
   organization,
@@ -250,6 +269,7 @@ export function JobApplicationPreparationModal({
     const fallbackListingId = initialJobListingId ?? jobListings[0]?.id ?? '';
     setSelectedJobListingId(fallbackListingId);
     setSelectedOrganizationId(organization.id);
+    setSelectedPersonId('');
     setRunId(null);
     setError(null);
   }, [initialJobListingId, isOpen, jobListings, organization.id]);
@@ -274,9 +294,15 @@ export function JobApplicationPreparationModal({
         const fetchedPersonOptions =
           results[1].status === 'fulfilled' ? toPersonOptions(results[1].value) : [];
         setDefaultConnection(connection);
-        setPersonOptions(mergePersonOptions(fetchedPersonOptions, connection));
+        setPersonOptions(mergePersonOptions(fetchedPersonOptions, connection, jobApplicationSettings));
 
-        const defaultPersonId = connection?.connection.jobApplicationPersonId?.trim() ?? '';
+        const filemakerDefaultPersonId = jobApplicationSettings.defaultPersonId.trim();
+        const integrationDefaultPersonId =
+          connection?.connection.jobApplicationPersonId?.trim() ?? '';
+        const defaultPersonId =
+          filemakerDefaultPersonId.length > 0
+            ? filemakerDefaultPersonId
+            : integrationDefaultPersonId;
         setSelectedPersonId((current: string): string =>
           current.trim().length > 0 ? current : defaultPersonId
         );
@@ -288,7 +314,7 @@ export function JobApplicationPreparationModal({
       });
 
     return () => controller.abort();
-  }, [isOpen]);
+  }, [isOpen, jobApplicationSettings]);
 
   useEffect(() => {
     if (!selectedJobListingId && jobListings[0]) {
@@ -325,7 +351,7 @@ export function JobApplicationPreparationModal({
       ]);
       const applicationContext = {
         version: 1,
-        platformContext: buildPlatformContext(defaultConnection),
+        platformContext: buildPlatformContext(defaultConnection, jobApplicationSettings),
         personContext: {
           selectedPersonId: personId,
           person: personDetail.person ?? null,
@@ -397,6 +423,7 @@ export function JobApplicationPreparationModal({
   }, [
     defaultConnection,
     fireAiPathTriggerEvent,
+    jobApplicationSettings,
     onCreated,
     organization,
     selectedOrganizationId,
@@ -466,6 +493,13 @@ export function JobApplicationPreparationModal({
         </div>
 
         <div className='flex flex-wrap items-center gap-2 text-xs text-gray-400'>
+          {jobApplicationSettings.defaultPersonId.trim().length > 0 ? (
+            <Badge variant='outline'>
+              Filemaker default ·{' '}
+              {jobApplicationSettings.defaultPersonName.trim() ||
+                jobApplicationSettings.defaultPersonId}
+            </Badge>
+          ) : null}
           {defaultConnection ? (
             <Badge variant='outline'>
               {defaultConnection.integration.name} · {defaultConnection.connection.name}

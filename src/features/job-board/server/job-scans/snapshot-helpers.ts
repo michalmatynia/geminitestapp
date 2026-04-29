@@ -43,6 +43,15 @@ export const cleanCompanyProfileTitle = (value: unknown): string | null => {
   const normalized = normalizeProbeText(value)
     .replace(/\s*[-|]\s*(profil pracodawcy|pracodawca|kariera|career|jobs).*$/i, '')
     .trim();
+  const key = normalizeCompanyNameGuardKey(normalized);
+  if (
+    GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
+    key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('odkrywaj najlepsze miejsca pracy') ||
+    key.startsWith('profile pracodawcow')
+  ) {
+    return null;
+  }
   return normalized.length > 0 ? normalized : null;
 };
 
@@ -51,6 +60,7 @@ const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
   'employer profile',
   'employers',
   'informacje i opinie o pracodawcach',
+  'odkrywaj najlepsze miejsca pracy',
   'pracodawca',
   'pracodawcy',
   'profile pracodawcow',
@@ -72,6 +82,7 @@ const cleanSnapshotCompanyName = (value: unknown): string | null => {
   if (
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('odkrywaj najlepsze miejsca pracy') ||
     key.startsWith('profile pracodawcow')
   ) {
     return null;

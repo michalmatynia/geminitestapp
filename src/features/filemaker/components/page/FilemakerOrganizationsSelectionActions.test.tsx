@@ -143,15 +143,11 @@ vi.mock('./FilemakerJobBoardScrapeModal', () => ({
     onCompleted: () => void;
     onClose: () => void;
     open: boolean;
-    selectedOrganizationCount: number;
-    selectedOrganizationIds: string[];
   }) => {
     modalPropsMock(props);
     return props.open ? (
       <section
         aria-label='job-board scrape modal'
-        data-selected-count={String(props.selectedOrganizationCount)}
-        data-selected-ids={props.selectedOrganizationIds.join(',')}
         role='dialog'
       >
         <button type='button' onClick={props.onCompleted}>
@@ -250,7 +246,7 @@ describe('FilemakerOrganizationsSelectionActions', () => {
     installClipboardMock();
   });
 
-  it('opens the job-board scrape modal with the selected organisation IDs', async () => {
+  it('opens the job-board scrape modal without passing selected organisation IDs', async () => {
     const user = userEvent.setup();
     const onJobBoardScrapeCompleted = vi.fn();
 
@@ -271,8 +267,11 @@ describe('FilemakerOrganizationsSelectionActions', () => {
     await user.click(within(selectionBar).getByRole('button', { name: /Scrape jobs/i }));
 
     const modal = screen.getByRole('dialog', { name: 'job-board scrape modal' });
-    expect(modal).toHaveAttribute('data-selected-count', '2');
-    expect(modal).toHaveAttribute('data-selected-ids', 'org-1,org-3');
+    expect(modalPropsMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        open: true,
+      })
+    );
 
     await user.click(within(modal).getByRole('button', { name: 'Complete scrape' }));
 

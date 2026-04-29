@@ -762,6 +762,39 @@ const normalizeOfferUrl = (
   }
 };
 
+const normalizePracujCompanyProfileUrl = (
+  value: string | null,
+  baseUrl: string | null
+): string | null => {
+  if (value === null) return null;
+  try {
+    const url = baseUrl === null ? new URL(value) : new URL(value, baseUrl);
+    url.hash = '';
+    const hostname = url.hostname.toLowerCase().replace(/^www\./, '');
+    if (!/pracuj\.pl$/iu.test(hostname)) return null;
+    if (!/\/(?:pracodawcy|pracodawca|firmy|firma|profil-pracodawcy)\//iu.test(url.pathname)) {
+      return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+};
+
+const collectPracujCompanyProfileLinksFromHtml = (
+  html: string,
+  baseUrl: string | null
+): string[] =>
+  normalizeStringArray(
+    Array.from(html.matchAll(/<a\b([^>]*)>/gi)).flatMap((match): string[] => {
+      const url = normalizePracujCompanyProfileUrl(
+        readHtmlAttribute(match[1] ?? '', 'href'),
+        baseUrl
+      );
+      return url === null ? [] : [url];
+    })
+  );
+
 const collectOfferLinksFromHtml = (
   html: string,
   baseUrl: string,
@@ -799,6 +832,7 @@ const GENERIC_JOB_BOARD_COMPANY_NAME_KEYS = new Set([
   'employer profile',
   'employers',
   'informacje i opinie o pracodawcach',
+  'odkrywaj najlepsze miejsca pracy',
   'pracodawca',
   'pracodawcy',
   'profile pracodawcow',
@@ -819,6 +853,7 @@ const cleanStructuredCompanyName = (value: string | null): string | null => {
   if (
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
+    key.startsWith('odkrywaj najlepsze miejsca pracy') ||
     key.startsWith('profile pracodawcow')
   ) {
     return null;
@@ -856,8 +891,11 @@ const buildPlainHtmlStructuredSnapshot = (
   const companyName = cleanStructuredCompanyName(
     readFirstJsonLdString(hiringOrganization?.['name'])
   );
-  const companyUrls = readJsonLdStrings(hiringOrganization?.['url'], hiringOrganization?.['sameAs']);
-  const companyUrl = companyUrls[0] ?? null;
+  const companyLinks = normalizeStringArray([
+    ...readJsonLdStrings(hiringOrganization?.['url'], hiringOrganization?.['sameAs']),
+    ...collectPracujCompanyProfileLinksFromHtml(rawHtml, fallbackUrl ?? canonical),
+  ]);
+  const companyUrl = companyLinks[0] ?? null;
   const companyDescription = readFirstJsonLdString(hiringOrganization?.['description']);
   const companyIndustry = readFirstJsonLdString(hiringOrganization?.['industry']);
   const companySize = readFirstJsonLdString(
@@ -885,14 +923,14 @@ const buildPlainHtmlStructuredSnapshot = (
   return {
     applyUrls: normalizeStringArray([readFirstJsonLdString(jobPosting?.['url'], fallbackUrl)]),
     canonical,
-    companyLinks: companyUrls,
+    companyLinks,
     companyProfile:
       companyName || companyUrl || companyAddress !== null
         ? {
             facts: [
               ...(companyName ? [{ label: 'Company', value: companyName }] : []),
               ...(companyUrl ? [{ label: 'Website', value: companyUrl }] : []),
-              ...companyUrls.slice(1).map((url) => ({ label: 'Same as', value: url })),
+              ...companyLinks.slice(1).map((url) => ({ label: 'Same as', value: url })),
               ...(companyEmail ? [{ label: 'Email', value: companyEmail }] : []),
               ...(companyPhone ? [{ label: 'Phone', value: companyPhone }] : []),
               ...(companyLogo ? [{ label: 'Logo URL', value: companyLogo }] : []),
@@ -908,7 +946,7 @@ const buildPlainHtmlStructuredSnapshot = (
             sections: [],
             title: companyName,
             url: companyUrl,
-            websiteUrls: companyUrls,
+            websiteUrls: companyLinks,
           }
         : null,
     facts: [

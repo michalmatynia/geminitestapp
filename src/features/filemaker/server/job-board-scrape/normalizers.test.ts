@@ -86,4 +86,26 @@ describe('buildScrapedOfferPills', () => {
       }),
     ]);
   });
+
+  it('uses validation patterns to keep concatenated technology section blobs out of Technology', () => {
+    const extraction = buildScrapedOfferLexiconExtraction({
+      provider: 'pracuj_pl',
+      snapshot: {
+        provider: 'pracuj_pl',
+        sections: [
+          {
+            heading: 'Technologie',
+            text:
+              'Technologie, ktorych uzywamyWymaganeReact.jsHTMLCSSSCSSJavaScriptGitNext.jsStorybookMile widzianeReact Testing LibraryVitestPlaywright',
+          },
+        ],
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+    });
+
+    expect(extraction.pills.map((pill) => pill.label)).not.toContain(
+      'Technologie, ktorych uzywamyWymaganeReact.jsHTMLCSSSCSSJavaScriptGitNext.jsStorybookMile widzianeReact Testing LibraryVitestPlaywright'
+    );
+  });
 });

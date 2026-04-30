@@ -19,7 +19,7 @@ function areStringArraysEqual(
   return leftSorted.every((value, index) => value === rightSorted[index]);
 }
 
-const buildIdentityPayloadDiff = (
+const buildIdentityTextPayloadDiff = (
   existing: ProductValidationPattern,
   next: UpdateValidationPatternPayload
 ): UpdateValidationPatternPayload => {
@@ -28,20 +28,25 @@ const buildIdentityPayloadDiff = (
   if (next.target !== existing.target) diff.target = next.target;
   if (next.locale !== (existing.locale ?? null)) diff.locale = next.locale;
   if (next.regex !== existing.regex) diff.regex = next.regex;
+  return diff;
+};
+
+const buildIdentityMessagePayloadDiff = (
+  existing: ProductValidationPattern,
+  next: UpdateValidationPatternPayload
+): UpdateValidationPatternPayload => {
+  const diff: UpdateValidationPatternPayload = {};
   if (next.flags !== (existing.flags ?? null)) diff.flags = next.flags;
   if (next.message !== existing.message) diff.message = next.message;
   if (next.severity !== existing.severity) diff.severity = next.severity;
   return diff;
 };
 
-const buildReplacementPayloadDiff = (
+const buildReplacementModePayloadDiff = (
   existing: ProductValidationPattern,
   next: UpdateValidationPatternPayload
 ): UpdateValidationPatternPayload => {
   const diff: UpdateValidationPatternPayload = {};
-  const currentScopes = normalizeProductValidationPatternReplacementScopes(
-    existing.replacementAppliesToScopes
-  );
   if (next.enabled !== existing.enabled) diff.enabled = next.enabled;
   if (next.replacementEnabled !== existing.replacementEnabled) {
     diff.replacementEnabled = next.replacementEnabled;
@@ -52,6 +57,17 @@ const buildReplacementPayloadDiff = (
   if ((next.skipNoopReplacementProposal ?? true) !== existing.skipNoopReplacementProposal) {
     diff.skipNoopReplacementProposal = next.skipNoopReplacementProposal;
   }
+  return diff;
+};
+
+const buildReplacementValuePayloadDiff = (
+  existing: ProductValidationPattern,
+  next: UpdateValidationPatternPayload
+): UpdateValidationPatternPayload => {
+  const diff: UpdateValidationPatternPayload = {};
+  const currentScopes = normalizeProductValidationPatternReplacementScopes(
+    existing.replacementAppliesToScopes
+  );
   if (next.replacementValue !== (existing.replacementValue ?? null)) {
     diff.replacementValue = next.replacementValue;
   }
@@ -110,7 +126,7 @@ const buildExecutionPayloadDiff = (
   return diff;
 };
 
-const buildLaunchModePayloadDiff = (
+const buildLaunchEnabledPayloadDiff = (
   existing: ProductValidationPattern,
   next: UpdateValidationPatternPayload
 ): UpdateValidationPatternPayload => {
@@ -124,6 +140,14 @@ const buildLaunchModePayloadDiff = (
   if (!areStringArraysEqual(next.launchAppliesToScopes, currentLaunchScopes)) {
     diff.launchAppliesToScopes = next.launchAppliesToScopes;
   }
+  return diff;
+};
+
+const buildLaunchModePayloadDiff = (
+  existing: ProductValidationPattern,
+  next: UpdateValidationPatternPayload
+): UpdateValidationPatternPayload => {
+  const diff: UpdateValidationPatternPayload = {};
   if ((next.launchScopeBehavior ?? 'gate') !== (existing.launchScopeBehavior ?? 'gate')) {
     diff.launchScopeBehavior = next.launchScopeBehavior;
   }
@@ -133,7 +157,7 @@ const buildLaunchModePayloadDiff = (
   return diff;
 };
 
-const buildLaunchValuePayloadDiff = (
+const buildLaunchSourcePayloadDiff = (
   existing: ProductValidationPattern,
   next: UpdateValidationPatternPayload
 ): UpdateValidationPatternPayload => {
@@ -144,6 +168,14 @@ const buildLaunchValuePayloadDiff = (
   if (next.launchOperator !== existing.launchOperator) {
     diff.launchOperator = next.launchOperator;
   }
+  return diff;
+};
+
+const buildLaunchValuePayloadDiff = (
+  existing: ProductValidationPattern,
+  next: UpdateValidationPatternPayload
+): UpdateValidationPatternPayload => {
+  const diff: UpdateValidationPatternPayload = {};
   if ((next.launchValue ?? null) !== (existing.launchValue ?? null)) {
     diff.launchValue = next.launchValue;
   }
@@ -153,12 +185,11 @@ const buildLaunchValuePayloadDiff = (
   return diff;
 };
 
-const buildRuntimePayloadDiff = (
+const buildRuntimeModePayloadDiff = (
   existing: ProductValidationPattern,
   next: UpdateValidationPatternPayload
 ): UpdateValidationPatternPayload => {
   const diff: UpdateValidationPatternPayload = {};
-  const currentAppliesToScopes = normalizeProductValidationPatternScopes(existing.appliesToScopes);
   if ((next.runtimeEnabled ?? false) !== existing.runtimeEnabled) {
     diff.runtimeEnabled = next.runtimeEnabled;
   }
@@ -168,6 +199,15 @@ const buildRuntimePayloadDiff = (
   if ((next.runtimeConfig ?? null) !== (existing.runtimeConfig ?? null)) {
     diff.runtimeConfig = next.runtimeConfig;
   }
+  return diff;
+};
+
+const buildRuntimeScopePayloadDiff = (
+  existing: ProductValidationPattern,
+  next: UpdateValidationPatternPayload
+): UpdateValidationPatternPayload => {
+  const diff: UpdateValidationPatternPayload = {};
+  const currentAppliesToScopes = normalizeProductValidationPatternScopes(existing.appliesToScopes);
   if (!areStringArraysEqual(next.appliesToScopes, currentAppliesToScopes)) {
     diff.appliesToScopes = next.appliesToScopes;
   }
@@ -188,13 +228,18 @@ export function buildPatternPayloadDiff(
   next: UpdateValidationPatternPayload
 ): UpdateValidationPatternPayload {
   return {
-    ...buildIdentityPayloadDiff(existing, next),
-    ...buildReplacementPayloadDiff(existing, next),
+    ...buildIdentityTextPayloadDiff(existing, next),
+    ...buildIdentityMessagePayloadDiff(existing, next),
+    ...buildReplacementModePayloadDiff(existing, next),
+    ...buildReplacementValuePayloadDiff(existing, next),
     ...buildBehaviorPayloadDiff(existing, next),
     ...buildExecutionPayloadDiff(existing, next),
+    ...buildLaunchEnabledPayloadDiff(existing, next),
     ...buildLaunchModePayloadDiff(existing, next),
+    ...buildLaunchSourcePayloadDiff(existing, next),
     ...buildLaunchValuePayloadDiff(existing, next),
-    ...buildRuntimePayloadDiff(existing, next),
+    ...buildRuntimeModePayloadDiff(existing, next),
+    ...buildRuntimeScopePayloadDiff(existing, next),
     ...buildSemanticPayloadDiff(existing, next),
   };
 }

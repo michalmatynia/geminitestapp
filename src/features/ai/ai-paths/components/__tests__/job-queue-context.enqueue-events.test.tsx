@@ -31,6 +31,11 @@ const mocks = vi.hoisted(() => ({
 let JobQueueProvider: typeof import('../JobQueueContext').JobQueueProvider;
 let useJobQueueState: typeof import('../JobQueueContext').useJobQueueState;
 let eventSourceUrls: string[] = [];
+let eventSourceInstances: Array<{
+  close: ReturnType<typeof vi.fn>;
+  emit: (type: string, event: Event) => void;
+  readyState: number;
+}> = [];
 
 vi.mock('next/navigation', () => ({
   usePathname: mocks.usePathnameMock as typeof import('next/navigation').usePathname,
@@ -120,17 +125,48 @@ function StreamStatusProbe({ runId }: { runId: string }): React.JSX.Element {
 describe('JobQueueProvider enqueue event listeners', () => {
   beforeEach(async () => {
     class MockEventSource {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      static CLOSED = 2;
+
+      private readonly listeners = new Map<string, Set<(event: Event) => void>>();
+      readyState = MockEventSource.CONNECTING;
+
       constructor(url: string) {
         eventSourceUrls.push(url);
+        eventSourceInstances.push(this);
       }
 
-      close(): void {}
-      addEventListener(): void {}
-      removeEventListener(): void {}
+      close = vi.fn((): void => {
+        this.readyState = MockEventSource.CLOSED;
+      });
+
+      addEventListener(type: string, listener: EventListenerOrEventListenerObject): void {
+        const listeners = this.listeners.get(type) ?? new Set<(event: Event) => void>();
+        if (typeof listener === 'function') {
+          listeners.add(listener);
+        } else {
+          listeners.add((event: Event): void => listener.handleEvent(event));
+        }
+        this.listeners.set(type, listeners);
+      }
+
+      removeEventListener(type: string, listener: EventListenerOrEventListenerObject): void {
+        const listeners = this.listeners.get(type);
+        if (!listeners) return;
+        if (typeof listener === 'function') {
+          listeners.delete(listener);
+        }
+      }
+
+      emit(type: string, event: Event): void {
+        this.listeners.get(type)?.forEach((listener) => listener(event));
+      }
     }
 
     resetOptimisticQueue();
     eventSourceUrls = [];
+    eventSourceInstances = [];
     mocks.usePathnameMock.mockReset();
     mocks.toastMock.mockReset();
     mocks.createListQueryV2Mock.mockReset();
@@ -332,6 +368,58 @@ describe('JobQueueProvider enqueue event listeners', () => {
       expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:stopped');
     });
     expect(eventSourceUrls).toEqual([]);
+  });
+
+  it('keeps an active stream reconnecting on transient EventSource errors', async () => {
+    jobQueueRunsData = {
+      runs: [
+        {
+          id: 'active-run',
+          status: 'running',
+          pathId: 'path-1',
+          pathName: 'Path 1',
+          createdAt: '2026-03-09T12:00:00.000Z',
+          updatedAt: '2026-03-09T12:00:05.000Z',
+        } as AiPathRunRecord,
+      ],
+      total: 1,
+    };
+
+    await act(async () => {
+      render(
+        <JobQueueProvider initialSearchQuery='active-run' initialExpandedRunId='active-run'>
+          <StreamStatusProbe runId='active-run' />
+        </JobQueueProvider>
+      );
+      await Promise.resolve();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:connecting');
+    });
+    expect(eventSourceInstances).toHaveLength(1);
+
+    act(() => {
+      eventSourceInstances[0]?.emit('ready', new Event('ready'));
+    });
+    expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:live');
+
+    act(() => {
+      eventSourceInstances[0]?.emit('error', new Event('error'));
+    });
+
+    expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:connecting');
+    expect(eventSourceInstances[0]?.close).not.toHaveBeenCalled();
+
+    act(() => {
+      eventSourceInstances[0]?.emit(
+        'error',
+        new MessageEvent('error', { data: JSON.stringify({ error: 'Run failed.' }) })
+      );
+    });
+
+    expect(screen.getByTestId('stream-status')).toHaveTextContent('expanded:stopped');
+    expect(eventSourceInstances[0]?.close).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes queue only for valid window enqueue events', () => {

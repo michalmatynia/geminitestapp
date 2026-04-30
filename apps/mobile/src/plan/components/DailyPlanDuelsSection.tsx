@@ -1,6 +1,5 @@
 import { Text, View } from 'react-native';
 import {
-  KangurMobileActionButton as ActionButton,
   KangurMobileCard as Card,
   KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
@@ -8,13 +7,12 @@ import {
   KangurMobilePill as Pill,
 } from '../../shared/KangurMobileUi';
 import { DUELS_ROUTE } from '../daily-plan-primitives';
-import { type KangurMobileCopy } from '../../i18n/kangurMobileI18n';
+import { type KangurMobileCopy, type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 import { formatKangurMobileScoreDateTime } from '../../scores/mobileScoreSummary';
 import {
   type KangurDuelOpponentEntry,
   type KangurDuelLeaderboardEntry,
 } from '@kangur/contracts/kangur-duels';
-import { type KangurMobileLocale } from '../../i18n/kangurMobileI18n';
 import { type UseKangurMobileLearnerDuelsSummaryResult } from '../../duels/useKangurMobileLearnerDuelsSummary';
 
 export interface DailyPlanDuelsSectionProps {
@@ -32,34 +30,29 @@ function OpponentItem({
   openDuelSession,
 }: {
   opponent: KangurDuelOpponentEntry;
-  copy: DailyPlanDuelsSectionProps['copy'];
+  copy: KangurMobileCopy;
   locale: string;
   duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
   openDuelSession: (sessionId: string) => void;
 }): React.JSX.Element {
-  const displayName = opponent.displayName;
-  const lastPlayedAt = opponent.lastPlayedAt;
-  const learnerId = opponent.learnerId;
-
   return (
     <InsetPanel gap={8}>
-      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>{displayName}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>{opponent.displayName}</Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Letztes Duell ${formatKangurMobileScoreDateTime(lastPlayedAt, locale as KangurMobileLocale)}`,
-          en: `Last duel ${formatKangurMobileScoreDateTime(lastPlayedAt, locale as KangurMobileLocale)}`,
-          pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(lastPlayedAt, locale as KangurMobileLocale)}`,
+          de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale as KangurMobileLocale)}`,
+          en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale as KangurMobileLocale)}`,
+          pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale as KangurMobileLocale)}`,
         })}
       </Text>
       <KangurMobilePendingActionButton
         horizontalPadding={14}
         label={copy({ de: 'Schneller Rückkampf', en: 'Quick rematch', pl: 'Szybki rewanż' })}
-        onPress={() => {
-          void duelPlan.createRematch(learnerId).then((sessionId) => {
-            if (sessionId !== null && sessionId !== '') openDuelSession(sessionId);
-          });
+        onPress={async () => {
+          const sessionId = await duelPlan.createRematch(opponent.learnerId);
+          if (sessionId) openDuelSession(sessionId);
         }}
-        pending={duelPlan.pendingOpponentLearnerId === learnerId}
+        pending={duelPlan.pendingOpponentLearnerId === opponent.learnerId}
         pendingLabel={copy({ de: 'Rückkampf wird gesendet...', en: 'Sending rematch...', pl: 'Wysyłanie rewanżu...' })}
       />
     </InsetPanel>
@@ -71,7 +64,7 @@ function CurrentEntryPanel({
   rank,
   entry,
 }: {
-  copy: DailyPlanDuelsSectionProps['copy'];
+  copy: KangurMobileCopy;
   rank: number | null;
   entry: KangurDuelLeaderboardEntry;
 }): React.JSX.Element {
@@ -94,244 +87,61 @@ function CurrentEntryPanel({
   );
 }
 
-function DuelStatusHeader({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): React.JSX.Element {
-  return (
-    <View style={{ gap: 4 }}>
-      <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-        {copy({ de: 'Duelle für heute', en: 'Duels for today', pl: 'Pojedynki na dziś' })}
-      </Text>
-      <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>
-        {copy({ de: 'Schneller Rückweg zu Rivalen', en: 'Quick return to rivals', pl: 'Szybki powrót do rywali' })}
-      </Text>
-    </View>
-  );
-}
-
-function DuelStatusPills({
-  copy,
-  opponentCount,
-  currentRank,
-}: {
-  copy: DailyPlanDuelsSectionProps['copy'];
-  opponentCount: number;
-  currentRank: number | null;
-}): React.JSX.Element {
-  return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <Pill
-        label={copy({
-          de: `Rivalen ${opponentCount}`,
-          en: `Rivals ${opponentCount}`,
-          pl: `Rywale ${opponentCount}`,
-        })}
-        tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
-      />
-      <Pill
-        label={
-          currentRank !== null && currentRank !== 0
-            ? copy({
-                de: `Deine Position #${currentRank}`,
-                en: `Your rank #${currentRank}`,
-                pl: `Twoja pozycja #${currentRank}`,
-              })
-            : copy({ de: 'Wartet auf Sichtbarkeit', en: 'Waiting for visibility', pl: 'Czeka na widoczność' })
-        }
-        tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }}
-      />
-    </View>
-  );
-}
-
-function DuelContentArea({
-  copy,
-  locale,
-  duelPlan,
-  openDuelSession,
-  opponents,
-  currentRank,
-  currentEntry,
-  actionError,
-}: {
-  copy: DailyPlanDuelsSectionProps['copy'];
-  locale: string;
-  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
-  openDuelSession: (sessionId: string) => void;
-  opponents: KangurDuelOpponentEntry[];
-  currentRank: number | null;
-  currentEntry: KangurDuelLeaderboardEntry | null;
-  actionError: string | null;
-}): React.JSX.Element {
-  return (
-    <View style={{ gap: 12 }}>
-      {currentEntry !== null ? (
-        <CurrentEntryPanel copy={copy} rank={currentRank} entry={currentEntry} />
-      ) : (
-        <Text style={{ color: '#475569', lineHeight: 22 }}>
-          {copy({
-            de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar.',
-            en: 'Your account is not visible in this duel standing yet.',
-            pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków.',
-          })}
-        </Text>
-      )}
-
-      {actionError !== null && actionError !== '' && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
-
-      {opponents.length === 0 ? (
-        <Text style={{ color: '#475569', lineHeight: 22 }}>
-          {copy({
-            de: 'Es gibt noch keine letzten Rivalen.',
-            en: 'There are no recent rivals yet.',
-            pl: 'Nie ma jeszcze ostatnich rywali.',
-          })}
-        </Text>
-      ) : (
-        <View style={{ gap: 12 }}>
-          {opponents.map((opponent) => (
-            <OpponentItem
-              key={opponent.learnerId}
-              opponent={opponent}
-              copy={copy}
-              locale={locale}
-              duelPlan={duelPlan}
-              openDuelSession={openDuelSession}
-            />
-          ))}
-        </View>
-      )}
-
-      <View style={{ alignSelf: 'stretch', gap: 10 }}>
-        <ActionButton
-          label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-          onPress={() => { void duelPlan.refresh(); }}
-          stretch
-          tone='secondary'
-        />
-        <LinkButton
-          href={DUELS_ROUTE}
-          label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })}
-          stretch
-        />
-      </View>
-    </View>
-  );
-}
-
-function DailyPlanDuelsBody({
-  copy,
-  locale,
-  duelPlan,
-  openDuelSession,
-  opponents,
-  currentRank,
-  currentEntry,
-  actionError,
-}: {
-  copy: DailyPlanDuelsSectionProps['copy'];
-  locale: string;
-  duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
-  openDuelSession: (sessionId: string) => void;
-  opponents: KangurDuelOpponentEntry[];
-  currentRank: number | null;
-  currentEntry: KangurDuelLeaderboardEntry | null;
-  actionError: string | null;
-}): React.JSX.Element {
-  return (
-    <Card>
-      <DuelStatusHeader copy={copy} />
-      <DuelStatusPills copy={copy} opponentCount={opponents.length} currentRank={currentRank} />
-      <DuelContentArea
-        copy={copy}
-        locale={locale}
-        duelPlan={duelPlan}
-        openDuelSession={openDuelSession}
-        opponents={opponents}
-        currentRank={currentRank}
-        currentEntry={currentEntry}
-        actionError={actionError}
-      />
-    </Card>
-  );
-}
-
-function DailyPlanDuelsLoading({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): React.JSX.Element {
-  return (
-    <Card>
-      <Text style={{ color: '#475569', lineHeight: 22 }}>
-        {copy({
-          de: 'Der heutige Duellstand wird geladen...',
-          en: 'Loading today’s duel standing...',
-          pl: 'Ładujemy dzisiejszy stan pojedynków...',
-        })}
-      </Text>
-    </Card>
-  );
-}
-
-function DailyPlanDuelsUnauthenticated({ copy }: { copy: DailyPlanDuelsSectionProps['copy'] }): React.JSX.Element {
-  return (
-    <Card>
-      <Text style={{ color: '#475569', lineHeight: 22 }}>
-        {copy({
-          de: 'Melde dich an, um hier deinen Duellstand, letzte Rivalen und schnelle Rückkämpfe zu sehen.',
-          en: 'Sign in to see duel standing, recent rivals, and quick rematches here.',
-          pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
-        })}
-      </Text>
-    </Card>
-  );
-}
-
-function DailyPlanDuelsError({
-  error,
-  copy,
-  onRefresh,
-}: {
-  error: string;
-  copy: DailyPlanDuelsSectionProps['copy'];
-  onRefresh: () => void;
-}): React.JSX.Element {
-  return (
-    <Card>
-      <View style={{ gap: 10 }}>
-        <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{error}</Text>
-        <ActionButton label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })} onPress={onRefresh} />
-      </View>
-    </Card>
-  );
-}
-
 export function DailyPlanDuelsSection({
   copy,
   locale,
   duelPlan,
   openDuelSession,
 }: DailyPlanDuelsSectionProps): React.JSX.Element {
-  const { opponents, currentRank, currentEntry, isRestoringAuth, isLoading, isAuthenticated, error, actionError } =
-    duelPlan;
+  const { opponents, currentRank, currentEntry, isRestoringAuth, isLoading, isAuthenticated, error, actionError } = duelPlan;
 
-  if (Boolean(isRestoringAuth) || Boolean(isLoading)) {
-    return <DailyPlanDuelsLoading copy={copy} />;
+  if (isRestoringAuth || isLoading) {
+    return (
+      <Card>
+        <Text style={{ color: '#475569', lineHeight: 22 }}>
+          {copy({ de: 'Der heutige Duellstand wird geladen...', en: 'Loading today’s duel standing...', pl: 'Ładujemy dzisiejszy stan pojedynków...' })}
+        </Text>
+      </Card>
+    );
   }
 
   if (!isAuthenticated) {
-    return <DailyPlanDuelsUnauthenticated copy={copy} />;
+    return (
+      <Card>
+        <Text style={{ color: '#475569', lineHeight: 22 }}>
+          {copy({ de: 'Melde dich an, um hier deinen Duellstand zu sehen.', en: 'Sign in to see duel standing.', pl: 'Zaloguj się, aby zobaczyć tutaj stan w pojedynkach.' })}
+        </Text>
+      </Card>
+    );
   }
 
-  if (error !== null && error !== '') {
-    return <DailyPlanDuelsError error={error} copy={copy} onRefresh={() => { void duelPlan.refresh(); }} />;
+  if (error) {
+    return (
+      <Card>
+        <View style={{ gap: 10 }}>
+          <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{error}</Text>
+          <LinkButton label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })} onPress={() => { void duelPlan.refresh(); }} />
+        </View>
+      </Card>
+    );
   }
 
   return (
-    <DailyPlanDuelsBody
-      copy={copy}
-      locale={locale}
-      duelPlan={duelPlan}
-      openDuelSession={openDuelSession}
-      opponents={opponents}
-      currentRank={currentRank}
-      currentEntry={currentEntry}
-      actionError={actionError}
-    />
+    <Card>
+      <View style={{ gap: 4 }}>
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Duelle für heute', en: 'Duels for today', pl: 'Pojedynki na dziś' })}</Text>
+        <Text style={{ color: '#0f172a', fontSize: 20, fontWeight: '800' }}>{copy({ de: 'Schneller Rückweg zu Rivalen', en: 'Quick return to rivals', pl: 'Szybki powrót do rywali' })}</Text>
+      </View>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Pill label={copy({ de: `Rivalen ${opponents.length}`, en: `Rivals ${opponents.length}`, pl: `Rywale ${opponents.length}` })} tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }} />
+        <Pill label={(currentRank !== null && currentRank !== 0) ? copy({ de: `Deine Position #${currentRank}`, en: `Your rank #${currentRank}`, pl: `Twoja pozycja #${currentRank}` }) : copy({ de: 'Wartet auf Sichtbarkeit', en: 'Waiting for visibility', pl: 'Czeka na widoczność' })} tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }} />
+      </View>
+      <View style={{ gap: 12 }}>
+        {currentEntry !== null ? <CurrentEntryPanel copy={copy} rank={currentRank} entry={currentEntry} /> : <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Dein Konto ist nicht sichtbar.', en: 'Your account is not visible.', pl: 'Twoje konto jest niewidoczne.' })}</Text>}
+        {actionError && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
+        {opponents.length === 0 ? <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Keine Rivalen.', en: 'No rivals.', pl: 'Brak rywali.' })}</Text> : opponents.map((opponent) => <OpponentItem key={opponent.learnerId} opponent={opponent} copy={copy} locale={locale} duelPlan={duelPlan} openDuelSession={openDuelSession} />)}
+        <LinkButton href={DUELS_ROUTE} label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })} stretch />
+      </View>
+    </Card>
   );
 }

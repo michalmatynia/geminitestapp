@@ -3,6 +3,94 @@ import { describe, expect, it, vi } from 'vitest';
 import { prepareDatabaseTemplateContext } from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context';
 
 describe('prepareDatabaseTemplateContext catalogId canonical wiring', () => {
+  it('exposes the runtime run id to database templates without replacing existing context', () => {
+    const { templateInputs, templateContext } = prepareDatabaseTemplateContext({
+      resolvedInputs: {
+        context: {
+          entityId: 'entity-1',
+        },
+      },
+      dbConfig: {
+        operation: 'query',
+        entityType: 'custom',
+        idField: 'entityId',
+        mode: 'replace',
+        query: {
+          provider: 'auto',
+          collection: 'filemaker_job_applications',
+          mode: 'custom',
+          preset: 'by_id',
+          field: 'id',
+          idType: 'string',
+          queryTemplate: '{"runId":"{{context.runId}}"}',
+          limit: 1,
+          sort: '',
+          projection: '',
+          single: true,
+        },
+        writeSource: 'bundle',
+        writeSourcePath: '',
+        dryRun: false,
+      },
+      aiPromptTemplate: '',
+      runId: 'run-application-email-1',
+      runStartedAt: '2026-04-30T10:00:00.000Z',
+      simulationEntityType: null,
+      fallbackEntityId: null,
+      fetchEntityCached: vi.fn(async () => null),
+      schemaData: null,
+    });
+
+    expect(templateInputs['runId']).toBe('run-application-email-1');
+    expect(templateInputs['runStartedAt']).toBe('2026-04-30T10:00:00.000Z');
+    expect(templateContext['runId']).toBe('run-application-email-1');
+    expect(templateContext['context']).toEqual({
+      entityId: 'entity-1',
+      runId: 'run-application-email-1',
+      runStartedAt: '2026-04-30T10:00:00.000Z',
+    });
+  });
+
+  it('does not replace scalar context inputs when adding runtime run metadata', () => {
+    const { templateInputs, templateContext } = prepareDatabaseTemplateContext({
+      resolvedInputs: {
+        context: 'legacy scalar context',
+      },
+      dbConfig: {
+        operation: 'query',
+        entityType: 'custom',
+        idField: 'entityId',
+        mode: 'replace',
+        query: {
+          provider: 'auto',
+          collection: 'filemaker_job_applications',
+          mode: 'custom',
+          preset: 'by_id',
+          field: 'id',
+          idType: 'string',
+          queryTemplate: '{"runId":"{{runId}}"}',
+          limit: 1,
+          sort: '',
+          projection: '',
+          single: true,
+        },
+        writeSource: 'bundle',
+        writeSourcePath: '',
+        dryRun: false,
+      },
+      aiPromptTemplate: '',
+      runId: 'run-legacy-context-1',
+      simulationEntityType: null,
+      fallbackEntityId: null,
+      fetchEntityCached: vi.fn(async () => null),
+      schemaData: null,
+    });
+
+    expect(templateInputs['runId']).toBe('run-legacy-context-1');
+    expect(templateInputs['context']).toBe('legacy scalar context');
+    expect(templateContext['context']).toBe('legacy scalar context');
+  });
+
   it('does not promote catalogId from nested context entity data', () => {
     const { templateInputs, templateContext } = prepareDatabaseTemplateContext({
       resolvedInputs: {

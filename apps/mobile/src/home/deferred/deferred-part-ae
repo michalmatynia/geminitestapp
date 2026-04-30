@@ -1,0 +1,8 @@
+          de: 'Wir bereiten Abzeichen, Aufgaben und das Ergebniszentrum fur den nachsten Startschritt vor.',
+          en: 'Preparing badges, tasks, and the results hub for the next home step.',
+          pl: 'Przygotowujemy odznaki, zadania i centrum wyników na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}

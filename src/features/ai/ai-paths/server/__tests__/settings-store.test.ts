@@ -34,6 +34,10 @@ import {
   MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION,
   MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
 } from '@/shared/lib/ai-paths/marketplace-copy-debrand';
+import {
+  JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+  JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+} from '@/shared/lib/ai-paths/job-application-prepare';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 
 const buildEmptyStarterSettings = () => [
@@ -551,6 +555,88 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(databaseNode?.config?.database?.updateTemplate).toContain(
       'marketplaceContentOverrides.$.title'
     );
+  });
+
+  it('refreshes stale tailored application email configs before trigger-button reads', () => {
+    const fullySeeded = seedCanonicalStarterWorkflows(buildEmptyStarterSettings()).nextRecords;
+    const staleRecords = fullySeeded.map((record) => {
+      if (record.key !== `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_APPLICATION_TAILORED_EMAIL_PATH_ID}`) {
+        return record;
+      }
+
+      const parsed = JSON.parse(record.value) as Record<string, unknown>;
+      const nodes = Array.isArray(parsed['nodes'])
+        ? (parsed['nodes'] as Array<Record<string, unknown>>)
+        : [];
+      const staleNodes = nodes.map((node) => {
+        if (node['type'] !== 'database') return node;
+        return {
+          ...node,
+          config: {
+            ...(node['config'] && typeof node['config'] === 'object'
+              ? (node['config'] as Record<string, unknown>)
+              : {}),
+            database: {
+              action: 'updateOne',
+              actionCategory: 'update',
+              updatePayloadMode: 'custom',
+              updateTemplate: '{"$set":{"updatedAt":"{{context.timestamp}}"}}',
+            },
+          },
+        };
+      });
+
+      return {
+        ...record,
+        value: JSON.stringify({
+          ...parsed,
+          nodes: staleNodes,
+          extensions: {
+            ...(parsed['extensions'] && typeof parsed['extensions'] === 'object'
+              ? (parsed['extensions'] as Record<string, unknown>)
+              : {}),
+            aiPathsStarter: {
+              starterKey: 'job_application_tailored_email',
+              templateId: JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID,
+              templateVersion: 11,
+              seededDefault: true,
+            },
+          },
+        }),
+      };
+    });
+
+    const refreshed = ensureCanonicalStarterWorkflowRecordsForPathIds(staleRecords, [
+      JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+    ]);
+    expect(refreshed.affectedCount).toBeGreaterThan(0);
+
+    const emailRecord = refreshed.nextRecords.find(
+      (record) =>
+        record.key === `${AI_PATHS_CONFIG_KEY_PREFIX}${JOB_APPLICATION_TAILORED_EMAIL_PATH_ID}`
+    );
+    if (!emailRecord) throw new Error('Expected tailored application email path config');
+    const canonical = loadCanonicalStoredPathConfig({
+      pathId: JOB_APPLICATION_TAILORED_EMAIL_PATH_ID,
+      rawConfig: emailRecord.value,
+    });
+    const databaseNode = canonical.nodes.find((node) => node.type === 'database');
+    const updateTemplate = databaseNode?.config?.database?.updateTemplate ?? '';
+    const parsed = JSON.parse(emailRecord.value) as Record<string, unknown>;
+    const starterExtension =
+      parsed['extensions'] &&
+      typeof parsed['extensions'] === 'object' &&
+      (parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] &&
+      typeof (parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] === 'object'
+        ? ((parsed['extensions'] as Record<string, unknown>)['aiPathsStarter'] as Record<string, unknown>)
+        : null;
+
+    expect(databaseNode?.config?.database?.query?.collection).toBe('filemaker_job_applications');
+    expect(updateTemplate).toContain('activeArtifacts.applicationEmailVersionId');
+    expect(updateTemplate).toContain('"applicationEmail":{{value.applicationEmail}}');
+    expect(updateTemplate).toContain('"artifactVersions.applicationEmail"');
+    expect(updateTemplate).toContain('"sourceRunId":"{{context.runId}}"');
+    expect(starterExtension?.['templateVersion']).toBe(13);
   });
 
   it('seeds the broader canonical starter workflow bundle from semantic workflow assets', () => {

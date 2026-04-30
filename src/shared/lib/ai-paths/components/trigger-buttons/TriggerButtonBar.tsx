@@ -14,7 +14,11 @@ import { Button, Dialog, DialogContent, DialogDescription, DialogHeader, DialogT
 import { StatusBadge } from '@/shared/ui/data-display.public';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { type TriggerButtonLastRun, useTriggerButtons } from '../../hooks/useTriggerButtons';
+import {
+  type TriggerButtonLastRun,
+  type TriggerButtonRunSnapshotArgs,
+  useTriggerButtons,
+} from '../../hooks/useTriggerButtons';
 import { resolveTriggerButtonRunFeedbackPresentation } from '../../trigger-button-run-feedback';
 
 type TriggerButtonBarProps = {
@@ -33,6 +37,7 @@ type TriggerButtonBarProps = {
         entityType: 'product' | 'note' | 'custom';
       }) => void)
     | undefined;
+  onRunSnapshot?: ((args: TriggerButtonRunSnapshotArgs) => void) | undefined;
   className?: string;
 };
 
@@ -266,6 +271,7 @@ export function TriggerButtonBar({
   disabled,
   showRunFeedback,
   onRunQueued,
+  onRunSnapshot,
   className,
 }: TriggerButtonBarProps): React.JSX.Element | null {
   const { buttons, toggleMap, successMap, runStates, lastRuns, handleTrigger } = useTriggerButtons({
@@ -275,6 +281,7 @@ export function TriggerButtonBar({
     getEntityJson,
     getTriggerExtras,
     onRunQueued,
+    onRunSnapshot,
   });
   const feedbackLocation = location;
   const shouldShowRunFeedback =

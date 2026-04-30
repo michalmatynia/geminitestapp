@@ -306,6 +306,8 @@ export const handleDatabase: NodeHandler = async ({
   fallbackEntityId,
   strictFlowMode = true,
   runMeta,
+  runId,
+  runStartedAt,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;
   const dbConfig: DatabaseConfig = (node.config?.database as DatabaseConfig) ?? {
@@ -363,6 +365,8 @@ export const handleDatabase: NodeHandler = async ({
       resolvedInputs,
       dbConfig,
       aiPromptTemplate,
+      runId,
+      runStartedAt,
       simulationEntityType,
       fallbackEntityId,
       fetchEntityCached,

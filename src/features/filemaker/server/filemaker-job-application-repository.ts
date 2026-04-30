@@ -14,6 +14,8 @@ import type {
   FilemakerJobApplicationCoverLetter,
   FilemakerJobApplicationEmail,
   FilemakerJobApplicationMatchAnalysis,
+  FilemakerJobApplicationMatchAnalysisDecision,
+  FilemakerJobApplicationMatchAnalysisStatus,
   FilemakerJobApplicationStatus,
   FilemakerJobApplicationTailoredCv,
 } from '../filemaker-job-application.types';
@@ -44,7 +46,9 @@ export type FilemakerJobApplicationMongoDocument = Document & {
   jobTitle?: unknown;
   matchAnalysis?: unknown;
   matchAnalysisHistory?: unknown;
+  matchAnalysisModelId?: unknown;
   matchAnalysisSourceEntityId?: unknown;
+  matchAnalysisStatus?: unknown;
   matchAnalysisUpdatedAt?: unknown;
   missingInformation?: unknown;
   organizationId?: unknown;
@@ -128,6 +132,45 @@ const normalizeStatus = (value: unknown): FilemakerJobApplicationStatus => {
     return value;
   }
   return 'draft';
+};
+
+const normalizeMatchAnalysisStatus = (
+  value: unknown
+): FilemakerJobApplicationMatchAnalysisStatus | null => {
+  if (
+    value === 'queued' ||
+    value === 'running' ||
+    value === 'completed' ||
+    value === 'failed'
+  ) {
+    return value;
+  }
+  return null;
+};
+
+const normalizeMatchAnalysisDecision = (
+  value: unknown
+): FilemakerJobApplicationMatchAnalysisDecision | null => {
+  const normalized = normalizeString(value)?.toLowerCase().replace(/[_-]+/gu, ' ') ?? null;
+  if (normalized === null) return null;
+  if (normalized === 'apply now' || normalized === 'apply') return 'Apply now';
+  if (
+    normalized === 'prepare before applying' ||
+    normalized === 'prepare first' ||
+    normalized === 'prepare'
+  ) {
+    return 'Prepare before applying';
+  }
+  if (
+    normalized === 'deprioritise or rebuild evidence' ||
+    normalized === 'deprioritize or rebuild evidence' ||
+    normalized === 'deprioritise' ||
+    normalized === 'deprioritize' ||
+    normalized === 'rebuild evidence'
+  ) {
+    return 'Deprioritise or rebuild evidence';
+  }
+  return null;
 };
 
 const normalizeArtifactKind = (
@@ -458,6 +501,9 @@ const toMatchAnalysis = (value: unknown): FilemakerJobApplicationMatchAnalysis |
     score: normalizeNumber(record['score']),
     scoreLabel: normalizeString(record['scoreLabel']),
     summary: normalizeString(record['summary']),
+    changeSincePrevious: normalizeString(record['changeSincePrevious']),
+    recommendedDecision: normalizeMatchAnalysisDecision(record['recommendedDecision']),
+    recommendedDecisionReason: normalizeString(record['recommendedDecisionReason']),
     strongMatches: normalizeStringArray(record['strongMatches']),
     gaps: normalizeStringArray(record['gaps']),
     attentionAreas: normalizeMatchAnalysisAttentionAreas(record['attentionAreas']),
@@ -483,6 +529,10 @@ const normalizeMatchAnalysisHistory = (
         id,
         payload: toMatchAnalysis(record['payload']),
         sourceRunId: normalizeString(record['sourceRunId']),
+        modelId: normalizeString(record['modelId']),
+        applicationId: normalizeString(record['applicationId']),
+        canonicalApplicationKeySnapshot: normalizeString(record['canonicalApplicationKeySnapshot']),
+        applicationUpdatedAtSnapshot: normalizeString(record['applicationUpdatedAtSnapshot']),
         createdAt: normalizeString(record['createdAt']),
       };
     })
@@ -555,7 +605,9 @@ const toFilemakerJobApplication = (
     applicationEmail: toApplicationEmail(document.applicationEmail),
     matchAnalysis: toMatchAnalysis(document.matchAnalysis),
     matchAnalysisHistory: normalizeMatchAnalysisHistory(document.matchAnalysisHistory),
+    matchAnalysisModelId: normalizeString(document.matchAnalysisModelId),
     matchAnalysisSourceEntityId: normalizeString(document.matchAnalysisSourceEntityId),
+    matchAnalysisStatus: normalizeMatchAnalysisStatus(document.matchAnalysisStatus),
     matchAnalysisUpdatedAt: normalizeString(document.matchAnalysisUpdatedAt),
     applicationNotes: normalizeStringArray(document.applicationNotes),
     missingInformation: normalizeStringArray(document.missingInformation),

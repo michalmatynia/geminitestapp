@@ -183,6 +183,25 @@ describe('TriggerButtonBar', () => {
     );
   });
 
+  it('forwards run snapshot callbacks into useTriggerButtons', () => {
+    const onRunSnapshot = vi.fn();
+
+    render(
+      <TriggerButtonBar
+        location='product_marketplace_copy_row'
+        entityType='product'
+        entityId='product-1'
+        onRunSnapshot={onRunSnapshot}
+      />
+    );
+
+    expect(useTriggerButtonsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onRunSnapshot,
+      })
+    );
+  });
+
   it('hides inline run feedback when showRunFeedback is false', () => {
     useTriggerButtonsMock.mockReturnValue({
       buttons: [BUTTON],

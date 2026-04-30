@@ -6,6 +6,7 @@ import {
   materializeStarterWorkflowSeedBundle,
 } from '@/shared/lib/ai-paths/core/starter-workflows';
 import { handleParser } from '@/shared/lib/ai-paths/core/runtime/handlers/transform/parser';
+import { parseJsonSafe, renderJsonTemplate } from '@/shared/lib/ai-paths/core/utils';
 import { evaluateRunPreflight } from '@/shared/lib/ai-paths/core/utils/run-preflight';
 import {
   JOB_APPLICATION_PREPARE_TRIGGER_LOCATION,
@@ -276,5 +277,113 @@ describe('starter job application preparation workflow', () => {
       expect(report.shouldBlock).toBe(false);
       expect(report.compileReport.errors).toBe(0);
     });
+  });
+
+  it('renders the tailored email database upsert with the generated email payload', () => {
+    const entry = getStarterWorkflowTemplateById(JOB_APPLICATION_TAILORED_EMAIL_STARTER_TEMPLATE_ID);
+    if (!entry) throw new Error('Missing starter_job_application_tailored_email entry');
+
+    const config = materializeStarterWorkflowPathConfig(entry, {
+      pathId: 'path_starter_job_application_email_write_runtime',
+    });
+    const databaseNode = config.nodes.find((node) => node.type === 'database');
+    const databaseConfig = databaseNode?.config?.database;
+    if (!databaseConfig?.query?.queryTemplate || !databaseConfig.updateTemplate) {
+      throw new Error('Missing tailored email database write template');
+    }
+
+    const applicationEmail = {
+      subject: 'Application for FileMaker Consultant',
+      bodyMarkdown: 'Dear Hiring Team,\n\nI am applying for the FileMaker Consultant role.',
+      bodyText: 'Dear Hiring Team,\n\nI am applying for the FileMaker Consultant role.',
+      language: 'en',
+    };
+    const templateInputs = {
+      context: {
+        entityId: 'org-1:job-1:person-1:application_package',
+        runId: 'run-application-email-1',
+        timestamp: '2026-04-30T10:00:00.000Z',
+        entityJson: {
+          applicationContext: {
+            version: 2,
+            personContext: {
+              selectedPersonId: 'person-1',
+              person: { fullName: 'Ada Lovelace' },
+            },
+            organizationContext: {
+              selectedOrganizationId: 'org-1',
+              organization: { name: 'Acme Hiring' },
+            },
+            jobContext: {
+              selectedJobListingId: 'job-1',
+              listing: { title: 'FileMaker Consultant' },
+            },
+            platformContext: {
+              integrationId: 'integration-pracuj',
+              integrationSlug: 'pracuj-pl',
+              connectionId: 'connection-pracuj',
+            },
+          },
+        },
+      },
+      value: {
+        applicationEmail,
+        applicationNotes: ['Matched FileMaker experience to the listing.'],
+        missingInformation: ['No recipient name in linked records.'],
+        confidence: 0.82,
+      },
+    };
+
+    const renderedQuery = parseJsonSafe(
+      renderJsonTemplate(
+        databaseConfig.query.queryTemplate,
+        templateInputs,
+        templateInputs.value
+      )
+    ) as Record<string, unknown>;
+    const renderedUpdate = parseJsonSafe(
+      renderJsonTemplate(databaseConfig.updateTemplate, templateInputs, templateInputs.value)
+    ) as Record<string, Record<string, unknown>>;
+
+    expect(renderedQuery).toEqual({
+      canonicalApplicationKey: 'person-1::org-1::job-1::pracuj-pl',
+    });
+    expect(renderedUpdate['$setOnInsert']).toEqual(
+      expect.objectContaining({
+        id: 'ai-job-application-person-1-org-1-job-1-pracuj-pl',
+        personId: 'person-1',
+        organizationId: 'org-1',
+        jobListingId: 'job-1',
+        integrationSlug: 'pracuj-pl',
+        canonicalApplicationKey: 'person-1::org-1::job-1::pracuj-pl',
+      })
+    );
+    expect(renderedUpdate['$set']).toEqual(
+      expect.objectContaining({
+        personName: 'Ada Lovelace',
+        organizationName: 'Acme Hiring',
+        jobTitle: 'FileMaker Consultant',
+        integrationId: 'integration-pracuj',
+        integrationSlug: 'pracuj-pl',
+        connectionId: 'connection-pracuj',
+        source: 'ai-path-job-application-tailored-email',
+        sourceEntityId: 'org-1:job-1:person-1:application_package',
+        'activeArtifacts.applicationEmailVersionId':
+          'ai-job-application-email-org-1:job-1:person-1:application_package-2026-04-30T10:00:00.000Z',
+        applicationEmail,
+      })
+    );
+    expect(renderedUpdate['$push']).toEqual(
+      expect.objectContaining({
+        'artifactVersions.applicationEmail': expect.objectContaining({
+          kind: 'application_email',
+          payload: applicationEmail,
+          applicationNotes: ['Matched FileMaker experience to the listing.'],
+          missingInformation: ['No recipient name in linked records.'],
+          confidence: 0.82,
+          sourceRunId: 'run-application-email-1',
+        }),
+      })
+    );
   });
 });

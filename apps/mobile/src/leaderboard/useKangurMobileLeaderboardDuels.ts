@@ -1,8 +1,9 @@
-import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLeaderboardEntry, KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState, useCallback } from 'react';
 
 import { useKangurMobileAuth } from '../auth/KangurMobileAuthContext';
+import { useKangurMobileHomeDuelsLeaderboard } from '../home/useKangurMobileHomeDuelsLeaderboard';
 import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileRuntime } from '../providers/KangurRuntimeContext';
 import {
@@ -92,31 +93,24 @@ function useLeaderboardChallengeAction(toErrorMessage: (error: unknown) => strin
   return { actionError, isActionPending, pendingOpponentLearnerId, challengeLearner };
 }
 
-export const useKangurMobileLeaderboardDuels =
+export const useKangurMobileLearnerDuelsSummary =
   (): UseKangurMobileLeaderboardDuelsResult => {
     const { copy } = useKangurMobileI18n();
+    const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
     const { session } = useKangurMobileAuth();
     const activeLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
     const isAuthenticated = session.status === 'authenticated';
     const toErrorMessage = useLeaderboardDuelsActionErrorMessage(copy);
 
-    // This data was unused, I'll remove it.
-    // const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard();
-    
-    // As per the original file, it returned duelLeaderboard.entries...
-    // I will adjust to use the data from the hook properly.
-    const currentIdx = -1; // Placeholder for now
-
+    const currentIdx = useLeaderboardRank(activeLearnerId, duelLeaderboard.entries);
     const challengeAction = useLeaderboardChallengeAction(toErrorMessage);
 
     return {
       ...challengeAction,
-      currentEntry: null, // Placeholder
-      currentRank: null, // Placeholder
-      entries: [], // Placeholder
-      error: null, // Placeholder
-      isAuthenticated, 
-      isLoading: false, // Placeholder
-      refresh: async () => {}, // Placeholder
+      currentEntry: currentIdx >= 0 ? duelLeaderboard.entries[currentIdx] ?? null : null,
+      currentRank: currentIdx >= 0 ? currentIdx + 1 : null,
+      entries: duelLeaderboard.entries, error: duelLeaderboard.error,
+      isAuthenticated, isLoading: duelLeaderboard.isLoading,
+      refresh: duelLeaderboard.refresh,
     };
   };

@@ -2,13 +2,15 @@
 
 /* eslint-disable complexity, consistent-return, max-lines, max-lines-per-function, @typescript-eslint/strict-boolean-expressions */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { IntegrationConnectionBasic, IntegrationWithConnections } from '@/shared/contracts/integrations/domain';
 import type { FilemakerJobApplicationSettings } from '../../filemaker-job-application-settings';
 import { JOB_APPLICATION_PREPARE_TRIGGER_LOCATION } from '@/shared/lib/ai-paths/job-application-prepare';
 import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import type { TrackedAiPathRunSnapshot } from '@/shared/lib/ai-paths/client-run-tracker';
+import type { TriggerButtonRunSnapshotArgs } from '@/shared/lib/ai-paths/hooks/useTriggerButtons';
 import {
   FormField,
   SelectSimple,
@@ -75,6 +77,7 @@ type JobApplicationConnection = {
 
 const NO_PERSON_VALUE = '__no_person__';
 const LAST_SELECTED_PERSON_STORAGE_KEY = 'filemaker.jobApplication.prepare.lastSelectedPersonId';
+const APPLICATION_COMPLETION_REFRESH_DELAYS_MS = [1_000, 4_000] as const;
 
 const readLastSelectedPersonId = (): string => {
   if (typeof window === 'undefined') return '';
@@ -495,6 +498,41 @@ const buildTriggeredApplicationContext = (
 
 const readString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
 
+const normalizeTrackedJobApplicationRunStatus = (
+  status: TrackedAiPathRunSnapshot['status']
+): JobApplicationRunStatus => {
+  switch (status) {
+    case 'completed':
+      return 'completed';
+    case 'failed':
+    case 'canceled':
+      return 'error';
+    case 'running':
+      return 'running';
+    case 'queued':
+    default:
+      return 'queued';
+  }
+};
+
+const parseApplicationPackageEntityContext = (
+  entityId: string | null | undefined
+): Pick<JobApplicationRunContext, 'jobListingId' | 'organizationId' | 'personId'> | null => {
+  const normalizedEntityId = readString(entityId);
+  if (normalizedEntityId.length === 0) return null;
+  const parts = normalizedEntityId.split(':');
+  if (parts.length < 4 || parts[parts.length - 1] !== 'application_package') return null;
+  const organizationId = parts.slice(0, -3).join(':');
+  const jobListingId = parts[parts.length - 3];
+  const personId = parts[parts.length - 2];
+  if (!organizationId || !jobListingId || !personId) return null;
+  return {
+    jobListingId,
+    organizationId,
+    personId,
+  };
+};
+
 const hasArrayEntries = (value: unknown): boolean => Array.isArray(value) && value.length > 0;
 
 const hasCvProfile = (person: FilemakerPersonOptionRecord): boolean =>
@@ -828,6 +866,8 @@ export function JobApplicationPreparationModal({
     Partial<Record<JobApplicationArtifactKind, string>>
   >({});
   const [error, setError] = useState<string | null>(null);
+  const refreshTimeoutIdsRef = useRef<number[]>([]);
+  const refreshedCompletedRunIdsRef = useRef<Set<string>>(new Set());
 
   const jobOptions = useMemo<SelectSimpleOption[]>(
     () => jobListings.map(toJobOption),
@@ -863,6 +903,16 @@ export function JobApplicationPreparationModal({
     setSelectedPersonId(resolveInitialSelectedPersonId(jobApplicationSettings));
     setError(null);
   }, [initialJobListingId, isOpen, jobApplicationSettings, jobListings, organization.id]);
+
+  useEffect(
+    () => () => {
+      refreshTimeoutIdsRef.current.forEach((timeoutId: number): void => {
+        window.clearTimeout(timeoutId);
+      });
+      refreshTimeoutIdsRef.current = [];
+    },
+    []
+  );
 
   useEffect(() => {
     if (!isOpen) return;
@@ -953,7 +1003,7 @@ export function JobApplicationPreparationModal({
     selectedListing !== null;
 
   useEffect(() => {
-    if (!isOpen || !canCreate || selectedListing === null) {
+    if (!isOpen || !canCreate) {
       setApplicationContext(null);
       setApplicationContextEntityId(null);
       setIsApplicationContextLoading(false);
@@ -1080,6 +1130,20 @@ export function JobApplicationPreparationModal({
     };
   }, [applicationContext]);
 
+  const scheduleCompletedArtifactRefresh = useCallback((): void => {
+    onCreated?.();
+    if (typeof window === 'undefined') return;
+    refreshTimeoutIdsRef.current.forEach((timeoutId: number): void => {
+      window.clearTimeout(timeoutId);
+    });
+    refreshTimeoutIdsRef.current = APPLICATION_COMPLETION_REFRESH_DELAYS_MS.map(
+      (delayMs: number): number =>
+        window.setTimeout(() => {
+          onCreated?.();
+        }, delayMs)
+    );
+  }, [onCreated]);
+
   const handleRunQueued = useCallback(
     (args: { button: AiTriggerButtonRecord; runId: string }): void => {
       if (selectedListing === null || applicationContextEntityId === null) return;
@@ -1136,6 +1200,91 @@ export function JobApplicationPreparationModal({
     ]
   );
 
+  const handleRunSnapshot = useCallback(
+    (args: TriggerButtonRunSnapshotArgs): void => {
+      const artifactKind = resolveButtonApplicationArtifactKind(args.button);
+      if (artifactKind === null) return;
+      const artifactLabel = args.button.name.trim() || formatJobApplicationArtifactKind(artifactKind);
+      const parsedContext = parseApplicationPackageEntityContext(
+        args.snapshot.entityId ?? applicationContextEntityId
+      );
+      const storedContext = runContextsByArtifact[artifactKind] ?? null;
+      let fallbackContext: JobApplicationRunContext | null = null;
+      if (parsedContext !== null) {
+        fallbackContext = {
+          ...parsedContext,
+          jobTitle:
+            selectedListing !== null && selectedListing.id === parsedContext.jobListingId
+              ? selectedListing.title
+              : '',
+        };
+      } else if (selectedListing !== null) {
+        fallbackContext = {
+          jobListingId: selectedListing.id,
+          jobTitle: selectedListing.title,
+          organizationId: selectedOrganizationId,
+          personId: selectedPersonId.trim(),
+        };
+      }
+      const runContext = storedContext ?? fallbackContext;
+      if (runContext === null) return;
+
+      const nextStatus = normalizeTrackedJobApplicationRunStatus(args.snapshot.status);
+      const updatedAt = args.snapshot.updatedAt ?? new Date().toISOString();
+      const errorMessage =
+        args.snapshot.errorMessage ?? (args.snapshot.status === 'canceled' ? 'Run canceled.' : null);
+      setRunIdsByArtifact((current) => ({
+        ...current,
+        [artifactKind]: args.snapshot.runId,
+      }));
+      setRunStatusesByArtifact((current) => ({
+        ...current,
+        [artifactKind]: nextStatus,
+      }));
+      setRunContextsByArtifact((current) => ({
+        ...current,
+        [artifactKind]: runContext,
+      }));
+      setRunLabelsByArtifact((current) => ({
+        ...current,
+        [artifactKind]: artifactLabel,
+      }));
+      onRunEntryChange?.({
+        artifactKind,
+        artifactLabel,
+        context: runContext,
+        error: errorMessage,
+        id: createJobApplicationRunEntryId({
+          artifactKind,
+          jobListingId: runContext.jobListingId,
+          organizationId: runContext.organizationId,
+          personId: runContext.personId,
+        }),
+        runId: args.snapshot.runId,
+        status: nextStatus,
+        updatedAt,
+      });
+
+      if (
+        args.snapshot.trackingState === 'stopped' &&
+        args.snapshot.status === 'completed' &&
+        !refreshedCompletedRunIdsRef.current.has(args.snapshot.runId)
+      ) {
+        refreshedCompletedRunIdsRef.current.add(args.snapshot.runId);
+        scheduleCompletedArtifactRefresh();
+      }
+    },
+    [
+      applicationContextEntityId,
+      onRunEntryChange,
+      runContextsByArtifact,
+      scheduleCompletedArtifactRefresh,
+      selectedListing,
+      selectedOrganizationId,
+      selectedPersonId,
+    ]
+  );
+
   const runStateEntries = useMemo(
     () => {
       const selectedPersonFilter = selectedPersonId.trim();
@@ -1174,7 +1323,6 @@ export function JobApplicationPreparationModal({
           (
             entry
           ): entry is JobApplicationRunEntry & { label: string } =>
-            entry.status !== null &&
             entry.context !== null &&
             entry.context.organizationId === selectedOrganizationId &&
             entry.context.jobListingId === selectedJobListingId &&
@@ -1214,6 +1362,7 @@ export function JobApplicationPreparationModal({
             disabled={!canCreate || isApplicationContextLoading || applicationContext === null}
             showRunFeedback
             onRunQueued={handleRunQueued}
+            onRunSnapshot={handleRunSnapshot}
             className='justify-end'
           />
         </>

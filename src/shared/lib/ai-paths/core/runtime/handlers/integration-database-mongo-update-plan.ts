@@ -471,7 +471,11 @@ export async function buildMongoUpdatePlan({
       ],
       templateContext: templateInputs,
       currentValue,
-      allowEmptyArrays: true,
+      allowEmptyArrays: !isProductParameterUpdateTarget({
+        collection,
+        dbConfig,
+        targetPath: parameterTargetPath,
+      }),
     });
     if (!templateGuardrail.ok) {
       const hasMappingConfig = Array.isArray(dbConfig.mappings) && dbConfig.mappings.length > 0;

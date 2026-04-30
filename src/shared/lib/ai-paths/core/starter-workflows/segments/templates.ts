@@ -183,7 +183,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_cv',
-    templateVersion: 25,
+      templateVersion: 26,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
@@ -242,7 +242,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_email',
-      templateVersion: 11,
+      templateVersion: 13,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
@@ -301,7 +301,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_cover_letter',
-      templateVersion: 11,
+      templateVersion: 12,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
@@ -336,12 +336,18 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
               modelId: JOB_APPLICATION_MATCH_ANALYSIS_MODEL_ID,
               promptGoal:
                 'Analyze how good a match this Person is for the selected job and identify areas needing attention before applying.',
+              traceability:
+                'Use applicationRecord.updatedAt as the prepared-application snapshot timestamp for this analysis.',
             },
             outputContract: {
               matchAnalysis: {
                 score: 'number 0..100',
                 scoreLabel: 'weak | partial | solid | strong | excellent',
                 summary: 'string',
+                changeSincePrevious: 'string',
+                recommendedDecision:
+                  'Apply now | Prepare before applying | Deprioritise or rebuild evidence',
+                recommendedDecisionReason: 'string',
                 strongMatches: 'string[]',
                 gaps: 'string[]',
                 attentionAreas:
@@ -362,7 +368,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_match_analysis',
-      templateVersion: 1,
+      templateVersion: 2,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

@@ -34,6 +34,12 @@ type TriggerRunState = {
 };
 
 export type TriggerButtonLastRun = TriggerButtonRunFeedbackSnapshot;
+export type TriggerButtonRunSnapshotArgs = {
+  button: AiTriggerButtonRecord;
+  entityId?: string | null | undefined;
+  entityType: 'product' | 'note' | 'custom';
+  snapshot: TrackedAiPathRunSnapshot;
+};
 
 const areTriggerButtonLastRunsEqual = (
   left: TriggerButtonLastRun | undefined,
@@ -151,6 +157,7 @@ interface UseTriggerButtonsOptions {
         entityType: 'product' | 'note' | 'custom';
       }) => void)
     | undefined;
+  onRunSnapshot?: ((args: TriggerButtonRunSnapshotArgs) => void) | undefined;
 }
 
 export function useTriggerButtons({
@@ -160,6 +167,7 @@ export function useTriggerButtons({
   getEntityJson,
   getTriggerExtras,
   onRunQueued,
+  onRunSnapshot,
 }: UseTriggerButtonsOptions) {
   const { toast } = useToast();
   const { fireAiPathTriggerEvent } = useAiPathTriggerEvent();
@@ -222,6 +230,7 @@ export function useTriggerButtons({
         entityType: 'product' | 'note' | 'custom';
         pathId?: string | null | undefined;
         initialSnapshot?: Partial<TrackedAiPathRunSnapshot> | undefined;
+        onSnapshot?: ((snapshot: TrackedAiPathRunSnapshot) => void) | undefined;
       }
     ): void => {
       stopRunSubscription(buttonId);
@@ -248,6 +257,7 @@ export function useTriggerButtons({
             entityType: options.entityType,
             run: nextLastRun,
           });
+          options.onSnapshot?.(snapshot);
 
           if (snapshot.trackingState !== 'stopped' || didStop) return;
           didStop = true;
@@ -299,6 +309,14 @@ export function useTriggerButtons({
           entityType,
           pathId: button.pathId ?? null,
           ...(initialSnapshot ? { initialSnapshot } : {}),
+          onSnapshot: (snapshot: TrackedAiPathRunSnapshot): void => {
+            onRunSnapshot?.({
+              button,
+              entityId: feedbackEntityId,
+              entityType,
+              snapshot,
+            });
+          },
         });
       }
     });
@@ -324,6 +342,7 @@ export function useTriggerButtons({
     entityType,
     feedbackEntityId,
     feedbackScopeKey,
+    onRunSnapshot,
     startRunSubscription,
     stopRunSubscription,
   ]);
@@ -487,6 +506,14 @@ export function useTriggerButtons({
               entityType,
               pathId: button.pathId ?? null,
               ...(initialSnapshot ? { initialSnapshot } : {}),
+              onSnapshot: (snapshot: TrackedAiPathRunSnapshot): void => {
+                onRunSnapshot?.({
+                  button,
+                  entityId: resolvedEntityId,
+                  entityType,
+                  snapshot,
+                });
+              },
             });
             onRunQueued?.({
               button,
@@ -577,6 +604,7 @@ export function useTriggerButtons({
       getTriggerExtras,
       location,
       onRunQueued,
+      onRunSnapshot,
       startRunSubscription,
       toast,
     ]

@@ -507,11 +507,13 @@ export const resolveWriteTemplateGuardrail = ({
   templates,
   templateContext,
   currentValue,
+  allowEmptyArrays,
 }: ResolveWriteTemplateGuardrailInput): ResolveWriteTemplateGuardrailResult => {
   const inspection = inspectWriteTemplates({
     templates,
     templateContext,
     currentValue,
+    allowEmptyArrays,
   });
   if (
     inspection.missing.length === 0 &&

@@ -307,7 +307,8 @@ export function useJobQueueRealtime({
             action: 'parseRunStreamPayload',
             runId,
           });
-        }      });
+        }
+      });
 
       source.addEventListener('nodes', (event: Event) => {
         try {
@@ -330,7 +331,8 @@ export function useJobQueueRealtime({
             action: 'parseNodesStreamPayload',
             runId,
           });
-        }      });
+        }
+      });
 
       source.addEventListener('events', (event: Event) => {
         try {
@@ -367,16 +369,32 @@ export function useJobQueueRealtime({
             action: 'parseEventsStreamPayload',
             runId,
           });
-        }      });
+        }
+      });
 
-      const cleanup = () => {
-        setStreamStatuses((prev) => ({ ...prev, [runId]: 'stopped' }));
+      const cleanup = (): void => {
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'stopped') return prev;
+          return { ...prev, [runId]: 'stopped' };
+        });
         source.close();
         streamSourcesRef.current.delete(runId);
       };
 
+      const handleStreamError = (event: Event): void => {
+        if (event instanceof MessageEvent) {
+          cleanup();
+          return;
+        }
+        if (streamSourcesRef.current.get(runId) !== source) return;
+        setStreamStatuses((prev) => {
+          if (prev[runId] === 'connecting') return prev;
+          return { ...prev, [runId]: 'connecting' };
+        });
+      };
+
       source.addEventListener('done', cleanup);
-      source.addEventListener('error', cleanup);
+      source.addEventListener('error', handleStreamError);
     });
   }, [expandedRunIds, pausedStreams, runDetails, runs, setRunDetails]);
 

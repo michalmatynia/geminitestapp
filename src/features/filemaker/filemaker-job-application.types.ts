@@ -62,6 +62,17 @@ export type FilemakerJobApplicationEmail = {
   subject: string | null;
 };
 
+export type FilemakerJobApplicationMatchAnalysisStatus =
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed';
+
+export type FilemakerJobApplicationMatchAnalysisDecision =
+  | 'Apply now'
+  | 'Prepare before applying'
+  | 'Deprioritise or rebuild evidence';
+
 export type FilemakerJobApplicationMatchAnalysisAttentionArea = {
   area: string | null;
   whyItMatters: string | null;
@@ -73,6 +84,9 @@ export type FilemakerJobApplicationMatchAnalysis = {
   score: number | null;
   scoreLabel: string | null;
   summary: string | null;
+  changeSincePrevious: string | null;
+  recommendedDecision: FilemakerJobApplicationMatchAnalysisDecision | null;
+  recommendedDecisionReason: string | null;
   strongMatches: string[];
   gaps: string[];
   attentionAreas: FilemakerJobApplicationMatchAnalysisAttentionArea[];
@@ -186,9 +200,15 @@ export type FilemakerJobApplication = {
     id: string;
     payload: FilemakerJobApplicationMatchAnalysis | null;
     sourceRunId: string | null;
+    modelId?: string | null;
+    applicationId?: string | null;
+    canonicalApplicationKeySnapshot?: string | null;
+    applicationUpdatedAtSnapshot?: string | null;
     createdAt: string | null;
   }> | null;
+  matchAnalysisStatus?: FilemakerJobApplicationMatchAnalysisStatus | null;
   matchAnalysisSourceEntityId?: string | null;
+  matchAnalysisModelId?: string | null;
   matchAnalysisUpdatedAt?: string | null;
   applicationNotes: string[];
   missingInformation: string[];

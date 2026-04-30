@@ -168,6 +168,57 @@ describe('useTriggerButtons', () => {
     });
   });
 
+  it('calls onRunSnapshot as tracked run snapshots arrive after enqueue', async () => {
+    const onRunSnapshot = vi.fn();
+    const { result } = renderHook(() =>
+      useTriggerButtons({
+        location: 'product_row',
+        entityType: 'product',
+        entityId: 'product-1',
+        onRunSnapshot,
+      })
+    );
+
+    await act(async () => {
+      await result.current.handleTrigger(BUTTON, { mode: 'click' });
+    });
+
+    expect(onRunSnapshot).toHaveBeenCalledWith({
+      button: BUTTON,
+      entityId: 'product-1',
+      entityType: 'product',
+      snapshot: expect.objectContaining({
+        runId: 'run-queued-1',
+        status: 'queued',
+        trackingState: 'active',
+      }),
+    });
+
+    act(() => {
+      emitTrackedRunSnapshot('run-queued-1', {
+        status: 'completed',
+        updatedAt: '2026-03-09T12:00:05.000Z',
+        finishedAt: '2026-03-09T12:00:05.000Z',
+        trackingState: 'stopped',
+      });
+    });
+
+    await waitFor(() => {
+      expect(onRunSnapshot).toHaveBeenCalledWith({
+        button: BUTTON,
+        entityId: 'product-1',
+        entityType: 'product',
+        snapshot: expect.objectContaining({
+          runId: 'run-queued-1',
+          status: 'completed',
+          finishedAt: '2026-03-09T12:00:05.000Z',
+          trackingState: 'stopped',
+        }),
+      });
+    });
+    expect(trackedRunListeners.has('run-queued-1')).toBe(false);
+  });
+
   it('passes caller-provided trigger extras into the AI Path event', async () => {
     const getTriggerExtras = vi.fn(() => ({
       marketplaceCopyDebrandInput: {
@@ -321,7 +372,7 @@ describe('useTriggerButtons', () => {
         preferredPathId: 'path_marketplace_copy_debrand_v1',
         entityType: 'product',
         entityId: 'product-1',
-        getEntityJson,
+        getEntityJson: expect.any(Function),
         source: {
           tab: 'product',
           location: 'product_marketplace_copy_row',
@@ -338,6 +389,17 @@ describe('useTriggerButtons', () => {
         },
       })
     );
+    const triggerArgs = fireAiPathTriggerEventMock.mock.calls[0]?.[0] as {
+      getEntityJson?: () => Record<string, unknown> | null;
+    };
+    expect(triggerArgs.getEntityJson?.()).toEqual({
+      id: 'product-1',
+      name_en: 'Warhammer 40,000 Space Marine Figure',
+      marketplaceCopyDebrandInput: {
+        sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+      },
+    });
+    expect(getEntityJson).toHaveBeenCalledWith(debrandButton);
   });
 
   it('shows an error and aborts when trigger extras cannot be built', async () => {

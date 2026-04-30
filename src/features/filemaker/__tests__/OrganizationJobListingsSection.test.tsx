@@ -1028,6 +1028,93 @@ describe('OrganizationJobListingsSection', () => {
     expect(screen.queryByText('Cover letter draft created.')).not.toBeInTheDocument();
   });
 
+  it('keeps sparse application email versions visible after generation completes', async () => {
+    jobApplicationsPayload = {
+      applications: [
+        {
+          id: 'application-1',
+          activeArtifacts: {
+            applicationEmailVersionId: 'email-version-1',
+            coverLetterVersionId: null,
+            tailoredCvVersionId: null,
+          },
+          artifactVersions: {
+            applicationEmail: [
+              {
+                id: 'email-version-1',
+                applicationNotes: [],
+                confidence: null,
+                createdAt: '2026-04-29T10:05:00.000Z',
+                kind: 'application_email',
+                linkedRecordId: null,
+                missingInformation: [],
+                payload: {
+                  applicationEmail: {},
+                },
+                sourceRunId: 'run-email-1',
+                version: 1,
+              },
+            ],
+            coverLetter: [],
+            tailoredCv: [],
+          },
+          status: 'draft',
+          personId: 'person-1',
+          personName: 'Ada Lovelace',
+          organizationId: 'org-1',
+          organizationName: 'Acme Hiring',
+          jobListingId: 'job-1',
+          jobTitle: 'FileMaker Consultant',
+          integrationId: 'integration-pracuj',
+          integrationSlug: 'pracuj-pl',
+          connectionId: 'connection-pracuj',
+          tailoredCvId: null,
+          tailoredCv: null,
+          coverLetter: null,
+          applicationEmail: null,
+          applicationNotes: [],
+          missingInformation: [],
+          confidence: null,
+          source: 'ai-path-job-application-tailored-email',
+          sourceEntityId: 'org-1:job-1:person-1:application_package',
+          sourceApplicationContext: {},
+          createdAt: '2026-04-29T10:00:00.000Z',
+          updatedAt: '2026-04-29T10:05:00.000Z',
+        },
+      ],
+    };
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    expect(await screen.findByText('Prepared applications')).toBeInTheDocument();
+    expect(screen.getByText('Email v1')).toBeInTheDocument();
+    expect(screen.getByText('Application email draft created.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View' }));
+
+    expect(screen.getByRole('dialog', { name: 'Prepared application' })).toBeInTheDocument();
+    expect(screen.getByText('1 generated version')).toBeInTheDocument();
+    expect(screen.getByText('Email version')).toBeInTheDocument();
+    expect(screen.getByText('No application email content was generated.')).toBeInTheDocument();
+  });
+
   it('fires the job application AI Path with person CV, job, and organisation context', async () => {
     mocks.settingsGet.mockImplementation((key: string) => {
       if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();

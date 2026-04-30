@@ -92,6 +92,17 @@ const buildReplacementPayloadFields = ({
     formData.denyBehaviorOverride === 'inherit' ? null : formData.denyBehaviorOverride,
 });
 
+const getSequenceGroupLabel = (
+  selectedSequenceGroup: SequenceGroupView | undefined,
+  editingPattern: ProductValidationPattern | null
+): string | null =>
+  selectedSequenceGroup?.label ?? nullableTrimToNull(editingPattern?.sequenceGroupLabel);
+
+const getSequenceGroupDebounceMs = (
+  selectedSequenceGroup: SequenceGroupView | undefined,
+  editingPattern: ProductValidationPattern | null
+): number => selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0;
+
 const buildSequenceGroupPayloadFields = ({
   editingPattern,
   formData,
@@ -113,10 +124,8 @@ const buildSequenceGroupPayloadFields = ({
   const selectedSequenceGroup = sequenceGroups.get(sequenceGroupId);
   return {
     sequenceGroupId,
-    sequenceGroupLabel:
-      selectedSequenceGroup?.label ?? nullableTrimToNull(editingPattern?.sequenceGroupLabel),
-    sequenceGroupDebounceMs:
-      selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0,
+    sequenceGroupLabel: getSequenceGroupLabel(selectedSequenceGroup, editingPattern),
+    sequenceGroupDebounceMs: getSequenceGroupDebounceMs(selectedSequenceGroup, editingPattern),
     sequence: parsedSequence,
   };
 };

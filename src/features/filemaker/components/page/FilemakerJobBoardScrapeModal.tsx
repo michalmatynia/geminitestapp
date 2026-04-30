@@ -53,6 +53,14 @@ import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '../../settings';
 import type { FilemakerDatabase, FilemakerLexiconTerm } from '../../types';
 import { JobBoardOriginBadge } from '../shared/JobBoardOriginBadge';
 import { useJobBoardScrapeBrowserModeSetting } from './useJobBoardScrapeBrowserModeSetting';
+import {
+  advanceOfferProgress,
+  computeEtaLabel,
+  computeMatchSummary,
+  createEmptyOfferProgress,
+  formatSecondsAgo,
+  type OfferProgressTracker,
+} from './job-board-scrape-progress';
 
 type FilemakerJobBoardScrapeModalProps = {
   onClose: () => void;
@@ -84,14 +92,6 @@ type ActiveScrapeRequest = {
   controller: AbortController;
   id: number;
   mode: FilemakerJobBoardScrapeMode;
-};
-
-type OfferProgressTracker = {
-  averageMs: number | null;
-  firstAt: number | null;
-  lastAt: number | null;
-  lastIndex: number;
-  total: number;
 };
 
 type LivePreviewState = {
@@ -216,14 +216,6 @@ const STATUS_OPTIONS = [
   { value: 'closed', label: 'Closed' },
 ] as const;
 
-const createEmptyOfferProgress = (): OfferProgressTracker => ({
-  averageMs: null,
-  firstAt: null,
-  lastAt: null,
-  lastIndex: 0,
-  total: 0,
-});
-
 const createEmptyLivePreviewState = (): LivePreviewState => ({
   discoveredUrls: [],
   final: false,
@@ -233,69 +225,6 @@ const createEmptyLivePreviewState = (): LivePreviewState => ({
   warnings: [],
   writes: [],
 });
-
-const EMA_ALPHA = 0.3;
-
-const advanceOfferProgress = (
-  current: OfferProgressTracker,
-  index: number,
-  total: number,
-  eventAtIso: string
-): OfferProgressTracker => {
-  const parsed = Date.parse(eventAtIso);
-  const at = Number.isNaN(parsed) ? Date.now() : parsed;
-  if (current.lastAt === null) {
-    return { averageMs: null, firstAt: at, lastAt: at, lastIndex: index, total };
-  }
-  const sampleMs = at - current.lastAt;
-  if (sampleMs <= 0) {
-    return { ...current, lastAt: at, lastIndex: index, total };
-  }
-  const averageMs =
-    current.averageMs === null
-      ? sampleMs
-      : current.averageMs * (1 - EMA_ALPHA) + sampleMs * EMA_ALPHA;
-  return { averageMs, firstAt: current.firstAt ?? at, lastAt: at, lastIndex: index, total };
-};
-
-const formatEtaMs = (ms: number): string => {
-  const total = Math.max(0, Math.round(ms / 1000));
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  if (minutes <= 0) return `~${seconds}s`;
-  return `~${minutes}m ${seconds}s`;
-};
-
-const computeEtaLabel = (progress: OfferProgressTracker): string | null => {
-  if (progress.averageMs === null || progress.total <= progress.lastIndex) return null;
-  const remaining = progress.total - progress.lastIndex;
-  return formatEtaMs(progress.averageMs * remaining);
-};
-
-const HIGH_CONFIDENCE_THRESHOLD = 85;
-
-type MatchSummaryCounts = {
-  highConfidence: number;
-  lowConfidence: number;
-  unmatched: number;
-};
-
-const computeMatchSummary = (
-  offers: readonly FilemakerJobBoardScrapeOfferResult[]
-): MatchSummaryCounts => {
-  let highConfidence = 0;
-  let lowConfidence = 0;
-  let unmatched = 0;
-  for (const item of offers) {
-    if (item.match === null) {
-      unmatched += 1;
-      continue;
-    }
-    if (item.match.confidence >= HIGH_CONFIDENCE_THRESHOLD) highConfidence += 1;
-    else lowConfidence += 1;
-  }
-  return { highConfidence, lowConfidence, unmatched };
-};
 
 const lexiconPillHref = (pill: ScrapedOfferPill): string => {
   const params = new URLSearchParams({
@@ -1556,6 +1485,19 @@ const createInitialState = (): ScrapeModalInitialState => {
   const savedDraft = readSavedDraft();
   return savedDraft ? { draft: savedDraft } : { draft: defaultDraft() };
 };
+
+function DraftSavedPill(props: { savedAt: number }): React.JSX.Element {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 5000);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <Badge variant='secondary' className='text-xs'>
+      {`Draft saved ${formatSecondsAgo(now - props.savedAt)}`}
+    </Badge>
+  );
+}
 
 function ScrapedOfferClassifyTrigger(props: {
   database: FilemakerDatabase;

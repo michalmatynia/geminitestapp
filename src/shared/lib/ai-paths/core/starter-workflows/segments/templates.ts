@@ -368,7 +368,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_match_analysis',
-      templateVersion: 2,
+      templateVersion: 3,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

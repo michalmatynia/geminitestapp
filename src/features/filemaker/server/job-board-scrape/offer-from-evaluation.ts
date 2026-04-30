@@ -444,6 +444,18 @@ const firstCleanCompanyName = (values: readonly unknown[]): string | null => {
   return null;
 };
 
+const normalizeCompanyIdentityNameKey = (value: unknown): string =>
+  normalizeCompanyNameGuardKey(toStringValue(value))
+    .replace(/\b(spolka|sp|zoo|z o o|s a|sa|inc|ltd|llc|gmbh)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const companyNamesMatchForIdentity = (left: unknown, right: unknown): boolean => {
+  const leftKey = normalizeCompanyIdentityNameKey(left);
+  const rightKey = normalizeCompanyIdentityNameKey(right);
+  return leftKey.length > 0 && rightKey.length > 0 && leftKey === rightKey;
+};
+
 const isReliableScrapedOfferUrl = (value: string, provider: JobBoardProvider): boolean => {
   if (!isJobBoardOfferUrl(value, provider)) return false;
   if (provider !== 'pracuj_pl') return true;
@@ -670,43 +682,18 @@ const companyNameFromPracujProfileUrl = (value: string | null | undefined): stri
   }
 };
 
-const JOB_BOARD_COMPANY_IDENTITY_HOSTS = [
-  'ashbyhq.com',
-  'breezy.hr',
-  'erecruiter.pl',
-  'facebook.com',
-  'greenhouse.io',
-  'github.com',
-  'gitlab.com',
-  'instagram.com',
-  'justjoin.it',
-  'lever.co',
-  'linkedin.com',
-  'medium.com',
-  'nofluffjobs.com',
-  'nofluffjobs.pl',
-  'pracuj.pl',
-  'smartrecruiters.com',
-  'teamtailor.com',
-  'tiktok.com',
-  'traffit.com',
-  'twitter.com',
-  'workable.com',
-  'x.com',
-  'youtube.com',
-  'youtu.be',
-] as const;
-
 const companyNameFromSnapshotCompanyUrls = (
   snapshot: JobBoardStructuredSnapshot | null | undefined
 ): string | null => {
   const profile = asRecord(snapshot?.companyProfile);
-  const profileWebsiteUrls = Array.isArray(profile?.['websiteUrls'])
-    ? profile?.['websiteUrls']
+  const rawProfileWebsiteUrls = profile?.['websiteUrls'];
+  const profileWebsiteUrls: unknown[] = Array.isArray(rawProfileWebsiteUrls)
+    ? rawProfileWebsiteUrls
     : [];
-  const candidates = [
+  const companyLinks: unknown[] = snapshot?.companyLinks ?? [];
+  const candidates: unknown[] = [
     profile?.['url'],
-    ...(snapshot?.companyLinks ?? []),
+    ...companyLinks,
     ...profileWebsiteUrls,
   ];
   for (const candidate of candidates) {
@@ -744,7 +731,8 @@ const companyNameFromSnapshotCompanyProfile = (
 ): string | null => {
   const profile = asRecord(snapshot?.companyProfile);
   if (profile === null) return null;
-  const headings = Array.isArray(profile['headings']) ? profile['headings'] : [];
+  const rawHeadings = profile['headings'];
+  const headings: unknown[] = Array.isArray(rawHeadings) ? rawHeadings : [];
   return firstCleanCompanyName([
     ...companyNameFactCandidates(profile['facts']),
     companyNameFromPracujProfileUrl(toStringValue(profile['url'])),
@@ -851,6 +839,7 @@ const firstSnapshotListingTitle = (
 const firstSnapshotCompanyName = (
   snapshot: JobBoardStructuredSnapshot | null | undefined
 ): string | null =>
+  cleanCompanyName(snapshot?.employerName) ??
   cleanCompanyName(recordFirstNullableString(jsonLdHiringOrganization(snapshot), ['name', 'legalName'])) ??
   cleanCompanyName(snapshotFactValue(snapshot, COMPANY_NAME_FACT_KEYS, true)) ??
   cleanCompanyName(snapshot?.companyProfile?.title) ??
@@ -1098,6 +1087,7 @@ const companyAddressCandidates = (input: {
     addressFromRecord(jsonLdHiringOrganization(input.snapshot)) ?? '',
     ...addressFacts(input.snapshot),
     ...snapshotTextAddressCandidates(input.snapshot),
+    addressFromRecord(input.company) ?? '',
     addressFromRecord(input.listing) ?? '',
     jsonLdJobLocationAddress(input.snapshot) ?? '',
   ]);
@@ -1132,7 +1122,8 @@ const companyProfileFieldValue = (
   return (
     firstJsonLdOrganizationValue(input.snapshot, field.jsonLdKeys) ??
     snapshotFactValue(input.snapshot, field.factKeywords) ??
-    firstSnapshotTextProfileValue(input.snapshot, field.key)
+    firstSnapshotTextProfileValue(input.snapshot, field.key) ??
+    recordFirstNullableString(input.company, [field.key, `company${field.label.replace(/\s+/g, '')}`])
   );
 };
 
@@ -1175,7 +1166,8 @@ const profileLinesFromCompany = (input: {
     lines,
     'Description',
     firstJsonLdOrganizationValue(input.snapshot, ['description']) ??
-      snapshotCompanyDescription(input.snapshot)
+      snapshotCompanyDescription(input.snapshot) ??
+      recordFirstNullableString(input.company, ['description', 'profile', 'about'])
   );
   COMPANY_PROFILE_FIELDS.forEach((field) => {
     addProfileLine(
@@ -1184,8 +1176,10 @@ const profileLinesFromCompany = (input: {
       companyProfileFieldValue(input, field.key)
     );
   });
-  const website = firstSnapshotWebsite(input.snapshot);
-  const profileUrl = firstSnapshotCompanyUrl(input.snapshot);
+  const website = firstSnapshotWebsite(input.snapshot) ?? companyProfileFieldValue(input, 'website');
+  const profileUrl =
+    firstSnapshotCompanyUrl(input.snapshot) ??
+    recordFirstNullableString(input.company, ['profileUrl', 'companyProfileUrl']);
   addProfileLine(lines, 'Website', website);
   addProfileLine(lines, 'Profile URL', profileUrl);
   addCompanyRelatedUrlLines(lines, input.snapshot, [website, profileUrl]);
@@ -1257,7 +1251,7 @@ const normalizedTextBlockArray = (value: unknown, itemStartPattern?: RegExp): st
             : normalizedValue
                 ?.replace(JOB_RESPONSIBILITY_HEADING_RE, '')
                 .replace(itemStartPattern, '\n$1');
-        if (normalized == null) return [];
+        if (normalized === null || normalized === undefined) return [];
         return normalized
           .split(/\n+|[•●▪]/u)
           .map(normalizeLexiconLabel);
@@ -1862,22 +1856,56 @@ const offerDescriptionFromSources = (input: {
   );
 };
 
-const identityFromSources = (input: {
-  company: Record<string, unknown> | null;
+const offerContentFieldsFromSources = (input: {
   listing: Record<string, unknown> | null;
+  options: FilemakerJobBoardScrapeRequest;
   snapshot?: JobBoardStructuredSnapshot | null;
-}): { companyName: string; companyNameEvidence: 'model' | 'none' | 'page'; title: string } => {
-  const listingTitle = recordString(input.listing, 'title');
-  const title =
-    listingTitle.length > 0 ? listingTitle : firstSnapshotListingTitle(input.snapshot) ?? '';
-  const pageCompanyName = firstCleanCompanyName([
-    companyNameFromSnapshotCompanyUrls(input.snapshot),
-    companyNameFromSnapshotCompanyProfile(input.snapshot),
-    firstSnapshotCompanyName(input.snapshot),
-    companyNameFromPracujProfileUrl(firstSnapshotCompanyUrl(input.snapshot)),
-  ]);
-  const modelCompanyName = firstCleanCompanyName([
-    recordFirstNullableString(input.listing, [
+}): Pick<
+  FilemakerJobBoardScrapedOffer,
+  'description' | 'location' | 'requirements' | 'responsibilities'
+> => ({
+  description: offerDescriptionFromSources({
+    extractDescriptions: input.options.extractDescriptions,
+    listing: input.listing,
+    snapshot: input.snapshot,
+  }),
+  location: locationFromSources({ listing: input.listing, snapshot: input.snapshot }),
+  requirements: offerRequirementsFromSources({
+    listing: input.listing,
+    snapshot: input.snapshot,
+  }),
+  responsibilities: offerResponsibilitiesFromSources({
+    listing: input.listing,
+    snapshot: input.snapshot,
+  }),
+});
+
+const salaryOfferFields = (
+  salary: ReturnType<typeof salaryFromSources>
+): Pick<
+  FilemakerJobBoardScrapedOffer,
+  'salaryCurrency' | 'salaryMax' | 'salaryMin' | 'salaryPeriod' | 'salaryText'
+> => ({
+  salaryCurrency: salary.salaryCurrency,
+  salaryMax: salary.salaryMax,
+  salaryMin: salary.salaryMin,
+  salaryPeriod: salary.salaryPeriod,
+  salaryText: salary.salaryText,
+});
+
+type CompanyNameSource = NonNullable<FilemakerJobBoardScrapedOffer['companyNameSource']>;
+
+type CompanyNameCandidate = {
+  source: CompanyNameSource;
+  value: string | null;
+};
+
+const modelCompanyNameFromRecords = (
+  company: Record<string, unknown> | null,
+  listing: Record<string, unknown> | null
+): string | null =>
+  firstCleanCompanyName([
+    recordFirstNullableString(listing, [
       'companyName',
       'employerName',
       'employer',
@@ -1885,7 +1913,7 @@ const identityFromSources = (input: {
       'organizationName',
       'hiringOrganizationName',
     ]),
-    recordFirstNullableString(input.company, [
+    recordFirstNullableString(company, [
       'name',
       'legalName',
       'displayName',
@@ -1893,14 +1921,96 @@ const identityFromSources = (input: {
       'organizationName',
     ]),
   ]);
-  const rawCompanyName = pageCompanyName ?? modelCompanyName ?? '';
+
+const companyNameCandidatesFromSources = (input: {
+  company: Record<string, unknown> | null;
+  listing: Record<string, unknown> | null;
+  snapshot?: JobBoardStructuredSnapshot | null;
+}): CompanyNameCandidate[] => [
+  {
+    source: 'employer_selector',
+    value: cleanCompanyName(input.snapshot?.employerName),
+  },
+  {
+    source: 'page',
+    value: firstCleanCompanyName([
+      companyNameFromSnapshotCompanyProfile(input.snapshot),
+      firstSnapshotCompanyName(input.snapshot),
+    ]),
+  },
+  {
+    source: 'profile_url',
+    value:
+      companyNameFromSnapshotCompanyUrls(input.snapshot) ??
+      companyNameFromPracujProfileUrl(firstSnapshotCompanyUrl(input.snapshot)),
+  },
+  {
+    source: 'model',
+    value: modelCompanyNameFromRecords(input.company, input.listing),
+  },
+];
+
+const selectCompanyNameCandidate = (
+  candidates: readonly CompanyNameCandidate[]
+): CompanyNameCandidate | null =>
+  candidates.find((candidate) => candidate.value !== null && candidate.value.length > 0) ??
+  null;
+
+const identityFromSources = (input: {
+  company: Record<string, unknown> | null;
+  listing: Record<string, unknown> | null;
+  snapshot?: JobBoardStructuredSnapshot | null;
+}): { companyName: string; companyNameSource: CompanyNameSource | null; title: string } => {
+  const listingTitle = recordString(input.listing, 'title');
+  const title =
+    listingTitle.length > 0 ? listingTitle : firstSnapshotListingTitle(input.snapshot) ?? '';
+  const selected = selectCompanyNameCandidate(companyNameCandidatesFromSources(input));
+  const rawCompanyName = selected?.value ?? '';
   const companyName = isGenericJobBoardCompanyName(rawCompanyName) ? '' : rawCompanyName;
-  const companyNameEvidence =
-    companyName.length === 0 ? 'none' : pageCompanyName !== null ? 'page' : 'model';
-  return { companyName, companyNameEvidence, title };
+  const companyNameSource = companyName.length === 0 ? null : selected?.source ?? null;
+  return { companyName, companyNameSource, title };
 };
 
-export const offerFromEvaluation = (input: {
+type CompanyProfileUrlResolution = {
+  companyProfileUrl: string | null;
+  profileCompanyName: string | null;
+  snapshotProfileCompanyName: string | null;
+};
+
+const resolveCompanyProfileUrlForIdentity = (input: {
+  company: Record<string, unknown> | null;
+  companyName: string;
+  companyNameSource: CompanyNameSource | null;
+  snapshot?: JobBoardStructuredSnapshot | null;
+}): CompanyProfileUrlResolution => {
+  const rawSnapshotCompanyProfileUrl =
+    firstSnapshotCompanyUrl(input.snapshot) ??
+    recordFirstNullableString(input.company, ['profileUrl', 'companyProfileUrl']);
+  const rawProfileCompanyName = companyNameFromPracujProfileUrl(rawSnapshotCompanyProfileUrl);
+  const profileConflictsWithEmployerSelector =
+    input.companyNameSource === 'employer_selector' &&
+    rawProfileCompanyName !== null &&
+    !companyNamesMatchForIdentity(input.companyName, rawProfileCompanyName);
+  const companyProfileUrl = profileConflictsWithEmployerSelector
+    ? null
+    : rawSnapshotCompanyProfileUrl;
+  return {
+    companyProfileUrl,
+    profileCompanyName: companyNameFromPracujProfileUrl(companyProfileUrl),
+    snapshotProfileCompanyName: rawProfileCompanyName,
+  };
+};
+
+const shouldRejectModelOnlyCompanyName = (input: {
+  companyNameSource: CompanyNameSource | null;
+  provider: JobBoardProvider;
+  snapshotProfileCompanyName: string | null;
+}): boolean =>
+  input.provider === 'pracuj_pl' &&
+  input.companyNameSource === 'model' &&
+  input.snapshotProfileCompanyName === null;
+
+type OfferFromEvaluationInput = {
   evaluation: JobScanEvaluation;
   finalUrl: string;
   options: FilemakerJobBoardScrapeRequest;
@@ -1908,28 +2018,32 @@ export const offerFromEvaluation = (input: {
   snapshot?: JobBoardStructuredSnapshot | null;
   sourceSite: string;
   validationPatterns?: readonly FilemakerLexiconValidationPattern[] | null;
-}): FilemakerJobBoardScrapedOffer | null => {
+};
+
+export const offerFromEvaluation = (
+  input: OfferFromEvaluationInput
+): FilemakerJobBoardScrapedOffer | null => {
   const evaluation = input.evaluation;
   const listing = asRecord(evaluation?.listing);
   const company = asRecord(evaluation?.company);
   const sourceUrl = normalizeJobBoardSourceUrl(input.finalUrl);
   if (sourceUrl === null || !isReliableScrapedOfferUrl(sourceUrl, input.provider)) return null;
-  const { companyName, companyNameEvidence, title } = identityFromSources({
+  const { companyName, companyNameSource, title } = identityFromSources({
     company,
     listing,
     snapshot: input.snapshot,
   });
   const companyInformation = companyInformationFromSources({ company, listing, snapshot: input.snapshot });
-  const snapshotCompanyProfileUrl = firstSnapshotCompanyUrl(input.snapshot);
-  const companyProfileUrl = snapshotCompanyProfileUrl;
-  const profileCompanyName = companyNameFromPracujProfileUrl(companyProfileUrl);
-  const snapshotProfileCompanyName = companyNameFromPracujProfileUrl(snapshotCompanyProfileUrl);
-  const resolvedCompanyName =
-    companyName.length > 0
-      ? companyName
-      : profileCompanyName;
+  const { companyProfileUrl, profileCompanyName, snapshotProfileCompanyName } =
+    resolveCompanyProfileUrlForIdentity({
+      company,
+      companyName,
+      companyNameSource,
+      snapshot: input.snapshot,
+    });
+  const resolvedCompanyName = companyName.length > 0 ? companyName : profileCompanyName;
   if (title.length === 0 || resolvedCompanyName === null) return null;
-  if (companyNameEvidence === 'model' && snapshotProfileCompanyName === null) return null;
+  if (shouldRejectModelOnlyCompanyName({ companyNameSource, provider: input.provider, snapshotProfileCompanyName })) return null;
   const salary = salaryFromSources({ extractSalaries: input.options.extractSalaries, listing, snapshot: input.snapshot });
   const companyProfile = buildCompanyProfile({ company, listing, snapshot: input.snapshot });
   const dates = dateRangeFromSources({ listing, snapshot: input.snapshot });
@@ -1943,24 +2057,18 @@ export const offerFromEvaluation = (input: {
   });
   return {
     companyName: resolvedCompanyName,
+    ...(companyNameSource !== null ? { companyNameSource } : {}),
     companyProfile,
     companyProfileUrl,
     ...companyInformation,
-    description: offerDescriptionFromSources({
-      extractDescriptions: input.options.extractDescriptions,
+    ...offerContentFieldsFromSources({
+      options: input.options,
       listing,
       snapshot: input.snapshot,
     }),
-    requirements: offerRequirementsFromSources({ listing, snapshot: input.snapshot }),
-    responsibilities: offerResponsibilitiesFromSources({ listing, snapshot: input.snapshot }),
     expiresAt: dates.expiresAt,
-    location: locationFromSources({ listing, snapshot: input.snapshot }),
     postedAt: dates.postedAt,
-    salaryCurrency: salary.salaryCurrency,
-    salaryMax: salary.salaryMax,
-    salaryMin: salary.salaryMin,
-    salaryPeriod: salary.salaryPeriod,
-    salaryText: salary.salaryText,
+    ...salaryOfferFields(salary),
     sourceExternalId: extractJobBoardExternalIdFromUrl(sourceUrl, input.provider),
     sourceSite: input.sourceSite,
     sourceUrl,

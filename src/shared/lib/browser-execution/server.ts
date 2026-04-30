@@ -21,4 +21,4 @@ export {
 } from './sequencers/Supplier1688ScanSequencer';
 export {
   generateProductScanPlaywrightStepSequencerRuntime,
-} from './product-scan-step-sequencer';
+} from '@/features/playwright/scan-steps';

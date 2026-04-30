@@ -1,4 +1,5 @@
 import 'server-only';
+/* eslint-disable max-lines, complexity */
 
 import type { JobScanEvaluation, JobScanStep } from '@/shared/contracts/job-board';
 
@@ -160,6 +161,9 @@ export const hostnameFromUrl = (value: string | null): string | null => {
 const combinedFacts = (
   snapshot: JobBoardStructuredSnapshot
 ): Array<{ label: string; value: string }> => [
+  ...(normalizeProbeText(snapshot.employerName).length > 0
+    ? [{ label: 'Employer', value: normalizeProbeText(snapshot.employerName) }]
+    : []),
   ...(snapshot.facts ?? []),
   ...(snapshot.companyProfile?.facts ?? []),
 ];

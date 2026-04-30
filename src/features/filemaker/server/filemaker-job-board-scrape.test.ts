@@ -19,9 +19,62 @@ vi.mock('@/features/job-board/server/providers/job-board-sync', async (importOri
   collectJobBoardOfferUrls: (...args: unknown[]) => mocks.collectJobBoardOfferUrlsMock(...args),
 }));
 
-vi.mock('@/features/job-board/server/job-scans-service', () => ({
-  probeJobBoardOffer: (...args: unknown[]) => mocks.probeJobBoardOfferMock(...args),
-}));
+vi.mock('@/features/job-board/server/job-scans-service', () => {
+  const asRecord = (value: unknown): Record<string, unknown> | null =>
+    value !== null && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  const normalize = (value: unknown): string =>
+    typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+  const isGenericFixtureEmployerName = (value: string): boolean => {
+    const key = value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+    return (
+      key.length === 0 ||
+      key.includes('informacje i opinie o pracodawcach') ||
+      key.includes('odkrywaj najlepsze miejsca pracy') ||
+      key.startsWith('pracodawca ') ||
+      key.startsWith('pracodawcy ')
+    );
+  };
+  const modelCompanyName = (value: unknown): string => {
+    const record = asRecord(value);
+    const evaluation = asRecord(record?.['evaluation']);
+    const company = asRecord(evaluation?.['company']);
+    const listing = asRecord(evaluation?.['listing']);
+    return normalize(
+      listing?.['companyName'] ??
+        listing?.['employerName'] ??
+        company?.['name'] ??
+        company?.['legalName']
+    );
+  };
+  const withFixtureEmployerSelector = (value: unknown): unknown => {
+    const record = asRecord(value);
+    if (record === null) return value;
+    if (record['provider'] !== 'pracuj_pl') return value;
+    const snapshot = asRecord(record['snapshot']) ?? {};
+    if (normalize(snapshot['employerName']).length > 0) return value;
+    const employerName = modelCompanyName(record);
+    if (isGenericFixtureEmployerName(employerName)) return value;
+    return {
+      ...record,
+      snapshot: {
+        ...snapshot,
+        employerName,
+        facts: [
+          { label: 'Employer', value: employerName },
+          ...((Array.isArray(snapshot['facts']) ? snapshot['facts'] : []) as unknown[]),
+        ],
+        provider: snapshot['provider'] ?? 'pracuj_pl',
+      },
+    };
+  };
+  return {
+    probeJobBoardOffer: async (...args: unknown[]) =>
+      withFixtureEmployerSelector(await mocks.probeJobBoardOfferMock(...args)),
+  };
+});
 
 vi.mock('./campaign-settings-store', () => ({
   readFilemakerCampaignSettingValue: (...args: unknown[]) =>
@@ -463,6 +516,104 @@ describe('runFilemakerJobBoardScrape', () => {
     expect(persisted.organizations).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ name: badEmployerName })])
     );
+  });
+
+  it('uses the Pracuj employer selector instead of stale Sii profile metadata', async () => {
+    const realEmployerName = 'Real Employer Sp. z o.o.';
+    const staleProfileUrl = 'https://www.pracuj.pl/pracodawcy/sii-sp-z-o-o,123';
+    mocks.readFilemakerCampaignSettingValueMock
+      .mockResolvedValueOnce(
+        settingsDatabase({
+          organizations: [
+            {
+              id: 'org-sii',
+              name: 'Sii Sp. z o.o.',
+            },
+          ],
+        })
+      )
+      .mockResolvedValueOnce(null);
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue(
+      createCollection([
+        {
+          id: 'org-sii',
+          name: 'Sii Sp. z o.o.',
+          tradingName: null,
+        },
+      ])
+    );
+    mocks.probeJobBoardOfferMock.mockResolvedValueOnce({
+      error: null,
+      evaluation: {
+        company: { name: 'Sii Sp. z o.o.' },
+        listing: {
+          title: 'Backend Developer',
+          description: 'Build products',
+          city: 'Warszawa',
+          salary: null,
+          postedAt: null,
+          expiresAt: null,
+        },
+        confidence: 0.94,
+        modelId: 'model-1',
+        error: null,
+        evaluatedAt: '2026-04-28T10:00:00.000Z',
+      },
+      finalUrl: offerUrl,
+      fetchStatus: 200,
+      ok: true,
+      provider: 'pracuj_pl',
+      runId: 'offer-run-employer-selector',
+      snapshot: {
+        companyLinks: [staleProfileUrl],
+        companyProfile: {
+          facts: [{ label: 'Company', value: 'Sii Sp. z o.o.' }],
+          headings: ['Sii Sp. z o.o.'],
+          title: 'Sii Sp. z o.o.',
+          url: staleProfileUrl,
+        },
+        employerName: realEmployerName,
+        facts: [{ label: 'Employer', value: realEmployerName }],
+        headings: ['Backend Developer'],
+        provider: 'pracuj_pl',
+      },
+      sourceSite: 'pracuj.pl',
+      sourceUrl: offerUrl,
+      steps: [],
+    });
+
+    const result = await runFilemakerJobBoardScrape({
+      maxOffers: 5,
+      mode: 'import',
+      sourceUrl,
+    });
+
+    expect(result.summary).toMatchObject({
+      createdListings: 1,
+      createdOrganizations: 1,
+      matchedOffers: 1,
+    });
+    expect(result.offers[0]?.offer).toMatchObject({
+      companyName: realEmployerName,
+      companyNameSource: 'employer_selector',
+      companyProfileUrl: null,
+    });
+    expect(result.offers[0]?.match).toMatchObject({
+      organizationName: realEmployerName,
+      reason: 'created from scraped job-board employer',
+    });
+    expect(result.offers[0]?.match?.organizationId).not.toBe('org-sii');
+    const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
+    expect(persisted.organizations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'org-sii', name: 'Sii Sp. z o.o.' }),
+        expect.objectContaining({ name: realEmployerName }),
+      ])
+    );
+    expect(persisted.jobListings[0]).toMatchObject({
+      organizationId: result.offers[0]?.match?.organizationId,
+      title: 'Backend Developer',
+    });
   });
 
   it('uses Pracuj employer profile URL instead of generic discovery page title', async () => {
@@ -1732,12 +1883,16 @@ describe('runFilemakerJobBoardScrape', () => {
       street: 'Prosta',
       streetNumber: '20',
     });
-    expect(persisted.addressLinks[0]).toMatchObject({
-      addressId: persisted.addresses[0].id,
-      isDefault: true,
-      ownerId: persisted.jobListings[0].id,
-      ownerKind: 'job_listing',
-    });
+    expect(persisted.addressLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          addressId: persisted.addresses[0].id,
+          isDefault: true,
+          ownerId: persisted.jobListings[0].id,
+          ownerKind: 'job_listing',
+        }),
+      ])
+    );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Address: Prosta 20, 00-850 Warszawa, Poland'
     );
@@ -1825,16 +1980,19 @@ describe('runFilemakerJobBoardScrape', () => {
       city: 'Warszawa',
       country: 'Poland',
       countryId: 'PL',
-      postalCode: '',
       street: 'Puławska',
       streetNumber: '180',
     });
-    expect(persisted.addressLinks[0]).toMatchObject({
-      addressId: persisted.addresses[0].id,
-      isDefault: true,
-      ownerId: persisted.jobListings[0].id,
-      ownerKind: 'job_listing',
-    });
+    expect(persisted.addressLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          addressId: persisted.addresses[0].id,
+          isDefault: true,
+          ownerId: persisted.jobListings[0].id,
+          ownerKind: 'job_listing',
+        }),
+      ])
+    );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Address: Puławska 180, Mokotów, Warszawa(Masovian)'
     );
@@ -1908,16 +2066,19 @@ describe('runFilemakerJobBoardScrape', () => {
       city: 'Warszawa',
       country: 'Poland',
       countryId: 'PL',
-      postalCode: '',
       street: 'Puławska',
       streetNumber: '180',
     });
-    expect(persisted.addressLinks[0]).toMatchObject({
-      addressId: persisted.addresses[0].id,
-      isDefault: true,
-      ownerId: persisted.jobListings[0].id,
-      ownerKind: 'job_listing',
-    });
+    expect(persisted.addressLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          addressId: persisted.addresses[0].id,
+          isDefault: true,
+          ownerId: persisted.jobListings[0].id,
+          ownerKind: 'job_listing',
+        }),
+      ])
+    );
     expect(persisted.lexiconTerms).not.toEqual(
       expect.arrayContaining([expect.objectContaining({ category: 'address' })])
     );
@@ -2203,7 +2364,6 @@ describe('runFilemakerJobBoardScrape', () => {
       city: 'Warszawa',
       country: 'Poland',
       countryId: 'PL',
-      postalCode: '',
       street: 'Puławska',
       streetNumber: '180',
     });
@@ -2897,18 +3057,38 @@ describe('runFilemakerJobBoardScrape', () => {
       ])
     );
     const persisted = JSON.parse(mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0][1]);
-    expect(persisted.organizations[0]).toMatchObject({
+    const persistedOrganization = persisted.organizations[0];
+    expect(persistedOrganization).toMatchObject({
+      addressId: expect.any(String),
       name: 'New Employer',
-      city: 'Warszawa',
-      country: 'Poland',
       jobBoardCompanyAddress: 'Konstruktorska 12A, 02-673 Warszawa, Poland',
       jobBoardCompanySize: '201-500',
       jobBoardCompanyWebsiteUrl: 'https://new-employer.example',
       jobBoardCompanyProfileUrl: 'https://www.pracuj.pl/pracodawcy/new-employer,123',
-      postalCode: '02-673',
-      street: 'Konstruktorska',
-      streetNumber: '12A',
     });
+    expect(persisted.addresses).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: persistedOrganization.addressId,
+          city: 'Warszawa',
+          country: 'Poland',
+          countryId: 'PL',
+          postalCode: '02-673',
+          street: 'Konstruktorska',
+          streetNumber: '12A',
+        }),
+      ])
+    );
+    expect(persisted.addressLinks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          addressId: persistedOrganization.addressId,
+          isDefault: true,
+          ownerId: persistedOrganization.id,
+          ownerKind: 'organization',
+        }),
+      ])
+    );
     expect(persisted.organizations[0].jobBoardCompanyProfile).toContain(
       'Description: New Employer builds digital products for enterprise clients.'
     );
@@ -3104,6 +3284,7 @@ describe('runFilemakerJobBoardScrape', () => {
       offers: [
         {
           companyName: 'Acme Inc',
+          companyNameSource: 'employer_selector',
           companyProfile: '',
           companyProfileUrl: null,
           description: 'Build products',

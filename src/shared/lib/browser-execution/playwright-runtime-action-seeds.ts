@@ -1,4 +1,7 @@
-import type { PlaywrightAction } from '@/shared/contracts/playwright-steps';
+import type {
+  PlaywrightAction,
+  PlaywrightActionExecutionSettings,
+} from '@/shared/contracts/playwright-steps';
 import {
   defaultPlaywrightActionBlockConfig,
   defaultPlaywrightActionExecutionSettings,
@@ -30,6 +33,7 @@ import {
 
 type RuntimeActionSeedDefinition = {
   description: string;
+  executionSettings?: Partial<PlaywrightActionExecutionSettings>;
   name: string;
 };
 
@@ -111,6 +115,9 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     name: JOB_APPLICATION_APPLY_RUNTIME_NAME,
     description:
       'Applies to a prepared job application from FileMaker using the selected integration connection, browser session, persona, and headed or headless execution settings.',
+    executionSettings: {
+      headless: true,
+    },
   },
   vinted_list: {
     name: 'Vinted List',
@@ -153,7 +160,10 @@ const createSeedAction = (runtimeKey: ActionSequenceKey): PlaywrightAction => {
     })),
     stepSetIds: [],
     personaId: null,
-    executionSettings: defaultPlaywrightActionExecutionSettings,
+    executionSettings: {
+      ...defaultPlaywrightActionExecutionSettings,
+      ...(definition.executionSettings ?? {}),
+    },
     createdAt: SEEDED_ACTION_TIMESTAMP,
     updatedAt: SEEDED_ACTION_TIMESTAMP,
   });

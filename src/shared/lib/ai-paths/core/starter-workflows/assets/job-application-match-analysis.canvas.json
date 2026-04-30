@@ -152,8 +152,8 @@
     {
       "id": "node-model-job-application-match-analysis",
       "type": "model",
-      "title": "gpt-oss:120b-cloud Match Analysis Model",
-      "description": "Analyze candidate fit against the prepared application using gpt-oss:120b-cloud.",
+      "title": "Match Analysis Model",
+      "description": "Analyze candidate fit against the prepared application.",
       "position": {
         "x": 1280,
         "y": 240
@@ -173,7 +173,7 @@
           "maxTokens": 2600,
           "vision": false,
           "waitForResult": true,
-          "modelId": "gpt-oss:120b-cloud"
+          "modelId": ""
         }
       }
     },

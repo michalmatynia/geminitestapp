@@ -60,7 +60,13 @@ export const ADVANCED_FILTER_FIELD_CONFIGS: readonly AdvancedFilterFieldConfig[]
     field: 'categoryId',
     label: 'Category',
     kind: 'string',
-    operators: ['contains', 'eq', 'neq', 'isEmpty', 'isNotEmpty'],
+    operators: ['eq', 'neq', 'contains', 'isEmpty', 'isNotEmpty'],
+  },
+  {
+    field: 'traderaStatus',
+    label: 'Tradera Status',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
   },
   {
     field: 'catalogId',

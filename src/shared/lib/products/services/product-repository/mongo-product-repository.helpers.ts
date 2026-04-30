@@ -32,6 +32,9 @@ export type ProductListingFilterDocument = {
   productId: string | ObjectId;
   integrationId: string | ObjectId;
   externalListingId?: string | null;
+  status?: string | null;
+  marketplaceData?: Record<string, unknown> | null;
+  updatedAt?: Date | string | null;
 };
 
 export type BaseExportLookupContext = {

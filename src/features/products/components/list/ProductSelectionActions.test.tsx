@@ -10,6 +10,7 @@ const {
   executeVintedMassExportMock,
   marketplaceCopyDebrandBatchModalMock,
   parseActionsModalMock,
+  scrapeProfilesModalMock,
   productScanModalMock,
   queueMarketplaceCopyDebrandBatchMock,
   setParsedMatchProductIdsMock,
@@ -30,6 +31,7 @@ const {
   executeVintedMassExportMock: vi.fn(),
   marketplaceCopyDebrandBatchModalMock: vi.fn(),
   parseActionsModalMock: vi.fn(),
+  scrapeProfilesModalMock: vi.fn(),
   productScanModalMock: vi.fn(),
   queueMarketplaceCopyDebrandBatchMock: vi.fn(),
   setParsedMatchProductIdsMock: vi.fn(),
@@ -132,6 +134,20 @@ vi.mock('@/features/products/components/list/ProductParseActionsModal', () => ({
         </button>
         <button type='button' onClick={props.onClose}>
           Close Parse Actions
+        </button>
+      </div>
+    ) : null;
+  },
+}));
+
+vi.mock('@/features/products/components/list/ProductScrapeProfilesModal', () => ({
+  ProductScrapeProfilesModal: (props: { isOpen: boolean; onClose: () => void }) => {
+    scrapeProfilesModalMock(props);
+    return props.isOpen ? (
+      <div role='dialog'>
+        <span>Scrape Profiles Modal</span>
+        <button type='button' onClick={props.onClose}>
+          Close Scrape Profiles
         </button>
       </div>
     ) : null;
@@ -539,6 +555,19 @@ describe('ProductSelectionActions', () => {
       })
     );
     expect(screen.getByText('Parse Actions Modal')).toBeInTheDocument();
+  });
+
+  it('opens the scrape profiles modal from the products toolbar', () => {
+    render(<ProductSelectionActions />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Scrape Profiles' }));
+
+    expect(scrapeProfilesModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+      })
+    );
+    expect(screen.getByText('Scrape Profiles Modal')).toBeInTheDocument();
   });
 
   it('filters the product list to parsed matches from the parse actions modal', async () => {

@@ -42,7 +42,7 @@ export {
   type ProductScanSequenceKey,
   type ProductScanStepExtension,
   type ProductScanStepKey,
-} from './product-scan-step-sequencer';
+} from '@/features/playwright/scan-steps';
 
 export {
   GOOGLE_LENS_FILE_INPUT_SELECTORS,

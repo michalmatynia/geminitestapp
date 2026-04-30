@@ -1,7 +1,5 @@
 
-import type { AiNode, AiPathsValidationConfig, Edge, NodeConfig, PathBlockedRunPolicy, PathConfig, PathExecutionMode, PathFlowIntensity, PathMeta, PathRunMode } from '@/shared/contracts/ai-paths';
-import { AI_PATHS_HISTORY_RETENTION_DEFAULT, AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT } from '@/shared/lib/ai-paths/core/constants';
-import { DEFAULT_AI_PATHS_VALIDATION_CONFIG } from '@/shared/lib/ai-paths/core/validation-engine';
+import type { AiNode, Edge, NodeConfig, PathConfig, PathMeta } from '@/shared/contracts/ai-paths';
 
 import type { ReactNode } from 'react';
 
@@ -32,19 +30,6 @@ export interface GraphMutationRecord {
 export interface GraphLoadPayload {
   nodes: AiNode[];
   edges: Edge[];
-  pathName?: string | undefined;
-  pathDescription?: string | undefined;
-  activeTrigger?: string | undefined;
-  executionMode?: PathExecutionMode | undefined;
-  flowIntensity?: PathFlowIntensity | undefined;
-  runMode?: PathRunMode | undefined;
-  strictFlowMode?: boolean | undefined;
-  blockedRunPolicy?: PathBlockedRunPolicy | undefined;
-  aiPathsValidation?: AiPathsValidationConfig | undefined;
-  historyRetentionPasses?: number | undefined;
-  historyRetentionOptionsMax?: number | undefined;
-  isPathLocked?: boolean | undefined;
-  isPathActive?: boolean | undefined;
 }
 
 export interface GraphDataState {
@@ -52,28 +37,18 @@ export interface GraphDataState {
   edges: Edge[];
   graphRevision: number;
   lastMutation: GraphMutationRecord | null;
-}
-
-export interface PathMetadataState {
   paths: PathMeta[];
   pathConfigs: Record<string, PathConfig>;
   activePathId: string | null;
-  pathName: string;
-  pathDescription: string;
-  activeTrigger: string;
-  executionMode: PathExecutionMode;
-  flowIntensity: PathFlowIntensity;
-  runMode: PathRunMode;
-  strictFlowMode: boolean;
-  blockedRunPolicy: PathBlockedRunPolicy;
-  aiPathsValidation: AiPathsValidationConfig;
-  historyRetentionPasses: number;
-  historyRetentionOptionsMax: number;
-  isPathLocked: boolean;
-  isPathActive: boolean;
 }
 
-export type GraphState = GraphDataState & PathMetadataState;
+/**
+ * @deprecated Use `usePathConfigState` from `PathConfigContext` instead.
+ * Kept temporarily so external types continue to resolve during migration.
+ */
+export type PathMetadataState = GraphDataState;
+
+export type GraphState = GraphDataState;
 
 export interface GraphActions {
   setNodes: (
@@ -95,21 +70,6 @@ export interface GraphActions {
       | ((prev: Record<string, PathConfig>) => Record<string, PathConfig>)
   ) => void;
   setActivePathId: (pathId: string | null) => void;
-  setPathName: (name: string) => void;
-  setPathDescription: (description: string) => void;
-  setActiveTrigger: (trigger: string) => void;
-  setExecutionMode: (mode: PathExecutionMode) => void;
-  setFlowIntensity: (intensity: PathFlowIntensity) => void;
-  setRunMode: (mode: PathRunMode) => void;
-  setStrictFlowMode: (enabled: boolean) => void;
-  setBlockedRunPolicy: (policy: PathBlockedRunPolicy) => void;
-  setAiPathsValidation: (config: AiPathsValidationConfig) => void;
-  setHistoryRetentionPasses: (passes: number) => void;
-  setHistoryRetentionOptionsMax: (max: number) => void;
-  setIsPathLocked: (locked: boolean) => void;
-  togglePathLock: () => void;
-  setIsPathActive: (active: boolean) => void;
-  togglePathActive: () => void;
   loadGraph: (data: GraphLoadPayload) => void;
   resetGraph: () => void;
 }
@@ -122,17 +82,3 @@ export interface GraphProviderProps {
   initialPathConfigs?: Record<string, PathConfig> | undefined;
   initialActivePathId?: string | null | undefined;
 }
-
-export const DEFAULT_PATH_NAME = 'Description Inference Path';
-export const DEFAULT_PATH_DESCRIPTION = 'Vision + text model workflow with structured updates.';
-export const DEFAULT_TRIGGER = 'Product Modal - Context Filter';
-export const DEFAULT_EXECUTION_MODE: PathExecutionMode = 'server';
-export const DEFAULT_FLOW_INTENSITY: PathFlowIntensity = 'medium';
-export const DEFAULT_RUN_MODE: PathRunMode = 'manual';
-export const DEFAULT_STRICT_FLOW_MODE = true;
-export const DEFAULT_BLOCKED_RUN_POLICY: PathBlockedRunPolicy = 'fail_run';
-export const DEFAULT_AI_PATHS_VALIDATION: AiPathsValidationConfig =
-  DEFAULT_AI_PATHS_VALIDATION_CONFIG;
-export const DEFAULT_HISTORY_RETENTION_PASSES = AI_PATHS_HISTORY_RETENTION_DEFAULT;
-export const DEFAULT_HISTORY_RETENTION_OPTIONS_MAX =
-  AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT;

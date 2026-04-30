@@ -6,6 +6,7 @@ import {
   Download,
   FileSearch,
   FileUp,
+  Globe2,
   Image as ImageIcon,
   Search,
   Pencil,
@@ -45,6 +46,7 @@ import { ProductScanModal } from '@/features/products/components/list/ProductSca
 import { ProductBatchEditModal } from '@/features/products/components/list/ProductBatchEditModal';
 import { ProductMarketplaceCopyDebrandBatchModal } from '@/features/products/components/list/ProductMarketplaceCopyDebrandBatchModal';
 import { ProductParseActionsModal } from '@/features/products/components/list/ProductParseActionsModal';
+import { ProductScrapeProfilesModal } from '@/features/products/components/list/ProductScrapeProfilesModal';
 import { ProductBulkSyncResultsModal } from '@/features/products/components/list/ProductBulkSyncResultsModal';
 import { ProductBulkSyncSetupModal } from '@/features/products/components/list/ProductBulkSyncSetupModal';
 import type {
@@ -141,6 +143,7 @@ export const ProductSelectionActions = memo(() => {
     string[]
   >([]);
   const [isParseActionsOpen, setIsParseActionsOpen] = useState(false);
+  const [isScrapeProfilesOpen, setIsScrapeProfilesOpen] = useState(false);
   const [bulkSyncResults, setBulkSyncResults] = useState<ProductSyncBulkResponse | null>(null);
   const [bulkSyncResultProducts, setBulkSyncResultProducts] = useState<typeof data>([]);
   const [isBulkSyncResultsOpen, setIsBulkSyncResultsOpen] = useState(false);
@@ -803,16 +806,28 @@ export const ProductSelectionActions = memo(() => {
           </>
         }
         afterBatchActions={
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={() => setIsParseActionsOpen(true)}
-            className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
-          >
-            <FileSearch className='h-3.5 w-3.5' />
-            Parse Actions
-          </Button>
+          <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => setIsParseActionsOpen(true)}
+              className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
+            >
+              <FileSearch className='h-3.5 w-3.5' />
+              Parse Actions
+            </Button>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              onClick={() => setIsScrapeProfilesOpen(true)}
+              className='h-8 w-full gap-2 border-border/60 bg-card/30 text-gray-300 hover:bg-card/50 hover:text-white sm:w-auto'
+            >
+              <Globe2 className='h-3.5 w-3.5' />
+              Scrape Profiles
+            </Button>
+          </div>
         }
         rightActions={
           <div className='flex w-full flex-wrap items-center gap-2 sm:w-auto'>
@@ -1062,6 +1077,10 @@ export const ProductSelectionActions = memo(() => {
         isOpen={isParseActionsOpen}
         onClose={() => setIsParseActionsOpen(false)}
         onFindMatches={handleFindParsedMatches}
+      />
+      <ProductScrapeProfilesModal
+        isOpen={isScrapeProfilesOpen}
+        onClose={() => setIsScrapeProfilesOpen(false)}
       />
       <ProductBulkSyncSetupModal
         isOpen={isBulkSyncSetupOpen}

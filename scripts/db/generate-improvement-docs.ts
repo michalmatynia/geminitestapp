@@ -366,6 +366,7 @@ const renderPortfolioMarkdown = (
     '',
     `- \`npm run improvements:read-only\` -> ${defaultImprovementTrackIds.join(', ')}`,
     `- \`npm run improvements:application\` -> ${applicationTrackIds.join(', ')}`,
+    '- `npm run improvements:image-studio` -> image-studio-product-integration',
     '- `npm run improvements:products` -> products-parameter-integrity, products-category-schema-normalization',
     '- `npm run improvements:refresh-docs` -> regenerate this hub from the latest improvement reports',
     '',

@@ -202,6 +202,8 @@ describe('ProductFilters layout contract', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
 
     await waitFor(() => {
+      expect(useProductCategoriesMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
+      expect(useProductCategoriesForCatalogsMock).toHaveBeenLastCalledWith([], { enabled: true });
       expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
       expect(useFilterTagsMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
       expect(useProducersMock).toHaveBeenLastCalledWith({ enabled: true });
@@ -354,6 +356,16 @@ describe('ProductFilters layout contract', () => {
       { value: 'Attack On Titan', label: 'Attack On Titan' },
       { value: 'Naruto', label: 'Naruto' },
     ]);
+    expect(advancedFilterModalProps.fieldValueOptions?.traderaStatus).toEqual(
+      expect.arrayContaining([
+        { value: 'disabled', label: 'Disabled' },
+        { value: 'not_added', label: 'Not added' },
+        { value: 'closed', label: 'Closed' },
+        { value: 'active', label: 'Active' },
+        { value: 'ended', label: 'Ended' },
+        { value: 'sold', label: 'Sold' },
+      ])
+    );
   });
 
   it('builds category options across all catalogs when Product List is scoped to all catalogs', () => {
@@ -522,6 +534,7 @@ describe('ProductFilters layout contract', () => {
       fieldValueOptions?: Record<string, Array<{ value: string; label: string }>>;
     };
     expect(advancedFilterModalProps.fieldValueOptions?.categoryId).toEqual([
+      { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
       { value: 'cat-keychains', label: 'Keychains' },
       { value: 'cat-pins', label: 'Pins' },
       { value: 'cat-game-pins', label: 'Pins / Game Pins' },

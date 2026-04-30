@@ -1,0 +1,153 @@
+{
+  "id": "battlestock-warhammer-40k-30k",
+  "version": 1,
+  "siteHost": "www.battle-stock.pl",
+  "description": "BattleStock Warhammer 40k / 30k category product tiles.",
+  "entryUrl": "https://www.battle-stock.pl/pl/c/Warhammer-40k-30k/45",
+  "rateLimit": {
+    "requestsPerMinute": 20,
+    "concurrency": 1
+  },
+  "steps": [
+    {
+      "id": "open-category",
+      "kind": "goto",
+      "url": "https://www.battle-stock.pl/pl/c/Warhammer-40k-30k/45",
+      "waitUntil": "domcontentloaded"
+    },
+    {
+      "id": "wait-for-products",
+      "kind": "waitFor",
+      "selector": "product-list product-tile",
+      "timeoutMs": 15000,
+      "state": "visible"
+    },
+    {
+      "id": "extract-products",
+      "kind": "extractList",
+      "itemSelector": "product-list product-tile",
+      "fields": {
+        "product_id": {
+          "attribute": "product-id"
+        },
+        "name": {
+          "attribute": "name"
+        },
+        "price_raw": {
+          "attribute": "price"
+        },
+        "producer": {
+          "attribute": "producer"
+        },
+        "category": {
+          "attribute": "category"
+        },
+        "currency": {
+          "attribute": "currency"
+        },
+        "url": {
+          "selector": "product-link a",
+          "attribute": "href"
+        },
+        "images": {
+          "selector": "picture.product-tile__image_primary img, picture.product-tile__image_secondary img",
+          "attribute": "src",
+          "many": true
+        }
+      }
+    },
+    {
+      "id": "paginate-products",
+      "kind": "paginate",
+      "strategy": "nextLink",
+      "nextSelector": ".product-list__footer .pagination__button[aria-label=\"Następne produkty\"]",
+      "maxPages": 75
+    }
+  ],
+  "fieldMap": {
+    "bindings": {
+      "title": {
+        "path": "name",
+        "transforms": [
+          {
+            "name": "trim"
+          }
+        ],
+        "required": true
+      },
+      "price": {
+        "path": "price_raw",
+        "transforms": [
+          {
+            "name": "toNumber"
+          },
+          {
+            "name": "money"
+          }
+        ],
+        "required": true
+      },
+      "currency": {
+        "path": "currency",
+        "transforms": [
+          {
+            "name": "trim"
+          },
+          {
+            "name": "uppercase"
+          }
+        ],
+        "fallback": "PLN"
+      },
+      "brand": {
+        "path": "producer",
+        "transforms": [
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "category": {
+        "path": "category",
+        "transforms": [
+          {
+            "name": "trim"
+          }
+        ]
+      },
+      "sourceUrl": {
+        "path": "url",
+        "transforms": [
+          {
+            "name": "absoluteUrl",
+            "args": {
+              "base": "https://www.battle-stock.pl"
+            }
+          }
+        ],
+        "required": true
+      },
+      "externalId": {
+        "path": "product_id",
+        "transforms": [
+          {
+            "name": "trim"
+          }
+        ],
+        "required": true
+      },
+      "images": {
+        "path": "images",
+        "transforms": [
+          {
+            "name": "toStringArray"
+          }
+        ]
+      }
+    },
+    "defaults": {
+      "currency": "PLN",
+      "brand": "BattleStock"
+    }
+  }
+}

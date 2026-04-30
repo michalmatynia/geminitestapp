@@ -307,6 +307,38 @@ describe('job-board-sync', () => {
     });
   });
 
+  it('extracts Pracuj employer name from the exact employer selector', () => {
+    const snapshot = extractJobBoardStructuredSnapshot(
+      `
+        <html>
+          <head><title>Backend Developer - oferta pracy</title></head>
+          <body>
+            <main>
+              <h1>Backend Developer</h1>
+              <h2 data-scroll-id="employer-name" data-test="text-employerName">
+                Real Employer Sp. z o.o.
+              </h2>
+            </main>
+          </body>
+        </html>
+      `,
+      'https://www.pracuj.pl/praca/backend-developer-warszawa,oferta,1001'
+    );
+
+    expect(snapshot).toMatchObject({
+      employerName: 'Real Employer Sp. z o.o.',
+      companyProfile: {
+        facts: expect.arrayContaining([
+          { label: 'Company', value: 'Real Employer Sp. z o.o.' },
+        ]),
+      },
+      facts: expect.arrayContaining([
+        { label: 'Employer', value: 'Real Employer Sp. z o.o.' },
+        { label: 'Company', value: 'Real Employer Sp. z o.o.' },
+      ]),
+    });
+  });
+
   it('uses the runtime action browser mode when no run override is provided', async () => {
     mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValueOnce({
       ...defaultPlaywrightActionExecutionSettings,

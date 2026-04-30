@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-15'
+last_reviewed: '2026-04-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,7 +8,7 @@ canonical: true
 ---
 # Products category and schema normalization Improvement Track
 
-Generated at: 2026-04-15T10:54:26.142Z
+Generated at: 2026-04-30T09:41:39.599Z
 
 ## Snapshot
 
@@ -39,20 +39,15 @@ Surfaces the remaining category and parameter-schema decisions that cannot be au
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
-| `dry-run` | `passed` | 3 | 2 | 1 | 0 | 0 |
+| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `passed` | 3 | 2 | 1 | 0 | 0 |
 
 ## Latest Steps
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
-| `classify` | `passed` | `automatic` | `products-category-manual-remediation-report` | `products:report:parameter-remediation` |
-| `plan` | `manual` | `manual` | `products-category-schema-plan` | manual |
-| `dry-run` | `manual` | `manual` | `products-category-schema-curate-family-mappings` | manual |
-| `dry-run` | `passed` | `automatic` | `products-category-schema-build-ready-curated-overrides` | `products:build:ready-parameter-curated-overrides` |
-| `dry-run` | `passed` | `automatic` | `products-category-schema-preview-ready-curated-overrides` | `products:apply:parameter-curated-overrides` |
 | `apply` | `manual` | `manual` | `products-category-schema-apply` | manual |
 | `apply` | `passed` | `automatic` | `products-category-schema-build-ready-curated-overrides` | `products:build:ready-parameter-curated-overrides` |
 | `apply` | `passed` | `automatic` | `products-category-schema-apply-ready-curated-overrides` | `products:apply:ready-parameter-curated-overrides` |

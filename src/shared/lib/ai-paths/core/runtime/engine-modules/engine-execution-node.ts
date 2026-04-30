@@ -86,27 +86,10 @@ export type RunNodeArgs = {
   executed: NodeHandlerContext['executed'];
 };
 
-const EFFECT_NODE_TYPES = new Set<string>([
-  'agent',
-  'api_advanced',
-  'database',
-  'http',
-  'learner_agent',
-  'model',
-  'notification',
-  'playwright',
-]);
-
-const DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE = new Map<string, 'per_run' | 'per_activation'>([
-  ['agent', 'per_activation'],
-  ['api_advanced', 'per_activation'],
-  ['database', 'per_activation'],
-  ['http', 'per_activation'],
-  ['learner_agent', 'per_activation'],
-  ['model', 'per_activation'],
-  ['notification', 'per_run'],
-  ['playwright', 'per_activation'],
-]);
+import {
+  getDefaultSideEffectPolicy,
+  isEffectNodeType,
+} from '../../node-handler-registry';
 
 const EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE = new Map<string, keyof NodeHandlerContext['executed']>([
   ['agent', 'ai'],
@@ -124,7 +107,7 @@ const resolveNodeSideEffectPolicy = (node: AiNode): 'per_run' | 'per_activation'
   if (configured === 'per_run' || configured === 'per_activation') {
     return configured;
   }
-  return DEFAULT_SIDE_EFFECT_POLICY_BY_NODE_TYPE.get(node.type);
+  return getDefaultSideEffectPolicy(node.type);
 };
 
 const resolveNodeIdempotencyKey = (input: {
@@ -306,7 +289,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
   const isImplicitTriggerNode = node.type === 'trigger' && !options.triggerNodeId;
   const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
   const isCacheDisabled = cacheMode === 'disabled';
-  const isEffectNodeType = EFFECT_NODE_TYPES.has(node.type);
+  const isEffectNode = isEffectNodeType(node.type);
   const sideEffectPolicy = resolveNodeSideEffectPolicy(node);
   const effectExecutedBucket = EFFECT_EXECUTED_BUCKET_BY_NODE_TYPE.get(node.type);
   const idempotencyKey = resolveNodeIdempotencyKey({
@@ -342,7 +325,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     const attempt = state.reserveNodeAttempt(node.id);
     const spanId = buildSpanId(node.id, attempt, iteration);
     const out = cacheSource;
-    const effectSourceSpanId = isEffectNodeType
+    const effectSourceSpanId = isEffectNode
       ? resolveSourceSpanId({
         state,
         options,
@@ -373,7 +356,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
       activationHash,
       cacheDecision: isSeedMatch ? 'seed' : 'hit',
       sideEffectPolicy,
-      sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+      sideEffectDecision: isEffectNode ? 'skipped_duplicate' : undefined,
       idempotencyKey,
       effectSourceSpanId,
       runtimeTelemetry,
@@ -390,7 +373,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         status: 'cached',
         durationMs: 0,
         sideEffectPolicy,
-        sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+        sideEffectDecision: isEffectNode ? 'skipped_duplicate' : undefined,
         activationHash: activationHash ?? undefined,
         ...(idempotencyKey ? { idempotencyKey } : {}),
         ...buildRuntimeTelemetryFields(runtimeTelemetry),
@@ -413,7 +396,7 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
         cached: true,
         cacheDecision: isSeedMatch ? 'seed' : 'hit',
         sideEffectPolicy,
-        sideEffectDecision: isEffectNodeType ? 'skipped_duplicate' : undefined,
+        sideEffectDecision: isEffectNode ? 'skipped_duplicate' : undefined,
         activationHash,
         idempotencyKey,
         effectSourceSpanId,
@@ -495,9 +478,9 @@ export const runNode = async (args: RunNodeArgs): Promise<boolean> => {
     const retryPolicy = readRuntimeRetryPolicy(node);
 
     const sideEffectDecision: 'executed' | 'skipped_policy' | undefined =
-      isEffectNodeType && effectExecutedBucket && executed[effectExecutedBucket].has(node.id)
+      isEffectNode && effectExecutedBucket && executed[effectExecutedBucket].has(node.id)
         ? 'skipped_policy'
-        : isEffectNodeType
+        : isEffectNode
           ? 'executed'
           : undefined;
 

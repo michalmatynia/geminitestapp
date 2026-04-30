@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  INITIAL_RUNTIME_STATUS_STATE,
-  runtimeStatusReducer,
-} from '../RuntimeContext.status-reducer';
+  INITIAL_STATUS_STATE as INITIAL_RUNTIME_STATUS_STATE,
+  statusReducer as runtimeStatusReducer,
+} from '../RuntimeContext';
 
 describe('runtimeStatusReducer', () => {
   it('updates run status without mutating the rest of the status slice', () => {

@@ -14,6 +14,7 @@ import {
   resolveRuntimeActionDefinition,
   resolveRuntimeActionStepIds,
 } from './runtime-action-resolver.server';
+import { JOB_APPLICATION_APPLY_RUNTIME_KEY } from './job-application-apply-runtime-constants';
 
 describe('runtime-action-resolver.server', () => {
   beforeEach(() => {
@@ -43,6 +44,18 @@ describe('runtime-action-resolver.server', () => {
       'publish_verify',
       'browser_close',
     ]);
+  });
+
+  it('uses the seeded job application apply runtime action as headless by default', async () => {
+    getSettingValueMock.mockResolvedValue(null);
+
+    await expect(resolveRuntimeActionDefinition(JOB_APPLICATION_APPLY_RUNTIME_KEY)).resolves.toMatchObject({
+      id: 'runtime_action__job_application_apply',
+      runtimeKey: JOB_APPLICATION_APPLY_RUNTIME_KEY,
+      executionSettings: {
+        headless: true,
+      },
+    });
   });
 
   it('uses enabled runtime_step blocks from the stored runtime action and ignores disabled ones', async () => {

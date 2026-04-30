@@ -1,7 +1,9 @@
 import 'server-only';
 
 import type { ProductScanStep } from '@/shared/contracts/product-scans';
-import { resolveProductScanStepGroup as resolveSharedProductScanStepGroup } from '@/shared/lib/browser-execution/product-scan-step-sequencer';
+import {
+  resolveProductScanStepGroup as resolveSharedProductScanStepGroup,
+} from '@/features/playwright/scan-steps';
 
 import {
   readOptionalPositiveInt,

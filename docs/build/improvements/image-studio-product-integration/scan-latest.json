@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-30T09:41:39.599Z",
+  "track": {
+    "id": "image-studio-product-integration",
+    "title": "Image Studio product integration",
+    "description": "Verifies Product modal handoff to Image Studio, Studio project persistence, generated variant intake, and runtime stability of Studio controls.",
+    "docs": {
+      "category": "quality",
+      "defaultSelected": false,
+      "commands": [
+        "npm run improvements:image-studio",
+        "npm run improvements:plan -- --track image-studio-product-integration",
+        "npm run improvements:dry-run -- --track image-studio-product-integration",
+        "npm run test:image-studio-product"
+      ],
+      "relatedDocs": [
+        "docs/build/general-improvements.md",
+        "docs/build/improvements/README.md"
+      ],
+      "generatedArtifacts": [
+        "artifacts/improvements/plan-report.json",
+        "artifacts/improvements/dry-run-report.json"
+      ]
+    },
+    "phases": {
+      "audit": [
+        {
+          "id": "image-studio-product-runtime-audit",
+          "title": "Audit Product modal Image Studio runtime health",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Open the Product edit modal and switch to the Studio tab with a product that has image slots.",
+              "Confirm the Studio project field, source image selector, action bar, variant grid, and audit history render without React maximum update depth errors.",
+              "Verify the selected Studio project can be changed without repeated autosave requests for the same value."
+            ]
+          }
+        },
+        {
+          "id": "image-studio-product-regression-tests",
+          "title": "Run Product modal and Image Studio integration regression tests",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "test:image-studio-product"
+          }
+        }
+      ],
+      "classify": [
+        {
+          "id": "image-studio-product-failure-classification",
+          "title": "Classify Product Studio failures by integration boundary",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Separate UI runtime failures from API/config failures before changing Studio service code.",
+              "Classify project persistence issues against /api/v2/products/[id]/studio config reads and writes.",
+              "Classify send/open/accept failures against product-studio service preflight, sequencing, variant, and audit contracts."
+            ]
+          }
+        }
+      ],
+      "plan": [
+        {
+          "id": "image-studio-product-integration-plan",
+          "title": "Plan Product modal Image Studio recovery work",
+          "mode": "manual",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Start with idempotent state updates in Product modal and Studio project synchronization.",
+              "Keep shared primitive changes API-compatible with current Product form usage.",
+              "Validate with npm run test:image-studio-product plus the focused shared primitive tests before broader app checks."
+            ]
+          }
+        }
+      ],
+      "dry-run": [
+        {
+          "id": "image-studio-product-regression-tests",
+          "title": "Run Product modal and Image Studio integration regression tests",
+          "mode": "automatic",
+          "writes": false,
+          "outputs": [],
+          "body": {
+            "kind": "script",
+            "script": "test:image-studio-product"
+          }
+        }
+      ],
+      "apply": [
+        {
+          "id": "image-studio-product-apply",
+          "title": "Apply Image Studio fixes through targeted Product and Studio modules",
+          "mode": "manual",
+          "writes": true,
+          "outputs": [],
+          "body": {
+            "kind": "manual",
+            "instructions": [
+              "Apply code changes only in the owning Product modal, Product Studio context, shared UI primitive, or Image Studio service modules.",
+              "Do not change generation-provider behavior while fixing Product modal integration or render stability.",
+              "After changes, rerun npm run test:image-studio-product and the focused lint/type checks for touched files."
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "summary": {
+    "trackId": "image-studio-product-integration",
+    "title": "Image Studio product integration",
+    "category": "quality",
+    "defaultSelected": false,
+    "description": "Verifies Product modal handoff to Image Studio, Studio project persistence, generated variant intake, and runtime stability of Studio controls.",
+    "overallStatus": "passed",
+    "latestGeneratedAt": "2026-04-30T09:41:39.533Z",
+    "docDir": "docs/build/improvements/image-studio-product-integration",
+    "phases": [
+      {
+        "phase": "audit",
+        "generatedAt": "2026-04-30T09:41:38.928Z",
+        "reportPath": "artifacts/improvements/audit-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 2,
+        "automaticStepCount": 1,
+        "manualStepCount": 1,
+        "passedStepCount": 1,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "image-studio-product-runtime-audit",
+            "title": "Audit Product modal Image Studio runtime health",
+            "trackId": "image-studio-product-integration",
+            "phase": "audit",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Open the Product edit modal and switch to the Studio tab with a product that has image slots.",
+              "Confirm the Studio project field, source image selector, action bar, variant grid, and audit history render without React maximum update depth errors.",
+              "Verify the selected Studio project can be changed without repeated autosave requests for the same value."
+            ]
+          },
+          {
+            "id": "image-studio-product-regression-tests",
+            "title": "Run Product modal and Image Studio integration regression tests",
+            "trackId": "image-studio-product-integration",
+            "phase": "audit",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [],
+            "instructions": [],
+            "script": "test:image-studio-product",
+            "durationMs": 13439
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "classify",
+        "generatedAt": "2026-04-30T09:41:39.301Z",
+        "reportPath": "artifacts/improvements/classify-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "image-studio-product-failure-classification",
+            "title": "Classify Product Studio failures by integration boundary",
+            "trackId": "image-studio-product-integration",
+            "phase": "classify",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Separate UI runtime failures from API/config failures before changing Studio service code.",
+              "Classify project persistence issues against /api/v2/products/[id]/studio config reads and writes.",
+              "Classify send/open/accept failures against product-studio service preflight, sequencing, variant, and audit contracts."
+            ]
+          }
+        ],
+        "status": "manual"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-30T09:41:39.533Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 0,
+        "manualStepCount": 1,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "image-studio-product-integration-plan",
+            "title": "Plan Product modal Image Studio recovery work",
+            "trackId": "image-studio-product-integration",
+            "phase": "plan",
+            "mode": "manual",
+            "writes": false,
+            "status": "manual",
+            "outputs": [],
+            "instructions": [
+              "Start with idempotent state updates in Product modal and Studio project synchronization.",
+              "Keep shared primitive changes API-compatible with current Product form usage.",
+              "Validate with npm run test:image-studio-product plus the focused shared primitive tests before broader app checks."
+            ]
+          }
+        ],
+        "status": "manual"
+      },
+      {
+        "phase": "dry-run",
+        "generatedAt": "2026-04-30T04:59:45.752Z",
+        "reportPath": "artifacts/improvements/dry-run-report.json",
+        "executionMode": "executed",
+        "allowWrite": false,
+        "stepCount": 1,
+        "automaticStepCount": 1,
+        "manualStepCount": 0,
+        "passedStepCount": 1,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [
+          {
+            "id": "image-studio-product-regression-tests",
+            "title": "Run Product modal and Image Studio integration regression tests",
+            "trackId": "image-studio-product-integration",
+            "phase": "dry-run",
+            "mode": "automatic",
+            "writes": false,
+            "status": "passed",
+            "outputs": [],
+            "instructions": [],
+            "script": "test:image-studio-product",
+            "durationMs": 13431
+          }
+        ],
+        "status": "passed"
+      },
+      {
+        "phase": "apply",
+        "generatedAt": "2026-04-15T10:54:26.139Z",
+        "reportPath": "artifacts/improvements/apply-report.json",
+        "executionMode": "executed",
+        "allowWrite": true,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
+      }
+    ]
+  }
+}

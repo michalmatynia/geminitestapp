@@ -44,7 +44,9 @@ describe('improvement operations contract', () => {
       'improvements:read-only':
         'node --import tsx scripts/db/run-general-improvement-batch.ts',
       'improvements:application':
-        'node --import tsx scripts/db/run-general-improvement-batch.ts --track ui-consolidation,application-performance,testing-quality-baseline,repo-quality-baseline',
+        'node --import tsx scripts/db/run-general-improvement-batch.ts --track ui-consolidation,application-performance,testing-quality-baseline,image-studio-product-integration,repo-quality-baseline',
+      'improvements:image-studio':
+        'node --import tsx scripts/db/run-general-improvement-batch.ts --track image-studio-product-integration',
       'improvements:products':
         'node --import tsx scripts/db/run-general-improvement-batch.ts --track products-parameter-integrity,products-category-schema-normalization',
       'improvements:refresh-docs':
@@ -67,6 +69,7 @@ describe('improvement operations contract', () => {
       'ui-consolidation',
       'application-performance',
       'testing-quality-baseline',
+      'image-studio-product-integration',
       'repo-quality-baseline',
     ]);
   });

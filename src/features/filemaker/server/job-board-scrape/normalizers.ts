@@ -165,6 +165,9 @@ const resolveCandidateCategory = (
     validationPatterns,
     { label, sourceScope }
   );
+  if (sourceScope === 'section_value') {
+    return patternClassification?.typeKey === 'other' ? 'other' : category;
+  }
   if (patternClassification !== null) return patternClassification.typeKey;
   return category;
 };

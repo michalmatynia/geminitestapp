@@ -96,9 +96,14 @@ function ProductEditorModalInner(props: ProductEditorModalProps & { state: Edito
     suppressNonHydratedEditWarning, isSaveDisabledOverride,
     validationInstanceScopeOverride, submitButtonText, state
   } = props;
+  const { setFormHasUnsavedChanges, setFormIsSaving } = state;
 
-  const onIsSavingChange = useCallback((value: boolean) => state.setFormIsSaving(value), [state]);
-  const onHasUnsavedChangesChange = useCallback((value: boolean) => state.setFormHasUnsavedChanges(value), [state]);
+  const onIsSavingChange = useCallback((value: boolean) => {
+    setFormIsSaving((current) => (current === value ? current : value));
+  }, [setFormIsSaving]);
+  const onHasUnsavedChangesChange = useCallback((value: boolean) => {
+    setFormHasUnsavedChanges((current) => (current === value ? current : value));
+  }, [setFormHasUnsavedChanges]);
 
   return (
     <ProductFormProvider
@@ -144,13 +149,14 @@ export function ProductEditorModal(props: ProductEditorModalProps): React.JSX.El
 
   const shouldApplyNormalizeResultLocally = validationInstanceScopeOverride !== undefined;
   const state = useProductEditorModalState({ isOpen, providerKey, shouldApplyNormalizeResultLocally });
+  const { setFormHasUnsavedChanges, setFormIsSaving } = state;
 
   useEffect(() => {
     if (showSkeleton === true) {
-      state.setFormIsSaving(false);
-      state.setFormHasUnsavedChanges(false);
+      setFormIsSaving((current) => (current === false ? current : false));
+      setFormHasUnsavedChanges((current) => (current === false ? current : false));
     }
-  }, [showSkeleton, state]);
+  }, [setFormHasUnsavedChanges, setFormIsSaving, showSkeleton]);
 
   if (isOpen === false) return null;
 

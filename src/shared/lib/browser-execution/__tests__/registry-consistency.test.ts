@@ -190,6 +190,7 @@ describe('ACTION_SEQUENCES', () => {
       JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS
     );
     expect(seed?.name).toBe('Job Application Apply');
+    expect(seed?.executionSettings.headless).toBe(true);
     expect(seed?.blocks.map((block) => block.refId)).toEqual(
       JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS
     );

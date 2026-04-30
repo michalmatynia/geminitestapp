@@ -98,7 +98,7 @@ export const buildSelectiveTriggerSettingsData = async (
   const preferredConfigKey = `${PATH_CONFIG_PREFIX}${preferredPathId}`;
   const selectiveRecords = await fetchAiPathsSettingsByKeysCached(
     [AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_UI_STATE_KEY, preferredConfigKey],
-    { timeoutMs: TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS }
+    { bypassCache: true, timeoutMs: TRIGGER_SETTINGS_PRELOAD_TIMEOUT_MS }
   );
   const configRecord =
     selectiveRecords.find((item: { key: string }) => item.key === preferredConfigKey) ?? null;

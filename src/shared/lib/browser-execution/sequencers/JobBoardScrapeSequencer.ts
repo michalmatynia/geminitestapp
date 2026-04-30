@@ -769,6 +769,11 @@ export class JobBoardScrapeSequencer {
           const element = document.querySelector(selector);
           return normalizeText(element?.getAttribute(attribute) ?? '');
         };
+        const employerName = normalizeText(
+          document.querySelector(
+            'h2[data-test="text-employerName"][data-scroll-id="employer-name"]'
+          )?.textContent ?? ''
+        );
         const root =
           document.querySelector('main, article, [role="main"]') ??
           document.querySelector('body');
@@ -929,6 +934,7 @@ export class JobBoardScrapeSequencer {
             }
           });
         };
+        addFact('Employer', employerName);
 
         for (const dl of Array.from((root ?? document).querySelectorAll('dl')).slice(0, 20)) {
           let lastTerm = '';
@@ -1090,6 +1096,7 @@ export class JobBoardScrapeSequencer {
           metaDescription: metaValue('meta[name="description"]') || null,
           ogTitle: metaValue('meta[property="og:title"]') || null,
           ogDescription: metaValue('meta[property="og:description"]') || null,
+          employerName: employerName || null,
           headings: unique(
             Array.from(document.querySelectorAll('h1, h2, h3'))
               .filter(isVisible)

@@ -88,6 +88,7 @@ export type JobBoardStructuredSnapshot = {
     websiteUrls?: string[];
   } | null;
   dataScripts?: string[];
+  employerName?: string | null;
   facts?: Array<{ label: string; value: string }>;
   headings?: string[];
   jsonLd?: string[];
@@ -623,6 +624,17 @@ const readHeadingTexts = (html: string): string[] =>
     )
   ).slice(0, 24);
 
+const readPracujEmployerName = (html: string): string | null => {
+  for (const match of html.matchAll(/<h2\b([^>]*)>([\s\S]*?)<\/h2>/gi)) {
+    const attributes = match[1] ?? '';
+    if (readHtmlAttribute(attributes, 'data-test') !== 'text-employerName') continue;
+    if (readHtmlAttribute(attributes, 'data-scroll-id') !== 'employer-name') continue;
+    const text = htmlToDenseText(match[2] ?? '');
+    if (text.length > 0) return text;
+  }
+  return null;
+};
+
 const collectJsonLdRecords = (value: unknown): Record<string, unknown>[] => {
   const records: Record<string, unknown>[] = [];
   const visit = (entry: unknown): void => {
@@ -893,6 +905,7 @@ const buildPlainHtmlStructuredSnapshot = (
   const metaDescription = readMetaContent(rawHtml, ['description']);
   const ogDescription = readMetaContent(rawHtml, ['og:description']);
   const headings = readHeadingTexts(rawHtml);
+  const employerName = cleanStructuredCompanyName(readPracujEmployerName(rawHtml));
   const jsonLd = readJsonLdScripts(rawHtml);
   const records = jsonLd.flatMap((script) => {
     try {
@@ -909,9 +922,9 @@ const buildPlainHtmlStructuredSnapshot = (
     : asRecord(rawJobLocation);
   const jobAddress = asRecord(jobLocation?.['address']);
   const companyAddress = asRecord(hiringOrganization?.['address']);
-  const companyName = cleanStructuredCompanyName(
-    readFirstJsonLdString(hiringOrganization?.['name'])
-  );
+  const companyName =
+    employerName ??
+    cleanStructuredCompanyName(readFirstJsonLdString(hiringOrganization?.['name']));
   const companyLinks = normalizeStringArray([
     ...readJsonLdStrings(hiringOrganization?.['url'], hiringOrganization?.['sameAs']),
     ...collectPracujCompanyProfileLinksFromHtml(rawHtml, fallbackUrl ?? canonical),
@@ -970,7 +983,9 @@ const buildPlainHtmlStructuredSnapshot = (
             websiteUrls: companyLinks,
           }
         : null,
+    employerName,
     facts: [
+      ...(employerName ? [{ label: 'Employer', value: employerName }] : []),
       ...(companyName ? [{ label: 'Company', value: companyName }] : []),
       ...(location ? [{ label: 'Location', value: location }] : []),
       ...jsonLdAddressFacts(jobAddress),
@@ -1044,6 +1059,9 @@ const buildSnapshotSection = (snapshot: JobBoardStructuredSnapshot): string => {
   if (snapshot.ogTitle) lines.push(`og_title: ${clipText(normalizeText(snapshot.ogTitle), 500)}`);
   if (snapshot.ogDescription) {
     lines.push(`og_description: ${clipText(normalizeText(snapshot.ogDescription), 500)}`);
+  }
+  if (snapshot.employerName) {
+    lines.push(`employer_name: ${clipText(normalizeText(snapshot.employerName), 500)}`);
   }
 
   const headings = (snapshot.headings ?? []).map((item) => normalizeText(item)).filter(Boolean);

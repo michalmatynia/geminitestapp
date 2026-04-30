@@ -1,6 +1,6 @@
 import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 
-import { useGraphDataState, usePathMetadataState } from './GraphContext';
+import { useGraphDataState } from './GraphContext';
 
 export function useNodes(): AiNode[] {
   const { nodes } = useGraphDataState();
@@ -19,7 +19,7 @@ export function useNode(nodeId: string | null): AiNode | null {
 }
 
 export function useActivePathConfig(): PathConfig | null {
-  const { activePathId, pathConfigs } = usePathMetadataState();
+  const { activePathId, pathConfigs } = useGraphDataState();
   if (!activePathId) return null;
   return pathConfigs[activePathId] ?? null;
 }

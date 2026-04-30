@@ -5,14 +5,26 @@ const {
   categoryFindMock,
   categoryFindOneMock,
   categoryToArrayMock,
+  customFieldFindMock,
+  customFieldToArrayMock,
   getMongoDbMock,
+  integrationFindMock,
+  integrationToArrayMock,
+  listingFindMock,
+  listingToArrayMock,
   loadMongoBaseExportLookupContextMock,
   loggerInfoMock,
 } = vi.hoisted(() => ({
   categoryFindMock: vi.fn(),
   categoryFindOneMock: vi.fn(),
   categoryToArrayMock: vi.fn(),
+  customFieldFindMock: vi.fn(),
+  customFieldToArrayMock: vi.fn(),
   getMongoDbMock: vi.fn(),
+  integrationFindMock: vi.fn(),
+  integrationToArrayMock: vi.fn(),
+  listingFindMock: vi.fn(),
+  listingToArrayMock: vi.fn(),
   loadMongoBaseExportLookupContextMock: vi.fn(),
   loggerInfoMock: vi.fn(),
 }));
@@ -60,11 +72,34 @@ describe('mongo-product-repository.filters', () => {
     categoryFindOneMock.mockResolvedValue(null);
     categoryToArrayMock.mockResolvedValue([]);
     categoryFindMock.mockReturnValue({ toArray: categoryToArrayMock });
+    customFieldToArrayMock.mockResolvedValue([]);
+    customFieldFindMock.mockReturnValue({ toArray: customFieldToArrayMock });
+    integrationToArrayMock.mockResolvedValue([{ _id: 'integration-tradera' }]);
+    integrationFindMock.mockReturnValue({ toArray: integrationToArrayMock });
+    listingToArrayMock.mockResolvedValue([]);
+    listingFindMock.mockReturnValue({ toArray: listingToArrayMock });
     getMongoDbMock.mockResolvedValue({
-      collection: () => ({
-        findOne: categoryFindOneMock,
-        find: categoryFindMock,
-      }),
+      collection: (name: string) => {
+        if (name === 'integrations') {
+          return {
+            find: integrationFindMock,
+          };
+        }
+        if (name === 'product_listings') {
+          return {
+            find: listingFindMock,
+          };
+        }
+        if (name === 'product_custom_fields') {
+          return {
+            find: customFieldFindMock,
+          };
+        }
+        return {
+          findOne: categoryFindOneMock,
+          find: categoryFindMock,
+        };
+      },
     });
   });
 
@@ -547,6 +582,60 @@ describe('mongo-product-repository.filters', () => {
     });
   });
 
+  it('compiles advanced category not equal Unassigned as assigned category filter', async () => {
+    const filter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'category-assigned',
+            field: 'categoryId',
+            operator: 'neq',
+            value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(categoryFindOneMock).not.toHaveBeenCalled();
+    expect(categoryFindMock).not.toHaveBeenCalled();
+    expect(filter).toEqual({
+      categoryId: { $exists: true, $nin: [null, ''] },
+    });
+  });
+
+  it('compiles advanced category contains Unassigned as unassigned category filter', async () => {
+    const filter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'category-unassigned',
+            field: 'categoryId',
+            operator: 'contains',
+            value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(categoryFindOneMock).not.toHaveBeenCalled();
+    expect(categoryFindMock).not.toHaveBeenCalled();
+    expect(filter).toEqual({
+      $or: [{ categoryId: { $exists: false } }, { categoryId: null }, { categoryId: '' }],
+    });
+  });
+
   it('expands advanced category equality filters to descendant category ids', async () => {
     categoryFindOneMock.mockResolvedValue({
       _id: 'cat-pins',
@@ -580,6 +669,210 @@ describe('mongo-product-repository.filters', () => {
     expect(filter).toEqual({
       categoryId: {
         $in: ['cat-pins', 'cat-anime-pins', 'cat-game-pins'],
+      },
+    });
+  });
+
+  it('compiles advanced Tradera status filters from resolved listing badge statuses', async () => {
+    listingToArrayMock.mockResolvedValue([
+      {
+        productId: 'product-active',
+        integrationId: 'integration-tradera',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+      {
+        productId: 'product-active',
+        integrationId: 'integration-tradera',
+        status: 'auth_required',
+        updatedAt: '2026-04-02T18:10:00.000Z',
+      },
+      {
+        productId: 'product-closed',
+        integrationId: 'integration-tradera',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+      {
+        productId: 'product-closed',
+        integrationId: 'integration-tradera',
+        status: 'closed',
+        updatedAt: '2026-04-02T18:10:00.000Z',
+      },
+    ]);
+
+    const activeFilter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'tradera-active',
+            field: 'traderaStatus',
+            operator: 'eq',
+            value: 'active',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+    const closedFilter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'tradera-closed',
+            field: 'traderaStatus',
+            operator: 'eq',
+            value: 'closed',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(activeFilter).toEqual({
+      $or: [
+        { id: { $in: ['product-active'] } },
+        { _id: { $in: ['product-active'] } },
+      ],
+    });
+    expect(closedFilter).toEqual({
+      $or: [
+        { id: { $in: ['product-closed'] } },
+        { _id: { $in: ['product-closed'] } },
+      ],
+    });
+    expect(integrationFindMock).toHaveBeenCalledWith(
+      { slug: { $in: ['tradera'] } },
+      { projection: { _id: 1 } }
+    );
+    expect(listingFindMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        $or: expect.arrayContaining([
+          { integrationId: { $in: ['integration-tradera'] } },
+        ]),
+      }),
+      expect.objectContaining({
+        projection: expect.objectContaining({
+          productId: 1,
+          status: 1,
+        }),
+      })
+    );
+  });
+
+  it('compiles advanced Tradera not-added filters as products without listings or disabled status', async () => {
+    listingToArrayMock.mockResolvedValue([
+      {
+        productId: 'product-listed',
+        integrationId: 'integration-tradera',
+        status: 'active',
+        updatedAt: '2026-04-02T18:00:00.000Z',
+      },
+    ]);
+    customFieldToArrayMock.mockResolvedValue([
+      {
+        _id: 'field-market',
+        name: 'Market Exclusion',
+        type: 'checkbox_set',
+        options: [{ id: 'opt-tradera', label: 'Tradera' }],
+      },
+    ]);
+
+    const filter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'tradera-not-added',
+            field: 'traderaStatus',
+            operator: 'eq',
+            value: 'not_added',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(filter).toEqual({
+      $and: [
+        {
+          $and: [
+            { id: { $nin: ['product-listed'] } },
+            { _id: { $nin: ['product-listed'] } },
+          ],
+        },
+        {
+          $nor: [
+            {
+              customFields: {
+                $elemMatch: {
+                  fieldId: {
+                    $in: ['market-exclusion', 'base-market-exclusion', 'field-market'],
+                  },
+                  selectedOptionIds: {
+                    $in: ['tradera', 'market-exclusion-tradera', 'opt-tradera'],
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('compiles advanced Tradera disabled filters from Market Exclusion custom fields', async () => {
+    customFieldToArrayMock.mockResolvedValue([
+      {
+        _id: 'field-market',
+        name: 'Market Exclusion',
+        type: 'checkbox_set',
+        options: [{ id: 'opt-tradera', label: 'Tradera' }],
+      },
+    ]);
+
+    const filter = await buildAdvancedMongoWhere(
+      JSON.stringify({
+        type: 'group',
+        id: 'root',
+        combinator: 'and',
+        not: false,
+        rules: [
+          {
+            type: 'condition',
+            id: 'tradera-disabled',
+            field: 'traderaStatus',
+            operator: 'eq',
+            value: 'disabled',
+          },
+        ],
+      }),
+      baseExportContext
+    );
+
+    expect(filter).toEqual({
+      customFields: {
+        $elemMatch: {
+          fieldId: {
+            $in: ['market-exclusion', 'base-market-exclusion', 'field-market'],
+          },
+          selectedOptionIds: {
+            $in: ['tradera', 'market-exclusion-tradera', 'opt-tradera'],
+          },
+        },
       },
     });
   });

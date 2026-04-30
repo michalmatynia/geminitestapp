@@ -1,6 +1,6 @@
 ---
 owner: 'Platform Team'
-last_reviewed: '2026-04-15'
+last_reviewed: '2026-04-30'
 status: 'generated'
 doc_type: 'generated'
 scope: 'cross-feature'
@@ -8,14 +8,14 @@ canonical: true
 ---
 # Application performance Improvement Track
 
-Generated at: 2026-04-15T10:54:26.142Z
+Generated at: 2026-04-30T09:41:39.599Z
 
 ## Snapshot
 
 - Track id: `application-performance`
 - Category: `performance`
 - Included in default read-only bundle: yes
-- Overall status: `passed`
+- Overall status: `attention`
 - Latest report timestamp: 2026-04-15T10:54:26.139Z
 
 ## Purpose
@@ -40,8 +40,8 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 | Phase | Status | Steps | Automatic | Manual | Failed | Blocked |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | `audit` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
-| `classify` | `passed` | 1 | 1 | 0 | 0 | 0 |
-| `plan` | `manual` | 1 | 0 | 1 | 0 | 0 |
+| `classify` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
+| `plan` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `dry-run` | `not-selected` | 0 | 0 | 0 | 0 | 0 |
 | `apply` | `manual` | 1 | 0 | 1 | 0 | 0 |
 
@@ -49,8 +49,6 @@ Adds app-level performance regression checks to the improvement portfolio so bro
 
 | Phase | Status | Mode | Step | Command |
 | --- | --- | --- | --- | --- |
-| `classify` | `passed` | `automatic` | `application-performance-baseline` | `perf:ops:baseline` |
-| `plan` | `manual` | `manual` | `application-performance-plan` | manual |
 | `apply` | `manual` | `manual` | `application-performance-apply` | manual |
 
 ## Related Docs

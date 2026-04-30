@@ -260,16 +260,21 @@ export const useProductFormStudioController = (
     setStudioProjectIdState,
     toast,
   });
-  const { currentStudioProjectRef } = refs;
+  const { currentStudioProjectRef, persistedStudioProjectRef } = refs;
   const setStudioProjectId = useCallback(
     (projectId: string | null): void => {
       const normalized = typeof projectId === 'string' ? projectId.trim() : '';
       const nextProjectId = normalized.length > 0 ? normalized : null;
+      if (currentStudioProjectRef.current === nextProjectId) {
+        setStudioProjectIdState((current) => (current === nextProjectId ? current : nextProjectId));
+        return;
+      }
       currentStudioProjectRef.current = nextProjectId;
-      setStudioProjectIdState(nextProjectId);
+      setStudioProjectIdState((current) => (current === nextProjectId ? current : nextProjectId));
+      if (persistedStudioProjectRef.current === nextProjectId) return;
       persistStudioConfig(nextProjectId);
     },
-    [currentStudioProjectRef, persistStudioConfig]
+    [currentStudioProjectRef, persistedStudioProjectRef, persistStudioConfig]
   );
   const stateValue = useMemo(
     (): ProductFormStudioStateContextType => ({

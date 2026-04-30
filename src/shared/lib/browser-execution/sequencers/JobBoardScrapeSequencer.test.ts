@@ -179,6 +179,78 @@ describe('JobBoardScrapeSequencer', () => {
     expect(html).toContain('Acme builds digital products');
   });
 
+  it('extracts Pracuj.pl employer name from the exact offer selector', async () => {
+    const offerUrl = 'https://www.pracuj.pl/praca/backend-developer-warszawa,oferta,1001';
+    const offerHtml = `
+      <main>
+        <h1>Backend Developer</h1>
+        <h2 data-test="text-employerName" data-scroll-id="employer-name">
+          Real Employer Sp. z o.o.
+        </h2>
+      </main>
+    `;
+    const hiddenLocator = createLocator(false);
+    const bodyLocator = createLocator(true);
+    bodyLocator.textContent.mockResolvedValue('Backend Developer Real Employer Sp. z o.o.');
+    const page = {
+      evaluate: vi.fn(async (callback: unknown, input: unknown) => {
+        const window = new Window({ url: offerUrl });
+        window.document.write(offerHtml);
+        const globalRecord = globalThis as typeof globalThis & {
+          document?: unknown;
+          Element?: unknown;
+          HTMLElement?: unknown;
+          window?: unknown;
+        };
+        const previous = {
+          document: globalRecord.document,
+          Element: globalRecord.Element,
+          HTMLElement: globalRecord.HTMLElement,
+          window: globalRecord.window,
+        };
+        globalRecord.window = window;
+        globalRecord.document = window.document;
+        globalRecord.Element = window.Element;
+        globalRecord.HTMLElement = window.HTMLElement;
+        try {
+          return (callback as (value: unknown) => unknown)(input);
+        } finally {
+          globalRecord.window = previous.window;
+          globalRecord.document = previous.document;
+          globalRecord.Element = previous.Element;
+          globalRecord.HTMLElement = previous.HTMLElement;
+          window.close();
+        }
+      }),
+      frames: vi.fn(() => []),
+      locator: vi.fn((selector: string) => (selector === 'body' ? bodyLocator : hiddenLocator)),
+      mainFrame: vi.fn(() => null),
+      url: vi.fn(() => offerUrl),
+      waitForLoadState: vi.fn(async () => undefined),
+    } as unknown as Page;
+    const sequencer = new JobBoardScrapeSequencer(
+      { page, emit: vi.fn(), log: vi.fn() },
+      {
+        mode: 'fetch_offer',
+        provider: 'pracuj_pl',
+        sourceUrl: offerUrl,
+      }
+    );
+    (sequencer as unknown as { provider: string; sourceUrl: string }).provider = 'pracuj_pl';
+    (sequencer as unknown as { provider: string; sourceUrl: string }).sourceUrl = offerUrl;
+
+    await (
+      sequencer as unknown as {
+        extractOfferSnapshot: () => Promise<void>;
+      }
+    ).extractOfferSnapshot();
+
+    const html = (sequencer as unknown as { html: string | null }).html ?? '';
+    expect(html).toContain('"employerName":"Real Employer Sp. z o.o."');
+    expect(html).toContain('"label":"Employer"');
+    expect(html).toContain('"value":"Real Employer Sp. z o.o."');
+  });
+
   it('extracts company contact and social data from profile page JSON-LD', async () => {
     const offerUrl = 'https://www.pracuj.pl/praca/developer-warszawa,oferta,1001';
     const companyUrl = 'https://www.pracuj.pl/pracodawcy/acme,123';

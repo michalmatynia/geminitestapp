@@ -32,6 +32,7 @@ const ProductForm = dynamic(loadProductForm, {
 const FileManager = dynamic(() => import('@/features/files/public').then((mod) => mod.default), {
   ssr: false,
 });
+const PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS = [...PRODUCT_EDITOR_CONTEXT_ROOT_IDS];
 
 export function ProductFormModalBridge(props: {
   onIsSavingChange: (value: boolean) => void;
@@ -150,7 +151,7 @@ export function ProductFormModalBody(props: {
     <ContextRegistryPageProvider
       pageId='admin:product-editor-modal'
       title='Product Editor Modal'
-      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
+      rootNodeIds={PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS}
     >
       <ProductLeafCategoriesContextRegistrySource sourceId='product-modal-leaf-categories' />
       <ProductFormModalActions disableTriggerButtons={props.disableTriggerButtons === true} onRunQueued={handleRunQueued} />

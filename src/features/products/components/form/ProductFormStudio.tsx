@@ -26,6 +26,8 @@ type ProductStudioRegistrySource = {
   resolved: ReturnType<typeof buildProductStudioWorkspaceContextBundle>;
 } | null;
 
+const PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS = [...PRODUCT_EDITOR_CONTEXT_ROOT_IDS];
+
 function StudioUnavailableSection({ description }: { description: string }): React.JSX.Element {
   return (
     <FormSection title='Studio' description={description}>
@@ -128,7 +130,7 @@ export default function ProductFormStudio(): React.JSX.Element {
     <ContextRegistryPageProvider
       pageId='admin:product-editor'
       title='Product Editor'
-      rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}
+      rootNodeIds={PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS}
     >
       <ProductStudioProvider>
         <ProductFormStudioInner />

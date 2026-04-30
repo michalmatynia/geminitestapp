@@ -2,6 +2,12 @@ import { type Filter } from 'mongodb';
 
 import { getProductAdvancedFilterMetrics } from '@/shared/contracts/products/filters';
 import { type ProductAdvancedFilterCondition, type ProductAdvancedFilterRule, type ProductFilters } from '@/shared/contracts/products';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { TRADERA_INTEGRATION_SLUGS } from '@/shared/lib/integration-slugs';
+import {
+  MARKET_EXCLUSION_FIELD_NAME,
+  normalizeBaseMarketplaceCheckboxKey,
+} from '@/shared/lib/integrations/base-marketplace-checkboxes';
 import { PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE } from '@/shared/lib/products/constants';
 import { logger } from '@/shared/utils/logger';
 
@@ -9,9 +15,14 @@ import { type ProductDocument } from './mongo-product-repository-mappers';
 import { buildMongoExpandedCategoryFilter } from './mongo-category-filter';
 import {
   appendAndCondition,
+  buildLookupValues,
   buildProductIdFilter,
   buildLookupFilterForIds,
   escapeRegex,
+  integrationCollectionName,
+  isEmptyFilter,
+  listingCollectionName,
+  normalizeLookupId,
   parseAdvancedFilterGroup,
   toAdvancedBooleanValue,
   toAdvancedDateValue,
@@ -20,7 +31,75 @@ import {
   toAdvancedStringValue,
   loadMongoBaseExportLookupContext,
   type BaseExportLookupContext,
+  type IntegrationSlugDocument,
+  type ProductListingFilterDocument,
 } from './mongo-product-repository.helpers';
+
+const PRODUCT_CUSTOM_FIELD_COLLECTION = 'product_custom_fields';
+const TRADERA_NOT_ADDED_STATUS = 'not_added';
+const TRADERA_NOT_STARTED_STATUS = 'not_started';
+const TRADERA_DISABLED_STATUS = 'disabled';
+const TRADERA_STATUS_NO_MATCH_ID = '__no_tradera_status_products__';
+const TRADERA_MARKET_EXCLUSION_FIELD_ID_FALLBACKS = ['market-exclusion', 'base-market-exclusion'];
+const TRADERA_MARKET_EXCLUSION_OPTION_ID_FALLBACKS = [
+  'tradera',
+  'market-exclusion-tradera',
+];
+const TRADERA_SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+const TRADERA_CLOSED_STATUS = 'closed';
+const TRADERA_STATUS_RANK: Record<string, number> = {
+  active: 5,
+  success: 5,
+  completed: 5,
+  listed: 5,
+  ok: 5,
+  running: 4,
+  processing: 4,
+  in_progress: 4,
+  pending: 3,
+  queued: 3,
+  queued_relist: 3,
+  closed: 2,
+  unsold: 2,
+  ended: 2,
+  sold: 2,
+  expired: 2,
+  failed: 1,
+  needs_login: 1,
+  auth_required: 1,
+  error: 1,
+  cancelled: 1,
+  disabled: 0,
+  archived: 0,
+  removed: 0,
+};
+
+type ProductCustomFieldFilterDocument = {
+  _id?: unknown;
+  id?: string;
+  name?: string;
+  type?: string;
+  options?: Array<{ id?: string; label?: string }>;
+};
+
+type TraderaStatusCandidateMeta = {
+  productId: string;
+  status: string;
+  updatedAtMs: number;
+  rank: number;
+  success: boolean;
+};
+
+type TraderaStatusLookupContext = {
+  disabledCondition: Filter<ProductDocument>;
+  listedProductIds: string[];
+  productIdsByStatus: Map<string, string[]>;
+};
+
+type AdvancedMongoFilterContext = {
+  baseExport: BaseExportLookupContext;
+  loadTraderaStatus: () => Promise<TraderaStatusLookupContext>;
+};
 
 const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
   ({
@@ -276,10 +355,19 @@ const buildMongoCategoryCondition = async (
   }
 
   const value = toAdvancedStringValue(condition.value);
-  if (!value) return null;
+  if (value.length === 0) return null;
 
   if (value === PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE) {
-    return condition.operator === 'eq' ? buildMongoUnassignedCategoryFilter() : null;
+    if (condition.operator === 'eq' || condition.operator === 'contains') {
+      return buildMongoUnassignedCategoryFilter();
+    }
+    if (condition.operator === 'neq') {
+      const assignedCategoryFilter: Filter<ProductDocument> = {
+        categoryId: { $exists: true, $nin: [null, ''] },
+      };
+      return assignedCategoryFilter;
+    }
+    return null;
   }
 
   if (condition.operator === 'contains') {
@@ -298,6 +386,389 @@ const buildMongoCategoryCondition = async (
     });
     if (!eqCondition) return null;
     return { $nor: [eqCondition] } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const normalizeTraderaStatusValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, '_');
+  if (normalized.length === 0) return null;
+  if (normalized === TRADERA_NOT_STARTED_STATUS || normalized === 'notadded') {
+    return TRADERA_NOT_ADDED_STATUS;
+  }
+  return normalized;
+};
+
+const normalizeTraderaStatusValues = (value: unknown): string[] => {
+  const rawValues = Array.isArray(value) ? value : [value];
+  const seen = new Set<string>();
+  const statuses: string[] = [];
+  rawValues.forEach((entry: unknown) => {
+    const normalized = normalizeTraderaStatusValue(entry);
+    if (normalized === null || seen.has(normalized)) return;
+    seen.add(normalized);
+    statuses.push(normalized);
+  });
+  return statuses;
+};
+
+const readRecord = (value: unknown): Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+const resolvePendingTraderaExecutionAction = (marketplaceData: unknown): string | null => {
+  const traderaData = readRecord(readRecord(marketplaceData)['tradera']);
+  const pendingExecution = readRecord(traderaData['pendingExecution']);
+  return normalizeTraderaStatusValue(pendingExecution['action']);
+};
+
+const toTimestampMs = (value: unknown): number => {
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isNaN(time) ? 0 : time;
+  }
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'string') {
+    const time = Date.parse(value);
+    return Number.isNaN(time) ? 0 : time;
+  }
+  return 0;
+};
+
+const buildTraderaStatusCandidateMeta = (
+  doc: ProductListingFilterDocument
+): TraderaStatusCandidateMeta | null => {
+  const productId = normalizeLookupId(doc.productId);
+  if (productId.length === 0) return null;
+  const status = normalizeTraderaStatusValue(doc.status) ?? 'unknown';
+  return {
+    productId,
+    status,
+    updatedAtMs: toTimestampMs(doc.updatedAt),
+    rank: TRADERA_STATUS_RANK[status] ?? -1,
+    success: TRADERA_SUCCESS_STATUSES.has(status),
+  };
+};
+
+const shouldReplaceTraderaClosedCandidate = (
+  currentMeta: TraderaStatusCandidateMeta,
+  nextMeta: TraderaStatusCandidateMeta
+): boolean | null => {
+  const currentIsClosed = currentMeta.status === TRADERA_CLOSED_STATUS;
+  const nextIsClosed = nextMeta.status === TRADERA_CLOSED_STATUS;
+  if (!currentIsClosed && !nextIsClosed) return null;
+  if (currentIsClosed !== nextIsClosed) {
+    const otherMeta = currentIsClosed ? nextMeta : currentMeta;
+    if (!otherMeta.success) {
+      return nextIsClosed;
+    }
+  }
+  if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+    return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+  }
+  return nextIsClosed && !currentIsClosed;
+};
+
+const shouldReplaceTraderaStatusCandidate = (
+  currentMeta: TraderaStatusCandidateMeta,
+  nextMeta: TraderaStatusCandidateMeta
+): boolean => {
+  const closedDecision = shouldReplaceTraderaClosedCandidate(currentMeta, nextMeta);
+  if (closedDecision !== null) return closedDecision;
+
+  if (currentMeta.success !== nextMeta.success) return nextMeta.success;
+
+  if (!currentMeta.success && !nextMeta.success) {
+    if (nextMeta.updatedAtMs !== currentMeta.updatedAtMs) {
+      return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+    }
+    return nextMeta.rank > currentMeta.rank;
+  }
+
+  if (nextMeta.rank !== currentMeta.rank) return nextMeta.rank > currentMeta.rank;
+
+  return nextMeta.updatedAtMs > currentMeta.updatedAtMs;
+};
+
+const buildTraderaListingFilter = (
+  integrationLookupValues: ReturnType<typeof buildLookupValues>
+): Filter<ProductListingFilterDocument> => {
+  const filters: Array<Filter<ProductListingFilterDocument>> = [
+    { 'marketplaceData.marketplace': 'tradera' } as Filter<ProductListingFilterDocument>,
+    {
+      'marketplaceData.source': { $regex: 'tradera', $options: 'i' },
+    } as Filter<ProductListingFilterDocument>,
+    { 'marketplaceData.tradera': { $exists: true } } as Filter<ProductListingFilterDocument>,
+    {
+      integrationId: { $regex: 'tradera', $options: 'i' },
+    } as Filter<ProductListingFilterDocument>,
+  ];
+
+  if (integrationLookupValues.length > 0) {
+    filters.unshift({
+      integrationId: { $in: integrationLookupValues },
+    } as Filter<ProductListingFilterDocument>);
+  }
+
+  return { $or: filters } as Filter<ProductListingFilterDocument>;
+};
+
+const resolveProductCustomFieldId = (doc: ProductCustomFieldFilterDocument): string => {
+  const explicitId = normalizeLookupId(doc.id);
+  return explicitId.length > 0 ? explicitId : normalizeLookupId(doc._id);
+};
+
+const buildTraderaDisabledCondition = (
+  customFieldDocs: ProductCustomFieldFilterDocument[]
+): Filter<ProductDocument> => {
+  const marketExclusionNameKey = normalizeBaseMarketplaceCheckboxKey(
+    MARKET_EXCLUSION_FIELD_NAME
+  );
+  const marketExclusionFieldIds = new Set<string>(TRADERA_MARKET_EXCLUSION_FIELD_ID_FALLBACKS);
+  const traderaOptionIds = new Set<string>(TRADERA_MARKET_EXCLUSION_OPTION_ID_FALLBACKS);
+
+  customFieldDocs.forEach((doc: ProductCustomFieldFilterDocument) => {
+    if (doc.type !== 'checkbox_set') return;
+    if (normalizeBaseMarketplaceCheckboxKey(doc.name ?? '') !== marketExclusionNameKey) return;
+
+    const fieldId = resolveProductCustomFieldId(doc);
+    if (fieldId.length > 0) marketExclusionFieldIds.add(fieldId);
+
+    if (!Array.isArray(doc.options)) return;
+    doc.options.forEach((option) => {
+      if (normalizeBaseMarketplaceCheckboxKey(option.label ?? '') !== 'tradera') return;
+      const optionId = typeof option.id === 'string' ? option.id.trim() : '';
+      if (optionId.length > 0) traderaOptionIds.add(optionId);
+    });
+  });
+
+  return {
+    customFields: {
+      $elemMatch: {
+        fieldId: { $in: Array.from(marketExclusionFieldIds) },
+        selectedOptionIds: { $in: Array.from(traderaOptionIds) },
+      },
+    },
+  } as Filter<ProductDocument>;
+};
+
+const buildMongoNoTraderaStatusProductsCondition = (): Filter<ProductDocument> =>
+  ({ id: TRADERA_STATUS_NO_MATCH_ID }) as Filter<ProductDocument>;
+
+const buildMongoProductIdsInCondition = (productIds: string[]): Filter<ProductDocument> => {
+  if (productIds.length === 0) return buildMongoNoTraderaStatusProductsCondition();
+  return {
+    $or: [
+      { id: { $in: productIds } },
+      { _id: { $in: buildLookupValues(productIds) } },
+    ],
+  } as Filter<ProductDocument>;
+};
+
+const buildMongoProductIdsNotInCondition = (productIds: string[]): Filter<ProductDocument> => {
+  if (productIds.length === 0) return {};
+  return {
+    $and: [
+      { id: { $nin: productIds } },
+      { _id: { $nin: buildLookupValues(productIds) } },
+    ],
+  } as Filter<ProductDocument>;
+};
+
+const combineMongoAndFilters = (
+  filters: Array<Filter<ProductDocument> | null>
+): Filter<ProductDocument> => {
+  const meaningfulFilters = filters.filter(
+    (filter): filter is Filter<ProductDocument> => filter !== null && !isEmptyFilter(filter)
+  );
+  if (meaningfulFilters.length === 0) return {};
+  if (meaningfulFilters.length === 1 && meaningfulFilters[0] !== undefined) {
+    return meaningfulFilters[0];
+  }
+  return { $and: meaningfulFilters } as Filter<ProductDocument>;
+};
+
+const combineMongoOrFilters = (
+  filters: Array<Filter<ProductDocument> | null>
+): Filter<ProductDocument> => {
+  const meaningfulFilters = filters.filter(
+    (filter): filter is Filter<ProductDocument> => filter !== null
+  );
+  if (meaningfulFilters.some((filter: Filter<ProductDocument>) => isEmptyFilter(filter))) {
+    return {};
+  }
+  if (meaningfulFilters.length === 0) return buildMongoNoTraderaStatusProductsCondition();
+  if (meaningfulFilters.length === 1 && meaningfulFilters[0] !== undefined) {
+    return meaningfulFilters[0];
+  }
+  return { $or: meaningfulFilters } as Filter<ProductDocument>;
+};
+
+const buildMongoNotCondition = (filter: Filter<ProductDocument>): Filter<ProductDocument> =>
+  ({ $nor: [filter] }) as Filter<ProductDocument>;
+
+const loadMongoTraderaStatusLookupContext = async (): Promise<TraderaStatusLookupContext> => {
+  const db = await getMongoDb();
+  const [integrations, customFieldDocs] = await Promise.all([
+    db
+      .collection<IntegrationSlugDocument>(integrationCollectionName)
+      .find(
+        { slug: { $in: Array.from(TRADERA_INTEGRATION_SLUGS) } },
+        { projection: { _id: 1 } }
+      )
+      .toArray(),
+    db
+      .collection<ProductCustomFieldFilterDocument>(PRODUCT_CUSTOM_FIELD_COLLECTION)
+      .find(
+        { type: 'checkbox_set' },
+        { projection: { _id: 1, id: 1, name: 1, type: 1, options: 1 } }
+      )
+      .toArray(),
+  ]);
+
+  const integrationIds = integrations
+    .map((integration: IntegrationSlugDocument) => normalizeLookupId(integration._id))
+    .filter((id: string) => id.length > 0);
+  const integrationLookupValues = buildLookupValues(integrationIds);
+  const listingDocs = await db
+    .collection<ProductListingFilterDocument>(listingCollectionName)
+    .find(buildTraderaListingFilter(integrationLookupValues), {
+      projection: {
+        productId: 1,
+        integrationId: 1,
+        status: 1,
+        marketplaceData: 1,
+        updatedAt: 1,
+      },
+    })
+    .toArray();
+
+  const listedProductIds = new Set<string>();
+  const candidateByProductId = new Map<string, TraderaStatusCandidateMeta>();
+  const productsWithPendingStatusCheck = new Set<string>();
+
+  listingDocs.forEach((doc: ProductListingFilterDocument) => {
+    const candidate = buildTraderaStatusCandidateMeta(doc);
+    if (candidate === null) return;
+
+    listedProductIds.add(candidate.productId);
+    if (resolvePendingTraderaExecutionAction(doc.marketplaceData) === 'check_status') {
+      productsWithPendingStatusCheck.add(candidate.productId);
+    }
+
+    const current = candidateByProductId.get(candidate.productId);
+    if (current === undefined || shouldReplaceTraderaStatusCandidate(current, candidate)) {
+      candidateByProductId.set(candidate.productId, candidate);
+    }
+  });
+
+  productsWithPendingStatusCheck.forEach((productId: string) => {
+    candidateByProductId.set(productId, {
+      productId,
+      status: 'processing',
+      updatedAtMs: Date.now(),
+      rank: TRADERA_STATUS_RANK.processing,
+      success: false,
+    });
+  });
+
+  const productIdsByStatus = new Map<string, string[]>();
+  candidateByProductId.forEach((candidate: TraderaStatusCandidateMeta) => {
+    const existing = productIdsByStatus.get(candidate.status) ?? [];
+    existing.push(candidate.productId);
+    productIdsByStatus.set(candidate.status, existing);
+  });
+
+  return {
+    disabledCondition: buildTraderaDisabledCondition(customFieldDocs),
+    listedProductIds: Array.from(listedProductIds),
+    productIdsByStatus,
+  };
+};
+
+const getTraderaStatusLookupContext = (
+  context: AdvancedMongoFilterContext
+): Promise<TraderaStatusLookupContext> => context.loadTraderaStatus();
+
+const createAdvancedMongoFilterContext = (
+  baseExport: BaseExportLookupContext
+): AdvancedMongoFilterContext => {
+  let traderaStatusPromise: Promise<TraderaStatusLookupContext> | null = null;
+
+  return {
+    baseExport,
+    loadTraderaStatus: (): Promise<TraderaStatusLookupContext> => {
+      if (traderaStatusPromise === null) {
+        traderaStatusPromise = loadMongoTraderaStatusLookupContext();
+      }
+      return traderaStatusPromise;
+    },
+  };
+};
+
+const buildMongoTraderaNotAddedCondition = (
+  context: TraderaStatusLookupContext
+): Filter<ProductDocument> =>
+  combineMongoAndFilters([
+    buildMongoProductIdsNotInCondition(context.listedProductIds),
+    buildMongoNotCondition(context.disabledCondition),
+  ]);
+
+const buildMongoTraderaStatusPositiveCondition = (
+  statuses: string[],
+  context: TraderaStatusLookupContext
+): Filter<ProductDocument> => {
+  const filters: Array<Filter<ProductDocument> | null> = [];
+  const listingStatusProductIds = new Set<string>();
+
+  statuses.forEach((status: string) => {
+    if (status === TRADERA_NOT_ADDED_STATUS) {
+      filters.push(buildMongoTraderaNotAddedCondition(context));
+      return;
+    }
+
+    if (status === TRADERA_DISABLED_STATUS) {
+      filters.push(context.disabledCondition);
+    }
+
+    (context.productIdsByStatus.get(status) ?? []).forEach((productId: string) => {
+      listingStatusProductIds.add(productId);
+    });
+  });
+
+  if (listingStatusProductIds.size > 0) {
+    filters.push(buildMongoProductIdsInCondition(Array.from(listingStatusProductIds)));
+  }
+
+  return combineMongoOrFilters(filters);
+};
+
+const buildMongoTraderaStatusCondition = async (
+  condition: ProductAdvancedFilterCondition,
+  advancedContext: AdvancedMongoFilterContext
+): Promise<Filter<ProductDocument> | null> => {
+  const context = await getTraderaStatusLookupContext(advancedContext);
+
+  if (condition.operator === 'isEmpty') {
+    return buildMongoTraderaNotAddedCondition(context);
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return buildMongoNotCondition(buildMongoTraderaNotAddedCondition(context));
+  }
+
+  const statuses = normalizeTraderaStatusValues(condition.value);
+  if (statuses.length === 0) return null;
+
+  if (condition.operator === 'eq' || condition.operator === 'in') {
+    return buildMongoTraderaStatusPositiveCondition(statuses, context);
+  }
+
+  if (condition.operator === 'neq' || condition.operator === 'notIn') {
+    return buildMongoNotCondition(buildMongoTraderaStatusPositiveCondition(statuses, context));
   }
 
   return null;
@@ -488,7 +959,7 @@ export const buildMongoBaseExportedCondition = (
 
 const compileAdvancedMongoCondition = async (
   condition: ProductAdvancedFilterCondition,
-  context: BaseExportLookupContext
+  context: AdvancedMongoFilterContext
 ): Promise<Filter<ProductDocument> | null> => {
   if (condition.field === 'id') return buildMongoIdCondition(condition);
   if (condition.field === 'sku') return buildMongoStringFieldCondition(['sku'], condition);
@@ -506,6 +977,9 @@ const compileAdvancedMongoCondition = async (
   if (condition.field === 'titleTheme')
     return buildMongoStructuredTitleFieldCondition('structuredTitle.theme', 4, condition);
   if (condition.field === 'categoryId') return buildMongoCategoryCondition(condition);
+  if (condition.field === 'traderaStatus') {
+    return buildMongoTraderaStatusCondition(condition, context);
+  }
   if (condition.field === 'catalogId')
     return buildMongoNestedIdArrayCondition('catalogs.catalogId', 'catalogs', condition);
   if (condition.field === 'tagId')
@@ -518,8 +992,12 @@ const compileAdvancedMongoCondition = async (
   if (condition.field === 'baseExported') {
     const value = toAdvancedBooleanValue(condition.value);
     if (value === null) return null;
-    if (condition.operator === 'eq') return buildMongoBaseExportedCondition(value, context);
-    if (condition.operator === 'neq') return buildMongoBaseExportedCondition(!value, context);
+    if (condition.operator === 'eq') {
+      return buildMongoBaseExportedCondition(value, context.baseExport);
+    }
+    if (condition.operator === 'neq') {
+      return buildMongoBaseExportedCondition(!value, context.baseExport);
+    }
     return null;
   }
   if (condition.field === 'baseProductId')
@@ -530,7 +1008,7 @@ const compileAdvancedMongoCondition = async (
 
 const compileAdvancedMongoRule = async (
   rule: ProductAdvancedFilterRule,
-  context: BaseExportLookupContext
+  context: AdvancedMongoFilterContext
 ): Promise<Filter<ProductDocument> | null> => {
   if (rule.type === 'condition') {
     return compileAdvancedMongoCondition(rule, context);
@@ -563,7 +1041,10 @@ export const buildAdvancedMongoWhere = async (
   if (!parsedGroup) return null;
   const metrics = getProductAdvancedFilterMetrics(parsedGroup);
   const compileStart = Date.now();
-  const compiled = await compileAdvancedMongoRule(parsedGroup, context);
+  const compiled = await compileAdvancedMongoRule(
+    parsedGroup,
+    createAdvancedMongoFilterContext(context)
+  );
   logger.info('[products.advanced-filter.mongo] compiled', {
     rules: metrics.rules,
     depth: metrics.depth,

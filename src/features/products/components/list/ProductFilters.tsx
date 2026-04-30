@@ -42,6 +42,31 @@ const BASE_EXPORTED_OPTIONS: Array<LabeledOptionDto<'__all__' | 'true' | 'false'
   { value: 'false', label: 'Not exported to Base.com' },
 ];
 
+const TRADERA_STATUS_OPTIONS: Array<LabeledOptionDto<string>> = [
+  { value: 'disabled', label: 'Disabled' },
+  { value: 'not_added', label: 'Not added' },
+  { value: 'active', label: 'Active' },
+  { value: 'closed', label: 'Closed' },
+  { value: 'ended', label: 'Ended' },
+  { value: 'sold', label: 'Sold' },
+  { value: 'unsold', label: 'Unsold' },
+  { value: 'queued', label: 'Queued' },
+  { value: 'queued_relist', label: 'Queued relist' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'running', label: 'Running' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'listed', label: 'Listed' },
+  { value: 'failed', label: 'Failed' },
+  { value: 'auth_required', label: 'Auth required' },
+  { value: 'needs_login', label: 'Needs login' },
+  { value: 'error', label: 'Error' },
+  { value: 'removed', label: 'Removed' },
+  { value: 'archived', label: 'Archived' },
+  { value: 'expired', label: 'Expired' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+
 const STOCK_OPERATOR_OPTIONS: Array<
   LabeledOptionDto<'__all__' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'>
 > = [
@@ -56,10 +81,7 @@ import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
 import type { FilterField } from '@/shared/contracts/ui/panels';
-import {
-  PRODUCT_CATEGORY_FILTER_ALL_VALUE,
-  PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE,
-} from '@/shared/lib/products/constants';
+import { PRODUCT_CATEGORY_FILTER_ALL_VALUE } from '@/shared/lib/products/constants';
 
 import {
   createAdvancedPreset,
@@ -183,12 +205,12 @@ export function ProductFilters({
     .map((catalog) => normalizeString(catalog.id))
     .filter((id) => id.length > 0);
   const { data: rawSingleCatalogCategories } = useProductCategories(selectedCatalogId, {
-    enabled: isFilterPanelExpanded,
+    enabled: filterMetadataEnabled,
   });
   const { data: rawCrossCatalogCategories } = useProductCategoriesForCatalogs(
     selectedCatalogId || catalogFilter === 'unassigned' ? [] : catalogIds,
     {
-      enabled: isFilterPanelExpanded,
+      enabled: filterMetadataEnabled,
     }
   );
   const { data: rawAvailableTags } = useFilterTags(selectedCatalogId, {
@@ -261,10 +283,9 @@ export function ProductFilters({
       label: normalizeString(tag.name) || normalizeString(tag.id),
     })),
     categoryId: categoryOptions.filter(
-      (option) =>
-        option.value !== PRODUCT_CATEGORY_FILTER_ALL_VALUE &&
-        option.value !== PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE
+      (option) => option.value !== PRODUCT_CATEGORY_FILTER_ALL_VALUE
     ),
+    traderaStatus: TRADERA_STATUS_OPTIONS,
     producerId: producers.map((producer) => ({
       value: normalizeString(producer.id),
       label: normalizeString(producer.name) || normalizeString(producer.id),

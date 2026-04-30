@@ -204,8 +204,10 @@ export function ProductFormCoreProvider({
   );
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [handleSubmitFn, setHandleSubmitFn] = useState<(e?: BaseSyntheticEvent) => Promise<void>>(
-    () => async () => {}
+  const handleSubmitRef = useRef<(e?: BaseSyntheticEvent) => Promise<void>>(async () => {});
+  const handleSubmitFn = useCallback(
+    (event?: BaseSyntheticEvent): Promise<void> => handleSubmitRef.current(event),
+    []
   );
   const [ConfirmationModal, setConfirmationModal] = useState<React.ComponentType>(() => () => null);
   const [uploading, setUploading] = useState(false);
@@ -229,11 +231,13 @@ export function ProductFormCoreProvider({
   }, [defaultValuesSignature, methods]);
 
   const updateHandleSubmit = useCallback((fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
-    setHandleSubmitFn(() => fn);
+    handleSubmitRef.current = fn;
   }, []);
 
   const updateConfirmationModal = useCallback((component: React.ComponentType): void => {
-    setConfirmationModal(() => component);
+    setConfirmationModal((current: React.ComponentType): React.ComponentType =>
+      current === component ? current : component
+    );
   }, []);
 
   const toggleNote = (noteId: string): void => {

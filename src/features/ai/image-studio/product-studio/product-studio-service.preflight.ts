@@ -94,6 +94,7 @@ export const resolveProductStudioSequencePreflight = async (params: {
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,
+    brainConfigWarning,
   } = await resolveStudioSettingsBundle(resolved.projectId);
   const activeSequenceSteps = resolveImageStudioSequenceActiveSteps(
     parsedStudioSettings.projectSequencing
@@ -107,7 +108,11 @@ export const resolveProductStudioSequencePreflight = async (params: {
     requestedMode: requestedSequenceMode,
     modelId,
   });
-  const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
+  const warnings = [
+    ...routeDecision.warnings,
+    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
+    ...(brainConfigWarning !== null ? [brainConfigWarning] : []),
+  ];
   const sequenceReadiness = resolveSequenceReadiness({
     sequencing,
     sequencingDiagnostics,

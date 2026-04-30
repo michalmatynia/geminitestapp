@@ -595,7 +595,7 @@ describe('loadPathConfigsFromSettings', () => {
     );
   });
 
-  it('preserves mapping-mode custom starter derivatives during trigger load', async () => {
+  it('canonicalizes zero-overlap starter derivatives during trigger load', async () => {
     const pathId = 'path-live-parameter-inference-broken';
     const data: Array<{ key: string; value: string }> = [
       {
@@ -609,17 +609,12 @@ describe('loadPathConfigsFromSettings', () => {
     ];
 
     const loaded = await loadPathConfigsFromSettings(data);
-    const databaseNode = loaded.configs[pathId]?.nodes.find((node) => node.type === 'database');
-
-    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('mapping');
-    expect(databaseNode?.config?.database?.mappings).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          sourcePort: 'value',
-          targetPath: 'parameters',
-        }),
-      ])
+    const databaseNode = loaded.configs[pathId]?.nodes.find(
+      (node) => node.type === 'database' && node.config?.database?.operation === 'update'
     );
+
+    expect(databaseNode?.config?.database?.updatePayloadMode).toBe('custom');
+    expect(databaseNode?.config?.database?.updateTemplate).toContain('"parameters": {{value}}');
   });
 
   it('keeps query providers canonical while normalizing db_schema provider defaults before trigger preflight validation', async () => {
@@ -863,6 +858,10 @@ describe('buildSelectiveTriggerSettingsData', () => {
       { key: AI_PATHS_UI_STATE_KEY, value: '{"value":{"activePathId":"path-sel"}}' },
       { key: `${PATH_CONFIG_PREFIX}path-sel`, value: configValue },
     ]);
+    expect(mockedFetchByKeys).toHaveBeenCalledWith(
+      [AI_PATHS_HISTORY_RETENTION_KEY, AI_PATHS_UI_STATE_KEY, `${PATH_CONFIG_PREFIX}path-sel`],
+      expect.objectContaining({ bypassCache: true })
+    );
     expect(records.some((record) => record.key === PATH_INDEX_KEY)).toBe(false);
   });
 

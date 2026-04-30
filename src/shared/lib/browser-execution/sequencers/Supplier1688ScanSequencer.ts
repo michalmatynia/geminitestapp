@@ -11,7 +11,7 @@ import {
   SUPPLIER_1688_DEFAULT_SELECTOR_RUNTIME,
   type Supplier1688SelectorRuntime,
 } from '../selectors/supplier-1688';
-import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
+import type { ProductScanSequenceEntry } from '@/features/playwright/scan-steps';
 import {
   ProductScanSequencer,
   type ProductScanCandidateStepMeta,

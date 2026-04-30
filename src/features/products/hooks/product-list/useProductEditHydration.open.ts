@@ -6,6 +6,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 
 import { handleEditProductFetchError } from './useProductEditHydration.errors';
 import {
+  type ProductDetailQueryKeys,
   fetchFreshEditProductDetail,
   readFreshCachedEditProductDetail,
 } from './useProductEditHydration.fetch';
@@ -26,29 +27,24 @@ type ProductEditOpenActionsInput = Pick<
   handleMissingEditProduct: (message: string) => void;
 };
 
-export const useProductEditOpenActions = (
-  input: ProductEditOpenActionsInput
-): {
-  handleOpenEditModal: (product: ProductWithImages) => void;
-  handleCloseEdit: () => void;
-} => {
-  const {
-    clearProductEditorQueryParams,
-    handleMissingEditProduct,
-    queryClient,
-    refs,
-    setActionError,
-    setEditingProduct,
-    setIsEditHydrating,
-    toast,
-  } = input;
-  const { editOpenRequestTokenRef, openingProductFromQueryRef } = refs;
+type ProductEditFetchErrorHandler = (
+  error: unknown,
+  requestToken: number,
+  clearHydrationOnError: boolean
+) => void;
 
-  const handleFetchError = useCallback(
+const useProductEditFetchErrorHandler = (
+  input: Pick<
+    ProductEditOpenActionsInput,
+    'refs' | 'handleMissingEditProduct' | 'setIsEditHydrating' | 'toast'
+  >
+): ProductEditFetchErrorHandler => {
+  const { handleMissingEditProduct, refs, setIsEditHydrating, toast } = input;
+  return useCallback(
     (error: unknown, requestToken: number, clearHydrationOnError: boolean): void => {
       handleEditProductFetchError({
         error,
-        editOpenRequestTokenRef,
+        editOpenRequestTokenRef: refs.editOpenRequestTokenRef,
         requestToken,
         handleMissingEditProduct,
         setIsEditHydrating,
@@ -56,74 +52,130 @@ export const useProductEditOpenActions = (
         clearHydrationOnError,
       });
     },
-    [editOpenRequestTokenRef, handleMissingEditProduct, setIsEditHydrating, toast]
+    [handleMissingEditProduct, refs.editOpenRequestTokenRef, setIsEditHydrating, toast]
   );
+};
 
-  const handleOpenEditModal = useCallback(
+const openCachedEditProduct = (input: {
+  cachedData: ProductWithImages;
+  keys: ProductDetailQueryKeys;
+  productId: string;
+  queryClient: QueryClient;
+  requestToken: number;
+  setEditingProduct: ProductEditHydrationInput['setEditingProduct'];
+  setIsEditHydrating: React.Dispatch<React.SetStateAction<boolean>>;
+  handleFetchError: ProductEditFetchErrorHandler;
+}): void => {
+  input.queryClient.setQueryData(input.keys.detailEditQueryKey, input.cachedData);
+  input.setEditingProduct(markEditingProductHydrated(input.cachedData));
+  input.setIsEditHydrating(false);
+  void fetchFreshEditProductDetail({
+    queryClient: input.queryClient,
+    productId: input.productId,
+    queryKey: input.keys.detailEditQueryKey,
+    source: 'products.hooks.useProductEditHydration.handleOpenEditModal.cachedRefresh',
+    tags: ['products', 'detail', 'edit', 'fetch', 'cached-refresh'],
+  })
+    .then((freshProduct: ProductWithImages) => {
+      input.queryClient.setQueryData(input.keys.detailQueryKey, freshProduct);
+    })
+    .catch((error: unknown) => input.handleFetchError(error, input.requestToken, false));
+};
+
+const openFreshEditProduct = (input: {
+  product: ProductWithImages;
+  keys: ProductDetailQueryKeys;
+  queryClient: QueryClient;
+  requestToken: number;
+  refs: ProductEditHydrationRefs;
+  setEditingProduct: ProductEditHydrationInput['setEditingProduct'];
+  setIsEditHydrating: React.Dispatch<React.SetStateAction<boolean>>;
+  handleFetchError: ProductEditFetchErrorHandler;
+}): void => {
+  input.setEditingProduct(input.product);
+  input.setIsEditHydrating(true);
+  void fetchFreshEditProductDetail({
+    queryClient: input.queryClient,
+    productId: input.product.id,
+    queryKey: input.keys.detailEditQueryKey,
+    source: 'products.hooks.useProductEditHydration.handleOpenEditModal',
+    tags: ['products', 'detail', 'edit', 'fetch'],
+  })
+    .then((freshProduct: ProductWithImages) => {
+      input.queryClient.setQueryData(input.keys.detailQueryKey, freshProduct);
+      if (input.refs.editOpenRequestTokenRef.current !== input.requestToken) return;
+      input.setEditingProduct(markEditingProductHydrated(freshProduct));
+      input.setIsEditHydrating(false);
+    })
+    .catch((error: unknown) => input.handleFetchError(error, input.requestToken, true));
+};
+
+const useOpenEditModalHandler = (
+  input: Omit<ProductEditOpenActionsInput, 'clearProductEditorQueryParams'>
+): ((product: ProductWithImages) => void) => {
+  const { queryClient, refs, setActionError, setEditingProduct, setIsEditHydrating } = input;
+  const handleFetchError = useProductEditFetchErrorHandler(input);
+
+  return useCallback(
     (product: ProductWithImages): void => {
       setActionError(null);
-      editOpenRequestTokenRef.current += 1;
-      const requestToken = editOpenRequestTokenRef.current;
+      refs.editOpenRequestTokenRef.current += 1;
+      const requestToken = refs.editOpenRequestTokenRef.current;
       const cached = readFreshCachedEditProductDetail(queryClient, product.id);
 
       if (cached.cachedData !== undefined) {
-        queryClient.setQueryData(cached.keys.detailEditQueryKey, cached.cachedData);
-        setEditingProduct(markEditingProductHydrated(cached.cachedData));
-        setIsEditHydrating(false);
-        void fetchFreshEditProductDetail({
-          queryClient,
+        openCachedEditProduct({
+          cachedData: cached.cachedData,
+          keys: cached.keys,
           productId: product.id,
-          queryKey: cached.keys.detailEditQueryKey,
-          source: 'products.hooks.useProductEditHydration.handleOpenEditModal.cachedRefresh',
-          tags: ['products', 'detail', 'edit', 'fetch', 'cached-refresh'],
-        })
-          .then((freshProduct: ProductWithImages) => {
-            queryClient.setQueryData(cached.keys.detailQueryKey, freshProduct);
-          })
-          .catch((error: unknown) => handleFetchError(error, requestToken, false));
+          queryClient,
+          requestToken,
+          setEditingProduct,
+          setIsEditHydrating,
+          handleFetchError,
+        });
         return;
       }
 
-      setEditingProduct(product);
-      setIsEditHydrating(true);
-      void fetchFreshEditProductDetail({
+      openFreshEditProduct({
+        product,
+        keys: cached.keys,
         queryClient,
-        productId: product.id,
-        queryKey: cached.keys.detailEditQueryKey,
-        source: 'products.hooks.useProductEditHydration.handleOpenEditModal',
-        tags: ['products', 'detail', 'edit', 'fetch'],
-      })
-        .then((freshProduct: ProductWithImages) => {
-          queryClient.setQueryData(cached.keys.detailQueryKey, freshProduct);
-          if (editOpenRequestTokenRef.current !== requestToken) return;
-          setEditingProduct(markEditingProductHydrated(freshProduct));
-          setIsEditHydrating(false);
-        })
-        .catch((error: unknown) => handleFetchError(error, requestToken, true));
+        requestToken,
+        refs,
+        setEditingProduct,
+        setIsEditHydrating,
+        handleFetchError,
+      });
     },
-    [
-      editOpenRequestTokenRef,
-      handleFetchError,
-      queryClient,
-      setActionError,
-      setEditingProduct,
-      setIsEditHydrating,
-    ]
+    [handleFetchError, queryClient, refs, setActionError, setEditingProduct, setIsEditHydrating]
   );
+};
 
-  const handleCloseEdit = useCallback((): void => {
-    editOpenRequestTokenRef.current += 1;
-    openingProductFromQueryRef.current = null;
+const useCloseEditHandler = (
+  input: Pick<
+    ProductEditOpenActionsInput,
+    'clearProductEditorQueryParams' | 'refs' | 'setEditingProduct' | 'setIsEditHydrating'
+  >
+): (() => void) => {
+  const { clearProductEditorQueryParams, refs, setEditingProduct, setIsEditHydrating } = input;
+  return useCallback((): void => {
+    refs.editOpenRequestTokenRef.current += 1;
+    refs.openingProductFromQueryRef.current = null;
     setEditingProduct(null);
     setIsEditHydrating(false);
     clearProductEditorQueryParams();
-  }, [
-    clearProductEditorQueryParams,
-    editOpenRequestTokenRef,
-    openingProductFromQueryRef,
-    setEditingProduct,
-    setIsEditHydrating,
-  ]);
+  }, [clearProductEditorQueryParams, refs, setEditingProduct, setIsEditHydrating]);
+};
+
+export const useProductEditOpenActions = (
+  input: ProductEditOpenActionsInput
+): {
+  handleOpenEditModal: (product: ProductWithImages) => void;
+  handleCloseEdit: () => void;
+} => {
+  const handleOpenEditModal = useOpenEditModalHandler(input);
+  const handleCloseEdit = useCloseEditHandler(input);
 
   return {
     handleOpenEditModal,

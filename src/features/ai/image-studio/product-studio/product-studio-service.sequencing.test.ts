@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolvePostProductionRoute } from './product-studio-service.sequencing';
-import type { ProductStudioSequencingConfig } from '@/shared/contracts/products/studio';
+import {
+  resolvePostProductionRoute,
+  resolveSequenceReadiness,
+} from './product-studio-service.sequencing';
+import type {
+  ProductStudioSequencingConfig,
+  ProductStudioSequencingDiagnostics,
+} from '@/shared/contracts/products/studio';
 
 const makeSequencing = (
   overrides: Partial<ProductStudioSequencingConfig> = {}
@@ -22,6 +28,25 @@ const makeSequencing = (
   snapshotMatchesCurrent: false,
   needsSaveDefaults: false,
   needsSaveDefaultsReason: null,
+  ...overrides,
+});
+
+const makeDiagnostics = (
+  overrides: Partial<ProductStudioSequencingDiagnostics> = {}
+): ProductStudioSequencingDiagnostics => ({
+  projectId: 'studio-a',
+  projectSettingsKey: 'image-studio:project:studio-a:settings',
+  selectedSettingsKey: 'image-studio:project:studio-a:settings',
+  selectedScope: 'project',
+  hasProjectSettings: true,
+  hasGlobalSettings: false,
+  projectSequencingEnabled: false,
+  globalSequencingEnabled: false,
+  selectedSequencingEnabled: false,
+  selectedSnapshotHash: null,
+  selectedSnapshotSavedAt: null,
+  selectedSnapshotStepCount: 0,
+  selectedSnapshotModelId: null,
   ...overrides,
 });
 
@@ -93,6 +118,39 @@ describe('resolvePostProductionRoute', () => {
       warnings: [
         'Model "dall-e-3" does not support full-sequence generation and persisted project sequencing is disabled, so Product Studio will run direct generation only.',
       ],
+    });
+  });
+});
+
+describe('resolveSequenceReadiness', () => {
+  it('marks direct generation routes ready because they do not require project sequencing', () => {
+    expect(
+      resolveSequenceReadiness({
+        sequencing: makeSequencing(),
+        sequencingDiagnostics: makeDiagnostics(),
+        requestedMode: 'auto',
+        route: 'ai_direct_generation',
+      })
+    ).toEqual({
+      ready: true,
+      requiresProjectSequence: false,
+      state: 'ready',
+      message: null,
+    });
+  });
+
+  it('keeps explicit sequence routes blocked until project sequencing is enabled', () => {
+    expect(
+      resolveSequenceReadiness({
+        sequencing: makeSequencing(),
+        sequencingDiagnostics: makeDiagnostics(),
+        requestedMode: 'studio_prompt_then_sequence',
+        route: 'studio_sequencer',
+      })
+    ).toMatchObject({
+      ready: false,
+      requiresProjectSequence: true,
+      state: 'project_sequence_disabled',
     });
   });
 });

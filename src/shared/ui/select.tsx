@@ -28,7 +28,9 @@ const EMPTY_NATIVE_SELECT_STATE: Pick<NativeSelectContextValue, 'options' | 'pla
 export const shouldUseNativeSelectMode = (pathname: string | null | undefined): boolean =>
   Boolean(
     pathname &&
-    (pathname.startsWith('/admin/image-studio') || pathname.startsWith('/admin/ai-paths/queue'))
+    (pathname.startsWith('/admin/image-studio') ||
+      pathname.startsWith('/admin/ai-paths/queue') ||
+      pathname.startsWith('/admin/products'))
   );
 
 const useNativeSelectMode = (): boolean => {

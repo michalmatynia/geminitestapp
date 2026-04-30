@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-04-15T10:54:26.142Z",
+  "generatedAt": "2026-04-30T09:41:39.599Z",
   "track": {
     "id": "application-performance",
     "title": "Application performance",
@@ -113,13 +113,13 @@
     "category": "performance",
     "defaultSelected": true,
     "description": "Adds app-level performance regression checks to the improvement portfolio so broad sweeps cover runtime health alongside UI, quality, and data recovery.",
-    "overallStatus": "passed",
+    "overallStatus": "attention",
     "latestGeneratedAt": "2026-04-15T10:54:26.139Z",
     "docDir": "docs/build/improvements/application-performance",
     "phases": [
       {
         "phase": "audit",
-        "generatedAt": "2026-04-15T10:54:08.335Z",
+        "generatedAt": "2026-04-30T09:41:38.928Z",
         "reportPath": "artifacts/improvements/audit-report.json",
         "executionMode": "executed",
         "allowWrite": false,
@@ -136,87 +136,41 @@
       },
       {
         "phase": "classify",
-        "generatedAt": "2026-04-15T10:36:23.126Z",
+        "generatedAt": "2026-04-30T09:41:39.301Z",
         "reportPath": "artifacts/improvements/classify-report.json",
         "executionMode": "executed",
         "allowWrite": false,
-        "stepCount": 1,
-        "automaticStepCount": 1,
-        "manualStepCount": 0,
-        "passedStepCount": 1,
-        "failedStepCount": 0,
-        "blockedStepCount": 0,
-        "plannedStepCount": 0,
-        "outputs": [
-          "docs/metrics/critical-path-performance-latest.md",
-          "docs/metrics/critical-path-performance-latest.json",
-          "docs/metrics/critical-flow-tests-latest.md",
-          "docs/metrics/critical-flow-tests-latest.json",
-          "docs/metrics/unit-domain-timings-latest.md",
-          "docs/metrics/unit-domain-timings-latest.json",
-          "docs/metrics/route-hotspots.md"
-        ],
-        "steps": [
-          {
-            "id": "application-performance-baseline",
-            "title": "Run the performance baseline pass",
-            "trackId": "application-performance",
-            "phase": "classify",
-            "mode": "automatic",
-            "writes": false,
-            "status": "passed",
-            "outputs": [
-              "docs/metrics/critical-path-performance-latest.md",
-              "docs/metrics/critical-path-performance-latest.json",
-              "docs/metrics/critical-flow-tests-latest.md",
-              "docs/metrics/critical-flow-tests-latest.json",
-              "docs/metrics/unit-domain-timings-latest.md",
-              "docs/metrics/unit-domain-timings-latest.json",
-              "docs/metrics/route-hotspots.md"
-            ],
-            "instructions": [],
-            "script": "perf:ops:baseline",
-            "durationMs": 706069
-          }
-        ],
-        "status": "passed"
-      },
-      {
-        "phase": "plan",
-        "generatedAt": "2026-04-15T10:36:23.624Z",
-        "reportPath": "artifacts/improvements/plan-report.json",
-        "executionMode": "planned",
-        "allowWrite": false,
-        "stepCount": 1,
+        "stepCount": 0,
         "automaticStepCount": 0,
-        "manualStepCount": 1,
+        "manualStepCount": 0,
         "passedStepCount": 0,
         "failedStepCount": 0,
         "blockedStepCount": 0,
         "plannedStepCount": 0,
         "outputs": [],
-        "steps": [
-          {
-            "id": "application-performance-plan",
-            "title": "Review the latest performance baseline outputs before optimization work",
-            "trackId": "application-performance",
-            "phase": "plan",
-            "mode": "manual",
-            "writes": false,
-            "status": "manual",
-            "outputs": [],
-            "instructions": [
-              "Use docs/metrics/critical-path-performance-latest.md and docs/metrics/critical-flow-tests-latest.md as the default review surfaces.",
-              "Treat docs/metrics/route-hotspots.md as the next-level investigation when baseline output suggests route-level regressions.",
-              "Use the weekly lane only when you need trend context, not for every local improvement pass."
-            ]
-          }
-        ],
-        "status": "manual"
+        "steps": [],
+        "status": "not-selected"
+      },
+      {
+        "phase": "plan",
+        "generatedAt": "2026-04-30T09:41:39.533Z",
+        "reportPath": "artifacts/improvements/plan-report.json",
+        "executionMode": "planned",
+        "allowWrite": false,
+        "stepCount": 0,
+        "automaticStepCount": 0,
+        "manualStepCount": 0,
+        "passedStepCount": 0,
+        "failedStepCount": 0,
+        "blockedStepCount": 0,
+        "plannedStepCount": 0,
+        "outputs": [],
+        "steps": [],
+        "status": "not-selected"
       },
       {
         "phase": "dry-run",
-        "generatedAt": "2026-03-14T08:13:11.213Z",
+        "generatedAt": "2026-04-30T04:59:45.752Z",
         "reportPath": "artifacts/improvements/dry-run-report.json",
         "executionMode": "executed",
         "allowWrite": false,

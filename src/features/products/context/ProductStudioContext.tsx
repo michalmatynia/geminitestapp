@@ -165,9 +165,9 @@ export function ProductStudioProvider({
       configuredDefaultStudioProjectId.length > 0 &&
       studioProjectIds.includes(configuredDefaultStudioProjectId)
         ? configuredDefaultStudioProjectId
-        : null;
+        : '';
     if (fallback === current) return;
-    setStudioProjectId(fallback);
+    setStudioProjectId(fallback.length > 0 ? fallback : null);
   }, [
     configuredDefaultStudioProjectId,
     studioConfigLoading,

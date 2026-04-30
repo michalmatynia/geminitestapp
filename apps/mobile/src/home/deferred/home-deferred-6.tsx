@@ -1,39 +1,6 @@
-export function DeferredHomeHeroIntro({
-  homeHeroLearnerName,
-  isRestoringAuth,
-}: {
-  homeHeroLearnerName: string | null;
-  isRestoringAuth: boolean;
-}): React.JSX.Element {
-  const { copy } = useKangurMobileI18n();
-
-  let heroText = '';
-  if (isRestoringAuth) {
-    heroText = copy({
-      de: 'Wir bereiten die Startdaten gerade vor.',
-      en: 'Preparing your home startup data.',
-      pl: 'Przygotowujemy teraz dane startowe.',
-    });
-  } else if (homeHeroLearnerName !== null) {
-    heroText = copy({
-      de: `Willkommen zurück, ${homeHeroLearnerName}.`,
-      en: `Welcome back, ${homeHeroLearnerName}.`,
-      pl: `Witaj ponownie, ${homeHeroLearnerName}.`,
-    });
-  } else {
-    heroText = copy({
-      de: 'Lektionen, Training und Ergebnisse sind hier schnell erreichbar.',
-      en: 'Lessons, practice, and results are all close here.',
-      pl: 'Lekcje, trening i wyniki są tutaj pod ręką.',
-    });
-  }
-
-  return (
-    <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24 }}>
-      {heroText}
-    </Text>
-  );
-}
+import { Text, View } from 'react-native';
+import { SectionCard } from '../homeScreenPrimitives';
+import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 export function DeferredHomeInsightsLessonPlanCard(): React.JSX.Element {
   const { copy } = useKangurMobileI18n();
@@ -98,3 +65,11 @@ export function DeferredHomeInsightsExtrasCard(): React.JSX.Element {
     >
       <Text style={{ color: '#475569', lineHeight: 20 }}>
         {copy({
+          de: 'Wir bereiten Abzeichen, Aufgaben und das Ergebniszentrum fur den nachsten Startschritt vor.',
+          en: 'Preparing badges, tasks, and the results hub for the next home step.',
+          pl: 'Przygotowujemy odznaki, zadania i centrum wyników na kolejny etap ekranu startowego.',
+        })}
+      </Text>
+    </SectionCard>
+  );
+}

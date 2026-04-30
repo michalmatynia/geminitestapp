@@ -31,7 +31,7 @@ function OpponentItem({
 }: {
   opponent: KangurDuelOpponentEntry;
   copy: KangurMobileCopy;
-  locale: string;
+  locale: KangurMobileLocale;
   duelPlan: UseKangurMobileLearnerDuelsSummaryResult;
   openDuelSession: (sessionId: string) => void;
 }): React.JSX.Element {
@@ -40,9 +40,9 @@ function OpponentItem({
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>{opponent.displayName}</Text>
       <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
         {copy({
-          de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale as KangurMobileLocale)}`,
-          en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale as KangurMobileLocale)}`,
-          pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale as KangurMobileLocale)}`,
+          de: `Letztes Duell ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+          en: `Last duel ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
+          pl: `Ostatni pojedynek ${formatKangurMobileScoreDateTime(opponent.lastPlayedAt, locale)}`,
         })}
       </Text>
       <KangurMobilePendingActionButton
@@ -139,7 +139,7 @@ export function DailyPlanDuelsSection({
       <View style={{ gap: 12 }}>
         {currentEntry !== null ? <CurrentEntryPanel copy={copy} rank={currentRank} entry={currentEntry} /> : <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Dein Konto ist nicht sichtbar.', en: 'Your account is not visible.', pl: 'Twoje konto jest niewidoczne.' })}</Text>}
         {actionError && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
-        {opponents.length === 0 ? <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Keine Rivalen.', en: 'No rivals.', pl: 'Brak rywali.' })}</Text> : opponents.map((opponent) => <OpponentItem key={opponent.learnerId} opponent={opponent} copy={copy} locale={locale} duelPlan={duelPlan} openDuelSession={openDuelSession} />)}
+        {opponents.length === 0 ? <Text style={{ color: '#475569', lineHeight: 22 }}>{copy({ de: 'Keine Rivalen.', en: 'No rivals.', pl: 'Brak rywali.' })}</Text> : opponents.map((opponent) => <OpponentItem key={opponent.learnerId} opponent={opponent} copy={copy} locale={locale as KangurMobileLocale} duelPlan={duelPlan} openDuelSession={openDuelSession} />)}
         <LinkButton href={DUELS_ROUTE} label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })} stretch />
       </View>
     </Card>

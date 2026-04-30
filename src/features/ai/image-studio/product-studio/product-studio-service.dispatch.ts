@@ -213,6 +213,7 @@ export async function sendProductImageToStudio(params: {
     sequencingDiagnostics,
     sequenceGenerationMode,
     modelId,
+    brainConfigWarning,
   } = await resolveStudioSettingsBundle(resolved.projectId);
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
     params.sequenceGenerationMode ?? sequenceGenerationMode
@@ -240,7 +241,11 @@ export async function sendProductImageToStudio(params: {
     parsedStudioSettings.projectSequencing
   ).filter((step) => step.enabled);
   const sequenceStepPlan = buildProductStudioSequenceStepPlan(resolvedActiveSteps);
-  const warnings = [...routeDecision.warnings, ...buildSequenceStepPlanWarnings(sequenceStepPlan)];
+  const warnings = [
+    ...routeDecision.warnings,
+    ...buildSequenceStepPlanWarnings(sequenceStepPlan),
+    ...(brainConfigWarning !== null ? [brainConfigWarning] : []),
+  ];
   const routeDecisionMs = Date.now() - routeDecisionStartMs;
   const sequenceSnapshot = buildImageStudioSequenceSnapshot(parsedStudioSettings, { modelId });
   const auditSettingsContext = buildAuditSettingsContext(sequencingDiagnostics);

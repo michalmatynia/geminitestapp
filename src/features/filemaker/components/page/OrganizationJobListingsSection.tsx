@@ -81,6 +81,7 @@ import type {
   FilemakerJobApplicationActiveArtifacts,
   FilemakerJobApplicationApplyRun,
   FilemakerJobApplicationApplyRunResponse,
+  FilemakerJobApplicationApplyRunStep,
   FilemakerJobApplicationArtifactVersion,
   FilemakerJobApplicationStatus,
   FilemakerJobListing,
@@ -817,13 +818,19 @@ const composeApplicationMeta = (application: FilemakerJobApplication): string =>
 const isActiveApplicationApplyRun = (run: FilemakerJobApplicationApplyRun | null): boolean =>
   run?.status === 'queued' || run?.status === 'running';
 
-const formatApplicationApplyRunStatus = (
-  status: FilemakerJobApplicationApplyRun['status']
-): string =>
+const formatStatusToken = (status: string): string =>
   status
     .split('_')
     .map((part: string): string => `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`)
     .join(' ');
+
+const formatApplicationApplyRunStatus = (
+  status: FilemakerJobApplicationApplyRun['status']
+): string => formatStatusToken(status);
+
+const formatApplicationApplyRunStepStatus = (
+  status: FilemakerJobApplicationApplyRunStep['status']
+): string => (status === 'ok' ? 'Done' : formatStatusToken(status));
 
 const resolveApplicationApplyButtonLabel = (
   run: FilemakerJobApplicationApplyRun | null,
@@ -1800,7 +1807,6 @@ function ApplicationPackageModal({
     visibleApplication?.tailoredCvId !== null &&
     visibleApplication?.tailoredCvId !== undefined &&
     visibleApplication.tailoredCvId.trim().length > 0;
-  const latestApplyStep = applyRun?.steps[applyRun.steps.length - 1] ?? null;
   const applyButtonLabel = resolveApplicationApplyButtonLabel(applyRun, isApplying);
   const applyActionHref = resolveStepSequencerActionHref(applyBrowserMode.action?.id);
   const matchAnalysis = visibleApplication?.matchAnalysis ?? null;
@@ -2590,10 +2596,35 @@ function ApplicationPackageModal({
                   </a>
                 ) : null}
               </div>
-              {latestApplyStep !== null ? (
-                <p className='mt-2 text-xs text-gray-400'>
-                  {latestApplyStep.label}: {latestApplyStep.detail}
-                </p>
+              {applyRun.steps.length > 0 ? (
+                <div className='mt-3 space-y-2'>
+                  <div className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
+                    Playwright application steps
+                  </div>
+                  <ol
+                    aria-label='Playwright application steps'
+                    className='space-y-2 border-l border-border/70 pl-3'
+                  >
+                    {applyRun.steps.map(
+                      (step: FilemakerJobApplicationApplyRunStep): React.JSX.Element => (
+                        <li key={step.id} className='space-y-1'>
+                          <div className='flex flex-wrap items-center gap-2'>
+                            <Badge variant='outline'>
+                              {formatApplicationApplyRunStepStatus(step.status)}
+                            </Badge>
+                            <span className='text-xs font-medium text-gray-100'>{step.label}</span>
+                            <span className='text-[11px] text-gray-500'>
+                              {formatTimestamp(step.createdAt)}
+                            </span>
+                          </div>
+                          {step.detail.trim().length > 0 ? (
+                            <p className='text-xs leading-relaxed text-gray-400'>{step.detail}</p>
+                          ) : null}
+                        </li>
+                      )
+                    )}
+                  </ol>
+                </div>
               ) : null}
               {applyRun.error !== null ? (
                 <p className='mt-2 text-xs text-red-300'>{applyRun.error}</p>

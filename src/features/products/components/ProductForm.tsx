@@ -31,6 +31,7 @@ import { ProductFormTabsContent } from './form/ProductFormTabsContent';
 export { alignDraftStructuredNameToSelectedCategory } from './form/ProductForm.helpers';
 
 const ProductFormDebugPanel = dynamic(() => import('@/features/products/components/ProductFormDebugPanel'), { ssr: false, loading: () => null });
+const PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS = [...PRODUCT_EDITOR_CONTEXT_ROOT_IDS];
 
 interface ProductFormProps {
   submitButtonText: string;
@@ -134,7 +135,7 @@ export default function ProductForm({
   }, [core.draft?.openProductFormTab, searchParams]);
 
   return (
-    <ContextRegistryPageProvider pageId='admin:product-editor' title='Product Editor' rootNodeIds={[...PRODUCT_EDITOR_CONTEXT_ROOT_IDS]}>
+    <ContextRegistryPageProvider pageId='admin:product-editor' title='Product Editor' rootNodeIds={PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS}>
       <form onSubmit={(e) => { core.handleSubmit(e).catch(() => { /* handled by context */ }); }} className='relative min-h-[400px] pb-10'>
         {isDebugOpen && <ProductFormDebugPanel />}
         <ProductValidationSettingsProvider value={{

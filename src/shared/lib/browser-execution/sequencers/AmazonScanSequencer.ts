@@ -16,7 +16,7 @@ import {
   AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
   resolveAmazonRuntimeOperationLabel,
 } from '../amazon-runtime-constants';
-import type { ProductScanSequenceEntry } from '../product-scan-step-sequencer';
+import type { ProductScanSequenceEntry } from '@/features/playwright/scan-steps';
 import {
   GoogleLensSearchSequencer,
   type GoogleLensSearchImageCandidate,

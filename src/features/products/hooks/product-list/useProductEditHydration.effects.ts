@@ -1,10 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect } from 'react';
 
-import {
-  isEditingProductHydrated,
-  markEditingProductHydrated,
-} from '@/features/products/hooks/editingProductHydration';
+import { markEditingProductHydrated } from '@/features/products/hooks/editingProductHydration';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { ApiError } from '@/shared/lib/api-client';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
@@ -94,7 +91,7 @@ export const useResetEditHydrationWhenClosed = (input: {
   }, [editingProduct, refs.editOpenRequestTokenRef, setIsEditHydrating]);
 };
 
-export const useOpenProductFromQueryHydration = (input: {
+type OpenProductFromQueryHydrationInput = {
   openProductIdFromQuery: string;
   editingProduct: ProductWithImages | null;
   refs: ProductEditHydrationRefs;
@@ -104,9 +101,62 @@ export const useOpenProductFromQueryHydration = (input: {
   setIsEditHydrating: React.Dispatch<React.SetStateAction<boolean>>;
   handleMissingEditProduct: (message: string) => void;
   toast: ProductEditHydrationToast;
+};
+
+const fetchOpenProductFromQuery = (input: {
+  openProductIdFromQuery: string;
+  requestToken: number;
+  refs: ProductEditHydrationRefs;
+  queryClient: QueryClient;
+  setEditingProduct: ProductEditHydrationInput['setEditingProduct'];
+  setIsEditHydrating: React.Dispatch<React.SetStateAction<boolean>>;
+  handleMissingEditProduct: (message: string) => void;
+  toast: ProductEditHydrationToast;
 }): void => {
+  const keys = buildProductDetailQueryKeys(input.openProductIdFromQuery);
+  void fetchFreshEditProductDetail({
+    queryClient: input.queryClient,
+    productId: input.openProductIdFromQuery,
+    queryKey: keys.detailEditQueryKey,
+    source: 'products.hooks.useProductEditHydration.openingProductFromQuery',
+    tags: ['products', 'detail', 'edit', 'fetch'],
+  })
+    .then((freshProduct: ProductWithImages) => {
+      input.queryClient.setQueryData(keys.detailQueryKey, freshProduct);
+      if (input.refs.editOpenRequestTokenRef.current !== input.requestToken) return;
+      input.setEditingProduct(markEditingProductHydrated(freshProduct));
+      input.setIsEditHydrating(false);
+    })
+    .catch((error: unknown) => {
+      handleEditProductFetchError({
+        error,
+        editOpenRequestTokenRef: input.refs.editOpenRequestTokenRef,
+        requestToken: input.requestToken,
+        handleMissingEditProduct: input.handleMissingEditProduct,
+        setIsEditHydrating: input.setIsEditHydrating,
+        toast: input.toast,
+        clearHydrationOnError: true,
+      });
+    });
+};
+
+const useResetClearedOpenProductQuery = (
+  input: Pick<OpenProductFromQueryHydrationInput, 'refs' | 'setIsEditHydrating'>
+): (() => void) => {
+  const { refs, setIsEditHydrating } = input;
+  return useCallback((): void => {
+    if (refs.openingProductFromQueryRef.current !== null) {
+      refs.openingProductFromQueryRef.current = null;
+      refs.editOpenRequestTokenRef.current += 1;
+      setIsEditHydrating(false);
+    }
+  }, [refs.editOpenRequestTokenRef, refs.openingProductFromQueryRef, setIsEditHydrating]);
+};
+
+const useHydrateOpenProductFromQuery = (
+  input: Omit<OpenProductFromQueryHydrationInput, 'editingProduct'>
+): (() => void) => {
   const {
-    editingProduct,
     handleMissingEditProduct,
     openProductIdFromQuery,
     queryClient,
@@ -116,17 +166,7 @@ export const useOpenProductFromQueryHydration = (input: {
     setIsEditHydrating,
     toast,
   } = input;
-  useEffect(() => {
-    if (openProductIdFromQuery === '') {
-      if (refs.openingProductFromQueryRef.current !== null) {
-        refs.openingProductFromQueryRef.current = null;
-        refs.editOpenRequestTokenRef.current += 1;
-        setIsEditHydrating(false);
-      }
-      return;
-    }
-    if ((editingProduct?.id ?? '') === openProductIdFromQuery) return;
-    if (refs.openingProductFromQueryRef.current === openProductIdFromQuery) return;
+  return useCallback((): void => {
     refs.openingProductFromQueryRef.current = openProductIdFromQuery;
     refs.editOpenRequestTokenRef.current += 1;
     const requestToken = refs.editOpenRequestTokenRef.current;
@@ -134,34 +174,17 @@ export const useOpenProductFromQueryHydration = (input: {
     setActionError(null);
     setEditingProduct(null);
     setIsEditHydrating(true);
-
-    const keys = buildProductDetailQueryKeys(openProductIdFromQuery);
-    void fetchFreshEditProductDetail({
+    fetchOpenProductFromQuery({
+      openProductIdFromQuery,
+      requestToken,
+      refs,
       queryClient,
-      productId: openProductIdFromQuery,
-      queryKey: keys.detailEditQueryKey,
-      source: 'products.hooks.useProductEditHydration.openingProductFromQuery',
-      tags: ['products', 'detail', 'edit', 'fetch'],
-    })
-      .then((freshProduct: ProductWithImages) => {
-        queryClient.setQueryData(keys.detailQueryKey, freshProduct);
-        if (refs.editOpenRequestTokenRef.current !== requestToken) return;
-        setEditingProduct(markEditingProductHydrated(freshProduct));
-        setIsEditHydrating(false);
-      })
-      .catch((error: unknown) => {
-        handleEditProductFetchError({
-          error,
-          editOpenRequestTokenRef: refs.editOpenRequestTokenRef,
-          requestToken,
-          handleMissingEditProduct,
-          setIsEditHydrating,
-          toast,
-          clearHydrationOnError: true,
-        });
-      });
+      setEditingProduct,
+      setIsEditHydrating,
+      handleMissingEditProduct,
+      toast,
+    });
   }, [
-    editingProduct?.id,
     handleMissingEditProduct,
     openProductIdFromQuery,
     queryClient,
@@ -171,6 +194,30 @@ export const useOpenProductFromQueryHydration = (input: {
     setEditingProduct,
     setIsEditHydrating,
     toast,
+  ]);
+};
+
+export const useOpenProductFromQueryHydration = (
+  input: OpenProductFromQueryHydrationInput
+): void => {
+  const { editingProduct, openProductIdFromQuery, refs } = input;
+  const resetClearedOpenProductQuery = useResetClearedOpenProductQuery(input);
+  const hydrateOpenProductFromQuery = useHydrateOpenProductFromQuery(input);
+
+  useEffect(() => {
+    if (openProductIdFromQuery === '') {
+      resetClearedOpenProductQuery();
+      return;
+    }
+    if ((editingProduct?.id ?? '') === openProductIdFromQuery) return;
+    if (refs.openingProductFromQueryRef.current === openProductIdFromQuery) return;
+    hydrateOpenProductFromQuery();
+  }, [
+    editingProduct?.id,
+    hydrateOpenProductFromQuery,
+    openProductIdFromQuery,
+    refs.openingProductFromQueryRef,
+    resetClearedOpenProductQuery,
   ]);
 };
 

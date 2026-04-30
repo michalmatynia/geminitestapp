@@ -6,9 +6,10 @@ import {
   KangurMobileInsetPanel as InsetPanel,
   KangurMobileLinkButton as LinkButton,
   KangurMobilePill as Pill,
-} from '../shared/KangurMobileUi';
+} from '../../shared/KangurMobileUi';
 import { type LessonBody } from './lessons-types';
 import { LessonBodyView } from './LessonBodyView';
+import { type Href } from 'expo-router';
 
 interface SavedCheckpoint {
   countsAsLessonCompletion: boolean;
@@ -16,17 +17,36 @@ interface SavedCheckpoint {
   scorePercent: number;
 }
 
+interface Lesson {
+  emoji: string;
+  title: string;
+  componentId: string;
+  description: string;
+}
+
+interface CheckpointSummary {
+  attempts: number;
+  bestScorePercent: number;
+  lastScorePercent: number;
+  lastCompletedAt: string;
+}
+
+interface SelectedLesson {
+  lesson: Lesson;
+  checkpointSummary?: CheckpointSummary;
+}
+
 interface LessonCardProps {
   copy: (dict: { de: string; en: string; pl: string }) => string;
   isPreparing: boolean;
-  selectedLesson: any;
+  selectedLesson: SelectedLesson | null;
   focusToken: string | null;
   selectedLessonBody: LessonBody | null;
   actionError: string | null;
   savedCheckpoint: SavedCheckpoint | null;
   activeSectionIdx: number;
   effectiveFocusToken: string | null;
-  saveLessonCheckpoint: (checkpoint: any) => SavedCheckpoint;
+  saveLessonCheckpoint: (checkpoint: { countsAsLessonCompletion: boolean, lessonComponentId: string, scorePercent: number }) => SavedCheckpoint;
   setSavedCheckpoint: (checkpoint: SavedCheckpoint | null) => void;
   setDismissedFocusToken: (token: string | null) => void;
   setActiveSectionIdx: (idx: number) => void;
@@ -36,13 +56,13 @@ interface LessonCardProps {
 export function LessonCard(props: LessonCardProps): React.JSX.Element | null {
   const { isPreparing, selectedLesson, focusToken } = props;
 
-  if (isPreparing) return selectedLesson !== null || focusToken !== null ? <View /> : null;
-  if (selectedLesson === null) return renderShortcutHelp(props);
+  if (isPreparing) return (selectedLesson !== null || focusToken !== null) ? <View /> : null;
+  if (selectedLesson === null) return <LessonShortcutHelp {...props} />;
 
-  return <LessonDetailsCard {...props} />;
+  return <LessonDetailsCard {...props} selectedLesson={selectedLesson} />;
 }
 
-function renderShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }: LessonCardProps): React.JSX.Element {
+function LessonShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }: LessonCardProps): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
@@ -62,7 +82,7 @@ function renderShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }
         <ActionButton
           label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}
           onPress={() => {
-            setDismissedFocusToken(focusToken);
+            if (focusToken) setDismissedFocusToken(focusToken);
             router.replace('/lessons');
           }}
           stretch
@@ -73,7 +93,11 @@ function renderShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }
   );
 }
 
-function LessonDetailsCard(props: LessonCardProps): React.JSX.Element {
+interface LessonDetailsCardProps extends LessonCardProps {
+  selectedLesson: SelectedLesson;
+}
+
+function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
   const { copy, selectedLesson, actionError, savedCheckpoint, selectedLessonBody, activeSectionIdx, effectiveFocusToken, saveLessonCheckpoint, setSavedCheckpoint, setActiveSectionIdx, setDismissedFocusToken, router, focusToken } = props;
   
   return (

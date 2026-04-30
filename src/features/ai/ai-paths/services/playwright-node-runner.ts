@@ -27,12 +27,6 @@ import { isObjectRecord } from '@/shared/utils/object-utils';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import type { PlaywrightActionRunRequestSummary } from '@/shared/contracts/playwright-action-runs';
 
-import {
-  AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY,
-  AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY,
-  AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY,
-} from '@/shared/lib/browser-execution/amazon-runtime-constants';
-
 import { parseUserScript, safeStringify } from './playwright-node-runner.parser';
 import {
   evaluateStepWithAI,
@@ -40,19 +34,7 @@ import {
   type PlaywrightStepEvaluateOptions,
   type PlaywrightStepInjectOptions,
 } from '@/features/playwright/server/ai-step-service';
-import { executeAmazonReverseImageScanRuntime } from './playwright-node-runner.amazon-runtime';
-import {
-  executeSupplier1688ProbeScanRuntime,
-  SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY,
-} from './playwright-node-runner.supplier-1688-runtime';
-import {
-  executeFilemakerOrganizationPresenceScrapeRuntime,
-  FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY,
-} from './playwright-node-runner.filemaker-runtime';
-import {
-  executeJobBoardScrapeRuntime,
-  JOB_BOARD_SCRAPE_RUNTIME_KEY,
-} from './playwright-node-runner.job-board-runtime';
+import { findRuntimeEntry } from './playwright-node-runner.runtime-registry';
 export { validatePlaywrightNodeScript } from './playwright-node-runner.parser';
 export * from './playwright-node-runner.types';
 import type {
@@ -1827,27 +1809,14 @@ const executePlaywrightNodeRun = async (
       },
     };
 
-    const isSupplier1688RuntimeRequest =
-      isPlaywrightNodeRuntimeRunRequest(request) &&
-      request.runtimeKey === SUPPLIER_1688_PROBE_SCAN_RUNTIME_KEY;
-    const isFilemakerOrganizationPresenceRuntimeRequest =
-      isPlaywrightNodeRuntimeRunRequest(request) &&
-      request.runtimeKey === FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_KEY;
-    const isJobBoardScrapeRuntimeRequest =
-      isPlaywrightNodeRuntimeRunRequest(request) &&
-      request.runtimeKey === JOB_BOARD_SCRAPE_RUNTIME_KEY;
-    const isAmazonReverseImageScanRuntimeRequest =
-      isPlaywrightNodeRuntimeRunRequest(request) &&
-      (
-        request.runtimeKey === AMAZON_REVERSE_IMAGE_SCAN_RUNTIME_KEY ||
-        request.runtimeKey === AMAZON_GOOGLE_LENS_CANDIDATE_SEARCH_RUNTIME_KEY ||
-        request.runtimeKey === AMAZON_CANDIDATE_EXTRACTION_RUNTIME_KEY
-      );
+    const runtimeEntry = isPlaywrightNodeRuntimeRunRequest(request)
+      ? findRuntimeEntry(request.runtimeKey)
+      : undefined;
 
     const returnValue = await withTimeout(
       (() => {
-        if (isAmazonReverseImageScanRuntimeRequest) {
-          return executeAmazonReverseImageScanRuntime({
+        if (runtimeEntry && isPlaywrightNodeRuntimeRunRequest(request)) {
+          return runtimeEntry.handle({
             page,
             runtimeKey: request.runtimeKey,
             input: request.input ?? {},
@@ -1857,48 +1826,13 @@ const executePlaywrightNodeRun = async (
             helpers: userContext.helpers,
           });
         }
-        if (isSupplier1688RuntimeRequest) {
-          return executeSupplier1688ProbeScanRuntime({
-            page,
-            input: request.input ?? {},
-            emit: userContext.emit,
-            log: userContext.log,
-            artifacts: userContext.artifacts,
-            helpers: userContext.helpers,
-          });
-        }
-        if (isFilemakerOrganizationPresenceRuntimeRequest) {
-          return executeFilemakerOrganizationPresenceScrapeRuntime({
-            page,
-            input: request.input ?? {},
-            emit: userContext.emit,
-            log: userContext.log,
-          });
-        }
-        if (isJobBoardScrapeRuntimeRequest) {
-          return executeJobBoardScrapeRuntime({
-            page,
-            input: request.input ?? {},
-            emit: userContext.emit,
-            log: userContext.log,
-            helpers: userContext.helpers,
-          });
-        }
         if (isPlaywrightNodeRuntimeRunRequest(request)) {
           throw new Error(`Unsupported Playwright runtime request: ${request.runtimeKey}`);
         }
         return Promise.resolve(parseUserScript(request.script, logs)(userContext));
       })(),
       timeoutMs,
-      isSupplier1688RuntimeRequest
-        ? '1688 supplier probe runtime timed out.'
-        : isFilemakerOrganizationPresenceRuntimeRequest
-          ? 'FileMaker organisation discovery runtime timed out.'
-          : isJobBoardScrapeRuntimeRequest
-            ? 'Job board scrape runtime timed out.'
-            : isAmazonReverseImageScanRuntimeRequest
-              ? 'Amazon reverse-image runtime timed out.'
-              : 'Playwright script timed out.'
+      runtimeEntry?.timeoutMessage ?? 'Playwright script timed out.'
     );
 
     await captureFinalRunArtifacts({

@@ -2,9 +2,13 @@
 
 import type { ChangeEvent } from 'react';
 
-import { type ProductAdvancedFilterCondition } from '@/shared/contracts/products';
+import {
+  type ProductAdvancedFilterCondition,
+  type ProductAdvancedFilterField,
+} from '@/shared/contracts/products';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
+import { MultiSelect } from '@/shared/ui/multi-select';
 import { SelectSimple } from '@/shared/ui/select-simple';
 
 import type { AdvancedFilterValueOption } from './AdvancedFilterBuilder.types';
@@ -33,6 +37,59 @@ const hasStringValueOptions = (
 const getOptionLabel = (option: AdvancedFilterValueOption): string =>
   option.label.length > 0 ? option.label : option.value;
 
+const SEARCHABLE_OPTION_FIELD_COPY: Partial<
+  Record<
+    ProductAdvancedFilterField,
+    {
+      ariaLabel: string;
+      emptyMessage: string;
+      placeholder: string;
+      searchPlaceholder: string;
+    }
+  >
+> = {
+  categoryId: {
+    ariaLabel: 'Condition category value',
+    emptyMessage: 'No categories found.',
+    placeholder: 'Select category',
+    searchPlaceholder: 'Search categories...',
+  },
+  traderaStatus: {
+    ariaLabel: 'Condition Tradera status value',
+    emptyMessage: 'No Tradera statuses found.',
+    placeholder: 'Select Tradera status',
+    searchPlaceholder: 'Search Tradera statuses...',
+  },
+};
+
+const shouldUseOptionSelect = (
+  options: AdvancedFilterValueOption[] | undefined,
+  fieldConfig: AdvancedFilterFieldConfig
+): options is AdvancedFilterValueOption[] =>
+  SEARCHABLE_OPTION_FIELD_COPY[fieldConfig.field] !== undefined &&
+  Array.isArray(options) &&
+  options.length > 0;
+
+const toSelectedOptionValue = (value: unknown): string | null => {
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    return normalized.length > 0 ? normalized : null;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return null;
+};
+
+const getSelectedOptionValues = (controller: AdvancedFilterConditionController): string[] => {
+  if (controller.useMultiValueInput) {
+    return Array.isArray(controller.condition.value)
+      ? controller.condition.value
+          .map((value: unknown) => toSelectedOptionValue(value))
+          .filter((value: string | null): value is string => value !== null)
+      : [];
+  }
+  return controller.value.length > 0 ? [controller.value] : [];
+};
+
 function PlaceholderValueField({ label }: { label: string }): React.JSX.Element {
   return (
     <div className='space-y-1'>
@@ -60,13 +117,51 @@ function ConditionBooleanValueSelect({
   );
 }
 
+function ConditionSearchableOptionValueSelect({
+  controller,
+}: {
+  controller: AdvancedFilterConditionController;
+}): React.JSX.Element {
+  const copy = SEARCHABLE_OPTION_FIELD_COPY[controller.fieldConfig.field] ?? {
+    ariaLabel: 'Condition value',
+    emptyMessage: 'No options found.',
+    placeholder: 'Select value',
+    searchPlaceholder: 'Search options...',
+  };
+
+  return (
+    <MultiSelect
+      options={controller.valueOptions ?? []}
+      selected={getSelectedOptionValues(controller)}
+      onChange={(values: string[]): void => {
+        controller.handleValueChange(
+          controller.useMultiValueInput ? values.join(', ') : (values[0] ?? '')
+        );
+      }}
+      single={!controller.useMultiValueInput}
+      placeholder={copy.placeholder}
+      searchPlaceholder={copy.searchPlaceholder}
+      ariaLabel={copy.ariaLabel}
+      emptyMessage={copy.emptyMessage}
+      className='space-y-0 [&_button]:h-8 [&_button]:text-xs'
+    />
+  );
+}
+
 function ConditionTextValueInput({
   controller,
 }: {
   controller: AdvancedFilterConditionController;
 }): React.JSX.Element {
-  const showOptions = hasStringValueOptions(controller.valueOptions, controller.fieldConfig);
+  const stringValueOptions = hasStringValueOptions(controller.valueOptions, controller.fieldConfig)
+    ? controller.valueOptions
+    : undefined;
+  const showOptions = stringValueOptions !== undefined;
   const placeholder = controller.useMultiValueInput ? 'Value 1, value 2, ...' : 'Value';
+
+  if (shouldUseOptionSelect(controller.valueOptions, controller.fieldConfig)) {
+    return <ConditionSearchableOptionValueSelect controller={controller} />;
+  }
 
   return (
     <>
@@ -82,9 +177,9 @@ function ConditionTextValueInput({
         aria-label='Condition value'
         title={placeholder}
       />
-      {showOptions ? (
+      {stringValueOptions !== undefined ? (
         <datalist id={controller.dataListId}>
-          {controller.valueOptions.map((option: AdvancedFilterValueOption) => (
+          {stringValueOptions.map((option: AdvancedFilterValueOption) => (
             <option
               key={option.value}
               value={option.value}

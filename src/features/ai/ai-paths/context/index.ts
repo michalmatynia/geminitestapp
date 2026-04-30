@@ -4,6 +4,7 @@ export { CanvasProvider } from './CanvasContext';
 export { PresetsProvider } from './PresetsContext';
 export { RunHistoryProvider } from './RunHistoryContext';
 export { GraphProvider } from './GraphContext';
+export { PathConfigProvider } from './PathConfigContext';
 export { RuntimeProvider } from './RuntimeContext';
 export { PersistenceProvider } from './PersistenceContext';
 export { AiPathsProvider } from './AiPathsProvider';
@@ -23,6 +24,7 @@ export { useRunHistoryState, useRunHistoryActions } from './RunHistoryContext';
 // Consumer Hooks - Graph
 export {
   useGraphDataState,
+  useGraphActionsBase,
   usePathMetadataState,
   useGraphState,
   useGraphActions,
@@ -33,6 +35,9 @@ export {
   useNode,
   useActivePathConfig,
 } from './GraphContext.selectors';
+
+// Consumer Hooks - PathConfig
+export { usePathConfigState, usePathConfigActions } from './PathConfigContext';
 
 // Consumer Hooks - Runtime
 export {
@@ -89,6 +94,13 @@ export type {
   PathMetadataState,
   GraphState,
 } from './GraphContext';
+
+// Types - PathConfig
+export type {
+  PathConfigState,
+  PathConfigActions,
+  PathConfigPatch,
+} from './PathConfigContext';
 
 // Types - Runtime
 export type {

@@ -30,6 +30,7 @@ describe('shared Select native fallback', () => {
   it('switches to native select mode on the configured admin routes', () => {
     expect(shouldUseNativeSelectMode('/admin/image-studio')).toBe(true);
     expect(shouldUseNativeSelectMode('/admin/ai-paths/queue')).toBe(true);
+    expect(shouldUseNativeSelectMode('/admin/products')).toBe(true);
     expect(shouldUseNativeSelectMode('/admin/kangur')).toBe(false);
   });
 

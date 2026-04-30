@@ -84,7 +84,7 @@ export function ProductFormTabsContent({ mountedTabs }: { mountedTabs: Set<Produ
   return (
     <>
       <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount><ProductFormGeneral /></TabsContent>
-      <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount><ProductFormOther /></TabsContent>
+      <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden'><ProductFormOther /></TabsContent>
       <DeferredTabsA mountedTabs={mountedTabs} />
       <DeferredTabsB mountedTabs={mountedTabs} />
       <TabsContent value='validation' className='mt-4 space-y-4'><ProductFormValidationTab /></TabsContent>

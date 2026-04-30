@@ -1,0 +1,6 @@
+phase,stepId,title,status,mode,writes,script,outputs,reportGeneratedAt,reportPath
+audit,image-studio-product-runtime-audit,Audit Product modal Image Studio runtime health,manual,manual,false,,,2026-04-30T09:41:38.928Z,artifacts/improvements/audit-report.json
+audit,image-studio-product-regression-tests,Run Product modal and Image Studio integration regression tests,passed,automatic,false,test:image-studio-product,,2026-04-30T09:41:38.928Z,artifacts/improvements/audit-report.json
+classify,image-studio-product-failure-classification,Classify Product Studio failures by integration boundary,manual,manual,false,,,2026-04-30T09:41:39.301Z,artifacts/improvements/classify-report.json
+plan,image-studio-product-integration-plan,Plan Product modal Image Studio recovery work,manual,manual,false,,,2026-04-30T09:41:39.533Z,artifacts/improvements/plan-report.json
+dry-run,image-studio-product-regression-tests,Run Product modal and Image Studio integration regression tests,passed,automatic,false,test:image-studio-product,,2026-04-30T04:59:45.752Z,artifacts/improvements/dry-run-report.json

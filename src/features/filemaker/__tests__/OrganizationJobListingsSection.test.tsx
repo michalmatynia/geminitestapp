@@ -483,7 +483,22 @@ describe('OrganizationJobListingsSection', () => {
                 },
                 confirmationUrl: null,
                 error: null,
-                steps: [],
+                steps: [
+                  {
+                    id: 'apply-step-launch',
+                    label: 'Launch browser',
+                    status: 'ok',
+                    detail: 'Using headed browser mode.',
+                    createdAt: '2026-04-29T10:00:02.000Z',
+                  },
+                  {
+                    id: 'apply-step-auth',
+                    label: 'Authenticate',
+                    status: 'pending',
+                    detail: 'Opening Pracuj.pl with saved integration settings.',
+                    createdAt: '2026-04-29T10:00:05.000Z',
+                  },
+                ],
                 createdAt: '2026-04-29T10:00:00.000Z',
                 startedAt: null,
                 completedAt: null,
@@ -933,6 +948,13 @@ describe('OrganizationJobListingsSection', () => {
       );
     });
     expect(await screen.findByText('Queued')).toBeInTheDocument();
+    expect(screen.getByText('Playwright application steps')).toBeInTheDocument();
+    expect(screen.getByText('Launch browser')).toBeInTheDocument();
+    expect(screen.getByText('Using headed browser mode.')).toBeInTheDocument();
+    expect(screen.getByText('Authenticate')).toBeInTheDocument();
+    expect(
+      screen.getByText('Opening Pracuj.pl with saved integration settings.')
+    ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText('Application status'), {
       target: { value: 'applied' },

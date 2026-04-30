@@ -609,6 +609,89 @@ const improvementTracks: ImprovementTrack[] = [
     },
   },
   {
+    id: 'image-studio-product-integration',
+    title: 'Image Studio product integration',
+    description:
+      'Verifies Product modal handoff to Image Studio, Studio project persistence, generated variant intake, and runtime stability of Studio controls.',
+    docs: {
+      category: 'quality',
+      defaultSelected: false,
+      commands: [
+        'npm run improvements:image-studio',
+        'npm run improvements:plan -- --track image-studio-product-integration',
+        'npm run improvements:dry-run -- --track image-studio-product-integration',
+        'npm run test:image-studio-product',
+      ],
+      relatedDocs: [
+        'docs/build/general-improvements.md',
+        'docs/build/improvements/README.md',
+      ],
+      generatedArtifacts: [
+        'artifacts/improvements/plan-report.json',
+        'artifacts/improvements/dry-run-report.json',
+      ],
+    },
+    phases: {
+      audit: [
+        manualStep(
+          'image-studio-product-runtime-audit',
+          'Audit Product modal Image Studio runtime health',
+          [
+            'Open the Product edit modal and switch to the Studio tab with a product that has image slots.',
+            'Confirm the Studio project field, source image selector, action bar, variant grid, and audit history render without React maximum update depth errors.',
+            'Verify the selected Studio project can be changed without repeated autosave requests for the same value.',
+          ],
+        ),
+        scriptStep(
+          'image-studio-product-regression-tests',
+          'Run Product modal and Image Studio integration regression tests',
+          'test:image-studio-product',
+        ),
+      ],
+      classify: [
+        manualStep(
+          'image-studio-product-failure-classification',
+          'Classify Product Studio failures by integration boundary',
+          [
+            'Separate UI runtime failures from API/config failures before changing Studio service code.',
+            'Classify project persistence issues against /api/v2/products/[id]/studio config reads and writes.',
+            'Classify send/open/accept failures against product-studio service preflight, sequencing, variant, and audit contracts.',
+          ],
+        ),
+      ],
+      plan: [
+        manualStep(
+          'image-studio-product-integration-plan',
+          'Plan Product modal Image Studio recovery work',
+          [
+            'Start with idempotent state updates in Product modal and Studio project synchronization.',
+            'Keep shared primitive changes API-compatible with current Product form usage.',
+            'Validate with npm run test:image-studio-product plus the focused shared primitive tests before broader app checks.',
+          ],
+        ),
+      ],
+      'dry-run': [
+        scriptStep(
+          'image-studio-product-regression-tests',
+          'Run Product modal and Image Studio integration regression tests',
+          'test:image-studio-product',
+        ),
+      ],
+      apply: [
+        manualStep(
+          'image-studio-product-apply',
+          'Apply Image Studio fixes through targeted Product and Studio modules',
+          [
+            'Apply code changes only in the owning Product modal, Product Studio context, shared UI primitive, or Image Studio service modules.',
+            'Do not change generation-provider behavior while fixing Product modal integration or render stability.',
+            'After changes, rerun npm run test:image-studio-product and the focused lint/type checks for touched files.',
+          ],
+          { writes: true },
+        ),
+      ],
+    },
+  },
+  {
     id: 'repo-quality-baseline',
     title: 'Repository quality baseline',
     description:

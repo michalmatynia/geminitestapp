@@ -130,6 +130,9 @@ export const filemakerJobBoardUnclassifiedPillSchema = z.object({
 
 export const filemakerJobBoardScrapedOfferSchema = z.object({
   companyName: z.string().trim().min(1),
+  companyNameSource: z
+    .enum(['employer_selector', 'model', 'page', 'profile_url'])
+    .optional(),
   companyProfile: z.string().default(''),
   companyProfileUrl: z.string().trim().url().nullable().default(null),
   companyWebsiteUrl: z.string().trim().nullable().optional(),

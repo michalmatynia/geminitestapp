@@ -7,7 +7,7 @@ import {
   buildProductScanStepSequenceManifest,
   generateProductScanPlaywrightStepSequencerRuntime,
   resolveProductScanStepGroup,
-} from '../product-scan-step-sequencer';
+} from './product-scan-step-sequencer';
 
 describe('product scan step sequencer', () => {
   it('every registered browser sequence references known step ids', () => {

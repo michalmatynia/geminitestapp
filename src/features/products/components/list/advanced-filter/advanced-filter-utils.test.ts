@@ -350,6 +350,42 @@ describe('advanced-filter-utils', () => {
     });
 
     expect(
+      buildConditionForFieldChange(
+        {
+          type: 'condition',
+          id: 'rule-category',
+          field: 'price',
+          operator: 'gt',
+          value: 10,
+        },
+        'categoryId'
+      )
+    ).toEqual({
+      type: 'condition',
+      id: 'rule-category',
+      field: 'categoryId',
+      operator: 'eq',
+    });
+
+    expect(
+      buildConditionForFieldChange(
+        {
+          type: 'condition',
+          id: 'rule-tradera-status',
+          field: 'price',
+          operator: 'gt',
+          value: 10,
+        },
+        'traderaStatus'
+      )
+    ).toEqual({
+      type: 'condition',
+      id: 'rule-tradera-status',
+      field: 'traderaStatus',
+      operator: 'eq',
+    });
+
+    expect(
       buildConditionForOperatorChange({
         type: 'condition',
         id: 'rule-operator',

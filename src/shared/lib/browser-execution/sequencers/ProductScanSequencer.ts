@@ -11,7 +11,7 @@ import {
   PRODUCT_SCAN_STEP_SEQUENCES,
   type ProductScanSequenceEntry,
   type ProductScanStepKey,
-} from '../product-scan-step-sequencer';
+} from '@/features/playwright/scan-steps';
 import { getProductScanScrapedItems } from './product-scan-scraped-items';
 
 export type ProductScanClickTarget = {

@@ -1,22 +1,13 @@
-import {
-  mergeNodeOutputsForStatus,
-  toRuntimeNodeStatus,
-} from '@/features/ai/ai-paths/services/path-run-executor.logic';
-import { toRuntimeNodeResolutionTelemetry } from '@/features/ai/ai-paths/services/path-run-executor.runtime-kernel';
+import { mergeNodeOutputsForStatus } from '@/features/ai/ai-paths/services/path-run-executor.logic';
 import { recordRuntimeNodeStatus } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import type {
-  AiNode,
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunRepository,
-  RuntimeProfileNodeSpanStatus,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type {
   RuntimeHistoryEntry,
-  RuntimeSideEffectDecision,
-  RuntimeSideEffectPolicy,
-  RuntimeTraceEffect,
   RuntimeTraceSpanStatus,
 } from '@/shared/contracts/ai-paths-runtime';
 import type {
@@ -26,13 +17,20 @@ import type {
   RuntimeNodeStartEvent,
 } from '@/shared/lib/ai-paths/core/runtime/engine-modules/engine-types';
 import { cloneJsonSafe, hashRuntimeValue } from '@/shared/lib/ai-paths/core/utils/runtime';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { extractDatabaseRuntimeMetadata } from '../../components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
 
+import {
+  buildRuntimeTraceEffect,
+  resolveDurationMs,
+  resolveFinishedNodeStatus,
+  resolveRuntimeProfileSpanStatus,
+  resolveRuntimeTraceSpanStatus,
+} from './callbacks.helpers';
+import { createLifecycleEmitter } from './callbacks.lifecycle-emitter';
 import type { PathRunProfiling } from './profiling';
 import type { UpsertRuntimeTraceSpan } from './tracing';
-import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
 export type CallbackCtx = {
@@ -58,66 +56,6 @@ export type CallbackCtx = {
   setRuntimeNodeStatus?: (nodeId: string, status: AiPathRunNodeRecord['status']) => void;
 };
 
-const EFFECT_NODE_TYPES = new Set([
-  'agent',
-  'api_advanced',
-  'advanced_api',
-  'database',
-  'http',
-  'learner_agent',
-  'model',
-  'notification',
-  'playwright',
-]);
-
-const resolveFinishedNodeStatus = (input: {
-  cached?: boolean;
-  nextOutputs: RuntimePortValues;
-}): AiPathRunNodeRecord['status'] => {
-  if (input.cached) return 'cached';
-  return toRuntimeNodeStatus(input.nextOutputs['status']) ?? 'completed';
-};
-
-const resolveRuntimeTraceSpanStatus = (
-  status: AiPathRunNodeRecord['status']
-): RuntimeTraceSpanStatus => {
-  switch (status) {
-    case 'cached':
-      return 'cached';
-    case 'failed':
-    case 'timeout':
-    case 'canceled':
-      return 'failed';
-    case 'blocked':
-      return 'blocked';
-    case 'waiting_callback':
-    case 'advance_pending':
-      return 'waiting_callback';
-    case 'skipped':
-      return 'skipped';
-    default:
-      return 'completed';
-  }
-};
-
-const resolveRuntimeProfileSpanStatus = (
-  status: RuntimeTraceSpanStatus
-): RuntimeProfileNodeSpanStatus => {
-  switch (status) {
-    case 'cached':
-      return 'cached';
-    case 'failed':
-      return 'failed';
-    case 'skipped':
-      return 'skipped';
-    case 'blocked':
-    case 'waiting_callback':
-      return 'blocked';
-    default:
-      return 'completed';
-  }
-};
-
 export const createCallbacks = (ctx: CallbackCtx) => {
   const {
     run,
@@ -137,138 +75,15 @@ export const createCallbacks = (ctx: CallbackCtx) => {
     setRuntimeNodeStatus,
   } = ctx;
 
-  const toRunEventRuntimeKernelMetadata = (input?: {
-    runtimeStrategy?: unknown;
-    runtimeResolutionSource?: unknown;
-    runtimeCodeObjectId?: unknown;
-  }): Record<string, unknown> => ({
-    ...runtimeKernelExecutionTelemetry,
-    ...toRuntimeNodeResolutionTelemetry({
-      runtimeStrategy: input?.runtimeStrategy,
-      runtimeResolutionSource: input?.runtimeResolutionSource,
-      runtimeCodeObjectId: input?.runtimeCodeObjectId,
-    }),
-  });
-
-  const buildRuntimeTraceEffect = (input: {
-    nodeType: string;
-    sideEffectPolicy?: RuntimeSideEffectPolicy;
-    sideEffectDecision?: RuntimeSideEffectDecision;
-    effectSourceSpanId?: string | null;
-  }): RuntimeTraceEffect | undefined => {
-    const policy = input.sideEffectPolicy;
-    const decision = input.sideEffectDecision;
-    const sourceSpanId =
-      typeof input.effectSourceSpanId === 'string' && input.effectSourceSpanId.trim().length > 0
-        ? input.effectSourceSpanId.trim()
-        : undefined;
-
-    const isEffectNode = EFFECT_NODE_TYPES.has(input.nodeType);
-    if (!isEffectNode && !policy && !decision && !sourceSpanId) {
-      return undefined;
-    }
-
-    return {
-      ...(policy ? { policy } : {}),
-      ...(decision ? { decision } : {}),
-      ...(sourceSpanId ? { sourceSpanId } : {}),
-    };
-  };
+  const { emit: emitNodeLifecycleSystemEvent, toRunEventRuntimeKernelMetadata } =
+    createLifecycleEmitter({
+      run,
+      traceId,
+      logNodeStartEvents,
+      runtimeKernelExecutionTelemetry,
+    });
 
   const nodeStartedAtBySpanId = new Map<string, string>();
-
-  const resolveDurationMs = (
-    startedAt: string | null | undefined,
-    finishedAt: string | null | undefined
-  ): number | null => {
-    if (!startedAt || !finishedAt) return null;
-    const startedAtMs = Date.parse(startedAt);
-    const finishedAtMs = Date.parse(finishedAt);
-    if (!Number.isFinite(startedAtMs) || !Number.isFinite(finishedAtMs)) return null;
-    return Math.max(0, finishedAtMs - startedAtMs);
-  };
-
-  const emitNodeLifecycleSystemEvent = (input: {
-    event:
-      | 'node.started'
-      | 'node.finished'
-      | 'node.blocked'
-      | 'node.failed'
-      | 'node.reused_seeded';
-    level: 'info' | 'warn' | 'error';
-    node: AiNode;
-    spanId: string;
-    iteration: number;
-    attempt: number;
-    status: string;
-    startedAt?: string | null;
-    finishedAt?: string | null;
-    durationMs?: number | null;
-    cached?: boolean;
-    cacheDecision?: RuntimeNodeFinishEvent['cacheDecision'] | 'seed' | null;
-    sideEffectPolicy?: RuntimeSideEffectPolicy;
-    sideEffectDecision?: RuntimeSideEffectDecision;
-    activationHash?: string | null;
-    idempotencyKey?: string | null;
-    effectSourceSpanId?: string | null;
-    runtimeStrategy?: unknown;
-    runtimeResolutionSource?: unknown;
-    runtimeCodeObjectId?: unknown;
-    reason?: string | null;
-    errorMessage?: string | null;
-    waitingOnPorts?: string[] | null;
-  }): void => {
-    if (!logNodeStartEvents) return;
-
-    const phaseLabel =
-      input.event === 'node.started'
-        ? 'started'
-        : input.event === 'node.reused_seeded'
-          ? 'reused seeded outputs'
-          : input.event === 'node.blocked'
-            ? 'blocked'
-            : input.event === 'node.failed'
-              ? 'failed'
-              : 'finished';
-
-    void logSystemEvent({
-      level: input.level,
-      source: 'ai-paths-executor',
-      message: `AI Paths node ${phaseLabel}: ${run.pathName ?? run.pathId ?? run.id} :: ${input.node.title ?? input.node.id}`,
-      context: {
-        event: input.event,
-        runId: run.id,
-        pathId: run.pathId ?? null,
-        pathName: run.pathName ?? null,
-        traceId,
-        spanId: input.spanId,
-        nodeId: input.node.id,
-        nodeType: input.node.type,
-        nodeTitle: input.node.title ?? null,
-        iteration: input.iteration,
-        attempt: input.attempt,
-        status: input.status,
-        startedAt: input.startedAt ?? null,
-        finishedAt: input.finishedAt ?? null,
-        durationMs: input.durationMs ?? null,
-        cached: input.cached ?? null,
-        cacheDecision: input.cacheDecision ?? null,
-        sideEffectPolicy: input.sideEffectPolicy ?? null,
-        sideEffectDecision: input.sideEffectDecision ?? null,
-        activationHash: input.activationHash ?? null,
-        idempotencyKey: input.idempotencyKey ?? null,
-        effectSourceSpanId: input.effectSourceSpanId ?? null,
-        reason: input.reason ?? null,
-        errorMessage: input.errorMessage ?? null,
-        waitingOnPorts: input.waitingOnPorts ?? null,
-        ...toRunEventRuntimeKernelMetadata({
-          runtimeStrategy: input.runtimeStrategy,
-          runtimeResolutionSource: input.runtimeResolutionSource,
-          runtimeCodeObjectId: input.runtimeCodeObjectId,
-        }),
-      },
-    });
-  };
 
   return {
     onNodeStart: async ({

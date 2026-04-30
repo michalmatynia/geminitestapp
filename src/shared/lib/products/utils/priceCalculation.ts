@@ -1,10 +1,23 @@
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
+import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/catalogs';
+
+type PriceCalculationOptions = {
+  sourcePrice?: number | null | undefined;
+};
+
+type ProductPriceSources = {
+  basePrice: number | null;
+  sourcePrice: number | null;
+};
 
 function normalizeCurrencyCode(code?: string | null): string {
   return (code ?? '').trim().toUpperCase();
 }
 
 const normalizePriceGroupIdentifier = (value?: string | null): string => (value ?? '').trim();
+
+const toFinitePrice = (value: number | null | undefined): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 const getPriceGroupKey = (group: PriceGroupForCalculation | undefined): string | null =>
   group?.id || group?.groupId || null;
@@ -51,6 +64,14 @@ const applyPriceGroupAdjustment = (
   return price * multiplier + addToPrice;
 };
 
+const resolveProductFieldPrice = (
+  group: PriceGroupForCalculation,
+  prices: ProductPriceSources
+): number | null => {
+  if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return prices.sourcePrice;
+  return prices.basePrice;
+};
+
 const markVisitedPriceGroup = (
   group: PriceGroupForCalculation,
   visited: Set<string>
@@ -89,7 +110,7 @@ const matchesTargetCurrency = (
 const resolvePriceForGroup = (input: {
   group: PriceGroupForCalculation | undefined;
   defaultGroup: PriceGroupForCalculation;
-  basePrice: number;
+  prices: ProductPriceSources;
   priceGroups: PriceGroupForCalculation[];
   visited?: Set<string>;
 }): number | null => {
@@ -97,22 +118,28 @@ const resolvePriceForGroup = (input: {
   const group = input.group;
   if (!group) return null;
   if (!markVisitedPriceGroup(group, visited)) return null;
-  if (isSamePriceGroup(group, input.defaultGroup)) {
-    return input.basePrice;
+  if (isSamePriceGroup(group, input.defaultGroup) && group.type !== 'dependent') {
+    return input.prices.basePrice;
   }
   if (group.type === 'standard') {
-    return applyPriceGroupAdjustment(input.basePrice, group);
+    const productFieldPrice = resolveProductFieldPrice(group, input.prices);
+    return productFieldPrice === null ? null : applyPriceGroupAdjustment(productFieldPrice, group);
   }
-  if (group.type !== 'dependent' || !group.sourceGroupId) {
+  if (group.type !== 'dependent') {
     return null;
   }
-  const sourcePrice = resolvePriceForGroup({
-    group: findPriceGroupById(input.priceGroups, group.sourceGroupId),
-    defaultGroup: input.defaultGroup,
-    basePrice: input.basePrice,
-    priceGroups: input.priceGroups,
-    visited,
-  });
+  const normalizedSourceGroupId =
+    typeof group.sourceGroupId === 'string' ? group.sourceGroupId.trim() : '';
+  const sourcePrice =
+    normalizedSourceGroupId.length > 0
+      ? resolvePriceForGroup({
+          group: findPriceGroupById(input.priceGroups, normalizedSourceGroupId),
+          defaultGroup: input.defaultGroup,
+          prices: input.prices,
+          priceGroups: input.priceGroups,
+          visited,
+        })
+      : resolveProductFieldPrice(group, input.prices);
   if (sourcePrice === null) {
     return null;
   }
@@ -125,9 +152,15 @@ export function calculatePriceForCurrency(
   basePrice: number | null,
   defaultPriceGroupId: string | null,
   targetCurrencyCode: string,
-  priceGroups: PriceGroupForCalculation[]
+  priceGroups: PriceGroupForCalculation[],
+  options: PriceCalculationOptions = {}
 ): { price: number | null; currencyCode: string; baseCurrencyCode: string } {
-  if (basePrice === null || !priceGroups.length) {
+  const prices: ProductPriceSources = {
+    basePrice: toFinitePrice(basePrice),
+    sourcePrice: toFinitePrice(options.sourcePrice),
+  };
+
+  if (!priceGroups.length || (prices.basePrice === null && prices.sourcePrice === null)) {
     return {
       price: null,
       currencyCode: targetCurrencyCode,
@@ -155,7 +188,13 @@ export function calculatePriceForCurrency(
   const baseCurrencyCode: string = getGroupCurrencyCode(defaultGroup);
 
   if (baseCurrencyCode && baseCurrencyCode === normalizedTarget) {
-    return { price: basePrice, currencyCode: targetCurrencyCode, baseCurrencyCode };
+    const defaultGroupPrice = resolvePriceForGroup({
+      group: defaultGroup,
+      defaultGroup,
+      prices,
+      priceGroups,
+    });
+    return { price: defaultGroupPrice, currencyCode: targetCurrencyCode, baseCurrencyCode };
   }
 
   const targetCandidates: PriceGroupForCalculation[] = priceGroups.filter(
@@ -167,7 +206,7 @@ export function calculatePriceForCurrency(
     const candidateResolved = resolvePriceForGroup({
       group: candidate,
       defaultGroup,
-      basePrice,
+      prices,
       priceGroups,
     });
     if (candidateResolved !== null) {
@@ -180,7 +219,7 @@ export function calculatePriceForCurrency(
   }
 
   return {
-    price: basePrice,
+    price: prices.basePrice,
     currencyCode: baseCurrencyCode || targetCurrencyCode,
     baseCurrencyCode: baseCurrencyCode || normalizedTarget,
   };

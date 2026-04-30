@@ -123,4 +123,40 @@ describe('PriceCell', () => {
     expect(screen.getByText('12.50')).toBeInTheDocument();
     expect(screen.getByText('Base: 10.00 USD')).toBeInTheDocument();
   });
+
+  it('renders a dependent price calculated from scraped sourcePrice', () => {
+    useProductListRowVisualsContextMock.mockReturnValue(
+      createRowVisualsContext({
+        currencyCode: 'PLN',
+        priceGroups: [
+          createPriceGroup(),
+          createPriceGroup({
+            id: 'group-retail',
+            groupId: 'RETAIL',
+            currencyId: 'PLN',
+            currency: { code: 'PLN' },
+            currencyCode: 'PLN',
+            type: 'dependent',
+            basePriceField: 'sourcePrice',
+            sourceGroupId: null,
+            priceMultiplier: 2,
+          }),
+        ],
+      })
+    );
+
+    render(
+      <PriceCell
+        row={createRow(
+          createProduct({
+            price: null,
+            sourcePrice: 60,
+            defaultPriceGroupId: 'group-usd',
+          })
+        )}
+      />
+    );
+
+    expect(screen.getByText('120.00')).toBeInTheDocument();
+  });
 });

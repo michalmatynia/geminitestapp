@@ -39,6 +39,7 @@ export const priceGroupForCalculationSchema = z.object({
   groupId: z.string().optional(),
   currencyId: z.string(),
   type: z.string(),
+  basePriceField: z.string().optional(),
   isDefault: z.boolean(),
   sourceGroupId: z.string().nullable(),
   priceMultiplier: z.number(),

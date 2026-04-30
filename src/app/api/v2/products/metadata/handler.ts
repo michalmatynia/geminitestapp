@@ -10,6 +10,7 @@ import {
   getParameterRepository,
 } from '@/features/products/server';
 import { paginationQuerySchema, type PaginationQuery } from '@/shared/contracts/base';
+import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
@@ -113,7 +114,8 @@ const toIso = (value: unknown): string | undefined => {
 
 const resolveGroupType = (
   value: unknown,
-  sourceGroupId: string | null
+  sourceGroupId: string | null,
+  basePriceField?: string | null
 ): 'standard' | 'dependent' => {
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
@@ -121,6 +123,7 @@ const resolveGroupType = (
       return normalized;
     }
   }
+  if (basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return 'dependent';
   return sourceGroupId ? 'dependent' : 'standard';
 };
 
@@ -267,12 +270,19 @@ export async function postProductsMetadataHandler(
       throw badRequestError('currencyId or currencyCode is required for price-groups');
     }
 
+    const basePriceField = readString(payload, 'basePriceField') ?? 'price';
     const sourceGroupId = readString(payload, 'sourceGroupId');
     const typeValue = readString(payload, 'type');
-    const groupType = resolveGroupType(typeValue, sourceGroupId);
+    const groupType = resolveGroupType(typeValue, sourceGroupId, basePriceField);
 
-    if (groupType === 'dependent' && !sourceGroupId) {
-      throw badRequestError('Invalid payload. dependent group requires sourceGroupId.');
+    if (
+      groupType === 'dependent' &&
+      !sourceGroupId &&
+      basePriceField !== PRICE_GROUP_SOURCE_PRICE_FIELD
+    ) {
+      throw badRequestError(
+        'Invalid payload. dependent group requires sourceGroupId or sourcePrice basePriceField.'
+      );
     }
 
     const explicitGroupId = readString(payload, 'groupId');
@@ -300,8 +310,8 @@ export async function postProductsMetadataHandler(
       description: readString(payload, 'description'),
       currencyId: String(currencyDoc.id ?? currencyDoc.code ?? ''),
       type: groupType,
-      basePriceField: readString(payload, 'basePriceField') ?? 'price',
-      sourceGroupId,
+      basePriceField,
+      sourceGroupId: basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD ? null : sourceGroupId,
       priceMultiplier: readNumber(payload, 'priceMultiplier') ?? 1,
       addToPrice: Math.trunc(readNumber(payload, 'addToPrice') ?? 0),
       createdAt: now,

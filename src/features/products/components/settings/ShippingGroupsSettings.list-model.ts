@@ -8,11 +8,22 @@ import {
   findRedundantShippingGroupRuleCategoryIds,
   formatCategoryRuleSummary,
   normalizeShippingGroupRuleCategoryIds,
+  type ShippingGroupRuleConflict,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
 
 import { summarizeRuleDescendantCoverage } from '../../utils/shipping-group-settings-utils';
 import type { ShippingGroupListItem, ShippingGroupRuleCoverage } from './ShippingGroupsSettings.helpers';
 import { getMissingRuleSummary, toTrimmedString } from './ShippingGroupsSettings.helpers';
+
+export type ShippingGroupsListRuleModel = {
+  categoryLabelById: Map<string, string>;
+  ruleConflicts: ShippingGroupRuleConflict[];
+  redundantSummaryById: Map<string, string | null>;
+  missingSummaryById: Map<string, string | null>;
+  shippingGroupsWithRedundantRules: ProductShippingGroup[];
+  shippingGroupsWithMissingRuleCategories: ProductShippingGroup[];
+  listItems: ShippingGroupListItem[];
+};
 
 const getShippingGroupCategoryIds = (shippingGroup: ProductShippingGroup): string[] =>
   Array.isArray(shippingGroup.autoAssignCategoryIds) ? shippingGroup.autoAssignCategoryIds : [];
@@ -212,7 +223,7 @@ export const useShippingGroupsListRuleModel = ({
 }: {
   shippingGroups: readonly ProductShippingGroup[];
   selectedCatalogCategories: readonly ProductCategory[];
-}) => {
+}): ShippingGroupsListRuleModel => {
   const categoryLabelById = useMemo(
     () => buildCategoryPathLabelMap(selectedCatalogCategories),
     [selectedCatalogCategories]

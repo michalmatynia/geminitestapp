@@ -3,7 +3,10 @@
 import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import { type PriceGroup } from '@/shared/contracts/products/catalogs';
+import {
+  PRICE_GROUP_SOURCE_PRICE_FIELD,
+  type PriceGroup,
+} from '@/shared/contracts/products/catalogs';
 import { findPriceGroupByIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -26,6 +29,7 @@ const hasBasePriceAdjustment = (group: PriceGroup): boolean =>
   (Number.isFinite(group.addToPrice) ? group.addToPrice : 0) !== 0;
 
 const resolveSourceGroupLabel = (group: PriceGroup, priceGroups: readonly PriceGroup[]): string => {
+  if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return 'scraped sourcePrice';
   const sourceGroup = findPriceGroupByIdentifier(priceGroups, group.sourceGroupId);
   const normalizedSourceIdentifier = String(group.sourceGroupId ?? '').trim();
   if (sourceGroup !== undefined) return `${sourceGroup.name} (${sourceGroup.currencyCode})`;

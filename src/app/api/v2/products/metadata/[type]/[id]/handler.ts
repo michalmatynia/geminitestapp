@@ -7,6 +7,7 @@ import {
   type ProductTagUpdateInput,
   type ProductParameterUpdateInput,
 } from '@/features/products/server';
+import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/catalogs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
@@ -50,12 +51,14 @@ const toIso = (value: unknown): string | undefined => {
 
 const resolveGroupType = (
   value: unknown,
-  sourceGroupId: string | null
+  sourceGroupId: string | null,
+  basePriceField?: string | null
 ): 'standard' | 'dependent' => {
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
     if (normalized === 'standard' || normalized === 'dependent') return normalized;
   }
+  if (basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return 'dependent';
   return sourceGroupId ? 'dependent' : 'standard';
 };
 
@@ -241,7 +244,8 @@ export async function putProductsMetadataIdHandler(
       'sourceGroupId' in data
         ? (resolvedSourceGroupId ?? null)
         : (existing.sourceGroupId ?? null);
-    const nextType = resolveGroupType(data['type'], nextSourceGroupId);
+    const nextBasePriceField = readString(data, 'basePriceField') ?? existing.basePriceField ?? null;
+    const nextType = resolveGroupType(data['type'], nextSourceGroupId, nextBasePriceField);
 
     await assertNoPriceGroupDependencyCycle({
       priceGroupId: resolvedId,

@@ -30,10 +30,21 @@ type ModalStateArgs = {
   toast: ShippingGroupToast;
 };
 
+export type ShippingGroupsModalState = {
+  showModal: boolean;
+  setShowModal: Dispatch<SetStateAction<boolean>>;
+  editingShippingGroup: ProductShippingGroup | null;
+  formData: ShippingGroupFormData;
+  setFormData: Dispatch<SetStateAction<ShippingGroupFormData>>;
+  openCreateModal: () => void;
+  openEditModal: (shippingGroup: ProductShippingGroup) => void;
+  closeModal: () => void;
+};
+
 export const useShippingGroupsModalState = ({
   selectedCatalogId,
   toast,
-}: ModalStateArgs) => {
+}: ModalStateArgs): ShippingGroupsModalState => {
   const [showModal, setShowModal] = useState(false);
   const [editingShippingGroup, setEditingShippingGroup] = useState<ProductShippingGroup | null>(null);
   const [formData, setFormData] = useState<ShippingGroupFormData>(
@@ -84,13 +95,18 @@ type SaveShippingGroupArgs = {
   normalizedRuleIds: readonly string[];
 };
 
+export type ShippingGroupsSaveAction = {
+  handleSave: (args: SaveShippingGroupArgs) => Promise<void>;
+  isSaving: boolean;
+};
+
 export const useShippingGroupsSaveAction = ({
   formData,
   editingShippingGroup,
   setShowModal,
   onRefresh,
   toast,
-}: SaveActionArgs) => {
+}: SaveActionArgs): ShippingGroupsSaveAction => {
   const saveShippingGroupMutation = useSaveShippingGroupMutation();
   const handleSave = useCallback(
     async (args: SaveShippingGroupArgs): Promise<void> => {
@@ -150,11 +166,18 @@ type DeleteActionArgs = {
   toast: ShippingGroupToast;
 };
 
+export type ShippingGroupsDeleteAction = {
+  shippingGroupToDelete: ProductShippingGroup | null;
+  setShippingGroupToDelete: Dispatch<SetStateAction<ProductShippingGroup | null>>;
+  handleDelete: (shippingGroup: ProductShippingGroup) => void;
+  handleConfirmDelete: () => Promise<void>;
+};
+
 export const useShippingGroupsDeleteAction = ({
   selectedCatalogId,
   onRefresh,
   toast,
-}: DeleteActionArgs) => {
+}: DeleteActionArgs): ShippingGroupsDeleteAction => {
   const [shippingGroupToDelete, setShippingGroupToDelete] =
     useState<ProductShippingGroup | null>(null);
   const deleteShippingGroupMutation = useDeleteShippingGroupMutation();

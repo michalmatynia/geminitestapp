@@ -5,6 +5,7 @@
 
 import type { JSX, ReactNode } from 'react';
 
+import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
 import { AdminProductsPageLayout } from '@/shared/ui/admin-products-page-layout';
 
 import { ProductSettingsPageModals } from './ProductSettingsPage.modals';
@@ -28,22 +29,23 @@ export function ProductSettingsPage({
   return (
     <InternationalizationProvider>
       <AdminProductsPageLayout title='Product Settings' current='Settings'>
-        <ProductSettingsQuickLinks onSectionChange={state.setActiveSection} />
-        <ProductSettingsSectionsLayout
-          activeSection={state.activeSection}
-          onSectionChange={state.setActiveSection}
-          contextValue={state.contextValue}
-          customFieldsProps={state.metadata.customFieldsProps}
-          parametersProps={state.metadata.parametersProps}
-          productSyncSettingsSlot={productSyncSettingsSlot}
-          internationalizationSettingsSlot={internationalizationSettingsSlot}
-        />
-        <ProductSettingsPageModals
-          actions={state.actions}
-          priceGroups={state.metadata.priceGroups}
-          loadingGroups={state.metadata.loadingGroups}
-          internationalizationModalsSlot={internationalizationModalsSlot}
-        />
+        <ProductSettingsProvider value={state.contextValue}>
+          <ProductSettingsQuickLinks onSectionChange={state.setActiveSection} />
+          <ProductSettingsSectionsLayout
+            activeSection={state.activeSection}
+            onSectionChange={state.setActiveSection}
+            customFieldsProps={state.metadata.customFieldsProps}
+            parametersProps={state.metadata.parametersProps}
+            productSyncSettingsSlot={productSyncSettingsSlot}
+            internationalizationSettingsSlot={internationalizationSettingsSlot}
+          />
+          <ProductSettingsPageModals
+            actions={state.actions}
+            priceGroups={state.metadata.priceGroups}
+            loadingGroups={state.metadata.loadingGroups}
+            internationalizationModalsSlot={internationalizationModalsSlot}
+          />
+        </ProductSettingsProvider>
       </AdminProductsPageLayout>
     </InternationalizationProvider>
   );

@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/explicit-function-return-type */
+/* eslint-disable max-lines-per-function, complexity, @typescript-eslint/explicit-function-return-type */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {

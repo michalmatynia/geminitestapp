@@ -121,7 +121,8 @@ const resolvePriceModel = ({
     product.price,
     product.defaultPriceGroupId,
     rowVisuals.currencyCode,
-    rowVisuals.priceGroups
+    rowVisuals.priceGroups,
+    { sourcePrice: product.sourcePrice ?? null }
   );
   const normalizedBaseCurrencyCode = normalizeCurrencyCode(result.baseCurrencyCode);
   const normalizedSelectedCurrencyCode = normalizeCurrencyCode(rowVisuals.currencyCode);

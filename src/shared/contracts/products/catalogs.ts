@@ -38,6 +38,9 @@ export type CatalogUpdateInput = z.infer<typeof updateCatalogSchema>;
 /**
  * Price Group Contract
  */
+export const PRICE_GROUP_BASE_PRICE_FIELD = 'price';
+export const PRICE_GROUP_SOURCE_PRICE_FIELD = 'sourcePrice';
+
 export const priceGroupSchema = namedDtoSchema.extend({
   groupId: z.string(),
   currencyId: z.string(),

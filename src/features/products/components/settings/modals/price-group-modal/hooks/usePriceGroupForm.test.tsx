@@ -4,7 +4,10 @@ import React from 'react';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PriceGroup } from '@/shared/contracts/products/catalogs';
+import {
+  PRICE_GROUP_SOURCE_PRICE_FIELD,
+  type PriceGroup,
+} from '@/shared/contracts/products/catalogs';
 
 const mocks = vi.hoisted(() => ({
   mutateAsync: vi.fn(),
@@ -62,6 +65,15 @@ const standardAdjustedPriceGroup: PriceGroup = {
   addToPrice: 5,
   createdAt: '2026-04-04T00:00:00.000Z',
   updatedAt: '2026-04-04T00:00:00.000Z',
+};
+
+const sourcePriceDependentPriceGroup: PriceGroup = {
+  ...dependentPriceGroup,
+  id: 'group-retail',
+  groupId: 'RETAIL_FROM_SOURCE',
+  name: 'Retail from Source',
+  basePriceField: PRICE_GROUP_SOURCE_PRICE_FIELD,
+  sourceGroupId: null,
 };
 
 describe('usePriceGroupForm', () => {
@@ -176,6 +188,7 @@ describe('usePriceGroupForm', () => {
         currencyCode: 'EUR',
         isDefault: false,
         type: 'dependent',
+        basePriceField: 'price',
         sourceGroupId: 'group-pln',
         priceMultiplier: 1.25,
         addToPrice: 3,
@@ -184,7 +197,33 @@ describe('usePriceGroupForm', () => {
     expect(mocks.toast).toHaveBeenCalledWith('Price group saved.', { variant: 'success' });
   });
 
-  it('blocks save when a dependent price group has no source group', async () => {
+  it('submits sourcePrice as the dependent price source', async () => {
+    const { result } = renderHook(() =>
+      usePriceGroupForm({ priceGroup: sourcePriceDependentPriceGroup })
+    );
+
+    expect(result.current.form.sourceGroupId).toBe('__product_source_price__');
+
+    await act(async () => {
+      await result.current.handleSubmit();
+    });
+
+    expect(mocks.mutateAsync).toHaveBeenCalledWith({
+      id: 'group-retail',
+      data: {
+        name: 'Retail from Source',
+        currencyCode: 'EUR',
+        isDefault: false,
+        type: 'dependent',
+        basePriceField: 'sourcePrice',
+        sourceGroupId: null,
+        priceMultiplier: 1.25,
+        addToPrice: 3,
+      },
+    });
+  });
+
+  it('blocks save when a dependent price group has no source price', async () => {
     const { result } = renderHook(() => usePriceGroupForm({ priceGroup: dependentPriceGroup }));
 
     act(() => {
@@ -199,7 +238,7 @@ describe('usePriceGroupForm', () => {
     });
 
     expect(mocks.mutateAsync).not.toHaveBeenCalled();
-    expect(mocks.toast).toHaveBeenCalledWith('Dependent price groups require a source price group.', {
+    expect(mocks.toast).toHaveBeenCalledWith('Dependent price groups require a source price.', {
       variant: 'error',
     });
   });
@@ -220,6 +259,7 @@ describe('usePriceGroupForm', () => {
         currencyCode: 'EUR',
         isDefault: false,
         type: 'standard',
+        basePriceField: 'price',
         sourceGroupId: null,
         priceMultiplier: 1.2,
         addToPrice: 5,
@@ -358,6 +398,7 @@ describe('usePriceGroupForm', () => {
         currencyCode: 'EUR',
         isDefault: false,
         type: 'dependent',
+        basePriceField: 'price',
         sourceGroupId: 'group-pln',
         priceMultiplier: 1.25,
         addToPrice: 3,

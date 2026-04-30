@@ -1,12 +1,26 @@
+/* eslint-disable max-lines-per-function */
+
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 
-const { saveParameterMutationMock } = vi.hoisted(() => ({
+const { apiGetMock, saveParameterMutationMock, useTitleTermsMock } = vi.hoisted(() => ({
+  apiGetMock: vi.fn(),
   saveParameterMutationMock: vi.fn(),
+  useTitleTermsMock: vi.fn(),
+}));
+
+vi.mock('@/shared/lib/api-client', () => ({
+  api: {
+    get: apiGetMock,
+  },
 }));
 
 vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
@@ -16,11 +30,15 @@ vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
   }),
 }));
 
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useTitleTerms: (...args: unknown[]) => useTitleTermsMock(...args),
+}));
+
 import {
   DraftCreatorFormProvider,
   type DraftCreatorFormContextValue,
 } from './DraftCreatorFormContext';
-import { DraftCreatorParametersTab } from './DraftCreatorFormFields';
+import { DraftCreatorDetailsTab, DraftCreatorParametersTab } from './DraftCreatorFormFields';
 
 const createParameter = (
   id: string,
@@ -49,6 +67,34 @@ const createCatalog = (id: string, isDefault = false): CatalogRecord => ({
   priceGroupIds: [],
   createdAt: '2026-04-30T00:00:00.000Z',
   updatedAt: '2026-04-30T00:00:00.000Z',
+});
+
+const createCategory = (id: string, name: string): ProductCategory => ({
+  id,
+  name,
+  name_en: name,
+  name_pl: null,
+  name_de: null,
+  color: null,
+  parentId: null,
+  catalogId: 'catalog-1',
+  sortIndex: null,
+  createdAt: '2026-04-30T00:00:00.000Z',
+  updatedAt: '2026-04-30T00:00:00.000Z',
+});
+
+const createImageManagerController = (): ProductImageManagerController => ({
+  imageSlots: [],
+  imageLinks: [],
+  imageBase64s: [],
+  setImageLinkAt: vi.fn(),
+  setImageBase64At: vi.fn(),
+  handleSlotImageChange: vi.fn(),
+  handleSlotFileSelect: vi.fn(),
+  handleSlotDisconnectImage: vi.fn(),
+  setShowFileManager: vi.fn(),
+  swapImageSlots: vi.fn(),
+  setImagesReordering: vi.fn(),
 });
 
 const createContextValue = (
@@ -136,7 +182,7 @@ const createContextValue = (
   showFileManager: false,
   setShowFileManager: vi.fn(),
   handleMultiFileSelect: vi.fn(),
-  imageManagerController: {} as never,
+  imageManagerController: createImageManagerController(),
   parameters: [createParameter('simple-material', 'material')],
   parametersLoading: false,
   parameterValues: [{ parameterId: 'simple-material', value: 'Metal' }],
@@ -149,7 +195,9 @@ const createContextValue = (
 
 describe('DraftCreatorParametersTab', () => {
   beforeEach(() => {
+    apiGetMock.mockResolvedValue({ profiles: [] });
     saveParameterMutationMock.mockReset();
+    useTitleTermsMock.mockReturnValue({ data: [], isLoading: false });
   });
 
   it('renders linked title-term parameter values as synced and read-only', () => {
@@ -229,5 +277,52 @@ describe('DraftCreatorParametersTab', () => {
         },
       });
     });
+  });
+});
+
+const renderDetailsTab = (
+  overrides: Partial<DraftCreatorFormContextValue> = {}
+): ReturnType<typeof render> => {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <DraftCreatorFormProvider value={createContextValue(overrides)}>
+        <DraftCreatorDetailsTab />
+      </DraftCreatorFormProvider>
+    </QueryClientProvider>
+  );
+};
+
+describe('DraftCreatorDetailsTab', () => {
+  beforeEach(() => {
+    apiGetMock.mockResolvedValue({ profiles: [] });
+    saveParameterMutationMock.mockReset();
+    useTitleTermsMock.mockReturnValue({ data: [], isLoading: false });
+  });
+
+  it('renders an enabled category selector and writes the selected category to draft state', async () => {
+    const user = userEvent.setup();
+    const setSelectedCategoryId = vi.fn();
+
+    renderDetailsTab({
+      categories: [createCategory('category-anime-pin', 'Anime Pin')],
+      setSelectedCategoryId,
+    });
+
+    const categoryButton = screen.getByRole('button', { name: 'Categories' });
+    expect(categoryButton).toBeEnabled();
+    expect(categoryButton).toHaveTextContent('Select category');
+
+    await user.click(categoryButton);
+    await user.click(screen.getByRole('menuitemcheckbox', { name: 'Anime Pin' }));
+
+    expect(setSelectedCategoryId).toHaveBeenCalledWith('category-anime-pin');
   });
 });

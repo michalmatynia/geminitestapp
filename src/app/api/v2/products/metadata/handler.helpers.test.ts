@@ -39,7 +39,14 @@ describe('products metadata handler helpers', () => {
         groupType: 'dependent',
         sourceGroupId: null,
       })
-    ).toThrow('Invalid payload. dependent group requires sourceGroupId.');
+    ).toThrow('Invalid payload. dependent group requires sourceGroupId or sourcePrice basePriceField.');
+    expect(() =>
+      assertValidPriceGroupTypeDependencies({
+        groupType: 'dependent',
+        sourceGroupId: null,
+        basePriceField: 'sourcePrice',
+      })
+    ).not.toThrow();
 
     expect(
       resolvePriceGroupBaseId({

@@ -171,4 +171,44 @@ describe('products priceCalculation utils', () => {
       baseCurrencyCode: 'USD',
     });
   });
+
+  it('calculates a dependent price group from scraped sourcePrice', () => {
+    const groups = [
+      createGroup({
+        id: 'group-usd',
+        groupId: 'USD',
+        currencyId: 'USD',
+        currency: { code: 'USD' },
+        currencyCode: 'USD',
+        isDefault: true,
+      }),
+      createGroup({
+        id: 'group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        type: 'dependent',
+        basePriceField: 'sourcePrice',
+        sourceGroupId: null,
+        priceMultiplier: 2,
+        addToPrice: 5,
+      }),
+    ];
+
+    expect(
+      calculatePriceForCurrency(null, 'group-usd', 'PLN', groups, { sourcePrice: 60 })
+    ).toEqual({
+      price: 125,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'USD',
+    });
+    expect(
+      calculatePriceForCurrency(null, 'group-retail', 'PLN', groups, { sourcePrice: 60 })
+    ).toEqual({
+      price: 125,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+  });
 });

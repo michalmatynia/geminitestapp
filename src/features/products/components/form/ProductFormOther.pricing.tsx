@@ -4,7 +4,10 @@ import React, { useMemo } from 'react';
 import type { UseFormSetValue } from 'react-hook-form';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import {
+  PRICE_GROUP_SOURCE_PRICE_FIELD,
+  type CatalogRecord,
+} from '@/shared/contracts/products/catalogs';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { FormField, FormSection } from '@/shared/ui/form-section';
@@ -26,14 +29,15 @@ type ProductFormOtherPricingSectionProps = {
   catalogs: CatalogRecord[];
   selectedCatalogIds: string[];
   basePrice: number;
+  sourcePrice: number | null;
   selectedDefaultPriceGroupId: string;
   filteredPriceGroups: PriceGroupWithDetails[];
   setValue: UseFormSetValue<ProductFormData>;
 };
 
 const hasPriceMultiplierSource = (group: PriceGroupWithDetails): boolean =>
-  typeof group.sourceGroupId === 'string' &&
-  group.sourceGroupId.trim() !== '' &&
+  ((typeof group.sourceGroupId === 'string' && group.sourceGroupId.trim() !== '') ||
+    group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) &&
   typeof group.priceMultiplier === 'number' &&
   Number.isFinite(group.priceMultiplier);
 
@@ -55,32 +59,36 @@ const buildBasePriceGroupPrice = (
 
 const buildCalculatedPriceGroupPrice = (
   group: PriceGroupWithDetails,
-  sourceGroup: PriceGroupWithDetails | null,
-  sourcePrice: number | null
+  sourcePrice: number | null,
+  sourceGroupName: string | undefined
 ): PriceGroupWithCalculatedPrice => ({
   ...group,
   calculatedPrice:
-    sourceGroup !== null && sourcePrice !== null ? sourcePrice * group.priceMultiplier : null,
+    sourcePrice !== null ? sourcePrice * group.priceMultiplier + group.addToPrice : null,
   isCalculated: true,
-  sourceGroupName: sourceGroup?.name,
+  sourceGroupName,
 });
 
 const buildPriceGroupPrices = ({
   filteredPriceGroups,
   selectedDefaultPriceGroupId,
   basePrice,
+  sourcePrice,
 }: Pick<
   ProductFormOtherPricingSectionProps,
-  'filteredPriceGroups' | 'selectedDefaultPriceGroupId' | 'basePrice'
+  'filteredPriceGroups' | 'selectedDefaultPriceGroupId' | 'basePrice' | 'sourcePrice'
 >): PriceGroupWithCalculatedPrice[] =>
   filteredPriceGroups.map((group) => {
     if (hasPriceMultiplierSource(group) === false) {
       return buildBasePriceGroupPrice(group, basePrice, selectedDefaultPriceGroupId);
     }
+    if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) {
+      return buildCalculatedPriceGroupPrice(group, sourcePrice, 'Source price');
+    }
     const sourceGroup =
       filteredPriceGroups.find((candidate) => candidate.id === group.sourceGroupId) ?? null;
-    const sourcePrice = sourceGroup?.id === selectedDefaultPriceGroupId ? basePrice : null;
-    return buildCalculatedPriceGroupPrice(group, sourceGroup, sourcePrice);
+    const resolvedSourcePrice = sourceGroup?.id === selectedDefaultPriceGroupId ? basePrice : null;
+    return buildCalculatedPriceGroupPrice(group, resolvedSourcePrice, sourceGroup?.name);
   });
 
 const buildPriceGroupOptions = (
@@ -185,7 +193,12 @@ export function ProductFormOtherPricingSection(
     props.isNewProduct && typeof selectedCatalog?.defaultPriceGroupId === 'string';
   const priceGroupPrices = useMemo(
     () => buildPriceGroupPrices(props),
-    [props.basePrice, props.filteredPriceGroups, props.selectedDefaultPriceGroupId]
+    [
+      props.basePrice,
+      props.filteredPriceGroups,
+      props.selectedDefaultPriceGroupId,
+      props.sourcePrice,
+    ]
   );
   const priceGroupOptions = useMemo(
     () => buildPriceGroupOptions(props.filteredPriceGroups),

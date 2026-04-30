@@ -99,14 +99,16 @@ export const buildMongoPriceGroupUpdateDocument = ({
     update['sourceGroupId'] = data['sourceGroupId'] === null ? null : (resolvedSourceGroupId ?? null);
   }
 
-  if ('type' in data || 'sourceGroupId' in data) {
+  const basePriceField = readMetadataString(data, 'basePriceField');
+
+  if ('type' in data || 'sourceGroupId' in data || 'basePriceField' in data) {
     update['type'] = resolvePriceGroupType(
       data['type'],
-      (update['sourceGroupId'] as string | null | undefined) ?? existing.sourceGroupId ?? null
+      (update['sourceGroupId'] as string | null | undefined) ?? existing.sourceGroupId ?? null,
+      basePriceField
     );
   }
 
-  const basePriceField = readMetadataString(data, 'basePriceField');
   if (basePriceField) update['basePriceField'] = basePriceField;
 
   const priceMultiplier = readMetadataNumber(data, 'priceMultiplier');

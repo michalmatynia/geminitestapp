@@ -12,13 +12,30 @@ import {
   findRedundantShippingGroupRuleCategoryIds,
   formatCategoryRuleSummary,
   normalizeShippingGroupRuleCategoryIds,
+  type ShippingGroupRuleConflict,
 } from '@/shared/lib/products/utils/shipping-group-rule-conflicts';
 
 import {
   DRAFT_SHIPPING_GROUP_ID,
   summarizeRuleDescendantCoverage,
 } from '../../utils/shipping-group-settings-utils';
+import type { ShippingGroupRuleCoverage } from './ShippingGroupsSettings.helpers';
 import { getMissingRuleSummary, hasNormalizedRuleChanges } from './ShippingGroupsSettings.helpers';
+
+type ModalRuleSummaries = {
+  redundantRuleSummary: string | null;
+  normalizedRuleSummary: string | null;
+  missingRuleSummary: string | null;
+  shouldShowNormalizedRuleSummary: boolean;
+};
+
+export type ShippingGroupsModalRuleModel = ModalRuleSummaries & {
+  categoryLabelById: Map<string, string>;
+  normalizedRuleIds: string[];
+  categoryOptions: Array<LabeledOptionDto<string>>;
+  ruleConflicts: ShippingGroupRuleConflict[];
+  ruleCoverage: ShippingGroupRuleCoverage;
+};
 
 const buildCategoryOptions = (
   categories: readonly ProductCategory[],
@@ -68,7 +85,7 @@ const buildModalRuleConflicts = ({
   draftRuleIds: readonly string[];
   modalCatalogShippingGroups: readonly ProductShippingGroup[];
   modalCatalogCategories: readonly ProductCategory[];
-}) => {
+}): ShippingGroupRuleConflict[] => {
   if (formData.catalogId.trim().length === 0 || draftRuleIds.length === 0) return [];
   const draftShippingGroup = buildDraftShippingGroup({ formData, editingShippingGroupId, draftRuleIds });
   const modalPeerShippingGroups = modalCatalogShippingGroups.filter(
@@ -90,7 +107,7 @@ const useModalRuleSummaries = ({
   modalCatalogCategories: readonly ProductCategory[];
   categoryLabelById: Map<string, string>;
   normalizedRuleIds: readonly string[];
-}) => {
+}): ModalRuleSummaries => {
   const redundantRuleSummary = useMemo(() => {
     const redundantRuleIds = findRedundantShippingGroupRuleCategoryIds({
       categoryIds: formData.autoAssignCategoryIds,
@@ -132,11 +149,8 @@ export const useShippingGroupsModalRuleModel = ({
   editingShippingGroup: ProductShippingGroup | null;
   modalCatalogCategories: readonly ProductCategory[];
   modalCatalogShippingGroups: readonly ProductShippingGroup[];
-}) => {
-  const categoryLabelById = useMemo(
-    () => buildCategoryPathLabelMap(modalCatalogCategories),
-    [modalCatalogCategories]
-  );
+}): ShippingGroupsModalRuleModel => {
+  const categoryLabelById = useMemo(() => buildCategoryPathLabelMap(modalCatalogCategories), [modalCatalogCategories]);
   const normalizedRuleIds = useMemo(
     () =>
       normalizeShippingGroupRuleCategoryIds({
@@ -151,10 +165,7 @@ export const useShippingGroupsModalRuleModel = ({
     categoryLabelById,
     normalizedRuleIds,
   });
-  const categoryOptions = useMemo(
-    () => buildCategoryOptions(modalCatalogCategories, categoryLabelById),
-    [categoryLabelById, modalCatalogCategories]
-  );
+  const categoryOptions = useMemo(() => buildCategoryOptions(modalCatalogCategories, categoryLabelById), [categoryLabelById, modalCatalogCategories]);
   const ruleConflicts = useMemo(
     () =>
       buildModalRuleConflicts({
@@ -167,12 +178,7 @@ export const useShippingGroupsModalRuleModel = ({
     [editingShippingGroup?.id, formData, modalCatalogCategories, modalCatalogShippingGroups, normalizedRuleIds]
   );
   const ruleCoverage = useMemo(
-    () =>
-      summarizeRuleDescendantCoverage({
-        categoryIds: normalizedRuleIds,
-        categories: modalCatalogCategories,
-        categoryLabelById,
-      }),
+    () => summarizeRuleDescendantCoverage({ categoryIds: normalizedRuleIds, categories: modalCatalogCategories, categoryLabelById }),
     [categoryLabelById, modalCatalogCategories, normalizedRuleIds]
   );
   return {

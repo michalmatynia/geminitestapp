@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { ObjectId } from 'mongodb';
 
 import { badRequestError } from '@/shared/errors/app-error';
+import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/catalogs';
 import type {
   MongoCurrencyDoc,
   MongoPriceGroupDoc,
@@ -51,7 +52,8 @@ export const normalizePriceGroupId = (value: string): string => {
 
 export const resolvePriceGroupType = (
   value: unknown,
-  sourceGroupId: string | null
+  sourceGroupId: string | null,
+  basePriceField?: string | null
 ): 'standard' | 'dependent' => {
   if (typeof value === 'string') {
     const normalized = value.trim().toLowerCase();
@@ -60,18 +62,27 @@ export const resolvePriceGroupType = (
     }
   }
 
+  if (basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return 'dependent';
   return sourceGroupId ? 'dependent' : 'standard';
 };
 
 export const assertValidPriceGroupTypeDependencies = ({
   groupType,
   sourceGroupId,
+  basePriceField,
 }: {
   groupType: 'standard' | 'dependent';
   sourceGroupId: string | null;
+  basePriceField?: string | null;
 }): void => {
-  if (groupType === 'dependent' && !sourceGroupId) {
-    throw badRequestError('Invalid payload. dependent group requires sourceGroupId.');
+  if (
+    groupType === 'dependent' &&
+    !sourceGroupId &&
+    basePriceField !== PRICE_GROUP_SOURCE_PRICE_FIELD
+  ) {
+    throw badRequestError(
+      'Invalid payload. dependent group requires sourceGroupId or sourcePrice basePriceField.'
+    );
   }
 };
 

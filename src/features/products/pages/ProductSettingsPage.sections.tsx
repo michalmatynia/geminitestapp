@@ -6,7 +6,6 @@ import { CustomFieldsSettings } from '@/features/products/components/settings/Cu
 import { ParametersSettings } from '@/features/products/components/settings/parameters/ParametersSettings';
 import { PriceGroupsSettings } from '@/features/products/components/settings/pricing/PriceGroupsSettings';
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
-import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
 import { ShippingGroupsSettings } from '@/features/products/components/settings/ShippingGroupsSettings';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
 import { ValidatorDefaultPanel } from '@/features/products/components/settings/validator-settings/ValidatorDefaultPanel';
@@ -24,7 +23,6 @@ import { useProductSettingsController } from './product-settings/useProductSetti
 import type {
   ProductSettingsCustomFieldsProps,
   ProductSettingsParametersProps,
-  ProductSettingsProviderValue,
   ProductSettingsSection,
 } from './ProductSettingsPage.types';
 
@@ -38,7 +36,6 @@ type ProductSettingsPanelProps = {
 type ProductSettingsSectionsLayoutProps = ProductSettingsPanelProps & {
   activeSection: ProductSettingsSection;
   onSectionChange: (section: ProductSettingsSection) => void;
-  contextValue: ProductSettingsProviderValue;
 };
 
 type ProductSettingsSectionPanel = (props: ProductSettingsPanelProps) => JSX.Element;
@@ -110,7 +107,6 @@ const SECTION_PANELS = {
 export const ProductSettingsSectionsLayout = ({
   activeSection,
   onSectionChange,
-  contextValue,
   ...panelProps
 }: ProductSettingsSectionsLayoutProps): JSX.Element => {
   const ActivePanel = SECTION_PANELS[activeSection];
@@ -133,11 +129,9 @@ export const ProductSettingsSectionsLayout = ({
         </div>
       </Card>
 
-      <ProductSettingsProvider value={contextValue}>
-        <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
-          <ActivePanel {...panelProps} />
-        </Card>
-      </ProductSettingsProvider>
+      <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40'>
+        <ActivePanel {...panelProps} />
+      </Card>
     </div>
   );
 };

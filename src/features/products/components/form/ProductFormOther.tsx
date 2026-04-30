@@ -30,6 +30,9 @@ const readNullableString = (value: unknown): string | null => {
 const readNumber = (value: unknown): number =>
   typeof value === 'number' && Number.isFinite(value) ? value : 0;
 
+const readNullableNumber = (value: unknown): number | null =>
+  typeof value === 'number' && Number.isFinite(value) ? value : null;
+
 const isMissingProduct = (product: unknown): boolean => product === null || product === undefined;
 
 export default function ProductFormOther(): React.JSX.Element {
@@ -55,6 +58,7 @@ export default function ProductFormOther(): React.JSX.Element {
         catalogs={readArray<CatalogRecord>(metadata.catalogs)}
         selectedCatalogIds={selectedCatalogIds}
         basePrice={readNumber(watch('price'))}
+        sourcePrice={readNullableNumber(watch('sourcePrice'))}
         selectedDefaultPriceGroupId={selectedDefaultPriceGroupId}
         filteredPriceGroups={readArray<PriceGroupWithDetails>(metadata.filteredPriceGroups)}
         setValue={setValue}

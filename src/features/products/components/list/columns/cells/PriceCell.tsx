@@ -49,12 +49,17 @@ function ConvertedPriceTooltip({ displayPrice, actualCurrency }: { displayPrice:
   );
 }
 
+function CalculatedPriceDisplay({ displayPrice }: { displayPrice: number }): React.JSX.Element {
+  return <span className='text-foreground'>{displayPrice.toFixed(2)}</span>;
+}
+
 function resolvePriceInfo(product: ProductWithImages, currencyCode: string, priceGroups: PriceGroupWithDetails[]): PriceInfo {
   return calculatePriceForCurrency(
     product.price,
     product.defaultPriceGroupId,
     currencyCode,
-    priceGroups
+    priceGroups,
+    { sourcePrice: product.sourcePrice ?? null }
   );
 }
 
@@ -78,6 +83,10 @@ function PriceCellContent({ product, info, currencyCode }: { product: ProductWit
 
   if (isConverted === true && info.price !== null && product.price !== null && info.baseCurrencyCode !== null) {
     return <ConvertedPriceDisplay displayPrice={info.price} productPrice={product.price} baseCurrencyCode={info.baseCurrencyCode} />;
+  }
+
+  if (product.price === null && info.price !== null) {
+    return <CalculatedPriceDisplay displayPrice={info.price} />;
   }
 
   const showIndicator = info.currencyCode !== null && info.currencyCode !== currencyCode;

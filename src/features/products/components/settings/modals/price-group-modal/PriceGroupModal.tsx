@@ -10,7 +10,10 @@ import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { useProductSettingsPriceGroupsContext } from '../../ProductSettingsContext';
-import { usePriceGroupForm } from './hooks/usePriceGroupForm';
+import {
+  PRODUCT_SOURCE_PRICE_SOURCE_ID,
+  usePriceGroupForm,
+} from './hooks/usePriceGroupForm';
 
 interface PriceGroupModalProps extends EntityModalProps<PriceGroup> {}
 
@@ -25,6 +28,11 @@ type PriceGroupFormState = {
 };
 
 const toTrimmedString = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
+
+const PRODUCT_SOURCE_PRICE_OPTION = {
+  value: PRODUCT_SOURCE_PRICE_SOURCE_ID,
+  label: 'Scraped product sourcePrice',
+};
 
 const wouldCreateSourceGroupCycle = ({
   currentPriceGroup,
@@ -110,10 +118,10 @@ function usePriceGroupFields({
   const dependentFields: SettingsPanelField<PriceGroupFormState>[] = useMemo(() => [
     {
       key: 'sourceGroupId',
-      label: 'Source price group',
+      label: 'Source price',
       type: 'select',
       options: sourceGroupOptions,
-      placeholder: 'Select source price group',
+      placeholder: 'Select source price',
       disabled: formType !== 'dependent',
     },
     { key: 'priceMultiplier', label: 'Price multiplier', type: 'number', step: 0.01 },
@@ -137,8 +145,9 @@ export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element 
   } = usePriceGroupForm({ priceGroup, priceGroups });
 
   const sourceGroupOptions = useMemo(
-    () =>
-      priceGroups
+    () => [
+      PRODUCT_SOURCE_PRICE_OPTION,
+      ...priceGroups
         .filter((group) => {
           const normalizedId = toTrimmedString(group.id);
           if (normalizedId === '') return false;
@@ -152,6 +161,7 @@ export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element 
           value: group.id,
           label: `${group.name} (${group.currencyCode})`,
         })),
+    ],
     [priceGroup, priceGroups]
   );
 

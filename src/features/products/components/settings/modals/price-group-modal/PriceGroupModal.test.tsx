@@ -156,12 +156,15 @@ describe('PriceGroupModal', () => {
     );
 
     expect(screen.getByText('Group type')).toBeInTheDocument();
-    expect(screen.getByText('Source price group')).toBeInTheDocument();
+    expect(screen.getByText('Source price')).toBeInTheDocument();
     expect(screen.getByText('Price multiplier')).toBeInTheDocument();
     expect(screen.getByText('Add to price')).toBeInTheDocument();
     expect(screen.getByTestId('field-sourceGroupId-disabled')).toHaveTextContent('enabled');
     expect(screen.getByTestId('field-priceMultiplier-disabled')).toHaveTextContent('enabled');
     expect(screen.getByTestId('field-addToPrice-disabled')).toHaveTextContent('enabled');
+    expect(screen.getByTestId('field-sourceGroupId-options')).toHaveTextContent(
+      'Scraped product sourcePrice'
+    );
     expect(screen.getByTestId('field-sourceGroupId-options')).toHaveTextContent('Standard PLN (PLN)');
     expect(screen.getByTestId('field-sourceGroupId-options')).not.toHaveTextContent(
       'Retail EUR (EUR)'

@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable max-lines-per-function, complexity, @typescript-eslint/explicit-function-return-type */
+/* eslint-disable max-lines, max-lines-per-function, complexity, @typescript-eslint/explicit-function-return-type */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/features/drafter/hooks/useDraftQueries';
 import { useProductImages, useCatalogs, useProducers } from '@/features/products/forms.public';
 import type { ProductDraft, ProductDraftKind, ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import { resolveCategoryIdFromStructuredDraftName } from './draft-category-inference';
 import { useDraftMetadata } from './useDraftMetadata';
 import { useDraftCreatorParameters } from './useDraftCreatorParameters';
 import { useDraftPolishNameAutoSync } from './useDraftPolishNameAutoSync';
@@ -75,6 +76,10 @@ export const useDraftCreatorForm = (
   const [selectedProducerIds, setSelectedProducerIds] = useState<string[]>([]);
 
   const metadata = useDraftMetadata(selectedCatalogIds);
+  const inferredCategoryId = useMemo(
+    () => resolveCategoryIdFromStructuredDraftName(nameEn, metadata.categories),
+    [metadata.categories, nameEn]
+  );
   const primaryCatalogId = selectedCatalogIds[0] ?? '';
   useDraftPolishNameAutoSync({
     categories: metadata.categories,
@@ -90,6 +95,12 @@ export const useDraftCreatorForm = (
     nameEn,
     selectedCatalogIds,
   });
+  useEffect(() => {
+    if (inferredCategoryId === null) return;
+    setSelectedCategoryId((current) =>
+      current === inferredCategoryId ? current : inferredCategoryId
+    );
+  }, [inferredCategoryId]);
   const {
     addParameterValue,
     parameterDefinitions,

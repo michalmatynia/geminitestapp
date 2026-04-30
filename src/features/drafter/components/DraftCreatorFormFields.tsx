@@ -115,6 +115,11 @@ const buildParameterOptions = (
     label: getParameterLabel(parameter),
   }));
 
+const resolveCategoryPlaceholder = (loading: boolean, categoryCount: number): string => {
+  if (loading) return 'Loading categories...';
+  return categoryCount > 0 ? 'Select category' : 'No categories available';
+};
+
 export function DraftCreatorDraftInfoSection(): React.JSX.Element {
   const {
     name,
@@ -702,11 +707,14 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
           <CatalogMultiSelectField />
         </FormSection>
 
-        {categories.length > 0 ? (
-          <FormSection title='Categories' className='p-4'>
-            <CategorySingleSelectField placeholder='Select category' />
-          </FormSection>
-        ) : null}
+        <FormSection title='Categories' className='p-4'>
+          <CategorySingleSelectField
+            disabled={categoryLoading || categories.length === 0}
+            loading={categoryLoading}
+            placeholder={resolveCategoryPlaceholder(categoryLoading, categories.length)}
+            emptyMessage='No categories available.'
+          />
+        </FormSection>
 
         {tags.length > 0 ? (
           <FormSection title='Tags' className='p-4'>

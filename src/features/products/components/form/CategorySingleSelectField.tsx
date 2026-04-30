@@ -14,6 +14,7 @@ type CategorySingleSelectFieldProps = {
   loading?: boolean | undefined;
   disabled?: boolean | undefined;
   placeholder?: string | undefined;
+  emptyMessage?: string | undefined;
 };
 
 const resolveSelectedCategoryIds = (
@@ -27,7 +28,8 @@ const resolveSelectedCategoryIds = (
 export function CategorySingleSelectField(
   props: CategorySingleSelectFieldProps
 ): React.JSX.Element {
-  const { categories, selectedCategoryId, onChange, loading, disabled, placeholder } = props;
+  const { categories, selectedCategoryId, onChange, loading, disabled, placeholder, emptyMessage } =
+    props;
 
   const selectedIds = resolveSelectedCategoryIds(selectedCategoryId);
   const handleChange =
@@ -47,6 +49,7 @@ export function CategorySingleSelectField(
       disabled={disabled}
       placeholder={placeholder ?? 'Select category'}
       searchPlaceholder='Search categories...'
+      emptyMessage={emptyMessage}
       single
     />
   );

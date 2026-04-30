@@ -177,6 +177,20 @@ describe('useDraftCreatorForm', () => {
     });
   });
 
+  it('preselects the matching draft category from the English structured title', async () => {
+    const { result } = renderHook(() =>
+      useDraftCreatorForm(null, handleSaveSuccessMock)
+    );
+
+    act(() => {
+      result.current.state.setNameEn('Scout | 4 cm | Metal | Anime Pin | Attack On Titan');
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.selectedCategoryId).toBe('category-anime-pin');
+    });
+  });
+
   it('preserves a custom Polish title base while syncing translated segments', async () => {
     const { result } = renderHook(() =>
       useDraftCreatorForm(null, handleSaveSuccessMock)

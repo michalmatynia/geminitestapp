@@ -77,10 +77,16 @@ function useDraftStructuredCategoryState({
   const primaryCatalogId = selectedCatalogIds[0] ?? '';
   const setStructuredValue = useCallback<UseFormSetValue<ProductFormData>>(
     (fieldName, nextValue) => {
-      if (fieldName !== 'name_en') return;
-      onValueChange(typeof nextValue === 'string' ? nextValue : String(nextValue ?? ''));
+      if (fieldName === 'categoryId') {
+        const nextId = typeof nextValue === 'string' ? nextValue.trim() : '';
+        setSelectedCategoryId(nextId.length > 0 ? nextId : null);
+        return;
+      }
+      if (fieldName === 'name_en') {
+        onValueChange(typeof nextValue === 'string' ? nextValue : String(nextValue ?? ''));
+      }
     },
-    [onValueChange]
+    [onValueChange, setSelectedCategoryId]
   );
   const getStructuredValue = useCallback(
     ((fieldName: keyof ProductFormData) => {

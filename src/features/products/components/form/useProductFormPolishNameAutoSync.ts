@@ -13,6 +13,7 @@ import {
 import { coerceWatchedString } from './ProductFormGeneral.helpers';
 
 type StructuredNameCategories = Parameters<typeof syncPolishStructuredProductName>[0]['categories'];
+export type ProductFormPolishNameCategories = StructuredNameCategories;
 
 type PolishBaseNameAutoSyncStateUpdate = {
   generatedPolishTitle: string | null;
@@ -27,6 +28,10 @@ type UseProductFormPolishNameAutoSyncInput = {
   namePl: unknown;
   getValues: UseFormGetValues<ProductFormData>;
   setValue: UseFormSetValue<ProductFormData>;
+};
+
+type BuildGeneratedPolishNameInput = Parameters<typeof syncPolishStructuredProductName>[0] & {
+  languageTabValues: string[];
 };
 
 const resolvePolishBaseNameAutoSyncStateUpdate = ({
@@ -49,6 +54,14 @@ const resolvePolishBaseNameAutoSyncStateUpdate = ({
   };
 };
 
+const buildGeneratedPolishName = ({
+  languageTabValues,
+  ...syncInput
+}: BuildGeneratedPolishNameInput): PolishStructuredProductNameSyncResult | null => {
+  if (languageTabValues.includes('pl') === false) return null;
+  return syncPolishStructuredProductName(syncInput);
+};
+
 export const useProductFormPolishNameAutoSync = ({
   primaryCatalogId,
   languageTabValues,
@@ -65,18 +78,17 @@ export const useProductFormPolishNameAutoSync = ({
   const polishBaseNameAutoSyncRef = useRef<boolean>(true);
   const generatedPolishName = useMemo(
     () =>
-      languageTabValues.includes('pl')
-        ? syncPolishStructuredProductName({
-            englishTitle: coerceWatchedString(nameEn),
-            polishTitle: coerceWatchedString(namePl),
-            previousGeneratedPolishTitle: lastGeneratedPolishNameRef.current,
-            syncPreviousGeneratedBaseName: polishBaseNameAutoSyncRef.current,
-            sizeTerms: sizeTermsQuery.data,
-            materialTerms: materialTermsQuery.data,
-            categories,
-            themeTerms: themeTermsQuery.data,
-          })
-        : null,
+      buildGeneratedPolishName({
+        languageTabValues,
+        englishTitle: coerceWatchedString(nameEn),
+        polishTitle: coerceWatchedString(namePl),
+        previousGeneratedPolishTitle: lastGeneratedPolishNameRef.current,
+        syncPreviousGeneratedBaseName: polishBaseNameAutoSyncRef.current,
+        sizeTerms: sizeTermsQuery.data,
+        materialTerms: materialTermsQuery.data,
+        categories,
+        themeTerms: themeTermsQuery.data,
+      }),
     [
       categories,
       languageTabValues,

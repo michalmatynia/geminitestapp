@@ -56,6 +56,20 @@ export const pickMappedSku = (mapped: NormalizedMappedProduct): string | null =>
   return rawSku.length > 0 ? rawSku : null;
 };
 
+const moveImportedPriceToSourcePrice = (
+  mapped: NormalizedMappedProduct
+): NormalizedMappedProduct => {
+  const { price, ...rest } = mapped;
+  const withoutPrice: NormalizedMappedProduct = { ...rest };
+  if (rest.sourcePrice !== undefined || price === undefined) {
+    return withoutPrice;
+  }
+  return {
+    ...withoutPrice,
+    sourcePrice: price,
+  };
+};
+
 export const normalizeMappedProduct = (
   record: BaseProductRecord,
   mappings: Array<{ sourceKey: string; targetField: string }>,
@@ -68,8 +82,10 @@ export const normalizeMappedProduct = (
   }) as NormalizedMappedProduct;
 
   const sku = pickMappedSku(mapped);
-  mapped.sku = sku ?? '';
-  return mapped;
+  return {
+    ...moveImportedPriceToSourcePrice(mapped),
+    sku: sku ?? '',
+  };
 };
 
 const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
@@ -424,7 +440,7 @@ export const importSingleItem = async (input: {
       description_en: mapped.description_en,
       description_pl: mapped.description_pl,
       description_de: mapped.description_de,
-      price: mapped.price,
+      sourcePrice: mapped.sourcePrice,
       stock: mapped.stock,
       weight: mapped.weight,
       sizeLength: mapped.sizeLength,

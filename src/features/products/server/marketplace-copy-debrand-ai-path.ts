@@ -6,11 +6,16 @@ import {
   getAiPathsSetting,
 } from '@/features/ai/ai-paths/server';
 import { assertAiPathRunQueueReadyForEnqueue } from '@/features/ai/ai-paths/workers/aiPathRunQueue';
-import { buildMarketplaceCopyDebrandTriggerInput } from '@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput';
+import {
+  buildMarketplaceCopyDebrandTriggerInput,
+  sanitizeMarketplaceCopyDebrandTriggerInput,
+} from '@/features/products/lib/buildMarketplaceCopyDebrandTriggerInput';
 import { buildTriggeredProductEntityJson } from '@/features/products/lib/build-triggered-product-entity-json';
 import { resolveMarketplaceCopyDebrandIntegrationName } from '@/features/products/server/marketplace-copy-debrand-batch';
+import { prepareMarketplaceCopyDebrandRuntimeConfig } from '@/features/products/server/marketplace-copy-debrand-runtime-config';
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 import type { IntegrationRecord } from '@/shared/contracts/integrations/repositories';
+import type { MarketplaceCopyDebrandTriggerInput } from '@/shared/contracts/products/marketplace-copy-debrand-run';
 import type {
   ProductMarketplaceContentOverrideDraft,
   ProductWithImages,
@@ -35,6 +40,16 @@ type EnqueueMarketplaceCopyDebrandRunInput = {
   userId?: string | null;
   integrationNameById?: Map<string, string>;
 };
+
+type EnqueueMarketplaceCopyDebrandRowRunInput = {
+  productId: string | null;
+  entityJson: Record<string, unknown>;
+  marketplaceCopyDebrandInput: MarketplaceCopyDebrandTriggerInput;
+  integration: IntegrationRecord;
+  userId?: string | null;
+};
+
+type MarketplaceCopyDebrandRunMode = 'batch' | 'row';
 
 const loadMarketplaceCopyDebrandPathConfig = async (): Promise<PathConfig> => {
   await ensureCanonicalStarterWorkflowSettingsForPathIds([MARKETPLACE_COPY_DEBRAND_PATH_ID]);
@@ -126,23 +141,24 @@ const buildMarketplaceCopyDebrandEntityJson = (
 
 const buildMarketplaceCopyDebrandContext = (input: {
   pathConfig: PathConfig;
-  product: ProductWithImages;
+  entityId: string | null;
   triggerNode: AiNode;
-  marketplaceCopyDebrandInput: ReturnType<typeof buildMarketplaceCopyDebrandTriggerInput>;
+  marketplaceCopyDebrandInput: MarketplaceCopyDebrandTriggerInput;
   entityJson: Record<string, unknown>;
+  mode: MarketplaceCopyDebrandRunMode;
 }): Record<string, unknown> =>
   buildTriggerContext({
     triggerNode: input.triggerNode,
     triggerEventId: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
     triggerLabel: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
     entityType: 'product',
-    entityId: input.product.id,
+    entityId: input.entityId,
     entityJson: input.entityJson,
     pathInfo: { id: input.pathConfig.id, name: input.pathConfig.name },
     source: { tab: 'product', location: MARKETPLACE_COPY_DEBRAND_TRIGGER_LOCATION },
     extras: {
       marketplaceCopyDebrandInput: input.marketplaceCopyDebrandInput,
-      mode: 'batch',
+      mode: input.mode,
     },
   });
 
@@ -151,13 +167,20 @@ const buildMarketplaceCopyDebrandRunMeta = (input: {
   requestId: string;
   integration: IntegrationRecord;
   rowIndex: number;
+  mode: MarketplaceCopyDebrandRunMode;
 }): Record<string, unknown> => {
   const runtimeState = toRecordOrUndefined(input.pathConfig.runtimeState);
   const parserSamples = toRecordOrUndefined(input.pathConfig.parserSamples);
   const updaterSamples = toRecordOrUndefined(input.pathConfig.updaterSamples);
+  const source =
+    input.mode === 'batch'
+      ? 'product_marketplace_copy_debrand_batch'
+      : 'product_marketplace_copy_debrand_row';
+  const serverSource =
+    input.mode === 'batch' ? 'marketplace-copy-debrand-batch' : 'marketplace-copy-debrand-row';
 
   return {
-    source: 'product_marketplace_copy_debrand_batch',
+    source,
     requestId: input.requestId,
     triggerLabel: MARKETPLACE_COPY_DEBRAND_TRIGGER_NAME,
     strictFlowMode: input.pathConfig.strictFlowMode !== false,
@@ -169,7 +192,7 @@ const buildMarketplaceCopyDebrandRunMeta = (input: {
       ...(runtimeState !== undefined ? { runtimeState } : {}),
     },
     serverMetadata: {
-      source: 'marketplace-copy-debrand-batch',
+      source: serverSource,
       integrationId: input.integration.id,
       integrationSlug: input.integration.slug,
       rowIndex: input.rowIndex,
@@ -182,6 +205,7 @@ export const enqueueMarketplaceCopyDebrandRun = async (
 ): Promise<string> => {
   await assertAiPathRunQueueReadyForEnqueue();
   const pathConfig = await loadMarketplaceCopyDebrandPathConfig();
+  const runtimeConfig = prepareMarketplaceCopyDebrandRuntimeConfig(pathConfig);
   const triggerNode = findMarketplaceCopyDebrandTriggerNode(pathConfig);
   const marketplaceCopyDebrandInput = buildMarketplaceCopyDebrandInput(input);
   const entityJson = buildMarketplaceCopyDebrandEntityJson(
@@ -190,10 +214,11 @@ export const enqueueMarketplaceCopyDebrandRun = async (
   );
   const triggerContext = buildMarketplaceCopyDebrandContext({
     pathConfig,
-    product: input.product,
+    entityId: input.product.id,
     triggerNode,
     marketplaceCopyDebrandInput,
     entityJson,
+    mode: 'batch',
   });
   const requestId = createAiPathTriggerRequestId({
     pathId: pathConfig.id,
@@ -204,10 +229,10 @@ export const enqueueMarketplaceCopyDebrandRun = async (
 
   const run = await enqueuePathRun({
     userId: input.userId ?? null,
-    pathId: pathConfig.id,
-    pathName: pathConfig.name,
-    nodes: pathConfig.nodes,
-    edges: pathConfig.edges,
+    pathId: runtimeConfig.id,
+    pathName: runtimeConfig.name,
+    nodes: runtimeConfig.nodes,
+    edges: runtimeConfig.edges,
     triggerEvent: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
     triggerNodeId: triggerNode.id,
     triggerContext,
@@ -219,6 +244,60 @@ export const enqueueMarketplaceCopyDebrandRun = async (
       requestId,
       integration: input.integration,
       rowIndex: input.rowIndex,
+      mode: 'batch',
+    }),
+  });
+
+  return run.id;
+};
+
+export const enqueueMarketplaceCopyDebrandRowRun = async (
+  input: EnqueueMarketplaceCopyDebrandRowRunInput
+): Promise<string> => {
+  await assertAiPathRunQueueReadyForEnqueue();
+  const pathConfig = await loadMarketplaceCopyDebrandPathConfig();
+  const runtimeConfig = prepareMarketplaceCopyDebrandRuntimeConfig(pathConfig);
+  const triggerNode = findMarketplaceCopyDebrandTriggerNode(pathConfig);
+  const marketplaceCopyDebrandInput = sanitizeMarketplaceCopyDebrandTriggerInput(
+    input.marketplaceCopyDebrandInput
+  );
+  const entityJson = {
+    ...input.entityJson,
+    marketplaceCopyDebrandInput,
+  };
+  const triggerContext = buildMarketplaceCopyDebrandContext({
+    pathConfig,
+    entityId: input.productId,
+    triggerNode,
+    marketplaceCopyDebrandInput,
+    entityJson,
+    mode: 'row',
+  });
+  const requestId = createAiPathTriggerRequestId({
+    pathId: pathConfig.id,
+    triggerEventId: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+    entityType: 'product',
+    entityId: input.productId,
+  });
+
+  const run = await enqueuePathRun({
+    userId: input.userId ?? null,
+    pathId: runtimeConfig.id,
+    pathName: runtimeConfig.name,
+    nodes: runtimeConfig.nodes,
+    edges: runtimeConfig.edges,
+    triggerEvent: MARKETPLACE_COPY_DEBRAND_TRIGGER_BUTTON_ID,
+    triggerNodeId: triggerNode.id,
+    triggerContext,
+    entityId: input.productId,
+    entityType: 'product',
+    requestId,
+    meta: buildMarketplaceCopyDebrandRunMeta({
+      pathConfig,
+      requestId,
+      integration: input.integration,
+      rowIndex: marketplaceCopyDebrandInput.targetRow.index,
+      mode: 'row',
     }),
   });
 

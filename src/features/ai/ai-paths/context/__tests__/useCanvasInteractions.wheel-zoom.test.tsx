@@ -149,6 +149,61 @@ describe('useCanvasInteractionsNavigation wheel zoom', () => {
     unmount();
   });
 
+  it('bounds animated wheel zoom frames when view feedback progresses slowly', () => {
+    const viewportElement = document.createElement('div');
+    Object.defineProperty(viewportElement, 'getBoundingClientRect', {
+      value: (): DOMRect => buildViewportRect(),
+    });
+
+    const latestViewRef = { current: { x: 0, y: 0, scale: 1 } };
+    const viewportRef = { current: viewportElement } as React.RefObject<HTMLDivElement | null>;
+    const rafQueue: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+      (callback: FrameRequestCallback): number => {
+        rafQueue.push(callback);
+        return rafQueue.length;
+      }
+    );
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation((): void => undefined);
+
+    let reportedScale = 1;
+    const updateView = vi.fn((next: { x: number; y: number; scale: number }): void => {
+      const direction = next.scale < reportedScale ? -1 : 1;
+      reportedScale = Math.max(0.1, Math.min(1.6, reportedScale + direction * 0.001));
+      latestViewRef.current = { ...next, scale: reportedScale };
+    });
+
+    const { result, unmount } = renderHook(() =>
+      useCanvasInteractionsNavigation({
+        view: latestViewRef.current,
+        latestViewRef,
+        updateView,
+        viewportRef,
+        nodes: [],
+        resolveActiveNodeSelectionIds: (): string[] => [],
+        updateLastPointerCanvasPosFromClient: (): { x: number; y: number } | null => null,
+      })
+    );
+
+    act(() => {
+      result.current.applyWheelZoom(500, 300, 220, { deltaMode: 0 });
+    });
+
+    act(() => {
+      for (let step = 0; step < 240 && rafQueue.length > 0; step += 1) {
+        const callback = rafQueue.shift();
+        if (!callback) break;
+        callback(performance.now() + (step + 1) * 16);
+      }
+    });
+
+    expect(updateView).toHaveBeenCalledTimes(24);
+    expect(rafQueue).toHaveLength(0);
+    expect(result.current.wheelZoomRafRef.current).toBeNull();
+
+    unmount();
+  });
+
   it('does not dispatch a view update when clamped view is unchanged', () => {
     const viewportElement = document.createElement('div');
     Object.defineProperty(viewportElement, 'getBoundingClientRect', {

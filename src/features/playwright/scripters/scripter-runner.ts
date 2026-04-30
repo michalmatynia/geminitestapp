@@ -24,6 +24,7 @@ export type RunScripterOptions = {
   signal?: AbortSignal;
   now?: () => number;
   rateLimiter?: RateLimiter;
+  limit?: number;
 };
 
 const filterJsonLd = (items: unknown[], filterType: string | undefined): unknown[] => {
@@ -67,6 +68,11 @@ const checkAborted = (signal: AbortSignal | undefined): void => {
   if (signal?.aborted) throw new Error('Scripter run aborted');
 };
 
+const hasReachedLimit = (
+  records: Array<Record<string, unknown>>,
+  limit: number | undefined
+): boolean => typeof limit === 'number' && limit >= 0 && records.length >= limit;
+
 type RerunnableStep = Extract<ScripterExtractionStep, { kind: 'extractJsonLd' | 'extractList' }>;
 
 const isRerunnable = (step: ScripterExtractionStep): step is RerunnableStep =>
@@ -96,6 +102,7 @@ export const runScripter = async (
         const items = await driver.extractJsonLd();
         const filtered = filterJsonLd(items, step.filterType);
         for (const item of filtered) {
+          if (hasReachedLimit(records, options.limit)) break;
           if (item && typeof item === 'object' && !Array.isArray(item)) {
             records.push(item as Record<string, unknown>);
             recordsAdded += 1;
@@ -104,6 +111,7 @@ export const runScripter = async (
       } else {
         const rows = await driver.extractList(step.itemSelector, step.fields);
         for (const row of rows) {
+          if (hasReachedLimit(records, options.limit)) break;
           records.push({ ...row });
           recordsAdded += 1;
         }
@@ -175,6 +183,7 @@ export const runScripter = async (
           const maxPages = step.maxPages ?? 5;
           for (let i = 1; i <= maxPages; i += 1) {
             checkAborted(options.signal);
+            if (hasReachedLimit(records, options.limit)) break;
             let advanced = false;
             if (step.strategy === 'nextLink') {
               if (!step.nextSelector) throw new Error('paginate.nextLink requires nextSelector');

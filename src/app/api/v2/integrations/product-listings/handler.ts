@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import {
   PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG,
+  SCRAPED_SOURCE_INTEGRATION_SLUG,
   TRADERA_INTEGRATION_SLUGS,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -55,7 +56,7 @@ const attachTimingHeaders = (
 const normalizeStatus = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
 
-const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok']);
+const SUCCESS_STATUSES = new Set(['active', 'success', 'completed', 'listed', 'ok', 'linked']);
 const CLOSED_STATUS = 'closed';
 
 const shouldReplaceTraderaClosedCandidate = (
@@ -110,6 +111,7 @@ const resolveMarketplaceKey = (slug: string | null | undefined): MarketplaceBadg
   if (isCanonicalBaseIntegrationSlug(normalized)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(normalized)) return 'tradera';
   if (normalized === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
+  if (normalized === SCRAPED_SOURCE_INTEGRATION_SLUG) return 'scrapedSource';
   return null;
 };
 
@@ -121,11 +123,15 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
   if (isCanonicalBaseIntegrationSlug(marketplace)) return 'base';
   if (TRADERA_INTEGRATION_SLUGS.has(marketplace)) return 'tradera';
   if (marketplace === PLAYWRIGHT_PROGRAMMABLE_INTEGRATION_SLUG) return 'playwrightProgrammable';
+  if (marketplace === SCRAPED_SOURCE_INTEGRATION_SLUG || marketplace === 'scrape') {
+    return 'scrapedSource';
+  }
 
   const source = typeof data['source'] === 'string' ? data['source'].trim().toLowerCase() : '';
   if (source.includes('base')) return 'base';
   if (source.includes('tradera')) return 'tradera';
   if (source.includes('playwright')) return 'playwrightProgrammable';
+  if (source.includes('scrape')) return 'scrapedSource';
 
   const traderaData = data['tradera'];
   if (traderaData && typeof traderaData === 'object') return 'tradera';
@@ -135,6 +141,9 @@ const inferMarketplaceFromListingMetadata = (value: unknown): MarketplaceBadgeKe
 
   const playwrightData = data['playwright'];
   if (playwrightData && typeof playwrightData === 'object') return 'playwrightProgrammable';
+
+  const scrapedSourceData = data['scrapedSource'];
+  if (scrapedSourceData && typeof scrapedSourceData === 'object') return 'scrapedSource';
 
   return null;
 };
@@ -198,6 +207,10 @@ const buildPayload = async (
     completed: 5,
     listed: 5,
     ok: 5,
+    linked: 5,
+    review_required: 4,
+    purchase_review_required: 4,
+    purchase_queued: 4,
     running: 4,
     processing: 4,
     in_progress: 4,
@@ -208,10 +221,12 @@ const buildPayload = async (
     unsold: 2,
     ended: 2,
     failed: 1,
+    check_failed: 1,
     needs_login: 1,
     auth_required: 1,
     error: 1,
     removed: 0,
+    unavailable: 0,
   };
 
   const byProduct = new Map<string, MarketplaceBadgeEntry>();

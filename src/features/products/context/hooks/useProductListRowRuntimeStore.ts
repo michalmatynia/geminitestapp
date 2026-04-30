@@ -18,6 +18,8 @@ export type ProductListRowRuntimeStoreState = Pick<
   | 'playwrightProgrammableBadgeStatuses'
   | 'vintedBadgeIds'
   | 'vintedBadgeStatuses'
+  | 'scrapedSourceBadgeIds'
+  | 'scrapedSourceBadgeStatuses'
   | 'queuedProductIds'
   | 'productAiRunStatusByProductId'
   | 'productScanRunStatusByProductId'
@@ -39,6 +41,8 @@ export const EMPTY_PRODUCT_LIST_ROW_RUNTIME_SNAPSHOT: ProductListRowRuntimeConte
   traderaStatus: 'not_started',
   showVintedBadge: false,
   vintedStatus: 'not_started',
+  showScrapedSourceBadge: false,
+  scrapedSourceStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,
@@ -92,6 +96,8 @@ const areProductListRowRuntimeSnapshotsEqual = (
     left.traderaStatus === right.traderaStatus,
     left.showVintedBadge === right.showVintedBadge,
     left.vintedStatus === right.vintedStatus,
+    left.showScrapedSourceBadge === right.showScrapedSourceBadge,
+    left.scrapedSourceStatus === right.scrapedSourceStatus,
     left.showPlaywrightProgrammableBadge === right.showPlaywrightProgrammableBadge,
     left.playwrightProgrammableStatus === right.playwrightProgrammableStatus,
     areProductAiRunFeedbacksEqual(left.productAiRunFeedback, right.productAiRunFeedback),
@@ -109,6 +115,8 @@ const areProductListRowRuntimeStoreStatesEqual = (
     left.traderaBadgeStatuses === right.traderaBadgeStatuses,
     left.vintedBadgeIds === right.vintedBadgeIds,
     left.vintedBadgeStatuses === right.vintedBadgeStatuses,
+    left.scrapedSourceBadgeIds === right.scrapedSourceBadgeIds,
+    left.scrapedSourceBadgeStatuses === right.scrapedSourceBadgeStatuses,
     left.playwrightProgrammableBadgeIds === right.playwrightProgrammableBadgeIds,
     left.playwrightProgrammableBadgeStatuses === right.playwrightProgrammableBadgeStatuses,
     left.queuedProductIds === right.queuedProductIds,
@@ -137,6 +145,8 @@ const createProductListRowRuntimeSnapshot = (
   traderaStatus: resolveRowRuntimeStatus(state.traderaBadgeStatuses, productId),
   showVintedBadge: state.vintedBadgeIds.has(productId),
   vintedStatus: resolveRowRuntimeStatus(state.vintedBadgeStatuses, productId),
+  showScrapedSourceBadge: state.scrapedSourceBadgeIds.has(productId),
+  scrapedSourceStatus: resolveRowRuntimeStatus(state.scrapedSourceBadgeStatuses, productId),
   showPlaywrightProgrammableBadge: state.playwrightProgrammableBadgeIds.has(productId),
   playwrightProgrammableStatus: resolveRowRuntimeStatus(
     state.playwrightProgrammableBadgeStatuses,

@@ -508,7 +508,15 @@ export const autoExtractTagIds = (record: BaseProductRecord): string[] => {
   return Array.from(ids);
 };
 
-export const NUMBER_FIELDS = new Set(['price', 'stock', 'sizeLength', 'sizeWidth', 'weight', 'length']);
+export const NUMBER_FIELDS = new Set([
+  'price',
+  'sourcePrice',
+  'stock',
+  'sizeLength',
+  'sizeWidth',
+  'weight',
+  'length',
+]);
 
 export const PRODUCER_TARGET_FIELDS = new Set([
   'producerids',

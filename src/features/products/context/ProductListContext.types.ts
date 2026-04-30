@@ -111,6 +111,8 @@ export interface ProductListContextType {
   playwrightProgrammableBadgeStatuses: Map<string, string>;
   vintedBadgeIds: Set<string>;
   vintedBadgeStatuses: Map<string, string>;
+  scrapedSourceBadgeIds: Set<string>;
+  scrapedSourceBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
   productAiRunStatusByProductId?: ReadonlyMap<string, ProductAiRunFeedback> | undefined;
   productScanRunStatusByProductId?:

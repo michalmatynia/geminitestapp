@@ -638,6 +638,41 @@ describe('enqueuePlaywrightNodeRun', () => {
     });
   });
 
+  it('redacts sensitive request summary input before retaining action-run history', async () => {
+    const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
+    const runtime = await createPlaywrightRuntime();
+    mocks.chromiumLaunchMock.mockResolvedValue(runtime.browser);
+
+    const run = await enqueuePlaywrightNodeRun({
+      waitForResult: true,
+      request: {
+        script: 'export default async () => ({ ok: true });',
+        input: {
+          username: 'buyer@example.com',
+          password: 'secret-password',
+          sourceUrl: 'https://shop.example.com/item/1',
+          nested: {
+            apiToken: 'secret-token',
+            note: 'Contact buyer@example.com',
+          },
+        },
+      },
+    });
+
+    expect(run.status).toBe('completed');
+
+    const persisted = await readPlaywrightNodeRun(run.runId);
+    expect(persisted?.requestSummary?.input).toEqual({
+      username: '[REDACTED]',
+      password: '[REDACTED]',
+      sourceUrl: 'https://shop.example.com/item/1',
+      nested: {
+        apiToken: '[REDACTED]',
+        note: 'Contact [REDACTED]',
+      },
+    });
+  });
+
   it('fails when the start URL violates outbound policy', async () => {
     const { enqueuePlaywrightNodeRun, readPlaywrightNodeRun } = await loadRunner();
     const runtime = await createPlaywrightRuntime();

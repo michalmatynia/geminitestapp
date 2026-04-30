@@ -77,7 +77,7 @@ export async function postProductsImportCsvHandler(
       name_pl: (row['Name PL'] ?? '').toString().trim(),
       name_en: (row['Name EN'] ?? '').toString().trim(),
       name_de: (row['Name DE'] ?? '').toString().trim(),
-      price: row['Cena sprzedaży Retail Online (in EUR)']
+      sourcePrice: row['Cena sprzedaży Retail Online (in EUR)']
         ? parseInt(row['Cena sprzedaży Retail Online (in EUR)'], 10)
         : 0,
       description_en: `${row['EN']}`,

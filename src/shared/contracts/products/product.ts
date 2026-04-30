@@ -17,7 +17,7 @@ export const productCurrencySchema = namedDtoSchema.extend({
 
 export type ProductCurrencyRecord = z.infer<typeof productCurrencySchema>;
 
-export const productImportSourceSchema = z.enum(['base']);
+export const productImportSourceSchema = z.enum(['base', 'scrape']);
 
 export type ProductImportSource = z.infer<typeof productImportSourceSchema>;
 
@@ -355,6 +355,7 @@ export const productSchema = dtoBaseSchema.extend({
   supplierLink: z.string().nullable(),
   priceComment: z.string().nullable(),
   stock: z.preprocess(normalizeProductStockValue, z.number().nullable()),
+  sourcePrice: z.number().nullable().optional(),
   price: z.number().nullable(),
   sizeLength: z.number().nullable(),
   sizeWidth: z.number().nullable(),

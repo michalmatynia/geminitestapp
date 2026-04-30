@@ -18,7 +18,10 @@ import {
   loadProductIntegrationsAdapter,
   type ProductTriggerButtonBarProps,
 } from '@/features/products/lib/product-integrations-adapter-loader';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type {
+  ProductImportSource,
+  ProductWithImages,
+} from '@/shared/contracts/products/product';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
@@ -41,11 +44,11 @@ import {
   hasEnglishProductDescription,
   hasEnglishProductTitle,
   hasPolishProductDescription,
-  hasImportedProductOrigin,
   hasPolishProductTitle,
   getImageFilepath,
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
+  resolveProductImportSource,
 } from './columns/product-column-utils';
 import { TraderaQuickListButton } from './columns/buttons/TraderaQuickListButton';
 import { ProductListActivityPill } from './ProductListActivityPill';
@@ -83,6 +86,17 @@ const VintedQuickListButton = dynamic(
   () =>
     import('./columns/buttons/VintedQuickListButton').then(
       (mod: typeof import('./columns/buttons/VintedQuickListButton')) => mod.VintedQuickListButton
+    ),
+  {
+    ssr: false,
+    loading: () => null,
+  }
+);
+
+const ScrapedSourceControls = dynamic(
+  () =>
+    import('./columns/buttons/ScrapedSourceControls').then(
+      (mod: typeof import('./columns/buttons/ScrapedSourceControls')) => mod.ScrapedSourceControls
     ),
   {
     ssr: false,
@@ -209,7 +223,7 @@ type ProductListMobileCardResolvedProps = {
   rowVisuals: ProductListRowVisualsContextValue;
   rowRuntime: ProductListRowRuntimeValue;
   nameValue: string;
-  isImported: boolean;
+  importSource: ProductImportSource | null;
   hasMarketplaceCopy: boolean;
   hasEnglishTitle: boolean;
   hasEnglishDescription: boolean;
@@ -243,7 +257,7 @@ const renderProductListMobileCard = ({
   rowVisuals,
   rowRuntime,
   nameValue,
-  isImported,
+  importSource,
   hasMarketplaceCopy,
   hasEnglishTitle,
   hasEnglishDescription,
@@ -287,13 +301,15 @@ const renderProductListMobileCard = ({
     traderaStatus,
     showVintedBadge,
     vintedStatus,
+    showScrapedSourceBadge,
+    scrapedSourceStatus,
     showPlaywrightProgrammableBadge,
     playwrightProgrammableStatus,
     productAiRunFeedback,
     productScanRunFeedback,
   } = rowRuntime;
   const hasStatusIcons = [
-    isImported ||
+    importSource !== null ||
     hasMarketplaceCopy,
     hasEnglishTitle,
     hasEnglishDescription,
@@ -375,7 +391,7 @@ const renderProductListMobileCard = ({
             {(product.archived || hasStatusIcons || productAiRunFeedback || productScanRunFeedback) && (
               <div data-product-list-status-icons className='flex flex-wrap items-center gap-2'>
                 <ProductListStatusIcons
-                  isImported={isImported}
+                  importSource={importSource}
                   hasMarketplaceCopy={hasMarketplaceCopy}
                   hasEnglishTitle={hasEnglishTitle}
                   hasEnglishDescription={hasEnglishDescription}
@@ -503,6 +519,12 @@ const renderProductListMobileCard = ({
             onIntegrationsClick(product, recoveryContext, 'baselinker')
           }
         />
+        <ScrapedSourceControls
+          product={product}
+          showScrapedSourceBadge={showScrapedSourceBadge}
+          scrapedSourceStatus={scrapedSourceStatus}
+          prefetchListings={() => prefetchListings(product.id)}
+        />
         <TraderaQuickListButton
           product={product}
           prefetchListings={() => prefetchListings(product.id)}
@@ -591,7 +613,7 @@ const ProductListMobileCard = memo(({
 
   const nameKey = rowVisuals.productNameKey ?? 'name_en';
   const nameValue = getProductListDisplayName(product, nameKey);
-  const isImported = hasImportedProductOrigin(product);
+  const importSource = resolveProductImportSource(product);
   const hasMarketplaceCopy = hasFilledMarketplaceCopy(product);
   const hasEnglishTitle = hasEnglishProductTitle(product);
   const hasEnglishDescription = hasEnglishProductDescription(product);
@@ -667,7 +689,7 @@ const ProductListMobileCard = memo(({
     rowVisuals,
     rowRuntime,
     nameValue,
-    isImported,
+    importSource,
     hasMarketplaceCopy,
     hasEnglishTitle,
     hasEnglishDescription,

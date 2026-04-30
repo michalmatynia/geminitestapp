@@ -9,19 +9,28 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
 const {
-  fireAiPathTriggerEventMock,
   getAiPathRunMock,
+  notifyAiPathRunEnqueuedMock,
+  queueMarketplaceCopyDebrandRunMock,
   subscribeToTrackedAiPathRunMock,
+  toastMock,
   useIntegrationsMock,
   useProductFormCoreMock,
   useProductFormImagesMock,
 } = vi.hoisted(() => ({
-  fireAiPathTriggerEventMock: vi.fn(),
   getAiPathRunMock: vi.fn(),
+  notifyAiPathRunEnqueuedMock: vi.fn(),
+  queueMarketplaceCopyDebrandRunMock: vi.fn(),
   subscribeToTrackedAiPathRunMock: vi.fn(),
+  toastMock: vi.fn(),
   useIntegrationsMock: vi.fn(),
   useProductFormCoreMock: vi.fn(),
   useProductFormImagesMock: vi.fn(),
+}));
+
+vi.mock('@/features/products/api/products', () => ({
+  queueMarketplaceCopyDebrandRun: (...args: unknown[]) =>
+    queueMarketplaceCopyDebrandRunMock(...args),
 }));
 
 vi.mock('@/features/integrations/hooks/useIntegrationQueries', () => ({
@@ -61,10 +70,16 @@ vi.mock('@/shared/lib/ai-paths/client-run-tracker', () => ({
   subscribeToTrackedAiPathRun: (...args: unknown[]) => subscribeToTrackedAiPathRunMock(...args),
 }));
 
-vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
-  useAiPathTriggerEvent: () => ({
-    fireAiPathTriggerEvent: (...args: unknown[]) => fireAiPathTriggerEventMock(...args),
-  }),
+vi.mock('@/shared/lib/query-invalidation', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/shared/lib/query-invalidation')>();
+  return {
+    ...actual,
+    notifyAiPathRunEnqueued: (...args: unknown[]) => notifyAiPathRunEnqueuedMock(...args),
+  };
+});
+
+vi.mock('@/shared/ui/toast', () => ({
+  useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock('lucide-react', () => ({
@@ -179,6 +194,7 @@ vi.mock('@/shared/ui/multi-select', () => ({
 }));
 
 import ProductFormMarketplaceCopy from './ProductFormMarketplaceCopy';
+import { __resetTriggerButtonRunFeedbackForTests } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 
 function renderMarketplaceCopy(
   defaultValues: Partial<ProductFormData> = {},
@@ -226,7 +242,12 @@ function renderMarketplaceCopy(
 describe('ProductFormMarketplaceCopy', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    fireAiPathTriggerEventMock.mockResolvedValue(undefined);
+    __resetTriggerButtonRunFeedbackForTests();
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy',
+      productId: 'product-1',
+    });
     useIntegrationsMock.mockReturnValue({
       data: [
         { id: 'integration-tradera', name: 'Tradera', slug: 'tradera' },
@@ -312,17 +333,14 @@ describe('ProductFormMarketplaceCopy', () => {
 
     await user.click(screen.getByRole('button', { name: 'Debrand' }));
 
-    const triggerArgs = fireAiPathTriggerEventMock.mock.calls[0]?.[0] as {
-      getEntityJson?: () => Record<string, unknown>;
-      source?: { location?: string };
-      extras?: Record<string, unknown>;
+    const queueArgs = queueMarketplaceCopyDebrandRunMock.mock.calls[0]?.[0] as {
+      productId?: string | null;
+      entityJson?: Record<string, unknown>;
+      marketplaceCopyDebrandInput?: Record<string, unknown>;
     };
 
-    expect(triggerArgs.source).toEqual({
-      tab: 'product',
-      location: 'product_marketplace_copy_row',
-    });
-    expect(triggerArgs.getEntityJson?.()).toMatchObject({
+    expect(queueArgs.productId).toBe('product-1');
+    expect(queueArgs.entityJson).toMatchObject({
       id: 'product-1',
       name_en: 'Warhammer 40,000 Space Marine Figure',
       description_en: 'Official branded description',
@@ -343,21 +361,73 @@ describe('ProductFormMarketplaceCopy', () => {
         },
       },
     });
-    expect(triggerArgs.extras).toMatchObject({
-      marketplaceCopyDebrandInput: {
-        sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
-        sourceEnglishDescription: 'Official branded description',
-        targetRow: {
-          id: expect.any(String),
-          index: 0,
-          integrationIds: ['integration-tradera', 'integration-vinted'],
-          integrationNames: ['Tradera', 'Vinted.pl'],
-          currentAlternateTitle: 'Old alternate title',
-          currentAlternateDescription: 'Old alternate description',
-        },
+    expect(queueArgs.marketplaceCopyDebrandInput).toMatchObject({
+      sourceEnglishTitle: 'Warhammer 40,000 Space Marine Figure',
+      sourceEnglishDescription: 'Official branded description',
+      targetRow: {
+        id: expect.any(String),
+        index: 0,
+        integrationIds: ['integration-tradera', 'integration-vinted'],
+        integrationNames: ['Tradera', 'Vinted.pl'],
+        currentAlternateTitle: 'Old alternate title',
+        currentAlternateDescription: 'Old alternate description',
       },
-      mode: 'click',
     });
+  });
+
+  it('shows queued feedback and a toast after a row debrand run is created', async () => {
+    const user = userEvent.setup();
+    renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Debrand' }));
+
+    expect(await screen.findByText('Queued')).toBeInTheDocument();
+    expect(screen.getByTitle('Debrand run status: Queued')).toBeInTheDocument();
+    expect(toastMock).toHaveBeenCalledWith('Debrand job queued (run-debrand-marketplace-copy).', {
+      variant: 'success',
+    });
+    expect(notifyAiPathRunEnqueuedMock).toHaveBeenCalledWith('run-debrand-marketplace-copy', {
+      entityId: 'product-1',
+      entityType: 'product',
+    });
+  });
+
+  it('restores an active debrand status when the marketplace copy row remounts', async () => {
+    const user = userEvent.setup();
+    const view = renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    await user.click(screen.getByRole('button', { name: 'Debrand' }));
+    expect(await screen.findByText('Queued')).toBeInTheDocument();
+
+    view.unmount();
+    renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    expect(await screen.findByTitle('Debrand run status: Queued')).toBeInTheDocument();
+    expect(queueMarketplaceCopyDebrandRunMock).toHaveBeenCalledTimes(1);
   });
 
   it('writes completed debrand results back into the same alternate copy row', async () => {
@@ -369,13 +439,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy',
+      productId: 'product-1',
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -392,7 +460,7 @@ describe('ProductFormMarketplaceCopy', () => {
       },
     });
 
-    renderMarketplaceCopy({
+    const view = renderMarketplaceCopy({
       marketplaceContentOverrides: [
         {
           integrationIds: ['integration-tradera'],
@@ -412,16 +480,33 @@ describe('ProductFormMarketplaceCopy', () => {
     const callback = trackedCallbacks.get('run-debrand-marketplace-copy');
     expect(callback).toBeTypeOf('function');
 
-    callback?.({
-      trackingState: 'stopped',
-      status: 'completed',
-      errorMessage: null,
+    await act(async () => {
+      callback?.({
+        trackingState: 'stopped',
+        status: 'completed',
+        errorMessage: null,
+      });
     });
 
     expect(await screen.findByDisplayValue('WH 40k Space Marine Figure')).toBeInTheDocument();
     expect(
       await screen.findByDisplayValue('Compatible with grimdark sci-fi armies.')
     ).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.queryByTitle('Debrand run status: Completed')).not.toBeInTheDocument();
+    });
+
+    view.unmount();
+    renderMarketplaceCopy({
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-tradera'],
+          title: '',
+          description: '',
+        },
+      ],
+    });
+    expect(screen.queryByTitle('Debrand run status: Completed')).not.toBeInTheDocument();
   });
 
   it('writes completed debrand results back into the same row from database-node update payloads', async () => {
@@ -433,13 +518,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy-db');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy-db',
+      productId: 'product-1',
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -473,10 +556,12 @@ describe('ProductFormMarketplaceCopy', () => {
 
     await user.click(screen.getByRole('button', { name: 'Debrand' }));
 
-    trackedCallbacks.get('run-debrand-marketplace-copy-db')?.({
-      trackingState: 'stopped',
-      status: 'completed',
-      errorMessage: null,
+    await act(async () => {
+      trackedCallbacks.get('run-debrand-marketplace-copy-db')?.({
+        trackingState: 'stopped',
+        status: 'completed',
+        errorMessage: null,
+      });
     });
 
     expect(await screen.findByDisplayValue('Persisted debranded title')).toBeInTheDocument();
@@ -492,13 +577,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy',
+      productId: 'product-1',
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -537,10 +620,12 @@ describe('ProductFormMarketplaceCopy', () => {
 
     await user.click(screen.getByRole('button', { name: 'Remove alternate copy 1' }));
 
-    staleCallback?.({
-      trackingState: 'stopped',
-      status: 'completed',
-      errorMessage: null,
+    await act(async () => {
+      staleCallback?.({
+        trackingState: 'stopped',
+        status: 'completed',
+        errorMessage: null,
+      });
     });
 
     expect(await screen.findByDisplayValue('WH 40k Space Marine Figure')).toBeInTheDocument();
@@ -560,13 +645,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy',
+      productId: 'product-1',
+    });
     getAiPathRunMock.mockRejectedValue(new Error('network failed'));
 
     renderMarketplaceCopy({
@@ -581,10 +664,12 @@ describe('ProductFormMarketplaceCopy', () => {
 
     await user.click(screen.getByRole('button', { name: 'Debrand' }));
 
-    trackedCallbacks.get('run-debrand-marketplace-copy')?.({
-      trackingState: 'stopped',
-      status: 'completed',
-      errorMessage: null,
+    await act(async () => {
+      trackedCallbacks.get('run-debrand-marketplace-copy')?.({
+        trackingState: 'stopped',
+        status: 'completed',
+        errorMessage: null,
+      });
     });
 
     expect(
@@ -616,10 +701,10 @@ describe('ProductFormMarketplaceCopy', () => {
 
     await user.click(screen.getByRole('button', { name: 'Debrand' }));
 
-    const triggerArgs = fireAiPathTriggerEventMock.mock.calls[0]?.[0] as {
-      entityId?: string | null;
+    const queueArgs = queueMarketplaceCopyDebrandRunMock.mock.calls[0]?.[0] as {
+      productId?: string | null;
     };
-    expect(triggerArgs.entityId).toBeNull();
+    expect(queueArgs.productId).toBeNull();
   });
 
   it('recovers draft-only debrand results from failed runs when the database node cannot persist', async () => {
@@ -631,13 +716,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy-draft-failed');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy-draft-failed',
+      productId: null,
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -699,13 +782,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy-saved-failed');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy-saved-failed',
+      productId: 'product-1',
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -764,13 +845,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy-saved-failed-empty');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy-saved-failed-empty',
+      productId: 'product-1',
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -816,13 +895,11 @@ describe('ProductFormMarketplaceCopy', () => {
         return vi.fn();
       }
     );
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onSuccess?: (runId: string) => void;
-      }) => {
-        args.onSuccess?.('run-debrand-marketplace-copy');
-      }
-    );
+    queueMarketplaceCopyDebrandRunMock.mockResolvedValue({
+      status: 'queued',
+      runId: 'run-debrand-marketplace-copy',
+      productId: null,
+    });
     getAiPathRunMock.mockResolvedValue({
       ok: true,
       data: {
@@ -859,17 +936,17 @@ describe('ProductFormMarketplaceCopy', () => {
 
     await user.click(screen.getByRole('button', { name: 'Debrand' }));
 
-    expect(fireAiPathTriggerEventMock).toHaveBeenCalledWith(
+    expect(queueMarketplaceCopyDebrandRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        triggerEventId: 'bdf0f5d2-a300-4f79-991c-2b5f1e0ef3a4',
-        triggerLabel: 'Debrand',
-        preferredPathId: 'path_marketplace_copy_debrand_v1',
-        entityType: 'product',
-        entityId: null,
-        source: {
-          tab: 'product',
-          location: 'product_marketplace_copy_row',
-        },
+        productId: null,
+        entityJson: expect.objectContaining({
+          marketplaceCopyDebrandInput: expect.any(Object),
+        }),
+        marketplaceCopyDebrandInput: expect.objectContaining({
+          targetRow: expect.objectContaining({
+            integrationIds: ['integration-tradera'],
+          }),
+        }),
       })
     );
 
@@ -880,10 +957,12 @@ describe('ProductFormMarketplaceCopy', () => {
       )
     );
 
-    trackedCallbacks.get('run-debrand-marketplace-copy')?.({
-      trackingState: 'stopped',
-      status: 'completed',
-      errorMessage: null,
+    await act(async () => {
+      trackedCallbacks.get('run-debrand-marketplace-copy')?.({
+        trackingState: 'stopped',
+        status: 'completed',
+        errorMessage: null,
+      });
     });
 
     expect(await screen.findByDisplayValue('Fallback debranded title')).toBeInTheDocument();
@@ -892,14 +971,8 @@ describe('ProductFormMarketplaceCopy', () => {
 
   it('shows a row-local error when the debrand run cannot be queued', async () => {
     const user = userEvent.setup();
-    fireAiPathTriggerEventMock.mockImplementation(
-      async (args: {
-        onError?: (error: string) => void;
-      }) => {
-        args.onError?.(
-          'Debrand failed: the selected AI Path no longer contains the Debrand trigger node.'
-        );
-      }
+    queueMarketplaceCopyDebrandRunMock.mockRejectedValue(
+      new Error('the selected AI Path no longer contains the Debrand trigger node.')
     );
 
     renderMarketplaceCopy({
@@ -919,5 +992,9 @@ describe('ProductFormMarketplaceCopy', () => {
         'Debrand failed: the selected AI Path no longer contains the Debrand trigger node.'
       )
     ).toBeInTheDocument();
+    expect(toastMock).toHaveBeenCalledWith(
+      'Debrand failed: the selected AI Path no longer contains the Debrand trigger node.',
+      { variant: 'error' }
+    );
   });
 });

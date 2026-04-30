@@ -38,6 +38,7 @@ const {
     getProductById: vi.fn(),
     getProductBySku: vi.fn(),
     getProductsBySkus: vi.fn(),
+    findProductBySupplierLink: vi.fn(),
     findProductsByBaseIds: vi.fn(),
     duplicateProduct: vi.fn(),
     deleteProduct: vi.fn(),
@@ -212,6 +213,7 @@ describe('productService parameter normalization', () => {
       sku === 'SKU-1' ? createProductRecord() : null
     );
     repositoryMock.getProductsBySkus.mockResolvedValue([createProductRecord()]);
+    repositoryMock.findProductBySupplierLink.mockResolvedValue(createProductRecord());
     repositoryMock.findProductsByBaseIds.mockResolvedValue([createProductRecord()]);
     repositoryMock.duplicateProduct.mockResolvedValue({ id: 'product-2' });
     repositoryMock.deleteProduct.mockResolvedValue(createProductRecord());
@@ -857,6 +859,11 @@ describe('productService parameter normalization', () => {
     expect(await productService.getProductsBySkus(['SKU-1'], { provider: 'mongodb' as any })).toEqual([
       createProductRecord(),
     ]);
+    expect(
+      await productService.findProductBySupplierLink('https://example.com/p/1', {
+        provider: 'mongodb' as any,
+      })
+    ).toEqual(createProductRecord());
     expect(await productService.findProductsByBaseIds(['base-1'], { provider: 'mongodb' as any })).toEqual([
       createProductRecord(),
     ]);

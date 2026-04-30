@@ -9,6 +9,9 @@ describe('buildListProjectStage', () => {
     expect(stage).not.toBeNull();
     expect(stage).toMatchObject({
       importSource: 1,
+      supplierName: 1,
+      supplierLink: 1,
+      catalogs: 1,
       category: {
         id: '$category.id',
         name: '$category.name',
@@ -24,6 +27,7 @@ describe('buildListProjectStage', () => {
       description_en: 1,
       description_pl: 1,
       marketplaceContentOverrides: 1,
+      sourcePrice: 1,
     });
   });
 
@@ -33,6 +37,33 @@ describe('buildListProjectStage', () => {
 });
 
 describe('mongoProductReadImpl duplicate SKU enrichment', () => {
+  it('finds products by exact supplier link for scrape deduplication', async () => {
+    const findOne = vi.fn().mockResolvedValue({
+      _id: 'product-source-1',
+      id: 'product-source-1',
+      sku: 'BATTLESTOCK-13033',
+      supplierLink: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+      createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2026-01-01T00:00:00.000Z'),
+      catalogId: 'catalog-1',
+      name_en: '40k spiritseer',
+      published: false,
+    });
+
+    const product = await mongoProductReadImpl.findProductBySupplierLink(
+      'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+      async () =>
+        ({
+          findOne,
+        }) as never
+    );
+
+    expect(findOne).toHaveBeenCalledWith({
+      supplierLink: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+    });
+    expect(product?.id).toBe('product-source-1');
+  });
+
   it('attaches duplicateSkuCount to listed products using normalized SKU matching', async () => {
     const aggregate = vi
       .fn()

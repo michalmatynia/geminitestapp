@@ -261,4 +261,41 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
       expect.anything()
     );
   });
+
+  it('stores source prices separately from final prices on create and update', async () => {
+    const insertOne = vi.fn().mockResolvedValue({ insertedId: 'product-1' });
+    const findOneAndUpdate = vi.fn().mockResolvedValue(null);
+
+    await mongoProductWriteImpl.createProduct(
+      {
+        sku: 'SKU-1',
+        sourcePrice: 12.5,
+      } as any,
+      async () => ({ insertOne }) as any
+    );
+
+    await mongoProductWriteImpl.updateProduct(
+      'product-1',
+      {
+        sourcePrice: 14.75,
+      } as any,
+      async () => ({ findOneAndUpdate }) as any
+    );
+
+    expect(insertOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourcePrice: 12.5,
+        price: 0,
+      })
+    );
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        $set: expect.objectContaining({
+          sourcePrice: 14.75,
+        }),
+      }),
+      expect.anything()
+    );
+  });
 });

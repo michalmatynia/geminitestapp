@@ -17,6 +17,7 @@ import {
 
 const VIEW_POSITION_EPSILON = 0.01;
 const VIEW_SCALE_EPSILON = 0.000001;
+const WHEEL_ZOOM_MAX_FRAMES = 24;
 
 const areViewsNearlyEqual = (
   a: { x: number; y: number; scale: number },
@@ -87,6 +88,7 @@ export function useCanvasInteractionsNavigation({
     scale: number;
     anchorClientPos: { x: number; y: number } | null;
   } | null>(null);
+  const wheelZoomFrameCountRef = useRef(0);
   const panInertiaRafRef = useRef<number | null>(null);
   const panInertiaVelocityRef = useRef<{
     vx: number;
@@ -176,6 +178,7 @@ export function useCanvasInteractionsNavigation({
       wheelZoomRafRef.current = null;
     }
     wheelZoomTargetRef.current = null;
+    wheelZoomFrameCountRef.current = 0;
     stopPanInertia();
   }, [stopPanInertia, stopProgrammaticViewAnimation]);
 
@@ -255,16 +258,22 @@ export function useCanvasInteractionsNavigation({
 
   const startWheelZoomLoop = useCallback((): void => {
     if (wheelZoomRafRef.current !== null) return;
+    wheelZoomFrameCountRef.current = 0;
     const tick = (): void => {
       wheelZoomRafRef.current = null;
       const target = wheelZoomTargetRef.current;
       if (!target) return;
+      wheelZoomFrameCountRef.current += 1;
       const currentView = latestViewRef.current;
       const remainingScale = target.scale - currentView.scale;
-      if (Math.abs(remainingScale) <= WHEEL_ZOOM_STOP_THRESHOLD) {
+      if (
+        Math.abs(remainingScale) <= WHEEL_ZOOM_STOP_THRESHOLD ||
+        wheelZoomFrameCountRef.current >= WHEEL_ZOOM_MAX_FRAMES
+      ) {
         const finalView = getZoomTargetView(target.scale, target.anchorClientPos);
         setViewClamped(finalView);
         wheelZoomTargetRef.current = null;
+        wheelZoomFrameCountRef.current = 0;
         return;
       }
       const steppedScale = currentView.scale + remainingScale * WHEEL_ZOOM_EASING;
@@ -276,6 +285,7 @@ export function useCanvasInteractionsNavigation({
         const finalView = getZoomTargetView(target.scale, target.anchorClientPos);
         setViewClamped(finalView);
         wheelZoomTargetRef.current = null;
+        wheelZoomFrameCountRef.current = 0;
         return;
       }
       wheelZoomRafRef.current = requestAnimationFrame(tick);
@@ -516,7 +526,7 @@ export function useCanvasInteractionsNavigation({
           y: clientY,
         },
       };
-      if (options?.immediate) {
+      if (options?.immediate === true) {
         if (wheelZoomRafRef.current !== null) {
           cancelAnimationFrame(wheelZoomRafRef.current);
           wheelZoomRafRef.current = null;

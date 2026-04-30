@@ -355,7 +355,7 @@ const buildMongoCategoryCondition = async (
   }
 
   const value = toAdvancedStringValue(condition.value);
-  if (value.length === 0) return null;
+  if (!value) return null;
 
   if (value === PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE) {
     if (condition.operator === 'eq' || condition.operator === 'contains') {
@@ -670,7 +670,7 @@ const loadMongoTraderaStatusLookupContext = async (): Promise<TraderaStatusLooku
       productId,
       status: 'processing',
       updatedAtMs: Date.now(),
-      rank: TRADERA_STATUS_RANK.processing,
+      rank: TRADERA_STATUS_RANK['processing'] ?? 4,
       success: false,
     });
   });

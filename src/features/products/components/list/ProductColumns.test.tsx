@@ -1148,6 +1148,24 @@ describe('ProductColumns queued badge', () => {
     expect(screen.getByLabelText('Imported product')).toBeInTheDocument();
   });
 
+  it('renders a distinct scraped badge for scraped products', () => {
+    const product = createProduct({
+      baseProductId: null,
+      importSource: 'scrape',
+    });
+
+    const nameColumn = getProductColumns().find((column) => column.accessorKey === 'name_en');
+    if (!nameColumn || typeof nameColumn.cell !== 'function') {
+      throw new Error('Name column cell was not found.');
+    }
+
+    const cell = nameColumn.cell({ row: { original: product } } as never);
+    render(cell);
+
+    expect(screen.getByLabelText('Scraped product')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Imported product')).not.toBeInTheDocument();
+  });
+
   it('renders product status icons below the name summary row', () => {
     const product = createProduct({
       baseProductId: 'base-123',

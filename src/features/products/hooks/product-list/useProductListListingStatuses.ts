@@ -30,6 +30,7 @@ type UseProductListListingStatusesInput = {
   traderaBadgeStatuses: Map<string, string>;
   playwrightProgrammableBadgeStatuses: Map<string, string>;
   vintedBadgeStatuses: Map<string, string>;
+  scrapedSourceBadgeStatuses: Map<string, string>;
   visibleProductIdSet: Set<string>;
   triggerJobCompletionHighlight: (productId: string) => void;
 };
@@ -75,6 +76,7 @@ export function useProductListListingStatuses({
   traderaBadgeStatuses,
   playwrightProgrammableBadgeStatuses,
   vintedBadgeStatuses,
+  scrapedSourceBadgeStatuses,
   visibleProductIdSet,
   triggerJobCompletionHighlight,
 }: UseProductListListingStatusesInput): ProductListListingStatusesResult {
@@ -92,9 +94,22 @@ export function useProductListListingStatuses({
         playwrightProgrammableBadgeStatuses.get(product.id)
       );
       setNormalizedListingStatus(statuses, product.id, 'vinted', vintedBadgeStatuses.get(product.id));
+      setNormalizedListingStatus(
+        statuses,
+        product.id,
+        'scraped-source',
+        scrapedSourceBadgeStatuses.get(product.id)
+      );
     }
     return statuses;
-  }, [data, integrationBadgeStatuses, playwrightProgrammableBadgeStatuses, traderaBadgeStatuses, vintedBadgeStatuses]);
+  }, [
+    data,
+    integrationBadgeStatuses,
+    playwrightProgrammableBadgeStatuses,
+    scrapedSourceBadgeStatuses,
+    traderaBadgeStatuses,
+    vintedBadgeStatuses,
+  ]);
 
   useEffect(() => {
     const previousStatuses = previousListingBadgeStatusesRef.current;

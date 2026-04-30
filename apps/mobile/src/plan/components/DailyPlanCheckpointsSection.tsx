@@ -30,7 +30,7 @@ export function DailyPlanCheckpointsSection({
                 </Text>
             ) : (
                 <View style={{ gap: 12 }}>
-                    {lessonCheckpoints.recentCheckpoints.map((item: KangurMobileLessonCheckpointItem) => (
+                    {lessonCheckpoints.recentCheckpoints.map((item) => (
                         <LessonCheckpointRow key={item.componentId} item={item} />
                     ))}
                     <LinkButton href={LESSONS_ROUTE} label={copy({ de: 'Lektionen öffnen', en: 'Open lessons', pl: 'Otwórz lekcje' })} />

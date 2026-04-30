@@ -1,0 +1,195 @@
+'use client';
+
+import { Link2, RefreshCw, ShoppingCart } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+
+import type { ProductScrapedSourceActionResponse } from '@/shared/contracts/products/scraped-source';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
+import { api } from '@/shared/lib/api-client';
+import { invalidateProductListingsAndBadges } from '@/shared/lib/query-invalidation';
+import { Button } from '@/shared/ui/button';
+import { useToast } from '@/shared/ui/toast';
+import { cn } from '@/shared/utils/ui-utils';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
+
+import { getMarketplaceButtonClass } from '../product-column-utils';
+
+type ScrapedSourceAction = 'link' | 'check-status' | 'run-purchase';
+
+type ScrapedSourceControlsProps = {
+  product: ProductWithImages;
+  showScrapedSourceBadge: boolean;
+  scrapedSourceStatus: string;
+  prefetchListings: () => void;
+};
+
+const postScrapedSourceAction = (
+  action: ScrapedSourceAction,
+  productId: string
+): Promise<ProductScrapedSourceActionResponse> =>
+  api.post<ProductScrapedSourceActionResponse>(`/api/v2/products/scraped-source/${action}`, {
+    productId,
+  });
+
+const hasSourceUrl = (product: ProductWithImages): boolean =>
+  typeof product.supplierLink === 'string' && product.supplierLink.trim().length > 0;
+
+const toastVariantForStatus = (
+  status: string
+): 'success' | 'warning' =>
+  status === 'check_failed' || status === 'unavailable' ? 'warning' : 'success';
+
+const openScrapedSourcePurchaseTarget = (
+  response: ProductScrapedSourceActionResponse | null
+): void => {
+  const targetUrl = response?.actionRunUrl ?? response?.sourceUrl ?? null;
+  if (targetUrl !== null) {
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  }
+};
+
+const useScrapedSourceActions = (
+  productId: string
+): {
+  pendingAction: ScrapedSourceAction | null;
+  runAction: (action: ScrapedSourceAction) => Promise<ProductScrapedSourceActionResponse | null>;
+} => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [pendingAction, setPendingAction] = useState<ScrapedSourceAction | null>(null);
+
+  const runAction = useCallback(
+    async (action: ScrapedSourceAction): Promise<ProductScrapedSourceActionResponse | null> => {
+      setPendingAction(action);
+      try {
+        const response = await postScrapedSourceAction(action, productId);
+        await invalidateProductListingsAndBadges(queryClient, productId);
+        toast(response.message, { variant: toastVariantForStatus(response.status) });
+        return response;
+      } catch (error) {
+        logClientError(error);
+        toast(error instanceof Error ? error.message : 'Scraped source action failed.', {
+          variant: 'error',
+        });
+        return null;
+      } finally {
+        setPendingAction(null);
+      }
+    },
+    [productId, queryClient, toast]
+  );
+
+  return { pendingAction, runAction };
+};
+
+function ScrapedSourceIconButton({
+  label,
+  status,
+  pending,
+  onClick,
+  onMouseEnter,
+  onFocus,
+  children,
+}: {
+  label: string;
+  status: string;
+  pending: boolean;
+  onClick: () => void;
+  onMouseEnter: () => void;
+  onFocus: () => void;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  return (
+    <Button
+      type='button'
+      onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onFocus={onFocus}
+      variant='ghost'
+      size='icon'
+      disabled={pending}
+      aria-label={label}
+      title={label}
+      className={cn(
+        'size-8 rounded-full border border-transparent bg-transparent p-0 hover:bg-transparent',
+        pending && 'cursor-not-allowed opacity-60',
+        getMarketplaceButtonClass(status, true, 'scraped')
+      )}
+    >
+      {pending ? (
+        <span aria-hidden='true' className='text-[9px] font-black uppercase leading-none'>
+          ...
+        </span>
+      ) : (
+        children
+      )}
+    </Button>
+  );
+}
+
+function ScrapedSourceControlsInner({
+  product,
+  showScrapedSourceBadge,
+  scrapedSourceStatus,
+  prefetchListings,
+}: ScrapedSourceControlsProps): React.JSX.Element | null {
+  const { pendingAction, runAction } = useScrapedSourceActions(product.id);
+
+  const handleLink = (): void => {
+    void runAction('link');
+  };
+  const handleStatus = (): void => {
+    void runAction('check-status');
+  };
+  const handlePurchase = (): void => {
+    void runAction('run-purchase').then(openScrapedSourcePurchaseTarget);
+  };
+
+  const effectiveStatus = showScrapedSourceBadge ? scrapedSourceStatus : 'not_started';
+
+  return (
+    <>
+      {!showScrapedSourceBadge ? (
+        <ScrapedSourceIconButton
+          label='Link scraped source'
+          status='linked'
+          pending={pendingAction === 'link'}
+          onClick={handleLink}
+          onMouseEnter={prefetchListings}
+          onFocus={prefetchListings}
+        >
+          <Link2 className='size-3.5' aria-hidden='true' />
+        </ScrapedSourceIconButton>
+      ) : (
+        <ScrapedSourceIconButton
+          label={`Check scraped source status (${effectiveStatus})`}
+          status={effectiveStatus}
+          pending={pendingAction === 'check-status'}
+          onClick={handleStatus}
+          onMouseEnter={prefetchListings}
+          onFocus={prefetchListings}
+        >
+          <RefreshCw className='size-3.5' aria-hidden='true' />
+        </ScrapedSourceIconButton>
+      )}
+      <ScrapedSourceIconButton
+        label='Buy scraped item'
+        status='purchase_review_required'
+        pending={pendingAction === 'run-purchase'}
+        onClick={handlePurchase}
+        onMouseEnter={prefetchListings}
+        onFocus={prefetchListings}
+      >
+        <ShoppingCart className='size-3.5' aria-hidden='true' />
+      </ScrapedSourceIconButton>
+    </>
+  );
+}
+
+export function ScrapedSourceControls(
+  props: ScrapedSourceControlsProps
+): React.JSX.Element | null {
+  if (props.product.importSource !== 'scrape' || !hasSourceUrl(props.product)) return null;
+  return <ScrapedSourceControlsInner {...props} />;
+}

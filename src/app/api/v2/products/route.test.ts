@@ -59,4 +59,18 @@ describe('products route module', () => {
     expect(parametersBatchIndex).toBeLessThan(parametersIdIndex);
     expect(parametersIndex).toBeLessThan(productIdIndex);
   });
+
+  it('registers marketplace copy debrand routes before the generic product id route', () => {
+    const batchIndex = catchAllRouteSource.indexOf(
+      '../marketplace-copy-debrand/batch/route-handler'
+    );
+    const runIndex = catchAllRouteSource.indexOf('../marketplace-copy-debrand/run/route-handler');
+    const productIdIndex = catchAllRouteSource.indexOf('../[id]/route-handler');
+
+    expect(batchIndex).toBeGreaterThan(-1);
+    expect(runIndex).toBeGreaterThan(-1);
+    expect(productIdIndex).toBeGreaterThan(-1);
+    expect(batchIndex).toBeLessThan(productIdIndex);
+    expect(runIndex).toBeLessThan(productIdIndex);
+  });
 });

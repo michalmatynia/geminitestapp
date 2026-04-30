@@ -142,25 +142,41 @@ const attachDuplicateSkuCounts = async (
   });
 };
 
+const LIST_PROJECT_FIELD_SELECTION: Document = {
+  _id: 1,
+  id: 1,
+  sku: 1,
+  baseProductId: 1,
+  importSource: 1,
+  supplierName: 1,
+  supplierLink: 1,
+  defaultPriceGroupId: 1,
+  categoryId: 1,
+  catalogId: 1,
+  catalogs: 1,
+  name_en: 1,
+  name_pl: 1,
+  name_de: 1,
+  description_en: 1,
+  description_pl: 1,
+  marketplaceContentOverrides: 1,
+  parameters: 1,
+  customFields: 1,
+  notes: 1,
+  sourcePrice: 1,
+  price: 1,
+  stock: 1,
+  archived: 1,
+  createdAt: 1,
+  updatedAt: 1,
+};
+
 export const buildListProjectStage = (filters: ProductFilters): Document | null => {
   if (typeof filters.sku === 'string' && filters.sku.trim().length > 0) {
     return null;
   }
   return {
-    _id: 1,
-    id: 1,
-    sku: 1,
-    baseProductId: 1,
-    importSource: 1,
-    defaultPriceGroupId: 1,
-    categoryId: 1,
-    catalogId: 1,
-    name_en: 1,
-    name_pl: 1,
-    name_de: 1,
-    description_en: 1,
-    description_pl: 1,
-    marketplaceContentOverrides: 1,
+    ...LIST_PROJECT_FIELD_SELECTION,
     category: {
       id: '$category.id',
       name: '$category.name',
@@ -175,14 +191,6 @@ export const buildListProjectStage = (filters: ProductFilters): Document | null 
       parentId: '$category.parentId',
       sortIndex: '$category.sortIndex',
     },
-    parameters: 1,
-    customFields: 1,
-    notes: 1,
-    price: 1,
-    stock: 1,
-    archived: 1,
-    createdAt: 1,
-    updatedAt: 1,
     imageLinks: { $slice: ['$imageLinks', 1] },
     imageBase64s: { $literal: [] },
     images: {
@@ -440,5 +448,15 @@ export const mongoProductReadImpl = {
       .find({ baseProductId: { $in: baseIds } } as Filter<ProductDocument>)
       .toArray();
     return docs.map((doc) => toProductResponse(doc));
+  },
+
+  async findProductBySupplierLink(
+    supplierLink: string,
+    getCollection: () => Promise<Collection<ProductDocument>>
+  ) {
+    const collection = await getCollection();
+    const doc = await collection.findOne({ supplierLink } as Filter<ProductDocument>);
+    if (!doc) return null;
+    return toProductResponse(doc);
   },
 };

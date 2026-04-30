@@ -73,6 +73,8 @@ export const createRowRuntimeContext = (
   traderaStatus: 'not_started',
   showVintedBadge: false,
   vintedStatus: 'not_started',
+  showScrapedSourceBadge: false,
+  scrapedSourceStatus: 'not_started',
   showPlaywrightProgrammableBadge: false,
   playwrightProgrammableStatus: 'not_started',
   productAiRunFeedback: null,

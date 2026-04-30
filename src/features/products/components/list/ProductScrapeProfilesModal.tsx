@@ -1,6 +1,12 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { Play } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -21,6 +27,23 @@ import { ProductScrapeProfilesBody } from './ProductScrapeProfilesModal.parts';
 type ProductScrapeProfilesModalProps = {
   isOpen: boolean;
   onClose: () => void;
+};
+
+type ProductScrapeProfilesController = {
+  dryRun: boolean;
+  error: Error | null;
+  isBusy: boolean;
+  isLoading: boolean;
+  canRun: boolean;
+  limitError: string | null;
+  limitInput: string;
+  profiles: ProductScrapeProfilesListResponse['profiles'];
+  result: ProductScrapeProfileRunResponse | null;
+  selectedProfileId: string;
+  onDryRunChange: (value: boolean) => void;
+  onLimitInputChange: (value: string) => void;
+  onProfileSelect: (profileId: string) => void;
+  onRun: () => void;
 };
 
 const SCRAPE_RUN_TIMEOUT_MS = 300_000;
@@ -61,7 +84,11 @@ const resultVariant = (result: ProductScrapeProfileRunResponse): 'success' | 'wa
 
 const useRunScrapeProfileMutation = (
   setResult: (result: ProductScrapeProfileRunResponse) => void
-) => {
+): UseMutationResult<
+  ProductScrapeProfileRunResponse,
+  Error,
+  ProductScrapeProfileRunRequest
+> => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   return useMutation({
@@ -82,18 +109,19 @@ const useRunScrapeProfileMutation = (
   });
 };
 
-const useScrapeProfilesQuery = (isOpen: boolean) =>
-  useQuery({
+const useScrapeProfilesQuery = (
+  isOpen: boolean
+): UseQueryResult<ProductScrapeProfilesListResponse, Error> =>
+  useQuery<ProductScrapeProfilesListResponse, Error>({
     queryKey: SCRAPE_PROFILES_QUERY_KEY,
     queryFn: fetchScrapeProfiles,
     enabled: isOpen,
     staleTime: 60_000,
   });
 
-export function ProductScrapeProfilesModal(
-  props: ProductScrapeProfilesModalProps
-): React.JSX.Element {
-  const { isOpen, onClose } = props;
+const useProductScrapeProfilesController = (
+  isOpen: boolean
+): ProductScrapeProfilesController => {
   const [profileId, setProfileId] = useState('');
   const [limitInput, setLimitInput] = useState('');
   const [dryRun, setDryRun] = useState(false);
@@ -137,6 +165,30 @@ export function ProductScrapeProfilesModal(
   const isBusy = runMutation.isPending;
   const canRun = profileId.length > 0 && parsedLimit !== undefined && !isBusy;
 
+  return {
+    dryRun,
+    error: profilesQuery.error,
+    isBusy,
+    isLoading: profilesQuery.isLoading,
+    canRun,
+    limitError: parsedLimit === undefined ? 'Limit must be a positive whole number.' : null,
+    limitInput,
+    profiles,
+    result,
+    selectedProfileId: profileId,
+    onDryRunChange: setDryRun,
+    onLimitInputChange: setLimitInput,
+    onProfileSelect: setProfileId,
+    onRun: handleRun,
+  };
+};
+
+export function ProductScrapeProfilesModal(
+  props: ProductScrapeProfilesModalProps
+): React.JSX.Element {
+  const { isOpen, onClose } = props;
+  const controller = useProductScrapeProfilesController(isOpen);
+
   return (
     <AppModal
       isOpen={isOpen}
@@ -144,17 +196,17 @@ export function ProductScrapeProfilesModal(
       title='Scrape Profiles'
       subtitle='BattleStock product import'
       size='lg'
-      lockClose={isBusy}
+      lockClose={controller.isBusy}
       footer={
         <>
-          <Button type='button' variant='outline' onClick={onClose} disabled={isBusy}>
+          <Button type='button' variant='outline' onClick={onClose} disabled={controller.isBusy}>
             Close
           </Button>
           <Button
             type='button'
-            onClick={handleRun}
-            disabled={!canRun}
-            loading={isBusy}
+            onClick={controller.onRun}
+            disabled={!controller.canRun}
+            loading={controller.isBusy}
             loadingText='Running...'
           >
             <Play className='size-4' aria-hidden='true' />
@@ -164,19 +216,17 @@ export function ProductScrapeProfilesModal(
       }
     >
       <ProductScrapeProfilesBody
-        dryRun={dryRun}
-        error={profilesQuery.error}
-        isLoading={profilesQuery.isLoading}
-        limitError={
-          parsedLimit === undefined ? 'Limit must be a positive whole number.' : null
-        }
-        limitInput={limitInput}
-        profiles={profiles}
-        result={result}
-        selectedProfileId={profileId}
-        onDryRunChange={setDryRun}
-        onLimitInputChange={setLimitInput}
-        onProfileSelect={setProfileId}
+        dryRun={controller.dryRun}
+        error={controller.error}
+        isLoading={controller.isLoading}
+        limitError={controller.limitError}
+        limitInput={controller.limitInput}
+        profiles={controller.profiles}
+        result={controller.result}
+        selectedProfileId={controller.selectedProfileId}
+        onDryRunChange={controller.onDryRunChange}
+        onLimitInputChange={controller.onLimitInputChange}
+        onProfileSelect={controller.onProfileSelect}
       />
     </AppModal>
   );

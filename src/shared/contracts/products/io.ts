@@ -201,6 +201,7 @@ const productInputFieldsSchema = z.object({
   description_en: z.string().nullable().optional(),
   description_pl: z.string().nullable().optional(),
   description_de: z.string().nullable().optional(),
+  sourcePrice: optionalNonNegativeNumberFromFormSchema,
   price: optionalNonNegativeNumberFromFormSchema,
   supplierName: z.string().nullable().optional(),
   supplierLink: z.string().nullable().optional(),

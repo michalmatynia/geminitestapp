@@ -70,7 +70,7 @@ export const PRODUCT_BATCH_EDIT_FIELD_DEFINITIONS: ProductBatchEditFieldDefiniti
     label: 'Import Source',
     group: 'Identifiers',
     kind: 'enum',
-    description: 'Currently supports Base.com import source values.',
+    description: 'Supports Base.com and scraped source values.',
   },
   {
     field: 'defaultPriceGroupId',

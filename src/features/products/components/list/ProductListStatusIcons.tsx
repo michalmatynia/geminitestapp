@@ -1,13 +1,14 @@
 'use client';
 
-import { Download, Store } from 'lucide-react';
+import { Download, Globe2, Store } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import type { ProductImportSource } from '@/shared/contracts/products/product';
 import { Tooltip } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/utils/ui-utils';
 
 type ProductListStatusIconsProps = {
-  isImported: boolean;
+  importSource: ProductImportSource | null;
   hasMarketplaceCopy: boolean;
   hasEnglishTitle: boolean;
   hasEnglishDescription: boolean;
@@ -29,8 +30,24 @@ const getLocalizedCopyLabel = ({
   return `${languageName} title filled`;
 };
 
-function ImportedStatusIcon({ show }: { show: boolean }): React.JSX.Element | null {
-  if (!show) return null;
+function ImportSourceStatusIcon({
+  importSource,
+}: {
+  importSource: ProductImportSource | null;
+}): React.JSX.Element | null {
+  if (importSource === null) return null;
+
+  if (importSource === 'scrape') {
+    return (
+      <ProductListStatusIcon
+        label='Scraped product'
+        tooltip='Scraped product'
+        className='text-emerald-300'
+      >
+        <Globe2 className='size-3' aria-hidden='true' />
+      </ProductListStatusIcon>
+    );
+  }
 
   return (
     <ProductListStatusIcon
@@ -90,14 +107,14 @@ function LocalizedCopyStatusIcon({
 }
 
 const hasAnyProductListStatusIcon = ({
-  isImported,
+  importSource,
   hasMarketplaceCopy,
   hasEnglishTitle,
   hasEnglishDescription,
   hasPolishTitle,
   hasPolishDescription,
 }: ProductListStatusIconsProps): boolean =>
-  isImported ||
+  importSource !== null ||
   hasMarketplaceCopy ||
   hasEnglishTitle ||
   hasEnglishDescription ||
@@ -133,7 +150,7 @@ function ProductListStatusIcon({
 }
 
 export function ProductListStatusIcons({
-  isImported,
+  importSource,
   hasMarketplaceCopy,
   hasEnglishTitle,
   hasEnglishDescription,
@@ -141,7 +158,7 @@ export function ProductListStatusIcons({
   hasPolishDescription,
 }: ProductListStatusIconsProps): React.JSX.Element | null {
   if (!hasAnyProductListStatusIcon({
-    isImported,
+    importSource,
     hasMarketplaceCopy,
     hasEnglishTitle,
     hasEnglishDescription,
@@ -151,7 +168,7 @@ export function ProductListStatusIcons({
 
   return (
     <>
-      <ImportedStatusIcon show={isImported} />
+      <ImportSourceStatusIcon importSource={importSource} />
       <LocalizedCopyStatusIcon
         code='EN'
         languageName='English'

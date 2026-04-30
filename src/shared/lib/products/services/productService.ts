@@ -638,6 +638,24 @@ async function findProductsByBaseIds(
   return await enrichProductsWithEffectiveShippingGroups(products as ProductWithImages[], provider);
 }
 
+async function findProductBySupplierLink(
+  supplierLink: string,
+  options?: { provider?: ProductDbProvider }
+): Promise<ProductWithImages | null> {
+  const normalizedSupplierLink = supplierLink.trim();
+  if (normalizedSupplierLink.length === 0) return null;
+  const provider = options?.provider ?? (await getProductDataProvider());
+  const productRepository = await resolveProductRepository(provider);
+
+  const product = await productRepository.findProductBySupplierLink(normalizedSupplierLink);
+  if (!product) return null;
+  const [enrichedProduct] = await enrichProductsWithEffectiveShippingGroups(
+    [product as ProductWithImages],
+    provider
+  );
+  return enrichedProduct ?? null;
+}
+
 async function createProduct(
   data: unknown,
   options?: { provider?: ProductDbProvider; userId?: string }
@@ -1030,6 +1048,7 @@ export const productService = {
   getProductBySku,
   getProductsBySkus,
   findProductsByBaseIds,
+  findProductBySupplierLink,
   createProduct,
   bulkCreateProducts,
   updateProduct,

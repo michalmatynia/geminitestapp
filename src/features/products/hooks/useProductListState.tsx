@@ -98,6 +98,8 @@ const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_IDS = new Set<string>();
 const EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_VINTED_BADGE_IDS = new Set<string>();
 const EMPTY_VINTED_BADGE_STATUSES = new Map<string, string>();
+const EMPTY_SCRAPED_SOURCE_BADGE_IDS = new Set<string>();
+const EMPTY_SCRAPED_SOURCE_BADGE_STATUSES = new Map<string, string>();
 const EMPTY_PRODUCT_TABLE_COLUMNS: ColumnDef<ProductWithImages>[] = [];
 
 export function useProductListState(): ProductListContextType & {
@@ -800,6 +802,8 @@ export function useProductListState(): ProductListContextType & {
       playwrightProgrammableBadgeStatuses: EMPTY_PLAYWRIGHT_PROGRAMMABLE_BADGE_STATUSES,
       vintedBadgeIds: EMPTY_VINTED_BADGE_IDS,
       vintedBadgeStatuses: EMPTY_VINTED_BADGE_STATUSES,
+      scrapedSourceBadgeIds: EMPTY_SCRAPED_SOURCE_BADGE_IDS,
+      scrapedSourceBadgeStatuses: EMPTY_SCRAPED_SOURCE_BADGE_STATUSES,
       queuedProductIds,
       productAiRunStatusByProductId,
       productScanRunStatusByProductId,

@@ -112,6 +112,7 @@ export const productDraftSchema = namedDtoSchema.extend({
   sizeLength: z.number().nullable().optional(),
   sizeWidth: z.number().nullable().optional(),
   length: z.number().nullable().optional(),
+  sourcePrice: z.number().nullable().optional(),
   price: z.number().nullable().optional(),
   supplierName: z.string().nullable().optional(),
   supplierLink: z.string().nullable().optional(),
@@ -262,6 +263,7 @@ export type TransactionalProductRepository = {
   getProductsBySkus(skus: string[]): Promise<ProductRecord[]>;
   findProductByBaseId(baseProductId: string): Promise<ProductRecord | null>;
   findProductsByBaseIds(baseIds: string[]): Promise<ProductRecord[]>;
+  findProductBySupplierLink(supplierLink: string): Promise<ProductRecord | null>;
   createProduct(data: ProductCreateInput): Promise<ProductRecord>;
   bulkCreateProducts(data: ProductCreateInput[]): Promise<number>;
   updateProduct(id: string, data: ProductUpdateInput): Promise<ProductRecord | null>;

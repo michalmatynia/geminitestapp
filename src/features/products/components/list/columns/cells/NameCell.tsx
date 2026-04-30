@@ -3,7 +3,10 @@
 import { Archive } from 'lucide-react';
 import { memo, useMemo } from 'react';
 import type { Row } from '@tanstack/react-table';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type {
+  ProductImportSource,
+  ProductWithImages,
+} from '@/shared/contracts/products/product';
 import {
   useProductListRowActionsContext,
   useProductListRowRuntime,
@@ -18,17 +21,17 @@ import {
   hasEnglishProductDescription,
   hasEnglishProductTitle,
   hasPolishProductDescription,
-  hasImportedProductOrigin,
   hasPolishProductTitle,
   isUnassignedProductCategoryLabel,
   resolveProductCategoryLabel,
+  resolveProductImportSource,
 } from '../product-column-utils';
 import { ProductListActivityPill } from '../../ProductListActivityPill';
 import { ProductListStatusIcons } from '../../ProductListStatusIcons';
 
 type ShippingInfo = { autoLabel: string, autoRuleLabel: string, conflictLabel: string, manualMissingLabel: string };
 type NameCellStatusState = {
-  isImported: boolean;
+  importSource: ProductImportSource | null;
   hasMarketplaceCopy: boolean;
   hasEnglishTitle: boolean;
   hasEnglishDescription: boolean;
@@ -147,14 +150,14 @@ function NameCellBasicInfo({ product }: { product: ProductWithImages }): React.J
 }
 
 function resolveNameCellStatusState(product: ProductWithImages, runtime: ProductListRowRuntimeContextType): NameCellStatusState {
-  const isImported = hasImportedProductOrigin(product);
+  const importSource = resolveProductImportSource(product);
   const hasMarketplaceCopy = hasFilledMarketplaceCopy(product);
   const hasEnglishTitle = hasEnglishProductTitle(product);
   const hasEnglishDescription = hasEnglishProductDescription(product);
   const hasPolishTitle = hasPolishProductTitle(product);
   const hasPolishDescription = hasPolishProductDescription(product);
   const hasStatusIcons = [
-    isImported ||
+    importSource !== null ||
     hasMarketplaceCopy,
     hasEnglishTitle,
     hasEnglishDescription,
@@ -164,7 +167,7 @@ function resolveNameCellStatusState(product: ProductWithImages, runtime: Product
   const hasActivity = runtime.productAiRunFeedback !== null || runtime.productScanRunFeedback !== null;
 
   return {
-    isImported,
+    importSource,
     hasMarketplaceCopy,
     hasEnglishTitle,
     hasEnglishDescription,
@@ -191,7 +194,7 @@ function NameCellSecondaryInfo({ product, runtime, categoryLabel, ship }: { prod
       {status.hasStatusRow ? (
         <div data-product-list-status-icons className='flex min-h-4 flex-wrap items-center gap-1.5'>
           <ProductListStatusIcons
-            isImported={status.isImported}
+            importSource={status.importSource}
             hasMarketplaceCopy={status.hasMarketplaceCopy}
             hasEnglishTitle={status.hasEnglishTitle}
             hasEnglishDescription={status.hasEnglishDescription}

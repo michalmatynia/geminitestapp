@@ -32,4 +32,34 @@ describe('buildMarketplaceCopyDebrandTriggerInput', () => {
       },
     });
   });
+
+  it('drops shipping automation notes from debrand source descriptions', () => {
+    expect(
+      buildMarketplaceCopyDebrandTriggerInput({
+        values: {
+          name_en: 'Keychain title',
+          description_en: 'Auto-assigned keychain shipping for Tradera listings.',
+        },
+        row: {
+          id: 'row-1',
+          index: 0,
+          integrationIds: ['integration-tradera'],
+          integrationNames: ['Tradera'],
+          currentAlternateTitle: 'Keychain row title',
+          currentAlternateDescription: 'Auto-assigned keychain shipping for Tradera listings.',
+        },
+      })
+    ).toEqual({
+      sourceEnglishTitle: 'Keychain title',
+      sourceEnglishDescription: '',
+      targetRow: {
+        id: 'row-1',
+        index: 0,
+        integrationIds: ['integration-tradera'],
+        integrationNames: ['Tradera'],
+        currentAlternateTitle: 'Keychain row title',
+        currentAlternateDescription: null,
+      },
+    });
+  });
 });

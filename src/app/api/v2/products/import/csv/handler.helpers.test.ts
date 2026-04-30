@@ -33,7 +33,7 @@ describe('product import csv handler helpers', () => {
       name_pl: 'Nazwa 1',
       name_en: 'Name 1',
       name_de: 'Name 1 DE',
-      price: 12,
+      sourcePrice: 12,
       description_en: 'Desc EN 1',
       description_de: 'Desc DE 1',
       description_pl: 'Desc PL 1',

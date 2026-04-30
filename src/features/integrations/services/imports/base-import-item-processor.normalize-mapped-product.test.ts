@@ -22,6 +22,22 @@ const marketplaceFieldDefinition: ProductCustomFieldDefinition = {
 };
 
 describe('normalizeMappedProduct', () => {
+  it('moves imported Base prices into sourcePrice for later final-price recalculation', () => {
+    const mapped = normalizeMappedProduct(
+      {
+        base_product_id: 'base-1',
+        sku: 'SKU-1',
+        price: 123.45,
+      },
+      [{ sourceKey: 'price', targetField: 'price' }],
+      [],
+      []
+    );
+
+    expect(mapped.sourcePrice).toBe(123);
+    expect(mapped.price).toBeUndefined();
+  });
+
   it('maps normalized marketplace checkboxes from grouped Base payloads for import processing', () => {
     const mapped = normalizeMappedProduct(
       {

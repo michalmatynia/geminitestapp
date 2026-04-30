@@ -8,6 +8,8 @@ import {
   type ProductBulkArchiveResponse,
   type ProductMarketplaceCopyDebrandBatchRequest,
   type ProductMarketplaceCopyDebrandBatchResponse,
+  type ProductMarketplaceCopyDebrandRunRequest,
+  type ProductMarketplaceCopyDebrandRunResponse,
   type ProductParseActionsMarkTraderaClosedRequest,
   type ProductParseActionsMarkTraderaClosedResponse,
   type ProductParseActionsMatchRequest,
@@ -140,6 +142,18 @@ export async function queueMarketplaceCopyDebrandBatch(
 ): Promise<ProductMarketplaceCopyDebrandBatchResponse> {
   return api.post<ProductMarketplaceCopyDebrandBatchResponse>(
     '/api/v2/products/marketplace-copy-debrand/batch',
+    request,
+    {
+      timeout: PRODUCT_WRITE_TIMEOUT_MS,
+    }
+  );
+}
+
+export async function queueMarketplaceCopyDebrandRun(
+  request: ProductMarketplaceCopyDebrandRunRequest
+): Promise<ProductMarketplaceCopyDebrandRunResponse> {
+  return api.post<ProductMarketplaceCopyDebrandRunResponse>(
+    '/api/v2/products/marketplace-copy-debrand/run',
     request,
     {
       timeout: PRODUCT_WRITE_TIMEOUT_MS,

@@ -46,6 +46,10 @@ export const mongoProductRepository: ProductRepository = {
     return mongoProductReadImpl.findProductsByBaseIds(baseIds, getProductCollection);
   },
 
+  async findProductBySupplierLink(supplierLink: string): Promise<ProductRecord | null> {
+    return mongoProductReadImpl.findProductBySupplierLink(supplierLink, getProductCollection);
+  },
+
   async createProduct(data: ProductCreateInput): Promise<ProductRecord> {
     return mongoProductWriteImpl.createProduct(data, getProductCollection);
   },

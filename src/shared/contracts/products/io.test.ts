@@ -11,10 +11,12 @@ describe('product io schemas', () => {
   it('normalizes numeric form fields on create payloads', () => {
     const parsed = productCreateInputSchema.parse({
       sku: 'SKU-1',
+      sourcePrice: ' 9.5 ',
       price: ' 12.5 ',
       stock: '7',
     });
 
+    expect(parsed.sourcePrice).toBe(9.5);
     expect(parsed.price).toBe(12.5);
     expect(parsed.stock).toBe(7);
   });

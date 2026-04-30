@@ -129,6 +129,42 @@ describe('runScripter', () => {
     expect(result.telemetry.some((t) => t.iteration === 1)).toBe(true);
   });
 
+  it('honors record limits before paginating further', async () => {
+    const { driver, calls } = createFakeDriver({
+      pages: [
+        {
+          url: 'https://shop.example/products?page=1',
+          list: [{ title: 'A' }, { title: 'B' }],
+        },
+        {
+          url: 'https://shop.example/products?page=2',
+          list: [{ title: 'C' }],
+        },
+      ],
+    });
+    const def = minimalDef(
+      [
+        { id: 'open', kind: 'goto', url: 'https://shop.example/products?page=1' },
+        {
+          id: 'list',
+          kind: 'extractList',
+          itemSelector: '.product',
+          fields: { title: { selector: 'h2' } },
+        },
+        { id: 'next', kind: 'paginate', strategy: 'queryParam', queryParam: 'page', maxPages: 3 },
+      ],
+      'https://shop.example/products?page=1'
+    );
+
+    const result = await runScripter(def, driver, { limit: 1 });
+
+    expect(result.records.map((r) => r['title'])).toEqual(['A']);
+    expect(calls.filter((c) => c.startsWith('goto:'))).toEqual([
+      'goto:https://shop.example/products?page=1',
+    ]);
+    expect(calls.filter((c) => c.startsWith('list:'))).toHaveLength(1);
+  });
+
   it('stops paginating when nextLink cannot be clicked', async () => {
     const { driver } = createFakeDriver({
       pages: [

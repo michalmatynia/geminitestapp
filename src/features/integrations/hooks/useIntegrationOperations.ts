@@ -36,6 +36,8 @@ type IntegrationListingBadgeState = {
   playwrightProgrammableBadgeStatuses: Map<string, string>;
   vintedBadgeIds: Set<string>;
   vintedBadgeStatuses: Map<string, string>;
+  scrapedSourceBadgeIds: Set<string>;
+  scrapedSourceBadgeStatuses: Map<string, string>;
 };
 
 const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
@@ -47,6 +49,8 @@ const EMPTY_INTEGRATION_LISTING_BADGE_STATE: IntegrationListingBadgeState = {
   playwrightProgrammableBadgeStatuses: new Map<string, string>(),
   vintedBadgeIds: new Set<string>(),
   vintedBadgeStatuses: new Map<string, string>(),
+  scrapedSourceBadgeIds: new Set<string>(),
+  scrapedSourceBadgeStatuses: new Map<string, string>(),
 };
 
 const toMarketplaceEntry = (value: unknown): MarketplaceBadgeEntry =>
@@ -98,7 +102,9 @@ const areIntegrationListingBadgeStatesEqual = (
     next.playwrightProgrammableBadgeStatuses
   ) &&
   areStringSetsEqual(previous.vintedBadgeIds, next.vintedBadgeIds) &&
-  areStringMapsEqual(previous.vintedBadgeStatuses, next.vintedBadgeStatuses);
+  areStringMapsEqual(previous.vintedBadgeStatuses, next.vintedBadgeStatuses) &&
+  areStringSetsEqual(previous.scrapedSourceBadgeIds, next.scrapedSourceBadgeIds) &&
+  areStringMapsEqual(previous.scrapedSourceBadgeStatuses, next.scrapedSourceBadgeStatuses);
 
 const buildIntegrationListingBadgeState = (
   payload: ListingBadgesPayload
@@ -111,6 +117,8 @@ const buildIntegrationListingBadgeState = (
   const nextPlaywrightProgrammableBadgeIds = new Set<string>();
   const nextVintedBadgeStatuses = new Map<string, string>();
   const nextVintedBadgeIds = new Set<string>();
+  const nextScrapedSourceBadgeStatuses = new Map<string, string>();
+  const nextScrapedSourceBadgeIds = new Set<string>();
 
   for (const [productId, rawMarketplaces] of Object.entries(payload)) {
     const marketplaces = toMarketplaceEntry(rawMarketplaces);
@@ -135,6 +143,15 @@ const buildIntegrationListingBadgeState = (
       nextVintedBadgeStatuses.set(productId, vintedStatus);
     }
 
+    const scrapedSourceStatus =
+      typeof marketplaces?.scrapedSource === 'string'
+        ? marketplaces.scrapedSource.trim().toLowerCase()
+        : '';
+    if (scrapedSourceStatus) {
+      nextScrapedSourceBadgeIds.add(productId);
+      nextScrapedSourceBadgeStatuses.set(productId, scrapedSourceStatus);
+    }
+
     const playwrightProgrammableStatus =
       typeof marketplaces?.playwrightProgrammable === 'string'
         ? marketplaces.playwrightProgrammable.trim().toLowerCase()
@@ -154,6 +171,8 @@ const buildIntegrationListingBadgeState = (
     playwrightProgrammableBadgeStatuses: nextPlaywrightProgrammableBadgeStatuses,
     vintedBadgeIds: nextVintedBadgeIds,
     vintedBadgeStatuses: nextVintedBadgeStatuses,
+    scrapedSourceBadgeIds: nextScrapedSourceBadgeIds,
+    scrapedSourceBadgeStatuses: nextScrapedSourceBadgeStatuses,
   };
 };
 

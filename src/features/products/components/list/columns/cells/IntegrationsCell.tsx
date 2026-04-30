@@ -31,6 +31,7 @@ const TriggerButtonBar = dynamic<ProductTriggerButtonBarProps>(
 
 const BaseQuickExportButton = dynamic(() => import('../buttons/BaseQuickExportButton').then((mod) => mod.BaseQuickExportButton), { ssr: false, loading: () => null });
 const VintedQuickListButton = dynamic(() => import('../buttons/VintedQuickListButton').then((mod) => mod.VintedQuickListButton), { ssr: false, loading: () => null });
+const ScrapedSourceControls = dynamic(() => import('../buttons/ScrapedSourceControls').then((mod) => mod.ScrapedSourceControls), { ssr: false, loading: () => null });
 const TraderaStatusButton = dynamic(() => import('../buttons/TraderaStatusButton').then((mod) => mod.TraderaStatusButton), { ssr: false, loading: () => null });
 const VintedStatusButton = dynamic(() => import('../buttons/VintedStatusButton').then((mod) => mod.VintedStatusButton), { ssr: false, loading: () => null });
 const PlaywrightStatusButton = dynamic(() => import('../buttons/PlaywrightStatusButton').then((mod) => mod.PlaywrightStatusButton), { ssr: false, loading: () => null });
@@ -82,6 +83,7 @@ export const IntegrationsCell: React.FC<{ row: Row<ProductWithImages> }> = memo(
         <span aria-hidden='true' className='inline-flex size-full items-center justify-center text-[20px] font-medium leading-none tracking-tight -translate-y-[1px]'>+</span>
       </CircleIconButton>
       <BaseQuickExportButton product={product} status={runtime.integrationStatus} prefetchListings={prefetchListings} showMarketplaceBadge={runtime.showMarketplaceBadge} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'baselinker')} />
+      <ScrapedSourceControls product={product} showScrapedSourceBadge={runtime.showScrapedSourceBadge} scrapedSourceStatus={runtime.scrapedSourceStatus} prefetchListings={prefetchListings} />
       <TraderaQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'tradera')} showTraderaBadge={runtime.showTraderaBadge} traderaStatus={runtime.traderaStatus} />
       {runtime.showTraderaBadge && <TraderaStatusButton productId={product.id} status={runtime.traderaStatus} prefetchListings={prefetchListings} onOpenListings={(rec): void => onIntegrationsClick(product, rec, 'tradera')} customFieldValues={product.customFields} />}
       <VintedQuickListButton product={product} prefetchListings={prefetchListings} onOpenIntegrations={(rec): void => onIntegrationsClick(product, rec, 'vinted')} showVintedBadge={runtime.showVintedBadge} vintedStatus={runtime.vintedStatus} />

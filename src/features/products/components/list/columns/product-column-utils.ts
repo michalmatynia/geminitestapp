@@ -1,4 +1,7 @@
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type {
+  ProductImportSource,
+  ProductWithImages,
+} from '@/shared/contracts/products/product';
 
 export type ProductNameKey = 'name_en' | 'name_pl' | 'name_de';
 
@@ -214,8 +217,15 @@ export const resolveEffectiveDefaultPriceGroupId = (
   return catalogDefaultPriceGroupId || null;
 };
 
+export const resolveProductImportSource = (
+  product: ProductWithImages
+): ProductImportSource | null => {
+  const source = product.importSource;
+  return source === 'base' || source === 'scrape' ? source : null;
+};
+
 export const hasImportedProductOrigin = (product: ProductWithImages): boolean =>
-  typeof product.importSource === 'string' && product.importSource.trim().length > 0;
+  resolveProductImportSource(product) !== null;
 
 export const hasFilledMarketplaceCopy = (product: ProductWithImages): boolean => {
   const overrides = Array.isArray(product.marketplaceContentOverrides)
@@ -334,7 +344,7 @@ export const getStatusToneClass = (value: string): string => {
 export const getMarketplaceButtonClass = (
   value: string,
   manageMode: boolean,
-  marketplace: 'base' | 'tradera' | 'playwright' | 'vinted'
+  marketplace: 'base' | 'tradera' | 'playwright' | 'vinted' | 'scraped'
 ): string => {
   if (!manageMode) {
     return getStatusToneClass(value);
@@ -360,6 +370,9 @@ export const getMarketplaceButtonClass = (
   }
   if (marketplace === 'vinted') {
     return 'border-teal-400/70 bg-teal-500/15 text-teal-100 hover:border-teal-300/80 hover:bg-teal-500/25';
+  }
+  if (marketplace === 'scraped') {
+    return 'border-emerald-400/70 bg-emerald-500/15 text-emerald-100 hover:border-emerald-300/80 hover:bg-emerald-500/25';
   }
   return 'border-sky-400/70 bg-sky-500/15 text-sky-100 hover:border-sky-300/80 hover:bg-sky-500/25';
 };

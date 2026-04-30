@@ -24,6 +24,11 @@ import { recordPlaywrightActionRunSnapshot } from '@/shared/lib/playwright/actio
 import { evaluateOutboundUrlPolicy } from '@/shared/lib/security/outbound-url-policy';
 import { getFsPromises } from '@/shared/lib/files/runtime-fs';
 import { isObjectRecord } from '@/shared/utils/object-utils';
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  redactSensitiveText,
+} from '@/shared/utils/observability/redaction-policy';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import type { PlaywrightActionRunRequestSummary } from '@/shared/contracts/playwright-action-runs';
 
@@ -588,25 +593,76 @@ export const updateRunState = async (
   return next;
 };
 
+const REDACTED_REQUEST_SUMMARY_MAX_DEPTH = 6;
+const REDACTED_REQUEST_SUMMARY_MAX_ARRAY = 50;
+
+const isNullableRequestSummaryValue = (value: unknown): value is null | undefined =>
+  value === null || value === undefined;
+
+const isSensitiveRequestSummaryKey = (key: string): boolean =>
+  key.length > 0 && isSensitiveKey(key);
+
+const redactPlaywrightRunRequestArray = (value: unknown[], depth: number): unknown[] =>
+  value
+    .slice(0, REDACTED_REQUEST_SUMMARY_MAX_ARRAY)
+    .map((entry) => redactPlaywrightRunRequestValue(entry, '', depth + 1));
+
+const redactPlaywrightRunRequestObject = (value: object, depth: number): unknown => {
+  if (!isObjectRecord(value)) return '[unserializable]';
+  return Object.fromEntries(
+    Object.entries(value).map(([entryKey, entryValue]) => [
+      entryKey,
+      redactPlaywrightRunRequestValue(entryValue, entryKey, depth + 1),
+    ])
+  );
+};
+
+const redactPlaywrightRunRequestValue = (
+  value: unknown,
+  key: string,
+  depth: number
+): unknown => {
+  if (isSensitiveRequestSummaryKey(key)) return REDACTED_VALUE;
+  if (typeof value === 'string') return redactSensitiveText(value);
+  if (isNullableRequestSummaryValue(value)) return value;
+  if (typeof value !== 'object') return value;
+  if (depth >= REDACTED_REQUEST_SUMMARY_MAX_DEPTH) return '[truncated-depth]';
+  if (Array.isArray(value)) return redactPlaywrightRunRequestArray(value, depth);
+  return redactPlaywrightRunRequestObject(value, depth);
+};
+
+const redactPlaywrightRunRequestInput = (
+  input: Record<string, unknown>
+): Record<string, unknown> => {
+  const redacted = redactPlaywrightRunRequestValue(input, '', 0);
+  return isObjectRecord(redacted) ? redacted : {};
+};
+
+const resolveRequestSummaryString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.length > 0 ? value : undefined;
+
 const summarizePlaywrightRunRequest = (
   request: PlaywrightNodeRunRequest
 ): PlaywrightActionRunRequestSummary => {
-  const summary: PlaywrightActionRunRequestSummary = {};
-  if (request.startUrl) summary.startUrl = request.startUrl;
-  if (request.browserEngine) summary.browserEngine = request.browserEngine;
-  if (typeof request.timeoutMs === 'number') summary.timeoutMs = request.timeoutMs;
-  if (typeof request.runtimeKey === 'string') summary.runtimeKey = request.runtimeKey;
-  if (request.actionId) summary.actionId = request.actionId;
-  if (request.actionName) summary.actionName = request.actionName;
-  if (request.selectorProfile) summary.selectorProfile = request.selectorProfile;
-  if (request.input && isObjectRecord(request.input)) summary.input = request.input;
-  if (request.personaId) {
+  const summary: PlaywrightActionRunRequestSummary = {
+    startUrl: resolveRequestSummaryString(request.startUrl),
+    browserEngine: resolveRequestSummaryString(request.browserEngine),
+    timeoutMs: typeof request.timeoutMs === 'number' ? request.timeoutMs : undefined,
+    runtimeKey: resolveRequestSummaryString(request.runtimeKey),
+    actionId: resolveRequestSummaryString(request.actionId),
+    actionName: resolveRequestSummaryString(request.actionName),
+    selectorProfile: resolveRequestSummaryString(request.selectorProfile),
+  };
+  if (isObjectRecord(request.input)) {
+    summary.input = redactPlaywrightRunRequestInput(request.input);
+  }
+  if (typeof request.personaId === 'string' && request.personaId.length > 0) {
     summary.input = {
       ...(summary.input ?? {}),
       personaId: request.personaId,
     };
   }
-  if (request.capture && isObjectRecord(request.capture)) summary.capture = request.capture;
+  if (isObjectRecord(request.capture)) summary.capture = request.capture;
   return summary;
 };
 

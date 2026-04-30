@@ -494,6 +494,7 @@ export type MarketplaceBadgeEntry = {
   tradera?: string;
   vinted?: string;
   playwrightProgrammable?: string;
+  scrapedSource?: string;
 };
 
 export type ListingBadgesPayload = Record<string, MarketplaceBadgeEntry>;

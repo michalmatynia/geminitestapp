@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   createCatalog: vi.fn(),
   createProduct: vi.fn(),
   dryRun: vi.fn(),
+  findProductBySupplierLink: vi.fn(),
   getProductBySku: vi.fn(),
   invalidateAll: vi.fn(),
   listCatalogs: vi.fn(),
@@ -36,6 +37,7 @@ vi.mock('@/shared/lib/products/services/catalog-repository', () => ({
 vi.mock('@/shared/lib/products/services/productService', () => ({
   productService: {
     createProduct: mocks.createProduct,
+    findProductBySupplierLink: mocks.findProductBySupplierLink,
     getProductBySku: mocks.getProductBySku,
     updateProduct: mocks.updateProduct,
   },
@@ -123,6 +125,7 @@ describe('product scrape profiles', () => {
     mocks.listCatalogs.mockResolvedValue([battleStockCatalog]);
     mocks.dryRun.mockResolvedValue(makeSource([makeDraft()]));
     mocks.getProductBySku.mockResolvedValue(null);
+    mocks.findProductBySupplierLink.mockResolvedValue(null);
     mocks.createProduct.mockResolvedValue({
       id: 'product-created',
       sku: 'BATTLESTOCK-13033',
@@ -165,10 +168,11 @@ describe('product scrape profiles', () => {
     expect(mocks.createProduct).toHaveBeenCalledWith(
       expect.objectContaining({
         sku: 'BATTLESTOCK-13033',
+        importSource: 'scrape',
         name_pl: '40k spiritseer',
         supplierName: 'BattleStock',
         supplierLink: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
-        price: 60,
+        sourcePrice: 60,
         catalogIds: ['catalog-battlestock'],
         imageLinks: [
           'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
@@ -196,12 +200,69 @@ describe('product scrape profiles', () => {
       'product-existing',
       expect.objectContaining({
         sku: 'BATTLESTOCK-13033',
+        importSource: 'scrape',
         catalogIds: ['catalog-other', 'catalog-battlestock'],
       }),
       undefined
     );
     expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(response.updatedCount).toBe(1);
+  });
+
+  it('updates existing source URL matches when the scraped SKU changed', async () => {
+    mocks.getProductBySku.mockResolvedValue(null);
+    mocks.findProductBySupplierLink.mockResolvedValue({
+      id: 'product-existing-source',
+      sku: 'BATTLESTOCK-OLD-13033',
+      catalogs: [{ productId: 'product-existing-source', catalogId: 'catalog-other', assignedAt: '' }],
+    });
+
+    const response = await runProductScrapeProfile({
+      profileId: 'battlestock-warhammer-40k-30k',
+    });
+
+    expect(mocks.findProductBySupplierLink).toHaveBeenCalledWith(
+      'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033'
+    );
+    expect(mocks.updateProduct).toHaveBeenCalledWith(
+      'product-existing-source',
+      expect.objectContaining({
+        sku: 'BATTLESTOCK-13033',
+        supplierLink: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+        catalogIds: ['catalog-other', 'catalog-battlestock'],
+      }),
+      undefined
+    );
+    expect(mocks.createProduct).not.toHaveBeenCalled();
+    expect(response.updatedCount).toBe(1);
+  });
+
+  it('skips duplicate scraped candidates within a single run', async () => {
+    const duplicateDraft = {
+      ...makeDraft(),
+      index: 1,
+      externalId: null,
+      raw: { product_id: null, name: '40k spiritseer', price_raw: '60' },
+      draft: {
+        ...makeDraft().draft,
+        supplierLink:
+          'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033?utm_source=category#details',
+      },
+    };
+    mocks.dryRun.mockResolvedValue(makeSource([makeDraft(), duplicateDraft]));
+
+    const response = await runProductScrapeProfile({
+      profileId: 'battlestock-warhammer-40k-30k',
+    });
+
+    expect(mocks.createProduct).toHaveBeenCalledTimes(1);
+    expect(response.createdCount).toBe(1);
+    expect(response.skippedCount).toBe(1);
+    expect(response.products[1]).toMatchObject({
+      status: 'skipped',
+      error: 'Duplicate scraped product in this run.',
+      sourceUrl: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+    });
   });
 
   it('supports dry runs without mutating products', async () => {

@@ -179,7 +179,7 @@ describe('mapBaseProduct', () => {
       expect(result.name_pl).toBe('Produkt testowy');
       expect(result.name_en).toBe('Test product');
       expect(result.sku).toBe('SKU-1');
-      expect(result.price).toBe(4999);
+      expect(result.sourcePrice).toBe(4999);
     });
 
     it('prefers the PLN price from grouped price entries instead of the first EUR slot', () => {
@@ -202,7 +202,7 @@ describe('mapBaseProduct', () => {
         preferredPriceCurrencies: ['PLN'],
       });
 
-      expect(result.price).toBe(5100);
+      expect(result.sourcePrice).toBe(5100);
     });
 
     it('does not fall back to the first multi-currency price when the target currency cannot be matched safely', () => {
@@ -219,7 +219,7 @@ describe('mapBaseProduct', () => {
         preferredPriceCurrencies: ['PLN'],
       });
 
-      expect(result.price).toBeUndefined();
+      expect(result.sourcePrice).toBeUndefined();
     });
 
     it('matches numeric Base price-group ids when the preferred identifiers include a PLN slot id', () => {
@@ -240,7 +240,7 @@ describe('mapBaseProduct', () => {
         preferredPriceCurrencies: ['PLN', '3772', '77295'],
       });
 
-      expect(result.price).toBe(42);
+      expect(result.sourcePrice).toBe(42);
     });
 
     it('does not let a generic price template mapping override the preferred PLN price', () => {
@@ -268,7 +268,7 @@ describe('mapBaseProduct', () => {
         }
       );
 
-      expect(result.price).toBe(5100);
+      expect(result.sourcePrice).toBe(5100);
     });
 
     it('does not let a non-preferred numeric Base price-group mapping override the preferred PLN price', () => {
@@ -293,7 +293,7 @@ describe('mapBaseProduct', () => {
         }
       );
 
-      expect(result.price).toBe(42);
+      expect(result.sourcePrice).toBe(42);
     });
 
     it('allows an explicit preferred-currency price template mapping to set the price', () => {
@@ -318,7 +318,7 @@ describe('mapBaseProduct', () => {
         }
       );
 
-      expect(result.price).toBe(5100);
+      expect(result.sourcePrice).toBe(5100);
     });
 
     it('maps localized parameter template sources without copying Polish into English', () => {

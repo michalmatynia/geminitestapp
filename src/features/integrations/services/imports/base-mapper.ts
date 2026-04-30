@@ -50,6 +50,8 @@ import {
   getByPath,
 } from './base-mapper-utils';
 
+const IMPORT_PRICE_TARGET_FIELD = 'sourcePrice';
+
 export type BaseCustomFieldImportDiagnostics = {
   autoMatchedFieldIds: string[];
   autoMatchedFieldNames: string[];
@@ -828,9 +830,11 @@ const applyTemplateMappings = (
       );
       continue;
     }
-    if (NUMBER_FIELDS.has(targetField)) {
+    const numericTargetField =
+      targetField === 'price' ? IMPORT_PRICE_TARGET_FIELD : targetField;
+    if (NUMBER_FIELDS.has(numericTargetField)) {
       if (
-        targetField === 'price' &&
+        numericTargetField === IMPORT_PRICE_TARGET_FIELD &&
         hasMultiplePriceEntries &&
         normalizedPreferredPriceIdentifiers.length > 0 &&
         isAmbiguousPriceTemplateSource(sourceKey)
@@ -839,7 +843,7 @@ const applyTemplateMappings = (
       }
       const parsed = toIntValue(rawValue);
       if (parsed === null) continue;
-      (mapped as Record<string, unknown>)[targetField] = parsed;
+      (mapped as Record<string, unknown>)[numericTargetField] = parsed;
       continue;
     }
     const stringValue = toStringValue(rawValue);
@@ -982,7 +986,7 @@ export function mapBaseProduct(
     description_pl: descriptionPl ?? undefined,
     description_de: descriptionDe ?? undefined,
     sku: sku ?? '',
-    price: price ?? undefined,
+    sourcePrice: price ?? undefined,
     stock: stock ?? undefined,
     weight: weight ?? undefined,
     sizeLength: sizeLength ?? undefined,

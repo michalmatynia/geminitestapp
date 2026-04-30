@@ -39,6 +39,8 @@ type BadgeState = {
   playwrightProgrammableBadgeStatuses: Map<string, string>;
   vintedBadgeIds: Set<string>;
   vintedBadgeStatuses: Map<string, string>;
+  scrapedSourceBadgeIds: Set<string>;
+  scrapedSourceBadgeStatuses: Map<string, string>;
 };
 
 const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
@@ -50,6 +52,8 @@ const createBadgeState = (overrides: Partial<BadgeState> = {}): BadgeState => ({
   playwrightProgrammableBadgeStatuses: new Map<string, string>(),
   vintedBadgeIds: new Set<string>(),
   vintedBadgeStatuses: new Map<string, string>(),
+  scrapedSourceBadgeIds: new Set<string>(),
+  scrapedSourceBadgeStatuses: new Map<string, string>(),
   ...overrides,
 });
 
@@ -201,6 +205,10 @@ const createProviderValue = (
     traderaBadgeStatuses: new Map<string, string>(),
     playwrightProgrammableBadgeIds: new Set<string>(),
     playwrightProgrammableBadgeStatuses: new Map<string, string>(),
+    vintedBadgeIds: new Set<string>(),
+    vintedBadgeStatuses: new Map<string, string>(),
+    scrapedSourceBadgeIds: new Set<string>(),
+    scrapedSourceBadgeStatuses: new Map<string, string>(),
     queuedProductIds: new Set<string>(),
     productAiRunStatusByProductId: new Map(),
     productScanRunStatusByProductId: new Map(),

@@ -2,7 +2,7 @@
 
 /* eslint-disable complexity, max-lines, max-lines-per-function */
 
-import { Download, ExternalLink, Eye, RotateCcw, Save } from 'lucide-react';
+import { Download, ExternalLink, Eye, RotateCcw, Save, Trash2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useRouter } from 'nextjs-toploader/app';
 import React, { startTransition, useCallback, useEffect, useMemo, useState } from 'react';
@@ -82,6 +82,34 @@ const parseLines = (value: string): string[] =>
     .split(/\r?\n/)
     .map((line: string): string => line.trim())
     .filter((line: string): boolean => line.length > 0);
+
+const areStringListsEqual = (left: string[], right: string[]): boolean =>
+  left.length === right.length &&
+  left.every((value: string, index: number): boolean => value === right[index]);
+
+const buildExperiencePatchSignature = (
+  patch: FilemakerCvExperienceHighlightPatch,
+  index: number
+): string =>
+  [
+    getExperiencePatchKey(patch, index),
+    patch.experienceId ?? '',
+    patch.experienceTitle ?? '',
+    patch.company ?? '',
+    patch.role ?? '',
+    ...patch.highlights,
+  ].join('\u001f');
+
+const areExperiencePatchesEqual = (
+  left: FilemakerCvExperienceHighlightPatch[],
+  right: FilemakerCvExperienceHighlightPatch[]
+): boolean =>
+  left.length === right.length &&
+  left.every(
+    (patch: FilemakerCvExperienceHighlightPatch, index: number): boolean =>
+      buildExperiencePatchSignature(patch, index) ===
+      buildExperiencePatchSignature(right[index] as FilemakerCvExperienceHighlightPatch, index)
+  );
 
 const normalizePatchKey = (value: string | null | undefined): string =>
   (value ?? '')
@@ -274,6 +302,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
   const [patchCoreStrengthsText, setPatchCoreStrengthsText] = useState('');
   const [patchTechnicalEnvironmentText, setPatchTechnicalEnvironmentText] = useState('');
   const [patchExperienceHighlightsText, setPatchExperienceHighlightsText] = useState<Record<string, string>>({});
+  const [removedExperiencePatchKeys, setRemovedExperiencePatchKeys] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -301,6 +330,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
             cv.tailoringPatch?.experienceHighlightPatches ?? cv.experienceHighlightPatches
           )
         );
+        setRemovedExperiencePatchKeys([]);
       })
       .catch((error: unknown): void => {
         if (controller.signal.aborted) return;
@@ -318,6 +348,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
         setPatchCoreStrengthsText('');
         setPatchTechnicalEnvironmentText('');
         setPatchExperienceHighlightsText({});
+        setRemovedExperiencePatchKeys([]);
       });
     return () => {
       controller.abort();
@@ -343,12 +374,20 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
       : tailoringPatch?.selectedTechnicalEnvironment ?? state.cv?.selectedTechnicalEnvironment ?? [];
   const baseExperienceHighlightPatches =
     tailoringPatch?.experienceHighlightPatches ?? state.cv?.experienceHighlightPatches ?? [];
+  const activeBaseExperienceHighlightPatches = useMemo(
+    () =>
+      baseExperienceHighlightPatches.filter(
+        (patch: FilemakerCvExperienceHighlightPatch, index: number): boolean =>
+          !removedExperiencePatchKeys.includes(getExperiencePatchKey(patch, index))
+      ),
+    [baseExperienceHighlightPatches, removedExperiencePatchKeys]
+  );
   const editableExperiencePatchTargets = useMemo(
     () =>
       isScopedTailoredCv
-        ? mergeExperiencePatchesWithBlocks(blocks, baseExperienceHighlightPatches)
-        : baseExperienceHighlightPatches,
-    [baseExperienceHighlightPatches, blocks, isScopedTailoredCv]
+        ? mergeExperiencePatchesWithBlocks(blocks, activeBaseExperienceHighlightPatches)
+        : activeBaseExperienceHighlightPatches,
+    [activeBaseExperienceHighlightPatches, blocks, isScopedTailoredCv]
   );
   const experienceHighlightPatches = isScopedTailoredCv
     ? editableExperiencePatchTargets.map(
@@ -367,13 +406,39 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
           if (patch.highlights.length === 0) return false;
           const sourcePatch = editableExperiencePatchTargets[index];
           const wasGeneratedPatch =
-            sourcePatch !== undefined && baseExperienceHighlightPatches.includes(sourcePatch);
+            sourcePatch !== undefined && activeBaseExperienceHighlightPatches.includes(sourcePatch);
           const originalHighlights = joinLines(sourcePatch?.highlights ?? []);
           const nextHighlights = joinLines(patch.highlights);
           return wasGeneratedPatch || nextHighlights !== originalHighlights;
         }
       )
     : experienceHighlightPatches;
+  const loadedProfessionalSummary =
+    state.cv?.tailoringPatch?.professionalSummary ?? state.cv?.professionalSummary ?? '';
+  const loadedCoreStrengths = state.cv?.tailoringPatch?.coreStrengths ?? state.cv?.coreStrengths ?? [];
+  const loadedTechnicalEnvironment =
+    state.cv?.tailoringPatch?.selectedTechnicalEnvironment ??
+    state.cv?.selectedTechnicalEnvironment ??
+    [];
+  const summaryPatchChanged =
+    isScopedTailoredCv && patchProfessionalSummary.trim() !== loadedProfessionalSummary.trim();
+  const coreStrengthsPatchChanged =
+    isScopedTailoredCv && !areStringListsEqual(parseLines(patchCoreStrengthsText), loadedCoreStrengths);
+  const technicalEnvironmentPatchChanged =
+    isScopedTailoredCv &&
+    !areStringListsEqual(parseLines(patchTechnicalEnvironmentText), loadedTechnicalEnvironment);
+  const experiencePatchesChanged =
+    isScopedTailoredCv &&
+    (removedExperiencePatchKeys.length > 0 ||
+      !areExperiencePatchesEqual(
+        persistedExperienceHighlightPatches,
+        baseExperienceHighlightPatches
+      ));
+  const hasScopedPatchChanges =
+    summaryPatchChanged ||
+    coreStrengthsPatchChanged ||
+    technicalEnvironmentPatchChanged ||
+    experiencePatchesChanged;
   const tailoringScope = state.cv?.tailoringScope ?? null;
   const canonicalPatchField = tailoringScope?.canonicalPatchField ?? 'tailoringPatch';
   const renderedBodyMode = tailoringScope?.renderedBodyMode ?? 'ai_rendered_full_cv';
@@ -421,6 +486,18 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     [previewBlocks, state.cv?.highlightTechnologyTerms]
   );
 
+  useEffect(() => {
+    if (!hasScopedPatchChanges) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasScopedPatchChanges]);
+
   const applyLoadedCv = useCallback((cv: FilemakerCv): void => {
     const normalizedBlocks = normalizeCvBlocks(cv.bodyBlocks);
     setState({ cv, error: null, isLoading: false });
@@ -438,6 +515,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
         cv.tailoringPatch?.experienceHighlightPatches ?? cv.experienceHighlightPatches
       )
     );
+    setRemovedExperiencePatchKeys([]);
   }, []);
 
   const persistCurrentCv = useCallback(async (): Promise<FilemakerCv> => {
@@ -490,10 +568,16 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
   ]);
 
   const handleBackToPerson = useCallback((): void => {
+    if (
+      hasScopedPatchChanges &&
+      !window.confirm('Discard unsaved tailored CV patch changes?')
+    ) {
+      return;
+    }
     startTransition(() => {
       router.push(`/admin/filemaker/persons/${encodeURIComponent(personId)}`);
     });
-  }, [personId, router]);
+  }, [hasScopedPatchChanges, personId, router]);
 
   const handleSave = useCallback(async (): Promise<void> => {
     if (state.cv === null) return;
@@ -583,7 +667,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
               void handleSave();
             }}
             cancelText='Back to Person'
-            saveText='Save CV'
+            saveText={isScopedTailoredCv ? 'Save Patch' : 'Save CV'}
             isSaving={isSaving}
             saveIcon={<Save className='size-3.5' />}
           >
@@ -632,6 +716,53 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
             employers, roles, dates, locations, certifications, and section order should remain
             unchanged.
           </div>
+          {isScopedTailoredCv ? (
+            <div className='flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/60 bg-card/30 p-3 text-xs text-muted-foreground'>
+              <span>
+                Canonical edit target:{' '}
+                <span className='font-medium text-foreground'>{canonicalEditMode}</span>
+              </span>
+              <div className='flex flex-wrap items-center gap-2'>
+                <Badge variant={hasScopedPatchChanges ? 'secondary' : 'outline'} className='text-[10px]'>
+                  {hasScopedPatchChanges ? 'Unsaved patch changes' : 'No patch changes'}
+                </Badge>
+                {hasScopedPatchChanges ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='h-6 gap-1 px-2 text-[10px]'
+                    onClick={() => {
+                      setPatchProfessionalSummary(
+                        state.cv?.tailoringPatch?.professionalSummary ??
+                          state.cv?.professionalSummary ??
+                          ''
+                      );
+                      setPatchCoreStrengthsText(
+                        joinLines(state.cv?.tailoringPatch?.coreStrengths ?? state.cv?.coreStrengths)
+                      );
+                      setPatchTechnicalEnvironmentText(
+                        joinLines(
+                          state.cv?.tailoringPatch?.selectedTechnicalEnvironment ??
+                            state.cv?.selectedTechnicalEnvironment
+                        )
+                      );
+                      setPatchExperienceHighlightsText(
+                        buildExperienceHighlightsTextMap(
+                          state.cv?.tailoringPatch?.experienceHighlightPatches ??
+                            state.cv?.experienceHighlightPatches
+                        )
+                      );
+                      setRemovedExperiencePatchKeys([]);
+                    }}
+                  >
+                    <RotateCcw className='size-3' />
+                    Discard changes
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
           {sourceCvTitle.length > 0 || sourceCvRecordId.length > 0 ? (
             <div className='flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-card/30 p-3 text-xs text-muted-foreground'>
               <div>
@@ -647,6 +778,12 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
                   size='sm'
                   className='h-7 gap-1.5 text-[11px]'
                   onClick={() => {
+                    if (
+                      hasScopedPatchChanges &&
+                      !window.confirm('Discard unsaved tailored CV patch changes?')
+                    ) {
+                      return;
+                    }
                     startTransition(() => {
                       router.push(
                         `/admin/filemaker/persons/${encodeURIComponent(personId)}/cvs/${encodeURIComponent(sourceCvRecordId)}`
@@ -693,7 +830,14 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
           {isScopedTailoredCv ? (
             <div className='grid gap-3 lg:grid-cols-3'>
               <FormField label='Professional summary' className='lg:col-span-3'>
-                <div className='mb-2 flex justify-end'>
+                <div className='mb-2 flex items-center justify-between gap-2'>
+                  {summaryPatchChanged ? (
+                    <Badge variant='secondary' className='text-[10px]'>
+                      Changed
+                    </Badge>
+                  ) : (
+                    <span />
+                  )}
                   <Button
                     type='button'
                     variant='ghost'
@@ -722,7 +866,14 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
                 />
               </FormField>
               <FormField label='Core strengths'>
-                <div className='mb-2 flex justify-end'>
+                <div className='mb-2 flex items-center justify-between gap-2'>
+                  {coreStrengthsPatchChanged ? (
+                    <Badge variant='secondary' className='text-[10px]'>
+                      Changed
+                    </Badge>
+                  ) : (
+                    <span />
+                  )}
                   <Button
                     type='button'
                     variant='ghost'
@@ -749,7 +900,14 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
                 />
               </FormField>
               <FormField label='Selected technical environment'>
-                <div className='mb-2 flex justify-end'>
+                <div className='mb-2 flex items-center justify-between gap-2'>
+                  {technicalEnvironmentPatchChanged ? (
+                    <Badge variant='secondary' className='text-[10px]'>
+                      Changed
+                    </Badge>
+                  ) : (
+                    <span />
+                  )}
                   <Button
                     type='button'
                     variant='ghost'
@@ -816,9 +974,39 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
           </div>
           {experienceHighlightPatches.length > 0 ? (
             <div className='space-y-3'>
-              <div className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
-                Tailored experience highlights
+              <div className='flex flex-wrap items-center justify-between gap-2'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <div className='text-[10px] font-semibold uppercase tracking-wide text-muted-foreground'>
+                    Tailored experience highlights
+                  </div>
+                  {experiencePatchesChanged ? (
+                    <Badge variant='secondary' className='text-[10px]'>
+                      Changed
+                    </Badge>
+                  ) : null}
+                </div>
+                {isScopedTailoredCv && removedExperiencePatchKeys.length > 0 ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='h-6 gap-1 px-2 text-[10px]'
+                    onClick={() => {
+                      setRemovedExperiencePatchKeys([]);
+                    }}
+                  >
+                    <RotateCcw className='size-3' />
+                    Restore removed patches
+                  </Button>
+                ) : null}
               </div>
+              {isScopedTailoredCv && removedExperiencePatchKeys.length > 0 ? (
+                <div className='rounded border border-red-300/20 bg-red-400/5 p-2 text-[11px] leading-4 text-red-100'>
+                  {removedExperiencePatchKeys.length} generated experience patch
+                  {removedExperiencePatchKeys.length === 1 ? '' : 'es'} removed. Source CV
+                  highlights will be used for those sections unless restored before saving.
+                </div>
+              ) : null}
               <div className='grid gap-3 lg:grid-cols-2'>
                 {experienceHighlightPatches.map((patch, index) => (
                   <div
@@ -856,6 +1044,35 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
                         >
                           <RotateCcw className='size-3' />
                           Reset
+                        </Button>
+                      ) : null}
+                      {isScopedTailoredCv &&
+                      activeBaseExperienceHighlightPatches.includes(
+                        editableExperiencePatchTargets[index] as FilemakerCvExperienceHighlightPatch
+                      ) ? (
+                        <Button
+                          type='button'
+                          variant='ghost'
+                          size='sm'
+                          className='h-6 gap-1 px-2 text-[10px] text-red-300 hover:text-red-200'
+                          onClick={() => {
+                            const sourcePatch = editableExperiencePatchTargets[index];
+                            if (sourcePatch === undefined) return;
+                            const baseIndex = baseExperienceHighlightPatches.indexOf(sourcePatch);
+                            const removedKey = getExperiencePatchKey(sourcePatch, baseIndex);
+                            const displayKey = getExperiencePatchKey(patch, index);
+                            setRemovedExperiencePatchKeys((current) =>
+                              current.includes(removedKey) ? current : [...current, removedKey]
+                            );
+                            setPatchExperienceHighlightsText((current) => {
+                              const next = { ...current };
+                              delete next[displayKey];
+                              return next;
+                            });
+                          }}
+                        >
+                          <Trash2 className='size-3' />
+                          Remove patch
                         </Button>
                       ) : null}
                     </div>

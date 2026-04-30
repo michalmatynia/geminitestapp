@@ -209,6 +209,7 @@ export function AdminFilemakerSettingsPage(): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
+  const [hasMounted, setHasMounted] = useState(false);
   const [personOptionsState, setPersonOptionsState] = useState<PersonOptionsState>({
     error: null,
     isLoading: false,
@@ -226,6 +227,10 @@ export function AdminFilemakerSettingsPage(): React.JSX.Element {
   const [settings, setSettings] = useState<FilemakerJobApplicationSettings>(
     cloneSettings(storedSettings)
   );
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     setSettings(cloneSettings(storedSettings));
@@ -308,7 +313,7 @@ export function AdminFilemakerSettingsPage(): React.JSX.Element {
     );
   };
 
-  if (settingsQuery.isLoading || !settingsQuery.data) {
+  if (!hasMounted || settingsQuery.isLoading || !settingsQuery.data) {
     return (
       <FilemakerSettingsShell>
         <LoadingState message='Loading Filemaker settings...' />

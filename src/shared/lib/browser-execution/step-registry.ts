@@ -2,6 +2,7 @@ import type { PlaywrightActionBlockConfig } from '@/shared/contracts/playwright-
 import { SUPPLIER_1688_PROBE_SCAN_RUNTIME_STEPS } from './supplier-1688-runtime-constants';
 import { FILEMAKER_ORGANIZATION_PRESENCE_SCRAPE_RUNTIME_STEPS } from './filemaker-organization-presence-runtime-constants';
 import { JOB_BOARD_SCRAPE_RUNTIME_STEPS } from './job-board-runtime-constants';
+import { JOB_APPLICATION_APPLY_RUNTIME_STEPS } from './job-application-apply-runtime-constants';
 
 export const STEP_REGISTRY = {
   // Browser lifecycle
@@ -151,6 +152,40 @@ export const STEP_REGISTRY = {
   [JOB_BOARD_SCRAPE_RUNTIME_STEPS.finalize]: {
     id: JOB_BOARD_SCRAPE_RUNTIME_STEPS.finalize,
     label: 'Finalize job board scrape',
+  },
+
+  // FileMaker prepared job application apply runtime
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.inputValidate]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.inputValidate,
+    label: 'Validate application source',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.prepareArtifacts]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.prepareArtifacts,
+    label: 'Prepare application artifacts',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.sessionPreflight]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.sessionPreflight,
+    label: 'Check job-board session',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.authenticate]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.authenticate,
+    label: 'Authenticate to job board',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.openOffer]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.openOffer,
+    label: 'Open job offer',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.openApplyForm]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.openApplyForm,
+    label: 'Open application form',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.uploadDocuments]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.uploadDocuments,
+    label: 'Upload application documents',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_STEPS.reviewOrSubmit]: {
+    id: JOB_APPLICATION_APPLY_RUNTIME_STEPS.reviewOrSubmit,
+    label: 'Review or submit application',
   },
 
   // Product scan shared / Amazon runtime flow

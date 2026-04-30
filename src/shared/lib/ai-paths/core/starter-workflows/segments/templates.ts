@@ -147,7 +147,11 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
                 experienceHighlightPatches:
                   '{experienceId:string, experienceTitle:string, highlights:string[]}[]; patch bullets for existing experience entries only',
                 tailoringScope:
-                  '{lockedFieldsPreserved:boolean, allowedSections:string[]}; allowed sections are Professional Summary, Core Strengths, Selected Technical Environment, and Experience Highlights',
+                  '{lockedFieldsPreserved:boolean, allowedSections:string[], canonicalPatchField:string, renderedBodyMode:string}; allowed sections are Professional Summary, Core Strengths, Selected Technical Environment, and Experience Highlights',
+                tailoringPatch:
+                  '{professionalSummary:string, coreStrengths:string[], selectedTechnicalEnvironment:string[], experienceHighlightPatches:{experienceId:string, experienceTitle:string, highlights:string[]}[]}; canonical limited patch object',
+                sourceCvRecordId: 'string; copy from personContext.cvsSummary.preferredSourceCvRecordId',
+                sourceCvTitle: 'string; copy from personContext.cvsSummary.preferredSourceCvTitle',
                 bodyText: 'string',
                 bodyMarkdown: 'string',
                 language: 'string; BCP-47 tag matching the job listing language',
@@ -171,7 +175,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_cv',
-      templateVersion: 18,
+    templateVersion: 24,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

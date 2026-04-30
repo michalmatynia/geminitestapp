@@ -19,6 +19,10 @@ import {
   generateTraderaSelectorRegistryRuntime,
 } from '../selectors/tradera';
 import { getPlaywrightRuntimeActionSeed } from '../playwright-runtime-action-seeds';
+import {
+  JOB_APPLICATION_APPLY_RUNTIME_KEY,
+  JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS,
+} from '../job-application-apply-runtime-constants';
 
 // ── Registry completeness ─────────────────────────────────────────────────────
 
@@ -177,6 +181,18 @@ describe('ACTION_SEQUENCES', () => {
         `missing runtime action seed for ${key}`
       ).not.toBeNull();
     }
+  });
+
+  it('registers the FileMaker job application apply runtime action', () => {
+    const seed = getPlaywrightRuntimeActionSeed(JOB_APPLICATION_APPLY_RUNTIME_KEY);
+
+    expect(ACTION_SEQUENCES[JOB_APPLICATION_APPLY_RUNTIME_KEY]).toEqual(
+      JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS
+    );
+    expect(seed?.name).toBe('Job Application Apply');
+    expect(seed?.blocks.map((block) => block.refId)).toEqual(
+      JOB_APPLICATION_APPLY_RUNTIME_STEP_IDS
+    );
   });
 });
 

@@ -25,9 +25,13 @@ import type { FilemakerJobApplication, FilemakerJobListing, FilemakerOrganizatio
 
 const mocks = vi.hoisted(() => ({
   fireAiPathTriggerEvent: vi.fn(),
+  savePlaywrightActionsIsPending: false,
+  savePlaywrightActionsMutateAsync: vi.fn(),
   settingsGet: vi.fn(),
   triggerButtonsQuery: vi.fn(),
   useActionsContext: vi.fn(),
+  usePlaywrightActions: vi.fn(),
+  useSettingsMap: vi.fn(),
   useStateContext: vi.fn(),
 }));
 
@@ -35,6 +39,18 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: mocks.settingsGet,
   }),
+}));
+
+vi.mock('@/shared/hooks/usePlaywrightStepSequencer', () => ({
+  usePlaywrightActions: (options?: unknown) => mocks.usePlaywrightActions(options),
+  useSavePlaywrightActionsMutation: () => ({
+    isPending: mocks.savePlaywrightActionsIsPending,
+    mutateAsync: mocks.savePlaywrightActionsMutateAsync,
+  }),
+}));
+
+vi.mock('@/shared/hooks/use-settings', () => ({
+  useSettingsMap: (options?: unknown) => mocks.useSettingsMap(options),
 }));
 
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
@@ -133,6 +149,34 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
         </option>
       ))}
     </select>
+  ),
+  ToggleRow: ({
+    children,
+    checked,
+    disabled,
+    label,
+    onCheckedChange,
+  }: {
+    children?: React.ReactNode;
+    checked: boolean;
+    disabled?: boolean;
+    label: string;
+    onCheckedChange: (checked: boolean) => void;
+  }) => (
+    <label>
+      <span>{label}</span>
+      <input
+        aria-label={label}
+        checked={checked}
+        disabled={disabled}
+        role='switch'
+        type='checkbox'
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          onCheckedChange(event.currentTarget.checked)
+        }
+      />
+      {children}
+    </label>
   ),
 }));
 
@@ -369,6 +413,9 @@ function JobListingsHarness(props: {
 describe('OrganizationJobListingsSection', () => {
   beforeEach(() => {
     mocks.fireAiPathTriggerEvent.mockReset();
+    mocks.savePlaywrightActionsIsPending = false;
+    mocks.savePlaywrightActionsMutateAsync.mockReset();
+    mocks.savePlaywrightActionsMutateAsync.mockResolvedValue(undefined);
     mocks.fireAiPathTriggerEvent.mockImplementation(async (args: {
       onFinished?: () => void;
       onSuccess?: (runId: string) => void;
@@ -383,6 +430,10 @@ describe('OrganizationJobListingsSection', () => {
       isLoading: false,
     });
     mocks.useActionsContext.mockReset();
+    mocks.usePlaywrightActions.mockReset();
+    mocks.usePlaywrightActions.mockReturnValue({ data: [] });
+    mocks.useSettingsMap.mockReset();
+    mocks.useSettingsMap.mockReturnValue({ data: undefined, isLoading: false });
     mocks.useStateContext.mockReset();
     jobApplicationsPayload = { applications: [] };
     vi.stubGlobal(
@@ -818,6 +869,13 @@ describe('OrganizationJobListingsSection', () => {
       'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001'
     );
     expect(screen.getByRole('button', { name: 'Apply' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Edit action' })).toHaveAttribute(
+      'href',
+      '/admin/playwright/step-sequencer?actionId=runtime_action__job_application_apply'
+    );
+    expect(screen.getByText('Current: Headless')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('switch', { name: 'Action browser mode' }));
+    expect(screen.getByText('Current: Headed · Unsaved')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Export CV PDF' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Preview CV PDF' })).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Download Text' })).toHaveLength(2);
@@ -831,6 +889,19 @@ describe('OrganizationJobListingsSection', () => {
     expect(screen.getByText('Confirm preferred salary range.')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+    await waitFor(() => {
+      expect(mocks.savePlaywrightActionsMutateAsync).toHaveBeenCalledTimes(1);
+    });
+    const savedActions = (
+      mocks.savePlaywrightActionsMutateAsync.mock.calls[0]?.[0] as {
+        actions: Array<{ executionSettings: { headless: boolean | null }; runtimeKey: string | null }>;
+      }
+    ).actions;
+    expect(
+      savedActions.find((action) => action.runtimeKey === 'job_application_apply')?.executionSettings
+        .headless
+    ).toBe(false);
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(

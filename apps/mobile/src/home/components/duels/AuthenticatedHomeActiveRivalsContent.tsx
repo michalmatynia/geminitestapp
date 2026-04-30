@@ -16,7 +16,7 @@ type Props = {
   areDeferredHomeDuelAdvancedReady: boolean;
   presence: UseKangurMobileHomeDuelsPresenceResult;
   copy: KangurMobileCopy;
-  locale: string;
+  locale: KangurMobileLocale;
   onChallenge: (sessionId: string) => void;
 };
 
@@ -90,7 +90,7 @@ function RivalItem({
 }: {
   entry: KangurDuelLobbyPresenceEntry;
   copy: KangurMobileCopy;
-  locale: string;
+  locale: KangurMobileLocale;
   presence: UseKangurMobileHomeDuelsPresenceResult;
   isCurrentLearner: boolean;
   onChallenge: (sessionId: string) => void;
@@ -103,7 +103,7 @@ function RivalItem({
       isActionPending={presence.isActionPending}
       isCurrentLearner={isCurrentLearner}
       isPending={presence.pendingLearnerId === entry.learnerId}
-      locale={locale as any}
+      locale={locale}
       onChallenge={
         isCurrentLearner
           ? null

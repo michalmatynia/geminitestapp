@@ -23,6 +23,10 @@ import {
   JOB_BOARD_SCRAPE_RUNTIME_KEY,
   JOB_BOARD_SCRAPE_RUNTIME_NAME,
 } from './job-board-runtime-constants';
+import {
+  JOB_APPLICATION_APPLY_RUNTIME_KEY,
+  JOB_APPLICATION_APPLY_RUNTIME_NAME,
+} from './job-application-apply-runtime-constants';
 
 type RuntimeActionSeedDefinition = {
   description: string;
@@ -102,6 +106,11 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     name: JOB_BOARD_SCRAPE_RUNTIME_NAME,
     description:
       'Collects and probes job offers from supported job boards through the shared browser runtime, persona, and humanized execution settings.',
+  },
+  [JOB_APPLICATION_APPLY_RUNTIME_KEY]: {
+    name: JOB_APPLICATION_APPLY_RUNTIME_NAME,
+    description:
+      'Applies to a prepared job application from FileMaker using the selected integration connection, browser session, persona, and headed or headless execution settings.',
   },
   vinted_list: {
     name: 'Vinted List',

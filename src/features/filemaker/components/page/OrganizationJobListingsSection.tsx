@@ -22,6 +22,7 @@ import {
   FormSection,
   MultiSelect,
   SelectSimple,
+  ToggleRow,
 } from '@/shared/ui/forms-and-actions.public';
 import {
   Badge,
@@ -39,6 +40,7 @@ import { DetailModal } from '@/shared/ui/templates.public';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
+import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 
 import { compileCvBlocksToHtml } from '../cv-builder/compile-cv-blocks';
 import {
@@ -50,6 +52,7 @@ import {
   JobApplicationPreparationModal,
   type JobApplicationRunEntry,
 } from './JobApplicationPreparationModal';
+import { useJobApplicationApplyBrowserModeSetting } from './useJobApplicationApplyBrowserModeSetting';
 import { openFilemakerCvPdfPreview } from '../../cv-pdf-preview';
 import { createClientFilemakerId, formatTimestamp } from '../../pages/filemaker-page-utils';
 import {
@@ -1388,6 +1391,7 @@ function ApplicationPackageModal({
   const [isExportingCoverLetterPdf, setIsExportingCoverLetterPdf] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
   const [isPreviewingCvPdf, setIsPreviewingCvPdf] = useState(false);
+  const applyBrowserMode = useJobApplicationApplyBrowserModeSetting(application !== null);
   const cvVersions = application?.artifactVersions.tailoredCv ?? [];
   const coverLetterVersions = application?.artifactVersions.coverLetter ?? [];
   const applicationEmailVersions = application?.artifactVersions.applicationEmail ?? [];
@@ -1544,6 +1548,7 @@ function ApplicationPackageModal({
     visibleApplication.tailoredCvId.trim().length > 0;
   const latestApplyStep = applyRun?.steps[applyRun.steps.length - 1] ?? null;
   const applyButtonLabel = resolveApplicationApplyButtonLabel(applyRun, isApplying);
+  const applyActionHref = resolveStepSequencerActionHref(applyBrowserMode.action?.id);
 
   useEffect(() => {
     toastRef.current = toast;
@@ -1617,6 +1622,7 @@ function ApplicationPackageModal({
     const requestSeq = (applyRunRequestSeqRef.current += 1);
     setIsApplying(true);
     try {
+      await applyBrowserMode.persist();
       const response = await fetch(
         `/api/filemaker/job-applications/${encodeURIComponent(applyApplicationId)}/apply`,
         {
@@ -1872,6 +1878,7 @@ function ApplicationPackageModal({
               disabled={
                 isMutating ||
                 isApplying ||
+                applyBrowserMode.isSaving ||
                 isActiveApplicationApplyRun(applyRun) ||
                 applyApplicationId === null
               }
@@ -1940,6 +1947,45 @@ function ApplicationPackageModal({
               ) : null}
             </div>
           ) : null}
+
+          <div className='space-y-3 rounded-md border border-border/70 bg-black/20 p-3'>
+            <div className='flex flex-wrap items-center justify-between gap-2'>
+              <div>
+                <div className='text-xs font-semibold uppercase tracking-wide text-gray-400'>
+                  Settings
+                </div>
+                <div className='text-sm text-gray-200'>
+                  {applyBrowserMode.action?.name ?? 'Job Application Apply'}
+                </div>
+              </div>
+              <a
+                href={applyActionHref}
+                className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-2.5 text-xs text-gray-100 hover:bg-white/5'
+              >
+                <ExternalLink className='h-3.5 w-3.5' aria-hidden='true' />
+                Edit action
+              </a>
+            </div>
+            <ToggleRow
+              label='Action browser mode'
+              description='Mirrors Job Application Apply action settings.'
+              checked={applyBrowserMode.headless}
+              onCheckedChange={applyBrowserMode.setHeadless}
+              disabled={
+                applyBrowserMode.isLoading ||
+                isApplying ||
+                isActiveApplicationApplyRun(applyRun)
+              }
+              loading={applyBrowserMode.isLoading || applyBrowserMode.isSaving}
+              variant='switch'
+              toggleOnRowClick
+            >
+              <div className='pt-1 text-[11px] font-medium text-foreground'>
+                Current: {applyBrowserMode.headless ? 'Headless' : 'Headed'}
+                {applyBrowserMode.hasUnsavedChanges ? ' · Unsaved' : ''}
+              </div>
+            </ToggleRow>
+          </div>
 
           <div className='grid gap-3 md:grid-cols-3'>
             <PreparedArtifactVersionPicker
@@ -2264,10 +2310,21 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     error: null,
     isLoading: false,
   });
+  const lastSettingsRefreshListingIdRef = useRef<string | null>(null);
   const rawCampaigns = settingsStore.get(FILEMAKER_EMAIL_CAMPAIGNS_KEY);
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawJobApplicationSettings = settingsStore.get(FILEMAKER_JOB_APPLICATION_SETTINGS_KEY);
+  const isJobApplicationSettingsLoading = applicationListingId !== null && settingsStore.isLoading;
   const organizationId = organization?.id ?? '';
+  useEffect(() => {
+    if (applicationListingId === null) {
+      lastSettingsRefreshListingIdRef.current = null;
+      return;
+    }
+    if (lastSettingsRefreshListingIdRef.current === applicationListingId) return;
+    lastSettingsRefreshListingIdRef.current = applicationListingId;
+    settingsStore.refetch();
+  }, [applicationListingId, settingsStore]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -3197,6 +3254,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         filemakerDatabase={filemakerDatabase}
         initialJobListingId={applicationListingId}
         isOpen={applicationListingId !== null}
+        isJobApplicationSettingsLoading={isJobApplicationSettingsLoading}
         jobListings={jobListings}
         jobApplicationSettings={jobApplicationSettings}
         onClose={(): void => setApplicationListingId(null)}

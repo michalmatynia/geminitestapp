@@ -1,302 +1,161 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React from 'react';
 
-import {
-  createMasterFolderTreeTransactionAdapter,
-  FolderTreeViewportV2,
-  useMasterFolderTreeShell,
-} from '@/shared/lib/foldertree/public';
-import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
-import { useReorderValidationPatternsMutation } from '@/features/products/hooks/useProductSettingsQueries';
-import type { SequenceGroupDraft } from '@/shared/contracts/products/validation';
-import { Button } from '@/shared/ui/button';
+import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/public';
 import { FolderTreePanel } from '@/shared/ui/FolderTreePanel';
-import { FormField } from '@/shared/ui/form-section';
-import { Input } from '@/shared/ui/input';
 
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-
-import { PatternNodeItem } from './pattern-tree/PatternNodeItem';
-import { SequenceGroupFolderNodeItem } from './pattern-tree/SequenceGroupFolderNodeItem';
-import { ValidatorPatternSemanticHistoryPanel } from './ValidatorPatternSemanticHistoryPanel';
+import { ValidatorPatternTreeGroupSettingsPanel } from './ValidatorPatternTreeGroupSettingsPanel';
 import {
-  fromPatternMasterNodeId,
-  buildValidatorPatternMasterNodes,
-  fromSeqGroupMasterNodeId,
-  resolveValidatorPatternReorderUpdates,
-} from './validator-pattern-master-tree';
+  useValidatorPatternSemanticHistory,
+  useValidatorPatternTreeContextValue,
+  useValidatorPatternTreeRenderNode,
+  useValidatorPatternTreeSelection,
+  useValidatorPatternTreeShellModel,
+  type ValidatorPatternTreeSelection,
+} from './ValidatorPatternTree.hooks';
+import { ValidatorPatternSemanticHistoryPanel } from './ValidatorPatternSemanticHistoryPanel';
 import { ValidatorPatternTreeContext } from './ValidatorPatternTreeContext';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-// ─── Group Settings Panel ─────────────────────────────────────────────────────
-
-function GroupSettingsPanel(props: {
-  groupId: string;
-  draft: SequenceGroupDraft;
-  setGroupDrafts: React.Dispatch<React.SetStateAction<Record<string, SequenceGroupDraft>>>;
-  onSave: () => void;
-  onDeleteSequence: () => void;
+function ValidatorPatternTreeSelectedGroupPanel({
+  isPending,
+  onSaveSequenceGroup,
+  onUngroup,
+  selection,
+  setGroupDrafts,
+}: {
   isPending: boolean;
-}): React.JSX.Element {
-  const { groupId, draft, setGroupDrafts, onSave, onDeleteSequence, isPending } = props;
+  onSaveSequenceGroup: (groupId: string) => Promise<void>;
+  onUngroup: (groupId: string) => Promise<void>;
+  selection: ValidatorPatternTreeSelection;
+  setGroupDrafts: React.Dispatch<
+    React.SetStateAction<ValidatorPatternTreeSelection['groupDrafts']>
+  >;
+}): React.JSX.Element | null {
+  const { selectedGroup, selectedGroupDraft, selectedGroupId } = selection;
+  if (
+    selectedGroupId === null ||
+    selectedGroup === null ||
+    selectedGroupDraft === null
+  ) {
+    return null;
+  }
 
   return (
-    <div className='mt-2 flex flex-wrap items-end gap-3 rounded-md border border-cyan-500/25 bg-cyan-500/5 px-3 py-2'>
-      <FormField label='Group Label' className='min-w-[160px] flex-1'>
-        <Input
-          className='h-8'
-          value={draft.label}
-          disabled={isPending}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            setGroupDrafts((prev) => ({
-              ...prev,
-              [groupId]: { ...draft, label: event.target.value },
-            }));
-          }}
-          placeholder='Sequence / Group'
-         aria-label='Sequence / Group' title='Sequence / Group'/>
-      </FormField>
-      <FormField label='Debounce (ms)' className='w-28 shrink-0'>
-        <Input
-          type='number'
-          min={0}
-          max={30000}
-          className='h-8'
-          value={draft.debounceMs}
-          disabled={isPending}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            setGroupDrafts((prev) => ({
-              ...prev,
-              [groupId]: { ...draft, debounceMs: event.target.value },
-            }));
-          }}
-         aria-label='Debounce (ms)' title='Debounce (ms)'/>
-      </FormField>
-      <div className='flex shrink-0 items-end gap-2'>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          className='h-8'
-          disabled={isPending}
-          onClick={onSave}
-        >
-          Save Group
-        </Button>
-        <Button
-          type='button'
-          variant='outline'
-          size='sm'
-          className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
-          disabled={isPending}
-          onClick={onDeleteSequence}
-        >
-          Delete Sequence
-        </Button>
-      </div>
-    </div>
+    <ValidatorPatternTreeGroupSettingsPanel
+      groupId={selectedGroupId}
+      draft={selectedGroupDraft}
+      setGroupDrafts={setGroupDrafts}
+      onSave={(): void => {
+        void onSaveSequenceGroup(selectedGroupId);
+      }}
+      onDeleteSequence={(): void => {
+        void onUngroup(selectedGroupId);
+      }}
+      isPending={isPending}
+    />
   );
 }
 
-// ─── ValidatorPatternTree ─────────────────────────────────────────────────────
+const resolveSemanticHistoryFocusProps = (
+  focusedRequest: { patternId: string; auditKey: string; requestId: number } | null,
+  selectedPatternId: string
+): { focusedAuditKey: string | null; focusRequestId: number } => {
+  if (focusedRequest?.patternId !== selectedPatternId) {
+    return { focusedAuditKey: null, focusRequestId: 0 };
+  }
+
+  return {
+    focusedAuditKey: focusedRequest.auditKey,
+    focusRequestId: focusedRequest.requestId,
+  };
+};
+
+function ValidatorPatternTreeSemanticHistory({
+  focusedRequest,
+  dismissedPatternId,
+  onClose,
+  selection,
+}: {
+  focusedRequest: { patternId: string; auditKey: string; requestId: number } | null;
+  dismissedPatternId: string | null;
+  onClose: (patternId: string) => void;
+  selection: ValidatorPatternTreeSelection;
+}): React.JSX.Element | null {
+  const { selectedPattern } = selection;
+  if (selectedPattern === null || dismissedPatternId === selectedPattern.id) {
+    return null;
+  }
+
+  const focusProps = resolveSemanticHistoryFocusProps(focusedRequest, selectedPattern.id);
+
+  return (
+    <ValidatorPatternSemanticHistoryPanel
+      pattern={selectedPattern}
+      focusedAuditKey={focusProps.focusedAuditKey}
+      focusRequestId={focusProps.focusRequestId}
+      onClose={() => {
+        onClose(selectedPattern.id);
+      }}
+    />
+  );
+}
 
 export function ValidatorPatternTree(): React.JSX.Element {
-  const {
-    patterns,
-    orderedPatterns,
-    sequenceGroups,
-    groupDrafts,
-    setGroupDrafts,
-    getGroupDraft,
-    handleEditPattern,
-    handleDuplicatePattern,
-    setPatternToDelete,
-    handleTogglePattern,
-    handleSaveSequenceGroup,
-    handleUngroup,
-    patternActionsPending,
-    reorderPending,
-  } = useValidatorSettingsContext();
-
-  const reorderPatternsMutation = useReorderValidationPatternsMutation();
-  const [focusedSemanticHistoryRequest, setFocusedSemanticHistoryRequest] = React.useState<{
-    patternId: string;
-    auditKey: string;
-    requestId: number;
-  } | null>(null);
-  const [dismissedSemanticHistoryPatternId, setDismissedSemanticHistoryPatternId] =
-    React.useState<string | null>(null);
-
-  // Build master nodes from ordered patterns + sequence groups
-  const masterNodes = useMemo(
-    () => buildValidatorPatternMasterNodes(orderedPatterns, sequenceGroups),
-    [orderedPatterns, sequenceGroups]
-  );
-
-  const reorderPatternsMutationRef = useRef(reorderPatternsMutation);
-  useEffect(() => {
-    reorderPatternsMutationRef.current = reorderPatternsMutation;
-  }, [reorderPatternsMutation]);
-
-  const adapter = useMemo(
-    () =>
-      createMasterFolderTreeTransactionAdapter({
-        onApply: async (tx) => {
-          const updates = resolveValidatorPatternReorderUpdates({
-            previousNodes: tx.previousNodes,
-            nextNodes: tx.nextNodes,
-          });
-
-          if (updates.length === 0) return;
-
-          try {
-            await reorderPatternsMutationRef.current.mutateAsync({ updates });
-          } catch (error: unknown) {
-            logClientCatch(error, {
-              source: 'ValidatorPatternTree',
-              action: 'reorder',
-              operationType: tx.operation.type,
-              updateCount: updates.length,
-            });
-            throw error instanceof Error ? error : new Error('Failed to reorder patterns.');
-          }
-        },
-      }),
-    []
-  );
-
-  const {
-    appearance: { rootDropUi },
-    controller,
-    viewport: { scrollToNodeRef },
-  } = useMasterFolderTreeShell({
-    instance: 'validator_pattern_tree',
-    nodes: masterNodes,
-    initiallyExpandedNodeIds: masterNodes
-      .filter((node) => node.type === 'folder')
-      .map((node) => node.id),
-    adapter,
+  const settings = useValidatorSettingsContext();
+  const treeShell = useValidatorPatternTreeShellModel({
+    orderedPatterns: settings.orderedPatterns,
+    sequenceGroups: settings.sequenceGroups,
   });
-
-  const patternById = useMemo(() => new Map(patterns.map((p) => [p.id, p])), [patterns]);
-
-  const isPending = patternActionsPending || reorderPending || reorderPatternsMutation.isPending;
-
-  const contextValue = useMemo(
-    () => ({
-      controller,
-      patternById,
-      sequenceGroupById: sequenceGroups,
-      groupDrafts,
-      setGroupDrafts,
-      getGroupDraft,
-      onEditPattern: handleEditPattern,
-      onDuplicatePattern: handleDuplicatePattern,
-      onDeletePattern: setPatternToDelete,
-      onTogglePattern: handleTogglePattern,
-      onOpenSemanticHistory: (patternId: string, auditKey: string) => {
-        setDismissedSemanticHistoryPatternId(null);
-        setFocusedSemanticHistoryRequest((prev) => ({
-          patternId,
-          auditKey,
-          requestId:
-            prev?.patternId === patternId && prev.auditKey === auditKey
-              ? prev.requestId + 1
-              : 1,
-        }));
-      },
-      onSaveSequenceGroup: handleSaveSequenceGroup,
-      onUngroup: handleUngroup,
-      isPending,
-    }),
-    [
-      controller,
-      patternById,
-      sequenceGroups,
-      groupDrafts,
-      setGroupDrafts,
-      getGroupDraft,
-      handleEditPattern,
-      handleDuplicatePattern,
-      setPatternToDelete,
-      handleTogglePattern,
-      setFocusedSemanticHistoryRequest,
-      handleSaveSequenceGroup,
-      handleUngroup,
-      isPending,
-    ]
+  const patternById = React.useMemo(
+    () => new Map(settings.patterns.map((pattern) => [pattern.id, pattern])),
+    [settings.patterns]
   );
-
-  const renderNode = useCallback((input: FolderTreeViewportRenderNodeInput): React.ReactNode => {
-    if (input.node.type === 'folder') {
-      return <SequenceGroupFolderNodeItem {...input} />;
-    }
-    return <PatternNodeItem {...input} />;
-  }, []);
-
-  // Show group settings panel below tree when a sequence-group folder is selected
-  const selectedGroupId = controller.selectedNodeId
-    ? fromSeqGroupMasterNodeId(controller.selectedNodeId)
-    : null;
-  const selectedPatternId = controller.selectedNodeId
-    ? fromPatternMasterNodeId(controller.selectedNodeId)
-    : null;
-  const selectedGroup = selectedGroupId ? (sequenceGroups.get(selectedGroupId) ?? null) : null;
-  const selectedGroupDraft = selectedGroupId ? getGroupDraft(selectedGroupId) : null;
-  const selectedPattern = selectedPatternId ? patternById.get(selectedPatternId) ?? null : null;
-  const semanticHistoryVisible =
-    selectedPattern !== null && dismissedSemanticHistoryPatternId !== selectedPattern.id;
-
-  React.useEffect(() => {
-    setDismissedSemanticHistoryPatternId(null);
-  }, [selectedPattern?.id]);
+  const selection = useValidatorPatternTreeSelection({
+    controller: treeShell.controller,
+    getGroupDraft: settings.getGroupDraft,
+    groupDrafts: settings.groupDrafts,
+    patternById,
+    sequenceGroups: settings.sequenceGroups,
+  });
+  const semanticHistory = useValidatorPatternSemanticHistory(selection.selectedPatternId);
+  const isPending =
+    settings.patternActionsPending || settings.reorderPending || treeShell.reorderPending;
+  const contextValue = useValidatorPatternTreeContextValue({
+    controller: treeShell.controller,
+    isPending,
+    onOpenSemanticHistory: semanticHistory.open,
+    patternById,
+    settings,
+  });
+  const renderNode = useValidatorPatternTreeRenderNode();
 
   return (
     <ValidatorPatternTreeContext.Provider value={contextValue}>
       <FolderTreePanel masterInstance='validator_pattern_tree' className='h-auto min-h-0'>
         <FolderTreeViewportV2
-          controller={controller}
-          scrollToNodeRef={scrollToNodeRef}
-          rootDropUi={rootDropUi}
+          controller={treeShell.controller}
+          scrollToNodeRef={treeShell.scrollToNodeRef}
+          rootDropUi={treeShell.rootDropUi}
           renderNode={renderNode}
           enableDnd={!isPending}
           emptyLabel='No patterns — click Add Pattern to create the first one'
         />
       </FolderTreePanel>
-      {selectedGroupId && selectedGroup !== null && selectedGroupDraft && (
-        <GroupSettingsPanel
-          groupId={selectedGroupId}
-          draft={selectedGroupDraft}
-          setGroupDrafts={setGroupDrafts}
-          onSave={(): void => {
-            void handleSaveSequenceGroup(selectedGroupId);
-          }}
-          onDeleteSequence={(): void => {
-            void handleUngroup(selectedGroupId);
-          }}
-          isPending={isPending}
-        />
-      )}
-      {selectedPattern && semanticHistoryVisible ? (
-        <ValidatorPatternSemanticHistoryPanel
-          pattern={selectedPattern}
-          focusedAuditKey={
-            focusedSemanticHistoryRequest?.patternId === selectedPattern.id
-              ? focusedSemanticHistoryRequest.auditKey
-              : null
-          }
-          focusRequestId={
-            focusedSemanticHistoryRequest?.patternId === selectedPattern.id
-              ? focusedSemanticHistoryRequest.requestId
-              : 0
-          }
-          onClose={() => {
-            setDismissedSemanticHistoryPatternId(selectedPattern.id);
-            setFocusedSemanticHistoryRequest(null);
-          }}
-        />
-      ) : null}
+      <ValidatorPatternTreeSelectedGroupPanel
+        isPending={isPending}
+        onSaveSequenceGroup={settings.handleSaveSequenceGroup}
+        onUngroup={settings.handleUngroup}
+        selection={selection}
+        setGroupDrafts={settings.setGroupDrafts}
+      />
+      <ValidatorPatternTreeSemanticHistory
+        focusedRequest={semanticHistory.focusedRequest}
+        dismissedPatternId={semanticHistory.dismissedPatternId}
+        onClose={semanticHistory.close}
+        selection={selection}
+      />
     </ValidatorPatternTreeContext.Provider>
   );
 }

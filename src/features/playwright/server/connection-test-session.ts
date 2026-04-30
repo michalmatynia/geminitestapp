@@ -24,10 +24,41 @@ export type OpenPlaywrightConnectionTestSessionInput = Omit<
   browserSelectionStepName?: string;
 };
 
+const buildRuntimeOptions = (
+  input: OpenPlaywrightConnectionTestSessionInput
+): Partial<OpenPlaywrightConnectionPageSessionInput> => {
+  const options: Partial<OpenPlaywrightConnectionPageSessionInput> = {};
+  if (input.instance !== undefined && input.instance !== null) options.instance = input.instance;
+  if (input.runtime !== undefined) options.runtime = input.runtime;
+  if (input.runtimeActionKey !== undefined) options.runtimeActionKey = input.runtimeActionKey;
+  if (input.browserPreference !== undefined) options.browserPreference = input.browserPreference;
+  if (typeof input.headless === 'boolean') options.headless = input.headless;
+  return options;
+};
+
+const buildLaunchOptions = (
+  input: OpenPlaywrightConnectionTestSessionInput
+): Partial<OpenPlaywrightConnectionPageSessionInput> => {
+  const options: Partial<OpenPlaywrightConnectionPageSessionInput> = {};
+  if (input.launchSettingsOverrides !== undefined) {
+    options.launchSettingsOverrides = input.launchSettingsOverrides;
+  }
+  if (input.viewport !== undefined) options.viewport = input.viewport;
+  return options;
+};
+
+const toOpenPlaywrightConnectionPageSessionInput = (
+  input: OpenPlaywrightConnectionTestSessionInput
+): OpenPlaywrightConnectionPageSessionInput => ({
+  connection: input.connection,
+  ...buildRuntimeOptions(input),
+  ...buildLaunchOptions(input),
+});
+
 export const openPlaywrightConnectionTestSession = async (
   input: OpenPlaywrightConnectionTestSessionInput
 ): Promise<OpenPlaywrightConnectionPageSessionResult> => {
-  if (input.launchStep) {
+  if (input.launchStep !== undefined) {
     input.pushStep(
       input.launchStep.stepName,
       'pending',
@@ -35,28 +66,20 @@ export const openPlaywrightConnectionTestSession = async (
     );
   }
 
-  const session = await openPlaywrightConnectionPageSession({
-    connection: input.connection,
-    ...(input.instance ? { instance: input.instance } : {}),
-    ...(input.runtime ? { runtime: input.runtime } : {}),
-    ...(input.browserPreference ? { browserPreference: input.browserPreference } : {}),
-    ...(typeof input.headless === 'boolean' ? { headless: input.headless } : {}),
-    ...(input.launchSettingsOverrides
-      ? { launchSettingsOverrides: input.launchSettingsOverrides }
-      : {}),
-    ...(input.viewport ? { viewport: input.viewport } : {}),
-  });
+  const session = await openPlaywrightConnectionPageSession(
+    toOpenPlaywrightConnectionPageSessionInput(input)
+  );
 
   pushPlaywrightBrowserSelectionSteps({
     fallbackMessages: session.fallbackMessages,
     launchLabel: session.launchLabel,
     pushStep: input.pushStep,
-    ...(input.browserSelectionStepName
+    ...(input.browserSelectionStepName !== undefined
       ? { stepName: input.browserSelectionStepName }
       : {}),
   });
 
-  if (input.launchStep?.successDetail) {
+  if (input.launchStep?.successDetail !== undefined) {
     input.pushStep(input.launchStep.stepName, 'ok', input.launchStep.successDetail);
   }
 

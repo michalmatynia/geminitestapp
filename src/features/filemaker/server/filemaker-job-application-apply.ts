@@ -15,8 +15,6 @@ import {
   PRACUJ_AUTH_REQUIRED_DETAIL,
   acceptPracujCookies,
   readPracujAuthState,
-  resolvePracujBrowserPreference,
-  resolvePracujHeadless,
   safePracujGoto,
   trySubmitPracujCredentials,
   type PracujCredentials,
@@ -26,6 +24,7 @@ import {
   persistPlaywrightConnectionTestSession,
   resolvePlaywrightConnectionTestRuntime,
 } from '@/features/playwright/server';
+import { JOB_APPLICATION_APPLY_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-application-apply-runtime-constants';
 import { conflictError } from '@/shared/errors/app-error';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integration-storage';
 import type { FilemakerJobListing } from '@/shared/contracts/filemaker';
@@ -574,26 +573,11 @@ const authenticatePracuj = async (
     connection,
     pushStep,
     runtime,
-    headless: resolvePracujHeadless({
-      configuredHeadless: runtime.settings.headless,
-      interactiveManualMode: false,
-      quicklistPreflightMode: false,
-    }),
-    browserPreference: resolvePracujBrowserPreference({
-      configuredBrowser: runtime.settings.browser,
-      interactiveManualMode: false,
-    }),
-    launchSettingsOverrides: {
-      slowMo: runtime.settings.slowMo,
-      proxyEnabled: runtime.settings.proxyEnabled,
-      proxyServer: runtime.settings.proxyServer,
-      proxyUsername: runtime.settings.proxyUsername,
-      proxyPassword: runtime.settings.proxyPassword,
-    },
+    runtimeActionKey: JOB_APPLICATION_APPLY_RUNTIME_KEY,
     viewport: { width: 1366, height: 900 },
     launchStep: {
       stepName: 'Launching Playwright',
-      pendingDetail: `Starting browser (headless=${runtime.settings.headless ? 'on' : 'off'}).`,
+      pendingDetail: 'Starting browser with Job Application Apply action settings.',
       successDetail: 'Browser started.',
     },
   });

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { JOB_APPLICATION_APPLY_RUNTIME_KEY } from '@/shared/lib/browser-execution/job-application-apply-runtime-constants';
 
 const { openPlaywrightConnectionPageSessionMock } = vi.hoisted(() => ({
   openPlaywrightConnectionPageSessionMock: vi.fn(),
@@ -32,6 +33,7 @@ describe('openPlaywrightConnectionTestSession', () => {
     const session = await openPlaywrightConnectionTestSession({
       connection: { id: 'connection-1' } as never,
       runtime: { settings: { headless: true } } as never,
+      runtimeActionKey: JOB_APPLICATION_APPLY_RUNTIME_KEY,
       headless: false,
       pushStep,
       launchStep: {
@@ -44,6 +46,7 @@ describe('openPlaywrightConnectionTestSession', () => {
     expect(openPlaywrightConnectionPageSessionMock).toHaveBeenCalledWith({
       connection: { id: 'connection-1' },
       runtime: { settings: { headless: true } },
+      runtimeActionKey: JOB_APPLICATION_APPLY_RUNTIME_KEY,
       headless: false,
     });
     expect(pushStep).toHaveBeenNthCalledWith(

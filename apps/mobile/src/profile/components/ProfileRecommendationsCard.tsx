@@ -15,7 +15,10 @@ type Recommendation = {
   priority: KangurAssignmentPriority;
   title: string;
   description: string;
-  action: KangurLearnerAction;
+  action: {
+    page: string;
+    label: string;
+  };
 };
 
 type RecommendationItemProps = {
@@ -34,7 +37,7 @@ function RecommendationItem({
   getActionHref,
 }: RecommendationItemProps): React.JSX.Element {
   const canNavigate = canNavigateToRecommendation(recommendation.action.page);
-  const actionHref = getActionHref(recommendation.action);
+  const actionHref = getActionHref(recommendation.action as KangurLearnerAction);
 
   return (
     <InsetPanel gap={8}>
@@ -119,7 +122,7 @@ export function ProfileRecommendationsCard({
           {snapshot.recommendations.map((recommendation) => (
             <RecommendationItem
               key={recommendation.id}
-              recommendation={recommendation as Recommendation}
+              recommendation={recommendation as unknown as Recommendation}
               locale={locale}
               copy={copy}
               canNavigateToRecommendation={canNavigateToRecommendation}
@@ -129,7 +132,7 @@ export function ProfileRecommendationsCard({
         </View>
       )}
 
-      {recommendationsNote != null && recommendationsNote.length > 0 && (
+      {recommendationsNote !== null && recommendationsNote.length > 0 && (
         <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
           {recommendationsNote}
         </Text>

@@ -30,6 +30,7 @@ type JobApplicationPreparationModalProps = {
   initialJobListingId: string | null;
   filemakerDatabase: FilemakerDatabase;
   isOpen: boolean;
+  isJobApplicationSettingsLoading?: boolean;
   jobListings: FilemakerJobListing[];
   jobApplicationSettings: FilemakerJobApplicationSettings;
   onClose: () => void;
@@ -96,6 +97,14 @@ const writeLastSelectedPersonId = (personId: string): void => {
   } catch {
     // Storage is best-effort; explicit dropdown selection still works for the current modal session.
   }
+};
+
+const resolveInitialSelectedPersonId = (
+  jobApplicationSettings: FilemakerJobApplicationSettings
+): string => {
+  const filemakerDefaultPersonId = jobApplicationSettings.defaultPersonId.trim();
+  if (filemakerDefaultPersonId.length > 0) return filemakerDefaultPersonId;
+  return readLastSelectedPersonId();
 };
 
 export type JobApplicationArtifactKind = 'tailored_cv' | 'application_email' | 'cover_letter';
@@ -636,6 +645,39 @@ const resolveDefaultJobApplicationConnection = (
   return null;
 };
 
+const resolvePreferredPersonId = (
+  jobApplicationSettings: FilemakerJobApplicationSettings,
+  defaultConnection: JobApplicationConnection | null,
+  lastSelectedPersonId: string
+): string => {
+  const filemakerDefaultPersonId = jobApplicationSettings.defaultPersonId.trim();
+  if (filemakerDefaultPersonId.length > 0) return filemakerDefaultPersonId;
+
+  const modalSelectedPersonId = lastSelectedPersonId.trim();
+  if (modalSelectedPersonId.length > 0) return modalSelectedPersonId;
+
+  return defaultConnection?.connection.jobApplicationPersonId?.trim() ?? '';
+};
+
+const shouldReplaceCurrentPersonWithFilemakerDefault = (input: {
+  currentPersonId: string;
+  filemakerDefaultPersonId: string;
+  integrationDefaultPersonId: string;
+  lastSelectedPersonId: string;
+}): boolean => {
+  const currentPersonId = input.currentPersonId.trim();
+  const filemakerDefaultPersonId = input.filemakerDefaultPersonId.trim();
+  if (filemakerDefaultPersonId.length === 0 || currentPersonId === filemakerDefaultPersonId) {
+    return false;
+  }
+
+  return (
+    currentPersonId.length === 0 ||
+    currentPersonId === input.integrationDefaultPersonId.trim() ||
+    currentPersonId === input.lastSelectedPersonId.trim()
+  );
+};
+
 const toJobOption = (listing: FilemakerJobListing, index: number): SelectSimpleOption => ({
   value: listing.id,
   label: listing.title.trim().length > 0 ? listing.title : `Job listing ${index + 1}`,
@@ -752,6 +794,7 @@ export function JobApplicationPreparationModal({
   filemakerDatabase,
   initialJobListingId,
   isOpen,
+  isJobApplicationSettingsLoading = false,
   jobListings,
   jobApplicationSettings,
   onClose,
@@ -817,9 +860,16 @@ export function JobApplicationPreparationModal({
     const fallbackListingId = initialJobListingId ?? jobListings[0]?.id ?? '';
     setSelectedJobListingId(fallbackListingId);
     setSelectedOrganizationId(organization.id);
-    setSelectedPersonId(readLastSelectedPersonId());
+    setSelectedPersonId(resolveInitialSelectedPersonId(jobApplicationSettings));
     setError(null);
-  }, [initialJobListingId, isOpen, jobListings, organization.id]);
+  }, [initialJobListingId, isOpen, jobApplicationSettings, jobListings, organization.id]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const filemakerDefaultPersonId = jobApplicationSettings.defaultPersonId.trim();
+    if (filemakerDefaultPersonId.length === 0) return;
+    setSelectedPersonId(filemakerDefaultPersonId);
+  }, [jobApplicationSettings.defaultPersonId, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -854,15 +904,25 @@ export function JobApplicationPreparationModal({
         const filemakerDefaultPersonId = jobApplicationSettings.defaultPersonId.trim();
         const integrationDefaultPersonId =
           connection?.connection.jobApplicationPersonId?.trim() ?? '';
-        const defaultPersonId =
-          lastSelectedPersonId.length > 0
-            ? lastSelectedPersonId
-            : filemakerDefaultPersonId.length > 0
-              ? filemakerDefaultPersonId
-              : integrationDefaultPersonId;
-        setSelectedPersonId((current: string): string =>
-          current.trim().length > 0 ? current : defaultPersonId
+        const defaultPersonId = resolvePreferredPersonId(
+          jobApplicationSettings,
+          connection,
+          lastSelectedPersonId
         );
+        setSelectedPersonId((current: string): string => {
+          if (
+            shouldReplaceCurrentPersonWithFilemakerDefault({
+              currentPersonId: current,
+              filemakerDefaultPersonId,
+              integrationDefaultPersonId,
+              lastSelectedPersonId,
+            })
+          ) {
+            return filemakerDefaultPersonId;
+          }
+
+          return current.trim().length > 0 ? current : defaultPersonId;
+        });
         setContextStatus(results.some((result) => result.status === 'fulfilled') ? 'idle' : 'error');
       })
       .catch((loadError: unknown): void => {
@@ -1160,11 +1220,11 @@ export function JobApplicationPreparationModal({
       }
     >
       <div className='space-y-4'>
-        {selectedPersonId.trim().length === 0 ? (
+        {selectedPersonId.trim().length === 0 && !isJobApplicationSettingsLoading ? (
           <div className='rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs text-amber-200'>
             No Person is selected. Pick a default Person in{' '}
             <a
-              href='/admin/filemaker/settings'
+              href='/admin/settings/filemaker'
               className='underline hover:text-amber-100'
             >
               Filemaker Settings

@@ -8,74 +8,78 @@ import {
   KangurMobilePill as Pill,
 } from '../shared/KangurMobileUi';
 import { type LessonBody } from './lessons-types';
-import { LessonBodyView } from './components/LessonBodyView';
+import { LessonBodyView } from './LessonBodyView';
 
-export function LessonCard({
-  copy,
-  isPreparing,
-  selectedLesson,
-  focusToken,
-  selectedLessonBody,
-  actionError,
-  savedCheckpoint,
-  activeSectionIdx,
-  effectiveFocusToken,
-  saveLessonCheckpoint,
-  setSavedCheckpoint,
-  setDismissedFocusToken,
-  setActiveSectionIdx,
-  router,
-}: any): React.JSX.Element | null {
-  if (isPreparing) {
-    return selectedLesson !== null || focusToken !== null ? (
-      <View>
-        {/* Placeholder components */}
-      </View>
-    ) : null;
-  }
+interface SavedCheckpoint {
+  countsAsLessonCompletion: boolean;
+  newBadges: string[];
+  scorePercent: number;
+}
 
-  if (selectedLesson === null) {
-    if (focusToken !== null) {
-      return (
-        <Card>
-          <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
-            {copy({ de: 'Lektions-Shortcut', en: 'Lesson shortcut', pl: 'Skrót do lekcji' })}
-          </Text>
-          <InsetPanel gap={10}>
-            <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-              {copy({
-                de: `Der Shortcut wollte "${focusToken}" öffnen. Dieser Shortcut öffnet "${focusToken}" nicht mehr.`,
-                en: `The shortcut tried to open "${focusToken}". This shortcut no longer opens "${focusToken}".`,
-                pl: `Skrót próbował otworzyć "${focusToken}". Ten skrót już nie otwiera "${focusToken}".`,
-              })}
-            </Text>
-          </InsetPanel>
-          <View style={{ gap: 10 }}>
-            <LinkButton href="/lessons" label={copy({ de: 'Otwórz pełny katalog', en: 'Open full catalog', pl: 'Otwórz pełny katalog' })} stretch tone="primary" />
-            <ActionButton
-              label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}
-              onPress={() => {
-                setDismissedFocusToken(focusToken);
-                router.replace('/lessons');
-              }}
-              stretch
-              tone="secondary"
-            />
-          </View>
-        </Card>
-      );
-    }
-    return null;
-  }
+interface LessonCardProps {
+  copy: (dict: { de: string; en: string; pl: string }) => string;
+  isPreparing: boolean;
+  selectedLesson: any;
+  focusToken: string | null;
+  selectedLessonBody: LessonBody | null;
+  actionError: string | null;
+  savedCheckpoint: SavedCheckpoint | null;
+  activeSectionIdx: number;
+  effectiveFocusToken: string | null;
+  saveLessonCheckpoint: (checkpoint: any) => SavedCheckpoint;
+  setSavedCheckpoint: (checkpoint: SavedCheckpoint | null) => void;
+  setDismissedFocusToken: (token: string | null) => void;
+  setActiveSectionIdx: (idx: number) => void;
+  router: any;
+}
 
+export function LessonCard(props: LessonCardProps): React.JSX.Element | null {
+  const { isPreparing, selectedLesson, focusToken } = props;
+
+  if (isPreparing) return selectedLesson !== null || focusToken !== null ? <View /> : null;
+  if (selectedLesson === null) return renderShortcutHelp(props);
+
+  return <LessonDetailsCard {...props} />;
+}
+
+function renderShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }: LessonCardProps): React.JSX.Element {
   return (
     <Card>
       <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>
-        {selectedLesson.lesson.emoji} {selectedLesson.lesson.title}
+        {copy({ de: 'Lektions-Shortcut', en: 'Lesson shortcut', pl: 'Skrót do lekcji' })}
       </Text>
-      
-      {actionError && <Text style={{ color: '#b91c1c', fontSize: 14 }}>{actionError}</Text>}
+      <InsetPanel gap={10}>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
+          {copy({
+            de: `Der Shortcut wollte "${focusToken}" öffnen. Dieser Shortcut öffnet "${focusToken}" nicht mehr.`,
+            en: `The shortcut tried to open "${focusToken}". This shortcut no longer opens "${focusToken}".`,
+            pl: `Skrót próbował otworzyć "${focusToken}". Ten skrót już nie otwiera "${focusToken}".`,
+          })}
+        </Text>
+      </InsetPanel>
+      <View style={{ gap: 10 }}>
+        <LinkButton href="/lessons" label={copy({ de: 'Otwórz pełny katalog', en: 'Open full catalog', pl: 'Otwórz pełny katalog' })} stretch tone="primary" />
+        <ActionButton
+          label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}
+          onPress={() => {
+            setDismissedFocusToken(focusToken);
+            router.replace('/lessons');
+          }}
+          stretch
+          tone="secondary"
+        />
+      </View>
+    </Card>
+  );
+}
 
+function LessonDetailsCard(props: LessonCardProps): React.JSX.Element {
+  const { copy, selectedLesson, actionError, savedCheckpoint, selectedLessonBody, activeSectionIdx, effectiveFocusToken, saveLessonCheckpoint, setSavedCheckpoint, setActiveSectionIdx, setDismissedFocusToken, router, focusToken } = props;
+  
+  return (
+    <Card>
+      <Text style={{ color: '#0f172a', fontSize: 24, fontWeight: '800' }}>{selectedLesson.lesson.emoji} {selectedLesson.lesson.title}</Text>
+      {actionError && <Text style={{ color: '#b91c1c', fontSize: 14 }}>{actionError}</Text>}
       {savedCheckpoint && (
         <InsetPanel gap={8} style={{ backgroundColor: '#f0fdfa', borderColor: '#ccfbf1' }}>
           <Text style={{ color: '#0f766e', fontSize: 14, lineHeight: 20 }}>
@@ -136,7 +140,6 @@ export function LessonCard({
               <Text style={{ color: '#64748b', fontSize: 12 }}>{copy({ de: 'Letzte Speicherung', en: 'Last saved', pl: 'Ostatni zapis' })}: {new Date(selectedLesson.checkpointSummary.lastCompletedAt).toLocaleDateString()}</Text>
             )}
           </View>
-          
           <ActionButton
             label={copy({ de: 'Zapisz checkpoint', en: 'Save checkpoint', pl: 'Zapisz checkpoint' })}
             onPress={() => {

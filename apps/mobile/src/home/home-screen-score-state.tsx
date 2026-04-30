@@ -209,28 +209,17 @@ export function DeferredAuthenticatedHomeScoreState({
   );
 }
 
-export function LiveAuthenticatedHomeScoreState({
-  areDeferredHomePanelsReady,
-  areDeferredHomeScoreRefreshReady,
-  children,
-  debugProofOperation,
-}: HomeScoreStateProps & {
-  areDeferredHomeScoreRefreshReady: boolean;
-}): React.JSX.Element {
-  const { copy, locale } = useKangurMobileI18n();
-  const cachedRecentResults = useKangurMobileRecentResults({
-    enabled: false,
-  });
-  const trainingFocus = useKangurMobileTrainingFocus({
-    enabled: areDeferredHomeScoreRefreshReady,
-    recentResultsLimit: 3,
-  });
+function resolveRecentResults(
+  trainingFocus: ReturnType<typeof useKangurMobileTrainingFocus>,
+  cachedRecentResults: ReturnType<typeof useKangurMobileRecentResults>,
+): HomeRecentResultsViewModel {
   const hasResolvedHomeScoreInsights =
     trainingFocus.isEnabled &&
     !trainingFocus.isLoading &&
     !trainingFocus.isRestoringAuth &&
     !trainingFocus.error;
-  const recentResults = {
+
+  return {
     error: trainingFocus.isEnabled ? trainingFocus.error : cachedRecentResults.error,
     isEnabled: trainingFocus.isEnabled,
     isLoading: trainingFocus.isEnabled
@@ -244,6 +233,24 @@ export function LiveAuthenticatedHomeScoreState({
       ? trainingFocus.recentResults
       : cachedRecentResults.results,
   };
+}
+
+export function LiveAuthenticatedHomeScoreState({
+  areDeferredHomePanelsReady,
+  areDeferredHomeScoreRefreshReady,
+  children,
+  debugProofOperation,
+}: HomeScoreStateProps & {
+  areDeferredHomeScoreRefreshReady: boolean;
+}): React.JSX.Element {
+  const { copy, locale } = useKangurMobileI18n();
+  const cachedRecentResults = useKangurMobileRecentResults({ enabled: false });
+  const trainingFocus = useKangurMobileTrainingFocus({
+    enabled: areDeferredHomeScoreRefreshReady,
+    recentResultsLimit: 3,
+  });
+
+  const recentResults = resolveRecentResults(trainingFocus, cachedRecentResults);
   const homeDebugProof = createHomeDebugProofViewModel({
     isEnabled:
       recentResults.isEnabled &&

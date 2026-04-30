@@ -4,29 +4,29 @@
 // and parsing/normalization for product list/detail payloads. Prefer
 // useProductsWithCount for a single request that returns items + total.
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { z } from 'zod';
 
-import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
+import { getProducts, countProducts } from '@/features/products/api/products';
 import { logProductListDebug } from '@/features/products/lib/product-list-observability';
-import { catalogSchema } from '@/shared/contracts/products/catalogs';
 import { type ProductFilter as UseProductsFilters } from '@/shared/contracts/products/filters';
 import {
   type ProductWithImages,
   productSchema,
-  productWithImagesSchema,
 } from '@/shared/contracts/products/product';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   createListQueryV2,
-  createPaginatedListQueryV2,
   createSingleQueryV2,
-  prefetchQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
 import { refetchProductsAndCounts } from './productCache';
+import {
+  getProductsPagedQueryKey,
+  useProductsNextPagePrefetch,
+  useProductsPagedQuery,
+} from './useProductsQuery.paged';
 import { useProductsPagedDebugLogging } from './useProductsPagedDebugLogging';
 
 export type { UseProductsFilters };
@@ -40,105 +40,6 @@ export interface UseProductsOptions {
 // 60s keeps the UI feeling responsive while significantly reducing repeated fetches
 // when users navigate in and out of the products pages.
 const PRODUCTS_STALE_MS = 60_000;
-const productsPagedResultSchema = z.object({
-  products: z.array(productWithImagesSchema),
-  total: z.number().nonnegative(),
-});
-
-const toTrimmedString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const toRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-  return value as Record<string, unknown>;
-};
-
-const toOptionalFiniteNumber = (value: unknown): number | undefined => {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-};
-
-const normalizePagedImageFileRecord = (input: unknown): Record<string, unknown> | undefined => {
-  const record = toRecord(input);
-  if (record === null) return undefined;
-
-  const filepath = toTrimmedString(record['filepath']);
-  const derivedFilename = filepath.split('/').filter(Boolean).pop() ?? 'image';
-  const id =
-    toTrimmedString(record['id']) ||
-    toTrimmedString(record['_id']) ||
-    filepath ||
-    derivedFilename;
-
-  return {
-    ...record,
-    id,
-    filename: toTrimmedString(record['filename']) || derivedFilename,
-    filepath,
-    mimetype: toTrimmedString(record['mimetype']) || 'application/octet-stream',
-    size: toOptionalFiniteNumber(record['size']) ?? 0,
-    createdAt: toTrimmedString(record['createdAt']) || undefined,
-    updatedAt: toTrimmedString(record['updatedAt']) || null,
-  };
-};
-
-const normalizePagedProductCatalogRelation = (input: unknown): Record<string, unknown> => {
-  const record = toRecord(input) ?? {};
-  const catalog = record['catalog'];
-  const parsedCatalog = catalogSchema.safeParse(catalog);
-  if (parsedCatalog.success) {
-    return {
-      ...record,
-      catalog: parsedCatalog.data,
-    };
-  }
-
-  const relation = { ...record };
-  delete relation['catalog'];
-  return relation;
-};
-
-const normalizePagedProductRecord = (input: unknown): Record<string, unknown> => {
-  const record = toRecord(input) ?? {};
-  const images = Array.isArray(record['images'])
-    ? record['images'].map((image: unknown) => {
-        const imageRecord = toRecord(image) ?? {};
-        return {
-          ...imageRecord,
-          imageFile: normalizePagedImageFileRecord(imageRecord['imageFile']),
-        };
-      })
-    : record['images'];
-  const catalogs = Array.isArray(record['catalogs'])
-    ? record['catalogs'].map(normalizePagedProductCatalogRelation)
-    : record['catalogs'];
-
-  return {
-    ...record,
-    images,
-    catalogs,
-  };
-};
-
-const parseProductsPagedResult = (
-  payload: unknown
-): {
-  products: ProductWithImages[];
-  total: number;
-} => {
-  const record = toRecord(payload) ?? {};
-  const productsRaw = record['products'];
-  return productsPagedResultSchema.parse({
-    ...record,
-    products: Array.isArray(productsRaw)
-      ? (productsRaw as unknown[]).map(normalizePagedProductRecord)
-      : [],
-  });
-};
-
-const getProductsPagedQueryKey = (filters: UseProductsFilters) =>
-  [...QUERY_KEYS.products.lists(), 'paged', { filters }] as const;
 
 export function useProducts(
   filters: UseProductsFilters,
@@ -216,102 +117,24 @@ export function useProductsWithCount(
   refetch: () => Promise<void>;
 } {
   const queryClient = useQueryClient();
-  const enabled = options?.enabled ?? true;
-  const shouldPrefetchNextPage = options?.prefetchNextPage ?? true;
+  const enabled = options.enabled ?? true;
+  const shouldPrefetchNextPage = options.prefetchNextPage ?? true;
   const prefetchKeyRef = useRef<string>('');
 
   // Single request replaces the previous two parallel queries (getProducts + countProducts).
   // The query key starts with QUERY_KEYS.products.lists() so refetchProductsAndCounts()
   // invalidates it automatically on mutations.
   const queryKey = useMemo(() => getProductsPagedQueryKey(filters), [filters]);
-  const query = createPaginatedListQueryV2<ProductWithImages>({
-    id: `${JSON.stringify(filters)  }:paged`,
-    queryKey,
-    queryFn: async (context) => {
-      try {
-        const { products, total } = parseProductsPagedResult(
-          await getProductsWithCount(filters, context.signal)
-        );
-        return { items: products, total };
-      } catch (error) {
-        logClientCatch(error, {
-          source: 'products.hooks.useProductsWithCount',
-          action: 'queryFn',
-          filters,
-        });
-        throw error;
-      }
-    },
-    staleTime: PRODUCTS_STALE_MS,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+  const query = useProductsPagedQuery({ enabled, filters, queryKey });
+
+  useProductsNextPagePrefetch({
     enabled,
-    transformError: (error: unknown): Error =>
-      error instanceof Error ? error : new Error('Failed to load products.'),
-    meta: {
-      source: 'products.hooks.useProductsWithCount',
-      operation: 'list',
-      resource: 'products.paged',
-      domain: 'products',
-      queryKey,
-      tags: ['products', 'list', 'count'],
-      description: 'Loads paginated products and total count for the current filters.',
-    },
+    filters,
+    prefetchKeyRef,
+    queryClient,
+    queryData: query.data,
+    shouldPrefetchNextPage,
   });
-
-  useEffect(() => {
-    if (!enabled) return;
-    if (!shouldPrefetchNextPage) return;
-    if (!query.data) return;
-
-    const currentPage = typeof filters.page === 'number' && filters.page > 0 ? filters.page : 1;
-    const currentPageSize =
-      typeof filters.pageSize === 'number' && filters.pageSize > 0 ? filters.pageSize : 20;
-    const totalPages = Math.max(1, Math.ceil(query.data.total / currentPageSize));
-    if (currentPage >= totalPages) return;
-
-    const nextFilters: UseProductsFilters = {
-      ...filters,
-      page: currentPage + 1,
-      pageSize: currentPageSize,
-    };
-    const nextQueryKey = getProductsPagedQueryKey(nextFilters);
-    const prefetchKey = JSON.stringify(nextQueryKey);
-    if (prefetchKeyRef.current === prefetchKey) return;
-    prefetchKeyRef.current = prefetchKey;
-
-    if (queryClient.getQueryData(nextQueryKey) !== undefined) return;
-
-    void prefetchQueryV2(queryClient, {
-      queryKey: nextQueryKey,
-      queryFn: async (context) => {
-        try {
-          const { products, total } = parseProductsPagedResult(
-            await getProductsWithCount(nextFilters, context.signal)
-          );
-          return { items: products, total };
-        } catch (error) {
-          logClientCatch(error, {
-            source: 'products.hooks.useProductsWithCount',
-            action: 'prefetchQueryFn',
-            filters: nextFilters,
-          });
-          throw error;
-        }
-      },
-      staleTime: PRODUCTS_STALE_MS,
-      meta: {
-        source: 'products.hooks.useProductsWithCount.prefetch',
-        operation: 'list',
-        resource: 'products.paged',
-        domain: 'products',
-        queryKey: nextQueryKey,
-        tags: ['products', 'list', 'prefetch'],
-        description: 'Prefetches the next product page and count.',
-      },
-    })();
-  }, [enabled, filters, query.data, queryClient, shouldPrefetchNextPage]);
 
   const debugQueryKey = useProductsPagedDebugLogging({
     enabled,

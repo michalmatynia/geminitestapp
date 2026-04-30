@@ -46,7 +46,7 @@ export const PART_4C = String.raw`
           ...lastObservedState,
           shippingSmootherModalDismissed: true,
         };
-        await page.waitForTimeout(100).catch(() => undefined);
+        await page.waitForTimeout(50).catch(() => undefined);
         activeShippingDialog = (await findVisibleShippingDialog()) || activeShippingDialog;
         continue;
       }

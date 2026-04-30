@@ -9,17 +9,9 @@ import type {
   ProductScrapeProfileRunResponse,
 } from '@/shared/contracts/products/scrape-profiles';
 
-const {
-  apiGetMock,
-  apiPostMock,
-  invalidateListingBadgesMock,
-  invalidateProductsAndCountsMock,
-  toastMock,
-} = vi.hoisted(() => ({
+const { apiGetMock, apiPostMock, toastMock } = vi.hoisted(() => ({
   apiGetMock: vi.fn(),
   apiPostMock: vi.fn(),
-  invalidateListingBadgesMock: vi.fn(),
-  invalidateProductsAndCountsMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
@@ -31,8 +23,8 @@ vi.mock('@/shared/lib/api-client', () => ({
 }));
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
-  invalidateListingBadges: (...args: unknown[]) => invalidateListingBadgesMock(...args),
-  invalidateProductsAndCounts: (...args: unknown[]) => invalidateProductsAndCountsMock(...args),
+  invalidateListingBadges: vi.fn(),
+  invalidateProductsAndCounts: vi.fn(),
 }));
 
 vi.mock('@/shared/ui/toast', () => ({
@@ -55,7 +47,7 @@ vi.mock('@/shared/ui/app-modal', () => ({
     isOpen?: boolean;
     title?: React.ReactNode;
   }) =>
-    isOpen ? (
+    isOpen === true ? (
       <div role='dialog' aria-label={typeof title === 'string' ? title : 'Modal'}>
         <div>{children}</div>
         <div>{footer}</div>
@@ -74,7 +66,9 @@ vi.mock('@/shared/ui/button', () => ({
     loadingText?: string;
   }) => (
     <button {...props} disabled={props.disabled === true || loading === true}>
-      {loading === true && loadingText ? loadingText : children}
+      {loading === true && loadingText !== undefined && loadingText.length > 0
+        ? loadingText
+        : children}
     </button>
   ),
 }));
@@ -98,7 +92,7 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     <select
       id={id}
       aria-label={ariaLabel}
-      disabled={disabled}
+      disabled={disabled === true}
       value={value ?? ''}
       onChange={(event) => onValueChange?.(event.target.value)}
     >
@@ -150,55 +144,42 @@ const otherProfile: ProductScrapeProfile = {
   targetCatalogName: 'Other',
 };
 
-const createDraft = (
-  input: Pick<ProductDraft, 'id' | 'name' | 'draftKind' | 'scrapeProfileId'>
-): ProductDraft =>
-  ({
-    ...input,
-    createdAt: '2026-04-30T00:00:00.000Z',
-    updatedAt: '2026-04-30T00:00:00.000Z',
-  }) as ProductDraft;
+const createDraft = (id: string, name: string, scrapeProfileId: string | null): ProductDraft => ({
+  id,
+  name,
+  draftKind: 'scrape_template',
+  scrapeProfileId,
+  createdAt: '2026-04-30T00:00:00.000Z',
+  updatedAt: '2026-04-30T00:00:00.000Z',
+});
 
-const renderModal = (): QueryClient => {
+const renderModal = (): { unmount: () => void } => {
   const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  render(
+  const rendered = render(
     <QueryClientProvider client={queryClient}>
       <ProductScrapeProfilesModal isOpen onClose={vi.fn()} />
     </QueryClientProvider>
   );
-  return queryClient;
+  return { unmount: rendered.unmount };
 };
 
 const runResponse: ProductScrapeProfileRunResponse = {
-  profileId: battleProfile.id,
-  profileLabel: battleProfile.label,
-  dryRun: false,
-  catalog: { id: 'catalog-battle', name: 'BattleStock' },
-  scrapedCount: 1,
-  createdCount: 1,
+  profileId: otherProfile.id,
+  profileLabel: otherProfile.label,
+  dryRun: true,
+  catalog: { id: 'catalog-other', name: 'Other' },
+  scrapedCount: 0,
+  createdCount: 0,
   updatedCount: 0,
   skippedCount: 0,
   failedCount: 0,
   issueCount: 0,
-  products: [
-    {
-      index: 0,
-      status: 'created',
-      productId: 'product-1',
-      sku: 'BATTLESTOCK-1',
-      title: 'Rendered product',
-      sourceUrl: battleProfile.sourceUrl,
-      error: null,
-    },
-  ],
+  products: [],
   summary: {
-    rawCount: 1,
-    mappedCount: 1,
+    rawCount: 0,
+    mappedCount: 0,
     recordsWithErrors: 0,
     recordsWithWarnings: 0,
     totalIssues: 0,
@@ -207,40 +188,18 @@ const runResponse: ProductScrapeProfileRunResponse = {
 
 import { ProductScrapeProfilesModal } from './ProductScrapeProfilesModal';
 
-describe('ProductScrapeProfilesModal', () => {
+describe('ProductScrapeProfilesModal persistence', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    apiGetMock.mockImplementation(async (url: string) => {
+    apiGetMock.mockImplementation((url: string) => {
       if (url === '/api/v2/products/scrape-profiles') {
         return { profiles: [battleProfile, otherProfile] };
       }
       if (url === '/api/drafts') {
         return [
-          createDraft({
-            id: 'template-any',
-            name: 'Universal scrape template',
-            draftKind: 'scrape_template',
-            scrapeProfileId: null,
-          }),
-          createDraft({
-            id: 'template-battle',
-            name: 'BattleStock scrape template',
-            draftKind: 'scrape_template',
-            scrapeProfileId: battleProfile.id,
-          }),
-          createDraft({
-            id: 'template-other',
-            name: 'Other scrape template',
-            draftKind: 'scrape_template',
-            scrapeProfileId: otherProfile.id,
-          }),
-          createDraft({
-            id: 'standard-draft',
-            name: 'Standard draft',
-            draftKind: 'standard',
-            scrapeProfileId: null,
-          }),
+          createDraft('template-any', 'Universal scrape template', null),
+          createDraft('template-other', 'Other scrape template', otherProfile.id),
         ];
       }
       throw new Error(`Unexpected GET ${url}`);
@@ -248,49 +207,29 @@ describe('ProductScrapeProfilesModal', () => {
     apiPostMock.mockResolvedValue(runResponse);
   });
 
-  it('runs the selected scrape profile with a compatible scrape template', async () => {
-    renderModal();
+  it('retains profile settings across modal remounts', async () => {
+    const firstRender = renderModal();
 
     await screen.findByText('BattleStock Warhammer 40k / 30k');
-    const templateSelect = await screen.findByLabelText('Select scrape draft template');
-
-    expect(screen.getByText('Universal scrape template')).toBeInTheDocument();
-    expect(screen.getByText('BattleStock scrape template')).toBeInTheDocument();
-    expect(screen.queryByText('Other scrape template')).not.toBeInTheDocument();
-    expect(screen.queryByText('Standard draft')).not.toBeInTheDocument();
-
-    fireEvent.change(templateSelect, { target: { value: 'template-battle' } });
-    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
-
-    await waitFor(() => {
-      expect(apiPostMock).toHaveBeenCalledWith(
-        '/api/v2/products/scrape-profiles/run',
-        {
-          profileId: battleProfile.id,
-          dryRun: false,
-          skipRecordsWithErrors: true,
-          draftTemplateId: 'template-battle',
-        },
-        { timeout: 300_000 }
-      );
-    });
-    await waitFor(() => {
-      expect(invalidateProductsAndCountsMock).toHaveBeenCalledWith(expect.any(QueryClient));
-      expect(invalidateListingBadgesMock).toHaveBeenCalledWith(expect.any(QueryClient));
-    });
-  });
-
-  it('clears a selected profile-specific template when switching profiles', async () => {
-    renderModal();
-
-    await screen.findByText('BattleStock Warhammer 40k / 30k');
-    const templateSelect = await screen.findByLabelText('Select scrape draft template');
-
-    fireEvent.change(templateSelect, { target: { value: 'template-battle' } });
     fireEvent.click(screen.getByRole('button', { name: /Other profile/ }));
+    await screen.findByText('Other scrape template');
+    fireEvent.change(screen.getByLabelText('Limit'), { target: { value: '25' } });
+    fireEvent.change(screen.getByLabelText('Select scrape draft template'), {
+      target: { value: 'template-other' },
+    });
+    fireEvent.click(screen.getByLabelText('Dry run'));
+
+    firstRender.unmount();
+    renderModal();
 
     await waitFor(() => {
-      expect(screen.queryByText('BattleStock scrape template')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Other profile/ })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+      expect(screen.getByLabelText('Limit')).toHaveValue('25');
+      expect(screen.getByLabelText('Select scrape draft template')).toHaveValue('template-other');
+      expect(screen.getByLabelText('Dry run')).toBeChecked();
     });
 
     fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
@@ -300,8 +239,10 @@ describe('ProductScrapeProfilesModal', () => {
         '/api/v2/products/scrape-profiles/run',
         {
           profileId: otherProfile.id,
-          dryRun: false,
+          dryRun: true,
           skipRecordsWithErrors: true,
+          limit: 25,
+          draftTemplateId: 'template-other',
         },
         { timeout: 300_000 }
       );

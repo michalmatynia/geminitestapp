@@ -13,9 +13,12 @@ import type {
   ProductScrapeProfilesListResponse,
 } from '@/shared/contracts/products/scrape-profiles';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
+import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { badRequestError, configurationError, notFoundError } from '@/shared/errors/app-error';
+import { getCategoryRepository } from '@/shared/lib/products/services/category-repository';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
+import { resolveLocalizedCategoryName } from '@/shared/lib/products/title-terms';
 
 import {
   processScrapeDrafts,
@@ -118,6 +121,47 @@ const resolveScrapeDraftTemplate = async (
   return template;
 };
 
+const normalizeTemplateCategoryAlias = (value: string | null | undefined): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().replace(/\s+/g, ' ');
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveTemplateCategoryAliases = (
+  category: Pick<ProductCategory, 'name' | 'name_en' | 'name_pl' | 'name_de'>
+): string[] =>
+  Array.from(
+    new Set(
+      [
+        resolveLocalizedCategoryName(category, 'en'),
+        category.name,
+        category.name_en,
+        category.name_pl,
+        category.name_de,
+      ]
+        .map(normalizeTemplateCategoryAlias)
+        .filter((value): value is string => value !== null)
+    )
+  );
+
+const resolveDraftTemplateCategoryAliases = async (
+  template: ProductDraft | null
+): Promise<string[]> => {
+  if (
+    template === null ||
+    typeof template.name_en !== 'string' ||
+    template.name_en.trim().length === 0 ||
+    typeof template.categoryId !== 'string' ||
+    template.categoryId.trim().length === 0
+  ) {
+    return [];
+  }
+
+  const categoryRepository = await getCategoryRepository();
+  const category = await categoryRepository.getCategoryById(template.categoryId.trim());
+  return category === null ? [] : resolveTemplateCategoryAliases(category);
+};
+
 const resolveProductServiceOptions = (
   userId: string | null | undefined
 ): { userId?: string } | undefined => {
@@ -139,6 +183,7 @@ export const runProductScrapeProfile = async (
 
   const catalog = await ensureCatalog(profile.targetCatalogName);
   const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
+  const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
   const source = await getDefaultScripterServer().dryRun({
     scripterId: profile.scripterId,
     enforceRobots: false,
@@ -155,6 +200,7 @@ export const runProductScrapeProfile = async (
     skipRecordsWithErrors: input.skipRecordsWithErrors ?? true,
     productServiceOptions: resolveProductServiceOptions(options.userId),
     draftTemplate,
+    draftTemplateCategoryAliases,
   });
   const outcomeSummary = summarizeOutcomes(outcomes);
 

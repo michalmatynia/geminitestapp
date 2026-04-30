@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   captureException: vi.fn(),
   dryRun: vi.fn(),
   ensureScrapedSourceListing: vi.fn(),
+  getCategoryById: vi.fn(),
   findProductBySupplierLink: vi.fn(),
   getDraft: vi.fn(),
   getProductBySku: vi.fn(),
@@ -41,9 +42,15 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
 }));
 
 vi.mock('@/shared/lib/products/services/catalog-repository', () => ({
-  getCatalogRepository: async () => ({
+  getCatalogRepository: () => Promise.resolve({
     createCatalog: mocks.createCatalog,
     listCatalogs: mocks.listCatalogs,
+  }),
+}));
+
+vi.mock('@/shared/lib/products/services/category-repository', () => ({
+  getCategoryRepository: () => Promise.resolve({
+    getCategoryById: mocks.getCategoryById,
   }),
 }));
 
@@ -140,6 +147,19 @@ describe('product scrape profiles', () => {
     vi.clearAllMocks();
     mocks.registryGet.mockResolvedValue(scripterDefinition);
     mocks.listCatalogs.mockResolvedValue([battleStockCatalog]);
+    mocks.getCategoryById.mockResolvedValue({
+      id: 'category-pendants',
+      name: 'Gaming Pendant',
+      name_en: 'Gaming Pendant',
+      name_pl: null,
+      name_de: null,
+      color: null,
+      parentId: null,
+      catalogId: 'catalog-battlestock',
+      sortIndex: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    });
     mocks.dryRun.mockResolvedValue(makeSource([makeDraft()]));
     mocks.getDraft.mockResolvedValue(null);
     mocks.getProductBySku.mockResolvedValue(null);
@@ -316,6 +336,7 @@ describe('product scrape profiles', () => {
       name: 'BattleStock pendant template',
       draftKind: 'scrape_template',
       scrapeProfileId: 'battlestock-warhammer-40k-30k',
+      name_en: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
       name_pl: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
       supplierName: 'BattleStock',
       supplierLink: '[sourceUrl]',
@@ -387,8 +408,10 @@ describe('product scrape profiles', () => {
     });
 
     expect(mocks.getDraft).toHaveBeenCalledWith('draft-template-1');
+    expect(mocks.getCategoryById).toHaveBeenCalledWith('category-pendants');
     expect(mocks.createProduct).toHaveBeenCalledWith(
       expect.objectContaining({
+        name_en: '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
         name_pl: '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
         supplierLink: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
         priceComment: 'Scraped 60 PLN',

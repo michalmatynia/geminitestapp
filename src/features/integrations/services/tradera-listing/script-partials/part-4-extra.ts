@@ -220,7 +220,7 @@ export const PART_4_EXTRA = String.raw`
         context: 'shipping-dialog-wait',
       }).catch(() => false);
       if (shippingSmootherModalDismissed) {
-        await page.waitForTimeout(100).catch(() => undefined);
+        await page.waitForTimeout(50).catch(() => undefined);
         continue;
       }
 
@@ -394,7 +394,7 @@ export const PART_4_EXTRA = String.raw`
         strategy: strategy.name,
       });
       await strategy.run().catch(() => undefined);
-      await page.waitForTimeout(120).catch(() => undefined);
+      await page.waitForTimeout(50).catch(() => undefined);
 
       const stillVisible = Boolean(await findVisibleShippingSmootherDialog());
       if (!stillVisible) {
@@ -649,7 +649,7 @@ export const PART_4_EXTRA = String.raw`
       return false;
     }
 
-    await page.waitForTimeout(150).catch(() => undefined);
+    await page.waitForTimeout(75).catch(() => undefined);
     const stillVisible = Boolean(await findVisibleShippingSmootherDialog());
     if (!stillVisible) {
       log?.('tradera.quicklist.shipping_smoother_modal.dismissed', {
@@ -687,7 +687,7 @@ export const PART_4_EXTRA = String.raw`
         return true;
       }
 
-      const dialogClosed = await waitForDialogToClose(shippingSmootherDialog, 500);
+      const dialogClosed = await waitForDialogToClose(shippingSmootherDialog, 250);
       if (dialogClosed) {
         log?.('tradera.quicklist.shipping_smoother_modal.dismissed', {
           context,
@@ -720,7 +720,7 @@ export const PART_4_EXTRA = String.raw`
 
     if (closeButton) {
       await humanClick(closeButton, { pauseAfter: false }).catch(() => undefined);
-      const dialogClosed = await waitForDialogToClose(shippingSmootherDialog, 500);
+      const dialogClosed = await waitForDialogToClose(shippingSmootherDialog, 250);
       if (dialogClosed) {
         log?.('tradera.quicklist.shipping_smoother_modal.dismissed', {
           context,
@@ -733,7 +733,7 @@ export const PART_4_EXTRA = String.raw`
     await humanPress('Escape', { pauseBefore: false, pauseAfter: false }).catch(
       () => undefined
     );
-    const dialogClosed = await waitForDialogToClose(shippingSmootherDialog, 350);
+    const dialogClosed = await waitForDialogToClose(shippingSmootherDialog, 200);
     if (dialogClosed) {
       log?.('tradera.quicklist.shipping_smoother_modal.dismissed', {
         context,
@@ -765,7 +765,7 @@ export const PART_4_EXTRA = String.raw`
       if (!visible) {
         return true;
       }
-      await page.waitForTimeout(75).catch(() => undefined);
+      await page.waitForTimeout(50).catch(() => undefined);
     }
 
     return !(await dialog.isVisible().catch(() => false));

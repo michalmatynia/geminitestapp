@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 import { View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
-import { useKangurMobileI18n, type KangurMobileCopy } from '../i18n/kangurMobileI18n';
+import { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 import { useKangurMobileLessonCheckpoints } from '../lessons/useKangurMobileLessonCheckpoints';
 import {
   resolveResultsFilterFamily,
@@ -19,6 +19,33 @@ import { KangurMobileScrollScreen } from '../shared/KangurMobileUi';
 const DUELS_ROUTE = createKangurDuelsHref();
 const PROFILE_ROUTE = '/profile' as Href;
 const LESSONS_ROUTE = '/lessons' as Href;
+
+function ResultsContent({ 
+    results, 
+    resultsAssignments, 
+    resultsBadges, 
+    lessonMastery, 
+    duelResults, 
+    lessonCheckpoints, 
+    filterFamily, 
+    filterOperation, 
+    lessonFocusSummary, 
+    copy, 
+    locale, 
+    openDuelSession 
+}: any) {
+  return (
+    <>
+      <ResultsOverview results={results} copy={copy} />
+      <ResultsAssignmentsSection assignments={resultsAssignments.assignmentItems} copy={copy} />
+      <ResultsBadgesSection badges={resultsBadges} copy={copy} profileHref={PROFILE_ROUTE} />
+      <ResultsLessonMasterySection mastery={lessonMastery} summary={lessonFocusSummary} copy={copy} />
+      <ResultsDuelsSection duelResults={duelResults} duelsHref={DUELS_ROUTE} openDuelSession={openDuelSession} />
+      <ResultsCheckpointsSection checkpoints={lessonCheckpoints.recentCheckpoints} copy={copy} lessonsHref={LESSONS_ROUTE} />
+      <ResultsListSection results={results} copy={copy} locale={locale} family={filterFamily} operation={filterOperation} />
+    </>
+  );
+}
 
 export function KangurResultsScreen(): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
@@ -45,15 +72,15 @@ export function KangurResultsScreen(): React.JSX.Element {
   
   const lessonFocusSummary = weakestLesson
     ? copy({
-        de: `Fokus nach den Ergebnissen: ${  weakestLesson.title  } braucht noch eine schnelle Wiederholung, bevor du wieder Tempo aufbaust.`,
-        en: `Post-results focus: ${  weakestLesson.title  } still needs a quick review before you build momentum again.`,
-        pl: `Fokus po wynikach: ${  weakestLesson.title  } potrzebuje jeszcze szybkiej powtórki, zanim znowu wejdziesz w tempo.`,
+        de: `Fokus nach den Ergebnissen: ${weakestLesson.title} braucht noch eine schnelle Wiederholung, bevor du wieder Tempo aufbaust.`,
+        en: `Post-results focus: ${weakestLesson.title} still needs a quick review before you build momentum again.`,
+        pl: `Fokus po wynikach: ${weakestLesson.title} potrzebuje jeszcze szybkiej powtórki, zanim znowu wejdziesz w tempo.`,
       })
     : strongestLesson
       ? copy({
-          de: `Stabile Stärke: ${  strongestLesson.title  } hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
-          en: `Stable strength: ${  strongestLesson.title  } is holding its level and works well for a short confidence run.`,
-          pl: `Stabilna mocna strona: ${  strongestLesson.title  } trzyma poziom i nadaje się na krótkie, pewne wejście.`,
+          de: `Stabile Stärke: ${strongestLesson.title} hält das Niveau und eignet sich für einen kurzen sicheren Einstieg.`,
+          en: `Stable strength: ${strongestLesson.title} is holding its level and works well for a short confidence run.`,
+          pl: `Stabilna mocna strona: ${strongestLesson.title} trzyma poziom i nadaje się na krótkie, pewne wejście.`,
         })
       : null;
       
@@ -66,41 +93,21 @@ export function KangurResultsScreen(): React.JSX.Element {
         <View style={{ gap: 14 }}>
           <ResultsHeader copy={copy} />
           
-          {results.isLoading || !results.isEnabled ? null : (
-            <>
-              <ResultsOverview results={results} copy={copy} />
-              <ResultsAssignmentsSection
-                assignmentItems={resultsAssignments.assignmentItems}
-                copy={copy}
-              />
-              <ResultsBadgesSection
-                resultsBadges={resultsBadges}
-                copy={copy}
-                profileHref={PROFILE_ROUTE}
-              />
-              <ResultsLessonMasterySection
-                lessonMastery={lessonMastery}
-                lessonFocusSummary={lessonFocusSummary}
-                copy={copy}
-              />
-              <ResultsDuelsSection
-                duelResults={duelResults}
-                duelsHref={DUELS_ROUTE}
+          {(results.isLoading || !results.isEnabled) ? null : (
+            <ResultsContent 
+                results={results} 
+                resultsAssignments={resultsAssignments} 
+                resultsBadges={resultsBadges} 
+                lessonMastery={lessonMastery} 
+                duelResults={duelResults} 
+                lessonCheckpoints={lessonCheckpoints} 
+                filterFamily={filterFamily} 
+                filterOperation={filterOperation} 
+                lessonFocusSummary={lessonFocusSummary} 
+                copy={copy} 
+                locale={locale} 
                 openDuelSession={openDuelSession}
-              />
-              <ResultsCheckpointsSection
-                checkpoints={lessonCheckpoints.recentCheckpoints}
-                copy={copy}
-                lessonsHref={LESSONS_ROUTE}
-              />
-              <ResultsListSection
-                results={results}
-                copy={copy}
-                locale={locale}
-                filterFamily={filterFamily}
-                filterOperation={filterOperation}
-              />
-            </>
+            />
           )}
         </View>
     </KangurMobileScrollScreen>

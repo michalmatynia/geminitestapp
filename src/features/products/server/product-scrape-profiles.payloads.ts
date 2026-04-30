@@ -3,6 +3,10 @@ import 'server-only';
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
 import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import {
+  normalizeStructuredProductName,
+  parseStructuredProductName,
+} from '@/shared/lib/products/title-terms';
 
 import type {
   ProductScrapeCandidate,
@@ -24,6 +28,7 @@ type ProductScrapePayloadInput = {
   profile: ProductScrapeProfileConfig;
   catalogIds: string[];
   template?: ProductDraft | null;
+  templateCategoryAliases?: readonly string[];
 };
 
 const hasTemplateNumber = (value: number | null | undefined): value is number =>
@@ -106,13 +111,14 @@ const buildTemplatePayloadDefaults = (
 
 const buildRenderedNameFields = ({
   candidate,
+  templateCategoryAliases,
   values,
   template,
-}: Pick<ProductScrapePayloadInput, 'candidate' | 'template'> & {
+}: Pick<ProductScrapePayloadInput, 'candidate' | 'template' | 'templateCategoryAliases'> & {
   values: ScrapeTemplateValues;
 }): Pick<ProductCreateInput, 'sku' | 'importSource' | 'name_pl'> &
   Partial<Pick<ProductCreateInput, 'name_en' | 'name_de'>> => {
-  const nameEn = renderScrapeTemplateText(template?.name_en, values);
+  const nameEn = resolveRenderedNameEn(template, values, templateCategoryAliases);
   const nameDe = renderScrapeTemplateText(template?.name_de, values);
 
   return {
@@ -122,6 +128,34 @@ const buildRenderedNameFields = ({
     name_pl: resolveRenderedNamePl(candidate, template, values),
     ...(nameDe !== null ? { name_de: nameDe } : {}),
   };
+};
+
+const resolveRenderedNameEn = (
+  template: ProductDraft | null | undefined,
+  values: ScrapeTemplateValues,
+  templateCategoryAliases: readonly string[] | undefined
+): string | null => {
+  const nameEn = renderScrapeTemplateText(template?.name_en, values);
+  if (nameEn === null) return null;
+  if (!hasTemplateString(template?.categoryId)) return null;
+  if (!hasTemplateCategoryAliases(templateCategoryAliases)) return null;
+
+  const normalizedNameEn = normalizeStructuredProductName(nameEn);
+  const categorySegment = resolveStructuredNameCategorySegment(normalizedNameEn);
+  if (categorySegment === null) return null;
+  return templateCategoryAliases.includes(categorySegment) ? normalizedNameEn : null;
+};
+
+const normalizeStructuredCategorySegment = (value: string): string =>
+  value.trim().replace(/\s+/g, ' ');
+
+const hasTemplateCategoryAliases = (
+  value: readonly string[] | undefined
+): value is readonly string[] => Array.isArray(value) && value.length > 0;
+
+const resolveStructuredNameCategorySegment = (nameEn: string): string | null => {
+  const parsed = parseStructuredProductName(nameEn);
+  return parsed === null ? null : normalizeStructuredCategorySegment(parsed.category);
 };
 
 const resolveRenderedSku = (
@@ -206,11 +240,12 @@ const buildCommonPayloadFields = ({
   profile,
   catalogIds,
   template,
+  templateCategoryAliases,
 }: ProductScrapePayloadInput): ProductCreateInput => {
   const values = buildScrapeTemplateValues(draft, candidate);
 
   return {
-    ...buildRenderedNameFields({ candidate, values, template }),
+    ...buildRenderedNameFields({ candidate, values, template, templateCategoryAliases }),
     ...buildRenderedDescriptionFields(template, values),
     ...buildRenderedSupplierFields({ candidate, profile, template, values }),
     ...buildTemplatePayloadDefaults(template, values),

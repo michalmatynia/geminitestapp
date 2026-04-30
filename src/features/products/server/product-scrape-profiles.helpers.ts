@@ -47,6 +47,7 @@ type ProductScrapeRunContext = {
   productServiceOptions: { userId?: string } | undefined;
   duplicateState?: ProductScrapeDuplicateState;
   draftTemplate?: ProductDraft | null;
+  draftTemplateCategoryAliases?: readonly string[];
 };
 
 const normalizeString = (value: unknown): string | null => {
@@ -179,6 +180,7 @@ const processPersistedCandidate = async (
       profile: context.profile,
       catalogIds,
       template: context.draftTemplate,
+      templateCategoryAliases: context.draftTemplateCategoryAliases,
     });
     const updated = await productService.updateProduct(
       existing.id,
@@ -200,6 +202,7 @@ const processPersistedCandidate = async (
     profile: context.profile,
     catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
     template: context.draftTemplate,
+    templateCategoryAliases: context.draftTemplateCategoryAliases,
   });
   const created = await productService.createProduct(
     payload,
@@ -235,6 +238,7 @@ const processValidScrapeCandidate = async (
       profile: context.profile,
       catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
       template: context.draftTemplate,
+      templateCategoryAliases: context.draftTemplateCategoryAliases,
     });
     return createOutcome(
       toResultProduct(draft, candidate, 'dry_run', {

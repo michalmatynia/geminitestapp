@@ -2,13 +2,18 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
-import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraftInput, type ProductDraftOpenFormTab, type ProductImportSource, type ProductParameterValue } from '@/shared/contracts/products';
+import {
+  PRODUCT_DRAFT_KIND_OPTIONS,
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+} from '@/shared/contracts/products/drafts';
+import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraftInput, type ProductDraftKind, type ProductDraftOpenFormTab, type ProductImportSource, type ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type MongoDraftDoc = {
   _id: string;
   name?: string;
+  draftKind?: ProductDraftKind | null;
+  scrapeProfileId?: string | null;
   description?: string | null;
   sku?: string | null;
   ean?: string | null;
@@ -74,6 +79,20 @@ const normalizeIconColor = (value: unknown): string | null => {
 };
 
 const openProductFormTabOptions = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
+const draftKindOptions = new Set<string>(PRODUCT_DRAFT_KIND_OPTIONS);
+
+const normalizeDraftKind = (value: unknown): ProductDraftKind => {
+  if (typeof value !== 'string') return 'standard';
+  const trimmed = value.trim();
+  if (draftKindOptions.has(trimmed) === false) return 'standard';
+  return trimmed as ProductDraftKind;
+};
+
+const normalizeNullableString = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 const normalizeOpenProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   if (typeof value !== 'string') return 'general';
@@ -86,6 +105,8 @@ const mapMongoDocToDraft = (doc: MongoDraftDoc): ProductDraft => {
   return {
     id: String(doc._id),
     name: doc.name ?? '',
+    draftKind: normalizeDraftKind(doc.draftKind),
+    scrapeProfileId: normalizeNullableString(doc.scrapeProfileId),
     description: doc.description ?? null,
     sku: doc.sku ?? null,
     ean: doc.ean ?? null,
@@ -149,6 +170,8 @@ const getDraftMongo = async (id: string): Promise<ProductDraft | null> => {
 const buildCreateDraftDoc = (input: CreateProductDraftInput, id: string, now: Date): MongoDraftDoc => ({
   _id: id,
   ...input,
+  draftKind: normalizeDraftKind(input.draftKind),
+  scrapeProfileId: normalizeNullableString(input.scrapeProfileId),
   description: input.description ?? null,
   sku: input.sku ?? null,
   ean: input.ean ?? null,
@@ -220,6 +243,14 @@ const updateDraftMongo = async (
     updatePayload['categoryId'] = (typeof input.categoryId === 'string' && input.categoryId.trim() !== '')
       ? input.categoryId.trim()
       : null;
+  }
+
+  if ('draftKind' in input) {
+    updatePayload['draftKind'] = normalizeDraftKind(input.draftKind);
+  }
+
+  if ('scrapeProfileId' in input) {
+    updatePayload['scrapeProfileId'] = normalizeNullableString(input.scrapeProfileId);
   }
 
   if ('producerIds' in input) {

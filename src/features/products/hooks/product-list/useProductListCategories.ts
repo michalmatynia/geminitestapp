@@ -7,8 +7,8 @@
 'use no memo';
 
 // useProductListCategories: derives an embedded category-name map from the
-// current page of products and falls back to a batched category lookup for any
-// missing catalog-scoped categories. Keeps client-side lookups cheap and avoids
+// current page of products and falls back to the shared Mentios category tree
+// for any missing category labels. Keeps client-side lookups cheap and avoids
 // per-row category API calls.
 import { useMemo } from 'react';
 
@@ -16,12 +16,12 @@ import {
   buildCategoryNameById,
   resolveCategoryLabelByLocale,
   resolveCategoryRecordId,
-  resolveProductCatalogId,
   resolveProductCategoryId,
 } from '@/features/products/hooks/product-list-state-utils';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { api } from '@/shared/lib/api-client';
+import { DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID } from '@/shared/lib/products/default-category-tree';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -38,6 +38,7 @@ type UseProductListCategoriesArgs = {
   data: ProductWithImages[];
   nameLocale?: string;
   enabled?: boolean;
+  defaultCategoryCatalogId?: string | null;
 };
 
 type UseProductListCategoriesResult = {
@@ -71,18 +72,18 @@ const buildEmbeddedCategoryNameById = (
 
 const resolveCategoryLookupCatalogIds = (
   data: ProductWithImages[],
-  embeddedCategoryNameById: Map<string, string>
+  embeddedCategoryNameById: Map<string, string>,
+  defaultCategoryCatalogId: string | null | undefined
 ): string[] => {
-  const ids = new Set<string>();
-  data.forEach((product: ProductWithImages) => {
-    const categoryId = resolveProductCategoryId(product);
-    if (categoryId === '' || embeddedCategoryNameById.has(categoryId)) return;
+  const normalizedDefaultCatalogId =
+    typeof defaultCategoryCatalogId === 'string' ? defaultCategoryCatalogId.trim() : '';
+  if (normalizedDefaultCatalogId.length === 0) return [];
 
-    const catalogId = resolveProductCatalogId(product);
-    if (catalogId === '') return;
-    ids.add(catalogId);
+  const hasMissingCategoryLabel = data.some((product: ProductWithImages) => {
+    const categoryId = resolveProductCategoryId(product);
+    return categoryId !== '' && !embeddedCategoryNameById.has(categoryId);
   });
-  return Array.from(ids).sort();
+  return hasMissingCategoryLabel ? [normalizedDefaultCatalogId] : [];
 };
 
 const fetchProductCategoryBatch = (
@@ -116,6 +117,7 @@ export function useProductListCategories({
   data,
   nameLocale,
   enabled = true,
+  defaultCategoryCatalogId = DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID,
 }: UseProductListCategoriesArgs): UseProductListCategoriesResult {
   const locale = (nameLocale ?? 'name_en') as ProductCategoryLocale;
 
@@ -125,8 +127,9 @@ export function useProductListCategories({
   );
 
   const categoryLookupCatalogIds = useMemo(
-    (): string[] => resolveCategoryLookupCatalogIds(data, embeddedCategoryNameById),
-    [data, embeddedCategoryNameById]
+    (): string[] =>
+      resolveCategoryLookupCatalogIds(data, embeddedCategoryNameById, defaultCategoryCatalogId),
+    [data, embeddedCategoryNameById, defaultCategoryCatalogId]
   );
 
   const batchCategoryQueryKey = useMemo(

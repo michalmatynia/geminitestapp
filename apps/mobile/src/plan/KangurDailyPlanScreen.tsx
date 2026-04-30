@@ -9,9 +9,6 @@ import {
   KangurMobileLinkButton as LinkButton,
   KangurMobileScrollScreen,
 } from '../shared/KangurMobileUi';
-import {
-  DUELS_ROUTE,
-} from './daily-plan-primitives';
 import { useKangurMobileDailyPlanAssignments } from './useKangurMobileDailyPlanAssignments';
 import {
   useKangurMobileDailyPlanBadges,
@@ -99,9 +96,9 @@ export function KangurDailyPlanScreen(): React.JSX.Element {
             isAuthenticated={isAuthenticated}
             isLoadingAuth={isLoadingAuth}
             lessonsCount={lessonMastery.trackedLessons}
-            refresh={() => refresh()}
+            refresh={() => { void refresh(); }}
             resultsCount={recentResultItems.length}
-            signIn={() => signIn()}
+            signIn={() => { void signIn(); }}
             supportsLearnerCredentials={supportsLearnerCredentials}
           />
 

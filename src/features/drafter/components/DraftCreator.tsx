@@ -9,6 +9,10 @@ import {
   ProductImagesTabContent,
   ProductImagesTabProvider,
 } from '@/features/products/forms.public';
+import {
+  ProductFormImageContext,
+  type ProductFormImageContextType,
+} from '@/features/products/context/ProductFormImageContext';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { CreateProductDraftInput } from '@/shared/contracts/products/drafts';
 import { IconSelector } from '@/shared/lib/icons';
@@ -18,7 +22,10 @@ import { LoadingState } from '@/shared/ui/navigation-and-layout.public';
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
-import { DraftCreatorFormProvider } from './DraftCreatorFormContext';
+import {
+  DraftCreatorFormProvider,
+  type DraftCreatorFormContextValue,
+} from './DraftCreatorFormContext';
 import { DraftCreatorDetailsTab, DraftCreatorParametersTab } from './DraftCreatorFormFields';
 import { useOptionalDrafterActions, useOptionalDrafterState } from '../context/DrafterContext';
 import { useDraftCreatorForm } from '../hooks/useDraftCreatorForm';
@@ -103,7 +110,14 @@ export function DraftCreator({
   }, [draftId, images]);
 
   const handleSave = async (): Promise<void> => {
-    const formData = { name: state.name, iconColorMode: state.iconColorMode, iconColor: state.iconColor, openProductFormTab: state.openProductFormTab };
+    const formData = {
+      name: state.name,
+      draftKind: state.draftKind,
+      scrapeProfileId: state.scrapeProfileId,
+      iconColorMode: state.iconColorMode,
+      iconColor: state.iconColor,
+      openProductFormTab: state.openProductFormTab,
+    };
     const validation = validateFormData(draftSubmitSchema, formData, 'Draft form is invalid.');
     if (validation.success === false) {
       toast(validation.firstError, { variant: 'error' });
@@ -114,6 +128,11 @@ export function DraftCreator({
       const imgLinks = await serializeDraftImageLinks();
       const input: CreateProductDraftInput = {
         name: state.name.trim(),
+        draftKind: state.draftKind,
+        scrapeProfileId:
+          state.draftKind === 'scrape_template' && state.scrapeProfileId !== null
+            ? state.scrapeProfileId
+            : null,
         description: state.description.trim() !== '' ? state.description.trim() : null,
         sku: state.sku.trim() !== '' ? state.sku.trim() : null,
         ean: state.ean.trim() !== '' ? state.ean.trim() : null,
@@ -139,8 +158,16 @@ export function DraftCreator({
         tagIds: state.selectedTagIds,
         producerIds: state.selectedProducerIds,
         parameters: state.parameterValues
-          .map((e: ProductParameterValue) => ({ parameterId: e.parameterId?.trim(), value: typeof e.value === 'string' ? e.value.trim() : '' }))
-          .filter((e): e is { parameterId: string; value: string } => e.parameterId !== undefined && e.parameterId !== ''),
+          .map((e: ProductParameterValue): ProductParameterValue => ({
+            parameterId: e.parameterId?.trim(),
+            value: typeof e.value === 'string' ? e.value.trim() : '',
+            ...(e.valuesByLanguage !== undefined ? { valuesByLanguage: e.valuesByLanguage } : {}),
+            ...(e.skipParameterInference === true ? { skipParameterInference: true } : {}),
+          }))
+          .filter(
+            (e): e is ProductParameterValue & { parameterId: string } =>
+              e.parameterId !== undefined && e.parameterId !== ''
+          ),
         active: state.active,
         validatorEnabled: state.validatorEnabled,
         formatterEnabled: state.validatorEnabled ? state.formatterEnabled : false,
@@ -174,6 +201,7 @@ export function DraftCreator({
       setImageLinkAt: images.setImageLinkAt,
       setImageBase64At: images.setImageBase64At,
       handleSlotImageChange: images.handleSlotImageChange,
+      handleSlotFileSelect: images.handleSlotFileSelect,
       handleSlotDisconnectImage: images.handleSlotDisconnectImage,
       setShowFileManager: images.setShowFileManager,
       swapImageSlots: images.swapImageSlots,
@@ -183,17 +211,45 @@ export function DraftCreator({
     [images]
   );
 
+  const productFormImageContextValue = useMemo<ProductFormImageContextType>(
+    () => ({
+      imageSlots: images.imageSlots,
+      imageLinks: images.imageLinks,
+      imageBase64s: images.imageBase64s,
+      productId: null,
+      uploading: false,
+      uploadError: null,
+      uploadSuccess: false,
+      showFileManager: images.showFileManager,
+      setShowFileManager: images.setShowFileManager,
+      handleSlotImageChange: images.handleSlotImageChange,
+      handleSlotFileSelect: images.handleSlotFileSelect,
+      handleSlotDisconnectImage: images.handleSlotDisconnectImage,
+      handleMultiImageChange: images.handleMultiImageChange,
+      handleMultiFileSelect: images.handleMultiFileSelect,
+      swapImageSlots: images.swapImageSlots,
+      setImageLinkAt: images.setImageLinkAt,
+      setImageBase64At: images.setImageBase64At,
+      setImagesReordering: images.setImagesReordering,
+      refreshImagesFromProduct: images.refreshFromProduct,
+    }),
+    [images]
+  );
+
   const resolvedIconColor = normalizeIconColor(state.iconColor) ?? DEFAULT_ICON_COLOR;
 
-  const contextValue = useMemo(() => ({
-    ...state,
-    ...queries,
-    ...metadata,
-    ...images,
-    resolvedIconColor,
-    openIconLibrary: () => state.setIsIconLibraryOpen(true),
-    imageManagerController,
-  }), [state, queries, metadata, images, resolvedIconColor, imageManagerController]);
+  const contextValue = useMemo<DraftCreatorFormContextValue>(
+    () => ({
+      ...state,
+      ...queries,
+      ...metadata,
+      ...images,
+      resolvedIconColor,
+      openIconLibrary: () => state.setIsIconLibraryOpen(true),
+      imageManagerController,
+    }),
+    [state, queries, metadata, images, resolvedIconColor, imageManagerController]
+  );
 
   if (queries.draftQuery.isLoading) {
     return (
@@ -205,7 +261,7 @@ export function DraftCreator({
 
   return (
     <>
-      <DraftCreatorFormProvider value={contextValue as any}>
+      <DraftCreatorFormProvider value={contextValue}>
         <form
           ref={formRef}
           onSubmit={(e: React.FormEvent): void => {
@@ -225,17 +281,19 @@ export function DraftCreator({
                 <DraftCreatorDetailsTab />
               </TabsContent>
               <TabsContent value='images' className='mt-0 space-y-4'>
-                <ProductImagesTabProvider
-                  value={{
-                    showFileManager: images.showFileManager,
-                    onShowFileManager: images.setShowFileManager,
-                    onSelectFiles: images.handleMultiFileSelect,
-                    inlineFileManager: true,
-                    imageManagerController,
-                  }}
-                >
-                  <ProductImagesTabContent />
-                </ProductImagesTabProvider>
+                <ProductFormImageContext.Provider value={productFormImageContextValue}>
+                  <ProductImagesTabProvider
+                    value={{
+                      showFileManager: images.showFileManager,
+                      onShowFileManager: images.setShowFileManager,
+                      onSelectFiles: images.handleMultiFileSelect,
+                      inlineFileManager: true,
+                      imageManagerController,
+                    }}
+                  >
+                    <ProductImagesTabContent />
+                  </ProductImagesTabProvider>
+                </ProductFormImageContext.Provider>
               </TabsContent>
               <TabsContent value='parameters' className='mt-0 space-y-4'>
                 <DraftCreatorParametersTab />

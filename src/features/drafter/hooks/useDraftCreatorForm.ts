@@ -1,14 +1,19 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+/* eslint-disable max-lines-per-function, complexity, @typescript-eslint/explicit-function-return-type */
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   useDraft,
   useCreateDraftMutation,
   useUpdateDraftMutation,
 } from '@/features/drafter/hooks/useDraftQueries';
 import { useProductImages, useCatalogs, useProducers } from '@/features/products/forms.public';
-import type { ProductDraft, ProductDraftOpenFormTab, ProductParameterValue } from '@/shared/contracts/products';
+import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
+import { mergeParameterDefinitions } from '@/features/products/context/ProductFormParameterDefinitions';
+import type { ProductDraft, ProductDraftKind, ProductDraftOpenFormTab, ProductParameterValue } from '@/shared/contracts/products';
 import { useDraftMetadata } from './useDraftMetadata';
+import { resolveDraftLinkedTitleTermParameterValues } from './draft-linked-title-term-parameters';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
 
@@ -27,6 +32,8 @@ export const useDraftCreatorForm = (
 
   // Form fields
   const [name, setName] = useState<string>('');
+  const [draftKind, setDraftKind] = useState<ProductDraftKind>('standard');
+  const [scrapeProfileId, setScrapeProfileId] = useState<string | null>(null);
   const [description, setDescription] = useState<string>('');
   const [sku, setSku] = useState<string>('');
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>('ean');
@@ -65,6 +72,27 @@ export const useDraftCreatorForm = (
   const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>([]);
 
   const metadata = useDraftMetadata(selectedCatalogIds);
+  const primaryCatalogId = selectedCatalogIds[0] ?? '';
+  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
+  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
+  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
+  const parameterDefinitions = useMemo(
+    () =>
+      mergeParameterDefinitions({
+        parameters: metadata.parameters,
+        simpleParameters: metadata.simpleParameters,
+        parameterValues,
+        fallbackCatalogId: primaryCatalogId,
+      }),
+    [metadata.parameters, metadata.simpleParameters, parameterValues, primaryCatalogId]
+  );
+  const draftMetadata = useMemo(
+    () => ({
+      ...metadata,
+      parameters: parameterDefinitions,
+    }),
+    [metadata, parameterDefinitions]
+  );
 
   const active = propActive ?? activeState;
 
@@ -73,14 +101,17 @@ export const useDraftCreatorForm = (
     imageLinks,
     imageBase64s,
     handleSlotImageChange,
+    handleSlotFileSelect,
     setImageLinkAt,
     setImageBase64At,
     showFileManager,
     setShowFileManager,
     handleSlotDisconnectImage,
+    handleMultiImageChange,
     handleMultiFileSelect,
     swapImageSlots,
     setImagesReordering,
+    refreshFromProduct,
   } = useProductImages(undefined, []);
 
   const setActive = useCallback((value: boolean): void => {
@@ -115,6 +146,8 @@ export const useDraftCreatorForm = (
 
   const syncFormWithDraft = useCallback((draft: ProductDraft): void => {
     setName(draft.name);
+    setDraftKind(draft.draftKind ?? 'standard');
+    setScrapeProfileId(draft.scrapeProfileId ?? null);
     setDescription(draft.description ?? '');
     setSku(draft.sku ?? '');
     setEan(draft.ean ?? '');
@@ -141,7 +174,7 @@ export const useDraftCreatorForm = (
     setBaseProductId(draft.baseProductId ?? '');
     setActive(draft.active ?? true);
     setValidatorEnabled(draft.validatorEnabled ?? true);
-    setFormatterEnabled(draft.validatorEnabled ? (draft.formatterEnabled ?? false) : false);
+    setFormatterEnabled((draft.validatorEnabled ?? true) ? (draft.formatterEnabled ?? false) : false);
     setIcon(draft.icon ?? null);
     setIconColorMode(draft.iconColorMode === 'custom' ? 'custom' : 'theme');
     setIconColor(draft.iconColor ?? DEFAULT_ICON_COLOR);
@@ -156,6 +189,8 @@ export const useDraftCreatorForm = (
 
   const resetForm = useCallback((): void => {
     setName('');
+    setDraftKind('standard');
+    setScrapeProfileId(null);
     setDescription('');
     setSku('');
     setEan('');
@@ -192,6 +227,35 @@ export const useDraftCreatorForm = (
     setParameterValues([]);
   }, [setActive, applyDraftImageState]);
 
+  const addParameterValue = useCallback((): void => {
+    setParameterValues((current): ProductParameterValue[] => [
+      ...current,
+      { parameterId: '', value: '' },
+    ]);
+  }, []);
+
+  const updateParameterId = useCallback((index: number, parameterId: string): void => {
+    setParameterValues((current): ProductParameterValue[] =>
+      current.map((entry, entryIndex): ProductParameterValue =>
+        entryIndex === index ? { ...entry, parameterId } : entry
+      )
+    );
+  }, []);
+
+  const updateParameterValue = useCallback((index: number, value: string): void => {
+    setParameterValues((current): ProductParameterValue[] =>
+      current.map((entry, entryIndex): ProductParameterValue =>
+        entryIndex === index ? { ...entry, value } : entry
+      )
+    );
+  }, []);
+
+  const removeParameterValue = useCallback((index: number): void => {
+    setParameterValues((current): ProductParameterValue[] =>
+      current.filter((_entry, entryIndex): boolean => entryIndex !== index)
+    );
+  }, []);
+
   useEffect(() => {
     if (draftQuery.data) {
       syncFormWithDraft(draftQuery.data);
@@ -200,9 +264,30 @@ export const useDraftCreatorForm = (
     }
   }, [syncFormWithDraft, resetForm, draftQuery.data, draftId]);
 
+  useEffect(() => {
+    setParameterValues((current): ProductParameterValue[] => {
+      const next = resolveDraftLinkedTitleTermParameterValues({
+        existingParameterValues: current,
+        materialTerms: materialTermsQuery.data ?? [],
+        nameEn,
+        parameters: parameterDefinitions,
+        sizeTerms: sizeTermsQuery.data ?? [],
+        themeTerms: themeTermsQuery.data ?? [],
+      });
+      return JSON.stringify(next) === JSON.stringify(current) ? current : next;
+    });
+  }, [
+    materialTermsQuery.data,
+    nameEn,
+    parameterDefinitions,
+    sizeTermsQuery.data,
+    themeTermsQuery.data,
+  ]);
+
   return {
     state: {
       name, setName, description, setDescription, sku, setSku, identifierType, setIdentifierType,
+      draftKind, setDraftKind, scrapeProfileId, setScrapeProfileId,
       ean, setEan, gtin, setGtin, asin, setAsin, nameEn, setNameEn, namePl, setNamePl, nameDe, setNameDe,
       descEn, setDescEn, descPl, setDescPl, descDe, setDescDe, weight, setWeight, sizeLength, setSizeLength,
       sizeWidth, setSizeWidth, length, setLength, price, setPrice, supplierName, setSupplierName,
@@ -212,13 +297,15 @@ export const useDraftCreatorForm = (
       openProductFormTab, setOpenProductFormTab, isIconLibraryOpen, setIsIconLibraryOpen,
       selectedCatalogIds, setSelectedCatalogIds, selectedCategoryId, setSelectedCategoryId,
       selectedTagIds, setSelectedTagIds, selectedProducerIds, setSelectedProducerIds, parameterValues, setParameterValues,
+      addParameterValue, updateParameterId, updateParameterValue, removeParameterValue,
     },
     queries: { catalogs, producers, producersLoading, draftQuery, createDraftMutation, updateDraftMutation },
-    metadata,
+    metadata: draftMetadata,
     images: {
       imageSlots, imageLinks, imageBase64s, setImageLinkAt, setImageBase64At, handleSlotImageChange,
-      handleSlotDisconnectImage, showFileManager, setShowFileManager, handleMultiFileSelect,
-      swapImageSlots, setImagesReordering,
+      handleSlotFileSelect, handleSlotDisconnectImage, handleMultiImageChange, showFileManager,
+      setShowFileManager, handleMultiFileSelect, swapImageSlots, setImagesReordering,
+      refreshFromProduct,
     },
     actions: { handleSave: async () => {}, handleSaveSuccess }
   };

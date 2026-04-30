@@ -28,6 +28,7 @@ export const productScrapeProfileRunRequestSchema = z
     limit: z.number().int().positive().max(5000).optional(),
     dryRun: z.boolean().optional(),
     skipRecordsWithErrors: z.boolean().optional(),
+    draftTemplateId: z.string().trim().min(1).optional(),
   })
   .strict();
 

@@ -39,6 +39,10 @@ import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { ListQuery } from '@/shared/contracts/ui/queries';
 import { useDraftQueries } from '@/shared/hooks/useDraftQueries';
 import {
+  DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID,
+  resolveDefaultProductCategoryTreeCatalogId,
+} from '@/shared/lib/products/default-category-tree';
+import {
   type BackgroundSyncEvent,
   useProductListSync,
 } from '@/shared/hooks/sync/useBackgroundSync';
@@ -151,10 +155,17 @@ export function useProductListState(): ProductListContextType & {
     preferences.showTriggerRunFeedback ?? true
   );
 
-  const { catalogs, currencyCode, setCurrencyCode, currencyOptions, priceGroups, languageOptions } =
-    useCatalogSync(preferences.catalogFilter || 'all', {
-      enabled: rowRuntimeReady,
-    });
+  const {
+    catalogs,
+    catalogsLoading,
+    currencyCode,
+    setCurrencyCode,
+    currencyOptions,
+    priceGroups,
+    languageOptions,
+  } = useCatalogSync(preferences.catalogFilter || 'all', {
+    enabled: rowRuntimeReady,
+  });
 
   const {
     data,
@@ -228,6 +239,9 @@ export function useProductListState(): ProductListContextType & {
     data: visibleData,
     nameLocale: preferences.nameLocale,
     enabled: rowRuntimeReady,
+    defaultCategoryCatalogId:
+      resolveDefaultProductCategoryTreeCatalogId(catalogs) ??
+      (catalogsLoading ? null : DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID),
   });
 
   const shouldEnableListBackgroundSync = shouldEnableProductListBackgroundSyncRuntime({

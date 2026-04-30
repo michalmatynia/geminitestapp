@@ -1,521 +1,90 @@
 'use client';
 
-// ProductFilters: UI for product list filters (search, sku, category,
-// price range). Thin presentation component — state and handlers are
-// supplied by useProductListFilters and the ProductListProvider to keep this
-// component purely presentational and easy to test.
 'use no memo';
-// ProductFilters: filter panel for the products list. Provides search,
-// field-based filters, advanced filter modal and presets management; pulls
-// metadata (catalogs, categories, tags) lazily for performance.
 
 import React, { useEffect, useState } from 'react';
 
 import { AdvancedFilterModal } from '@/features/products/components/list/advanced-filter';
 import { useProductListFiltersContext } from '@/features/products/context/ProductListContext';
-import {
-  useProductCategories,
-  useProductCategoriesForCatalogs,
-} from '@/features/products/hooks/useCategoryQueries';
-import {
-  useCatalogs,
-  useFilterTags,
-  useProducers,
-  useTitleTerms,
-} from '@/features/products/hooks/useProductMetadataQueries';
-import type { LabeledOptionDto } from '@/shared/contracts/base';
-import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import type { ProductAdvancedFilterField, ProductAdvancedFilterGroup } from '@/shared/contracts/products/filters';
-import type { ProductCategory } from '@/shared/contracts/products/categories';
-import type { Producer } from '@/shared/contracts/products/producers';
-import type { ProductTag } from '@/shared/contracts/products/tags';
-import type { ProductTitleTerm } from '@/shared/contracts/products/title-terms';
-
-const ID_MATCH_MODE_OPTIONS: Array<LabeledOptionDto<'exact' | 'partial'>> = [
-  { value: 'exact', label: 'Exact' },
-  { value: 'partial', label: 'Partial' },
-];
-
-const BASE_EXPORTED_OPTIONS: Array<LabeledOptionDto<'__all__' | 'true' | 'false'>> = [
-  { value: '__all__', label: 'All export statuses' },
-  { value: 'true', label: 'Exported to Base.com' },
-  { value: 'false', label: 'Not exported to Base.com' },
-];
-
-const TRADERA_STATUS_OPTIONS: Array<LabeledOptionDto<string>> = [
-  { value: 'disabled', label: 'Disabled' },
-  { value: 'not_added', label: 'Not added' },
-  { value: 'active', label: 'Active' },
-  { value: 'closed', label: 'Closed' },
-  { value: 'ended', label: 'Ended' },
-  { value: 'sold', label: 'Sold' },
-  { value: 'unsold', label: 'Unsold' },
-  { value: 'queued', label: 'Queued' },
-  { value: 'queued_relist', label: 'Queued relist' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'running', label: 'Running' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'listed', label: 'Listed' },
-  { value: 'failed', label: 'Failed' },
-  { value: 'auth_required', label: 'Auth required' },
-  { value: 'needs_login', label: 'Needs login' },
-  { value: 'error', label: 'Error' },
-  { value: 'removed', label: 'Removed' },
-  { value: 'archived', label: 'Archived' },
-  { value: 'expired', label: 'Expired' },
-  { value: 'cancelled', label: 'Cancelled' },
-];
-
-const STOCK_OPERATOR_OPTIONS: Array<
-  LabeledOptionDto<'__all__' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'>
-> = [
-  { value: '__all__', label: 'Any' },
-  { value: 'gt', label: 'More than (>)' },
-  { value: 'gte', label: 'More than or equal (>=)' },
-  { value: 'lt', label: 'Less than (<)' },
-  { value: 'lte', label: 'Less than or equal (<=)' },
-  { value: 'eq', label: 'Equal (=)' },
-];
 import { Button } from '@/shared/ui/button';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 
-import type { FilterField } from '@/shared/contracts/ui/panels';
-import { PRODUCT_CATEGORY_FILTER_ALL_VALUE } from '@/shared/lib/products/constants';
-
+import { useProductFilterMetadata } from './ProductFilters.metadata';
 import {
-  createAdvancedPreset,
-  hasPresetNameConflict,
-  normalizePresetName,
-} from './product-filters-utils';
-import { buildCategoryFilterOptions } from './product-category-filter-options';
+  buildProductFilterConfig,
+  buildProductFilterValues,
+  createProductFilterChangeHandler,
+  createProductFilterPresetSaveHandler,
+  createProductFiltersResetHandler,
+} from './ProductFilters.model';
 
 export { ProductSelectionActions } from './ProductSelectionActions';
-
-const normalizeString = (value: unknown): string => {
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number') return String(value);
-  return '';
-};
-
-const isCatalogRecord = (value: unknown): value is CatalogRecord =>
-  Boolean(value) &&
-  typeof value === 'object' &&
-  normalizeString((value as { id?: unknown }).id).length > 0;
-
-const isProductCategory = (value: unknown): value is ProductCategory =>
-  Boolean(value) &&
-  typeof value === 'object' &&
-  normalizeString((value as { id?: unknown }).id).length > 0;
-
-const isProductTag = (value: unknown): value is ProductTag =>
-  Boolean(value) &&
-  typeof value === 'object' &&
-  normalizeString((value as { id?: unknown }).id).length > 0;
-
-const isProducer = (value: unknown): value is Producer =>
-  Boolean(value) &&
-  typeof value === 'object' &&
-  normalizeString((value as { id?: unknown }).id).length > 0;
-
-const isProductTitleTerm = (value: unknown): value is ProductTitleTerm =>
-  Boolean(value) &&
-  typeof value === 'object' &&
-  normalizeString((value as { id?: unknown }).id).length > 0 &&
-  normalizeString((value as { name_en?: unknown }).name_en).length > 0;
-
-const buildTitleTermOptions = (
-  terms: ProductTitleTerm[]
-): Array<LabeledOptionDto<string>> => {
-  const optionMap = new Map<string, LabeledOptionDto<string>>();
-  terms.forEach((term) => {
-    const value = normalizeString(term.name_en);
-    if (!value || optionMap.has(value)) return;
-    optionMap.set(value, {
-      value,
-      label: value,
-    });
-  });
-  return Array.from(optionMap.values()).sort((left, right) =>
-    left.label.localeCompare(right.label, undefined, {
-      sensitivity: 'base',
-      numeric: true,
-    })
-  );
-};
 
 type ProductFiltersProps = {
   instanceId?: string;
 };
 
+function ProductAdvancedFilterButton({
+  active,
+  onClick,
+}: {
+  active: boolean;
+  onClick: () => void;
+}): React.JSX.Element {
+  return (
+    <Button
+      type='button'
+      size='sm'
+      variant={active ? 'default' : 'outline'}
+      onClick={onClick}
+      className='h-8 w-full sm:w-auto'
+    >
+      Advanced Filter
+    </Button>
+  );
+}
+
 export function ProductFilters({
   instanceId,
 }: ProductFiltersProps): React.JSX.Element {
-  const {
-    search,
-    setSearch,
-    productId,
-    setProductId,
-    idMatchMode,
-    setIdMatchMode,
-    sku,
-    setSku,
-    description,
-    setDescription,
-    categoryId,
-    setCategoryId,
-    nameLocale,
-    catalogFilter,
-    minPrice,
-    setMinPrice,
-    maxPrice,
-    setMaxPrice,
-    stockValue,
-    setStockValue,
-    stockOperator,
-    setStockOperator,
-    startDate,
-    setStartDate,
-    endDate,
-    setEndDate,
-    advancedFilter,
-    advancedFilterPresets,
-    setAdvancedFilterPresets,
-    setAdvancedFilterState,
-    baseExported,
-    setBaseExported,
-    includeArchived,
-    setIncludeArchived,
-    filtersCollapsedByDefault,
-  } = useProductListFiltersContext();
+  const filters = useProductListFiltersContext();
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
-  const [isFilterPanelExpanded, setIsFilterPanelExpanded] = useState(!filtersCollapsedByDefault);
-  const hasAdvancedFilter = advancedFilter.trim().length > 0;
+  const [isFilterPanelExpanded, setIsFilterPanelExpanded] = useState(
+    filters.filtersCollapsedByDefault === false
+  );
+  const hasAdvancedFilter = filters.advancedFilter.trim().length > 0;
   const filterMetadataEnabled = isFilterPanelExpanded || isAdvancedFilterOpen;
+  const { categoryOptions, advancedFieldValueOptions } = useProductFilterMetadata({
+    catalogFilter: filters.catalogFilter,
+    enabled: filterMetadataEnabled,
+    nameLocale: filters.nameLocale,
+  });
 
   useEffect(() => {
-    setIsFilterPanelExpanded(!filtersCollapsedByDefault);
-  }, [filtersCollapsedByDefault]);
-
-  const selectedCatalogId =
-    catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
-  const { data: rawCatalogs } = useCatalogs({ enabled: filterMetadataEnabled });
-  const catalogs = Array.isArray(rawCatalogs) ? rawCatalogs.filter(isCatalogRecord) : [];
-  const catalogIds = catalogs
-    .map((catalog) => normalizeString(catalog.id))
-    .filter((id) => id.length > 0);
-  const { data: rawSingleCatalogCategories } = useProductCategories(selectedCatalogId, {
-    enabled: filterMetadataEnabled,
-  });
-  const { data: rawCrossCatalogCategories } = useProductCategoriesForCatalogs(
-    selectedCatalogId || catalogFilter === 'unassigned' ? [] : catalogIds,
-    {
-      enabled: filterMetadataEnabled,
-    }
-  );
-  const { data: rawAvailableTags } = useFilterTags(selectedCatalogId, {
-    enabled: filterMetadataEnabled,
-  });
-  const titleTermQueryOptions = {
-    enabled: filterMetadataEnabled,
-    allowWithoutCatalog: true,
-  } as const;
-  const { data: rawSizeTerms } = useTitleTerms(selectedCatalogId, 'size', titleTermQueryOptions);
-  const { data: rawMaterialTerms } = useTitleTerms(
-    selectedCatalogId,
-    'material',
-    titleTermQueryOptions
-  );
-  const { data: rawThemeTerms } = useTitleTerms(
-    selectedCatalogId,
-    'theme',
-    titleTermQueryOptions
-  );
-  const categorySource = selectedCatalogId ? rawSingleCatalogCategories : rawCrossCatalogCategories;
-  const categories = Array.isArray(categorySource) ? categorySource.filter(isProductCategory) : [];
-  const availableTags = Array.isArray(rawAvailableTags)
-    ? rawAvailableTags.filter(isProductTag)
-    : [];
-  const sizeTerms = Array.isArray(rawSizeTerms) ? rawSizeTerms.filter(isProductTitleTerm) : [];
-  const materialTerms = Array.isArray(rawMaterialTerms)
-    ? rawMaterialTerms.filter(isProductTitleTerm)
-    : [];
-  const themeTerms = Array.isArray(rawThemeTerms) ? rawThemeTerms.filter(isProductTitleTerm) : [];
-  const catalogNameById = new Map(
-    catalogs.map(
-      (catalog) =>
-        [
-          normalizeString(catalog.id),
-          normalizeString(catalog.name) || normalizeString(catalog.id),
-        ] as const
-    )
-  );
-  const { data: rawProducers } = useProducers({ enabled: filterMetadataEnabled });
-  const producers = Array.isArray(rawProducers) ? rawProducers.filter(isProducer) : [];
-
-  const categoryOptions = buildCategoryFilterOptions({
-    categories,
-    catalogNameById,
-    nameLocale,
-    selectedCatalogId,
-  });
-
-  const fallbackTagOptionMap = new Map<string, { id: string; name: string }>();
-  availableTags.forEach((tag) => {
-    const tagId = normalizeString(tag.id);
-    if (!tagId || fallbackTagOptionMap.has(tagId)) return;
-    fallbackTagOptionMap.set(tagId, {
-      id: tagId,
-      name: normalizeString(tag.name) || tagId,
-    });
-  });
-  const fallbackTagOptions = Array.from(fallbackTagOptionMap.values());
-
-  const advancedFieldValueOptions: Partial<
-    Record<ProductAdvancedFilterField, Array<LabeledOptionDto<string>>>
-  > = {
-    catalogId: catalogs.map((catalog) => ({
-      value: normalizeString(catalog.id),
-      label: normalizeString(catalog.name) || normalizeString(catalog.id),
-    })),
-    tagId: fallbackTagOptions.map((tag) => ({
-      value: normalizeString(tag.id),
-      label: normalizeString(tag.name) || normalizeString(tag.id),
-    })),
-    categoryId: categoryOptions.filter(
-      (option) => option.value !== PRODUCT_CATEGORY_FILTER_ALL_VALUE
-    ),
-    traderaStatus: TRADERA_STATUS_OPTIONS,
-    producerId: producers.map((producer) => ({
-      value: normalizeString(producer.id),
-      label: normalizeString(producer.name) || normalizeString(producer.id),
-    })),
-    titleSize: buildTitleTermOptions(sizeTerms),
-    titleMaterial: buildTitleTermOptions(materialTerms),
-    titleTheme: buildTitleTermOptions(themeTerms),
-  };
-
-  // Filter configuration
-  const filterConfig: FilterField[] = [
-    {
-      key: 'productId',
-      label: 'Product ID',
-      type: 'text',
-      placeholder: 'Search by product ID...',
-      width: '16rem',
-    },
-    {
-      key: 'idMatchMode',
-      label: 'ID Match',
-      type: 'select',
-      placeholder: 'Choose match mode',
-      options: ID_MATCH_MODE_OPTIONS,
-      width: '10rem',
-    },
-    { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
-    {
-      key: 'description',
-      label: 'Description',
-      type: 'text',
-      placeholder: 'Search by description...',
-      width: '16rem',
-    },
-    {
-      key: 'categoryId',
-      label: 'Category',
-      type: 'select',
-      placeholder: 'All categories',
-      options: categoryOptions,
-      width: '16rem',
-    },
-    {
-      key: 'baseExported',
-      label: 'Base.com Export',
-      type: 'select',
-      placeholder: 'All export statuses',
-      options: BASE_EXPORTED_OPTIONS,
-      width: '16rem',
-    },
-    {
-      key: 'includeArchived',
-      label: 'Show Archived',
-      type: 'checkbox',
-      width: '12rem',
-    },
-    {
-      key: 'minPrice',
-      label: 'Min Price',
-      type: 'number',
-      placeholder: 'Min price',
-      width: '9rem',
-    },
-    {
-      key: 'maxPrice',
-      label: 'Max Price',
-      type: 'number',
-      placeholder: 'Max price',
-      width: '9rem',
-    },
-    {
-      key: 'stockOperator',
-      label: 'Stock Operator',
-      type: 'select',
-      placeholder: 'Choose operator',
-      options: STOCK_OPERATOR_OPTIONS,
-      width: '13rem',
-    },
-    {
-      key: 'stockValue',
-      label: 'Stock Value',
-      type: 'number',
-      placeholder: 'Stock amount',
-      width: '10rem',
-    },
-    { key: 'createdAt', label: 'Date Range', type: 'dateRange', width: '22rem' },
-  ];
-
-  // Filter values (combined date range into single object)
-  const filterValues = {
-    productId,
-    idMatchMode: normalizeString(productId) ? idMatchMode : '',
-    sku,
-    description,
-    categoryId,
-    baseExported,
-    includeArchived,
-    minPrice,
-    maxPrice,
-    stockOperator,
-    stockValue,
-    createdAt: { from: startDate, to: endDate },
-  };
-
-  // Handle filter changes
-  const handleFilterChange = (key: string, value: unknown) => {
-    switch (key) {
-      case 'productId':
-        setProductId(typeof value === 'string' ? value : '');
-        break;
-      case 'idMatchMode':
-        setIdMatchMode(value === 'partial' ? 'partial' : 'exact');
-        break;
-      case 'sku':
-        setSku(typeof value === 'string' ? value : '');
-        break;
-      case 'description':
-        setDescription(typeof value === 'string' ? value : '');
-        break;
-      case 'categoryId':
-        setCategoryId(
-          typeof value === 'string' &&
-            value &&
-            value !== PRODUCT_CATEGORY_FILTER_ALL_VALUE
-            ? value
-            : ''
-        );
-        break;
-      case 'baseExported':
-        if (value === 'true' || value === 'false') {
-          setBaseExported(value);
-        } else {
-          setBaseExported('');
-        }
-        break;
-      case 'includeArchived':
-        setIncludeArchived(value === true);
-        break;
-      case 'minPrice':
-        setMinPrice(
-          value === '' || value === null || value === undefined ? undefined : Number(value)
-        );
-        break;
-      case 'maxPrice':
-        setMaxPrice(
-          value === '' || value === null || value === undefined ? undefined : Number(value)
-        );
-        break;
-      case 'stockOperator':
-        if (
-          value === 'gt' ||
-          value === 'gte' ||
-          value === 'lt' ||
-          value === 'lte' ||
-          value === 'eq'
-        ) {
-          setStockOperator(value);
-        } else {
-          setStockOperator('');
-        }
-        break;
-      case 'stockValue':
-        setStockValue(
-          value === '' || value === null || value === undefined ? undefined : Number(value)
-        );
-        break;
-      case 'createdAt': {
-        const dateRange = value as { from?: string; to?: string } | undefined;
-        setStartDate(dateRange?.from || '');
-        setEndDate(dateRange?.to || '');
-        break;
-      }
-    }
-  };
-
-  const handleSavePresetFromModal = async (
-    name: string,
-    filter: ProductAdvancedFilterGroup
-  ): Promise<void> => {
-    const trimmedName = normalizePresetName(name);
-    if (!trimmedName) {
-      throw new Error('Preset name is required.');
-    }
-    if (hasPresetNameConflict(advancedFilterPresets, trimmedName)) {
-      throw new Error('Preset name already exists. Choose a unique name.');
-    }
-    const preset = createAdvancedPreset(trimmedName, filter);
-    await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
-  };
+    setIsFilterPanelExpanded(filters.filtersCollapsedByDefault === false);
+  }, [filters.filtersCollapsedByDefault]);
 
   return (
     <>
       <FilterPanel
-        {...(instanceId ? { idBase: `products-${instanceId}` } : {})}
-        filters={filterConfig}
-        values={filterValues}
-        search={search}
+        {...(instanceId !== undefined && instanceId.length > 0
+          ? { idBase: `products-${instanceId}` }
+          : {})}
+        filters={buildProductFilterConfig(categoryOptions)}
+        values={buildProductFilterValues(filters)}
+        search={filters.search}
         searchPlaceholder='Search by product name...'
-        onFilterChange={handleFilterChange}
-        onSearchChange={setSearch}
-        onReset={() => {
-          setSearch('');
-          setProductId('');
-          setIdMatchMode('exact');
-          setSku('');
-          setDescription('');
-          setCategoryId('');
-          setBaseExported('');
-          setIncludeArchived(false);
-          setMinPrice(undefined);
-          setMaxPrice(undefined);
-          setStockOperator('');
-          setStockValue(undefined);
-          setStartDate('');
-          setEndDate('');
-          setAdvancedFilterState('', null);
-        }}
+        onFilterChange={createProductFilterChangeHandler(filters)}
+        onSearchChange={filters.setSearch}
+        onReset={createProductFiltersResetHandler(filters)}
         actions={
-          <Button
-            type='button'
-            size='sm'
-            variant={hasAdvancedFilter ? 'default' : 'outline'}
+          <ProductAdvancedFilterButton
+            active={hasAdvancedFilter}
             onClick={() => setIsAdvancedFilterOpen(true)}
-            className='h-8 w-full sm:w-auto'
-          >
-            Advanced Filter
-          </Button>
+          />
         }
         collapsible
-        defaultExpanded={!filtersCollapsedByDefault}
+        defaultExpanded={filters.filtersCollapsedByDefault === false}
         onExpandedChange={setIsFilterPanelExpanded}
         toggleButtonAlignment='start'
         showHeader={false}
@@ -524,11 +93,11 @@ export function ProductFilters({
       {isAdvancedFilterOpen ? (
         <AdvancedFilterModal
           open={isAdvancedFilterOpen}
-          value={advancedFilter}
+          value={filters.advancedFilter}
           onClose={() => setIsAdvancedFilterOpen(false)}
-          onApply={(value) => setAdvancedFilterState(value, null)}
-          onClear={() => setAdvancedFilterState('', null)}
-          onSavePreset={handleSavePresetFromModal}
+          onApply={(value) => filters.setAdvancedFilterState(value, null)}
+          onClear={() => filters.setAdvancedFilterState('', null)}
+          onSavePreset={createProductFilterPresetSaveHandler(filters)}
           fieldValueOptions={advancedFieldValueOptions}
         />
       ) : null}

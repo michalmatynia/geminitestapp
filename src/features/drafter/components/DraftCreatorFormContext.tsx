@@ -10,7 +10,7 @@ import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { ProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductTag } from '@/shared/contracts/products/tags';
-import type { ProductDraftOpenFormTab } from '@/shared/contracts/products/drafts';
+import type { ProductDraftKind, ProductDraftOpenFormTab } from '@/shared/contracts/products/drafts';
 import { internalError } from '@/shared/errors/app-error';
 import { createStrictContext } from '@/shared/lib/react/createStrictContext';
 
@@ -26,6 +26,10 @@ const createDraftCreatorStrictContext = <T,>(hookName: string, displayName: stri
 export interface DraftCreatorBasicInfo {
   name: string;
   setName: (next: string) => void;
+  draftKind: ProductDraftKind;
+  setDraftKind: (next: ProductDraftKind) => void;
+  scrapeProfileId: string | null;
+  setScrapeProfileId: (next: string | null) => void;
   description: string;
   setDescription: (next: string) => void;
   validatorEnabled: boolean;
@@ -178,6 +182,10 @@ export function DraftCreatorFormProvider({
     () => ({
       name: value.name,
       setName: value.setName,
+      draftKind: value.draftKind,
+      setDraftKind: value.setDraftKind,
+      scrapeProfileId: value.scrapeProfileId,
+      setScrapeProfileId: value.setScrapeProfileId,
       description: value.description,
       setDescription: value.setDescription,
       validatorEnabled: value.validatorEnabled,

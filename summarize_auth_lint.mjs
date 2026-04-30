@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const report = JSON.parse(fs.readFileSync('lint_plan_audit.json', 'utf8'));
+const report = JSON.parse(fs.readFileSync('lint_auth_audit.json', 'utf8'));
 
 const summary = report.map(file => ({
   filePath: file.filePath.replace(process.cwd(), ''),

@@ -106,12 +106,12 @@ describe('useProductListCategories', () => {
     expect(apiGetMock).not.toHaveBeenCalled();
   });
 
-  it('falls back to the category batch endpoint when the row is missing an embedded label', async () => {
+  it('falls back to the Mentios category tree when the row is missing an embedded label', async () => {
     apiGetMock.mockResolvedValue({
-      'catalog-1': [
+      'catalog-mentios': [
         {
           id: 'category-1',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name_en: 'Keychains',
         },
       ],
@@ -140,7 +140,49 @@ describe('useProductListCategories', () => {
     });
 
     expect(apiGetMock).toHaveBeenCalledWith(
-      '/api/v2/products/categories/batch?catalogIds=catalog-1',
+      '/api/v2/products/categories/batch?catalogIds=catalog-mentios',
+      expect.objectContaining({
+        timeout: 60_000,
+      })
+    );
+  });
+
+  it('uses the resolved Mentios catalog id when it differs from the canonical fallback', async () => {
+    apiGetMock.mockResolvedValue({
+      'catalog-shared-tree': [
+        {
+          id: 'category-1',
+          catalogId: 'catalog-shared-tree',
+          name_en: 'Keychains',
+        },
+      ],
+    });
+
+    const queryClient = createQueryClient();
+    const { result } = renderHook(
+      () =>
+        useProductListCategories({
+          data: [
+            {
+              ...createProduct(),
+              categoryId: 'category-1',
+              catalogId: 'catalog-1',
+            },
+          ],
+          nameLocale: 'name_en',
+          defaultCategoryCatalogId: 'catalog-shared-tree',
+        }),
+      {
+        wrapper: createWrapper(queryClient),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current.categoryNameById.get('category-1')).toBe('Keychains');
+    });
+
+    expect(apiGetMock).toHaveBeenCalledWith(
+      '/api/v2/products/categories/batch?catalogIds=catalog-shared-tree',
       expect.objectContaining({
         timeout: 60_000,
       })
@@ -149,10 +191,10 @@ describe('useProductListCategories', () => {
 
   it('defers the category batch endpoint until explicitly enabled', async () => {
     apiGetMock.mockResolvedValue({
-      'catalog-1': [
+      'catalog-mentios': [
         {
           id: 'category-1',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name_en: 'Keychains',
         },
       ],
@@ -191,7 +233,7 @@ describe('useProductListCategories', () => {
     });
 
     expect(apiGetMock).toHaveBeenCalledWith(
-      '/api/v2/products/categories/batch?catalogIds=catalog-1',
+      '/api/v2/products/categories/batch?catalogIds=catalog-mentios',
       expect.objectContaining({
         timeout: 60_000,
       })

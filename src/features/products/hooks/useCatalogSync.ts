@@ -11,22 +11,23 @@ import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+import {
+  buildLanguageOptions,
+  findCatalogForFilter,
+  getCatalogsErrorMessage,
+  getSupportedLanguageKeys,
+  normalizeCatalogRecord,
+  resolveCatalogPriceGroups,
+  resolveCurrencyCodes,
+  resolveFallbackCurrencyCode,
+  resolveSupportedLanguageOption,
+  type LanguageOption,
+} from './useCatalogSync.helpers';
 import type { UseProductsOptions } from './useProductsQuery';
 
 // This hook composes deferred runtime state with multi-query metadata loading.
 // Opt out of React Compiler memoization to keep the admin products page on a
 // stable dev hook path.
-
-type LanguageOption = {
-  value: 'name_en' | 'name_pl' | 'name_de';
-  label: string;
-};
-
-const supportedLanguageMap: Record<string, LanguageOption> = {
-  EN: { value: 'name_en', label: 'English' },
-  PL: { value: 'name_pl', label: 'Polish' },
-  DE: { value: 'name_de', label: 'German' },
-};
 
 const PRICE_GROUPS_ENDPOINT = '/api/v2/products/metadata/price-groups';
 const CATALOGS_ENDPOINT = '/api/v2/products/entities/catalogs';
@@ -55,52 +56,37 @@ export interface UseCatalogSyncResult {
 
 export type UseCatalogSyncOptions = UseProductsOptions;
 
-const DEFAULT_LANGUAGE_OPTIONS: LanguageOption[] = [
-  supportedLanguageMap['EN']!,
-  supportedLanguageMap['PL']!,
-  supportedLanguageMap['DE']!,
-];
-
-const resolveSupportedLanguageOption = (value: string | null | undefined): LanguageOption | undefined => {
-  const normalizedValue = String(value ?? '').trim().toUpperCase();
-  if (!normalizedValue) return undefined;
-  if (normalizedValue in supportedLanguageMap) {
-    return supportedLanguageMap[normalizedValue]!;
-  }
-
-  const suffix = normalizedValue.split(/[-_]/).pop();
-  if (!suffix) return undefined;
-  return supportedLanguageMap[suffix];
+type CatalogSyncQueryResult = {
+  data: unknown;
+  error: unknown;
+  isLoading: boolean;
 };
 
-export function useCatalogSync(
-  catalogFilter: string,
-  { enabled = true }: UseCatalogSyncOptions = {}
-): UseCatalogSyncResult {
-  const catalogFilterInitialized = useRef(false);
+type CatalogSyncQueries = readonly [CatalogSyncQueryResult, CatalogSyncQueryResult];
+
+const useRuntimeReady = (): boolean => {
   const [runtimeReady, setRuntimeReady] = useState(process.env['NODE_ENV'] === 'production');
 
   useEffect(() => {
-    if (runtimeReady) return;
-    // In React Strict Mode (dev), the first mount is intentionally discarded.
-    // Deferring query enablement avoids start->abort noise for metadata calls.
+    if (runtimeReady) return undefined;
     const timer = setTimeout(() => {
       setRuntimeReady(true);
     }, 0);
     return () => clearTimeout(timer);
   }, [runtimeReady]);
 
-  const queriesEnabled = enabled && runtimeReady;
+  return runtimeReady;
+};
 
-  // Parallel queries for all data sources
-  const results = createMultiQueryV2({
+const useCatalogSyncQueries = (queriesEnabled: boolean): CatalogSyncQueries =>
+  createMultiQueryV2({
     queries: [
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
         queryFn: ({ signal }: { signal?: AbortSignal }): Promise<Catalog[]> =>
           fetchCatalogs(signal),
         enabled: queriesEnabled,
-        staleTime: 1000 * 60 * 5, // 5 minutes
+        staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
@@ -134,27 +120,35 @@ export function useCatalogSync(
     ] as const,
   });
 
-  const catalogsQuery = results[0];
-  const priceGroupsQuery = results[1];
-
-  // Log errors
+const useCatalogSyncErrors = (
+  catalogsError: unknown,
+  priceGroupsError: unknown
+): void => {
   useEffect(() => {
-    if (catalogsQuery.error) {
-      logClientError(catalogsQuery.error as Error, {
+    if (catalogsError !== null && catalogsError !== undefined) {
+      logClientError(catalogsError, {
         context: { source: 'useCatalogSync', action: 'fetchCatalogs' },
       });
     }
-    if (priceGroupsQuery.error) {
-      logClientError(priceGroupsQuery.error as Error, {
+    if (priceGroupsError !== null && priceGroupsError !== undefined) {
+      logClientError(priceGroupsError, {
         context: { source: 'useCatalogSync', action: 'fetchPriceGroups' },
       });
     }
-  }, [catalogsQuery.error, priceGroupsQuery.error]);
+  }, [catalogsError, priceGroupsError]);
+};
 
-  // Extract data with defaults
-  const rawCatalogs = useMemo(() => {
-    return Array.isArray(catalogsQuery.data) ? (catalogsQuery.data as Catalog[]) : [];
-  }, [catalogsQuery.data]);
+const useCatalogSyncData = (
+  catalogsQuery: CatalogSyncQueryResult,
+  priceGroupsQuery: CatalogSyncQueryResult
+): { catalogs: Catalog[]; priceGroups: PriceGroupWithDetails[] } => {
+  const catalogs = useMemo(
+    () =>
+      Array.isArray(catalogsQuery.data)
+        ? (catalogsQuery.data as Catalog[]).map(normalizeCatalogRecord)
+        : [],
+    [catalogsQuery.data]
+  );
   const priceGroups = useMemo(
     () =>
       Array.isArray(priceGroupsQuery.data)
@@ -162,62 +156,39 @@ export function useCatalogSync(
         : [],
     [priceGroupsQuery.data]
   );
+  return { catalogs, priceGroups };
+};
 
-  // Memoize catalog transformation to prevent new references
-  const catalogs = useMemo(
-    () =>
-      rawCatalogs.map((catalog) => ({
-        ...catalog,
-        priceGroupIds: catalog.priceGroupIds ?? [],
-        defaultPriceGroupId: catalog.defaultPriceGroupId ?? null,
-      })),
-    [rawCatalogs]
-  );
-
-  // Memoize currency options to prevent unnecessary re-renders
-  const { codes, fallbackCode } = useMemo((): { codes: string[]; fallbackCode: string } => {
-    if (priceGroups.length === 0) return { codes: [] as string[], fallbackCode: '' };
-
-    const isCatalogScoped = catalogFilter !== 'all' && catalogFilter !== 'unassigned';
-    const catalog = isCatalogScoped
-      ? catalogs.find((entry) => entry.id === catalogFilter)
-      : undefined;
-    const catalogPriceGroupIds = catalog?.priceGroupIds ?? [];
-    const allowedGroupIds = catalogPriceGroupIds.length > 0 ? new Set(catalogPriceGroupIds) : null;
-
-    const candidateGroups = allowedGroupIds
-      ? priceGroups.filter((group) => allowedGroupIds.has(group.id))
-      : priceGroups;
-
-    let codes = Array.from(
-      new Set(
-        candidateGroups
-          .map((group) => group.currency?.code)
-          .filter((code): code is NonNullable<typeof code> => Boolean(code))
-      )
-    ).map((code) => code.trim().toUpperCase());
-
-    codes = codes.filter((code) => /^[A-Z]{3,5}$/.test(code));
-
-    const defaultGroupId = catalog?.defaultPriceGroupId ?? null;
-    const defaultGroup = defaultGroupId
-      ? candidateGroups.find((group) => group.id === defaultGroupId)
-      : candidateGroups.find((group) => group.isDefault);
-
-    const fallbackCode = defaultGroup?.currency?.code || codes[0] || '';
-
-    return { codes, fallbackCode };
+const useCurrencySync = ({
+  catalogFilter,
+  catalogs,
+  priceGroups,
+}: {
+  catalogFilter: string;
+  catalogs: Catalog[];
+  priceGroups: PriceGroupWithDetails[];
+}): {
+  currencyCode: string;
+  setCurrencyCode: (action: string | ((prev: string) => string)) => void;
+  currencyOptions: string[];
+} => {
+  const { codes, fallbackCode } = useMemo(() => {
+    const candidateGroups = resolveCatalogPriceGroups({ catalogFilter, catalogs, priceGroups });
+    const resolvedCodes = resolveCurrencyCodes(candidateGroups);
+    return {
+      codes: resolvedCodes,
+      fallbackCode: resolveFallbackCurrencyCode({
+        catalogFilter,
+        catalogs,
+        candidateGroups,
+        codes: resolvedCodes,
+      }),
+    };
   }, [catalogFilter, catalogs, priceGroups]);
-
-  // Sync Currency Options based on Catalog
-  const currencyOptions = codes;
-
   const [userCurrencyCode, setUserCurrencyCode] = useState<string | null>(null);
-
   const currencyCode =
-    userCurrencyCode && codes.includes(userCurrencyCode) ? userCurrencyCode : fallbackCode;
-
-  const handleSetCurrencyCode = useCallback(
+    userCurrencyCode !== null && codes.includes(userCurrencyCode) ? userCurrencyCode : fallbackCode;
+  const setCurrencyCode = useCallback(
     (action: string | ((prev: string) => string)): void => {
       setUserCurrencyCode((current) => {
         const baseValue = current ?? fallbackCode;
@@ -226,47 +197,49 @@ export function useCatalogSync(
     },
     [fallbackCode]
   );
+  return { currencyCode, setCurrencyCode, currencyOptions: codes };
+};
 
-  const { languageOptions, fallbackNameLocale } = useMemo((): {
-    languageOptions: LanguageOption[];
-    fallbackNameLocale: 'name_en' | 'name_pl' | 'name_de' | undefined;
-  } => {
-    const options: LanguageOption[] = [];
-    const isCatalogScoped = catalogFilter !== 'all' && catalogFilter !== 'unassigned';
-    const catalog = isCatalogScoped
-      ? catalogs.find((entry) => entry.id === catalogFilter)
-      : undefined;
-    const allowedIds = catalog?.languageIds ?? [];
-
-    const seen = new Set<string>();
-    (allowedIds.length > 0 ? allowedIds : Object.keys(supportedLanguageMap)).forEach((languageId) => {
-      const option = resolveSupportedLanguageOption(languageId);
-      if (!option || seen.has(option.value)) return;
-      seen.add(option.value);
-      options.push(option);
-    });
-
-    if (options.length === 0) {
-      options.push(...DEFAULT_LANGUAGE_OPTIONS);
-    }
-
-    const defaultLanguageId = catalog?.defaultLanguageId ?? null;
-    const defaultOption = resolveSupportedLanguageOption(defaultLanguageId);
-    const fallbackNameLocale = defaultOption?.value ?? options[0]?.value;
-
-    return { languageOptions: options, fallbackNameLocale };
+const useCatalogLanguageOptions = ({
+  catalogFilter,
+  catalogs,
+}: {
+  catalogFilter: string;
+  catalogs: Catalog[];
+}): Pick<UseCatalogSyncResult, 'languageOptions' | 'fallbackNameLocale'> =>
+  useMemo(() => {
+    const catalog = findCatalogForFilter(catalogFilter, catalogs);
+    const options = buildLanguageOptions(catalog?.languageIds ?? getSupportedLanguageKeys());
+    const defaultOption = resolveSupportedLanguageOption(catalog?.defaultLanguageId ?? null);
+    return {
+      languageOptions: options,
+      fallbackNameLocale: defaultOption?.value ?? options[0]?.value,
+    };
   }, [catalogFilter, catalogs]);
 
-  return {
+export function useCatalogSync(
+  catalogFilter: string,
+  { enabled = true }: UseCatalogSyncOptions = {}
+): UseCatalogSyncResult {
+  const runtimeReady = useRuntimeReady();
+  const catalogFilterInitialized = useRef(false);
+  const queriesEnabled = enabled && runtimeReady;
+  const results = useCatalogSyncQueries(queriesEnabled);
+  const catalogsQuery = results[0];
+  const priceGroupsQuery = results[1];
+  useCatalogSyncErrors(catalogsQuery.error, priceGroupsQuery.error);
+  const { catalogs, priceGroups } = useCatalogSyncData(catalogsQuery, priceGroupsQuery);
+  const { currencyCode, setCurrencyCode, currencyOptions } = useCurrencySync({
+    catalogFilter,
     catalogs,
-    catalogsLoading: catalogsQuery.isLoading,
-    catalogsError: catalogsQuery.error ? (catalogsQuery.error as Error).message : null,
-    currencyCode,
-    setCurrencyCode: handleSetCurrencyCode,
-    currencyOptions,
     priceGroups,
-    catalogFilterInitialized,
-    languageOptions,
-    fallbackNameLocale,
-  };
+  });
+  const { languageOptions, fallbackNameLocale } = useCatalogLanguageOptions({
+    catalogFilter,
+    catalogs,
+  });
+
+  return { catalogs, catalogsLoading: catalogsQuery.isLoading,
+    catalogsError: getCatalogsErrorMessage(catalogsQuery.error), currencyCode, setCurrencyCode,
+    currencyOptions, priceGroups, catalogFilterInitialized, languageOptions, fallbackNameLocale };
 }

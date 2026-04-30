@@ -86,4 +86,52 @@ describe('draft-repository importSource persistence', () => {
       })
     );
   });
+
+  it('persists scrape template metadata on create, list, and update', async () => {
+    const docs: DraftDoc[] = [];
+    const collection = createCollectionMock(docs);
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn(() => collection),
+    });
+
+    const created = await createDraft({
+      name: 'BattleStock scrape template',
+      draftKind: 'scrape_template',
+      scrapeProfileId: 'battlestock-warhammer-40k-30k',
+    });
+
+    expect(created).toEqual(
+      expect.objectContaining({
+        draftKind: 'scrape_template',
+        scrapeProfileId: 'battlestock-warhammer-40k-30k',
+      })
+    );
+    expect(docs[0]).toEqual(
+      expect.objectContaining({
+        draftKind: 'scrape_template',
+        scrapeProfileId: 'battlestock-warhammer-40k-30k',
+      })
+    );
+
+    await expect(listDrafts()).resolves.toEqual([
+      expect.objectContaining({
+        id: created.id,
+        draftKind: 'scrape_template',
+        scrapeProfileId: 'battlestock-warhammer-40k-30k',
+      }),
+    ]);
+
+    const updated = await updateDraft(created.id, {
+      draftKind: 'standard',
+      scrapeProfileId: null,
+    });
+
+    expect(updated).toEqual(
+      expect.objectContaining({
+        id: created.id,
+        draftKind: 'standard',
+        scrapeProfileId: null,
+      })
+    );
+  });
 });

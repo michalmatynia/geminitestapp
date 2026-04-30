@@ -1,26 +1,27 @@
 import 'server-only';
 
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
-import type {
-  ProductScrapeProfile,
-  ProductScrapeProfileRunProduct,
-} from '@/shared/contracts/products/scrape-profiles';
+import type { ProductScrapeProfileRunProduct } from '@/shared/contracts/products/scrape-profiles';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
-import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { productService } from '@/shared/lib/products/services/productService';
-export type ProductScrapeProfileConfig = ProductScrapeProfile & {
-  skuPrefix: string;
-  supplierName: string;
-  priceComment: string;
-};
-type ProductScrapeCandidate = {
-  title: string;
-  sku: string;
-  price: number | null;
-  sourceUrl: string;
-  imageLinks: string[];
-};
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  buildCandidate,
+  buildCandidateDuplicateKeys,
+  type ProductScrapeCandidate,
+  type ProductScrapeProfileConfig,
+} from './product-scrape-profiles.candidates';
+import {
+  buildCreatePayload,
+  buildUpdatePayload,
+  resolveResultPayloadTitle,
+} from './product-scrape-profiles.payloads';
+import { ensureScrapedSourceListing } from './product-scraped-source-common';
+
+export type { ProductScrapeProfileConfig } from './product-scrape-profiles.candidates';
+
 type ProductScrapeDuplicateState = {
   seenKeys: Set<string>;
 };
@@ -45,122 +46,13 @@ type ProductScrapeRunContext = {
   skipRecordsWithErrors: boolean;
   productServiceOptions: { userId?: string } | undefined;
   duplicateState?: ProductScrapeDuplicateState;
+  draftTemplate?: ProductDraft | null;
 };
-const TRACKING_QUERY_PARAM_PATTERN = /^(utm_|fbclid$|gclid$|gbraid$|wbraid$|mc_cid$|mc_eid$)/i;
 
 const normalizeString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
-};
-const normalizeNumber = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim().replace(',', '.');
-  if (normalized.length === 0) return null;
-  const parsed = Number(normalized);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-const normalizeStringArray = (value: unknown): string[] => {
-  if (!Array.isArray(value)) {
-    const single = normalizeString(value);
-    return single !== null ? [single] : [];
-  }
-  return value
-    .map((entry) => normalizeString(entry))
-    .filter((entry): entry is string => entry !== null);
-};
-const toAbsoluteUrl = (value: string, baseUrl: string): string | null => {
-  try {
-    return new URL(value, baseUrl).toString();
-  } catch {
-    return null;
-  }
-};
-const canonicalizeSourceUrl = (value: string, baseUrl: string): string | null => {
-  const absolute = toAbsoluteUrl(value, baseUrl);
-  if (absolute === null) return null;
-  try {
-    const url = new URL(absolute);
-    url.hash = '';
-    Array.from(url.searchParams.keys()).forEach((key) => {
-      if (TRACKING_QUERY_PARAM_PATTERN.test(key)) url.searchParams.delete(key);
-    });
-    url.searchParams.sort();
-    if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, '');
-    url.protocol = url.protocol.toLowerCase();
-    url.hostname = url.hostname.toLowerCase();
-    return url.toString();
-  } catch {
-    return absolute;
-  }
-};
-const normalizeUrls = (values: string[], baseUrl: string): string[] =>
-  Array.from(
-    new Set(
-      values
-        .map((value) => toAbsoluteUrl(value, baseUrl))
-        .filter((value): value is string => value !== null)
-    )
-  );
-const resolveUrlPathIdentityToken = (value: string): string | null => {
-  try {
-    const url = new URL(value);
-    const token = url.pathname
-      .split('/')
-      .filter((segment) => segment.trim().length > 0)
-      .at(-1);
-    if (token === undefined || !/^[a-zA-Z0-9._-]+$/.test(token)) return null;
-    return token;
-  } catch {
-    return null;
-  }
-};
-const normalizeSkuToken = (value: unknown): string | null => {
-  const raw = normalizeString(value);
-  if (raw === null) return null;
-  const tokenSource = resolveUrlPathIdentityToken(raw) ?? raw;
-  const token = tokenSource
-    .replace(/^https?:\/\//i, '')
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 96);
-  return token.length > 0 ? token.toUpperCase() : null;
-};
-const getRawString = (draft: ScripterImportDraft, key: string): string | null =>
-  normalizeString(draft.raw[key]);
-const resolveDraftTitle = (draft: ScripterImportDraft): string | null =>
-  normalizeString(draft.draft.name_pl) ??
-  normalizeString(draft.draft.name) ??
-  normalizeString(draft.draft.name_en);
-
-const resolveDraftExternalId = (
-  draft: ScripterImportDraft,
-  sourceUrl: string | null
-): string | null =>
-  normalizeString(draft.externalId) ??
-  getRawString(draft, 'product_id') ??
-  sourceUrl;
-
-const buildCandidate = (
-  draft: ScripterImportDraft,
-  profile: ProductScrapeProfileConfig
-): ProductScrapeCandidate | null => {
-  const title = resolveDraftTitle(draft);
-  const sourceUrl = normalizeString(draft.draft.supplierLink);
-  const canonicalSourceUrl =
-    sourceUrl !== null ? canonicalizeSourceUrl(sourceUrl, profile.sourceUrl) : null;
-  const skuToken =
-    normalizeSkuToken(draft.draft.sku) ??
-    normalizeSkuToken(resolveDraftExternalId(draft, canonicalSourceUrl));
-  if (title === null || skuToken === null || canonicalSourceUrl === null) return null;
-  return {
-    title,
-    sku: `${profile.skuPrefix}${skuToken}`,
-    price: normalizeNumber(draft.draft.price),
-    sourceUrl: canonicalSourceUrl,
-    imageLinks: normalizeUrls(normalizeStringArray(draft.draft.imageLinks), profile.sourceUrl),
-  };
 };
 
 const hasBlockingIssue = (draft: ScripterImportDraft): boolean =>
@@ -183,13 +75,16 @@ const existingCatalogIds = (product: ProductWithImages | null, catalogId: string
   return Array.from(ids);
 };
 
-const buildCandidateDuplicateKeys = (
-  candidate: ProductScrapeCandidate,
-  profile: ProductScrapeProfileConfig
-): string[] => [
-  `${profile.id}:sku:${candidate.sku.trim().toUpperCase()}`,
-  `${profile.id}:source:${candidate.sourceUrl}`,
-];
+const mergeTemplateCatalogIds = (
+  catalogIds: string[],
+  template: ProductDraft | null | undefined
+): string[] => {
+  const ids = new Set(catalogIds);
+  (template?.catalogIds ?? []).forEach((catalogId) => {
+    if (catalogId.trim().length > 0) ids.add(catalogId);
+  });
+  return Array.from(ids);
+};
 
 const markDuplicateCandidate = (
   candidate: ProductScrapeCandidate,
@@ -203,39 +98,6 @@ const markDuplicateCandidate = (
   return false;
 };
 
-const buildCreatePayload = (
-  candidate: ProductScrapeCandidate,
-  profile: ProductScrapeProfileConfig,
-  catalogIds: string[]
-): ProductCreateInput => ({
-  sku: candidate.sku,
-  importSource: 'scrape',
-  name_pl: candidate.title,
-  supplierName: profile.supplierName,
-  supplierLink: candidate.sourceUrl,
-  priceComment: profile.priceComment,
-  stock: 0,
-  catalogIds,
-  imageLinks: candidate.imageLinks,
-  ...(candidate.price !== null ? { sourcePrice: candidate.price } : {}),
-});
-
-const buildUpdatePayload = (
-  candidate: ProductScrapeCandidate,
-  profile: ProductScrapeProfileConfig,
-  catalogIds: string[]
-): ProductUpdateInput => ({
-  sku: candidate.sku,
-  importSource: 'scrape',
-  name_pl: candidate.title,
-  supplierName: profile.supplierName,
-  supplierLink: candidate.sourceUrl,
-  priceComment: profile.priceComment,
-  catalogIds,
-  imageLinks: candidate.imageLinks,
-  ...(candidate.price !== null ? { sourcePrice: candidate.price } : {}),
-});
-
 const resolveResultTitle = (
   draft: ScripterImportDraft,
   candidate: ProductScrapeCandidate | null
@@ -246,20 +108,29 @@ const resolveResultSourceUrl = (
   candidate: ProductScrapeCandidate | null
 ): string | null => candidate?.sourceUrl ?? normalizeString(draft.draft.supplierLink) ?? null;
 
+const resolveResultProductSku = (candidate: ProductScrapeCandidate | null): string | null =>
+  candidate !== null ? candidate.sku : null;
+
+const resolveResultProductTitle = (
+  draft: ScripterImportDraft,
+  candidate: ProductScrapeCandidate | null,
+  title: string | null | undefined
+): string | null => title ?? resolveResultTitle(draft, candidate);
+
 const toResultProduct = (
   draft: ScripterImportDraft,
   candidate: ProductScrapeCandidate | null,
   status: ProductScrapeProfileRunProduct['status'],
-  options?: { productId?: string | null; error?: string | null }
+  options: { productId?: string | null; error?: string | null; title?: string | null } = {}
 ): ProductScrapeProfileRunProduct => ({
-  index: draft.index,
-  status,
-  productId: options?.productId ?? null,
-  sku: candidate?.sku ?? null,
-  title: resolveResultTitle(draft, candidate),
-  sourceUrl: resolveResultSourceUrl(draft, candidate),
-  error: options?.error ?? null,
-});
+    index: draft.index,
+    status,
+    productId: options.productId ?? null,
+    sku: resolveResultProductSku(candidate),
+    title: resolveResultProductTitle(draft, candidate, options.title),
+    sourceUrl: resolveResultSourceUrl(draft, candidate),
+    error: options.error ?? null,
+  });
 
 const createOutcome = (
   result: ProductScrapeProfileRunProduct,
@@ -272,6 +143,23 @@ const createOutcome = (
   failedCount: counts.failedCount ?? 0,
 });
 
+const linkPersistedScrapedProduct = async (
+  productId: string,
+  candidate: ProductScrapeCandidate
+): Promise<void> => {
+  try {
+    await ensureScrapedSourceListing(productId, 'linked');
+  } catch (error) {
+    await ErrorSystem.captureException(error, {
+      service: 'product-scrape-profiles',
+      action: 'linkPersistedScrapedProduct',
+      productId,
+      sourceUrl: candidate.sourceUrl,
+      sku: candidate.sku,
+    });
+  }
+};
+
 const processPersistedCandidate = async (
   draft: ScripterImportDraft,
   candidate: ProductScrapeCandidate,
@@ -280,24 +168,90 @@ const processPersistedCandidate = async (
   const existingBySku = await productService.getProductBySku(candidate.sku);
   const existing =
     existingBySku ?? (await productService.findProductBySupplierLink(candidate.sourceUrl));
-  const catalogIds = existingCatalogIds(existing, context.catalog.id);
+  const catalogIds = mergeTemplateCatalogIds(
+    existingCatalogIds(existing, context.catalog.id),
+    context.draftTemplate
+  );
   if (existing !== null) {
+    const payload = buildUpdatePayload({
+      candidate,
+      draft,
+      profile: context.profile,
+      catalogIds,
+      template: context.draftTemplate,
+    });
     const updated = await productService.updateProduct(
       existing.id,
-      buildUpdatePayload(candidate, context.profile, catalogIds),
+      payload,
       context.productServiceOptions
     );
-    return createOutcome(toResultProduct(draft, candidate, 'updated', { productId: updated.id }), {
-      updatedCount: 1,
-    });
+    await linkPersistedScrapedProduct(updated.id, candidate);
+    return createOutcome(
+      toResultProduct(draft, candidate, 'updated', {
+        productId: updated.id,
+        title: resolveResultPayloadTitle(payload, candidate),
+      }),
+      { updatedCount: 1 }
+    );
   }
+  const payload = buildCreatePayload({
+    candidate,
+    draft,
+    profile: context.profile,
+    catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
+    template: context.draftTemplate,
+  });
   const created = await productService.createProduct(
-    buildCreatePayload(candidate, context.profile, [context.catalog.id]),
+    payload,
     context.productServiceOptions
   );
-  return createOutcome(toResultProduct(draft, candidate, 'created', { productId: created.id }), {
-    createdCount: 1,
-  });
+  await linkPersistedScrapedProduct(created.id, candidate);
+  return createOutcome(
+    toResultProduct(draft, candidate, 'created', {
+      productId: created.id,
+      title: resolveResultPayloadTitle(payload, candidate),
+    }),
+    { createdCount: 1 }
+  );
+};
+
+const processValidScrapeCandidate = async (
+  draft: ScripterImportDraft,
+  candidate: ProductScrapeCandidate,
+  context: ProductScrapeRunContext
+): Promise<ProductScrapeDraftOutcome> => {
+  if (markDuplicateCandidate(candidate, context)) {
+    return createOutcome(
+      toResultProduct(draft, candidate, 'skipped', {
+        error: 'Duplicate scraped product in this run.',
+      }),
+      { skippedCount: 1 }
+    );
+  }
+  if (context.dryRun) {
+    const payload = buildCreatePayload({
+      candidate,
+      draft,
+      profile: context.profile,
+      catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
+      template: context.draftTemplate,
+    });
+    return createOutcome(
+      toResultProduct(draft, candidate, 'dry_run', {
+        title: resolveResultPayloadTitle(payload, candidate),
+      })
+    );
+  }
+  try {
+    return await processPersistedCandidate(draft, candidate, context);
+  } catch (error) {
+    return createOutcome(
+      toResultProduct(draft, candidate, 'failed', {
+        error: error instanceof Error ? error.message : String(error),
+      }),
+      { failedCount: 1 }
+    );
+  }
 };
 
 export const processScrapeDraft = async (
@@ -322,25 +276,7 @@ export const processScrapeDraft = async (
       { failedCount: 1 }
     );
   }
-  if (markDuplicateCandidate(candidate, context)) {
-    return createOutcome(
-      toResultProduct(draft, candidate, 'skipped', {
-        error: 'Duplicate scraped product in this run.',
-      }),
-      { skippedCount: 1 }
-    );
-  }
-  if (context.dryRun) return createOutcome(toResultProduct(draft, candidate, 'dry_run'));
-  try {
-    return await processPersistedCandidate(draft, candidate, context);
-  } catch (error) {
-    return createOutcome(
-      toResultProduct(draft, candidate, 'failed', {
-        error: error instanceof Error ? error.message : String(error),
-      }),
-      { failedCount: 1 }
-    );
-  }
+  return await processValidScrapeCandidate(draft, candidate, context);
 };
 
 export const processScrapeDrafts = async (

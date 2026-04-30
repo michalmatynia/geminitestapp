@@ -4,6 +4,7 @@ import {
   getDefaultScripterRegistry,
   getDefaultScripterServer,
 } from '@/features/playwright/scripters/public';
+import { getDraft } from '@/features/drafter/services/draft-service';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import type {
   ProductScrapeProfile,
@@ -12,7 +13,8 @@ import type {
   ProductScrapeProfilesListResponse,
 } from '@/shared/contracts/products/scrape-profiles';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import { configurationError, notFoundError } from '@/shared/errors/app-error';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import { badRequestError, configurationError, notFoundError } from '@/shared/errors/app-error';
 import { getCatalogRepository } from '@/shared/lib/products/services/catalog-repository';
 
 import {
@@ -87,6 +89,35 @@ const ensureCatalog = async (name: string): Promise<CatalogRecord> => {
   });
 };
 
+const resolveScrapeDraftTemplate = async (
+  profile: ProductScrapeProfileConfig,
+  draftTemplateId: string | undefined
+): Promise<ProductDraft | null> => {
+  if (draftTemplateId === undefined) return null;
+  const template = await getDraft(draftTemplateId);
+  if (template === null) {
+    throw notFoundError(`Draft template not found: ${draftTemplateId}`, { draftTemplateId });
+  }
+  if (template.draftKind !== 'scrape_template') {
+    throw badRequestError('Selected draft is not a scrape template.', {
+      draftTemplateId,
+      draftKind: template.draftKind ?? 'standard',
+    });
+  }
+  if (
+    typeof template.scrapeProfileId === 'string' &&
+    template.scrapeProfileId.trim().length > 0 &&
+    template.scrapeProfileId !== profile.id
+  ) {
+    throw badRequestError('Selected draft template is assigned to another scrape profile.', {
+      draftTemplateId,
+      scrapeProfileId: template.scrapeProfileId,
+      profileId: profile.id,
+    });
+  }
+  return template;
+};
+
 const resolveProductServiceOptions = (
   userId: string | null | undefined
 ): { userId?: string } | undefined => {
@@ -107,6 +138,7 @@ export const runProductScrapeProfile = async (
   await ensureScripterProfileFile(profile);
 
   const catalog = await ensureCatalog(profile.targetCatalogName);
+  const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
   const source = await getDefaultScripterServer().dryRun({
     scripterId: profile.scripterId,
     enforceRobots: false,
@@ -122,6 +154,7 @@ export const runProductScrapeProfile = async (
     dryRun,
     skipRecordsWithErrors: input.skipRecordsWithErrors ?? true,
     productServiceOptions: resolveProductServiceOptions(options.userId),
+    draftTemplate,
   });
   const outcomeSummary = summarizeOutcomes(outcomes);
 

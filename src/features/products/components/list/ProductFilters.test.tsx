@@ -166,8 +166,7 @@ describe('ProductFilters layout contract', () => {
 
     const filterPanelProps = filterPanelMock.mock.lastCall?.[0] as Record<string, unknown>;
     expect(filterPanelProps.defaultExpanded).toBe(false);
-    expect(useProductCategoriesMock).toHaveBeenCalledWith(undefined, { enabled: false });
-    expect(useProductCategoriesForCatalogsMock).toHaveBeenCalledWith([], { enabled: false });
+    expect(useProductCategoriesMock).toHaveBeenCalledWith('catalog-mentios', { enabled: false });
     expect(useCatalogsMock).toHaveBeenCalledWith({ enabled: false });
     expect(useFilterTagsMock).toHaveBeenCalledWith(undefined, { enabled: false });
     expect(useProducersMock).toHaveBeenCalledWith({ enabled: false });
@@ -202,8 +201,9 @@ describe('ProductFilters layout contract', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Advanced Filter' }));
 
     await waitFor(() => {
-      expect(useProductCategoriesMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
-      expect(useProductCategoriesForCatalogsMock).toHaveBeenLastCalledWith([], { enabled: true });
+      expect(useProductCategoriesMock).toHaveBeenLastCalledWith('catalog-mentios', {
+        enabled: true,
+      });
       expect(useCatalogsMock).toHaveBeenLastCalledWith({ enabled: true });
       expect(useFilterTagsMock).toHaveBeenLastCalledWith(undefined, { enabled: true });
       expect(useProducersMock).toHaveBeenLastCalledWith({ enabled: true });
@@ -230,6 +230,7 @@ describe('ProductFilters layout contract', () => {
 
     render(<ProductFilters />);
 
+    expect(useProductCategoriesMock).toHaveBeenCalledWith('catalog-mentios', { enabled: true });
     expect(useFilterTagsMock).toHaveBeenCalledWith('catalog-1', { enabled: true });
     expect(useTitleTermsMock).toHaveBeenNthCalledWith(1, 'catalog-1', 'size', {
       enabled: true,
@@ -368,28 +369,19 @@ describe('ProductFilters layout contract', () => {
     );
   });
 
-  it('builds category options across all catalogs when Product List is scoped to all catalogs', () => {
+  it('builds category options from the Mentios tree when Product List is scoped to all catalogs', () => {
     useCatalogsMock.mockReturnValue({
       data: [
+        { id: 'catalog-mentios', name: 'Mentios' },
         { id: 'catalog-1', name: 'Catalog One' },
         { id: 'catalog-2', name: 'Catalog Two' },
       ],
     });
-    useProductCategoriesForCatalogsMock.mockReturnValue({
+    useProductCategoriesMock.mockReturnValue({
       data: [
         {
           id: 'cat-1',
-          catalogId: 'catalog-1',
-          name: 'Keychains',
-          name_en: 'Keychains',
-          name_pl: 'Breloki',
-          name_de: null,
-          color: null,
-          parentId: null,
-        },
-        {
-          id: 'cat-2',
-          catalogId: 'catalog-2',
+          catalogId: 'catalog-mentios',
           name: 'Keychains',
           name_en: 'Keychains',
           name_pl: 'Breloki',
@@ -399,7 +391,7 @@ describe('ProductFilters layout contract', () => {
         },
         {
           id: 'cat-3',
-          catalogId: 'catalog-2',
+          catalogId: 'catalog-mentios',
           name: 'Stickers',
           name_en: 'Stickers',
           name_pl: 'Naklejki',
@@ -420,16 +412,13 @@ describe('ProductFilters layout contract', () => {
     };
     const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
 
-    expect(useProductCategoriesForCatalogsMock).toHaveBeenCalledWith(
-      ['catalog-1', 'catalog-2'],
-      { enabled: true }
-    );
+    expect(useProductCategoriesMock).toHaveBeenCalledWith('catalog-mentios', { enabled: true });
+    expect(useProductCategoriesForCatalogsMock).not.toHaveBeenCalled();
     expect(categoryFilter?.options).toEqual(
       expect.arrayContaining([
         { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
         { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
-        { value: 'cat-1', label: 'Keychains (Catalog One)' },
-        { value: 'cat-2', label: 'Keychains (Catalog Two)' },
+        { value: 'cat-1', label: 'Keychains' },
         { value: 'cat-3', label: 'Stickers' },
       ])
     );
@@ -443,7 +432,7 @@ describe('ProductFilters layout contract', () => {
       data: [
         {
           id: 'cat-pins',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: 'Pins',
           name_en: 'Pins',
           name_pl: null,
@@ -454,7 +443,7 @@ describe('ProductFilters layout contract', () => {
         },
         {
           id: 'cat-keychains',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: 'Keychains',
           name_en: 'Keychains',
           name_pl: null,
@@ -465,7 +454,7 @@ describe('ProductFilters layout contract', () => {
         },
         {
           id: 'cat-anime-pins',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: 'Anime Pins',
           name_en: 'Anime Pins',
           name_pl: null,
@@ -476,7 +465,7 @@ describe('ProductFilters layout contract', () => {
         },
         {
           id: 'cat-game-pins',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: 'Game Pins',
           name_en: 'Game Pins',
           name_pl: null,
@@ -487,7 +476,7 @@ describe('ProductFilters layout contract', () => {
         },
         {
           id: 'cat-orphan',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: 'Orphan',
           name_en: 'Orphan',
           name_pl: null,
@@ -498,7 +487,7 @@ describe('ProductFilters layout contract', () => {
         },
         {
           id: 'cat-self',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: 'Self Cycle',
           name_en: 'Self Cycle',
           name_pl: null,
@@ -520,6 +509,7 @@ describe('ProductFilters layout contract', () => {
     };
     const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
 
+    expect(useProductCategoriesMock).toHaveBeenCalledWith('catalog-mentios', { enabled: true });
     expect(categoryFilter?.options).toEqual([
       { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
       { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },
@@ -550,7 +540,7 @@ describe('ProductFilters layout contract', () => {
       data: [
         {
           id: '507f1f77bcf86cd799439011',
-          catalogId: 'catalog-1',
+          catalogId: 'catalog-mentios',
           name: '   ',
           name_en: '   ',
           name_pl: null,
@@ -571,6 +561,7 @@ describe('ProductFilters layout contract', () => {
     };
     const categoryFilter = filterPanelProps.filters.find((field) => field.key === 'categoryId');
 
+    expect(useProductCategoriesMock).toHaveBeenCalledWith('catalog-mentios', { enabled: true });
     expect(categoryFilter?.options).toEqual([
       { value: PRODUCT_CATEGORY_FILTER_ALL_VALUE, label: 'All categories' },
       { value: PRODUCT_CATEGORY_FILTER_UNASSIGNED_VALUE, label: 'Unassigned' },

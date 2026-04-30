@@ -10,12 +10,10 @@ import {
   type PlaywrightVerificationInjectionConfig,
   type PlaywrightVerificationObservationLike,
   type PlaywrightObservationLoopResult,
-  type PlaywrightObservationLoopSnapshot,
   type PlaywrightVerificationReviewLoopProfile,
   type PlaywrightVerificationReviewLoopProfileOptions,
   type PlaywrightVerificationReviewProfile,
   type PlaywrightVerificationObservationLoopWithProfileOptions,
-  evaluateStepWithAI,
   evaluateStructuredPlaywrightScreenshotWithAI,
   runPlaywrightVerificationObservationLoopWithProfile,
   runPlaywrightVerificationReviewCapture,
@@ -359,22 +357,20 @@ export const commitProductScanVerificationObservation = <
     injection?: PlaywrightInjectionAttemptResult | null;
   }
 ): readonly TObservation[] => {
-  state.review = input.review;
-  state.observations.push(input.observation);
-  if (input.injection?.attempted) {
-    state.injectionAttempts.push(input.injection);
+  const mutableState = state;
+  mutableState.review = input.review;
+  mutableState.observations.push(input.observation);
+  if (input.injection?.attempted === true) {
+    mutableState.injectionAttempts.push(input.injection);
   }
-  return state.observations;
+  return mutableState.observations;
 };
 
-export const buildProductScanVerificationDiagnosticsPayload = <
-  TReview extends ProductScanVerificationReviewCloneable,
-  TObservation extends ProductScanVerificationReviewCloneable,
->(options: {
+export const buildProductScanVerificationDiagnosticsPayload = (options: {
   reviewKey: string;
   observationsKey: string;
-  review: TReview | null;
-  observations: readonly TObservation[];
+  review: ProductScanVerificationReviewCloneable | null;
+  observations: readonly ProductScanVerificationReviewCloneable[];
   injectionAttempts?: readonly PlaywrightInjectionAttemptResult[];
 }): Record<string, unknown> => {
   const payload: Record<string, unknown> = {};
@@ -390,7 +386,7 @@ export const buildProductScanVerificationDiagnosticsPayload = <
   }
 
   const attempts = options.injectionAttempts;
-  if (attempts && attempts.length > 0) {
+  if (attempts !== undefined && attempts.length > 0) {
     const successCount = attempts.filter((a) => a.done).length;
     payload['injectionAttempts'] = attempts.length;
     payload['injectionSuccesses'] = successCount;

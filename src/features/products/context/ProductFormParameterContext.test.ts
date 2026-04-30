@@ -224,6 +224,27 @@ describe('ProductFormParameterProvider', () => {
     ]);
   });
 
+  it('treats parameter definitions without linked title metadata as manual rows', () => {
+    useParametersMock.mockReturnValue({
+      data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],
+      isLoading: false,
+    });
+
+    const product = {
+      parameters: [{ parameterId: 'param-1', value: 'Used' }],
+    } as Partial<ProductWithImages> as ProductWithImages;
+
+    const wrapper = createWrapper({ product });
+    const { result } = renderHook(() => useProductFormParameters(), { wrapper });
+
+    expect(result.current.parameterValues).toEqual([
+      {
+        parameterId: 'param-1',
+        value: 'Used',
+      },
+    ]);
+  });
+
   it('keeps the parameter row when its localized value is cleared', () => {
     useParametersMock.mockReturnValue({
       data: [{ id: 'param-1', name_en: 'Condition' }] satisfies Partial<ProductParameter>[],

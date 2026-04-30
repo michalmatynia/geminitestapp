@@ -96,7 +96,14 @@ export const PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS: ProductDraftOpenFormTab[] = [
   'validation',
 ];
 
+export const productDraftKindSchema = z.enum(['standard', 'scrape_template']);
+export type ProductDraftKind = z.infer<typeof productDraftKindSchema>;
+
+export const PRODUCT_DRAFT_KIND_OPTIONS: ProductDraftKind[] = ['standard', 'scrape_template'];
+
 export const productDraftSchema = namedDtoSchema.extend({
+  draftKind: productDraftKindSchema.optional(),
+  scrapeProfileId: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
   sku: z.string().nullable().optional(),
   ean: z.string().nullable().optional(),

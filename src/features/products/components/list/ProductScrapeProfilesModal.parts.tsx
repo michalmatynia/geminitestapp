@@ -6,38 +6,56 @@ import type {
   ProductScrapeProfile,
   ProductScrapeProfileRunResponse,
 } from '@/shared/contracts/products/scrape-profiles';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { Alert } from '@/shared/ui/alert';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
+import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
+
+import { ProductScrapeProfilesResult } from './ProductScrapeProfilesModal.result';
 
 type ProductScrapeProfilesBodyProps = {
   dryRun: boolean;
   error: Error | null;
   isLoading: boolean;
+  isDraftTemplatesLoading: boolean;
   limitError: string | null;
   limitInput: string;
+  draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfile[];
   result: ProductScrapeProfileRunResponse | null;
+  selectedDraftTemplateId: string;
   selectedProfileId: string;
   onDryRunChange: (value: boolean) => void;
+  onDraftTemplateSelect: (draftTemplateId: string) => void;
   onLimitInputChange: (value: string) => void;
   onProfileSelect: (profileId: string) => void;
 };
 
 type ProductScrapeProfilesFormProps = {
   dryRun: boolean;
+  isDraftTemplatesLoading: boolean;
   limitError: string | null;
   limitInput: string;
+  draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfile[];
+  selectedDraftTemplateId: string;
   selectedProfileId: string;
   onDryRunChange: (value: boolean) => void;
+  onDraftTemplateSelect: (draftTemplateId: string) => void;
   onLimitInputChange: (value: string) => void;
   onProfileSelect: (profileId: string) => void;
 };
 
-const RESULT_ROW_LIMIT = 8;
+const NO_DRAFT_TEMPLATE_VALUE = '__no_draft_template__';
+
+type ProductScrapeDraftTemplateOption = {
+  value: string;
+  label: string;
+  description?: string;
+};
 
 const profileMeta = (profile: ProductScrapeProfile): string =>
   [
@@ -47,6 +65,20 @@ const profileMeta = (profile: ProductScrapeProfile): string =>
   ]
     .filter((entry): entry is string => entry !== null)
     .join(' / ');
+
+const hasAssignedScrapeProfile = (draft: ProductDraft): boolean =>
+  typeof draft.scrapeProfileId === 'string' && draft.scrapeProfileId.trim().length > 0;
+
+const buildDraftTemplateOptions = (
+  draftTemplates: ProductDraft[]
+): ProductScrapeDraftTemplateOption[] => [
+  { value: NO_DRAFT_TEMPLATE_VALUE, label: 'No template' },
+  ...draftTemplates.map((draft) => ({
+    value: draft.id,
+    label: draft.name,
+    description: hasAssignedScrapeProfile(draft) ? 'Profile specific' : 'Any scrape profile',
+  })),
+];
 
 function ProductScrapeProfileButton(props: {
   profile: ProductScrapeProfile;
@@ -79,19 +111,104 @@ function ProductScrapeProfileButton(props: {
   );
 }
 
+function ProductScrapeProfilesLimitField({
+  limitError,
+  limitInput,
+  onLimitInputChange,
+}: Pick<
+  ProductScrapeProfilesFormProps,
+  'limitError' | 'limitInput' | 'onLimitInputChange'
+>): React.JSX.Element {
+  return (
+    <div className='space-y-2'>
+      <Label htmlFor='product-scrape-profile-limit'>Limit</Label>
+      <Input
+        id='product-scrape-profile-limit'
+        value={limitInput}
+        onChange={(event) => onLimitInputChange(event.target.value)}
+        placeholder='All products'
+        inputMode='numeric'
+        aria-invalid={limitError !== null ? 'true' : undefined}
+      />
+      {limitError !== null ? (
+        <div className='flex items-center gap-1 text-xs text-red-300'>
+          <TriangleAlert className='size-3' aria-hidden='true' />
+          {limitError}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ProductScrapeProfilesDraftTemplateField({
+  isDraftTemplatesLoading,
+  selectedDraftTemplateId,
+  draftTemplateOptions,
+  onDraftTemplateSelect,
+}: Pick<
+  ProductScrapeProfilesFormProps,
+  'isDraftTemplatesLoading' | 'selectedDraftTemplateId' | 'onDraftTemplateSelect'
+> & {
+  draftTemplateOptions: ProductScrapeDraftTemplateOption[];
+}): React.JSX.Element {
+  return (
+    <div className='space-y-2'>
+      <Label htmlFor='product-scrape-profile-draft-template'>Draft template</Label>
+      <SelectSimple
+        id='product-scrape-profile-draft-template'
+        size='sm'
+        options={draftTemplateOptions}
+        value={
+          selectedDraftTemplateId.length > 0
+            ? selectedDraftTemplateId
+            : NO_DRAFT_TEMPLATE_VALUE
+        }
+        onValueChange={(value): void =>
+          onDraftTemplateSelect(value === NO_DRAFT_TEMPLATE_VALUE ? '' : value)
+        }
+        placeholder={isDraftTemplatesLoading ? 'Loading templates...' : 'No template'}
+        ariaLabel='Select scrape draft template'
+        title='Select scrape draft template'
+        disabled={isDraftTemplatesLoading}
+      />
+    </div>
+  );
+}
+
+function ProductScrapeProfilesDryRunField({
+  dryRun,
+  onDryRunChange,
+}: Pick<ProductScrapeProfilesFormProps, 'dryRun' | 'onDryRunChange'>): React.JSX.Element {
+  return (
+    <div className='flex items-center gap-2 self-end pb-2'>
+      <Checkbox
+        id='product-scrape-profile-dry-run'
+        checked={dryRun}
+        onCheckedChange={(checked) => onDryRunChange(checked === true)}
+      />
+      <Label htmlFor='product-scrape-profile-dry-run'>Dry run</Label>
+    </div>
+  );
+}
+
 function ProductScrapeProfilesForm(
   props: ProductScrapeProfilesFormProps
 ): React.JSX.Element {
   const {
     dryRun,
+    isDraftTemplatesLoading,
     limitError,
     limitInput,
+    draftTemplates,
     profiles,
+    selectedDraftTemplateId,
     selectedProfileId,
     onDryRunChange,
+    onDraftTemplateSelect,
     onLimitInputChange,
     onProfileSelect,
   } = props;
+  const draftTemplateOptions = buildDraftTemplateOptions(draftTemplates);
   return (
     <>
       <div className='grid gap-2 md:grid-cols-2'>
@@ -104,88 +221,21 @@ function ProductScrapeProfilesForm(
           />
         ))}
       </div>
-      <div className='grid gap-4 rounded-md border border-border/60 bg-card/35 p-4 md:grid-cols-[1fr_auto]'>
-        <div className='space-y-2'>
-          <Label htmlFor='product-scrape-profile-limit'>Limit</Label>
-          <Input
-            id='product-scrape-profile-limit'
-            value={limitInput}
-            onChange={(event) => onLimitInputChange(event.target.value)}
-            placeholder='All products'
-            inputMode='numeric'
-            aria-invalid={limitError !== null ? 'true' : undefined}
-          />
-          {limitError !== null ? (
-            <div className='flex items-center gap-1 text-xs text-red-300'>
-              <TriangleAlert className='size-3' aria-hidden='true' />
-              {limitError}
-            </div>
-          ) : null}
-        </div>
-        <div className='flex items-center gap-2 self-end pb-2'>
-          <Checkbox
-            id='product-scrape-profile-dry-run'
-            checked={dryRun}
-            onCheckedChange={(checked) => onDryRunChange(checked === true)}
-          />
-          <Label htmlFor='product-scrape-profile-dry-run'>Dry run</Label>
-        </div>
+      <div className='grid gap-4 rounded-md border border-border/60 bg-card/35 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'>
+        <ProductScrapeProfilesLimitField
+          limitError={limitError}
+          limitInput={limitInput}
+          onLimitInputChange={onLimitInputChange}
+        />
+        <ProductScrapeProfilesDraftTemplateField
+          isDraftTemplatesLoading={isDraftTemplatesLoading}
+          selectedDraftTemplateId={selectedDraftTemplateId}
+          draftTemplateOptions={draftTemplateOptions}
+          onDraftTemplateSelect={onDraftTemplateSelect}
+        />
+        <ProductScrapeProfilesDryRunField dryRun={dryRun} onDryRunChange={onDryRunChange} />
       </div>
     </>
-  );
-}
-
-function ProductScrapeProfilesResult(props: {
-  result: ProductScrapeProfileRunResponse;
-}): React.JSX.Element {
-  const { result } = props;
-  return (
-    <div className='space-y-3 rounded-md border border-border/60 bg-card/35 p-4'>
-      <div className='grid gap-2 sm:grid-cols-5'>
-        {[
-          ['Scraped', result.scrapedCount],
-          ['Created', result.createdCount],
-          ['Updated', result.updatedCount],
-          ['Skipped', result.skippedCount],
-          ['Failed', result.failedCount],
-        ].map(([label, value]) => (
-          <div key={label}>
-            <div className='text-[10px] uppercase text-muted-foreground'>{label}</div>
-            <div className='text-sm font-semibold'>{value}</div>
-          </div>
-        ))}
-      </div>
-      <div className='max-h-64 overflow-auto rounded-md border border-white/5'>
-        <table className='w-full text-left text-xs'>
-          <thead className='sticky top-0 bg-card text-muted-foreground'>
-            <tr>
-              <th className='px-3 py-2 font-medium'>Status</th>
-              <th className='px-3 py-2 font-medium'>SKU</th>
-              <th className='px-3 py-2 font-medium'>Product</th>
-            </tr>
-          </thead>
-          <tbody>
-            {result.products.slice(0, RESULT_ROW_LIMIT).map((product) => (
-              <tr
-                key={`${product.index}-${product.sku ?? 'missing'}`}
-                className='border-t border-white/5'
-              >
-                <td className='px-3 py-2 capitalize text-muted-foreground'>
-                  {product.status.replace('_', ' ')}
-                </td>
-                <td className='px-3 py-2 font-mono'>{product.sku ?? '-'}</td>
-                <td className='px-3 py-2'>
-                  <div className='max-w-[360px] truncate'>{product.title ?? '-'}</div>
-                  {product.error !== null ? (
-                    <div className='mt-1 text-[11px] text-red-300'>{product.error}</div>
-                  ) : null}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
   );
 }
 

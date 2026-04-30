@@ -23,4 +23,5 @@ export * from './errors';
 export * from './orders-import';
 export * from './scanner-settings';
 export * from './scrape-profiles';
+export * from './scrape-template-placeholders';
 export * from './scraped-source';

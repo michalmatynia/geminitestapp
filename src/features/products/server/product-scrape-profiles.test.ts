@@ -3,8 +3,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   createCatalog: vi.fn(),
   createProduct: vi.fn(),
+  captureException: vi.fn(),
   dryRun: vi.fn(),
+  ensureScrapedSourceListing: vi.fn(),
   findProductBySupplierLink: vi.fn(),
+  getDraft: vi.fn(),
   getProductBySku: vi.fn(),
   invalidateAll: vi.fn(),
   listCatalogs: vi.fn(),
@@ -27,6 +30,16 @@ vi.mock('@/features/products/performance/cached-service', () => ({
   },
 }));
 
+vi.mock('@/features/drafter/services/draft-service', () => ({
+  getDraft: mocks.getDraft,
+}));
+
+vi.mock('@/shared/utils/observability/error-system', () => ({
+  ErrorSystem: {
+    captureException: mocks.captureException,
+  },
+}));
+
 vi.mock('@/shared/lib/products/services/catalog-repository', () => ({
   getCatalogRepository: async () => ({
     createCatalog: mocks.createCatalog,
@@ -41,6 +54,10 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
     getProductBySku: mocks.getProductBySku,
     updateProduct: mocks.updateProduct,
   },
+}));
+
+vi.mock('./product-scraped-source-common', () => ({
+  ensureScrapedSourceListing: mocks.ensureScrapedSourceListing,
 }));
 
 import {
@@ -124,12 +141,15 @@ describe('product scrape profiles', () => {
     mocks.registryGet.mockResolvedValue(scripterDefinition);
     mocks.listCatalogs.mockResolvedValue([battleStockCatalog]);
     mocks.dryRun.mockResolvedValue(makeSource([makeDraft()]));
+    mocks.getDraft.mockResolvedValue(null);
     mocks.getProductBySku.mockResolvedValue(null);
     mocks.findProductBySupplierLink.mockResolvedValue(null);
     mocks.createProduct.mockResolvedValue({
       id: 'product-created',
       sku: 'BATTLESTOCK-13033',
     });
+    mocks.captureException.mockResolvedValue(undefined);
+    mocks.ensureScrapedSourceListing.mockResolvedValue({});
     mocks.updateProduct.mockResolvedValue({
       id: 'product-updated',
       sku: 'BATTLESTOCK-13033',
@@ -182,7 +202,30 @@ describe('product scrape profiles', () => {
     );
     expect(response.createdCount).toBe(1);
     expect(response.catalog.name).toBe('BattleStock');
+    expect(mocks.ensureScrapedSourceListing).toHaveBeenCalledWith('product-created', 'linked');
     expect(mocks.invalidateAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the product import successful when scraped source linking fails', async () => {
+    const linkError = new Error('listing write failed');
+    mocks.ensureScrapedSourceListing.mockRejectedValueOnce(linkError);
+
+    const response = await runProductScrapeProfile({
+      profileId: 'battlestock-warhammer-40k-30k',
+      limit: 1,
+    });
+
+    expect(response.createdCount).toBe(1);
+    expect(response.failedCount).toBe(0);
+    expect(mocks.captureException).toHaveBeenCalledWith(
+      linkError,
+      expect.objectContaining({
+        service: 'product-scrape-profiles',
+        action: 'linkPersistedScrapedProduct',
+        productId: 'product-created',
+        sourceUrl: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+      })
+    );
   });
 
   it('updates existing SKU matches and preserves their other catalog memberships', async () => {
@@ -207,6 +250,7 @@ describe('product scrape profiles', () => {
     );
     expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(response.updatedCount).toBe(1);
+    expect(mocks.ensureScrapedSourceListing).toHaveBeenCalledWith('product-updated', 'linked');
   });
 
   it('updates existing source URL matches when the scraped SKU changed', async () => {
@@ -235,6 +279,7 @@ describe('product scrape profiles', () => {
     );
     expect(mocks.createProduct).not.toHaveBeenCalled();
     expect(response.updatedCount).toBe(1);
+    expect(mocks.ensureScrapedSourceListing).toHaveBeenCalledWith('product-updated', 'linked');
   });
 
   it('skips duplicate scraped candidates within a single run', async () => {
@@ -265,6 +310,132 @@ describe('product scrape profiles', () => {
     });
   });
 
+  it('renders selected scrape template placeholders into created products', async () => {
+    mocks.getDraft.mockResolvedValue({
+      id: 'draft-template-1',
+      name: 'BattleStock pendant template',
+      draftKind: 'scrape_template',
+      scrapeProfileId: 'battlestock-warhammer-40k-30k',
+      name_pl: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+      supplierName: 'BattleStock',
+      supplierLink: '[sourceUrl]',
+      priceComment: 'Scraped [price] [currency]',
+      ean: '[externalId]',
+      price: 99,
+      weight: 0.2,
+      sizeLength: 5,
+      sizeWidth: 1,
+      length: 5,
+      stock: 4,
+      defaultPriceGroupId: 'price-group-retail',
+      shippingGroupId: 'shipping-small',
+      catalogIds: ['catalog-template'],
+      categoryId: 'category-pendants',
+      tagIds: ['tag-warhammer'],
+      producerIds: ['producer-games-workshop'],
+      customFields: [{ fieldId: 'source-url', textValue: '[sourceUrl]' }],
+      parameters: [
+        { parameterId: 'source-brand', value: '[brand]' },
+        {
+          parameterId: 'material',
+          value: 'Metal',
+          valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+          skipParameterInference: true,
+        },
+      ],
+      marketplaceContentOverrides: [
+        {
+          integrationIds: ['integration-allegro'],
+          title: '[name] custom listing',
+          description: '[description]',
+        },
+      ],
+      notes: { text: 'Scraped category [category]', color: '#60a5fa' },
+    });
+    mocks.dryRun.mockResolvedValue(
+      makeSource([
+        {
+          ...makeDraft(),
+          mapped: {
+            title: '40k spiritseer',
+            description: 'Psyker unit',
+            price: 60,
+            currency: 'PLN',
+            images: [],
+            sku: null,
+            ean: null,
+            brand: 'Games Workshop',
+            category: 'Eldar / Aeldari',
+            sourceUrl: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+            externalId: '13033',
+            raw: {},
+          },
+          raw: {
+            product_id: '13033',
+            name: '40k spiritseer',
+            price_raw: '60',
+            currency: 'PLN',
+            producer: 'Games Workshop',
+          },
+        },
+      ])
+    );
+
+    const response = await runProductScrapeProfile({
+      profileId: 'battlestock-warhammer-40k-30k',
+      draftTemplateId: 'draft-template-1',
+    });
+
+    expect(mocks.getDraft).toHaveBeenCalledWith('draft-template-1');
+    expect(mocks.createProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name_pl: '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+        supplierLink: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+        priceComment: 'Scraped 60 PLN',
+        ean: '13033',
+        price: 99,
+        weight: 0.2,
+        sizeLength: 5,
+        sizeWidth: 1,
+        length: 5,
+        stock: 4,
+        defaultPriceGroupId: 'price-group-retail',
+        shippingGroupId: 'shipping-small',
+        categoryId: 'category-pendants',
+        tagIds: ['tag-warhammer'],
+        producerIds: ['producer-games-workshop'],
+        customFields: [
+          {
+            fieldId: 'source-url',
+            textValue: 'https://www.battle-stock.pl/pl/p/40k-spiritseer/13033',
+          },
+        ],
+        parameters: [
+          { parameterId: 'source-brand', value: 'Games Workshop' },
+          {
+            parameterId: 'material',
+            value: 'Metal',
+            valuesByLanguage: { en: 'Metal', pl: 'Metal PL' },
+            skipParameterInference: true,
+          },
+        ],
+        marketplaceContentOverrides: [
+          {
+            integrationIds: ['integration-allegro'],
+            title: '40k spiritseer custom listing',
+            description: 'Psyker unit',
+          },
+        ],
+        notes: { text: 'Scraped category Eldar / Aeldari', color: '#60a5fa' },
+        sourcePrice: 60,
+      }),
+      undefined
+    );
+    expect(response.products[0]?.title).toBe(
+      '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k'
+    );
+  });
+
   it('supports dry runs without mutating products', async () => {
     const response = await runProductScrapeProfile({
       profileId: 'battlestock-warhammer-40k-30k',
@@ -275,6 +446,29 @@ describe('product scrape profiles', () => {
     expect(mocks.updateProduct).not.toHaveBeenCalled();
     expect(mocks.invalidateAll).not.toHaveBeenCalled();
     expect(response.products[0]?.status).toBe('dry_run');
+  });
+
+  it('renders selected scrape template placeholders in dry run results', async () => {
+    mocks.getDraft.mockResolvedValue({
+      id: 'draft-template-1',
+      name: 'BattleStock pendant template',
+      draftKind: 'scrape_template',
+      scrapeProfileId: 'battlestock-warhammer-40k-30k',
+      name_pl: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+    });
+
+    const response = await runProductScrapeProfile({
+      profileId: 'battlestock-warhammer-40k-30k',
+      draftTemplateId: 'draft-template-1',
+      dryRun: true,
+    });
+
+    expect(mocks.createProduct).not.toHaveBeenCalled();
+    expect(mocks.updateProduct).not.toHaveBeenCalled();
+    expect(response.products[0]).toMatchObject({
+      status: 'dry_run',
+      title: '40k spiritseer | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
+    });
   });
 
   it('creates the BattleStock catalog when it does not exist', async () => {

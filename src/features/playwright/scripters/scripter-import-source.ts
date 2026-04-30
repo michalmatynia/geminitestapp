@@ -12,7 +12,7 @@ import {
   type DryRunSummary,
 } from './scripter-dry-run';
 import type { ScripterRunResult } from './scripter-runner';
-import type { ScripterDefinition } from './types';
+import type { MappedScripterRecord, ScripterDefinition } from './types';
 
 export type ScripterImportSourceMeta = {
   type: 'scripter';
@@ -26,6 +26,7 @@ export type ScripterImportSourceMeta = {
 export type ScripterImportDraft = {
   index: number;
   externalId: string | null;
+  mapped?: MappedScripterRecord;
   draft: CreateProductDraftInput;
   raw: Record<string, unknown>;
   issues: DryRunRecord['issues'];
@@ -76,6 +77,7 @@ export const resolveScripterImportSource = async (
     drafts.push({
       index: record.index,
       externalId: deriveExternalId(record),
+      mapped: record.mapped,
       draft: buildScripterDraftInput(record.mapped, catalogDefaults),
       raw: record.raw,
       issues: record.issues,

@@ -15,7 +15,10 @@ import type { ProductParameter } from '@/shared/contracts/products/parameters';
 import type { PriceGroupWithDetails, ProductWithImages } from '@/shared/contracts/products/product';
 import type { Producer } from '@/shared/contracts/products/producers';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import { api } from '@/shared/lib/api-client';
+import {
+  DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID,
+  resolveDefaultProductCategoryTreeCatalogId,
+} from '@/shared/lib/products/default-category-tree';
 import { matchesPriceGroupIdentifier } from '@/shared/lib/products/utils/price-group-identifiers';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
@@ -258,69 +261,16 @@ export function useProductMetadata({
   }, [initialProducerSelection]);
 
   const primaryCatalogId = selectedCatalogIds[0] ?? '';
-  const categoriesQuery = useCategoriesForCatalogs(selectedCatalogIds);
+  const categoryTreeCatalogId =
+    resolveDefaultProductCategoryTreeCatalogId(catalogsQuery.data ?? []) ??
+    (catalogsQuery.isLoading ? null : DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID);
+  const categoriesQuery = useCategoriesForCatalogs(
+    categoryTreeCatalogId !== null ? [categoryTreeCatalogId] : []
+  );
   const shippingGroupsQuery = useShippingGroups(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);
   const categories = categoriesQuery.data ?? [];
-  const isSelectedCategoryInPrimaryCatalog = React.useMemo((): boolean => {
-    if (selectedCategoryId === null) return true;
-    return categories.some((category: ProductCategory) => category.id === selectedCategoryId);
-  }, [categories, selectedCategoryId]);
-  const attemptedCategoryCatalogResolutionsRef = React.useRef<Set<string>>(new Set());
-
-  React.useEffect(() => {
-    attemptedCategoryCatalogResolutionsRef.current.clear();
-  }, [initialCategorySelection, product?.id]);
-
-  React.useEffect(() => {
-    if ((product?.id ?? null) === null) return;
-    if (selectedCategoryId === null) return;
-    if (selectedCategoryId !== initialCategorySelection) return;
-    if (arraysEqual(selectedCatalogIds, initialCatalogSelection) === false) return;
-    if (categoriesQuery.isLoading === true) return;
-    if (isSelectedCategoryInPrimaryCatalog === true) return;
-
-    const resolutionKey = `${selectedCategoryId}:${primaryCatalogId !== '' ? primaryCatalogId : 'none'}`;
-    if (attemptedCategoryCatalogResolutionsRef.current.has(resolutionKey)) return;
-    attemptedCategoryCatalogResolutionsRef.current.add(resolutionKey);
-
-    let cancelled = false;
-    void api
-      .get<ProductCategory>(
-        `/api/v2/products/categories/${encodeURIComponent(selectedCategoryId)}`,
-        {
-          logError: false,
-        }
-      )
-      .then((category: ProductCategory) => {
-        if (cancelled === true) return;
-        const categoryCatalogId =
-          typeof category?.catalogId === 'string' ? category.catalogId.trim() : '';
-        if (categoryCatalogId === '') return;
-        setSelectedCatalogIds((prev: string[]) => {
-          if (prev[0] === categoryCatalogId) return prev;
-          const withoutCurrent = prev.filter((id: string) => id !== categoryCatalogId);
-          return [categoryCatalogId, ...withoutCurrent];
-        });
-      })
-      .catch(() => {
-        // Best effort fallback only.
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    categoriesQuery.isLoading,
-    initialCatalogSelection,
-    initialCategorySelection,
-    isSelectedCategoryInPrimaryCatalog,
-    primaryCatalogId,
-    product?.id,
-    selectedCategoryId,
-    selectedCatalogIds,
-  ]);
 
   const toggleCatalog = (catalogId: string): void => {
     setSelectedCatalogIds((prev: string[]) =>
@@ -333,18 +283,6 @@ export function useProductMetadata({
   const setCategoryId = (categoryId: string | null): void => {
     const trimmed = typeof categoryId === 'string' ? categoryId.trim() : '';
     setSelectedCategoryId(trimmed !== '' ? trimmed : null);
-    if (trimmed === '') return;
-
-    const categoryCatalogId =
-      categories.find((category: ProductCategory) => category.id === trimmed)?.catalogId?.trim() ??
-      '';
-    if (categoryCatalogId === '') return;
-
-    setSelectedCatalogIds((prev: string[]) => {
-      if (prev[0] === categoryCatalogId) return prev;
-      const withoutCategoryCatalog = prev.filter((id: string) => id !== categoryCatalogId);
-      return [categoryCatalogId, ...withoutCategoryCatalog];
-    });
   };
 
   const toggleTag = (tagId: string): void => {
@@ -450,7 +388,7 @@ export function useProductMetadata({
     selectedCatalogIds,
     toggleCatalog,
     categories,
-    categoriesLoading: categoriesQuery.isLoading,
+    categoriesLoading: catalogsQuery.isLoading || categoriesQuery.isLoading,
     selectedCategoryId,
     setCategoryId,
     shippingGroups: shippingGroupsQuery.data ?? [],

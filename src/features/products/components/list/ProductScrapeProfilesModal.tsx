@@ -10,16 +10,21 @@ import {
 import { Play } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
+import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
 import type {
   ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
   ProductScrapeProfilesListResponse,
 } from '@/shared/contracts/products/scrape-profiles';
+import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { AppModal } from '@/shared/ui/app-modal';
 import { Button } from '@/shared/ui/button';
 import { useToast } from '@/shared/ui/toast';
 import { api } from '@/shared/lib/api-client';
-import { invalidateProductsAndCounts } from '@/shared/lib/query-invalidation';
+import {
+  invalidateListingBadges,
+  invalidateProductsAndCounts,
+} from '@/shared/lib/query-invalidation';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { ProductScrapeProfilesBody } from './ProductScrapeProfilesModal.parts';
@@ -34,16 +39,40 @@ type ProductScrapeProfilesController = {
   error: Error | null;
   isBusy: boolean;
   isLoading: boolean;
+  isDraftTemplatesLoading: boolean;
   canRun: boolean;
   limitError: string | null;
   limitInput: string;
+  draftTemplates: ProductDraft[];
   profiles: ProductScrapeProfilesListResponse['profiles'];
   result: ProductScrapeProfileRunResponse | null;
+  selectedDraftTemplateId: string;
   selectedProfileId: string;
   onDryRunChange: (value: boolean) => void;
+  onDraftTemplateSelect: (draftTemplateId: string) => void;
   onLimitInputChange: (value: string) => void;
   onProfileSelect: (profileId: string) => void;
   onRun: () => void;
+};
+
+type ProductScrapeProfileQueries = {
+  draftsQuery: ReturnType<typeof useDraftQueries>;
+  profiles: ProductScrapeProfilesListResponse['profiles'];
+  profilesQuery: UseQueryResult<ProductScrapeProfilesListResponse, Error>;
+  selectedProfile: ProductScrapeProfilesListResponse['profiles'][number] | null;
+  draftTemplates: ProductDraft[];
+};
+
+type ProductScrapeProfileSelectionEffectsInput = Pick<
+  ProductScrapeProfileQueries,
+  'profiles' | 'selectedProfile' | 'draftTemplates'
+> & {
+  isOpen: boolean;
+  draftTemplateId: string;
+  setDraftTemplateId: (value: string) => void;
+  setLimitInput: (value: string) => void;
+  setProfileId: React.Dispatch<React.SetStateAction<string>>;
+  setResult: (result: ProductScrapeProfileRunResponse | null) => void;
 };
 
 const SCRAPE_RUN_TIMEOUT_MS = 300_000;
@@ -96,7 +125,10 @@ const useRunScrapeProfileMutation = (
     onSuccess: async (response) => {
       setResult(response);
       if (!response.dryRun) {
-        await invalidateProductsAndCounts(queryClient);
+        await Promise.all([
+          invalidateProductsAndCounts(queryClient),
+          invalidateListingBadges(queryClient),
+        ]);
       }
       toast(buildToastMessage(response), { variant: resultVariant(response) });
     },
@@ -119,14 +151,12 @@ const useScrapeProfilesQuery = (
     staleTime: 60_000,
   });
 
-const useProductScrapeProfilesController = (
-  isOpen: boolean
-): ProductScrapeProfilesController => {
-  const [profileId, setProfileId] = useState('');
-  const [limitInput, setLimitInput] = useState('');
-  const [dryRun, setDryRun] = useState(false);
-  const [result, setResult] = useState<ProductScrapeProfileRunResponse | null>(null);
+const useProductScrapeProfileQueries = (
+  isOpen: boolean,
+  profileId: string
+): ProductScrapeProfileQueries => {
   const profilesQuery = useScrapeProfilesQuery(isOpen);
+  const draftsQuery = useDraftQueries(undefined, { enabled: isOpen });
   const profiles = useMemo(
     () => profilesQuery.data?.profiles ?? [],
     [profilesQuery.data?.profiles]
@@ -135,14 +165,35 @@ const useProductScrapeProfilesController = (
     () => profiles.find((profile) => profile.id === profileId) ?? null,
     [profileId, profiles]
   );
-  const parsedLimit = useMemo(() => parseLimit(limitInput), [limitInput]);
-  const runMutation = useRunScrapeProfileMutation(setResult);
+  const draftTemplates = useMemo(
+    () =>
+      (draftsQuery.data ?? []).filter((draft) => {
+        if (draft.draftKind !== 'scrape_template') return false;
+        const assignedProfileId = draft.scrapeProfileId?.trim() ?? '';
+        return assignedProfileId.length === 0 || assignedProfileId === profileId;
+      }),
+    [draftsQuery.data, profileId]
+  );
 
+  return { draftsQuery, profiles, profilesQuery, selectedProfile, draftTemplates };
+};
+
+const useProductScrapeProfileSelectionEffects = ({
+  isOpen,
+  profiles,
+  selectedProfile,
+  draftTemplateId,
+  draftTemplates,
+  setDraftTemplateId,
+  setLimitInput,
+  setProfileId,
+  setResult,
+}: ProductScrapeProfileSelectionEffectsInput): void => {
   useEffect(() => {
-    if (!isOpen || profiles.length === 0) return;
+    if (isOpen !== true || profiles.length === 0) return;
     const firstProfileId = profiles[0]?.id ?? '';
     setProfileId((current) => (current.length > 0 ? current : firstProfileId));
-  }, [isOpen, profiles]);
+  }, [isOpen, profiles, setProfileId]);
 
   useEffect(() => {
     if (selectedProfile === null) return;
@@ -150,7 +201,39 @@ const useProductScrapeProfilesController = (
       selectedProfile.defaultLimit !== null ? String(selectedProfile.defaultLimit) : '';
     setLimitInput(nextLimit);
     setResult(null);
-  }, [selectedProfile?.id]);
+  }, [selectedProfile?.id, selectedProfile?.defaultLimit, setLimitInput, setResult]);
+
+  useEffect(() => {
+    if (draftTemplateId.length === 0) return;
+    const templateStillAvailable = draftTemplates.some((draft) => draft.id === draftTemplateId);
+    if (!templateStillAvailable) setDraftTemplateId('');
+  }, [draftTemplateId, draftTemplates, setDraftTemplateId]);
+};
+
+const useProductScrapeProfilesController = (
+  isOpen: boolean
+): ProductScrapeProfilesController => {
+  const [profileId, setProfileId] = useState('');
+  const [draftTemplateId, setDraftTemplateId] = useState('');
+  const [limitInput, setLimitInput] = useState('');
+  const [dryRun, setDryRun] = useState(false);
+  const [result, setResult] = useState<ProductScrapeProfileRunResponse | null>(null);
+  const { profilesQuery, draftsQuery, profiles, selectedProfile, draftTemplates } =
+    useProductScrapeProfileQueries(isOpen, profileId);
+  const parsedLimit = useMemo(() => parseLimit(limitInput), [limitInput]);
+  const runMutation = useRunScrapeProfileMutation(setResult);
+
+  useProductScrapeProfileSelectionEffects({
+    isOpen,
+    profiles,
+    selectedProfile,
+    draftTemplateId,
+    draftTemplates,
+    setDraftTemplateId,
+    setLimitInput,
+    setProfileId,
+    setResult,
+  });
 
   const handleRun = (): void => {
     if (profileId.length === 0 || parsedLimit === undefined) return;
@@ -159,6 +242,7 @@ const useProductScrapeProfilesController = (
       dryRun,
       skipRecordsWithErrors: true,
       ...(parsedLimit !== null ? { limit: parsedLimit } : {}),
+      ...(draftTemplateId.length > 0 ? { draftTemplateId } : {}),
     });
   };
 
@@ -170,13 +254,17 @@ const useProductScrapeProfilesController = (
     error: profilesQuery.error,
     isBusy,
     isLoading: profilesQuery.isLoading,
+    isDraftTemplatesLoading: draftsQuery.isLoading,
     canRun,
     limitError: parsedLimit === undefined ? 'Limit must be a positive whole number.' : null,
     limitInput,
+    draftTemplates,
     profiles,
     result,
+    selectedDraftTemplateId: draftTemplateId,
     selectedProfileId: profileId,
     onDryRunChange: setDryRun,
+    onDraftTemplateSelect: setDraftTemplateId,
     onLimitInputChange: setLimitInput,
     onProfileSelect: setProfileId,
     onRun: handleRun,
@@ -219,12 +307,16 @@ export function ProductScrapeProfilesModal(
         dryRun={controller.dryRun}
         error={controller.error}
         isLoading={controller.isLoading}
+        isDraftTemplatesLoading={controller.isDraftTemplatesLoading}
         limitError={controller.limitError}
         limitInput={controller.limitInput}
+        draftTemplates={controller.draftTemplates}
         profiles={controller.profiles}
         result={controller.result}
+        selectedDraftTemplateId={controller.selectedDraftTemplateId}
         selectedProfileId={controller.selectedProfileId}
         onDryRunChange={controller.onDryRunChange}
+        onDraftTemplateSelect={controller.onDraftTemplateSelect}
         onLimitInputChange={controller.onLimitInputChange}
         onProfileSelect={controller.onProfileSelect}
       />

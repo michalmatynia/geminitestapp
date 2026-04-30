@@ -53,8 +53,15 @@ describe('useProductMetadata', () => {
           languageIds: [],
           priceGroupIds: ['PLN_STANDARD'],
         },
+        {
+          id: 'catalog-mentios',
+          name: 'Mentios',
+          languageIds: [],
+          priceGroupIds: [],
+        },
       ],
       isSuccess: true,
+      isLoading: false,
     });
     mocks.useLanguages.mockReturnValue({
       data: [],
@@ -157,23 +164,23 @@ describe('useProductMetadata', () => {
     expect(mocks.useParameters).toHaveBeenCalledWith('catalog-1');
   });
 
-  it('loads category options from every selected catalog', () => {
+  it('loads category options from the Mentios tree regardless of selected product catalogs', () => {
     renderHook(() =>
       useProductMetadata({
         initialCatalogIds: ['catalog-1', 'catalog-2'],
       })
     );
 
-    expect(mocks.useCategoriesForCatalogs).toHaveBeenCalledWith(['catalog-1', 'catalog-2']);
+    expect(mocks.useCategoriesForCatalogs).toHaveBeenCalledWith(['catalog-mentios']);
   });
 
-  it('promotes the chosen category catalog so parameters follow the category', () => {
+  it('does not promote the chosen category catalog into the product catalog selection', () => {
     mocks.useCategoriesForCatalogs.mockReturnValue({
       data: [
         {
           id: 'category-foam-hammer',
           name: 'Foam Hammer',
-          catalogId: 'catalog-2',
+          catalogId: 'catalog-mentios',
           parentId: null,
         },
       ],
@@ -191,6 +198,6 @@ describe('useProductMetadata', () => {
     });
 
     expect(result.current.selectedCategoryId).toBe('category-foam-hammer');
-    expect(result.current.selectedCatalogIds).toEqual(['catalog-2', 'catalog-1']);
+    expect(result.current.selectedCatalogIds).toEqual(['catalog-1', 'catalog-2']);
   });
 });

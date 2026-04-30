@@ -455,7 +455,8 @@ export const mongoProductReadImpl = {
     getCollection: () => Promise<Collection<ProductDocument>>
   ) {
     const collection = await getCollection();
-    const doc = await collection.findOne({ supplierLink } as Filter<ProductDocument>);
+    const filter: Filter<ProductDocument> = { supplierLink };
+    const doc = await collection.findOne(filter);
     if (!doc) return null;
     return toProductResponse(doc);
   },

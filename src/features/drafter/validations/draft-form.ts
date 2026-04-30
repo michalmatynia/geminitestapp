@@ -1,12 +1,17 @@
 import { z } from 'zod';
 
-import { PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS } from '@/shared/contracts/products/drafts';
+import {
+  PRODUCT_DRAFT_KIND_OPTIONS,
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+} from '@/shared/contracts/products/drafts';
 
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
 export const draftSubmitSchema = z
   .object({
     name: z.string().trim().min(1, 'Draft name is required'),
+    draftKind: z.enum(PRODUCT_DRAFT_KIND_OPTIONS).optional(),
+    scrapeProfileId: z.string().trim().nullable().optional(),
     iconColorMode: z.enum(['theme', 'custom']),
     iconColor: z.string().trim().optional().nullable(),
     openProductFormTab: z.enum(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS),

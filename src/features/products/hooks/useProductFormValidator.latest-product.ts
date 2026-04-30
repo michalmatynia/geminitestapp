@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import * as productsApi from '@/features/products/api/products';
 import { resolveLatestProductValidatorSourceValues } from '@/features/products/hooks/validator/validator-utils';
 import type { ProductValidationPattern } from '@/shared/contracts/products/validation';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { hasLatestProductSourcePattern } from './useProductFormValidator.helpers';
@@ -16,7 +16,7 @@ type UseProductFormValidatorLatestProductValuesArgs = {
   validatorPatterns: ProductValidationPattern[];
 };
 
-type LatestProductSourceQueryOptions = Parameters<typeof createListQueryV2>[0];
+type LatestProductSourceQueryOptions = Parameters<typeof useListQueryV2>[0];
 
 const buildLatestProductSourceQueryOptions = ({
   enabled,
@@ -55,7 +55,7 @@ export const useProductFormValidatorLatestProductValues = ({
     [validatorPatterns]
   );
   const latestProductsQueryKey = QUERY_KEYS.products.validatorLatestProductSource();
-  const latestProductsQuery = createListQueryV2(
+  const latestProductsQuery = useListQueryV2(
     buildLatestProductSourceQueryOptions({
       enabled: validatorEnabled && needsLatestProductSource,
       queryKey: latestProductsQueryKey,

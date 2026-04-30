@@ -31,6 +31,7 @@ const {
 
 vi.mock('@/shared/lib/query-factories-v2', () => ({
   createListQueryV2: (config: unknown) => createListQueryV2Mock(config),
+  useListQueryV2: (config: unknown) => createListQueryV2Mock(config),
 }));
 
 vi.mock('@/features/products/api/products', () => ({

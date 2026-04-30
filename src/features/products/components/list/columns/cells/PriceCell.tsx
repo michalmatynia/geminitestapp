@@ -78,6 +78,11 @@ function PriceCellContentIndicator({ info }: { info: PriceInfo }): React.JSX.Ele
   );
 }
 
+const shouldRenderCalculatedPrice = (
+  productPrice: number | null,
+  displayPrice: number | null
+): displayPrice is number => displayPrice !== null && displayPrice !== productPrice;
+
 function PriceCellContent({ product, info, currencyCode }: { product: ProductWithImages, info: PriceInfo, currencyCode: string }): React.JSX.Element {
   const isConverted = resolveConvertedPrice(product.price, info.price, info.baseCurrencyCode, currencyCode);
 
@@ -85,7 +90,7 @@ function PriceCellContent({ product, info, currencyCode }: { product: ProductWit
     return <ConvertedPriceDisplay displayPrice={info.price} productPrice={product.price} baseCurrencyCode={info.baseCurrencyCode} />;
   }
 
-  if (product.price === null && info.price !== null) {
+  if (shouldRenderCalculatedPrice(product.price, info.price)) {
     return <CalculatedPriceDisplay displayPrice={info.price} />;
   }
 

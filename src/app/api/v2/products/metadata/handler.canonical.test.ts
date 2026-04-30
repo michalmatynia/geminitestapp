@@ -191,6 +191,60 @@ describe('v2 products metadata handler canonical contract', () => {
     );
   });
 
+  it('creates sourcePrice-backed dependent price groups without a sourceGroupId', async () => {
+    const currencyFindOneMock = vi.fn().mockResolvedValue({
+      id: 'PLN',
+      code: 'PLN',
+      name: 'Polish Zloty',
+      symbol: 'zł',
+    });
+    const priceGroupsFindOneMock = vi.fn().mockResolvedValue(null);
+    const priceGroupsInsertOneMock = vi.fn().mockResolvedValue({
+      acknowledged: true,
+      insertedId: 'mongo-price-group-3',
+    });
+
+    getMongoDbMock.mockResolvedValue(
+      createMongoMock({
+        currencies: {
+          findOne: currencyFindOneMock,
+        },
+        price_groups: {
+          findOne: priceGroupsFindOneMock,
+          insertOne: priceGroupsInsertOneMock,
+        },
+      })
+    );
+
+    const request = new NextRequest('http://localhost/api/v2/products/metadata/price-groups', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Retail from Source',
+        currencyCode: 'PLN',
+        type: 'dependent',
+        basePriceField: 'sourcePrice',
+        priceMultiplier: 2,
+      }),
+    });
+
+    await postProductsMetadataHandler(
+      request,
+      {} as Parameters<typeof postProductsMetadataHandler>[1],
+      { type: 'price-groups' }
+    );
+
+    expect(priceGroupsInsertOneMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Retail from Source',
+        sourceGroupId: null,
+        basePriceField: 'sourcePrice',
+        type: 'dependent',
+        priceMultiplier: 2,
+      })
+    );
+  });
+
   it('reads price-groups from mongo collections', async () => {
     const priceGroupsToArrayMock = vi.fn().mockResolvedValue([
       {

@@ -33,6 +33,7 @@ describe('products metadata handler helpers', () => {
     expect(resolvePriceGroupType(' dependent ', 'base-group')).toBe('dependent');
     expect(resolvePriceGroupType(undefined, 'base-group')).toBe('dependent');
     expect(resolvePriceGroupType(undefined, null)).toBe('standard');
+    expect(resolvePriceGroupType(undefined, null, 'sourcePrice')).toBe('dependent');
 
     expect(() =>
       assertValidPriceGroupTypeDependencies({

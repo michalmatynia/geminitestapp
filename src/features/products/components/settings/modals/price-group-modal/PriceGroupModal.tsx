@@ -10,10 +10,8 @@ import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder
 import type { SettingsPanelField } from '@/shared/contracts/ui/settings';
 
 import { useProductSettingsPriceGroupsContext } from '../../ProductSettingsContext';
-import {
-  PRODUCT_SOURCE_PRICE_SOURCE_ID,
-  usePriceGroupForm,
-} from './hooks/usePriceGroupForm';
+import { PRODUCT_SOURCE_PRICE_SOURCE_ID } from './hooks/priceGroupSourceSelection';
+import { usePriceGroupForm } from './hooks/usePriceGroupForm';
 
 interface PriceGroupModalProps extends EntityModalProps<PriceGroup> {}
 
@@ -166,8 +164,10 @@ export function PriceGroupModal(props: PriceGroupModalProps): React.JSX.Element 
   );
 
   const handleSave = async (): Promise<void> => {
-    await handleFormSubmit();
-    onSuccess?.();
+    const saved = await handleFormSubmit();
+    if (saved) {
+      onSuccess?.();
+    }
   };
 
   const fields = usePriceGroupFields({

@@ -52,6 +52,16 @@ const resolveNumberDefault = (
     0
   );
 
+const resolveOptionalNumberDefault = (
+  { product, draft }: ProductFormDefaultsInput,
+  key: keyof ProductWithImages & keyof ProductDraft
+): number | undefined =>
+  firstDefined(
+    product?.[key] as number | null | undefined,
+    draft?.[key] as number | null | undefined,
+    undefined
+  );
+
 const resolveOptionalDefault = <T,>(
   { product, draft }: ProductFormDefaultsInput,
   key: keyof ProductWithImages & keyof ProductDraft,
@@ -121,6 +131,12 @@ const resolveNumericDefaults = (input: ProductFormDefaultsInput): Pick<
   length: resolveNumberDefault(input, 'length'),
 });
 
+const resolveOptionalNumericDefaults = (
+  input: ProductFormDefaultsInput
+): Pick<ProductFormData, 'sourcePrice'> => ({
+  sourcePrice: resolveOptionalNumberDefault(input, 'sourcePrice'),
+});
+
 const resolveOptionalIdDefaults = (input: ProductFormDefaultsInput): Pick<
   ProductFormData,
   'baseProductId' | 'defaultPriceGroupId' | 'importSource' | 'shippingGroupId'
@@ -166,6 +182,7 @@ export const resolveProductFormDefaultValues = (
   ...resolveIdentifierDefaults(input),
   ...resolveDescriptionDefaults(input),
   ...resolveNumericDefaults(input),
+  ...resolveOptionalNumericDefaults(input),
   ...resolveOptionalIdDefaults(input),
   ...resolveMarketplaceContentDefaults(input),
   notes: normalizeProductFormNotes(input.product?.notes ?? input.draft?.notes ?? undefined),

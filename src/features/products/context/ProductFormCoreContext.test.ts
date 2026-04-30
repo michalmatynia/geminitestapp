@@ -131,6 +131,20 @@ describe('resolveProductFormDefaultValues', () => {
       color: '#fde68a',
     });
   });
+
+  it('hydrates source price without defaulting missing scraped prices to zero', () => {
+    expect(
+      resolveProductFormDefaultValues({
+        product: createProduct({ sourcePrice: 42.5 }),
+      }).sourcePrice
+    ).toBe(42.5);
+
+    expect(
+      resolveProductFormDefaultValues({
+        product: createProduct({ sourcePrice: null }),
+      }).sourcePrice
+    ).toBeUndefined();
+  });
 });
 
 function ImportSourceProbe(): React.JSX.Element {

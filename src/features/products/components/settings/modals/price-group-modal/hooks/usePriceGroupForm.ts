@@ -12,6 +12,13 @@ import { useToast } from '@/shared/ui/toast';
 
 import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
 
+import {
+  isProductSourcePriceSelected,
+  normalizeSourceGroupId,
+  resolveInitialSourceGroupId,
+  wouldCreateSourceGroupCycle,
+} from './priceGroupSourceSelection';
+
 interface PriceGroupFormState {
   name: string;
   currencyCode: string;
@@ -31,11 +38,10 @@ interface UsePriceGroupFormReturn {
   form: PriceGroupFormState;
   setForm: React.Dispatch<React.SetStateAction<PriceGroupFormState>>;
   saveMutation: ReturnType<typeof useSavePriceGroupMutation>;
-  handleSubmit: () => Promise<void>;
+  handleSubmit: () => Promise<boolean>;
 }
 
 const EMPTY_PRICE_GROUPS: PriceGroup[] = [];
-export const PRODUCT_SOURCE_PRICE_SOURCE_ID = '__product_source_price__';
 
 const toTrimmedString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -43,94 +49,13 @@ const toTrimmedString = (value: unknown): string =>
 const hasText = (value: string | null | undefined): value is string =>
   typeof value === 'string' && value.length > 0;
 
-const normalizeSourceGroupId = (
-  sourceGroupId: string | null | undefined,
-  priceGroups: PriceGroup[]
-): string => {
-  const normalizedSourceGroupId = toTrimmedString(sourceGroupId);
-  if (normalizedSourceGroupId === PRODUCT_SOURCE_PRICE_SOURCE_ID) {
-    return PRODUCT_SOURCE_PRICE_SOURCE_ID;
+const coerceFiniteNumber = (value: unknown, fallback: number): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value.trim());
+    if (Number.isFinite(parsed)) return parsed;
   }
-  if (normalizedSourceGroupId.length === 0) {
-    return '';
-  }
-
-  const matchingGroup = priceGroups.find((group) => {
-    const groupId = toTrimmedString(group.id);
-    const legacyGroupId = toTrimmedString(group.groupId);
-    return normalizedSourceGroupId === groupId || normalizedSourceGroupId === legacyGroupId;
-  });
-
-  return matchingGroup !== undefined ? toTrimmedString(matchingGroup.id) : normalizedSourceGroupId;
-};
-
-const isProductSourcePriceSelected = (sourceGroupId: string): boolean =>
-  sourceGroupId === PRODUCT_SOURCE_PRICE_SOURCE_ID;
-
-const resolveInitialSourceGroupId = (
-  priceGroup: PriceGroup,
-  priceGroups: PriceGroup[]
-): string => {
-  const normalizedSourceGroupId = normalizeSourceGroupId(priceGroup.sourceGroupId, priceGroups);
-  if (normalizedSourceGroupId.length > 0) return normalizedSourceGroupId;
-  if (
-    priceGroup.type === 'dependent' &&
-    priceGroup.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD
-  ) {
-    return PRODUCT_SOURCE_PRICE_SOURCE_ID;
-  }
-  return '';
-};
-
-const wouldCreateSourceGroupCycle = ({
-  currentPriceGroup,
-  sourceGroupId,
-  priceGroups,
-}: {
-  currentPriceGroup?: PriceGroup | null | undefined;
-  sourceGroupId: string;
-  priceGroups: PriceGroup[];
-}): boolean => {
-  const normalizedSourceGroupId = normalizeSourceGroupId(sourceGroupId, priceGroups);
-  if (isProductSourcePriceSelected(normalizedSourceGroupId)) {
-    return false;
-  }
-  if (normalizedSourceGroupId.length === 0) {
-    return false;
-  }
-
-  const selfIdentifiers = new Set(
-    [currentPriceGroup?.id, currentPriceGroup?.groupId]
-      .map((value) => toTrimmedString(value))
-      .filter(hasText)
-  );
-  const groupByIdentifier = new Map<string, PriceGroup>();
-
-  priceGroups.forEach((group) => {
-    const id = toTrimmedString(group.id);
-    const groupId = toTrimmedString(group.groupId);
-    if (id.length > 0) {
-      groupByIdentifier.set(id, group);
-    }
-    if (groupId.length > 0) {
-      groupByIdentifier.set(groupId, group);
-    }
-  });
-
-  const visited = new Set<string>();
-  let currentIdentifier = normalizedSourceGroupId;
-
-  while (currentIdentifier.length > 0) {
-    if (selfIdentifiers.has(currentIdentifier) || visited.has(currentIdentifier)) {
-      return true;
-    }
-
-    visited.add(currentIdentifier);
-    const currentGroup = groupByIdentifier.get(currentIdentifier);
-    currentIdentifier = toTrimmedString(currentGroup?.sourceGroupId);
-  }
-
-  return false;
+  return fallback;
 };
 
 const buildInitialFormState = (
@@ -155,9 +80,8 @@ const buildInitialFormState = (
     isDefault: priceGroup.isDefault,
     type: hasText(toTrimmedString(priceGroup.type)) ? toTrimmedString(priceGroup.type) : 'standard',
     sourceGroupId: resolveInitialSourceGroupId(priceGroup, priceGroups),
-    priceMultiplier:
-      typeof priceGroup.priceMultiplier === 'number' ? priceGroup.priceMultiplier : 1,
-    addToPrice: typeof priceGroup.addToPrice === 'number' ? priceGroup.addToPrice : 0,
+    priceMultiplier: coerceFiniteNumber(priceGroup.priceMultiplier, 1),
+    addToPrice: coerceFiniteNumber(priceGroup.addToPrice, 0),
   };
 };
 
@@ -175,9 +99,65 @@ type PriceGroupFormValidationResult =
 type PriceGroupSaveMutation = ReturnType<typeof useSavePriceGroupMutation>;
 type ToastFn = ReturnType<typeof useToast>['toast'];
 
+type DependentSourceValidation = {
+  normalizedSourceGroupId: string | null;
+  basePriceField: string;
+};
+
+type PriceGroupFormValidationError = Extract<PriceGroupFormValidationResult, { ok: false }>;
+
 const normalizeGroupType = (value: string): string => {
   const groupType = toTrimmedString(value);
   return groupType.length > 0 ? groupType : 'standard';
+};
+
+const resolveDependentSourceValidation = (
+  form: PriceGroupFormState,
+  priceGroups: PriceGroup[]
+): DependentSourceValidation => {
+  const rawSourceGroupId = normalizeSourceGroupId(form.sourceGroupId, priceGroups);
+  if (isProductSourcePriceSelected(rawSourceGroupId)) {
+    return {
+      normalizedSourceGroupId: null,
+      basePriceField: PRICE_GROUP_SOURCE_PRICE_FIELD,
+    };
+  }
+
+  return {
+    normalizedSourceGroupId: rawSourceGroupId,
+    basePriceField: PRICE_GROUP_BASE_PRICE_FIELD,
+  };
+};
+
+const validateDependentSourceSelection = ({
+  groupType,
+  normalizedSourceGroupId,
+  priceGroup,
+  priceGroups,
+}: {
+  groupType: string;
+  normalizedSourceGroupId: string | null;
+  priceGroup?: PriceGroup | null | undefined;
+  priceGroups: PriceGroup[];
+}): PriceGroupFormValidationError | null => {
+  if (groupType !== 'dependent') return null;
+  if (normalizedSourceGroupId === '') {
+    return { ok: false, message: 'Dependent price groups require a source price.' };
+  }
+  if (
+    normalizedSourceGroupId !== null &&
+    wouldCreateSourceGroupCycle({
+      currentPriceGroup: priceGroup,
+      sourceGroupId: normalizedSourceGroupId,
+      priceGroups,
+    })
+  ) {
+    return {
+      ok: false,
+      message: 'Dependent price groups cannot reference themselves through a source-group cycle.',
+    };
+  }
+  return null;
 };
 
 const validatePriceGroupForm = ({
@@ -196,31 +176,17 @@ const validatePriceGroupForm = ({
   }
 
   const groupType = normalizeGroupType(form.type);
-  const rawSourceGroupId =
-    groupType === 'dependent' ? normalizeSourceGroupId(form.sourceGroupId, priceGroups) : '';
-  const sourcePriceSelected = isProductSourcePriceSelected(rawSourceGroupId);
-  const normalizedSourceGroupId = sourcePriceSelected ? null : rawSourceGroupId;
-  const basePriceField = sourcePriceSelected
-    ? PRICE_GROUP_SOURCE_PRICE_FIELD
-    : PRICE_GROUP_BASE_PRICE_FIELD;
-
-  if (groupType === 'dependent' && normalizedSourceGroupId === '') {
-    return { ok: false, message: 'Dependent price groups require a source price.' };
-  }
-  if (
-    groupType === 'dependent' &&
-    normalizedSourceGroupId !== null &&
-    wouldCreateSourceGroupCycle({
-      currentPriceGroup: priceGroup,
-      sourceGroupId: normalizedSourceGroupId,
-      priceGroups,
-    })
-  ) {
-    return {
-      ok: false,
-      message: 'Dependent price groups cannot reference themselves through a source-group cycle.',
-    };
-  }
+  const { normalizedSourceGroupId, basePriceField } =
+    groupType === 'dependent'
+      ? resolveDependentSourceValidation(form, priceGroups)
+      : { normalizedSourceGroupId: null, basePriceField: PRICE_GROUP_BASE_PRICE_FIELD };
+  const dependentSourceError = validateDependentSourceSelection({
+    groupType,
+    normalizedSourceGroupId,
+    priceGroup,
+    priceGroups,
+  });
+  if (dependentSourceError !== null) return dependentSourceError;
 
   return { ok: true, name, currencyCode, groupType, normalizedSourceGroupId, basePriceField };
 };
@@ -237,13 +203,16 @@ const usePriceGroupFormSubmit = ({
   priceGroups: PriceGroup[];
   saveMutation: PriceGroupSaveMutation;
   toast: ToastFn;
-}): (() => Promise<void>) =>
-  React.useCallback(async (): Promise<void> => {
+}): (() => Promise<boolean>) =>
+  React.useCallback(async (): Promise<boolean> => {
     const validation = validatePriceGroupForm({ form, priceGroup, priceGroups });
     if (!validation.ok) {
       toast(validation.message, { variant: 'error' });
-      return;
+      return false;
     }
+
+    const priceMultiplier = coerceFiniteNumber(form.priceMultiplier, 1);
+    const addToPrice = coerceFiniteNumber(form.addToPrice, 0);
 
     try {
       await saveMutation.mutateAsync({
@@ -256,12 +225,13 @@ const usePriceGroupFormSubmit = ({
           basePriceField: validation.basePriceField,
           sourceGroupId:
             validation.groupType === 'dependent' ? validation.normalizedSourceGroupId : null,
-          priceMultiplier: form.priceMultiplier,
-          addToPrice: form.addToPrice,
+          priceMultiplier,
+          addToPrice,
         },
       });
 
       toast('Price group saved.', { variant: 'success' });
+      return true;
     } catch (err) {
       logClientCatch(err, {
         source: 'PriceGroupModal',
@@ -269,6 +239,7 @@ const usePriceGroupFormSubmit = ({
         priceGroupId: priceGroup?.id,
       });
       toast('Failed to save price group.', { variant: 'error' });
+      return false;
     }
   }, [form, priceGroup, priceGroups, saveMutation, toast]);
 

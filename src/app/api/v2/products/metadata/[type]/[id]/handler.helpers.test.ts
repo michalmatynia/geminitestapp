@@ -102,6 +102,29 @@ describe('product metadata by-type and id handler helpers', () => {
     });
   });
 
+  it('builds a sourcePrice-backed dependent update without a source group', () => {
+    const now = new Date('2026-04-04T00:00:00.000Z');
+
+    expect(
+      buildMongoPriceGroupUpdateDocument({
+        data: {
+          type: 'dependent',
+          sourceGroupId: null,
+          basePriceField: 'sourcePrice',
+        },
+        existing: {
+          sourceGroupId: 'pg-base',
+        },
+        now,
+      })
+    ).toEqual({
+      updatedAt: now,
+      sourceGroupId: null,
+      type: 'dependent',
+      basePriceField: 'sourcePrice',
+    });
+  });
+
   it('builds catalog pull and default-unset updates for deletes', () => {
     const now = new Date('2026-04-04T00:00:00.000Z');
 

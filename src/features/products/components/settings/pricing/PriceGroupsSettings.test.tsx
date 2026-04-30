@@ -187,4 +187,30 @@ describe('PriceGroupsSettings', () => {
     expect(screen.getByText('Main EUR tier · Depends on Standard PLN (PLN) × 1.25 + 3.00')).toBeInTheDocument();
     expect(screen.queryByText(/missing source group/i)).not.toBeInTheDocument();
   });
+
+  it('labels sourcePrice-backed dependent price groups', () => {
+    mocks.useProductSettingsPriceGroupsContextMock.mockReturnValue({
+      loadingGroups: false,
+      priceGroups: [
+        priceGroups[0],
+        {
+          ...priceGroups[1],
+          basePriceField: 'sourcePrice',
+          sourceGroupId: null,
+        },
+      ],
+      defaultGroupId: 'group-pln',
+      onDefaultGroupChange: vi.fn(),
+      defaultGroupSaving: false,
+      onOpenPriceGroupCreate: vi.fn(),
+      onEditPriceGroup: vi.fn(),
+      onDeletePriceGroup: vi.fn(),
+    });
+
+    render(<PriceGroupsSettings />);
+
+    expect(
+      screen.getByText('Main EUR tier · Depends on scraped sourcePrice × 1.25 + 3.00')
+    ).toBeInTheDocument();
+  });
 });

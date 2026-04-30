@@ -13,6 +13,7 @@ import type {
   FilemakerJobApplication,
   FilemakerJobApplicationCoverLetter,
   FilemakerJobApplicationEmail,
+  FilemakerJobApplicationMatchAnalysis,
   FilemakerJobApplicationStatus,
   FilemakerJobApplicationTailoredCv,
 } from '../filemaker-job-application.types';
@@ -41,6 +42,10 @@ export type FilemakerJobApplicationMongoDocument = Document & {
   integrationSlug?: unknown;
   jobListingId?: unknown;
   jobTitle?: unknown;
+  matchAnalysis?: unknown;
+  matchAnalysisHistory?: unknown;
+  matchAnalysisSourceEntityId?: unknown;
+  matchAnalysisUpdatedAt?: unknown;
   missingInformation?: unknown;
   organizationId?: unknown;
   organizationName?: unknown;
@@ -423,6 +428,73 @@ const toApplicationEmail = (value: unknown): FilemakerJobApplicationEmail | null
   };
 };
 
+const normalizeMatchAnalysisAttentionAreas = (
+  value: unknown
+): FilemakerJobApplicationMatchAnalysis['attentionAreas'] =>
+  Array.isArray(value)
+    ? value
+        .map((entry: unknown) => {
+          const record = normalizeRecord(entry);
+          if (record === null) return null;
+          return {
+            area: normalizeString(record['area']),
+            whyItMatters: normalizeString(record['whyItMatters']),
+            recommendedAction: normalizeString(record['recommendedAction']),
+            evidence: normalizeString(record['evidence']),
+          };
+        })
+        .filter(
+          (
+            entry
+          ): entry is FilemakerJobApplicationMatchAnalysis['attentionAreas'][number] =>
+            entry !== null
+        )
+    : [];
+
+const toMatchAnalysis = (value: unknown): FilemakerJobApplicationMatchAnalysis | null => {
+  const record = normalizeRecord(value);
+  if (record === null) return null;
+  return {
+    score: normalizeNumber(record['score']),
+    scoreLabel: normalizeString(record['scoreLabel']),
+    summary: normalizeString(record['summary']),
+    strongMatches: normalizeStringArray(record['strongMatches']),
+    gaps: normalizeStringArray(record['gaps']),
+    attentionAreas: normalizeMatchAnalysisAttentionAreas(record['attentionAreas']),
+    cvEvidence: normalizeStringArray(record['cvEvidence']),
+    jobEvidence: normalizeStringArray(record['jobEvidence']),
+    riskFlags: normalizeStringArray(record['riskFlags']),
+    interviewTalkingPoints: normalizeStringArray(record['interviewTalkingPoints']),
+    learningPlan: normalizeStringArray(record['learningPlan']),
+  };
+};
+
+const normalizeMatchAnalysisHistory = (
+  value: unknown
+): NonNullable<FilemakerJobApplication['matchAnalysisHistory']> | null => {
+  if (!Array.isArray(value)) return null;
+  const history = value
+    .map((entry: unknown) => {
+      const record = normalizeRecord(entry);
+      if (record === null) return null;
+      const id = normalizeString(record['id']);
+      if (id === null) return null;
+      return {
+        id,
+        payload: toMatchAnalysis(record['payload']),
+        sourceRunId: normalizeString(record['sourceRunId']),
+        createdAt: normalizeString(record['createdAt']),
+      };
+    })
+    .filter(
+      (
+        entry
+      ): entry is NonNullable<FilemakerJobApplication['matchAnalysisHistory']>[number] =>
+        entry !== null
+    );
+  return history.length > 0 ? history : null;
+};
+
 const toFilemakerJobApplication = (
   document: FilemakerJobApplicationMongoDocument
 ): FilemakerJobApplication => {
@@ -481,6 +553,10 @@ const toFilemakerJobApplication = (
     tailoredCv: toTailoredCv(document.tailoredCv, tailoredCvSourceFallback),
     coverLetter: toCoverLetter(document.coverLetter),
     applicationEmail: toApplicationEmail(document.applicationEmail),
+    matchAnalysis: toMatchAnalysis(document.matchAnalysis),
+    matchAnalysisHistory: normalizeMatchAnalysisHistory(document.matchAnalysisHistory),
+    matchAnalysisSourceEntityId: normalizeString(document.matchAnalysisSourceEntityId),
+    matchAnalysisUpdatedAt: normalizeString(document.matchAnalysisUpdatedAt),
     applicationNotes: normalizeStringArray(document.applicationNotes),
     missingInformation: normalizeStringArray(document.missingInformation),
     confidence: normalizeNumber(document.confidence),

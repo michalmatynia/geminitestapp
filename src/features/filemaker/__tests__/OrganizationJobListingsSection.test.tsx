@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => ({
   savePlaywrightActionsIsPending: false,
   savePlaywrightActionsMutateAsync: vi.fn(),
   settingsGet: vi.fn(),
+  settingsRefetch: vi.fn(),
   triggerButtonsQuery: vi.fn(),
   useActionsContext: vi.fn(),
   usePlaywrightActions: vi.fn(),
@@ -38,6 +39,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: () => ({
     get: mocks.settingsGet,
+    refetch: mocks.settingsRefetch,
   }),
 }));
 
@@ -54,6 +56,21 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 }));
 
 vi.mock('@/shared/ui/forms-and-actions.public', () => ({
+  FormActions: ({
+    onSave,
+    saveText = 'Save',
+    isDisabled,
+    isSaving,
+  }: {
+    onSave?: () => void;
+    saveText?: string;
+    isDisabled?: boolean;
+    isSaving?: boolean;
+  }) => (
+    <button type='button' disabled={isDisabled || isSaving} onClick={onSave}>
+      {isSaving ? 'Saving...' : saveText}
+    </button>
+  ),
   FormField: ({
     label,
     description,
@@ -266,19 +283,21 @@ vi.mock('@/shared/ui/templates.public', () => ({
   DetailModal: ({
     children,
     footer,
+    header,
     isOpen,
     subtitle,
     title,
   }: {
     children: React.ReactNode;
     footer?: React.ReactNode;
+    header?: React.ReactNode;
     isOpen: boolean;
     subtitle?: React.ReactNode;
     title: React.ReactNode;
   }) =>
     isOpen ? (
       <div role='dialog' aria-label={String(title)}>
-        <h3>{title}</h3>
+        {header ?? <h3>{title}</h3>}
         {subtitle !== undefined && subtitle !== null ? <p>{subtitle}</p> : null}
         {children}
         {footer}
@@ -424,6 +443,7 @@ describe('OrganizationJobListingsSection', () => {
       args.onFinished?.();
     });
     mocks.settingsGet.mockReset();
+    mocks.settingsRefetch.mockReset();
     mocks.triggerButtonsQuery.mockReset();
     mocks.triggerButtonsQuery.mockReturnValue({
       data: [jobApplicationTailoredCvTriggerButton],
@@ -921,6 +941,8 @@ describe('OrganizationJobListingsSection', () => {
     await waitFor(() => {
       expect(screen.getByLabelText('Application status')).toHaveValue('applied');
     });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
     expect(fetch).toHaveBeenCalledWith(
       '/api/filemaker/job-applications/application-1',
       expect.objectContaining({
@@ -928,6 +950,9 @@ describe('OrganizationJobListingsSection', () => {
         method: 'PATCH',
       })
     );
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Save' })).not.toBeDisabled();
+    });
 
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
 

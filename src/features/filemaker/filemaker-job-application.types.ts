@@ -62,6 +62,27 @@ export type FilemakerJobApplicationEmail = {
   subject: string | null;
 };
 
+export type FilemakerJobApplicationMatchAnalysisAttentionArea = {
+  area: string | null;
+  whyItMatters: string | null;
+  recommendedAction: string | null;
+  evidence: string | null;
+};
+
+export type FilemakerJobApplicationMatchAnalysis = {
+  score: number | null;
+  scoreLabel: string | null;
+  summary: string | null;
+  strongMatches: string[];
+  gaps: string[];
+  attentionAreas: FilemakerJobApplicationMatchAnalysisAttentionArea[];
+  cvEvidence: string[];
+  jobEvidence: string[];
+  riskFlags: string[];
+  interviewTalkingPoints: string[];
+  learningPlan: string[];
+};
+
 export type FilemakerJobApplicationArtifactVersion = {
   id: string;
   applicationNotes: string[];
@@ -160,6 +181,15 @@ export type FilemakerJobApplication = {
   tailoredCv: FilemakerJobApplicationTailoredCv | null;
   coverLetter: FilemakerJobApplicationCoverLetter | null;
   applicationEmail: FilemakerJobApplicationEmail | null;
+  matchAnalysis: FilemakerJobApplicationMatchAnalysis | null;
+  matchAnalysisHistory?: Array<{
+    id: string;
+    payload: FilemakerJobApplicationMatchAnalysis | null;
+    sourceRunId: string | null;
+    createdAt: string | null;
+  }> | null;
+  matchAnalysisSourceEntityId?: string | null;
+  matchAnalysisUpdatedAt?: string | null;
   applicationNotes: string[];
   missingInformation: string[];
   confidence: number | null;

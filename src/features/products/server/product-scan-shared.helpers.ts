@@ -1,5 +1,5 @@
 import type { ProductScanImageCandidate } from '@/shared/contracts/product-scans';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { ProductImageRecord, ProductWithImages } from '@/shared/contracts/products/product';
 
 export const PRODUCT_SCAN_IMAGE_CANDIDATE_LIMIT = 3;
 const PRODUCT_SCAN_DISPLAY_NAME_MAX_LENGTH = 300;
@@ -14,83 +14,136 @@ export const normalizeOptionalProductScanString = (value: unknown): string | nul
   return trimmed.length > 0 ? trimmed : null;
 };
 
+type ProductScanImageCandidateBuckets = {
+  seen: Set<string>;
+  fileBackedCandidates: ProductScanImageCandidate[];
+  urlOnlyCandidates: ProductScanImageCandidate[];
+};
+
 const collectCandidateKeys = (...values: Array<string | null | undefined>): string[] =>
-  Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+  Array.from(
+    new Set(
+      values.filter(
+        (value: string | null | undefined): value is string =>
+          value !== null && value !== undefined && value !== ''
+      )
+    )
+  );
+
+const resolveFirstProductScanDisplayName = (
+  product: Pick<ProductWithImages, 'id' | 'name_en' | 'name_pl' | 'name_de' | 'sku'>
+): string => {
+  const candidates = [product.name_en, product.name_pl, product.name_de, product.sku]
+    .map((value: string | null | undefined): string | null =>
+      normalizeOptionalProductScanString(value)
+    )
+    .filter((value: string | null): value is string => value !== null);
+  return candidates[0] ?? product.id;
+};
 
 export const resolveProductScanDisplayName = (
   product: Pick<ProductWithImages, 'id' | 'name_en' | 'name_pl' | 'name_de' | 'sku'>
 ): string => {
-  const rawName =
-    product.name_en?.trim() ||
-    product.name_pl?.trim() ||
-    product.name_de?.trim() ||
-    product.sku?.trim() ||
-    product.id;
-
+  const rawName = resolveFirstProductScanDisplayName(product);
   return rawName.slice(0, PRODUCT_SCAN_DISPLAY_NAME_MAX_LENGTH);
+};
+
+const resolveFilepathUrl = (rawFilepath: string | null): string | null => {
+  if (rawFilepath === null) return null;
+  return HTTP_IMAGE_FILEPATH_PATTERN.test(rawFilepath) ? rawFilepath : null;
+};
+
+const resolveLocalFilepath = (rawFilepath: string | null): string | null => {
+  if (rawFilepath === null) return null;
+  return HTTP_IMAGE_FILEPATH_PATTERN.test(rawFilepath) ? null : rawFilepath;
+};
+
+const resolveImageRecordCandidate = (
+  image: ProductImageRecord
+): ProductScanImageCandidate | null => {
+  const imageFile = image.imageFile;
+  const rawFilepath = normalizeOptionalProductScanString(imageFile.filepath);
+  const url =
+    normalizeOptionalProductScanString(imageFile.publicUrl) ??
+    normalizeOptionalProductScanString(imageFile.url) ??
+    normalizeOptionalProductScanString(imageFile.thumbnailUrl) ??
+    resolveFilepathUrl(rawFilepath);
+  const filepath = resolveLocalFilepath(rawFilepath);
+
+  if (filepath === null && url === null) return null;
+
+  return {
+    id:
+      normalizeOptionalProductScanString(imageFile.id) ??
+      normalizeOptionalProductScanString(image.imageFileId),
+    url,
+    filepath,
+    filename: normalizeOptionalProductScanString(imageFile.filename),
+  };
+};
+
+const addCandidateIfUnique = (
+  buckets: ProductScanImageCandidateBuckets,
+  candidate: ProductScanImageCandidate
+): void => {
+  const candidateKeys = collectCandidateKeys(candidate.filepath, candidate.url, candidate.id);
+  const key = candidateKeys[0] ?? null;
+
+  if (key === null || candidateKeys.some((candidateKey: string): boolean => buckets.seen.has(candidateKey))) {
+    return;
+  }
+
+  candidateKeys.forEach((candidateKey: string): void => {
+    buckets.seen.add(candidateKey);
+  });
+  if (candidate.filepath !== null) {
+    buckets.fileBackedCandidates.push(candidate);
+    return;
+  }
+  buckets.urlOnlyCandidates.push(candidate);
+};
+
+const addImageRecordCandidate = (
+  buckets: ProductScanImageCandidateBuckets,
+  image: ProductImageRecord
+): void => {
+  const candidate = resolveImageRecordCandidate(image);
+  if (candidate !== null) {
+    addCandidateIfUnique(buckets, candidate);
+  }
+};
+
+const addImageLinkCandidate = (
+  buckets: ProductScanImageCandidateBuckets,
+  imageLink: string
+): void => {
+  const normalizedUrl = normalizeOptionalProductScanString(imageLink);
+  if (normalizedUrl === null) return;
+  addCandidateIfUnique(buckets, {
+    id: null,
+    url: normalizedUrl,
+    filepath: null,
+    filename: null,
+  });
 };
 
 export const resolveProductScanImageCandidates = (
   product: Pick<ProductWithImages, 'images' | 'imageLinks'>,
   limit = PRODUCT_SCAN_IMAGE_CANDIDATE_LIMIT
 ): ProductScanImageCandidate[] => {
-  const seen = new Set<string>();
-  const fileBackedCandidates: ProductScanImageCandidate[] = [];
-  const urlOnlyCandidates: ProductScanImageCandidate[] = [];
+  const buckets: ProductScanImageCandidateBuckets = {
+    seen: new Set<string>(),
+    fileBackedCandidates: [],
+    urlOnlyCandidates: [],
+  };
 
-  for (const image of Array.isArray(product.images) ? product.images : []) {
-    const imageFile = image.imageFile;
-    const rawFilepath = normalizeOptionalProductScanString(imageFile?.filepath);
-    const url =
-      normalizeOptionalProductScanString(imageFile?.publicUrl) ??
-      normalizeOptionalProductScanString(imageFile?.url) ??
-      normalizeOptionalProductScanString(imageFile?.thumbnailUrl) ??
-      (rawFilepath && HTTP_IMAGE_FILEPATH_PATTERN.test(rawFilepath) ? rawFilepath : null);
-    const filepath =
-      rawFilepath && !HTTP_IMAGE_FILEPATH_PATTERN.test(rawFilepath) ? rawFilepath : null;
-    const id =
-      normalizeOptionalProductScanString(imageFile?.id) ??
-      normalizeOptionalProductScanString(image.imageFileId);
-
-    if (!filepath && !url) {
-      continue;
-    }
-
-    const candidateKeys = collectCandidateKeys(filepath, url, id);
-    const key = candidateKeys[0] ?? null;
-
-    if (!key || candidateKeys.some((candidateKey) => seen.has(candidateKey))) {
-      continue;
-    }
-
-    candidateKeys.forEach((candidateKey) => seen.add(candidateKey));
-    const candidate = {
-      id,
-      url,
-      filepath,
-      filename: normalizeOptionalProductScanString(imageFile?.filename),
-    };
-    if (filepath) {
-      fileBackedCandidates.push(candidate);
-    } else {
-      urlOnlyCandidates.push(candidate);
-    }
+  for (const image of product.images) {
+    addImageRecordCandidate(buckets, image);
   }
 
-  for (const imageLink of Array.isArray(product.imageLinks) ? product.imageLinks : []) {
-    const normalizedUrl = normalizeOptionalProductScanString(imageLink);
-    if (!normalizedUrl || seen.has(normalizedUrl)) {
-      continue;
-    }
-
-    seen.add(normalizedUrl);
-    urlOnlyCandidates.push({
-      id: null,
-      url: normalizedUrl,
-      filepath: null,
-      filename: null,
-    });
+  for (const imageLink of product.imageLinks ?? []) {
+    addImageLinkCandidate(buckets, imageLink);
   }
 
-  return [...fileBackedCandidates, ...urlOnlyCandidates].slice(0, limit);
+  return [...buckets.fileBackedCandidates, ...buckets.urlOnlyCandidates].slice(0, limit);
 };

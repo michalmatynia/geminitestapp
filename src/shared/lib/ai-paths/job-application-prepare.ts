@@ -34,3 +34,15 @@ export const JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID =
   'a33db600-1645-4b9b-a78c-a93d2282db0c';
 export const JOB_APPLICATION_COVER_LETTER_TRIGGER_NAME = 'Create Cover Letter';
 export const JOB_APPLICATION_COVER_LETTER_TRIGGER_SORT_INDEX = 62;
+
+export const JOB_APPLICATION_MATCH_ANALYSIS_STARTER_TEMPLATE_ID =
+  'starter_job_application_match_analysis';
+export const JOB_APPLICATION_MATCH_ANALYSIS_PATH_ID =
+  'path_job_application_match_analysis_v1';
+export const JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_BUTTON_ID =
+  'd0d04f1b-4514-4cc0-a8d6-75e8f26fd765';
+export const JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_LOCATION =
+  'filemaker_prepared_application';
+export const JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_NAME = 'Analyze Match';
+export const JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_SORT_INDEX = 63;
+export const JOB_APPLICATION_MATCH_ANALYSIS_MODEL_ID = 'gpt-oss:120b-cloud';

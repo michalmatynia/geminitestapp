@@ -21,7 +21,9 @@ const NESTED_RESULT_KEYS = [
 const NON_RESULT_NODE_TYPES = new Set(['trigger', 'fetcher', 'parser', 'prompt', 'viewer', 'context']);
 
 const asRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
   return value as Record<string, unknown>;
 };
 
@@ -37,15 +39,19 @@ const extractJsonCandidate = (value: string): string => {
   return fencedMatch?.[1]?.trim() ?? trimmed;
 };
 
-const tryParseJsonValue = (value: unknown): unknown | null => {
+type ParsedJsonValue = {
+  value: unknown;
+};
+
+const tryParseJsonValue = (value: unknown): ParsedJsonValue | null => {
   const trimmed = asTrimmedString(value);
-  if (!trimmed) return null;
+  if (trimmed === null) return null;
 
   const candidate = extractJsonCandidate(trimmed);
   if (!candidate.startsWith('{') && !candidate.startsWith('[')) return null;
 
   try {
-    return JSON.parse(candidate) as unknown;
+    return { value: JSON.parse(candidate) as unknown };
   } catch {
     return null;
   }
@@ -53,13 +59,13 @@ const tryParseJsonValue = (value: unknown): unknown | null => {
 
 const normalizeParameterId = (value: unknown): string | null => {
   const direct = asTrimmedString(value);
-  return direct && direct.length > 0 ? direct : null;
+  return direct;
 };
 
 const resolveParameterTranslationValue = (record: Record<string, unknown>): string | null => {
   const valuesByLanguage = asRecord(record['valuesByLanguage']);
   const polishValue = asTrimmedString(valuesByLanguage?.['pl']);
-  if (polishValue) return polishValue;
+  if (polishValue !== null) return polishValue;
   return asTrimmedString(record['value']);
 };
 
@@ -69,13 +75,13 @@ const normalizeParameterTranslations = (value: unknown): TranslationParameterUpd
   const updatesById = new Map<string, TranslationParameterUpdate>();
   value.forEach((entry: unknown) => {
     const record = asRecord(entry);
-    if (!record) return;
+    if (record === null) return;
     const parameterId =
       normalizeParameterId(record['parameterId']) ??
       normalizeParameterId(record['id']) ??
       normalizeParameterId(record['_id']);
     const translatedValue = resolveParameterTranslationValue(record);
-    if (!parameterId || !translatedValue) return;
+    if (parameterId === null || translatedValue === null) return;
     updatesById.set(parameterId, {
       parameterId,
       value: translatedValue,
@@ -89,8 +95,8 @@ const mergeTranslationResults = (
   base: TranslationEnPlAiPathResult | null,
   next: TranslationEnPlAiPathResult | null
 ): TranslationEnPlAiPathResult | null => {
-  if (!base) return next;
-  if (!next) return base;
+  if (base === null) return next;
+  if (next === null) return base;
 
   const parameterUpdatesById = new Map<string, TranslationParameterUpdate>();
   base.parameterTranslations.forEach((entry) => {
@@ -106,73 +112,124 @@ const mergeTranslationResults = (
   };
 };
 
-const resolveTranslationFromUpdateDoc = (value: unknown): TranslationEnPlAiPathResult | null => {
-  const record = asRecord(value);
-  if (!record) return null;
+const hasTranslationResult = (result: TranslationEnPlAiPathResult): boolean =>
+  result.descriptionPl !== null || result.parameterTranslations.length > 0;
 
+const resolveTranslationUpdateDocRecord = (
+  record: Record<string, unknown>
+): Record<string, unknown> | null => {
+  const debugPayload = asRecord(record['debugPayload']);
   const updateDoc =
     asRecord(record['updateDoc']) ??
-    asRecord(asRecord(record['debugPayload'])?.['updateDoc']) ??
+    asRecord(debugPayload?.['updateDoc']) ??
     asRecord(record['update']) ??
     null;
-  if (!updateDoc) return null;
+  if (updateDoc === null) return null;
+  return asRecord(updateDoc['$set']) ?? updateDoc;
+};
 
-  const setRecord = asRecord(updateDoc['$set']) ?? updateDoc;
-  if (!setRecord) return null;
-
-  const descriptionPl = asTrimmedString(setRecord['description_pl']);
-  const parameterTranslations = normalizeParameterTranslations(setRecord['parameters']);
-  if (!descriptionPl && parameterTranslations.length === 0) return null;
-
-  return {
-    descriptionPl,
-    parameterTranslations,
+const resolveTranslationFromSetRecord = (
+  setRecord: Record<string, unknown>
+): TranslationEnPlAiPathResult | null => {
+  const result = {
+    descriptionPl: asTrimmedString(setRecord['description_pl']),
+    parameterTranslations: normalizeParameterTranslations(setRecord['parameters']),
   };
+  return hasTranslationResult(result) ? result : null;
+};
+
+const resolveTranslationFromUpdateDoc = (value: unknown): TranslationEnPlAiPathResult | null => {
+  const record = asRecord(value);
+  if (record === null) return null;
+
+  const setRecord = resolveTranslationUpdateDocRecord(record);
+  if (setRecord === null) return null;
+
+  return resolveTranslationFromSetRecord(setRecord);
+};
+
+const resolveParsedTranslationSourceValue = (value: unknown): unknown => {
+  const parsedJsonValue = tryParseJsonValue(value);
+  return parsedJsonValue === null ? value : parsedJsonValue.value;
+};
+
+const trackSeenObject = (value: object, seen: WeakSet<object>): boolean => {
+  if (seen.has(value)) return false;
+  seen.add(value);
+  return true;
+};
+
+const resolveTranslationFromArrayPayload = (
+  sourceValue: unknown[],
+  seen: WeakSet<object>
+): TranslationEnPlAiPathResult | null => {
+  if (!trackSeenObject(sourceValue, seen)) return null;
+
+  let merged: TranslationEnPlAiPathResult | null = null;
+  for (let index = sourceValue.length - 1; index >= 0; index -= 1) {
+    merged = mergeTranslationResults(
+      merged,
+      resolveTranslationFromPayload(sourceValue[index], seen)
+    );
+  }
+  return merged;
+};
+
+const resolveDirectTranslationFromRecord = (
+  record: Record<string, unknown>
+): TranslationEnPlAiPathResult | null => {
+  const result = {
+    descriptionPl: asTrimmedString(record['description_pl']),
+    parameterTranslations: normalizeParameterTranslations(record['parameters']),
+  };
+  return hasTranslationResult(result) ? result : null;
+};
+
+const resolveNestedTranslationFromRecord = (
+  record: Record<string, unknown>,
+  seen: WeakSet<object>
+): TranslationEnPlAiPathResult | null => {
+  let merged: TranslationEnPlAiPathResult | null = null;
+  for (const key of NESTED_RESULT_KEYS) {
+    merged = mergeTranslationResults(merged, resolveTranslationFromPayload(record[key], seen));
+  }
+  return merged;
+};
+
+const resolveTranslationFromRecordPayload = (
+  record: Record<string, unknown>,
+  seen: WeakSet<object>
+): TranslationEnPlAiPathResult | null => {
+  let merged = resolveDirectTranslationFromRecord(record);
+  merged = mergeTranslationResults(merged, resolveTranslationFromUpdateDoc(record));
+  return mergeTranslationResults(merged, resolveNestedTranslationFromRecord(record, seen));
 };
 
 const resolveTranslationFromPayload = (
   value: unknown,
   seen: WeakSet<object> = new WeakSet<object>()
 ): TranslationEnPlAiPathResult | null => {
-  const parsedJsonValue = tryParseJsonValue(value);
-  const sourceValue = parsedJsonValue ?? value;
+  const sourceValue = resolveParsedTranslationSourceValue(value);
 
   if (Array.isArray(sourceValue)) {
-    if (seen.has(sourceValue)) return null;
-    seen.add(sourceValue);
-    let merged: TranslationEnPlAiPathResult | null = null;
-    for (let index = sourceValue.length - 1; index >= 0; index -= 1) {
-      merged = mergeTranslationResults(
-        merged,
-        resolveTranslationFromPayload(sourceValue[index], seen)
-      );
-    }
-    return merged;
+    return resolveTranslationFromArrayPayload(sourceValue, seen);
   }
 
   const record = asRecord(sourceValue);
-  if (!record) return null;
-  if (seen.has(record)) return null;
-  seen.add(record);
+  if (record === null) return null;
+  if (!trackSeenObject(record, seen)) return null;
 
-  let merged: TranslationEnPlAiPathResult | null = null;
+  return resolveTranslationFromRecordPayload(record, seen);
+};
 
-  const directDescription = asTrimmedString(record['description_pl']);
-  const directParameterTranslations = normalizeParameterTranslations(record['parameters']);
-  if (directDescription || directParameterTranslations.length > 0) {
-    merged = {
-      descriptionPl: directDescription,
-      parameterTranslations: directParameterTranslations,
-    };
-  }
+const resolveNodeType = (nodeRecord: Record<string, unknown>): string => {
+  const type = asTrimmedString(nodeRecord['type']);
+  if (type !== null) return type.toLowerCase();
 
-  merged = mergeTranslationResults(merged, resolveTranslationFromUpdateDoc(record));
+  const nodeType = asTrimmedString(nodeRecord['nodeType']);
+  if (nodeType !== null) return nodeType.toLowerCase();
 
-  for (const key of NESTED_RESULT_KEYS) {
-    merged = mergeTranslationResults(merged, resolveTranslationFromPayload(record[key], seen));
-  }
-
-  return merged;
+  return '';
 };
 
 const resolveTranslationFromNodes = (nodes: unknown): TranslationEnPlAiPathResult | null => {
@@ -181,13 +238,8 @@ const resolveTranslationFromNodes = (nodes: unknown): TranslationEnPlAiPathResul
   let merged: TranslationEnPlAiPathResult | null = null;
   for (let index = nodes.length - 1; index >= 0; index -= 1) {
     const nodeRecord = asRecord(nodes[index]);
-    if (!nodeRecord) continue;
-    const nodeType =
-      typeof nodeRecord['type'] === 'string'
-        ? nodeRecord['type'].trim().toLowerCase()
-        : typeof nodeRecord['nodeType'] === 'string'
-          ? nodeRecord['nodeType'].trim().toLowerCase()
-          : '';
+    if (nodeRecord === null) continue;
+    const nodeType = resolveNodeType(nodeRecord);
     if (NON_RESULT_NODE_TYPES.has(nodeType)) continue;
 
     merged = mergeTranslationResults(
@@ -210,10 +262,10 @@ const resolveTranslationFromNodes = (nodes: unknown): TranslationEnPlAiPathResul
 
 const resolveTranslationFromRuntimeState = (value: unknown): TranslationEnPlAiPathResult | null => {
   const runtimeState = asRecord(value);
-  if (!runtimeState) return null;
+  if (runtimeState === null) return null;
 
   const nodeOutputs = asRecord(runtimeState['nodeOutputs']) ?? asRecord(runtimeState['outputs']);
-  if (!nodeOutputs) return null;
+  if (nodeOutputs === null) return null;
 
   let merged: TranslationEnPlAiPathResult | null = null;
   const outputValues = Object.values(nodeOutputs);
@@ -233,14 +285,14 @@ export const extractTranslationEnPlFromAiPathRunDetail = (
   detail: unknown
 ): TranslationEnPlAiPathResult | null => {
   const detailRecord = asRecord(detail);
-  if (!detailRecord) return null;
+  if (detailRecord === null) return null;
 
   const resolved = mergeTranslationResults(
     resolveTranslationFromNodes(detailRecord['nodes']),
     resolveTranslationFromRuntimeState(asRecord(detailRecord['run'])?.['runtimeState'])
   );
 
-  if (!resolved) return null;
-  if (!resolved.descriptionPl && resolved.parameterTranslations.length === 0) return null;
+  if (resolved === null) return null;
+  if (resolved.descriptionPl === null && resolved.parameterTranslations.length === 0) return null;
   return resolved;
 };

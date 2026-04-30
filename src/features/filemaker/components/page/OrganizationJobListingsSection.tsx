@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { MultiSelectOption } from '@/shared/ui/forms-and-actions.public';
 import {
+  FormActions,
   FormField,
   FormSection,
   MultiSelect,
@@ -39,6 +40,8 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { DetailModal } from '@/shared/ui/templates.public';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { getAiPathRun } from '@/shared/lib/ai-paths/api/client';
+import { TriggerButtonBar } from '@/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_LOCATION } from '@/shared/lib/ai-paths/job-application-prepare';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { resolveStepSequencerActionHref } from '@/features/playwright/utils/step-sequencer-action-links';
 
@@ -1110,6 +1113,7 @@ function JobApplicationsInline({
           const cvVersionCount = application.artifactVersions.tailoredCv.length;
           const coverLetterVersionCount = application.artifactVersions.coverLetter.length;
           const emailVersionCount = application.artifactVersions.applicationEmail.length;
+          const hasMatchAnalysis = application.matchAnalysis !== null;
           return (
             <div
               key={application.id}
@@ -1162,6 +1166,11 @@ function JobApplicationsInline({
                 ) : null}
                 {emailVersionCount > 0 ? (
                   <Badge variant='outline'>Email v{emailVersionCount}</Badge>
+                ) : null}
+                {hasMatchAnalysis ? (
+                  <Badge variant='success'>
+                    Match {application.matchAnalysis?.score ?? 'analysis'}
+                  </Badge>
                 ) : null}
               </div>
               <p className='mt-1 line-clamp-2 text-xs text-gray-400'>
@@ -1362,6 +1371,108 @@ const createVisiblePreparedApplication = ({
   };
 };
 
+type ApplicationMatchAnalysisContextState = {
+  cvs: FilemakerCv[];
+  error: string | null;
+  isLoading: boolean;
+  personDetail: Record<string, unknown> | null;
+};
+
+const createEmptyApplicationMatchAnalysisContextState = (): ApplicationMatchAnalysisContextState => ({
+  cvs: [],
+  error: null,
+  isLoading: false,
+  personDetail: null,
+});
+
+const truncateApplicationMatchAnalysisValue = (
+  value: unknown,
+  maxLength = 18000,
+  depth = 0
+): unknown => {
+  if (typeof value === 'string') {
+    if (value.length <= maxLength) return value;
+    return `${value.slice(0, maxLength)}\n\n[truncated for match analysis]`;
+  }
+  if (Array.isArray(value)) {
+    return value
+      .slice(0, 50)
+      .map((entry: unknown): unknown =>
+        truncateApplicationMatchAnalysisValue(entry, Math.max(1200, Math.floor(maxLength / 4)), depth + 1)
+      );
+  }
+  if (value !== null && typeof value === 'object' && depth < 4) {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .slice(0, 80)
+        .map(([key, entry]: [string, unknown]): [string, unknown] => [
+          key,
+          truncateApplicationMatchAnalysisValue(entry, Math.max(1200, Math.floor(maxLength / 4)), depth + 1),
+        ])
+    );
+  }
+  return value;
+};
+
+const compactApplicationCvForMatchAnalysis = (cv: FilemakerCv): Record<string, unknown> => {
+  const record = cv as unknown as Record<string, unknown>;
+  return {
+    id: record['id'] ?? null,
+    title: record['title'] ?? null,
+    status: record['status'] ?? null,
+    fullName: record['fullName'] ?? null,
+    professionalSummary: record['professionalSummary'] ?? null,
+    coreStrengths: record['coreStrengths'] ?? null,
+    selectedTechnicalEnvironment: record['selectedTechnicalEnvironment'] ?? null,
+    experience:
+      record['experience'] ??
+      record['jobExperience'] ??
+      record['professionalExperience'] ??
+      record['experienceTimeline'] ??
+      null,
+    education: record['education'] ?? record['educationItems'] ?? null,
+    languageSkills: record['languageSkills'] ?? null,
+    links: record['links'] ?? null,
+    bodyText: truncateApplicationMatchAnalysisValue(record['bodyText']),
+    bodyMarkdown: truncateApplicationMatchAnalysisValue(record['bodyMarkdown']),
+    bodyBlocks: truncateApplicationMatchAnalysisValue(record['bodyBlocks'] ?? null),
+    updatedAt: record['updatedAt'] ?? null,
+  };
+};
+
+const resolvePersonRecordFromPayload = (
+  payload: Record<string, unknown> | null
+): Record<string, unknown> | null => {
+  if (payload === null) return null;
+  const person = payload['person'];
+  return person !== null && typeof person === 'object' && !Array.isArray(person)
+    ? (person as Record<string, unknown>)
+    : payload;
+};
+
+const buildApplicationMatchAnalysisOutputContract = (): Record<string, unknown> => ({
+  matchAnalysis: {
+    score: 'number from 0 to 100',
+    scoreLabel: 'short fit label',
+    summary: 'short practical hiring fit summary',
+    strongMatches: ['CV/job evidence that supports this application'],
+    gaps: ['missing or weak areas against the posting'],
+    attentionAreas: [
+      {
+        area: 'skill, experience, evidence, portfolio, language, or domain area',
+        whyItMatters: 'why this matters for this job posting',
+        recommendedAction: 'specific action before applying or interviewing',
+        evidence: 'job or CV evidence behind the recommendation',
+      },
+    ],
+    cvEvidence: ['specific evidence from the selected person profile and CV records'],
+    jobEvidence: ['specific evidence from the job posting'],
+    riskFlags: ['risks, mismatches, or unclear points'],
+    interviewTalkingPoints: ['points to emphasize in interview'],
+    learningPlan: ['focused preparation actions'],
+  },
+});
+
 function ApplicationPackageModal({
   application,
   isMutating,
@@ -1370,6 +1481,7 @@ function ApplicationPackageModal({
   onDelete,
   onActiveArtifactsChange,
   onStatusChange,
+  onAnalysisRunQueued,
 }: {
   application: PreparedJobApplication | null;
   isMutating: boolean;
@@ -1381,6 +1493,7 @@ function ApplicationPackageModal({
     activeArtifacts: FilemakerJobApplicationActiveArtifacts
   ) => void;
   onStatusChange: (applicationId: string, status: FilemakerJobApplicationStatus) => void;
+  onAnalysisRunQueued?: () => void;
 }): React.JSX.Element {
   const { toast } = useToast();
   const [appliedStatusSyncRunId, setAppliedStatusSyncRunId] = useState<string | null>(null);
@@ -1411,6 +1524,74 @@ function ApplicationPackageModal({
   const [selectedCvVersionId, setSelectedCvVersionId] = useState('');
   const [selectedCoverLetterVersionId, setSelectedCoverLetterVersionId] = useState('');
   const [selectedApplicationEmailVersionId, setSelectedApplicationEmailVersionId] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<FilemakerJobApplicationStatus>('draft');
+  const [matchAnalysisContext, setMatchAnalysisContext] =
+    useState<ApplicationMatchAnalysisContextState>(() =>
+      createEmptyApplicationMatchAnalysisContextState()
+    );
+
+  useEffect(() => {
+    const personId = application?.personId?.trim() ?? '';
+    if (application === null || personId.length === 0) {
+      setMatchAnalysisContext(createEmptyApplicationMatchAnalysisContextState());
+      return undefined;
+    }
+
+    let isCancelled = false;
+    const controller = new AbortController();
+    setMatchAnalysisContext((current: ApplicationMatchAnalysisContextState) => ({
+      ...current,
+      error: null,
+      isLoading: true,
+    }));
+
+    const loadMatchAnalysisContext = async (): Promise<void> => {
+      try {
+        const [personResponse, cvsResponse] = await Promise.all([
+          fetch(`/api/filemaker/persons/${encodeURIComponent(personId)}`, {
+            signal: controller.signal,
+          }),
+          fetch(`/api/filemaker/cvs?personId=${encodeURIComponent(personId)}`, {
+            signal: controller.signal,
+          }),
+        ]);
+        if (!personResponse.ok) {
+          throw new Error(`Failed to load selected person profile (${personResponse.status}).`);
+        }
+        if (!cvsResponse.ok) {
+          throw new Error(`Failed to load selected person CV records (${cvsResponse.status}).`);
+        }
+        const personPayload = (await personResponse.json()) as Record<string, unknown>;
+        const cvsPayload = (await cvsResponse.json()) as { cvs?: FilemakerCv[] };
+        if (isCancelled) return;
+        setMatchAnalysisContext({
+          cvs: Array.isArray(cvsPayload.cvs) ? cvsPayload.cvs : [],
+          error: null,
+          isLoading: false,
+          personDetail: personPayload,
+        });
+      } catch (error: unknown) {
+        if (isCancelled || controller.signal.aborted) return;
+        logClientError(error);
+        setMatchAnalysisContext({
+          cvs: [],
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to load selected person data for match analysis.',
+          isLoading: false,
+          personDetail: null,
+        });
+      }
+    };
+
+    void loadMatchAnalysisContext();
+    return (): void => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [application?.id, application?.personId]);
+
   useEffect(() => {
     setSelectedCvVersionId(
       resolveInitialVersionId(
@@ -1433,10 +1614,12 @@ function ApplicationPackageModal({
         latestApplicationEmailVersionId
       )
     );
+    setSelectedStatus(application?.status ?? 'draft');
   }, [
     application?.activeArtifacts?.applicationEmailVersionId,
     application?.activeArtifacts?.coverLetterVersionId,
     application?.activeArtifacts?.tailoredCvVersionId,
+    application?.status,
     application?.id,
     applicationEmailVersions,
     coverLetterVersions,
@@ -1460,15 +1643,17 @@ function ApplicationPackageModal({
   };
   const handleCvVersionChange = (value: string): void => {
     setSelectedCvVersionId(value);
-    persistActiveArtifacts({ tailoredCvVersionId: value.length > 0 ? value : null });
   };
   const handleCoverLetterVersionChange = (value: string): void => {
     setSelectedCoverLetterVersionId(value);
-    persistActiveArtifacts({ coverLetterVersionId: value.length > 0 ? value : null });
   };
   const handleApplicationEmailVersionChange = (value: string): void => {
     setSelectedApplicationEmailVersionId(value);
-    persistActiveArtifacts({ applicationEmailVersionId: value.length > 0 ? value : null });
+  };
+  const handleSavePreparedApplication = (): void => {
+    if (application === null) return;
+    persistActiveArtifacts({});
+    onStatusChange(application.id, selectedStatus);
   };
   const selectedCvVersion =
     cvVersions.find(
@@ -1549,6 +1734,94 @@ function ApplicationPackageModal({
   const latestApplyStep = applyRun?.steps[applyRun.steps.length - 1] ?? null;
   const applyButtonLabel = resolveApplicationApplyButtonLabel(applyRun, isApplying);
   const applyActionHref = resolveStepSequencerActionHref(applyBrowserMode.action?.id);
+  const matchAnalysis = visibleApplication?.matchAnalysis ?? null;
+  const matchAnalysisHistory = visibleApplication?.matchAnalysisHistory ?? [];
+  const visibleMatchAnalysisHistory = matchAnalysisHistory.slice(-4).reverse();
+  const canRunMatchAnalysis =
+    visibleApplication !== null &&
+    jobListing !== null &&
+    matchAnalysisContext.isLoading === false &&
+    matchAnalysisContext.error === null;
+  const matchAnalysisCvCount = matchAnalysisContext.cvs.length;
+  const matchAnalysisContextStatus = matchAnalysisContext.isLoading
+    ? 'Loading CV context'
+    : matchAnalysisContext.error !== null
+      ? 'Context unavailable'
+      : `${matchAnalysisCvCount} CV record${matchAnalysisCvCount === 1 ? '' : 's'} loaded`;
+  const matchAnalysisDisabledReason =
+    visibleApplication === null
+      ? 'Open a prepared application before running match analysis.'
+      : jobListing === null
+        ? 'Job listing context is missing.'
+        : matchAnalysisContext.isLoading
+          ? 'Selected person profile and CV records are still loading.'
+          : matchAnalysisContext.error;
+
+  const getMatchAnalysisEntityJson = useCallback((): Record<string, unknown> | null => {
+    if (visibleApplication === null || jobListing === null) return null;
+    const canonicalApplicationKey =
+      visibleApplication.canonicalApplicationKey ?? visibleApplication.id;
+    return {
+      id: `${canonicalApplicationKey}:match-analysis`,
+      applicationContext: {
+        version: 1,
+        applicationRecord: {
+          id: visibleApplication.id,
+          applicationIds: visibleApplication.applicationIds,
+          canonicalApplicationKey,
+          status: selectedStatus,
+          personId: visibleApplication.personId,
+          personName: visibleApplication.personName,
+          organizationId: visibleApplication.organizationId,
+          organizationName: visibleApplication.organizationName,
+          jobListingId: visibleApplication.jobListingId,
+          jobTitle: visibleApplication.jobTitle,
+          integrationId: visibleApplication.integrationId,
+          integrationSlug: visibleApplication.integrationSlug,
+          connectionId: visibleApplication.connectionId,
+          tailoredCv: truncateApplicationMatchAnalysisValue(visibleApplication.tailoredCv),
+          coverLetter: truncateApplicationMatchAnalysisValue(visibleApplication.coverLetter),
+          applicationEmail: truncateApplicationMatchAnalysisValue(visibleApplication.applicationEmail),
+          applicationNotes: visibleApplication.applicationNotes,
+          missingInformation: visibleApplication.missingInformation,
+          confidence: visibleApplication.confidence,
+        },
+        personContext: {
+          selectedPersonId: visibleApplication.personId,
+          person: truncateApplicationMatchAnalysisValue(
+            resolvePersonRecordFromPayload(matchAnalysisContext.personDetail)
+          ),
+          personPayload: truncateApplicationMatchAnalysisValue(matchAnalysisContext.personDetail),
+          cvs: matchAnalysisContext.cvs.map(compactApplicationCvForMatchAnalysis),
+        },
+        jobContext: {
+          selectedJobListingId: jobListing.id,
+          listing: truncateApplicationMatchAnalysisValue(jobListing),
+        },
+        organizationContext: {
+          selectedOrganizationId: visibleApplication.organizationId,
+          organization: {
+            id: visibleApplication.organizationId,
+            name: visibleApplication.organizationName,
+          },
+        },
+        platformContext: {
+          integrationId: visibleApplication.integrationId,
+          integrationSlug: visibleApplication.integrationSlug,
+          connectionId: visibleApplication.connectionId,
+        },
+        analysisRequest: {
+          artifact: 'job_application_match_analysis',
+          modelId: 'gpt-oss:120b-cloud',
+          includeAllJobPostingAspects: true,
+          includeCurrentPersonProfileCvAndEducation: true,
+          goal:
+            'Score candidate/job fit and identify practical attention areas before applying.',
+        },
+        outputContract: buildApplicationMatchAnalysisOutputContract(),
+      },
+    };
+  }, [jobListing, matchAnalysisContext.cvs, matchAnalysisContext.personDetail, selectedStatus, visibleApplication]);
 
   useEffect(() => {
     toastRef.current = toast;
@@ -1818,8 +2091,31 @@ function ApplicationPackageModal({
       isOpen={application !== null}
       onClose={onClose}
       title='Prepared application'
-      subtitle={application !== null ? formatApplicationTitle(application) : undefined}
-      size='lg'
+      subtitle={undefined}
+      size='xl'
+      className='w-[min(96vw,86rem)] max-w-[86rem] md:min-w-[72rem]'
+      header={
+        <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+          <div className='min-w-0'>
+            <div className='flex min-w-0 items-center gap-2'>
+              <FormActions
+                onSave={handleSavePreparedApplication}
+                saveText='Save'
+                saveVariant='success'
+                isSaving={isMutating}
+                isDisabled={application === null || isMutating}
+                className='mr-2'
+              />
+              <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
+                Prepared application
+              </h2>
+            </div>
+          </div>
+          <Button type='button' onClick={onClose} variant='outline' size='sm'>
+            Close
+          </Button>
+        </div>
+      }
       footer={
         <>
           {cvHref !== null ? (
@@ -1900,9 +2196,6 @@ function ApplicationPackageModal({
               Delete
             </Button>
           ) : null}
-          <Button type='button' onClick={onClose}>
-            Close
-          </Button>
         </>
       }
     >
@@ -1968,7 +2261,7 @@ function ApplicationPackageModal({
             </div>
             <ToggleRow
               label='Action browser mode'
-              description='Mirrors Job Application Apply action settings.'
+              description='Synced with the Job Application Apply action sequence.'
               checked={applyBrowserMode.headless}
               onCheckedChange={applyBrowserMode.setHeadless}
               disabled={
@@ -2010,9 +2303,9 @@ function ApplicationPackageModal({
 
           <FormField label='Application status'>
             <SelectSimple
-              value={application.status}
+              value={selectedStatus}
               onValueChange={(value: string): void => {
-                onStatusChange(application.id, value as FilemakerJobApplicationStatus);
+                setSelectedStatus(value as FilemakerJobApplicationStatus);
               }}
               options={APPLICATION_STATUS_OPTIONS}
               ariaLabel='Application status'
@@ -2244,7 +2537,253 @@ function ApplicationPackageModal({
             </div>
 
             <aside className='space-y-3'>
-              <PreparedApplicationVersionHistory
+              <section className='space-y-3 rounded-lg border border-border/50 bg-background/35 p-3'>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <div>
+            <h4 className='text-sm font-semibold text-white'>AI match analysis</h4>
+            <p className='text-[11px] text-gray-500'>
+              Uses the selected person profile, CV records, education, and full job posting.
+            </p>
+            <div className='mt-2 flex flex-wrap gap-1.5'>
+              <Badge variant='outline'>gpt-oss:120b-cloud</Badge>
+              <Badge variant={canRunMatchAnalysis ? 'success' : 'outline'}>
+                {matchAnalysisContextStatus}
+              </Badge>
+              <Badge variant='outline'>Analysis only</Badge>
+            </div>
+            {!canRunMatchAnalysis && matchAnalysisDisabledReason !== null ? (
+              <p className='mt-2 text-[11px] text-amber-200'>{matchAnalysisDisabledReason}</p>
+            ) : null}
+            {visibleApplication?.matchAnalysisUpdatedAt ? (
+              <p className='mt-1 text-[11px] text-emerald-300'>
+                Last analysis: {formatTimestamp(visibleApplication.matchAnalysisUpdatedAt)}
+                {matchAnalysisHistory.length > 0 ? ` · ${matchAnalysisHistory.length} saved` : ''}
+              </p>
+            ) : null}
+          </div>
+          <TriggerButtonBar
+            location={JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_LOCATION}
+            entityType='custom'
+            entityId={
+              visibleApplication?.canonicalApplicationKey ?? visibleApplication?.id ?? null
+            }
+            getEntityJson={getMatchAnalysisEntityJson}
+            disabled={!canRunMatchAnalysis}
+            showRunFeedback
+            onRunQueued={(): void => {
+              onAnalysisRunQueued?.();
+              window.setTimeout((): void => onAnalysisRunQueued?.(), 3000);
+              window.setTimeout((): void => onAnalysisRunQueued?.(), 9000);
+              window.setTimeout((): void => onAnalysisRunQueued?.(), 20000);
+              window.setTimeout((): void => onAnalysisRunQueued?.(), 45000);
+              toast('Match analysis queued.', { variant: 'success' });
+            }}
+            className='[&_button]:h-8 [&_button]:px-2 [&_button]:text-[11px] [&_button]:font-semibold'
+          />
+        </div>
+        {matchAnalysisContext.isLoading ? (
+          <div className='flex items-center gap-2 rounded-md border border-border/50 bg-background/40 px-3 py-2 text-xs text-gray-400'>
+            <Loader2 className='h-3.5 w-3.5 animate-spin' aria-hidden='true' />
+            Loading selected person CV context...
+          </div>
+        ) : null}
+        {matchAnalysisContext.error !== null ? (
+          <div className='rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'>
+            {matchAnalysisContext.error}
+          </div>
+        ) : null}
+        {matchAnalysis !== null ? (
+          <div className='space-y-3 rounded-md border border-emerald-500/25 bg-emerald-500/10 p-3'>
+            <div className='flex flex-wrap items-end gap-2'>
+              <span className='text-3xl font-semibold text-emerald-100'>
+                {matchAnalysis.score ?? 'n/a'}
+              </span>
+              <span className='pb-1 text-xs font-medium uppercase tracking-[0.16em] text-emerald-300'>
+                {matchAnalysis.scoreLabel ?? 'Match score'}
+              </span>
+            </div>
+            {matchAnalysis.summary !== null ? (
+              <p className='text-sm leading-relaxed text-gray-200'>{matchAnalysis.summary}</p>
+            ) : null}
+            {matchAnalysis.gaps.length > 0 ||
+            matchAnalysis.attentionAreas.length > 0 ||
+            matchAnalysis.learningPlan.length > 0 ? (
+              <div className='grid gap-2 md:grid-cols-3'>
+                <div className='rounded-md border border-amber-500/25 bg-amber-500/10 p-2'>
+                  <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-amber-300'>
+                    Main gap
+                  </div>
+                  <p className='mt-1 text-xs text-gray-200'>
+                    {matchAnalysis.gaps[0] ?? 'No major gap reported.'}
+                  </p>
+                </div>
+                <div className='rounded-md border border-blue-500/25 bg-blue-500/10 p-2'>
+                  <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-blue-300'>
+                    First action
+                  </div>
+                  <p className='mt-1 text-xs text-gray-200'>
+                    {matchAnalysis.attentionAreas[0]?.recommendedAction ??
+                      matchAnalysis.attentionAreas[0]?.area ??
+                      'No immediate action reported.'}
+                  </p>
+                </div>
+                <div className='rounded-md border border-violet-500/25 bg-violet-500/10 p-2'>
+                  <div className='text-[10px] font-semibold uppercase tracking-[0.16em] text-violet-300'>
+                    Prep focus
+                  </div>
+                  <p className='mt-1 text-xs text-gray-200'>
+                    {matchAnalysis.learningPlan[0] ?? 'No preparation plan reported.'}
+                  </p>
+                </div>
+              </div>
+            ) : null}
+            {matchAnalysis.strongMatches.length > 0 ? (
+              <div className='space-y-1'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300'>
+                  Strong matches
+                </div>
+                <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                  {matchAnalysis.strongMatches.map((item: string, index: number) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {matchAnalysis.gaps.length > 0 ? (
+              <div className='space-y-1'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-amber-300'>
+                  Gaps
+                </div>
+                <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                  {matchAnalysis.gaps.map((item: string, index: number) => (
+                    <li key={`${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {matchAnalysis.cvEvidence.length > 0 || matchAnalysis.jobEvidence.length > 0 ? (
+              <div className='grid gap-2 md:grid-cols-2'>
+                {matchAnalysis.cvEvidence.length > 0 ? (
+                  <div className='space-y-1 rounded-md border border-border/50 bg-background/35 p-2'>
+                    <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-300'>
+                      CV evidence
+                    </div>
+                    <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                      {matchAnalysis.cvEvidence.map((item: string, index: number) => (
+                        <li key={`cv-evidence-${item}-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {matchAnalysis.jobEvidence.length > 0 ? (
+                  <div className='space-y-1 rounded-md border border-border/50 bg-background/35 p-2'>
+                    <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300'>
+                      Job evidence
+                    </div>
+                    <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                      {matchAnalysis.jobEvidence.map((item: string, index: number) => (
+                        <li key={`job-evidence-${item}-${index}`}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {matchAnalysis.attentionAreas.length > 0 ? (
+              <div className='space-y-2'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-300'>
+                  Attention areas
+                </div>
+                {matchAnalysis.attentionAreas.map((area, index: number) => (
+                  <div
+                    key={`${area.area ?? 'attention'}-${index}`}
+                    className='rounded-md border border-border/50 bg-background/40 p-2 text-xs text-gray-300'
+                  >
+                    <div className='font-semibold text-white'>{area.area ?? 'Attention area'}</div>
+                    {area.whyItMatters !== null ? <p>{area.whyItMatters}</p> : null}
+                    {area.recommendedAction !== null ? (
+                      <p className='mt-1 text-emerald-200'>{area.recommendedAction}</p>
+                    ) : null}
+                    {area.evidence !== null ? (
+                      <p className='mt-1 text-[11px] text-gray-500'>{area.evidence}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            ) : null}
+            {matchAnalysis.riskFlags.length > 0 ? (
+              <div className='space-y-1'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-red-300'>
+                  Risk flags
+                </div>
+                <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                  {matchAnalysis.riskFlags.map((item: string, index: number) => (
+                    <li key={`risk-${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {matchAnalysis.interviewTalkingPoints.length > 0 ? (
+              <div className='space-y-1'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-300'>
+                  Interview talking points
+                </div>
+                <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                  {matchAnalysis.interviewTalkingPoints.map((item: string, index: number) => (
+                    <li key={`talking-point-${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {matchAnalysis.learningPlan.length > 0 ? (
+              <div className='space-y-1'>
+                <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-300'>
+                  Preparation plan
+                </div>
+                <ul className='list-disc space-y-1 pl-4 text-xs text-gray-300'>
+                  {matchAnalysis.learningPlan.map((item: string, index: number) => (
+                    <li key={`learning-${item}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className='text-xs text-gray-500'>
+            No match analysis yet. Run Analyze Match to score fit and surface preparation gaps.
+          </p>
+        )}
+        {visibleMatchAnalysisHistory.length > 0 ? (
+          <div className='space-y-2 rounded-md border border-border/50 bg-background/30 p-3'>
+            <div className='text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-500'>
+              Recent analysis history
+            </div>
+            {visibleMatchAnalysisHistory.map((entry, index: number) => (
+              <div
+                key={entry.id}
+                className='rounded-md border border-border/40 bg-background/35 px-2 py-1.5 text-xs text-gray-300'
+              >
+                <div className='flex flex-wrap items-center gap-2'>
+                  <Badge variant={index === 0 ? 'success' : 'outline'}>
+                    {index === 0 ? 'Latest' : `v${matchAnalysisHistory.length - index}`}
+                  </Badge>
+                  <span className='text-gray-500'>
+                    {entry.createdAt !== null ? formatTimestamp(entry.createdAt) : 'Unknown time'}
+                  </span>
+                  <span className='font-semibold text-gray-100'>
+                    {entry.payload?.score ?? 'n/a'}
+                    {entry.payload?.scoreLabel ? ` · ${entry.payload.scoreLabel}` : ''}
+                  </span>
+                </div>
+                {entry.payload?.summary ? (
+                  <p className='mt-1 line-clamp-2 text-gray-400'>{entry.payload.summary}</p>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </section>
+      <PreparedApplicationVersionHistory
                 applicationEmailVersions={applicationEmailVersions}
                 coverLetterVersions={coverLetterVersions}
                 cvVersions={cvVersions}
@@ -3281,6 +3820,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         }}
         onStatusChange={(applicationId: string, status: FilemakerJobApplicationStatus): void => {
           void handleApplicationStatusChange(applicationId, status);
+        }}
+        onAnalysisRunQueued={(): void => {
+          void loadApplications();
         }}
       />
     </FormSection>

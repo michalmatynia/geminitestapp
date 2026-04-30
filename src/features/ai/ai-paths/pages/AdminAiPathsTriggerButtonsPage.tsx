@@ -76,6 +76,10 @@ const LOCATION_OPTIONS: Array<LabeledOptionDto<AiTriggerButtonLocation>> = [
     label: 'FileMaker: Organisation Job Application',
   },
   {
+    value: 'filemaker_prepared_application',
+    label: 'FileMaker: Prepared Application',
+  },
+  {
     value: 'filemaker_job_board_scraped_offer',
     label: 'FileMaker: Scraped Job Offer',
   },

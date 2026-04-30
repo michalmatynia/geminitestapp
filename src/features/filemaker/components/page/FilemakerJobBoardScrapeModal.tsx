@@ -86,11 +86,20 @@ type ActiveScrapeRequest = {
   mode: FilemakerJobBoardScrapeMode;
 };
 
+type OfferProgressTracker = {
+  averageMs: number | null;
+  firstAt: number | null;
+  lastAt: number | null;
+  lastIndex: number;
+  total: number;
+};
+
 type LivePreviewState = {
   discoveredUrls: string[];
   final: boolean;
   messages: string[];
   offers: FilemakerJobBoardScrapeOfferResult[];
+  progress: OfferProgressTracker;
   warnings: string[];
   writes: FilemakerJobBoardScrapeWriteResult[];
 };
@@ -207,14 +216,86 @@ const STATUS_OPTIONS = [
   { value: 'closed', label: 'Closed' },
 ] as const;
 
+const createEmptyOfferProgress = (): OfferProgressTracker => ({
+  averageMs: null,
+  firstAt: null,
+  lastAt: null,
+  lastIndex: 0,
+  total: 0,
+});
+
 const createEmptyLivePreviewState = (): LivePreviewState => ({
   discoveredUrls: [],
   final: false,
   messages: [],
   offers: [],
+  progress: createEmptyOfferProgress(),
   warnings: [],
   writes: [],
 });
+
+const EMA_ALPHA = 0.3;
+
+const advanceOfferProgress = (
+  current: OfferProgressTracker,
+  index: number,
+  total: number,
+  eventAtIso: string
+): OfferProgressTracker => {
+  const parsed = Date.parse(eventAtIso);
+  const at = Number.isNaN(parsed) ? Date.now() : parsed;
+  if (current.lastAt === null) {
+    return { averageMs: null, firstAt: at, lastAt: at, lastIndex: index, total };
+  }
+  const sampleMs = at - current.lastAt;
+  if (sampleMs <= 0) {
+    return { ...current, lastAt: at, lastIndex: index, total };
+  }
+  const averageMs =
+    current.averageMs === null
+      ? sampleMs
+      : current.averageMs * (1 - EMA_ALPHA) + sampleMs * EMA_ALPHA;
+  return { averageMs, firstAt: current.firstAt ?? at, lastAt: at, lastIndex: index, total };
+};
+
+const formatEtaMs = (ms: number): string => {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const minutes = Math.floor(total / 60);
+  const seconds = total % 60;
+  if (minutes <= 0) return `~${seconds}s`;
+  return `~${minutes}m ${seconds}s`;
+};
+
+const computeEtaLabel = (progress: OfferProgressTracker): string | null => {
+  if (progress.averageMs === null || progress.total <= progress.lastIndex) return null;
+  const remaining = progress.total - progress.lastIndex;
+  return formatEtaMs(progress.averageMs * remaining);
+};
+
+const HIGH_CONFIDENCE_THRESHOLD = 85;
+
+type MatchSummaryCounts = {
+  highConfidence: number;
+  lowConfidence: number;
+  unmatched: number;
+};
+
+const computeMatchSummary = (
+  offers: readonly FilemakerJobBoardScrapeOfferResult[]
+): MatchSummaryCounts => {
+  let highConfidence = 0;
+  let lowConfidence = 0;
+  let unmatched = 0;
+  for (const item of offers) {
+    if (item.match === null) {
+      unmatched += 1;
+      continue;
+    }
+    if (item.match.confidence >= HIGH_CONFIDENCE_THRESHOLD) highConfidence += 1;
+    else lowConfidence += 1;
+  }
+  return { highConfidence, lowConfidence, unmatched };
+};
 
 const lexiconPillHref = (pill: ScrapedOfferPill): string => {
   const params = new URLSearchParams({
@@ -1107,6 +1188,7 @@ const reduceLivePreviewEvent = (
     return {
       ...current,
       offers: mergeLiveOffer(current.offers, offerResult),
+      progress: advanceOfferProgress(current.progress, event.index, event.total, event.at),
       messages: appendCapped(
         current.messages,
         `Scraped ${event.index}/${event.total}: ${offerLabel}`
@@ -1529,6 +1611,7 @@ export function FilemakerJobBoardScrapeModal(
   const [initialState] = useState(createInitialState);
   const [draft, setDraft] = useState<ScrapeDraft>(initialState.draft);
   const [savedDraftBaseline, setSavedDraftBaseline] = useState<ScrapeDraft>(initialState.draft);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
   const [modeInFlight, setModeInFlight] = useState<FilemakerJobBoardScrapeMode | null>(null);
   const [saveDraftsInFlight, setSaveDraftsInFlight] = useState<string | null>(null);
   const [result, setResult] = useState<FilemakerJobBoardScrapeResponse | null>(null);
@@ -1598,6 +1681,7 @@ export function FilemakerJobBoardScrapeModal(
       const saved = hasDraftUnsavedChanges ? writeSavedDraft(draft) : true;
       if (saved) {
         setSavedDraftBaseline(draft);
+        setDraftSavedAt(Date.now());
       }
       await browserMode.persist();
       toast(saved ? 'Scraper settings saved.' : 'Failed to save scraper settings.', {
@@ -2135,6 +2219,9 @@ export function FilemakerJobBoardScrapeModal(
       size='xl'
       actions={
         <div className='flex flex-wrap items-center gap-2'>
+          {draftSavedAt !== null && !hasSettingsUnsavedChanges ? (
+            <DraftSavedPill savedAt={draftSavedAt} />
+          ) : null}
           <Button
             type='button'
             variant={isRunning && activeScrapeMode === 'preview' ? 'warning' : 'outline'}
@@ -2383,6 +2470,27 @@ export function FilemakerJobBoardScrapeModal(
               <Badge variant='secondary'>{livePreview.offers.length} offers scraped</Badge>
               <Badge variant='secondary'>{livePreview.writes.length} writes</Badge>
               <Badge variant='secondary'>{livePreview.warnings.length} warnings</Badge>
+              {(() => {
+                const eta = !livePreview.final ? computeEtaLabel(livePreview.progress) : null;
+                return eta === null ? null : (
+                  <Badge variant='secondary'>{`${eta} remaining`}</Badge>
+                );
+              })()}
+              {(() => {
+                if (livePreview.offers.length === 0) return null;
+                const summary = computeMatchSummary(livePreview.offers);
+                return (
+                  <>
+                    <Badge variant='secondary'>{summary.highConfidence} matched</Badge>
+                    {summary.lowConfidence > 0 ? (
+                      <Badge variant='secondary'>{summary.lowConfidence} low confidence</Badge>
+                    ) : null}
+                    {summary.unmatched > 0 ? (
+                      <Badge variant='secondary'>{summary.unmatched} unmatched</Badge>
+                    ) : null}
+                  </>
+                );
+              })()}
             </div>
             {livePreview.messages.length > 0 ? (
               <div className='space-y-1 rounded border border-border/40 bg-muted/10 px-3 py-2 text-xs text-muted-foreground'>

@@ -24,6 +24,7 @@ export const aiTriggerButtonLocationSchema = z.enum([
   'cms_block_header',
   'admin_dashboard',
   'filemaker_organization_job_application',
+  'filemaker_prepared_application',
   'filemaker_job_board_scraped_offer',
 ]);
 

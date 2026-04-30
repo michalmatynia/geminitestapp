@@ -9,29 +9,29 @@
 // uses create/update mutations. Provides hydation guards and optimistic save
 // behavior while exposing success/error state and a confirmation modal type.
 
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
 
-import type { ProductWithImages, ProductParameterValue, ResolvedProductParameterValue } from '@/shared/contracts/products/product';
 import type { ProductCustomFieldValue } from '@/shared/contracts/products/custom-fields';
-import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import type { ProductImageSlot } from '@/shared/contracts/products/drafts';
+import type { ProductFormData, ProductImageSlot } from '@/shared/contracts/products/drafts';
+import type { ProductParameterValue, ProductWithImages } from '@/shared/contracts/products/product';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { decodeSimpleParameterStorageId } from '@/shared/lib/products/utils/parameter-partition';
-import { normalizeProductCustomFieldValues } from '@/shared/lib/products/utils/custom-field-values';
-import {
-  mergeProductParameterValue,
-  normalizeParameterValuesByLanguage,
-  resolveStoredParameterValue,
-} from '@/shared/lib/products/utils/parameter-values';
 import { useToast } from '@/shared/ui/toast';
 
-import { logClientCatch } from '@/shared/utils/observability/client-error-logger';
-
-import { isEditingProductHydrated, markEditingProductHydrated } from './editingProductHydration';
+import {
+  executeProductFormSubmit,
+  hasTemporaryProductImages,
+} from './useProductFormSubmit.execution';
 import { useCreateProductMutation, useUpdateProductMutation } from './useProductDataMutations';
 
 import type { BaseSyntheticEvent } from 'react';
 import type { UseFormReturn } from 'react-hook-form';
+
+export {
+  buildProductFormData,
+  normalizeProductCustomFieldsForSubmission,
+  normalizeProductParametersForSubmission,
+  type BuildProductFormDataInput,
+} from './useProductFormSubmit.payload';
 
 export interface UseProductFormSubmitProps {
   product?: ProductWithImages | undefined;
@@ -61,331 +61,176 @@ export interface UseProductFormSubmitResult {
   ConfirmationModal: React.ComponentType;
 }
 
-export const normalizeProductParametersForSubmission = (
-  parameterValues: ProductParameterValue[]
-): ResolvedProductParameterValue[] =>
-  Array.from(
-    parameterValues.reduce(
-      (
-        byParameterId: Map<string, ResolvedProductParameterValue>,
-        entry: ProductParameterValue
-      ): Map<string, ResolvedProductParameterValue> => {
-        const valuesByLanguage = normalizeParameterValuesByLanguage(entry.valuesByLanguage);
+type CreateProductMutationRef = MutableRefObject<ReturnType<typeof useCreateProductMutation>>;
+type UpdateProductMutationRef = MutableRefObject<ReturnType<typeof useUpdateProductMutation>>;
 
-        const hasLocalizedValues = Object.keys(valuesByLanguage).length > 0;
-        const directValue = typeof entry.value === 'string' ? entry.value.trim() : '';
-        const normalizedParameterId = decodeSimpleParameterStorageId(
-          typeof entry.parameterId === 'string' ? entry.parameterId.trim() : ''
-        );
-
-        if (!normalizedParameterId) {
-          return byParameterId;
-        }
-
-        const existingEntry = byParameterId.get(normalizedParameterId);
-        const skipParameterInference = entry.skipParameterInference === true;
-        byParameterId.set(
-          normalizedParameterId,
-          hasLocalizedValues
-            ? mergeProductParameterValue(existingEntry, {
-              parameterId: normalizedParameterId,
-              value: directValue,
-              valuesByLanguage,
-              skipParameterInference,
-            })
-            : {
-              parameterId: normalizedParameterId,
-              value: resolveStoredParameterValue({}, directValue),
-              ...(skipParameterInference ? { skipParameterInference: true } : {}),
-            }
-        );
-        return byParameterId;
-      },
-      new Map<string, ResolvedProductParameterValue>()
-    ).values()
-  );
-
-export const normalizeProductCustomFieldsForSubmission = (
-  customFieldValues: ProductCustomFieldValue[]
-): ProductCustomFieldValue[] => normalizeProductCustomFieldValues(customFieldValues);
-
-type BuildProductFormDataInput = {
-  data: ProductFormData;
-  imageSlots: (ProductImageSlot | null)[];
-  imageLinks: string[];
-  imageBase64s: string[];
-  selectedCatalogIds: string[];
-  selectedCategoryId: string | null;
-  selectedTagIds: string[];
-  selectedProducerIds: string[];
-  selectedNoteIds: string[];
-  customFieldValues: ProductCustomFieldValue[];
-  parameterValues: ProductParameterValue[];
-  studioProjectId: string | null;
+type LatestSubmitRefs = {
+  createMutationRef: CreateProductMutationRef;
+  updateMutationRef: UpdateProductMutationRef;
+  onSuccessRef: MutableRefObject<UseProductFormSubmitProps['onSuccess']>;
+  onEditSaveRef: MutableRefObject<UseProductFormSubmitProps['onEditSave']>;
+  refreshImagesRef: MutableRefObject<UseProductFormSubmitProps['refreshImages']>;
 };
 
-const MANAGED_FORM_DATA_FIELDS = new Set<string>([
-  'catalogIds',
-  'categoryId',
-  'customFields',
-  'imageBase64s',
-  'imageLinks',
-  'noteIds',
-  'parameters',
-  'producerIds',
-  'studioProjectId',
-  'tagIds',
-]);
+const useLatestSubmitRefs = (props: {
+  createMutation: ReturnType<typeof useCreateProductMutation>;
+  updateMutation: ReturnType<typeof useUpdateProductMutation>;
+  onSuccess: UseProductFormSubmitProps['onSuccess'];
+  onEditSave: UseProductFormSubmitProps['onEditSave'];
+  refreshImages: UseProductFormSubmitProps['refreshImages'];
+}): LatestSubmitRefs => {
+  const createMutationRef = useRef(props.createMutation);
+  const updateMutationRef = useRef(props.updateMutation);
+  const onSuccessRef = useRef(props.onSuccess);
+  const onEditSaveRef = useRef(props.onEditSave);
+  const refreshImagesRef = useRef(props.refreshImages);
 
-function buildFormData(input: BuildProductFormDataInput): FormData {
-  const {
-    data,
-    imageSlots,
-    imageLinks,
-    imageBase64s,
-    selectedCatalogIds,
-    selectedCategoryId,
-    selectedTagIds,
-    selectedProducerIds,
-    selectedNoteIds,
-    customFieldValues,
-    parameterValues,
-    studioProjectId,
-  } = input;
-  const formData = new FormData();
+  createMutationRef.current = props.createMutation;
+  updateMutationRef.current = props.updateMutation;
+  onSuccessRef.current = props.onSuccess;
+  onEditSaveRef.current = props.onEditSave;
+  refreshImagesRef.current = props.refreshImages;
 
-  Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
-    if (MANAGED_FORM_DATA_FIELDS.has(key)) {
-      return;
-    }
-    if (value !== null && value !== undefined) {
-      if (typeof value === 'object') {
-        formData.append(key, JSON.stringify(value));
-      } else if (typeof value === 'string') {
-        formData.append(key, value);
-      } else {
-        formData.append(key, String(value as number | boolean));
-      }
-    }
-  });
+  return { createMutationRef, updateMutationRef, onSuccessRef, onEditSaveRef, refreshImagesRef };
+};
 
-  formData.append(
-    'imageLinks',
-    JSON.stringify(imageLinks.map((link: string): string => link.trim()))
-  );
-  formData.append(
-    'imageBase64s',
-    JSON.stringify(imageBase64s.map((link: string): string => link.trim()))
-  );
+const acquireSubmitLock = (submitInFlightRef: MutableRefObject<boolean>): boolean => {
+  const lockRef = submitInFlightRef;
+  if (lockRef.current) return false;
+  lockRef.current = true;
+  return true;
+};
 
-  imageSlots.forEach((slot: ProductImageSlot | null): void => {
-    if (slot?.type === 'file') {
-      formData.append('images', slot.data as Blob);
-    } else if (slot?.type === 'existing') {
-      formData.append('imageFileIds', slot.data.id);
-    }
-  });
+const releaseSubmitLock = (submitInFlightRef: MutableRefObject<boolean>): void => {
+  const lockRef = submitInFlightRef;
+  lockRef.current = false;
+};
 
-  selectedCatalogIds.forEach((catalogId: string): void => {
-    formData.append('catalogIds', catalogId);
-  });
+const resolveSkuValue = (data: ProductFormData): string =>
+  typeof data.sku === 'string' ? data.sku.trim() : '';
 
-  if (selectedCategoryId) {
-    formData.append('categoryId', selectedCategoryId);
-  } else {
-    formData.append('categoryId', '');
+type LockedSubmitArgs = {
+  submitInFlightRef: MutableRefObject<boolean>;
+  setIsSubmitting: (value: boolean) => void;
+  setUploadError: (message: string | null) => void;
+  setUploadSuccess: (value: boolean) => void;
+  operation: () => Promise<void>;
+};
+
+const runSubmitWithLock = async ({
+  submitInFlightRef,
+  setIsSubmitting,
+  setUploadError,
+  setUploadSuccess,
+  operation,
+}: LockedSubmitArgs): Promise<void> => {
+  if (!acquireSubmitLock(submitInFlightRef)) return;
+  setIsSubmitting(true);
+  setUploadError(null);
+  setUploadSuccess(false);
+
+  try {
+    await operation();
+  } finally {
+    releaseSubmitLock(submitInFlightRef);
+    setIsSubmitting(false);
   }
+};
 
-  selectedTagIds.forEach((tagId: string): void => {
-    formData.append('tagIds', tagId);
-  });
+type UseSubmitCallbackArgs = Omit<
+  UseProductFormSubmitProps,
+  'methods' | 'refreshImages' | 'onSuccess' | 'onEditSave'
+> & {
+  latestRefs: LatestSubmitRefs;
+  confirm: ReturnType<typeof useConfirm>['confirm'];
+  toast: ReturnType<typeof useToast>['toast'];
+  setIsSubmitting: (value: boolean) => void;
+  setUploadError: (message: string | null) => void;
+  setUploadSuccess: (value: boolean) => void;
+  submitInFlightRef: MutableRefObject<boolean>;
+  successTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
+};
 
-  selectedProducerIds.forEach((producerId: string): void => {
-    formData.append('producerIds', producerId);
-  });
-  if (selectedProducerIds.length === 0) {
-    formData.append('producerIds', '');
-  }
+type ProductFormSubmitState = {
+  uploadError: string | null;
+  uploadSuccess: boolean;
+  isSubmitting: boolean;
+  setIsSubmitting: (value: boolean) => void;
+  setUploadError: (message: string | null) => void;
+  setUploadSuccess: (value: boolean) => void;
+  successTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>;
+  submitInFlightRef: MutableRefObject<boolean>;
+};
 
-  selectedNoteIds.forEach((noteId: string): void => {
-    formData.append('noteIds', noteId);
-  });
-  if (selectedNoteIds.length === 0) {
-    formData.append('noteIds', '');
-  }
-
-  const normalizedCustomFields = normalizeProductCustomFieldsForSubmission(customFieldValues);
-  formData.append('customFields', JSON.stringify(normalizedCustomFields));
-
-  const normalizedParameters = normalizeProductParametersForSubmission(parameterValues);
-  formData.append('parameters', JSON.stringify(normalizedParameters));
-
-  formData.append('studioProjectId', studioProjectId ?? '');
-
-  return formData;
-}
-
-export function useProductFormSubmit(
-  props: UseProductFormSubmitProps
-): UseProductFormSubmitResult {
-  const {
-    product,
-    methods,
-    imageSlots,
-    imageLinks,
-    imageBase64s,
-    selectedCatalogIds,
-    selectedCategoryId,
-    selectedTagIds,
-    selectedProducerIds,
-    selectedNoteIds,
-    customFieldValues,
-    parameterValues,
-    studioProjectId,
-    refreshImages,
-    onSuccess,
-    onEditSave,
-    requireHydratedEditProduct = false,
-  } = props;
-
-  const { toast } = useToast();
-  const { confirm, ConfirmationModal } = useConfirm();
+const useProductFormSubmitState = (): ProductFormSubmitState => {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
-  // Track submitting state explicitly instead of relying on mutation.isPending.
-  // In TanStack Query v5, isPending stays true during async onSuccess callbacks
-  // (invalidation, cache patching) which can delay the UI from exiting "saving" state.
-  // The finally block guarantees this resets even if onSuccess hangs.
   const [isSubmitting, setIsSubmitting] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const submitInFlightRef = useRef(false);
 
-  const createMutation = useCreateProductMutation();
-  const updateMutation = useUpdateProductMutation();
+  return {
+    uploadError,
+    uploadSuccess,
+    isSubmitting,
+    setIsSubmitting,
+    setUploadError,
+    setUploadSuccess,
+    successTimerRef,
+    submitInFlightRef,
+  };
+};
 
-  const createMutationRef = useRef(createMutation);
-  createMutationRef.current = createMutation;
-  const updateMutationRef = useRef(updateMutation);
-  updateMutationRef.current = updateMutation;
-
-  const onSuccessRef = useRef(onSuccess);
-  onSuccessRef.current = onSuccess;
-  const onEditSaveRef = useRef(onEditSave);
-  onEditSaveRef.current = onEditSave;
-  const refreshImagesRef = useRef(refreshImages);
-  refreshImagesRef.current = refreshImages;
-
+const useSuccessTimerCleanup = (
+  successTimerRef: MutableRefObject<ReturnType<typeof setTimeout> | null>
+): void => {
   useEffect((): (() => void) => {
     return (): void => {
-      if (successTimerRef.current) {
+      if (successTimerRef.current !== null) {
         clearTimeout(successTimerRef.current);
       }
     };
-  }, []);
+  }, [successTimerRef]);
+};
 
-  const onSubmit = useCallback(
+const useProductFormSubmitCallback = ({
+  latestRefs,
+  confirm,
+  toast,
+  setIsSubmitting,
+  setUploadError,
+  setUploadSuccess,
+  submitInFlightRef,
+  successTimerRef,
+  ...input
+}: UseSubmitCallbackArgs): ((data: ProductFormData) => Promise<void>) =>
+  useCallback(
     async (data: ProductFormData): Promise<void> => {
-      const skuValue = typeof data.sku === 'string' ? data.sku.trim() : '';
-      const hasTempImages = imageSlots.some((slot: ProductImageSlot | null): boolean => {
-        if (!slot) return false;
-        if (slot.type === 'file') return true;
-        return slot.previewUrl.startsWith('/uploads/products/temp/');
-      });
-
-      const performSubmit = async () => {
-        if (submitInFlightRef.current) {
-          return;
-        }
-
-        submitInFlightRef.current = true;
-        setIsSubmitting(true);
-        setUploadError(null);
-        setUploadSuccess(false);
-
-        try {
-          if (product && requireHydratedEditProduct && !isEditingProductHydrated(product)) {
-            const message = 'Product details are still loading. Wait a moment and try again.';
-            setUploadError(message);
-            toast(message, { variant: 'warning' });
-            return;
-          }
-
-          const formData = buildFormData({
-            data,
-            imageSlots,
-            imageLinks,
-            imageBase64s,
-            selectedCatalogIds,
-            selectedCategoryId,
-            selectedTagIds,
-            selectedProducerIds,
-            selectedNoteIds,
-            customFieldValues,
-            parameterValues,
-            studioProjectId,
-          });
-
-          const savedProduct = product
-            ? await updateMutationRef.current.mutateAsync({
-              id: product.id,
-              data: formData,
-              originalSku:
-                typeof product.sku === 'string' && product.sku.trim().length > 0
-                  ? product.sku.trim()
-                  : undefined,
-              originalNameEn:
-                typeof product.name_en === 'string' && product.name_en.trim().length > 0
-                  ? product.name_en.trim()
-                  : undefined,
-            })
-            : await createMutationRef.current.mutateAsync(formData);
-
-          const isQueued = savedProduct == null;
-
-          if (isQueued) {
-            onSuccessRef.current?.({ queued: true });
-            return;
-          }
-
-          const resolvedProduct = savedProduct as ProductWithImages;
-          // Note: Cache patching and background invalidation are now handled
-          // declaratively within the mutation's invalidate callback in useProductData.ts
-
-          if (!product) {
-            onSuccessRef.current?.();
-          } else {
-            refreshImagesRef.current(resolvedProduct);
-            setUploadSuccess(true);
-            if (successTimerRef.current) {
-              clearTimeout(successTimerRef.current);
-            }
-            successTimerRef.current = setTimeout(() => {
-              setUploadSuccess(false);
-            }, 3000);
-            if (!onSuccessRef.current) {
-              toast('Product updated successfully.', { variant: 'success' });
-            }
-            onEditSaveRef.current?.(markEditingProductHydrated(resolvedProduct));
-            onSuccessRef.current?.();
-          }
-        } catch (error: unknown) {
-          logClientCatch(error, {
-            service: 'product-form',
-            action: 'submit',
-            productId: product?.id,
-          });
-          if (error instanceof Error) {
-            setUploadError(error.message);
-          } else {
-            setUploadError('An unknown error occurred');
-          }
-        } finally {
-          submitInFlightRef.current = false;
-          setIsSubmitting(false);
-        }
+      const performSubmit = async (): Promise<void> => {
+        await runSubmitWithLock({
+          submitInFlightRef,
+          setIsSubmitting,
+          setUploadError,
+          setUploadSuccess,
+          operation: async (): Promise<void> => {
+            await executeProductFormSubmit({
+              ...input,
+              data,
+              createProduct: latestRefs.createMutationRef.current.mutateAsync,
+              updateProduct: latestRefs.updateMutationRef.current.mutateAsync,
+              refreshImages: latestRefs.refreshImagesRef.current,
+              onSuccess: latestRefs.onSuccessRef.current,
+              onEditSave: latestRefs.onEditSaveRef.current,
+              setUploadError,
+              setUploadSuccess,
+              successTimerRef,
+              toast,
+            });
+          },
+        });
       };
 
-      if (!skuValue && hasTempImages) {
+      if (resolveSkuValue(data) === '' && hasTemporaryProductImages(input.imageSlots)) {
         confirm({
           title: 'Submit without SKU?',
           message:
@@ -399,33 +244,68 @@ export function useProductFormSubmit(
       await performSubmit();
     },
     [
-      product,
-      imageSlots,
-      imageLinks,
-      imageBase64s,
-      selectedCatalogIds,
-      selectedCategoryId,
-      selectedTagIds,
-      selectedProducerIds,
-      selectedNoteIds,
-      customFieldValues,
-      parameterValues,
-      studioProjectId,
-      toast,
       confirm,
+      input,
+      latestRefs,
+      setIsSubmitting,
+      setUploadError,
+      setUploadSuccess,
+      submitInFlightRef,
+      successTimerRef,
+      toast,
     ]
   );
 
+export function useProductFormSubmit(
+  props: UseProductFormSubmitProps
+): UseProductFormSubmitResult {
+  const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
+  const submitState = useProductFormSubmitState();
+  const latestRefs = useLatestSubmitRefs({
+    createMutation: useCreateProductMutation(),
+    updateMutation: useUpdateProductMutation(),
+    onSuccess: props.onSuccess,
+    onEditSave: props.onEditSave,
+    refreshImages: props.refreshImages,
+  });
+
+  useSuccessTimerCleanup(submitState.successTimerRef);
+
+  const onSubmit = useProductFormSubmitCallback({
+    product: props.product,
+    imageSlots: props.imageSlots,
+    imageLinks: props.imageLinks,
+    imageBase64s: props.imageBase64s,
+    selectedCatalogIds: props.selectedCatalogIds,
+    selectedCategoryId: props.selectedCategoryId,
+    selectedTagIds: props.selectedTagIds,
+    selectedProducerIds: props.selectedProducerIds,
+    selectedNoteIds: props.selectedNoteIds,
+    customFieldValues: props.customFieldValues,
+    parameterValues: props.parameterValues,
+    studioProjectId: props.studioProjectId,
+    requireHydratedEditProduct: props.requireHydratedEditProduct ?? false,
+    latestRefs,
+    confirm,
+    toast,
+    setIsSubmitting: submitState.setIsSubmitting,
+    setUploadError: submitState.setUploadError,
+    setUploadSuccess: submitState.setUploadSuccess,
+    submitInFlightRef: submitState.submitInFlightRef,
+    successTimerRef: submitState.successTimerRef,
+  });
+
   const submitHandler = useCallback(
-    (e?: BaseSyntheticEvent): Promise<void> => methods.handleSubmit(onSubmit)(e),
-    [methods, onSubmit]
+    (e?: BaseSyntheticEvent): Promise<void> => props.methods.handleSubmit(onSubmit)(e),
+    [props.methods, onSubmit]
   );
 
   return {
     handleSubmit: submitHandler,
-    uploading: isSubmitting,
-    uploadError,
-    uploadSuccess,
+    uploading: submitState.isSubmitting,
+    uploadError: submitState.uploadError,
+    uploadSuccess: submitState.uploadSuccess,
     ConfirmationModal,
   };
 }

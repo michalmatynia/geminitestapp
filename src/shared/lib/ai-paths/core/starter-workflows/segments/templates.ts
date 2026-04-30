@@ -7,6 +7,13 @@ import {
   JOB_APPLICATION_COVER_LETTER_TRIGGER_BUTTON_ID,
   JOB_APPLICATION_COVER_LETTER_TRIGGER_NAME,
   JOB_APPLICATION_COVER_LETTER_TRIGGER_SORT_INDEX,
+  JOB_APPLICATION_MATCH_ANALYSIS_MODEL_ID,
+  JOB_APPLICATION_MATCH_ANALYSIS_PATH_ID,
+  JOB_APPLICATION_MATCH_ANALYSIS_STARTER_TEMPLATE_ID,
+  JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_BUTTON_ID,
+  JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_LOCATION,
+  JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_NAME,
+  JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_SORT_INDEX,
   JOB_APPLICATION_PREPARE_TRIGGER_LOCATION,
   JOB_APPLICATION_TAILORED_CV_PATH_ID,
   JOB_APPLICATION_TAILORED_CV_STARTER_TEMPLATE_ID,
@@ -47,6 +54,7 @@ import descriptionInferenceLiteAsset from '../assets/description-inference-lite.
 import gemmaVisionObjectAnalyserApiAsset from '../assets/gemma-vision-object-analyser-api.canvas.json';
 import gemmaVisionObjectAnalyserModelAsset from '../assets/gemma-vision-object-analyser-model.canvas.json';
 import jobApplicationCoverLetterAsset from '../assets/job-application-cover-letter.canvas.json';
+import jobApplicationMatchAnalysisAsset from '../assets/job-application-match-analysis.canvas.json';
 import jobApplicationTailoredCvAsset from '../assets/job-application-tailored-cv.canvas.json';
 import jobApplicationTailoredEmailAsset from '../assets/job-application-tailored-email.canvas.json';
 import jobBoardLexiconClassificationAsset from '../assets/job-board-lexicon-classification.canvas.json';
@@ -175,7 +183,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_cv',
-    templateVersion: 24,
+    templateVersion: 25,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {
@@ -294,6 +302,67 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     starterLineage: {
       starterKey: 'job_application_cover_letter',
       templateVersion: 11,
+      canonicalGraphHashes: [],
+    },
+    upgradePolicy: {
+      versionedOverlayScope: 'any_provenance_path',
+    },
+  },
+  {
+    templateId: JOB_APPLICATION_MATCH_ANALYSIS_STARTER_TEMPLATE_ID,
+    name: 'Analyze Application Match',
+    description:
+      'Analyze how well a prepared application matches the job listing using the current Person profile, CV records, and education.',
+    semanticAsset: jobApplicationMatchAnalysisAsset as CanvasSemanticDocument,
+    seedPolicy: {
+      autoSeed: true,
+      defaultPathId: JOB_APPLICATION_MATCH_ANALYSIS_PATH_ID,
+      isActive: true,
+      isLocked: false,
+      sortOrder: JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_SORT_INDEX,
+      includeInCanonicalSeed: true,
+    },
+    triggerButtonPresets: [
+      {
+        id: JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_BUTTON_ID,
+        name: JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_NAME,
+        pathId: JOB_APPLICATION_MATCH_ANALYSIS_PATH_ID,
+        locations: [JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_LOCATION],
+        display: buildTriggerDisplay(JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_NAME),
+        contextTemplate: {
+          applicationContext: {
+            analysisRequest: {
+              artifact: 'match_analysis',
+              modelId: JOB_APPLICATION_MATCH_ANALYSIS_MODEL_ID,
+              promptGoal:
+                'Analyze how good a match this Person is for the selected job and identify areas needing attention before applying.',
+            },
+            outputContract: {
+              matchAnalysis: {
+                score: 'number 0..100',
+                scoreLabel: 'weak | partial | solid | strong | excellent',
+                summary: 'string',
+                strongMatches: 'string[]',
+                gaps: 'string[]',
+                attentionAreas:
+                  '{area:string, whyItMatters:string, recommendedAction:string, evidence:string}[]',
+                cvEvidence: 'string[]',
+                jobEvidence: 'string[]',
+                riskFlags: 'string[]',
+                interviewTalkingPoints: 'string[]',
+                learningPlan: 'string[]',
+              },
+            },
+          },
+        },
+        enabled: true,
+        mode: 'click',
+        sortIndex: JOB_APPLICATION_MATCH_ANALYSIS_TRIGGER_SORT_INDEX,
+      },
+    ],
+    starterLineage: {
+      starterKey: 'job_application_match_analysis',
+      templateVersion: 1,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

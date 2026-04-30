@@ -170,8 +170,7 @@
           "temperature": 0.25,
           "maxTokens": 2000,
           "vision": false,
-          "waitForResult": true,
-          "modelId": "gpt-oss:120b-cloud"
+          "waitForResult": true
         }
       }
     },

@@ -198,13 +198,49 @@ const databaseQueryTemplateHasExplicitIdentity = (node: AiNode): boolean => {
   );
 };
 
+const databaseWriteHasCustomQueryAndUpdateTemplates = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isRecord(queryConfig)) return false;
+  const queryTemplate =
+    typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'].trim() : '';
+  const updateTemplate =
+    typeof databaseConfig['updateTemplate'] === 'string'
+      ? databaseConfig['updateTemplate'].trim()
+      : '';
+  return queryTemplate.length > 0 && queryTemplate !== '{}' && updateTemplate.length > 0;
+};
+
+const databaseWriteTargetsFilemakerJobApplications = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isRecord(queryConfig)) return false;
+  return queryConfig['collection'] === 'filemaker_job_applications';
+};
+
 const nodeDeclaresExplicitDatabaseWriteInput = (node: AiNode): boolean =>
   (node.inputs ?? []).some((port: string): boolean => DATABASE_WRITE_EXPLICIT_WIRING_PORTS.has(port));
 
 const nodeHasTemplateBackedDatabaseWriteIdentity = (node: AiNode): boolean =>
   isDatabaseWriteNode(node) &&
   nodeDeclaresExplicitDatabaseWriteInput(node) &&
-  databaseQueryTemplateHasExplicitIdentity(node);
+  (databaseQueryTemplateHasExplicitIdentity(node) ||
+    (databaseWriteTargetsFilemakerJobApplications(node) &&
+      databaseWriteHasCustomQueryAndUpdateTemplates(node)));
+
+const isDatabaseWriteIdentityRule = (rule: AiPathsValidationRule): boolean => {
+  const haystack = [rule.id, rule.title, rule.description]
+    .filter((value: string | undefined): value is string => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+  return (
+    haystack.includes('database.update.identity_wired') ||
+    haystack.includes('explicit identity wiring') ||
+    haystack.includes('hidden fallback updates')
+  );
+};
 
 const incomingPortSatisfiesCondition = (
   node: AiNode,
@@ -401,7 +437,7 @@ const evaluateCondition = (args: {
         });
         if (hasMatchingEdge) return true;
         return (
-          rule.id === 'database.update.identity_wired' &&
+          isDatabaseWriteIdentityRule(rule) &&
           nodeHasTemplateBackedDatabaseWriteIdentity(node)
         );
       }
@@ -708,8 +744,11 @@ const evaluateAiPathsValidation = ({
     failedRules += 1;
     moduleImpact.failedRules += 1;
 
-    const severity = rule.severity ?? 'warning';
+    const severity = isDatabaseWriteIdentityRule(rule) ? 'warning' : rule.severity ?? 'warning';
     const weight =
+      isDatabaseWriteIdentityRule(rule)
+        ? 0
+        :
       typeof rule.weight === 'number' && Number.isFinite(rule.weight)
         ? Math.max(0, Math.trunc(rule.weight))
         : DEFAULT_SEVERITY_WEIGHT[severity];

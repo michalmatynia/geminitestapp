@@ -134,9 +134,18 @@ const normalizeArtifactKind = (
   return null;
 };
 
+type TailoredCvSourceFallback = {
+  sourceCvRecordId: string | null;
+  sourceCvTitle: string | null;
+};
+
 const normalizeArtifactVersion = (
   value: unknown,
-  kind: FilemakerJobApplicationArtifactKind
+  kind: FilemakerJobApplicationArtifactKind,
+  sourceFallback: TailoredCvSourceFallback = {
+    sourceCvRecordId: null,
+    sourceCvTitle: null,
+  }
 ): FilemakerJobApplicationArtifactVersion | null => {
   const record = normalizeRecord(value);
   if (record === null) return null;
@@ -153,7 +162,10 @@ const normalizeArtifactVersion = (
     kind,
     linkedRecordId: normalizeString(record['linkedRecordId']),
     missingInformation: normalizeStringArray(record['missingInformation']),
-    payload: normalizeRecord(record['payload']),
+    payload:
+      kind === 'tailored_cv'
+        ? applyTailoredCvSourceFallbackToPayload(normalizeRecord(record['payload']), sourceFallback)
+        : normalizeRecord(record['payload']),
     sourceRunId: normalizeString(record['sourceRunId']),
     version: normalizeNumber(record['version']),
   };
@@ -161,12 +173,13 @@ const normalizeArtifactVersion = (
 
 const normalizeArtifactVersionArray = (
   value: unknown,
-  kind: FilemakerJobApplicationArtifactKind
+  kind: FilemakerJobApplicationArtifactKind,
+  sourceFallback?: TailoredCvSourceFallback
 ): FilemakerJobApplicationArtifactVersion[] =>
   Array.isArray(value)
     ? value
         .map((entry: unknown, index: number): FilemakerJobApplicationArtifactVersion | null => {
-          const version = normalizeArtifactVersion(entry, kind);
+          const version = normalizeArtifactVersion(entry, kind, sourceFallback);
           return version === null
             ? null
             : {
@@ -178,14 +191,15 @@ const normalizeArtifactVersionArray = (
     : [];
 
 const normalizePersistedArtifactVersions = (
-  value: unknown
+  value: unknown,
+  sourceFallback?: TailoredCvSourceFallback
 ): FilemakerJobApplicationArtifactVersionSet | null => {
   const record = normalizeRecord(value);
   if (record === null) return null;
   const versions: FilemakerJobApplicationArtifactVersionSet = {
     applicationEmail: normalizeArtifactVersionArray(record['applicationEmail'], 'application_email'),
     coverLetter: normalizeArtifactVersionArray(record['coverLetter'], 'cover_letter'),
-    tailoredCv: normalizeArtifactVersionArray(record['tailoredCv'], 'tailored_cv'),
+    tailoredCv: normalizeArtifactVersionArray(record['tailoredCv'], 'tailored_cv', sourceFallback),
   };
   return versions.applicationEmail.length > 0 ||
     versions.coverLetter.length > 0 ||
@@ -211,23 +225,181 @@ const normalizeRecord = (value: unknown): Record<string, unknown> | null =>
     ? (value as Record<string, unknown>)
     : null;
 
+const normalizeTailoredCvSourceFallback = (value: unknown): TailoredCvSourceFallback => {
+  const record = normalizeRecord(value);
+  if (record === null) return { sourceCvRecordId: null, sourceCvTitle: null };
+  return {
+    sourceCvRecordId:
+      normalizeString(record['preferredSourceCvRecordId']) ?? normalizeString(record['sourceCvRecordId']),
+    sourceCvTitle:
+      normalizeString(record['preferredSourceCvTitle']) ?? normalizeString(record['sourceCvTitle']),
+  };
+};
+
+const applyTailoredCvSourceFallbackToPayload = (
+  payload: Record<string, unknown> | null,
+  sourceFallback: TailoredCvSourceFallback
+): Record<string, unknown> | null => {
+  if (payload === null) return null;
+  const sourceCvRecordId = normalizeString(sourceFallback.sourceCvRecordId);
+  const sourceCvTitle = normalizeString(sourceFallback.sourceCvTitle);
+  if (sourceCvRecordId === null && sourceCvTitle === null) return payload;
+  const nestedTailoredCv = normalizeRecord(payload['tailoredCv']);
+  if (nestedTailoredCv !== null) {
+    const nestedTailoringPatch = normalizeRecord(nestedTailoredCv['tailoringPatch']);
+    return {
+      ...payload,
+      tailoredCv: {
+        ...nestedTailoredCv,
+        sourceCvRecordId: normalizeString(nestedTailoredCv['sourceCvRecordId']) ?? sourceCvRecordId,
+        sourceCvTitle: normalizeString(nestedTailoredCv['sourceCvTitle']) ?? sourceCvTitle,
+        tailoringPatch:
+          nestedTailoringPatch ?? {
+            professionalSummary: normalizeString(nestedTailoredCv['professionalSummary']),
+            coreStrengths: normalizeStringArray(nestedTailoredCv['coreStrengths']),
+            selectedTechnicalEnvironment: normalizeStringArray(
+              nestedTailoredCv['selectedTechnicalEnvironment']
+            ),
+            experienceHighlightPatches: normalizeExperienceHighlightPatches(
+              nestedTailoredCv['experienceHighlightPatches']
+            ),
+          },
+      },
+    };
+  }
+  const tailoringPatch = normalizeRecord(payload['tailoringPatch']);
+  return {
+    ...payload,
+    sourceCvRecordId: normalizeString(payload['sourceCvRecordId']) ?? sourceCvRecordId,
+    sourceCvTitle: normalizeString(payload['sourceCvTitle']) ?? sourceCvTitle,
+    tailoringPatch:
+      tailoringPatch ?? {
+        professionalSummary: normalizeString(payload['professionalSummary']),
+        coreStrengths: normalizeStringArray(payload['coreStrengths']),
+        selectedTechnicalEnvironment: normalizeStringArray(payload['selectedTechnicalEnvironment']),
+        experienceHighlightPatches: normalizeExperienceHighlightPatches(
+          payload['experienceHighlightPatches']
+        ),
+      },
+  };
+};
+
+const TAILORED_CV_ALLOWED_SECTIONS = [
+  'Professional Summary',
+  'Core Strengths',
+  'Selected Technical Environment',
+  'Experience Highlights',
+];
+
 const normalizeId = (document: FilemakerJobApplicationMongoDocument): string => {
   const id = normalizeString(document.id);
   if (id !== null) return id;
   return document._id;
 };
 
-const toTailoredCv = (value: unknown): FilemakerJobApplicationTailoredCv | null => {
+const normalizeExperienceHighlightPatches = (
+  value: unknown
+): FilemakerJobApplicationTailoredCv['experienceHighlightPatches'] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry: unknown) => {
+      const patch = normalizeRecord(entry);
+      if (patch === null) return null;
+      const highlights = normalizeStringArray(patch['highlights']);
+      if (highlights.length === 0) return null;
+      return {
+        experienceKey: normalizeString(patch['experienceKey']),
+        experienceId: normalizeString(patch['experienceId']),
+        experienceTitle: normalizeString(patch['experienceTitle']),
+        company: normalizeString(patch['company']),
+        role: normalizeString(patch['role']),
+        highlights,
+      };
+    })
+    .filter(
+      (
+        entry
+      ): entry is NonNullable<FilemakerJobApplicationTailoredCv['experienceHighlightPatches']>[number] =>
+        entry !== null
+    );
+};
+
+const toTailoredCv = (
+  value: unknown,
+  sourceFallback: TailoredCvSourceFallback = {
+    sourceCvRecordId: null,
+    sourceCvTitle: null,
+  }
+): FilemakerJobApplicationTailoredCv | null => {
   const record = normalizeRecord(value);
   if (record === null) return null;
+  const tailoringScope = normalizeRecord(record['tailoringScope']);
+  const explicitTailoringPatch = normalizeRecord(record['tailoringPatch']);
+  const experienceHighlightPatches = normalizeExperienceHighlightPatches(
+    record['experienceHighlightPatches']
+  );
+  const patchExperienceHighlightPatches = normalizeExperienceHighlightPatches(
+    explicitTailoringPatch?.['experienceHighlightPatches']
+  );
+  const patchCoreStrengths =
+    explicitTailoringPatch !== null
+      ? normalizeStringArray(explicitTailoringPatch['coreStrengths'])
+      : [];
+  const patchSelectedTechnicalEnvironment =
+    explicitTailoringPatch !== null
+      ? normalizeStringArray(explicitTailoringPatch['selectedTechnicalEnvironment'])
+      : [];
+  const patchProfessionalSummary =
+    explicitTailoringPatch !== null
+      ? normalizeString(explicitTailoringPatch['professionalSummary'])
+      : null;
+  const coreStrengths = normalizeStringArray(record['coreStrengths']);
+  const selectedTechnicalEnvironment = normalizeStringArray(record['selectedTechnicalEnvironment']);
+  const professionalSummary = normalizeString(record['professionalSummary']);
   return {
     bodyMarkdown: normalizeString(record['bodyMarkdown']),
     bodyText: normalizeString(record['bodyText']),
+    coreStrengths,
     educationHighlights: normalizeStringArray(record['educationHighlights']),
+    experienceHighlightPatches,
     experienceHighlights: normalizeStringArray(record['experienceHighlights']),
     preferencesMatch: normalizeStringArray(record['preferencesMatch']),
-    professionalSummary: normalizeString(record['professionalSummary']),
+    professionalSummary,
+    selectedTechnicalEnvironment,
     skills: normalizeStringArray(record['skills']),
+    sourceCvRecordId:
+      normalizeString(record['sourceCvRecordId']) ?? sourceFallback.sourceCvRecordId,
+    sourceCvTitle: normalizeString(record['sourceCvTitle']) ?? sourceFallback.sourceCvTitle,
+    tailoringPatch: {
+      professionalSummary: patchProfessionalSummary ?? professionalSummary,
+      coreStrengths: patchCoreStrengths.length > 0 ? patchCoreStrengths : coreStrengths,
+      selectedTechnicalEnvironment:
+        patchSelectedTechnicalEnvironment.length > 0
+          ? patchSelectedTechnicalEnvironment
+          : selectedTechnicalEnvironment,
+      experienceHighlightPatches:
+        patchExperienceHighlightPatches.length > 0
+          ? patchExperienceHighlightPatches
+          : experienceHighlightPatches,
+    },
+    tailoringScope: {
+      allowedSections:
+        tailoringScope !== null && normalizeStringArray(tailoringScope['allowedSections']).length > 0
+          ? normalizeStringArray(tailoringScope['allowedSections'])
+          : TAILORED_CV_ALLOWED_SECTIONS,
+      canonicalPatchField:
+        tailoringScope !== null
+          ? normalizeString(tailoringScope['canonicalPatchField']) ?? 'tailoringPatch'
+          : 'tailoringPatch',
+      lockedFieldsPreserved:
+        tailoringScope !== null && typeof tailoringScope['lockedFieldsPreserved'] === 'boolean'
+          ? tailoringScope['lockedFieldsPreserved']
+          : true,
+      renderedBodyMode:
+        tailoringScope !== null
+          ? normalizeString(tailoringScope['renderedBodyMode']) ?? 'ai_rendered_full_cv'
+          : 'ai_rendered_full_cv',
+    },
     title: normalizeString(record['title']),
   };
 };
@@ -260,6 +432,8 @@ const toFilemakerJobApplication = (
   const integrationId = normalizeString(document.integrationId);
   const integrationSlug = normalizeString(document.integrationSlug);
   const connectionId = normalizeString(document.connectionId);
+  const sourceApplicationContext = normalizeRecord(document.sourceApplicationContext);
+  const tailoredCvSourceFallback = normalizeTailoredCvSourceFallback(sourceApplicationContext);
   const fallbackCanonicalKey =
     personId.length > 0 && organizationId.length > 0 && jobListingId.length > 0
       ? buildFilemakerJobApplicationCanonicalKey({
@@ -285,10 +459,12 @@ const toFilemakerJobApplication = (
     artifactVersionCreatedAt: normalizeString(document.artifactVersionCreatedAt),
     artifactVersionId: normalizeString(document.artifactVersionId),
     artifactVersions: normalizePersistedArtifactVersions(
-      document.artifactVersions ?? document.persistedArtifactVersions
+      document.artifactVersions ?? document.persistedArtifactVersions,
+      tailoredCvSourceFallback
     ),
     persistedArtifactVersions: normalizePersistedArtifactVersions(
-      document.persistedArtifactVersions ?? document.artifactVersions
+      document.persistedArtifactVersions ?? document.artifactVersions,
+      tailoredCvSourceFallback
     ),
     canonicalApplicationKey: normalizeString(document.canonicalApplicationKey) ?? fallbackCanonicalKey,
     status: normalizeStatus(document.status),
@@ -302,7 +478,7 @@ const toFilemakerJobApplication = (
     integrationSlug,
     connectionId,
     tailoredCvId: normalizeString(document.tailoredCvId),
-    tailoredCv: toTailoredCv(document.tailoredCv),
+    tailoredCv: toTailoredCv(document.tailoredCv, tailoredCvSourceFallback),
     coverLetter: toCoverLetter(document.coverLetter),
     applicationEmail: toApplicationEmail(document.applicationEmail),
     applicationNotes: normalizeStringArray(document.applicationNotes),
@@ -310,7 +486,7 @@ const toFilemakerJobApplication = (
     confidence: normalizeNumber(document.confidence),
     source: normalizeString(document.source),
     sourceEntityId: normalizeString(document.sourceEntityId),
-    sourceApplicationContext: normalizeRecord(document.sourceApplicationContext),
+    sourceApplicationContext,
     createdAt: normalizeRequiredString(document.createdAt),
     updatedAt: normalizeRequiredString(document.updatedAt),
   };
@@ -648,10 +824,6 @@ export const collapseLegacyMongoFilemakerJobApplicationsForListing = async (inpu
         { id: canonicalId, artifactVersions: { $exists: true } },
       ],
     });
-    if (group.length <= 1 && existingContainer === null) {
-      legacyGroupsSkipped += 1;
-      continue;
-    }
     const sorted = group.slice().sort((left, right): number =>
       normalizeRequiredString(right.updatedAt).localeCompare(normalizeRequiredString(left.updatedAt))
     );

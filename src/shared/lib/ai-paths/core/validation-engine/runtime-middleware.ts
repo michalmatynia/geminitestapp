@@ -153,6 +153,28 @@ const databaseQueryTemplateHasExplicitIdentity = (node: AiNode): boolean => {
   );
 };
 
+const databaseWriteHasCustomQueryAndUpdateTemplates = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isObjectRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isObjectRecord(queryConfig)) return false;
+  const queryTemplate =
+    typeof queryConfig['queryTemplate'] === 'string' ? queryConfig['queryTemplate'].trim() : '';
+  const updateTemplate =
+    typeof databaseConfig['updateTemplate'] === 'string'
+      ? databaseConfig['updateTemplate'].trim()
+      : '';
+  return queryTemplate.length > 0 && queryTemplate !== '{}' && updateTemplate.length > 0;
+};
+
+const databaseWriteTargetsFilemakerJobApplications = (node: AiNode): boolean => {
+  const databaseConfig = (node.config as Record<string, unknown> | undefined)?.['database'];
+  if (!isObjectRecord(databaseConfig)) return false;
+  const queryConfig = databaseConfig['query'];
+  if (!isObjectRecord(queryConfig)) return false;
+  return queryConfig['collection'] === 'filemaker_job_applications';
+};
+
 const nodeDeclaresExplicitDatabaseWriteInput = (node: AiNode): boolean =>
   (node.inputs ?? []).some((port: string): boolean => DATABASE_WRITE_EXPLICIT_PORTS.has(port));
 
@@ -162,7 +184,12 @@ const nodeHasSafeDatabaseWriteIdentity = (
 ): boolean => {
   if (!node) return false;
   if (nodeHasExplicitDatabaseWriteWiring(node.id, edges)) return true;
-  return nodeDeclaresExplicitDatabaseWriteInput(node) && databaseQueryTemplateHasExplicitIdentity(node);
+  return (
+    nodeDeclaresExplicitDatabaseWriteInput(node) &&
+    (databaseQueryTemplateHasExplicitIdentity(node) ||
+      (databaseWriteTargetsFilemakerJobApplications(node) &&
+        databaseWriteHasCustomQueryAndUpdateTemplates(node)))
+  );
 };
 
 const databaseWriteNodeIdsWithoutExplicitWiring = (nodes: AiNode[], edges: Edge[]): string[] =>
@@ -230,6 +257,16 @@ const filterRuntimeValidationFindings = (
     if (databaseWriteNodeIdsWithoutExplicitWiring(nodes, edges).length > 0) return true;
     return false;
   });
+
+const normalizeRuntimeValidationFinding = (
+  finding: AiPathsValidationFinding
+): AiPathsValidationFinding =>
+  isDatabaseWriteIdentityFinding(finding)
+    ? {
+        ...finding,
+        severity: 'warning',
+      }
+    : finding;
 
 const buildReportFromFilteredFindings = (
   report: ReturnType<typeof evaluateAiPathsValidationAtStage>,
@@ -584,9 +621,13 @@ export const createAiPathsRuntimeValidationMiddleware = ({
       stage,
       ...(node ? { node } : {}),
     });
+    const normalizedFindings = rawReport.findings.map(normalizeRuntimeValidationFinding);
     const report = buildReportFromFilteredFindings(
-      rawReport,
-      filterRuntimeValidationFindings(rawReport.findings, nodes, validationEdges)
+      {
+        ...rawReport,
+        findings: normalizedFindings,
+      },
+      filterRuntimeValidationFindings(normalizedFindings, nodes, validationEdges)
     );
 
     const hasRuleFailures = report.enabled && report.rulesEvaluated > 0 && report.failedRules > 0;

@@ -16,6 +16,16 @@ import { Hint } from '@/shared/ui/Hint';
 
 import { cn } from '@/shared/utils/ui-utils';
 
+const hasNonEmptyString = (value: string | null | undefined): value is string =>
+  typeof value === 'string' && value.length > 0;
+
+const resolveSnippetMatch = (value: string, index: number, rawMatch: string): string => {
+  if (rawMatch.length > 0) return rawMatch;
+  const fallbackMatch = value.slice(index, Math.min(value.length, index + 1));
+  if (fallbackMatch.length > 0) return fallbackMatch;
+  return ' ';
+};
+
 const buildIssueSnippet = (
   value: string,
   index: number,
@@ -29,10 +39,126 @@ const buildIssueSnippet = (
 
   return {
     before: `${start > 0 ? '...' : ''}${rawBefore}`,
-    match: rawMatch || value.slice(index, Math.min(value.length, index + 1)) || ' ',
+    match: resolveSnippetMatch(value, index, rawMatch),
     after: `${rawAfter}${end < value.length ? '...' : ''}`,
   };
 };
+
+const resolveToneClass = (issue: FieldValidatorIssue): string => {
+  if (issue.severity === 'warning') return 'border-amber-500/40 bg-amber-500/10 text-amber-100';
+  return 'border-red-500/40 bg-red-500/10 text-red-100';
+};
+
+const resolveMatchClass = (issue: FieldValidatorIssue): string => {
+  if (issue.severity === 'warning') return 'bg-amber-300/30 text-amber-50';
+  return 'bg-red-300/30 text-red-50';
+};
+
+const resolveReplacementBadgeClass = (issue: FieldValidatorIssue): string => {
+  if (issue.replacementScope === 'global') {
+    return 'border-emerald-500/50 bg-emerald-500/15 text-emerald-100';
+  }
+  if (issue.replacementScope !== 'field') {
+    return 'border-gray-500/40 bg-gray-500/10 text-gray-200/80';
+  }
+  if (issue.replacementActive) return 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100';
+  return 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200/80';
+};
+
+const resolveReplacementBadgeText = (issue: FieldValidatorIssue): string => {
+  if (issue.replacementScope === 'global') return 'Global replacer';
+  if (issue.replacementScope !== 'field') return 'Validation only';
+  if (issue.replacementActive) return 'Field replacer';
+  return 'Field replacer (other field)';
+};
+
+const resolveProposedValue = ({
+  issue,
+  proposedValueOverride,
+  value,
+}: {
+  issue: FieldValidatorIssue;
+  proposedValueOverride?: string | null;
+  value: string;
+}): string | null => {
+  if (proposedValueOverride !== undefined && proposedValueOverride !== null) {
+    return proposedValueOverride;
+  }
+  if (hasNonEmptyString(issue.replacementValue)) {
+    return getIssueReplacementPreview(value, issue);
+  }
+  return null;
+};
+
+function ValidatorIssueActions({
+  denyLabel,
+  issue,
+  onDeny,
+  onReplace,
+}: {
+  denyLabel: 'Deny' | 'Mute';
+  issue: FieldValidatorIssue;
+  onDeny?: (() => void) | undefined;
+  onReplace?: (() => void) | undefined;
+}): React.JSX.Element | null {
+  const canDeny = onDeny !== undefined;
+  const canReplace = hasNonEmptyString(issue.replacementValue) && onReplace !== undefined;
+  if (canDeny === false && canReplace === false) return null;
+
+  return (
+    <div className='ml-auto flex flex-wrap justify-end gap-1'>
+      {canDeny ? (
+        <Button
+          type='button'
+          onClick={onDeny}
+          className='h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
+        >
+          {denyLabel}
+        </Button>
+      ) : null}
+      {canReplace ? (
+        <Button
+          type='button'
+          onClick={onReplace}
+          className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
+        >
+          Replace
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function ValidatorIssueSnippet({
+  matchClass,
+  snippet,
+}: {
+  matchClass: string;
+  snippet: { before: string; match: string; after: string };
+}): React.JSX.Element {
+  return (
+    <div className='mt-1 font-mono text-[11px] break-all'>
+      <span className='opacity-90'>{snippet.before}</span>
+      <mark className={cn('rounded px-0.5', matchClass)}>{snippet.match}</mark>
+      <span className='opacity-90'>{snippet.after}</span>
+    </div>
+  );
+}
+
+function ValidatorIssueProposedResult({
+  proposedValue,
+}: {
+  proposedValue: string;
+}): React.JSX.Element {
+  return (
+    <div className='mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5'>
+      <Hint uppercase size='xxs' variant='info' className='text-emerald-200/90'>
+        Proposed Result
+      </Hint>
+      <p className='mt-1 break-all font-mono text-[11px] text-emerald-100'>{proposedValue}</p>
+    </div>
+  );
+}
 
 export const ValidatorIssueHint = memo((props: {
   issue: FieldValidatorIssue;
@@ -54,34 +180,12 @@ export const ValidatorIssueHint = memo((props: {
   } = props;
 
   const snippet = buildIssueSnippet(value, issue.index, issue.length);
-  const toneClass =
-    issue.severity === 'warning'
-      ? 'border-amber-500/40 bg-amber-500/10 text-amber-100'
-      : 'border-red-500/40 bg-red-500/10 text-red-100';
-  const matchClass =
-    issue.severity === 'warning' ? 'bg-amber-300/30 text-amber-50' : 'bg-red-300/30 text-red-50';
-  const replacementBadgeClass =
-    issue.replacementScope === 'global'
-      ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-100'
-      : issue.replacementScope === 'field'
-        ? issue.replacementActive
-          ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100'
-          : 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200/80'
-        : 'border-gray-500/40 bg-gray-500/10 text-gray-200/80';
-  const replacementBadgeText =
-    issue.replacementScope === 'global'
-      ? 'Global replacer'
-      : issue.replacementScope === 'field'
-        ? issue.replacementActive
-          ? 'Field replacer'
-          : 'Field replacer (other field)'
-        : 'Validation only';
-  const proposedValue =
-    proposedValueOverride ??
-    (issue.replacementValue ? getIssueReplacementPreview(value, issue) : null);
+  const toneClass = resolveToneClass(issue);
+  const matchClass = resolveMatchClass(issue);
+  const replacementBadgeClass = resolveReplacementBadgeClass(issue);
+  const replacementBadgeText = resolveReplacementBadgeText(issue);
+  const proposedValue = resolveProposedValue({ issue, proposedValueOverride, value });
   const hasProposedChange = Boolean(proposedValue !== null && proposedValue !== value);
-  const handleDenyClick = onDeny;
-  const handleReplaceClick = onReplace;
 
   return (
     <div className={cn('mt-2 rounded-md border px-2 py-2 text-xs', toneClass)}>
@@ -95,43 +199,18 @@ export const ValidatorIssueHint = memo((props: {
         >
           {replacementBadgeText}
         </span>
-        {handleDenyClick || (issue.replacementValue && handleReplaceClick) ? (
-          <div className='ml-auto flex flex-wrap justify-end gap-1'>
-            {handleDenyClick ? (
-              <Button
-                type='button'
-                onClick={handleDenyClick}
-                className='h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
-              >
-                {denyLabel}
-              </Button>
-            ) : null}
-            {issue.replacementValue && handleReplaceClick ? (
-              <Button
-                type='button'
-                onClick={handleReplaceClick}
-                className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
-              >
-                Replace
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
+        <ValidatorIssueActions
+          denyLabel={denyLabel}
+          issue={issue}
+          onDeny={onDeny}
+          onReplace={onReplace}
+        />
       </div>
-      {!hideMatchSnippet ? (
-        <div className='mt-1 font-mono text-[11px] break-all'>
-          <span className='opacity-90'>{snippet.before}</span>
-          <mark className={cn('rounded px-0.5', matchClass)}>{snippet.match}</mark>
-          <span className='opacity-90'>{snippet.after}</span>
-        </div>
+      {hideMatchSnippet === false ? (
+        <ValidatorIssueSnippet matchClass={matchClass} snippet={snippet} />
       ) : null}
-      {hasProposedChange ? (
-        <div className='mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5'>
-          <Hint uppercase size='xxs' variant='info' className='text-emerald-200/90'>
-            Proposed Result
-          </Hint>
-          <p className='mt-1 break-all font-mono text-[11px] text-emerald-100'>{proposedValue}</p>
-        </div>
+      {hasProposedChange && proposedValue !== null ? (
+        <ValidatorIssueProposedResult proposedValue={proposedValue} />
       ) : null}
     </div>
   );
@@ -192,7 +271,7 @@ export const IssueHintRow = memo((
     <ValidatorIssueHint
       issue={issue}
       value={fieldValue}
-      onReplace={issue.replacementValue ? onReplace : undefined}
+      onReplace={hasNonEmptyString(issue.replacementValue) ? onReplace : undefined}
       onDeny={onDeny}
       denyLabel={getDenyActionLabel(issue.patternId)}
     />

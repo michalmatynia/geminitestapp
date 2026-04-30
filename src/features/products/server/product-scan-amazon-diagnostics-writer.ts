@@ -45,11 +45,13 @@ export type AmazonScanDiagnosticWriteResult = {
 const safeScanId = (scanId: string): string | null =>
   SAFE_SCAN_ID_RE.test(scanId) ? scanId : null;
 
-const safeStageName = (stage: string): string =>
-  stage
+const safeStageName = (stage: string): string => {
+  const normalized = stage
     .replace(/[^A-Za-z0-9._-]/g, '_')
     .slice(0, MAX_STAGE_NAME_LEN)
-    .replace(/^_+|_+$/g, '') || 'stage';
+    .replace(/^_+|_+$/g, '');
+  return normalized.length > 0 ? normalized : 'stage';
+};
 
 const stagePrefix = (sequence: number, stage: AmazonScanDiagnosticStage): string => {
   const seq = Math.max(0, Math.floor(sequence)).toString().padStart(3, '0');
@@ -58,7 +60,7 @@ const stagePrefix = (sequence: number, stage: AmazonScanDiagnosticStage): string
 
 const resolveDiagnosticsDir = (): string => {
   const fromEnv = process.env[DIAGNOSTICS_ENV]?.trim();
-  if (fromEnv && fromEnv.length > 0) return fromEnv;
+  if (fromEnv !== undefined && fromEnv.length > 0) return fromEnv;
   return join(process.cwd(), DEFAULT_DIAGNOSTICS_DIR);
 };
 
@@ -80,7 +82,37 @@ const stringifyArtifact = (artifact: AmazonScanDiagnosticArtifact): string => {
       return JSON.stringify({ __unserializable: true });
     }
   }
-  return artifact.kind === 'html' ? artifact.html : artifact.text;
+  if (artifact.kind === 'html') return artifact.html;
+  if (artifact.kind === 'text') return artifact.text;
+  return '';
+};
+
+const writeAmazonScanDiagnosticArtifact = async (input: {
+  artifact: AmazonScanDiagnosticArtifact;
+  directory: string;
+  filename: string;
+  payload: AmazonScanDiagnosticPayload;
+  scanId: string;
+}): Promise<string | null> => {
+  const { artifact, directory, filename, payload, scanId } = input;
+  const fullPath = join(directory, filename);
+  try {
+    if (artifact.kind === 'binary') {
+      await writeFile(fullPath, artifact.content);
+    } else {
+      await writeFile(fullPath, stringifyArtifact(artifact), 'utf8');
+    }
+    return filename;
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'product-scans.diagnostics',
+      action: 'writeArtifact',
+      scanId,
+      stage: payload.stage,
+      filename,
+    });
+    return null;
+  }
 };
 
 /**
@@ -93,7 +125,7 @@ export async function writeAmazonScanDiagnosticArtifacts(
   payload: AmazonScanDiagnosticPayload
 ): Promise<AmazonScanDiagnosticWriteResult> {
   const scanId = safeScanId(payload.scanId);
-  if (!scanId) {
+  if (scanId === null) {
     return { written: false, directory: null, files: [], error: 'Unsafe scanId' };
   }
 
@@ -116,30 +148,19 @@ export async function writeAmazonScanDiagnosticArtifacts(
   }
 
   const prefix = stagePrefix(payload.sequence, payload.stage);
-  const written: string[] = [];
-
-  for (const [name, artifact] of Object.entries(payload.artifacts)) {
-    const safeName = safeStageName(name);
-    const extension = resolveArtifactExtension(artifact);
-    const filename = `${prefix}.${safeName}.${extension}`;
-    const fullPath = join(directory, filename);
-    try {
-      if (artifact.kind === 'binary') {
-        await writeFile(fullPath, artifact.content);
-      } else {
-        await writeFile(fullPath, stringifyArtifact(artifact), 'utf8');
-      }
-      written.push(filename);
-    } catch (error) {
-      void ErrorSystem.captureException(error, {
-        service: 'product-scans.diagnostics',
-        action: 'writeArtifact',
-        scanId,
-        stage: payload.stage,
-        filename,
-      });
-    }
-  }
+  const written = (
+    await Promise.all(
+      Object.entries(payload.artifacts).map(([name, artifact]) =>
+        writeAmazonScanDiagnosticArtifact({
+          artifact,
+          directory,
+          filename: `${prefix}.${safeStageName(name)}.${resolveArtifactExtension(artifact)}`,
+          payload,
+          scanId,
+        })
+      )
+    )
+  ).filter((filename): filename is string => filename !== null);
 
   return { written: written.length > 0, directory, files: written };
 }
@@ -150,7 +171,7 @@ export async function writeAmazonScanDiagnosticArtifacts(
  */
 export async function clearAmazonScanDiagnostics(scanId: string): Promise<void> {
   const safe = safeScanId(scanId);
-  if (!safe) return;
+  if (safe === null) return;
   const directory = join(resolveDiagnosticsDir(), safe);
   try {
     await rm(directory, { recursive: true, force: true });
@@ -169,7 +190,7 @@ export async function clearAmazonScanDiagnostics(scanId: string): Promise<void> 
  */
 export function resolveAmazonScanDiagnosticsDirectory(scanId: string): string | null {
   const safe = safeScanId(scanId);
-  return safe ? join(resolveDiagnosticsDir(), safe) : null;
+  return safe !== null ? join(resolveDiagnosticsDir(), safe) : null;
 }
 
 const KNOWN_TRUE_VALUES = new Set(['true', 'yes', '1', 'on']);

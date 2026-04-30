@@ -255,18 +255,48 @@ const summarizeLinkedRecords = (value: unknown): Record<string, unknown> | null 
 };
 
 const summarizeCvRecords = (value: unknown): Record<string, unknown> | null => {
-  if (!Array.isArray(value)) return null;
+  if (!Array.isArray(value) || value.length === 0) {
+    return {
+      count: 0,
+      preferredSourceCvRecordId: 'profile-fields-only',
+      preferredSourceCvTitle: 'Profile fields only',
+      items: [],
+    };
+  }
+  const preferredRecord =
+    value
+      .map((entry: unknown): Record<string, unknown> => readPlainRecord(entry) ?? {})
+      .find((record: Record<string, unknown>): boolean => {
+        const tailoringScope = readPlainRecord(record['tailoringScope']);
+        const sourceCvRecordId = compactContextString(record['sourceCvRecordId'], 160);
+        return tailoringScope === null && sourceCvRecordId === null;
+      }) ??
+    readPlainRecord(value[0]) ??
+    {};
+  const preferredSourceCvRecordId =
+    compactContextString(preferredRecord['id'], 160) ?? 'profile-fields-only';
+  const preferredSourceCvTitle =
+    compactContextString(preferredRecord['title'], 240) ?? 'Profile fields only';
   return {
     count: value.length,
-    items: value.slice(0, 3).map((entry: unknown): Record<string, unknown> => {
+    preferredSourceCvRecordId,
+    preferredSourceCvTitle,
+    items: value.slice(0, 3).map((entry: unknown, index: number): Record<string, unknown> => {
       const record = readPlainRecord(entry) ?? {};
+      const id = compactContextString(record['id'], 160);
+      const title = compactContextString(record['title'], 240);
       return {
-        id: compactContextString(record['id'], 160),
-        title: compactContextString(record['title'], 240),
+        id,
+        title,
+        sourceCvRecordId: id,
+        sourceCvTitle: title,
+        preferredTailoringBase: id === preferredSourceCvRecordId,
+        scopedTailoredCv: readPlainRecord(record['tailoringScope']) !== null,
         status: compactContextString(record['status'], 80),
         professionalSummary: compactContextString(record['professionalSummary'], 1400),
         bodyText: compactContextString(record['bodyText'], 2400),
         bodyMarkdown: compactContextString(record['bodyMarkdown'], 2400),
+        bodyBlocks: compactApplicationContextValue(record['bodyBlocks'], 0),
         skills: Array.isArray(record['skills']) ? record['skills'].slice(0, 24) : [],
         experienceHighlights: Array.isArray(record['experienceHighlights'])
           ? record['experienceHighlights'].slice(0, 16)

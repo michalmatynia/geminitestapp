@@ -25,10 +25,16 @@ import {
   PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
   PRODUCT_SCAN_URL_MAX_LENGTH,
 } from './product-scans-service.constants';
+import {
+  hasSameProductScanStepPersistenceIdentity,
+  normalizePersistedProductScanStepDetails,
+} from './product-scans-service.helpers.step-upsert';
 import type {
   AmazonScanCandidatePreview,
   AmazonScanCandidateResult,
 } from './product-scans-service.types';
+
+export { upsertPersistedProductScanStep } from './product-scans-service.helpers.step-upsert';
 
 export const normalizeParsedProductScanSteps = (value: unknown): ProductScanStep[] => {
   if (!Array.isArray(value)) {
@@ -99,8 +105,8 @@ export const normalizeParsedAmazonCandidateResults = (
     .map((item: unknown): AmazonScanCandidateResult | null => {
       const record = toRecord(item);
       if (record === null) return null;
-      const url = readOptionalString(record?.['url']);
-      if (!url) return null;
+      const url = readOptionalString(record['url']);
+      if (url === null) return null;
       return {
         url,
         score: typeof record['score'] === 'number' ? record['score'] : null,
@@ -124,8 +130,8 @@ export const normalizeParsedAmazonCandidatePreviews = (
     .map((item: unknown): AmazonScanCandidatePreview | null => {
       const record = toRecord(item);
       if (record === null) return null;
-      const url = readOptionalString(record?.['url']);
-      if (!url) return null;
+      const url = readOptionalString(record['url']);
+      if (url === null) return null;
       return {
         id: readOptionalString(record['id']),
         matchedImageId: readOptionalString(record['matchedImageId']),
@@ -148,9 +154,27 @@ export const resolveProductScanStepGroup = (
   key: string | null | undefined
 ): ProductScanStep['group'] => resolveSharedProductScanStepGroup(key);
 
-const normalizePersistedProductScanStepDetails = (
-  details: ProductScanStep['details'] | null | undefined
-): ProductScanStep['details'] => (Array.isArray(details) ? details.slice(0, 20) : []);
+const PRODUCT_SCAN_STEP_EQUALITY_FIELDS = [
+  'key',
+  'status',
+  'resultCode',
+  'message',
+  'url',
+  'candidateId',
+  'candidateRank',
+  'attempt',
+] as const satisfies ReadonlyArray<keyof ProductScanStep>;
+
+const haveSameProductScanStepFields = (
+  stepA: ProductScanStep,
+  stepB: ProductScanStep
+): boolean =>
+  PRODUCT_SCAN_STEP_EQUALITY_FIELDS.every((field) => stepA[field] === stepB[field]);
+
+const haveSameProductScanStepDetails = (
+  stepA: ProductScanStep,
+  stepB: ProductScanStep
+): boolean => JSON.stringify(stepA.details) === JSON.stringify(stepB.details);
 
 export const areProductScanStepsEqual = (
   a: ProductScanStep[],
@@ -166,43 +190,16 @@ export const areProductScanStepsEqual = (
     if (stepA === undefined || stepB === undefined) {
       return false;
     }
-    if (
-      stepA.key !== stepB.key ||
-      stepA.status !== stepB.status ||
-      stepA.resultCode !== stepB.resultCode ||
-      stepA.message !== stepB.message ||
-      stepA.url !== stepB.url ||
-      stepA.candidateId !== stepB.candidateId ||
-      stepA.candidateRank !== stepB.candidateRank ||
-      stepA.attempt !== stepB.attempt ||
-      JSON.stringify(stepA.details) !== JSON.stringify(stepB.details)
-    ) {
+    if (!haveSameProductScanStepFields(stepA, stepB)) {
+      return false;
+    }
+    if (!haveSameProductScanStepDetails(stepA, stepB)) {
       return false;
     }
   }
 
   return true;
 };
-
-const normalizeProductScanStepIdentityText = (value: unknown): string | null =>
-  readOptionalString(value);
-
-const normalizeProductScanStepIdentityInt = (value: unknown): number | null =>
-  readOptionalPositiveInt(value);
-
-const hasSameProductScanStepPersistenceIdentity = (
-  existing: Pick<ProductScanStep, 'key' | 'candidateId' | 'candidateRank' | 'attempt' | 'retryOf'>,
-  next: Pick<ProductScanStep, 'key' | 'candidateId' | 'candidateRank' | 'attempt' | 'retryOf'>
-): boolean =>
-  existing.key === next.key &&
-  normalizeProductScanStepIdentityText(existing.candidateId) ===
-    normalizeProductScanStepIdentityText(next.candidateId) &&
-  normalizeProductScanStepIdentityInt(existing.candidateRank) ===
-    normalizeProductScanStepIdentityInt(next.candidateRank) &&
-  normalizeProductScanStepIdentityInt(existing.attempt) ===
-    normalizeProductScanStepIdentityInt(next.attempt) &&
-  normalizeProductScanStepIdentityText(existing.retryOf) ===
-    normalizeProductScanStepIdentityText(next.retryOf);
 
 export const resolvePersistedProductScanSteps = (
   scan: ProductScanRecord,
@@ -227,57 +224,11 @@ export const resolvePersistedProductScanSteps = (
       results[existingIndex] = {
         ...existing,
         ...nextStep,
-        details: normalizePersistedProductScanStepDetails(nextStep.details ?? existing.details),
+        details: normalizePersistedProductScanStepDetails(nextStep.details),
       };
     } else {
       results.push(nextStep);
     }
-  }
-
-  return results;
-};
-
-export const upsertPersistedProductScanStep = (
-  steps: ProductScanStep[],
-  nextStep: Partial<ProductScanStep> & { key: string; label: string }
-): ProductScanStep[] => {
-  const results = [...steps];
-  const existingIndex = results.findIndex((step) =>
-    hasSameProductScanStepPersistenceIdentity(step, {
-      key: nextStep.key,
-      candidateId: nextStep.candidateId ?? null,
-      candidateRank: nextStep.candidateRank ?? null,
-      attempt: nextStep.attempt ?? null,
-      retryOf: nextStep.retryOf ?? null,
-    })
-  );
-  const existingStep = existingIndex >= 0 ? results[existingIndex] : undefined;
-
-  const mergedStep: ProductScanStep = {
-    ...nextStep,
-    key: nextStep.key,
-    label: nextStep.label,
-    group: nextStep.group ?? existingStep?.group ?? resolveProductScanStepGroup(nextStep.key),
-    status: nextStep.status ?? existingStep?.status ?? 'pending',
-    resultCode: nextStep.resultCode ?? existingStep?.resultCode ?? null,
-    message: nextStep.message ?? existingStep?.message ?? null,
-    details: normalizePersistedProductScanStepDetails(nextStep.details ?? existingStep?.details),
-    candidateId: nextStep.candidateId ?? existingStep?.candidateId ?? null,
-    candidateRank: nextStep.candidateRank ?? existingStep?.candidateRank ?? null,
-    url: nextStep.url ?? existingStep?.url ?? null,
-    attempt: nextStep.attempt ?? existingStep?.attempt ?? null,
-    retryOf: nextStep.retryOf ?? existingStep?.retryOf ?? null,
-    inputSource: nextStep.inputSource ?? existingStep?.inputSource ?? 'url',
-    warning: nextStep.warning ?? existingStep?.warning ?? null,
-    startedAt: nextStep.startedAt ?? existingStep?.startedAt ?? new Date().toISOString(),
-    completedAt: nextStep.completedAt ?? existingStep?.completedAt ?? null,
-    durationMs: nextStep.durationMs ?? existingStep?.durationMs ?? null,
-  };
-
-  if (existingIndex >= 0) {
-    results[existingIndex] = mergedStep;
-  } else {
-    results.push(mergedStep);
   }
 
   return results;

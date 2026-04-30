@@ -20,47 +20,68 @@ type ProductsPagedDebugSnapshot = {
   errorUpdatedAt: number;
 };
 
+type ProductsPagedDebugQuery = {
+  isPending: boolean;
+  isFetching: boolean;
+  data?: { items?: ProductWithImages[]; total?: number };
+  error?: unknown;
+  dataUpdatedAt?: number;
+  errorUpdatedAt?: number;
+};
+
+const readFiniteNumber = (value: number | undefined): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+
+const readProductsPagedItemsCount = (query: ProductsPagedDebugQuery): number =>
+  query.data?.items?.length ?? 0;
+
+const readProductsPagedTotal = (query: ProductsPagedDebugQuery): number =>
+  query.data?.total ?? 0;
+
+const readProductsPagedErrorMessage = (query: ProductsPagedDebugQuery): string | null =>
+  query.error instanceof Error ? query.error.message : null;
+
 const buildProductsPagedDebugSnapshot = (args: {
   enabled: boolean;
   queryKey: readonly unknown[];
-  query: {
-    isPending: boolean;
-    isFetching: boolean;
-    data?: { items?: ProductWithImages[]; total?: number };
-    error?: unknown;
-    dataUpdatedAt?: number;
-    errorUpdatedAt?: number;
-  };
+  query: ProductsPagedDebugQuery;
 }): ProductsPagedDebugSnapshot => ({
   queryKey: JSON.stringify(args.queryKey),
   enabled: args.enabled,
   isPending: args.query.isPending,
   isFetching: args.query.isFetching,
-  itemsCount: args.query.data?.items?.length ?? 0,
-  total: args.query.data?.total ?? 0,
-  hasError: Boolean(args.query.error),
-  errorMessage: args.query.error instanceof Error ? args.query.error.message : null,
-  dataUpdatedAt:
-    typeof args.query.dataUpdatedAt === 'number' && Number.isFinite(args.query.dataUpdatedAt)
-      ? args.query.dataUpdatedAt
-      : 0,
-  errorUpdatedAt:
-    typeof args.query.errorUpdatedAt === 'number' && Number.isFinite(args.query.errorUpdatedAt)
-      ? args.query.errorUpdatedAt
-      : 0,
+  itemsCount: readProductsPagedItemsCount(args.query),
+  total: readProductsPagedTotal(args.query),
+  hasError: args.query.error !== null && args.query.error !== undefined,
+  errorMessage: readProductsPagedErrorMessage(args.query),
+  dataUpdatedAt: readFiniteNumber(args.query.dataUpdatedAt),
+  errorUpdatedAt: readFiniteNumber(args.query.errorUpdatedAt),
 });
+
+const DEBUG_SNAPSHOT_FIELDS = [
+  'queryKey',
+  'enabled',
+  'isPending',
+  'isFetching',
+  'itemsCount',
+  'total',
+  'hasError',
+  'errorMessage',
+  'dataUpdatedAt',
+  'errorUpdatedAt',
+] as const satisfies ReadonlyArray<keyof ProductsPagedDebugSnapshot>;
+
+const hasProductsPagedDebugSnapshotChanged = (
+  previousSnapshot: ProductsPagedDebugSnapshot | null,
+  debugSnapshot: ProductsPagedDebugSnapshot
+): boolean =>
+  previousSnapshot === null ||
+  DEBUG_SNAPSHOT_FIELDS.some((field) => previousSnapshot[field] !== debugSnapshot[field]);
 
 export function useProductsPagedDebugLogging(args: {
   enabled: boolean;
   queryKey: readonly unknown[];
-  query: {
-    isPending: boolean;
-    isFetching: boolean;
-    data?: { items?: ProductWithImages[]; total?: number };
-    error?: unknown;
-    dataUpdatedAt?: number;
-    errorUpdatedAt?: number;
-  };
+  query: ProductsPagedDebugQuery;
 }): string {
   const { enabled, queryKey, query } = args;
   const previousDebugSnapshotRef = useRef<ProductsPagedDebugSnapshot | null>(null);
@@ -85,18 +106,7 @@ export function useProductsPagedDebugLogging(args: {
 
   useEffect(() => {
     const previousSnapshot = previousDebugSnapshotRef.current;
-    if (
-      previousSnapshot?.queryKey === debugSnapshot.queryKey &&
-      previousSnapshot?.enabled === debugSnapshot.enabled &&
-      previousSnapshot?.isPending === debugSnapshot.isPending &&
-      previousSnapshot?.isFetching === debugSnapshot.isFetching &&
-      previousSnapshot?.itemsCount === debugSnapshot.itemsCount &&
-      previousSnapshot?.total === debugSnapshot.total &&
-      previousSnapshot?.hasError === debugSnapshot.hasError &&
-      previousSnapshot?.errorMessage === debugSnapshot.errorMessage &&
-      previousSnapshot?.dataUpdatedAt === debugSnapshot.dataUpdatedAt &&
-      previousSnapshot?.errorUpdatedAt === debugSnapshot.errorUpdatedAt
-    ) {
+    if (!hasProductsPagedDebugSnapshotChanged(previousSnapshot, debugSnapshot)) {
       return;
     }
 

@@ -56,8 +56,10 @@ export const IMPORT_STATE_LABELS: Record<BaseOrderImportState, string> = {
   imported: 'Already Imported',
 };
 
+const toNullable = <TValue>(value: TValue | null | undefined): TValue | null => value ?? null;
+
 export const formatOrderDate = (value: string | null): string => {
-  if (!value) return '—';
+  if (value === null || value.trim().length === 0) return '—';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '—';
   return date.toLocaleString();
@@ -68,15 +70,16 @@ export const formatOrderTotal = (
   currency: string | null | undefined
 ): string => {
   if (amount === null || amount === undefined || !Number.isFinite(amount)) return '—';
-  if (currency?.trim()) {
+  const normalizedCurrency = currency?.trim() ?? '';
+  if (normalizedCurrency.length > 0) {
     try {
       return new Intl.NumberFormat(undefined, {
         style: 'currency',
-        currency: currency.trim(),
+        currency: normalizedCurrency,
         maximumFractionDigits: 2,
       }).format(amount);
     } catch {
-      return `${amount.toFixed(2)} ${currency}`;
+      return `${amount.toFixed(2)} ${normalizedCurrency}`;
     }
   }
   return amount.toFixed(2);
@@ -95,7 +98,10 @@ export const summarizeOrderAggregate = (
   const normalizedCurrencies = new Set(
     orders
       .map((order) => order.currency?.trim())
-      .filter((currency): currency is string => Boolean(currency))
+      .filter(
+        (currency): currency is string =>
+          currency !== undefined && currency.length > 0
+      )
   );
 
   if (orders.length === 0) {
@@ -128,11 +134,11 @@ export const summarizeOrderAggregate = (
 
 export const formatTextValue = (value: string | null): string => {
   const normalized = value?.trim();
-  return normalized ? normalized : '—';
+  return normalized !== undefined && normalized.length > 0 ? normalized : '—';
 };
 
 export const getOrderTimestamp = (value: string | null): number => {
-  if (!value) return Number.NEGATIVE_INFINITY;
+  if (value === null || value.trim().length === 0) return Number.NEGATIVE_INFINITY;
   const timestamp = new Date(value).getTime();
   return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
 };
@@ -142,15 +148,15 @@ export const normalizeSortText = (value: string | null): string => value?.trim()
 export const formatPreviewScopeDateRange = (scope: PreviewScopeState): string => {
   const from = scope.dateFrom.trim();
   const to = scope.dateTo.trim();
-  if (!from && !to) return 'Any date';
-  return `${from || 'Any'} -> ${to || 'Any'}`;
+  if (from.length === 0 && to.length === 0) return 'Any date';
+  return `${from.length > 0 ? from : 'Any'} -> ${to.length > 0 ? to : 'Any'}`;
 };
 
 export const formatPreviewScopeStatus = (
   statusId: string,
   statusOptions: Array<{ value: string; label: string }>
 ): string => {
-  if (!statusId.trim()) return 'All statuses';
+  if (statusId.trim().length === 0) return 'All statuses';
   return statusOptions.find((option) => option.value === statusId)?.label ?? statusId;
 };
 
@@ -158,32 +164,41 @@ export const formatPreviewScopeConnection = (
   connectionId: string,
   connectionOptions: Array<{ value: string; label: string }>
 ): string => {
-  if (!connectionId.trim()) return 'No connection';
+  if (connectionId.trim().length === 0) return 'No connection';
   return connectionOptions.find((option) => option.value === connectionId)?.label ?? connectionId;
 };
 
+const resolveSnapshotSyncedAt = (
+  order: BaseOrderImportPreviewItem,
+  syncedAt: string | undefined
+): string => syncedAt ?? order.lastImportedAt ?? new Date().toISOString();
+
+const buildPreviousImportSnapshotLineItem = (
+  item: BaseOrderImportPreviewItem['lineItems'][number]
+): BaseOrderImportPreviousSnapshot['lineItems'][number] => ({
+  sku: toNullable(item.sku),
+  name: item.name,
+  quantity: item.quantity,
+  unitPriceGross: toNullable(item.unitPriceGross),
+  baseProductId: toNullable(item.baseProductId),
+});
+
 export const buildPreviousImportSnapshot = (
   order: BaseOrderImportPreviewItem,
-  syncedAt: string = order.lastImportedAt ?? new Date().toISOString()
+  syncedAt?: string
 ): BaseOrderImportPreviousSnapshot => ({
-  orderNumber: order.orderNumber ?? null,
-  externalStatusId: order.externalStatusId ?? null,
-  externalStatusName: order.externalStatusName ?? null,
+  orderNumber: toNullable(order.orderNumber),
+  externalStatusId: toNullable(order.externalStatusId),
+  externalStatusName: toNullable(order.externalStatusName),
   buyerName: order.buyerName,
-  buyerEmail: order.buyerEmail ?? null,
-  currency: order.currency ?? null,
-  totalGross: order.totalGross ?? null,
-  deliveryMethod: order.deliveryMethod ?? null,
-  paymentMethod: order.paymentMethod ?? null,
-  source: order.source ?? null,
-  orderCreatedAt: order.orderCreatedAt ?? null,
-  orderUpdatedAt: order.orderUpdatedAt ?? null,
-  lineItems: order.lineItems.map((item) => ({
-    sku: item.sku ?? null,
-    name: item.name,
-    quantity: item.quantity,
-    unitPriceGross: item.unitPriceGross ?? null,
-    baseProductId: item.baseProductId ?? null,
-  })),
-  lastImportedAt: syncedAt,
+  buyerEmail: toNullable(order.buyerEmail),
+  currency: toNullable(order.currency),
+  totalGross: toNullable(order.totalGross),
+  deliveryMethod: toNullable(order.deliveryMethod),
+  paymentMethod: toNullable(order.paymentMethod),
+  source: toNullable(order.source),
+  orderCreatedAt: toNullable(order.orderCreatedAt),
+  orderUpdatedAt: toNullable(order.orderUpdatedAt),
+  lineItems: order.lineItems.map(buildPreviousImportSnapshotLineItem),
+  lastImportedAt: resolveSnapshotSyncedAt(order, syncedAt),
 });

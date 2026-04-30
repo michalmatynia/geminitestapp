@@ -3,13 +3,17 @@ import { logClientCatch } from '@/shared/utils/observability/client-error-logger
 
 import {
   createSequenceGroupId,
-  getPatternSequence,
   getSequenceGroupId,
-  normalizeSequenceGroupDebounceMs,
   sortRuleDraftsBySequence,
-  DEFAULT_SEQUENCE_STEP,
 } from '../helpers';
 
+import {
+  buildReorderedGroupResult,
+  normalizeSequenceGroupDraftDebounceMs,
+  normalizeSequenceGroupLabel,
+  persistPatternSequences,
+} from './group-actions.helpers';
+export { handleRenameGroup, handleUpdateGroupDebounce } from './group-actions-edit';
 import type { UpdatePatternMutation } from './types';
 
 export const handleSaveSequenceGroup = async (args: {
@@ -22,10 +26,8 @@ export const handleSaveSequenceGroup = async (args: {
 }): Promise<void> => {
   const { groupId, getGroupDraft, patterns, updatePattern, notifySuccess, notifyError } = args;
   const draft = getGroupDraft(groupId);
-  const normalizedLabel = draft.label.trim() || 'Sequence / Group';
-  const normalizedDebounce = normalizeSequenceGroupDebounceMs(
-    Number.parseInt(draft.debounceMs, 10) || 0
-  );
+  const normalizedLabel = normalizeSequenceGroupLabel(draft.label);
+  const normalizedDebounce = normalizeSequenceGroupDraftDebounceMs(draft.debounceMs);
 
   const groupPatterns = patterns.filter((p) => getSequenceGroupId(p) === groupId);
   if (groupPatterns.length === 0) {
@@ -112,16 +114,7 @@ export const handleMoveGroup = async (args: {
   result.splice(Math.max(0, Math.min(targetIndex, others.length)), 0, ...groupMembers);
 
   try {
-    await Promise.all(
-      result.map((pattern, index) => {
-        const nextSequence = (index + 1) * DEFAULT_SEQUENCE_STEP;
-        if (getPatternSequence(pattern, index) === nextSequence) return Promise.resolve();
-        return updatePattern.mutateAsync({
-          id: pattern.id,
-          data: { sequence: nextSequence },
-        });
-      })
-    );
+    await persistPatternSequences(result, updatePattern);
   } catch (error) {
     logClientCatch(error, {
       source: 'useValidatorSettingsController',
@@ -139,42 +132,11 @@ export const handleReorderInGroup = async (args: {
   notifyError: (message: string) => void;
 }): Promise<void> => {
   const { patternId, targetIndex, patterns, updatePattern, notifyError } = args;
-  const pattern = patterns.find((p) => p.id === patternId);
-  if (!pattern) return;
-  const groupId = getSequenceGroupId(pattern);
-  if (!groupId) return;
-
-  const ordered = sortRuleDraftsBySequence(patterns);
-  const groupMembers = ordered.filter((p) => getSequenceGroupId(p) === groupId);
-
-  const movedIndex = groupMembers.findIndex((p) => p.id === patternId);
-  if (movedIndex < 0) return;
-
-  const nextGroupMembers = [...groupMembers];
-  const [moved] = nextGroupMembers.splice(movedIndex, 1);
-  if (moved) {
-    nextGroupMembers.splice(Math.max(0, Math.min(targetIndex, nextGroupMembers.length)), 0, moved);
-  }
-
-  const result = [...ordered];
-  let groupWritePtr = 0;
-  for (let i = 0; i < result.length; i += 1) {
-    if (getSequenceGroupId(result[i]!) === groupId) {
-      result[i] = nextGroupMembers[groupWritePtr++]!;
-    }
-  }
+  const result = buildReorderedGroupResult(patterns, patternId, targetIndex);
+  if (result === null) return;
 
   try {
-    await Promise.all(
-      result.map((p, index) => {
-        const nextSequence = (index + 1) * DEFAULT_SEQUENCE_STEP;
-        if (getPatternSequence(p, index) === nextSequence) return Promise.resolve();
-        return updatePattern.mutateAsync({
-          id: p.id,
-          data: { sequence: nextSequence },
-        });
-      })
-    );
+    await persistPatternSequences(result, updatePattern);
   } catch (error) {
     logClientCatch(error, {
       source: 'useValidatorSettingsController',
@@ -193,7 +155,7 @@ export const handleMoveToGroup = async (args: {
 }): Promise<void> => {
   const { patternId, groupId, patterns, updatePattern, notifyError } = args;
   const targetGroupMember = patterns.find((p) => getSequenceGroupId(p) === groupId);
-  if (!targetGroupMember) return;
+  if (targetGroupMember === undefined) return;
 
   try {
     await updatePattern.mutateAsync({
@@ -221,9 +183,9 @@ export const handleRemoveFromGroup = async (args: {
 }): Promise<void> => {
   const { patternId, patterns, updatePattern, notifyError } = args;
   const pattern = patterns.find((p) => p.id === patternId);
-  if (!pattern) return;
+  if (pattern === undefined) return;
   const groupId = getSequenceGroupId(pattern);
-  if (!groupId) return;
+  if (groupId === null) return;
 
   try {
     const remainingInGroup = patterns.filter(
@@ -242,17 +204,19 @@ export const handleRemoveFromGroup = async (args: {
     ];
 
     if (remainingInGroup.length === 1) {
-      const lone = remainingInGroup[0]!;
-      updates.push(
-        updatePattern.mutateAsync({
-          id: lone.id,
-          data: {
-            sequenceGroupId: null,
-            sequenceGroupLabel: null,
-            sequenceGroupDebounceMs: 0,
-          },
-        })
-      );
+      const lone = remainingInGroup[0];
+      if (lone !== undefined) {
+        updates.push(
+          updatePattern.mutateAsync({
+            id: lone.id,
+            data: {
+              sequenceGroupId: null,
+              sequenceGroupLabel: null,
+              sequenceGroupDebounceMs: 0,
+            },
+          })
+        );
+      }
     }
 
     await Promise.all(updates);
@@ -295,60 +259,5 @@ export const handleCreateGroup = async (args: {
       action: 'createGroup',
     });
     notifyError(error instanceof Error ? error.message : 'Failed to create group.');
-  }
-};
-
-export const handleRenameGroup = async (args: {
-  groupId: string;
-  label: string;
-  patterns: ProductValidationPattern[];
-  updatePattern: UpdatePatternMutation;
-  notifyError: (message: string) => void;
-}): Promise<void> => {
-  const { groupId, label, patterns, updatePattern, notifyError } = args;
-  const groupPatterns = patterns.filter((p) => getSequenceGroupId(p) === groupId);
-  try {
-    await Promise.all(
-      groupPatterns.map((p) =>
-        updatePattern.mutateAsync({
-          id: p.id,
-          data: { sequenceGroupLabel: label.trim() || 'Sequence / Group' },
-        })
-      )
-    );
-  } catch (error) {
-    logClientCatch(error, {
-      source: 'useValidatorSettingsController',
-      action: 'renameGroup',
-    });
-    notifyError(error instanceof Error ? error.message : 'Failed to rename group.');
-  }
-};
-
-export const handleUpdateGroupDebounce = async (args: {
-  groupId: string;
-  debounceMs: number;
-  patterns: ProductValidationPattern[];
-  updatePattern: UpdatePatternMutation;
-  notifyError: (message: string) => void;
-}): Promise<void> => {
-  const { groupId, debounceMs, patterns, updatePattern, notifyError } = args;
-  const normalized = normalizeSequenceGroupDebounceMs(debounceMs);
-  const groupPatterns = patterns.filter((p) => getSequenceGroupId(p) === groupId);
-  try {
-    await Promise.all(
-      groupPatterns.map((p) =>
-        updatePattern.mutateAsync({
-          id: p.id,
-          data: { sequenceGroupDebounceMs: normalized },
-        })
-      )
-    );
-  } catch (error) {
-    logClientCatch(error, {
-      source: 'useValidatorSettingsController',
-      action: 'updateGroupDebounce',
-    });
-    notifyError(error instanceof Error ? error.message : 'Failed to update group debounce.');
   }
 };

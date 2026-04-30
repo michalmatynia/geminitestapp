@@ -992,7 +992,8 @@ describe('OrganizationJobListingsSection', () => {
       triggerEventId: JOB_APPLICATION_TAILORED_CV_TRIGGER_BUTTON_ID,
     });
     expect((personContext['person'] as Record<string, unknown>)['fullName']).toBe('Ada Lovelace');
-    expect(personContext['cvs']).toEqual([
+    expect((personContext['cvsSummary'] as Record<string, unknown>)['count']).toBe(1);
+    expect((personContext['cvsSummary'] as Record<string, unknown>)['items']).toEqual([
       expect.objectContaining({
         id: 'cv-1',
         title: 'Primary CV',
@@ -1000,14 +1001,15 @@ describe('OrganizationJobListingsSection', () => {
     ]);
     expect((jobContext['listing'] as FilemakerJobListing).title).toBe('FileMaker Consultant');
     expect((organizationContext['organization'] as FilemakerOrganization).name).toBe('Acme Hiring');
-    expect((organizationContext['linkedRecords'] as Record<string, unknown>)['linkedAddresses']).toEqual([
-      expect.objectContaining({ addressId: 'address-org-1' }),
-    ]);
+    expect(
+      (organizationContext['linkedRecordsSummary'] as Record<string, unknown>)['linkedAddresses']
+    ).toEqual([expect.objectContaining({ city: 'Warsaw' })]);
     expect(generationRequest['artifacts']).toEqual([
       'tailored_cv',
       'cv_pdf_preview',
     ]);
     expect(generationRequest['artifact']).toBe('tailored_cv');
-    expect(args.extras['applicationContext']).toEqual(context);
+    expect(args.extras['generationRequest']).toEqual(generationRequest);
+    expect(args.extras['outputContract']).toEqual(context['outputContract']);
   });
 });

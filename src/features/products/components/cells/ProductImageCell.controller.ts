@@ -46,22 +46,32 @@ export interface ProductImageCellController {
   updatePreview: ReturnType<typeof useProductImagePreview>['updatePreview'];
 }
 
-export function useProductImageCellController({
-  imageUrl,
-  note,
-  productId,
-}: ProductImageCellProps): ProductImageCellController {
-  const { showPreview, updatePreview, hidePreview } = useProductImagePreview();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
+interface ProductNoteState {
+  draftNoteText: string;
+  hasDraftChanges: boolean;
+  isSavingNote: boolean;
+  noteColor: string;
+  noteModalOpen: boolean;
+  resolvedNote: ResolvedProductNote | null;
+  setDraftNoteText: Dispatch<SetStateAction<string>>;
+  setIsSavingNote: Dispatch<SetStateAction<boolean>>;
+  setNoteModalOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+type SyncSavedProduct = (savedProduct: ProductWithImages, noteOverride?: ProductNoteValue) => void;
+type Toast = ReturnType<typeof useToast>['toast'];
+
+interface ProductNoteSaveOptions extends ProductNoteState {
+  closeNoteModalIfRequested: (closeAfter: boolean) => void;
+  productId: string;
+  syncSavedProduct: SyncSavedProduct;
+  toast: Toast;
+}
+
+function useProductNoteState(note: ProductNoteValue): ProductNoteState {
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [draftNoteText, setDraftNoteText] = useState('');
   const [isSavingNote, setIsSavingNote] = useState(false);
-
-  const unoptimized = useMemo(
-    (): boolean => (hasImageUrl(imageUrl) ? shouldSkipOptimization(imageUrl) : false),
-    [imageUrl]
-  );
   const resolvedNote = useMemo((): ResolvedProductNote | null => resolveProductNote(note), [note]);
   const noteColor = resolvedNote?.color ?? DEFAULT_NOTE_COLOR;
   const hasDraftChanges = resolvedNote !== null && draftNoteText !== resolvedNote.text;
@@ -72,7 +82,23 @@ export function useProductImageCellController({
     }
   }, [noteModalOpen, resolvedNote]);
 
-  const syncSavedProduct = useCallback(
+  return {
+    draftNoteText,
+    hasDraftChanges,
+    isSavingNote,
+    noteColor,
+    noteModalOpen,
+    resolvedNote,
+    setDraftNoteText,
+    setIsSavingNote,
+    setNoteModalOpen,
+  };
+}
+
+function useSyncSavedProductNote(): SyncSavedProduct {
+  const queryClient = useQueryClient();
+
+  return useCallback(
     (savedProduct: ProductWithImages, noteOverride?: ProductNoteValue): void => {
       const mergedSavedProduct = applySavedProductNoteOverride(savedProduct, noteOverride);
       queryClient.setQueriesData(
@@ -84,12 +110,20 @@ export function useProductImageCellController({
     },
     [queryClient]
   );
+}
 
-  const closeNoteModalIfRequested = useCallback((closeAfter: boolean): void => {
-    if (closeAfter === true) setNoteModalOpen(false);
-  }, []);
-
-  const saveNote = useCallback(
+function useProductNoteSave({
+  closeNoteModalIfRequested,
+  draftNoteText,
+  isSavingNote,
+  productId,
+  resolvedNote,
+  setIsSavingNote,
+  setNoteModalOpen,
+  syncSavedProduct,
+  toast,
+}: ProductNoteSaveOptions): ProductImageCellController['saveNote'] {
+  return useCallback(
     async (options: SaveNoteOptions = {}): Promise<void> => {
       const closeAfter = options.closeAfter === true;
       if (resolvedNote === null) {
@@ -115,11 +149,7 @@ export function useProductImageCellController({
         toast(noteUpdate.toastMessage, { variant: 'success' });
         if (shouldCloseNoteModalAfterSave(closeAfter, noteUpdate.hasText)) setNoteModalOpen(false);
       } catch (error) {
-        logClientCatch(error, {
-          source: 'ProductImageCell',
-          action: 'saveNote',
-          productId,
-        });
+        logClientCatch(error, { source: 'ProductImageCell', action: 'saveNote', productId });
         toast(error instanceof Error ? error.message : 'Failed to update product note', {
           variant: 'error',
         });
@@ -133,36 +163,66 @@ export function useProductImageCellController({
       isSavingNote,
       productId,
       resolvedNote,
+      setIsSavingNote,
+      setNoteModalOpen,
       syncSavedProduct,
       toast,
     ]
   );
+}
+
+export function useProductImageCellController({
+  imageUrl,
+  note,
+  productId,
+}: ProductImageCellProps): ProductImageCellController {
+  const { showPreview, updatePreview, hidePreview } = useProductImagePreview();
+  const { toast } = useToast();
+  const noteState = useProductNoteState(note);
+  const syncSavedProduct = useSyncSavedProductNote();
+
+  const unoptimized = useMemo(
+    (): boolean => (hasImageUrl(imageUrl) ? shouldSkipOptimization(imageUrl) : false),
+    [imageUrl]
+  );
+
+  const closeNoteModalIfRequested = useCallback((closeAfter: boolean): void => {
+    if (closeAfter === true) noteState.setNoteModalOpen(false);
+  }, [noteState]);
+
+  const saveNote = useProductNoteSave({
+    ...noteState,
+    closeNoteModalIfRequested,
+    productId,
+    syncSavedProduct,
+    toast,
+  });
 
   const cancelNoteModal = useCallback((): void => {
-    if (resolvedNote !== null) {
-      setDraftNoteText(resolvedNote.text);
+    if (noteState.resolvedNote !== null) {
+      noteState.setDraftNoteText(noteState.resolvedNote.text);
     }
-    setNoteModalOpen(false);
-  }, [resolvedNote]);
+    noteState.setNoteModalOpen(false);
+  }, [noteState]);
 
   const openNoteModal = useCallback((text: string): void => {
     hidePreview();
-    setDraftNoteText(text);
-    setNoteModalOpen(true);
-  }, [hidePreview]);
+    noteState.setDraftNoteText(text);
+    noteState.setNoteModalOpen(true);
+  }, [hidePreview, noteState]);
 
   return {
     cancelNoteModal,
-    draftNoteText,
-    hasDraftChanges,
+    draftNoteText: noteState.draftNoteText,
+    hasDraftChanges: noteState.hasDraftChanges,
     hidePreview,
-    isSavingNote,
-    noteColor,
-    noteModalOpen,
+    isSavingNote: noteState.isSavingNote,
+    noteColor: noteState.noteColor,
+    noteModalOpen: noteState.noteModalOpen,
     openNoteModal,
-    resolvedNote,
+    resolvedNote: noteState.resolvedNote,
     saveNote,
-    setDraftNoteText,
+    setDraftNoteText: noteState.setDraftNoteText,
     showPreview,
     unoptimized,
     updatePreview,

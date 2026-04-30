@@ -1,12 +1,29 @@
-import type { KangurMobileLessonItem } from './useKangurMobileLessons';
-import type { useKangurMobileI18n } from '../i18n/kangurMobileI18n';
+import { type KangurAiTutorConversationContext } from '../../../../src/shared/contracts/kangur-ai-tutor';
+import { type KangurMobileLocale, type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 
-export type LessonsCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
-export type LessonsLocale = ReturnType<typeof useKangurMobileI18n>['locale'];
+export interface LessonMastery {
+  trackedLessons: number;
+  masteredLessons: number;
+  lessonsNeedingPractice: number;
+  weakest: Array<{ title: string }>;
+  strongest: Array<{ title: string }>;
+}
 
-export interface LessonsCatalogPanelProps {
-  copy: LessonsCopy;
-  lessons: KangurMobileLessonItem[];
-  locale: LessonsLocale;
-  onOpenCatalogLesson: () => void;
+export interface LessonSection {
+  id: string;
+  title: string;
+  description: string;
+}
+
+export interface LessonBody {
+  introduction: string;
+  practiceNote?: string;
+  sections: LessonSection[];
+}
+
+export interface LessonViewModel {
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: KangurMobileLocale;
+  lessonMastery: LessonMastery;
+  tutorContext: KangurAiTutorConversationContext;
 }

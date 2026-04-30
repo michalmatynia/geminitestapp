@@ -141,6 +141,13 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
               tailoredCv: {
                 title: 'string',
                 professionalSummary: 'string',
+                coreStrengths: 'string[]; tailored lightly from the base Core Strengths section only',
+                selectedTechnicalEnvironment:
+                  'string[]; lightly tailored from the base Selected Technical Environment section; do not overfit or invent tools',
+                experienceHighlightPatches:
+                  '{experienceId:string, experienceTitle:string, highlights:string[]}[]; patch bullets for existing experience entries only',
+                tailoringScope:
+                  '{lockedFieldsPreserved:boolean, allowedSections:string[]}; allowed sections are Professional Summary, Core Strengths, Selected Technical Environment, and Experience Highlights',
                 bodyText: 'string',
                 bodyMarkdown: 'string',
                 language: 'string; BCP-47 tag matching the job listing language',
@@ -164,7 +171,7 @@ const rawRegistryEntries: AiPathTemplateRegistryEntry[] = [
     ],
     starterLineage: {
       starterKey: 'job_application_tailored_cv',
-      templateVersion: 13,
+      templateVersion: 18,
       canonicalGraphHashes: [],
     },
     upgradePolicy: {

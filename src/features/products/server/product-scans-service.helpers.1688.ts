@@ -5,32 +5,20 @@ import { randomUUID } from 'crypto';
 import {
   normalizeProductScanRecord,
   type ProductScanRecord,
-  type ProductScanRequestSequenceEntry,
   type ProductScanSupplierEvaluation,
 } from '@/shared/contracts/product-scans';
-import type { Supplier1688SelectorRegistryResolutionSummary } from '@/features/integrations/services/supplier-1688-selector-registry';
-import type { Supplier1688SelectorRuntime } from '@/shared/lib/browser-execution/selectors/supplier-1688';
 
 import {
   type ProductScanner1688CandidateEvaluatorResolvedConfig,
 } from './product-scanner-settings';
 
-import {
-  PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH,
-  PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH,
-  PRODUCT_SCAN_URL_MAX_LENGTH,
-} from './product-scans-service.constants';
-import {
-  normalizeProductScanRequestSequence,
-  readOptionalString,
-} from './product-scans-service.helpers.base';
-import {
-  buildPreparedProductScanSteps,
-  normalizeParsedCandidateUrls,
-} from './product-scans-service.helpers.steps';
+import { readOptionalString } from './product-scans-service.helpers.base';
+import { buildPreparedProductScanSteps } from './product-scans-service.helpers.steps';
 import {
   formatEvaluationConfidence,
 } from './product-scans-service.helpers.amazon';
+
+export { build1688ScanRequestInput } from './product-scans-service.helpers.1688-request';
 
 export const resolveNext1688EvaluationStepAttempt = (
   steps: ProductScanRecord['steps']
@@ -115,19 +103,21 @@ export const resolve1688CandidateRank = (
 export const resolve1688EvaluationMessage = (
   evaluation: ProductScanSupplierEvaluation | null | undefined
 ): string => {
-  if (!evaluation) {
+  if (evaluation === null || evaluation === undefined) {
     return '1688 supplier AI evaluation failed.';
   }
   const confidenceLabel = formatEvaluationConfidence(evaluation.confidence);
   if (evaluation.status === 'approved') {
-    return confidenceLabel
-      ? `AI evaluator approved the 1688 supplier candidate (${confidenceLabel}).`
-      : 'AI evaluator approved the 1688 supplier candidate.';
+    return format1688EvaluationDecisionMessage(
+      'AI evaluator approved the 1688 supplier candidate',
+      confidenceLabel
+    );
   }
   if (evaluation.status === 'rejected') {
-    return confidenceLabel
-      ? `AI evaluator rejected the 1688 supplier candidate (${confidenceLabel}).`
-      : 'AI evaluator rejected the 1688 supplier candidate.';
+    return format1688EvaluationDecisionMessage(
+      'AI evaluator rejected the 1688 supplier candidate',
+      confidenceLabel
+    );
   }
   if (evaluation.status === 'skipped') {
     return (
@@ -138,11 +128,59 @@ export const resolve1688EvaluationMessage = (
   return evaluation.error ?? '1688 supplier AI evaluation failed.';
 };
 
+const format1688EvaluationDecisionMessage = (
+  message: string,
+  confidenceLabel: string | null
+): string =>
+  confidenceLabel !== null ? `${message} (${confidenceLabel}).` : `${message}.`;
+
+const read1688EvaluationBoolean = (
+  evaluation: ProductScanSupplierEvaluation | null | undefined,
+  key: 'sameProduct' | 'imageMatch' | 'titleMatch' | 'proceed'
+): string | null => {
+  if (evaluation === null || evaluation === undefined) return null;
+  const value = evaluation[key];
+  return typeof value === 'boolean' ? String(value) : null;
+};
+
+const read1688EvaluationModelId = (
+  evaluation: ProductScanSupplierEvaluation | null | undefined
+): string | null => (evaluation === null || evaluation === undefined ? null : evaluation.modelId);
+
+const read1688EvaluationConfidence = (
+  evaluation: ProductScanSupplierEvaluation | null | undefined
+): string | null =>
+  formatEvaluationConfidence(
+    evaluation === null || evaluation === undefined ? null : evaluation.confidence
+  );
+
+const read1688EvaluationFirstItem = (
+  evaluation: ProductScanSupplierEvaluation | null | undefined,
+  key: 'reasons' | 'mismatches'
+): string | null => {
+  if (evaluation === null || evaluation === undefined) return null;
+  return evaluation[key][0] ?? null;
+};
+
+const normalize1688ScanActorUserId = (value: string | null | undefined): string | null => {
+  const trimmed = value?.trim() ?? '';
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const nullableValue = <TValue>(value: TValue | null | undefined): TValue | null => value ?? null;
+
+const resolve1688AsinUpdateStatus = (
+  status: ProductScanRecord['status']
+): ProductScanRecord['asinUpdateStatus'] => (status === 'failed' ? 'not_needed' : 'pending');
+
+const resolve1688CompletedAt = (status: ProductScanRecord['status']): string | null =>
+  status === 'failed' ? new Date().toISOString() : null;
+
 export const build1688EvaluationStepDetails = (
   evaluation: ProductScanSupplierEvaluation | null | undefined,
   evaluatorConfig: ProductScanner1688CandidateEvaluatorResolvedConfig
 ): Array<{ label: string; value: string | null }> => [
-  { label: 'Model', value: evaluation?.modelId ?? null },
+  { label: 'Model', value: read1688EvaluationModelId(evaluation) },
   {
     label: 'Model source',
     value: resolve1688EvaluatorModelSource(evaluatorConfig.mode),
@@ -159,133 +197,33 @@ export const build1688EvaluationStepDetails = (
   },
   {
     label: 'Confidence',
-    value: formatEvaluationConfidence(evaluation?.confidence),
+    value: read1688EvaluationConfidence(evaluation),
   },
   {
     label: 'Same product',
-    value:
-      evaluation && typeof evaluation.sameProduct === 'boolean' ? String(evaluation.sameProduct) : null,
+    value: read1688EvaluationBoolean(evaluation, 'sameProduct'),
   },
   {
     label: 'Image match',
-    value:
-      evaluation && typeof evaluation.imageMatch === 'boolean' ? String(evaluation.imageMatch) : null,
+    value: read1688EvaluationBoolean(evaluation, 'imageMatch'),
   },
   {
     label: 'Title match',
-    value:
-      evaluation && typeof evaluation.titleMatch === 'boolean' ? String(evaluation.titleMatch) : null,
+    value: read1688EvaluationBoolean(evaluation, 'titleMatch'),
   },
   {
     label: 'Proceed',
-    value: evaluation && typeof evaluation.proceed === 'boolean' ? String(evaluation.proceed) : null,
+    value: read1688EvaluationBoolean(evaluation, 'proceed'),
   },
   {
     label: 'Reason',
-    value: evaluation?.reasons[0] ?? null,
+    value: read1688EvaluationFirstItem(evaluation, 'reasons'),
   },
   {
     label: 'Mismatch',
-    value: evaluation?.mismatches[0] ?? null,
+    value: read1688EvaluationFirstItem(evaluation, 'mismatches'),
   },
 ];
-
-export const build1688ScanRequestInput = (input: {
-  productId: string;
-  productName: string | null;
-  imageCandidates: ProductScanRecord['imageCandidates'];
-  integrationId?: string | null;
-  connectionId?: string | null;
-  scanner1688StartUrl?: string | null;
-  scanner1688LoginMode?: 'session_required' | 'manual_login' | null;
-  scanner1688DefaultSearchMode?: 'local_image' | 'image_url_fallback' | null;
-  batchIndex?: number;
-  allowManualVerification: boolean;
-  manualVerificationTimeoutMs: number;
-  candidateResultLimit?: number | null;
-  minimumCandidateScore?: number | null;
-  maxExtractedImages?: number | null;
-  allowUrlImageSearchFallback?: boolean | null;
-  directSupplierCandidateUrl?: string | null;
-  directSupplierCandidateUrls?: string[] | null;
-  directMatchedImageId?: string | null;
-  directSupplierCandidateRank?: number | null;
-  stepSequenceKey?: string | null;
-  stepSequence?: ProductScanRequestSequenceEntry[] | null;
-  runtimeKey?: string | null;
-  actionId?: string | null;
-  actionName?: string | null;
-  action?: unknown;
-  blocks?: unknown[] | null;
-  selectorProfile?: string | null;
-  selectorRegistryResolution?: Supplier1688SelectorRegistryResolutionSummary | null;
-  selectorRuntime?: Supplier1688SelectorRuntime | null;
-  evaluatorConfig?: unknown;
-}): Record<string, unknown> => ({
-  productId: input.productId,
-  productName: input.productName,
-  imageCandidates: input.imageCandidates,
-  integrationId: readOptionalString(input.integrationId, 160),
-  connectionId: readOptionalString(input.connectionId, 160),
-  scanner1688StartUrl: readOptionalString(input.scanner1688StartUrl, PRODUCT_SCAN_URL_MAX_LENGTH),
-  scanner1688LoginMode:
-    input.scanner1688LoginMode === 'manual_login' ? 'manual_login' : 'session_required',
-  scanner1688DefaultSearchMode:
-    input.scanner1688DefaultSearchMode === 'image_url_fallback'
-      ? 'image_url_fallback'
-      : 'local_image',
-  batchIndex:
-    typeof input.batchIndex === 'number' && Number.isFinite(input.batchIndex) && input.batchIndex > 0
-      ? Math.trunc(input.batchIndex)
-      : 0,
-  allowManualVerification: input.allowManualVerification,
-  manualVerificationTimeoutMs: input.manualVerificationTimeoutMs,
-  candidateResultLimit:
-    typeof input.candidateResultLimit === 'number' &&
-    Number.isFinite(input.candidateResultLimit) &&
-    input.candidateResultLimit > 0
-      ? Math.trunc(input.candidateResultLimit)
-      : null,
-  minimumCandidateScore:
-    typeof input.minimumCandidateScore === 'number' &&
-    Number.isFinite(input.minimumCandidateScore) &&
-    input.minimumCandidateScore > 0
-      ? Math.trunc(input.minimumCandidateScore)
-      : null,
-  maxExtractedImages:
-    typeof input.maxExtractedImages === 'number' &&
-    Number.isFinite(input.maxExtractedImages) &&
-    input.maxExtractedImages > 0
-      ? Math.trunc(input.maxExtractedImages)
-      : null,
-  allowUrlImageSearchFallback: input.allowUrlImageSearchFallback !== false,
-  directSupplierCandidateUrl: readOptionalString(
-    input.directSupplierCandidateUrl,
-    PRODUCT_SCAN_URL_MAX_LENGTH
-  ),
-  directSupplierCandidateUrls: normalizeParsedCandidateUrls(input.directSupplierCandidateUrls),
-  directMatchedImageId: readOptionalString(
-    input.directMatchedImageId,
-    PRODUCT_SCAN_MATCHED_IMAGE_ID_MAX_LENGTH
-  ),
-  directSupplierCandidateRank:
-    typeof input.directSupplierCandidateRank === 'number' &&
-    Number.isFinite(input.directSupplierCandidateRank) &&
-    input.directSupplierCandidateRank > 0
-      ? Math.trunc(input.directSupplierCandidateRank)
-      : null,
-  stepSequenceKey: readOptionalString(input.stepSequenceKey, PRODUCT_SCAN_SEQUENCE_KEY_MAX_LENGTH),
-  stepSequence: normalizeProductScanRequestSequence(input.stepSequence),
-  runtimeKey: readOptionalString(input.runtimeKey, 160),
-  actionId: readOptionalString(input.actionId, 160),
-  actionName: readOptionalString(input.actionName, 240),
-  action: input.action ?? null,
-  blocks: Array.isArray(input.blocks) ? input.blocks : [],
-  selectorProfile: readOptionalString(input.selectorProfile, 120),
-  selectorRegistryResolution: input.selectorRegistryResolution ?? null,
-  selectorRuntime: input.selectorRuntime ?? null,
-  evaluatorConfig: input.evaluatorConfig ?? null,
-});
 
 export const create1688ProductScanBaseRecord = (input: {
   productId: string;
@@ -325,13 +263,13 @@ export const create1688ProductScanBaseRecord = (input: {
       summaryLabel: '1688 supplier reverse image',
       imageCandidateCount: input.imageCandidates.length,
       status: input.status,
-      error: input.error ?? null,
+      error: nullableValue(input.error),
     }),
     rawResult: null,
-    error: input.error ?? null,
-    asinUpdateStatus: input.status === 'failed' ? 'not_needed' : 'pending',
+    error: nullableValue(input.error),
+    asinUpdateStatus: resolve1688AsinUpdateStatus(input.status),
     asinUpdateMessage: null,
-    createdBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
-    updatedBy: (input.userId?.trim() ?? '') !== '' ? String(input.userId).trim() : null,
-    completedAt: input.status === 'failed' ? new Date().toISOString() : null,
+    createdBy: normalize1688ScanActorUserId(input.userId),
+    updatedBy: normalize1688ScanActorUserId(input.userId),
+    completedAt: resolve1688CompletedAt(input.status),
   });

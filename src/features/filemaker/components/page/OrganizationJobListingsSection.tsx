@@ -14,7 +14,7 @@ import {
   RefreshCw,
   Trash2,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { MultiSelectOption } from '@/shared/ui/forms-and-actions.public';
 import {
@@ -354,20 +354,138 @@ const normalizePayloadStringArray = (value: unknown): string[] =>
         .filter((entry): entry is string => entry !== null)
     : [];
 
+const TAILORED_CV_ALLOWED_SECTIONS = [
+  'Professional Summary',
+  'Core Strengths',
+  'Selected Technical Environment',
+  'Experience Highlights',
+];
+
+const formatExperiencePatchLabel = (patch: {
+  company?: string | null;
+  experienceId?: string | null;
+  experienceKey?: string | null;
+  experienceTitle?: string | null;
+  role?: string | null;
+}): string => {
+  const roleCompany = [patch.role, patch.company]
+    .filter((value: string | null | undefined): value is string =>
+      typeof value === 'string' && value.trim().length > 0
+    )
+    .join(' | ');
+  return (
+    patch.experienceTitle ??
+    (roleCompany.length > 0 ? roleCompany : null) ??
+    patch.experienceKey ??
+    patch.experienceId ??
+    'Experience'
+  );
+};
+
 const normalizeTailoredCvPayload = (
   value: unknown
 ): FilemakerJobApplication['tailoredCv'] => {
   const payload = readRecord(value);
   const record = readRecord(payload?.['tailoredCv']) ?? payload;
   if (record === null) return null;
+  const tailoringScope = readRecord(record['tailoringScope']);
+  const tailoringPatch = readRecord(record['tailoringPatch']);
+  const allowedSections =
+    tailoringScope !== null && normalizePayloadStringArray(tailoringScope['allowedSections']).length > 0
+      ? normalizePayloadStringArray(tailoringScope['allowedSections'])
+      : TAILORED_CV_ALLOWED_SECTIONS;
   return {
     bodyMarkdown: normalizePayloadString(record['bodyMarkdown']),
     bodyText: normalizePayloadString(record['bodyText']),
+    coreStrengths: normalizePayloadStringArray(record['coreStrengths']),
     educationHighlights: normalizePayloadStringArray(record['educationHighlights']),
+    experienceHighlightPatches: Array.isArray(record['experienceHighlightPatches'])
+      ? record['experienceHighlightPatches']
+          .map((entry: unknown) => {
+            const patch = readRecord(entry);
+            if (patch === null) return null;
+            const highlights = normalizePayloadStringArray(patch['highlights']);
+            if (highlights.length === 0) return null;
+            return {
+              experienceKey: normalizePayloadString(patch['experienceKey']),
+              experienceId: normalizePayloadString(patch['experienceId']),
+              experienceTitle: normalizePayloadString(patch['experienceTitle']),
+              company: normalizePayloadString(patch['company']),
+              role: normalizePayloadString(patch['role']),
+              highlights,
+            };
+          })
+          .filter(
+            (
+              entry
+            ): entry is {
+              experienceKey?: string | null;
+              experienceId: string | null;
+              experienceTitle: string | null;
+              company?: string | null;
+              role?: string | null;
+              highlights: string[];
+            } => entry !== null
+          )
+      : [],
     experienceHighlights: normalizePayloadStringArray(record['experienceHighlights']),
     preferencesMatch: normalizePayloadStringArray(record['preferencesMatch']),
     professionalSummary: normalizePayloadString(record['professionalSummary']),
+    selectedTechnicalEnvironment: normalizePayloadStringArray(
+      record['selectedTechnicalEnvironment']
+    ),
     skills: normalizePayloadStringArray(record['skills']),
+    sourceCvRecordId: normalizePayloadString(record['sourceCvRecordId']),
+    sourceCvTitle: normalizePayloadString(record['sourceCvTitle']),
+    tailoringPatch:
+      tailoringPatch !== null
+        ? {
+            professionalSummary: normalizePayloadString(tailoringPatch['professionalSummary']),
+            coreStrengths: normalizePayloadStringArray(tailoringPatch['coreStrengths']),
+            selectedTechnicalEnvironment: normalizePayloadStringArray(
+              tailoringPatch['selectedTechnicalEnvironment']
+            ),
+            experienceHighlightPatches: Array.isArray(
+              tailoringPatch['experienceHighlightPatches']
+            )
+              ? tailoringPatch['experienceHighlightPatches']
+                  .map((entry: unknown) => {
+                    const patch = readRecord(entry);
+                    if (patch === null) return null;
+                    const highlights = normalizePayloadStringArray(patch['highlights']);
+                    if (highlights.length === 0) return null;
+                    return {
+                      experienceKey: normalizePayloadString(patch['experienceKey']),
+                      experienceId: normalizePayloadString(patch['experienceId']),
+                      experienceTitle: normalizePayloadString(patch['experienceTitle']),
+                      company: normalizePayloadString(patch['company']),
+                      role: normalizePayloadString(patch['role']),
+                      highlights,
+                    };
+                  })
+                  .filter(
+                    (
+                      entry
+                    ): entry is {
+                      experienceKey?: string | null;
+                      experienceId: string | null;
+                      experienceTitle: string | null;
+                      company?: string | null;
+                      role?: string | null;
+                      highlights: string[];
+                    } => entry !== null
+                  )
+              : [],
+          }
+        : null,
+    tailoringScope:
+      {
+        allowedSections,
+        lockedFieldsPreserved:
+          tailoringScope !== null && typeof tailoringScope['lockedFieldsPreserved'] === 'boolean'
+            ? tailoringScope['lockedFieldsPreserved']
+            : true,
+      },
     title: normalizePayloadString(record['title']),
   };
 };
@@ -1264,6 +1382,8 @@ function ApplicationPackageModal({
   const { toast } = useToast();
   const [appliedStatusSyncRunId, setAppliedStatusSyncRunId] = useState<string | null>(null);
   const [applyRun, setApplyRun] = useState<FilemakerJobApplicationApplyRun | null>(null);
+  const applyRunRequestSeqRef = useRef(0);
+  const toastRef = useRef(toast);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingCoverLetterPdf, setIsExportingCoverLetterPdf] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
@@ -1322,25 +1442,29 @@ function ApplicationPackageModal({
     latestCvVersionId,
   ]);
   const persistActiveArtifacts = (patch: Partial<FilemakerJobApplicationActiveArtifacts>): void => {
-    if (application === null || application.applicationIds.length !== 1) return;
-    onActiveArtifactsChange(application.applicationIds[0]!, {
-      applicationEmailVersionId: selectedApplicationEmailVersionId || null,
-      coverLetterVersionId: selectedCoverLetterVersionId || null,
-      tailoredCvVersionId: selectedCvVersionId || null,
+    const applicationIds = application?.applicationIds ?? [];
+    const applicationId = applicationIds.length === 1 ? (applicationIds[0] ?? null) : null;
+    if (applicationId === null) return;
+    onActiveArtifactsChange(applicationId, {
+      applicationEmailVersionId:
+        selectedApplicationEmailVersionId.length > 0 ? selectedApplicationEmailVersionId : null,
+      coverLetterVersionId:
+        selectedCoverLetterVersionId.length > 0 ? selectedCoverLetterVersionId : null,
+      tailoredCvVersionId: selectedCvVersionId.length > 0 ? selectedCvVersionId : null,
       ...patch,
     });
   };
   const handleCvVersionChange = (value: string): void => {
     setSelectedCvVersionId(value);
-    persistActiveArtifacts({ tailoredCvVersionId: value || null });
+    persistActiveArtifacts({ tailoredCvVersionId: value.length > 0 ? value : null });
   };
   const handleCoverLetterVersionChange = (value: string): void => {
     setSelectedCoverLetterVersionId(value);
-    persistActiveArtifacts({ coverLetterVersionId: value || null });
+    persistActiveArtifacts({ coverLetterVersionId: value.length > 0 ? value : null });
   };
   const handleApplicationEmailVersionChange = (value: string): void => {
     setSelectedApplicationEmailVersionId(value);
-    persistActiveArtifacts({ applicationEmailVersionId: value || null });
+    persistActiveArtifacts({ applicationEmailVersionId: value.length > 0 ? value : null });
   };
   const selectedCvVersion =
     cvVersions.find(
@@ -1382,6 +1506,34 @@ function ApplicationPackageModal({
   const notes = visibleApplication?.applicationNotes ?? [];
   const missingInformation = visibleApplication?.missingInformation ?? [];
   const skills = visibleApplication?.tailoredCv?.skills ?? [];
+  const tailoringPatch = visibleApplication?.tailoredCv?.tailoringPatch ?? null;
+  const tailoredProfessionalSummary =
+    tailoringPatch?.professionalSummary ?? visibleApplication?.tailoredCv?.professionalSummary;
+  const coreStrengths = tailoringPatch?.coreStrengths ?? visibleApplication?.tailoredCv?.coreStrengths ?? [];
+  const selectedTechnicalEnvironment =
+    tailoringPatch?.selectedTechnicalEnvironment ??
+    visibleApplication?.tailoredCv?.selectedTechnicalEnvironment ??
+    [];
+  const experienceHighlightPatches =
+    tailoringPatch?.experienceHighlightPatches ??
+    visibleApplication?.tailoredCv?.experienceHighlightPatches ??
+    [];
+  const tailoredCvAllowedSections = visibleApplication?.tailoredCv?.tailoringScope?.allowedSections ?? [];
+  const tailoredCvCanonicalPatchField =
+    visibleApplication?.tailoredCv?.tailoringScope?.canonicalPatchField ?? 'tailoringPatch';
+  const tailoredCvRenderedBodyMode =
+    visibleApplication?.tailoredCv?.tailoringScope?.renderedBodyMode ?? 'ai_rendered_full_cv';
+  const tailoredCvSourceTitle = visibleApplication?.tailoredCv?.sourceCvTitle?.trim() ?? '';
+  const tailoredCvSourceId = visibleApplication?.tailoredCv?.sourceCvRecordId?.trim() ?? '';
+  const tailoredCvSourceHref =
+    visibleApplication !== null &&
+    tailoredCvSourceId.length > 0 &&
+    tailoredCvSourceId !== 'profile-fields-only' &&
+    tailoredCvSourceId !== visibleApplication.tailoredCvId
+      ? `/admin/filemaker/persons/${encodeURIComponent(
+          visibleApplication.personId
+        )}/cvs/${encodeURIComponent(tailoredCvSourceId)}`
+      : null;
   const hasApplicationEmail =
     (visibleApplication?.applicationEmail?.subject?.trim() ?? '').length > 0 ||
     (visibleApplication?.applicationEmail?.bodyMarkdown?.trim() ?? '').length > 0 ||
@@ -1393,28 +1545,39 @@ function ApplicationPackageModal({
   const latestApplyStep = applyRun?.steps[applyRun.steps.length - 1] ?? null;
   const applyButtonLabel = resolveApplicationApplyButtonLabel(applyRun, isApplying);
 
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
+
   const loadLatestApplyRun = useCallback(
     async (targetApplicationId: string, options?: { silent?: boolean }): Promise<void> => {
+      const requestSeq = (applyRunRequestSeqRef.current += 1);
       try {
         const response = await fetch(
           `/api/filemaker/job-applications/${encodeURIComponent(targetApplicationId)}/apply`
         );
         if (!response.ok) throw new Error(`Failed to load apply run (${response.status}).`);
         const payload = (await response.json()) as FilemakerJobApplicationApplyRunResponse;
-        setApplyRun(payload.run ?? null);
+        if (requestSeq === applyRunRequestSeqRef.current) {
+          setApplyRun(payload.run ?? null);
+        }
       } catch (error: unknown) {
         logClientError(error);
         if (options?.silent !== true) {
-          toast(error instanceof Error ? error.message : 'Failed to load application apply run.', {
-            variant: 'error',
-          });
+          toastRef.current(
+            error instanceof Error ? error.message : 'Failed to load application apply run.',
+            {
+              variant: 'error',
+            }
+          );
         }
       }
     },
-    [toast]
+    []
   );
 
   useEffect(() => {
+    applyRunRequestSeqRef.current += 1;
     setApplyRun(null);
     setAppliedStatusSyncRunId(null);
     if (applyApplicationId === null) return;
@@ -1451,6 +1614,7 @@ function ApplicationPackageModal({
 
   const handleApply = async (): Promise<void> => {
     if (visibleApplication === null || applyApplicationId === null) return;
+    const requestSeq = (applyRunRequestSeqRef.current += 1);
     setIsApplying(true);
     try {
       const response = await fetch(
@@ -1474,7 +1638,9 @@ function ApplicationPackageModal({
       );
       if (!response.ok) throw new Error(`Failed to start application apply run (${response.status}).`);
       const payload = (await response.json()) as FilemakerJobApplicationApplyRunResponse;
-      setApplyRun(payload.run ?? null);
+      if (requestSeq === applyRunRequestSeqRef.current) {
+        setApplyRun(payload.run ?? null);
+      }
       toast('Application apply run started.', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error);
@@ -1938,12 +2104,86 @@ function ApplicationPackageModal({
                   <div className='mb-2 text-sm font-medium text-gray-100'>
                     {formatNullableText(visibleApplication?.tailoredCv?.title, 'Tailored CV')}
                   </div>
+                  {tailoredCvSourceTitle.length > 0 || tailoredCvSourceId.length > 0 ? (
+                    <div className='mb-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
+                      <span>
+                        Based on CV:{' '}
+                        {tailoredCvSourceTitle.length > 0 ? tailoredCvSourceTitle : tailoredCvSourceId}
+                      </span>
+                      {tailoredCvSourceHref !== null ? (
+                        <a
+                          href={tailoredCvSourceHref}
+                          className='rounded border border-border/60 px-2 py-0.5 text-[10px] font-medium text-gray-200 transition-colors hover:border-emerald-300/50 hover:text-emerald-100'
+                        >
+                          Open source CV
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <p className='text-xs leading-5 text-gray-300'>
                     {formatNullableText(
-                      visibleApplication?.tailoredCv?.professionalSummary,
+                      tailoredProfessionalSummary,
                       'No professional summary was generated.'
                     )}
                   </p>
+                  {tailoredCvAllowedSections.length > 0 ? (
+                    <div className='mt-3 rounded border border-emerald-400/20 bg-emerald-400/5 p-2 text-[11px] leading-4 text-emerald-100'>
+                      Tailoring limited to: {tailoredCvAllowedSections.join(', ')}
+                      <br />
+                      Canonical patch: {tailoredCvCanonicalPatchField}; rendered body:{' '}
+                      {tailoredCvRenderedBodyMode}
+                    </div>
+                  ) : null}
+                  {coreStrengths.length > 0 ? (
+                    <div className='mt-3'>
+                      <div className='mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400'>
+                        Core strengths
+                      </div>
+                      <div className='flex flex-wrap gap-1'>
+                        {coreStrengths.map((strength: string) => (
+                          <Badge key={strength} variant='outline'>
+                            {strength}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {selectedTechnicalEnvironment.length > 0 ? (
+                    <div className='mt-3'>
+                      <div className='mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400'>
+                        Selected technical environment
+                      </div>
+                      <div className='flex flex-wrap gap-1'>
+                        {selectedTechnicalEnvironment.map((technology: string) => (
+                          <Badge key={technology} variant='outline'>
+                            {technology}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                  {experienceHighlightPatches.length > 0 ? (
+                    <div className='mt-3 space-y-2'>
+                      <div className='text-[11px] font-semibold uppercase tracking-wide text-gray-400'>
+                        Experience highlight patches
+                      </div>
+                      {experienceHighlightPatches.map((patch) => (
+                        <div
+                          key={`${patch.experienceKey ?? patch.experienceId ?? patch.experienceTitle ?? 'experience'}-${patch.highlights.join('|')}`}
+                          className='rounded border border-border/40 bg-background/30 p-2'
+                        >
+                          <div className='mb-1 text-xs font-medium text-gray-200'>
+                            {formatExperiencePatchLabel(patch)}
+                          </div>
+                          <ul className='list-disc space-y-1 pl-4 text-xs leading-5 text-gray-300'>
+                            {patch.highlights.map((highlight: string) => (
+                              <li key={highlight}>{highlight}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                   {skills.length > 0 ? (
                     <div className='mt-3 flex flex-wrap gap-1'>
                       {skills.map((skill: string) => (

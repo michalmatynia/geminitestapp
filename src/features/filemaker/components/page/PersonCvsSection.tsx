@@ -407,9 +407,62 @@ export function PersonCvsSection(): React.JSX.Element {
                   <div className='truncate text-[10px] text-gray-600'>
                     Updated: {formatTimestamp(cv.updatedAt)}
                   </div>
+                  {cv.bodyBlocksEditable === false ||
+                  (cv.tailoringScope !== null && cv.tailoringScope !== undefined) ? (
+                    <div className='mt-1 truncate text-[10px] text-emerald-300/80'>
+                      Scoped tailored CV
+                      {cv.sourceCvTitle !== null &&
+                      cv.sourceCvTitle !== undefined &&
+                      cv.sourceCvTitle.trim().length > 0
+                        ? ` based on ${cv.sourceCvTitle}`
+                        : cv.sourceCvRecordId !== null &&
+                            cv.sourceCvRecordId !== undefined &&
+                            cv.sourceCvRecordId.trim().length > 0 &&
+                            cv.sourceCvRecordId !== 'profile-fields-only'
+                          ? ` based on ${cv.sourceCvRecordId}`
+                          : ''}
+                    </div>
+                  ) : null}
                 </div>
               </div>
               <div className='flex shrink-0 items-center gap-2'>
+                {cv.bodyBlocksEditable === false ||
+                (cv.tailoringScope !== null && cv.tailoringScope !== undefined) ? (
+                  <Badge variant='secondary' className='h-5 text-[10px]'>
+                    Tailored
+                  </Badge>
+                ) : null}
+                {(cv.bodyBlocksEditable === false ||
+                  (cv.tailoringScope !== null && cv.tailoringScope !== undefined)) &&
+                cv.sourceCvRecordId !== null &&
+                cv.sourceCvRecordId !== undefined &&
+                cv.sourceCvRecordId !== 'profile-fields-only' &&
+                cv.sourceCvRecordId !== cv.id ? (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='icon'
+                    className='size-7'
+                    aria-label={`Open source CV for ${formatCvTitle(cv)}`}
+                    title={`Open source CV for ${formatCvTitle(cv)}`}
+                    onClick={() => {
+                      const sourceCv = state.cvs.find(
+                        (candidate: FilemakerCv): boolean => candidate.id === cv.sourceCvRecordId
+                      );
+                      if (sourceCv !== undefined) {
+                        openCv(sourceCv);
+                        return;
+                      }
+                      openCv({
+                        ...cv,
+                        id: cv.sourceCvRecordId ?? cv.id,
+                        title: cv.sourceCvTitle ?? cv.sourceCvRecordId ?? cv.title,
+                      });
+                    }}
+                  >
+                    <FileText className='size-3.5' />
+                  </Button>
+                ) : null}
                 <Badge variant='outline' className='h-5 text-[10px]'>
                   {cv.status}
                 </Badge>

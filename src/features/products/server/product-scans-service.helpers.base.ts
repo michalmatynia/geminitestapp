@@ -129,8 +129,8 @@ export const resolveProductScanRequestSequenceInput = (
   const stepSequence = normalizeProductScanRequestSequence(record?.['stepSequence']) ?? undefined;
 
   return {
-    ...(stepSequenceKey ? { stepSequenceKey } : {}),
-    ...(stepSequence ? { stepSequence } : {}),
+    ...(stepSequenceKey !== undefined ? { stepSequenceKey } : {}),
+    ...(stepSequence !== undefined ? { stepSequence } : {}),
   };
 };
 
@@ -162,6 +162,22 @@ const normalizeStartedRawStatus = (status: unknown): ProductScanRecord['status']
   return null;
 };
 
+const hasNonEmptyString = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value.length > 0;
+
+const stringProperty = (
+  key: string,
+  value: string | null | undefined
+): Record<string, string> => (hasNonEmptyString(value) ? { [key]: value } : {});
+
+const definedProperty = <TValue>(
+  key: string,
+  value: TValue | undefined
+): Record<string, TValue> => (value !== undefined ? { [key]: value } : {});
+
+const trueProperty = (key: string, value: boolean | undefined): Record<string, true> =>
+  value === true ? { [key]: true } : {};
+
 export const createProductScanStartedRawResult = (input: {
   runId: string;
   status?: unknown;
@@ -185,24 +201,22 @@ export const createProductScanStartedRawResult = (input: {
   return {
     runId: input.runId,
     ...(status !== null ? { status } : {}),
-    ...(input.runtimeKey ? { runtimeKey: input.runtimeKey } : {}),
-    ...(input.actionId ? { actionId: input.actionId } : {}),
-    ...(input.selectorProfile ? { selectorProfile: input.selectorProfile } : {}),
+    ...stringProperty('runtimeKey', input.runtimeKey),
+    ...stringProperty('actionId', input.actionId),
+    ...stringProperty('selectorProfile', input.selectorProfile),
     imageSearchProvider: input.imageSearchProvider ?? null,
-    ...(input.imageSearchPageUrl ? { imageSearchPageUrl: input.imageSearchPageUrl } : {}),
-    ...(input.imageSearchProviderHistory !== undefined
-      ? { imageSearchProviderHistory: input.imageSearchProviderHistory }
-      : {}),
+    ...stringProperty('imageSearchPageUrl', input.imageSearchPageUrl),
+    ...definedProperty('imageSearchProviderHistory', input.imageSearchProviderHistory),
     allowManualVerification: input.allowManualVerification ?? false,
-    ...(input.previousRunId ? { previousRunId: input.previousRunId } : {}),
-    ...(input.previousResult !== undefined ? { previousResult: input.previousResult } : {}),
+    ...stringProperty('previousRunId', input.previousRunId),
+    ...definedProperty('previousResult', input.previousResult),
     manualVerificationPending: input.manualVerificationPending ?? false,
     manualVerificationMessage: input.manualVerificationMessage ?? null,
     manualVerificationTimeoutMs:
       input.manualVerificationTimeoutMs ?? DEFAULT_PRODUCT_SCANNER_MANUAL_VERIFICATION_TIMEOUT_MS,
-    ...(input.stepSequenceKey ? { stepSequenceKey: input.stepSequenceKey } : {}),
-    ...(input.stepSequence ? { stepSequence: input.stepSequence } : {}),
-    ...(input.recordDiagnostics === true ? { recordDiagnostics: true } : {}),
+    ...stringProperty('stepSequenceKey', input.stepSequenceKey),
+    ...definedProperty('stepSequence', input.stepSequence),
+    ...trueProperty('recordDiagnostics', input.recordDiagnostics),
   };
 };
 

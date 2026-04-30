@@ -10,14 +10,44 @@ export type FilemakerJobApplicationArtifactKind =
   | 'cover_letter'
   | 'tailored_cv';
 
+export type FilemakerJobApplicationExperienceHighlightPatch = {
+  experienceKey?: string | null;
+  experienceId: string | null;
+  experienceTitle: string | null;
+  company?: string | null;
+  role?: string | null;
+  highlights: string[];
+};
+
+export type FilemakerJobApplicationTailoringScope = {
+  allowedSections: string[];
+  canonicalPatchField?: string | null;
+  lockedFieldsPreserved: boolean | null;
+  renderedBodyMode?: string | null;
+};
+
+export type FilemakerJobApplicationTailoringPatch = {
+  professionalSummary: string | null;
+  coreStrengths: string[];
+  selectedTechnicalEnvironment: string[];
+  experienceHighlightPatches: FilemakerJobApplicationExperienceHighlightPatch[];
+};
+
 export type FilemakerJobApplicationTailoredCv = {
   bodyMarkdown: string | null;
   bodyText: string | null;
+  coreStrengths?: string[];
   educationHighlights: string[];
+  experienceHighlightPatches?: FilemakerJobApplicationExperienceHighlightPatch[];
   experienceHighlights: string[];
   preferencesMatch: string[];
   professionalSummary: string | null;
+  selectedTechnicalEnvironment?: string[];
   skills: string[];
+  sourceCvRecordId?: string | null;
+  sourceCvTitle?: string | null;
+  tailoringPatch?: FilemakerJobApplicationTailoringPatch | null;
+  tailoringScope?: FilemakerJobApplicationTailoringScope | null;
   title: string | null;
 };
 

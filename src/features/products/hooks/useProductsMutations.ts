@@ -1,8 +1,3 @@
-// Product mutation hooks: wrap create/update/delete operations with
-// TanStack mutation factories, optimistic updates, retry strategies, and
-// cache invalidation helpers to keep product list/detail caches consistent.
-import { useQueryClient } from '@tanstack/react-query';
-
 import {
   batchEditProducts,
   bulkSetProductsArchivedState,
@@ -20,7 +15,6 @@ import type {
   ProductMarketplaceCopyDebrandBatchResponse,
   ProductWithImages,
 } from '@/shared/contracts/products';
-import type { ProductPatchInput } from '@/shared/contracts/products/io';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui/queries';
 import { AppError, operationFailedError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
@@ -32,103 +26,19 @@ import {
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { delay } from '@/shared/utils/time-utils';
 
-import {
-  invalidateProductsAndCounts,
-  getProductDetailQueryKey,
-} from './productCache';
+import { invalidateProductsAndCounts } from './productCache';
+
+export { useUpdateProductField } from './useProductFieldMutation';
 
 interface UpdateProductPayload {
   id: string;
   data: Partial<ProductWithImages>;
 }
 
-type ProductQuickField = keyof ProductPatchInput;
-
-type ProductListCacheValue =
-  | ProductWithImages[]
-  | { items: ProductWithImages[] }
-  | null
-  | undefined;
-
-const patchProductListCacheValue = (
-  cacheValue: ProductListCacheValue,
-  productId: string,
-  field: keyof ProductWithImages,
-  value: ProductWithImages[keyof ProductWithImages]
-): ProductListCacheValue => {
-  if (!cacheValue) return cacheValue;
-  if (Array.isArray(cacheValue)) {
-    return cacheValue.map((product: ProductWithImages) =>
-      product.id === productId ? { ...product, [field]: value } : product
-    );
-  }
-  if (Array.isArray(cacheValue.items)) {
-    return {
-      ...cacheValue,
-      items: cacheValue.items.map((product: ProductWithImages) =>
-        product.id === productId ? { ...product, [field]: value } : product
-      ),
-    };
-  }
-  return cacheValue;
-};
-
-const mergeUpdatedProductIntoListCacheValue = (
-  cacheValue: ProductListCacheValue,
-  savedProduct: ProductWithImages
-): ProductListCacheValue => {
-  if (!cacheValue) return cacheValue;
-  if (Array.isArray(cacheValue)) {
-    return cacheValue.map((product: ProductWithImages) =>
-      product.id === savedProduct.id ? { ...product, ...savedProduct } : product
-    );
-  }
-  if (Array.isArray(cacheValue.items)) {
-    return {
-      ...cacheValue,
-      items: cacheValue.items.map((product: ProductWithImages) =>
-        product.id === savedProduct.id ? { ...product, ...savedProduct } : product
-      ),
-    };
-  }
-  return cacheValue;
-};
-
-const syncUpdatedProductAcrossCaches = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  savedProduct: ProductWithImages
-): void => {
-  queryClient.setQueriesData({ queryKey: QUERY_KEYS.products.lists() }, (old: ProductListCacheValue) =>
-    mergeUpdatedProductIntoListCacheValue(old, savedProduct)
-  );
-  queryClient.setQueryData(getProductDetailQueryKey(savedProduct.id), savedProduct);
-  queryClient.setQueryData(QUERY_KEYS.products.detailEdit(savedProduct.id), savedProduct);
-};
-
-const markUpdatedProductCachesStale = async (
-  queryClient: ReturnType<typeof useQueryClient>,
-  productId: string
-): Promise<void> => {
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.lists(),
-      refetchType: 'none',
-    }),
-    queryClient.invalidateQueries({
-      queryKey: getProductDetailQueryKey(productId),
-      refetchType: 'none',
-    }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.detailEdit(productId),
-      refetchType: 'none',
-    }),
-  ]);
-};
-
 // Retry only transient/network errors — not validation (400) or not-found (404)
 const isTransientError = (error: Error): boolean => {
   if (error instanceof AppError) return error.retryable;
-  const msg = error?.message?.toLowerCase() ?? '';
+  const msg = error.message.toLowerCase();
   return /timeout|network|connection|refused|reset|fetch/i.test(msg);
 };
 
@@ -295,7 +205,7 @@ export function useBulkEditProductFields(): UpdateMutation<
       description: 'Applies product field batch edit operations.',
     },
     invalidate: async (queryClient, response) => {
-      if (response?.dryRun) return;
+      if (response.dryRun) return;
       await Promise.all([
         invalidateProductsAndCounts(queryClient),
         queryClient.invalidateQueries({
@@ -354,95 +264,6 @@ export function useDuplicateProduct(): CreateMutation<ProductWithImages, { id: s
     },
     invalidate: async (queryClient) => {
       await invalidateProductsAndCounts(queryClient);
-    },
-  });
-}
-
-export function useUpdateProductField(): UpdateMutation<
-  ProductWithImages,
-  {
-    id: string;
-    field: ProductQuickField;
-    value: number;
-  }
-  > {
-  const queryClient = useQueryClient();
-
-  return createUpdateMutationV2<
-    ProductWithImages,
-    {
-      id: string;
-      field: ProductQuickField;
-      value: number;
-    },
-    {
-      previousLists: Array<[readonly unknown[], ProductListCacheValue]>;
-      previousDetail: ProductWithImages | undefined;
-      previousDetailEdit: ProductWithImages | undefined;
-    }
-  >({
-    mutationFn: async ({ id, field, value }): Promise<ProductWithImages> =>
-      await api.patch<ProductWithImages>(`/api/v2/products/${id}`, { [field]: value }),
-    onMutate: async ({ id, field, value }) => {
-      // Optimistically update the list and detail caches
-      const listKey = QUERY_KEYS.products.lists();
-      const detailKey = getProductDetailQueryKey(id);
-      const detailEditKey = QUERY_KEYS.products.detailEdit(id);
-
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await Promise.all([
-        queryClient.cancelQueries({ queryKey: listKey }),
-        queryClient.cancelQueries({ queryKey: detailKey }),
-        queryClient.cancelQueries({ queryKey: detailEditKey }),
-      ]);
-
-      // Snapshot the previous values
-      const previousLists = queryClient.getQueriesData<ProductListCacheValue>({ queryKey: listKey });
-      const previousDetail = queryClient.getQueryData<ProductWithImages>(detailKey);
-      const previousDetailEdit = queryClient.getQueryData<ProductWithImages>(detailEditKey);
-
-      // Optimistically update lists
-      queryClient.setQueriesData({ queryKey: listKey }, (old: ProductListCacheValue) =>
-        patchProductListCacheValue(old, id, field, value)
-      );
-
-      // Optimistically update detail
-      queryClient.setQueryData(detailKey, (old: ProductWithImages | undefined) =>
-        old ? { ...old, [field]: value } : old
-      );
-      queryClient.setQueryData(detailEditKey, (old: ProductWithImages | undefined) =>
-        old ? { ...old, [field]: value } : old
-      );
-
-      return { previousLists, previousDetail, previousDetailEdit };
-    },
-    onError: (_err, { id }, context) => {
-      // Rollback on error
-      context?.previousLists.forEach(([queryKey, value]) => {
-        queryClient.setQueryData(queryKey, value);
-      });
-      if (context?.previousDetail !== undefined) {
-        queryClient.setQueryData(getProductDetailQueryKey(id), context.previousDetail);
-      }
-      if (context?.previousDetailEdit !== undefined) {
-        queryClient.setQueryData(QUERY_KEYS.products.detailEdit(id), context.previousDetailEdit);
-      }
-    },
-    mutationKey: QUERY_KEYS.products.all,
-    meta: {
-      source: 'products.hooks.useUpdateProductField',
-      operation: 'update',
-      resource: 'products.field',
-      domain: 'products',
-      mutationKey: QUERY_KEYS.products.all,
-      tags: ['products', 'field-update'],
-      description: 'Updates a single product field with optimistic cache sync.',
-    },
-    onSuccess: async (savedProduct) => {
-      syncUpdatedProductAcrossCaches(queryClient, savedProduct);
-    },
-    invalidate: async (queryClient, _, variables) => {
-      await markUpdatedProductCachesStale(queryClient, variables.id);
     },
   });
 }

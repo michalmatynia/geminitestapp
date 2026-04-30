@@ -44,7 +44,7 @@ const VALIDATION_RULE_INFERENCE_STATUSES: ReadonlySet<string> = new Set([
   'deprecated',
 ]);
 
-export const AI_PATHS_VALIDATION_SCHEMA_VERSION = 2;
+export const AI_PATHS_VALIDATION_SCHEMA_VERSION = 3;
 export const DEFAULT_AI_PATHS_VALIDATION_SCHEMA_VERSION = AI_PATHS_VALIDATION_SCHEMA_VERSION;
 
 const sanitizeStringArray = (value: unknown): string[] => {
@@ -319,6 +319,8 @@ const upgradeDatabaseWriteIdentityRule = (
       ...existingConditions,
       ...missingIncomingPortConditions,
     ]),
+    severity: 'warning',
+    weight: 0,
     recommendation:
       'Wire Parser/Context output into Database.id, entityId, productId, value, context, bundle, or meta for deterministic writes.',
   };
@@ -462,7 +464,7 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
     title: 'Path has trigger node',
     description: 'A runnable path must include at least one Trigger node.',
     enabled: true,
-    severity: 'error',
+    severity: 'warning',
     module: 'graph',
     sequence: 10,
     conditionMode: 'all',
@@ -584,7 +586,7 @@ const buildCoreRules = (): AiPathsValidationRule[] => [
         port: 'meta',
       },
     ],
-    weight: 40,
+    weight: 0,
     recommendation:
       'Wire Parser/Context output into Database.entityId, productId, value, context, bundle, or meta for deterministic writes.',
     docsBindings: ['ai-paths:node-docs', 'ai-paths:quick-wiring'],

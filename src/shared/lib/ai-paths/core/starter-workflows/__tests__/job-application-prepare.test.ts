@@ -177,7 +177,7 @@ describe('starter job application preparation workflow', () => {
     expect(promptNode?.config?.prompt?.template).toContain('tailored CV');
     expect(promptNode?.config?.prompt?.template).toContain('bodyBlocks');
     expect(promptNode?.config?.prompt?.template).toContain('lexicon');
-    expect(promptNode?.config?.prompt?.template).toContain('BCP-47');
+    expect(promptNode?.config?.prompt?.template).toContain('"language"');
     expect(modelNode?.title).toBe('Tailored CV Model');
     expect(modelNode?.config?.model).toEqual(
       expect.objectContaining({
@@ -197,11 +197,22 @@ describe('starter job application preparation workflow', () => {
       'filemaker_cvs',
       'filemaker_job_applications',
     ]);
-    expect(
-      databaseNodes.find(
-        (node) => node.config?.database?.query?.collection === 'filemaker_job_applications'
-      )?.config?.database?.query?.queryTemplate
-    ).toContain('applicationEmail');
+    const applicationDatabaseNode = databaseNodes.find(
+      (node) => node.config?.database?.query?.collection === 'filemaker_job_applications'
+    );
+    expect(applicationDatabaseNode?.config?.database).toEqual(
+      expect.objectContaining({
+        action: 'updateOne',
+        actionCategory: 'update',
+        upsert: true,
+      })
+    );
+    expect(applicationDatabaseNode?.config?.database?.query?.queryTemplate).toContain(
+      'canonicalApplicationKey'
+    );
+    expect(applicationDatabaseNode?.config?.database?.updateTemplate).toContain(
+      'activeArtifacts.tailoredCvVersionId'
+    );
     expect(
       databaseNodes.find((node) => node.config?.database?.query?.collection === 'filemaker_cvs')
         ?.config?.database?.query?.queryTemplate
@@ -246,7 +257,20 @@ describe('starter job application preparation workflow', () => {
       expect(databaseNodes[0]?.config?.database?.query?.collection).toBe(
         'filemaker_job_applications'
       );
+      expect(databaseNodes[0]?.config?.database).toEqual(
+        expect.objectContaining({
+          action: 'updateOne',
+          actionCategory: 'update',
+          upsert: true,
+        })
+      );
       expect(databaseNodes[0]?.config?.database?.query?.queryTemplate).toContain(
+        'canonicalApplicationKey'
+      );
+      expect(databaseNodes[0]?.config?.database?.updateTemplate).toContain(
+        `activeArtifacts.${expectation.expectedTemplateField}VersionId`
+      );
+      expect(databaseNodes[0]?.config?.database?.updateTemplate).toContain(
         expectation.expectedTemplateField
       );
       expect(report.shouldBlock).toBe(false);

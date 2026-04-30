@@ -17,14 +17,14 @@ import {
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-config';
 import { resolveAiPathsRuntimeValidationMiddleware } from '@/shared/lib/ai-paths/core/validation-engine/runtime-middleware';
 
-import { extractDatabaseRuntimeMetadata } from '../useAiPathsLocalExecution.helpers';
+import { extractDatabaseRuntimeMetadata } from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
 import {
   createRunId,
   mergeRuntimeNodeOutputsForStatus,
   resolveRuntimeNodeDisplayStatus,
-} from '../utils';
+} from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/utils';
 
-import type { LocalExecutionArgs } from '../types';
+import type { LocalExecutionArgs } from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 

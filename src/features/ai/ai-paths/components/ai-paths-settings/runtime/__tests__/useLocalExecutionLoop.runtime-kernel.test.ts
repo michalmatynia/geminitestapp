@@ -35,7 +35,7 @@ vi.mock('@/shared/lib/ai-paths', async () => {
   };
 });
 
-import { useLocalExecutionLoop } from '../segments/useLocalExecutionLoop';
+import { useLocalExecutionLoop } from '@/features/ai/ai-paths/services/local-execution/useLocalExecutionLoop';
 
 const normalizeNodeStatus = normalizeAiPathRuntimeNodeStatus;
 

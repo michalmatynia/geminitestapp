@@ -27,7 +27,7 @@ vi.mock('@/shared/lib/ai-brain/hooks/useBrainModelOptions', () => ({
   useBrainModelOptions: () => brainModelOptionsMock(),
 }));
 
-import { useLocalExecutionTriggers } from '../segments/useLocalExecutionTriggers';
+import { useLocalExecutionTriggers } from '@/features/ai/ai-paths/services/local-execution/useLocalExecutionTriggers';
 import type { LocalExecutionArgs } from '../types';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>

@@ -12,7 +12,7 @@ import {
   collectVisionModelCapabilityIssues,
 } from '@/shared/lib/ai-paths/core/utils/model-capability-preflight';
 
-import { evaluateLocalExecutionSecurity } from '../local-execution-security';
+import { evaluateLocalExecutionSecurity } from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/local-execution-security';
 import {
   buildSimulationOutputsFromContext,
   hasEntityReference,
@@ -20,10 +20,14 @@ import {
   readEntityIdFromContext,
   readEntityTypeFromContext,
   resolveFetcherSourceMode,
-} from '../useAiPathsLocalExecution.helpers';
-import { buildTriggerContext, createRunId, mergeRuntimeNodeOutputsForStatus } from '../utils';
+} from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.helpers';
+import {
+  buildTriggerContext,
+  createRunId,
+  mergeRuntimeNodeOutputsForStatus,
+} from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/utils';
 
-import type { LocalExecutionArgs } from '../types';
+import type { LocalExecutionArgs } from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/types';
 
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,

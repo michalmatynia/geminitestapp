@@ -1,8 +1,20 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductParameter } from '@/shared/contracts/products/parameters';
+
+const { saveParameterMutationMock } = vi.hoisted(() => ({
+  saveParameterMutationMock: vi.fn(),
+}));
+
+vi.mock('@/features/products/hooks/useProductSettingsQueries', () => ({
+  useSaveParameterMutation: () => ({
+    isPending: false,
+    mutateAsync: saveParameterMutationMock,
+  }),
+}));
 
 import {
   DraftCreatorFormProvider,
@@ -27,7 +39,21 @@ const createParameter = (
   updatedAt: '2026-04-30T00:00:00.000Z',
 });
 
-const createContextValue = (): DraftCreatorFormContextValue => ({
+const createCatalog = (id: string, isDefault = false): CatalogRecord => ({
+  id,
+  name: id,
+  isDefault,
+  languageIds: [],
+  defaultLanguageId: null,
+  defaultPriceGroupId: null,
+  priceGroupIds: [],
+  createdAt: '2026-04-30T00:00:00.000Z',
+  updatedAt: '2026-04-30T00:00:00.000Z',
+});
+
+const createContextValue = (
+  overrides: Partial<DraftCreatorFormContextValue> = {}
+): DraftCreatorFormContextValue => ({
   name: 'Draft',
   setName: vi.fn(),
   draftKind: 'standard',
@@ -118,9 +144,14 @@ const createContextValue = (): DraftCreatorFormContextValue => ({
   updateParameterId: vi.fn(),
   updateParameterValue: vi.fn(),
   removeParameterValue: vi.fn(),
+  ...overrides,
 });
 
 describe('DraftCreatorParametersTab', () => {
+  beforeEach(() => {
+    saveParameterMutationMock.mockReset();
+  });
+
   it('renders linked title-term parameter values as synced and read-only', () => {
     render(
       <DraftCreatorFormProvider value={createContextValue()}>
@@ -132,5 +163,71 @@ describe('DraftCreatorParametersTab', () => {
     expect(screen.getByText('Material term')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Value' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Remove' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Create parameter' })).toBeEnabled();
+  });
+
+  it('creates a parameter definition from the Drafter parameters tab', async () => {
+    saveParameterMutationMock.mockResolvedValue(createParameter('condition', null));
+    render(
+      <DraftCreatorFormProvider value={createContextValue()}>
+        <DraftCreatorParametersTab />
+      </DraftCreatorFormProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create parameter' }));
+    fireEvent.change(screen.getByLabelText('Field name in English'), {
+      target: { value: 'Condition' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(saveParameterMutationMock).toHaveBeenCalledWith({
+        id: undefined,
+        data: {
+          name_en: 'Condition',
+          name_pl: null,
+          name_de: null,
+          catalogId: 'catalog-1',
+          selectorType: 'text',
+          optionLabels: [],
+          linkedTitleTermType: null,
+        },
+      });
+    });
+  });
+
+  it('creates a parameter definition through the default catalog when no catalog is selected', async () => {
+    saveParameterMutationMock.mockResolvedValue(createParameter('condition', null));
+    render(
+      <DraftCreatorFormProvider
+        value={createContextValue({
+          catalogs: [createCatalog('catalog-default', true)],
+          selectedCatalogIds: [],
+        })}
+      >
+        <DraftCreatorParametersTab />
+      </DraftCreatorFormProvider>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create parameter' }));
+    fireEvent.change(screen.getByLabelText('Field name in English'), {
+      target: { value: 'Condition' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    await waitFor(() => {
+      expect(saveParameterMutationMock).toHaveBeenCalledWith({
+        id: undefined,
+        data: {
+          name_en: 'Condition',
+          name_pl: null,
+          name_de: null,
+          catalogId: 'catalog-default',
+          selectorType: 'text',
+          optionLabels: [],
+          linkedTitleTermType: null,
+        },
+      });
+    });
   });
 });

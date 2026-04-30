@@ -339,6 +339,46 @@ describe('job-board-sync', () => {
     });
   });
 
+  it.each([
+    {
+      html: `
+        <h2 data-scroll-id="employer-name" data-test="text-employerName">
+          Sii Sp. z o.o.<a href="#company-details">About the Company</a>
+        </h2>
+      `,
+      label: 'company details anchor',
+    },
+    {
+      html: `
+        <h2 data-scroll-id="employer-name" data-test="text-employerName">
+          Sii Sp. z o.o.O firmie
+        </h2>
+      `,
+      label: 'Polish section label suffix',
+    },
+  ])('ignores Pracuj $label in employer identity', ({ html }) => {
+    const snapshot = extractJobBoardStructuredSnapshot(
+      `
+        <html>
+          <head><title>Backend Developer - oferta pracy</title></head>
+          <body><main><h1>Backend Developer</h1>${html}</main></body>
+        </html>
+      `,
+      'https://www.pracuj.pl/praca/backend-developer-warszawa,oferta,1001'
+    );
+
+    expect(snapshot).toMatchObject({
+      employerName: 'Sii Sp. z o.o.',
+      companyProfile: {
+        facts: expect.arrayContaining([{ label: 'Company', value: 'Sii Sp. z o.o.' }]),
+      },
+      facts: expect.arrayContaining([
+        { label: 'Employer', value: 'Sii Sp. z o.o.' },
+        { label: 'Company', value: 'Sii Sp. z o.o.' },
+      ]),
+    });
+  });
+
   it('uses the runtime action browser mode when no run override is provided', async () => {
     mocks.resolveRuntimeActionExecutionSettingsMock.mockResolvedValueOnce({
       ...defaultPlaywrightActionExecutionSettings,

@@ -31,8 +31,43 @@ describe('DraftPlaceholderTextInput', () => {
       expect(screen.getByText('[name]')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('[name]'));
+    fireEvent.mouseDown(screen.getByRole('option', { name: '[name]' }));
 
     expect(input.value).toBe('[name]');
+  });
+
+  it('filters placeholder choices while typing the token name', async () => {
+    render(<PlaceholderInputHarness />);
+
+    const input = screen.getByRole('textbox', { name: 'Product title' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '[sou' } });
+    input.setSelectionRange(4, 4);
+    fireEvent.keyUp(input, { key: 'u' });
+
+    await waitFor(() => {
+      expect(screen.getByText('[sourceUrl]')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('[name]')).not.toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByRole('option', { name: '[sourceUrl]' }));
+
+    expect(input.value).toBe('[sourceUrl]');
+  });
+
+  it('renders placeholder choices in a top-level overlay above panels', async () => {
+    render(<PlaceholderInputHarness />);
+
+    const input = screen.getByRole('textbox', { name: 'Product title' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '[' } });
+    input.setSelectionRange(1, 1);
+    fireEvent.keyDown(input, { key: '[' });
+
+    const listbox = await screen.findByRole('listbox', { name: 'Scrape placeholders' });
+
+    expect(listbox.parentElement).toBe(document.body);
+    expect(listbox).toHaveClass('fixed');
+    expect(listbox).toHaveClass('z-[80]');
+    expect(listbox).toHaveClass('pointer-events-auto');
   });
 });

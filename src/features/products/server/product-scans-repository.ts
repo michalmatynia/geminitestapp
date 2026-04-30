@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { Filter } from 'mongodb';
+import type { Collection } from 'mongodb';
 
 import {
   PRODUCT_SCANS_COLLECTION,
@@ -13,33 +13,33 @@ import {
 } from '@/shared/contracts/product-scans';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  ACTIVE_PRODUCT_PROVIDER_INDEX_NAME,
+  ENGINE_RUN_ID_INDEX_NAME,
+  LEGACY_ENGINE_RUN_ID_INDEX_NAME,
+  buildMongoFilter,
+  matchesFilter,
+  normalizeIdList,
+  sortByCreatedAtDesc,
+  toDocUpdate,
+  toScanRecord,
+  upsertInMemoryProductScan,
+  type ProductScanDoc,
+} from './product-scans-repository.helpers';
 
-type ProductScanDoc = Omit<ProductScanRecord, 'createdAt' | 'updatedAt' | 'completedAt'> & {
-  createdAt: Date;
-  updatedAt: Date;
-  completedAt: Date | null;
-};
-
-const ENGINE_RUN_ID_INDEX_NAME = 'product_scans_engineRunId_unique';
-const ACTIVE_PRODUCT_PROVIDER_INDEX_NAME = 'product_scans_active_product_provider_unique';
-const LEGACY_ENGINE_RUN_ID_INDEX_NAME = 'engineRunId_1';
-
-let indexesEnsured: Promise<void> | null = null;
 let inMemoryScans: ProductScanRecord[] = [];
+let indexesEnsured: Promise<void> | null = null;
 
-const createDuplicateConstraintError = (message: string): Error => {
-  const error = new Error(message) as Error & { code?: number };
-  error.code = 11000;
-  return error;
-};
+const hasMongoUri = (): boolean => (process.env['MONGODB_URI'] ?? '').length > 0;
 
 const ensureIndexes = async (): Promise<void> => {
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return;
   }
 
-  if (indexesEnsured) {
-    return indexesEnsured;
+  if (indexesEnsured !== null) {
+    await indexesEnsured;
+    return;
   }
 
   indexesEnsured = (async () => {
@@ -83,112 +83,12 @@ const ensureIndexes = async (): Promise<void> => {
     }
   })();
 
-  return indexesEnsured;
+  await indexesEnsured;
 };
 
-const readCollection = async () => {
+const readCollection = async (): Promise<Collection<ProductScanDoc>> => {
   const db = await getMongoDb();
   return db.collection<ProductScanDoc>(PRODUCT_SCANS_COLLECTION);
-};
-
-const toScanRecord = (doc: ProductScanDoc): ProductScanRecord =>
-  normalizeProductScanRecord({
-    ...doc,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt.toISOString(),
-    completedAt: doc.completedAt ? doc.completedAt.toISOString() : null,
-  });
-
-const toDocUpdate = (
-  scan: ProductScanRecord
-): Omit<ProductScanDoc, 'createdAt' | 'updatedAt' | 'completedAt'> & {
-  completedAt: Date | null;
-} => {
-  const { createdAt: _createdAt, updatedAt: _updatedAt, completedAt, ...rest } = scan;
-  return {
-    ...rest,
-    completedAt: completedAt ? new Date(completedAt) : null,
-  };
-};
-
-const sortByCreatedAtDesc = (scans: ProductScanRecord[]): ProductScanRecord[] =>
-  [...scans].sort((left, right) => {
-    const leftTs = left.createdAt ? Date.parse(left.createdAt) : 0;
-    const rightTs = right.createdAt ? Date.parse(right.createdAt) : 0;
-    return rightTs - leftTs;
-  });
-
-const normalizeIdList = (value: string[] | null | undefined): string[] =>
-  Array.from(
-    new Set(
-      (Array.isArray(value) ? value : [])
-        .map((entry) => entry.trim())
-        .filter((entry) => entry.length > 0)
-    )
-  );
-
-const buildMongoFilter = (input: {
-  ids?: string[] | null;
-  productId?: string | null;
-  productIds?: string[] | null;
-  statuses?: ProductScanStatus[] | null;
-  provider?: ProductScanProvider | null;
-}): Filter<ProductScanDoc> => {
-  const filter: Filter<ProductScanDoc> = {};
-  const ids = normalizeIdList(input.ids);
-  const productIds = normalizeIdList(input.productIds);
-  const productId = input.productId?.trim() || null;
-  const statuses = normalizeIdList(input.statuses ?? []) as ProductScanStatus[];
-
-  if (ids.length > 0) {
-    filter['id'] = { $in: ids };
-  }
-  if (productId) {
-    filter['productId'] = productId;
-  } else if (productIds.length > 0) {
-    filter['productId'] = { $in: productIds };
-  }
-  if (statuses.length > 0) {
-    filter['status'] = { $in: statuses };
-  }
-  if (input.provider) {
-    filter['provider'] = input.provider;
-  }
-
-  return filter;
-};
-
-const matchesFilter = (
-  scan: ProductScanRecord,
-  input: {
-    ids?: string[] | null;
-    productId?: string | null;
-    productIds?: string[] | null;
-    statuses?: ProductScanStatus[] | null;
-    provider?: ProductScanProvider | null;
-  }
-): boolean => {
-  const ids = normalizeIdList(input.ids);
-  const productIds = normalizeIdList(input.productIds);
-  const productId = input.productId?.trim() || null;
-  const statuses = normalizeIdList(input.statuses ?? []) as ProductScanStatus[];
-
-  if (ids.length > 0 && !ids.includes(scan.id)) {
-    return false;
-  }
-  if (productId && scan.productId !== productId) {
-    return false;
-  }
-  if (productIds.length > 0 && !productIds.includes(scan.productId)) {
-    return false;
-  }
-  if (statuses.length > 0 && !statuses.includes(scan.status)) {
-    return false;
-  }
-  if (input.provider && scan.provider !== input.provider) {
-    return false;
-  }
-  return true;
 };
 
 export async function listProductScans(input: {
@@ -199,9 +99,10 @@ export async function listProductScans(input: {
   provider?: ProductScanProvider | null;
   limit?: number | null;
 } = {}): Promise<ProductScanRecord[]> {
-  const limit = input.limit != null ? Math.max(1, Math.trunc(input.limit)) : 100;
+  const limit =
+    input.limit !== null && input.limit !== undefined ? Math.max(1, Math.trunc(input.limit)) : 100;
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return sortByCreatedAtDesc(
       inMemoryScans.filter((scan) =>
         matchesFilter(scan, {
@@ -243,7 +144,7 @@ export async function listLatestProductScansByProductIds(input: {
     return [];
   }
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     const latestByProductId = new Map<string, ProductScanRecord>();
 
     for (const scan of sortByCreatedAtDesc(
@@ -289,18 +190,18 @@ export async function listLatestProductScansByProductIds(input: {
 
 export async function getProductScanById(id: string): Promise<ProductScanRecord | null> {
   const normalizedId = id.trim();
-  if (!normalizedId) {
+  if (normalizedId.length === 0) {
     return null;
   }
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return inMemoryScans.find((scan) => scan.id === normalizedId) ?? null;
   }
 
   await ensureIndexes();
   const collection = await readCollection();
   const doc = await collection.findOne({ id: normalizedId });
-  return doc ? toScanRecord(doc) : null;
+  return doc !== null ? toScanRecord(doc) : null;
 }
 
 export async function findLatestActiveProductScan(input: {
@@ -308,13 +209,13 @@ export async function findLatestActiveProductScan(input: {
   provider?: ProductScanRecord['provider'];
 }): Promise<ProductScanRecord | null> {
   const productId = input.productId.trim();
-  if (!productId) {
+  if (productId.length === 0) {
     return null;
   }
 
   const provider = input.provider ?? 'amazon';
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     return (
       sortByCreatedAtDesc(
         inMemoryScans.filter(
@@ -338,53 +239,17 @@ export async function findLatestActiveProductScan(input: {
     { sort: { createdAt: -1 } }
   );
 
-  return doc ? toScanRecord(doc) : null;
+  return doc !== null ? toScanRecord(doc) : null;
 }
 
 export async function upsertProductScan(scan: CreateProductScanInput): Promise<ProductScanRecord> {
   const normalized = normalizeProductScanRecord(scan);
   const now = new Date();
 
-  if (!process.env['MONGODB_URI']) {
-    const conflictingActiveScan = inMemoryScans.find(
-      (entry) =>
-        entry.id !== normalized.id &&
-        entry.productId === normalized.productId &&
-        entry.provider === normalized.provider &&
-        (entry.status === 'queued' || entry.status === 'running') &&
-        (normalized.status === 'queued' || normalized.status === 'running')
-    );
-    if (conflictingActiveScan) {
-      throw createDuplicateConstraintError(
-        'Another active product scan already exists for this product and provider.'
-      );
-    }
-
-    const normalizedEngineRunId = normalized.engineRunId?.trim() || null;
-    if (normalizedEngineRunId) {
-      const conflictingEngineRunScan = inMemoryScans.find(
-        (entry) => entry.id !== normalized.id && entry.engineRunId === normalizedEngineRunId
-      );
-      if (conflictingEngineRunScan) {
-        throw createDuplicateConstraintError(
-          `Another product scan already uses engine run id ${normalizedEngineRunId}.`
-        );
-      }
-    }
-
-    const next = {
-      ...normalized,
-      createdAt: normalized.createdAt ?? now.toISOString(),
-      updatedAt: now.toISOString(),
-      completedAt: normalized.completedAt ?? null,
-    };
-    const existingIndex = inMemoryScans.findIndex((entry) => entry.id === normalized.id);
-    if (existingIndex >= 0) {
-      inMemoryScans[existingIndex] = next;
-    } else {
-      inMemoryScans = [next, ...inMemoryScans];
-    }
-    return next;
+  if (!hasMongoUri()) {
+    const result = upsertInMemoryProductScan({ normalized, now, scans: inMemoryScans });
+    inMemoryScans = result.scans;
+    return result.record;
   }
 
   await ensureIndexes();
@@ -398,16 +263,17 @@ export async function upsertProductScan(scan: CreateProductScanInput): Promise<P
         updatedAt: now,
       },
       $setOnInsert: {
-        createdAt: normalized.createdAt ? new Date(normalized.createdAt) : now,
+        createdAt:
+          normalized.createdAt.length > 0 ? new Date(normalized.createdAt) : now,
       },
     },
     { upsert: true, returnDocument: 'after' }
   );
 
-  if (!result) {
+  if (result === null) {
     return {
       ...normalized,
-      createdAt: normalized.createdAt ?? now.toISOString(),
+      createdAt: normalized.createdAt,
       updatedAt: now.toISOString(),
     };
   }
@@ -420,7 +286,7 @@ export async function updateProductScan(
   updates: UpdateProductScanInput
 ): Promise<ProductScanRecord | null> {
   const existing = await getProductScanById(id);
-  if (!existing) {
+  if (existing === null) {
     return null;
   }
 
@@ -436,11 +302,11 @@ export async function updateProductScan(
 
 export async function deleteProductScan(id: string): Promise<boolean> {
   const normalizedId = id.trim();
-  if (!normalizedId) {
+  if (normalizedId.length === 0) {
     return false;
   }
 
-  if (!process.env['MONGODB_URI']) {
+  if (!hasMongoUri()) {
     const initialLength = inMemoryScans.length;
     inMemoryScans = inMemoryScans.filter((scan) => scan.id !== normalizedId);
     return inMemoryScans.length < initialLength;
@@ -449,5 +315,5 @@ export async function deleteProductScan(id: string): Promise<boolean> {
   await ensureIndexes();
   const collection = await readCollection();
   const result = await collection.deleteOne({ id: normalizedId });
-  return (result.deletedCount ?? 0) > 0;
+  return result.deletedCount > 0;
 }

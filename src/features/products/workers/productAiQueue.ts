@@ -95,7 +95,7 @@ async function runStoredProductAiJob(args: {
     await logSystemEvent({ level: 'info', source: logSource, message: `Job ${job.id} completed`, context: { jobId: job.id } });
     return result;
   } catch (error: unknown) {
-    ErrorSystem.captureException(error).catch(() => { /* silent */ });
+    void Promise.resolve(ErrorSystem.captureException(error)).catch(() => { /* silent */ });
     const msg = error instanceof Error ? error.message : 'Job failed.';
     await ErrorSystem.captureException(error, { service: logSource, jobId: job.id, productId: job.productId, jobType: job.type });
     await updateJobStatus(jobRepository, job, 'failed', { finishedAt: new Date(), errorMessage: msg });

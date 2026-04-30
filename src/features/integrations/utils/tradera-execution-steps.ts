@@ -63,7 +63,7 @@ const countResolvedExecutionSteps = (
   steps: readonly TraderaExecutionStep[]
 ): number => steps.reduce((count, step) => count + (step.status === 'pending' ? 0 : 1), 0);
 
-const pickMostInformativeExecutionSteps = (
+export const pickMostInformativeTraderaExecutionSteps = (
   candidates: readonly TraderaExecutionStep[][]
 ): TraderaExecutionStep[] => {
   let bestSteps: TraderaExecutionStep[] = [];
@@ -464,6 +464,7 @@ const resolveQuicklistFailureStepId = ({
   logs: readonly string[] | null | undefined;
 }): string => {
   const normalizedError = (errorMessage ?? '').toUpperCase();
+  const normalizedErrorText = (errorMessage ?? '').trim().toLowerCase();
   const authInitialState = getLastEventPayload(logs, 'tradera.quicklist.auth.initial');
   const manualLoginWasNeeded = readBoolean(authInitialState?.['loggedIn']) === false;
 
@@ -499,7 +500,13 @@ const resolveQuicklistFailureStepId = ({
       : 'duplicate_check';
   }
 
-  if (normalizedError.includes('FAIL_CATEGORY')) {
+  if (
+    normalizedError.includes('FAIL_CATEGORY') ||
+    normalizedErrorText.includes('category mapping') ||
+    normalizedErrorText.includes('map the category') ||
+    normalizedErrorText.includes('mapped category') ||
+    normalizedErrorText.includes('tradera category')
+  ) {
     return 'category_select';
   }
 
@@ -521,7 +528,14 @@ const resolveQuicklistFailureStepId = ({
     return 'title_fill';
   }
 
-  if (normalizedError.includes('FAIL_SHIPPING_SET')) {
+  if (
+    normalizedError.includes('FAIL_SHIPPING_SET') ||
+    normalizedErrorText.includes('shipping group') ||
+    normalizedErrorText.includes('shipping price in eur') ||
+    normalizedErrorText.includes('tradera shipping price') ||
+    normalizedErrorText.includes('delivery settings') ||
+    normalizedErrorText.includes('delivery could not')
+  ) {
     return 'shipping_set';
   }
 
@@ -1112,7 +1126,11 @@ export const resolveTraderaExecutionStepsFromMarketplaceData = (
 
   let steps: TraderaExecutionStep[];
   if (quicklistAction !== null) {
-    steps = pickMostInformativeExecutionSteps([persistedSteps, rawExecutionSteps, derivedSteps]);
+    steps = pickMostInformativeTraderaExecutionSteps([
+      persistedSteps,
+      rawExecutionSteps,
+      derivedSteps,
+    ]);
   } else if (persistedSteps.length > 0) {
     steps = persistedSteps;
   } else if (rawExecutionSteps.length > 0) {

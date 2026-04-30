@@ -17,9 +17,15 @@ type IntegrationListState = {
   vintedDefinition: IntegrationDefinition | null;
   scanner1688Definition: IntegrationDefinition | null;
   baselinkerDefinition: IntegrationDefinition | null;
+  scrapedSourceDefinition: IntegrationDefinition | null;
   linkedinDefinition: IntegrationDefinition | null;
   pracujDefinition: IntegrationDefinition | null;
 };
+
+const findIntegrationDefinition = (
+  slug: IntegrationDefinition['slug']
+): IntegrationDefinition | null =>
+  integrationDefinitions.find((definition) => definition.slug === slug) ?? null;
 
 export function useIntegrationList(): IntegrationListState {
   const { integrations } = useIntegrationsData();
@@ -27,20 +33,14 @@ export function useIntegrationList(): IntegrationListState {
   const integrationSlugs = integrations.map((integration: Integration) => integration.slug);
   const hasIntegrations = integrations.length > 0;
 
-  const traderaDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'tradera') ?? null;
-  const allegroDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'allegro') ?? null;
-  const vintedDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'vinted') ?? null;
-  const scanner1688Definition =
-    integrationDefinitions.find((definition) => definition.slug === '1688') ?? null;
-  const baselinkerDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'baselinker') ?? null;
-  const linkedinDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'linkedin') ?? null;
-  const pracujDefinition =
-    integrationDefinitions.find((definition) => definition.slug === 'pracuj-pl') ?? null;
+  const traderaDefinition = findIntegrationDefinition('tradera');
+  const allegroDefinition = findIntegrationDefinition('allegro');
+  const vintedDefinition = findIntegrationDefinition('vinted');
+  const scanner1688Definition = findIntegrationDefinition('1688');
+  const baselinkerDefinition = findIntegrationDefinition('baselinker');
+  const scrapedSourceDefinition = findIntegrationDefinition('scraped-source');
+  const linkedinDefinition = findIntegrationDefinition('linkedin');
+  const pracujDefinition = findIntegrationDefinition('pracuj-pl');
 
   return {
     integrations,
@@ -52,6 +52,7 @@ export function useIntegrationList(): IntegrationListState {
     vintedDefinition,
     scanner1688Definition,
     baselinkerDefinition,
+    scrapedSourceDefinition,
     linkedinDefinition,
     pracujDefinition,
   };

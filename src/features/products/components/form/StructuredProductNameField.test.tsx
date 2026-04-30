@@ -384,8 +384,9 @@ describe('StructuredProductNameField', () => {
     fireEvent.keyUp(input, { key: 'ArrowDown' });
 
     expect((input as HTMLInputElement).value).toBe('Scout Regiment | cm');
-    expect(listbox.className).toContain('left-0');
-    expect(listbox.className).toContain('right-0');
+    expect(listbox.parentElement).toBe(document.body);
+    expect(listbox).toHaveClass('fixed');
+    expect(listbox.className).toContain('z-[70]');
     expect(listbox.className).toContain('overflow-hidden');
     expect(scrollRegion?.className ?? '').toContain('overflow-y-auto');
     expect(within(listbox).getByRole('option', { name: '1 cm' })).toBeInTheDocument();

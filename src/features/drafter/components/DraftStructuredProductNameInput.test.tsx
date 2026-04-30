@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ProductCategory } from '@/shared/contracts/products/categories';
@@ -52,6 +52,7 @@ type StructuredInputHarnessProps = {
   initialValue?: string;
   onCategoryChange?: (nextId: string | null) => void;
   placeholderDropdownEnabled?: boolean;
+  selectedCatalogIds?: string[];
 };
 
 const categories = [createCategory('category-anime-pin', 'Anime Pin')];
@@ -61,6 +62,7 @@ function StructuredInputHarness({
   initialValue = '',
   onCategoryChange = (): void => {},
   placeholderDropdownEnabled = false,
+  selectedCatalogIds = ['catalog-1'],
 }: StructuredInputHarnessProps): React.JSX.Element {
   const [value, setValue] = useState(initialValue);
   const [selectedCategoryId, setSelectedCategoryIdState] = useState<string | null>(
@@ -69,7 +71,7 @@ function StructuredInputHarness({
   const metadata = useMemo<DraftCreatorMetadata>(
     () => ({
       catalogs: [],
-      selectedCatalogIds: ['catalog-1'],
+      selectedCatalogIds,
       setSelectedCatalogIds: vi.fn(),
       categories,
       categoryLoading: false,
@@ -87,7 +89,7 @@ function StructuredInputHarness({
       selectedProducerIds: [],
       setSelectedProducerIds: vi.fn(),
     }),
-    [onCategoryChange, selectedCategoryId]
+    [onCategoryChange, selectedCatalogIds, selectedCategoryId]
   );
 
   return (
@@ -151,6 +153,46 @@ describe('DraftStructuredProductNameInput', () => {
     });
   });
 
+  it('offers structured title suggestions before a draft catalog is selected', async () => {
+    render(<StructuredInputHarness selectedCatalogIds={[]} />);
+
+    const input = screen.getByRole('textbox', { name: 'Product name' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: 'Scout | 4' } });
+    input.setSelectionRange(input.value.length, input.value.length);
+    fireEvent.keyUp(input, { key: '4' });
+
+    expect(screen.queryByText(/Select a catalog first/i)).not.toBeInTheDocument();
+    expect(useTitleTermsMock).toHaveBeenCalledWith('', 'size', { allowWithoutCatalog: true });
+
+    const option = await screen.findByRole('option', { name: /4 cm/i });
+    fireEvent.click(option);
+
+    await waitFor(() => {
+      expect(input).toHaveValue('Scout | 4 cm | ');
+    });
+  });
+
+  it('offers size suggestions after a scrape placeholder title segment', async () => {
+    render(<StructuredInputHarness placeholderDropdownEnabled />);
+
+    const input = screen.getByRole('textbox', { name: 'Product name' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '[name] | 4' } });
+    input.setSelectionRange(input.value.length, input.value.length);
+    fireEvent.keyUp(input, { key: '4' });
+
+    const listbox = await screen.findByRole('listbox', { name: 'Size suggestions' });
+    expect(listbox.parentElement).toBe(document.body);
+    expect(listbox).toHaveClass('fixed');
+    expect(listbox.className).toContain('z-[70]');
+
+    const option = within(listbox).getByRole('option', { name: /4 cm/i });
+    fireEvent.click(option);
+
+    await waitFor(() => {
+      expect(input).toHaveValue('[name] | 4 cm | ');
+    });
+  });
+
   it('keeps scrape placeholder insertion available for scrape template draft names', async () => {
     render(<StructuredInputHarness placeholderDropdownEnabled />);
 
@@ -163,8 +205,27 @@ describe('DraftStructuredProductNameInput', () => {
       expect(screen.getByText('[name]')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText('[name]'));
+    fireEvent.mouseDown(screen.getByRole('option', { name: '[name]' }));
 
     expect(input).toHaveValue('[name]');
+  });
+
+  it('filters scrape placeholders while typing inside structured draft names', async () => {
+    render(<StructuredInputHarness placeholderDropdownEnabled />);
+
+    const input = screen.getByRole('textbox', { name: 'Product name' }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '[sou' } });
+    input.setSelectionRange(4, 4);
+    fireEvent.keyUp(input, { key: 'u' });
+
+    await waitFor(() => {
+      expect(screen.getByText('[sourceUrl]')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('[name]')).not.toBeInTheDocument();
+
+    fireEvent.mouseDown(screen.getByRole('option', { name: '[sourceUrl]' }));
+
+    expect(input).toHaveValue('[sourceUrl]');
   });
 });

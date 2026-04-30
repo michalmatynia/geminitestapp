@@ -39,6 +39,7 @@ export type UseStructuredProductNameSuggestionsArgs = {
   materialTerms: ProductTitleTerm[];
   nameValue: string;
   primaryCatalogId?: string;
+  requireCatalogForSuggestions?: boolean;
   setCategoryId: (categoryId: string | null) => void;
   setNormalizeNameError: (error: string | null) => void;
   setValue: UseFormSetValue<ProductFormData>;
@@ -118,11 +119,12 @@ const didSegmentContextChange = ({
 export const resolveDropdownOpen = (
   activeStage: TitleSegmentStage | null,
   primaryCatalogId: string | undefined,
-  suggestionCount: number
+  suggestionCount: number,
+  requireCatalogForSuggestions = true
 ): boolean =>
   activeStage !== null &&
-  typeof primaryCatalogId === 'string' &&
-  primaryCatalogId !== '' &&
+  (requireCatalogForSuggestions === false ||
+    (typeof primaryCatalogId === 'string' && primaryCatalogId !== '')) &&
   suggestionCount > 0;
 
 function useHighlightedSuggestionReset({

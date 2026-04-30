@@ -5,6 +5,7 @@ import {
   is1688IntegrationSlug,
   isPlaywrightProgrammableSlug,
   isPracujPlIntegrationSlug,
+  isScrapedSourceIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
@@ -211,6 +212,7 @@ export async function postHandler(
   const isVintedIntegration = integrationSlug === 'vinted';
   const is1688Integration = is1688IntegrationSlug(integration.slug);
   const isPracujIntegration = isPracujPlIntegrationSlug(integration.slug);
+  const isScrapedSourceIntegration = isScrapedSourceIntegrationSlug(integration.slug);
   const isPlaywrightProgrammableIntegration = isPlaywrightProgrammableSlug(integration.slug);
   if (isPlaywrightProgrammableIntegration) {
     return NextResponse.json(
@@ -233,6 +235,7 @@ export async function postHandler(
     !isVintedIntegration &&
     !is1688Integration &&
     !isPracujIntegration &&
+    !isScrapedSourceIntegration &&
     !isPlaywrightProgrammableIntegration &&
     !normalizedUsername
   ) {
@@ -245,6 +248,7 @@ export async function postHandler(
     !isVintedIntegration &&
     !is1688Integration &&
     !isPracujIntegration &&
+    !isScrapedSourceIntegration &&
     !isPlaywrightProgrammableIntegration &&
     !normalizedPassword
   ) {
@@ -268,7 +272,11 @@ export async function postHandler(
   const created = await repo.createConnection(integrationId, {
     name: data.name,
     ...(normalizedUsername ||
-    (!isVintedIntegration && !isPracujIntegration && !isPlaywrightProgrammableIntegration)
+      (!isVintedIntegration &&
+        !is1688Integration &&
+        !isPracujIntegration &&
+        !isScrapedSourceIntegration &&
+        !isPlaywrightProgrammableIntegration)
       ? { username: normalizedUsername }
       : {}),
     ...(encryptedPassword ? { password: encryptedPassword } : {}),

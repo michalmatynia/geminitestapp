@@ -76,6 +76,20 @@ describe('products/parameters handler', () => {
     expect(listParametersCachedMock).not.toHaveBeenCalled();
   });
 
+  it('lists all parameters directly when catalogId is omitted', async () => {
+    listParametersMock.mockResolvedValue([{ id: 'param-1', catalogId: 'catalog-1' }]);
+
+    const response = await getHandler(
+      new NextRequest('http://localhost/api/v2/products/parameters'),
+      {} as ApiHandlerContext
+    );
+
+    expect(response.status).toBe(200);
+    expect(getParameterRepositoryMock).toHaveBeenCalledTimes(1);
+    expect(listParametersMock).toHaveBeenCalledWith({});
+    expect(listParametersCachedMock).not.toHaveBeenCalled();
+  });
+
   it('invalidates server-side products cache after parameter creation', async () => {
     findByNameMock.mockResolvedValue(null);
     createParameterMock.mockResolvedValue({

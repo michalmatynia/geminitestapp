@@ -2,10 +2,11 @@ import bcrypt from 'bcryptjs';
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { auth, findAuthUserById } from '@/features/auth/server';
+import { auth, findAuthUserById, type AuthUserRecord } from '@/features/auth/server';
 import {
   isPlaywrightProgrammableSlug,
   isPracujPlIntegrationSlug,
+  isScrapedSourceIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
@@ -172,6 +173,9 @@ export async function putHandler(
   const isPracujIntegration = Boolean(
     integration && isPracujPlIntegrationSlug(integration.slug)
   );
+  const isScrapedSourceIntegration = Boolean(
+    integration && isScrapedSourceIntegrationSlug(integration.slug)
+  );
   const isPlaywrightProgrammableIntegration = Boolean(
     integration && isPlaywrightProgrammableSlug(integration.slug)
   );
@@ -189,6 +193,7 @@ export async function putHandler(
     integration.slug !== 'baselinker' &&
     !isVintedIntegration &&
     !isPracujIntegration &&
+    !isScrapedSourceIntegration &&
     !isPlaywrightProgrammableIntegration &&
     typeof normalizedUsername === 'string' &&
     !normalizedUsername
@@ -423,7 +428,7 @@ export async function deleteHandler(
     return parsed.response;
   }
 
-  const user = await findAuthUserById(userId);
+  const user = (await findAuthUserById(userId)) as AuthUserRecord | null;
   if (!user?.passwordHash) {
     throw authError('Unable to verify password for this account.');
   }

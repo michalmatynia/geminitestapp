@@ -8,6 +8,7 @@ import {
   isTraderaIntegrationSlug,
   isLinkedInIntegrationSlug,
   isPracujPlIntegrationSlug,
+  isScrapedSourceIntegrationSlug,
   isVintedIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import { DEFAULT_TRADERA_QUICKLIST_SCRIPT } from '@/features/integrations/services/tradera-listing/default-script';
@@ -46,6 +47,130 @@ type ConnectionFormFieldsProps = {
   idPrefix?: string;
 };
 
+type ConnectionFormLabels = {
+  connectionNamePlaceholder: string;
+  usernameLabel: string;
+  usernamePlaceholder: string;
+  passwordLabel: string;
+  passwordPlaceholder: string;
+  browserSessionCredentialDescription?: string;
+};
+
+const getConnectionFormLabels = (
+  integrationSlug: string,
+  isCreateMode: boolean
+): ConnectionFormLabels => {
+  const isAllegro = integrationSlug === 'allegro';
+  const isBaselinker = integrationSlug === 'baselinker';
+  const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
+  const isVinted = isVintedIntegrationSlug(integrationSlug);
+  const is1688 = is1688IntegrationSlug(integrationSlug);
+  const isPracuj = isPracujPlIntegrationSlug(integrationSlug);
+  const isScrapedSource = isScrapedSourceIntegrationSlug(integrationSlug);
+
+  if (isAllegro) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. Allegro Main)',
+      usernameLabel: 'Allegro client ID',
+      usernamePlaceholder: 'Allegro client ID',
+      passwordLabel: 'Allegro client secret',
+      passwordPlaceholder: isCreateMode
+        ? 'Allegro client secret'
+        : 'New client secret (leave blank to keep)',
+    };
+  }
+
+  if (isLinkedIn) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. LinkedIn Main)',
+      usernameLabel: 'LinkedIn client ID',
+      usernamePlaceholder: 'LinkedIn client ID',
+      passwordLabel: 'LinkedIn client secret',
+      passwordPlaceholder: isCreateMode
+        ? 'LinkedIn client secret'
+        : 'New client secret (leave blank to keep)',
+    };
+  }
+
+  if (isVinted) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. Vinted Browser)',
+      usernameLabel: 'Vinted email (optional)',
+      usernamePlaceholder: 'Vinted email (optional)',
+      passwordLabel: 'Vinted password (optional)',
+      passwordPlaceholder: isCreateMode
+        ? 'Vinted password (optional)'
+        : 'New Vinted password (leave blank to keep)',
+      browserSessionCredentialDescription:
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.',
+    };
+  }
+
+  if (is1688) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. 1688 Main)',
+      usernameLabel: '1688 account label (optional)',
+      usernamePlaceholder: '1688 account label (optional)',
+      passwordLabel: '1688 password (optional)',
+      passwordPlaceholder: isCreateMode
+        ? '1688 password (optional)'
+        : 'New 1688 password (leave blank to keep)',
+      browserSessionCredentialDescription:
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.',
+    };
+  }
+
+  if (isPracuj) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. Pracuj.pl Profile)',
+      usernameLabel: 'Pracuj.pl email (optional)',
+      usernamePlaceholder: 'Pracuj.pl email (optional)',
+      passwordLabel: 'Pracuj.pl password (optional)',
+      passwordPlaceholder: isCreateMode
+        ? 'Pracuj.pl password (optional)'
+        : 'New Pracuj.pl password (leave blank to keep)',
+      browserSessionCredentialDescription:
+        'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.',
+    };
+  }
+
+  if (isScrapedSource) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. BattleStock)',
+      usernameLabel: 'Source account email (optional)',
+      usernamePlaceholder: 'Source account email (optional)',
+      passwordLabel: 'Source account password (optional)',
+      passwordPlaceholder: isCreateMode
+        ? 'Source account password (optional)'
+        : 'New source account password (leave blank to keep)',
+      browserSessionCredentialDescription:
+        'Optional. Used by scraped-item purchase runs to sign in before cart and checkout review.',
+    };
+  }
+
+  if (isBaselinker) {
+    return {
+      connectionNamePlaceholder: 'Integration name (e.g. Main Baselinker)',
+      usernameLabel: 'Account name (optional)',
+      usernamePlaceholder: 'Account name (for reference)',
+      passwordLabel: 'Baselinker API token',
+      passwordPlaceholder: isCreateMode
+        ? 'Baselinker API token'
+        : 'New password (leave blank to keep)',
+    };
+  }
+
+  return {
+    connectionNamePlaceholder: 'Integration name (e.g. John\'s Tradera)',
+    usernameLabel: 'Tradera username',
+    usernamePlaceholder: 'Tradera username',
+    passwordLabel: 'Tradera password',
+    passwordPlaceholder: isCreateMode
+      ? 'Tradera password'
+      : 'New password (leave blank to keep)',
+  };
+};
+
 export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JSX.Element {
   const {
     integrationSlug,
@@ -58,100 +183,9 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isCreateMode = mode === 'create';
   const isTradera = isTraderaIntegrationSlug(integrationSlug);
   const isTraderaBrowser = isTradera;
-  const isAllegro = integrationSlug === 'allegro';
-  const isBaselinker = integrationSlug === 'baselinker';
-  const isLinkedIn = isLinkedInIntegrationSlug(integrationSlug);
-  const isVinted = isVintedIntegrationSlug(integrationSlug);
   const is1688 = is1688IntegrationSlug(integrationSlug);
-  const isPracuj = isPracujPlIntegrationSlug(integrationSlug);
   const isJobSearchPlatform = isJobSearchPlatformIntegrationSlug(integrationSlug);
-
-  const connectionNamePlaceholder = isAllegro
-    ? 'Integration name (e.g. Allegro Main)'
-    : isLinkedIn
-      ? 'Integration name (e.g. LinkedIn Main)'
-      : isVinted
-        ? 'Integration name (e.g. Vinted Browser)'
-        : is1688
-          ? 'Integration name (e.g. 1688 Main)'
-          : isPracuj
-            ? 'Integration name (e.g. Pracuj.pl Profile)'
-            : isBaselinker
-              ? 'Integration name (e.g. Main Baselinker)'
-              : 'Integration name (e.g. John\'s Tradera)';
-
-  const usernameLabel = isAllegro
-    ? 'Allegro client ID'
-    : isLinkedIn
-      ? 'LinkedIn client ID'
-      : isVinted
-        ? 'Vinted email (optional)'
-        : is1688
-          ? '1688 account label (optional)'
-          : isPracuj
-            ? 'Pracuj.pl email (optional)'
-            : isBaselinker
-              ? 'Account name (optional)'
-              : 'Tradera username';
-
-  const usernamePlaceholder = isAllegro
-    ? 'Allegro client ID'
-    : isLinkedIn
-      ? 'LinkedIn client ID'
-      : isVinted
-        ? 'Vinted email (optional)'
-        : is1688
-          ? '1688 account label (optional)'
-          : isPracuj
-            ? 'Pracuj.pl email (optional)'
-            : isBaselinker
-              ? 'Account name (for reference)'
-              : 'Tradera username';
-
-  const passwordLabel = isAllegro
-    ? 'Allegro client secret'
-    : isLinkedIn
-      ? 'LinkedIn client secret'
-      : isVinted
-        ? 'Vinted password (optional)'
-        : is1688
-          ? '1688 password (optional)'
-          : isPracuj
-            ? 'Pracuj.pl password (optional)'
-            : isBaselinker
-              ? 'Baselinker API token'
-              : 'Tradera password';
-
-  const passwordPlaceholder = isCreateMode
-    ? isAllegro
-      ? 'Allegro client secret'
-      : isLinkedIn
-        ? 'LinkedIn client secret'
-        : isVinted
-          ? 'Vinted password (optional)'
-          : is1688
-            ? '1688 password (optional)'
-            : isPracuj
-              ? 'Pracuj.pl password (optional)'
-              : isBaselinker
-                ? 'Baselinker API token'
-                : 'Tradera password'
-    : isAllegro
-      ? 'New client secret (leave blank to keep)'
-      : isLinkedIn
-        ? 'New client secret (leave blank to keep)'
-        : isVinted
-          ? 'New Vinted password (leave blank to keep)'
-          : is1688
-            ? 'New 1688 password (leave blank to keep)'
-            : isPracuj
-              ? 'New Pracuj.pl password (leave blank to keep)'
-              : 'New password (leave blank to keep)';
-
-  const browserSessionCredentialDescription =
-    isVinted || is1688 || isPracuj
-      ? 'Optional. Leave blank if you will sign in through the login window and reuse the stored browser session.'
-      : undefined;
+  const labels = getConnectionFormLabels(integrationSlug, isCreateMode);
 
   const traderaCategoryStrategyDescription =
     form.traderaCategoryStrategy === 'top_suggested'
@@ -164,7 +198,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
         <Input
           variant='subtle'
           size='sm'
-          placeholder={connectionNamePlaceholder}
+          placeholder={labels.connectionNamePlaceholder}
           value={form.name}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             setForm((prev) => ({
@@ -172,13 +206,18 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               name: event.target.value,
             }))
           }
-         aria-label={connectionNamePlaceholder} title={connectionNamePlaceholder}/>
+          aria-label={labels.connectionNamePlaceholder}
+          title={labels.connectionNamePlaceholder}
+        />
       </FormField>
-      <FormField label={usernameLabel} description={browserSessionCredentialDescription}>
+      <FormField
+        label={labels.usernameLabel}
+        description={labels.browserSessionCredentialDescription}
+      >
         <Input
           variant='subtle'
           size='sm'
-          placeholder={usernamePlaceholder}
+          placeholder={labels.usernamePlaceholder}
           value={form.username}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             setForm((prev) => ({
@@ -186,14 +225,19 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               username: event.target.value,
             }))
           }
-         aria-label={usernamePlaceholder} title={usernamePlaceholder}/>
+          aria-label={labels.usernamePlaceholder}
+          title={labels.usernamePlaceholder}
+        />
       </FormField>
-      <FormField label={passwordLabel} description={browserSessionCredentialDescription}>
+      <FormField
+        label={labels.passwordLabel}
+        description={labels.browserSessionCredentialDescription}
+      >
         <Input
           variant='subtle'
           size='sm'
           type='password'
-          placeholder={passwordPlaceholder}
+          placeholder={labels.passwordPlaceholder}
           value={form.password}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             setForm((prev) => ({
@@ -201,7 +245,9 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
               password: event.target.value,
             }))
           }
-         aria-label={passwordPlaceholder} title={passwordPlaceholder}/>
+          aria-label={labels.passwordPlaceholder}
+          title={labels.passwordPlaceholder}
+        />
       </FormField>
       {isJobSearchPlatform && (
         <ConnectionPersonProfileField

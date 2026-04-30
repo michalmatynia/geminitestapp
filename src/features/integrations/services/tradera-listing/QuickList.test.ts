@@ -183,8 +183,65 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await humanFill(usernameInput, username);');
   });
 
+  it('dismisses the Tradera shipping smoother modal before entering shipping price', () => {
+    const modalHelperIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const dismissVisibleShippingSmootherModalIfPresent = async'
+    );
+    const shippingDialogWaitIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const waitForVisibleShippingDialog = async'
+    );
+    const shippingDialogWaitDismissIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      "context: 'shipping-dialog-wait'"
+    );
+    const priceInputWaitIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const waitForShippingDialogPriceInputReady = async'
+    );
+    const modalDismissDuringPriceWaitIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const shippingSmootherModalDismissed = await dismissVisibleShippingSmootherModalIfPresent({',
+      priceInputWaitIndex
+    );
+    const modalDismissBeforeDialogIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const shippingSmootherModalDismissed = await dismissVisibleShippingSmootherModalIfPresent({'
+    );
+    const priceEntryIndex = DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
+      'const shippingSaveEnablement = await enableShippingDialogSaveButton({'
+    );
+
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Shipping is now even smoother');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Now you just need to choose the package size');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('You control which suppliers you offer');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('The buyer chooses the supplier when paying');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('You ship with');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS = [\'Continue\', \'Fortsätt\'];');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("context: 'delivery-checkbox-start'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("context: 'shipping-dialog-wait'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("context: 'shipping-price-input-wait'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const findShippingSmootherContinueButton = async');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.shipping_smoother_modal.continue_attempt');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const clickShippingSmootherContinueByDomHeuristic = async');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera.quicklist.shipping_smoother_modal.dom_heuristic_attempt');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("method: 'dom-heuristic'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("element.closest('button, a, [role=\"button\"], [tabindex]')");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const isTopmostCandidate = (element) =>');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('globalModalFooterCandidate');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("new MouseEvent('click'");
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'xpath=following::*[normalize-space(.)="Continue" or normalize-space(.)="Fortsätt"][1]'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain("method: 'continue-transition'");
+
+    expect(modalHelperIndex).toBeGreaterThan(-1);
+    expect(shippingDialogWaitIndex).toBeGreaterThan(-1);
+    expect(shippingDialogWaitDismissIndex).toBeGreaterThan(shippingDialogWaitIndex);
+    expect(shippingDialogWaitDismissIndex).toBeLessThan(priceInputWaitIndex);
+    expect(priceInputWaitIndex).toBeGreaterThan(-1);
+    expect(modalDismissBeforeDialogIndex).toBeLessThan(priceInputWaitIndex);
+    expect(modalDismissDuringPriceWaitIndex).toBeGreaterThan(priceInputWaitIndex);
+    expect(modalDismissDuringPriceWaitIndex).toBeLessThan(priceEntryIndex);
+  });
+
   it('opens the create listing form from the selling landing page when needed', () => {
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v148');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('tradera-quicklist-default:v151');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const hasExecutionStep = (id) => getExecutionStep(id) !== null;');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('FAIL_ACTION_MANIFEST: Required Tradera quicklist step "');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const QUICKLIST_ACTION_EXECUTION_STEPS = {');
@@ -293,6 +350,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SHIPPING_DIALOG_CANCEL_LABELS = [\'Cancel\', \'Avbryt\'];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SHIPPING_DIALOG_SAVE_LABELS = [\'Save\', \'Spara\'];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SHIPPING_DIALOG_PRICE_INPUT_SELECTORS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SHIPPING_SMOOTHER_MODAL_TEXT_HINTS = [');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('Shipping is now even smoother');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS = [\'Continue\', \'Fortsätt\'];');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const LISTING_CONFIRMATION_LABELS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_SAVING_SELECTORS = [');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const DRAFT_SAVED_SELECTORS = [');
@@ -685,7 +745,9 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const toggledOff = await setCheckboxChecked('
     );
-    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('successWhen: async () => Boolean(await findVisibleShippingDialog()),');
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'successWhen: async () =>\n            Boolean(\n              (await findVisibleShippingDialog()) ||\n                (await findVisibleShippingSmootherDialog())\n            ),'
+    );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('await setCheckboxChecked(');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain('const imageDraftState = await waitForDraftSaveSettled();');
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
@@ -988,6 +1050,12 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       'const publishVerification = await recoverPublishConfirmationViaVisibleCandidates('
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      'const dismissVisibleShippingSmootherModalIfPresent = async'
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
+      "context: 'shipping-price-input-wait'"
+    );
+    expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
       'const recoverPublishedListingViaVisibleCandidate = async ('
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).toContain(
@@ -1033,14 +1101,14 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       )
     ).toBeLessThan(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
-        'const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);'
+        'const dialogClosed = await submitShippingDialogSave(activeShippingDialog, saveButton);'
       )
     );
     expect(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf('log?.(\'tradera.quicklist.delivery.price_set\'')
     ).toBeLessThan(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
-        'const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);'
+        'const dialogClosed = await submitShippingDialogSave(activeShippingDialog, saveButton);'
       )
     );
     expect(
@@ -1049,7 +1117,7 @@ describe('DEFAULT_TRADERA_QUICKLIST_SCRIPT', () => {
       )
     ).toBeLessThan(
       DEFAULT_TRADERA_QUICKLIST_SCRIPT.indexOf(
-        'const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);'
+        'const dialogClosed = await submitShippingDialogSave(activeShippingDialog, saveButton);'
       )
     );
     expect(DEFAULT_TRADERA_QUICKLIST_SCRIPT).not.toContain('shippingDialogReady.saveButton ||');

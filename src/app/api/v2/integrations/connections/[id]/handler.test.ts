@@ -345,6 +345,57 @@ describe('integration connection by-id handler', () => {
     });
   });
 
+  it('allows clearing the username for scraped source connections', async () => {
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'BattleStock',
+        username: '',
+      },
+    });
+    getConnectionByIdMock.mockResolvedValue({
+      id: 'conn-battlestock-1',
+      integrationId: 'integration-scraped-source-1',
+    });
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-scraped-source-1',
+      slug: 'scraped-source',
+    });
+    updateConnectionMock.mockResolvedValue({
+      id: 'conn-battlestock-1',
+      integrationId: 'integration-scraped-source-1',
+      name: 'BattleStock',
+      username: '',
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      traderaBrowserMode: 'builtin',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await putHandler(
+      new Request('http://localhost/api/v2/integrations/connections/conn-battlestock-1', {
+        method: 'PUT',
+      }) as never,
+      {} as never,
+      { id: 'conn-battlestock-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(updateConnectionMock).toHaveBeenCalledWith('conn-battlestock-1', {
+      name: 'BattleStock',
+      username: '',
+    });
+    expect(payload).toMatchObject({
+      id: 'conn-battlestock-1',
+      name: 'BattleStock',
+      username: '',
+    });
+  });
+
   it('updates the selected Persons profile for Pracuj.pl job applications', async () => {
     parseJsonBodyMock.mockResolvedValue({
       ok: true,

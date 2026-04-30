@@ -202,7 +202,6 @@ export async function getProductsMetadataHandler(
     return NextResponse.json(await repo.listParameters({ skip, limit: pageSize }));
   }
   if (type === 'simple-parameters') {
-    if (!catalogId) throw badRequestError('catalogId is required for simple-parameters');
     return NextResponse.json(await listSimpleParameters({ catalogId }));
   }
   if (type === 'price-groups') {

@@ -2,20 +2,20 @@ import type { ProductCategory, ProductCategoryCreateInput } from '@/shared/contr
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import { attachTimingHeaders, buildServerTiming } from '@/shared/lib/api/timing-utils';
 import {
-  catalogIdWithFreshQuerySchema,
-  type CatalogIdWithFreshQuery,
+  optionalCatalogIdWithFreshQuerySchema,
   type CatalogIdQuery,
+  type OptionalCatalogIdWithFreshQuery,
 } from '@/shared/validations/product-metadata-api-schemas';
 
-export const querySchema = catalogIdWithFreshQuerySchema;
+export const querySchema = optionalCatalogIdWithFreshQuerySchema;
 
-export type ProductCategoriesQuery = CatalogIdWithFreshQuery;
+export type ProductCategoriesQuery = OptionalCatalogIdWithFreshQuery;
 
 export const requireProductCategoryCatalogId = (
   query: CatalogIdQuery | undefined
 ): string => {
   const catalogId = query?.catalogId ?? '';
-  if (!catalogId) {
+  if (catalogId.length === 0) {
     throw badRequestError('catalogId query parameter is required');
   }
 
@@ -28,7 +28,7 @@ export const shouldUseFreshProductCategoryFetch = (
 
 export const normalizeCategoryCreateName = (data: ProductCategoryCreateInput): string => {
   const normalizedName = data.name.trim();
-  if (!normalizedName) {
+  if (normalizedName.length === 0) {
     throw badRequestError('Category name is required');
   }
 

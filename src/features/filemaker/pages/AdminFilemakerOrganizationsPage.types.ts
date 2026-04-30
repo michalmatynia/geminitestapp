@@ -59,12 +59,14 @@ export type OrganizationListState = {
   advancedFilterPresets: OrganizationAdvancedFilterPreset[];
   error: string | null;
   filters: OrganizationFilters;
+  isDeletingOrganizations: boolean;
   isLoading: boolean;
   isSelectingAllOrganizations: boolean;
   nodes: MasterTreeNode[];
   onDeselectAllOrganizations: () => void;
   onDeselectOrganizationsPage: () => void;
   onDeleteOrganization: (organization: FilemakerOrganization) => void;
+  onDeleteSelectedOrganizations: () => void;
   onFilterChange: (key: string, value: unknown) => void;
   onLaunchOrganizationEmailScrape: (organizationId: string) => void;
   onLaunchOrganizationWebsiteSocialScrape: (organizationId: string) => void;

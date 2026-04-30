@@ -47,7 +47,12 @@ export function KangurLessonsScreen(): React.JSX.Element {
   return (
     <KangurMobileScrollScreen contentContainerStyle={{ gap: 18, paddingHorizontal: 20, paddingVertical: 24 }}>
       <View style={{ gap: 14 }}>
-        <LessonsHeader copy={copy} lessonMastery={lessonMastery as any} planHref="/plan" resultsHref={createKangurResultsHref()} />
+        <LessonsHeader 
+            copy={copy} 
+            lessonMastery={lessonMastery} 
+            planHref="/plan" 
+            resultsHref={createKangurResultsHref()} 
+        />
         <KangurMobileAiTutorCard context={tutorContext} />
         <LessonCard
             copy={copy}
@@ -66,8 +71,22 @@ export function KangurLessonsScreen(): React.JSX.Element {
             router={router}
         />
         <LessonsSecondarySections
-          copy={copy} duelSectionDescription="" isPreparingLessonsView={isPreparing} lessonBadges={lessonBadges} lessonCheckpoints={lessonCheckpoints} lessonDuels={lessonDuels} lessonFocusSummary={null} lessonMastery={lessonMastery as any} lessonRecentResults={lessonRecentResults} lessons={lessons} lessonsAssignments={lessonsAssignments} locale="de"
-          onOpenCatalogLesson={() => setDismissedFocusToken(null)} openDuelSession={(id) => router.replace(createKangurDuelsHref({ sessionId: id }))} profileHref="/profile" resultsHref={createKangurResultsHref()}
+          copy={copy} 
+          duelSectionDescription='' 
+          isPreparingLessonsView={isPreparing} 
+          lessonBadges={lessonBadges} 
+          lessonCheckpoints={lessonCheckpoints} 
+          lessonDuels={lessonDuels} 
+          lessonFocusSummary={null} 
+          lessonMastery={lessonMastery} 
+          lessonRecentResults={lessonRecentResults} 
+          lessons={lessons} 
+          lessonsAssignments={lessonsAssignments} 
+          locale={locale}
+          onOpenCatalogLesson={() => setDismissedFocusToken(null)} 
+          openDuelSession={(id: string) => router.replace(createKangurDuelsHref({ sessionId: id }))} 
+          profileHref='/profile' 
+          resultsHref={createKangurResultsHref()}
         />
       </View>
     </KangurMobileScrollScreen>

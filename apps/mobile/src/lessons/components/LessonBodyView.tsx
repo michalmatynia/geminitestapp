@@ -4,8 +4,59 @@ import {
   KangurMobileActionButton as ActionButton,
   KangurMobileFilterChip as FilterChip,
   KangurMobileInsetPanel as InsetPanel,
-} from '../shared/KangurMobileUi';
-import { type LessonBody } from './lessons-types';
+} from '../../shared/KangurMobileUi';
+import { type LessonBody, type LessonSection } from './lessons-types';
+
+interface SectionNavigationProps {
+  copy: (dict: { de: string; en: string; pl: string }) => string;
+  activeSectionIndex: number;
+  totalSections: number;
+  setActiveSectionIndex: (index: number) => void;
+}
+
+function SectionNavigation({ copy, activeSectionIndex, totalSections, setActiveSectionIndex }: SectionNavigationProps) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 10 }}>
+      <ActionButton
+        centered
+        disabled={activeSectionIndex === 0}
+        label={copy({ de: 'Zurück', en: 'Previous', pl: 'Poprzednia' })}
+        onPress={() => setActiveSectionIndex(Math.max(0, activeSectionIndex - 1))}
+        tone="secondary"
+      />
+      <ActionButton
+        centered
+        disabled={activeSectionIndex >= totalSections - 1}
+        label={copy({ de: 'Weiter', en: 'Next', pl: 'Następna' })}
+        onPress={() => setActiveSectionIndex(Math.min(totalSections - 1, activeSectionIndex + 1))}
+        tone="primary"
+      />
+    </View>
+  );
+}
+
+function SectionList({
+  sections,
+  activeSectionIndex,
+  setActiveSectionIndex,
+}: {
+  sections: LessonSection[];
+  activeSectionIndex: number;
+  setActiveSectionIndex: (index: number) => void;
+}) {
+  return (
+    <View style={{ flexDirection: 'column', gap: 8 }}>
+      {sections.map((s, idx) => (
+        <FilterChip
+          key={s.id}
+          label={`${idx + 1}. ${s.title}`}
+          onPress={() => setActiveSectionIndex(idx)}
+          selected={idx === activeSectionIndex}
+        />
+      ))}
+    </View>
+  );
+}
 
 export function LessonBodyView({
   copy,
@@ -30,40 +81,16 @@ export function LessonBodyView({
         <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
           {copy({ de: 'Lektionsabschnitte', en: 'Lesson sections', pl: 'Sekcje lekcji' })}
         </Text>
-        <View style={{ flexDirection: 'column', gap: 8 }}>
-          {lessonBody.sections.map((s, idx) => (
-            <FilterChip
-              key={s.id}
-              label={`${idx + 1}. ${s.title}`}
-              onPress={() => setActiveSectionIndex(idx)}
-              selected={idx === activeSectionIndex}
-            />
-          ))}
-        </View>
+        <SectionList sections={lessonBody.sections} activeSectionIndex={activeSectionIndex} setActiveSectionIndex={setActiveSectionIndex} />
       </View>
       {activeSection !== null && (
         <InsetPanel gap={10}>
           <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>{activeSection.title}</Text>
           <Text style={{ color: '#475569', fontSize: 14 }}>{activeSection.description}</Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
-            <ActionButton
-              centered
-              disabled={activeSectionIndex === 0}
-              label={copy({ de: 'Zurück', en: 'Previous', pl: 'Poprzednia' })}
-              onPress={() => setActiveSectionIndex(Math.max(0, activeSectionIndex - 1))}
-              tone="secondary"
-            />
-            <ActionButton
-              centered
-              disabled={activeSectionIndex >= totalSections - 1}
-              label={copy({ de: 'Weiter', en: 'Next', pl: 'Następna' })}
-              onPress={() => setActiveSectionIndex(Math.min(totalSections - 1, activeSectionIndex + 1))}
-              tone="primary"
-            />
-          </View>
+          <SectionNavigation copy={copy} activeSectionIndex={activeSectionIndex} totalSections={totalSections} setActiveSectionIndex={setActiveSectionIndex} />
         </InsetPanel>
       )}
-      {Boolean(lessonBody.practiceNote) && (
+      {lessonBody.practiceNote && (
         <Text style={{ color: '#475569', fontSize: 13, fontStyle: 'italic', lineHeight: 18 }}>
           {lessonBody.practiceNote}
         </Text>

@@ -1,16 +1,29 @@
 import type {
   ProductScanAmazonEvaluationStatus,
   ProductScanRecord,
-  ProductScanSupplierEvaluationStatus,
   ProductScanStatus,
+  ProductScanSupplierEvaluationStatus,
 } from '@/shared/contracts/product-scans';
-import type { TriggerButtonRunFeedbackPresentation } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 import { isProductScanActiveStatus } from '@/shared/contracts/product-scans';
+import type { TriggerButtonRunFeedbackPresentation } from '@/shared/lib/ai-paths/trigger-button-run-feedback';
 
 export type ProductScanRunFeedback = TriggerButtonRunFeedbackPresentation & {
   scanId: string;
   status: ProductScanStatus;
   updatedAt: string | null;
+};
+
+type ProductScanRawResultRecord = Record<string, unknown>;
+
+type ProductScanRunFeedbackOptions = {
+  manualVerificationPending?: boolean | null;
+  manualVerificationMessage?: string | null;
+  googleStealthRetrying?: boolean | null;
+  googleManualFallbackOpen?: boolean | null;
+  candidateSelectionRequired?: boolean | null;
+  amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
+  amazonEvaluationLanguageAccepted?: boolean | null;
+  supplierEvaluationStatus?: ProductScanSupplierEvaluationStatus | null;
 };
 
 export const PRODUCT_SCAN_CANDIDATE_SELECTION_LABEL = 'Awaiting Selection';
@@ -22,6 +35,11 @@ export const PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_MESSAGE =
 export const PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_LABEL = 'Manual Fallback';
 export const PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_MESSAGE =
   'Opening a visible browser for Google captcha verification.';
+
+const PRODUCT_SCAN_WARNING_BADGE_CLASS =
+  'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25';
+const PRODUCT_SCAN_AI_WARNING_BADGE_CLASS =
+  'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25';
 
 const PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS: Record<
   ProductScanStatus,
@@ -36,8 +54,7 @@ const PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS: Record<
   queued: {
     label: 'Queued',
     variant: 'pending',
-    badgeClassName:
-      'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+    badgeClassName: PRODUCT_SCAN_WARNING_BADGE_CLASS,
   },
   running: {
     label: 'Running',
@@ -49,200 +66,253 @@ const PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS: Record<
   no_match: {
     label: 'No Match',
     variant: 'warning',
-    badgeClassName:
-      'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
+    badgeClassName: PRODUCT_SCAN_WARNING_BADGE_CLASS,
   },
   conflict: {
     label: 'Conflict',
     variant: 'warning',
-    badgeClassName:
-      'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
+    badgeClassName: PRODUCT_SCAN_AI_WARNING_BADGE_CLASS,
   },
   failed: { label: 'Failed', variant: 'error' },
 };
 
-const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean => {
-  const rawResult = scan.rawResult;
-  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
-    return false;
-  }
-
-  return (rawResult as Record<string, unknown>)['manualVerificationPending'] === true;
+const GOOGLE_STEALTH_RETRY_PRESENTATION: TriggerButtonRunFeedbackPresentation = {
+  label: PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_LABEL,
+  variant: 'warning',
+  badgeClassName: PRODUCT_SCAN_WARNING_BADGE_CLASS,
 };
+
+const GOOGLE_MANUAL_FALLBACK_PRESENTATION: TriggerButtonRunFeedbackPresentation = {
+  label: PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_LABEL,
+  variant: 'warning',
+  badgeClassName:
+    'border-sky-500/40 bg-sky-500/20 text-sky-200 hover:bg-sky-500/25',
+};
+
+const CANDIDATE_SELECTION_PRESENTATION: TriggerButtonRunFeedbackPresentation = {
+  label: PRODUCT_SCAN_CANDIDATE_SELECTION_LABEL,
+  variant: 'warning',
+  badgeClassName: PRODUCT_SCAN_WARNING_BADGE_CLASS,
+};
+
+const AI_REJECTED_PRESENTATION: TriggerButtonRunFeedbackPresentation = {
+  label: 'AI Rejected',
+  variant: 'warning',
+  badgeClassName: PRODUCT_SCAN_AI_WARNING_BADGE_CLASS,
+};
+
+const AI_LANGUAGE_REJECTED_PRESENTATION: TriggerButtonRunFeedbackPresentation = {
+  label: 'AI Rejected: Language',
+  variant: 'warning',
+  badgeClassName: PRODUCT_SCAN_AI_WARNING_BADGE_CLASS,
+};
+
+const AI_FAILED_PRESENTATION: TriggerButtonRunFeedbackPresentation = {
+  label: 'AI Failed',
+  variant: 'error',
+};
+
+const toRawResultRecord = (rawResult: unknown): ProductScanRawResultRecord | null => {
+  if (rawResult === null || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
+    return null;
+  }
+  return rawResult as ProductScanRawResultRecord;
+};
+
+const isQueuedOrRunning = (status: ProductScanStatus): boolean =>
+  status === 'running' || status === 'queued';
+
+const readRawResultFlag = (rawResult: unknown, key: string): boolean => {
+  const record = toRawResultRecord(rawResult);
+  if (record === null) return false;
+  return record[key] === true;
+};
+
+const readRawResultString = (rawResult: unknown, key: string): string | null => {
+  const record = toRawResultRecord(rawResult);
+  const value = record?.[key];
+  if (typeof value === 'string' && value.trim().length > 0) {
+    return value;
+  }
+  return null;
+};
+
+const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean =>
+  readRawResultFlag(scan.rawResult, 'manualVerificationPending');
 
 export const isProductScanGoogleStealthRetrying = (
   scan: Pick<ProductScanRecord, 'status' | 'rawResult'> | null | undefined
 ): boolean => {
-  if (scan?.status !== 'running' && scan?.status !== 'queued') {
-    return false;
-  }
-
-  const rawResult = scan.rawResult;
-  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
-    return false;
-  }
-
-  const result = rawResult as Record<string, unknown>;
+  if (scan === null || scan === undefined) return false;
+  if (!isQueuedOrRunning(scan.status)) return false;
   return (
-    result['captchaStealthRetryStarted'] === true &&
-    result['manualVerificationPending'] !== true &&
-    result['captchaManualRetryStarted'] !== true
+    readRawResultFlag(scan.rawResult, 'captchaStealthRetryStarted') &&
+    !readRawResultFlag(scan.rawResult, 'manualVerificationPending') &&
+    !readRawResultFlag(scan.rawResult, 'captchaManualRetryStarted')
   );
 };
 
 export const isProductScanGoogleManualFallbackOpen = (
   scan: Pick<ProductScanRecord, 'status' | 'rawResult' | 'steps'> | null | undefined
 ): boolean => {
-  if (scan?.status !== 'running' && scan?.status !== 'queued') {
-    return false;
-  }
-
-  const rawResult = scan.rawResult;
-  const rawResultRecord =
-    rawResult && typeof rawResult === 'object' && !Array.isArray(rawResult)
-      ? (rawResult as Record<string, unknown>)
-      : null;
-  const hasManualRetryFlag = rawResultRecord?.['captchaManualRetryStarted'] === true;
-  const hasManualRetryStep =
-    Array.isArray(scan.steps) &&
-    scan.steps.some((step) => step.key === 'google_manual_retry');
-
-  return hasManualRetryFlag || hasManualRetryStep;
+  if (scan === null || scan === undefined) return false;
+  if (!isQueuedOrRunning(scan.status)) return false;
+  return (
+    readRawResultFlag(scan.rawResult, 'captchaManualRetryStarted') ||
+    scan.steps.some((step) => step.key === 'google_manual_retry')
+  );
 };
 
 const getManualVerificationMessage = (
   scan: Pick<ProductScanRecord, 'rawResult' | 'asinUpdateMessage'> | null | undefined
 ): string | null => {
-  if (!scan) {
+  if (scan === null || scan === undefined) {
     return null;
   }
-  const rawResult = scan.rawResult;
-  if (rawResult && typeof rawResult === 'object' && !Array.isArray(rawResult)) {
-    const msg = (rawResult as Record<string, unknown>)['manualVerificationMessage'];
-    if (typeof msg === 'string' && msg.trim().length > 0) {
-      return msg;
-    }
-  }
+  const rawMessage = readRawResultString(scan.rawResult, 'manualVerificationMessage');
+  if (rawMessage !== null) return rawMessage;
   return typeof scan.asinUpdateMessage === 'string' ? scan.asinUpdateMessage : null;
 };
 
 export const isProductScanCandidateSelectionRequired = (
   scan: Pick<ProductScanRecord, 'status' | 'rawResult'> | null | undefined
 ): boolean => {
-  if (scan?.status !== 'completed') {
-    return false;
-  }
+  if (scan === null || scan === undefined) return false;
+  if (scan.status !== 'completed') return false;
+  return readRawResultFlag(scan.rawResult, 'candidateSelectionRequired');
+};
 
-  const rawResult = scan.rawResult;
-  if (!rawResult || typeof rawResult !== 'object' || Array.isArray(rawResult)) {
-    return false;
-  }
+const resolveManualVerificationPresentation = (
+  message: string | null | undefined
+): TriggerButtonRunFeedbackPresentation => ({
+  label: /requested login/i.test(message ?? '') ? 'Login' : 'Captcha',
+  variant: 'warning',
+  badgeClassName: PRODUCT_SCAN_WARNING_BADGE_CLASS,
+});
 
-  return (rawResult as Record<string, unknown>)['candidateSelectionRequired'] === true;
+const resolveActiveScanPresentation = (
+  status: ProductScanStatus,
+  options: ProductScanRunFeedbackOptions
+): TriggerButtonRunFeedbackPresentation | null => {
+  if (!isQueuedOrRunning(status)) return null;
+  if (options.googleStealthRetrying === true) return GOOGLE_STEALTH_RETRY_PRESENTATION;
+  if (options.googleManualFallbackOpen === true) return GOOGLE_MANUAL_FALLBACK_PRESENTATION;
+  if (status === 'running' && options.manualVerificationPending === true) {
+    return resolveManualVerificationPresentation(options.manualVerificationMessage);
+  }
+  return null;
+};
+
+const resolveCompletedScanPresentation = (
+  status: ProductScanStatus,
+  options: ProductScanRunFeedbackOptions
+): TriggerButtonRunFeedbackPresentation | null => {
+  if (status !== 'completed') return null;
+  if (options.candidateSelectionRequired !== true) return null;
+  return CANDIDATE_SELECTION_PRESENTATION;
+};
+
+const resolveNoMatchPresentation = (
+  status: ProductScanStatus,
+  options: ProductScanRunFeedbackOptions
+): TriggerButtonRunFeedbackPresentation | null => {
+  if (status !== 'no_match') return null;
+  if (
+    options.amazonEvaluationStatus === 'rejected' &&
+    options.amazonEvaluationLanguageAccepted === false
+  ) {
+    return AI_LANGUAGE_REJECTED_PRESENTATION;
+  }
+  if (options.amazonEvaluationStatus === 'rejected') return AI_REJECTED_PRESENTATION;
+  if (options.supplierEvaluationStatus === 'rejected') return AI_REJECTED_PRESENTATION;
+  return null;
+};
+
+const resolveFailedPresentation = (
+  status: ProductScanStatus,
+  options: ProductScanRunFeedbackOptions
+): TriggerButtonRunFeedbackPresentation | null => {
+  if (status !== 'failed') return null;
+  if (options.amazonEvaluationStatus === 'failed') return AI_FAILED_PRESENTATION;
+  if (options.supplierEvaluationStatus === 'failed') return AI_FAILED_PRESENTATION;
+  return null;
 };
 
 export const resolveProductScanRunFeedbackPresentation = (
   status: ProductScanStatus,
-  options?: {
-    manualVerificationPending?: boolean | null;
-    manualVerificationMessage?: string | null;
-    googleStealthRetrying?: boolean | null;
-    googleManualFallbackOpen?: boolean | null;
-    candidateSelectionRequired?: boolean | null;
-    amazonEvaluationStatus?: ProductScanAmazonEvaluationStatus | null;
-    amazonEvaluationLanguageAccepted?: boolean | null;
-    supplierEvaluationStatus?: ProductScanSupplierEvaluationStatus | null;
-  }
-): TriggerButtonRunFeedbackPresentation =>
-  (status === 'running' || status === 'queued') && options?.googleStealthRetrying
-    ? {
-        label: PRODUCT_SCAN_GOOGLE_STEALTH_RETRY_LABEL,
-        variant: 'warning',
-        badgeClassName:
-          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
-      }
-    : (status === 'running' || status === 'queued') && options?.googleManualFallbackOpen
-    ? {
-        label: PRODUCT_SCAN_GOOGLE_MANUAL_FALLBACK_LABEL,
-        variant: 'warning',
-        badgeClassName:
-          'border-sky-500/40 bg-sky-500/20 text-sky-200 hover:bg-sky-500/25',
-      }
-    : status === 'running' && options?.manualVerificationPending
-    ? {
-        label: /requested login/i.test(options?.manualVerificationMessage ?? '') ? 'Login' : 'Captcha',
-        variant: 'warning',
-        badgeClassName:
-          'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
-      }
-    : status === 'completed' && options?.candidateSelectionRequired
-      ? {
-          label: PRODUCT_SCAN_CANDIDATE_SELECTION_LABEL,
-          variant: 'warning',
-          badgeClassName:
-            'border-amber-500/40 bg-amber-500/20 text-amber-200 hover:bg-amber-500/25',
-        }
-    : status === 'no_match' &&
-        options?.amazonEvaluationStatus === 'rejected' &&
-        options?.amazonEvaluationLanguageAccepted === false
-      ? {
-          label: 'AI Rejected: Language',
-          variant: 'warning',
-          badgeClassName:
-            'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
-        }
-    : status === 'no_match' && options?.amazonEvaluationStatus === 'rejected'
-      ? {
-          label: 'AI Rejected',
-          variant: 'warning',
-          badgeClassName:
-            'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
-        }
-      : status === 'no_match' && options?.supplierEvaluationStatus === 'rejected'
-        ? {
-            label: 'AI Rejected',
-            variant: 'warning',
-            badgeClassName:
-              'border-orange-500/40 bg-orange-500/20 text-orange-200 hover:bg-orange-500/25',
-          }
-      : status === 'failed' && options?.amazonEvaluationStatus === 'failed'
-        ? {
-            label: 'AI Failed',
-            variant: 'error',
-          }
-        : status === 'failed' && options?.supplierEvaluationStatus === 'failed'
-          ? {
-              label: 'AI Failed',
-              variant: 'error',
-            }
-        : PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS[status] ?? {
-            label: status,
-            variant: 'neutral',
-          };
+  options: ProductScanRunFeedbackOptions = {}
+): TriggerButtonRunFeedbackPresentation => {
+  const activePresentation = resolveActiveScanPresentation(status, options);
+  if (activePresentation !== null) return activePresentation;
+  const completedPresentation = resolveCompletedScanPresentation(status, options);
+  if (completedPresentation !== null) return completedPresentation;
+  const noMatchPresentation = resolveNoMatchPresentation(status, options);
+  if (noMatchPresentation !== null) return noMatchPresentation;
+  const failedPresentation = resolveFailedPresentation(status, options);
+  if (failedPresentation !== null) return failedPresentation;
+  return PRODUCT_SCAN_RUN_FEEDBACK_PRESENTATIONS[status];
+};
+
+const getAmazonEvaluationStatus = (
+  scan: ProductScanRecord
+): ProductScanAmazonEvaluationStatus | null => {
+  if (scan.amazonEvaluation === null) return null;
+  return scan.amazonEvaluation.status;
+};
+
+const getAmazonEvaluationLanguageAccepted = (scan: ProductScanRecord): boolean | null => {
+  if (scan.amazonEvaluation === null) return null;
+  return scan.amazonEvaluation.languageAccepted ?? null;
+};
+
+const getSupplierEvaluationStatus = (
+  scan: ProductScanRecord
+): ProductScanSupplierEvaluationStatus | null => {
+  if (scan.supplierEvaluation === null) return null;
+  return scan.supplierEvaluation.status;
+};
+
+const getProductScanFeedbackUpdatedAt = (scan: ProductScanRecord): string | null => {
+  if (typeof scan.updatedAt === 'string') return scan.updatedAt;
+  if (typeof scan.completedAt === 'string') return scan.completedAt;
+  if (typeof scan.createdAt === 'string') return scan.createdAt;
+  return null;
+};
+
+const buildProductScanRunFeedbackOptions = (
+  scan: ProductScanRecord
+): ProductScanRunFeedbackOptions => ({
+  manualVerificationPending: isManualVerificationPending(scan),
+  manualVerificationMessage: getManualVerificationMessage(scan),
+  googleStealthRetrying: isProductScanGoogleStealthRetrying(scan),
+  googleManualFallbackOpen: isProductScanGoogleManualFallbackOpen(scan),
+  candidateSelectionRequired: isProductScanCandidateSelectionRequired(scan),
+  amazonEvaluationStatus: getAmazonEvaluationStatus(scan),
+  amazonEvaluationLanguageAccepted: getAmazonEvaluationLanguageAccepted(scan),
+  supplierEvaluationStatus: getSupplierEvaluationStatus(scan),
+});
 
 export const buildProductScanRunFeedbackFromRecord = (
   scan: ProductScanRecord
 ): ProductScanRunFeedback => ({
   scanId: scan.id,
   status: scan.status,
-  updatedAt: scan.updatedAt ?? scan.completedAt ?? scan.createdAt ?? null,
-  ...resolveProductScanRunFeedbackPresentation(scan.status, {
-    manualVerificationPending: isManualVerificationPending(scan),
-    manualVerificationMessage: getManualVerificationMessage(scan),
-    googleStealthRetrying: isProductScanGoogleStealthRetrying(scan),
-    googleManualFallbackOpen: isProductScanGoogleManualFallbackOpen(scan),
-    candidateSelectionRequired: isProductScanCandidateSelectionRequired(scan),
-    amazonEvaluationStatus: scan.amazonEvaluation?.status ?? null,
-    amazonEvaluationLanguageAccepted: scan.amazonEvaluation?.languageAccepted ?? null,
-    supplierEvaluationStatus: scan.supplierEvaluation?.status ?? null,
-  }),
+  updatedAt: getProductScanFeedbackUpdatedAt(scan),
+  ...resolveProductScanRunFeedbackPresentation(
+    scan.status,
+    buildProductScanRunFeedbackOptions(scan)
+  ),
 });
+
+const getProductScanFeedbackTimestamp = (scan: ProductScanRecord): string => {
+  return getProductScanFeedbackUpdatedAt(scan) ?? '';
+};
 
 export const resolveProductScanFeedbackAgeMs = (
   scan: ProductScanRecord,
   now = Date.now()
 ): number => {
-  const timestamp = Date.parse(scan.updatedAt ?? scan.completedAt ?? scan.createdAt ?? '');
+  const timestamp = Date.parse(getProductScanFeedbackTimestamp(scan));
   if (!Number.isFinite(timestamp)) {
     return Number.POSITIVE_INFINITY;
   }

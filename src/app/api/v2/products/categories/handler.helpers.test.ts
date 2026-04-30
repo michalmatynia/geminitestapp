@@ -25,6 +25,9 @@ describe('product categories handler helpers', () => {
       catalogId: 'catalog-1',
       fresh: false,
     });
+    expect(querySchema.parse({})).toEqual({
+      fresh: false,
+    });
     expect(requireProductCategoryCatalogId({ catalogId: 'catalog-1' })).toBe('catalog-1');
     expect(() => requireProductCategoryCatalogId(undefined)).toThrow(
       'catalogId query parameter is required'

@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { TRADERA_INTEGRATION_SLUGS } from '@/features/integrations/constants/slugs';
 import {
   buildTraderaQuicklistExecutionSteps,
+  pickMostInformativeTraderaExecutionSteps,
   readTraderaExecutionSteps,
   resolveTraderaCheckStatusExecutionStepsFromResult,
 } from '@/features/integrations/utils/tradera-execution-steps';
@@ -162,34 +163,44 @@ const resolveLiveRunOutputs = (
 
 const resolveExecutionSteps = ({
   action,
+  status,
   resultValue,
   outputs,
   logs,
   error,
 }: {
   action: LiveTraderaAction;
+  status: PlaywrightNodeRunSnapshot['status'];
   resultValue: Record<string, unknown>;
   outputs: Record<string, unknown>;
   logs: string[];
   error: string | null;
 }): TraderaExecutionStep[] => {
   const emittedSteps = readTraderaExecutionSteps(outputs['steps']);
-  if (emittedSteps.length > 0) return emittedSteps;
-
   const rawExecutionSteps = readTraderaExecutionSteps(resultValue['executionSteps']);
   if (action === 'check_status') {
     return resolveTraderaCheckStatusExecutionStepsFromResult(resultValue);
   }
   if (action === 'move_to_unsold') {
-    return rawExecutionSteps;
+    return emittedSteps.length > 0 ? emittedSteps : rawExecutionSteps;
   }
 
-  return buildTraderaQuicklistExecutionSteps({
+  if (emittedSteps.length > 0 && (status === 'queued' || status === 'running')) {
+    return emittedSteps;
+  }
+
+  const derivedSteps = buildTraderaQuicklistExecutionSteps({
     action,
     rawResult: resultValue,
     logs,
     errorMessage: error,
   });
+
+  return pickMostInformativeTraderaExecutionSteps([
+    emittedSteps,
+    rawExecutionSteps,
+    derivedSteps,
+  ]);
 };
 
 const buildLiveTraderaExecutionState = (
@@ -202,6 +213,7 @@ const buildLiveTraderaExecutionState = (
   const error = typeof snapshot.error === 'string' ? snapshot.error : null;
   const executionSteps = resolveExecutionSteps({
     action,
+    status: snapshot.status,
     resultValue,
     outputs,
     logs,

@@ -8,6 +8,7 @@ import {
   isVintedIntegrationSlug,
   isLinkedInIntegrationSlug,
   isPracujPlIntegrationSlug,
+  isScrapedSourceIntegrationSlug,
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import {
@@ -143,6 +144,9 @@ export function useIntegrationsActionsImpl(args: {
     const isVintedIntegration = isVintedIntegrationSlug(args.activeIntegration.slug);
     const is1688Integration = is1688IntegrationSlug(args.activeIntegration.slug);
     const isPracujIntegration = isPracujPlIntegrationSlug(args.activeIntegration.slug);
+    const isScrapedSourceIntegration = isScrapedSourceIntegrationSlug(
+      args.activeIntegration.slug
+    );
     const isJobSearchPlatformIntegration = isJobSearchPlatformIntegrationSlug(
       args.activeIntegration.slug
     );
@@ -164,6 +168,7 @@ export function useIntegrationsActionsImpl(args: {
       !isVintedIntegration &&
       !is1688Integration &&
       !isPracujIntegration &&
+      !isScrapedSourceIntegration &&
       !normalizedUsername
     ) {
       toast('Username is required for this integration.', { variant: 'error' });
@@ -179,6 +184,7 @@ export function useIntegrationsActionsImpl(args: {
       !isVintedIntegration &&
       !is1688Integration &&
       !isPracujIntegration &&
+      !isScrapedSourceIntegration &&
       !formData.password.trim()
     ) {
       toast('Password/Token is required.', { variant: 'error' });
@@ -190,7 +196,10 @@ export function useIntegrationsActionsImpl(args: {
       name: normalizedName,
       ...(normalizedUsername ||
       !isCreateMode ||
-      (!isVintedIntegration && !is1688Integration && !isPracujIntegration)
+      (!isVintedIntegration &&
+        !is1688Integration &&
+        !isPracujIntegration &&
+        !isScrapedSourceIntegration)
         ? { username: normalizedUsername }
         : {}),
       ...(formData.password.trim() ? { password: formData.password.trim() } : {}),

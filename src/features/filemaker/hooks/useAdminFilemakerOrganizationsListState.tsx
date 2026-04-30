@@ -182,6 +182,17 @@ const buildOrganizationListParams = (input: {
   return params;
 };
 
+type MongoFilemakerOrganizationsHookState = MongoFilemakerOrganizationsState & {
+  removeOrganizations: (organizationIds: readonly string[]) => void;
+};
+
+type BatchDeleteOrganizationsResponse = {
+  deletedJobListingCount?: number;
+  deletedOrganizationCount?: number;
+  deletedOrganizationIds?: string[];
+  missingOrganizationIds?: string[];
+};
+
 function useMongoFilemakerOrganizations(input: {
   filters: OrganizationFilters;
   page: number;
@@ -189,7 +200,7 @@ function useMongoFilemakerOrganizations(input: {
   query: string;
   refreshKey: number;
   sort: OrganizationSortOption;
-}): MongoFilemakerOrganizationsState {
+}): MongoFilemakerOrganizationsHookState {
   const { filters, page, pageSize, query, refreshKey, sort } = input;
   const [state, setState] = useState<MongoFilemakerOrganizationsState>({
     ...EMPTY_ORGANIZATIONS_RESPONSE,
@@ -222,7 +233,42 @@ function useMongoFilemakerOrganizations(input: {
     };
   }, [filters, page, pageSize, query, refreshKey, sort]);
 
-  return state;
+  const removeOrganizations = useCallback((organizationIds: readonly string[]): void => {
+    const organizationIdSet = new Set(
+      organizationIds
+        .map((organizationId: string): string => organizationId.trim())
+        .filter((organizationId: string): boolean => organizationId.length > 0)
+    );
+    if (organizationIdSet.size === 0) return;
+    setState((current: MongoFilemakerOrganizationsState): MongoFilemakerOrganizationsState => {
+      const organizations = current.organizations.filter(
+        (organization: FilemakerOrganization): boolean => !organizationIdSet.has(organization.id)
+      );
+      const removedCount = current.organizations.length - organizations.length;
+      const totalCount = Math.max(0, current.totalCount - removedCount);
+      return {
+        ...current,
+        collectionCount: Math.max(0, current.collectionCount - removedCount),
+        linkedEventsByOrganizationId: Object.fromEntries(
+          Object.entries(current.linkedEventsByOrganizationId).filter(
+            ([organizationId]: [string, FilemakerEvent[]]): boolean =>
+              !organizationIdSet.has(organizationId)
+          )
+        ),
+        linkedJobListingsByOrganizationId: Object.fromEntries(
+          Object.entries(current.linkedJobListingsByOrganizationId).filter(
+            ([organizationId]: [string, FilemakerJobListing[]]): boolean =>
+              !organizationIdSet.has(organizationId)
+          )
+        ),
+        organizations,
+        totalCount,
+        totalPages: Math.max(1, Math.ceil(totalCount / current.pageSize)),
+      };
+    });
+  }, []);
+
+  return { ...state, removeOrganizations };
 }
 
 const loadOrganizationIdsForSelection = async (input: {
@@ -365,6 +411,19 @@ const selectedOrganizationIdsFromState = (
   selection: OrganizationSelectionState
 ): string[] => Object.keys(selection).filter((id: string): boolean => selection[id] === true);
 
+const pluralizeCount = (count: number, singular: string, plural: string): string =>
+  `${count} ${count === 1 ? singular : plural}`;
+
+const buildDeletedOrganizationsToast = (input: {
+  deletedJobListingCount: number;
+  deletedOrganizationCount: number;
+}): string =>
+  `Deleted ${pluralizeCount(
+    input.deletedOrganizationCount,
+    'organisation',
+    'organisations'
+  )} and ${pluralizeCount(input.deletedJobListingCount, 'job listing', 'job listings')}.`;
+
 const buildOrganizationRelationMaps = (
   organizations: FilemakerOrganization[],
   linkedEventsByOrganizationId: Record<string, FilemakerEvent[]>,
@@ -447,6 +506,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     OrganizationAdvancedFilterPreset[]
   >(readOrganizationAdvancedFilterPresets);
   const [organizationsRefreshKey, setOrganizationsRefreshKey] = useState(0);
+  const [isDeletingOrganizations, setIsDeletingOrganizations] = useState(false);
   const [isSelectingAllOrganizations, setIsSelectingAllOrganizations] = useState(false);
   const [organizationEmailScrapeState, setOrganizationEmailScrapeState] =
     useState<Record<string, boolean>>({});
@@ -468,6 +528,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
   });
   const { actions, openEvent, openJobListing, openOrganization } = useOrganizationActions(router);
   const organizations = mongoOrganizations.organizations;
+  const removeMongoOrganizations = mongoOrganizations.removeOrganizations;
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const organizationRelations = useMemo(
     () =>
@@ -633,6 +694,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
           if (!response.ok) {
             throw new Error(`Failed to delete organisation (${response.status}).`);
           }
+          removeMongoOrganizations([organization.id]);
           setOrganizationSelection(
             (current: OrganizationSelectionState): OrganizationSelectionState => {
               const next = { ...current };
@@ -640,13 +702,72 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
               return next;
             }
           );
+          settingsStore.refetch();
           setOrganizationsRefreshKey((current: number): number => current + 1);
           toast(`Deleted organisation "${organization.name}".`, { variant: 'success' });
         },
       });
     },
-    [confirm, toast]
+    [confirm, removeMongoOrganizations, settingsStore, toast]
   );
+  const deleteSelectedOrganizations = useCallback((): void => {
+    const selectedIds = selectedOrganizationIdsFromState(organizationSelection);
+    if (selectedIds.length === 0) {
+      toast('Please select organisations to delete.', { variant: 'error' });
+      return;
+    }
+    confirm({
+      title: 'Delete Selected Organisations',
+      message: `Delete ${selectedIds.length} selected organisation${
+        selectedIds.length === 1 ? '' : 's'
+      } and their linked job listings? This action cannot be undone.`,
+      confirmText: `Delete ${selectedIds.length}`,
+      isDangerous: true,
+      onConfirm: async (): Promise<void> => {
+        setIsDeletingOrganizations(true);
+        try {
+          const response = await fetch('/api/filemaker/organizations/batch-delete', {
+            method: 'POST',
+            headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ organizationIds: selectedIds }),
+          });
+          if (!response.ok) {
+            throw new Error(`Failed to delete organisations (${response.status}).`);
+          }
+          const result = (await response.json()) as BatchDeleteOrganizationsResponse;
+          const deletedIds = new Set([
+            ...(result.deletedOrganizationIds ?? []),
+            ...(result.missingOrganizationIds ?? []),
+          ]);
+          const idsToRemove = deletedIds.size > 0 ? Array.from(deletedIds) : selectedIds;
+          removeMongoOrganizations(idsToRemove);
+          setOrganizationSelection(
+            (current: OrganizationSelectionState): OrganizationSelectionState => {
+              const next = { ...current };
+              selectedIds.forEach((organizationId: string): void => {
+                delete next[organizationId];
+              });
+              return next;
+            }
+          );
+          settingsStore.refetch();
+          setOrganizationsRefreshKey((current: number): number => current + 1);
+          const deletedOrganizationCount =
+            result.deletedOrganizationCount ?? idsToRemove.length;
+          const deletedJobListingCount = result.deletedJobListingCount ?? 0;
+          toast(
+            buildDeletedOrganizationsToast({
+              deletedJobListingCount,
+              deletedOrganizationCount,
+            }),
+            { variant: 'success' }
+          );
+        } finally {
+          setIsDeletingOrganizations(false);
+        }
+      },
+    });
+  }, [confirm, organizationSelection, removeMongoOrganizations, settingsStore, toast]);
   const renderNode = useOrganizationRenderNode(
     organizationRelations.eventsById,
     organizationRelations.jobListingsById,
@@ -695,6 +816,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
     advancedFilterPresets,
     error: mongoOrganizations.error,
     filters,
+    isDeletingOrganizations,
     isLoading: mongoOrganizations.isLoading,
     isSelectingAllOrganizations,
     nodes,
@@ -711,6 +833,7 @@ export function useAdminFilemakerOrganizationsListState(): OrganizationListState
       });
     },
     onDeleteOrganization: deleteOrganization,
+    onDeleteSelectedOrganizations: deleteSelectedOrganizations,
     onFilterChange: (key, value) => {
       setFilters((current) => ({ ...current, ...normalizeFilterValue(key, value) }));
       setPage(1);

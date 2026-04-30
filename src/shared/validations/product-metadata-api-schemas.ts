@@ -39,6 +39,15 @@ export const catalogIdQuerySchema = z.object({
 
 export type CatalogIdQuery = z.infer<typeof catalogIdQuerySchema>;
 
+export const optionalCatalogIdQuerySchema = z.object({
+  catalogId: z.preprocess(
+    normalizeOptionalEntityId,
+    z.string().min(1).max(128, 'catalogId query parameter is too long').optional()
+  ),
+});
+
+export type OptionalCatalogIdQuery = z.infer<typeof optionalCatalogIdQuerySchema>;
+
 export const catalogIdsQuerySchema = z.object({
   catalogIds: z.preprocess(
     normalizeOptionalEntityId,
@@ -61,6 +70,14 @@ export const catalogIdWithFreshQuerySchema = catalogIdQuerySchema.extend({
 });
 
 export type CatalogIdWithFreshQuery = z.infer<typeof catalogIdWithFreshQuerySchema>;
+
+export const optionalCatalogIdWithFreshQuerySchema = optionalCatalogIdQuerySchema.extend({
+  fresh: freshQuerySchema.default(false),
+});
+
+export type OptionalCatalogIdWithFreshQuery = z.infer<
+  typeof optionalCatalogIdWithFreshQuerySchema
+>;
 
 /**
  * Standard product catalog IDs query with fresh data flag.

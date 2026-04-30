@@ -2,17 +2,24 @@ export const PART_4C = String.raw`
   const waitForShippingDialogPriceInputReady = async (shippingDialog, timeoutMs = 4_000) => {
     const deadline = Date.now() + timeoutMs;
     let lastObservedState = null;
+    let activeShippingDialog = shippingDialog;
 
     while (Date.now() < deadline) {
-      const dialogVisible = await shippingDialog.isVisible().catch(() => false);
+      if (!activeShippingDialog || !(await activeShippingDialog.isVisible().catch(() => false))) {
+        activeShippingDialog = (await findVisibleShippingDialog()) || activeShippingDialog;
+      }
+
+      const dialogVisible = activeShippingDialog
+        ? await activeShippingDialog.isVisible().catch(() => false)
+        : false;
       const shippingPriceInput = dialogVisible
-        ? await firstVisibleWithin(shippingDialog, SHIPPING_DIALOG_PRICE_INPUT_SELECTORS)
+        ? await firstVisibleWithin(activeShippingDialog, SHIPPING_DIALOG_PRICE_INPUT_SELECTORS)
         : null;
       const priceInputDisabled = shippingPriceInput
         ? await isControlDisabled(shippingPriceInput)
         : null;
       const saveButton = dialogVisible
-        ? await findButtonByLabelsWithin(shippingDialog, SHIPPING_DIALOG_SAVE_LABELS)
+        ? await findButtonByLabelsWithin(activeShippingDialog, SHIPPING_DIALOG_SAVE_LABELS)
         : null;
 
       lastObservedState = {
@@ -25,9 +32,23 @@ export const PART_4C = String.raw`
       if (dialogVisible && shippingPriceInput && priceInputDisabled === false) {
         log?.('tradera.quicklist.delivery.price_input_ready', lastObservedState);
         return {
+          shippingDialog: activeShippingDialog,
           shippingPriceInput,
           saveButton,
         };
+      }
+
+      const shippingSmootherModalDismissed = await dismissVisibleShippingSmootherModalIfPresent({
+        context: 'shipping-price-input-wait',
+      }).catch(() => false);
+      if (shippingSmootherModalDismissed) {
+        lastObservedState = {
+          ...lastObservedState,
+          shippingSmootherModalDismissed: true,
+        };
+        await page.waitForTimeout(100).catch(() => undefined);
+        activeShippingDialog = (await findVisibleShippingDialog()) || activeShippingDialog;
+        continue;
       }
 
       await wait(150);
@@ -407,6 +428,10 @@ export const PART_4C = String.raw`
   };
 
   const applyDeliveryCheckboxSelection = async () => {
+    await dismissVisibleShippingSmootherModalIfPresent({
+      context: 'delivery-checkbox-start',
+    }).catch(() => false);
+
     let shippingDialog = await findVisibleShippingDialog();
     let shippingToggle = null;
     let shippingAlreadyEnabled = false;
@@ -436,7 +461,11 @@ export const PART_4C = String.raw`
       shippingAlreadyEnabled = await isCheckboxChecked(shippingToggle);
       if (!shippingAlreadyEnabled) {
         await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
-          successWhen: async () => Boolean(await findVisibleShippingDialog()),
+          successWhen: async () =>
+            Boolean(
+              (await findVisibleShippingDialog()) ||
+                (await findVisibleShippingSmootherDialog())
+            ),
         });
       }
 
@@ -474,7 +503,11 @@ export const PART_4C = String.raw`
       }
 
       await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
-        successWhen: async () => Boolean(await findVisibleShippingDialog()),
+        successWhen: async () =>
+          Boolean(
+            (await findVisibleShippingDialog()) ||
+              (await findVisibleShippingSmootherDialog())
+          ),
       });
       shippingDialog = await waitForVisibleShippingDialog(2_500);
 
@@ -482,7 +515,11 @@ export const PART_4C = String.raw`
         const shippingReenableNeeded = !(await isCheckboxChecked(shippingToggle));
         if (shippingReenableNeeded) {
           await setCheckboxChecked(shippingToggle, OFFER_SHIPPING_LABELS, true, page, {
-            successWhen: async () => Boolean(await findVisibleShippingDialog()),
+            successWhen: async () =>
+              Boolean(
+                (await findVisibleShippingDialog()) ||
+                  (await findVisibleShippingSmootherDialog())
+              ),
           });
           shippingDialog = await waitForVisibleShippingDialog(2_500);
         }
@@ -550,8 +587,10 @@ export const PART_4C = String.raw`
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog price input was not ready.');
     }
 
+    const activeShippingDialog = shippingDialogReady.shippingDialog || shippingDialog;
+
     const shippingSaveEnablement = await enableShippingDialogSaveButton({
-      shippingDialog,
+      shippingDialog: activeShippingDialog,
       shippingPriceInput: shippingDialogReady.shippingPriceInput,
       expectedNormalizedPriceValue: normalizedConfiguredDeliveryPrice,
       rawPriceValue: expectedDeliveryPriceValue,
@@ -564,7 +603,7 @@ export const PART_4C = String.raw`
 
     const saveButton = shippingSaveEnablement.saveButton;
     if (!saveButton) {
-      const blockedState = await captureShippingDialogSaveState(shippingDialog);
+      const blockedState = await captureShippingDialogSaveState(activeShippingDialog);
       log?.('tradera.quicklist.delivery.save.blocked', {
         reason: 'button-disabled-after-price-entry',
         attempts: shippingSaveEnablement.attempts,
@@ -575,7 +614,7 @@ export const PART_4C = String.raw`
       );
     }
 
-    const dialogClosed = await submitShippingDialogSave(shippingDialog, saveButton);
+    const dialogClosed = await submitShippingDialogSave(activeShippingDialog, saveButton);
     if (!dialogClosed) {
       throw new Error('FAIL_SHIPPING_SET: Tradera shipping dialog did not close after saving.');
     }

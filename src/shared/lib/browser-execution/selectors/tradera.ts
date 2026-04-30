@@ -933,6 +933,27 @@ export const SHIPPING_DIALOG_PRICE_INPUT_SELECTORS = [
   'input[type="text"]',
   'input',
 ] as const;
+export const SHIPPING_SMOOTHER_MODAL_TEXT_HINTS = [
+  'Shipping is now even smoother',
+  'Now you just need to choose the package size',
+  'You control which suppliers you offer',
+  'The buyer chooses the supplier when paying',
+  'You ship with',
+  'paketstorlek',
+  'köparen väljer',
+] as const;
+export const SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS = [
+  'Continue',
+  'Fortsätt',
+] as const;
+export const SHIPPING_SMOOTHER_MODAL_CLOSE_SELECTORS = [
+  'button[aria-label*="Close" i]',
+  'button[aria-label*="Stäng" i]',
+  'button[title*="Close" i]',
+  'button[title*="Stäng" i]',
+  '[data-testid*="close"]',
+  '[data-testid*="dismiss"]',
+] as const;
 export const LISTING_CONFIRMATION_LABELS = [
   'I confirm that the content of the listing is accurate',
   'I confirm that the content is accurate',
@@ -1553,6 +1574,27 @@ export const TRADERA_SELECTOR_REGISTRY_DEFINITIONS: TraderaSelectorRegistryDefin
     kind: 'selectors',
     description: 'Price input candidates inside the shipping dialog.',
     value: [...SHIPPING_DIALOG_PRICE_INPUT_SELECTORS],
+  }),
+  defineRegistryEntry({
+    key: 'SHIPPING_SMOOTHER_MODAL_TEXT_HINTS',
+    group: 'shipping',
+    kind: 'hints',
+    description: 'Text markers for the Tradera shipping smoother modal.',
+    value: [...SHIPPING_SMOOTHER_MODAL_TEXT_HINTS],
+  }),
+  defineRegistryEntry({
+    key: 'SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS',
+    group: 'shipping',
+    kind: 'labels',
+    description: 'Dismiss actions for the Tradera shipping smoother modal.',
+    value: [...SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS],
+  }),
+  defineRegistryEntry({
+    key: 'SHIPPING_SMOOTHER_MODAL_CLOSE_SELECTORS',
+    group: 'shipping',
+    kind: 'selectors',
+    description: 'Close button candidates for the Tradera shipping smoother modal.',
+    value: [...SHIPPING_SMOOTHER_MODAL_CLOSE_SELECTORS],
   }),
   defineRegistryEntry({
     key: 'LISTING_CONFIRMATION_LABELS',

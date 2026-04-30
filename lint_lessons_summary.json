@@ -1,0 +1,792 @@
+[
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/KangurLessonsScreen.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe array destructuring of a tuple element with an `any` value.",
+        "line": 29
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "line": 29
+      },
+      {
+        "ruleId": "@typescript-eslint/no-redundant-type-constituents",
+        "message": "'any' overrides all other types in this union type.",
+        "line": 29
+      },
+      {
+        "ruleId": "no-nested-ternary",
+        "message": "Do not nest ternary expressions.",
+        "line": 41
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 50
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "line": 50
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 50
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 59
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 69
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 69
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "line": 69
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 69
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 70
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/LessonsAssignmentsPanel.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 45
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .id on a type that cannot be resolved.",
+        "line": 45
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/LessonsCatalogPanel.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `string`.",
+        "line": 42
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .mastery on a type that cannot be resolved.",
+        "line": 42
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 43
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 43
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 47
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 47
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required.",
+        "line": 52
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .isFocused on a type that cannot be resolved.",
+        "line": 52
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required.",
+        "line": 53
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .isFocused on a type that cannot be resolved.",
+        "line": 53
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 57
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 60
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 60
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 61
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 63
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .mastery on a type that cannot be resolved.",
+        "line": 63
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .mastery on a type that cannot be resolved.",
+        "line": 65
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required.",
+        "line": 66
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .checkpointSummary on a type that cannot be resolved.",
+        "line": 66
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 67
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .checkpointSummary on a type that cannot be resolved.",
+        "line": 67
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 72
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 72
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected any value in conditional. An explicit comparison or type conversion is required.",
+        "line": 73
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .practiceHref on a type that cannot be resolved.",
+        "line": 73
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .practiceHref on a type that cannot be resolved.",
+        "line": 74
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on a type that cannot be resolved.",
+        "line": 74
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 74
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 90
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 93
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 100
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .map on a type that cannot be resolved.",
+        "line": 100
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lesson on an `any` value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 101
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/LessonsDuelsPanel.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .opponents on a type that cannot be resolved.",
+        "line": 38
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .opponents on a type that cannot be resolved.",
+        "line": 38
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .opponents on a type that cannot be resolved.",
+        "line": 38
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .currentRank on a type that cannot be resolved.",
+        "line": 41
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .currentRank on a type that cannot be resolved.",
+        "line": 43
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 50
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .opponents on a type that cannot be resolved.",
+        "line": 50
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 51
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .learnerId on an `any` value.",
+        "line": 51
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .displayName on an `any` value.",
+        "line": 52
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "message": "Unsafe argument of type `any` assigned to a parameter of type `string`.",
+        "line": 55
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .learnerId on an `any` value.",
+        "line": 55
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .learnerId on an `any` value.",
+        "line": 56
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .error on a type that cannot be resolved.",
+        "line": 60
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .error on a type that cannot be resolved.",
+        "line": 62
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 63
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .refresh on a type that cannot be resolved.",
+        "line": 63
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonBodyView.tsx",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "message": "Function 'LessonBodyView' has too many lines (70). Maximum allowed is 60.",
+        "line": 10
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 23
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sections on a type that cannot be resolved.",
+        "line": 23
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 24
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sections on a type that cannot be resolved.",
+        "line": 24
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .introduction on a type that cannot be resolved.",
+        "line": 28
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 34
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sections on a type that cannot be resolved.",
+        "line": 34
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 36
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .id on an `any` value.",
+        "line": 36
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .title on an `any` value.",
+        "line": 37
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "message": "Unsafe argument of type `any` assigned to a parameter of type `number`.",
+        "line": 38
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .title on a type that cannot be resolved.",
+        "line": 46
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .description on a type that cannot be resolved.",
+        "line": 47
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 54
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 61
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .practiceNote on a type that cannot be resolved.",
+        "line": 66
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .practiceNote on a type that cannot be resolved.",
+        "line": 68
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 77
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonCard.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unused-vars",
+        "message": "'Href' is defined but never used. Allowed unused vars must match /^_/u.",
+        "line": 12
+      },
+      {
+        "ruleId": "@typescript-eslint/no-redundant-type-constituents",
+        "message": "'LessonBody' is an 'error' type that acts as 'any' and overrides all other types in this union type.",
+        "line": 44
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "line": 53
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 81
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 81
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 85
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of an `any` typed value.",
+        "line": 86
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .replace on an `any` value.",
+        "line": 86
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 89
+      },
+      {
+        "ruleId": "max-lines-per-function",
+        "message": "Function 'LessonDetailsCard' has too many lines (91). Maximum allowed is 60.",
+        "line": 100
+      },
+      {
+        "ruleId": "complexity",
+        "message": "Function 'LessonDetailsCard' has a complexity of 15. Maximum allowed is 8.",
+        "line": 100
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe object destructuring of a property with an error typed value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe object destructuring of a property with an `any` value.",
+        "line": 101
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 106
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 131
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sections on a type that cannot be resolved.",
+        "line": 134
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sections on a type that cannot be resolved.",
+        "line": 136
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .sections on a type that cannot be resolved.",
+        "line": 147
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 163
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 178
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of an `any` typed value.",
+        "line": 187
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .replace on an `any` value.",
+        "line": 187
+      },
+      {
+        "ruleId": "jsx-quotes",
+        "message": "Unexpected usage of doublequote.",
+        "line": 190
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsAssignmentsSection.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 39
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .id on a type that cannot be resolved.",
+        "line": 39
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsBadgesSection.tsx",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "message": "Function 'LessonsBadgesSection' has too many lines (61). Maximum allowed is 60.",
+        "line": 15
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 23
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .length on a type that cannot be resolved.",
+        "line": 56
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 66
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .map on a type that cannot be resolved.",
+        "line": 66
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsCatalogSection.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 57
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsDuelsSection.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an error typed value.",
+        "line": 219
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-call",
+        "message": "Unsafe call of a type that could not be resolved.",
+        "line": 219
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsHeader.tsx",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .trackedLessons on a type that cannot be resolved.",
+        "line": 25
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .masteredLessons on a type that cannot be resolved.",
+        "line": 26
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lessonsNeedingPractice on a type that cannot be resolved.",
+        "line": 27
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/components/LessonsRecentResultsSection.tsx",
+    "messages": [
+      {
+        "ruleId": "max-lines-per-function",
+        "message": "Function 'LessonsRecentResultsSection' has too many lines (64). Maximum allowed is 60.",
+        "line": 15
+      },
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "message": "Missing return type on function.",
+        "line": 23
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/lesson-row-primitives.tsx",
+    "messages": [
+      {
+        "ruleId": "max-lines",
+        "message": "File has too many lines (395). Maximum allowed is 300.",
+        "line": 325
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/lessonHref.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 11
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected value in conditional. A boolean expression is required.",
+        "line": 27
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useKangurMobileLessonCheckpoints.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected nullable string value in conditional. Please handle the nullish/empty cases explicitly.",
+        "line": 45
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected value in conditional. A boolean expression is required.",
+        "line": 129
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useKangurMobileLessons.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-member-access",
+        "message": "Unsafe member access .lessonMastery on a type that cannot be resolved.",
+        "line": 52
+      },
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-argument",
+        "message": "Unsafe argument of type error typed assigned to a parameter of type `Pick<{ totalXp: number; gamesPlayed: number; perfectGames: number; lessonsCompleted: number; clockPerfect: number; calendarPerfect: number; geometryPerfect: number; badges: string[]; operationsPlayed: string[]; ... 11 more ...; activityStats?: Record<...> | undefined; }, \"lessonMastery\">`.",
+        "line": 70
+      },
+      {
+        "ruleId": "@typescript-eslint/strict-boolean-expressions",
+        "message": "Unexpected value in conditional. A boolean expression is required.",
+        "line": 71
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useKangurMobileLessonsDuels.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "message": "Missing return type on function.",
+        "line": 7
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useLessonsScreenState.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/explicit-function-return-type",
+        "message": "Missing return type on function.",
+        "line": 9
+      }
+    ]
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/apps/mobile/src/lessons/useLessonsViewModel.ts",
+    "messages": [
+      {
+        "ruleId": "@typescript-eslint/no-unsafe-assignment",
+        "message": "Unsafe assignment of an `any` value.",
+        "line": 20
+      },
+      {
+        "ruleId": "@typescript-eslint/no-explicit-any",
+        "message": "Unexpected any. Specify a different type.",
+        "line": 20
+      }
+    ]
+  }
+]

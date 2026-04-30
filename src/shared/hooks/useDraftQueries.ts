@@ -1,6 +1,7 @@
 import type { IdDataDto } from '@/shared/contracts/base';
 import type { CreateProductDraftInput, ProductDraft, UpdateProductDraftInput } from '@/shared/contracts/products/drafts';
 import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui/queries';
+import type { QueryClient } from '@tanstack/react-query';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -16,6 +17,42 @@ const draftListKey = (notebookId?: string) =>
 
 export { draftKeys };
 
+const upsertDraftInList = (
+  drafts: ProductDraft[] | undefined,
+  draft: ProductDraft
+): ProductDraft[] => {
+  if (!Array.isArray(drafts)) return [draft];
+  const existingIndex = drafts.findIndex((entry) => entry.id === draft.id);
+  if (existingIndex === -1) return [draft, ...drafts];
+  const nextDrafts = drafts.slice();
+  nextDrafts[existingIndex] = draft;
+  return nextDrafts;
+};
+
+const removeDraftFromList = (
+  drafts: ProductDraft[] | undefined,
+  draftId: string
+): ProductDraft[] | undefined => {
+  if (!Array.isArray(drafts)) return drafts;
+  return drafts.filter((entry) => entry.id !== draftId);
+};
+
+const hydrateDraftListCaches = (queryClient: QueryClient, draft: ProductDraft): void => {
+  queryClient.setQueryData(draftKeys.detail(draft.id), draft);
+  queryClient.setQueriesData<ProductDraft[]>(
+    { queryKey: draftKeys.lists() },
+    (drafts) => upsertDraftInList(drafts, draft)
+  );
+};
+
+const removeDraftFromListCaches = (queryClient: QueryClient, draftId: string): void => {
+  queryClient.removeQueries({ queryKey: draftKeys.detail(draftId) });
+  queryClient.setQueriesData<ProductDraft[]>(
+    { queryKey: draftKeys.lists() },
+    (drafts) => removeDraftFromList(drafts, draftId)
+  );
+};
+
 type DraftQueriesOptions = {
   enabled?: boolean;
 };
@@ -30,7 +67,10 @@ export function useDraftQueries(
     queryKey,
     queryFn: (context) =>
       api.get<ProductDraft[]>('/api/drafts', {
-        params: notebookId ? { notebookId } : undefined,
+        params:
+          typeof notebookId === 'string' && notebookId.trim().length > 0
+            ? { notebookId }
+            : undefined,
         signal: context.signal,
       }),
     enabled: options?.enabled ?? true,
@@ -77,7 +117,10 @@ export function useCreateDraftMutation(): MutationResult<ProductDraft, CreatePro
       tags: ['drafts', 'create'],
       description: 'Creates drafts.',
     },
-    invalidateKeys: [draftKeys.lists()],
+    invalidate: async (queryClient, data) => {
+      hydrateDraftListCaches(queryClient, data);
+      await queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
+    },
   });
 }
 
@@ -95,9 +138,9 @@ export function useUpdateDraftMutation(): MutationResult<
       tags: ['drafts', 'update'],
       description: 'Updates drafts.',
     },
-    invalidate: (queryClient, data) => {
-      queryClient.setQueryData(draftKeys.detail(data.id), data);
-      void queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
+    invalidate: async (queryClient, data) => {
+      hydrateDraftListCaches(queryClient, data);
+      await queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
     },
   });
 }
@@ -113,9 +156,9 @@ export function useDeleteDraftMutation(): MutationResult<void, string> {
       tags: ['drafts', 'delete'],
       description: 'Deletes drafts.',
     },
-    invalidate: (queryClient, _, deletedId) => {
-      queryClient.removeQueries({ queryKey: draftKeys.detail(deletedId) });
-      void queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
+    invalidate: async (queryClient, _, deletedId) => {
+      removeDraftFromListCaches(queryClient, deletedId);
+      await queryClient.invalidateQueries({ queryKey: draftKeys.lists() });
     },
   });
 }

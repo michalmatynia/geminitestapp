@@ -299,10 +299,12 @@ const createProps = (
   },
   activeAdvancedFilterPresetId: null,
   advancedFilterPresets: [],
+  isDeletingOrganizations: false,
   isLoading: false,
   isSelectingAllOrganizations: false,
   nodes: [],
   onDeleteOrganization: vi.fn(),
+  onDeleteSelectedOrganizations: vi.fn(),
   onDeselectAllOrganizations: vi.fn(),
   onDeselectOrganizationsPage: vi.fn(),
   onFilterChange: vi.fn(),
@@ -489,6 +491,9 @@ describe('FilemakerOrganizationsListPanel', () => {
       within(actions).getByRole('button', { name: 'Select All Resultset' })
     ).toBeInTheDocument();
     expect(within(actions).getByRole('button', { name: /Copy selected IDs/i })).toBeInTheDocument();
+    expect(
+      within(actions).getByRole('button', { name: /Delete selected organisations/i })
+    ).toBeInTheDocument();
     expect(within(actions).getByRole('button', { name: /Scrape jobs/i })).toBeInTheDocument();
   });
 

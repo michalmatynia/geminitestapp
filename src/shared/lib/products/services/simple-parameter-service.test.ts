@@ -62,14 +62,11 @@ describe('simple-parameter-service', () => {
     vi.useRealTimers();
   });
 
-  it('returns an empty list for blank catalog ids and parses invalid settings defensively', async () => {
-    expect(await listSimpleParameters({ catalogId: '   ' })).toEqual([]);
-    expect(mocks.getProductDataProvider).not.toHaveBeenCalled();
-
+  it('parses invalid settings defensively for catalog-agnostic lists', async () => {
     const parseErrorDoc = { value: '{not-json' };
     mocks.findOne.mockResolvedValueOnce(parseErrorDoc);
 
-    const list = await listSimpleParameters({ catalogId: 'catalog-1' });
+    const list = await listSimpleParameters({ catalogId: '   ' });
 
     expect(list).toEqual([]);
     expect(mocks.findOne).toHaveBeenCalledWith(settingFilter);
@@ -106,10 +103,12 @@ describe('simple-parameter-service', () => {
     ]);
     mocks.findOne
       .mockResolvedValueOnce({ value: storedValue })
+      .mockResolvedValueOnce({ value: storedValue })
       .mockResolvedValueOnce({ value: storedValue });
 
     const all = await listSimpleParameters({ catalogId: 'catalog-1' });
     const searched = await listSimpleParameters({ catalogId: 'catalog-1', search: 'alf' });
+    const globalList = await listSimpleParameters({ catalogId: null });
 
     expect(all.map((item) => item.id)).toEqual(['p-1', 'p-2']);
     expect(all[0]).toEqual(
@@ -122,6 +121,7 @@ describe('simple-parameter-service', () => {
       })
     );
     expect(searched.map((item) => item.id)).toEqual(['p-1']);
+    expect(globalList.map((item) => item.id).sort()).toEqual(['p-1', 'p-2', 'p-3']);
   });
 
   it('creates parameters, trims nullable fields, and rejects duplicates or missing required input', async () => {

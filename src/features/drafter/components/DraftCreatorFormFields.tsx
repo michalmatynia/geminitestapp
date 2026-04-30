@@ -31,6 +31,7 @@ import {
   useDraftCreatorMetadata,
   useDraftCreatorParameters,
 } from './DraftCreatorFormContext';
+import { DraftCreatorParameterDefinitionModal } from './DraftCreatorParameterDefinitionModal';
 import { DraftPlaceholderTextInput } from './DraftPlaceholderTextInput';
 import { DraftStructuredProductNameInput } from './DraftStructuredProductNameInput';
 
@@ -703,12 +704,7 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
 
         {categories.length > 0 ? (
           <FormSection title='Categories' className='p-4'>
-            <CategorySingleSelectField
-              disabled={selectedCatalogIds.length === 0}
-              placeholder={
-                selectedCatalogIds.length > 0 ? 'Select category' : 'Select a catalog first'
-              }
-            />
+            <CategorySingleSelectField placeholder='Select category' />
           </FormSection>
         ) : null}
 
@@ -772,14 +768,17 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       description='Set default parameter values for products created from this draft.'
       className='p-4'
       actions={
-        <Button
-          type='button'
-          variant='outline'
-          onClick={addParameterValue}
-          disabled={parametersLoading || parameters.length === 0}
-        >
-          Add parameter
-        </Button>
+        <div className='flex flex-wrap justify-end gap-2'>
+          <DraftCreatorParameterDefinitionModal />
+          <Button
+            type='button'
+            variant='outline'
+            onClick={addParameterValue}
+            disabled={parametersLoading || parameters.length === 0}
+          >
+            Add parameter
+          </Button>
+        </div>
       }
     >
       {parametersLoading ? (
@@ -790,7 +789,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
       ) : parameters.length === 0 ? (
         <CompactEmptyState
           title='No parameters'
-          description='No parameters available for the selected catalog(s).'
+          description='No parameters available yet.'
           className='border-dashed border-border/60 py-8'
          />
       ) : parameterValues.length === 0 ? (

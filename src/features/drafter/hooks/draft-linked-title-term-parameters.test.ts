@@ -73,7 +73,7 @@ describe('resolveDraftLinkedTitleTermParameterValues', () => {
     ]);
   });
 
-  it('keeps skipped linked parameters manual and removes stale generated values', () => {
+  it('keeps linked parameters derived from the title even when a stale base value exists', () => {
     const result = resolveDraftLinkedTitleTermParameterValues({
       existingParameterValues: [
         { parameterId: 'size-param', value: 'Manual size', skipParameterInference: true },
@@ -90,7 +90,11 @@ describe('resolveDraftLinkedTitleTermParameterValues', () => {
     });
 
     expect(result).toEqual([
-      { parameterId: 'size-param', value: 'Manual size', skipParameterInference: true },
+      {
+        parameterId: 'size-param',
+        value: '4 cm',
+        valuesByLanguage: { en: '4 cm', pl: '4 cm' },
+      },
       {
         parameterId: 'material-param',
         value: 'Resin',

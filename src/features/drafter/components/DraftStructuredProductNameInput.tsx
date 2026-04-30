@@ -12,6 +12,12 @@ import {
 } from '@/features/products/components/form/useStructuredProductNameSuggestions';
 import type { ProductFormData } from '@/shared/contracts/products/drafts';
 
+import {
+  CLOSED_PLACEHOLDER_MENU,
+  insertPlaceholderToken,
+  resolvePlaceholderMenuState,
+  type DraftPlaceholderMenuState,
+} from './DraftPlaceholderDropdown';
 import { useDraftCreatorMetadata } from './DraftCreatorFormContext';
 import {
   DraftStructuredInputControl,
@@ -38,19 +44,25 @@ type DraftStructuredCategoryState = {
   setStructuredValue: UseFormSetValue<ProductFormData>;
 };
 
-const insertPlaceholderToken = (
-  value: string,
-  token: string,
+const updatePlaceholderMenuFromInput = (
+  inputRef: React.MutableRefObject<TextControlElement | null>,
+  updatePlaceholderMenu: (nextValue: string, cursorPosition: number | null) => void
+): void => {
+  const input = inputRef.current;
+  if (input !== null) updatePlaceholderMenu(input.value, input.selectionStart);
+};
+
+const focusStructuredInputAt = (
+  inputRef: React.MutableRefObject<TextControlElement | null>,
   cursorPosition: number
-): { nextValue: string; nextCursor: number } => {
-  const replaceStart = value.slice(0, cursorPosition).endsWith('[')
-    ? cursorPosition - 1
-    : cursorPosition;
-  const insertion = `[${token}]`;
-  return {
-    nextValue: `${value.slice(0, replaceStart)}${insertion}${value.slice(cursorPosition)}`,
-    nextCursor: replaceStart + insertion.length,
-  };
+): void => {
+  window.requestAnimationFrame(() => {
+    const input = inputRef.current;
+    if (input === null) return;
+    input.focus();
+    input.setSelectionRange(cursorPosition, cursorPosition);
+    input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ']' }));
+  });
 };
 
 function useDraftStructuredCategoryState({
@@ -116,9 +128,15 @@ function useDraftStructuredSuggestionController({
   DraftStructuredProductNameInputProps,
   'value' | 'onValueChange'
 >): StructuredProductNameSuggestionsController {
-  const sizeTermsQuery = useTitleTerms(categoryState.primaryCatalogId, 'size');
-  const materialTermsQuery = useTitleTerms(categoryState.primaryCatalogId, 'material');
-  const themeTermsQuery = useTitleTerms(categoryState.primaryCatalogId, 'theme');
+  const sizeTermsQuery = useTitleTerms(categoryState.primaryCatalogId, 'size', {
+    allowWithoutCatalog: true,
+  });
+  const materialTermsQuery = useTitleTerms(categoryState.primaryCatalogId, 'material', {
+    allowWithoutCatalog: true,
+  });
+  const themeTermsQuery = useTitleTerms(categoryState.primaryCatalogId, 'theme', {
+    allowWithoutCatalog: true,
+  });
 
   return useStructuredProductNameSuggestions({
     categorySuggestions: categoryState.categoryController.categorySuggestions,
@@ -129,6 +147,7 @@ function useDraftStructuredSuggestionController({
     materialTerms: materialTermsQuery.data ?? [],
     nameValue: value,
     primaryCatalogId: categoryState.primaryCatalogId,
+    requireCatalogForSuggestions: false,
     setCategoryId: categoryState.setSelectedCategoryId,
     setNormalizeNameError: () => {},
     setValue: categoryState.setStructuredValue,
@@ -155,31 +174,52 @@ function useDraftPlaceholderController({
   DraftStructuredProductNameInputProps,
   'placeholderDropdownEnabled' | 'value' | 'onValueChange'
 >): DraftPlaceholderController {
-  const [placeholderOpen, setPlaceholderOpen] = useState(false);
+  const [placeholderMenu, setPlaceholderMenu] =
+    useState<DraftPlaceholderMenuState>(CLOSED_PLACEHOLDER_MENU);
+
+  const updatePlaceholderMenu = (nextValue: string, cursorPosition: number | null): void =>
+    setPlaceholderMenu(
+      resolvePlaceholderMenuState({
+        cursorPosition,
+        enabled: placeholderDropdownEnabled,
+        value: nextValue,
+      })
+    );
+
+  const updateFromCurrentInput = (): void =>
+    updatePlaceholderMenuFromInput(inputRef, updatePlaceholderMenu);
+
   const handleKeyDown = (event: React.KeyboardEvent<TextControlElement>): void => {
     if (placeholderDropdownEnabled && event.key === '[') {
-      window.setTimeout(() => setPlaceholderOpen(true), 0);
+      window.setTimeout(updateFromCurrentInput, 0);
     }
-    if (event.key === 'Escape') setPlaceholderOpen(false);
-    if (placeholderOpen) return;
+    if (event.key === 'Escape') setPlaceholderMenu(CLOSED_PLACEHOLDER_MENU);
+    if (placeholderMenu.open) return;
     suggestionController.onKeyDown(event);
   };
-  const handleSelectPlaceholder = (key: string): void => {
-    const element = inputRef.current;
-    const cursorPosition = element?.selectionStart ?? value.length;
-    const { nextValue, nextCursor } = insertPlaceholderToken(value, key, cursorPosition);
-    onValueChange(nextValue);
-    setPlaceholderOpen(false);
-    window.requestAnimationFrame(() => {
-      const input = inputRef.current;
-      if (input === null) return;
-      input.focus();
-      input.setSelectionRange(nextCursor, nextCursor);
-      input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: ']' }));
-    });
+
+  const handleInputChange = (event: React.ChangeEvent<TextControlElement>): void => {
+    updatePlaceholderMenu(event.target.value, event.target.selectionStart);
   };
 
-  return { handleKeyDown, handleSelectPlaceholder, placeholderOpen };
+  const handleSelectPlaceholder = (key: string): void => {
+    const cursorPosition = inputRef.current?.selectionStart ?? value.length;
+    const { nextValue, nextCursor } = insertPlaceholderToken(value, key, cursorPosition);
+    onValueChange(nextValue);
+    setPlaceholderMenu(CLOSED_PLACEHOLDER_MENU);
+    focusStructuredInputAt(inputRef, nextCursor);
+  };
+
+  return {
+    handleClick: updateFromCurrentInput,
+    handleFocus: updateFromCurrentInput,
+    handleInputChange,
+    handleKeyDown,
+    handleKeyUp: updateFromCurrentInput,
+    handleSelectPlaceholder,
+    placeholderOpen: placeholderMenu.open,
+    placeholderQuery: placeholderMenu.query,
+  };
 }
 
 export function DraftStructuredProductNameInput({
@@ -224,7 +264,6 @@ export function DraftStructuredProductNameInput({
         suggestionController={suggestionController}
       />
       <DraftStructuredInputHints
-        primaryCatalogId={categoryState.primaryCatalogId}
         selectedCategoryLabel={categoryState.selectedCategoryLabel}
       />
     </div>

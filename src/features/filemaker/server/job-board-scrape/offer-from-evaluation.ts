@@ -403,6 +403,12 @@ const GENERIC_EMPLOYER_DIRECTORY_PATTERNS = [
   /\bpracodawcy profile pracodawc/u,
 ];
 
+const COMPANY_DETAILS_LABEL_SUFFIX_RE =
+  /\s*(?:[-|:]\s*)?(?:about\s+the\s+company|about\s+company|company\s+details|informacje\s+o\s+firmie|o\s+firmie)\s*$/iu;
+
+const stripCompanyDetailsLabelSuffix = (value: string): string =>
+  value.replace(COMPANY_DETAILS_LABEL_SUFFIX_RE, '').trim();
+
 export const isSuspiciousJobBoardCompanyName = (value: unknown): boolean => {
   const normalized = normalizeProfileValue(value);
   if (normalized.length === 0) return true;
@@ -429,7 +435,9 @@ export const isSuspiciousJobBoardCompanyName = (value: unknown): boolean => {
 };
 
 const cleanCompanyName = (value: unknown): string | null => {
-  const normalized = normalizeProfileValue(value)
+  const normalized = stripCompanyDetailsLabelSuffix(
+    normalizeProfileValue(value)
+  )
     .replace(/\s*[-|]\s*(profil pracodawcy|pracodawca|kariera|career|jobs?).*$/i, '')
     .trim();
   if (isSuspiciousJobBoardCompanyName(normalized)) return null;

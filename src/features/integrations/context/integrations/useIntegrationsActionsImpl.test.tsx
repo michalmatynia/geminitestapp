@@ -220,6 +220,68 @@ describe('useIntegrationsActionsImpl', () => {
     expect(payload).not.toHaveProperty('password');
   });
 
+  it('allows creating a scraped source connection without credentials', async () => {
+    const activeIntegration = createIntegration('scraped-source');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'BattleStock',
+      username: '   ',
+      password: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    const [{ payload }] = upsertConnectionMutateAsyncMock.mock.calls.at(-1) as [
+      { payload: Record<string, unknown> },
+    ];
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        payload: expect.objectContaining({
+          name: 'BattleStock',
+        }),
+      })
+    );
+    expect(payload).not.toHaveProperty('username');
+    expect(payload).not.toHaveProperty('password');
+  });
+
+  it('persists scraped source credentials when provided', async () => {
+    const activeIntegration = createIntegration('scraped-source');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'BattleStock',
+      username: 'buyer@example.com',
+      password: 'secret',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'update',
+      connectionId: 'connection-battlestock',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        integrationId: activeIntegration.id,
+        connectionId: 'connection-battlestock',
+        payload: expect.objectContaining({
+          name: 'BattleStock',
+          username: 'buyer@example.com',
+          password: 'secret',
+        }),
+      })
+    );
+  });
+
   it('persists the selected Persons profile for Pracuj.pl job applications', async () => {
     const activeIntegration = createIntegration('pracuj-pl');
     const args = createArgs(activeIntegration);

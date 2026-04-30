@@ -7,11 +7,15 @@ const mocks = vi.hoisted(() => ({
   listMongoFilemakerEventsForOrganizationMock: vi.fn(),
   parseFilemakerDatabaseMock: vi.fn(),
   readFilemakerCampaignSettingValueMock: vi.fn(),
+  toPersistedFilemakerDatabaseMock: vi.fn(),
+  upsertFilemakerCampaignSettingValueMock: vi.fn(),
 }));
 
 vi.mock('./campaign-settings-store', () => ({
   readFilemakerCampaignSettingValue: (...args: unknown[]) =>
     mocks.readFilemakerCampaignSettingValueMock(...args),
+  upsertFilemakerCampaignSettingValue: (...args: unknown[]) =>
+    mocks.upsertFilemakerCampaignSettingValueMock(...args),
 }));
 
 vi.mock('./filemaker-events-mongo', () => ({
@@ -49,10 +53,13 @@ vi.mock('./filemaker-organizations-mongo', () => ({
 
 vi.mock('../settings', () => ({
   parseFilemakerDatabase: (...args: unknown[]) => mocks.parseFilemakerDatabaseMock(...args),
+  toPersistedFilemakerDatabase: (...args: unknown[]) =>
+    mocks.toPersistedFilemakerDatabaseMock(...args),
 }));
 
 import {
   deleteMongoFilemakerOrganization,
+  deleteMongoFilemakerOrganizations,
   listMongoFilemakerOrganizations,
 } from './filemaker-organizations-repository';
 
@@ -71,7 +78,10 @@ describe('listMongoFilemakerOrganizations', () => {
     vi.clearAllMocks();
     mocks.listMongoFilemakerEventsForOrganizationMock.mockResolvedValue([]);
     mocks.readFilemakerCampaignSettingValueMock.mockResolvedValue('stored-filemaker-database');
+    mocks.toPersistedFilemakerDatabaseMock.mockImplementation((value: unknown) => value);
+    mocks.upsertFilemakerCampaignSettingValueMock.mockResolvedValue(true);
     mocks.parseFilemakerDatabaseMock.mockReturnValue({
+      jobListingLexiconLinks: [],
       jobListings: [
         {
           createdAt: '2026-04-28T09:00:00.000Z',
@@ -161,6 +171,84 @@ describe('listMongoFilemakerOrganizations', () => {
       $or: [{ _id: 'org-1' }, { id: 'org-1' }, { legacyUuid: 'org-1' }],
     });
     expect(deleteOne).toHaveBeenCalledWith({ _id: 'mongo-org-1' });
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(1);
     expect(deleted).toEqual(expect.objectContaining({ id: 'org-1', name: 'Acme Inc' }));
+  });
+
+  it('batch deletes organizations and removes linked settings job listings', async () => {
+    const documents = new Map([
+      [
+        'org-1',
+        {
+          _id: 'mongo-org-1',
+          id: 'org-1',
+          legacyUuid: 'legacy-org-1',
+          name: 'Acme Inc',
+        },
+      ],
+      [
+        'legacy-org-2',
+        {
+          _id: 'mongo-org-2',
+          id: 'org-2',
+          legacyUuid: 'legacy-org-2',
+          name: 'Beta Inc',
+        },
+      ],
+    ]);
+    const findOne = vi.fn(async (filter: { $or: Array<Record<string, string>> }) => {
+      const requestedId =
+        filter.$or.find((entry: Record<string, string>): boolean => entry._id !== undefined)
+          ?._id ?? '';
+      return documents.get(requestedId) ?? null;
+    });
+    const deleteMany = vi.fn(async () => ({ deletedCount: 2 }));
+    mocks.getFilemakerOrganizationsCollectionMock.mockResolvedValue({
+      deleteMany,
+      findOne,
+    });
+    mocks.parseFilemakerDatabaseMock.mockReturnValue({
+      jobListingLexiconLinks: [
+        { id: 'link-1', jobListingId: 'listing-1', lexiconTermId: 'term-1' },
+        { id: 'link-2', jobListingId: 'listing-2', lexiconTermId: 'term-2' },
+        { id: 'link-3', jobListingId: 'listing-other', lexiconTermId: 'term-3' },
+      ],
+      jobListings: [
+        { id: 'listing-1', organizationId: 'org-1', title: 'Frontend Developer' },
+        { id: 'listing-2', organizationId: 'legacy-org-2', title: 'Backend Developer' },
+        { id: 'listing-other', organizationId: 'org-other', title: 'Hidden Listing' },
+      ],
+    });
+
+    const result = await deleteMongoFilemakerOrganizations([
+      'org-1',
+      'legacy-org-2',
+      'missing-org',
+    ]);
+
+    expect(deleteMany).toHaveBeenCalledWith({
+      _id: { $in: ['mongo-org-1', 'mongo-org-2'] },
+    });
+    expect(result).toMatchObject({
+      deletedJobListingCount: 2,
+      deletedJobListingIds: ['listing-1', 'listing-2'],
+      deletedOrganizationCount: 2,
+      deletedOrganizationIds: ['org-1', 'org-2'],
+      missingOrganizationIds: ['missing-org'],
+      requestedOrganizationIds: ['org-1', 'legacy-org-2', 'missing-org'],
+    });
+    expect(mocks.upsertFilemakerCampaignSettingValueMock).toHaveBeenCalledTimes(1);
+    const persisted = JSON.parse(
+      mocks.upsertFilemakerCampaignSettingValueMock.mock.calls[0]?.[1] as string
+    ) as {
+      jobListingLexiconLinks: Array<{ id: string }>;
+      jobListings: Array<{ id: string }>;
+    };
+    expect(persisted.jobListings).toEqual([
+      expect.objectContaining({ id: 'listing-other' }),
+    ]);
+    expect(persisted.jobListingLexiconLinks).toEqual([
+      expect.objectContaining({ id: 'link-3' }),
+    ]);
   });
 });

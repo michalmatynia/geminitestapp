@@ -8,9 +8,12 @@ import { decodeSettingValue } from '@/shared/lib/settings/settings-compression';
 
 import type { FilemakerEvent, FilemakerJobListing, FilemakerOrganization } from '../types';
 import { resolveJobBoardOriginLabel } from '../job-board-origin';
-import { parseFilemakerDatabase } from '../settings';
+import { parseFilemakerDatabase, toPersistedFilemakerDatabase } from '../settings';
 import { FILEMAKER_DATABASE_KEY } from '../settings-constants';
-import { readFilemakerCampaignSettingValue } from './campaign-settings-store';
+import {
+  readFilemakerCampaignSettingValue,
+  upsertFilemakerCampaignSettingValue,
+} from './campaign-settings-store';
 import { buildOrganizationAdvancedFilter } from './filemaker-organization-advanced-filter-query';
 import {
   normalizeOrganizationPage,
@@ -55,6 +58,16 @@ export type FilemakerOrganizationsListResult = {
 type OrganizationAggregationResult = {
   documents?: FilemakerOrganizationMongoDocument[];
   metadata?: Array<{ totalCount?: number }>;
+};
+
+export type DeleteMongoFilemakerOrganizationsResult = {
+  deletedJobListingCount: number;
+  deletedJobListingIds: string[];
+  deletedOrganizationCount: number;
+  deletedOrganizationIds: string[];
+  deletedOrganizations: FilemakerOrganization[];
+  missingOrganizationIds: string[];
+  requestedOrganizationIds: string[];
 };
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -105,6 +118,35 @@ const ORGANIZATION_LIST_PROJECTION = {
   updatedAt: 1,
   updatedBy: 1,
 } as const;
+
+const ORGANIZATION_TEXT_SEARCH_FIELDS: Array<keyof FilemakerOrganizationMongoDocument> = [
+  'name',
+  'tradingName',
+  'taxId',
+  'krs',
+  'regon',
+  'jobBoardCompanyWebsiteUrl',
+  'jobBoardCompanyEmail',
+  'jobBoardCompanyPhone',
+  'jobBoardCompanyIndustry',
+  'jobBoardCompanySize',
+  'jobBoardCompanyAddress',
+  'jobBoardCompanyRegion',
+  'jobBoardCompanyProfileUrl',
+  'jobBoardCompanyProfile',
+  'jobBoardSourceLabel',
+  'jobBoardSourceSite',
+  'jobBoardSourceUrl',
+  'city',
+  'street',
+  'streetNumber',
+  'postalCode',
+  'country',
+  'countryId',
+  'legacyUuid',
+  'legacyDefaultAddressUuid',
+  'legacyDefaultBankAccountUuid',
+];
 
 const hasFieldValueFilter = (
   field: keyof FilemakerOrganizationMongoDocument
@@ -176,34 +218,11 @@ const buildOrganizationFilter = (input: {
   if (normalizedQuery.length > 0) {
     const regex = new RegExp(escapeRegex(normalizedQuery), 'i');
     clauses.push({
-      $or: [
-        { name: regex },
-        { tradingName: regex },
-        { taxId: regex },
-        { krs: regex },
-        { regon: regex },
-        { jobBoardCompanyWebsiteUrl: regex },
-        { jobBoardCompanyEmail: regex },
-        { jobBoardCompanyPhone: regex },
-        { jobBoardCompanyIndustry: regex },
-        { jobBoardCompanySize: regex },
-        { jobBoardCompanyAddress: regex },
-        { jobBoardCompanyRegion: regex },
-        { jobBoardCompanyProfileUrl: regex },
-        { jobBoardCompanyProfile: regex },
-        { jobBoardSourceLabel: regex },
-        { jobBoardSourceSite: regex },
-        { jobBoardSourceUrl: regex },
-        { city: regex },
-        { street: regex },
-        { streetNumber: regex },
-        { postalCode: regex },
-        { country: regex },
-        { countryId: regex },
-        { legacyUuid: regex },
-        { legacyDefaultAddressUuid: regex },
-        { legacyDefaultBankAccountUuid: regex },
-      ],
+      $or: ORGANIZATION_TEXT_SEARCH_FIELDS.map(
+        (field: keyof FilemakerOrganizationMongoDocument): Filter<FilemakerOrganizationMongoDocument> => ({
+          [field]: regex,
+        })
+      ),
     });
   }
   if (updatedBy.length > 0) {
@@ -674,6 +693,88 @@ const findMongoFilemakerOrganizationDocument = async (
     $or: [{ _id: organizationId }, { id: organizationId }, { legacyUuid: organizationId }],
   });
 
+const normalizeUniqueOrganizationIds = (
+  organizationIds: readonly string[]
+): string[] => Array.from(
+  new Set(
+    organizationIds
+      .map((organizationId: string): string => organizationId.trim())
+      .filter((organizationId: string): boolean => organizationId.length > 0)
+  )
+);
+
+const addOrganizationOwnerId = (ownerIds: Set<string>, value: string | undefined): void => {
+  const normalizedValue = value?.trim() ?? '';
+  if (normalizedValue.length > 0) ownerIds.add(normalizedValue);
+};
+
+const buildOrganizationOwnerIds = (input: {
+  documents: readonly FilemakerOrganizationMongoDocument[];
+  requestedOrganizationIds: readonly string[];
+}): Set<string> => {
+  const ownerIds = new Set<string>();
+  input.requestedOrganizationIds.forEach((organizationId: string): void => {
+    addOrganizationOwnerId(ownerIds, organizationId);
+  });
+  input.documents.forEach((document: FilemakerOrganizationMongoDocument): void => {
+    addOrganizationOwnerId(ownerIds, document._id);
+    addOrganizationOwnerId(ownerIds, document.id);
+    addOrganizationOwnerId(ownerIds, document.legacyUuid);
+  });
+  return ownerIds;
+};
+
+const deleteSettingsJobListingsForOrganizationIds = async (
+  organizationOwnerIds: ReadonlySet<string>
+): Promise<Pick<DeleteMongoFilemakerOrganizationsResult, 'deletedJobListingCount' | 'deletedJobListingIds'>> => {
+  if (organizationOwnerIds.size === 0) {
+    return { deletedJobListingCount: 0, deletedJobListingIds: [] };
+  }
+  const storedValue = await readFilemakerCampaignSettingValue(FILEMAKER_DATABASE_KEY);
+  if (storedValue === null || storedValue.trim().length === 0) {
+    return { deletedJobListingCount: 0, deletedJobListingIds: [] };
+  }
+
+  let database: ReturnType<typeof parseFilemakerDatabase>;
+  try {
+    database = parseFilemakerDatabase(
+      decodeSettingValue(FILEMAKER_DATABASE_KEY, storedValue)
+    );
+  } catch {
+    return { deletedJobListingCount: 0, deletedJobListingIds: [] };
+  }
+  const deletedJobListingIds = database.jobListings
+    .filter((listing: FilemakerJobListing): boolean =>
+      organizationOwnerIds.has(listing.organizationId.trim())
+    )
+    .map((listing: FilemakerJobListing): string => listing.id);
+  if (deletedJobListingIds.length === 0) {
+    return { deletedJobListingCount: 0, deletedJobListingIds: [] };
+  }
+
+  const deletedJobListingIdSet = new Set(deletedJobListingIds);
+  const nextDatabase = {
+    ...database,
+    jobListingLexiconLinks: database.jobListingLexiconLinks.filter(
+      (link): boolean => !deletedJobListingIdSet.has(link.jobListingId)
+    ),
+    jobListings: database.jobListings.filter(
+      (listing: FilemakerJobListing): boolean => !deletedJobListingIdSet.has(listing.id)
+    ),
+  };
+  const persisted = await upsertFilemakerCampaignSettingValue(
+    FILEMAKER_DATABASE_KEY,
+    JSON.stringify(toPersistedFilemakerDatabase(nextDatabase))
+  );
+  if (!persisted) {
+    throw new Error('Failed to delete linked Filemaker job listings.');
+  }
+  return {
+    deletedJobListingCount: deletedJobListingIds.length,
+    deletedJobListingIds,
+  };
+};
+
 const stripUndefinedFields = <T extends Record<string, unknown>>(input: T): Partial<T> =>
   Object.fromEntries(
     Object.entries(input).filter((entry: [string, unknown]): boolean => entry[1] !== undefined)
@@ -748,5 +849,52 @@ export const deleteMongoFilemakerOrganization = async (
   if (result.deletedCount !== 1) {
     throw notFoundError('Filemaker organization was not found.');
   }
+  await deleteSettingsJobListingsForOrganizationIds(
+    buildOrganizationOwnerIds({
+      documents: [existing],
+      requestedOrganizationIds: [organizationId],
+    })
+  );
   return toFilemakerOrganization(existing);
+};
+
+export const deleteMongoFilemakerOrganizations = async (
+  organizationIds: readonly string[]
+): Promise<DeleteMongoFilemakerOrganizationsResult> => {
+  const requestedOrganizationIds = normalizeUniqueOrganizationIds(organizationIds);
+  const collection = await getFilemakerOrganizationsCollection();
+  const documentsById = new Map<string, FilemakerOrganizationMongoDocument>();
+  const missingOrganizationIds: string[] = [];
+
+  for (const organizationId of requestedOrganizationIds) {
+    // eslint-disable-next-line no-await-in-loop
+    const document = await findMongoFilemakerOrganizationDocument(collection, organizationId);
+    if (!document) {
+      missingOrganizationIds.push(organizationId);
+      continue;
+    }
+    documentsById.set(document._id, document);
+  }
+
+  const documents = Array.from(documentsById.values());
+  if (documents.length > 0) {
+    await collection.deleteMany({
+      _id: { $in: documents.map((document: FilemakerOrganizationMongoDocument): string => document._id) },
+    });
+  }
+
+  const deletedJobListings = await deleteSettingsJobListingsForOrganizationIds(
+    buildOrganizationOwnerIds({ documents, requestedOrganizationIds })
+  );
+  const deletedOrganizations = documents.map(toFilemakerOrganization);
+  return {
+    ...deletedJobListings,
+    deletedOrganizationCount: deletedOrganizations.length,
+    deletedOrganizationIds: deletedOrganizations.map(
+      (organization: FilemakerOrganization): string => organization.id
+    ),
+    deletedOrganizations,
+    missingOrganizationIds,
+    requestedOrganizationIds,
+  };
 };

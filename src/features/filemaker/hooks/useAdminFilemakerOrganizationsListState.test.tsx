@@ -104,6 +104,15 @@ const listResponse = {
   totalPages: 1,
 };
 
+const emptyListResponse = {
+  ...listResponse,
+  collectionCount: 0,
+  linkedEventsByOrganizationId: {},
+  linkedJobListingsByOrganizationId: {},
+  organizations: [],
+  totalCount: 0,
+};
+
 const linkedJobListing = {
   createdAt: '2026-04-28T10:05:00.000Z',
   description: 'Build commerce software',
@@ -424,14 +433,16 @@ describe('useAdminFilemakerOrganizationsListState', () => {
   });
 
   it('confirms and deletes an organization from the row action menu', async () => {
+    let deleted = false;
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const url = String(input);
       if (url.startsWith('/api/filemaker/organizations?')) {
-        return Response.json(listResponse);
+        return Response.json(deleted ? emptyListResponse : listResponse);
       }
       if (url === '/api/filemaker/organizations/org-1') {
         expect(init).toMatchObject({ method: 'DELETE' });
         expect(init?.headers).toMatchObject({ 'x-csrf-token': 'csrf-token' });
+        deleted = true;
         return new Response(null, { status: 204 });
       }
       throw new Error(`Unexpected fetch ${url}`);
@@ -467,10 +478,90 @@ describe('useAdminFilemakerOrganizationsListState', () => {
       '/api/filemaker/organizations/org-1',
       expect.objectContaining({ method: 'DELETE' })
     );
+    await waitFor(() => expect(result.current.organizations).toEqual([]));
     expect(result.current.organizationSelection).toEqual({});
+    expect(mocks.settingsRefetchMock).toHaveBeenCalledTimes(1);
     expect(mocks.toastMock).toHaveBeenCalledWith('Deleted organisation "Acme Inc".', {
       variant: 'success',
     });
+  });
+
+  it('batch deletes selected organizations and removes them from the visible list', async () => {
+    let deleted = false;
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.startsWith('/api/filemaker/organizations?')) {
+        return Response.json(
+          deleted
+            ? emptyListResponse
+            : {
+                ...listResponse,
+                linkedJobListingsByOrganizationId: { 'org-1': [linkedJobListing] },
+              }
+        );
+      }
+      if (url === '/api/filemaker/organizations/batch-delete') {
+        expect(init).toMatchObject({ method: 'POST' });
+        expect(init?.headers).toMatchObject({
+          'Content-Type': 'application/json',
+          'x-csrf-token': 'csrf-token',
+        });
+        expect(JSON.parse(String(init?.body))).toEqual({ organizationIds: ['org-1'] });
+        deleted = true;
+        return Response.json({
+          deletedJobListingCount: 1,
+          deletedJobListingIds: ['listing-1'],
+          deletedOrganizationCount: 1,
+          deletedOrganizationIds: ['org-1'],
+          deletedOrganizations: [listResponse.organizations[0]],
+          missingOrganizationIds: [],
+          requestedOrganizationIds: ['org-1'],
+        });
+      }
+      throw new Error(`Unexpected fetch ${url}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useAdminFilemakerOrganizationsListState());
+
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onToggleOrganizationSelection('org-1', true);
+    });
+    await waitFor(() => expect(result.current.selectedOrganizationCount).toBe(1));
+
+    act(() => {
+      result.current.onDeleteSelectedOrganizations();
+    });
+
+    const confirmPayload = mocks.confirmMock.mock.calls.at(-1)?.[0] as {
+      confirmText: string;
+      isDangerous: boolean;
+      onConfirm: () => Promise<void>;
+      title: string;
+    };
+    expect(confirmPayload).toMatchObject({
+      confirmText: 'Delete 1',
+      isDangerous: true,
+      title: 'Delete Selected Organisations',
+    });
+
+    await act(async () => {
+      await confirmPayload.onConfirm();
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/filemaker/organizations/batch-delete',
+      expect.objectContaining({ method: 'POST' })
+    );
+    await waitFor(() => expect(result.current.organizations).toEqual([]));
+    expect(result.current.organizationSelection).toEqual({});
+    expect(mocks.settingsRefetchMock).toHaveBeenCalledTimes(1);
+    expect(mocks.toastMock).toHaveBeenCalledWith(
+      'Deleted 1 organisation and 1 job listing.',
+      { variant: 'success' }
+    );
   });
 
   it('surfaces API error messages from failed scrape requests', async () => {

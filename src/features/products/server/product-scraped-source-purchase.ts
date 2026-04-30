@@ -5,7 +5,7 @@ import { startPlaywrightConnectionEngineTask } from '@/features/playwright/serve
 import { resolvePlaywrightActionRunsHref } from '@/features/playwright/utils/action-runs-links';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations/repositories';
 import type { ProductScrapedSourceActionResponse } from '@/shared/contracts/products/scraped-source';
-import { notFoundError } from '@/shared/errors/app-error';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { decryptSecret } from '@/shared/lib/security/encryption';
 
 import {
@@ -37,6 +37,28 @@ const resolvePurchaseCredentials = (
       : '',
 });
 
+const hasPurchaseCredentials = (credentials: PurchaseCredentials): boolean =>
+  credentials.username.length > 0 && credentials.password.length > 0;
+
+const assertPurchaseCredentials = (
+  context: ScrapedSourceListingContext,
+  connection: IntegrationConnectionRecord,
+  credentials: PurchaseCredentials
+): void => {
+  if (hasPurchaseCredentials(credentials)) return;
+
+  throw badRequestError(
+    'Scraped source purchase requires stored source account credentials. Edit the Scraped Source connection and add the email and password before running Buy.',
+    {
+      productId: context.product.id,
+      connectionId: connection.id,
+      sourceHost: context.host,
+      missingUsername: credentials.username.length === 0,
+      missingPassword: credentials.password.length === 0,
+    }
+  );
+};
+
 const buildPurchaseRequestInput = (
   context: ScrapedSourceListingContext,
   credentials: PurchaseCredentials
@@ -49,6 +71,7 @@ const buildPurchaseRequestInput = (
   host: context.host,
   username: optionalNonEmptyString(credentials.username),
   password: optionalNonEmptyString(credentials.password),
+  credentialsProvided: hasPurchaseCredentials(credentials),
   checkoutMode: 'manual_review',
   submitOrder: false,
 });
@@ -77,6 +100,7 @@ const markPurchaseQueued = async (
         runId,
         actionRunUrl,
         sourceUrl: context.sourceUrl,
+        credentialsProvided: true,
         submitOrder: false,
       },
     },
@@ -139,6 +163,7 @@ export const runScrapedSourcePurchase = async (
   }
 
   const credentials = resolvePurchaseCredentials(connection);
+  assertPurchaseCredentials(context, connection, credentials);
   const startedAt = new Date().toISOString();
   const task = await startPurchaseAutomationTask(connection, context, credentials);
   const runId = task.run.runId;

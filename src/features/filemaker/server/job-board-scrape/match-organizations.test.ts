@@ -57,4 +57,20 @@ describe('job-board organisation matching', () => {
       reason: 'contained name match',
     });
   });
+
+  it.each(['Sii Sp. z o.o.About the Company', 'Sii Sp. z o.o.O firmie'])(
+    'matches Pracuj employer names with appended company section label: %s',
+    (companyName) => {
+      const match = findBestMatch(
+        offer(companyName),
+        [buildCandidate(organization({ id: 'org-sii', name: 'Sii Sp. z o.o.' }))],
+        85
+      );
+
+      expect(match).toMatchObject({
+        organizationId: 'org-sii',
+        organizationName: 'Sii Sp. z o.o.',
+      });
+    }
+  );
 });

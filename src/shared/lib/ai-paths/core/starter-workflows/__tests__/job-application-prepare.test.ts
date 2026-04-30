@@ -21,6 +21,21 @@ import {
   JOB_APPLICATION_TAILORED_EMAIL_TRIGGER_BUTTON_ID,
 } from '@/shared/lib/ai-paths/job-application-prepare';
 
+const extractSetOnInsertTemplate = (updateTemplate: string | undefined): string => {
+  const template = updateTemplate ?? '';
+  const setOnInsertEndIndex = template.indexOf('},"$set"');
+  return setOnInsertEndIndex >= 0 ? template.slice(0, setOnInsertEndIndex) : template;
+};
+
+const expectNoJobApplicationSetOnInsertRefreshFields = (
+  updateTemplate: string | undefined
+): void => {
+  const setOnInsertTemplate = extractSetOnInsertTemplate(updateTemplate);
+
+  expect(setOnInsertTemplate).not.toContain('"integrationSlug"');
+  expect(setOnInsertTemplate).not.toContain('"canonicalApplicationKey"');
+};
+
 describe('starter job application preparation workflow', () => {
   it('ships separate canonical trigger buttons for each application artifact', () => {
     const bundle = materializeStarterWorkflowSeedBundle('auto_seed');
@@ -211,8 +226,15 @@ describe('starter job application preparation workflow', () => {
     expect(applicationDatabaseNode?.config?.database?.query?.queryTemplate).toContain(
       'canonicalApplicationKey'
     );
+    expect(applicationDatabaseNode?.config?.database?.query?.queryTemplate).toContain('"$or"');
+    expect(applicationDatabaseNode?.config?.database?.query?.queryTemplate).toContain(
+      'ai-job-application-'
+    );
     expect(applicationDatabaseNode?.config?.database?.updateTemplate).toContain(
       'activeArtifacts.tailoredCvVersionId'
+    );
+    expectNoJobApplicationSetOnInsertRefreshFields(
+      applicationDatabaseNode?.config?.database?.updateTemplate
     );
     expect(
       databaseNodes.find((node) => node.config?.database?.query?.collection === 'filemaker_cvs')
@@ -268,11 +290,18 @@ describe('starter job application preparation workflow', () => {
       expect(databaseNodes[0]?.config?.database?.query?.queryTemplate).toContain(
         'canonicalApplicationKey'
       );
+      expect(databaseNodes[0]?.config?.database?.query?.queryTemplate).toContain('"$or"');
+      expect(databaseNodes[0]?.config?.database?.query?.queryTemplate).toContain(
+        'ai-job-application-'
+      );
       expect(databaseNodes[0]?.config?.database?.updateTemplate).toContain(
         `activeArtifacts.${expectation.expectedTemplateField}VersionId`
       );
       expect(databaseNodes[0]?.config?.database?.updateTemplate).toContain(
         expectation.expectedTemplateField
+      );
+      expectNoJobApplicationSetOnInsertRefreshFields(
+        databaseNodes[0]?.config?.database?.updateTemplate
       );
       expect(report.shouldBlock).toBe(false);
       expect(report.compileReport.errors).toBe(0);
@@ -346,7 +375,11 @@ describe('starter job application preparation workflow', () => {
     ) as Record<string, Record<string, unknown>>;
 
     expect(renderedQuery).toEqual({
-      canonicalApplicationKey: 'person-1::org-1::job-1::pracuj-pl',
+      $or: [
+        { canonicalApplicationKey: 'person-1::org-1::job-1::pracuj-pl' },
+        { id: 'ai-job-application-person-1-org-1-job-1-pracuj-pl' },
+        { _id: 'ai-job-application-person-1-org-1-job-1-pracuj-pl' },
+      ],
     });
     expect(renderedUpdate['$setOnInsert']).toEqual(
       expect.objectContaining({
@@ -354,10 +387,10 @@ describe('starter job application preparation workflow', () => {
         personId: 'person-1',
         organizationId: 'org-1',
         jobListingId: 'job-1',
-        integrationSlug: 'pracuj-pl',
-        canonicalApplicationKey: 'person-1::org-1::job-1::pracuj-pl',
       })
     );
+    expect(renderedUpdate['$setOnInsert']).not.toHaveProperty('integrationSlug');
+    expect(renderedUpdate['$setOnInsert']).not.toHaveProperty('canonicalApplicationKey');
     expect(renderedUpdate['$set']).toEqual(
       expect.objectContaining({
         personName: 'Ada Lovelace',
@@ -365,6 +398,7 @@ describe('starter job application preparation workflow', () => {
         jobTitle: 'FileMaker Consultant',
         integrationId: 'integration-pracuj',
         integrationSlug: 'pracuj-pl',
+        canonicalApplicationKey: 'person-1::org-1::job-1::pracuj-pl',
         connectionId: 'connection-pracuj',
         source: 'ai-path-job-application-tailored-email',
         sourceEntityId: 'org-1:job-1:person-1:application_package',
@@ -385,5 +419,10 @@ describe('starter job application preparation workflow', () => {
         }),
       })
     );
+    expect(
+      Object.keys(renderedUpdate['$setOnInsert'] ?? {}).filter((key) =>
+        Object.prototype.hasOwnProperty.call(renderedUpdate['$set'] ?? {}, key)
+      )
+    ).toEqual([]);
   });
 });

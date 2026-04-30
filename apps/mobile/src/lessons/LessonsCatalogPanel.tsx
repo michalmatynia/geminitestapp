@@ -71,7 +71,7 @@ function LessonItemRow({ item, copy, locale, onOpenCatalogLesson }: { item: Less
       <View style={{ flexDirection: 'column', gap: 8 }}>
         <LinkButton href={href} label={`${copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}: ${item.lesson.title}`} onPress={onOpenCatalogLesson} stretch textStyle={{ textAlign: 'left' }} tone="primary" />
         {item.practiceHref && (
-          <LinkButton href={item.practiceHref as Href} label={`${copy({ de: 'Training starten', en: 'Start practice', pl: 'Uruchom trening' })}: ${item.lesson.title}`} stretch textStyle={{ textAlign: 'left' }} tone="secondary" />
+          <LinkButton href={item.practiceHref} label={`${copy({ de: 'Training starten', en: 'Start practice', pl: 'Uruchom trening' })}: ${item.lesson.title}`} stretch textStyle={{ textAlign: 'left' }} tone='secondary' />
         )}
       </View>
     </InsetPanel>

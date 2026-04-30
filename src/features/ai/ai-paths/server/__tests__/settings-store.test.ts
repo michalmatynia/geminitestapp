@@ -622,6 +622,9 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     });
     const databaseNode = canonical.nodes.find((node) => node.type === 'database');
     const updateTemplate = databaseNode?.config?.database?.updateTemplate ?? '';
+    const setOnInsertEndIndex = updateTemplate.indexOf('},"$set"');
+    const setOnInsertTemplate =
+      setOnInsertEndIndex >= 0 ? updateTemplate.slice(0, setOnInsertEndIndex) : updateTemplate;
     const parsed = JSON.parse(emailRecord.value) as Record<string, unknown>;
     const starterExtension =
       parsed['extensions'] &&
@@ -636,7 +639,9 @@ describe('settings-store flag preservation and maintenance-only starter policy',
     expect(updateTemplate).toContain('"applicationEmail":{{value.applicationEmail}}');
     expect(updateTemplate).toContain('"artifactVersions.applicationEmail"');
     expect(updateTemplate).toContain('"sourceRunId":"{{context.runId}}"');
-    expect(starterExtension?.['templateVersion']).toBe(13);
+    expect(setOnInsertTemplate).not.toContain('"integrationSlug"');
+    expect(setOnInsertTemplate).not.toContain('"canonicalApplicationKey"');
+    expect(starterExtension?.['templateVersion']).toBe(15);
   });
 
   it('seeds the broader canonical starter workflow bundle from semantic workflow assets', () => {

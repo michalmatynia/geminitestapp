@@ -135,6 +135,7 @@ describe('product scraped source purchase', () => {
             sourceUrl: product.supplierLink,
             username: connection.username,
             password: 'plain-password',
+            credentialsProvided: true,
             submitOrder: false,
           }),
         }),
@@ -160,6 +161,7 @@ describe('product scraped source purchase', () => {
           purchase: expect.objectContaining({
             mode: 'playwright_manual_review',
             runId: 'run-purchase-1',
+            credentialsProvided: true,
             submitOrder: false,
           }),
         }),
@@ -172,5 +174,26 @@ describe('product scraped source purchase', () => {
       runId: 'run-purchase-1',
       actionRunUrl: '/admin/playwright/action-runs?runId=run-purchase-1',
     });
+  });
+
+  it('requires stored source credentials before starting the purchase run', async () => {
+    mocks.getConnectionById.mockResolvedValue({
+      ...connection,
+      username: '',
+      password: null,
+    });
+
+    await expect(runScrapedSourcePurchase(product.id)).rejects.toMatchObject({
+      message: expect.stringContaining('requires stored source account credentials'),
+      httpStatus: 400,
+    });
+
+    expect(mocks.startPlaywrightConnectionEngineTask).not.toHaveBeenCalled();
+    expect(mocks.updateListing).not.toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        status: 'purchase_queued',
+      })
+    );
   });
 });

@@ -399,32 +399,35 @@ export const invalidateCatalogScopedData = async (
   queryClient: QueryClient,
   catalogId: string | null
 ): Promise<void> => {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.metadata.shippingGroups(catalogId),
-    }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.metadata.simpleParameters(catalogId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.metadata.titleTermsAll(catalogId),
-    }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.settings.shippingGroups(catalogId),
-    }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(catalogId) }),
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(catalogId) }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.settings.simpleParameters(catalogId),
-    }),
-    queryClient.invalidateQueries({
-      queryKey: QUERY_KEYS.products.settings.categoryTree(catalogId),
-    }),
-  ]);
+  const catalogIds = catalogId === null ? [null] : [catalogId, null];
+  await Promise.all(
+    catalogIds.flatMap((id) => [
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.categories(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.metadata.shippingGroups(id),
+      }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.tags(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.metadata.parameters(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.metadata.simpleParameters(id),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.metadata.titleTermsAll(id),
+      }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.categories(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.settings.shippingGroups(id),
+      }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.tags(id) }),
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.products.settings.parameters(id) }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.settings.simpleParameters(id),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.products.settings.categoryTree(id),
+      }),
+    ])
+  );
 };
 
 export const invalidatePriceGroups = async (queryClient: QueryClient): Promise<void> => {

@@ -210,6 +210,126 @@ describe('useTraderaLiveExecution', () => {
     ]);
   });
 
+  it('reconstructs final failed quicklist steps when emitted live steps are stale', async () => {
+    const staleSteps = [
+      'browser_preparation',
+      'browser_open',
+      'cookie_accept',
+      'auth_check',
+      'auth_login',
+      'auth_manual',
+      'duplicate_check',
+      'deep_duplicate_check',
+      'sell_page_open',
+      'image_cleanup',
+      'image_upload',
+      'title_fill',
+      'description_fill',
+      'listing_format_select',
+      'price_set',
+      'category_select',
+      'attribute_select',
+      'shipping_set',
+      'publish',
+      'publish_verify',
+      'browser_close',
+    ].map((stepId) => ({
+      id: stepId,
+      label: stepId,
+      status:
+        stepId === 'publish_verify'
+          ? 'error'
+          : stepId === 'browser_close'
+            ? 'skipped'
+            : 'pending',
+      ...(stepId === 'publish_verify'
+        ? {
+            message:
+              'FAIL_PUBLISH_VALIDATION: Publish verification did not find the listing after submit.',
+          }
+        : {}),
+    }));
+
+    fetchPlaywrightRunMock.mockResolvedValue({
+      ok: true,
+      data: {
+        run: {
+          runId: 'run-live-failed-123',
+          status: 'failed',
+          result: {
+            finalUrl: 'https://www.tradera.com/en/my/active',
+            outputs: {
+              steps: staleSteps,
+              result: {
+                stage: 'publish_clicked',
+                currentUrl: 'https://www.tradera.com/en/my/active',
+              },
+            },
+          },
+          logs: [
+            '[user] tradera.quicklist.start {"listingAction":"relist"}',
+            '[user] tradera.quicklist.auth.initial {"loggedIn":true}',
+            '[user] tradera.quicklist.auth.final {"loggedIn":true}',
+            '[user] tradera.quicklist.duplicate.result {"duplicateFound":false}',
+            '[user] tradera.quicklist.sell_page.entry_point {"url":"https://www.tradera.com/en/selling/new"}',
+            '[user] tradera.quicklist.image.upload_start {"fileCount":2}',
+            '[user] tradera.quicklist.field.verified {"field":"title"}',
+            '[user] tradera.quicklist.category.search_result {"path":"Collectibles > Pins"}',
+            '[user] tradera.quicklist.delivery.save.applied {"shippingCondition":"Buyer pays shipping"}',
+            '[user] tradera.quicklist.publish.click_result {"clicked":true}',
+          ],
+          error:
+            'FAIL_PUBLISH_VALIDATION: Publish verification did not find the listing after submit.',
+        },
+      },
+    });
+
+    const { result } = renderHook(
+      () =>
+        useTraderaLiveExecution(
+          buildListing({
+            action: 'relist',
+            runId: 'run-live-failed-123',
+          })
+        ),
+      {
+        wrapper: createWrapper(),
+      }
+    );
+
+    await waitFor(() => {
+      expect(result.current?.status).toBe('failed');
+    });
+
+    expect(
+      result.current?.executionSteps.find((step) => step.id === 'duplicate_check')
+    ).toMatchObject({
+      status: 'success',
+    });
+    expect(
+      result.current?.executionSteps.find((step) => step.id === 'image_upload')
+    ).toMatchObject({
+      status: 'success',
+    });
+    expect(
+      result.current?.executionSteps.find((step) => step.id === 'shipping_set')
+    ).toMatchObject({
+      status: 'success',
+    });
+    expect(
+      result.current?.executionSteps.find((step) => step.id === 'publish')
+    ).toMatchObject({
+      status: 'success',
+    });
+    expect(
+      result.current?.executionSteps.find((step) => step.id === 'publish_verify')
+    ).toMatchObject({
+      status: 'error',
+      message:
+        'FAIL_PUBLISH_VALIDATION: Publish verification did not find the listing after submit.',
+    });
+  });
+
   it('falls back to Tradera raw-result execution steps for live status checks', async () => {
     fetchPlaywrightRunMock.mockResolvedValue({
       ok: true,

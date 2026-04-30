@@ -76,6 +76,7 @@ export const integrationDefinitions = [
   { name: '1688', slug: '1688' },
   { name: 'Allegro', slug: 'allegro' },
   { name: 'Baselinker', slug: 'baselinker' },
+  { name: 'Scraped Source', slug: 'scraped-source' },
   { name: 'LinkedIn', slug: 'linkedin' },
   { name: 'Pracuj.pl', slug: 'pracuj-pl' },
   { name: 'Playwright (Programmable)', slug: 'playwright-programmable' },

@@ -49,6 +49,15 @@ function SelectedCategoryHint({ label }: { label: string | null }): React.JSX.El
 }
 
 function StructuredProductNameInput({ controller }: ControllerProps): React.JSX.Element {
+  const inputAnchorRef = React.useRef<HTMLInputElement | null>(null);
+  const assignInputRef = React.useCallback(
+    (node: HTMLInputElement | null): void => {
+      inputAnchorRef.current = node;
+      controller.inputRef(node);
+    },
+    [controller]
+  );
+
   return (
     <div
       className='relative'
@@ -59,7 +68,7 @@ function StructuredProductNameInput({ controller }: ControllerProps): React.JSX.
       aria-controls={controller.dropdownOpen ? controller.listboxId : undefined}
     >
       <Input
-        ref={controller.inputRef}
+        ref={assignInputRef}
         id={controller.fieldName}
         name={controller.inputName}
         value={controller.value}
@@ -81,6 +90,7 @@ function StructuredProductNameInput({ controller }: ControllerProps): React.JSX.
       />
       {controller.dropdownOpen ? (
         <ProductTitleSuggestionPanel
+          anchorRef={inputAnchorRef}
           listboxId={controller.listboxId}
           listboxLabel={controller.listboxLabel}
           suggestions={controller.suggestions}

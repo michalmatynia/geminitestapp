@@ -181,11 +181,14 @@ const createProps = (
     parent: 'all',
     updatedBy: '',
   },
+  isDeletingOrganizations: false,
   isLoading: false,
   isSelectingAllOrganizations: false,
   nodes: [],
   onDeselectAllOrganizations: vi.fn(),
   onDeselectOrganizationsPage: vi.fn(),
+  onDeleteOrganization: vi.fn(),
+  onDeleteSelectedOrganizations: vi.fn(),
   onFilterChange: vi.fn(),
   onLaunchOrganizationEmailScrape: vi.fn(),
   onLaunchOrganizationWebsiteSocialScrape: vi.fn(),
@@ -209,9 +212,11 @@ const createProps = (
   renderNode: vi.fn(),
   selectedOrganizationCount: 0,
   shownCount: 0,
+  sort: 'updatedAt_desc',
   totalCount: 0,
   totalCountIsExact: true,
   totalPages: 1,
+  ConfirmationModal: () => null,
   ...overrides,
 });
 
@@ -276,6 +281,25 @@ describe('FilemakerOrganizationsSelectionActions', () => {
     await user.click(within(modal).getByRole('button', { name: 'Complete scrape' }));
 
     expect(onJobBoardScrapeCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it('runs the selected organisation delete action', async () => {
+    const user = userEvent.setup();
+    const onDeleteSelectedOrganizations = vi.fn();
+
+    render(
+      <FilemakerOrganizationsSelectionActions
+        {...createProps({
+          onDeleteSelectedOrganizations,
+          organizationSelection: { 'org-1': true },
+          selectedOrganizationCount: 1,
+        })}
+      />
+    );
+
+    await user.click(screen.getByRole('button', { name: /Delete selected organisations/i }));
+
+    expect(onDeleteSelectedOrganizations).toHaveBeenCalledTimes(1);
   });
 
   it('applies and clears an active advanced filter preset', async () => {

@@ -485,6 +485,54 @@ describe('integration connections handler', () => {
     });
   });
 
+  it('allows creating a scraped source connection without credentials', async () => {
+    getIntegrationByIdMock.mockResolvedValue({
+      id: 'integration-scraped-source-1',
+      slug: 'scraped-source',
+    });
+    parseJsonBodyMock.mockResolvedValue({
+      ok: true,
+      data: {
+        name: 'BattleStock',
+      },
+    });
+    createConnectionMock.mockResolvedValue({
+      id: 'conn-battlestock-1',
+      integrationId: 'integration-scraped-source-1',
+      name: 'BattleStock',
+      username: undefined,
+      createdAt: '2026-04-02T10:00:00.000Z',
+      updatedAt: '2026-04-02T11:00:00.000Z',
+      playwrightStorageStateUpdatedAt: null,
+      playwrightPersonaId: null,
+      traderaBrowserMode: 'builtin',
+      traderaDefaultDurationHours: 72,
+      traderaAutoRelistEnabled: true,
+      traderaAutoRelistLeadMinutes: 180,
+      traderaApiSandbox: false,
+    });
+
+    const response = await postHandler(
+      new Request(
+        'http://localhost/api/v2/integrations/integration-scraped-source-1/connections',
+        { method: 'POST' }
+      ) as never,
+      {} as never,
+      { id: 'integration-scraped-source-1' }
+    );
+
+    const payload = await response.json();
+
+    expect(createConnectionMock).toHaveBeenCalledWith('integration-scraped-source-1', {
+      name: 'BattleStock',
+    });
+    expect(encryptSecretMock).not.toHaveBeenCalled();
+    expect(payload).toMatchObject({
+      id: 'conn-battlestock-1',
+      name: 'BattleStock',
+    });
+  });
+
   it('resolves and stores a Persons profile for Pracuj.pl job applications', async () => {
     getIntegrationByIdMock.mockResolvedValue({
       id: 'integration-pracuj-1',

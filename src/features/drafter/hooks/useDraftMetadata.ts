@@ -23,8 +23,9 @@ type DraftMetadataResult = {
 
 type DraftMetadataQueryConfig<T> = {
   description: string;
-  queryKeyFor: (catalogId: string) => readonly unknown[];
-  queryFn: (catalogId: string) => Promise<T[]>;
+  includeGlobalWhenEmpty?: boolean;
+  queryKeyFor: (catalogId: string | null) => readonly unknown[];
+  queryFn: (catalogId: string | null) => Promise<T[]>;
   resource: string;
   source: string;
   tags: string[];
@@ -40,8 +41,12 @@ const useDraftMetadataQueries = <T,>(
   selectedCatalogIds: string[],
   config: DraftMetadataQueryConfig<T>
 ): UseQueryResult<T[], Error>[] => {
-  const queries: Array<QueryDescriptorV2<unknown, unknown, unknown, QueryKey>> = selectedCatalogIds.map(
-    (id: string) => {
+  let catalogIds: Array<string | null> = selectedCatalogIds;
+  if (selectedCatalogIds.length === 0) {
+    catalogIds = config.includeGlobalWhenEmpty === true ? [null] : [];
+  }
+  const queries: Array<QueryDescriptorV2<unknown, unknown, unknown, QueryKey>> = catalogIds.map(
+    (id: string | null) => {
       const queryKey = normalizeQueryKey(config.queryKeyFor(id));
       return {
         queryKey,
@@ -62,14 +67,19 @@ const useDraftMetadataQueries = <T,>(
   return createMultiQueryV2({ queries });
 };
 
-const listSimpleParameters = async (catalogId: string): Promise<ProductSimpleParameter[]> =>
-  await api.get<ProductSimpleParameter[]>('/api/v2/products/simple-parameters', {
-    params: { catalogId },
+const listSimpleParameters = async (
+  catalogId: string | null
+): Promise<ProductSimpleParameter[]> => {
+  const params = catalogId === null ? undefined : { catalogId };
+  return await api.get<ProductSimpleParameter[]>('/api/v2/products/simple-parameters', {
+    params,
     cache: 'no-store',
   });
+};
 
 export const useDraftMetadata = (selectedCatalogIds: string[]): DraftMetadataResult => {
   const categoryQueries = useDraftMetadataQueries<ProductCategory>(selectedCatalogIds, {
+    includeGlobalWhenEmpty: true,
     queryKeyFor: QUERY_KEYS.products.metadata.categories,
     queryFn: getCategoriesFlat,
     source: 'drafter.hooks.useDraftMetadata.categories',
@@ -86,6 +96,7 @@ export const useDraftMetadata = (selectedCatalogIds: string[]): DraftMetadataRes
     tags: ['products', 'metadata', 'tags', 'multi'],
   });
   const parameterQueries = useDraftMetadataQueries<ProductParameter>(selectedCatalogIds, {
+    includeGlobalWhenEmpty: true,
     queryKeyFor: QUERY_KEYS.products.metadata.parameters,
     queryFn: getParameters,
     source: 'drafter.hooks.useDraftMetadata.parameters',
@@ -94,6 +105,7 @@ export const useDraftMetadata = (selectedCatalogIds: string[]): DraftMetadataRes
     tags: ['products', 'metadata', 'parameters', 'multi'],
   });
   const simpleParameterQueries = useDraftMetadataQueries<ProductSimpleParameter>(selectedCatalogIds, {
+    includeGlobalWhenEmpty: true,
     queryKeyFor: QUERY_KEYS.products.metadata.simpleParameters,
     queryFn: listSimpleParameters,
     source: 'drafter.hooks.useDraftMetadata.simpleParameters',

@@ -28,6 +28,7 @@ export function IntegrationList(): React.JSX.Element {
     vintedDefinition,
     scanner1688Definition,
     baselinkerDefinition,
+    scrapedSourceDefinition,
     linkedinDefinition,
     pracujDefinition,
   } = useIntegrationList();
@@ -76,6 +77,14 @@ export function IntegrationList(): React.JSX.Element {
       variant: 'processing' as const,
       color: 'active' as const,
       definition: baselinkerDefinition,
+    },
+    {
+      slug: 'scraped-source',
+      label: 'Scraped Source',
+      type: 'Source',
+      variant: 'info' as const,
+      color: 'info' as const,
+      definition: scrapedSourceDefinition,
     },
     {
       slug: 'linkedin',

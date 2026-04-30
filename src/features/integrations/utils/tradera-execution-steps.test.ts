@@ -28,6 +28,7 @@ const QUICKLIST_STEP_IDS = [
   'publish',
   'publish_verify',
 ];
+const QUICKLIST_STEP_IDS_WITH_BROWSER_CLOSE = [...QUICKLIST_STEP_IDS, 'browser_close'];
 
 describe('tradera-execution-steps', () => {
   it('builds a successful quicklist step timeline from scripted logs and final stage', () => {
@@ -564,6 +565,74 @@ describe('tradera-execution-steps', () => {
     expect(execution.steps.find((step) => step.id === 'category_select')).toMatchObject({
       status: 'error',
       message: 'FAIL_CATEGORY_SET: Tradera category could not be selected.',
+    });
+  });
+
+  it('maps user-facing missing shipping group failures onto delivery configuration', () => {
+    const staleSteps = QUICKLIST_STEP_IDS_WITH_BROWSER_CLOSE.map((stepId) => ({
+      id: stepId,
+      label: stepId,
+      status:
+        stepId === 'publish_verify'
+          ? 'error'
+          : stepId === 'browser_close'
+            ? 'skipped'
+            : 'pending',
+      ...(stepId === 'publish_verify'
+        ? {
+            message:
+              'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+          }
+        : {}),
+    }));
+
+    const execution = resolveTraderaExecutionStepsFromMarketplaceData({
+      tradera: {
+        lastExecution: {
+          action: 'relist',
+          ok: false,
+          error:
+            'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+          metadata: {
+            executionSteps: staleSteps,
+            rawResult: {
+              executionSteps: staleSteps,
+            },
+          },
+        },
+      },
+    });
+
+    expect(execution.steps.find((step) => step.id === 'shipping_set')).toMatchObject({
+      status: 'error',
+      message:
+        'Tradera export requires a shipping group with a Tradera shipping price in EUR. Assign or configure a shipping group with the EUR price and retry.',
+    });
+    expect(execution.steps.find((step) => step.id === 'publish')).toMatchObject({
+      status: 'skipped',
+    });
+    expect(execution.steps.find((step) => step.id === 'publish_verify')).toMatchObject({
+      status: 'skipped',
+    });
+  });
+
+  it('maps user-facing category mapping failures onto category selection', () => {
+    const steps = buildTraderaQuicklistExecutionSteps({
+      action: 'list',
+      rawResult: {
+        stage: 'listing_format_selected',
+      },
+      errorMessage:
+        'No active Tradera category mapping was found for Gaming Coins. Map the category before listing.',
+    });
+
+    expect(steps.find((step) => step.id === 'category_select')).toMatchObject({
+      status: 'error',
+      message:
+        'No active Tradera category mapping was found for Gaming Coins. Map the category before listing.',
+    });
+    expect(steps.find((step) => step.id === 'shipping_set')).toMatchObject({
+      status: 'skipped',
     });
   });
 

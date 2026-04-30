@@ -97,6 +97,43 @@ interface LessonDetailsCardProps extends LessonCardProps {
   selectedLesson: SelectedLesson;
 }
 
+function LessonStats({ checkpointSummary, copy }: { checkpointSummary: CheckpointSummary | undefined; copy: LessonCardProps['copy'] }) {
+  return (
+    <View style={{ gap: 8 }}>
+      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Versuche', en: 'Attempts', pl: 'Próby' })} {checkpointSummary?.attempts ?? 0}</Text>
+      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Bestes Ergebnis', en: 'Best score', pl: 'Najlepszy wynik' })} {checkpointSummary?.bestScorePercent ?? 0}%</Text>
+      <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Letztes Ergebnis', en: 'Last score', pl: 'Ostatni wynik' })} {checkpointSummary?.lastScorePercent ?? 0}%</Text>
+      {checkpointSummary?.lastCompletedAt && (
+        <Text style={{ color: '#64748b', fontSize: 12 }}>{copy({ de: 'Letzte Speicherung', en: 'Last saved', pl: 'Ostatni zapis' })}: {new Date(checkpointSummary.lastCompletedAt).toLocaleDateString()}</Text>
+      )}
+    </View>
+  );
+}
+
+function LessonProgress({
+  activeSectionIdx,
+  effectiveFocusToken,
+  lessonBody,
+  copy,
+}: {
+  activeSectionIdx: number;
+  effectiveFocusToken: string | null;
+  lessonBody: LessonBody;
+  copy: LessonCardProps['copy'];
+}) {
+  return (
+    <InsetPanel gap={8} style={{ backgroundColor: '#f0f9ff', borderColor: '#bae6fd' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+        <Text style={{ color: '#0369a1', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Lektionsfortschritt', en: 'Lesson progress', pl: 'Postęp lekcji' })}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {effectiveFocusToken !== null && <Pill label={copy({ de: 'Über Shortcut geöffnet', en: 'Opened from shortcut', pl: 'Otwarte ze skrótu' })} tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }} />}
+          <Pill label={`${Math.round(((activeSectionIdx + 1) / lessonBody.sections.length) * 100)}%`} tone={{ backgroundColor: '#ffffff', borderColor: '#7dd3fc', textColor: '#0369a1' }} />
+        </View>
+      </View>
+    </InsetPanel>
+  );
+}
+
 function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
   const { copy, selectedLesson, actionError, savedCheckpoint, selectedLessonBody, activeSectionIdx, effectiveFocusToken, saveLessonCheckpoint, setSavedCheckpoint, setActiveSectionIdx, setDismissedFocusToken, router, focusToken } = props;
   
@@ -139,15 +176,7 @@ function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
             }}
             setActiveSectionIndex={setActiveSectionIdx}
           />
-          <InsetPanel gap={8} style={{ backgroundColor: '#f0f9ff', borderColor: '#bae6fd' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-              <Text style={{ color: '#0369a1', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Lektionsfortschritt', en: 'Lesson progress', pl: 'Postęp lekcji' })}</Text>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {effectiveFocusToken !== null && <Pill label={copy({ de: 'Über Shortcut geöffnet', en: 'Opened from shortcut', pl: 'Otwarte ze skrótu' })} tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }} />}
-                <Pill label={`${Math.round(((activeSectionIdx + 1) / selectedLessonBody.sections.length) * 100)}%`} tone={{ backgroundColor: '#ffffff', borderColor: '#7dd3fc', textColor: '#0369a1' }} />
-              </View>
-            </View>
-          </InsetPanel>
+          <LessonProgress activeSectionIdx={activeSectionIdx} effectiveFocusToken={effectiveFocusToken} lessonBody={selectedLessonBody} copy={copy} />
         </View>
       ) : (
         <View style={{ gap: 12 }}>
@@ -155,15 +184,7 @@ function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
             <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Lektionsbrief', en: 'Lesson brief', pl: 'Skrót lekcji' })}</Text>
             <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Diese Lektion ist hier vorerst als Kurzbrief verfügbar.', en: 'This lesson is currently available here as a brief summary.', pl: 'Ta lekcja jest tu na razie dostępna jako krótki skrót.' })}</Text>
           </InsetPanel>
-
-          <View style={{ gap: 8 }}>
-            <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Versuche', en: 'Attempts', pl: 'Próby' })} {selectedLesson.checkpointSummary?.attempts ?? 0}</Text>
-            <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Bestes Ergebnis', en: 'Best score', pl: 'Najlepszy wynik' })} {selectedLesson.checkpointSummary?.bestScorePercent ?? 0}%</Text>
-            <Text style={{ color: '#475569', fontSize: 14 }}>{copy({ de: 'Letztes Ergebnis', en: 'Last score', pl: 'Ostatni wynik' })} {selectedLesson.checkpointSummary?.lastScorePercent ?? 0}%</Text>
-            {selectedLesson.checkpointSummary?.lastCompletedAt && (
-              <Text style={{ color: '#64748b', fontSize: 12 }}>{copy({ de: 'Letzte Speicherung', en: 'Last saved', pl: 'Ostatni zapis' })}: {new Date(selectedLesson.checkpointSummary.lastCompletedAt).toLocaleDateString()}</Text>
-            )}
-          </View>
+          <LessonStats checkpointSummary={selectedLesson.checkpointSummary} copy={copy} />
           <ActionButton
             label={copy({ de: 'Zapisz checkpoint', en: 'Save checkpoint', pl: 'Zapisz checkpoint' })}
             onPress={() => {
@@ -175,11 +196,10 @@ function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
               setSavedCheckpoint(res);
             }}
             stretch
-            tone="primary"
+            tone='primary'
           />
         </View>
       )}
-
       <ActionButton
         label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}
         onPress={() => {
@@ -187,7 +207,7 @@ function LessonDetailsCard(props: LessonDetailsCardProps): React.JSX.Element {
           router.replace('/lessons');
         }}
         stretch
-        tone="secondary"
+        tone='secondary'
       />
     </Card>
   );

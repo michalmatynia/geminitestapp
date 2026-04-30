@@ -1,19 +1,93 @@
 'use client';
 
 import { ChevronRight } from 'lucide-react';
-import React from 'react';
+import React, { useLayoutEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { cn } from '@/shared/utils/ui-utils';
 
 import type { SuggestionOption } from './StructuredProductNameField.types';
 
 type ProductTitleSuggestionPanelProps = {
+  anchorRef?: React.RefObject<HTMLInputElement | null>;
   listboxId: string;
   listboxLabel: string;
   suggestions: SuggestionOption[];
   highlightedIndex: number;
   onApply: (option: SuggestionOption) => void;
   onHighlight: (index: number) => void;
+};
+
+type SuggestionPanelPosition = {
+  left: number;
+  maxHeight: number;
+  top: number;
+  width: number;
+};
+
+type ProductTitleSuggestionPanelContentProps = ProductTitleSuggestionPanelProps & {
+  position: SuggestionPanelPosition | null;
+};
+
+const MIN_PANEL_HEIGHT = 140;
+const MAX_PANEL_HEIGHT = 240;
+const PANEL_GAP = 6;
+const VIEWPORT_MARGIN = 12;
+
+const resolvePanelPosition = (anchor: HTMLInputElement): SuggestionPanelPosition => {
+  const rect = anchor.getBoundingClientRect();
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : MAX_PANEL_HEIGHT;
+  const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : rect.width;
+  const spaceBelow = viewportHeight - rect.bottom - VIEWPORT_MARGIN;
+  const spaceAbove = rect.top - VIEWPORT_MARGIN;
+  const shouldOpenAbove = spaceBelow < MIN_PANEL_HEIGHT && spaceAbove > spaceBelow;
+  const maxHeight = Math.max(
+    MIN_PANEL_HEIGHT,
+    Math.min(MAX_PANEL_HEIGHT, shouldOpenAbove ? spaceAbove : spaceBelow)
+  );
+  const width = Math.max(
+    1,
+    Math.min(rect.width, Math.max(1, viewportWidth - VIEWPORT_MARGIN * 2))
+  );
+  const left = Math.min(
+    Math.max(VIEWPORT_MARGIN, rect.left),
+    Math.max(VIEWPORT_MARGIN, viewportWidth - width - VIEWPORT_MARGIN)
+  );
+  return {
+    left,
+    maxHeight,
+    top: shouldOpenAbove
+      ? Math.max(VIEWPORT_MARGIN, rect.top - maxHeight - PANEL_GAP)
+      : rect.bottom + PANEL_GAP,
+    width,
+  };
+};
+
+const useSuggestionPanelPosition = (
+  anchorRef: React.RefObject<HTMLInputElement | null> | undefined
+): SuggestionPanelPosition | null => {
+  const [position, setPosition] = useState<SuggestionPanelPosition | null>(null);
+
+  useLayoutEffect(() => {
+    if (anchorRef === undefined) return undefined;
+    const updatePosition = (): void => {
+      const anchor = anchorRef.current;
+      if (anchor === null) {
+        setPosition(null);
+        return;
+      }
+      setPosition(resolvePanelPosition(anchor));
+    };
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [anchorRef]);
+
+  return position;
 };
 
 type ProductTitleSuggestionOptionProps = {
@@ -27,11 +101,16 @@ type ProductTitleSuggestionOptionProps = {
 
 const getSuggestionPanelClassName = (): string =>
   cn(
-    'pointer-events-auto absolute left-0 right-0 top-[calc(100%+6px)] z-30 min-w-0 overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-2xl backdrop-blur',
+    'pointer-events-auto min-w-0 overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-2xl backdrop-blur',
     'transform-gpu will-change-transform transition-[opacity,transform,box-shadow] duration-200 ease-out motion-reduce:transition-none',
     'motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200 motion-safe:ease-out',
     'motion-safe:slide-in-from-top-2'
   );
+
+const getSuggestionPanelPositionClassName = (anchored: boolean): string =>
+  anchored
+    ? 'fixed z-[70]'
+    : 'absolute left-0 right-0 top-[calc(100%+6px)] z-30';
 
 const getSuggestionOptionStateClassName = (
   isDisabled: boolean,
@@ -101,24 +180,39 @@ function ProductTitleSuggestionOption({
   );
 }
 
-export function ProductTitleSuggestionPanel({
+function ProductTitleSuggestionPanelContent({
   listboxId,
   listboxLabel,
   suggestions,
   highlightedIndex,
   onApply,
   onHighlight,
-}: ProductTitleSuggestionPanelProps): React.JSX.Element {
+  position,
+}: ProductTitleSuggestionPanelContentProps): React.JSX.Element {
+  const anchored = position !== null;
   return (
     <div
       id={listboxId}
       role='listbox'
       aria-label={listboxLabel}
       tabIndex={-1}
-      className={getSuggestionPanelClassName()}
+      className={cn(
+        getSuggestionPanelClassName(),
+        getSuggestionPanelPositionClassName(anchored)
+      )}
+      style={
+        anchored
+          ? {
+              left: position.left,
+              maxHeight: position.maxHeight,
+              top: position.top,
+              width: position.width,
+            }
+          : undefined
+      }
       onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
     >
-      <div className='max-h-60 overflow-y-auto p-1'>
+      <div className='max-h-full overflow-y-auto p-1'>
         {suggestions.map((option, index) => (
           <ProductTitleSuggestionOption
             key={`${option.label}-${index}`}
@@ -133,4 +227,17 @@ export function ProductTitleSuggestionPanel({
       </div>
     </div>
   );
+}
+
+export function ProductTitleSuggestionPanel(
+  props: ProductTitleSuggestionPanelProps
+): React.JSX.Element {
+  const position = useSuggestionPanelPosition(props.anchorRef);
+  const content = <ProductTitleSuggestionPanelContent {...props} position={position} />;
+
+  if (props.anchorRef === undefined || position === null || typeof document === 'undefined') {
+    return content;
+  }
+
+  return createPortal(content, document.body);
 }

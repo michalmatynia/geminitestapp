@@ -579,16 +579,26 @@ export function FilemakerOrganizationsSelectionActions(
         </>
       }
       actions={
-        <DropdownMenuItem
-          onClick={(): void => {
-            void copySelectedIds();
-          }}
-          className='cursor-pointer gap-2'
-          disabled={props.selectedOrganizationCount === 0}
-        >
-          <CopyIcon className='h-4 w-4' />
-          Copy selected IDs
-        </DropdownMenuItem>
+        <>
+          <DropdownMenuItem
+            onClick={(): void => {
+              void copySelectedIds();
+            }}
+            className='cursor-pointer gap-2'
+            disabled={props.selectedOrganizationCount === 0}
+          >
+            <CopyIcon className='h-4 w-4' />
+            Copy selected IDs
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={props.onDeleteSelectedOrganizations}
+            className='cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive'
+            disabled={props.selectedOrganizationCount === 0 || props.isDeletingOrganizations}
+          >
+            <Trash2 className='h-4 w-4' />
+            Delete selected organisations
+          </DropdownMenuItem>
+        </>
       }
     />
   );

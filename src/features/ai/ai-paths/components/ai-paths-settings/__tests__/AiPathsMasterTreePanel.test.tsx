@@ -7,6 +7,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AiPathsMasterTreePanel } from '../AiPathsMasterTreePanel';
+import { AiPathsSettingsPageProvider } from '../AiPathsSettingsPageContext';
 
 vi.mock('@/features/ai/ai-paths/utils/ai-paths-master-tree-adapter', () => ({
   createAiPathsMasterTreeAdapter: () => ({}),
@@ -122,7 +123,7 @@ vi.mock('@/shared/ui/data-display.public', () => ({
     'aria-level'?: number;
     'aria-selected'?: boolean;
   }) => (
-    <div className={className} role={role} aria-level={ariaLevel} aria-selected={ariaSelected}>
+    <div className={className} className={className} role={role} aria-level={ariaLevel} aria-selected={ariaSelected}>
       {children}
     </div>
   ),
@@ -176,6 +177,12 @@ describe('AiPathsMasterTreePanel', () => {
     vi.clearAllMocks();
   });
 
+  const renderWithProvider = (ui: React.ReactElement) => render(
+    <AiPathsSettingsPageProvider value={{} as any}>
+        {ui}
+    </AiPathsSettingsPageProvider>
+  );
+
   it('keeps row click as selection-only in list mode and exposes preview/delete actions', () => {
     const props = buildProps({
       pathClickBehavior: 'select',
@@ -183,7 +190,7 @@ describe('AiPathsMasterTreePanel', () => {
       onPathOpen: vi.fn(),
     });
 
-    render(<AiPathsMasterTreePanel {...props} />);
+    renderWithProvider(<AiPathsMasterTreePanel {...props} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Path One' }));
 
@@ -203,7 +210,7 @@ describe('AiPathsMasterTreePanel', () => {
   it('keeps single-click open behavior in canvas mode', () => {
     const props = buildProps();
 
-    render(<AiPathsMasterTreePanel {...props} />);
+    renderWithProvider(<AiPathsMasterTreePanel {...props} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Path One' }));
 

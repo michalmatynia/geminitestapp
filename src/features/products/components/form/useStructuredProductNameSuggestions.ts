@@ -23,7 +23,8 @@ export function useStructuredProductNameSuggestions(
   const dropdownOpen = resolveDropdownOpen(
     suggestionState.activeStage,
     args.primaryCatalogId,
-    suggestionState.suggestions.length
+    suggestionState.suggestions.length,
+    args.requireCatalogForSuggestions
   );
   const activeDescendantId =
     dropdownOpen && suggestionState.suggestions[suggestionState.highlightedIndex] !== undefined

@@ -3,9 +3,16 @@
 import { useRef, useState } from 'react';
 import type React from 'react';
 
-import { SCRAPE_TEMPLATE_PLACEHOLDER_OPTIONS } from '@/shared/contracts/products/scrape-template-placeholders';
 import { Input, Textarea } from '@/shared/ui/primitives.public';
-import { cn } from '@/shared/utils/ui-utils';
+
+import {
+  CLOSED_PLACEHOLDER_MENU,
+  DraftPlaceholderDropdown,
+  insertPlaceholderToken,
+  resolvePlaceholderMenuState,
+  type DraftPlaceholderAnchorElement,
+  type DraftPlaceholderMenuState,
+} from './DraftPlaceholderDropdown';
 
 type DraftPlaceholderTextInputProps = {
   id?: string;
@@ -23,24 +30,144 @@ type DraftPlaceholderTextInputProps = {
 
 type TextControlElement = HTMLInputElement | HTMLTextAreaElement;
 
-const insertPlaceholderToken = (
-  value: string,
-  token: string,
-  cursorPosition: number
-): { nextValue: string; nextCursor: number } => {
-  const replaceStart = value.slice(0, cursorPosition).endsWith('[')
-    ? cursorPosition - 1
-    : cursorPosition;
-  const insertion = `[${token}]`;
-  return {
-    nextValue: `${value.slice(0, replaceStart)}${insertion}${value.slice(cursorPosition)}`,
-    nextCursor: replaceStart + insertion.length,
+type DraftPlaceholderTextInputController = {
+  commonProps: {
+    id?: string;
+    value: string;
+    disabled?: boolean;
+    placeholder?: string;
+    title?: string;
+    onKeyDown: (event: React.KeyboardEvent<TextControlElement>) => void;
+    onFocus: () => void;
+    onClick: () => void;
+    onKeyUp: () => void;
+    onChange: (
+      event: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>
+    ) => void;
+    'aria-label'?: string;
   };
+  handleSelectPlaceholder: (key: string) => void;
+  placeholderMenu: DraftPlaceholderMenuState;
+  ref: React.MutableRefObject<TextControlElement | null>;
 };
 
-export function DraftPlaceholderTextInput(
-  props: DraftPlaceholderTextInputProps
-): React.JSX.Element {
+type DraftPlaceholderTextInputControllerInput = Pick<
+  DraftPlaceholderTextInputProps,
+  | 'ariaLabel'
+  | 'disabled'
+  | 'id'
+  | 'onValueChange'
+  | 'placeholder'
+  | 'placeholderDropdownEnabled'
+  | 'title'
+  | 'value'
+>;
+
+const focusControlAt = (
+  ref: React.MutableRefObject<TextControlElement | null>,
+  cursorPosition: number
+): void => {
+  window.requestAnimationFrame(() => {
+    ref.current?.focus();
+    ref.current?.setSelectionRange(cursorPosition, cursorPosition);
+  });
+};
+
+const buildCommonProps = ({
+  ariaLabel,
+  disabled,
+  id,
+  onValueChange,
+  placeholder,
+  placeholderDropdownEnabled,
+  setPlaceholderMenu,
+  title,
+  updateFromCurrentElement,
+  updatePlaceholderMenu,
+  value,
+}: DraftPlaceholderTextInputControllerInput & {
+  setPlaceholderMenu: React.Dispatch<React.SetStateAction<DraftPlaceholderMenuState>>;
+  updateFromCurrentElement: () => void;
+  updatePlaceholderMenu: (nextValue: string, cursorPosition: number | null) => void;
+}): DraftPlaceholderTextInputController['commonProps'] => ({
+  id,
+  value,
+  disabled,
+  placeholder,
+  title,
+  onKeyDown: (event): void => {
+    if (placeholderDropdownEnabled && event.key === '[') {
+      window.setTimeout(updateFromCurrentElement, 0);
+    }
+    if (event.key === 'Escape') setPlaceholderMenu(CLOSED_PLACEHOLDER_MENU);
+  },
+  onFocus: updateFromCurrentElement,
+  onClick: updateFromCurrentElement,
+  onKeyUp: updateFromCurrentElement,
+  onChange: (event): void => {
+    onValueChange(event.target.value);
+    updatePlaceholderMenu(event.target.value, event.target.selectionStart);
+  },
+  'aria-label': ariaLabel ?? placeholder,
+});
+
+function useDraftPlaceholderTextInputController({
+  ariaLabel,
+  disabled,
+  id,
+  onValueChange,
+  placeholder,
+  placeholderDropdownEnabled,
+  title,
+  value,
+}: DraftPlaceholderTextInputControllerInput): DraftPlaceholderTextInputController {
+  const ref = useRef<TextControlElement | null>(null);
+  const [placeholderMenu, setPlaceholderMenu] =
+    useState<DraftPlaceholderMenuState>(CLOSED_PLACEHOLDER_MENU);
+
+  const updatePlaceholderMenu = (nextValue: string, cursorPosition: number | null): void =>
+    setPlaceholderMenu(
+      resolvePlaceholderMenuState({
+        cursorPosition,
+        enabled: placeholderDropdownEnabled,
+        value: nextValue,
+      })
+    );
+
+  const updateFromCurrentElement = (): void => {
+    const element = ref.current;
+    if (element !== null) updatePlaceholderMenu(element.value, element.selectionStart);
+  };
+
+  const handleSelectPlaceholder = (key: string): void => {
+    const cursorPosition = ref.current?.selectionStart ?? value.length;
+    const { nextValue, nextCursor } = insertPlaceholderToken(value, key, cursorPosition);
+    onValueChange(nextValue);
+    setPlaceholderMenu(CLOSED_PLACEHOLDER_MENU);
+    focusControlAt(ref, nextCursor);
+  };
+
+  return {
+    commonProps: buildCommonProps({
+      ariaLabel,
+      disabled,
+      id,
+      onValueChange,
+      placeholder,
+      placeholderDropdownEnabled,
+      setPlaceholderMenu,
+      title,
+      updateFromCurrentElement,
+      updatePlaceholderMenu,
+      value,
+    }),
+    handleSelectPlaceholder,
+    placeholderMenu,
+    ref,
+  };
+}
+
+export function DraftPlaceholderTextInput(props: DraftPlaceholderTextInputProps): React.JSX.Element {
   const {
     id,
     value,
@@ -54,45 +181,17 @@ export function DraftPlaceholderTextInput(
     className,
     placeholderDropdownEnabled,
   } = props;
-  const ref = useRef<TextControlElement | null>(null);
-  const [open, setOpen] = useState(false);
-
-  const handleKeyDown = (event: React.KeyboardEvent<TextControlElement>): void => {
-    if (placeholderDropdownEnabled && event.key === '[') {
-      window.setTimeout(() => setOpen(true), 0);
-    }
-    if (event.key === 'Escape') {
-      setOpen(false);
-    }
-  };
-
-  const handleSelectPlaceholder = (key: string): void => {
-    const element = ref.current;
-    const cursorPosition = element?.selectionStart ?? value.length;
-    const { nextValue, nextCursor } = insertPlaceholderToken(value, key, cursorPosition);
-    onValueChange(nextValue);
-    setOpen(false);
-    window.requestAnimationFrame(() => {
-      ref.current?.focus();
-      ref.current?.setSelectionRange(nextCursor, nextCursor);
+  const { commonProps, handleSelectPlaceholder, placeholderMenu, ref } =
+    useDraftPlaceholderTextInputController({
+      ariaLabel,
+      disabled,
+      id,
+      onValueChange,
+      placeholder,
+      placeholderDropdownEnabled,
+      title,
+      value,
     });
-  };
-
-  const commonProps = {
-    id,
-    value,
-    disabled,
-    placeholder,
-    title,
-    onKeyDown: handleKeyDown,
-    onFocus: (): void => {
-      if (placeholderDropdownEnabled && value.endsWith('[')) setOpen(true);
-    },
-    onChange: (
-      event: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>
-    ): void => onValueChange(event.target.value),
-    'aria-label': ariaLabel ?? placeholder,
-  };
 
   return (
     <div className='relative'>
@@ -114,26 +213,12 @@ export function DraftPlaceholderTextInput(
           className={className}
         />
       )}
-      {placeholderDropdownEnabled && open ? (
-        <div
-          className={cn(
-            'absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-popover p-1 shadow-lg'
-          )}
-          onMouseDown={(event): void => event.preventDefault()}
-        >
-          {SCRAPE_TEMPLATE_PLACEHOLDER_OPTIONS.map((option) => (
-            <button
-              key={option.key}
-              type='button'
-              className='flex w-full flex-col rounded px-2 py-1.5 text-left text-xs hover:bg-muted'
-              onClick={(): void => handleSelectPlaceholder(option.key)}
-            >
-              <span className='font-mono text-foreground'>[{option.key}]</span>
-              <span className='text-muted-foreground'>{option.description}</span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <DraftPlaceholderDropdown
+        anchorRef={ref as React.MutableRefObject<DraftPlaceholderAnchorElement | null>}
+        open={placeholderDropdownEnabled && placeholderMenu.open}
+        query={placeholderMenu.query}
+        onSelect={handleSelectPlaceholder}
+      />
     </div>
   );
 }

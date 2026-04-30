@@ -330,6 +330,13 @@ describe('TRADERA_SELECTOR_REGISTRY_RUNTIME', () => {
     expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
       "const FALLBACK_CATEGORY_PATH = 'Other > Other';"
     );
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
+      'const SHIPPING_SMOOTHER_MODAL_TEXT_HINTS ='
+    );
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain('Shipping is now even smoother');
+    expect(TRADERA_SELECTOR_REGISTRY_RUNTIME).toContain(
+      'const SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS ='
+    );
   });
 
   it('emits selector role metadata and value-key lookup for role-aware listing actions', () => {
@@ -369,6 +376,14 @@ describe('TRADERA_SELECTOR_REGISTRY_RUNTIME', () => {
         }),
         expect.objectContaining({
           key: 'FALLBACK_CATEGORY_PATH',
+          source: 'code',
+        }),
+        expect.objectContaining({
+          key: 'SHIPPING_SMOOTHER_MODAL_TEXT_HINTS',
+          source: 'code',
+        }),
+        expect.objectContaining({
+          key: 'SHIPPING_SMOOTHER_MODAL_DISMISS_LABELS',
           source: 'code',
         }),
       ])

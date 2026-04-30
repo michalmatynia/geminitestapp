@@ -185,6 +185,20 @@ describe('ConnectionFormFields', () => {
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
   });
 
+  it('shows scraped source credentials for scraped-item purchase runs', () => {
+    renderFields('scraped-source');
+
+    expect(screen.getByLabelText('Integration name (e.g. BattleStock)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Source account email (optional)')).toBeInTheDocument();
+    expect(screen.getByLabelText('Source account password (optional)')).toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        'Optional. Used by scraped-item purchase runs to sign in before cart and checkout review.'
+      )
+    ).toHaveLength(2);
+    expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
+  });
+
   it('selects a Persons profile for Pracuj.pl job applications', async () => {
     renderFields('pracuj-pl');
 

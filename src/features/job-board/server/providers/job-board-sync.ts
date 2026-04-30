@@ -585,6 +585,18 @@ const readHtmlAttribute = (attributes: string, name: string): string | null => {
   return normalized.length > 0 ? normalized : null;
 };
 
+const COMPANY_DETAILS_ANCHOR_HASHES = new Set(['#company-details']);
+
+const isCompanyDetailsAnchorHref = (value: string | null): boolean => {
+  const normalized = value?.trim().toLowerCase() ?? '';
+  return COMPANY_DETAILS_ANCHOR_HASHES.has(normalized);
+};
+
+const stripCompanyDetailsAnchors = (html: string): string =>
+  html.replace(/<a\b([^>]*)>[\s\S]*?<\/a>/gi, (full, attributes: string) =>
+    isCompanyDetailsAnchorHref(readHtmlAttribute(attributes, 'href')) ? ' ' : full
+  );
+
 const readMetaContent = (html: string, names: readonly string[]): string | null => {
   const wanted = new Set(names.map((name) => name.toLowerCase()));
   for (const match of html.matchAll(/<meta\b([^>]*)>/gi)) {
@@ -629,7 +641,7 @@ const readPracujEmployerName = (html: string): string | null => {
     const attributes = match[1] ?? '';
     if (readHtmlAttribute(attributes, 'data-test') !== 'text-employerName') continue;
     if (readHtmlAttribute(attributes, 'data-scroll-id') !== 'employer-name') continue;
-    const text = htmlToDenseText(match[2] ?? '');
+    const text = htmlToDenseText(stripCompanyDetailsAnchors(match[2] ?? ''));
     if (text.length > 0) return text;
   }
   return null;
@@ -803,8 +815,10 @@ const collectPracujCompanyProfileLinksFromHtml = (
 ): string[] =>
   normalizeStringArray(
     Array.from(html.matchAll(/<a\b([^>]*)>/gi)).flatMap((match): string[] => {
+      const href = readHtmlAttribute(match[1] ?? '', 'href');
+      if (isCompanyDetailsAnchorHref(href)) return [];
       const url = normalizePracujCompanyProfileUrl(
-        readHtmlAttribute(match[1] ?? '', 'href'),
+        href,
         baseUrl
       );
       return url === null ? [] : [url];
@@ -875,13 +889,20 @@ const normalizeCompanyNameGuardKey = (value: string): string =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+const COMPANY_DETAILS_LABEL_SUFFIX_RE =
+  /\s*(?:[-|:]\s*)?(?:about\s+the\s+company|about\s+company|company\s+details|informacje\s+o\s+firmie|o\s+firmie)\s*$/iu;
+
+const stripCompanyDetailsLabelSuffix = (value: string): string =>
+  value.replace(COMPANY_DETAILS_LABEL_SUFFIX_RE, '').trim();
+
 const cleanStructuredCompanyName = (value: string | null): string | null => {
   if (value === null) return null;
-  const key = normalizeCompanyNameGuardKey(value);
-  const compactAlphaNumeric = value.trim().replace(/[^\p{L}0-9]+/gu, '');
+  const cleanedValue = stripCompanyDetailsLabelSuffix(value);
+  const key = normalizeCompanyNameGuardKey(cleanedValue);
+  const compactAlphaNumeric = cleanedValue.trim().replace(/[^\p{L}0-9]+/gu, '');
   if (
     (/^[\p{L}]{1,2}$/u.test(compactAlphaNumeric) &&
-      value.trim() !== value.trim().toLocaleUpperCase()) ||
+      cleanedValue.trim() !== cleanedValue.trim().toLocaleUpperCase()) ||
     GENERIC_JOB_BOARD_COMPANY_NAME_KEYS.has(key) ||
     key.startsWith('informacje i opinie o pracodawcach') ||
     key.startsWith('odkrywaj najlepsze miejsca pracy') ||
@@ -891,7 +912,7 @@ const cleanStructuredCompanyName = (value: string | null): string | null => {
   ) {
     return null;
   }
-  return value;
+  return cleanedValue.length > 0 ? cleanedValue : null;
 };
 
 const buildPlainHtmlStructuredSnapshot = (

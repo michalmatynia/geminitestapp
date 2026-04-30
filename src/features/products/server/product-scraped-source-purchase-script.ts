@@ -100,8 +100,8 @@ export default async function run({ page, input, emit, log, helpers }) {
 
   const ensureLogin = async () => {
     if (!username || !password) {
-      await record('login', 'skipped_no_credentials');
-      return;
+      await record('login', 'missing_credentials');
+      throw new Error('Scraped source purchase requires source account credentials.');
     }
 
     const fillLoginForm = async () => {

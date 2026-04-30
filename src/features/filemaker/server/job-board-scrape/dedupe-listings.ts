@@ -11,11 +11,15 @@ export type ListingSourceIdentity = {
   sourceUrl?: unknown;
 };
 
+const COMPANY_DETAILS_LABEL_SUFFIX_RE =
+  /\s*(?:[-|:]\s*)?(?:about\s+the\s+company|about\s+company|company\s+details|informacje\s+o\s+firmie|o\s+firmie)\s*$/u;
+
 export const normalizeNameForMatch = (value: string): string =>
   value
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
+    .replace(COMPANY_DETAILS_LABEL_SUFFIX_RE, ' ')
     .replace(/\b(spolka|sp|zoo|z o o|s a|sa|inc|ltd|llc|gmbh|fundacja|stowarzyszenie)\b/g, ' ')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\s+/g, ' ')
@@ -44,6 +48,15 @@ export const normalizeSourceUrlForDedupe = (value: unknown): string => {
   }
 };
 
+const RELIABLE_LISTING_SOURCE_PATHS = [
+  { host: 'pracuj.pl', pathPattern: /,oferta,/iu },
+  { host: 'justjoin.it', pathPattern: /\/job-offer\//iu },
+  { host: 'nofluffjobs.com', pathPattern: /\/(?:pl\/)?job\//iu },
+] as const;
+
+const hostnameMatchesSourceHost = (hostname: string, host: string): boolean =>
+  hostname === host || hostname.endsWith(`.${host}`);
+
 const isReliableSourceUrlForListingDedupe = (value: unknown): boolean => {
   const normalized = normalizeJobBoardSourceUrl(value) ?? toStringValue(value);
   if (normalized.length === 0) return false;
@@ -51,16 +64,10 @@ const isReliableSourceUrlForListingDedupe = (value: unknown): boolean => {
     const parsed = new URL(normalized);
     const hostname = parsed.hostname.toLowerCase().replace(/^www\./, '');
     const pathname = parsed.pathname;
-    if (hostname === 'pracuj.pl' || hostname.endsWith('.pracuj.pl')) {
-      return /,oferta,/iu.test(pathname);
-    }
-    if (hostname === 'justjoin.it' || hostname.endsWith('.justjoin.it')) {
-      return /\/job-offer\//iu.test(pathname);
-    }
-    if (hostname === 'nofluffjobs.com' || hostname.endsWith('.nofluffjobs.com')) {
-      return /\/(?:pl\/)?job\//iu.test(pathname);
-    }
-    return false;
+    return RELIABLE_LISTING_SOURCE_PATHS.some(
+      (entry): boolean =>
+        hostnameMatchesSourceHost(hostname, entry.host) && entry.pathPattern.test(pathname)
+    );
   } catch {
     return false;
   }

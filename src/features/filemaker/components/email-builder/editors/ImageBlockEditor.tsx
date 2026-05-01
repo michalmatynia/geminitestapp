@@ -15,12 +15,6 @@ type EmailImageBlock = {
   align: 'left' | 'right' | 'center';
 };
 
-const ALIGN_OPTIONS = [
-  { label: 'Left', value: 'left' },
-  { label: 'Center', value: 'center' },
-  { label: 'Right', value: 'right' },
-];
-
 export function ImageBlockEditor({ block, onUpdate }: EditorProps<EmailImageBlock>): React.JSX.Element {
   return (
     <View>
@@ -38,7 +32,7 @@ export function ImageBlockEditor({ block, onUpdate }: EditorProps<EmailImageBloc
       <Text>Link URL (optional)</Text>
       <TextInput
         value={block.href ?? ''}
-        onChangeText={(text) => onUpdate({ href: text || null })}
+        onChangeText={(text) => onUpdate({ href: text.length > 0 ? text : null })}
         placeholder='https://...'
       />
       <Text>Width (px)</Text>

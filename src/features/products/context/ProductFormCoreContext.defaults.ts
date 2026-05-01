@@ -31,6 +31,23 @@ const firstNonEmptyString = (
   return '';
 };
 
+const resolveLocalizedProductName = (
+  product: ProductWithImages | undefined,
+  languageCode: 'en' | 'pl' | 'de'
+): string | null | undefined => {
+  const localizedName = product === undefined ? undefined : (product as { name?: unknown }).name;
+  if (
+    localizedName === null ||
+    localizedName === undefined ||
+    typeof localizedName !== 'object' ||
+    Array.isArray(localizedName)
+  ) {
+    return undefined;
+  }
+  const value = (localizedName as Partial<Record<'en' | 'pl' | 'de', unknown>>)[languageCode];
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+};
+
 const hasText = (value: string | null): boolean => value !== null && value.length > 0;
 
 const resolveStringDefault = (
@@ -87,9 +104,18 @@ const resolveNameDefaults = ({ product, draft }: ProductFormDefaultsInput): Pick
   ProductFormData,
   'name_en' | 'name_pl' | 'name_de'
 > => ({
-  name_en: firstNonEmptyString(product?.name_en, draft?.name_en),
-  name_pl: firstNonEmptyString(product?.name_pl, draft?.name_pl),
-  name_de: firstNonEmptyString(product?.name_de, draft?.name_de),
+  name_en: firstNonEmptyString(
+    firstNonEmptyString(product?.name_en, resolveLocalizedProductName(product, 'en')),
+    draft?.name_en
+  ),
+  name_pl: firstNonEmptyString(
+    firstNonEmptyString(product?.name_pl, resolveLocalizedProductName(product, 'pl')),
+    draft?.name_pl
+  ),
+  name_de: firstNonEmptyString(
+    firstNonEmptyString(product?.name_de, resolveLocalizedProductName(product, 'de')),
+    draft?.name_de
+  ),
 });
 
 const resolveIdentifierDefaults = ({ product, draft, initialSku }: ProductFormDefaultsInput): Pick<

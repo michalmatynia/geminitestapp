@@ -4,9 +4,20 @@
 // state with the Context Registry for AI/context tooling.
 
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
-import { useProductFormCore, type ProductFormCoreContextType } from '@/features/products/context/ProductFormCoreContext';
+import {
+  useProductFormCore,
+  type ProductFormCoreContextType,
+  type ProductFormCoreContextValue,
+} from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadataState, type ProductFormMetadataStateContextType } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { PRODUCT_EDITOR_CONTEXT_ROOT_IDS } from '@/features/products/context-registry/workspace';
@@ -39,6 +50,19 @@ interface ProductFormProps {
   validationInstanceScopeOverride?: string;
   validatorSessionKey?: string;
 }
+
+type ProductFormInnerProps = {
+  activeTab: ProductDraftOpenFormTab;
+  core: ProductFormCoreContextValue;
+  isDebugOpen: boolean;
+  meta: ProductFormMetadataStateContextType;
+  mountedTabs: Set<ProductDraftOpenFormTab>;
+  searchParams: URLSearchParams;
+  setActiveTab: Dispatch<SetStateAction<ProductDraftOpenFormTab>>;
+  setMountedTabs: Dispatch<SetStateAction<Set<ProductDraftOpenFormTab>>>;
+  validationInstanceScopeOverride?: string;
+  validatorSessionKey: string;
+};
 
 function resolveInitialMountedTabs(draft: ProductFormCoreContextType['draft']): Set<ProductDraftOpenFormTab> {
   const initial = new Set<ProductDraftOpenFormTab>(['general']);
@@ -104,6 +128,67 @@ function resolveFooterEntityId(core: ProductFormCoreContextType): string {
   return (typeof id === 'string') ? id.trim() : '';
 }
 
+function ProductFormInner({
+  activeTab,
+  core,
+  isDebugOpen,
+  meta,
+  mountedTabs,
+  searchParams,
+  setActiveTab,
+  setMountedTabs,
+  validationInstanceScopeOverride,
+  validatorSessionKey,
+}: ProductFormInnerProps): React.JSX.Element {
+  const validator = useProductFormValidator(validationInstanceScopeOverride, validatorSessionKey);
+
+  useProductFormCategoryEffect(core, meta);
+  useProductFormNameEffect(core, meta);
+
+  useEffect(() => {
+    const requested = searchParams.get('openProductTab');
+    const tab = (typeof requested === 'string' && requested.trim() !== '') ? requested : core.draft?.openProductFormTab;
+    setActiveTab(normalizeProductFormTab(tab));
+  }, [core.draft?.openProductFormTab, searchParams, setActiveTab]);
+
+  return (
+    <form onSubmit={(e) => { core.handleSubmit(e).catch(() => { /* handled by context */ }); }} className='relative min-h-[400px] pb-10'>
+      {isDebugOpen && <ProductFormDebugPanel />}
+      <ProductValidationSettingsProvider value={{
+        validationInstanceScope: validator.validationInstanceScope,
+        validatorEnabled: validator.validatorEnabled,
+        formatterEnabled: validator.formatterEnabled,
+        setValidatorEnabled: validator.setValidatorEnabled,
+        setFormatterEnabled: validator.setFormatterEnabled,
+        validationDenyBehavior: validator.validationDenyBehavior,
+        setValidationDenyBehavior: (v): void => { if (typeof v === 'string') validator.setValidationDenyBehavior(v); },
+        denyActionLabel: validator.denyActionLabel,
+        getDenyActionLabel: validator.getDenyActionLabel,
+        isIssueDenied: validator.isIssueDenied,
+        denyIssue: validator.denyIssue,
+        isIssueAccepted: validator.isIssueAccepted,
+        acceptIssue: validator.acceptIssue,
+        validatorPatterns: validator.validatorPatterns,
+        latestProductValues: validator.latestProductValues,
+        visibleFieldIssues: validator.visibleFieldIssues,
+      }}>
+        <ProductFormContextRegistrySource activeTab={activeTab} mountedTabs={mountedTabs} />
+        <ProductLeafCategoriesContextRegistrySource sourceId='product-editor-leaf-categories' />
+        <Tabs value={activeTab} onValueChange={(v): void => {
+          const tab = normalizeProductFormTab(v);
+          setActiveTab(tab);
+          setMountedTabs((prev) => prev.has(tab) ? prev : new Set([...prev, tab]));
+        }} className='w-full'>
+          <ProductFormTabsList />
+          <ProductFormTabsContent mountedTabs={mountedTabs} />
+        </Tabs>
+      </ProductValidationSettingsProvider>
+      <ProductFormFooter entityId={resolveFooterEntityId(core)} />
+      <core.ConfirmationModal />
+    </form>
+  );
+}
+
 /**
  * This component renders the product form fields and handles user interactions.
  */
@@ -121,55 +206,23 @@ export default function ProductForm({
   const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(() => resolveInitialMountedTabs(core.draft));
 
   const effectiveKey = useMemo(() => resolveValidatorSessionKey(validatorSessionKey), [validatorSessionKey]);
-  const validator = useProductFormValidator(validationInstanceScopeOverride, effectiveKey);
-
-  useProductFormCategoryEffect(core, meta);
-  useProductFormNameEffect(core, meta);
 
   useEffect(() => { setIsDebugOpen(searchParams.get('debug') === 'true'); }, [searchParams]);
 
-  useEffect(() => {
-    const requested = searchParams.get('openProductTab');
-    const tab = (typeof requested === 'string' && requested.trim() !== '') ? requested : core.draft?.openProductFormTab;
-    setActiveTab(normalizeProductFormTab(tab));
-  }, [core.draft?.openProductFormTab, searchParams]);
-
   return (
     <ContextRegistryPageProvider pageId='admin:product-editor' title='Product Editor' rootNodeIds={PRODUCT_EDITOR_CONTEXT_ROOT_NODE_IDS}>
-      <form onSubmit={(e) => { core.handleSubmit(e).catch(() => { /* handled by context */ }); }} className='relative min-h-[400px] pb-10'>
-        {isDebugOpen && <ProductFormDebugPanel />}
-        <ProductValidationSettingsProvider value={{
-          validationInstanceScope: validator.validationInstanceScope,
-          validatorEnabled: validator.validatorEnabled,
-          formatterEnabled: validator.formatterEnabled,
-          setValidatorEnabled: validator.setValidatorEnabled,
-          setFormatterEnabled: validator.setFormatterEnabled,
-          validationDenyBehavior: validator.validationDenyBehavior,
-          setValidationDenyBehavior: (v): void => { if (typeof v === 'string') validator.setValidationDenyBehavior(v); },
-          denyActionLabel: validator.denyActionLabel,
-          getDenyActionLabel: validator.getDenyActionLabel,
-          isIssueDenied: validator.isIssueDenied,
-          denyIssue: validator.denyIssue,
-          isIssueAccepted: validator.isIssueAccepted,
-          acceptIssue: validator.acceptIssue,
-          validatorPatterns: validator.validatorPatterns,
-          latestProductValues: validator.latestProductValues,
-          visibleFieldIssues: validator.visibleFieldIssues,
-        }}>
-          <ProductFormContextRegistrySource activeTab={activeTab} mountedTabs={mountedTabs} />
-          <ProductLeafCategoriesContextRegistrySource sourceId='product-editor-leaf-categories' />
-          <Tabs value={activeTab} onValueChange={(v): void => {
-            const tab = normalizeProductFormTab(v);
-            setActiveTab(tab);
-            setMountedTabs((prev) => prev.has(tab) ? prev : new Set([...prev, tab]));
-          }} className='w-full'>
-            <ProductFormTabsList />
-            <ProductFormTabsContent mountedTabs={mountedTabs} />
-          </Tabs>
-        </ProductValidationSettingsProvider>
-        <ProductFormFooter entityId={resolveFooterEntityId(core)} />
-        <core.ConfirmationModal />
-      </form>
+      <ProductFormInner
+        activeTab={activeTab}
+        core={core}
+        isDebugOpen={isDebugOpen}
+        meta={meta}
+        mountedTabs={mountedTabs}
+        searchParams={searchParams}
+        setActiveTab={setActiveTab}
+        setMountedTabs={setMountedTabs}
+        validationInstanceScopeOverride={validationInstanceScopeOverride}
+        validatorSessionKey={effectiveKey}
+      />
     </ContextRegistryPageProvider>
   );
 }

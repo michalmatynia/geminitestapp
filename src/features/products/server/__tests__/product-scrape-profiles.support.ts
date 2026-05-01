@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   dryRun: vi.fn(),
   ensureScrapedSourceListing: vi.fn(),
   findProductBySupplierLink: vi.fn(),
+  getMongoDb: vi.fn(),
   getCategoryById: vi.fn(),
   getDraft: vi.fn(),
   getProductBySku: vi.fn(),
@@ -53,6 +54,10 @@ vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: productScrapeProfileMocks.captureException,
   },
+}));
+
+vi.mock('@/shared/lib/db/mongo-client', () => ({
+  getMongoDb: productScrapeProfileMocks.getMongoDb,
 }));
 
 vi.mock('@/shared/lib/products/services/catalog-repository', () => ({
@@ -183,6 +188,25 @@ export const resetProductScrapeProfileMocks = (): void => {
   productScrapeProfileMocks.getDraft.mockResolvedValue(null);
   productScrapeProfileMocks.getProductBySku.mockResolvedValue(null);
   productScrapeProfileMocks.findProductBySupplierLink.mockResolvedValue(null);
+  productScrapeProfileMocks.getMongoDb.mockResolvedValue({
+    collection: vi.fn((name: string) => {
+      if (name === 'price_groups') {
+        return {
+          find: vi.fn(() => ({
+            toArray: vi.fn().mockResolvedValue([]),
+          })),
+        };
+      }
+      if (name === 'currencies') {
+        return {
+          find: vi.fn(() => ({
+            toArray: vi.fn().mockResolvedValue([]),
+          })),
+        };
+      }
+      throw new Error(`Unexpected collection lookup: ${name}`);
+    }),
+  });
   productScrapeProfileMocks.createProduct.mockResolvedValue({
     id: 'product-created',
     sku: 'BATTLESTOCK-13033',

@@ -22,9 +22,10 @@ import { resolveLocalizedCategoryName } from '@/shared/lib/products/title-terms'
 
 import {
   processScrapeDrafts,
-  summarizeOutcomes,
   type ProductScrapeProfileConfig,
 } from './product-scrape-profiles.helpers';
+import { summarizeOutcomes } from './product-scrape-profiles.outcomes';
+import { listScrapePriceGroupsForCalculation } from './product-scrape-pricing';
 
 const BATTLESTOCK_CATALOG_NAME = 'BattleStock';
 
@@ -169,6 +170,23 @@ const resolveProductServiceOptions = (
   return { userId };
 };
 
+const hasTemplateNumber = (value: number | null | undefined): boolean =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const hasPricingDefault = (value: string | null | undefined): boolean =>
+  typeof value === 'string' && value.trim().length > 0;
+
+const shouldLoadPriceGroupsForScrape = (
+  catalog: CatalogRecord,
+  draftTemplate: ProductDraft | null
+): boolean => {
+  if (hasTemplateNumber(draftTemplate?.price)) return false;
+  return (
+    hasPricingDefault(draftTemplate?.defaultPriceGroupId) ||
+    hasPricingDefault(catalog.defaultPriceGroupId)
+  );
+};
+
 export const listProductScrapeProfiles = (): ProductScrapeProfilesListResponse => ({
   profiles: PRODUCT_SCRAPE_PROFILES.map(toPublicProfile),
 });
@@ -184,6 +202,9 @@ export const runProductScrapeProfile = async (
   const catalog = await ensureCatalog(profile.targetCatalogName);
   const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
   const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
+  const priceGroups = shouldLoadPriceGroupsForScrape(catalog, draftTemplate)
+    ? await listScrapePriceGroupsForCalculation()
+    : [];
   const source = await getDefaultScripterServer().dryRun({
     scripterId: profile.scripterId,
     enforceRobots: false,
@@ -199,6 +220,7 @@ export const runProductScrapeProfile = async (
     dryRun,
     skipRecordsWithErrors: input.skipRecordsWithErrors ?? true,
     productServiceOptions: resolveProductServiceOptions(options.userId),
+    priceGroups,
     draftTemplate,
     draftTemplateCategoryAliases,
   });

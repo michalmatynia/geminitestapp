@@ -190,16 +190,6 @@ export function ExperienceBlockEditor({
           className='h-9'
         />
       </FormField>
-      <FormField label='Country of study' className='md:col-span-2'>
-        <Input
-          value={block.country ?? ''}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-            onUpdate({ country: event.target.value });
-          }}
-          aria-label='CV education country of study'
-          className='h-9'
-        />
-      </FormField>
       <FormField label='Description' className='md:col-span-2'>
         <Textarea
           value={block.description}
@@ -257,6 +247,16 @@ export function EducationBlockEditor({
             onUpdate({ period: event.target.value });
           }}
           aria-label='CV education period'
+          className='h-9'
+        />
+      </FormField>
+      <FormField label='Country of study' className='md:col-span-2'>
+        <Input
+          value={block.country}
+          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+            onUpdate({ country: event.target.value });
+          }}
+          aria-label='CV education country of study'
           className='h-9'
         />
       </FormField>

@@ -133,7 +133,9 @@ export const findMailThreadByReferences = async (
   accountId: string,
   references: string[]
 ): Promise<FilemakerMailThread | null> => {
-  const trimmed = references.map((entry) => entry?.trim()).filter((entry): entry is string => Boolean(entry));
+  const trimmed = references
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
   if (trimmed.length === 0) return null;
   const mongo = await getMongoDb();
   const message = await mongo
@@ -149,7 +151,9 @@ export const findMailMessagesByProviderIds = async (
   accountId: string,
   providerMessageIds: string[]
 ): Promise<FilemakerMailMessage[]> => {
-  const trimmed = providerMessageIds.map((entry) => entry?.trim()).filter((entry): entry is string => Boolean(entry));
+  const trimmed = providerMessageIds
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
   if (trimmed.length === 0) return [];
   const mongo = await getMongoDb();
   return await mongo
@@ -211,7 +215,9 @@ export const searchMailMessages = async (input: {
 }): Promise<FilemakerMailMessage[]> => {
   const mongo = await getMongoDb();
   const filter: Record<string, unknown> = {};
-  if (input.accountId) filter['accountId'] = input.accountId;
+  if (input.accountId !== undefined && input.accountId !== null && input.accountId.length > 0) {
+    filter['accountId'] = input.accountId;
+  }
 
   const escapedQuery = input.query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   filter['$or'] = [

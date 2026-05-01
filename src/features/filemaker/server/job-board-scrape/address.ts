@@ -115,7 +115,7 @@ const findOfferPillAddressValue = (offer: FilemakerJobBoardScrapedOffer): string
 export const findOfferAddressValue = (offer: FilemakerJobBoardScrapedOffer): string | null => {
   const pillAddress = findOfferPillAddressValue(offer);
   if (pillAddress !== null) return pillAddress;
-  const location = normalizeLexiconLabel(offer.location ?? '');
+  const location = normalizeLexiconLabel(offer.location);
   const profileAddress = findOfferProfileAddressValue(offer);
   if (
     profileAddress !== null &&

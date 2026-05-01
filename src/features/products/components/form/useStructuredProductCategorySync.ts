@@ -7,10 +7,15 @@ import type { StructuredProductTitleLocale } from '@/shared/lib/products/title-t
 
 import {
   buildCategorySuggestions,
-  normalizeSegmentValue,
   replaceStructuredSegment,
   resolveUniqueLeafCategorySuggestion,
 } from './StructuredProductNameField.suggestions';
+import {
+  hasStructuredCategoryPrefix,
+  resolveCategorySegment,
+  resolveCategorySegmentSyncAction,
+  type CategorySegmentSyncAction,
+} from './useStructuredProductCategorySync.helpers';
 import { CATEGORY_STAGE, type SuggestionOption } from './StructuredProductNameField.types';
 
 type UseStructuredProductCategorySyncArgs = {
@@ -28,74 +33,6 @@ type UseStructuredProductCategorySyncResult = {
   categorySuggestions: SuggestionOption[];
   selectedCategoryOption: SuggestionOption | null;
   syncMappedCategoryField: (nextCategoryId: string | null) => void;
-};
-
-type CategorySegmentSyncAction =
-  | { type: 'none' }
-  | { type: 'clear' }
-  | { type: 'sync'; categoryId: string | null }
-  | { type: 'select'; categoryId: string };
-
-const resolveCategorySegment = (nameValue: string): string =>
-  normalizeSegmentValue(nameValue.split('|')[3] ?? '');
-
-const hasStructuredCategoryPrefix = (nameValue: string): boolean => {
-  const segments = nameValue.split('|').map((segment: string) => normalizeSegmentValue(segment));
-  return Boolean(segments[0] !== '' && segments[1] !== '' && segments[2] !== '');
-};
-
-const shouldClearCategorySegment = ({
-  categorySegment,
-  selectedCategoryId,
-  selectedCategoryChanged,
-}: {
-  categorySegment: string;
-  selectedCategoryId: string | null;
-  selectedCategoryChanged: boolean;
-}): boolean =>
-  categorySegment === '' && selectedCategoryId !== null && selectedCategoryChanged === false;
-
-const shouldClearUnmatchedCategorySegment = ({
-  categorySegment,
-  selectedCategoryId,
-  selectedCategoryChanged,
-}: {
-  categorySegment: string;
-  selectedCategoryId: string | null;
-  selectedCategoryChanged: boolean;
-}): boolean =>
-  categorySegment !== '' && selectedCategoryId !== null && selectedCategoryChanged === false;
-
-const resolveCategorySegmentSyncAction = ({
-  categorySuggestions,
-  categorySegment,
-  selectedCategoryId,
-  selectedCategoryOption,
-  selectedCategoryChanged,
-}: {
-  categorySuggestions: SuggestionOption[];
-  categorySegment: string;
-  selectedCategoryId: string | null;
-  selectedCategoryOption: SuggestionOption | null;
-  selectedCategoryChanged: boolean;
-}): CategorySegmentSyncAction => {
-  if (shouldClearCategorySegment({ categorySegment, selectedCategoryId, selectedCategoryChanged })) {
-    return { type: 'clear' };
-  }
-  if (selectedCategoryOption?.value === categorySegment) {
-    return { type: 'sync', categoryId: selectedCategoryId };
-  }
-
-  const match = resolveUniqueLeafCategorySuggestion(categorySuggestions, categorySegment);
-  if (match?.categoryId !== undefined && match.categoryId !== selectedCategoryId) {
-    return { type: 'select', categoryId: match.categoryId };
-  }
-  if (
-    shouldClearUnmatchedCategorySegment({ categorySegment, selectedCategoryId, selectedCategoryChanged })
-  ) {
-    return { type: 'clear' };
-  }
-  return { type: 'none' };
 };
 
 const applyCategorySegmentSyncAction = ({
@@ -151,9 +88,20 @@ const usePreviousCategoryIdRef = (
   return previousSelectedCategoryIdRef;
 };
 
+const usePreviousNameValueRef = (
+  nameValue: string
+): ReturnType<typeof useRef<string | null>> => {
+  const previousNameValueRef = useRef<string | null>(null);
+  useEffect((): void => {
+    previousNameValueRef.current = nameValue;
+  }, [nameValue]);
+  return previousNameValueRef;
+};
+
 const useAutoSyncCategorySegment = ({
   categorySuggestions,
   nameValue,
+  previousNameValue,
   previousSelectedCategoryId,
   selectedCategoryId,
   selectedCategoryOption,
@@ -162,6 +110,7 @@ const useAutoSyncCategorySegment = ({
 }: {
   categorySuggestions: SuggestionOption[];
   nameValue: string;
+  previousNameValue: string | null;
   previousSelectedCategoryId: string | null;
   selectedCategoryId: string | null;
   selectedCategoryOption: SuggestionOption | null;
@@ -170,9 +119,13 @@ const useAutoSyncCategorySegment = ({
 }): void => {
   useEffect((): void => {
     const categorySegment = resolveCategorySegment(nameValue);
+    const previousCategorySegment =
+      previousNameValue === null ? null : resolveCategorySegment(previousNameValue);
     const action = resolveCategorySegmentSyncAction({
       categorySuggestions,
       categorySegment,
+      categorySegmentChanged:
+        previousCategorySegment !== null && previousCategorySegment !== categorySegment,
       selectedCategoryId,
       selectedCategoryOption,
       selectedCategoryChanged: previousSelectedCategoryId !== selectedCategoryId,
@@ -181,6 +134,7 @@ const useAutoSyncCategorySegment = ({
   }, [
     categorySuggestions,
     nameValue,
+    previousNameValue,
     previousSelectedCategoryId,
     selectedCategoryId,
     selectedCategoryOption,
@@ -222,11 +176,15 @@ const useStructuredCategorySegmentReplacement = ({
     ) {
       return;
     }
-    setValue(fieldName, replaceStructuredSegment(nameValue, CATEGORY_STAGE, selectedCategoryOption.value), {
-      shouldDirty: true,
-      shouldTouch: true,
-      shouldValidate: true,
-    });
+    setValue(
+      fieldName,
+      replaceStructuredSegment(nameValue, CATEGORY_STAGE, selectedCategoryOption.value),
+      {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      }
+    );
   }, [
     categorySuggestions,
     fieldName,
@@ -249,6 +207,7 @@ export function useStructuredProductCategorySync({
   setValue,
 }: UseStructuredProductCategorySyncArgs): UseStructuredProductCategorySyncResult {
   const previousSelectedCategoryIdRef = usePreviousCategoryIdRef(selectedCategoryId);
+  const previousNameValueRef = usePreviousNameValueRef(nameValue);
   const categorySuggestions = useMemo(
     () => buildCategorySuggestions(categories, locale),
     [categories, locale]
@@ -263,7 +222,11 @@ export function useStructuredProductCategorySync({
       const currentValue = getValues('categoryId');
       const currentId = typeof currentValue === 'string' ? currentValue.trim() : '';
       if (currentId === nextId) return;
-      setValue('categoryId', nextId, { shouldDirty: false, shouldTouch: false, shouldValidate: true });
+      setValue('categoryId', nextId, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: true,
+      });
     },
     [getValues, setValue]
   );
@@ -271,6 +234,7 @@ export function useStructuredProductCategorySync({
   useAutoSyncCategorySegment({
     categorySuggestions,
     nameValue,
+    previousNameValue: previousNameValueRef.current,
     previousSelectedCategoryId: previousSelectedCategoryIdRef.current,
     selectedCategoryId,
     selectedCategoryOption,

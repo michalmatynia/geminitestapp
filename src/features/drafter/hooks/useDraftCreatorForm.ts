@@ -10,6 +10,7 @@ import {
 } from '@/features/drafter/hooks/useDraftQueries';
 import { useProductImages, useCatalogs, useProducers } from '@/features/products/forms.public';
 import type { ProductDraft, ProductDraftKind, ProductDraftOpenFormTab } from '@/shared/contracts/products';
+import { resolveCategoryTreeCatalogIds } from '@/features/products/hooks/useProductMetadata.helpers';
 import { resolveCategoryIdFromStructuredDraftName } from './draft-category-inference';
 import { useDraftMetadata } from './useDraftMetadata';
 import { useDraftCreatorParameters } from './useDraftCreatorParameters';
@@ -27,7 +28,7 @@ export const useDraftCreatorForm = (
   onActiveChange?: (v: boolean) => void
 ) => {
   // Queries
-  const { data: catalogs = [] } = useCatalogs();
+  const { data: catalogs = [], isLoading: catalogsLoading = false } = useCatalogs();
   const { data: producers = [], isLoading: producersLoading } = useProducers();
   const draftQuery = useDraft(draftId);
   const createDraftMutation = useCreateDraftMutation();
@@ -75,7 +76,11 @@ export const useDraftCreatorForm = (
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [selectedProducerIds, setSelectedProducerIds] = useState<string[]>([]);
 
-  const metadata = useDraftMetadata(selectedCatalogIds);
+  const categoryCatalogIds = useMemo(
+    () => resolveCategoryTreeCatalogIds(catalogs, catalogsLoading),
+    [catalogs, catalogsLoading]
+  );
+  const metadata = useDraftMetadata(selectedCatalogIds, categoryCatalogIds);
   const inferredCategoryId = useMemo(
     () => resolveCategoryIdFromStructuredDraftName(nameEn, metadata.categories),
     [metadata.categories, nameEn]

@@ -35,3 +35,11 @@ export const toProductImageFileSource = (value: unknown): ProductImageFileSource
     mimetype: trimString(record['mimetype']),
   };
 };
+
+export const toProductImageUrlSource = (url: string | null | undefined): ProductImageFileSource | null => {
+  const trimmed = typeof url === 'string' ? url.trim() : '';
+  if (!trimmed || !/^https?:\/\//i.test(trimmed)) return null;
+  const lastSegment = trimmed.split('/').pop() ?? '';
+  const filename = lastSegment.split('?')[0] || null;
+  return { id: trimmed, filepath: trimmed, filename, mimetype: null };
+};

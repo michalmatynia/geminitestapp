@@ -227,10 +227,24 @@ const compileExperience = (block: CvExperienceBlock, context: CvRenderContext): 
   '</article>',
 ].join('');
 
+const compileEducationSubtitle = (
+  block: CvEducationBlock,
+  context: CvRenderContext
+): string => {
+  if (block.degree && block.institution) {
+    const subtitle = [block.institution, block.country].filter(Boolean).join(' · ');
+    return `<div class="cv-entry-subtitle">${highlightText(subtitle, context)}</div>`;
+  }
+  if (block.country) {
+    return `<div class="cv-entry-subtitle">${highlightText(block.country, context)}</div>`;
+  }
+  return '';
+};
+
 const compileEducation = (block: CvEducationBlock, context: CvRenderContext): string => [
   '<article class="cv-entry">',
   '<div class="cv-entry-heading">',
-  `<div><h3>${highlightText(block.degree || block.institution, context)}</h3>${block.degree && block.institution ? `<div class="cv-entry-subtitle">${highlightText([block.institution, block.country].filter(Boolean).join(' · '), context)}</div>` : block.country ? `<div class="cv-entry-subtitle">${highlightText(block.country, context)}</div>` : ''}</div>`,
+  `<div><h3>${highlightText(block.degree || block.institution, context)}</h3>${compileEducationSubtitle(block, context)}</div>`,
   block.period ? `<div class="cv-entry-period">${escapeHtml(block.period)}</div>` : '',
   '</div>',
   block.description ? `<div class="cv-entry-description">${paragraphize(block.description, context)}</div>` : '',

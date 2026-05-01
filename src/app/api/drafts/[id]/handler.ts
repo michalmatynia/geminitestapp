@@ -43,10 +43,11 @@ export async function putHandler(
   }
   const data = parsed.data;
   const categoryId = resolveDraftCategoryId(data);
-  const updated = await updateDraft(params.id, {
+  const updatePayload: UpdateProductDraftInput = {
     ...data,
-    ...(categoryId !== undefined ? { categoryId } : {}),
-  } as UpdateProductDraftInput);
+    categoryId,
+  };
+  const updated = await updateDraft(params.id, updatePayload);
   if (!updated) {
     throw notFoundError('Draft not found.', { draftId: params.id });
   }
@@ -62,6 +63,9 @@ export async function deleteHandler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  await deleteDraft(params.id);
+  const deleted = await deleteDraft(params.id);
+  if (!deleted) {
+    throw notFoundError('Draft not found.', { draftId: params.id });
+  }
   return NextResponse.json({ ok: true });
 }

@@ -89,7 +89,7 @@ export function FilemakerEntityTablePage<TData>(
     <div className='page-section-compact space-y-6'>
       <PanelHeader title={title} description={description} icon={icon} actions={actions} />
 
-      {headerSlot ? <div>{headerSlot}</div> : null}
+      {headerSlot !== undefined && headerSlot !== null ? <div>{headerSlot}</div> : null}
 
       <StandardDataTablePanel
         filters={renderFilemakerEntityTableFilters({

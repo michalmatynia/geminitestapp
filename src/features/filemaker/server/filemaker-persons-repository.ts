@@ -310,13 +310,15 @@ const normalizePatchLanguageSkillLevel = (value: number): number =>
 const normalizePatchLanguageSkills = (
   value: FilemakerPerson['languageSkills'] | undefined
 ): FilemakerPerson['languageSkills'] | undefined => {
-  if (value === undefined) return undefined;
-  return value
-    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
-      ...(skill.id?.trim() ? { id: skill.id.trim() } : {}),
-      language: skill.language.trim(),
-      level: normalizePatchLanguageSkillLevel(skill.level),
-    }))
+	  if (value === undefined) return undefined;
+	  return value
+	    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
+	      ...(skill.id.trim().length > 0
+	        ? { id: skill.id.trim() }
+	        : {}),
+	      language: skill.language.trim(),
+	      level: normalizePatchLanguageSkillLevel(skill.level),
+	    }))
     .filter((skill): boolean => skill.language.length > 0);
 };
 

@@ -2,6 +2,8 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { ObjectId, type Filter } from 'mongodb';
+
 import {
   PRODUCT_DRAFT_KIND_OPTIONS,
   PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
@@ -10,7 +12,8 @@ import { type ProductDraft, type CreateProductDraftInput, type UpdateProductDraf
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 type MongoDraftDoc = {
-  _id: string;
+  _id: string | ObjectId;
+  id?: string;
   name?: string;
   draftKind?: ProductDraftKind | null;
   scrapeProfileId?: string | null;
@@ -101,9 +104,25 @@ const normalizeOpenProductFormTab = (value: unknown): ProductDraftOpenFormTab =>
   return trimmed as ProductDraftOpenFormTab;
 };
 
+const MONGO_OBJECT_ID_PATTERN = /^[0-9a-fA-F]{24}$/;
+
+const buildDraftIdFilter = (id: string): Filter<MongoDraftDoc> => {
+  const trimmed = id.trim();
+  const stringMongoIdFilter: Filter<MongoDraftDoc> = { _id: trimmed };
+  const domainIdFilter: Filter<MongoDraftDoc> = { id: trimmed };
+  const filters: Filter<MongoDraftDoc>[] = [stringMongoIdFilter, domainIdFilter];
+
+  if (MONGO_OBJECT_ID_PATTERN.test(trimmed) && ObjectId.isValid(trimmed)) {
+    const objectIdFilter: Filter<MongoDraftDoc> = { _id: new ObjectId(trimmed) };
+    filters.push(objectIdFilter);
+  }
+
+  return { $or: filters };
+};
+
 const mapMongoDocToDraft = (doc: MongoDraftDoc): ProductDraft => {
   return {
-    id: String(doc._id),
+    id: String(doc.id ?? doc._id),
     name: doc.name ?? '',
     draftKind: normalizeDraftKind(doc.draftKind),
     scrapeProfileId: normalizeNullableString(doc.scrapeProfileId),
@@ -161,7 +180,9 @@ const listDraftsMongo = async (): Promise<ProductDraft[]> => {
 
 const getDraftMongo = async (id: string): Promise<ProductDraft | null> => {
   const mongo = await getMongoDb();
-  const draft = await mongo.collection<MongoDraftDoc>('product_drafts').findOne({ _id: id });
+  const draft = await mongo
+    .collection<MongoDraftDoc>('product_drafts')
+    .findOne(buildDraftIdFilter(id));
 
   if (draft === null) return null;
   return mapMongoDocToDraft(draft);
@@ -270,7 +291,7 @@ const updateDraftMongo = async (
   }
 
   const result = await mongo.collection<MongoDraftDoc>('product_drafts').findOneAndUpdate(
-    { _id: id },
+    buildDraftIdFilter(id),
     {
       $set: {
         ...updatePayload,
@@ -293,7 +314,9 @@ const updateDraftMongo = async (
 
 const deleteDraftMongo = async (id: string): Promise<boolean> => {
   const mongo = await getMongoDb();
-  const result = await mongo.collection<MongoDraftDoc>('product_drafts').deleteOne({ _id: id });
+  const result = await mongo
+    .collection<MongoDraftDoc>('product_drafts')
+    .deleteOne(buildDraftIdFilter(id));
   return result.deletedCount > 0;
 };
 

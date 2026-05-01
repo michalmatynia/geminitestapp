@@ -77,8 +77,11 @@ const listSimpleParameters = async (
   });
 };
 
-export const useDraftMetadata = (selectedCatalogIds: string[]): DraftMetadataResult => {
-  const categoryQueries = useDraftMetadataQueries<ProductCategory>(selectedCatalogIds, {
+export const useDraftMetadata = (
+  selectedCatalogIds: string[],
+  categoryCatalogIds: string[] = selectedCatalogIds
+): DraftMetadataResult => {
+  const categoryQueries = useDraftMetadataQueries<ProductCategory>(categoryCatalogIds, {
     includeGlobalWhenEmpty: true,
     queryKeyFor: QUERY_KEYS.products.metadata.categories,
     queryFn: getCategoriesFlat,

@@ -1,4 +1,4 @@
-import { beforeEach, expect, it } from 'vitest';
+import { beforeEach, expect, it, vi } from 'vitest';
 
 import {
   BATTLESTOCK_PROFILE_ID,
@@ -67,6 +67,67 @@ it('creates scraped BattleStock products in the BattleStock catalog', async () =
   expect(response.catalog.name).toBe('BattleStock');
   expect(mocks.ensureScrapedSourceListing).toHaveBeenCalledWith('product-created', 'linked');
   expect(mocks.invalidateAll).toHaveBeenCalledTimes(1);
+});
+
+it('calculates imported BattleStock product prices from catalog price group settings', async () => {
+  mocks.listCatalogs.mockResolvedValue([
+    {
+      ...battleStockCatalog,
+      defaultPriceGroupId: 'price-group-retail',
+      priceGroupIds: ['price-group-retail'],
+    },
+  ]);
+  mocks.getMongoDb.mockResolvedValue({
+    collection: vi.fn((name: string) => {
+      if (name === 'price_groups') {
+        return {
+          find: vi.fn(() => ({
+            toArray: vi.fn().mockResolvedValue([
+              {
+                id: 'price-group-retail',
+                groupId: 'RETAIL',
+                currencyId: 'PLN',
+                type: 'standard',
+                basePriceField: 'sourcePrice',
+                sourceGroupId: null,
+                priceMultiplier: 1.5,
+                addToPrice: 10,
+              },
+            ]),
+          })),
+        };
+      }
+      if (name === 'currencies') {
+        return {
+          find: vi.fn(() => ({
+            toArray: vi.fn().mockResolvedValue([
+              {
+                id: 'PLN',
+                code: 'PLN',
+                name: 'Polish Zloty',
+                symbol: 'zł',
+              },
+            ]),
+          })),
+        };
+      }
+      throw new Error(`Unexpected collection lookup: ${name}`);
+    }),
+  });
+
+  await scrapeProfiles.runProductScrapeProfile({
+    profileId: BATTLESTOCK_PROFILE_ID,
+    limit: 1,
+  });
+
+  expect(mocks.createProduct).toHaveBeenCalledWith(
+    expect.objectContaining({
+      defaultPriceGroupId: 'price-group-retail',
+      sourcePrice: 60,
+      price: 100,
+    }),
+    undefined
+  );
 });
 
 it('keeps the product import successful when scraped source linking fails', async () => {

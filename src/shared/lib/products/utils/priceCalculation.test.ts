@@ -211,4 +211,29 @@ describe('products priceCalculation utils', () => {
       baseCurrencyCode: 'PLN',
     });
   });
+
+  it('calculates a default sourcePrice-backed group instead of falling back to a null base price', () => {
+    const groups = [
+      createGroup({
+        id: 'group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        isDefault: true,
+        type: 'standard',
+        basePriceField: 'sourcePrice',
+        priceMultiplier: 1.5,
+        addToPrice: 10,
+      }),
+    ];
+
+    expect(
+      calculatePriceForCurrency(null, 'group-retail', 'PLN', groups, { sourcePrice: 60 })
+    ).toEqual({
+      price: 100,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+  });
 });

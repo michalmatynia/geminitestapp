@@ -1,9 +1,8 @@
 import 'server-only';
 
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
-import type { ProductScrapeProfileRunProduct } from '@/shared/contracts/products/scrape-profiles';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
-import type { ProductWithImages } from '@/shared/contracts/products/product';
+import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { productService } from '@/shared/lib/products/services/productService';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
@@ -18,42 +17,26 @@ import {
   buildUpdatePayload,
   resolveResultPayloadTitle,
 } from './product-scrape-profiles.payloads';
+import {
+  createOutcome,
+  toResultProduct,
+  type ProductScrapeDraftOutcome,
+} from './product-scrape-profiles.outcomes';
 import { ensureScrapedSourceListing } from './product-scraped-source-common';
 
 export type { ProductScrapeProfileConfig } from './product-scrape-profiles.candidates';
 
-type ProductScrapeDuplicateState = {
-  seenKeys: Set<string>;
-};
-type ProductScrapeDraftOutcome = {
-  result: ProductScrapeProfileRunProduct;
-  createdCount: number;
-  updatedCount: number;
-  skippedCount: number;
-  failedCount: number;
-};
-type ProductScrapeOutcomeSummary = {
-  createdCount: number;
-  updatedCount: number;
-  skippedCount: number;
-  failedCount: number;
-  products: ProductScrapeProfileRunProduct[];
-};
+type ProductScrapeDuplicateState = { seenKeys: Set<string> };
 type ProductScrapeRunContext = {
   profile: ProductScrapeProfileConfig;
   catalog: CatalogRecord;
   dryRun: boolean;
   skipRecordsWithErrors: boolean;
   productServiceOptions: { userId?: string } | undefined;
+  priceGroups: PriceGroupForCalculation[];
   duplicateState?: ProductScrapeDuplicateState;
   draftTemplate?: ProductDraft | null;
   draftTemplateCategoryAliases?: readonly string[];
-};
-
-const normalizeString = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 };
 
 const hasBlockingIssue = (draft: ScripterImportDraft): boolean =>
@@ -99,51 +82,6 @@ const markDuplicateCandidate = (
   return false;
 };
 
-const resolveResultTitle = (
-  draft: ScripterImportDraft,
-  candidate: ProductScrapeCandidate | null
-): string | null => candidate?.title ?? normalizeString(draft.draft.name) ?? null;
-
-const resolveResultSourceUrl = (
-  draft: ScripterImportDraft,
-  candidate: ProductScrapeCandidate | null
-): string | null => candidate?.sourceUrl ?? normalizeString(draft.draft.supplierLink) ?? null;
-
-const resolveResultProductSku = (candidate: ProductScrapeCandidate | null): string | null =>
-  candidate !== null ? candidate.sku : null;
-
-const resolveResultProductTitle = (
-  draft: ScripterImportDraft,
-  candidate: ProductScrapeCandidate | null,
-  title: string | null | undefined
-): string | null => title ?? resolveResultTitle(draft, candidate);
-
-const toResultProduct = (
-  draft: ScripterImportDraft,
-  candidate: ProductScrapeCandidate | null,
-  status: ProductScrapeProfileRunProduct['status'],
-  options: { productId?: string | null; error?: string | null; title?: string | null } = {}
-): ProductScrapeProfileRunProduct => ({
-    index: draft.index,
-    status,
-    productId: options.productId ?? null,
-    sku: resolveResultProductSku(candidate),
-    title: resolveResultProductTitle(draft, candidate, options.title),
-    sourceUrl: resolveResultSourceUrl(draft, candidate),
-    error: options.error ?? null,
-  });
-
-const createOutcome = (
-  result: ProductScrapeProfileRunProduct,
-  counts: Partial<Omit<ProductScrapeDraftOutcome, 'result'>> = {}
-): ProductScrapeDraftOutcome => ({
-  result,
-  createdCount: counts.createdCount ?? 0,
-  updatedCount: counts.updatedCount ?? 0,
-  skippedCount: counts.skippedCount ?? 0,
-  failedCount: counts.failedCount ?? 0,
-});
-
 const linkPersistedScrapedProduct = async (
   productId: string,
   candidate: ProductScrapeCandidate
@@ -179,6 +117,8 @@ const processPersistedCandidate = async (
       draft,
       profile: context.profile,
       catalogIds,
+      catalogDefaultPriceGroupId: context.catalog.defaultPriceGroupId,
+      priceGroups: context.priceGroups,
       template: context.draftTemplate,
       templateCategoryAliases: context.draftTemplateCategoryAliases,
     });
@@ -201,13 +141,12 @@ const processPersistedCandidate = async (
     draft,
     profile: context.profile,
     catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
+    catalogDefaultPriceGroupId: context.catalog.defaultPriceGroupId,
+    priceGroups: context.priceGroups,
     template: context.draftTemplate,
     templateCategoryAliases: context.draftTemplateCategoryAliases,
   });
-  const created = await productService.createProduct(
-    payload,
-    context.productServiceOptions
-  );
+  const created = await productService.createProduct(payload, context.productServiceOptions);
   await linkPersistedScrapedProduct(created.id, candidate);
   return createOutcome(
     toResultProduct(draft, candidate, 'created', {
@@ -237,6 +176,8 @@ const processValidScrapeCandidate = async (
       draft,
       profile: context.profile,
       catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
+      catalogDefaultPriceGroupId: context.catalog.defaultPriceGroupId,
+      priceGroups: context.priceGroups,
       template: context.draftTemplate,
       templateCategoryAliases: context.draftTemplateCategoryAliases,
     });
@@ -295,24 +236,5 @@ export const processScrapeDrafts = async (
     const outcomes = await previous;
     outcomes.push(await processScrapeDraft(draft, runContext));
     return outcomes;
-  }, Promise.resolve([]));
-};
-export const summarizeOutcomes = (
-  outcomes: ProductScrapeDraftOutcome[]
-): ProductScrapeOutcomeSummary =>
-  outcomes.reduce(
-    (summary, outcome) => ({
-      createdCount: summary.createdCount + outcome.createdCount,
-      updatedCount: summary.updatedCount + outcome.updatedCount,
-      skippedCount: summary.skippedCount + outcome.skippedCount,
-      failedCount: summary.failedCount + outcome.failedCount,
-      products: [...summary.products, outcome.result],
-    }),
-    {
-      createdCount: 0,
-      updatedCount: 0,
-      skippedCount: 0,
-      failedCount: 0,
-      products: [] as ProductScrapeProfileRunProduct[],
-    }
-  );
+	  }, Promise.resolve([]));
+	};

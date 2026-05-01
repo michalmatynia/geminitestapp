@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import type { Row } from '@tanstack/react-table';
 import type { ProductWithImages, PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { useProductListRowVisualsContext } from '@/features/products/context/ProductListContext';
@@ -53,6 +53,42 @@ function CalculatedPriceDisplay({ displayPrice }: { displayPrice: number }): Rea
   return <span className='text-foreground'>{displayPrice.toFixed(2)}</span>;
 }
 
+function resolveVisibleSourcePrice(product: ProductWithImages): number | null {
+  const sourcePrice = product.sourcePrice;
+  if (product.importSource !== 'scrape') return null;
+  if (typeof sourcePrice !== 'number' || !Number.isFinite(sourcePrice)) return null;
+  return sourcePrice;
+}
+
+function SourcePriceDisplay({ sourcePrice }: { sourcePrice: number | null }): React.JSX.Element | null {
+  if (sourcePrice === null) return null;
+
+  const formattedSourcePrice = sourcePrice.toFixed(2);
+  return (
+    <span
+      className='text-[11px] leading-none text-muted-foreground/80'
+      title={`Source price: ${formattedSourcePrice}`}
+    >
+      Source: {formattedSourcePrice}
+    </span>
+  );
+}
+
+function PriceCellFrame({
+  product,
+  children,
+}: {
+  product: ProductWithImages;
+  children: ReactNode;
+}): React.JSX.Element {
+  return (
+    <div className='flex flex-col items-start gap-0.5'>
+      {children}
+      <SourcePriceDisplay sourcePrice={resolveVisibleSourcePrice(product)} />
+    </div>
+  );
+}
+
 function resolvePriceInfo(product: ProductWithImages, currencyCode: string, priceGroups: PriceGroupWithDetails[]): PriceInfo {
   return calculatePriceForCurrency(
     product.price,
@@ -87,22 +123,36 @@ function PriceCellContent({ product, info, currencyCode }: { product: ProductWit
   const isConverted = resolveConvertedPrice(product.price, info.price, info.baseCurrencyCode, currencyCode);
 
   if (isConverted === true && info.price !== null && product.price !== null && info.baseCurrencyCode !== null) {
-    return <ConvertedPriceDisplay displayPrice={info.price} productPrice={product.price} baseCurrencyCode={info.baseCurrencyCode} />;
+    return (
+      <PriceCellFrame product={product}>
+        <ConvertedPriceDisplay
+          displayPrice={info.price}
+          productPrice={product.price}
+          baseCurrencyCode={info.baseCurrencyCode}
+        />
+      </PriceCellFrame>
+    );
   }
 
   if (shouldRenderCalculatedPrice(product.price, info.price)) {
-    return <CalculatedPriceDisplay displayPrice={info.price} />;
+    return (
+      <PriceCellFrame product={product}>
+        <CalculatedPriceDisplay displayPrice={info.price} />
+      </PriceCellFrame>
+    );
   }
 
   const showIndicator = info.currencyCode !== null && info.currencyCode !== currencyCode;
 
   return (
-    <div className='flex items-center gap-1'>
-      <PriceCellBase productId={product.id} price={product.price} />
-      {showIndicator === true && (
-        <PriceCellContentIndicator info={info} />
-      )}
-    </div>
+    <PriceCellFrame product={product}>
+      <div className='flex items-center gap-1'>
+        <PriceCellBase productId={product.id} price={product.price} />
+        {showIndicator === true && (
+          <PriceCellContentIndicator info={info} />
+        )}
+      </div>
+    </PriceCellFrame>
   );
 }
 

@@ -123,9 +123,10 @@ export const resolveDropdownOpen = (
   requireCatalogForSuggestions = true
 ): boolean =>
   activeStage !== null &&
+  suggestionCount > 0 &&
   (requireCatalogForSuggestions === false ||
-    (typeof primaryCatalogId === 'string' && primaryCatalogId !== '')) &&
-  suggestionCount > 0;
+    activeStage === CATEGORY_STAGE ||
+    (typeof primaryCatalogId === 'string' && primaryCatalogId !== ''));
 
 function useHighlightedSuggestionReset({
   highlightedIndex,

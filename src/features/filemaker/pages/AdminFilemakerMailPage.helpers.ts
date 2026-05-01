@@ -47,7 +47,7 @@ const toDraftFromFilemakerMailAccount = (
   folderAllowlist: account.folderAllowlist,
   initialSyncLookbackDays: account.initialSyncLookbackDays,
   maxMessagesPerSync: account.maxMessagesPerSync,
-  pushEnabled: account.pushEnabled ?? true,
+  pushEnabled: account.pushEnabled,
   dkimDomain: account.dkimDomain ?? null,
   dkimKeySelector: account.dkimKeySelector ?? null,
   dkimPrivateKey: '',

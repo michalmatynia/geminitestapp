@@ -910,12 +910,12 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
     if (organizationSource === 'mongo') {
       try {
-        const nextSettingsDatabase = applyOrganizationJobListings(
-          database,
-          organizationJobListingOwnerId || organization.id,
-          jobListings,
-          organizationJobListingOwnerIds
-        );
+	        const nextSettingsDatabase = applyOrganizationJobListings(
+	          database,
+	          organizationJobListingOwnerId.length > 0 ? organizationJobListingOwnerId : organization.id,
+	          jobListings,
+	          organizationJobListingOwnerIds
+	        );
         const response = await fetch(
           `/api/filemaker/organizations/${encodeURIComponent(organization.id)}`,
           {
@@ -996,12 +996,12 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
       organization.id,
       legacyDemandRows
     );
-    nextDatabase = applyOrganizationJobListings(
-      nextDatabase,
-      organizationJobListingOwnerId || organization.id,
-      jobListings,
-      organizationJobListingOwnerIds
-    );
+	    nextDatabase = applyOrganizationJobListings(
+	      nextDatabase,
+	      organizationJobListingOwnerId.length > 0 ? organizationJobListingOwnerId : organization.id,
+	      jobListings,
+	      organizationJobListingOwnerIds
+	    );
 
     await persistDatabase(nextDatabase, 'Organization updated.');
     router.push('/admin/filemaker/organizations');

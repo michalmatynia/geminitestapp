@@ -59,6 +59,21 @@ const formatCvTitle = (cv: FilemakerCv): string => {
   return title.length > 0 ? title : `${cv.personName} CV`;
 };
 
+const formatCvSourceSuffix = (cv: FilemakerCv): string => {
+  if (cv.sourceCvTitle !== null && cv.sourceCvTitle !== undefined && cv.sourceCvTitle.trim().length > 0) {
+    return ` based on ${cv.sourceCvTitle}`;
+  }
+  if (
+    cv.sourceCvRecordId !== null &&
+    cv.sourceCvRecordId !== undefined &&
+    cv.sourceCvRecordId.trim().length > 0 &&
+    cv.sourceCvRecordId !== 'profile-fields-only'
+  ) {
+    return ` based on ${cv.sourceCvRecordId}`;
+  }
+  return '';
+};
+
 export function PersonCvsSection(): React.JSX.Element {
   const {
     editableAddresses,
@@ -411,16 +426,7 @@ export function PersonCvsSection(): React.JSX.Element {
                   (cv.tailoringScope !== null && cv.tailoringScope !== undefined) ? (
                     <div className='mt-1 truncate text-[10px] text-emerald-300/80'>
                       Scoped tailored CV
-                      {cv.sourceCvTitle !== null &&
-                      cv.sourceCvTitle !== undefined &&
-                      cv.sourceCvTitle.trim().length > 0
-                        ? ` based on ${cv.sourceCvTitle}`
-                        : cv.sourceCvRecordId !== null &&
-                            cv.sourceCvRecordId !== undefined &&
-                            cv.sourceCvRecordId.trim().length > 0 &&
-                            cv.sourceCvRecordId !== 'profile-fields-only'
-                          ? ` based on ${cv.sourceCvRecordId}`
-                          : ''}
+                      {formatCvSourceSuffix(cv)}
                     </div>
                   ) : null}
                 </div>

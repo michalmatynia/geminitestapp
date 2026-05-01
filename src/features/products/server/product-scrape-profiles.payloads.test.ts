@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
 
 import type { ProductScrapeCandidate, ProductScrapeProfileConfig } from './product-scrape-profiles.candidates';
 import { buildCreatePayload } from './product-scrape-profiles.payloads';
@@ -43,6 +44,15 @@ const draft: ScripterImportDraft = {
   issues: [],
 };
 
+const defaultPayloadInput = {
+  candidate,
+  draft,
+  profile,
+  catalogIds: ['catalog-battlestock'],
+  catalogDefaultPriceGroupId: null,
+  priceGroups: [] as PriceGroupForCalculation[],
+};
+
 const template = (overrides: Partial<ProductDraft>): ProductDraft => {
   const draftTemplate: ProductDraft = {
     id: 'template-1',
@@ -58,23 +68,17 @@ const template = (overrides: Partial<ProductDraft>): ProductDraft => {
 describe('product scrape profile payloads', () => {
   it('drops unstructured rendered English template names so imports can still create products', () => {
     const payload = buildCreatePayload({
-      candidate,
-      draft,
-      profile,
-      catalogIds: ['catalog-battlestock'],
+      ...defaultPayloadInput,
       template: template({ name_en: '[name]' }),
     });
 
-    expect(payload.name_en).toBeUndefined();
+    expect(payload.name_en).toBe('40k spiritseer');
     expect(payload.name_pl).toBe('40k spiritseer');
   });
 
   it('keeps structured rendered English template names when the template selects a category', () => {
     const payload = buildCreatePayload({
-      candidate,
-      draft,
-      profile,
-      catalogIds: ['catalog-battlestock'],
+      ...defaultPayloadInput,
       template: template({
         categoryId: 'category-pendants',
         name_en: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
@@ -90,10 +94,7 @@ describe('product scrape profile payloads', () => {
 
   it('drops structured rendered English template names when the category segment does not match', () => {
     const payload = buildCreatePayload({
-      candidate,
-      draft,
-      profile,
-      catalogIds: ['catalog-battlestock'],
+      ...defaultPayloadInput,
       template: template({
         categoryId: 'category-pendants',
         name_en: '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k',
@@ -101,7 +102,37 @@ describe('product scrape profile payloads', () => {
       templateCategoryAliases: ['Display Base'],
     });
 
-    expect(payload.name_en).toBeUndefined();
+    expect(payload.name_en).toBe('40k spiritseer');
     expect(payload.categoryId).toBe('category-pendants');
+  });
+});
+
+describe('product scrape profile payload pricing', () => {
+  it('calculates imported product price from the catalog default source price group', () => {
+    const priceGroups: PriceGroupForCalculation[] = [
+      {
+        id: 'price-group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        type: 'standard',
+        basePriceField: 'sourcePrice',
+        isDefault: false,
+        sourceGroupId: null,
+        priceMultiplier: 1.5,
+        addToPrice: 10,
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+      },
+    ];
+
+    const payload = buildCreatePayload({
+      ...defaultPayloadInput,
+      catalogDefaultPriceGroupId: 'price-group-retail',
+      priceGroups,
+    });
+
+    expect(payload.defaultPriceGroupId).toBe('price-group-retail');
+    expect(payload.sourcePrice).toBe(60);
+    expect(payload.price).toBe(100);
   });
 });

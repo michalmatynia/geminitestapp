@@ -278,6 +278,24 @@ describe('ProductListMobileCards', () => {
     expect(screen.getByLabelText('Select Keychain').className).toContain('cursor-pointer');
   });
 
+  it('renders source price on mobile cards for scraped products', () => {
+    useProductListSelectionContextMock.mockReturnValue({
+      data: [
+        createProduct({
+          importSource: 'scrape',
+          price: 120,
+          sourcePrice: 60,
+        }),
+      ],
+      rowSelection: {},
+      setRowSelection: vi.fn(),
+    });
+
+    render(<ProductListMobileCards />);
+
+    expect(screen.getByText('Source: 60.00')).toBeInTheDocument();
+  });
+
   it('passes product notes into the shared thumbnail cell', () => {
     useProductListSelectionContextMock.mockReturnValue({
       data: [

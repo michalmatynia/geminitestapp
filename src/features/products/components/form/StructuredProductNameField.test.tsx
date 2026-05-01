@@ -2,7 +2,7 @@
 /* eslint-disable max-lines, max-lines-per-function */
 
 import React from 'react';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -49,6 +49,7 @@ type RenderFieldOptions = {
   fieldName?: 'name_en' | 'name_pl';
   locale?: 'en' | 'pl';
   selectedCategoryId?: string | null;
+  selectedCatalogIds?: string[];
   sizeTerms?: Array<string | { name_en: string; name_pl?: string | null }>;
   materialTerms?: Array<string | { name_en: string; name_pl?: string | null }>;
   themeTerms?: Array<string | { name_en: string; name_pl?: string | null }>;
@@ -71,8 +72,12 @@ const toTitleTermFixture = (
   };
 };
 
-// eslint-disable-next-line complexity
-function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnType<typeof vi.fn> } {
+type RenderFieldResult = {
+  setCategoryId: ReturnType<typeof vi.fn>;
+  rerenderField: () => void;
+};
+
+function renderField(options: RenderFieldOptions = {}): RenderFieldResult {
   const setCategoryId = vi.fn();
   const categories = options.categories ?? [
     {
@@ -125,7 +130,7 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
     setNormalizeNameError: vi.fn(),
   });
   useProductFormMetadataMock.mockReturnValue({
-    selectedCatalogIds: ['catalog-a'],
+    selectedCatalogIds: options.selectedCatalogIds ?? ['catalog-a'],
     categories,
     selectedCategoryId: options.selectedCategoryId ?? null,
     setCategoryId,
@@ -137,7 +142,7 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
     })
   );
 
-  render(
+  const renderFieldElement = (): React.JSX.Element => (
     <Wrapper>
       <StructuredProductNameField
         fieldName={options.fieldName ?? 'name_en'}
@@ -146,8 +151,9 @@ function renderField(options: RenderFieldOptions = {}): { setCategoryId: ReturnT
       <CategoryValueProbe />
     </Wrapper>
   );
+  const view = render(renderFieldElement());
 
-  return { setCategoryId };
+  return { setCategoryId, rerenderField: () => view.rerender(renderFieldElement()) };
 }
 
 describe('StructuredProductNameField', () => {
@@ -458,6 +464,42 @@ describe('StructuredProductNameField', () => {
       );
     });
     expect(setCategoryId).toHaveBeenCalledWith('child');
+  });
+
+  it('shows category suggestions even when no product catalog is selected', async () => {
+    const { setCategoryId } = renderField({ selectedCatalogIds: [] });
+    const input = screen.getByLabelText('English Name');
+
+    fireEvent.change(input, {
+      target: { value: 'Scout Regiment | 4 cm | Metal | p' },
+    });
+    input.setSelectionRange(
+      'Scout Regiment | 4 cm | Metal | p'.length,
+      'Scout Regiment | 4 cm | Metal | p'.length
+    );
+    fireEvent.keyUp(input, { key: 'p' });
+
+    const listbox = await screen.findByRole('listbox', { name: 'Category suggestions' });
+    fireEvent.click(
+      within(listbox).getByText('Pins / Anime Pin').closest('button') as HTMLButtonElement
+    );
+
+    await waitFor(() => {
+      expect(setCategoryId).toHaveBeenCalledWith('child');
+    });
+  });
+
+  it('does not clear an externally selected category when the title category segment is blank', async () => {
+    const { rerenderField, setCategoryId } = renderField({
+      initialName: '',
+      selectedCategoryId: 'child',
+    });
+
+    await act(async () => {});
+    rerenderField();
+    await act(async () => {});
+
+    expect(setCategoryId).not.toHaveBeenCalledWith(null);
   });
 
   it('syncs the real category when the user types an exact leaf category manually', async () => {

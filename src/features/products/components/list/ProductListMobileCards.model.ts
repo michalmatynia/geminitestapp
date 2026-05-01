@@ -53,6 +53,7 @@ type ProductListPriceModel = Pick<
   | 'currencyCode'
   | 'formattedPrice'
   | 'basePriceLabel'
+  | 'sourcePriceLabel'
 >;
 
 const resolveSkuModel = (product: ProductWithImages): ProductListSkuModel => {
@@ -113,6 +114,13 @@ const resolveFormattedPrice = (
   return `${displayPrice.toFixed(2)}${currencyLabel.length > 0 ? ` ${currencyLabel}` : ''}`;
 };
 
+const resolveSourcePriceLabel = (product: ProductWithImages): string => {
+  const sourcePrice = product.sourcePrice;
+  if (resolveProductImportSource(product) !== 'scrape') return '';
+  if (typeof sourcePrice !== 'number' || !Number.isFinite(sourcePrice)) return '';
+  return `Source: ${sourcePrice.toFixed(2)}`;
+};
+
 const resolvePriceModel = ({
   product,
   rowVisuals,
@@ -140,6 +148,7 @@ const resolvePriceModel = ({
     formattedPrice: resolveFormattedPrice(result.price, result.currencyCode),
     basePriceLabel:
       product.price !== null ? product.price.toFixed(2) : EMPTY_PRODUCT_LIST_VALUE,
+    sourcePriceLabel: resolveSourcePriceLabel(product),
   };
 };
 

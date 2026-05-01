@@ -140,6 +140,9 @@ const readRawResultString = (rawResult: unknown, key: string): string | null => 
 const isManualVerificationPending = (scan: Pick<ProductScanRecord, 'rawResult'>): boolean =>
   readRawResultFlag(scan.rawResult, 'manualVerificationPending');
 
+const hasGoogleManualRetryStep = (scan: Pick<ProductScanRecord, 'steps'>): boolean =>
+  Array.isArray(scan.steps) && scan.steps.some((step) => step.key === 'google_manual_retry');
+
 export const isProductScanGoogleStealthRetrying = (
   scan: Pick<ProductScanRecord, 'status' | 'rawResult'> | null | undefined
 ): boolean => {
@@ -159,7 +162,7 @@ export const isProductScanGoogleManualFallbackOpen = (
   if (!isQueuedOrRunning(scan.status)) return false;
   return (
     readRawResultFlag(scan.rawResult, 'captchaManualRetryStarted') ||
-    scan.steps.some((step) => step.key === 'google_manual_retry')
+    hasGoogleManualRetryStep(scan)
   );
 };
 

@@ -48,7 +48,7 @@ export function FilemakerPartyEditPageLayout(
     children,
   } = props;
 
-  if (!itemName) {
+  if (itemName === null || itemName.trim().length === 0) {
     return (
       <div className='page-section-compact text-center text-gray-500'>{notFoundMessage}</div>
     );

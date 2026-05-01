@@ -35,19 +35,28 @@ export type ProductFormParameterRowModel = {
   selectLabelOptions: Array<LabeledOptionDto<string>>;
 };
 
+type ProductParameterAvailabilitySource = Omit<ProductParameter, 'linkedTitleTermType'> &
+  Partial<Pick<ProductParameter, 'linkedTitleTermType'>>;
+
 const buildRowKey = (entry: ProductParameterValue, index: number): string => {
   const parameterId = entry.parameterId.length > 0 ? entry.parameterId : 'new';
   return `${parameterId}-${index}`;
 };
 
 const isParameterAvailableForRow = (
-  parameter: ProductParameter,
+  parameter: ProductParameterAvailabilitySource,
   entry: ProductParameterValue,
   selectedIds: string[]
 ): boolean => {
   const isSelectedInCurrentRow = parameter.id === entry.parameterId;
   if (selectedIds.includes(parameter.id) && isSelectedInCurrentRow !== true) return false;
-  if (parameter.linkedTitleTermType !== null && isSelectedInCurrentRow !== true) return false;
+  if (
+    parameter.linkedTitleTermType !== null &&
+    parameter.linkedTitleTermType !== undefined &&
+    isSelectedInCurrentRow !== true
+  ) {
+    return false;
+  }
   return true;
 };
 

@@ -3,6 +3,8 @@ import 'server-only';
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
 import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
+import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
+import { calculatePriceForCurrency } from '@/shared/lib/products/utils/priceCalculation';
 import {
   normalizeStructuredProductName,
   parseStructuredProductName,
@@ -27,6 +29,8 @@ type ProductScrapePayloadInput = {
   draft: ScripterImportDraft;
   profile: ProductScrapeProfileConfig;
   catalogIds: string[];
+  catalogDefaultPriceGroupId: string | null;
+  priceGroups: PriceGroupForCalculation[];
   template?: ProductDraft | null;
   templateCategoryAliases?: readonly string[];
 };
@@ -66,16 +70,66 @@ const buildTemplateNumericDefaults = (
   ...(hasTemplateNumber(template.stock) ? { stock: template.stock } : {}),
 });
 
+const resolveDefaultPriceGroupId = (
+  template: ProductDraft | null | undefined,
+  catalogDefaultPriceGroupId: string | null
+): string | null => {
+  if (hasTemplateString(template?.defaultPriceGroupId)) return template.defaultPriceGroupId;
+  if (hasTemplateString(catalogDefaultPriceGroupId)) return catalogDefaultPriceGroupId;
+  return null;
+};
+
 const buildTemplateIdDefaults = (
-  template: ProductDraft
-): Partial<ProductCreateInput & ProductUpdateInput> => ({
-  ...(hasTemplateString(template.defaultPriceGroupId)
-    ? { defaultPriceGroupId: template.defaultPriceGroupId }
-    : {}),
-  ...(hasTemplateString(template.shippingGroupId)
-    ? { shippingGroupId: template.shippingGroupId }
-    : {}),
-});
+  template: ProductDraft | null | undefined,
+  catalogDefaultPriceGroupId: string | null
+): Partial<ProductCreateInput & ProductUpdateInput> => {
+  const defaultPriceGroupId = resolveDefaultPriceGroupId(template, catalogDefaultPriceGroupId);
+  return {
+    ...(defaultPriceGroupId !== null ? { defaultPriceGroupId } : {}),
+    ...(hasTemplateString(template?.shippingGroupId)
+      ? { shippingGroupId: template.shippingGroupId }
+      : {}),
+  };
+};
+
+const matchesPriceGroupId = (group: PriceGroupForCalculation, id: string): boolean =>
+  group.id === id || group.groupId === id;
+
+const resolvePriceGroupCurrencyCode = (group: PriceGroupForCalculation): string => {
+  const currencyCode = group.currency.code.trim();
+  if (currencyCode.length > 0) return currencyCode;
+  if (typeof group.currencyCode === 'string' && group.currencyCode.trim().length > 0) {
+    return group.currencyCode.trim();
+  }
+  return group.currencyId.trim();
+};
+
+const buildCalculatedImportedPrice = ({
+  candidate,
+  catalogDefaultPriceGroupId,
+  priceGroups,
+  template,
+}: Pick<
+  ProductScrapePayloadInput,
+  'candidate' | 'catalogDefaultPriceGroupId' | 'priceGroups' | 'template'
+>): Partial<ProductCreateInput & ProductUpdateInput> => {
+  if (hasTemplateNumber(template?.price)) return {};
+  if (candidate.price === null) return {};
+
+  const defaultPriceGroupId = resolveDefaultPriceGroupId(template, catalogDefaultPriceGroupId);
+  if (defaultPriceGroupId === null) return {};
+
+  const defaultGroup = priceGroups.find((group) => matchesPriceGroupId(group, defaultPriceGroupId));
+  if (defaultGroup === undefined) return {};
+
+  const targetCurrencyCode = resolvePriceGroupCurrencyCode(defaultGroup);
+  if (targetCurrencyCode.length === 0) return {};
+
+  const result = calculatePriceForCurrency(null, defaultPriceGroupId, targetCurrencyCode, priceGroups, {
+    sourcePrice: candidate.price,
+  });
+  return result.price !== null ? { price: result.price } : {};
+};
 
 const buildTemplateRenderedDefaults = (
   template: ProductDraft,
@@ -97,14 +151,15 @@ const buildTemplateRenderedDefaults = (
 
 const buildTemplatePayloadDefaults = (
   template: ProductDraft | null | undefined,
-  values: ScrapeTemplateValues
+  values: ScrapeTemplateValues,
+  catalogDefaultPriceGroupId: string | null
 ): Partial<ProductCreateInput & ProductUpdateInput> => {
   if (template === null || template === undefined) return {};
 
   return {
     ...buildTemplateIdentifierDefaults(template, values),
     ...buildTemplateNumericDefaults(template),
-    ...buildTemplateIdDefaults(template),
+    ...buildTemplateIdDefaults(template, catalogDefaultPriceGroupId),
     ...buildTemplateRenderedDefaults(template, values),
   };
 };
@@ -124,7 +179,7 @@ const buildRenderedNameFields = ({
   return {
     sku: resolveRenderedSku(candidate, template, values),
     importSource: 'scrape',
-    ...(nameEn !== null ? { name_en: nameEn } : {}),
+    name_en: nameEn ?? candidate.title,
     name_pl: resolveRenderedNamePl(candidate, template, values),
     ...(nameDe !== null ? { name_de: nameDe } : {}),
   };
@@ -239,6 +294,8 @@ const buildCommonPayloadFields = ({
   draft,
   profile,
   catalogIds,
+  catalogDefaultPriceGroupId,
+  priceGroups,
   template,
   templateCategoryAliases,
 }: ProductScrapePayloadInput): ProductCreateInput => {
@@ -248,7 +305,9 @@ const buildCommonPayloadFields = ({
     ...buildRenderedNameFields({ candidate, values, template, templateCategoryAliases }),
     ...buildRenderedDescriptionFields(template, values),
     ...buildRenderedSupplierFields({ candidate, profile, template, values }),
-    ...buildTemplatePayloadDefaults(template, values),
+    ...buildTemplateIdDefaults(template, catalogDefaultPriceGroupId),
+    ...buildCalculatedImportedPrice({ candidate, catalogDefaultPriceGroupId, priceGroups, template }),
+    ...buildTemplatePayloadDefaults(template, values, catalogDefaultPriceGroupId),
     catalogIds,
     ...buildTemplateCollectionFields(template, values),
     imageLinks: candidate.imageLinks,

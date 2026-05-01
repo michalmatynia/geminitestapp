@@ -41,9 +41,9 @@ const isInsertable = (
   kind: EmailBlockKind
 ): boolean => {
   if (kind === 'section') return true;
-  const selected = selectedBlockId ? findBlockContext(blocks, selectedBlockId) : null;
+  const selected = selectedBlockId !== null ? findBlockContext(blocks, selectedBlockId) : null;
   const targets: EmailContainerBlock[] = [];
-  if (selected) {
+  if (selected !== null) {
     if (isEmailContainerBlock(selected.block)) targets.push(selected.block);
     if (selected.parent) targets.push(selected.parent);
   }

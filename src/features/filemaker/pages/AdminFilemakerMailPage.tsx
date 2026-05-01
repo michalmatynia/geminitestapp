@@ -16,20 +16,21 @@ function AdminFilemakerMailPageContent(): React.JSX.Element {
     isRecentPanel,
     selectedFolder,
   } = useMailPageContext();
+  let content: React.JSX.Element;
+  if (isAttentionPanel) {
+    content = <MailboxesAttentionSection />;
+  } else if (isSearchPanel) {
+    content = <MailSearchSection />;
+  } else if (selectedFolder !== null || isRecentPanel) {
+    content = <MailThreadsSection />;
+  } else {
+    content = <MailAccountSettingsSection />;
+  }
 
   return (
     <div className='page-section-compact grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
       <FilemakerMailSidebar />
-
-      {isAttentionPanel ? (
-        <MailboxesAttentionSection />
-      ) : isSearchPanel ? (
-        <MailSearchSection />
-      ) : selectedFolder || isRecentPanel ? (
-        <MailThreadsSection />
-      ) : (
-        <MailAccountSettingsSection />
-      )}
+      {content}
     </div>
   );
 }

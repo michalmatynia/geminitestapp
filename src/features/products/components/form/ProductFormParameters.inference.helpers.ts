@@ -22,6 +22,9 @@ import type {
   ParameterValueRowsSnapshot,
 } from './ProductFormParameters.types';
 
+type ProductParameterOptionSource = Omit<ProductParameter, 'optionLabels' | 'selectorType'> &
+  Partial<Pick<ProductParameter, 'optionLabels' | 'selectorType'>>;
+
 const ROW_TRIGGER_LANGUAGE_CODES = new Set(['en', 'pl']);
 
 export const SELECTOR_TYPES_REQUIRING_OPTIONS = new Set<ProductParameter['selectorType']>([
@@ -158,12 +161,14 @@ export const normalizeInferredParameterValue = (args: {
 };
 
 export const buildNormalizedParameterOptionLabels = (
-  parameter: ProductParameter,
+  parameter: ProductParameterOptionSource,
   currentValue: string
 ): string[] => {
+  const selectorType = parameter.selectorType ?? 'text';
+  const optionLabels = Array.isArray(parameter.optionLabels) ? parameter.optionLabels : [];
   const normalizedOptionLabels = Array.from(
     new Set(
-      parameter.optionLabels
+      optionLabels
         .map((value: string) => value.trim())
         .filter((value: string) => value.length > 0)
     )
@@ -171,7 +176,7 @@ export const buildNormalizedParameterOptionLabels = (
 
   if (
     currentValue.length > 0 &&
-    SELECTOR_TYPES_REQUIRING_OPTIONS.has(parameter.selectorType) &&
+    SELECTOR_TYPES_REQUIRING_OPTIONS.has(selectorType) &&
     normalizedOptionLabels.includes(currentValue) !== true
   ) {
     normalizedOptionLabels.unshift(currentValue);

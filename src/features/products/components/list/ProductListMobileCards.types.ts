@@ -36,6 +36,7 @@ export type ProductListMobileCardModel = {
   currencyCode: string;
   formattedPrice: string;
   basePriceLabel: string;
+  sourcePriceLabel: string;
 };
 
 export type ProductListMobileCardOwnProps = {

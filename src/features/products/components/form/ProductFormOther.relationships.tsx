@@ -76,8 +76,7 @@ const CategoryRelationshipFields = ({
 }): React.JSX.Element => (
   <>
     <CategorySingleSelectField
-      disabled={props.hasCatalogs === false}
-      placeholder={props.hasCatalogs ? 'Select category' : 'Select a catalog first'}
+      placeholder='Select category'
     />
     {categoryIssueList.map((issue) => {
       const replacementId = issue.replacementValue?.trim() ?? '';

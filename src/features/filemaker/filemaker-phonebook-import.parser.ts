@@ -26,8 +26,7 @@ const HEADERLESS_PHONEBOOK_FIELDS = [
   FIELDS.legacyUuid,
 ] as const;
 
-const LEGACY_PHONEBOOK_LINES = ['CSV/TSV', 'XLSX'] as const;
-type LegacyPhonebookRowsFormat = (typeof LEGACY_PHONEBOOK_LINES)[number];
+type LegacyPhonebookRowsFormat = 'CSV/TSV' | 'XLSX';
 
 type Delimiter = (typeof DELIMITER_CANDIDATES)[number];
 

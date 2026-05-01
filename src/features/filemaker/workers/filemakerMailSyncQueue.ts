@@ -73,20 +73,14 @@ const queue = createManagedQueue<FilemakerMailSyncQueueJobData>({
   processor: async (data, jobId, _signal, context) => {
     const result = await syncFilemakerMailAccount(data.accountId);
 
-    if (
-      context !== null &&
-      context !== undefined &&
-      typeof context.updateProgress === 'function'
-    ) {
-      await context.updateProgress({
-        accountId: data.accountId,
-        reason: data.reason,
-        fetchedMessageCount: result.fetchedMessageCount,
-        insertedMessageCount: result.insertedMessageCount,
-        updatedMessageCount: result.updatedMessageCount,
-        touchedThreadCount: result.touchedThreadCount,
-      });
-    }
+    await context?.updateProgress({
+      accountId: data.accountId,
+      reason: data.reason,
+      fetchedMessageCount: result.fetchedMessageCount,
+      insertedMessageCount: result.insertedMessageCount,
+      updatedMessageCount: result.updatedMessageCount,
+      touchedThreadCount: result.touchedThreadCount,
+    });
 
     if (typeof result.lastSyncError === 'string' && result.lastSyncError.trim().length > 0) {
       await logSystemEvent({

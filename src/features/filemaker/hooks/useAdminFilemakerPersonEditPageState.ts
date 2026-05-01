@@ -162,12 +162,14 @@ const normalizePersonLanguageSkillLevel = (value: number): number =>
 const normalizePersonLanguageSkills = (
   value: FilemakerPerson['languageSkills'] | undefined
 ): NonNullable<FilemakerPerson['languageSkills']> =>
-  (value ?? [])
-    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
-      ...(skill.id?.trim() ? { id: skill.id.trim() } : {}),
-      language: skill.language.trim(),
-      level: normalizePersonLanguageSkillLevel(skill.level),
-    }))
+	  (value ?? [])
+	    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
+	      ...(skill.id.trim().length > 0
+	        ? { id: skill.id.trim() }
+	        : {}),
+	      language: skill.language.trim(),
+	      level: normalizePersonLanguageSkillLevel(skill.level),
+	    }))
     .filter((skill): boolean => skill.language.length > 0);
 
 export type AdminFilemakerPersonEditPageContextValue = {

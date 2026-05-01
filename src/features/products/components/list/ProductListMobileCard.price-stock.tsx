@@ -24,6 +24,11 @@ export function ProductListMobileCardPriceStock({
             {model.showCurrencyIndicator ? ` (${model.currencyCode})` : ''}
           </div>
         ) : null}
+        {model.sourcePriceLabel.length > 0 ? (
+          <div className='text-[11px] text-muted-foreground/80'>
+            {model.sourcePriceLabel}
+          </div>
+        ) : null}
       </div>
       <div className='space-y-0.5'>
         <div className='text-muted-foreground'>Stock</div>

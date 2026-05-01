@@ -178,7 +178,11 @@ const resolveVisitedPriceForGroup = (
   group: PriceGroupForCalculation,
   visited: Set<string>
 ): number | null => {
-  if (isSamePriceGroup(group, input.defaultGroup) && group.type !== 'dependent') {
+  if (
+    isSamePriceGroup(group, input.defaultGroup) &&
+    group.type !== 'dependent' &&
+    group.basePriceField !== PRICE_GROUP_SOURCE_PRICE_FIELD
+  ) {
     return input.prices.basePrice;
   }
   if (group.type === 'standard') return resolveStandardPriceForGroup(group, input.prices);

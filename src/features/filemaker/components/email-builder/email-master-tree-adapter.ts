@@ -1,4 +1,8 @@
-import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/public';
+import {
+  createMasterFolderTreeAdapterV3,
+  type DecodedMasterTreeNodeV3,
+  type MasterFolderTreeAdapterV3,
+} from '@/shared/lib/foldertree/public';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import type { EmailBlock } from './block-model';
@@ -11,13 +15,17 @@ interface EmailMasterTreeAdapterInput {
   setBlocks: (next: EmailBlock[]) => void;
 }
 
-export const decodeEmailMasterNodeId = (nodeId: MasterTreeId) => ({
+export const decodeEmailMasterNodeId = (
+  nodeId: MasterTreeId
+): DecodedMasterTreeNodeV3<EmailBlockEntity> => ({
   entity: 'block' as const,
   id: nodeId,
   nodeId,
 });
 
-export const createEmailMasterTreeAdapter = (input: EmailMasterTreeAdapterInput) => {
+export const createEmailMasterTreeAdapter = (
+  input: EmailMasterTreeAdapterInput
+): MasterFolderTreeAdapterV3 => {
   const persistFromContext = (nextNodes: MasterTreeNode[]): void => {
     const next = applyTreeMutationToBlocks(input.getBlocks(), nextNodes);
     input.setBlocks(next);

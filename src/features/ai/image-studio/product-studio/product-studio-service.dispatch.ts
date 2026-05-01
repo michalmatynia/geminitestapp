@@ -44,6 +44,7 @@ import {
 } from './product-studio-service.helpers';
 import {
   toProductImageFileSource,
+  toProductImageUrlSource,
   type ProductImageFileSource,
 } from './product-studio-service.images';
 import { importSourceProductImageToStudio } from './product-studio-service.io';
@@ -164,9 +165,9 @@ export async function linkProductImageToStudio(params: {
   rotateBeforeSendDeg?: 90 | null | undefined;
 }): Promise<ProductStudioLinkResult> {
   const resolved = await resolveProductAndStudioTarget(params);
-  const sourceImage = toProductImageFileSource(
-    resolved.product.images[resolved.imageSlotIndex]?.imageFile
-  );
+  const sourceImage =
+    toProductImageFileSource(resolved.product.images[resolved.imageSlotIndex]?.imageFile) ??
+    toProductImageUrlSource(resolved.product.imageLinks?.[resolved.imageSlotIndex]);
   const skuFolderSegment =
     sanitizeSkuSegment(trimString(resolved.product.sku)) ??
     sanitizeSkuSegment(trimString(resolved.product.id)) ??
@@ -218,9 +219,9 @@ export async function sendProductImageToStudio(params: {
   const requestedSequenceMode = normalizeProductStudioSequenceGenerationMode(
     params.sequenceGenerationMode ?? sequenceGenerationMode
   );
-  const sourceImage = toProductImageFileSource(
-    resolved.product.images[resolved.imageSlotIndex]?.imageFile
-  );
+  const sourceImage =
+    toProductImageFileSource(resolved.product.images[resolved.imageSlotIndex]?.imageFile) ??
+    toProductImageUrlSource(resolved.product.imageLinks?.[resolved.imageSlotIndex]);
   const skuFolderSegment =
     sanitizeSkuSegment(trimString(resolved.product.sku)) ??
     sanitizeSkuSegment(trimString(resolved.product.id)) ??

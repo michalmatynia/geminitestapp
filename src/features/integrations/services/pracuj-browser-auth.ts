@@ -34,6 +34,23 @@ const COOKIE_ACCEPT_SELECTORS = [
   '#onetrust-accept-btn-handler',
 ] as const;
 
+const GOOGLE_LOGIN_SELECTORS = [
+  'button:has-text("Zaloguj przez Google")',
+  'button:has-text("Zaloguj się przez Google")',
+  'button:has-text("Google")',
+  'a:has-text("Zaloguj przez Google")',
+  '[data-testid*="google"]',
+] as const;
+
+const ONE_TIME_CODE_BUTTON_SELECTORS = [
+  'button:has-text("Zaloguj się jednorazowym kodem")',
+  'button:has-text("jednorazowym kodem")',
+  'a:has-text("Zaloguj się jednorazowym kodem")',
+  'a:has-text("jednorazowym kodem")',
+] as const;
+
+export type PracujLoginMode = 'password' | 'google' | 'one_time_code';
+
 const LOGGED_IN_TEXT_PATTERNS = [
   /wyloguj/i,
   /moje aplikacje/i,
@@ -199,6 +216,40 @@ export const trySubmitPracujCredentials = async (
   ]);
   await page.waitForTimeout(1500).catch(() => undefined);
   await acceptPracujCookies(page);
+  return true;
+};
+
+export const clickPracujGoogleLogin = async (page: Page): Promise<boolean> => {
+  const button = await findVisibleLocator(page, GOOGLE_LOGIN_SELECTORS);
+  if (button === null) return false;
+  await button.click({ timeout: 5000 }).catch(() => undefined);
+  return true;
+};
+
+export const triggerPracujOneTimeCode = async (
+  page: Page,
+  username: string
+): Promise<boolean> => {
+  const emailInput = await findVisibleLocator(page, EMAIL_SELECTORS);
+  const submitButton = await findVisibleLocator(page, SUBMIT_SELECTORS);
+  if (emailInput === null || submitButton === null) return false;
+
+  await emailInput.fill(username);
+  await Promise.allSettled([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15_000 }),
+    submitButton.click(),
+  ]);
+  await page.waitForTimeout(1000).catch(() => undefined);
+  await acceptPracujCookies(page);
+
+  const otpButton = await findVisibleLocator(page, ONE_TIME_CODE_BUTTON_SELECTORS);
+  if (otpButton === null) return false;
+
+  await Promise.allSettled([
+    page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15_000 }),
+    otpButton.click(),
+  ]);
+  await page.waitForTimeout(1000).catch(() => undefined);
   return true;
 };
 

@@ -67,6 +67,7 @@ const buildPage = (state: PageState) => ({
   goto: vi.fn(async (url: string) => {
     state.currentUrl = url;
   }),
+  setViewportSize: vi.fn(async () => undefined),
   waitForLoadState: vi.fn(async () => undefined),
   waitForNavigation: vi.fn(async () => undefined),
   waitForTimeout: vi.fn(async (timeoutMs: number) => {
@@ -77,6 +78,7 @@ const buildPage = (state: PageState) => ({
     const locator = {
       first: () => locator,
       textContent: vi.fn(async () => (selector === 'body' ? state.bodyText : '')),
+      isVisible: vi.fn(async () => false),
     };
     return locator;
   }),
@@ -179,29 +181,14 @@ describe('handlePracujBrowserTest', () => {
     expect(closeSessionMock).toHaveBeenCalledTimes(1);
   });
 
-  it('waits for manual Pracuj.pl login and persists the browser session', async () => {
+  it('completes successfully in manual mode when the stored session is already active', async () => {
     const state: PageState = {
       currentUrl: 'about:blank',
-      bodyText: 'Podaj adres e-mail',
-      showEmail: true,
+      bodyText: 'Moje aplikacje',
+      showEmail: false,
       showPassword: false,
     };
     const page = buildPage(state);
-    page.waitForTimeout.mockImplementation(async (timeoutMs: number) => {
-      mockNow += timeoutMs;
-      state.currentUrl = 'https://www.pracuj.pl/moje-aplikacje';
-      state.bodyText = 'Moje aplikacje';
-      state.showEmail = false;
-    });
-    findVisibleLocatorMock.mockImplementation((_: unknown, selectors: readonly string[]) => {
-      if (selectors.some((selector) => selector.includes('email'))) {
-        return Promise.resolve(state.showEmail ? createLocator(true) : null);
-      }
-      if (selectors.some((selector) => selector.includes('password'))) {
-        return Promise.resolve(state.showPassword ? createLocator(true) : null);
-      }
-      return Promise.resolve(null);
-    });
     resolvePlaywrightConnectionTestRuntimeMock.mockResolvedValueOnce({
       settings: {
         browser: 'chromium',
@@ -212,7 +199,7 @@ describe('handlePracujBrowserTest', () => {
         proxyUsername: '',
         proxyPassword: '',
       },
-      storageState: null,
+      storageState: { cookies: [], origins: [] },
     });
     openPlaywrightConnectionTestSessionMock.mockResolvedValue({
       page,
@@ -224,7 +211,7 @@ describe('handlePracujBrowserTest', () => {
     expect(await response.json()).toMatchObject({
       ok: true,
       sessionReady: true,
-      message: 'Pracuj.pl session refreshed successfully.',
+      message: 'Pracuj.pl session verified successfully.',
     });
     expect(persistPlaywrightConnectionTestSessionMock).toHaveBeenCalledWith(
       expect.objectContaining({

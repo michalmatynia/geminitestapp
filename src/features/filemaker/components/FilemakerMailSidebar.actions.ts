@@ -152,7 +152,7 @@ const clearSearchQuery = (input: {
   startTransition(() => {
     input.router.push(
       buildMailSelectionHref({
-        accountId: input.filters.searchContextAccountId ?? input.selectedAccountId,
+        accountId: input.filters.searchContextAccountId,
         panel: 'search',
       })
     );

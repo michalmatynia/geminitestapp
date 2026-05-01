@@ -14,6 +14,7 @@ type MailAccountSettingsFormProps = {
   draft: MailPageState['draft'];
   setDraft: MailPageState['setDraft'];
   selectedAccount: MailPageState['selectedAccount'];
+  accountFormErrors: MailPageState['accountFormErrors'];
   folderAllowlistValue: string;
   setFolderAllowlistValue: (value: string) => void;
   dmarcWarnings: FilemakerMailDmarcAlignmentWarning[];
@@ -46,9 +47,13 @@ const ConnectionFields = ({
   draft,
   setDraft,
   selectedAccount,
-}: Pick<MailAccountSettingsFormProps, 'draft' | 'setDraft' | 'selectedAccount'>): React.JSX.Element => (
+  accountFormErrors,
+}: Pick<
+  MailAccountSettingsFormProps,
+  'draft' | 'setDraft' | 'selectedAccount' | 'accountFormErrors'
+>): React.JSX.Element => (
   <>
-    <FormField label='Mailbox name'>
+    <FormField label='Mailbox name' required error={accountFormErrors.name}>
       <Input
         value={draft.name}
         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -57,7 +62,7 @@ const ConnectionFields = ({
         placeholder='Primary support inbox'
       />
     </FormField>
-    <FormField label='Email address'>
+    <FormField label='Email address' required error={accountFormErrors.emailAddress}>
       <Input
         value={draft.emailAddress}
         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -66,7 +71,12 @@ const ConnectionFields = ({
         placeholder='support@example.com'
       />
     </FormField>
-    <ServerConnectionGrid draft={draft} setDraft={setDraft} selectedAccount={selectedAccount} />
+    <ServerConnectionGrid
+      draft={draft}
+      setDraft={setDraft}
+      selectedAccount={selectedAccount}
+      accountFormErrors={accountFormErrors}
+    />
   </>
 );
 
@@ -74,19 +84,27 @@ const ServerConnectionGrid = ({
   draft,
   setDraft,
   selectedAccount,
-}: Pick<MailAccountSettingsFormProps, 'draft' | 'setDraft' | 'selectedAccount'>): React.JSX.Element => (
+  accountFormErrors,
+}: Pick<
+  MailAccountSettingsFormProps,
+  'draft' | 'setDraft' | 'selectedAccount' | 'accountFormErrors'
+>): React.JSX.Element => (
   <>
     <div className='grid gap-3 md:grid-cols-2'>
-      <FormField label='IMAP host'>
+      <FormField label='IMAP host' required error={accountFormErrors.imapHost}>
         <Input value={draft.imapHost} onChange={(event): void => { setDraft((prev) => ({ ...prev, imapHost: event.target.value })); }} placeholder='imap.example.com' />
       </FormField>
-      <FormField label='IMAP port'>
+      <FormField label='IMAP port' required error={accountFormErrors.imapPort}>
         <Input value={String(draft.imapPort)} onChange={(event): void => { setDraft((prev) => ({ ...prev, imapPort: parsePositiveInt(event.target.value, 993) })); }} />
       </FormField>
-      <FormField label='IMAP user'>
+      <FormField label='IMAP user' required error={accountFormErrors.imapUser}>
         <Input value={draft.imapUser} onChange={(event): void => { setDraft((prev) => ({ ...prev, imapUser: event.target.value })); }} />
       </FormField>
-      <FormField label='IMAP password'>
+      <FormField
+        label='IMAP password'
+        required={selectedAccount === null}
+        error={accountFormErrors.imapPassword}
+      >
         <Input
           type='password'
           value={draft.imapPassword}
@@ -96,16 +114,20 @@ const ServerConnectionGrid = ({
       </FormField>
     </div>
     <div className='grid gap-3 md:grid-cols-2'>
-      <FormField label='SMTP host'>
+      <FormField label='SMTP host' required error={accountFormErrors.smtpHost}>
         <Input value={draft.smtpHost} onChange={(event): void => { setDraft((prev) => ({ ...prev, smtpHost: event.target.value })); }} placeholder='smtp.example.com' />
       </FormField>
-      <FormField label='SMTP port'>
+      <FormField label='SMTP port' required error={accountFormErrors.smtpPort}>
         <Input value={String(draft.smtpPort)} onChange={(event): void => { setDraft((prev) => ({ ...prev, smtpPort: parsePositiveInt(event.target.value, 465) })); }} />
       </FormField>
-      <FormField label='SMTP user'>
+      <FormField label='SMTP user' required error={accountFormErrors.smtpUser}>
         <Input value={draft.smtpUser} onChange={(event): void => { setDraft((prev) => ({ ...prev, smtpUser: event.target.value })); }} />
       </FormField>
-      <FormField label='SMTP password'>
+      <FormField
+        label='SMTP password'
+        required={selectedAccount === null}
+        error={accountFormErrors.smtpPassword}
+      >
         <Input
           type='password'
           value={draft.smtpPassword}
@@ -144,12 +166,20 @@ const SenderFields = ({
 const SyncLimitsFields = ({
   draft,
   setDraft,
-}: Pick<MailAccountSettingsFormProps, 'draft' | 'setDraft'>): React.JSX.Element => (
+  accountFormErrors,
+}: Pick<
+  MailAccountSettingsFormProps,
+  'draft' | 'setDraft' | 'accountFormErrors'
+>): React.JSX.Element => (
   <div className='grid gap-3 md:grid-cols-2'>
-    <FormField label='Initial sync lookback (days)'>
+    <FormField
+      label='Initial sync lookback (days)'
+      required
+      error={accountFormErrors.initialSyncLookbackDays}
+    >
       <Input value={String(draft.initialSyncLookbackDays)} onChange={(event): void => { setDraft((prev) => ({ ...prev, initialSyncLookbackDays: parsePositiveInt(event.target.value, 30) })); }} />
     </FormField>
-    <FormField label='Max messages per sync'>
+    <FormField label='Max messages per sync' required error={accountFormErrors.maxMessagesPerSync}>
       <Input value={String(draft.maxMessagesPerSync)} onChange={(event): void => { setDraft((prev) => ({ ...prev, maxMessagesPerSync: parsePositiveInt(event.target.value, 100) })); }} />
     </FormField>
   </div>
@@ -233,9 +263,18 @@ const FormActions = ({
 
 export const MailAccountSettingsForm = (props: MailAccountSettingsFormProps): React.JSX.Element => (
   <FormSection title={props.selectedAccount !== null ? 'Mailbox Settings' : 'Add Mailbox'} className='space-y-3 p-4'>
-    <ConnectionFields draft={props.draft} setDraft={props.setDraft} selectedAccount={props.selectedAccount} />
+    <ConnectionFields
+      draft={props.draft}
+      setDraft={props.setDraft}
+      selectedAccount={props.selectedAccount}
+      accountFormErrors={props.accountFormErrors}
+    />
     <SenderFields draft={props.draft} setDraft={props.setDraft} folderAllowlistValue={props.folderAllowlistValue} setFolderAllowlistValue={props.setFolderAllowlistValue} />
-    <SyncLimitsFields draft={props.draft} setDraft={props.setDraft} />
+    <SyncLimitsFields
+      draft={props.draft}
+      setDraft={props.setDraft}
+      accountFormErrors={props.accountFormErrors}
+    />
     <DkimSection draft={props.draft} setDraft={props.setDraft} selectedAccount={props.selectedAccount} dmarcWarnings={props.dmarcWarnings} />
     <SecurityToggles draft={props.draft} setDraft={props.setDraft} />
     <FormActions selectedAccount={props.selectedAccount} handleSaveAccount={props.handleSaveAccount} isSavingAccount={props.isSavingAccount} router={props.router} />

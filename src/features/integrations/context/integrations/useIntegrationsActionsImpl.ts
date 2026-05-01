@@ -214,6 +214,17 @@ export function useIntegrationsActionsImpl(args: {
                 : null,
           }
         : {}),
+      ...(isPracujIntegration
+        ? {
+            pracujLoginMode: formData.pracujLoginMode,
+            pracujAuthMode: formData.pracujAuthMode,
+            pracujSalaryExpectation:
+              formData.pracujSalaryExpectation.trim().length > 0
+                ? parseInt(formData.pracujSalaryExpectation.trim(), 10) || null
+                : null,
+            pracujCooperationForm: formData.pracujCooperationForm,
+          }
+        : {}),
       ...(is1688Integration
         ? {
             scanner1688StartUrl: formData.scanner1688StartUrl.trim() || null,

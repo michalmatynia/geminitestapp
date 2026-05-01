@@ -15,6 +15,7 @@ import { getProductRepository } from '@/shared/lib/products/services/product-rep
 import { getProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
 import { productService } from '@/shared/lib/products/services/productService';
 
+import { clearProductStudioActiveRun } from './product-studio-service.active-run';
 import { asRecord, normalizeImageSlotIndex, trimString } from './product-studio-service.helpers';
 import { toProductImageFileSource } from './product-studio-service.images';
 import {
@@ -126,6 +127,11 @@ export async function acceptProductStudioVariant(params: {
   if (!updatedProduct) {
     throw operationFailedError('Product image was updated, but failed to reload product.');
   }
+
+  void clearProductStudioActiveRun({
+    productId: resolved.product.id,
+    imageSlotIndex: resolved.imageSlotIndex,
+  });
 
   return updatedProduct;
 }

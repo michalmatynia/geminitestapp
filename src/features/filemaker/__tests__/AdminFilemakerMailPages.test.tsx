@@ -18,6 +18,43 @@ describe('AdminFilemakerMail pages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
+
+  it('highlights required mailbox fields before saving a new account', async () => {
+    const { AdminFilemakerMailPage } = await import(
+      '@/features/filemaker/pages/AdminFilemakerMailPage'
+    );
+
+    fetchMock.mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url === '/api/filemaker/mail/accounts' && !init?.method) {
+        return jsonResponse({ accounts: [] });
+      }
+      if (url === '/api/filemaker/mail/folders' && !init?.method) {
+        return jsonResponse({ folders: [] });
+      }
+      throw new Error(`Unexpected fetch: ${url} (${init?.method ?? 'GET'})`);
+    });
+
+    renderWithProviders(<AdminFilemakerMailPage />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Save Mailbox' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Mailbox name is required.')).toBeInTheDocument();
+      expect(screen.getByText('IMAP password is required when creating a mailbox account.')).toBeInTheDocument();
+      expect(screen.getByText('SMTP password is required when creating a mailbox account.')).toBeInTheDocument();
+      expect(toastMock).toHaveBeenCalledWith('Fill the highlighted mailbox fields and try again.', {
+        variant: 'error',
+      });
+    });
+
+    expect(
+      fetchMock.mock.calls.some(
+        ([url, init]) => String(url) === '/api/filemaker/mail/accounts' && init?.method === 'POST'
+      )
+    ).toBe(false);
+  });
+
   it('loads the mailbox page on a folder route', async () => {
     const { AdminFilemakerMailPage } = await import(
       '@/features/filemaker/pages/AdminFilemakerMailPage'

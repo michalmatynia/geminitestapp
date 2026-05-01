@@ -24,6 +24,13 @@ export const toConnectionFormState = (connection: IntegrationConnection): Connec
     connection.scanner1688AllowUrlImageSearchFallback ?? false,
   jobApplicationPersonId: connection.jobApplicationPersonId ?? '',
   jobApplicationPersonName: connection.jobApplicationPersonName ?? '',
+  pracujLoginMode: connection.pracujLoginMode ?? 'password',
+  pracujAuthMode: connection.pracujAuthMode ?? 'auto',
+  pracujSalaryExpectation:
+    typeof connection.pracujSalaryExpectation === 'number'
+      ? String(connection.pracujSalaryExpectation)
+      : '18000',
+  pracujCooperationForm: connection.pracujCooperationForm ?? 'uop',
   traderaBrowserMode: connection.traderaBrowserMode ?? 'builtin',
   traderaCategoryStrategy: connection.traderaCategoryStrategy ?? 'mapper',
   playwrightListingScript: connection.playwrightListingScript ?? '',

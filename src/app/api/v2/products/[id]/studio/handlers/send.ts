@@ -42,6 +42,7 @@ export async function postHandler(
   const result = await sendProductImageToStudio({
     ...basePayload,
     sequenceGenerationMode: parsed.data.sequenceGenerationMode,
+    baselineVariantIds: parsed.data.baselineVariantIds ?? [],
     ...(contextRegistry ? { contextRegistry } : {}),
   });
 

@@ -133,12 +133,16 @@ function StudioSendButton({
   context: StudioActionsContext;
   isDisabled: boolean;
 }): JSX.Element {
+  const isRunActive = context.runStatus === 'queued' || context.runStatus === 'running';
   return (
     <Button
       size='xs'
       onClick={createStudioActionClickHandler(context.handleSendToStudio)}
       disabled={
-        context.openingInImageStudio || context.blockSendForSequenceReadiness || isDisabled
+        context.openingInImageStudio ||
+        context.blockSendForSequenceReadiness ||
+        isDisabled ||
+        isRunActive
       }
       loading={context.sending}
     >
@@ -229,7 +233,9 @@ export function StudioActionsBar(): JSX.Element {
         <StudioAcceptButton context={context} />
         <StudioRefreshButton context={context} />
         <StudioRunStatusBadge context={context} />
-        <StatusBadge status='Active' variant='success' size='sm' />
+        {context.runStatus === null ? (
+          <StatusBadge status='Studio ready' variant='success' size='sm' />
+        ) : null}
       </div>
       <StudioActionAlerts context={context} />
     </div>

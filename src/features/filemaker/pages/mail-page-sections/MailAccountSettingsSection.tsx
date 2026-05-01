@@ -110,6 +110,7 @@ export function MailAccountSettingsSection(): React.JSX.Element {
         draft={state.draft}
         setDraft={state.setDraft}
         selectedAccount={state.selectedAccount}
+        accountFormErrors={state.accountFormErrors}
         folderAllowlistValue={state.folderAllowlistValue}
         setFolderAllowlistValue={state.setFolderAllowlistValue}
         dmarcWarnings={dmarcAlignment.warnings}

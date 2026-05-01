@@ -20,6 +20,7 @@ export interface ProductStudioStateContextValue {
   variantsLoading: boolean;
   selectedVariantSlotId: string | null;
   selectedVariant: ImageStudioSlotRecord | null;
+  pendingExpectedOutputs: number;
   pendingVariantPlaceholderCount: number;
   sourceImageSrc: string | null;
   variantImageSrc: string | null;

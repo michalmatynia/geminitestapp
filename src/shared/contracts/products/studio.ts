@@ -163,6 +163,7 @@ export const productStudioSendRequestSchema = z.object({
   rotateBeforeSendDeg: z.literal(90).nullable().optional(),
   sequenceGenerationMode: productStudioSequenceGenerationModeSchema.optional(),
   contextRegistry: contextRegistryConsumerEnvelopeSchema.optional(),
+  baselineVariantIds: z.array(z.string()).optional(),
 });
 
 export type ProductStudioSendRequest = z.infer<typeof productStudioSendRequestSchema>;
@@ -190,6 +191,20 @@ export const productStudioConfigResponseSchema = z.object({
 
 export type ProductStudioConfigResponse = z.infer<typeof productStudioConfigResponseSchema>;
 
+export const productStudioRunKindSchema = z.enum(['generation', 'sequence']);
+export type ProductStudioRunKind = z.infer<typeof productStudioRunKindSchema>;
+
+export const productStudioActiveRunInfoSchema = z.object({
+  runId: z.string(),
+  runKind: productStudioRunKindSchema,
+  sequenceRunId: z.string().nullable(),
+  pendingExpectedOutputs: z.number(),
+  baselineVariantIds: z.array(z.string()),
+  runStatus: productStudioRunStatusSchema,
+});
+
+export type ProductStudioActiveRunInfo = z.infer<typeof productStudioActiveRunInfoSchema>;
+
 export const productStudioVariantsResponseSchema = z.object({
   config: productStudioConfigSchema,
   sequencing: productStudioSequencingConfigSchema,
@@ -201,12 +216,10 @@ export const productStudioVariantsResponseSchema = z.object({
   sourceSlotId: z.string().nullable(),
   sourceSlot: imageStudioSlotSchema.nullable(),
   variants: z.array(imageStudioSlotSchema),
+  activeRun: productStudioActiveRunInfoSchema.nullable(),
 });
 
 export type ProductStudioVariantsResponse = z.infer<typeof productStudioVariantsResponseSchema>;
-
-export const productStudioRunKindSchema = z.enum(['generation', 'sequence']);
-export type ProductStudioRunKind = z.infer<typeof productStudioRunKindSchema>;
 
 export const productStudioRunAuditStatusSchema = z.enum(['completed', 'failed']);
 export type ProductStudioRunAuditStatus = z.infer<typeof productStudioRunAuditStatusSchema>;

@@ -26,6 +26,7 @@ import {
 export type ActionSequenceKey =
   | 'playwright_programmable_listing'
   | 'playwright_programmable_import'
+  | 'pracuj_auth'
   | 'tradera_auth'
   | 'tradera_standard_list'
   | 'tradera_quicklist_list'
@@ -49,6 +50,11 @@ export const ACTION_SEQUENCES: Record<ActionSequenceKey, readonly StepId[]> = {
   playwright_programmable_listing: ['browser_preparation'],
 
   playwright_programmable_import: ['browser_preparation'],
+
+  pracuj_auth: [
+    ...BROWSER_AND_AUTH,
+    'browser_close',
+  ],
 
   tradera_auth: [
     ...BROWSER_AND_AUTH,

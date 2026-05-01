@@ -50,6 +50,10 @@ const RUNTIME_ACTION_SEED_DEFINITIONS: Record<ActionSequenceKey, RuntimeActionSe
     description:
       'Default programmable import browser-session profile. Owns execution settings and browser_preparation for programmable import scripts.',
   },
+  pracuj_auth: {
+    name: 'Pracuj Auth',
+    description: 'Default Pracuj.pl session validation and login recovery flow.',
+  },
   tradera_auth: {
     name: 'Tradera Auth',
     description: 'Default Tradera session validation and login recovery flow.',

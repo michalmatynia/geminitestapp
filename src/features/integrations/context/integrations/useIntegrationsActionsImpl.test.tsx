@@ -213,11 +213,38 @@ describe('useIntegrationsActionsImpl', () => {
         integrationId: activeIntegration.id,
         payload: expect.objectContaining({
           name: 'Pracuj.pl Profile',
+          pracujLoginMode: 'password',
+          pracujAuthMode: 'auto',
         }),
       })
     );
     expect(payload).not.toHaveProperty('username');
     expect(payload).not.toHaveProperty('password');
+  });
+
+  it('sends pracujAuthMode: manual when configured for manual login on apply runs', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      pracujAuthMode: 'manual' as const,
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'update',
+      connectionId: 'connection-pracuj-1',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          pracujAuthMode: 'manual',
+        }),
+      })
+    );
   });
 
   it('allows creating a scraped source connection without credentials', async () => {
@@ -415,6 +442,56 @@ describe('useIntegrationsActionsImpl', () => {
       },
       timeoutMs: 300000,
     });
+  });
+
+  it('persists pracujSalaryExpectation and pracujCooperationForm for Pracuj.pl connections', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      pracujSalaryExpectation: '22000',
+      pracujCooperationForm: 'b2b' as const,
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          pracujSalaryExpectation: 22000,
+          pracujCooperationForm: 'b2b',
+        }),
+      })
+    );
+  });
+
+  it('sends pracujSalaryExpectation: null when salary field is empty', async () => {
+    const activeIntegration = createIntegration('pracuj-pl');
+    const args = createArgs(activeIntegration);
+    const { result } = renderHook(() => useIntegrationsActionsImpl(args));
+    const form = {
+      ...createEmptyConnectionForm(),
+      name: 'Pracuj.pl Profile',
+      pracujSalaryExpectation: '   ',
+    };
+
+    await result.current.handleSaveConnection({
+      mode: 'create',
+      formData: form,
+    });
+
+    expect(upsertConnectionMutateAsyncMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          pracujSalaryExpectation: null,
+        }),
+      })
+    );
   });
 
   it('does not persist browser preference through the integration save path', async () => {

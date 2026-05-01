@@ -183,6 +183,21 @@ describe('ConnectionFormFields', () => {
     ).toHaveLength(2);
     expect(screen.queryByLabelText('Browser automation mode')).toBeNull();
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
+
+    const loginMethodSelect = screen.getByLabelText('Pracuj.pl login method') as HTMLSelectElement;
+    expect(loginMethodSelect.value).toBe('password');
+
+    const authModeSelect = screen.getByLabelText('Pracuj.pl auth mode for apply runs') as HTMLSelectElement;
+    expect(authModeSelect.value).toBe('auto');
+    expect(screen.getByText('Automatic (use stored session or credentials)')).toBeInTheDocument();
+
+    fireEvent.change(authModeSelect, { target: { value: 'manual' } });
+    expect(authModeSelect.value).toBe('manual');
+    expect(
+      screen.getByText(
+        'Opens a visible browser window for you to log in manually before each apply run. Use this when automatic login is unavailable.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows scraped source credentials for scraped-item purchase runs', () => {

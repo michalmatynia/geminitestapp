@@ -220,14 +220,17 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
     label,
     children,
     className,
+    error,
   }: {
     label: string;
     children: React.ReactNode;
     className?: string;
+    error?: string | null;
   }) => (
     <label className={className}>
       <span>{label}</span>
       {children}
+      {error ? <span role='alert'>{error}</span> : null}
     </label>
   ),
   FormSection: ({

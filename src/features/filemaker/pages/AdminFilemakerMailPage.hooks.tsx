@@ -23,7 +23,10 @@ import {
 import { formatFilemakerMailboxAllowlist } from '../mail-utils';
 import {
   createDefaultFilemakerMailDraft as defaultDraft,
+  hasFilemakerMailAccountDraftErrors,
   toDraftFromFilemakerMailAccount as toDraftFromAccount,
+  validateFilemakerMailAccountDraft,
+  type FilemakerMailAccountDraftFieldErrors,
 } from './AdminFilemakerMailPage.helpers';
 import type {
   AccountsResponse,
@@ -75,6 +78,7 @@ export interface MailPageState {
   setSyncingAccountId: React.Dispatch<React.SetStateAction<string | null>>;
   draft: FilemakerMailAccountDraft;
   setDraft: React.Dispatch<React.SetStateAction<FilemakerMailAccountDraft>>;
+  accountFormErrors: FilemakerMailAccountDraftFieldErrors;
   deepSearchQuery: string;
   setDeepSearchQuery: React.Dispatch<React.SetStateAction<string>>;
   deepSearchResults: FilemakerMailSearchResponse | null;
@@ -252,6 +256,8 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   const [isSavingAccount, setIsSavingAccount] = useState(false);
   const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
   const [draft, setDraft] = useState<FilemakerMailAccountDraft>(defaultDraft);
+  const [accountFormErrors, setAccountFormErrors] =
+    useState<FilemakerMailAccountDraftFieldErrors>({});
   const [deepSearchQuery, setDeepSearchQueryState] = useState(requestedSearchQuery);
   const effectiveDeepSearchQuery = shouldIgnoreActiveSearchState ? '' : deepSearchQuery;
   const [deepSearchResults, setDeepSearchResults] = useState<FilemakerMailSearchResponse | null>(null);
@@ -548,6 +554,10 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     setDraft(toDraftFromAccount(selectedAccount));
     setFolderAllowlistValue(formatFilemakerMailboxAllowlist(selectedAccount.folderAllowlist));
   }, [selectedAccount]);
+
+  useEffect(() => {
+    setAccountFormErrors({});
+  }, [draft, folderAllowlistValue]);
 
   useEffect(() => {
     if (!selectedAccountId || (!selectedFolder && selection.panel !== 'recent')) {
@@ -875,8 +885,18 @@ export function useAdminFilemakerMailPageState(): MailPageState {
   ]);
 
   const handleSaveAccount = useCallback(async (): Promise<void> => {
+    const nextErrors = validateFilemakerMailAccountDraft(draft);
+    if (hasFilemakerMailAccountDraftErrors(nextErrors)) {
+      setAccountFormErrors(nextErrors);
+      toast('Fill the highlighted mailbox fields and try again.', {
+        variant: 'error',
+      });
+      return;
+    }
+
     setIsSavingAccount(true);
     try {
+      setAccountFormErrors({});
       const isCreate = !draft.id;
       const payload = {
         ...draft,
@@ -1185,6 +1205,7 @@ export function useAdminFilemakerMailPageState(): MailPageState {
     setSyncingAccountId,
     draft,
     setDraft,
+    accountFormErrors,
     deepSearchQuery: effectiveDeepSearchQuery,
     setDeepSearchQuery,
     deepSearchResults,

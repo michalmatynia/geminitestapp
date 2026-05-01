@@ -1,3 +1,5 @@
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
+
 const isJsonResponse = (response: Response): boolean =>
   (response.headers.get('content-type') ?? '').toLowerCase().includes('application/json');
 
@@ -31,12 +33,14 @@ export const fetchFilemakerMailJson = async <T,>(
   url: string,
   init?: RequestInit
 ): Promise<T> => {
+  const headers = new Headers(init?.headers);
+  if (!headers.has('content-type')) {
+    headers.set('content-type', 'application/json');
+  }
+
   const response = await fetch(url, {
     ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(init?.headers ?? {}),
-    },
+    headers: withCsrfHeaders(headers),
   });
   if (!response.ok) {
     throw new Error(await readFilemakerMailErrorMessage(response));

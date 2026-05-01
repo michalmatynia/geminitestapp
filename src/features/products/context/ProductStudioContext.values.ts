@@ -25,6 +25,7 @@ type ProductStudioStateValueArgs = {
   imageSlotPreviews: ProductImageSlotPreview[];
   isStudioLoading: boolean;
   openingInImageStudio: boolean;
+  pendingExpectedOutputs: number;
   pendingVariantPlaceholderCount: number;
   rotatingDirection: 'left' | 'right' | null;
   runStatus: ProductStudioRunStatus | null;
@@ -57,6 +58,7 @@ const buildProductStudioStateValue = (
   variantsLoading: args.variantsLoading,
   selectedVariantSlotId: args.selectedVariantSlotId,
   selectedVariant: args.selectedVariant,
+  pendingExpectedOutputs: args.pendingExpectedOutputs,
   pendingVariantPlaceholderCount: args.pendingVariantPlaceholderCount,
   sourceImageSrc: args.sourceImageSrc,
   variantImageSrc: args.variantImageSrc,
@@ -86,7 +88,7 @@ export const useProductStudioStateValue = (
     args.blockSendForSequenceReadiness, args.canCompareWithSource,
     args.convertingLinkImageIndex, args.deletingVariantId,
     args.imageSlotPreviews, args.isStudioLoading, args.openingInImageStudio,
-    args.pendingVariantPlaceholderCount, args.rotatingDirection, args.runStatus,
+    args.pendingExpectedOutputs, args.pendingVariantPlaceholderCount, args.rotatingDirection, args.runStatus,
     args.selectedImageIndex, args.selectedSourcePreview, args.selectedVariant,
     args.selectedVariantSlotId, args.sending, args.sequenceReadinessMessage, args.sourceImageSrc,
     args.studioActionError, args.studioProjectId, args.studioProjectOptions,

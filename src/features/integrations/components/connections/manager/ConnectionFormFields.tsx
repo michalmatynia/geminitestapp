@@ -29,6 +29,22 @@ const TRADERA_BROWSER_MODE_OPTIONS = [
   { value: 'scripted', label: 'Playwright script' },
 ] as const;
 
+const PRACUJ_LOGIN_MODE_OPTIONS = [
+  { value: 'password', label: 'Regular login (email + password)' },
+  { value: 'google', label: 'Google login' },
+  { value: 'one_time_code', label: 'One-time code (email link)' },
+] as const;
+
+const PRACUJ_AUTH_MODE_OPTIONS = [
+  { value: 'auto', label: 'Automatic (use stored session or credentials)' },
+  { value: 'manual', label: 'Manual login (open browser window)' },
+] as const;
+
+const PRACUJ_COOPERATION_FORM_OPTIONS = [
+  { value: 'uop', label: 'UoP (umowa o pracę)' },
+  { value: 'b2b', label: 'B2B' },
+] as const;
+
 const SCANNER_1688_LOGIN_MODE_OPTIONS = [
   { value: 'session_required', label: 'Stored session required' },
   { value: 'manual_login', label: 'Manual login window' },
@@ -185,6 +201,7 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
   const isTraderaBrowser = isTradera;
   const is1688 = is1688IntegrationSlug(integrationSlug);
   const isJobSearchPlatform = isJobSearchPlatformIntegrationSlug(integrationSlug);
+  const isPracuj = isPracujPlIntegrationSlug(integrationSlug);
   const labels = getConnectionFormLabels(integrationSlug, isCreateMode);
 
   const traderaCategoryStrategyDescription =
@@ -262,6 +279,98 @@ export function ConnectionFormFields(props: ConnectionFormFieldsProps): React.JS
             }))
           }
         />
+      )}
+      {isPracuj && (
+        <>
+          <FormField
+            label='Login method'
+            description={
+              form.pracujLoginMode === 'google'
+                ? 'Google login will open a browser window for you to sign in with your Google account.'
+                : form.pracujLoginMode === 'one_time_code'
+                  ? 'Enter your email above. A one-time code will be sent to your inbox — enter it in the opened browser window.'
+                  : 'Automatically fills your email and password in the login form.'
+            }
+          >
+            <SelectSimple
+              id={`${idPrefix}-pracujLoginMode`}
+              value={form.pracujLoginMode}
+              onValueChange={(nextValue): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  pracujLoginMode:
+                    nextValue === 'google'
+                      ? 'google'
+                      : nextValue === 'one_time_code'
+                        ? 'one_time_code'
+                        : 'password',
+                }))
+              }
+              options={[...PRACUJ_LOGIN_MODE_OPTIONS]}
+              ariaLabel='Pracuj.pl login method'
+              placeholder='Login method'
+            />
+          </FormField>
+          <FormField
+            label='Auth mode (apply runs)'
+            description={
+              form.pracujAuthMode === 'manual'
+                ? 'Opens a visible browser window for you to log in manually before each apply run. Use this when automatic login is unavailable.'
+                : 'Uses the stored browser session or saved credentials to authenticate automatically.'
+            }
+          >
+            <SelectSimple
+              id={`${idPrefix}-pracujAuthMode`}
+              value={form.pracujAuthMode}
+              onValueChange={(nextValue): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  pracujAuthMode: nextValue === 'manual' ? 'manual' : 'auto',
+                }))
+              }
+              options={[...PRACUJ_AUTH_MODE_OPTIONS]}
+              ariaLabel='Pracuj.pl auth mode for apply runs'
+              placeholder='Auth mode'
+            />
+          </FormField>
+          <FormField
+            label='Expected cooperation form (apply runs)'
+            description='Preferred employment contract type sent in the external employer application form.'
+          >
+            <SelectSimple
+              id={`${idPrefix}-pracujCooperationForm`}
+              value={form.pracujCooperationForm}
+              onValueChange={(nextValue): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  pracujCooperationForm: nextValue === 'b2b' ? 'b2b' : 'uop',
+                }))
+              }
+              options={[...PRACUJ_COOPERATION_FORM_OPTIONS]}
+              ariaLabel='Pracuj.pl expected cooperation form'
+              placeholder='Cooperation form'
+            />
+          </FormField>
+          <FormField
+            label='Monthly gross salary expectation (PLN)'
+            description='Gross monthly salary entered in the external employer application form.'
+          >
+            <Input
+              variant='subtle'
+              size='sm'
+              placeholder='18000'
+              value={form.pracujSalaryExpectation}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                setForm((prev) => ({
+                  ...prev,
+                  pracujSalaryExpectation: event.target.value,
+                }))
+              }
+              aria-label='Pracuj.pl monthly gross salary expectation'
+              title='Monthly gross salary expectation (PLN)'
+            />
+          </FormField>
+        </>
       )}
       {is1688 && (
         <>

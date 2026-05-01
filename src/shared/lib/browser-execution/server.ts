@@ -1,4 +1,5 @@
 export { PlaywrightSequencer, type PlaywrightSequencerContext } from './sequencers/PlaywrightSequencer';
+export { PracujSequencer } from './sequencers/PracujSequencer';
 export { TraderaSequencer } from './sequencers/TraderaSequencer';
 export { VintedSequencer } from './sequencers/VintedSequencer';
 export {

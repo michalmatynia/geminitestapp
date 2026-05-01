@@ -20,13 +20,16 @@ import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contr
 type StudioVariantGridItem = GridPickerItem<ImageStudioSlotRecord | null> & {
   metadata?: {
     isPending?: boolean;
+    generationProgress?: { arrived: number; total: number };
   };
 };
 
 const buildStudioVariantGridItems = ({
+  pendingExpectedOutputs,
   pendingVariantPlaceholderCount,
   variants,
 }: {
+  pendingExpectedOutputs: number;
   pendingVariantPlaceholderCount: number;
   variants: ImageStudioSlotRecord[];
 }): StudioVariantGridItem[] => {
@@ -35,24 +38,36 @@ const buildStudioVariantGridItems = ({
     label: slot.name ?? 'Variant',
     value: slot,
   }));
+  const arrived = Math.max(0, pendingExpectedOutputs - pendingVariantPlaceholderCount);
   const pendingItems: StudioVariantGridItem[] = Array.from({
     length: pendingVariantPlaceholderCount,
   }).map((_, index) => ({
     id: `pending-${index}`,
-    label: 'Syncing...',
+    label: 'Generating...',
     disabled: true,
-    metadata: { isPending: true },
+    metadata: {
+      isPending: true,
+      generationProgress: { arrived, total: pendingExpectedOutputs },
+    },
   }));
   return [...items, ...pendingItems];
 };
 
-function PendingVariantCard(): React.JSX.Element {
+function PendingVariantCard({
+  arrived,
+  total,
+}: {
+  arrived: number;
+  total: number;
+}): React.JSX.Element {
+  const progressLabel =
+    total > 0 ? `${arrived} of ${total} generated` : 'Generating...';
   return (
     <div className='space-y-1 rounded border border-border/60 p-1'>
       <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>
-        <LoadingState message='Syncing...' size='xs' />
+        <LoadingState message='Generating...' size='xs' />
       </div>
-      <div className='px-0.5 text-[10px] text-gray-500'>Waiting for sequence output</div>
+      <div className='px-0.5 text-[10px] text-gray-500'>{progressLabel}</div>
     </div>
   );
 }
@@ -164,7 +179,13 @@ function StudioVariantsGridPicker({
       gridClassName='grid-cols-2 sm:grid-cols-3 md:grid-cols-5'
       gap='8px'
       renderItem={(item, isSelected) => {
-        if (item.metadata?.isPending === true) return <PendingVariantCard />;
+        if (item.metadata?.isPending === true)
+          return (
+            <PendingVariantCard
+              arrived={item.metadata.generationProgress?.arrived ?? 0}
+              total={item.metadata.generationProgress?.total ?? 0}
+            />
+          );
         if (item.value === null) return null;
         return (
           <VariantGridCard
@@ -191,6 +212,7 @@ export function StudioVariantsGrid(): React.JSX.Element {
     setSelectedVariantSlotId,
     deletingVariantId,
     handleDeleteVariant,
+    pendingExpectedOutputs,
     pendingVariantPlaceholderCount,
     sending,
     accepting,
@@ -200,8 +222,8 @@ export function StudioVariantsGrid(): React.JSX.Element {
 
   const gridItems = useMemo(
     (): StudioVariantGridItem[] =>
-      buildStudioVariantGridItems({ pendingVariantPlaceholderCount, variants }),
-    [pendingVariantPlaceholderCount, variants]
+      buildStudioVariantGridItems({ pendingExpectedOutputs, pendingVariantPlaceholderCount, variants }),
+    [pendingExpectedOutputs, pendingVariantPlaceholderCount, variants]
   );
 
   let content: React.JSX.Element;

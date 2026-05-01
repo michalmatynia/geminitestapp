@@ -17,6 +17,7 @@ import {
   readPracujAuthState,
   safePracujGoto,
   trySubmitPracujCredentials,
+  waitForPracujManualLogin,
   type PracujCredentials,
 } from '@/features/integrations/services/pracuj-browser-auth';
 import {
@@ -42,6 +43,7 @@ import type {
   FilemakerJobApplicationEmail,
 } from '../filemaker-job-application.types';
 import { createFilemakerCvPdfExport } from './filemaker-cv-pdf';
+import { getMongoFilemakerPersonById } from './filemaker-persons-repository';
 import {
   appendMongoFilemakerJobApplicationApplyRunStep,
   createMongoFilemakerJobApplicationApplyRun,
@@ -124,6 +126,197 @@ const SUBMITTED_TEXT_PATTERNS = [
   /application\s+(has\s+been\s+)?sent/i,
   /thank\s+you\s+for\s+your\s+application/i,
 ] as const;
+
+const KONTYNUUJ_APLIKOWANIE_SELECTORS = [
+  'button:has-text("Kontynuuj aplikowanie")',
+  'a:has-text("Kontynuuj aplikowanie")',
+  'button:has-text("Continue applying")',
+  'a:has-text("Continue applying")',
+] as const;
+
+const EXTERNAL_FORM_HEADING_PATTERNS = [
+  /formularz\s+zgłoszeniowy/i,
+  /kariera/i,
+  /formularz\s+aplikacyjny/i,
+] as const;
+
+const EXTERNAL_FIRST_NAME_SELECTORS = [
+  'input[name*="firstName" i]',
+  'input[name*="first_name" i]',
+  'input[name*="imie" i]',
+  'input[name*="imię" i]',
+  'input[placeholder*="Imię" i]',
+  'input[aria-label*="Imię" i]',
+  'input[aria-label*="imię" i]',
+] as const;
+
+const EXTERNAL_LAST_NAME_SELECTORS = [
+  'input[name*="lastName" i]',
+  'input[name*="last_name" i]',
+  'input[name*="nazwisko" i]',
+  'input[placeholder*="Nazwisko" i]',
+  'input[aria-label*="Nazwisko" i]',
+] as const;
+
+const EXTERNAL_EMAIL_SELECTORS = [
+  'input[type="email"]',
+  'input[name*="email" i]',
+  'input[placeholder*="E-mail" i]',
+  'input[placeholder*="email" i]',
+  'input[aria-label*="email" i]',
+] as const;
+
+const EXTERNAL_PHONE_SELECTORS = [
+  'input[name*="phone" i]',
+  'input[name*="telefon" i]',
+  'input[name*="tel" i]',
+  'input[type="tel"]',
+  'input[placeholder*="telefon" i]',
+  'input[placeholder*="phone" i]',
+  'input[aria-label*="telefon" i]',
+] as const;
+
+const EXTERNAL_MESSAGE_SELECTORS = [
+  'textarea[name*="message" i]',
+  'textarea[name*="wiadomosc" i]',
+  'textarea[name*="wiadomość" i]',
+  'textarea[placeholder*="wiadomość" i]',
+  'textarea[placeholder*="Miejsce na" i]',
+  'textarea[aria-label*="wiadomość" i]',
+  'textarea',
+] as const;
+
+const EXTERNAL_SALARY_SELECTORS = [
+  'input[name*="salary" i]',
+  'input[name*="wynagrodzenie" i]',
+  'input[name*="oczekiwania" i]',
+  'input[placeholder*="PLN" i]',
+  'input[placeholder*="wynagrodzenie" i]',
+  'input[aria-label*="wynagrodzenie" i]',
+  'input[aria-label*="salary" i]',
+] as const;
+
+type ExternalCareerFormInput = {
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  cvPath: string;
+  cooperationForm: 'uop' | 'b2b';
+  salaryExpectation: number | null;
+  messageText: string | null;
+};
+
+const pageBodyContains = async (page: Page, patterns: readonly RegExp[]): Promise<boolean> => {
+  const bodyText = (await page.locator('body').first().textContent({ timeout: 3000 }).catch(() => null)) ?? '';
+  return patterns.some((pattern) => pattern.test(bodyText));
+};
+
+const fillInputIfVisible = async (
+  page: Page,
+  selectors: readonly string[],
+  value: string
+): Promise<boolean> => {
+  const input = await findVisibleLocator(page, selectors);
+  if (input === null) return false;
+  const current = await input.inputValue({ timeout: 1500 }).catch(() => '');
+  if (current.trim().length > 0) return true;
+  await input.fill(value);
+  return true;
+};
+
+const selectCooperationFormOption = async (
+  page: Page,
+  value: 'uop' | 'b2b'
+): Promise<boolean> => {
+  const labelText = value === 'uop' ? /UoP|umowa\s+o\s+pracę|uop/i : /B2B|b2b/i;
+  const radioSelectors = [
+    `input[type="radio"][value*="${value}" i]`,
+    `input[type="radio"][id*="${value}" i]`,
+  ];
+
+  for (const selector of radioSelectors) {
+    const radios = page.locator(selector);
+    const count = await radios.count().catch(() => 0);
+    if (count > 0) {
+      await radios.first().click({ force: true }).catch(() => undefined);
+      return true;
+    }
+  }
+
+  const labels = page.locator('label');
+  const labelCount = await labels.count().catch(() => 0);
+  for (let i = 0; i < labelCount; i++) {
+    const label = labels.nth(i);
+    const text = await label.textContent().catch(() => '');
+    if (text && labelText.test(text)) {
+      const forAttr = await label.getAttribute('for').catch(() => null);
+      if (forAttr) {
+        const radio = page.locator(`#${CSS.escape(forAttr)}`);
+        if (await radio.isVisible({ timeout: 1000 }).catch(() => false)) {
+          await radio.click({ force: true }).catch(() => undefined);
+          return true;
+        }
+      }
+      await label.click({ force: true }).catch(() => undefined);
+      return true;
+    }
+  }
+  return false;
+};
+
+const fillExternalCareerForm = async (
+  page: Page,
+  input: ExternalCareerFormInput
+): Promise<boolean> => {
+  if (input.firstName !== null) {
+    await fillInputIfVisible(page, EXTERNAL_FIRST_NAME_SELECTORS, input.firstName);
+  }
+  if (input.lastName !== null) {
+    await fillInputIfVisible(page, EXTERNAL_LAST_NAME_SELECTORS, input.lastName);
+  }
+  if (input.email !== null) {
+    await fillInputIfVisible(page, EXTERNAL_EMAIL_SELECTORS, input.email);
+  }
+  if (input.phone !== null) {
+    await fillInputIfVisible(page, EXTERNAL_PHONE_SELECTORS, input.phone);
+  }
+
+  const fileInputs = page.locator('input[type="file"]');
+  const fileInputCount = await fileInputs.count().catch(() => 0);
+  if (fileInputCount > 0) {
+    await fileInputs.nth(0).setInputFiles(input.cvPath).catch(() => undefined);
+  }
+
+  await selectCooperationFormOption(page, input.cooperationForm);
+
+  if (input.salaryExpectation !== null) {
+    await fillInputIfVisible(page, EXTERNAL_SALARY_SELECTORS, String(input.salaryExpectation));
+  }
+
+  if (input.messageText !== null) {
+    const textarea = await findVisibleLocator(page, EXTERNAL_MESSAGE_SELECTORS);
+    if (textarea !== null) {
+      const current = await textarea.inputValue({ timeout: 1500 }).catch(() => '');
+      if (current.trim().length === 0) {
+        const truncated = input.messageText.slice(0, 500);
+        await textarea.fill(truncated);
+      }
+    }
+  }
+
+  const consentCheckboxes = page.locator('input[type="checkbox"]');
+  const checkboxCount = await consentCheckboxes.count().catch(() => 0);
+  for (let i = 0; i < checkboxCount; i++) {
+    const checkbox = consentCheckboxes.nth(i);
+    const checked = await checkbox.isChecked({ timeout: 1000 }).catch(() => false);
+    if (!checked) {
+      await checkbox.click({ force: true }).catch(() => undefined);
+    }
+  }
+
+  return true;
+};
 
 const normalizeText = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
@@ -540,6 +733,8 @@ const pageHasSubmittedConfirmation = async (page: Page): Promise<boolean> => {
   return SUBMITTED_TEXT_PATTERNS.some((pattern: RegExp): boolean => pattern.test(bodyText));
 };
 
+const PRACUJ_MANUAL_LOGIN_TIMEOUT_MS = 300_000;
+
 const authenticatePracuj = async (
   run: FilemakerJobApplicationApplyRun,
   connection: IntegrationConnectionRecord,
@@ -549,6 +744,7 @@ const authenticatePracuj = async (
   page: Page;
 } | null> => {
   const repo = getMongoIntegrationRepository();
+  const isManualMode = connection.pracujAuthMode === 'manual';
   const pushStep = (
     step: string,
     status: FilemakerJobApplicationApplyRunStepStatus,
@@ -566,18 +762,22 @@ const authenticatePracuj = async (
     storedSession: {
       loadedDetail: 'Stored Pracuj.pl browser session loaded.',
       missingDetail: 'No stored Pracuj.pl browser session found.',
-      missingStatus: credentials === null ? 'failed' : 'ok',
+      missingStatus: isManualMode || credentials !== null ? 'ok' : 'failed',
     },
   });
+
   const session = await openPlaywrightConnectionTestSession({
     connection,
     pushStep,
     runtime,
     runtimeActionKey: JOB_APPLICATION_APPLY_RUNTIME_KEY,
+    headless: isManualMode ? false : undefined,
     viewport: { width: 1366, height: 900 },
     launchStep: {
       stepName: 'Launching Playwright',
-      pendingDetail: 'Starting browser with Job Application Apply action settings.',
+      pendingDetail: isManualMode
+        ? 'Starting browser (manual login mode — browser window will open).'
+        : 'Starting browser with Job Application Apply action settings.',
       successDetail: 'Browser started.',
     },
   });
@@ -593,6 +793,38 @@ const authenticatePracuj = async (
     }
 
     appendStep(run.id, 'Session preflight', 'failed', 'Stored Pracuj.pl session is not active.');
+
+    if (isManualMode) {
+      const timeoutSec = Math.round(PRACUJ_MANUAL_LOGIN_TIMEOUT_MS / 1000);
+      appendStep(
+        run.id,
+        'Authentication',
+        'pending',
+        `Manual login mode — complete login in the browser window within ${timeoutSec}s.`
+      );
+      await safePracujGoto(page, PRACUJ_AUTH_ENTRY_URL, 30_000);
+      const success = await waitForPracujManualLogin(page, PRACUJ_MANUAL_LOGIN_TIMEOUT_MS);
+      if (!success) {
+        const timeoutDetail = `Manual Pracuj.pl login timed out after ${timeoutSec}s.`;
+        appendStep(run.id, 'Authentication', 'failed', timeoutDetail);
+        await completeRun(run.id, 'auth_required', { error: timeoutDetail });
+        await session.close().catch(() => undefined);
+        return null;
+      }
+      appendStep(run.id, 'Authentication', 'ok', 'Pracuj.pl account access verified.');
+      await persistPlaywrightConnectionTestSession({
+        connectionId: connection.id,
+        page,
+        repo,
+        pushStep,
+        pendingDetail: 'Saving Pracuj.pl browser session.',
+        successDetail: 'Pracuj.pl browser session saved.',
+        failureDetail: 'Failed to save Pracuj.pl browser session.',
+        throwOnFailure: false,
+      });
+      return session;
+    }
+
     if (credentials === null) {
       appendStep(run.id, 'Authentication', 'failed', PRACUJ_AUTH_REQUIRED_DETAIL);
       await completeRun(run.id, 'auth_required', { error: PRACUJ_AUTH_REQUIRED_DETAIL });
@@ -668,6 +900,92 @@ const runPracujApplySequence = async (
     appendStep(run.id, 'Apply form', 'pending', 'Opening the Pracuj.pl application form.');
     activePage = await clickAndFollow(activePage, applyButton);
     appendStep(run.id, 'Apply form', 'ok', `Application form opened at ${activePage.url()}.`);
+
+    const kontinuujButton = await findVisibleLocator(activePage, KONTYNUUJ_APLIKOWANIE_SELECTORS);
+    if (kontinuujButton !== null) {
+      appendStep(
+        run.id,
+        'External form redirect',
+        'pending',
+        'Employer redirecting to an external application form. Clicking "Kontynuuj aplikowanie".'
+      );
+      activePage = await clickAndFollow(activePage, kontinuujButton);
+      appendStep(
+        run.id,
+        'External form redirect',
+        'ok',
+        `Followed to external employer form at ${activePage.url()}.`
+      );
+
+      const isExternalForm = await pageBodyContains(activePage, EXTERNAL_FORM_HEADING_PATTERNS);
+      if (isExternalForm) {
+        const person = context.application.personId
+          ? await getMongoFilemakerPersonById(context.application.personId).catch(() => null)
+          : null;
+        const email = normalizeText(context.connection?.username) ?? null;
+        const phone = person?.phoneNumbers?.[0] ?? null;
+        const salaryExpectation =
+          typeof context.connection?.pracujSalaryExpectation === 'number'
+            ? context.connection.pracujSalaryExpectation
+            : null;
+        const cooperationForm: 'uop' | 'b2b' =
+          context.connection?.pracujCooperationForm === 'b2b' ? 'b2b' : 'uop';
+
+        appendStep(run.id, 'Fill external form', 'pending', 'Filling the external employer application form.');
+        await fillExternalCareerForm(activePage, {
+          firstName: person?.firstName ?? null,
+          lastName: person?.lastName ?? null,
+          email,
+          phone,
+          cvPath: artifacts.cvPath,
+          cooperationForm,
+          salaryExpectation,
+          messageText: artifacts.applicationEmailText,
+        });
+        appendStep(run.id, 'Fill external form', 'ok', 'External employer form fields populated.');
+
+        if (run.mode === 'review') {
+          await completeRun(run.id, 'awaiting_review', {
+            confirmationUrl: activePage.url(),
+            error: null,
+          });
+          appendStep(run.id, 'Review', 'ok', 'External employer form is prepared for manual review.');
+          return;
+        }
+
+        const externalSubmitButton = await findVisibleLocator(activePage, PRACUJ_FINAL_SUBMIT_SELECTORS);
+        if (externalSubmitButton === null) {
+          appendStep(run.id, 'Submit application', 'failed', 'No submit button found on the external employer form.');
+          await completeRun(run.id, 'awaiting_review', {
+            confirmationUrl: activePage.url(),
+            error: 'No submit button found on the external employer form. Review manually.',
+          });
+          return;
+        }
+
+        appendStep(run.id, 'Submit application', 'pending', 'Submitting the external employer form.');
+        activePage = await clickAndFollow(activePage, externalSubmitButton);
+        const submitted = await pageHasSubmittedConfirmation(activePage);
+        if (!submitted) {
+          appendStep(
+            run.id,
+            'Submit application',
+            'failed',
+            'Submit click completed, but no confirmation was detected on the external form.'
+          );
+          await completeRun(run.id, 'awaiting_review', {
+            confirmationUrl: activePage.url(),
+            error: 'No application confirmation detected after submitting external form.',
+          });
+          return;
+        }
+
+        appendStep(run.id, 'Submit application', 'ok', 'External employer form submitted and confirmation received.');
+        await completeRun(run.id, 'submitted', { confirmationUrl: activePage.url() });
+        await updateMongoFilemakerJobApplicationStatus(context.application.id, 'applied');
+        return;
+      }
+    }
 
     appendStep(run.id, 'Upload documents', 'pending', 'Uploading the selected CV and cover letter.');
     const uploadResult = await uploadPreparedFiles(activePage, artifacts);

@@ -100,6 +100,7 @@ const resolveOnNewMailbox = (
 const resolveContextActions = (input: {
   onNewMailbox: SidebarContextActions['onNewMailbox'];
   openSelection: ReturnType<typeof useSidebarSelectionActions>;
+  pageContext: FilemakerMailSidebarPageContext;
   propsActions: FilemakerMailSidebarProps['actions'];
 }): SidebarContextActions => {
   const actions = input.propsActions ?? {};
@@ -114,7 +115,10 @@ const resolveContextActions = (input: {
     onSelectAttention: withFallback(actions.onSelectAttention, input.openSelection.openAttentionPanel),
     onSelectFolder: withFallback(actions.onSelectFolder, input.openSelection.openFolder),
     onSelectRecent: withFallback(actions.onSelectRecent, input.openSelection.openRecentPanel),
-    onSelectSearch: withFallback(actions.onSelectSearch, input.openSelection.openSearchPanel),
+    onSelectSearch: withFallback(
+      actions.onSelectSearch,
+      input.pageContext !== null ? input.openSelection.openSearchPanel : undefined
+    ),
   };
 };
 
@@ -238,7 +242,7 @@ export const useFilemakerMailSidebarModel = ({
     selectedAccountId: state.selection.accountId,
   });
   const onNewMailbox = resolveOnNewMailbox(propsActions, state.pageContext);
-  const contextActions = resolveContextActions({ onNewMailbox, openSelection, propsActions });
+  const contextActions = resolveContextActions({ onNewMailbox, openSelection, pageContext: state.pageContext, propsActions });
   const contextValue = useSidebarContextValue({
     data: state.data,
     effectiveSearchAccountId: flags.effectiveSearchAccountId,

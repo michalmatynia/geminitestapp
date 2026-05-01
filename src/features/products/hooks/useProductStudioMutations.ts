@@ -24,6 +24,7 @@ type SendToStudioVariables = {
   productId: string;
   imageSlotIndex: number;
   projectId: string;
+  baselineVariantIds?: string[];
   contextRegistry?: ProductStudioSendRequest['contextRegistry'];
 };
 
@@ -60,12 +61,14 @@ export function useSendToStudioMutation(): MutationResult<
       productId,
       imageSlotIndex,
       projectId,
+      baselineVariantIds,
       contextRegistry: payloadContextRegistry,
     }) =>
       productStudioSendResponseSchema.parse(
         await api.post<unknown>(`/api/v2/products/${encodeURIComponent(productId)}/studio/send`, {
           imageSlotIndex,
           projectId,
+          ...(baselineVariantIds !== undefined ? { baselineVariantIds } : {}),
           ...(payloadContextRegistry ?? contextRegistry
             ? { contextRegistry: payloadContextRegistry ?? contextRegistry }
             : {}),

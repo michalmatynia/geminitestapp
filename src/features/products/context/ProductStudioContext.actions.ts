@@ -170,6 +170,7 @@ const useSendToStudioHandler = (
         productId: target.productId,
         imageSlotIndex: target.selectedImageIndex,
         projectId: target.studioProjectId,
+        baselineVariantIds: baselineIds,
         ...(args.contextRegistry !== null ? { contextRegistry: args.contextRegistry } : {}),
       });
       args.setActiveRunId(result.runId);

@@ -80,6 +80,10 @@ const connectionSchema = z.object({
   traderaApiSandbox: z.boolean().optional(),
   traderaParameterMapperRulesJson: z.string().trim().nullable().optional(),
   traderaParameterMapperCatalogJson: z.string().trim().nullable().optional(),
+  pracujLoginMode: z.enum(['password', 'google', 'one_time_code']).nullable().optional(),
+  pracujAuthMode: z.enum(['auto', 'manual']).nullable().optional(),
+  pracujSalaryExpectation: z.number().int().positive().nullable().optional(),
+  pracujCooperationForm: z.enum(['uop', 'b2b']).nullable().optional(),
   scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
   scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
   scanner1688DefaultSearchMode: z.enum(['local_image', 'image_url_fallback']).nullable().optional(),
@@ -324,6 +328,18 @@ export async function putHandler(
           traderaParameterMapperCatalogJson: data.traderaParameterMapperCatalogJson ?? null,
         }
       : {}),
+    ...(typeof data.pracujLoginMode === 'string' || data.pracujLoginMode === null
+      ? { pracujLoginMode: data.pracujLoginMode ?? null }
+      : {}),
+    ...(typeof data.pracujAuthMode === 'string' || data.pracujAuthMode === null
+      ? { pracujAuthMode: data.pracujAuthMode ?? null }
+      : {}),
+    ...(typeof data.pracujSalaryExpectation === 'number' || data.pracujSalaryExpectation === null
+      ? { pracujSalaryExpectation: data.pracujSalaryExpectation ?? null }
+      : {}),
+    ...(typeof data.pracujCooperationForm === 'string' || data.pracujCooperationForm === null
+      ? { pracujCooperationForm: data.pracujCooperationForm ?? null }
+      : {}),
     ...(typeof data.scanner1688StartUrl === 'string' || data.scanner1688StartUrl === null
       ? { scanner1688StartUrl: data.scanner1688StartUrl ?? null }
       : {}),
@@ -391,6 +407,10 @@ export async function putHandler(
     hasTraderaApiAppKey: Boolean(connection.traderaApiAppKey),
     hasTraderaApiToken: Boolean(connection.traderaApiToken),
     traderaApiTokenUpdatedAt: connection.traderaApiTokenUpdatedAt ?? null,
+    pracujLoginMode: connection.pracujLoginMode ?? null,
+    pracujAuthMode: connection.pracujAuthMode ?? null,
+    pracujSalaryExpectation: connection.pracujSalaryExpectation ?? null,
+    pracujCooperationForm: connection.pracujCooperationForm ?? null,
     scanner1688StartUrl: connection.scanner1688StartUrl ?? null,
     scanner1688LoginMode: connection.scanner1688LoginMode ?? null,
     scanner1688DefaultSearchMode: connection.scanner1688DefaultSearchMode ?? null,

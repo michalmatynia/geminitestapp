@@ -78,6 +78,10 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   playwrightLegacyBrowserMigration: programmablePlaywrightLegacyBrowserMigrationSchema
     .nullable()
     .optional(),
+  pracujLoginMode: z.enum(['password', 'google', 'one_time_code']).nullable().optional(),
+  pracujAuthMode: z.enum(['auto', 'manual']).nullable().optional(),
+  pracujSalaryExpectation: z.number().int().positive().nullable().optional(),
+  pracujCooperationForm: z.enum(['uop', 'b2b']).nullable().optional(),
   scanner1688StartUrl: z.string().trim().max(4_000).nullable().optional(),
   scanner1688LoginMode: z.enum(['session_required', 'manual_login']).nullable().optional(),
   scanner1688DefaultSearchMode: z
@@ -175,6 +179,10 @@ export type ConnectionFormState = {
   scanner1688AllowUrlImageSearchFallback: boolean;
   jobApplicationPersonId: string;
   jobApplicationPersonName: string;
+  pracujLoginMode: 'password' | 'google' | 'one_time_code';
+  pracujAuthMode: 'auto' | 'manual';
+  pracujSalaryExpectation: string;
+  pracujCooperationForm: 'uop' | 'b2b';
   traderaBrowserMode: 'builtin' | 'scripted';
   traderaCategoryStrategy: 'mapper' | 'top_suggested';
   playwrightListingScript: string;

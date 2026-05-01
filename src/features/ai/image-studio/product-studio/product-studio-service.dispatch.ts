@@ -33,6 +33,9 @@ import { badRequestError, operationFailedError } from '@/shared/errors/app-error
 import { setProductStudioSourceSlot } from '@/shared/lib/products/services/product-studio-config';
 
 import {
+  storeProductStudioActiveRun,
+} from './product-studio-service.active-run';
+import {
   buildAuditSettingsContext,
   logProductStudioRunAudit,
 } from './product-studio-service.audits';
@@ -201,6 +204,7 @@ export async function sendProductImageToStudio(params: {
   rotateBeforeSendDeg?: 90 | null | undefined;
   sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
   contextRegistry?: ContextRegistryConsumerEnvelope | null | undefined;
+  baselineVariantIds?: string[] | undefined;
 }): Promise<ProductStudioSendResult> {
   const startedAtMs = Date.now();
   let importMs = 0;
@@ -427,34 +431,49 @@ export async function sendProductImageToStudio(params: {
       throw error;
     }
     const fallbackReason = warnings[0] ?? null;
-    await logProductStudioRunAudit({
-      productId: resolved.product.id,
-      imageSlotIndex: resolved.imageSlotIndex,
-      projectId: resolved.projectId,
-      status: 'completed',
-      requestedSequenceMode,
-      resolvedSequenceMode: routeDecision.resolvedMode,
-      executionRoute: routeDecision.executionRoute,
-      runKind: 'sequence',
-      runId: sequenceRun.runId,
-      sequenceRunId: sequenceRun.runId,
-      dispatchMode: sequenceRun.dispatchMode,
-      fallbackReason,
-      warnings,
-      auditSettingsContext,
-      sequenceSnapshotHash: sequenceSnapshot.hash,
-      stepOrderUsed,
-      resolvedCropRect,
-      sourceImageSize,
-      timings: {
-        importMs,
-        sourceSlotUpsertMs,
-        routeDecisionMs,
-        dispatchMs,
-        totalMs: Date.now() - startedAtMs,
-      },
-      errorMessage: null,
-    });
+    await Promise.all([
+      logProductStudioRunAudit({
+        productId: resolved.product.id,
+        imageSlotIndex: resolved.imageSlotIndex,
+        projectId: resolved.projectId,
+        status: 'completed',
+        requestedSequenceMode,
+        resolvedSequenceMode: routeDecision.resolvedMode,
+        executionRoute: routeDecision.executionRoute,
+        runKind: 'sequence',
+        runId: sequenceRun.runId,
+        sequenceRunId: sequenceRun.runId,
+        dispatchMode: sequenceRun.dispatchMode,
+        fallbackReason,
+        warnings,
+        auditSettingsContext,
+        sequenceSnapshotHash: sequenceSnapshot.hash,
+        stepOrderUsed,
+        resolvedCropRect,
+        sourceImageSize,
+        timings: {
+          importMs,
+          sourceSlotUpsertMs,
+          routeDecisionMs,
+          dispatchMs,
+          totalMs: Date.now() - startedAtMs,
+        },
+        errorMessage: null,
+      }),
+      storeProductStudioActiveRun({
+        productId: resolved.product.id,
+        imageSlotIndex: resolved.imageSlotIndex,
+        data: {
+          runId: sequenceRun.runId,
+          runKind: 'sequence',
+          sequenceRunId: sequenceRun.runId,
+          pendingExpectedOutputs: sequencing.expectedOutputs,
+          baselineVariantIds: params.baselineVariantIds ?? [],
+          projectId: resolved.projectId,
+          dispatchedAt: new Date().toISOString(),
+        },
+      }),
+    ]);
 
     return {
       config,
@@ -585,34 +604,49 @@ export async function sendProductImageToStudio(params: {
     (await getImageStudioRunById(run.id)) ??
     run;
   const fallbackReason = warnings[0] ?? null;
-  await logProductStudioRunAudit({
-    productId: resolved.product.id,
-    imageSlotIndex: resolved.imageSlotIndex,
-    projectId: resolved.projectId,
-    status: 'completed',
-    requestedSequenceMode,
-    resolvedSequenceMode: routeDecision.resolvedMode,
-    executionRoute: routeDecision.executionRoute,
-    runKind: 'generation',
-    runId: latestRun.id,
-    sequenceRunId: null,
-    dispatchMode,
-    fallbackReason,
-    warnings,
-    auditSettingsContext,
-    sequenceSnapshotHash: sequenceSnapshot.hash,
-    stepOrderUsed: sequenceStepTypes,
-    resolvedCropRect: resolveFirstSequenceCropRect(resolvedActiveSteps),
-    sourceImageSize,
-    timings: {
-      importMs,
-      sourceSlotUpsertMs,
-      routeDecisionMs,
-      dispatchMs,
-      totalMs: Date.now() - startedAtMs,
-    },
-    errorMessage: null,
-  });
+  await Promise.all([
+    logProductStudioRunAudit({
+      productId: resolved.product.id,
+      imageSlotIndex: resolved.imageSlotIndex,
+      projectId: resolved.projectId,
+      status: 'completed',
+      requestedSequenceMode,
+      resolvedSequenceMode: routeDecision.resolvedMode,
+      executionRoute: routeDecision.executionRoute,
+      runKind: 'generation',
+      runId: latestRun.id,
+      sequenceRunId: null,
+      dispatchMode,
+      fallbackReason,
+      warnings,
+      auditSettingsContext,
+      sequenceSnapshotHash: sequenceSnapshot.hash,
+      stepOrderUsed: sequenceStepTypes,
+      resolvedCropRect: resolveFirstSequenceCropRect(resolvedActiveSteps),
+      sourceImageSize,
+      timings: {
+        importMs,
+        sourceSlotUpsertMs,
+        routeDecisionMs,
+        dispatchMs,
+        totalMs: Date.now() - startedAtMs,
+      },
+      errorMessage: null,
+    }),
+    storeProductStudioActiveRun({
+      productId: resolved.product.id,
+      imageSlotIndex: resolved.imageSlotIndex,
+      data: {
+        runId: latestRun.id,
+        runKind: 'generation',
+        sequenceRunId: null,
+        pendingExpectedOutputs: latestRun.expectedOutputs,
+        baselineVariantIds: params.baselineVariantIds ?? [],
+        projectId: resolved.projectId,
+        dispatchedAt: new Date().toISOString(),
+      },
+    }),
+  ]);
 
   return {
     config,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import {
   filemakerEmailCampaignPreferencesResponseSchema,
@@ -24,6 +25,32 @@ import type {
   FilemakerEmailCampaignRecipientActivityItem,
   FilemakerEmailCampaignRecipientActivitySummary,
 } from '../settings';
+
+type RecipientActivityUpdateInput = {
+  current: FilemakerEmailCampaignRecipientActivitySummary;
+  response: FilemakerEmailCampaignPreferencesResponse;
+  action: FilemakerEmailCampaignPreferencesAction;
+  eventAt: string;
+  isGlobalScope: boolean;
+};
+
+type RecipientSummaryUpdateInput = Omit<RecipientActivityUpdateInput, 'current'> & {
+  current: FilemakerEmailCampaignRecipientActivitySummary | null;
+};
+
+type PreferencesActionHandlerInput = {
+  normalizedToken: string | null;
+  isGlobalScope: boolean;
+  toast: ReturnType<typeof useToast>['toast'];
+  setIsSubmitting: Dispatch<SetStateAction<boolean>>;
+  setLastResult: Dispatch<SetStateAction<FilemakerEmailCampaignPreferencesResponse | null>>;
+  setStatus: Dispatch<SetStateAction<FilemakerEmailCampaignPreferenceStatus>>;
+  setReason: Dispatch<SetStateAction<FilemakerEmailCampaignSuppressionReason | null>>;
+  setCanRestore: Dispatch<SetStateAction<boolean>>;
+  setRecipientSummary: Dispatch<
+    SetStateAction<FilemakerEmailCampaignRecipientActivitySummary | null>
+  >;
+};
 
 const normalizeOptionalString = (value: string | null | undefined): string | null => {
   const normalized = value?.trim() ?? '';
@@ -98,13 +125,13 @@ const resolveErrorMessage = (error: unknown): string => {
   return 'Failed to update campaign preferences.';
 };
 
-const createActivityItem = (
-  current: FilemakerEmailCampaignRecipientActivitySummary,
-  response: FilemakerEmailCampaignPreferencesResponse,
-  action: FilemakerEmailCampaignPreferencesAction,
-  eventAt: string,
-  isGlobalScope: boolean
-): FilemakerEmailCampaignRecipientActivityItem | null => {
+const createActivityItem = ({
+  current,
+  response,
+  action,
+  eventAt,
+  isGlobalScope,
+}: RecipientActivityUpdateInput): FilemakerEmailCampaignRecipientActivityItem | null => {
   if (action === 'unsubscribe' && response.status === 'unsubscribed') {
     return {
       id: `recipient-activity-local-unsubscribe-${eventAt}`,
@@ -136,15 +163,15 @@ const createActivityItem = (
   return null;
 };
 
-const updateRecipientSummary = (
-  current: FilemakerEmailCampaignRecipientActivitySummary | null,
-  response: FilemakerEmailCampaignPreferencesResponse,
-  action: FilemakerEmailCampaignPreferencesAction,
-  eventAt: string,
-  isGlobalScope: boolean
-): FilemakerEmailCampaignRecipientActivitySummary | null => {
+const updateRecipientSummary = ({
+  current,
+  response,
+  action,
+  eventAt,
+  isGlobalScope,
+}: RecipientSummaryUpdateInput): FilemakerEmailCampaignRecipientActivitySummary | null => {
   if (current === null) return current;
-  const activity = createActivityItem(current, response, action, eventAt, isGlobalScope);
+  const activity = createActivityItem({ current, response, action, eventAt, isGlobalScope });
   if (activity === null) return current;
   const next = prependRecipientActivity(current, activity);
   if (activity.type === 'unsubscribed') {
@@ -182,6 +209,48 @@ const resolveResubscribeToast = (
     : 'Campaign delivery has been restored for this address.';
 };
 
+const applyPreferencesResponse = (
+  response: FilemakerEmailCampaignPreferencesResponse,
+  action: FilemakerEmailCampaignPreferencesAction,
+  input: PreferencesActionHandlerInput
+): void => {
+  const eventAt = new Date().toISOString();
+  input.setLastResult(response);
+  input.setStatus(response.status);
+  input.setReason(response.reason ?? null);
+  input.setCanRestore(response.canResubscribe);
+  input.setRecipientSummary((current) =>
+    updateRecipientSummary({
+      current,
+      response,
+      action,
+      eventAt,
+      isGlobalScope: input.isGlobalScope,
+    })
+  );
+  input.toast(resolveSuccessToast(action, response, input.isGlobalScope), { variant: 'success' });
+};
+
+const createPreferencesActionHandler =
+  (input: PreferencesActionHandlerInput) =>
+  (action: FilemakerEmailCampaignPreferencesAction): void => {
+    if (input.normalizedToken === null) {
+      input.toast('This preferences link is no longer valid.', { variant: 'error' });
+      return;
+    }
+    input.setIsSubmitting(true);
+    submitPreferencesAction(input.normalizedToken, action).then(
+      (response) => {
+        applyPreferencesResponse(response, action, input);
+        input.setIsSubmitting(false);
+      },
+      (error: unknown) => {
+        input.toast(resolveErrorMessage(error), { variant: 'error' });
+        input.setIsSubmitting(false);
+      }
+    );
+  };
+
 export const useFilemakerCampaignPreferencesPageModel = ({
   initialEmailAddress,
   initialCampaignId,
@@ -204,30 +273,17 @@ export const useFilemakerCampaignPreferencesPageModel = ({
   const normalizedToken = useMemo(() => normalizeOptionalString(initialToken), [initialToken]);
   const statusCopy = useMemo(() => buildStatusCopy(initialScope, status, reason), [initialScope, reason, status]);
   const isGlobalScope = initialScope === 'all_campaigns';
-
-  const handleAction = (action: FilemakerEmailCampaignPreferencesAction): void => {
-    if (normalizedToken === null) {
-      toast('This preferences link is no longer valid.', { variant: 'error' });
-      return;
-    }
-    setIsSubmitting(true);
-    submitPreferencesAction(normalizedToken, action).then(
-      (response) => {
-        const eventAt = new Date().toISOString();
-        setLastResult(response);
-        setStatus(response.status);
-        setReason(response.reason ?? null);
-        setCanRestore(response.canResubscribe);
-        setRecipientSummary((current) => updateRecipientSummary(current, response, action, eventAt, isGlobalScope));
-        toast(resolveSuccessToast(action, response, isGlobalScope), { variant: 'success' });
-        setIsSubmitting(false);
-      },
-      (error: unknown) => {
-        toast(resolveErrorMessage(error), { variant: 'error' });
-        setIsSubmitting(false);
-      }
-    );
-  };
+  const handleAction = createPreferencesActionHandler({
+    normalizedToken,
+    isGlobalScope,
+    toast,
+    setIsSubmitting,
+    setLastResult,
+    setStatus,
+    setReason,
+    setCanRestore,
+    setRecipientSummary,
+  });
 
   return {
     isSubmitting,

@@ -100,9 +100,9 @@ describe('FileMaker person import parser', () => {
         FirstName: 'Jan',
         LastName: 'Szarafiński',
         UUID: LEGACY_PERSON_UUID,
-        'key_org.PORTALFILTER': LEGACY_ORGANIZATION_UUIDS.join('\x0B'),
       })
     );
+    expect(rows[0]?.['key_org.PORTALFILTER']).toBeUndefined();
   });
 
   it('parses FileMaker TAB rows with literal quotes in fields', () => {
@@ -120,7 +120,7 @@ describe('FileMaker person import parser', () => {
     expect(rows[1]?.UUID).toBe(LEGACY_PERSON_UUID);
   });
 
-  it('retains legacy person metadata and organization UUID links', () => {
+  it('retains legacy person metadata and ignores organization portal filters', () => {
     const person = parsePersonFromRow(
       Object.fromEntries(HEADER.map((field, index) => [field, SAMPLE_ROW[index] ?? '']))
     );
@@ -135,7 +135,7 @@ describe('FileMaker person import parser', () => {
         lastName: 'Szarafiński',
         legacyDefaultAddressUuid: '7DF7ACC2-B5DB-4E43-A0DA-330E16C7B78F',
         legacyDefaultBankAccountUuid: '396F3594-812A-497F-A30E-57FA9B3DEFCB',
-        legacyOrganizationUuids: [...LEGACY_ORGANIZATION_UUIDS],
+        legacyOrganizationUuids: [],
         legacyUuid: LEGACY_PERSON_UUID,
         updatedAt: '2017-02-15T16:09:11.000Z',
         updatedBy: 'Admin',

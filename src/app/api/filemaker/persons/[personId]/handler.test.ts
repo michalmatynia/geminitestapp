@@ -49,10 +49,13 @@ describe('filemaker person handler', () => {
       cvSelectedTechnicalEnvironment: ['Next.js, React, TypeScript'],
       firstName: 'Ada',
       githubUrl: 'https://github.com/ada',
+      languageSkills: [{ language: 'English', level: 10 }],
       lastName: 'Lovelace',
+      nip: '1234567890',
       linkedinUrl: 'https://linkedin.com/in/ada',
       profileEducation: [
         {
+          country: 'United Kingdom',
           degree: 'Master of Computing',
           institution: 'Analytical Engine University',
           period: '1842 - 1843',
@@ -60,13 +63,17 @@ describe('filemaker person handler', () => {
       ],
       profileJobExperience: [
         {
+          endDate: '',
           highlights: ['Led end-to-end product delivery.'],
+          isCurrent: true,
           location: 'Remote',
           organization: 'StudiQ',
           period: 'Sep 2025 - Present',
+          startDate: '2025-09',
           title: 'Agentic Engineer',
         },
       ],
+      regon: '987654321',
     };
 
     const response = await patchHandler(

@@ -307,18 +307,24 @@ const normalizePatchString = (value: string | undefined): string | undefined => 
 const normalizePatchLanguageSkillLevel = (value: number): number =>
   Math.min(10, Math.max(1, Math.round(value)));
 
+const normalizePatchLanguageSkillId = (value: string | undefined): string | undefined => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : undefined;
+};
+
 const normalizePatchLanguageSkills = (
   value: FilemakerPerson['languageSkills'] | undefined
 ): FilemakerPerson['languageSkills'] | undefined => {
-	  if (value === undefined) return undefined;
-	  return value
-	    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
-	      ...(skill.id.trim().length > 0
-	        ? { id: skill.id.trim() }
-	        : {}),
-	      language: skill.language.trim(),
-	      level: normalizePatchLanguageSkillLevel(skill.level),
-	    }))
+  if (value === undefined) return undefined;
+  return value
+    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => {
+      const normalizedId = normalizePatchLanguageSkillId(skill.id);
+      return {
+        ...(normalizedId !== undefined ? { id: normalizedId } : {}),
+        language: skill.language.trim(),
+        level: normalizePatchLanguageSkillLevel(skill.level),
+      };
+    })
     .filter((skill): boolean => skill.language.length > 0);
 };
 
@@ -358,9 +364,11 @@ const buildMongoFilemakerPersonUpdate = (
     languageSkills: normalizePatchLanguageSkills(patch.languageSkills),
     lastName,
     linkedinUrl: normalizePatchString(patch.linkedinUrl),
+    nip: normalizePatchString(patch.nip),
     postalCode: normalizePatchString(patch.postalCode),
     profileEducation: patch.profileEducation,
     profileJobExperience: patch.profileJobExperience,
+    regon: normalizePatchString(patch.regon),
     street: normalizePatchString(patch.street),
     streetNumber: normalizePatchString(patch.streetNumber),
     updatedAt: now,

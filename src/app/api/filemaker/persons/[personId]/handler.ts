@@ -22,6 +22,7 @@ import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const personProfileEducationPatchSchema = z.object({
   id: z.string().optional(),
+  country: z.string().optional(),
   degree: z.string(),
   institution: z.string(),
   period: z.string(),
@@ -33,6 +34,9 @@ const personProfileJobExperiencePatchSchema = z.object({
   title: z.string(),
   organization: z.string(),
   period: z.string(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  isCurrent: z.boolean().optional(),
   location: z.string().optional(),
   description: z.string().optional(),
   highlights: z.array(z.string()).optional(),
@@ -74,9 +78,11 @@ const personPatchSchema = z.object({
   languageSkills: z.array(personLanguageSkillPatchSchema).optional(),
   lastName: z.string().optional(),
   linkedinUrl: z.string().optional(),
+  nip: z.string().optional(),
   postalCode: z.string().optional(),
   profileEducation: z.array(personProfileEducationPatchSchema).optional(),
   profileJobExperience: z.array(personProfileJobExperiencePatchSchema).optional(),
+  regon: z.string().optional(),
   street: z.string().optional(),
   streetNumber: z.string().optional(),
 });

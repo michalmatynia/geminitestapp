@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { randomUUID } from 'node:crypto';
-
 import type { Filter } from 'mongodb';
 
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -19,6 +17,10 @@ import {
   type MongoFilemakerEmailDocument,
   type MongoFilemakerEmailLinkDocument,
 } from './filemaker-email-repository.types';
+import {
+  listLinkedOrganizationIdentitiesForPerson,
+  type FilemakerLinkedOrganizationIdentity,
+} from './filemaker-person-linked-organizations';
 
 export {
   FILEMAKER_EMAILS_COLLECTION,
@@ -69,17 +71,8 @@ export const ensureMongoFilemakerEmailIndexes = async (
   ]);
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const PERSON_EMAIL_PARSER_IMPORT_SOURCE_KIND = 'filemaker-person-email-parser';
-const PERSON_EMAIL_PARSER_UPDATED_BY = 'filemaker-person-email-parser';
-
 const uniqueStrings = (values: Array<string | undefined>): string[] =>
   Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)));
-
-const normalizeEmailAddress = (value: string): string => value.trim().toLowerCase();
-
-const uniqueEmailAddresses = (values: string[]): string[] =>
-  Array.from(new Set(values.map(normalizeEmailAddress).filter((value: string): boolean => EMAIL_RE.test(value))));
 
 const mongoEmailToFilemakerEmail = (document: MongoFilemakerEmailDocument): FilemakerEmail =>
   createFilemakerEmail({
@@ -130,6 +123,25 @@ const buildPersonEmailLinkFilter = (
     clauses.push({ legacyPersonUuid: { $in: legacyPersonUuids } });
   }
   return { partyKind: 'person', $or: clauses };
+};
+
+const buildLinkedOrganizationEmailLinkFilter = (
+  organizations: FilemakerLinkedOrganizationIdentity[]
+): Filter<MongoFilemakerEmailLinkDocument> | null => {
+  const organizationIds = uniqueStrings(
+    organizations.map((organization) => organization.organizationId)
+  );
+  const legacyOrganizationUuids = uniqueStrings(
+    organizations.map((organization) => organization.legacyOrganizationUuid)
+  );
+  const clauses: Filter<MongoFilemakerEmailLinkDocument>[] = [];
+  if (organizationIds.length > 0) {
+    clauses.push({ organizationId: { $in: organizationIds } }, { partyId: { $in: organizationIds } });
+  }
+  if (legacyOrganizationUuids.length > 0) {
+    clauses.push({ legacyOrganizationUuid: { $in: legacyOrganizationUuids } });
+  }
+  return clauses.length > 0 ? { partyKind: 'organization', $or: clauses } : null;
 };
 
 const buildEmailDocumentFilter = (
@@ -189,133 +201,15 @@ export const listMongoFilemakerEmailsForPerson = async (
   person: FilemakerPerson & { legacyUuid?: string }
 ): Promise<FilemakerEmail[]> => {
   const collections = await getMongoFilemakerEmailCollections();
+  const organizationFilter = buildLinkedOrganizationEmailLinkFilter(
+    await listLinkedOrganizationIdentitiesForPerson(person)
+  );
+  const personFilter = buildPersonEmailLinkFilter(person);
+  const filter =
+    organizationFilter === null ? personFilter : { $or: [personFilter, organizationFilter] };
   const links = await collections.links
-    .find(buildPersonEmailLinkFilter(person))
+    .find(filter)
     .sort({ legacyEmailAddress: 1, emailId: 1 })
     .toArray();
   return listMongoFilemakerEmailsForLinks(links, collections);
-};
-
-const ensureMongoFilemakerEmailForAddress = async (input: {
-  address: string;
-  collections: MongoFilemakerEmailCollections;
-  now: Date;
-  nowIso: string;
-}): Promise<{ created: boolean; emailId: string }> => {
-  const existingEmail = await input.collections.emails.findOne({ email: input.address });
-  if (existingEmail !== null) return { created: false, emailId: existingEmail.id };
-
-  const emailId = randomUUID();
-  try {
-    await input.collections.emails.insertOne({
-      _id: emailId,
-      email: input.address,
-      id: emailId,
-      importSourceKind: PERSON_EMAIL_PARSER_IMPORT_SOURCE_KIND,
-      importedAt: input.now,
-      legacyUuids: [],
-      schemaVersion: 1,
-      status: 'unverified',
-      createdAt: input.nowIso,
-      updatedAt: input.nowIso,
-      updatedBy: PERSON_EMAIL_PARSER_UPDATED_BY,
-    });
-    return { created: true, emailId };
-  } catch (error: unknown) {
-    const racedEmail = await input.collections.emails.findOne({ email: input.address });
-    if (racedEmail === null) throw error;
-    return { created: false, emailId: racedEmail.id };
-  }
-};
-
-const ensureMongoFilemakerEmailPersonLink = async (input: {
-  address: string;
-  collections: MongoFilemakerEmailCollections;
-  emailId: string;
-  legacyPersonUuid: string;
-  now: Date;
-  nowIso: string;
-  personId: string;
-}): Promise<boolean> => {
-  const linkFilter = {
-    emailId: input.emailId,
-    partyKind: 'person' as const,
-    partyId: input.personId,
-  };
-  const existingLink = await input.collections.links.findOne(linkFilter);
-  if (existingLink !== null) return false;
-
-  const linkId = randomUUID();
-  try {
-    await input.collections.links.insertOne({
-      _id: linkId,
-      id: linkId,
-      emailId: input.emailId,
-      legacyEmailAddress: input.address,
-      ...(input.legacyPersonUuid.length > 0 ? { legacyPersonUuid: input.legacyPersonUuid } : {}),
-      partyId: input.personId,
-      partyKind: 'person',
-      importSourceKind: PERSON_EMAIL_PARSER_IMPORT_SOURCE_KIND,
-      importedAt: input.now,
-      schemaVersion: 1,
-      createdAt: input.nowIso,
-      updatedAt: input.nowIso,
-    });
-    return true;
-  } catch (error: unknown) {
-    const racedLink = await input.collections.links.findOne(linkFilter);
-    if (racedLink === null) throw error;
-    return false;
-  }
-};
-
-const upsertMongoFilemakerEmailForPersonAddress = async (input: {
-  address: string;
-  collections: MongoFilemakerEmailCollections;
-  legacyPersonUuid: string;
-  now: Date;
-  nowIso: string;
-  personId: string;
-}): Promise<{ created: boolean; linked: boolean }> => {
-  const email = await ensureMongoFilemakerEmailForAddress(input);
-  const linked = await ensureMongoFilemakerEmailPersonLink({
-    ...input,
-    emailId: email.emailId,
-  });
-  return { created: email.created, linked };
-};
-
-export const upsertMongoFilemakerEmailsForPerson = async (
-  person: FilemakerPerson & { legacyUuid?: string },
-  emailAddresses: string[]
-): Promise<{
-  createdEmailCount: number;
-  linkedEmailCount: number;
-  emails: FilemakerEmail[];
-}> => {
-  const collections = await getMongoFilemakerEmailCollections();
-  await ensureMongoFilemakerEmailIndexes(collections);
-
-  const addresses = uniqueEmailAddresses(emailAddresses);
-  const now = new Date();
-  const nowIso = now.toISOString();
-  const legacyPersonUuid = person.legacyUuid?.trim() ?? '';
-  const results = await Promise.all(
-    addresses.map((address: string) =>
-      upsertMongoFilemakerEmailForPersonAddress({
-        address,
-        collections,
-        legacyPersonUuid,
-        now,
-        nowIso,
-        personId: person.id,
-      })
-    )
-  );
-
-  return {
-    createdEmailCount: results.filter((result) => result.created).length,
-    linkedEmailCount: results.filter((result) => result.linked).length,
-    emails: await listMongoFilemakerEmailsForPerson(person),
-  };
 };

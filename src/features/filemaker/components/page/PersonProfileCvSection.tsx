@@ -80,27 +80,34 @@ const MONTH_LOOKUP = new Map<string, number>([
 const toMonthValue = (year: string, month: number): string =>
   `${year}-${String(month).padStart(2, '0')}`;
 
+const parseNumericMonthInput = (normalized: string): string | null => {
+  const monthValueMatch = /^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/.exec(normalized);
+  if (monthValueMatch === null) return null;
+  const year = monthValueMatch[1] ?? '';
+  const month = Number(monthValueMatch[2] ?? '');
+  if (month < 1 || month > 12) return null;
+  return toMonthValue(year, month);
+};
+
+const parseLabelMonthInput = (normalized: string): string | null => {
+  const labelMatch = /^([A-Za-z]{3,9})\.?\s+(\d{4})$/.exec(normalized);
+  if (labelMatch === null) return null;
+  const month = MONTH_LOOKUP.get((labelMatch[1] ?? '').toLowerCase());
+  if (month === undefined) return null;
+  return toMonthValue(labelMatch[2] ?? '', month);
+};
+
 const normalizeMonthInputValue = (value: string | undefined): string => {
   const normalized = value?.trim() ?? '';
-  const monthValueMatch = /^(\d{4})-(\d{1,2})(?:-\d{1,2})?$/.exec(normalized);
-  if (monthValueMatch) {
-    const month = Number(monthValueMatch[2]);
-    if (month >= 1 && month <= 12) return toMonthValue(monthValueMatch[1] ?? '', month);
-  }
-  const labelMatch = /^([A-Za-z]{3,9})\.?\s+(\d{4})$/.exec(normalized);
-  if (labelMatch) {
-    const month = MONTH_LOOKUP.get((labelMatch[1] ?? '').toLowerCase());
-    if (month !== undefined) return toMonthValue(labelMatch[2] ?? '', month);
-  }
-  return '';
+  return parseNumericMonthInput(normalized) ?? parseLabelMonthInput(normalized) ?? '';
 };
 
 const formatMonthInputValue = (value: string): string => {
   const normalized = normalizeMonthInputValue(value);
-  if (!normalized) return '';
-  const [year, monthRaw] = normalized.split('-');
+  if (normalized.length === 0) return '';
+  const [year = '', monthRaw = ''] = normalized.split('-');
   const month = Number(monthRaw);
-  if (!year || month < 1 || month > 12) return '';
+  if (year.length === 0 || month < 1 || month > 12) return '';
   return `${MONTH_LABELS[month - 1]} ${year}`;
 };
 
@@ -117,14 +124,19 @@ const parseExperiencePeriodDates = (
   };
 };
 
+const resolveDateInputValue = (value: string | undefined, fallback: string): string => {
+  const normalized = normalizeMonthInputValue(value);
+  return normalized.length > 0 ? normalized : fallback;
+};
+
 const resolveExperienceDateState = (
   experience: FilemakerPersonProfileJobExperience
 ): { startDate: string; endDate: string; isCurrent: boolean } => {
   const parsed = parseExperiencePeriodDates(experience.period);
   const isCurrent = experience.isCurrent ?? parsed.isCurrent;
   return {
-    startDate: normalizeMonthInputValue(experience.startDate) || parsed.startDate,
-    endDate: isCurrent ? '' : normalizeMonthInputValue(experience.endDate) || parsed.endDate,
+    startDate: resolveDateInputValue(experience.startDate, parsed.startDate),
+    endDate: isCurrent ? '' : resolveDateInputValue(experience.endDate, parsed.endDate),
     isCurrent,
   };
 };
@@ -136,11 +148,11 @@ const buildExperiencePeriod = (input: {
 }): string => {
   const startLabel = formatMonthInputValue(input.startDate);
   const endLabel = input.isCurrent ? 'Present' : formatMonthInputValue(input.endDate);
-  if (startLabel && endLabel) return `${startLabel} - ${endLabel}`;
-  if (startLabel && input.isCurrent) return `${startLabel} - Present`;
-  if (startLabel) return startLabel;
-  if (endLabel && !input.isCurrent) return endLabel;
-  return '';
+  const hasStartLabel = startLabel.length > 0;
+  const hasEndLabel = endLabel.length > 0;
+  if (!hasStartLabel) return input.isCurrent ? '' : endLabel;
+  if (!hasEndLabel) return startLabel;
+  return `${startLabel} - ${endLabel}`;
 };
 
 const updateDraft = (
@@ -339,6 +351,19 @@ const cloneReferenceCvProfile = (): Partial<FilemakerPerson> => ({
 
 const hasArrayEntries = (values: unknown): boolean => Array.isArray(values) && values.length > 0;
 
+const hasTextValue = (value: string | null | undefined): boolean =>
+  (value?.trim() ?? '').length > 0;
+
+const resolveReferenceText = (
+  currentValue: string | null | undefined,
+  referenceValue: string | null | undefined
+): string | null | undefined => (hasTextValue(currentValue) ? currentValue : referenceValue);
+
+const resolveReferenceArray = <T,>(
+  currentValue: T[] | undefined,
+  referenceValue: T[] | undefined
+): T[] | undefined => (hasArrayEntries(currentValue) ? currentValue : referenceValue);
+
 const isMichalMatyniaDraft = (personDraft: Partial<FilemakerPerson>): boolean => {
   const firstName = (personDraft.firstName ?? '').trim().toLocaleLowerCase('pl-PL');
   const lastName = (personDraft.lastName ?? '').trim().toLocaleLowerCase('pl-PL');
@@ -351,32 +376,27 @@ const mergeMissingReferenceCvProfile = (
   const reference = cloneReferenceCvProfile();
   return {
     ...current,
-    firstName: current.firstName?.trim() ? current.firstName : reference.firstName,
-    lastName: current.lastName?.trim() ? current.lastName : reference.lastName,
-    city: current.city?.trim() ? current.city : reference.city,
-    country: current.country?.trim() ? current.country : reference.country,
-    phoneNumbers: hasArrayEntries(current.phoneNumbers)
-      ? current.phoneNumbers
-      : reference.phoneNumbers,
-    cvHeadline: current.cvHeadline?.trim() ? current.cvHeadline : reference.cvHeadline,
-    cvProfessionalSummary: current.cvProfessionalSummary?.trim()
-      ? current.cvProfessionalSummary
-      : reference.cvProfessionalSummary,
-    cvCoreStrengths: hasArrayEntries(current.cvCoreStrengths)
-      ? current.cvCoreStrengths
-      : reference.cvCoreStrengths,
-    cvSelectedTechnicalEnvironment: hasArrayEntries(current.cvSelectedTechnicalEnvironment)
-      ? current.cvSelectedTechnicalEnvironment
-      : reference.cvSelectedTechnicalEnvironment,
-    languageSkills: hasArrayEntries(current.languageSkills)
-      ? current.languageSkills
-      : reference.languageSkills,
-    profileJobExperience: hasArrayEntries(current.profileJobExperience)
-      ? current.profileJobExperience
-      : reference.profileJobExperience,
-    profileEducation: hasArrayEntries(current.profileEducation)
-      ? current.profileEducation
-      : reference.profileEducation,
+    firstName: resolveReferenceText(current.firstName, reference.firstName),
+    lastName: resolveReferenceText(current.lastName, reference.lastName),
+    city: resolveReferenceText(current.city, reference.city),
+    country: resolveReferenceText(current.country, reference.country),
+    phoneNumbers: resolveReferenceArray(current.phoneNumbers, reference.phoneNumbers),
+    cvHeadline: resolveReferenceText(current.cvHeadline, reference.cvHeadline),
+    cvProfessionalSummary: resolveReferenceText(
+      current.cvProfessionalSummary,
+      reference.cvProfessionalSummary
+    ),
+    cvCoreStrengths: resolveReferenceArray(current.cvCoreStrengths, reference.cvCoreStrengths),
+    cvSelectedTechnicalEnvironment: resolveReferenceArray(
+      current.cvSelectedTechnicalEnvironment,
+      reference.cvSelectedTechnicalEnvironment
+    ),
+    languageSkills: resolveReferenceArray(current.languageSkills, reference.languageSkills),
+    profileJobExperience: resolveReferenceArray(
+      current.profileJobExperience,
+      reference.profileJobExperience
+    ),
+    profileEducation: resolveReferenceArray(current.profileEducation, reference.profileEducation),
   };
 };
 

@@ -71,3 +71,44 @@ export type FilemakerCampaignRunCancelResult = {
   run: FilemakerEmailCampaignRun;
   deliveries: FilemakerEmailCampaignDelivery[];
 };
+
+export type FilemakerCampaignProcessReason = 'manual' | 'retry';
+
+export type FilemakerCampaignRuntimePersistInput = {
+  campaignRegistry?: FilemakerEmailCampaignRegistry;
+  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
+  runRegistry?: FilemakerEmailCampaignRunRegistry;
+  deliveryRegistry?: FilemakerEmailCampaignDeliveryRegistry;
+  attemptRegistry?: FilemakerEmailCampaignDeliveryAttemptRegistry;
+  eventRegistry?: FilemakerEmailCampaignEventRegistry;
+  suppressionRegistry?: FilemakerEmailCampaignSuppressionRegistry;
+};
+
+export type FilemakerCampaignRuntimePersistence = {
+  readRuntimeState: () => Promise<FilemakerCampaignRuntimeState>;
+  persistRuntimeState: (input: FilemakerCampaignRuntimePersistInput) => Promise<void>;
+};
+
+export type FilemakerCampaignRunLaunchInput = {
+  campaignId: string;
+  mode: FilemakerEmailCampaignRun['mode'];
+  launchReason?: string | null;
+};
+
+export type FilemakerCampaignRunProcessInput = {
+  runId: string;
+  reason?: FilemakerCampaignProcessReason;
+};
+
+export type FilemakerCampaignRunCancelInput = {
+  runId: string;
+  actor?: string | null;
+  message?: string | null;
+};
+
+export type FilemakerCampaignRuntimeService = FilemakerCampaignRuntimePersistence & {
+  launchRun: (input: FilemakerCampaignRunLaunchInput) => Promise<FilemakerCampaignRunLaunchResult>;
+  processRun: (input: FilemakerCampaignRunProcessInput) => Promise<FilemakerCampaignRunProcessResult>;
+  cancelRun: (input: FilemakerCampaignRunCancelInput) => Promise<FilemakerCampaignRunCancelResult>;
+  launchCampaignRun: (input: FilemakerCampaignRunLaunchInput) => Promise<FilemakerCampaignRunLaunchResult>;
+};

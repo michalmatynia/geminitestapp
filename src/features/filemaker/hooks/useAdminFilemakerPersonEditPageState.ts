@@ -159,17 +159,23 @@ const applyPersonAddresses = (
 const normalizePersonLanguageSkillLevel = (value: number): number =>
   Math.min(10, Math.max(1, Math.round(value)));
 
+const normalizePersonLanguageSkillId = (value: string | undefined): string | undefined => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : undefined;
+};
+
 const normalizePersonLanguageSkills = (
   value: FilemakerPerson['languageSkills'] | undefined
 ): NonNullable<FilemakerPerson['languageSkills']> =>
-	  (value ?? [])
-	    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => ({
-	      ...(skill.id.trim().length > 0
-	        ? { id: skill.id.trim() }
-	        : {}),
-	      language: skill.language.trim(),
-	      level: normalizePersonLanguageSkillLevel(skill.level),
-	    }))
+  (value ?? [])
+    .map((skill): NonNullable<FilemakerPerson['languageSkills']>[number] => {
+      const normalizedId = normalizePersonLanguageSkillId(skill.id);
+      return {
+        ...(normalizedId !== undefined ? { id: normalizedId } : {}),
+        language: skill.language.trim(),
+        level: normalizePersonLanguageSkillLevel(skill.level),
+      };
+    })
     .filter((skill): boolean => skill.language.length > 0);
 
 export type AdminFilemakerPersonEditPageContextValue = {
@@ -448,12 +454,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
           streetNumber: address.streetNumber,
         })
     );
-    if (hasInvalidAddress) {
-      toast('Every linked address requires street, street number, city, postal code, and country.', {
-        variant: 'error',
-      });
-      return;
-    }
+    const canPersistAddresses = !hasInvalidAddress;
     const defaultAddressId =
       preparedAddresses.find((address): boolean => address.isDefault)?.addressId ??
       preparedAddresses[0]?.addressId ??
@@ -465,6 +466,7 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     const defaultAddress = normalizedAddresses.find(
       (address): boolean => address.addressId === defaultAddressId
     );
+    const addressForSave = canPersistAddresses ? defaultAddress : undefined;
     const normalizedLanguageSkills = normalizePersonLanguageSkills(personDraft.languageSkills);
 
     if (isCreateMode) {
@@ -474,13 +476,13 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         id: newPersonId,
         firstName: nextFirstName,
         lastName: nextLastName,
-        addressId: defaultAddress?.addressId ?? '',
-        street: defaultAddress?.street ?? '',
-        streetNumber: defaultAddress?.streetNumber ?? '',
-        city: defaultAddress?.city ?? '',
-        postalCode: defaultAddress?.postalCode ?? '',
-        country: defaultAddress?.country ?? '',
-        countryId: defaultAddress?.countryId ?? '',
+        addressId: addressForSave?.addressId ?? '',
+        street: addressForSave?.street ?? '',
+        streetNumber: addressForSave?.streetNumber ?? '',
+        city: addressForSave?.city ?? '',
+        postalCode: addressForSave?.postalCode ?? '',
+        country: addressForSave?.country ?? '',
+        countryId: addressForSave?.countryId ?? '',
         nip: personDraft.nip ?? '',
         regon: personDraft.regon ?? '',
         phoneNumbers: personDraft.phoneNumbers ?? [],
@@ -500,7 +502,9 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
         ...nextDatabase,
         persons: [...nextDatabase.persons, newPerson],
       };
-      nextDatabase = applyPersonAddresses(nextDatabase, newPersonId, normalizedAddresses);
+      if (canPersistAddresses) {
+        nextDatabase = applyPersonAddresses(nextDatabase, newPersonId, normalizedAddresses);
+      }
 
       await persistDatabase(nextDatabase, 'Person created.');
       startTransition(() => {
@@ -514,29 +518,36 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     if (mongoPerson !== null) {
       setIsMongoPersonSaving(true);
       try {
+        const addressPatch = canPersistAddresses
+          ? {
+              addressId: addressForSave?.addressId ?? personDraft.addressId ?? '',
+              addresses: normalizedAddresses,
+              city: addressForSave?.city ?? personDraft.city ?? '',
+              country: addressForSave?.country ?? personDraft.country ?? '',
+              countryId: addressForSave?.countryId ?? personDraft.countryId ?? '',
+              postalCode: addressForSave?.postalCode ?? personDraft.postalCode ?? '',
+              street: addressForSave?.street ?? personDraft.street ?? '',
+              streetNumber: addressForSave?.streetNumber ?? personDraft.streetNumber ?? '',
+            }
+          : {};
         const response = await fetch(`/api/filemaker/persons/${encodeURIComponent(mongoPerson.id)}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            ...addressPatch,
             cvCoreStrengths: personDraft.cvCoreStrengths ?? [],
             cvHeadline: personDraft.cvHeadline ?? '',
             cvProfessionalSummary: personDraft.cvProfessionalSummary ?? '',
             cvSelectedTechnicalEnvironment: personDraft.cvSelectedTechnicalEnvironment ?? [],
-            addressId: defaultAddress?.addressId ?? personDraft.addressId ?? '',
-            addresses: normalizedAddresses,
-            city: defaultAddress?.city ?? personDraft.city ?? '',
-            country: defaultAddress?.country ?? personDraft.country ?? '',
-            countryId: defaultAddress?.countryId ?? personDraft.countryId ?? '',
             firstName: nextFirstName,
             githubUrl: personDraft.githubUrl ?? '',
             languageSkills: normalizedLanguageSkills,
             lastName: nextLastName,
             linkedinUrl: personDraft.linkedinUrl ?? '',
-            postalCode: defaultAddress?.postalCode ?? personDraft.postalCode ?? '',
+            nip: personDraft.nip ?? '',
             profileEducation: personDraft.profileEducation ?? [],
             profileJobExperience: personDraft.profileJobExperience ?? [],
-            street: defaultAddress?.street ?? personDraft.street ?? '',
-            streetNumber: defaultAddress?.streetNumber ?? personDraft.streetNumber ?? '',
+            regon: personDraft.regon ?? '',
           }),
         });
         if (!response.ok) throw new Error(`Failed to save person (${response.status}).`);
@@ -561,26 +572,31 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
       return;
     }
 
-    nextDatabase = applyPersonAddresses(nextDatabase, person.id, normalizedAddresses);
+    if (canPersistAddresses) {
+      nextDatabase = applyPersonAddresses(nextDatabase, person.id, normalizedAddresses);
+    }
     nextDatabase = {
       ...nextDatabase,
-      persons: nextDatabase.persons.map((p) =>
-        p.id === person.id
-          ? {
-              ...p,
-              ...personDraft,
-              languageSkills: normalizedLanguageSkills,
-              addressId: defaultAddress?.addressId ?? '',
-              street: defaultAddress?.street ?? '',
-              streetNumber: defaultAddress?.streetNumber ?? '',
-              city: defaultAddress?.city ?? '',
-              postalCode: defaultAddress?.postalCode ?? '',
-              country: defaultAddress?.country ?? '',
-              countryId: defaultAddress?.countryId ?? '',
-              updatedAt: new Date().toISOString(),
-            }
-          : p
-      ),
+      persons: nextDatabase.persons.map((p) => {
+        if (p.id !== person.id) return p;
+        const basePerson = {
+          ...p,
+          ...personDraft,
+          languageSkills: normalizedLanguageSkills,
+          updatedAt: new Date().toISOString(),
+        };
+        if (!canPersistAddresses) return basePerson;
+        return {
+          ...basePerson,
+          addressId: addressForSave?.addressId ?? '',
+          street: addressForSave?.street ?? '',
+          streetNumber: addressForSave?.streetNumber ?? '',
+          city: addressForSave?.city ?? '',
+          postalCode: addressForSave?.postalCode ?? '',
+          country: addressForSave?.country ?? '',
+          countryId: addressForSave?.countryId ?? '',
+        };
+      }),
     };
 
     await persistDatabase(nextDatabase, 'Person updated.');

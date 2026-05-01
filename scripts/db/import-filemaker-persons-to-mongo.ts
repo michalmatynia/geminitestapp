@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { access, readFile } from 'node:fs/promises';
 import { extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -13,6 +14,11 @@ import {
   type LegacyPersonRow,
   type ParsedLegacyPerson,
 } from '@/features/filemaker/filemaker-persons-import.parser';
+import {
+  parseFilemakerLegacyPersonOrganizationJoinWorkbookRows,
+  parsePersonOrganizationJoinFromRow,
+  type LegacyPersonOrganizationJoinRow,
+} from '@/features/filemaker/filemaker-person-organization-joins-import.parser';
 import type { MongoSource } from '@/shared/contracts/database';
 
 loadDotenv({ path: '.env', quiet: true });
@@ -22,12 +28,14 @@ const PERSONS_COLLECTION = 'filemaker_persons';
 const PERSON_ORGANIZATION_LINKS_COLLECTION = 'filemaker_person_organization_links';
 const ORGANIZATIONS_COLLECTION = 'filemaker_organizations';
 const DEFAULT_BATCH_SIZE = 1_000;
+const DEFAULT_PERSON_ORGANIZATION_JOIN_INPUT_PATH = 'csv/c/PersonOrgJOIN.xlsx';
 const IMPORT_SOURCE_KIND = 'filemaker.person';
 
 type CliOptions = {
   batchSize: number;
   dryRun: boolean;
   inputPath: string | null;
+  personOrganizationJoinInputPath: string | null;
   replaceCollections: boolean;
   source: MongoSource | undefined;
 };
@@ -91,6 +99,14 @@ type CollectedPersons = {
   skippedRowCount: number;
 };
 
+type CollectedPersonOrganizationJoins = {
+  duplicateLegacyPairCount: number;
+  legacyOrganizationUuidsByLegacyPersonUuid: Map<string, string[]>;
+  parsedJoinCount: number;
+  skippedJoinRowCount: number;
+  uniquePairCount: number;
+};
+
 type WriteResultSummary = {
   insertedCount?: number;
   matchedCount: number;
@@ -104,9 +120,10 @@ const printUsage = (): void => {
       'Usage: NODE_OPTIONS=--conditions=react-server node --import tsx scripts/db/import-filemaker-persons-to-mongo.ts --input=csv/persons.tab --write',
       '',
       'Imports FileMaker person XLSX exports and headerless TAB/CSV exports into filemaker_persons.',
-      'key_org.PORTALFILTER is normalized into filemaker_person_organization_links.',
+      'PersonOrgJOIN.xlsx is preferred for filemaker_person_organization_links when present.',
       'Person UUID is retained as legacyUuid and each person receives a deterministic modern id.',
       'By default the script performs a dry run. Pass --write to upsert records.',
+      'Pass --person-org-join-input=csv/c/PersonOrgJOIN.xlsx to choose the join workbook explicitly.',
       'Pass --replace with --write to drop and rebuild the person collections.',
     ].join('\n')
   );
@@ -122,6 +139,7 @@ const parseArgs = (argv: string[]): CliOptions => {
     batchSize: DEFAULT_BATCH_SIZE,
     dryRun: true,
     inputPath: null,
+    personOrganizationJoinInputPath: null,
     replaceCollections: false,
     source: undefined,
   };
@@ -131,6 +149,13 @@ const parseArgs = (argv: string[]): CliOptions => {
     if (arg === '--dry-run') options.dryRun = true;
     if (arg === '--replace') options.replaceCollections = true;
     if (arg.startsWith('--input=')) options.inputPath = arg.slice('--input='.length).trim() || null;
+    if (arg.startsWith('--person-org-join-input=')) {
+      options.personOrganizationJoinInputPath =
+        arg.slice('--person-org-join-input='.length).trim() || null;
+    }
+    if (arg.startsWith('--join-input=')) {
+      options.personOrganizationJoinInputPath = arg.slice('--join-input='.length).trim() || null;
+    }
     if (arg.startsWith('--batch-size=')) {
       options.batchSize = parsePositiveInteger(arg.slice('--batch-size='.length), DEFAULT_BATCH_SIZE);
     }
@@ -161,6 +186,35 @@ const readLegacyPersonRows = async (inputPath: string): Promise<LegacyPersonRow[
   return parseFilemakerLegacyPersonRows(await readFile(inputPath, 'utf8'));
 };
 
+const fileExists = async (inputPath: string): Promise<boolean> => {
+  try {
+    await access(inputPath, constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const resolvePersonOrganizationJoinInputPath = async (
+  options: CliOptions
+): Promise<string | null> => {
+  if (options.personOrganizationJoinInputPath !== null) {
+    return options.personOrganizationJoinInputPath;
+  }
+  return (await fileExists(DEFAULT_PERSON_ORGANIZATION_JOIN_INPUT_PATH))
+    ? DEFAULT_PERSON_ORGANIZATION_JOIN_INPUT_PATH
+    : null;
+};
+
+const readLegacyPersonOrganizationJoinRows = async (
+  inputPath: string
+): Promise<LegacyPersonOrganizationJoinRow[]> => {
+  if (!isWorkbookInputPath(inputPath)) {
+    throw new Error('FileMaker person-organization join input must be an XLSX/XLS workbook.');
+  }
+  return parseFilemakerLegacyPersonOrganizationJoinWorkbookRows(await readFile(inputPath));
+};
+
 const collectPersons = (rows: LegacyPersonRow[]): CollectedPersons => {
   const persons = new Map<string, ParsedLegacyPerson>();
   let duplicateLegacyUuidCount = 0;
@@ -177,6 +231,58 @@ const collectPersons = (rows: LegacyPersonRow[]): CollectedPersons => {
   });
 
   return { duplicateLegacyUuidCount, persons, skippedRowCount };
+};
+
+const collectPersonOrganizationJoins = (
+  rows: LegacyPersonOrganizationJoinRow[]
+): CollectedPersonOrganizationJoins => {
+  const legacyOrganizationUuidsByLegacyPersonUuid = new Map<string, Set<string>>();
+  const seenPairs = new Set<string>();
+  let duplicateLegacyPairCount = 0;
+  let parsedJoinCount = 0;
+  let skippedJoinRowCount = 0;
+
+  rows.forEach((row: LegacyPersonOrganizationJoinRow): void => {
+    const join = parsePersonOrganizationJoinFromRow(row);
+    if (join === null) {
+      skippedJoinRowCount += 1;
+      return;
+    }
+    parsedJoinCount += 1;
+    const pairKey = `${join.legacyPersonUuid}:${join.legacyOrganizationUuid}`;
+    if (seenPairs.has(pairKey)) {
+      duplicateLegacyPairCount += 1;
+      return;
+    }
+    seenPairs.add(pairKey);
+    const organizationUuids =
+      legacyOrganizationUuidsByLegacyPersonUuid.get(join.legacyPersonUuid) ?? new Set<string>();
+    organizationUuids.add(join.legacyOrganizationUuid);
+    legacyOrganizationUuidsByLegacyPersonUuid.set(join.legacyPersonUuid, organizationUuids);
+  });
+
+  const legacyOrganizationUuidEntries: Array<[string, string[]]> = Array.from(
+    legacyOrganizationUuidsByLegacyPersonUuid.entries()
+  ).map(([legacyPersonUuid, organizationUuids]: [string, Set<string>]) => [
+    legacyPersonUuid,
+    Array.from(organizationUuids),
+  ]);
+
+  return {
+    duplicateLegacyPairCount,
+    legacyOrganizationUuidsByLegacyPersonUuid: new Map(legacyOrganizationUuidEntries),
+    parsedJoinCount,
+    skippedJoinRowCount,
+    uniquePairCount: seenPairs.size,
+  };
+};
+
+const resolveLegacyOrganizationUuids = (
+  person: ParsedLegacyPerson,
+  joins: CollectedPersonOrganizationJoins | null
+): string[] => {
+  if (joins === null) return person.legacyOrganizationUuids;
+  return joins.legacyOrganizationUuidsByLegacyPersonUuid.get(person.legacyUuid) ?? [];
 };
 
 const buildExistingPersonMap = async (
@@ -242,6 +348,7 @@ const toPersonDocument = (input: {
   id: string;
   importBatchId: string;
   importedAt: Date;
+  legacyOrganizationUuids: string[];
   person: ParsedLegacyPerson;
 }): FilemakerPersonMongoDocument => ({
   _id: input.id,
@@ -270,7 +377,7 @@ const toPersonDocument = (input: {
   ...(input.person.legacyDisplayBankAccountUuid
     ? { legacyDisplayBankAccountUuid: input.person.legacyDisplayBankAccountUuid }
     : {}),
-  legacyOrganizationUuids: input.person.legacyOrganizationUuids,
+  legacyOrganizationUuids: input.legacyOrganizationUuids,
   ...(input.person.legacyParentUuid ? { legacyParentUuid: input.person.legacyParentUuid } : {}),
   legacyUuid: input.person.legacyUuid,
   schemaVersion: 1,
@@ -282,6 +389,7 @@ const toPersonOrganizationLinkDocuments = (input: {
   idByLegacyPersonUuid: Map<string, string>;
   importBatchId: string;
   importedAt: Date;
+  joins: CollectedPersonOrganizationJoins | null;
   organizationByLegacyUuid: Map<string, OrganizationLookupRecord>;
   persons: Map<string, ParsedLegacyPerson>;
 }): FilemakerPersonOrganizationLinkMongoDocument[] => {
@@ -289,30 +397,50 @@ const toPersonOrganizationLinkDocuments = (input: {
   input.persons.forEach((person: ParsedLegacyPerson): void => {
     const personId = input.idByLegacyPersonUuid.get(person.legacyUuid);
     if (personId === undefined) return;
-    person.legacyOrganizationUuids.forEach((legacyOrganizationUuid: string): void => {
-      const organization = input.organizationByLegacyUuid.get(legacyOrganizationUuid);
-      const id = createModernId(
-        'person-organization-link',
-        `${person.legacyUuid}:${legacyOrganizationUuid}`
-      );
-      documents.set(id, {
-        _id: id,
-        id,
-        importBatchId: input.importBatchId,
-        importedAt: input.importedAt,
-        importSourceKind: IMPORT_SOURCE_KIND,
-        legacyOrganizationUuid,
-        legacyPersonUuid: person.legacyUuid,
-        ...(organization
-          ? { organizationId: organization.id, organizationName: organization.name }
-          : {}),
-        personId,
-        personName: person.fullName,
-        schemaVersion: 1,
-      });
-    });
+    resolveLegacyOrganizationUuids(person, input.joins).forEach(
+      (legacyOrganizationUuid: string): void => {
+        const organization = input.organizationByLegacyUuid.get(legacyOrganizationUuid);
+        const id = createModernId(
+          'person-organization-link',
+          `${person.legacyUuid}:${legacyOrganizationUuid}`
+        );
+        documents.set(id, {
+          _id: id,
+          id,
+          importBatchId: input.importBatchId,
+          importedAt: input.importedAt,
+          importSourceKind: IMPORT_SOURCE_KIND,
+          legacyOrganizationUuid,
+          legacyPersonUuid: person.legacyUuid,
+          ...(organization
+            ? { organizationId: organization.id, organizationName: organization.name }
+            : {}),
+          personId,
+          personName: person.fullName,
+          schemaVersion: 1,
+        });
+      }
+    );
   });
   return Array.from(documents.values());
+};
+
+const deleteImportedPersonOrganizationLinks = async (
+  collection: Collection<FilemakerPersonOrganizationLinkMongoDocument>,
+  legacyPersonUuids: string[],
+  batchSize: number
+): Promise<number> => {
+  let deletedCount = 0;
+  for (let index = 0; index < legacyPersonUuids.length; index += batchSize) {
+    const batch = legacyPersonUuids.slice(index, index + batchSize);
+    if (batch.length === 0) continue;
+    const result = await collection.deleteMany({
+      importSourceKind: IMPORT_SOURCE_KIND,
+      legacyPersonUuid: { $in: batch },
+    });
+    deletedCount += result.deletedCount;
+  }
+  return deletedCount;
 };
 
 const isNamespaceNotFoundError = (error: unknown): boolean => {
@@ -423,6 +551,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
   const parsedRows = await readLegacyPersonRows(options.inputPath);
   const collected = collectPersons(parsedRows);
+  const personOrganizationJoinInputPath = await resolvePersonOrganizationJoinInputPath(options);
+  const parsedPersonOrganizationJoinRows =
+    personOrganizationJoinInputPath === null
+      ? []
+      : await readLegacyPersonOrganizationJoinRows(personOrganizationJoinInputPath);
+  const collectedPersonOrganizationJoins =
+    personOrganizationJoinInputPath === null
+      ? null
+      : collectPersonOrganizationJoins(parsedPersonOrganizationJoinRows);
   const { getMongoClient, getMongoDb } = await import('@/shared/lib/db/mongo-client');
   const client = await getMongoClient(options.source);
 
@@ -450,9 +587,15 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       (person: ParsedLegacyPerson): FilemakerPersonMongoDocument =>
         toPersonDocument({
           existing: existingByLegacyUuid.get(person.legacyUuid),
-          id: idByLegacyPersonUuid.get(person.legacyUuid) ?? createModernId('person', person.legacyUuid),
+          id:
+            idByLegacyPersonUuid.get(person.legacyUuid) ??
+            createModernId('person', person.legacyUuid),
           importBatchId,
           importedAt,
+          legacyOrganizationUuids: resolveLegacyOrganizationUuids(
+            person,
+            collectedPersonOrganizationJoins
+          ),
           person,
         })
     );
@@ -460,9 +603,18 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
       idByLegacyPersonUuid,
       importBatchId,
       importedAt,
+      joins: collectedPersonOrganizationJoins,
       organizationByLegacyUuid,
       persons: collected.persons,
     });
+    const deletedStalePersonOrganizationLinkCount =
+      options.dryRun || options.replaceCollections
+        ? 0
+        : await deleteImportedPersonOrganizationLinks(
+            linksCollection,
+            Array.from(collected.persons.keys()),
+            options.batchSize
+          );
     const personWrite = options.dryRun
       ? { matchedCount: 0, modifiedCount: 0, upsertedCount: 0 }
       : options.replaceCollections
@@ -488,9 +640,20 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
           linkWrite,
           mode: options.dryRun ? 'dry-run' : 'write',
           organizationLookupCount: organizationByLegacyUuid.size,
+          personOrganizationJoinInputPath,
+          personOrganizationJoinParsedRowCount: parsedPersonOrganizationJoinRows.length,
+          personOrganizationJoinValidRowCount:
+            collectedPersonOrganizationJoins?.parsedJoinCount ?? 0,
+          personOrganizationJoinSkippedRowCount:
+            collectedPersonOrganizationJoins?.skippedJoinRowCount ?? 0,
+          personOrganizationJoinDuplicatePairCount:
+            collectedPersonOrganizationJoins?.duplicateLegacyPairCount ?? 0,
+          personOrganizationJoinUniquePairCount:
+            collectedPersonOrganizationJoins?.uniquePairCount ?? 0,
           parsedRowCount: parsedRows.length,
           personWrite,
           replacedCollections,
+          deletedStalePersonOrganizationLinkCount,
           resolvedOrganizationLinkCount: linkDocuments.filter(
             (link: FilemakerPersonOrganizationLinkMongoDocument): boolean =>
               typeof link.organizationId === 'string'

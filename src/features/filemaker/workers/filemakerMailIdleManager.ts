@@ -10,6 +10,13 @@ import * as mailServerUtils from '../server/mail/mail-utils';
 import { createImapClient } from '../server/mail/mail-imap';
 import type { FilemakerMailAccount } from '../types';
 import { enqueueFilemakerMailSyncJob, startFilemakerMailSyncQueue } from './filemakerMailSyncQueue';
+import {
+  buildIdleRefreshKey,
+  getIdleAccountState,
+  managerState,
+  patchIdleAccountState,
+  type AccountState,
+} from './filemakerMailIdleManager.state';
 
 const LOG_SOURCE = 'filemaker-mail-idle';
 const MIN_BACKOFF_MS = 5_000;
@@ -17,144 +24,135 @@ const MAX_BACKOFF_MS = 5 * 60_000;
 const MAX_CONSECUTIVE_FAILURES = 6;
 const SYNC_DEBOUNCE_MS = 1_500;
 
-type AccountState = {
-  accountId: string;
-  client: ImapFlow | null;
-  stopped: boolean;
-  failureCount: number;
-  reconnectTimer: NodeJS.Timeout | null;
-  syncTimer: NodeJS.Timeout | null;
-  refreshKey: string;
-};
-
-type ManagerState = {
-  started: boolean;
-  accountsById: Map<string, AccountState>;
-  refreshTimer: NodeJS.Timeout | null;
-};
-
-const globalWithState = globalThis as typeof globalThis & {
-  __filemakerMailIdleManagerState__?: ManagerState;
-};
-
-const managerState =
-  globalWithState.__filemakerMailIdleManagerState__ ??
-  (globalWithState.__filemakerMailIdleManagerState__ = {
-    started: false,
-    accountsById: new Map(),
-    refreshTimer: null,
-  });
-
 const isPushDisabledGlobally = (): boolean =>
   (process.env['DISABLE_FILEMAKER_MAIL_IDLE'] ?? '').toLowerCase() === 'true';
 
-const buildRefreshKey = (account: FilemakerMailAccount): string =>
-  [
-    account.status,
-    String(account.pushEnabled ?? true),
-    account.imapHost,
-    String(account.imapPort),
-    String(account.imapSecure),
-    account.imapUser,
-    account.updatedAt ?? '',
-  ].join('|');
-
 const scheduleReconnect = (state: AccountState): void => {
-  if (state.stopped) return;
+  const current = getIdleAccountState(state.accountId);
+  if (current === null || current.stopped) return;
   const delay = Math.min(
     MAX_BACKOFF_MS,
-    MIN_BACKOFF_MS * 2 ** Math.max(0, state.failureCount - 1)
+    MIN_BACKOFF_MS * 2 ** Math.max(0, current.failureCount - 1)
   );
-  if (state.reconnectTimer) clearTimeout(state.reconnectTimer);
-  state.reconnectTimer = setTimeout(() => {
-    state.reconnectTimer = null;
-    startIdleConnection(state).catch(() => {});
+  if (current.reconnectTimer !== null) clearTimeout(current.reconnectTimer);
+  const reconnectTimer = setTimeout(() => {
+    const nextState = patchIdleAccountState(state.accountId, { reconnectTimer: null });
+    if (nextState !== null) startIdleConnection(nextState).catch(() => {});
   }, delay);
+  patchIdleAccountState(state.accountId, { reconnectTimer });
+};
+
+const runDebouncedSync = async (accountId: string): Promise<void> => {
+  const state = patchIdleAccountState(accountId, { syncTimer: null });
+  if (state === null || state.stopped) return;
+  try {
+    startFilemakerMailSyncQueue();
+    await enqueueFilemakerMailSyncJob({
+      accountId,
+      reason: 'idle',
+    });
+  } catch (error) {
+    await logSystemEvent({
+      level: 'warn',
+      source: LOG_SOURCE,
+      message: `Debounced sync enqueue failed for account ${accountId}`,
+      error,
+    }).catch(() => {});
+  }
 };
 
 const scheduleDebouncedSync = (state: AccountState): void => {
-  if (state.stopped) return;
-  if (state.syncTimer) return;
-  state.syncTimer = setTimeout(async () => {
-    state.syncTimer = null;
-    try {
-      startFilemakerMailSyncQueue();
-      await enqueueFilemakerMailSyncJob({
-        accountId: state.accountId,
-        reason: 'idle',
-      });
-    } catch (error) {
-      await logSystemEvent({
-        level: 'warn',
-        source: LOG_SOURCE,
-        message: `Debounced sync enqueue failed for account ${state.accountId}`,
-        error,
-      }).catch(() => {});
-    }
+  const current = getIdleAccountState(state.accountId);
+  if (current === null || current.stopped || current.syncTimer !== null) return;
+  const syncTimer = setTimeout(() => {
+    runDebouncedSync(state.accountId).catch(() => {});
   }, SYNC_DEBOUNCE_MS);
+  patchIdleAccountState(state.accountId, { syncTimer });
 };
 
-const startIdleConnection = async (state: AccountState): Promise<void> => {
-  if (state.stopped) return;
+const resolveActiveIdleAccount = async (
+  state: AccountState
+): Promise<FilemakerMailAccount | null> => {
   const account = (await listFilemakerMailAccounts()).find(
     (entry) => entry.id === state.accountId
   );
-  if (!account) {
+  if (account === undefined) {
     stopAccount(state.accountId);
-    return;
+    return null;
   }
   if (account.status !== 'active' || account.pushEnabled === false) {
     await closeClient(state);
-    return;
+    return null;
   }
+  return account;
+};
 
+const resolveImapPassword = async (account: FilemakerMailAccount): Promise<string | null> => {
   const passwordKey = mailServerUtils.resolveAccountSecretSettingKey(account, 'imap_password');
   const secrets = await readSecretSettingValues([passwordKey]);
-  const password = secrets[passwordKey];
-  if (!password) {
+  const password = secrets[passwordKey] ?? '';
+  if (password.length === 0) {
     await logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,
       message: `IMAP password missing for ${account.emailAddress}; idle disabled.`,
       context: { accountId: account.id },
     }).catch(() => {});
-    return;
+    return null;
   }
+  return password;
+};
 
-  const client = createImapClient(account, password);
-  state.client = client;
-
-  const handleError = (label: string, error: unknown): void => {
+const createIdleErrorHandler = (
+  state: AccountState,
+  account: FilemakerMailAccount
+): ((label: string, error: unknown) => void) =>
+  (label: string, error: unknown): void => {
+    const current = getIdleAccountState(state.accountId);
+    const failureCount = (current?.failureCount ?? state.failureCount) + 1;
+    patchIdleAccountState(state.accountId, { failureCount });
     logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,
       message: `IMAP IDLE ${label} for ${account.emailAddress}`,
       error,
-      context: { accountId: account.id, failureCount: state.failureCount },
+      context: { accountId: account.id, failureCount },
     }).catch(() => {});
-    state.failureCount += 1;
     closeClient(state).catch(() => {});
-    if (state.failureCount >= MAX_CONSECUTIVE_FAILURES) {
+    if (failureCount >= MAX_CONSECUTIVE_FAILURES) {
       logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,
-        message: `IMAP IDLE giving up after ${state.failureCount} failures for ${account.emailAddress}`,
+        message: `IMAP IDLE giving up after ${failureCount} failures for ${account.emailAddress}`,
         context: { accountId: account.id },
       }).catch(() => {});
       return;
     }
-    scheduleReconnect(state);
+    const nextState = getIdleAccountState(state.accountId);
+    if (nextState !== null) scheduleReconnect(nextState);
   };
 
+const attachIdleClientHandlers = (
+  client: ImapFlow,
+  state: AccountState,
+  handleError: (label: string, error: unknown) => void
+): void => {
   client.on('error', (error: unknown) => handleError('error', error));
   client.on('close', () => handleError('close', new Error('connection closed')));
   client.on('exists', () => scheduleDebouncedSync(state));
   client.on('expunge', () => scheduleDebouncedSync(state));
+};
 
+const openIdleClient = async (
+  state: AccountState,
+  account: FilemakerMailAccount,
+  client: ImapFlow,
+  handleError: (label: string, error: unknown) => void
+): Promise<void> => {
   try {
     await client.connect();
     await client.mailboxOpen('INBOX', { readOnly: true });
-    state.failureCount = 0;
+    patchIdleAccountState(state.accountId, { failureCount: 0 });
     await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
@@ -167,18 +165,32 @@ const startIdleConnection = async (state: AccountState): Promise<void> => {
   }
 };
 
+const startIdleConnection = async (state: AccountState): Promise<void> => {
+  if (state.stopped) return;
+  const account = await resolveActiveIdleAccount(state);
+  if (account === null) return;
+  const password = await resolveImapPassword(account);
+  if (password === null) return;
+  const client = createImapClient(account, password);
+  patchIdleAccountState(state.accountId, { client });
+  const handleError = createIdleErrorHandler(state, account);
+  attachIdleClientHandlers(client, state, handleError);
+  await openIdleClient(state, account, client, handleError);
+};
+
 const closeClient = async (state: AccountState): Promise<void> => {
-  if (state.reconnectTimer) {
-    clearTimeout(state.reconnectTimer);
-    state.reconnectTimer = null;
+  const current = getIdleAccountState(state.accountId) ?? state;
+  if (current.reconnectTimer !== null) {
+    clearTimeout(current.reconnectTimer);
+    patchIdleAccountState(state.accountId, { reconnectTimer: null });
   }
-  if (state.syncTimer) {
-    clearTimeout(state.syncTimer);
-    state.syncTimer = null;
+  if (current.syncTimer !== null) {
+    clearTimeout(current.syncTimer);
+    patchIdleAccountState(state.accountId, { syncTimer: null });
   }
-  const client = state.client;
-  state.client = null;
-  if (!client) return;
+  const client = current.client;
+  patchIdleAccountState(state.accountId, { client: null });
+  if (client === null) return;
   try {
     await client.logout();
   } catch {
@@ -192,12 +204,12 @@ const closeClient = async (state: AccountState): Promise<void> => {
 
 const ensureAccount = async (account: FilemakerMailAccount): Promise<void> => {
   const existing = managerState.accountsById.get(account.id);
-  const refreshKey = buildRefreshKey(account);
+  const refreshKey = buildIdleRefreshKey(account);
 
-  if (existing?.refreshKey === refreshKey && existing.client) return;
+  if (existing?.refreshKey === refreshKey && existing.client !== null) return;
 
-  if (existing) {
-    existing.stopped = true;
+  if (existing !== undefined) {
+    patchIdleAccountState(existing.accountId, { stopped: true });
     await closeClient(existing);
   }
 
@@ -221,8 +233,8 @@ const ensureAccount = async (account: FilemakerMailAccount): Promise<void> => {
 
 const stopAccount = (accountId: string): void => {
   const existing = managerState.accountsById.get(accountId);
-  if (!existing) return;
-  existing.stopped = true;
+  if (existing === undefined) return;
+  patchIdleAccountState(accountId, { stopped: true });
   closeClient(existing).catch(() => {});
   managerState.accountsById.delete(accountId);
 };
@@ -235,9 +247,7 @@ const refreshAccounts = async (): Promise<void> => {
     for (const existingId of Array.from(managerState.accountsById.keys())) {
       if (!accountIds.has(existingId)) stopAccount(existingId);
     }
-    for (const account of accounts) {
-      await ensureAccount(account);
-    }
+    await Promise.all(accounts.map((account) => ensureAccount(account)));
   } catch (error) {
     await logSystemEvent({
       level: 'warn',
@@ -269,8 +279,8 @@ export const startFilemakerMailIdleManager = (): void => {
   }
 };
 
-export const stopFilemakerMailIdleManager = async (): Promise<void> => {
-  if (managerState.refreshTimer) {
+export const stopFilemakerMailIdleManager = (): void => {
+  if (managerState.refreshTimer !== null) {
     clearInterval(managerState.refreshTimer);
     managerState.refreshTimer = null;
   }
@@ -279,7 +289,7 @@ export const stopFilemakerMailIdleManager = async (): Promise<void> => {
   managerState.started = false;
 };
 
-export const __forFilemakerMailIdleTestOnly = {
+export const filemakerMailIdleManagerTestOnly = {
   refreshAccounts,
   managerState,
 };

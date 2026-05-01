@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 
 import { normalizeString } from './filemaker-settings.helpers';
 import { parseLegacyOrganiserTimestamp } from './filemaker-organisers-import.parser';
-import { extractLegacyUuids, normalizeLegacyUuid } from './filemaker-values-import.parser';
+import { normalizeLegacyUuid } from './filemaker-values-import.parser';
 
 const FILEMAKER_LINE_BREAK_PATTERN = /\r\n|\n|\r/;
 const HEADER_SCAN_LIMIT = 25;
@@ -27,7 +27,7 @@ const FIELDS = {
   emailParser: 'Email Parser',
   firstName: 'FirstName',
   emailPortalFilter: 'key_ema.PORTALFILTER',
-  organizationPortalFilter: 'key_org.PORTALFILTER',
+  ignoredOrganizationPortalFilter: '__ignored_organization_portal_filter',
   phonePortalFilter: 'key_pho.PORTALFILTER',
   websitePortalFilter: 'key_www.PORTALFILTER',
   lastName: 'LastName',
@@ -58,7 +58,7 @@ const HEADERLESS_PERSON_FIELDS = [
   FIELDS.emailParser,
   FIELDS.firstName,
   FIELDS.emailPortalFilter,
-  FIELDS.organizationPortalFilter,
+  FIELDS.ignoredOrganizationPortalFilter,
   FIELDS.phonePortalFilter,
   FIELDS.websitePortalFilter,
   FIELDS.lastName,
@@ -288,7 +288,7 @@ export const parsePersonFromRow = (row: LegacyPersonRow): ParsedLegacyPerson | n
     legacyDefaultBankAccountUuid: optionalLegacyUuid(row[FIELDS.defaultBankAccountUuid]),
     legacyDisplayAddressUuid: optionalLegacyUuid(row[FIELDS.displayAddressUuid]),
     legacyDisplayBankAccountUuid: optionalLegacyUuid(row[FIELDS.displayBankAccountUuid]),
-    legacyOrganizationUuids: extractLegacyUuids(row[FIELDS.organizationPortalFilter]),
+    legacyOrganizationUuids: [],
     legacyParentUuid: optionalLegacyUuid(row[FIELDS.legacyParentUuid]),
     legacyUuid,
     updatedAt: parseLegacyOrganiserTimestamp(row[FIELDS.updatedAt]),

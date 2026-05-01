@@ -56,6 +56,7 @@ export type FilemakerPersonMongoDocument = Document & {
   id: string;
   languageSkills?: FilemakerPerson['languageSkills'];
   lastName: string;
+  nip?: string;
   legacyDefaultAddressUuid?: string;
   legacyDefaultBankAccountUuid?: string;
   legacyDisplayAddressUuid?: string;
@@ -67,6 +68,7 @@ export type FilemakerPersonMongoDocument = Document & {
   postalCode?: string;
   profileEducation?: FilemakerPerson['profileEducation'];
   profileJobExperience?: FilemakerPerson['profileJobExperience'];
+  regon?: string;
   street?: string;
   streetNumber?: string;
   updatedAt?: string;
@@ -157,8 +159,8 @@ const createMongoPersonBase = (
   postalCode: document.postalCode,
   country: document.country,
   countryId: document.countryId,
-  nip: '',
-  regon: '',
+  nip: document.nip,
+  regon: document.regon,
   phoneNumbers: [],
   linkedinUrl: document.linkedinUrl,
   githubUrl: document.githubUrl,

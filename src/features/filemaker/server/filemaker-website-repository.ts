@@ -18,6 +18,10 @@ import type {
   WebsiteLinkFilter,
 } from '../filemaker-websites.types';
 import type { FilemakerEvent, FilemakerOrganization } from '../types';
+import {
+  listLinkedOrganizationIdentitiesForPerson,
+  type FilemakerLinkedOrganizationIdentity,
+} from './filemaker-person-linked-organizations';
 import type { MongoFilemakerPerson } from './filemaker-persons-mongo';
 
 export const FILEMAKER_WEBSITES_COLLECTION = 'filemaker_websites';
@@ -355,6 +359,25 @@ export const listMongoFilemakerWebsitesForOrganization = async (
   });
 };
 
+const buildLinkedOrganizationWebsiteLinkFilter = (
+  organizations: FilemakerLinkedOrganizationIdentity[]
+): Filter<MongoFilemakerWebsiteLinkDocument> | null => {
+  const organizationIds = uniqueStrings(
+    organizations.map((organization) => organization.organizationId)
+  );
+  const legacyOrganizationUuids = uniqueStrings(
+    organizations.map((organization) => organization.legacyOrganizationUuid)
+  );
+  const clauses: Filter<MongoFilemakerWebsiteLinkDocument>[] = [];
+  if (organizationIds.length > 0) {
+    clauses.push({ organizationId: { $in: organizationIds } }, { partyId: { $in: organizationIds } });
+  }
+  if (legacyOrganizationUuids.length > 0) {
+    clauses.push({ legacyOwnerUuid: { $in: legacyOrganizationUuids } });
+  }
+  return clauses.length > 0 ? { partyKind: 'organization', $or: clauses } : null;
+};
+
 export const listMongoFilemakerWebsitesForPerson = async (
   person: MongoFilemakerPerson
 ): Promise<MongoFilemakerWebsite[]> => {
@@ -365,10 +388,16 @@ export const listMongoFilemakerWebsitesForPerson = async (
   if (person.legacyUuid !== undefined && person.legacyUuid.trim().length > 0) {
     clauses.push({ legacyOwnerUuid: person.legacyUuid });
   }
-  return listWebsitesForLinkFilter({
+  const organizationFilter = buildLinkedOrganizationWebsiteLinkFilter(
+    await listLinkedOrganizationIdentitiesForPerson(person)
+  );
+  const personFilter: Filter<MongoFilemakerWebsiteLinkDocument> = {
     partyKind: 'person',
     $or: clauses,
-  });
+  };
+  const filter =
+    organizationFilter === null ? personFilter : { $or: [personFilter, organizationFilter] };
+  return listWebsitesForLinkFilter(filter);
 };
 
 export const listMongoFilemakerWebsitesForEvent = async (

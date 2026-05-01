@@ -28,4 +28,15 @@ describe('default product category tree catalog', () => {
     expect(resolveDefaultProductCategoryTreeCatalogId([{ id: 'catalog-1', name: 'Catalog One' }]))
       .toBeNull();
   });
+
+  it('ignores malformed catalog responses', () => {
+    expect(resolveDefaultProductCategoryTreeCatalogId({ catalogs: [] })).toBeNull();
+    expect(
+      resolveDefaultProductCategoryTreeCatalogId([
+        { id: 'catalog-1' },
+        { name: 'Mentios' },
+        null,
+      ])
+    ).toBeNull();
+  });
 });

@@ -50,6 +50,8 @@ export function ProductScrapeProfilesModal(
         error={controller.error}
         isLoading={controller.isLoading}
         isDraftTemplatesLoading={controller.isDraftTemplatesLoading}
+        imageImportMode={controller.imageImportMode}
+        sourcePriceCurrencyCode={controller.sourcePriceCurrencyCode}
         limitError={controller.limitError}
         limitInput={controller.limitInput}
         draftTemplates={controller.draftTemplates}
@@ -59,6 +61,8 @@ export function ProductScrapeProfilesModal(
         selectedProfileId={controller.selectedProfileId}
         onDryRunChange={controller.onDryRunChange}
         onDraftTemplateSelect={controller.onDraftTemplateSelect}
+        onImageImportModeChange={controller.onImageImportModeChange}
+        onSourcePriceCurrencyCodeChange={controller.onSourcePriceCurrencyCodeChange}
         onLimitInputChange={controller.onLimitInputChange}
         onProfileSelect={controller.onProfileSelect}
       />

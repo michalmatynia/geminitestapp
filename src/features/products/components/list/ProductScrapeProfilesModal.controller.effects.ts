@@ -2,13 +2,21 @@
 
 import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
-import type { ProductScrapeProfileRunResponse } from '@/shared/contracts/products/scrape-profiles';
+import type {
+  ProductScrapeProfileImageImportMode,
+  ProductScrapeProfileRunResponse,
+  ProductScrapeSourcePriceCurrencyCode,
+} from '@/shared/contracts/products/scrape-profiles';
 
 import {
   resolvePreferredProfileId,
   resolveProfileLimitInput,
 } from './ProductScrapeProfilesModal.controller.helpers';
-import type { ProductScrapeProfileQueries } from './ProductScrapeProfilesModal.controller.types';
+import type {
+  ProductScrapeProfileFormState,
+  ProductScrapeProfileQueries,
+  StoredSettingsState,
+} from './ProductScrapeProfilesModal.controller.types';
 import {
   getStoredProfileSettings,
   type ProductScrapeProfileStoredSettings,
@@ -23,6 +31,8 @@ type SelectionEffectsInput = Pick<
   isOpen: boolean;
   setDraftTemplateId: (value: string) => void;
   setDryRun: (value: boolean) => void;
+  setImageImportMode: (value: ProductScrapeProfileImageImportMode) => void;
+  setSourcePriceCurrencyCode: (value: ProductScrapeSourcePriceCurrencyCode) => void;
   setLimitInput: (value: string) => void;
   setProfileId: Dispatch<SetStateAction<string>>;
   setResult: (result: ProductScrapeProfileRunResponse | null) => void;
@@ -33,12 +43,25 @@ type SelectionEffectsInput = Pick<
 type PersistSettingsInput = Pick<ProductScrapeProfileQueries, 'selectedProfile'> & {
   draftTemplateId: string;
   dryRun: boolean;
+  imageImportMode: ProductScrapeProfileImageImportMode;
+  sourcePriceCurrencyCode: ProductScrapeSourcePriceCurrencyCode;
   isOpen: boolean;
   limitInput: string;
   settingsProfileId: string;
   storedSettingsRef: MutableRefObject<ProductScrapeProfileStoredSettings>;
   updateStoredSettings: (settings: ProductScrapeProfileStoredSettings) => void;
 };
+
+const resolveSelectedSourcePriceCurrencyCode = ({
+  selectedProfile,
+  storedProfileSettings,
+}: Pick<ProductScrapeProfileQueries, 'selectedProfile'> & {
+  storedProfileSettings: ProductScrapeProfileStoredSettings['profiles'][string] | null;
+}): ProductScrapeSourcePriceCurrencyCode =>
+  storedProfileSettings?.sourcePriceCurrencyCode ??
+  selectedProfile?.defaultSourcePriceCurrencyCode ??
+  selectedProfile?.sourcePriceCurrencyCodes?.[0] ??
+  'PLN';
 
 const useInitialProfileEffect = ({
   isOpen,
@@ -60,6 +83,8 @@ const useSelectedProfileSettingsEffect = ({
   selectedProfile,
   setDraftTemplateId,
   setDryRun,
+  setImageImportMode,
+  setSourcePriceCurrencyCode,
   setLimitInput,
   setResult,
   setSettingsProfileId,
@@ -69,6 +94,8 @@ const useSelectedProfileSettingsEffect = ({
   | 'selectedProfile'
   | 'setDraftTemplateId'
   | 'setDryRun'
+  | 'setImageImportMode'
+  | 'setSourcePriceCurrencyCode'
   | 'setLimitInput'
   | 'setResult'
   | 'setSettingsProfileId'
@@ -82,6 +109,10 @@ const useSelectedProfileSettingsEffect = ({
     );
     setDraftTemplateId(storedProfileSettings?.draftTemplateId ?? '');
     setDryRun(storedProfileSettings?.dryRun ?? false);
+    setImageImportMode(storedProfileSettings?.imageImportMode ?? 'links');
+    setSourcePriceCurrencyCode(
+      resolveSelectedSourcePriceCurrencyCode({ selectedProfile, storedProfileSettings })
+    );
     setLimitInput(resolveProfileLimitInput(selectedProfile, storedSettingsRef.current));
     setSettingsProfileId(selectedProfile.id);
     setResult(null);
@@ -89,6 +120,8 @@ const useSelectedProfileSettingsEffect = ({
     selectedProfile,
     setDraftTemplateId,
     setDryRun,
+    setImageImportMode,
+    setSourcePriceCurrencyCode,
     setLimitInput,
     setResult,
     setSettingsProfileId,
@@ -123,6 +156,8 @@ export const useProductScrapeProfileSelectionEffects = (
 export const usePersistProductScrapeProfileSettings = ({
   draftTemplateId,
   dryRun,
+  imageImportMode,
+  sourcePriceCurrencyCode,
   isOpen,
   limitInput,
   selectedProfile,
@@ -137,12 +172,20 @@ export const usePersistProductScrapeProfileSettings = ({
       selectedProfileId: selectedProfile.id,
       profiles: {
         ...storedSettingsRef.current.profiles,
-        [selectedProfile.id]: { draftTemplateId, dryRun, limitInput },
+        [selectedProfile.id]: {
+          draftTemplateId,
+          dryRun,
+          imageImportMode,
+          limitInput,
+          sourcePriceCurrencyCode,
+        },
       },
     });
   }, [
     draftTemplateId,
     dryRun,
+    imageImportMode,
+    sourcePriceCurrencyCode,
     isOpen,
     limitInput,
     selectedProfile,
@@ -150,4 +193,48 @@ export const usePersistProductScrapeProfileSettings = ({
     storedSettingsRef,
     updateStoredSettings,
   ]);
+};
+
+export const useProductScrapeProfileControllerEffects = ({
+  formState,
+  isOpen,
+  queries,
+  setResult,
+  stored,
+}: {
+  formState: ProductScrapeProfileFormState;
+  isOpen: boolean;
+  queries: ProductScrapeProfileQueries;
+  setResult: (result: ProductScrapeProfileRunResponse | null) => void;
+  stored: StoredSettingsState;
+}): void => {
+  useProductScrapeProfileSelectionEffects({
+    draftTemplateId: formState.draftTemplateId,
+    draftTemplates: queries.draftTemplates,
+    draftTemplatesReady: queries.draftsQuery.data !== undefined,
+    isOpen,
+    profiles: queries.profiles,
+    selectedProfile: queries.selectedProfile,
+    setDraftTemplateId: formState.setDraftTemplateId,
+    setDryRun: formState.setDryRun,
+    setImageImportMode: formState.setImageImportMode,
+    setSourcePriceCurrencyCode: formState.setSourcePriceCurrencyCode,
+    setLimitInput: formState.setLimitInput,
+    setProfileId: formState.setProfileId,
+    setResult,
+    setSettingsProfileId: formState.setSettingsProfileId,
+    storedSettingsRef: stored.storedSettingsRef,
+  });
+  usePersistProductScrapeProfileSettings({
+    draftTemplateId: formState.draftTemplateId,
+    dryRun: formState.dryRun,
+    imageImportMode: formState.imageImportMode,
+    sourcePriceCurrencyCode: formState.sourcePriceCurrencyCode,
+    isOpen,
+    limitInput: formState.limitInput,
+    selectedProfile: queries.selectedProfile,
+    settingsProfileId: formState.settingsProfileId,
+    storedSettingsRef: stored.storedSettingsRef,
+    updateStoredSettings: stored.updateStoredSettings,
+  });
 };

@@ -132,6 +132,8 @@ const battleProfile: ProductScrapeProfile = {
   targetCatalogName: 'BattleStock',
   defaultLimit: null,
   maxPages: 75,
+  defaultSourcePriceCurrencyCode: 'PLN',
+  sourcePriceCurrencyCodes: ['PLN', 'EUR'],
 };
 
 const otherProfile: ProductScrapeProfile = {
@@ -217,6 +219,9 @@ describe('ProductScrapeProfilesModal persistence', () => {
     fireEvent.change(screen.getByLabelText('Select scrape draft template'), {
       target: { value: 'template-other' },
     });
+    fireEvent.change(screen.getByLabelText('Select source price currency'), {
+      target: { value: 'EUR' },
+    });
     fireEvent.click(screen.getByLabelText('Dry run'));
 
     firstRender.unmount();
@@ -229,6 +234,7 @@ describe('ProductScrapeProfilesModal persistence', () => {
       );
       expect(screen.getByLabelText('Limit')).toHaveValue('25');
       expect(screen.getByLabelText('Select scrape draft template')).toHaveValue('template-other');
+      expect(screen.getByLabelText('Select source price currency')).toHaveValue('EUR');
       expect(screen.getByLabelText('Dry run')).toBeChecked();
     });
 
@@ -240,6 +246,8 @@ describe('ProductScrapeProfilesModal persistence', () => {
         {
           profileId: otherProfile.id,
           dryRun: true,
+          imageImportMode: 'links',
+          sourcePriceCurrencyCode: 'EUR',
           skipRecordsWithErrors: true,
           limit: 25,
           draftTemplateId: 'template-other',

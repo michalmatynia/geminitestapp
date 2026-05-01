@@ -140,6 +140,7 @@ export function ProductFormOtherPricingSection(
       props.basePrice,
       props.filteredPriceGroups,
       props.sourcePrice,
+      props.sourcePriceCurrencyCode,
       selectedPriceGroupId,
     ]
   );

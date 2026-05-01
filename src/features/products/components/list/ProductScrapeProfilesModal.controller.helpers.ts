@@ -1,8 +1,10 @@
 import type {
+  ProductScrapeProfileImageImportMode,
   ProductScrapeProfile,
   ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
   ProductScrapeProfilesListResponse,
+  ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
 import { api } from '@/shared/lib/api-client';
 
@@ -74,16 +76,22 @@ export const resolveProfileLimitInput = (
 export const buildRunRequest = ({
   draftTemplateId,
   dryRun,
+  imageImportMode,
   parsedLimit,
   profileId,
+  sourcePriceCurrencyCode,
 }: {
   draftTemplateId: string;
   dryRun: boolean;
+  imageImportMode: ProductScrapeProfileImageImportMode;
   parsedLimit: number | null | undefined;
   profileId: string;
+  sourcePriceCurrencyCode: ProductScrapeSourcePriceCurrencyCode;
 }): ProductScrapeProfileRunRequest => ({
   profileId,
   dryRun,
+  imageImportMode,
+  sourcePriceCurrencyCode,
   skipRecordsWithErrors: true,
   ...(parsedLimit !== null && parsedLimit !== undefined ? { limit: parsedLimit } : {}),
   ...(draftTemplateId.length > 0 ? { draftTemplateId } : {}),

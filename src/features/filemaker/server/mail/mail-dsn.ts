@@ -1,6 +1,6 @@
 import 'server-only';
 
-import type { MailparserParsedMail } from './mail-types';
+import type { MailparserAttachment, MailparserParsedMail } from './mail-types';
 
 const BOUNCE_FROM_LOCAL_PARTS = [
   'mailer-daemon',
@@ -55,7 +55,23 @@ export type FilemakerMailDsnReport = {
 
 const extractEmailFromLine = (line: string): string | null => {
   const match = line.match(EMAIL_REGEX);
-  return match ? match[0].toLowerCase() : null;
+  return match !== null ? match[0].toLowerCase() : null;
+};
+
+const isReportAttachmentContentType = (contentType: string | null | undefined): boolean => {
+  const normalized = (contentType ?? '').toLowerCase();
+  if (normalized.startsWith('message/delivery-status')) return true;
+  if (normalized.startsWith('message/feedback-report')) return true;
+  if (normalized.startsWith('message/rfc822')) return true;
+  return normalized.startsWith('text/');
+};
+
+const extractAttachmentReportText = (attachment: MailparserAttachment): string | null => {
+  if (!isReportAttachmentContentType(attachment.contentType)) return null;
+  const content = attachment.content;
+  if (Buffer.isBuffer(content)) return content.toString('utf8');
+  if (typeof content === 'string') return content;
+  return null;
 };
 
 const collectReportText = (parsed: MailparserParsedMail): string => {
@@ -63,20 +79,8 @@ const collectReportText = (parsed: MailparserParsedMail): string => {
   if (typeof parsed.text === 'string') parts.push(parsed.text);
   const attachments = Array.isArray(parsed.attachments) ? parsed.attachments : [];
   for (const attachment of attachments) {
-    const contentType = (attachment.contentType ?? '').toLowerCase();
-    if (
-      contentType.startsWith('message/delivery-status') ||
-      contentType.startsWith('message/feedback-report') ||
-      contentType.startsWith('message/rfc822') ||
-      contentType.startsWith('text/')
-    ) {
-      const content = attachment.content;
-      if (Buffer.isBuffer(content)) {
-        parts.push(content.toString('utf8'));
-      } else if (typeof content === 'string') {
-        parts.push(content);
-      }
-    }
+    const content = extractAttachmentReportText(attachment);
+    if (content !== null) parts.push(content);
   }
   return parts.join('\n');
 };
@@ -94,31 +98,53 @@ const fromLocalPart = (address: string): string => {
   return at > 0 ? trimmed.slice(0, at) : trimmed;
 };
 
+const addAddressesForPatterns = (
+  addresses: Set<string>,
+  report: string,
+  patterns: RegExp[]
+): void => {
+  for (const pattern of patterns) {
+    const matches = report.matchAll(new RegExp(pattern.source, 'gim'));
+    for (const match of matches) {
+      const candidate = extractEmailFromLine(match[1] ?? '');
+      if (candidate !== null) addresses.add(candidate);
+    }
+  }
+};
+
+const extractFirstMatchedGroup = (match: RegExpMatchArray | null): string | null => {
+  const value = match?.[1];
+  if (value === undefined) return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const hasBounceSender = (parsed: MailparserParsedMail): boolean => {
+  const fromEntries = parsed.from?.value;
+  const fromAddresses = Array.isArray(fromEntries)
+    ? fromEntries.map((entry) => normalizeAddress(entry.address))
+    : [];
+  return fromAddresses.some((address) => BOUNCE_FROM_LOCAL_PARTS.includes(fromLocalPart(address)));
+};
+
+const hasBounceSubject = (parsed: MailparserParsedMail): boolean => {
+  const subject = (parsed.subject ?? '').trim();
+  return subject.length > 0 && BOUNCE_SUBJECT_PATTERNS.some((pattern) => pattern.test(subject));
+};
+
+const hasDeliveryStatusAttachment = (parsed: MailparserParsedMail): boolean => {
+  const attachments = Array.isArray(parsed.attachments) ? parsed.attachments : [];
+  return attachments.some((attachment) =>
+    (attachment.contentType ?? '').toLowerCase().startsWith('message/delivery-status')
+  );
+};
+
 export const isLikelyFilemakerMailBounceMessage = (
   parsed: MailparserParsedMail
 ): boolean => {
-  const fromAddresses = Array.isArray(parsed.from?.value)
-    ? parsed.from?.value.map((entry) => normalizeAddress(entry.address))
-    : [];
-  if (fromAddresses.some((address) => BOUNCE_FROM_LOCAL_PARTS.includes(fromLocalPart(address)))) {
-    return true;
-  }
-
-  const subject = (parsed.subject ?? '').trim();
-  if (subject && BOUNCE_SUBJECT_PATTERNS.some((pattern) => pattern.test(subject))) {
-    return true;
-  }
-
-  const attachments = Array.isArray(parsed.attachments) ? parsed.attachments : [];
-  if (
-    attachments.some((attachment) =>
-      (attachment.contentType ?? '').toLowerCase().startsWith('message/delivery-status')
-    )
-  ) {
-    return true;
-  }
-
-  return false;
+  if (hasBounceSender(parsed)) return true;
+  if (hasBounceSubject(parsed)) return true;
+  return hasDeliveryStatusAttachment(parsed);
 };
 
 export const parseFilemakerMailDsnReport = (
@@ -126,14 +152,7 @@ export const parseFilemakerMailDsnReport = (
 ): FilemakerMailDsnReport => {
   const report = collectReportText(parsed);
   const bouncedAddresses = new Set<string>();
-
-  for (const pattern of DIAGNOSTIC_LINE_PATTERNS) {
-    const matches = report.matchAll(new RegExp(pattern.source, 'gim'));
-    for (const match of matches) {
-      const candidate = extractEmailFromLine(match[1] ?? '');
-      if (candidate) bouncedAddresses.add(candidate);
-    }
-  }
+  addAddressesForPatterns(bouncedAddresses, report, DIAGNOSTIC_LINE_PATTERNS);
 
   if (bouncedAddresses.size === 0) {
     const matches = report.match(new RegExp(EMAIL_REGEX.source, 'gi')) ?? [];
@@ -146,10 +165,10 @@ export const parseFilemakerMailDsnReport = (
   }
 
   const diagnosticMatch = report.match(DIAGNOSTIC_CODE_PATTERN);
-  const diagnosticCode = diagnosticMatch ? diagnosticMatch[1]!.trim() : null;
+  const diagnosticCode = extractFirstMatchedGroup(diagnosticMatch);
   const statusMatch = report.match(STATUS_PATTERN);
-  const status = statusMatch ? statusMatch[1]!.trim() : null;
-  const isPermanent = status ? status.startsWith('5.') : /^5\d{2}\b/.test(diagnosticCode ?? '');
+  const status = extractFirstMatchedGroup(statusMatch);
+  const isPermanent = status !== null ? status.startsWith('5.') : /^5\d{2}\b/.test(diagnosticCode ?? '');
 
   return {
     bouncedAddresses: Array.from(bouncedAddresses),
@@ -170,11 +189,9 @@ export const isLikelyFilemakerMailComplaintMessage = (
 ): boolean => {
   if (hasFeedbackReportAttachment(parsed)) return true;
   const subject = (parsed.subject ?? '').trim();
-  if (subject && COMPLAINT_SUBJECT_PATTERNS.some((pattern) => pattern.test(subject))) {
-    const report = collectReportText(parsed);
-    if (ARF_FEEDBACK_TYPE_PATTERN.test(report)) return true;
-  }
-  return false;
+  if (subject.length === 0) return false;
+  if (!COMPLAINT_SUBJECT_PATTERNS.some((pattern) => pattern.test(subject))) return false;
+  return ARF_FEEDBACK_TYPE_PATTERN.test(collectReportText(parsed));
 };
 
 export const parseFilemakerMailComplaintReport = (
@@ -183,22 +200,10 @@ export const parseFilemakerMailComplaintReport = (
   const report = collectReportText(parsed);
   const complained = new Set<string>();
 
-  const rcptMatches = report.matchAll(
-    new RegExp(ARF_ORIGINAL_RCPT_PATTERN.source, 'gim')
-  );
-  for (const match of rcptMatches) {
-    const candidate = extractEmailFromLine(match[1] ?? '');
-    if (candidate) complained.add(candidate);
-  }
+  addAddressesForPatterns(complained, report, [ARF_ORIGINAL_RCPT_PATTERN]);
 
   if (complained.size === 0) {
-    for (const pattern of DIAGNOSTIC_LINE_PATTERNS) {
-      const matches = report.matchAll(new RegExp(pattern.source, 'gim'));
-      for (const match of matches) {
-        const candidate = extractEmailFromLine(match[1] ?? '');
-        if (candidate) complained.add(candidate);
-      }
-    }
+    addAddressesForPatterns(complained, report, DIAGNOSTIC_LINE_PATTERNS);
   }
 
   const feedbackTypeMatch = report.match(ARF_FEEDBACK_TYPE_PATTERN);
@@ -206,7 +211,7 @@ export const parseFilemakerMailComplaintReport = (
 
   return {
     complainedAddresses: Array.from(complained),
-    feedbackType: feedbackTypeMatch ? feedbackTypeMatch[1]!.trim() : null,
-    userAgent: userAgentMatch ? userAgentMatch[1]!.trim() : null,
+    feedbackType: extractFirstMatchedGroup(feedbackTypeMatch),
+    userAgent: extractFirstMatchedGroup(userAgentMatch),
   };
 };

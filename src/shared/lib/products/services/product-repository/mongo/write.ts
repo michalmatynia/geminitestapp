@@ -50,6 +50,7 @@ export const mongoProductWriteImpl = {
       priceComment: data.priceComment || null,
       stock: data.stock ?? 0,
       sourcePrice: data.sourcePrice ?? null,
+      sourcePriceCurrencyCode: data.sourcePriceCurrencyCode ?? null,
       price: data.price ?? 0,
       sizeLength: data.sizeLength ?? null,
       sizeWidth: data.sizeWidth ?? null,
@@ -134,6 +135,8 @@ export const mongoProductWriteImpl = {
     if (data.priceComment !== undefined) set['priceComment'] = data.priceComment;
     if (data.stock !== undefined) set['stock'] = data.stock;
     if (data.sourcePrice !== undefined) set['sourcePrice'] = data.sourcePrice;
+    if (data.sourcePriceCurrencyCode !== undefined)
+      set['sourcePriceCurrencyCode'] = data.sourcePriceCurrencyCode;
     if (data.price !== undefined) set['price'] = data.price;
     if (data.sizeLength !== undefined) set['sizeLength'] = data.sizeLength;
     if (data.sizeWidth !== undefined) set['sizeWidth'] = data.sizeWidth;

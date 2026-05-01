@@ -3,6 +3,7 @@ import { PRICE_GROUP_SOURCE_PRICE_FIELD } from '@/shared/contracts/products/cata
 
 type PriceCalculationOptions = {
   sourcePrice?: number | null | undefined;
+  sourcePriceCurrencyCode?: string | null | undefined;
 };
 
 type CalculatePriceForCurrencyArgs =
@@ -23,6 +24,7 @@ type CalculatePriceForCurrencyArgs =
 type ProductPriceSources = {
   basePrice: number | null;
   sourcePrice: number | null;
+  sourcePriceCurrencyCode: string;
 };
 
 function normalizeCurrencyCode(code?: string | null): string {
@@ -99,7 +101,15 @@ const resolveProductFieldPrice = (
   prices: ProductPriceSources
 ): number | null => {
   if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) return prices.sourcePrice;
-  return prices.basePrice;
+  if (prices.basePrice !== null) return prices.basePrice;
+  if (
+    prices.sourcePrice !== null &&
+    prices.sourcePriceCurrencyCode.length > 0 &&
+    getGroupCurrencyCode(group) === prices.sourcePriceCurrencyCode
+  ) {
+    return prices.sourcePrice;
+  }
+  return null;
 };
 
 const markVisitedPriceGroup = (
@@ -183,7 +193,7 @@ const resolveVisitedPriceForGroup = (
     group.type !== 'dependent' &&
     group.basePriceField !== PRICE_GROUP_SOURCE_PRICE_FIELD
   ) {
-    return input.prices.basePrice;
+    return resolveProductFieldPrice(group, input.prices);
   }
   if (group.type === 'standard') return resolveStandardPriceForGroup(group, input.prices);
   if (group.type !== 'dependent') return null;
@@ -285,6 +295,7 @@ export function calculatePriceForCurrency(
   const prices: ProductPriceSources = {
     basePrice: toFinitePrice(basePrice),
     sourcePrice: toFinitePrice(options.sourcePrice),
+    sourcePriceCurrencyCode: normalizeCurrencyCode(options.sourcePriceCurrencyCode),
   };
 
   if (priceGroups.length === 0 || hasNoPriceInputs(prices)) {

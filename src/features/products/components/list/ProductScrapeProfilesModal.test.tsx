@@ -1,3 +1,4 @@
+/* eslint-disable max-lines, max-lines-per-function */
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -55,7 +56,7 @@ vi.mock('@/shared/ui/app-modal', () => ({
     isOpen?: boolean;
     title?: React.ReactNode;
   }) =>
-    isOpen ? (
+    isOpen === true ? (
       <div role='dialog' aria-label={typeof title === 'string' ? title : 'Modal'}>
         <div>{children}</div>
         <div>{footer}</div>
@@ -74,7 +75,9 @@ vi.mock('@/shared/ui/button', () => ({
     loadingText?: string;
   }) => (
     <button {...props} disabled={props.disabled === true || loading === true}>
-      {loading === true && loadingText ? loadingText : children}
+      {loading === true && typeof loadingText === 'string' && loadingText.length > 0
+        ? loadingText
+        : children}
     </button>
   ),
 }));
@@ -138,6 +141,8 @@ const battleProfile: ProductScrapeProfile = {
   targetCatalogName: 'BattleStock',
   defaultLimit: null,
   maxPages: 75,
+  defaultSourcePriceCurrencyCode: 'PLN',
+  sourcePriceCurrencyCodes: ['PLN', 'EUR'],
 };
 
 const otherProfile: ProductScrapeProfile = {
@@ -152,12 +157,14 @@ const otherProfile: ProductScrapeProfile = {
 
 const createDraft = (
   input: Pick<ProductDraft, 'id' | 'name' | 'draftKind' | 'scrapeProfileId'>
-): ProductDraft =>
-  ({
+): ProductDraft => {
+  const draft = {
     ...input,
     createdAt: '2026-04-30T00:00:00.000Z',
     updatedAt: '2026-04-30T00:00:00.000Z',
-  }) as ProductDraft;
+  };
+  return draft as ProductDraft;
+};
 
 const renderModal = (): QueryClient => {
   const queryClient = new QueryClient({
@@ -207,44 +214,48 @@ const runResponse: ProductScrapeProfileRunResponse = {
 
 import { ProductScrapeProfilesModal } from './ProductScrapeProfilesModal';
 
+const buildDraftsResponse = (): ProductDraft[] => [
+  createDraft({
+    id: 'template-any',
+    name: 'Universal scrape template',
+    draftKind: 'scrape_template',
+    scrapeProfileId: null,
+  }),
+  createDraft({
+    id: 'template-battle',
+    name: 'BattleStock scrape template',
+    draftKind: 'scrape_template',
+    scrapeProfileId: battleProfile.id,
+  }),
+  createDraft({
+    id: 'template-other',
+    name: 'Other scrape template',
+    draftKind: 'scrape_template',
+    scrapeProfileId: otherProfile.id,
+  }),
+  createDraft({
+    id: 'standard-draft',
+    name: 'Standard draft',
+    draftKind: 'standard',
+    scrapeProfileId: null,
+  }),
+];
+
+const handleApiGet = (url: string): ProductScrapeProfileRunResponse | ProductDraft[] | {
+  profiles: ProductScrapeProfile[];
+} => {
+  if (url === '/api/v2/products/scrape-profiles') {
+    return { profiles: [battleProfile, otherProfile] };
+  }
+  if (url === '/api/drafts') return buildDraftsResponse();
+  throw new Error(`Unexpected GET ${url}`);
+};
+
 describe('ProductScrapeProfilesModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    apiGetMock.mockImplementation(async (url: string) => {
-      if (url === '/api/v2/products/scrape-profiles') {
-        return { profiles: [battleProfile, otherProfile] };
-      }
-      if (url === '/api/drafts') {
-        return [
-          createDraft({
-            id: 'template-any',
-            name: 'Universal scrape template',
-            draftKind: 'scrape_template',
-            scrapeProfileId: null,
-          }),
-          createDraft({
-            id: 'template-battle',
-            name: 'BattleStock scrape template',
-            draftKind: 'scrape_template',
-            scrapeProfileId: battleProfile.id,
-          }),
-          createDraft({
-            id: 'template-other',
-            name: 'Other scrape template',
-            draftKind: 'scrape_template',
-            scrapeProfileId: otherProfile.id,
-          }),
-          createDraft({
-            id: 'standard-draft',
-            name: 'Standard draft',
-            draftKind: 'standard',
-            scrapeProfileId: null,
-          }),
-        ];
-      }
-      throw new Error(`Unexpected GET ${url}`);
-    });
+    apiGetMock.mockImplementation((url: string) => Promise.resolve(handleApiGet(url)));
     apiPostMock.mockResolvedValue(runResponse);
   });
 
@@ -268,6 +279,8 @@ describe('ProductScrapeProfilesModal', () => {
         {
           profileId: battleProfile.id,
           dryRun: false,
+          imageImportMode: 'links',
+          sourcePriceCurrencyCode: 'PLN',
           skipRecordsWithErrors: true,
           draftTemplateId: 'template-battle',
         },
@@ -301,6 +314,62 @@ describe('ProductScrapeProfilesModal', () => {
         {
           profileId: otherProfile.id,
           dryRun: false,
+          imageImportMode: 'links',
+          sourcePriceCurrencyCode: 'PLN',
+          skipRecordsWithErrors: true,
+        },
+        { timeout: 300_000 }
+      );
+    });
+  });
+
+  it('sends file image import mode when selected', async () => {
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    const imageModeSelect = screen.getByLabelText('Select scrape image import mode');
+    await waitFor(() => expect(imageModeSelect).toHaveValue('links'));
+    fireEvent.change(imageModeSelect, {
+      target: { value: 'files' },
+    });
+    await waitFor(() => expect(imageModeSelect).toHaveValue('files'));
+    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/products/scrape-profiles/run',
+        {
+          profileId: battleProfile.id,
+          dryRun: false,
+          imageImportMode: 'files',
+          sourcePriceCurrencyCode: 'PLN',
+          skipRecordsWithErrors: true,
+        },
+        { timeout: 300_000 }
+      );
+    });
+  });
+
+  it('sends the selected source price currency', async () => {
+    renderModal();
+
+    await screen.findByText('BattleStock Warhammer 40k / 30k');
+    const currencySelect = screen.getByLabelText('Select source price currency');
+    await waitFor(() => expect(currencySelect).toHaveValue('PLN'));
+    fireEvent.change(currencySelect, {
+      target: { value: 'EUR' },
+    });
+    await waitFor(() => expect(currencySelect).toHaveValue('EUR'));
+    fireEvent.click(screen.getByRole('button', { name: /Run Profile/ }));
+
+    await waitFor(() => {
+      expect(apiPostMock).toHaveBeenCalledWith(
+        '/api/v2/products/scrape-profiles/run',
+        {
+          profileId: battleProfile.id,
+          dryRun: false,
+          imageImportMode: 'links',
+          sourcePriceCurrencyCode: 'EUR',
           skipRecordsWithErrors: true,
         },
         { timeout: 300_000 }

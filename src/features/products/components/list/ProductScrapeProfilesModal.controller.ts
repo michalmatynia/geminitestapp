@@ -11,9 +11,11 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { useDraftQueries } from '@/features/drafter/hooks/useDraftQueries';
 import type {
+  ProductScrapeProfileImageImportMode,
   ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
   ProductScrapeProfilesListResponse,
+  ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
 import {
   invalidateListingBadges,
@@ -33,10 +35,10 @@ import {
   runScrapeProfile,
 } from './ProductScrapeProfilesModal.controller.helpers';
 import {
-  usePersistProductScrapeProfileSettings,
-  useProductScrapeProfileSelectionEffects,
+  useProductScrapeProfileControllerEffects,
 } from './ProductScrapeProfilesModal.controller.effects';
 import type {
+  ProductScrapeProfileFormState,
   ProductScrapeProfileQueries,
   ProductScrapeProfilesController,
   StoredSettingsState,
@@ -52,6 +54,8 @@ type ControllerResultInput = {
   draftTemplateId: string;
   dryRun: boolean;
   handleRun: () => void;
+  imageImportMode: ProductScrapeProfileImageImportMode;
+  sourcePriceCurrencyCode: ProductScrapeSourcePriceCurrencyCode;
   limitInput: string;
   parsedLimit: number | null | undefined;
   profileId: string;
@@ -60,15 +64,27 @@ type ControllerResultInput = {
   runIsPending: boolean;
   setDraftTemplateId: (value: string) => void;
   setDryRun: (value: boolean) => void;
+  setImageImportMode: (value: ProductScrapeProfileImageImportMode) => void;
+  setSourcePriceCurrencyCode: (value: ProductScrapeSourcePriceCurrencyCode) => void;
   setLimitInput: (value: string) => void;
   setProfileId: (value: string) => void;
+};
+
+const DEFAULT_STORED_PROFILE_SETTINGS = {
+  draftTemplateId: '',
+  dryRun: false,
+  imageImportMode: 'links' as const,
+  limitInput: '',
+  sourcePriceCurrencyCode: 'PLN' as const,
 };
 
 const useStoredSettingsState = (): StoredSettingsState => {
   const [storedSettings] = useState(readStoredScrapeProfileSettings);
   const storedSettingsRef = useRef<ProductScrapeProfileStoredSettings>(storedSettings);
   const initialProfileId = storedSettings.selectedProfileId;
-  const initialProfileSettings = getStoredProfileSettings(storedSettings, initialProfileId);
+  const initialProfileSettings =
+    getStoredProfileSettings(storedSettings, initialProfileId) ??
+    DEFAULT_STORED_PROFILE_SETTINGS;
   const updateStoredSettings = useCallback((settings: ProductScrapeProfileStoredSettings) => {
     storedSettingsRef.current = settings;
     writeStoredScrapeProfileSettings(settings);
@@ -76,11 +92,45 @@ const useStoredSettingsState = (): StoredSettingsState => {
 
   return {
     initialProfileId,
-    initialDraftTemplateId: initialProfileSettings?.draftTemplateId ?? '',
-    initialDryRun: initialProfileSettings?.dryRun ?? false,
-    initialLimitInput: initialProfileSettings?.limitInput ?? '',
+    initialDraftTemplateId: initialProfileSettings.draftTemplateId,
+    initialDryRun: initialProfileSettings.dryRun,
+    initialImageImportMode: initialProfileSettings.imageImportMode,
+    initialSourcePriceCurrencyCode: initialProfileSettings.sourcePriceCurrencyCode,
+    initialLimitInput: initialProfileSettings.limitInput,
     storedSettingsRef,
     updateStoredSettings,
+  };
+};
+
+const useScrapeProfileFormState = (
+  stored: StoredSettingsState
+): ProductScrapeProfileFormState => {
+  const [profileId, setProfileId] = useState(stored.initialProfileId);
+  const [settingsProfileId, setSettingsProfileId] = useState(stored.initialProfileId);
+  const [draftTemplateId, setDraftTemplateId] = useState(stored.initialDraftTemplateId);
+  const [limitInput, setLimitInput] = useState(stored.initialLimitInput);
+  const [dryRun, setDryRun] = useState(stored.initialDryRun);
+  const [imageImportMode, setImageImportMode] = useState<ProductScrapeProfileImageImportMode>(
+    stored.initialImageImportMode
+  );
+  const [sourcePriceCurrencyCode, setSourcePriceCurrencyCode] =
+    useState<ProductScrapeSourcePriceCurrencyCode>(stored.initialSourcePriceCurrencyCode);
+
+  return {
+    draftTemplateId,
+    dryRun,
+    imageImportMode,
+    sourcePriceCurrencyCode,
+    limitInput,
+    profileId,
+    settingsProfileId,
+    setDraftTemplateId,
+    setDryRun,
+    setImageImportMode,
+    setSourcePriceCurrencyCode,
+    setLimitInput,
+    setProfileId,
+    setSettingsProfileId,
   };
 };
 
@@ -150,6 +200,8 @@ const buildControllerResult = ({
   draftTemplateId,
   dryRun,
   handleRun,
+  imageImportMode,
+  sourcePriceCurrencyCode,
   limitInput,
   parsedLimit,
   profileId,
@@ -158,6 +210,8 @@ const buildControllerResult = ({
   runIsPending,
   setDraftTemplateId,
   setDryRun,
+  setImageImportMode,
+  setSourcePriceCurrencyCode,
   setLimitInput,
   setProfileId,
 }: ControllerResultInput): ProductScrapeProfilesController => ({
@@ -167,6 +221,8 @@ const buildControllerResult = ({
   isLoading: queries.profilesQuery.isLoading,
   isDraftTemplatesLoading: queries.draftsQuery.isLoading,
   canRun: profileId.length > 0 && parsedLimit !== undefined && !runIsPending,
+  imageImportMode,
+  sourcePriceCurrencyCode,
   limitError: resolveLimitError(parsedLimit),
   limitInput,
   draftTemplates: queries.draftTemplates,
@@ -176,6 +232,8 @@ const buildControllerResult = ({
   selectedProfileId: profileId,
   onDryRunChange: setDryRun,
   onDraftTemplateSelect: setDraftTemplateId,
+  onImageImportModeChange: setImageImportMode,
+  onSourcePriceCurrencyCodeChange: setSourcePriceCurrencyCode,
   onLimitInputChange: setLimitInput,
   onProfileSelect: setProfileId,
   onRun: handleRun,
@@ -185,60 +243,51 @@ export const useProductScrapeProfilesController = (
   isOpen: boolean
 ): ProductScrapeProfilesController => {
   const stored = useStoredSettingsState();
-  const [profileId, setProfileId] = useState(stored.initialProfileId);
-  const [settingsProfileId, setSettingsProfileId] = useState(stored.initialProfileId);
-  const [draftTemplateId, setDraftTemplateId] = useState(stored.initialDraftTemplateId);
-  const [limitInput, setLimitInput] = useState(stored.initialLimitInput);
-  const [dryRun, setDryRun] = useState(stored.initialDryRun);
+  const formState = useScrapeProfileFormState(stored);
   const [result, setResult] = useState<ProductScrapeProfileRunResponse | null>(null);
-  const queries = useProductScrapeProfileQueries(isOpen, profileId);
-  const parsedLimit = useMemo(() => parseLimit(limitInput), [limitInput]);
+  const queries = useProductScrapeProfileQueries(isOpen, formState.profileId);
+  const parsedLimit = useMemo(() => parseLimit(formState.limitInput), [formState.limitInput]);
   const runMutation = useRunScrapeProfileMutation(setResult);
 
-  useProductScrapeProfileSelectionEffects({
-    draftTemplateId,
-    draftTemplates: queries.draftTemplates,
-    draftTemplatesReady: queries.draftsQuery.data !== undefined,
+  useProductScrapeProfileControllerEffects({
+    formState,
     isOpen,
-    profiles: queries.profiles,
-    selectedProfile: queries.selectedProfile,
-    setDraftTemplateId,
-    setDryRun,
-    setLimitInput,
-    setProfileId,
+    queries,
     setResult,
-    setSettingsProfileId,
-    storedSettingsRef: stored.storedSettingsRef,
-  });
-  usePersistProductScrapeProfileSettings({
-    draftTemplateId,
-    dryRun,
-    isOpen,
-    limitInput,
-    selectedProfile: queries.selectedProfile,
-    settingsProfileId,
-    storedSettingsRef: stored.storedSettingsRef,
-    updateStoredSettings: stored.updateStoredSettings,
+    stored,
   });
 
   const handleRun = (): void => {
-    if (profileId.length === 0 || parsedLimit === undefined) return;
-    runMutation.mutate(buildRunRequest({ draftTemplateId, dryRun, parsedLimit, profileId }));
+    if (formState.profileId.length === 0 || parsedLimit === undefined) return;
+    runMutation.mutate(
+      buildRunRequest({
+        draftTemplateId: formState.draftTemplateId,
+        dryRun: formState.dryRun,
+        imageImportMode: formState.imageImportMode,
+        parsedLimit,
+        profileId: formState.profileId,
+        sourcePriceCurrencyCode: formState.sourcePriceCurrencyCode,
+      })
+    );
   };
 
   return buildControllerResult({
-    draftTemplateId,
-    dryRun,
+    draftTemplateId: formState.draftTemplateId,
+    dryRun: formState.dryRun,
     handleRun,
-    limitInput,
+    imageImportMode: formState.imageImportMode,
+    sourcePriceCurrencyCode: formState.sourcePriceCurrencyCode,
+    limitInput: formState.limitInput,
     parsedLimit,
-    profileId,
+    profileId: formState.profileId,
     queries,
     result,
     runIsPending: runMutation.isPending,
-    setDraftTemplateId,
-    setDryRun,
-    setLimitInput,
-    setProfileId,
+    setDraftTemplateId: formState.setDraftTemplateId,
+    setDryRun: formState.setDryRun,
+    setImageImportMode: formState.setImageImportMode,
+    setSourcePriceCurrencyCode: formState.setSourcePriceCurrencyCode,
+    setLimitInput: formState.setLimitInput,
+    setProfileId: formState.setProfileId,
   });
 };

@@ -126,7 +126,11 @@ const resolveSourcePriceLabel = ({
     product.defaultPriceGroupId,
     rowVisuals.priceGroups
   );
-  return `Source: ${sourcePrice.toFixed(2)}${currencyCode.length > 0 ? ` ${currencyCode}` : ''}`;
+  const storedCurrencyCode = product.sourcePriceCurrencyCode?.trim() ?? '';
+  const resolvedCurrencyCode = storedCurrencyCode.length > 0 ? storedCurrencyCode : currencyCode;
+  return `Source: ${sourcePrice.toFixed(2)}${
+    resolvedCurrencyCode.length > 0 ? ` ${resolvedCurrencyCode}` : ''
+  }`;
 };
 
 const resolvePriceModel = ({
@@ -138,7 +142,10 @@ const resolvePriceModel = ({
     product.defaultPriceGroupId,
     rowVisuals.currencyCode,
     rowVisuals.priceGroups,
-    { sourcePrice: product.sourcePrice ?? null }
+    {
+      sourcePrice: product.sourcePrice ?? null,
+      sourcePriceCurrencyCode: product.sourcePriceCurrencyCode ?? null,
+    }
   );
   const normalizedBaseCurrencyCode = normalizeCurrencyCode(result.baseCurrencyCode);
   const normalizedSelectedCurrencyCode = normalizeCurrencyCode(rowVisuals.currencyCode);

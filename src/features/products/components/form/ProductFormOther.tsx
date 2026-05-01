@@ -59,6 +59,7 @@ export default function ProductFormOther(): React.JSX.Element {
         selectedCatalogIds={selectedCatalogIds}
         basePrice={readNumber(watch('price'))}
         sourcePrice={readNullableNumber(watch('sourcePrice'))}
+        sourcePriceCurrencyCode={readNullableString(watch('sourcePriceCurrencyCode'))}
         selectedDefaultPriceGroupId={selectedDefaultPriceGroupId}
         filteredPriceGroups={readArray<PriceGroupWithDetails>(metadata.filteredPriceGroups)}
         setValue={setValue}

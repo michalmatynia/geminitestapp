@@ -145,12 +145,14 @@ function PricingHarness({
   defaultPriceGroupId = '',
   isNewProduct = true,
   sourcePrice = null,
+  sourcePriceCurrencyCode = null,
   testPriceGroups = priceGroups,
 }: {
   basePrice?: number;
   defaultPriceGroupId?: string;
   isNewProduct?: boolean;
   sourcePrice?: number | null;
+  sourcePriceCurrencyCode?: string | null;
   testPriceGroups?: PriceGroupWithDetails[];
 }): React.JSX.Element {
   const methods = useForm<ProductFormData>({
@@ -158,6 +160,7 @@ function PricingHarness({
       defaultPriceGroupId,
       price: basePrice,
       sourcePrice,
+      sourcePriceCurrencyCode,
       sku: 'SKU-1',
     },
   });
@@ -173,6 +176,7 @@ function PricingHarness({
         selectedCatalogIds={[catalog.id]}
         basePrice={basePrice}
         sourcePrice={sourcePrice}
+        sourcePriceCurrencyCode={sourcePriceCurrencyCode}
         selectedDefaultPriceGroupId={selectedDefaultPriceGroupId}
         filteredPriceGroups={testPriceGroups}
         setValue={methods.setValue}

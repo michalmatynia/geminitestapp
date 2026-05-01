@@ -51,6 +51,7 @@ const defaultPayloadInput = {
   catalogIds: ['catalog-battlestock'],
   catalogDefaultPriceGroupId: null,
   priceGroups: [] as PriceGroupForCalculation[],
+  sourcePriceCurrencyCode: 'PLN',
 };
 
 const template = (overrides: Partial<ProductDraft>): ProductDraft => {
@@ -133,6 +134,50 @@ describe('product scrape profile payload pricing', () => {
 
     expect(payload.defaultPriceGroupId).toBe('price-group-retail');
     expect(payload.sourcePrice).toBe(60);
+    expect(payload.sourcePriceCurrencyCode).toBe('PLN');
     expect(payload.price).toBe(100);
+  });
+
+  it('uses selected sourcePrice currency when the default group is not sourcePrice-backed', () => {
+    const priceGroups: PriceGroupForCalculation[] = [
+      {
+        id: 'price-group-pln',
+        groupId: 'PLN',
+        currencyId: 'PLN',
+        type: 'standard',
+        basePriceField: 'price',
+        isDefault: false,
+        sourceGroupId: null,
+        priceMultiplier: 1,
+        addToPrice: 0,
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+      },
+      {
+        id: 'price-group-eur',
+        groupId: 'EUR',
+        currencyId: 'EUR',
+        type: 'dependent',
+        basePriceField: 'price',
+        isDefault: false,
+        sourceGroupId: 'price-group-pln',
+        priceMultiplier: 0.28,
+        addToPrice: 0,
+        currency: { code: 'EUR' },
+        currencyCode: 'EUR',
+      },
+    ];
+
+    const payload = buildCreatePayload({
+      ...defaultPayloadInput,
+      catalogDefaultPriceGroupId: 'price-group-eur',
+      priceGroups,
+      sourcePriceCurrencyCode: 'PLN',
+    });
+
+    expect(payload.defaultPriceGroupId).toBe('price-group-eur');
+    expect(payload.sourcePrice).toBe(60);
+    expect(payload.sourcePriceCurrencyCode).toBe('PLN');
+    expect(payload.price).toBe(16.8);
   });
 });

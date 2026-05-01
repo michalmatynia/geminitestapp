@@ -1,4 +1,4 @@
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 import {
   BATTLESTOCK_PROFILE_ID,
@@ -17,6 +17,10 @@ let scrapeProfiles: ProductScrapeProfilesModule;
 beforeEach(async () => {
   resetProductScrapeProfileMocks();
   scrapeProfiles = await importProductScrapeProfiles();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 it('lists the BattleStock scrape profile', () => {
@@ -56,6 +60,7 @@ it('creates scraped BattleStock products in the BattleStock catalog', async () =
       supplierName: 'BattleStock',
       supplierLink: BATTLESTOCK_SOURCE_URL,
       sourcePrice: 60,
+      sourcePriceCurrencyCode: 'PLN',
       catalogIds: ['catalog-battlestock'],
       imageLinks: [
         'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
@@ -124,7 +129,49 @@ it('calculates imported BattleStock product prices from catalog price group sett
     expect.objectContaining({
       defaultPriceGroupId: 'price-group-retail',
       sourcePrice: 60,
+      sourcePriceCurrencyCode: 'PLN',
       price: 100,
+    }),
+    undefined
+  );
+});
+
+it('downloads scraped images as product files when requested', async () => {
+  const fetchMock = vi.fn(() => Promise.resolve({
+    ok: true,
+    status: 200,
+    blob: () => Promise.resolve(new Blob(['image-bytes'], { type: 'image/jpeg' })),
+    headers: { get: () => 'image/jpeg' },
+  }));
+  vi.stubGlobal('fetch', fetchMock);
+
+  await scrapeProfiles.runProductScrapeProfile({
+    profileId: BATTLESTOCK_PROFILE_ID,
+    limit: 1,
+    imageImportMode: 'files',
+  });
+
+  expect(fetchMock).toHaveBeenCalledWith(
+    'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
+    { cache: 'no-store' }
+  );
+  expect(mocks.uploadFile).toHaveBeenCalledWith(
+    expect.objectContaining({
+      name: '40k-spiritseer.jpg',
+      type: 'image/jpeg',
+    }),
+    expect.objectContaining({
+      category: 'products',
+      sku: 'BATTLESTOCK-13033',
+      filenameOverride: '40k-spiritseer.jpg',
+    })
+  );
+  expect(mocks.createProduct).toHaveBeenCalledWith(
+    expect.objectContaining({
+      imageFileIds: ['image-file-1'],
+      imageLinks: [
+        'https://www.battle-stock.pl/environment/cache/images/productGfx_34831_1500_1500/40k-spiritseer.jpg',
+      ],
     }),
     undefined
   );

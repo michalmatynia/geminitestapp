@@ -164,6 +164,7 @@ const LIST_PROJECT_FIELD_SELECTION: Document = {
   customFields: 1,
   notes: 1,
   sourcePrice: 1,
+  sourcePriceCurrencyCode: 1,
   price: 1,
   stock: 1,
   archived: 1,

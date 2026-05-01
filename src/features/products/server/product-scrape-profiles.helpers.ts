@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { ScripterImportDraft } from '@/features/playwright/scripters';
+import type { ProductScrapeProfileImageImportMode } from '@/shared/contracts/products/scrape-profiles';
 import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { PriceGroupForCalculation, ProductWithImages } from '@/shared/contracts/products/product';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
@@ -17,6 +18,7 @@ import {
   buildUpdatePayload,
   resolveResultPayloadTitle,
 } from './product-scrape-profiles.payloads';
+import { resolveScrapeImagePayload } from './product-scrape-profile-images';
 import {
   createOutcome,
   toResultProduct,
@@ -31,9 +33,11 @@ type ProductScrapeRunContext = {
   profile: ProductScrapeProfileConfig;
   catalog: CatalogRecord;
   dryRun: boolean;
+  imageImportMode: ProductScrapeProfileImageImportMode;
   skipRecordsWithErrors: boolean;
   productServiceOptions: { userId?: string } | undefined;
   priceGroups: PriceGroupForCalculation[];
+  sourcePriceCurrencyCode: string;
   duplicateState?: ProductScrapeDuplicateState;
   draftTemplate?: ProductDraft | null;
   draftTemplateCategoryAliases?: readonly string[];
@@ -99,6 +103,70 @@ const linkPersistedScrapedProduct = async (
   }
 };
 
+const processExistingScrapeCandidate = async (input: {
+  catalogIds: string[];
+  candidate: ProductScrapeCandidate;
+  context: ProductScrapeRunContext;
+  draft: ScripterImportDraft;
+  existing: ProductWithImages;
+  imagePayload: Awaited<ReturnType<typeof resolveScrapeImagePayload>>;
+}): Promise<ProductScrapeDraftOutcome> => {
+  const payload = buildUpdatePayload({
+    candidate: input.candidate,
+    draft: input.draft,
+    imagePayload: input.imagePayload,
+    profile: input.context.profile,
+    catalogIds: input.catalogIds,
+    catalogDefaultPriceGroupId: input.context.catalog.defaultPriceGroupId,
+    priceGroups: input.context.priceGroups,
+    sourcePriceCurrencyCode: input.context.sourcePriceCurrencyCode,
+    template: input.context.draftTemplate,
+    templateCategoryAliases: input.context.draftTemplateCategoryAliases,
+  });
+  const updated = await productService.updateProduct(
+    input.existing.id,
+    payload,
+    input.context.productServiceOptions
+  );
+  await linkPersistedScrapedProduct(updated.id, input.candidate);
+  return createOutcome(
+    toResultProduct(input.draft, input.candidate, 'updated', {
+      productId: updated.id,
+      title: resolveResultPayloadTitle(payload, input.candidate),
+    }),
+    { updatedCount: 1 }
+  );
+};
+
+const processNewScrapeCandidate = async (input: {
+  candidate: ProductScrapeCandidate;
+  context: ProductScrapeRunContext;
+  draft: ScripterImportDraft;
+  imagePayload: Awaited<ReturnType<typeof resolveScrapeImagePayload>>;
+}): Promise<ProductScrapeDraftOutcome> => {
+  const payload = buildCreatePayload({
+    candidate: input.candidate,
+    draft: input.draft,
+    imagePayload: input.imagePayload,
+    profile: input.context.profile,
+    catalogIds: mergeTemplateCatalogIds([input.context.catalog.id], input.context.draftTemplate),
+    catalogDefaultPriceGroupId: input.context.catalog.defaultPriceGroupId,
+    priceGroups: input.context.priceGroups,
+    sourcePriceCurrencyCode: input.context.sourcePriceCurrencyCode,
+    template: input.context.draftTemplate,
+    templateCategoryAliases: input.context.draftTemplateCategoryAliases,
+  });
+  const created = await productService.createProduct(payload, input.context.productServiceOptions);
+  await linkPersistedScrapedProduct(created.id, input.candidate);
+  return createOutcome(
+    toResultProduct(input.draft, input.candidate, 'created', {
+      productId: created.id,
+      title: resolveResultPayloadTitle(payload, input.candidate),
+    }),
+    { createdCount: 1 }
+  );
+};
+
 const processPersistedCandidate = async (
   draft: ScripterImportDraft,
   candidate: ProductScrapeCandidate,
@@ -111,50 +179,27 @@ const processPersistedCandidate = async (
     existingCatalogIds(existing, context.catalog.id),
     context.draftTemplate
   );
-  if (existing !== null) {
-    const payload = buildUpdatePayload({
-      candidate,
-      draft,
-      profile: context.profile,
-      catalogIds,
-      catalogDefaultPriceGroupId: context.catalog.defaultPriceGroupId,
-      priceGroups: context.priceGroups,
-      template: context.draftTemplate,
-      templateCategoryAliases: context.draftTemplateCategoryAliases,
-    });
-    const updated = await productService.updateProduct(
-      existing.id,
-      payload,
-      context.productServiceOptions
-    );
-    await linkPersistedScrapedProduct(updated.id, candidate);
-    return createOutcome(
-      toResultProduct(draft, candidate, 'updated', {
-        productId: updated.id,
-        title: resolveResultPayloadTitle(payload, candidate),
-      }),
-      { updatedCount: 1 }
-    );
-  }
-  const payload = buildCreatePayload({
+  const imagePayload = await resolveScrapeImagePayload({
     candidate,
-    draft,
-    profile: context.profile,
-    catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
-    catalogDefaultPriceGroupId: context.catalog.defaultPriceGroupId,
-    priceGroups: context.priceGroups,
-    template: context.draftTemplate,
-    templateCategoryAliases: context.draftTemplateCategoryAliases,
+    dryRun: context.dryRun,
+    imageImportMode: context.imageImportMode,
   });
-  const created = await productService.createProduct(payload, context.productServiceOptions);
-  await linkPersistedScrapedProduct(created.id, candidate);
-  return createOutcome(
-    toResultProduct(draft, candidate, 'created', {
-      productId: created.id,
-      title: resolveResultPayloadTitle(payload, candidate),
-    }),
-    { createdCount: 1 }
-  );
+  if (existing !== null) {
+    return await processExistingScrapeCandidate({
+      catalogIds,
+      candidate,
+      context,
+      draft,
+      existing,
+      imagePayload,
+    });
+  }
+  return await processNewScrapeCandidate({
+    candidate,
+    context,
+    draft,
+    imagePayload,
+  });
 };
 
 const processValidScrapeCandidate = async (
@@ -174,10 +219,16 @@ const processValidScrapeCandidate = async (
     const payload = buildCreatePayload({
       candidate,
       draft,
+      imagePayload: await resolveScrapeImagePayload({
+        candidate,
+        dryRun: context.dryRun,
+        imageImportMode: context.imageImportMode,
+      }),
       profile: context.profile,
       catalogIds: mergeTemplateCatalogIds([context.catalog.id], context.draftTemplate),
       catalogDefaultPriceGroupId: context.catalog.defaultPriceGroupId,
       priceGroups: context.priceGroups,
+      sourcePriceCurrencyCode: context.sourcePriceCurrencyCode,
       template: context.draftTemplate,
       templateCategoryAliases: context.draftTemplateCategoryAliases,
     });

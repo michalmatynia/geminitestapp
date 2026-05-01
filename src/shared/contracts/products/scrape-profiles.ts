@@ -1,5 +1,21 @@
 import { z } from 'zod';
 
+export const PRODUCT_SCRAPE_SOURCE_PRICE_CURRENCY_CODES = [
+  'PLN',
+  'EUR',
+  'USD',
+  'GBP',
+  'SEK',
+] as const;
+
+export const productScrapeSourcePriceCurrencyCodeSchema = z.enum(
+  PRODUCT_SCRAPE_SOURCE_PRICE_CURRENCY_CODES
+);
+
+export type ProductScrapeSourcePriceCurrencyCode = z.infer<
+  typeof productScrapeSourcePriceCurrencyCodeSchema
+>;
+
 export const productScrapeProfileSchema = z.object({
   id: z.string().trim().min(1),
   label: z.string().trim().min(1),
@@ -10,6 +26,8 @@ export const productScrapeProfileSchema = z.object({
   targetCatalogName: z.string().trim().min(1),
   defaultLimit: z.number().int().positive().nullable(),
   maxPages: z.number().int().positive().nullable(),
+  defaultSourcePriceCurrencyCode: productScrapeSourcePriceCurrencyCodeSchema.optional(),
+  sourcePriceCurrencyCodes: z.array(productScrapeSourcePriceCurrencyCodeSchema).optional(),
 });
 
 export type ProductScrapeProfile = z.infer<typeof productScrapeProfileSchema>;
@@ -22,6 +40,12 @@ export type ProductScrapeProfilesListResponse = z.infer<
   typeof productScrapeProfilesListResponseSchema
 >;
 
+export const productScrapeProfileImageImportModeSchema = z.enum(['links', 'files']);
+
+export type ProductScrapeProfileImageImportMode = z.infer<
+  typeof productScrapeProfileImageImportModeSchema
+>;
+
 export const productScrapeProfileRunRequestSchema = z
   .object({
     profileId: z.string().trim().min(1),
@@ -29,6 +53,8 @@ export const productScrapeProfileRunRequestSchema = z
     dryRun: z.boolean().optional(),
     skipRecordsWithErrors: z.boolean().optional(),
     draftTemplateId: z.string().trim().min(1).optional(),
+    imageImportMode: productScrapeProfileImageImportModeSchema.optional(),
+    sourcePriceCurrencyCode: productScrapeSourcePriceCurrencyCodeSchema.optional(),
   })
   .strict();
 

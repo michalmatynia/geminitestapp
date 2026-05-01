@@ -28,6 +28,7 @@ describe('buildListProjectStage', () => {
       description_pl: 1,
       marketplaceContentOverrides: 1,
       sourcePrice: 1,
+      sourcePriceCurrencyCode: 1,
     });
   });
 

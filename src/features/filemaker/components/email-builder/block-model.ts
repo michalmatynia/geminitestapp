@@ -74,34 +74,34 @@ export interface EmailRowBlock extends EmailBlockBase {
   children: EmailLeafBlock[];
 }
 
-export type EmailLeafBlock =
-  | EmailTextBlock
-  | EmailHeadingBlock
-  | EmailImageBlock
-  | EmailButtonBlock
-  | EmailDividerBlock
-  | EmailSpacerBlock;
+export type EmailLeafBlock = EmailTextBlock | EmailHeadingBlock | EmailImageBlock | EmailButtonBlock | EmailDividerBlock | EmailSpacerBlock;
 
 export type EmailContainerBlock = EmailSectionBlock | EmailColumnsBlock | EmailRowBlock;
 
 export type EmailBlock = EmailLeafBlock | EmailContainerBlock;
 
-const LEAF_KINDS: ReadonlySet<EmailLeafBlockKind> = new Set([
-  'text',
-  'heading',
-  'image',
-  'button',
-  'divider',
-  'spacer',
-]);
+const LEAF_KIND_VALUES = ['text', 'heading', 'image', 'button', 'divider', 'spacer'] as const satisfies readonly EmailLeafBlockKind[];
 
-const CONTAINER_KINDS: ReadonlySet<EmailContainerBlockKind> = new Set(['section', 'columns', 'row']);
+const CONTAINER_KIND_VALUES = ['section', 'columns', 'row'] as const satisfies readonly EmailContainerBlockKind[];
 
-export const isEmailLeafBlock = (block: EmailBlock): block is EmailLeafBlock =>
-  LEAF_KINDS.has(block.kind as EmailLeafBlockKind);
+const LEAF_KINDS: ReadonlySet<string> = new Set(LEAF_KIND_VALUES);
+const CONTAINER_KINDS: ReadonlySet<string> = new Set(CONTAINER_KIND_VALUES);
+
+const isEmailLeafBlockKind = (value: string): value is EmailLeafBlockKind => LEAF_KINDS.has(value);
+
+const isEmailContainerBlockKind = (value: string): value is EmailContainerBlockKind => CONTAINER_KINDS.has(value);
+
+const isEmailBlockKind = (value: string): value is EmailBlockKind =>
+  isEmailLeafBlockKind(value) || isEmailContainerBlockKind(value);
+
+const throwUnexpectedBlockKind = (kind: never): never => {
+  throw new Error(`Unexpected email block kind: ${String(kind)}`);
+};
+
+export const isEmailLeafBlock = (block: EmailBlock): block is EmailLeafBlock => isEmailLeafBlockKind(block.kind);
 
 export const isEmailContainerBlock = (block: EmailBlock): block is EmailContainerBlock =>
-  CONTAINER_KINDS.has(block.kind as EmailContainerBlockKind);
+  isEmailContainerBlockKind(block.kind);
 
 export const getBlockChildren = (block: EmailBlock): EmailBlock[] =>
   isEmailContainerBlock(block) ? (block.children as EmailBlock[]) : [];
@@ -110,14 +110,26 @@ export const isContainerKindAcceptingChildKind = (
   parentKind: EmailContainerBlockKind,
   childKind: EmailBlockKind
 ): boolean => {
-  if (parentKind === 'section') return childKind !== 'section'; // no nested sections
-  if (parentKind === 'columns') return childKind === 'row';
-  if (parentKind === 'row') return LEAF_KINDS.has(childKind as EmailLeafBlockKind);
-  return false;
+  switch (parentKind) {
+    case 'section':
+      return childKind !== 'section'; // no nested sections
+    case 'columns':
+      return childKind === 'row';
+    case 'row':
+      return isEmailLeafBlockKind(childKind);
+  }
+  return throwUnexpectedBlockKind(parentKind);
 };
 
-const generateBlockId = (kind: EmailBlockKind): string =>
-  `filemaker-email-block-${kind}-${toIdToken(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`) || 'entry'}`;
+const generateBlockId = (kind: EmailBlockKind): string => {
+  const token = toIdToken(`${Date.now()}-${Math.random().toString(36).slice(2, 8)}`);
+  return `filemaker-email-block-${kind}-${token.length > 0 ? token : 'entry'}`;
+};
+
+const normalizeStringWithFallback = (value: unknown, fallback: string): string => {
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : fallback;
+};
 
 const clampLevel = (value: unknown): 1 | 2 | 3 => {
   const parsed = Math.trunc(Number(value));
@@ -156,117 +168,166 @@ const normalizeColumnsGap = (value: unknown): number => {
   return Math.min(parsed, 64);
 };
 
-export const createEmailBlock = (kind: EmailBlockKind, overrides?: Partial<EmailBlock>): EmailBlock => {
-  const id = (overrides && 'id' in overrides && normalizeString((overrides as { id?: string }).id)) || generateBlockId(kind);
+const resolveBlockId = (kind: EmailBlockKind, overrides?: Partial<EmailBlock>): string => {
+  if (overrides === undefined || !('id' in overrides)) return generateBlockId(kind);
+  const id = normalizeString(overrides.id);
+  return id.length > 0 ? id : generateBlockId(kind);
+};
+
+const createTextBlock = (id: string, overrides?: Partial<EmailTextBlock>): EmailTextBlock => {
+  return {
+    id,
+    kind: 'text',
+    html: normalizeStringWithFallback(overrides?.html, '<p>Write your message…</p>'),
+  };
+};
+
+const createHeadingBlock = (id: string, overrides?: Partial<EmailHeadingBlock>): EmailHeadingBlock => {
+  return {
+    id,
+    kind: 'heading',
+    text: normalizeStringWithFallback(overrides?.text, 'Heading'),
+    level: clampLevel(overrides?.level),
+    align: normalizeAlign(overrides?.align),
+  };
+};
+
+const createImageBlock = (id: string, overrides?: Partial<EmailImageBlock>): EmailImageBlock => {
+  const href = normalizeString(overrides?.href);
+  return {
+    id,
+    kind: 'image',
+    src: normalizeString(overrides?.src),
+    alt: normalizeString(overrides?.alt),
+    href: href.length > 0 ? href : null,
+    width: normalizeNullablePositiveInt(overrides?.width),
+    align: normalizeAlign(overrides?.align ?? 'center'),
+  };
+};
+
+const createButtonBlock = (id: string, overrides?: Partial<EmailButtonBlock>): EmailButtonBlock => {
+  return {
+    id,
+    kind: 'button',
+    label: normalizeStringWithFallback(overrides?.label, 'Click here'),
+    href: normalizeStringWithFallback(overrides?.href, 'https://example.com'),
+    align: normalizeAlign(overrides?.align ?? 'center'),
+    background: normalizeColor(overrides?.background, '#2563eb'),
+    color: normalizeColor(overrides?.color, '#ffffff'),
+  };
+};
+
+const createDividerBlock = (id: string, overrides?: Partial<EmailDividerBlock>): EmailDividerBlock => ({
+  id,
+  kind: 'divider',
+  color: normalizeColor(overrides?.color, '#e5e7eb'),
+});
+
+const createSpacerBlock = (id: string, overrides?: Partial<EmailSpacerBlock>): EmailSpacerBlock => {
+  const height = Math.trunc(Number(overrides?.height));
+  return {
+    id,
+    kind: 'spacer',
+    height: Number.isFinite(height) && height > 0 ? Math.min(height, 200) : 24,
+  };
+};
+
+const createSectionBlock = (id: string, overrides?: Partial<EmailSectionBlock>): EmailSectionBlock => {
+  return {
+    id,
+    kind: 'section',
+    label: normalizeStringWithFallback(overrides?.label, 'Section'),
+    background: normalizeColor(overrides?.background, '#ffffff'),
+    paddingY: normalizePadding(overrides?.paddingY, 24),
+    paddingX: normalizePadding(overrides?.paddingX, 24),
+    children: normalizeEmailBlocks(overrides?.children).filter((child: EmailBlock): boolean =>
+      isContainerKindAcceptingChildKind('section', child.kind)
+    ),
+  };
+};
+
+const createColumnsFallbackRows = (): EmailRowBlock[] => [createEmailBlock('row'), createEmailBlock('row')];
+
+const createColumnsBlock = (id: string, overrides?: Partial<EmailColumnsBlock>): EmailColumnsBlock => {
+  const normalizedChildren = normalizeEmailBlocks(overrides?.children).filter(
+    (child: EmailBlock): child is EmailRowBlock => child.kind === 'row'
+  );
+  return {
+    id,
+    kind: 'columns',
+    label: normalizeStringWithFallback(overrides?.label, 'Columns'),
+    gap: normalizeColumnsGap(overrides?.gap),
+    children: normalizedChildren.length > 0 ? normalizedChildren : createColumnsFallbackRows(),
+  };
+};
+
+const createRowBlock = (id: string, overrides?: Partial<EmailRowBlock>): EmailRowBlock => {
+  return {
+    id,
+    kind: 'row',
+    label: normalizeStringWithFallback(overrides?.label, 'Row'),
+    background: normalizeColor(overrides?.background, '#ffffff'),
+    paddingY: normalizePadding(overrides?.paddingY, 8),
+    paddingX: normalizePadding(overrides?.paddingX, 8),
+    children: normalizeEmailBlocks(overrides?.children).filter(
+      (child: EmailBlock): child is EmailLeafBlock => isEmailLeafBlock(child)
+    ),
+  };
+};
+
+const createLeafEmailBlock = (
+  kind: EmailLeafBlockKind,
+  id: string,
+  overrides?: Partial<EmailBlock>
+): EmailLeafBlock => {
   switch (kind) {
     case 'text':
-      return {
-        id,
-        kind: 'text',
-        html: normalizeString((overrides as Partial<EmailTextBlock> | undefined)?.html) || '<p>Write your message…</p>',
-      };
+      return createTextBlock(id, overrides as Partial<EmailTextBlock> | undefined);
     case 'heading':
-      return {
-        id,
-        kind: 'heading',
-        text: normalizeString((overrides as Partial<EmailHeadingBlock> | undefined)?.text) || 'Heading',
-        level: clampLevel((overrides as Partial<EmailHeadingBlock> | undefined)?.level),
-        align: normalizeAlign((overrides as Partial<EmailHeadingBlock> | undefined)?.align),
-      };
+      return createHeadingBlock(id, overrides as Partial<EmailHeadingBlock> | undefined);
     case 'image':
-      return {
-        id,
-        kind: 'image',
-        src: normalizeString((overrides as Partial<EmailImageBlock> | undefined)?.src),
-        alt: normalizeString((overrides as Partial<EmailImageBlock> | undefined)?.alt),
-        href: normalizeString((overrides as Partial<EmailImageBlock> | undefined)?.href) || null,
-        width: normalizeNullablePositiveInt((overrides as Partial<EmailImageBlock> | undefined)?.width),
-        align: normalizeAlign((overrides as Partial<EmailImageBlock> | undefined)?.align ?? 'center'),
-      };
+      return createImageBlock(id, overrides as Partial<EmailImageBlock> | undefined);
     case 'button':
-      return {
-        id,
-        kind: 'button',
-        label: normalizeString((overrides as Partial<EmailButtonBlock> | undefined)?.label) || 'Click here',
-        href: normalizeString((overrides as Partial<EmailButtonBlock> | undefined)?.href) || 'https://example.com',
-        align: normalizeAlign((overrides as Partial<EmailButtonBlock> | undefined)?.align ?? 'center'),
-        background: normalizeColor((overrides as Partial<EmailButtonBlock> | undefined)?.background, '#2563eb'),
-        color: normalizeColor((overrides as Partial<EmailButtonBlock> | undefined)?.color, '#ffffff'),
-      };
+      return createButtonBlock(id, overrides as Partial<EmailButtonBlock> | undefined);
     case 'divider':
-      return {
-        id,
-        kind: 'divider',
-        color: normalizeColor((overrides as Partial<EmailDividerBlock> | undefined)?.color, '#e5e7eb'),
-      };
-    case 'spacer': {
-      const rawHeight = (overrides as Partial<EmailSpacerBlock> | undefined)?.height;
-      const height = Math.trunc(Number(rawHeight));
-      return {
-        id,
-        kind: 'spacer',
-        height: Number.isFinite(height) && height > 0 ? Math.min(height, 200) : 24,
-      };
-    }
-    case 'section': {
-      const rawChildren = (overrides as Partial<EmailSectionBlock> | undefined)?.children;
-      return {
-        id,
-        kind: 'section',
-        label: normalizeString((overrides as Partial<EmailSectionBlock> | undefined)?.label) || 'Section',
-        background: normalizeColor((overrides as Partial<EmailSectionBlock> | undefined)?.background, '#ffffff'),
-        paddingY: normalizePadding((overrides as Partial<EmailSectionBlock> | undefined)?.paddingY, 24),
-        paddingX: normalizePadding((overrides as Partial<EmailSectionBlock> | undefined)?.paddingX, 24),
-        children: normalizeEmailBlocks(rawChildren).filter((child: EmailBlock): boolean =>
-          isContainerKindAcceptingChildKind('section', child.kind)
-        ),
-      };
-    }
-    case 'columns': {
-      const rawChildren = (overrides as Partial<EmailColumnsBlock> | undefined)?.children;
-      const normalizedChildren = normalizeEmailBlocks(rawChildren).filter(
-        (child: EmailBlock): child is EmailRowBlock => child.kind === 'row'
-      );
-      const childrenWithFallback = normalizedChildren.length > 0
-        ? normalizedChildren
-        : [createEmailBlock('row') as EmailRowBlock, createEmailBlock('row') as EmailRowBlock];
-      return {
-        id,
-        kind: 'columns',
-        label: normalizeString((overrides as Partial<EmailColumnsBlock> | undefined)?.label) || 'Columns',
-        gap: normalizeColumnsGap((overrides as Partial<EmailColumnsBlock> | undefined)?.gap),
-        children: childrenWithFallback,
-      };
-    }
-    case 'row': {
-      const rawChildren = (overrides as Partial<EmailRowBlock> | undefined)?.children;
-      return {
-        id,
-        kind: 'row',
-        label: normalizeString((overrides as Partial<EmailRowBlock> | undefined)?.label) || 'Row',
-        background: normalizeColor((overrides as Partial<EmailRowBlock> | undefined)?.background, '#ffffff'),
-        paddingY: normalizePadding((overrides as Partial<EmailRowBlock> | undefined)?.paddingY, 8),
-        paddingX: normalizePadding((overrides as Partial<EmailRowBlock> | undefined)?.paddingX, 8),
-        children: normalizeEmailBlocks(rawChildren).filter(
-          (child: EmailBlock): child is EmailLeafBlock => isEmailLeafBlock(child)
-        ),
-      };
-    }
+      return createDividerBlock(id, overrides as Partial<EmailDividerBlock> | undefined);
+    case 'spacer':
+      return createSpacerBlock(id, overrides as Partial<EmailSpacerBlock> | undefined);
   }
+  return throwUnexpectedBlockKind(kind);
+};
+
+const createContainerEmailBlock = (
+  kind: EmailContainerBlockKind,
+  id: string,
+  overrides?: Partial<EmailBlock>
+): EmailContainerBlock => {
+  switch (kind) {
+    case 'section':
+      return createSectionBlock(id, overrides as Partial<EmailSectionBlock> | undefined);
+    case 'columns':
+      return createColumnsBlock(id, overrides as Partial<EmailColumnsBlock> | undefined);
+    case 'row':
+      return createRowBlock(id, overrides as Partial<EmailRowBlock> | undefined);
+  }
+  return throwUnexpectedBlockKind(kind);
+};
+
+export const createEmailBlock = (kind: EmailBlockKind, overrides?: Partial<EmailBlock>): EmailBlock => {
+  const id = resolveBlockId(kind, overrides);
+  if (isEmailLeafBlockKind(kind)) return createLeafEmailBlock(kind, id, overrides);
+  return createContainerEmailBlock(kind, id, overrides);
 };
 
 export const normalizeEmailBlock = (input: unknown): EmailBlock | null => {
-  if (!input || typeof input !== 'object') return null;
+  if (input === null || input === undefined || typeof input !== 'object') return null;
   const record = input as Record<string, unknown>;
   const kindRaw = normalizeString(record['kind']).toLowerCase();
-  if (
-    !LEAF_KINDS.has(kindRaw as EmailLeafBlockKind) &&
-    !CONTAINER_KINDS.has(kindRaw as EmailContainerBlockKind)
-  ) {
-    return null;
-  }
-  return createEmailBlock(kindRaw as EmailBlockKind, record as Partial<EmailBlock>);
+  if (!isEmailBlockKind(kindRaw)) return null;
+  return createEmailBlock(kindRaw, record as Partial<EmailBlock>);
 };
+
+const withResolvedBlockId = (block: EmailBlock, id: string): EmailBlock => ({ ...block, id });
 
 export const normalizeEmailBlocks = (input: unknown): EmailBlock[] => {
   if (!Array.isArray(input)) return [];
@@ -282,7 +343,7 @@ export const normalizeEmailBlocks = (input: unknown): EmailBlock[] => {
       resolvedId = `${normalized.id}-${suffix}`;
     }
     usedIds.add(resolvedId);
-    blocks.push({ ...normalized, id: resolvedId } as EmailBlock);
+    blocks.push(withResolvedBlockId(normalized, resolvedId));
   });
   return blocks;
 };

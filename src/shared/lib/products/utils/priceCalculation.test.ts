@@ -242,6 +242,56 @@ describe('products priceCalculation utils', () => {
     });
   });
 
+  it('uses sourcePrice as the base for a standard group matching the selected source currency', () => {
+    const groups = [
+      createGroup({
+        id: 'group-pln',
+        groupId: 'PLN',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        type: 'standard',
+        basePriceField: 'price',
+        sourceGroupId: null,
+        priceMultiplier: 1,
+        addToPrice: 0,
+      }),
+      createGroup({
+        id: 'group-eur',
+        groupId: 'EUR',
+        currencyId: 'EUR',
+        currency: { code: 'EUR' },
+        currencyCode: 'EUR',
+        type: 'dependent',
+        basePriceField: 'price',
+        sourceGroupId: 'group-pln',
+        priceMultiplier: 0.28,
+        addToPrice: 0,
+      }),
+    ];
+
+    expect(
+      calculatePriceForCurrency(null, 'group-pln', 'PLN', groups, {
+        sourcePrice: 370,
+        sourcePriceCurrencyCode: 'PLN',
+      })
+    ).toEqual({
+      price: 370,
+      currencyCode: 'PLN',
+      baseCurrencyCode: 'PLN',
+    });
+    expect(
+      calculatePriceForCurrency(null, 'group-eur', 'EUR', groups, {
+        sourcePrice: 370,
+        sourcePriceCurrencyCode: 'PLN',
+      })
+    ).toEqual({
+      price: 103.60000000000001,
+      currencyCode: 'EUR',
+      baseCurrencyCode: 'EUR',
+    });
+  });
+
   it('resolves sourcePrice currency from the assigned sourcePrice-backed group', () => {
     const groups = [
       createGroup({

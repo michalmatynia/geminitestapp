@@ -4,7 +4,6 @@ import type { ScripterImportDraft } from '@/features/playwright/scripters';
 import type { ProductCreateInput, ProductUpdateInput } from '@/shared/contracts/products/io';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
-import { calculatePriceForCurrency } from '@/shared/lib/products/utils/priceCalculation';
 import {
   normalizeStructuredProductName,
   parseStructuredProductName,
@@ -14,6 +13,7 @@ import type {
   ProductScrapeCandidate,
   ProductScrapeProfileConfig,
 } from './product-scrape-profiles.candidates';
+import type { ProductScrapeImagePayload } from './product-scrape-profile-images';
 import {
   buildScrapeTemplateValues,
   renderScrapeTemplateCustomFields,
@@ -23,14 +23,17 @@ import {
   renderScrapeTemplateText,
   type ScrapeTemplateValues,
 } from './product-scrape-template-renderer';
+import { buildCalculatedImportedPrice } from './product-scrape-profiles.payload-pricing';
 
 type ProductScrapePayloadInput = {
   candidate: ProductScrapeCandidate;
   draft: ScripterImportDraft;
+  imagePayload?: ProductScrapeImagePayload;
   profile: ProductScrapeProfileConfig;
   catalogIds: string[];
   catalogDefaultPriceGroupId: string | null;
   priceGroups: PriceGroupForCalculation[];
+  sourcePriceCurrencyCode: string;
   template?: ProductDraft | null;
   templateCategoryAliases?: readonly string[];
 };
@@ -90,45 +93,6 @@ const buildTemplateIdDefaults = (
       ? { shippingGroupId: template.shippingGroupId }
       : {}),
   };
-};
-
-const matchesPriceGroupId = (group: PriceGroupForCalculation, id: string): boolean =>
-  group.id === id || group.groupId === id;
-
-const resolvePriceGroupCurrencyCode = (group: PriceGroupForCalculation): string => {
-  const currencyCode = group.currency.code.trim();
-  if (currencyCode.length > 0) return currencyCode;
-  if (typeof group.currencyCode === 'string' && group.currencyCode.trim().length > 0) {
-    return group.currencyCode.trim();
-  }
-  return group.currencyId.trim();
-};
-
-const buildCalculatedImportedPrice = ({
-  candidate,
-  catalogDefaultPriceGroupId,
-  priceGroups,
-  template,
-}: Pick<
-  ProductScrapePayloadInput,
-  'candidate' | 'catalogDefaultPriceGroupId' | 'priceGroups' | 'template'
->): Partial<ProductCreateInput & ProductUpdateInput> => {
-  if (hasTemplateNumber(template?.price)) return {};
-  if (candidate.price === null) return {};
-
-  const defaultPriceGroupId = resolveDefaultPriceGroupId(template, catalogDefaultPriceGroupId);
-  if (defaultPriceGroupId === null) return {};
-
-  const defaultGroup = priceGroups.find((group) => matchesPriceGroupId(group, defaultPriceGroupId));
-  if (defaultGroup === undefined) return {};
-
-  const targetCurrencyCode = resolvePriceGroupCurrencyCode(defaultGroup);
-  if (targetCurrencyCode.length === 0) return {};
-
-  const result = calculatePriceForCurrency(null, defaultPriceGroupId, targetCurrencyCode, priceGroups, {
-    sourcePrice: candidate.price,
-  });
-  return result.price !== null ? { price: result.price } : {};
 };
 
 const buildTemplateRenderedDefaults = (
@@ -292,10 +256,12 @@ const buildTemplateCollectionFields = (
 const buildCommonPayloadFields = ({
   candidate,
   draft,
+  imagePayload,
   profile,
   catalogIds,
   catalogDefaultPriceGroupId,
   priceGroups,
+  sourcePriceCurrencyCode,
   template,
   templateCategoryAliases,
 }: ProductScrapePayloadInput): ProductCreateInput => {
@@ -306,12 +272,22 @@ const buildCommonPayloadFields = ({
     ...buildRenderedDescriptionFields(template, values),
     ...buildRenderedSupplierFields({ candidate, profile, template, values }),
     ...buildTemplateIdDefaults(template, catalogDefaultPriceGroupId),
-    ...buildCalculatedImportedPrice({ candidate, catalogDefaultPriceGroupId, priceGroups, template }),
+    ...buildCalculatedImportedPrice({
+      candidate,
+      catalogDefaultPriceGroupId,
+      priceGroups,
+      sourcePriceCurrencyCode,
+      templateDefaultPriceGroupId: template?.defaultPriceGroupId,
+      templatePrice: template?.price,
+    }),
     ...buildTemplatePayloadDefaults(template, values, catalogDefaultPriceGroupId),
     catalogIds,
     ...buildTemplateCollectionFields(template, values),
-    imageLinks: candidate.imageLinks,
-    ...(candidate.price !== null ? { sourcePrice: candidate.price } : {}),
+    imageLinks: imagePayload?.imageLinks ?? candidate.imageLinks,
+    ...(imagePayload?.imageFileIds !== undefined ? { imageFileIds: imagePayload.imageFileIds } : {}),
+    ...(candidate.price !== null
+      ? { sourcePrice: candidate.price, sourcePriceCurrencyCode }
+      : {}),
   };
 };
 

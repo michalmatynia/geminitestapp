@@ -1,9 +1,19 @@
 'use client';
 
+import type {
+  ProductScrapeProfileImageImportMode,
+  ProductScrapeSourcePriceCurrencyCode,
+} from '@/shared/contracts/products/scrape-profiles';
+import {
+  PRODUCT_SCRAPE_SOURCE_PRICE_CURRENCY_CODES,
+} from '@/shared/contracts/products/scrape-profiles';
+
 export type ProductScrapeProfileStoredProfileSettings = {
   draftTemplateId: string;
   dryRun: boolean;
+  imageImportMode: ProductScrapeProfileImageImportMode;
   limitInput: string;
+  sourcePriceCurrencyCode: ProductScrapeSourcePriceCurrencyCode;
 };
 
 export type ProductScrapeProfileStoredSettings = {
@@ -27,6 +37,21 @@ const readStoredString = (value: unknown): string => (typeof value === 'string' 
 
 const readStoredBoolean = (value: unknown): boolean => value === true;
 
+const readStoredImageImportMode = (value: unknown): ProductScrapeProfileImageImportMode =>
+  value === 'files' ? 'files' : 'links';
+
+const readStoredSourcePriceCurrencyCode = (
+  value: unknown
+): ProductScrapeSourcePriceCurrencyCode => {
+  if (typeof value !== 'string') return 'PLN';
+  const normalized = value.trim().toUpperCase();
+  return PRODUCT_SCRAPE_SOURCE_PRICE_CURRENCY_CODES.includes(
+    normalized as ProductScrapeSourcePriceCurrencyCode
+  )
+    ? (normalized as ProductScrapeSourcePriceCurrencyCode)
+    : 'PLN';
+};
+
 const readStoredProfileSettings = (
   value: unknown
 ): ProductScrapeProfileStoredProfileSettings | null => {
@@ -34,7 +59,11 @@ const readStoredProfileSettings = (
   return {
     draftTemplateId: readStoredString(value['draftTemplateId']),
     dryRun: readStoredBoolean(value['dryRun']),
+    imageImportMode: readStoredImageImportMode(value['imageImportMode']),
     limitInput: readStoredString(value['limitInput']),
+    sourcePriceCurrencyCode: readStoredSourcePriceCurrencyCode(
+      value['sourcePriceCurrencyCode']
+    ),
   };
 };
 

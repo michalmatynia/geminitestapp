@@ -165,7 +165,11 @@ const resolveOptionalNumericDefaults = (
 
 const resolveOptionalIdDefaults = (input: ProductFormDefaultsInput): Pick<
   ProductFormData,
-  'baseProductId' | 'defaultPriceGroupId' | 'importSource' | 'shippingGroupId'
+  | 'baseProductId'
+  | 'defaultPriceGroupId'
+  | 'importSource'
+  | 'shippingGroupId'
+  | 'sourcePriceCurrencyCode'
 > => ({
   defaultPriceGroupId: resolveOptionalDefault<string | undefined>(
     input,
@@ -175,6 +179,11 @@ const resolveOptionalIdDefaults = (input: ProductFormDefaultsInput): Pick<
   baseProductId: resolveOptionalDefault<string | undefined>(input, 'baseProductId', undefined),
   importSource: resolveOptionalDefault<string | undefined>(input, 'importSource', undefined),
   shippingGroupId: resolveOptionalDefault(input, 'shippingGroupId', ''),
+  sourcePriceCurrencyCode: resolveOptionalDefault<string | undefined>(
+    input,
+    'sourcePriceCurrencyCode',
+    undefined
+  ),
 });
 
 const resolveMarketplaceContentDefaults = ({

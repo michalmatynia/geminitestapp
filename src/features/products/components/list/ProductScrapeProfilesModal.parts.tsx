@@ -3,8 +3,10 @@
 import { CheckCircle2, Globe2, TriangleAlert } from 'lucide-react';
 
 import type {
+  ProductScrapeProfileImageImportMode,
   ProductScrapeProfile,
   ProductScrapeProfileRunResponse,
+  ProductScrapeSourcePriceCurrencyCode,
 } from '@/shared/contracts/products/scrape-profiles';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { Alert } from '@/shared/ui/alert';
@@ -15,12 +17,15 @@ import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
 import { cn } from '@/shared/utils/ui-utils';
 
 import { ProductScrapeProfilesResult } from './ProductScrapeProfilesModal.result';
+import { ProductScrapeProfilesSourceCurrencyField } from './ProductScrapeProfilesModal.source-currency';
 
 type ProductScrapeProfilesBodyProps = {
   dryRun: boolean;
   error: Error | null;
   isLoading: boolean;
   isDraftTemplatesLoading: boolean;
+  imageImportMode: ProductScrapeProfileImageImportMode;
+  sourcePriceCurrencyCode: ProductScrapeSourcePriceCurrencyCode;
   limitError: string | null;
   limitInput: string;
   draftTemplates: ProductDraft[];
@@ -30,6 +35,8 @@ type ProductScrapeProfilesBodyProps = {
   selectedProfileId: string;
   onDryRunChange: (value: boolean) => void;
   onDraftTemplateSelect: (draftTemplateId: string) => void;
+  onImageImportModeChange: (mode: ProductScrapeProfileImageImportMode) => void;
+  onSourcePriceCurrencyCodeChange: (code: ProductScrapeSourcePriceCurrencyCode) => void;
   onLimitInputChange: (value: string) => void;
   onProfileSelect: (profileId: string) => void;
 };
@@ -37,6 +44,8 @@ type ProductScrapeProfilesBodyProps = {
 type ProductScrapeProfilesFormProps = {
   dryRun: boolean;
   isDraftTemplatesLoading: boolean;
+  imageImportMode: ProductScrapeProfileImageImportMode;
+  sourcePriceCurrencyCode: ProductScrapeSourcePriceCurrencyCode;
   limitError: string | null;
   limitInput: string;
   draftTemplates: ProductDraft[];
@@ -45,6 +54,8 @@ type ProductScrapeProfilesFormProps = {
   selectedProfileId: string;
   onDryRunChange: (value: boolean) => void;
   onDraftTemplateSelect: (draftTemplateId: string) => void;
+  onImageImportModeChange: (mode: ProductScrapeProfileImageImportMode) => void;
+  onSourcePriceCurrencyCodeChange: (code: ProductScrapeSourcePriceCurrencyCode) => void;
   onLimitInputChange: (value: string) => void;
   onProfileSelect: (profileId: string) => void;
 };
@@ -175,6 +186,38 @@ function ProductScrapeProfilesDraftTemplateField({
   );
 }
 
+function ProductScrapeProfilesImageModeField({
+  imageImportMode,
+  onImageImportModeChange,
+}: Pick<
+  ProductScrapeProfilesFormProps,
+  'imageImportMode' | 'onImageImportModeChange'
+>): React.JSX.Element {
+  return (
+    <div className='space-y-2'>
+      <Label htmlFor='product-scrape-profile-image-mode'>Images</Label>
+      <SelectSimple
+        id='product-scrape-profile-image-mode'
+        size='sm'
+        options={[
+          { value: 'links', label: 'Keep image links' },
+          { value: 'files', label: 'Download as files' },
+        ]}
+        value={imageImportMode}
+        onValueChange={(value): void =>
+          onImageImportModeChange(value === 'files' ? 'files' : 'links')
+        }
+        placeholder='Keep image links'
+        ariaLabel='Select scrape image import mode'
+        title='Select scrape image import mode'
+      />
+      <p className='text-xs text-muted-foreground'>
+        File mode downloads scraped images and attaches them to the product record.
+      </p>
+    </div>
+  );
+}
+
 function ProductScrapeProfilesDryRunField({
   dryRun,
   onDryRunChange,
@@ -197,6 +240,8 @@ function ProductScrapeProfilesForm(
   const {
     dryRun,
     isDraftTemplatesLoading,
+    imageImportMode,
+    sourcePriceCurrencyCode,
     limitError,
     limitInput,
     draftTemplates,
@@ -205,10 +250,14 @@ function ProductScrapeProfilesForm(
     selectedProfileId,
     onDryRunChange,
     onDraftTemplateSelect,
+    onImageImportModeChange,
+    onSourcePriceCurrencyCodeChange,
     onLimitInputChange,
     onProfileSelect,
   } = props;
   const draftTemplateOptions = buildDraftTemplateOptions(draftTemplates);
+  const selectedProfile =
+    profiles.find((profile) => profile.id === selectedProfileId) ?? null;
   return (
     <>
       <div className='grid gap-2 md:grid-cols-2'>
@@ -221,7 +270,7 @@ function ProductScrapeProfilesForm(
           />
         ))}
       </div>
-      <div className='grid gap-4 rounded-md border border-border/60 bg-card/35 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]'>
+      <div className='grid gap-4 rounded-md border border-border/60 bg-card/35 p-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]'>
         <ProductScrapeProfilesLimitField
           limitError={limitError}
           limitInput={limitInput}
@@ -232,6 +281,15 @@ function ProductScrapeProfilesForm(
           selectedDraftTemplateId={selectedDraftTemplateId}
           draftTemplateOptions={draftTemplateOptions}
           onDraftTemplateSelect={onDraftTemplateSelect}
+        />
+        <ProductScrapeProfilesImageModeField
+          imageImportMode={imageImportMode}
+          onImageImportModeChange={onImageImportModeChange}
+        />
+        <ProductScrapeProfilesSourceCurrencyField
+          selectedProfile={selectedProfile}
+          sourcePriceCurrencyCode={sourcePriceCurrencyCode}
+          onSourcePriceCurrencyCodeChange={onSourcePriceCurrencyCodeChange}
         />
         <ProductScrapeProfilesDryRunField dryRun={dryRun} onDryRunChange={onDryRunChange} />
       </div>

@@ -1,4 +1,3 @@
-import type { CatalogRecord } from '@/shared/contracts/products/catalogs';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   DEFAULT_PRODUCT_CATEGORY_TREE_CATALOG_ID,
@@ -84,12 +83,13 @@ export const normalizeCategoryId = (categoryId: string | null): string | null =>
   return trimmed.length > 0 ? trimmed : null;
 };
 
-export const getQueryDataArray = <T,>(data: T[] | undefined): T[] => data ?? [];
+export const getQueryDataArray = <T,>(data: T[] | undefined): T[] =>
+  Array.isArray(data) ? data : [];
 
 export const getPrimaryCatalogId = (catalogIds: string[]): string => catalogIds[0] ?? '';
 
 export const resolveCategoryTreeCatalogIds = (
-  catalogs: CatalogRecord[],
+  catalogs: unknown,
   catalogsLoading: boolean
 ): string[] => {
   const catalogId =

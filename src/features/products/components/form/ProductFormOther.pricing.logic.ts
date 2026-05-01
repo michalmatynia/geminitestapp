@@ -32,6 +32,7 @@ export type ProductFormOtherPricingSectionProps = {
   selectedCatalogIds: string[];
   basePrice: number;
   sourcePrice: number | null;
+  sourcePriceCurrencyCode: string | null;
   selectedDefaultPriceGroupId: string;
   filteredPriceGroups: PriceGroupWithDetails[];
   setValue: UseFormSetValue<ProductFormData>;
@@ -87,12 +88,14 @@ const resolveCalculatedPriceForGroup = ({
   priceGroups,
   selectedDefaultPriceGroupId,
   sourcePrice,
+  sourcePriceCurrencyCode,
 }: {
   basePrice: number;
   group: PriceGroupWithDetails;
   priceGroups: PriceGroupWithDetails[];
   selectedDefaultPriceGroupId: string;
   sourcePrice: number | null;
+  sourcePriceCurrencyCode: string | null;
 }): number | null => {
   const targetCurrencyCode = resolvePriceGroupCurrencyCode(group);
   const result = calculatePriceForCurrency(
@@ -100,7 +103,7 @@ const resolveCalculatedPriceForGroup = ({
     selectedDefaultPriceGroupId,
     targetCurrencyCode,
     priceGroups,
-    { sourcePrice }
+    { sourcePrice, sourcePriceCurrencyCode }
   );
   return normalizeCurrencyCode(result.currencyCode) === normalizeCurrencyCode(targetCurrencyCode)
     ? result.price
@@ -112,9 +115,14 @@ export const buildPriceGroupPrices = ({
   selectedDefaultPriceGroupId,
   basePrice,
   sourcePrice,
+  sourcePriceCurrencyCode,
 }: Pick<
   ProductFormOtherPricingSectionProps,
-  'filteredPriceGroups' | 'selectedDefaultPriceGroupId' | 'basePrice' | 'sourcePrice'
+  | 'filteredPriceGroups'
+  | 'selectedDefaultPriceGroupId'
+  | 'basePrice'
+  | 'sourcePrice'
+  | 'sourcePriceCurrencyCode'
 >): PriceGroupWithCalculatedPrice[] =>
   filteredPriceGroups.map((group) => {
     if (hasPriceMultiplierSource(group) === false) {
@@ -128,6 +136,7 @@ export const buildPriceGroupPrices = ({
         priceGroups: filteredPriceGroups,
         selectedDefaultPriceGroupId,
         sourcePrice,
+        sourcePriceCurrencyCode,
       }),
       resolvePriceGroupSourceName(group, filteredPriceGroups)
     );

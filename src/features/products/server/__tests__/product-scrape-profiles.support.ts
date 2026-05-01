@@ -27,6 +27,7 @@ const mocks = vi.hoisted(() => ({
   listCatalogs: vi.fn(),
   registryGet: vi.fn(),
   updateProduct: vi.fn(),
+  uploadFile: vi.fn(),
 }));
 
 export const productScrapeProfileMocks = mocks;
@@ -82,6 +83,10 @@ vi.mock('@/shared/lib/products/services/productService', () => ({
     getProductBySku: productScrapeProfileMocks.getProductBySku,
     updateProduct: productScrapeProfileMocks.updateProduct,
   },
+}));
+
+vi.mock('@/shared/lib/files/services/image-file-service', () => ({
+  uploadFile: productScrapeProfileMocks.uploadFile,
 }));
 
 vi.mock('../product-scraped-source-common', () => ({
@@ -216,5 +221,9 @@ export const resetProductScrapeProfileMocks = (): void => {
   productScrapeProfileMocks.updateProduct.mockResolvedValue({
     id: 'product-updated',
     sku: 'BATTLESTOCK-13033',
+  });
+  productScrapeProfileMocks.uploadFile.mockResolvedValue({
+    id: 'image-file-1',
+    filepath: '/uploads/products/BATTLESTOCK-13033/40k-spiritseer.jpg',
   });
 };

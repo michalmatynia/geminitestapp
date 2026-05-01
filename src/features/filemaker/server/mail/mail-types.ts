@@ -28,6 +28,7 @@ export type MailparserAddressObject = {
 
 export type MailparserAttachment = {
   filename?: string | null;
+  content?: unknown;
   contentType?: string | null;
   size?: number | null;
   cid?: string | null;

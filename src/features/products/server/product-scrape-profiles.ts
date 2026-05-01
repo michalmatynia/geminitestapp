@@ -8,6 +8,7 @@ import { getDraft } from '@/features/drafter/services/draft-service';
 import { CachedProductService } from '@/features/products/performance/cached-service';
 import type {
   ProductScrapeProfile,
+  ProductScrapeSourcePriceCurrencyCode,
   ProductScrapeProfileRunRequest,
   ProductScrapeProfileRunResponse,
   ProductScrapeProfilesListResponse,
@@ -40,6 +41,8 @@ const PRODUCT_SCRAPE_PROFILES: ProductScrapeProfileConfig[] = [
     targetCatalogName: BATTLESTOCK_CATALOG_NAME,
     defaultLimit: null,
     maxPages: 75,
+    defaultSourcePriceCurrencyCode: 'PLN',
+    sourcePriceCurrencyCodes: ['PLN', 'EUR', 'USD', 'GBP', 'SEK'],
     skuPrefix: 'BATTLESTOCK-',
     supplierName: BATTLESTOCK_CATALOG_NAME,
     priceComment: 'Scraped from BattleStock',
@@ -56,6 +59,8 @@ const toPublicProfile = (profile: ProductScrapeProfileConfig): ProductScrapeProf
   targetCatalogName: profile.targetCatalogName,
   defaultLimit: profile.defaultLimit,
   maxPages: profile.maxPages,
+  defaultSourcePriceCurrencyCode: profile.defaultSourcePriceCurrencyCode,
+  sourcePriceCurrencyCodes: profile.sourcePriceCurrencyCodes,
 });
 
 const findProfile = (profileId: string): ProductScrapeProfileConfig => {
@@ -187,6 +192,31 @@ const shouldLoadPriceGroupsForScrape = (
   );
 };
 
+const loadScrapePriceGroups = async (
+  catalog: CatalogRecord,
+  draftTemplate: ProductDraft | null
+): Promise<Awaited<ReturnType<typeof listScrapePriceGroupsForCalculation>>> => {
+  if (!shouldLoadPriceGroupsForScrape(catalog, draftTemplate)) return [];
+  return await listScrapePriceGroupsForCalculation();
+};
+
+const resolveSourcePriceCurrencyCode = (
+  profile: ProductScrapeProfileConfig,
+  inputCurrencyCode: ProductScrapeSourcePriceCurrencyCode | undefined
+): string =>
+  inputCurrencyCode ??
+  profile.defaultSourcePriceCurrencyCode ??
+  profile.sourcePriceCurrencyCodes?.[0] ??
+  'PLN';
+
+const shouldInvalidateProductCache = (
+  dryRun: boolean,
+  counts: { createdCount: number; updatedCount: number }
+): boolean => {
+  if (dryRun) return false;
+  return counts.createdCount > 0 || counts.updatedCount > 0;
+};
+
 export const listProductScrapeProfiles = (): ProductScrapeProfilesListResponse => ({
   profiles: PRODUCT_SCRAPE_PROFILES.map(toPublicProfile),
 });
@@ -202,9 +232,8 @@ export const runProductScrapeProfile = async (
   const catalog = await ensureCatalog(profile.targetCatalogName);
   const draftTemplate = await resolveScrapeDraftTemplate(profile, input.draftTemplateId);
   const draftTemplateCategoryAliases = await resolveDraftTemplateCategoryAliases(draftTemplate);
-  const priceGroups = shouldLoadPriceGroupsForScrape(catalog, draftTemplate)
-    ? await listScrapePriceGroupsForCalculation()
-    : [];
+  const priceGroups = await loadScrapePriceGroups(catalog, draftTemplate);
+  const sourcePriceCurrencyCode = resolveSourcePriceCurrencyCode(profile, input.sourcePriceCurrencyCode);
   const source = await getDefaultScripterServer().dryRun({
     scripterId: profile.scripterId,
     enforceRobots: false,
@@ -218,15 +247,17 @@ export const runProductScrapeProfile = async (
     profile,
     catalog,
     dryRun,
+    imageImportMode: input.imageImportMode ?? 'links',
     skipRecordsWithErrors: input.skipRecordsWithErrors ?? true,
     productServiceOptions: resolveProductServiceOptions(options.userId),
     priceGroups,
+    sourcePriceCurrencyCode,
     draftTemplate,
     draftTemplateCategoryAliases,
   });
   const outcomeSummary = summarizeOutcomes(outcomes);
 
-  if (!dryRun && (outcomeSummary.createdCount > 0 || outcomeSummary.updatedCount > 0)) {
+  if (shouldInvalidateProductCache(dryRun, outcomeSummary)) {
     CachedProductService.invalidateAll();
   }
 

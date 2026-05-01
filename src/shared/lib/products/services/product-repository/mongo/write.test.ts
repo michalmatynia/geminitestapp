@@ -270,6 +270,7 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
       {
         sku: 'SKU-1',
         sourcePrice: 12.5,
+        sourcePriceCurrencyCode: 'PLN',
       } as any,
       async () => ({ insertOne }) as any
     );
@@ -278,6 +279,7 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
       'product-1',
       {
         sourcePrice: 14.75,
+        sourcePriceCurrencyCode: 'EUR',
       } as any,
       async () => ({ findOneAndUpdate }) as any
     );
@@ -285,6 +287,7 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
     expect(insertOne).toHaveBeenCalledWith(
       expect.objectContaining({
         sourcePrice: 12.5,
+        sourcePriceCurrencyCode: 'PLN',
         price: 0,
       })
     );
@@ -293,6 +296,7 @@ describe('mongoProductWriteImpl custom fields persistence', () => {
       expect.objectContaining({
         $set: expect.objectContaining({
           sourcePrice: 14.75,
+          sourcePriceCurrencyCode: 'EUR',
         }),
       }),
       expect.anything()

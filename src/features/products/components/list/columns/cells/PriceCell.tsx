@@ -112,7 +112,10 @@ function resolvePriceInfo(product: ProductWithImages, currencyCode: string, pric
     product.defaultPriceGroupId,
     currencyCode,
     priceGroups,
-    { sourcePrice: product.sourcePrice ?? null }
+    {
+      sourcePrice: product.sourcePrice ?? null,
+      sourcePriceCurrencyCode: product.sourcePriceCurrencyCode ?? null,
+    }
   );
 }
 
@@ -192,13 +195,18 @@ export const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row 
     product.defaultPriceGroupId,
     priceGroups
   );
+  const storedSourcePriceCurrencyCode = product.sourcePriceCurrencyCode?.trim() ?? '';
+  const resolvedSourcePriceCurrencyCode =
+    storedSourcePriceCurrencyCode.length > 0
+      ? storedSourcePriceCurrencyCode
+      : sourcePriceCurrencyCode;
 
   return (
     <PriceCellContent
       currencyCode={currencyCode}
       info={info}
       product={product}
-      sourcePriceCurrencyCode={sourcePriceCurrencyCode}
+      sourcePriceCurrencyCode={resolvedSourcePriceCurrencyCode}
     />
   );
 });

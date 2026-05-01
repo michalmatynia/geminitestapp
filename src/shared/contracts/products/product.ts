@@ -357,6 +357,7 @@ export const productSchema = dtoBaseSchema.extend({
   priceComment: z.string().nullable(),
   stock: z.preprocess(normalizeProductStockValue, z.number().nullable()),
   sourcePrice: z.number().nullable().optional(),
+  sourcePriceCurrencyCode: z.string().nullable().optional(),
   price: z.number().nullable(),
   sizeLength: z.number().nullable(),
   sizeWidth: z.number().nullable(),

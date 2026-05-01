@@ -114,6 +114,7 @@ export const productListingCreatePayloadSchema = z.object({
   autoRelistEnabled: z.boolean().optional(),
   autoRelistLeadMinutes: z.number().int().min(0).max(10080).optional(),
   templateId: z.string().trim().nullable().optional(),
+  concurrencyMode: z.enum(['sequential', 'concurrent']).nullable().optional(),
 });
 
 export type ProductListingCreatePayload = z.infer<typeof productListingCreatePayloadSchema>;

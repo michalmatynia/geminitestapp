@@ -8,6 +8,7 @@ export {
   startTraderaListingQueue,
   enqueueTraderaListingJob,
   buildTraderaListingQueueJobId,
+  TRADERA_LISTING_QUEUE_NAMES,
 } from '@/features/integrations/workers/traderaListingQueue';
 export {
   startVintedListingQueue,

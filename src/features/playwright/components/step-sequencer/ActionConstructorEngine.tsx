@@ -439,6 +439,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
     resolvedActionBlocks,
     actionDraftName,
     actionDraftDescription,
+    actionDraftConcurrencyMode,
     actionPersonaId,
     actionExecutionSettings,
     editingActionId,
@@ -447,6 +448,7 @@ export function ActionConstructorEngine(): React.JSX.Element {
     highlightedActionBlockId,
     setActionDraftName,
     setActionDraftDescription,
+    setActionDraftConcurrencyMode,
     setActionPersonaId,
     setActionExecutionSettings,
     handleAddRuntimeStepToAction,
@@ -1523,6 +1525,25 @@ export function ActionConstructorEngine(): React.JSX.Element {
                 </Select>
               </div>
             ) : null}
+
+            {/* Concurrency mode */}
+            <div className='flex items-center gap-2'>
+              <Label className='shrink-0 text-[11px] text-muted-foreground'>Concurrency</Label>
+              <Select
+                value={actionDraftConcurrencyMode ?? 'sequential'}
+                onValueChange={(v) =>
+                  setActionDraftConcurrencyMode(v === 'sequential' ? 'sequential' : 'concurrent')
+                }
+              >
+                <SelectTrigger className='h-7 flex-1 text-xs'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='sequential'>Sequential (one at a time)</SelectItem>
+                  <SelectItem value='concurrent'>Concurrent (multiple at once)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Name + description + save */}
             <div className='flex items-center gap-2'>

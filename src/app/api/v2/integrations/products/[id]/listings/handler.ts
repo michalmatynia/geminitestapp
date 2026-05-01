@@ -196,6 +196,7 @@ export async function postHandler(
       const response = await enqueueTraderaCreateListingResponse({
         listing,
         listingRepository: listingRepo,
+        concurrencyMode: data.concurrencyMode ?? null,
       });
       return NextResponse.json(response, { status: 201 });
     }

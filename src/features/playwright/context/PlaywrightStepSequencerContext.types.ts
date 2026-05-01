@@ -58,6 +58,8 @@ export interface PlaywrightStepSequencerActionState {
   actionDraftName: string;
   /** Draft description for saving the action. */
   actionDraftDescription: string | null;
+  /** Draft concurrency mode for saving the action. */
+  actionDraftConcurrencyMode: 'sequential' | 'concurrent' | null;
   /**
    * When non-null, the constructor is editing this saved action (loaded via
    * handleLoadActionIntoConstructor). "Update Action" overwrites it in place.
@@ -192,6 +194,7 @@ export interface PlaywrightStepSequencerContextType
   setActionExecutionSettings: (settings: PlaywrightActionExecutionSettings) => void;
   setActionDraftName: (name: string) => void;
   setActionDraftDescription: (description: string | null) => void;
+  setActionDraftConcurrencyMode: (mode: 'sequential' | 'concurrent' | null) => void;
   handleSaveAction: () => Promise<void>;
   /** Overwrite the currently-loaded action in place (requires editingActionId). */
   handleUpdateAction: () => Promise<void>;

@@ -666,6 +666,27 @@ export const PART_4_EXTRA = String.raw`
     context = 'unknown',
     required = false,
   } = {}) => {
+    // Fast path: single page.evaluate handles detection + dismiss atomically.
+    // Much cheaper than iterating Playwright locators one-by-one.
+    const domHeuristicDismissed = await clickShippingSmootherContinueByDomHeuristic(context);
+    if (domHeuristicDismissed) {
+      return true;
+    }
+
+    // If the DOM heuristic found no heading text the modal is not present.
+    const bodyHasShippingHeading = await page
+      .evaluate(() =>
+        (document.body?.innerText ?? document.body?.textContent ?? '')
+          .toLowerCase()
+          .includes('shipping is now even smoother')
+      )
+      .catch(() => false);
+    if (!bodyHasShippingHeading) {
+      return false;
+    }
+
+    // Fall back to full Playwright locator approach (handles edge cases the
+    // DOM heuristic can't reach, e.g. shadow DOM, unusual visibility states).
     const shippingSmootherDialog = await findVisibleShippingSmootherDialog();
     if (!shippingSmootherDialog) {
       return false;
@@ -706,11 +727,6 @@ export const PART_4_EXTRA = String.raw`
         });
         return true;
       }
-    }
-
-    const domHeuristicDismissed = await clickShippingSmootherContinueByDomHeuristic(context);
-    if (domHeuristicDismissed) {
-      return true;
     }
 
     const closeButton = await firstVisibleWithin(

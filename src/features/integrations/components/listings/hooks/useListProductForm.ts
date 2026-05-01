@@ -84,6 +84,7 @@ export function useListProductForm(
     selectedTraderaAutoRelistEnabled,
     selectedTraderaAutoRelistLeadMinutes,
     selectedTraderaTemplateId,
+    selectedConcurrencyMode,
   } = useListingTraderaSettings();
 
   const exportToBaseMutation = useExportToBaseMutation(productId);
@@ -208,6 +209,7 @@ export function useListProductForm(
                   selectedTraderaTemplateId && selectedTraderaTemplateId !== 'none'
                     ? selectedTraderaTemplateId
                     : null,
+              ...(selectedConcurrencyMode !== null ? { concurrencyMode: selectedConcurrencyMode } : {}),
             }
             : {}),
         });

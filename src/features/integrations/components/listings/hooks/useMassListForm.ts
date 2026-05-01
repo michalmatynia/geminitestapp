@@ -9,6 +9,7 @@ import {
 import {
   useListingBaseComSettings,
   useListingSelection,
+  useListingTraderaSettings,
 } from '@/features/integrations/context/ListingSettingsContext';
 import {
   useUpdateDefaultTraderaConnection,
@@ -58,6 +59,8 @@ export function useMassListForm() {
 
   const { selectedInventoryId, selectedTemplateId, allowDuplicateSku } =
     useListingBaseComSettings();
+
+  const { selectedConcurrencyMode } = useListingTraderaSettings();
 
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{
@@ -253,6 +256,9 @@ export function useMassListForm() {
               productId,
               integrationId,
               connectionId,
+              ...(isTraderaIntegration && selectedConcurrencyMode !== null
+                ? { concurrencyMode: selectedConcurrencyMode }
+                : {}),
             });
             await persistPreferredConnection(productId);
           }

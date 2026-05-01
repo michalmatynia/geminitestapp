@@ -5,6 +5,7 @@ import {
   buildTraderaListingQueueJobId,
   enqueueTraderaListingJob,
   initializeQueues,
+  TRADERA_LISTING_QUEUE_NAMES,
 } from '@/features/jobs/server';
 
 const toRecord = (value: unknown): Record<string, unknown> =>
@@ -45,9 +46,11 @@ const buildTraderaQueuedMarketplaceData = ({
 export const enqueueTraderaCreateListingResponse = async ({
   listing,
   listingRepository,
+  concurrencyMode,
 }: {
   listing: ProductListingWithDetails;
   listingRepository: ProductListingRepository;
+  concurrencyMode?: 'sequential' | 'concurrent' | null;
 }): Promise<ProductListingCreateResponse> => {
   initializeQueues();
   const enqueuedAt = new Date().toISOString();
@@ -71,13 +74,14 @@ export const enqueueTraderaCreateListingResponse = async ({
     const queuedJobId = await enqueueTraderaListingJob({
       ...traderaJobInput,
       jobId,
+      ...(concurrencyMode != null ? { concurrencyMode } : {}),
     });
     return {
       ...listing,
       marketplaceData: queuedMarketplaceData,
       queued: true,
       queue: {
-        name: 'tradera-listings',
+        name: TRADERA_LISTING_QUEUE_NAMES[concurrencyMode ?? 'sequential'],
         jobId: queuedJobId,
         enqueuedAt,
       },

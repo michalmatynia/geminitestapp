@@ -89,6 +89,7 @@ function loadActionIntoConstructorState(input: {
   setActionDraftName: (value: string) => void;
   setActionDraftDescription: (value: string | null) => void;
   setActionPersonaId: (value: string | null) => void;
+  setActionDraftConcurrencyMode: (value: 'sequential' | 'concurrent' | null) => void;
   setEditingActionId: (value: string | null) => void;
 }): void {
   const {
@@ -98,6 +99,7 @@ function loadActionIntoConstructorState(input: {
     setActionDraftName,
     setActionDraftDescription,
     setActionPersonaId,
+    setActionDraftConcurrencyMode,
     setEditingActionId,
   } = input;
 
@@ -106,6 +108,7 @@ function loadActionIntoConstructorState(input: {
   setActionDraftName(action.name);
   setActionDraftDescription(action.description);
   setActionPersonaId(action.personaId);
+  setActionDraftConcurrencyMode(action.concurrencyMode ?? null);
   setEditingActionId(action.id);
 }
 
@@ -174,6 +177,7 @@ export function usePlaywrightStepSequencerState(options?: {
   );
   const [actionDraftName, setActionDraftName] = useState('');
   const [actionDraftDescription, setActionDraftDescription] = useState<string | null>(null);
+  const [actionDraftConcurrencyMode, setActionDraftConcurrencyMode] = useState<'sequential' | 'concurrent' | null>(null);
   const [editingActionId, setEditingActionId] = useState<string | null>(null);
   const [highlightedActionBlockId, setHighlightedActionBlockId] = useState<string | null>(null);
   const appliedInitialActionLoadRef = useRef<string | null>(null);
@@ -733,6 +737,7 @@ export function usePlaywrightStepSequencerState(options?: {
       setActionDraftName,
       setActionDraftDescription,
       setActionPersonaId,
+      setActionDraftConcurrencyMode,
       setEditingActionId,
     });
     setHighlightedActionBlockId(null);
@@ -764,6 +769,7 @@ export function usePlaywrightStepSequencerState(options?: {
       setActionDraftName,
       setActionDraftDescription,
       setActionPersonaId,
+      setActionDraftConcurrencyMode,
       setEditingActionId,
     });
     setHighlightedActionBlockId(
@@ -787,6 +793,7 @@ export function usePlaywrightStepSequencerState(options?: {
     setActionBlocks([]);
     setActionDraftName('');
     setActionDraftDescription(null);
+    setActionDraftConcurrencyMode(null);
     setActionPersonaId(null);
     setActionExecutionSettings(defaultPlaywrightActionExecutionSettings);
     setEditingActionId(null);
@@ -952,6 +959,7 @@ export function usePlaywrightStepSequencerState(options?: {
             setActionDraftName,
             setActionDraftDescription,
             setActionPersonaId,
+            setActionDraftConcurrencyMode,
             setEditingActionId,
           });
         } else if (
@@ -1074,6 +1082,7 @@ export function usePlaywrightStepSequencerState(options?: {
             setActionDraftName,
             setActionDraftDescription,
             setActionPersonaId,
+            setActionDraftConcurrencyMode,
             setEditingActionId,
           });
         } else if (
@@ -1189,6 +1198,7 @@ export function usePlaywrightStepSequencerState(options?: {
         stepSetIds: [],
         personaId: actionPersonaId,
         executionSettings: actionExecutionSettings,
+        concurrencyMode: actionDraftConcurrencyMode,
         createdAt: ts,
         updatedAt: ts,
       });
@@ -1200,7 +1210,7 @@ export function usePlaywrightStepSequencerState(options?: {
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'saveAction' });
       toast(extractMutationErrorMessage(error, 'Failed to save action.'), { variant: 'error' });
     }
-  }, [actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, actionExecutionSettings, handleClearAction, saveActions, toast]);
+  }, [actionDraftName, actionDraftDescription, actionDraftConcurrencyMode, actionBlocks, actionPersonaId, actionExecutionSettings, handleClearAction, saveActions, toast]);
 
   const handleUpdateAction = useCallback(async (): Promise<void> => {
     if (editingActionId === null) return;
@@ -1228,6 +1238,7 @@ export function usePlaywrightStepSequencerState(options?: {
               stepSetIds: [],
               personaId: actionPersonaId,
               executionSettings: actionExecutionSettings,
+              concurrencyMode: actionDraftConcurrencyMode,
               updatedAt: now(),
             })
           : a
@@ -1239,7 +1250,7 @@ export function usePlaywrightStepSequencerState(options?: {
       logClientCatch(error, { source: 'usePlaywrightStepSequencerState', action: 'updateAction' });
       toast(extractMutationErrorMessage(error, 'Failed to update action.'), { variant: 'error' });
     }
-  }, [editingActionId, actionDraftName, actionDraftDescription, actionBlocks, actionPersonaId, actionExecutionSettings, actionValidationErrors, handleClearAction, saveActions, toast]);
+  }, [editingActionId, actionDraftName, actionDraftDescription, actionDraftConcurrencyMode, actionBlocks, actionPersonaId, actionExecutionSettings, actionValidationErrors, handleClearAction, saveActions, toast]);
 
   // ---------------------------------------------------------------------------
   // Assemble context value
@@ -1304,6 +1315,7 @@ export function usePlaywrightStepSequencerState(options?: {
     actionExecutionSettings,
     actionDraftName,
     actionDraftDescription,
+    actionDraftConcurrencyMode,
     editingActionId,
     editingActionRuntimeKey,
     actionValidationErrors,
@@ -1320,6 +1332,7 @@ export function usePlaywrightStepSequencerState(options?: {
     setActionExecutionSettings,
     setActionDraftName,
     setActionDraftDescription,
+    setActionDraftConcurrencyMode,
     handleSaveAction,
     handleUpdateAction,
 

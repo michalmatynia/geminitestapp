@@ -11,6 +11,7 @@ type TraderaListingQueueJobData = {
   jobId?: string;
   browserMode?: 'connection_default' | 'headless' | 'headed';
   selectorProfile?: string;
+  concurrencyMode?: 'sequential' | 'concurrent';
 };
 
 type TraderaListingServiceModule = {
@@ -67,12 +68,62 @@ const queue: ManagedQueue<TraderaListingQueueJobData> =
     },
   });
 
+const concurrentQueue: ManagedQueue<TraderaListingQueueJobData> =
+  createManagedQueue<TraderaListingQueueJobData>({
+    name: 'tradera-listings-concurrent',
+    concurrency: 3,
+    defaultJobOptions: {
+      attempts: 1,
+      removeOnComplete: true,
+      removeOnFail: false,
+    },
+    processor: async (data: TraderaListingQueueJobData, jobId: string) => {
+      const { processTraderaListingJob } = await loadTraderaListingService();
+      await processTraderaListingJob({ ...data, jobId });
+      return { ok: true, listingId: data.listingId, action: data.action };
+    },
+    onCompleted: async (jobId: string, _result: unknown, data: TraderaListingQueueJobData) => {
+      await ErrorSystem.logInfo('Tradera listing job completed (concurrent)', {
+        service: 'tradera-listing-queue-concurrent',
+        listingId: data.listingId,
+        action: data.action,
+        jobId,
+      });
+    },
+    onFailed: async (jobId: string, error: Error, data: TraderaListingQueueJobData) => {
+      await ErrorSystem.captureException(error, {
+        service: 'tradera-listing-queue-concurrent',
+        listingId: data.listingId,
+        action: data.action,
+        jobId,
+      });
+      try {
+        const { getProductListingRepository } = await import('@/features/integrations/server');
+        const repo = await getProductListingRepository();
+        await repo.updateListingStatus(data.listingId, 'failed');
+      } catch (cleanupError) {
+        await ErrorSystem.captureException(cleanupError, {
+          service: 'tradera-listing-queue-concurrent',
+          listingId: data.listingId,
+          phase: 'on-failed-status-cleanup',
+        });
+      }
+    },
+  });
+
+export const TRADERA_LISTING_QUEUE_NAMES = {
+  sequential: 'tradera-listings',
+  concurrent: 'tradera-listings-concurrent',
+} as const;
+
 export const startTraderaListingQueue = (): void => {
   queue.startWorker();
+  concurrentQueue.startWorker();
 };
 
 export const stopTraderaListingQueue = async (): Promise<void> => {
   await queue.stopWorker();
+  await concurrentQueue.stopWorker();
 };
 
 const resolveTraderaListingSelectorProfile = (
@@ -119,14 +170,18 @@ export const enqueueTraderaListingJob = async (
   data: TraderaListingQueueJobData
 ): Promise<string> => {
   const jobId = resolveRequestedTraderaListingQueueJobId(data);
-  const queuedJobId = await queue.enqueue({ ...data, jobId }, {
+  const targetQueue = data.concurrencyMode === 'concurrent' ? concurrentQueue : queue;
+  const queueName = data.concurrencyMode === 'concurrent' ? 'tradera-listings-concurrent' : 'tradera-listings';
+  const queuedJobId = await targetQueue.enqueue({ ...data, jobId }, {
     jobId,
   });
   await ErrorSystem.logInfo('Tradera listing job queued', {
     service: 'tradera-listing-queue',
+    queue: queueName,
     listingId: data.listingId,
     action: data.action,
     jobId: queuedJobId,
+    concurrencyMode: data.concurrencyMode ?? 'sequential',
   });
   return queuedJobId;
 };

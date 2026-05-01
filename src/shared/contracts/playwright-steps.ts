@@ -493,6 +493,7 @@ export const playwrightActionSchema = z.object({
   executionSettings: playwrightActionExecutionSettingsSchema
     .optional()
     .default(defaultPlaywrightActionExecutionSettings),
+  concurrencyMode: z.enum(['sequential', 'concurrent']).nullable().optional().default(null),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -529,6 +530,7 @@ export function normalizePlaywrightAction(action: PlaywrightAction): PlaywrightA
     runtimeKey: action.runtimeKey ?? null,
     blocks,
     executionSettings: normalizePlaywrightActionExecutionSettings(action.executionSettings),
+    concurrencyMode: action.concurrencyMode ?? null,
     stepSetIds: blocks
       .filter((block) => block.kind === 'step_set')
       .map((block) => block.refId),

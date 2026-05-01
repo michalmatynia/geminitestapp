@@ -49,7 +49,7 @@ const producers: Producer[] = [
   },
 ];
 
-describe('resolveValidatorFieldReplacement', () => {
+describe('resolveValidatorFieldReplacement text values', () => {
   it('resolves text replacements as trimmed strings', () => {
     expect(
       resolveValidatorFieldReplacement({
@@ -64,7 +64,9 @@ describe('resolveValidatorFieldReplacement', () => {
       displayValue: 'New title',
     });
   });
+});
 
+describe('resolveValidatorFieldReplacement numeric values', () => {
   it('resolves integer numeric replacements for stock fields', () => {
     expect(
       resolveValidatorFieldReplacement({
@@ -95,6 +97,23 @@ describe('resolveValidatorFieldReplacement', () => {
     });
   });
 
+  it('resolves dimension replacements from structured title size segments', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'length',
+        replacementValue: '40 mm',
+      })
+    ).toEqual({
+      kind: 'number',
+      fieldName: 'length',
+      value: 4,
+      comparableValue: '4',
+      displayValue: '4',
+    });
+  });
+});
+
+describe('resolveValidatorFieldReplacement category values', () => {
   it('resolves category replacements to ids and display labels', () => {
     expect(
       resolveValidatorFieldReplacement({
@@ -137,7 +156,9 @@ describe('resolveValidatorFieldReplacement', () => {
       })
     ).toBeNull();
   });
+});
 
+describe('resolveValidatorFieldReplacement producer values', () => {
   it('resolves producer replacements by producer name and preserves display labels', () => {
     expect(
       resolveValidatorFieldReplacement({

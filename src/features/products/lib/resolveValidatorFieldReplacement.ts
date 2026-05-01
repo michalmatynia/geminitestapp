@@ -6,8 +6,7 @@ import type { ProductCategory } from '@/shared/contracts/products/categories';
 import type { Producer } from '@/shared/contracts/products/producers';
 
 import {
-  coerceProductValidationNumericValue,
-  getProductValidationFieldNumberMode,
+  coerceProductValidationFieldNumericValue,
   getProductValidationFieldValueKind,
 } from './validatorTargetAdapters';
 import { resolveValidatorCategoryReplacementId } from './resolveValidatorCategoryReplacement';
@@ -154,9 +153,9 @@ export const resolveValidatorFieldReplacement = (
   }
 
   if (getProductValidationFieldValueKind(input.fieldName) === 'number') {
-    const normalizedNumericValue = coerceProductValidationNumericValue(
-      normalizedReplacement,
-      getProductValidationFieldNumberMode(input.fieldName)
+    const normalizedNumericValue = coerceProductValidationFieldNumericValue(
+      input.fieldName,
+      normalizedReplacement
     );
     if (normalizedNumericValue === null || !Number.isFinite(normalizedNumericValue)) return null;
     return {

@@ -71,7 +71,7 @@ export const shouldAdoptIncomingEditProductDetail = (input: {
   const { currentProduct, incomingProduct, isEditHydrating } = input;
   if (incomingProduct.id !== currentProduct.id) return false;
   const hydrated = isEditingProductHydrated(currentProduct);
-  if (!hydrated && !isEditHydrating) return false;
+  if (!hydrated) return isEditHydrating;
   if (isIncomingProductDetailNewer(incomingProduct, currentProduct)) return true;
   return (
     isIncomingProductDetailSameRevision(incomingProduct, currentProduct) &&

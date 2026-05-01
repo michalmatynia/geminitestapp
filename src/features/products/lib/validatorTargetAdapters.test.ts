@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  coerceProductValidationFieldNumericValue,
   coerceProductValidationNumericValue,
   coerceProductValidationTargetValue,
   getProductValidationFieldChangedAtDependencies,
@@ -50,9 +51,15 @@ describe('validatorTargetAdapters', () => {
     expect(coerceProductValidationNumericValue('7.8', 'decimal')).toBe(7.8);
     expect(coerceProductValidationTargetValue({ target: 'weight', value: '12,9' })).toBe(12.9);
     expect(coerceProductValidationTargetValue({ target: 'stock', value: '12,9' })).toBe(12);
+    expect(coerceProductValidationFieldNumericValue('sizeLength', '4 cm')).toBe(4);
+    expect(coerceProductValidationFieldNumericValue('length', '40 mm')).toBe(4);
+    expect(coerceProductValidationTargetValue({ target: 'size_length', value: '1.2 m' })).toBe(
+      120
+    );
     expect(coerceProductValidationTargetValue({ target: 'name', value: '  Title  ' })).toBe(
       '  Title  '
     );
+    expect(coerceProductValidationTargetValue({ target: 'price', value: '12 EUR' })).toBeNull();
     expect(coerceProductValidationTargetValue({ target: 'price', value: 'abc' })).toBeNull();
   });
 });

@@ -58,7 +58,14 @@ const producers: Producer[] = [
   },
 ];
 
-const createApplyApi = (currentValues: Partial<Record<keyof ProductFormData, unknown>>) => {
+const createApplyApi = (
+  currentValues: Partial<Record<keyof ProductFormData, unknown>>
+): {
+  setFormFieldValue: ReturnType<typeof vi.fn>;
+  setCategoryId: ReturnType<typeof vi.fn>;
+  setProducerIds: ReturnType<typeof vi.fn>;
+  getCurrentFieldValue: (fieldName: keyof ProductFormData) => unknown;
+} => {
   const setFormFieldValue = vi.fn();
   const setCategoryId = vi.fn();
   const setProducerIds = vi.fn();
@@ -71,7 +78,7 @@ const createApplyApi = (currentValues: Partial<Record<keyof ProductFormData, unk
   };
 };
 
-describe('applyValidatorFieldReplacement', () => {
+describe('applyValidatorFieldReplacement metadata setters', () => {
   it('applies category replacements through setCategoryId', () => {
     const applyApi = createApplyApi({ categoryId: 'category-1' });
 
@@ -119,7 +126,9 @@ describe('applyValidatorFieldReplacement', () => {
     expect(applyApi.setFormFieldValue).not.toHaveBeenCalled();
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
+});
 
+describe('applyValidatorFieldReplacement numeric values', () => {
   it('preserves decimal replacements for dimension fields', () => {
     const applyApi = createApplyApi({ sizeLength: 10 });
 
@@ -132,6 +141,21 @@ describe('applyValidatorFieldReplacement', () => {
     ).toBe(true);
 
     expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('sizeLength', 12.5);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
+  it('applies unit-bearing dimension replacements from imported product names', () => {
+    const applyApi = createApplyApi({ length: 0 });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'length',
+        replacementValue: '4 cm',
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('length', 4);
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
 
@@ -158,7 +182,9 @@ describe('applyValidatorFieldReplacement', () => {
       })
     ).toBe(false);
   });
+});
 
+describe('applyValidatorFieldReplacement matching checks', () => {
   it('detects when a producer replacement is already applied', () => {
     const applyApi = createApplyApi({ producerIds: ['producer-1'] });
 
@@ -186,7 +212,9 @@ describe('applyValidatorFieldReplacement', () => {
     expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('name_en', 'Next title');
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
+});
 
+describe('applyValidatorFieldReplacement guard cases', () => {
   it('returns false when the replacement cannot be resolved', () => {
     const applyApi = createApplyApi({ categoryId: 'category-1' });
 

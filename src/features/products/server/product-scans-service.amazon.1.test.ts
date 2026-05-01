@@ -530,13 +530,13 @@ describe('product-scans-service', () => {
     const result = await synchronizeProductScan(scan);
 
     expect(mocks.runBrainChatCompletionMock).toHaveBeenCalledTimes(1);
-    expect(mocks.readPlaywrightEngineArtifactMock).toHaveBeenNthCalledWith(1, {
-      runId: 'run-1',
-      fileName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
-    });
     expect(mocks.readPlaywrightEngineArtifactMock).toHaveBeenCalledWith({
       runId: 'run-1',
       fileName: 'amazon-scan-probe-image-1-attempt-1-rank-1.png',
+    });
+    expect(mocks.readPlaywrightEngineArtifactMock).toHaveBeenCalledWith({
+      runId: 'run-1',
+      fileName: 'amazon-scan-probe-image-1-attempt-1-rank-1-hero.png',
     });
     const brainCall = mocks.runBrainChatCompletionMock.mock.calls[0]?.[0];
     const userMessage = Array.isArray(brainCall?.messages)

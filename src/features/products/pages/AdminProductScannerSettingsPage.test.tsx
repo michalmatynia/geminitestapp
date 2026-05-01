@@ -163,6 +163,15 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
       {children}
     </label>
   ),
+  Input: ({
+    label,
+    ...props
+  }: React.InputHTMLAttributes<HTMLInputElement> & { label?: string }) => (
+    <label>
+      {label ? <span>{label}</span> : null}
+      <input {...props} />
+    </label>
+  ),
   SelectSimple: ({
     value,
     onValueChange,
@@ -208,6 +217,10 @@ vi.mock('@/shared/ui/forms-and-actions.public', () => ({
 }));
 
 vi.mock('@/shared/ui/primitives.public', () => ({
+  Badge: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props}>{children}</button>
+  ),
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   useToast: () => ({
     toast: mocks.toastMock,

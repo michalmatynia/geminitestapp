@@ -183,6 +183,19 @@ const createScan = (overrides: Partial<ProductScanRecord> = {}): ProductScanReco
 describe('product-scans-service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.getProductScannerSettingsMock.mockResolvedValue({
+      playwrightPersonaId: null,
+      playwrightBrowser: 'auto',
+      captchaBehavior: 'auto_show_browser',
+      manualVerificationTimeoutMs: 240000,
+      amazonImageSearchProvider: 'google_images_upload',
+      amazonImageSearchFallbackProvider: 'google_lens_upload',
+      playwrightSettingsOverrides: {
+        headless: true,
+      },
+    });
+    mocks.resolveProductScannerHeadlessMock.mockResolvedValue(true);
+    mocks.buildProductScannerEngineRequestOptionsMock.mockReturnValue({});
     mocks.updateProductScanMock.mockImplementation(
       async (id: string, updates: Partial<ProductScanRecord>) => ({
         ...createScan({ id }),

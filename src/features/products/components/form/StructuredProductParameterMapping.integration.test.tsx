@@ -41,6 +41,7 @@ vi.mock('@/shared/lib/ai-paths/hooks/useAiPathTriggerEvent', () => ({
 
 vi.mock('lucide-react', () => ({
   X: (props: SVGProps<SVGSVGElement>) => <svg {...props} data-testid='remove-parameter' />,
+  Ban: (props: SVGProps<SVGSVGElement>) => <svg {...props} data-testid='ban-icon' />,
   BookType: (props: SVGProps<SVGSVGElement>) => <svg {...props} data-testid='book-type-icon' />,
   ChevronRight: (props: SVGProps<SVGSVGElement>) => (
     <svg {...props} data-testid='chevron-right-icon' />

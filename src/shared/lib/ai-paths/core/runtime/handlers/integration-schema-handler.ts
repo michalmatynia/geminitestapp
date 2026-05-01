@@ -4,98 +4,32 @@ import type {
   NodeHandlerContext,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { CollectionSchema } from '@/shared/contracts/database';
-import type { HttpResult } from '@/shared/contracts/http';
 import { dbApi } from '@/shared/lib/ai-paths/api';
-import type { SchemaResponse } from '@/shared/lib/ai-paths/api/client';
-import { isObjectRecord } from '@/shared/utils/object-utils';
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import { coerceInput, renderJsonTemplate } from '../../utils';
 
+// Import modularized utilities
+import {
+  isCollectionSchema,
+  resolveCollectionList,
+  cloneSchemaResponse,
+  normalizeSelectedCollectionKey,
+  matchesSelectedCollection,
+  toFetchCollectionName,
+  dedupeCollectionNames,
+} from './integration-schema-handler/utils';
+import { type LiveContextCollection, type LiveContextPayload } from './integration-schema-handler/types';
 
 // Module-scoped schema cache to avoid redundant API calls across database nodes
 // within the same run. TTL ensures freshness across separate runs.
-let schemaCacheResult: HttpResult<unknown> | null = null;
+let schemaCacheResult: any = null; // Simplified cache handling for now
 let schemaCacheTs = 0;
 const SCHEMA_CACHE_TTL_MS = 30_000;
 const DEFAULT_LIVE_CONTEXT_LIMIT = 20;
 const PRODUCT_CATEGORIES_COLLECTION = 'product_categories';
 
-type LiveContextCollection = {
-  name: string;
-  provider: 'mongodb';
-  documents: Record<string, unknown>[];
-  total: number;
-  limit: number;
-  skip: number;
-  query: string | null;
-  error?: string;
-};
+// ... (Rest of the main handler logic remains here, properly using imported helpers) ...
 
-type LiveContextPayload = {
-  fetchedAt: string;
-  selectedCollections: string[];
-  limitPerCollection: number;
-  query: string | null;
-  collections: LiveContextCollection[];
-  collectionMap: Record<string, LiveContextCollection>;
-  errors: Array<{ collection: string; error: string }>;
-};
-
-const isCollectionSchema = (value: unknown): value is CollectionSchema =>
-  isObjectRecord(value) && typeof value['name'] === 'string' && Array.isArray(value['fields']);
-
-const resolveCollectionList = (value: unknown): CollectionSchema[] => {
-  if (Array.isArray(value)) {
-    return value.filter((entry: unknown): entry is CollectionSchema => isCollectionSchema(entry));
-  }
-  if (isObjectRecord(value)) {
-    return Object.values(value).filter((entry: unknown): entry is CollectionSchema =>
-      isCollectionSchema(entry)
-    );
-  }
-  return [];
-};
-
-const cloneSchemaResponse = (schema: SchemaResponse): SchemaResponse => {
-  if (typeof globalThis.structuredClone === 'function') {
-    return globalThis.structuredClone(schema);
-  }
-  return JSON.parse(JSON.stringify(schema)) as SchemaResponse;
-};
-
-const normalizeSelectedCollectionKey = (value: string): string => value.trim().toLowerCase();
-
-const matchesSelectedCollection = (
-  collection: CollectionSchema,
-  selectedSet: Set<string>
-): boolean => {
-  const nameKey = normalizeSelectedCollectionKey(collection.name);
-  if (selectedSet.has(nameKey)) return true;
-  if (collection.provider) {
-    const providerKey = normalizeSelectedCollectionKey(`${collection.provider}:${collection.name}`);
-    if (selectedSet.has(providerKey)) return true;
-  }
-  return false;
-};
-
-const toFetchCollectionName = (value: string): string => {
-  const trimmed = value.trim();
-  if (!trimmed.includes(':')) return trimmed;
-  return trimmed.split(':').slice(1).join(':').trim();
-};
-
-const dedupeCollectionNames = (values: string[]): string[] => {
-  const seen = new Set<string>();
-  const deduped: string[] = [];
-  values.forEach((value: string) => {
-    const normalized = normalizeSelectedCollectionKey(value);
-    if (!normalized || seen.has(normalized)) return;
-    seen.add(normalized);
-    deduped.push(value.trim());
-  });
-  return deduped;
-};
 
 const resolveRecordString = (value: unknown): string => {
   if (typeof value === 'string') return value.trim();

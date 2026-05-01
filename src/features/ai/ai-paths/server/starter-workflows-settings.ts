@@ -387,12 +387,16 @@ const buildCanonicalStarterConfigRewrite = (args: {
       provenance.templateVersion >= resolution.entry.starterLineage.templateVersion;
 
     if (!hasCurrentStarterProvenance) {
-      const refreshed = buildRefreshedStarterWorkflowConfig(parsedExisting);
-      if (refreshed) {
-        const refreshedRaw = JSON.stringify(refreshed);
-        if (isCanonicalStoredPathConfig(args.pathId, refreshedRaw)) {
-          return refreshedRaw;
+      try {
+        const refreshed = buildRefreshedStarterWorkflowConfig(parsedExisting);
+        if (refreshed) {
+          const refreshedRaw = JSON.stringify(refreshed);
+          if (isCanonicalStoredPathConfig(args.pathId, refreshedRaw)) {
+            return refreshedRaw;
+          }
         }
+      } catch {
+        // stored config is not refreshable (e.g. legacy node type) — fall through to full canonical rebuild
       }
     }
   }

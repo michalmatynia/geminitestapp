@@ -7,7 +7,9 @@ import type {
 
 export * from '../types/campaigns';
 export * from './campaign-factories';
+export * from './campaign-content-country-routing';
 export * from './campaign-content-routing';
+export * from './campaign-content-readiness';
 export * from './campaign-summarizers';
 export * from './campaign-engagement';
 export * from './campaign-list-hygiene';
@@ -19,7 +21,7 @@ import {
 } from '../types/campaigns';
 import {
   validateFilemakerCampaignContentReadiness,
-} from './campaign-content-routing';
+} from './campaign-content-readiness';
 
 type CampaignRecurringRule = NonNullable<FilemakerEmailCampaign['launch']['recurring']>;
 type ScheduledLaunchEvaluation = Pick<

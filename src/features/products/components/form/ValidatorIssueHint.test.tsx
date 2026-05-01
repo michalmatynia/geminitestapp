@@ -88,9 +88,11 @@ function ValueProbe(): React.JSX.Element {
 
 function IssueHintHarness({
   fieldName = 'sizeLength',
+  issue = createIssue(),
   patterns = [],
 }: {
   fieldName?: string;
+  issue?: FieldValidatorIssue;
   patterns?: ProductValidationPattern[];
 }): React.JSX.Element {
   const methods = useForm<ProductFormData>({
@@ -124,7 +126,7 @@ function IssueHintHarness({
   return (
     <ProductValidationSettingsProvider value={providerValue}>
       <FormProvider {...methods}>
-        <IssueHintRow fieldName={fieldName} fieldValue='0' issue={createIssue()} />
+        <IssueHintRow fieldName={fieldName} fieldValue='0' issue={issue} />
         <ValueProbe />
       </FormProvider>
     </ProductValidationSettingsProvider>
@@ -151,6 +153,18 @@ describe('IssueHintRow', () => {
 
   it('applies single-field pattern replacements to the configured replacement field', () => {
     render(<IssueHintHarness fieldName='name_en' patterns={[createPattern()]} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+
+    expect(screen.getByTestId('size-length-value')).toHaveTextContent('4');
+  });
+
+  it('uses the proposed value for cross-field segment replacements', () => {
+    const issue = createIssue({
+      regex: '\\|\\s*0\\s*\\|',
+      replacementApplyMode: 'replace_matched_segment',
+    });
+    render(<IssueHintHarness fieldName='name_en' issue={issue} patterns={[createPattern()]} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
 

@@ -67,6 +67,7 @@ const applyPendingFieldUpdates = (
     input.setValue(fieldName, fieldValue, {
       shouldDirty: true,
       shouldTouch: true,
+      shouldValidate: true,
     });
   }
 };

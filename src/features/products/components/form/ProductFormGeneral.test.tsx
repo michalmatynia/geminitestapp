@@ -365,6 +365,7 @@ describe('ProductFormGeneral formatter auto-apply', () => {
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,
+        shouldValidate: true,
       })
     );
   });
@@ -397,6 +398,7 @@ describe('ProductFormGeneral formatter auto-apply', () => {
       expect.objectContaining({
         shouldDirty: true,
         shouldTouch: true,
+        shouldValidate: true,
       })
     );
   });

@@ -34,46 +34,76 @@ export type FilemakerCampaignColdRecipient = {
   lastSentAt: string | null;
 };
 
-export const findFilemakerCampaignColdRecipients = (input: {
-  deliveries: FilemakerEmailCampaignDelivery[];
-  events: FilemakerEmailCampaignEvent[];
-  minSendsWithoutEngagement?: number;
-}): FilemakerCampaignColdRecipient[] => {
-  const minSendsWithoutEngagement =
-    input.minSendsWithoutEngagement ?? DEFAULT_MIN_SENDS_WITHOUT_ENGAGEMENT;
-  if (minSendsWithoutEngagement <= 0) return [];
+type FilemakerCampaignSendStats = {
+  sentCount: number;
+  lastSentAt: string | null;
+};
 
+const hasEngagementEvent = (event: FilemakerEmailCampaignEvent): boolean =>
+  event.type === 'opened' || event.type === 'clicked';
+
+const collectDeliveryAddressById = (
+  deliveries: FilemakerEmailCampaignDelivery[]
+): Map<string, string> => {
   const deliveryAddressById = new Map<string, string>();
-  for (const delivery of input.deliveries) {
+  for (const delivery of deliveries) {
     deliveryAddressById.set(delivery.id, normalizeAddress(delivery.emailAddress));
   }
+  return deliveryAddressById;
+};
 
+const collectEngagedAddresses = (
+  events: FilemakerEmailCampaignEvent[],
+  deliveryAddressById: Map<string, string>
+): Set<string> => {
   const engagedAddresses = new Set<string>();
-  for (const event of input.events) {
-    if (event.type !== 'opened' && event.type !== 'clicked') continue;
+  for (const event of events) {
+    if (!hasEngagementEvent(event)) continue;
     const deliveryId = event.deliveryId ?? '';
-    if (!deliveryId) continue;
+    if (deliveryId.length === 0) continue;
     const address = deliveryAddressById.get(deliveryId);
-    if (address) engagedAddresses.add(address);
+    if (address !== undefined && address.length > 0) engagedAddresses.add(address);
   }
+  return engagedAddresses;
+};
 
-  const sendStats = new Map<string, { sentCount: number; lastSentAt: string | null }>();
-  for (const delivery of input.deliveries) {
+const resolveLastSentAt = (
+  sentAt: string | null | undefined,
+  previous: FilemakerCampaignSendStats
+): string | null => {
+  if (sentAt === null || sentAt === undefined || sentAt.length === 0) {
+    return previous.lastSentAt;
+  }
+  if (previous.lastSentAt === null) return sentAt;
+  return Date.parse(sentAt) > Date.parse(previous.lastSentAt) ? sentAt : previous.lastSentAt;
+};
+
+const collectSendStatsByAddress = (
+  deliveries: FilemakerEmailCampaignDelivery[]
+): Map<string, FilemakerCampaignSendStats> => {
+  const sendStats = new Map<string, FilemakerCampaignSendStats>();
+  for (const delivery of deliveries) {
     if (delivery.status !== 'sent') continue;
     const address = normalizeAddress(delivery.emailAddress);
-    if (!address) continue;
+    if (address.length === 0) continue;
     const previous = sendStats.get(address) ?? { sentCount: 0, lastSentAt: null };
-    const lastSentAt =
-      delivery.sentAt &&
-      (!previous.lastSentAt || Date.parse(delivery.sentAt) > Date.parse(previous.lastSentAt))
-        ? delivery.sentAt
-        : previous.lastSentAt;
     sendStats.set(address, {
       sentCount: previous.sentCount + 1,
-      lastSentAt,
+      lastSentAt: resolveLastSentAt(delivery.sentAt, previous),
     });
   }
+  return sendStats;
+};
 
+const collectColdRecipients = ({
+  engagedAddresses,
+  minSendsWithoutEngagement,
+  sendStats,
+}: {
+  engagedAddresses: Set<string>;
+  minSendsWithoutEngagement: number;
+  sendStats: Map<string, FilemakerCampaignSendStats>;
+}): FilemakerCampaignColdRecipient[] => {
   const cold: FilemakerCampaignColdRecipient[] = [];
   for (const [emailAddress, stats] of sendStats.entries()) {
     if (stats.sentCount < minSendsWithoutEngagement) continue;
@@ -85,6 +115,32 @@ export const findFilemakerCampaignColdRecipients = (input: {
     });
   }
   return cold.sort((left, right) => right.sentCount - left.sentCount);
+};
+
+const findExistingSuppressionEntry = (
+  entries: Array<{ emailAddress: string }>,
+  emailAddress: string
+): { emailAddress: string } | undefined =>
+  entries.find((entry) => normalizeAddress(entry.emailAddress) === emailAddress);
+
+const buildColdRecipientNotes = (candidate: FilemakerCampaignColdRecipient): string => {
+  const lastSentAt = candidate.lastSentAt !== null ? `, last sent ${candidate.lastSentAt}` : '';
+  return `Auto-pruned: ${candidate.sentCount} consecutive sends without an open or click${lastSentAt}.`;
+};
+
+export const findFilemakerCampaignColdRecipients = (input: {
+  deliveries: FilemakerEmailCampaignDelivery[];
+  events: FilemakerEmailCampaignEvent[];
+  minSendsWithoutEngagement?: number;
+}): FilemakerCampaignColdRecipient[] => {
+  const minSendsWithoutEngagement =
+    input.minSendsWithoutEngagement ?? DEFAULT_MIN_SENDS_WITHOUT_ENGAGEMENT;
+  if (minSendsWithoutEngagement <= 0) return [];
+
+  const deliveryAddressById = collectDeliveryAddressById(input.deliveries);
+  const engagedAddresses = collectEngagedAddresses(input.events, deliveryAddressById);
+  const sendStats = collectSendStatsByAddress(input.deliveries);
+  return collectColdRecipients({ engagedAddresses, minSendsWithoutEngagement, sendStats });
 };
 
 export const pruneFilemakerCampaignColdRecipients = async (input?: {
@@ -118,10 +174,8 @@ export const pruneFilemakerCampaignColdRecipients = async (input?: {
   let skippedCount = 0;
 
   for (const candidate of candidates) {
-    const existing = registry.entries.find(
-      (entry) => normalizeAddress(entry.emailAddress) === candidate.emailAddress
-    );
-    if (existing) {
+    const existing = findExistingSuppressionEntry(registry.entries, candidate.emailAddress);
+    if (existing !== undefined) {
       skippedCount += 1;
       continue;
     }
@@ -131,9 +185,7 @@ export const pruneFilemakerCampaignColdRecipients = async (input?: {
         emailAddress: candidate.emailAddress,
         reason: 'cold',
         actor: input?.actor ?? 'system',
-        notes: `Auto-pruned: ${candidate.sentCount} consecutive sends without an open or click${
-          candidate.lastSentAt ? `, last sent ${candidate.lastSentAt}` : ''
-        }.`,
+        notes: buildColdRecipientNotes(candidate),
         createdAt: nowIso,
         updatedAt: nowIso,
       }),

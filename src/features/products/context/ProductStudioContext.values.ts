@@ -20,6 +20,7 @@ type ProductStudioStateValueArgs = {
   auditLoading: boolean;
   blockSendForSequenceReadiness: boolean;
   canCompareWithSource: boolean;
+  convertingLinkImageIndex: number | null;
   deletingVariantId: string | null;
   imageSlotPreviews: ProductImageSlotPreview[];
   isStudioLoading: boolean;
@@ -60,6 +61,7 @@ const buildProductStudioStateValue = (
   sourceImageSrc: args.sourceImageSrc,
   variantImageSrc: args.variantImageSrc,
   canCompareWithSource: args.canCompareWithSource,
+  convertingLinkImageIndex: args.convertingLinkImageIndex,
   variantsData: args.variantsData,
   sequenceReadinessMessage: args.sequenceReadinessMessage,
   blockSendForSequenceReadiness: args.blockSendForSequenceReadiness,
@@ -81,7 +83,8 @@ export const useProductStudioStateValue = (
 ): ProductStudioStateContextValue =>
   useMemo(() => buildProductStudioStateValue(args), [
     args.accepting, args.activeRunId, args.auditEntries, args.auditError, args.auditLoading,
-    args.blockSendForSequenceReadiness, args.canCompareWithSource, args.deletingVariantId,
+    args.blockSendForSequenceReadiness, args.canCompareWithSource,
+    args.convertingLinkImageIndex, args.deletingVariantId,
     args.imageSlotPreviews, args.isStudioLoading, args.openingInImageStudio,
     args.pendingVariantPlaceholderCount, args.rotatingDirection, args.runStatus,
     args.selectedImageIndex, args.selectedSourcePreview, args.selectedVariant,
@@ -100,6 +103,7 @@ type ProductStudioActionsValueArgs = ProductStudioActionHandlers & {
 
 export const useProductStudioActionsValue = ({
   handleAcceptVariant,
+  handleConvertLinkImageToFile,
   handleDeleteVariant,
   handleOpenInImageStudio,
   handleRotateImageSlot,
@@ -119,12 +123,14 @@ export const useProductStudioActionsValue = ({
       handleSendToStudio,
       handleOpenInImageStudio,
       handleAcceptVariant,
+      handleConvertLinkImageToFile,
       handleDeleteVariant,
       handleRotateImageSlot,
       refreshVariants,
     }),
     [
       handleAcceptVariant,
+      handleConvertLinkImageToFile,
       handleDeleteVariant,
       handleOpenInImageStudio,
       handleRotateImageSlot,

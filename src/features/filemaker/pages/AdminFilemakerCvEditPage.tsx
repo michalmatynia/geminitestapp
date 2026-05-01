@@ -23,7 +23,7 @@ import { CvBlockSettingsPanel } from '../components/cv-builder/CvBlockSettingsPa
 import { CvLayerPanel } from '../components/cv-builder/CvLayerPanel';
 import { compileCvBlocksToHtml } from '../components/cv-builder/compile-cv-blocks';
 import type { CvBlock } from '../components/cv-builder/cv-block-model';
-import { normalizeCvBlocks } from '../components/cv-builder/cv-block-model';
+import { isCvLeafBlock, normalizeCvBlocks } from '../components/cv-builder/cv-block-model';
 import { openFilemakerCvPdfPreview } from '../cv-pdf-preview';
 import type {
   FilemakerCv,
@@ -132,7 +132,7 @@ const getExperiencePatchKey = (
   patch: FilemakerCvExperienceHighlightPatch,
   index: number
 ): string =>
-  `${patch.experienceKey ?? patch.experienceId ?? patch.experienceTitle ?? patch.role ?? patch.company ?? 'experience'}-${index}`;
+  `${patch.experienceKey}-${index}`;
 
 const buildExperienceHighlightsTextMap = (
   patches: FilemakerCvExperienceHighlightPatch[] | null | undefined
@@ -151,13 +151,12 @@ const formatExperiencePatchLabel = (patch: FilemakerCvExperienceHighlightPatch):
       typeof value === 'string' && value.trim().length > 0
     )
     .join(' | ');
-  return (
-    patch.experienceTitle ??
-    (roleCompany.length > 0 ? roleCompany : null) ??
-    patch.experienceKey ??
-    patch.experienceId ??
-    'Experience'
-  );
+  if (typeof patch.experienceTitle === 'string' && patch.experienceTitle.length > 0) {
+    return patch.experienceTitle;
+  }
+  if (roleCompany.length > 0) return roleCompany;
+  if (patch.experienceKey.length > 0) return patch.experienceKey;
+  return patch.experienceId ?? 'Experience';
 };
 
 const isCoreStrengthsBlock = (block: CvBlock): block is Extract<CvBlock, { kind: 'skills' }> =>
@@ -180,7 +179,9 @@ const experiencePatchMatchesBlock = (
   block: CvBlock
 ): boolean => {
   if (block.kind !== 'experience') return false;
-  const roleCompany = [block.title, block.organization].filter(Boolean).join(' | ');
+  const roleCompany = [block.title, block.organization]
+    .filter((value: string): boolean => value.trim().length > 0)
+    .join(' | ');
   return (
     patchKeyMatches(patch.experienceId, block.id) ||
     patchKeyMatches(patch.experienceKey, block.id) ||
@@ -208,9 +209,11 @@ const createExperiencePatchFromBlock = (
 ): FilemakerCvExperienceHighlightPatch => ({
   experienceKey: block.id,
   experienceId: block.id,
-  experienceTitle: [block.title, block.organization].filter(Boolean).join(' | ') || block.title,
-  company: block.organization || null,
-  role: block.title || null,
+  experienceTitle: [block.title, block.organization]
+    .filter((value: string): boolean => value.trim().length > 0)
+    .join(' | '),
+  company: block.organization.length > 0 ? block.organization : null,
+  role: block.title.length > 0 ? block.title : null,
   highlights: block.highlights,
 });
 
@@ -267,14 +270,19 @@ const applyTailoringPatchToPreviewBlocks = (
       if (patch !== undefined) return { ...block, highlights: patch.highlights };
     }
     if ('children' in block && Array.isArray(block.children)) {
-      return {
-        ...block,
-        children: applyTailoringPatchToPreviewBlocks(block.children as CvBlock[], tailoringPatch),
-      } as CvBlock;
+      const children = applyTailoringPatchToPreviewBlocks(block.children as CvBlock[], tailoringPatch);
+      if (block.kind === 'section') return { ...block, children };
+      if (block.kind === 'columns') {
+        return { ...block, children: children.filter(isCvRowBlock) };
+      }
+      return { ...block, children: children.filter(isCvLeafBlock) };
     }
     return block;
   });
 };
+
+const isCvRowBlock = (block: CvBlock): block is Extract<CvBlock, { kind: 'row' }> =>
+  block.kind === 'row';
 
 const loadCv = async (cvId: string, signal: AbortSignal): Promise<FilemakerCv> => {
   const response = await fetch(`/api/filemaker/cvs/${encodeURIComponent(cvId)}`, { signal });
@@ -448,6 +456,8 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
     sourceCvRecordId.length > 0 &&
     sourceCvRecordId !== 'profile-fields-only' &&
     sourceCvRecordId !== state.cv?.id;
+  const sourceCvLabel = sourceCvTitle.length > 0 ? sourceCvTitle : sourceCvRecordId;
+  const isProfileFieldsOnlySource = !canOpenSourceCv && sourceCvRecordId === 'profile-fields-only';
   const hasTailoringMetadata =
     tailoringScope !== null ||
     tailoredProfessionalSummary.length > 0 ||
@@ -487,14 +497,16 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
   );
 
   useEffect(() => {
-    if (!hasScopedPatchChanges) return;
     const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
       event.preventDefault();
-      event.returnValue = '';
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    if (hasScopedPatchChanges) {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (hasScopedPatchChanges) {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
     };
   }, [hasScopedPatchChanges]);
 
@@ -768,7 +780,7 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
               <div>
                 Based on CV:{' '}
                 <span className='font-medium text-foreground'>
-                  {sourceCvTitle.length > 0 ? sourceCvTitle : sourceCvRecordId}
+                  {sourceCvLabel}
                 </span>
               </div>
               {canOpenSourceCv ? (
@@ -794,7 +806,8 @@ export function AdminFilemakerCvEditPage(): React.JSX.Element {
                   <ExternalLink className='size-3' />
                   Open source CV
                 </Button>
-              ) : sourceCvRecordId === 'profile-fields-only' ? (
+              ) : null}
+              {isProfileFieldsOnlySource ? (
                 <Badge variant='outline' className='text-[10px]'>
                   Profile fields only
                 </Badge>

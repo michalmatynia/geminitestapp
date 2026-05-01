@@ -68,15 +68,18 @@ const roundPercent = (numerator: number, denominator: number): number => {
   return Math.round((numerator * 1000) / denominator) / 10;
 };
 
+const parseRunSortTimestamp = (run: FilemakerEmailCampaignRun): number => {
+  const timestamp = Date.parse(run.completedAt ?? run.startedAt ?? run.createdAt ?? '');
+  return Number.isFinite(timestamp) ? timestamp : 0;
+};
+
 const compareRunsNewestFirst = (
   left: FilemakerEmailCampaignRun,
   right: FilemakerEmailCampaignRun
 ): number => {
-  const leftAt = Date.parse(left.completedAt ?? left.startedAt ?? left.createdAt ?? '');
-  const rightAt = Date.parse(right.completedAt ?? right.startedAt ?? right.createdAt ?? '');
-  const safeLeft = Number.isFinite(leftAt) ? leftAt : 0;
-  const safeRight = Number.isFinite(rightAt) ? rightAt : 0;
-  return safeRight - safeLeft;
+  const leftAt = parseRunSortTimestamp(left);
+  const rightAt = parseRunSortTimestamp(right);
+  return rightAt - leftAt;
 };
 
 interface SummarizeCampaignTrendInput {
@@ -88,97 +91,159 @@ interface SummarizeCampaignTrendInput {
   limit?: number;
 }
 
+const groupDeliveriesByRunId = (
+  deliveries: FilemakerEmailCampaignDelivery[]
+): Map<string, FilemakerEmailCampaignDelivery[]> => {
+  const deliveriesByRunId = new Map<string, FilemakerEmailCampaignDelivery[]>();
+  deliveries.forEach((delivery) => {
+    const list = deliveriesByRunId.get(delivery.runId) ?? [];
+    list.push(delivery);
+    deliveriesByRunId.set(delivery.runId, list);
+  });
+  return deliveriesByRunId;
+};
+
+const groupEventsByRunId = (
+  events: FilemakerEmailCampaignEvent[]
+): Map<string, FilemakerEmailCampaignEvent[]> => {
+  const eventsByRunId = new Map<string, FilemakerEmailCampaignEvent[]>();
+  events.forEach((event) => {
+    if (event.runId === null || event.runId === undefined || event.runId.length === 0) return;
+    const list = eventsByRunId.get(event.runId) ?? [];
+    list.push(event);
+    eventsByRunId.set(event.runId, list);
+  });
+  return eventsByRunId;
+};
+
+const countColdSuppressionsByRunId = (
+  registry: FilemakerEmailCampaignSuppressionRegistry
+): Map<string, number> => {
+  const suppressionsByRunId = new Map<string, number>();
+  registry.entries.forEach((entry) => {
+    if (entry.reason !== 'cold') return;
+    if (entry.runId === null || entry.runId === undefined || entry.runId.length === 0) return;
+    suppressionsByRunId.set(entry.runId, (suppressionsByRunId.get(entry.runId) ?? 0) + 1);
+  });
+  return suppressionsByRunId;
+};
+
+const resolveCount = (value: number, fallback: number): number =>
+  value > 0 ? value : fallback;
+
+const getEventDeliveryId = (event: FilemakerEmailCampaignEvent): string | null => {
+  if (event.deliveryId === null || event.deliveryId === undefined || event.deliveryId.length === 0) {
+    return null;
+  }
+  return event.deliveryId;
+};
+
+const collectRunEventCounts = (
+  events: FilemakerEmailCampaignEvent[]
+): { uniqueOpens: number; uniqueClicks: number; decisionCount: number } => {
+  const uniqueOpensSet = new Set<string>();
+  const uniqueClicksSet = new Set<string>();
+  let decisionCount = 0;
+  events.forEach((event) => {
+    const deliveryId = getEventDeliveryId(event);
+    if (event.type === 'opened' && deliveryId !== null) uniqueOpensSet.add(deliveryId);
+    if (event.type === 'clicked' && deliveryId !== null) uniqueClicksSet.add(deliveryId);
+    if (isFilemakerEmailCampaignDeliverabilityDecisionEvent(event)) decisionCount += 1;
+  });
+  return {
+    uniqueOpens: uniqueOpensSet.size,
+    uniqueClicks: uniqueClicksSet.size,
+    decisionCount,
+  };
+};
+
+const toCampaignRunTrendDataPoint = ({
+  deliveries,
+  events,
+  run,
+  suppressionsByRunId,
+}: {
+  deliveries: FilemakerEmailCampaignDelivery[];
+  events: FilemakerEmailCampaignEvent[];
+  run: FilemakerEmailCampaignRun;
+  suppressionsByRunId: Map<string, number>;
+}): CampaignRunTrendDataPoint => {
+  const recipientCount = resolveCount(run.recipientCount, deliveries.length);
+  const deliveredCount = resolveCount(
+    run.deliveredCount,
+    deliveries.filter((delivery) => delivery.status === 'sent').length
+  );
+  const bouncedCount = deliveries.filter((delivery) => delivery.status === 'bounced').length;
+  const failedCount = resolveCount(
+    run.failedCount,
+    deliveries.filter((delivery) => delivery.status === 'failed').length
+  );
+  const eventCounts = collectRunEventCounts(events);
+  return {
+    runId: run.id,
+    status: run.status,
+    mode: run.mode,
+    startedAt: run.startedAt ?? null,
+    completedAt: run.completedAt ?? null,
+    recipientCount,
+    deliveredCount,
+    bouncedCount,
+    failedCount,
+    uniqueOpens: eventCounts.uniqueOpens,
+    uniqueClicks: eventCounts.uniqueClicks,
+    openRatePercent: roundPercent(eventCounts.uniqueOpens, deliveredCount),
+    clickRatePercent: roundPercent(eventCounts.uniqueClicks, deliveredCount),
+    bounceRatePercent: roundPercent(bouncedCount, recipientCount),
+    failureRatePercent: roundPercent(failedCount + bouncedCount, recipientCount),
+    coldSuppressionsAdded: suppressionsByRunId.get(run.id) ?? 0,
+    decisionCount: eventCounts.decisionCount,
+  };
+};
+
+const sumTrendDataPointValue = (
+  points: CampaignRunTrendDataPoint[],
+  key: keyof CampaignRunTrendDataPoint
+): number => points.reduce((sum, point) => sum + (point[key] as number), 0);
+
+const averageTrendDataPointValue = (
+  points: CampaignRunTrendDataPoint[],
+  key: keyof CampaignRunTrendDataPoint
+): number =>
+  points.length === 0
+    ? 0
+    : Math.round((sumTrendDataPointValue(points, key) * 10) / points.length) / 10;
+
 export const summarizeFilemakerEmailCampaignRunTrend = (
   input: SummarizeCampaignTrendInput
 ): CampaignTrendSummary => {
   const limit = input.limit ?? 10;
   const campaignId = input.campaign.id;
-
   const runs = input.runRegistry.runs
     .filter((run) => run.campaignId === campaignId)
     .slice()
     .sort(compareRunsNewestFirst)
     .slice(0, limit);
-
-  const deliveriesByRunId = new Map<string, FilemakerEmailCampaignDelivery[]>();
-  input.deliveryRegistry.deliveries.forEach((delivery) => {
-    const list = deliveriesByRunId.get(delivery.runId) ?? [];
-    list.push(delivery);
-    deliveriesByRunId.set(delivery.runId, list);
-  });
-
-  const eventsByRunId = new Map<string, FilemakerEmailCampaignEvent[]>();
-  input.eventRegistry.events.forEach((event) => {
-    if (!event.runId) return;
-    const list = eventsByRunId.get(event.runId) ?? [];
-    list.push(event);
-    eventsByRunId.set(event.runId, list);
-  });
-
-  const suppressionsByRunId = new Map<string, number>();
-  input.suppressionRegistry.entries.forEach((entry) => {
-    if (entry.reason !== 'cold' || !entry.runId) return;
-    suppressionsByRunId.set(entry.runId, (suppressionsByRunId.get(entry.runId) ?? 0) + 1);
-  });
-
-  const points: CampaignRunTrendDataPoint[] = runs.map((run) => {
-    const deliveries = deliveriesByRunId.get(run.id) ?? [];
-    const events = eventsByRunId.get(run.id) ?? [];
-
-    const recipientCount = run.recipientCount || deliveries.length;
-    const deliveredCount = run.deliveredCount || deliveries.filter((d) => d.status === 'sent').length;
-    const bouncedCount = deliveries.filter((d) => d.status === 'bounced').length;
-    const failedCount = run.failedCount || deliveries.filter((d) => d.status === 'failed').length;
-
-    const uniqueOpensSet = new Set<string>();
-    const uniqueClicksSet = new Set<string>();
-    let decisionCount = 0;
-    events.forEach((event) => {
-      if (event.type === 'opened' && event.deliveryId) uniqueOpensSet.add(event.deliveryId);
-      if (event.type === 'clicked' && event.deliveryId) uniqueClicksSet.add(event.deliveryId);
-      if (isFilemakerEmailCampaignDeliverabilityDecisionEvent(event)) decisionCount += 1;
-    });
-
-    const openRatePercent = roundPercent(uniqueOpensSet.size, deliveredCount);
-    const clickRatePercent = roundPercent(uniqueClicksSet.size, deliveredCount);
-    const bounceRatePercent = roundPercent(bouncedCount, recipientCount);
-    const failureRatePercent = roundPercent(failedCount + bouncedCount, recipientCount);
-
-    return {
-      runId: run.id,
-      status: run.status,
-      mode: run.mode,
-      startedAt: run.startedAt ?? null,
-      completedAt: run.completedAt ?? null,
-      recipientCount,
-      deliveredCount,
-      bouncedCount,
-      failedCount,
-      uniqueOpens: uniqueOpensSet.size,
-      uniqueClicks: uniqueClicksSet.size,
-      openRatePercent,
-      clickRatePercent,
-      bounceRatePercent,
-      failureRatePercent,
-      coldSuppressionsAdded: suppressionsByRunId.get(run.id) ?? 0,
-      decisionCount,
-    };
-  });
-
-  const sumOf = (key: keyof CampaignRunTrendDataPoint): number =>
-    points.reduce((sum, point) => sum + (point[key] as number), 0);
-  const safeAvg = (key: keyof CampaignRunTrendDataPoint): number =>
-    points.length === 0 ? 0 : Math.round((sumOf(key) * 10) / points.length) / 10;
+  const deliveriesByRunId = groupDeliveriesByRunId(input.deliveryRegistry.deliveries);
+  const eventsByRunId = groupEventsByRunId(input.eventRegistry.events);
+  const suppressionsByRunId = countColdSuppressionsByRunId(input.suppressionRegistry);
+  const points = runs.map((run) =>
+    toCampaignRunTrendDataPoint({
+      run,
+      deliveries: deliveriesByRunId.get(run.id) ?? [],
+      events: eventsByRunId.get(run.id) ?? [],
+      suppressionsByRunId,
+    })
+  );
 
   return {
     campaignId,
     // Reverse for chart consumption: oldest → newest left-to-right.
     points: points.slice().reverse(),
     averages: {
-      openRatePercent: safeAvg('openRatePercent'),
-      clickRatePercent: safeAvg('clickRatePercent'),
-      bounceRatePercent: safeAvg('bounceRatePercent'),
-      failureRatePercent: safeAvg('failureRatePercent'),
+      openRatePercent: averageTrendDataPointValue(points, 'openRatePercent'),
+      clickRatePercent: averageTrendDataPointValue(points, 'clickRatePercent'),
+      bounceRatePercent: averageTrendDataPointValue(points, 'bounceRatePercent'),
+      failureRatePercent: averageTrendDataPointValue(points, 'failureRatePercent'),
     },
   };
 };

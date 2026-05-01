@@ -1,50 +1,90 @@
-import path from 'path';
-
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { uploadFile } from '@/features/files/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { ProductWithImages } from '@/shared/contracts/products/product';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { badRequestError } from '@/shared/errors/app-error';
+import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
+import {
+  buildLinkedProductImageResponse,
+  buildLinkedProductImageWithProductResponse,
+  clearLinkedImageSlotValue,
+  requireLinkedImageBlob,
+  requireLinkedImageDownloadResponse,
+  requireLinkedProduct,
+  requireLinkedProductImageId,
+  resolveConvertedLinkedImageFileIds,
+  resolveLinkedImageFilename,
+  resolveLinkedImageMimeType,
+} from './handler.helpers';
 
 const linkToFileSchema = z.object({
   url: z.string().trim().url(),
   filename: z.string().trim().optional(),
+  imageSlotIndex: z.number().int().min(0).max(DEFAULT_IMAGE_SLOT_COUNT - 1).optional(),
 });
 
-const extensionForMimeType = (mimetype: string): string => {
-  const normalized = mimetype.trim().toLowerCase();
-  if (normalized === 'image/png') return '.png';
-  if (normalized === 'image/webp') return '.webp';
-  if (normalized === 'image/gif') return '.gif';
-  if (normalized === 'image/avif') return '.avif';
-  if (normalized === 'image/svg+xml') return '.svg';
-  return '.jpg';
+type ProductRepository = Awaited<ReturnType<typeof getProductRepository>>;
+type LinkedImageDownload = { file: File; filename: string };
+type UploadedProductImage = { id: string; filepath: string };
+
+const resolvePreferredFilename = (filename: string | undefined): { preferred?: string } => {
+  if (filename === undefined || filename.length === 0) return {};
+  return { preferred: filename };
 };
 
-const resolveFilename = (input: { url: string; preferred?: string; mimetype: string }): string => {
-  const baseFallback = `linked-image-${Date.now()}`;
-  const withSource =
-    input.preferred?.trim() ||
-    (() => {
-      try {
-        const parsed = new URL(input.url);
-        const basename = path.basename(parsed.pathname).trim();
-        return basename || '';
-      } catch (error) {
-        void ErrorSystem.captureException(error);
-        return '';
-      }
-    })();
+const downloadLinkedImageFile = async (
+  url: string,
+  filename?: string
+): Promise<LinkedImageDownload> => {
+  const response = await fetch(url, { cache: 'no-store' });
+  requireLinkedImageDownloadResponse(response, url);
 
-  const source = withSource || baseFallback;
-  const ext = path.extname(source).trim();
-  if (ext.length > 0) return source;
-  return `${source}${extensionForMimeType(input.mimetype)}`;
+  const blob = requireLinkedImageBlob(await response.blob(), url);
+  const mimetype = resolveLinkedImageMimeType({
+    blobType: blob.type,
+    headerType: response.headers.get('content-type'),
+    url,
+  });
+  const resolvedFilename = resolveLinkedImageFilename({
+    url,
+    mimetype,
+    ...resolvePreferredFilename(filename),
+  });
+
+  return {
+    file: new File([blob], resolvedFilename, { type: mimetype }),
+    filename: resolvedFilename,
+  };
+};
+
+const persistConvertedImageSlot = async (input: {
+  imageSlotIndex: number;
+  product: ProductWithImages;
+  productId: string;
+  productRepo: ProductRepository;
+  uploaded: UploadedProductImage;
+}): Promise<ProductWithImages> => {
+  await input.productRepo.updateProduct(input.productId, {
+    imageLinks: clearLinkedImageSlotValue(input.product.imageLinks, input.imageSlotIndex),
+    imageBase64s: clearLinkedImageSlotValue(input.product.imageBase64s, input.imageSlotIndex),
+  });
+  await input.productRepo.replaceProductImages(
+    input.productId,
+    resolveConvertedLinkedImageFileIds(input.product, input.imageSlotIndex, input.uploaded.id)
+  );
+
+  const updatedProduct = await input.productRepo.getProductById(input.productId);
+  if (updatedProduct === null) {
+    throw badRequestError('Image was converted, but the product could not be reloaded.', {
+      productId: input.productId,
+    });
+  }
+  return updatedProduct;
 };
 
 export async function postHandler(
@@ -52,10 +92,7 @@ export async function postHandler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-  const productId = params.id;
-  if (!productId) {
-    throw badRequestError('Product id is required');
-  }
+  const productId = requireLinkedProductImageId(params);
 
   const parsed = await parseJsonBody(req, linkToFileSchema, {
     logPrefix: 'products.[id].images.link-to-file.POST',
@@ -65,41 +102,8 @@ export async function postHandler(
   }
 
   const productRepo = await getProductRepository();
-  const product = await productRepo.getProductById(productId);
-  if (!product) {
-    throw notFoundError('Product not found', { productId });
-  }
-
-  const response = await fetch(parsed.data.url, { cache: 'no-store' });
-  if (!response.ok) {
-    throw badRequestError(`Failed to download image (${response.status}).`, {
-      url: parsed.data.url,
-      status: response.status,
-    });
-  }
-
-  const blob = await response.blob();
-  if (blob.size <= 0) {
-    throw badRequestError('Downloaded image is empty.', {
-      url: parsed.data.url,
-    });
-  }
-
-  const detectedMime =
-    blob.type?.trim() || response.headers.get('content-type')?.trim() || 'image/jpeg';
-  if (!detectedMime.toLowerCase().startsWith('image/')) {
-    throw badRequestError('URL does not point to an image.', {
-      url: parsed.data.url,
-      mimetype: detectedMime,
-    });
-  }
-
-  const filename = resolveFilename({
-    url: parsed.data.url,
-    mimetype: detectedMime,
-    ...(parsed.data.filename ? { preferred: parsed.data.filename } : {}),
-  });
-  const file = new File([blob], filename, { type: detectedMime });
+  const product = requireLinkedProduct(await productRepo.getProductById(productId), productId);
+  const { file, filename } = await downloadLinkedImageFile(parsed.data.url, parsed.data.filename);
 
   const uploaded = await uploadFile(file, {
     category: 'products',
@@ -107,11 +111,18 @@ export async function postHandler(
     filenameOverride: filename,
   });
 
-  return NextResponse.json({
-    status: 'ok',
-    imageFile: {
-      id: uploaded.id,
-      filepath: uploaded.filepath,
-    },
-  });
+  if (parsed.data.imageSlotIndex !== undefined) {
+    const updatedProduct = await persistConvertedImageSlot({
+      imageSlotIndex: parsed.data.imageSlotIndex,
+      product,
+      productId,
+      productRepo,
+      uploaded,
+    });
+    return NextResponse.json(
+      buildLinkedProductImageWithProductResponse(uploaded, updatedProduct)
+    );
+  }
+
+  return NextResponse.json(buildLinkedProductImageResponse(uploaded));
 }

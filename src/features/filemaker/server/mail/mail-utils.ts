@@ -17,15 +17,19 @@ export const normalizeEmailAddress = (value: string | null | undefined): string 
   return normalized;
 };
 
+const toNullableString = (value: string): string | null =>
+  value.length > 0 ? value : null;
+
 export const toParticipant = (
   input: MessageAddressObject | FilemakerMailParticipant | null | undefined
 ): FilemakerMailParticipant | null => {
-  if (!input?.address) return null;
-  const address = normalizeEmailAddress(input.address);
-  if (!address) return null;
+  const rawAddress = input?.address ?? '';
+  if (rawAddress.length === 0) return null;
+  const address = normalizeEmailAddress(rawAddress);
+  if (address.length === 0) return null;
   return {
     address,
-    name: normalizeString('name' in input ? input.name : null) || null,
+    name: toNullableString(normalizeString('name' in input ? input.name : null)),
   };
 };
 
@@ -39,7 +43,7 @@ export const toParticipantList = (
   dedupeFilemakerMailParticipants(
     (input ?? [])
       .map((entry) => toParticipant(entry))
-      .filter((entry): entry is FilemakerMailParticipant => Boolean(entry))
+      .filter((entry): entry is FilemakerMailParticipant => entry !== null)
   );
 
 export const pickParticipantList = (
@@ -48,16 +52,16 @@ export const pickParticipantList = (
 ): FilemakerMailParticipant[] => (preferred.length > 0 ? preferred : fallback);
 
 export const parseMailParserAddressList = (input: unknown): FilemakerMailParticipant[] => {
-  if (!input || typeof input !== 'object') return [];
+  if (input === null || input === undefined || typeof input !== 'object') return [];
   const values = Array.isArray((input as { value?: unknown }).value)
     ? ((input as { value?: Array<{ name?: string; address?: string }> }).value ?? [])
     : [];
   const participants: FilemakerMailParticipant[] = [];
   values.forEach((entry) => {
-    if (!entry.address) return;
+    if (entry.address === undefined || entry.address.length === 0) return;
     participants.push({
       address: normalizeEmailAddress(entry.address),
-      name: normalizeString(entry.name) || null,
+      name: toNullableString(normalizeString(entry.name)),
     });
   });
   return dedupeFilemakerMailParticipants(participants);
@@ -84,8 +88,10 @@ export const mailFolderRoleOrder: Record<FilemakerMailFolderRole, number> = {
   custom: 6,
 };
 
-export const buildSyncStateId = (accountId: string, mailboxPath: string): string =>
-  `filemaker-mail-sync-${toIdToken(`${accountId}-${mailboxPath}`) || randomUUID()}`;
+export const buildSyncStateId = (accountId: string, mailboxPath: string): string => {
+  const token = toIdToken(`${accountId}-${mailboxPath}`);
+  return `filemaker-mail-sync-${token.length > 0 ? token : randomUUID()}`;
+};
 
 export const buildAccountSecretSettingKey = (
   accountId: string,
@@ -108,12 +114,13 @@ export const buildThreadId = (input: {
   normalizedSubject: string;
   anchorAddress: string;
 }): string => {
+  const providerThreadId = input.providerThreadId ?? '';
+  const hashSource =
+    providerThreadId.length > 0
+      ? `${input.accountId}:${providerThreadId}`
+      : `${input.accountId}:${input.normalizedSubject}:${input.anchorAddress}`;
   const hash = createHash('sha1')
-    .update(
-      input.providerThreadId
-        ? `${input.accountId}:${input.providerThreadId}`
-        : `${input.accountId}:${input.normalizedSubject}:${input.anchorAddress}`
-    )
+    .update(hashSource)
     .digest('hex')
     .slice(0, 16);
   return `filemaker-mail-thread-${hash}`;
@@ -130,20 +137,24 @@ export const resolveDirection = (
     ? 'outbound'
     : 'inbound';
 
+const hasMailFlag = (flags: Set<string> | undefined, flag: string): boolean =>
+  flags !== undefined ? flags.has(flag) : false;
+
 export const deriveFlags = (flags: Set<string> | undefined): FilemakerMailFlags => ({
-  seen: flags?.has('\\Seen') ?? false,
-  answered: flags?.has('\\Answered') ?? false,
-  flagged: flags?.has('\\Flagged') ?? false,
-  draft: flags?.has('\\Draft') ?? false,
-  deleted: flags?.has('\\Deleted') ?? false,
+  seen: hasMailFlag(flags, '\\Seen'),
+  answered: hasMailFlag(flags, '\\Answered'),
+  flagged: hasMailFlag(flags, '\\Flagged'),
+  draft: hasMailFlag(flags, '\\Draft'),
+  deleted: hasMailFlag(flags, '\\Deleted'),
 });
 
 export const parseReferencesHeader = (envelope: MessageEnvelopeObject | undefined): string[] => {
-  if (!envelope?.inReplyTo) return [];
-  return envelope.inReplyTo
+  const inReplyTo = envelope?.inReplyTo ?? '';
+  if (inReplyTo.length === 0) return [];
+  return inReplyTo
     .split(/\s+/)
     .map((entry) => entry.trim())
-    .filter(Boolean);
+    .filter((entry) => entry.length > 0);
 };
 
 export const normalizeReferenceIds = (input: unknown): string[] => {

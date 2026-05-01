@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { UseFormWatch } from 'react-hook-form';
+import { useWatch, type Control } from 'react-hook-form';
 
 import { buildProductValidationSourceValues } from '@/features/products/lib/validatorSourceFields';
 import type { ProductCategory } from '@/shared/contracts/products/categories';
@@ -15,7 +15,7 @@ type UseProductFormValidatorValuesArgs = {
   selectedCatalogIds: string[];
   selectedCategoryId: string | null;
   selectedProducerIds: string[];
-  watch: UseFormWatch<ProductFormData>;
+  control: Control<ProductFormData>;
 };
 
 const WATCHED_VALIDATOR_FIELDS = [
@@ -60,14 +60,17 @@ const buildValidatorBaseValues = (watchFields: readonly unknown[]): Record<strin
 
 export const useProductFormValidatorValues = ({
   categories,
+  control,
   fallbackCatalogId,
   producers,
   selectedCatalogIds,
   selectedCategoryId,
   selectedProducerIds,
-  watch,
 }: UseProductFormValidatorValuesArgs): Record<string, unknown> => {
-  const watchFields = watch(WATCHED_VALIDATOR_FIELDS);
+  const watchFields = useWatch({
+    control,
+    name: WATCHED_VALIDATOR_FIELDS,
+  }) as readonly unknown[];
 
   return useMemo(
     () =>

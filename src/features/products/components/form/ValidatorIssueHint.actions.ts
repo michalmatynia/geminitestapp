@@ -28,6 +28,23 @@ const resolveIssueReplacementFieldName = ({
   return fieldName;
 };
 
+const resolveIssueReplacementValue = ({
+  currentValue,
+  fieldName,
+  issue,
+  replacementFieldName,
+}: {
+  currentValue: string | number | undefined;
+  fieldName: string;
+  issue: FieldValidatorIssue;
+  replacementFieldName: string;
+}): string => {
+  if (fieldName !== replacementFieldName && issue.replacementValue !== null) {
+    return issue.replacementValue;
+  }
+  return getIssueReplacementPreview(String(currentValue ?? ''), issue);
+};
+
 export const useIssueReplacementFieldName = (
   fieldName: string,
   issue: FieldValidatorIssue
@@ -56,7 +73,12 @@ export const useIssueReplaceHandler = ({
     const currentValue =
       (getValues(replacementFieldName as keyof ProductFormData) as string | number | undefined) ??
       '';
-    const nextValue = getIssueReplacementPreview(String(currentValue), issue);
+    const nextValue = resolveIssueReplacementValue({
+      currentValue,
+      fieldName,
+      issue,
+      replacementFieldName,
+    });
     const applied = applyValidatorFieldReplacement({
       fieldName: replacementFieldName,
       replacementValue: nextValue,

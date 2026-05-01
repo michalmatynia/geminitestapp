@@ -33,6 +33,7 @@ type ProductStudioVariantFacts = {
 const summarizeImageSlot = (slot: ProductImageSlotPreview): Record<string, unknown> => ({
   index: slot.index,
   label: slot.label,
+  sourceType: slot.sourceType,
   src: slot.src,
 });
 

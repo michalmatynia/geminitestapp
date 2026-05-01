@@ -67,11 +67,11 @@ const enrichProductsWithEffectiveShippingGroups = async <TProduct extends Produc
     return products;
   }
 
-  const primaryCatalogIds = Array.from(
+  const productCategoryIds = Array.from(
     new Set(
       products
-        .map((product) => resolveProductPrimaryCatalogId(product))
-        .filter((catalogId): catalogId is string => typeof catalogId === 'string' && catalogId.length > 0)
+        .map((product) => toTrimmedString(product.categoryId))
+        .filter((categoryId): categoryId is string => categoryId.length > 0)
     )
   );
   const manualShippingGroupIds = Array.from(
@@ -82,7 +82,7 @@ const enrichProductsWithEffectiveShippingGroups = async <TProduct extends Produc
     )
   );
 
-  if (primaryCatalogIds.length === 0 && manualShippingGroupIds.length === 0) {
+  if (productCategoryIds.length === 0 && manualShippingGroupIds.length === 0) {
     return products;
   }
 
@@ -91,20 +91,14 @@ const enrichProductsWithEffectiveShippingGroups = async <TProduct extends Produc
     getCategoryRepository(provider),
   ]);
 
-  const [shippingGroupsByCatalogEntries, categoriesByCatalogEntries, manualShippingGroupEntries] =
+  const [shippingGroups, categories, manualShippingGroupEntries] =
     await Promise.all([
-      Promise.all(
-        primaryCatalogIds.map(async (catalogId) => [
-          catalogId,
-          await shippingGroupRepository.listShippingGroups({ catalogId }),
-        ] as const)
-      ),
-      Promise.all(
-        primaryCatalogIds.map(async (catalogId) => [
-          catalogId,
-          await categoryRepository.listCategories({ catalogId }),
-        ] as const)
-      ),
+      productCategoryIds.length > 0
+        ? shippingGroupRepository.listShippingGroups({})
+        : Promise.resolve([]),
+      productCategoryIds.length > 0
+        ? categoryRepository.listCategories({})
+        : Promise.resolve([]),
       Promise.all(
         manualShippingGroupIds.map(async (shippingGroupId) => [
           shippingGroupId,
@@ -113,28 +107,23 @@ const enrichProductsWithEffectiveShippingGroups = async <TProduct extends Produc
       ),
     ]);
 
-  const shippingGroupsByCatalog = new Map(shippingGroupsByCatalogEntries);
-  const categoriesByCatalog = new Map(categoriesByCatalogEntries);
   const manualShippingGroupsById = new Map(
     manualShippingGroupEntries.filter((entry): entry is readonly [string, NonNullable<(typeof entry)[1]>] => entry[1] !== null)
   );
   const shippingGroupNamesById = new Map<string, string>();
-  for (const shippingGroups of shippingGroupsByCatalog.values()) {
-    for (const shippingGroup of shippingGroups) {
-      shippingGroupNamesById.set(toTrimmedString(shippingGroup.id), shippingGroup.name);
-    }
+  for (const shippingGroup of shippingGroups) {
+    shippingGroupNamesById.set(toTrimmedString(shippingGroup.id), shippingGroup.name);
   }
   for (const [shippingGroupId, shippingGroup] of manualShippingGroupsById.entries()) {
     shippingGroupNamesById.set(shippingGroupId, shippingGroup.name);
   }
 
   return products.map((product) => {
-    const primaryCatalogId = resolveProductPrimaryCatalogId(product);
     const manualShippingGroupId = toTrimmedString(product.shippingGroupId);
     const resolution = resolveEffectiveShippingGroup({
       product,
-      shippingGroups: primaryCatalogId ? (shippingGroupsByCatalog.get(primaryCatalogId) ?? []) : [],
-      categories: primaryCatalogId ? (categoriesByCatalog.get(primaryCatalogId) ?? []) : [],
+      shippingGroups,
+      categories,
       manualShippingGroup: manualShippingGroupId
         ? (manualShippingGroupsById.get(manualShippingGroupId) ?? null)
         : null,
@@ -1013,7 +1002,7 @@ async function deleteProductImage(
   // 3. Cleanup if last link
   if (remainingLinksCount === 0) {
     await deleteFileFromStorage(imageFile.filepath);
-    throw badRequestError('Failed to delete product image', { productId, imageId });
+    await imageRepository.deleteImageFile(imageId);
   }
 }
 

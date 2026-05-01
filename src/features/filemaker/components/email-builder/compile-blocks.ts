@@ -11,6 +11,16 @@ import type {
   EmailTextBlock,
 } from './block-model';
 
+type EmailLeafBlock =
+  | EmailTextBlock
+  | EmailHeadingBlock
+  | EmailImageBlock
+  | EmailButtonBlock
+  | EmailDividerBlock
+  | EmailSpacerBlock;
+
+type EmailContainerBlock = EmailSectionBlock | EmailColumnsBlock | EmailRowBlock;
+
 const escapeHtml = (value: string): string =>
   value
     .replace(/&/g, '&amp;')
@@ -26,23 +36,29 @@ const wrapRow = (innerHtml: string): string =>
 
 const compileText = (block: EmailTextBlock): string => wrapRow(block.html);
 
+const getHeadingFontSize = (level: EmailHeadingBlock['level']): string => {
+  if (level === 1) return '28px';
+  if (level === 2) return '22px';
+  return '18px';
+};
+
 const compileHeading = (block: EmailHeadingBlock): string => {
   const tag = `h${block.level}`;
-  const size = block.level === 1 ? '28px' : block.level === 2 ? '22px' : '18px';
+  const size = getHeadingFontSize(block.level);
   const inner = `<${tag} style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:${size};line-height:1.3;color:#111827;text-align:${block.align};">${escapeHtml(block.text)}</${tag}>`;
   return wrapRow(inner);
 };
 
 const compileImage = (block: EmailImageBlock): string => {
-  if (!block.src) {
+  if (block.src.length === 0) {
     return wrapRow(
       `<div style="padding:24px;border:1px dashed #d1d5db;text-align:${block.align};color:#6b7280;font-size:12px;">[Image: no source]</div>`
     );
   }
-  const widthAttr = block.width ? ` width="${block.width}"` : '';
-  const widthStyle = block.width ? `max-width:${block.width}px;width:100%;` : 'max-width:100%;';
+  const widthAttr = block.width !== null ? ` width="${block.width}"` : '';
+  const widthStyle = block.width !== null ? `max-width:${block.width}px;width:100%;` : 'max-width:100%;';
   const img = `<img src="${escapeAttr(block.src)}" alt="${escapeAttr(block.alt)}"${widthAttr} style="${widthStyle}height:auto;display:inline-block;border:0;" />`;
-  const wrapped = block.href
+  const wrapped = block.href !== null && block.href.length > 0
     ? `<a href="${escapeAttr(block.href)}" target="_blank" rel="noopener">${img}</a>`
     : img;
   return wrapRow(`<div style="text-align:${block.align};">${wrapped}</div>`);
@@ -92,7 +108,10 @@ const compileColumns = (block: EmailColumnsBlock): string => {
   return `<tr><td><table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tbody><tr>${cells}</tr></tbody></table></td></tr>`;
 };
 
-const compileBlock = (block: EmailBlock): string => {
+const isContainerBlock = (block: EmailBlock): block is EmailContainerBlock =>
+  block.kind === 'section' || block.kind === 'columns' || block.kind === 'row';
+
+const compileLeafBlock = (block: EmailLeafBlock): string => {
   switch (block.kind) {
     case 'text': return compileText(block);
     case 'heading': return compileHeading(block);
@@ -100,11 +119,21 @@ const compileBlock = (block: EmailBlock): string => {
     case 'button': return compileButton(block);
     case 'divider': return compileDivider(block);
     case 'spacer': return compileSpacer(block);
+  }
+  return '';
+};
+
+const compileContainerBlock = (block: EmailContainerBlock): string => {
+  switch (block.kind) {
     case 'section': return compileSection(block);
     case 'columns': return compileColumns(block);
     case 'row': return compileRow(block);
   }
+  return '';
 };
+
+const compileBlock = (block: EmailBlock): string =>
+  isContainerBlock(block) ? compileContainerBlock(block) : compileLeafBlock(block);
 
 export const compileBlocksToHtml = (blocks: EmailBlock[]): string => {
   if (blocks.length === 0) return '';
@@ -138,37 +167,57 @@ const decodeEntities = (value: string): string =>
 export const compileBlocksToPlainText = (blocks: EmailBlock[]): string => {
   const lines: string[] = [];
   blocks.forEach((block: EmailBlock) => {
-    switch (block.kind) {
-      case 'text':
-        lines.push(decodeEntities(stripTags(block.html)).trim());
-        break;
-      case 'heading':
-        lines.push(block.text);
-        lines.push('');
-        break;
-      case 'image':
-        if (block.alt) lines.push(`[Image: ${block.alt}]`);
-        if (block.href) lines.push(block.href);
-        break;
-      case 'button':
-        lines.push(`${block.label}: ${block.href}`);
-        break;
-      case 'divider':
-        lines.push('---');
-        break;
-      case 'spacer':
-        lines.push('');
-        break;
-      case 'section':
-      case 'row':
-        lines.push(compileBlocksToPlainText(block.children));
-        break;
-      case 'columns':
-        block.children.forEach((row: EmailRowBlock) => {
-          lines.push(compileBlocksToPlainText(row.children));
-        });
-        break;
-    }
+    appendPlainTextBlock(lines, block);
   });
   return lines.filter((line: string, index: number, all: string[]) => !(line === '' && all[index - 1] === '')).join('\n').trim();
+};
+
+const appendImagePlainText = (lines: string[], block: EmailImageBlock): void => {
+  if (block.alt.length > 0) lines.push(`[Image: ${block.alt}]`);
+  if (block.href !== null && block.href.length > 0) lines.push(block.href);
+};
+
+const appendLeafPlainTextBlock = (lines: string[], block: EmailLeafBlock): void => {
+  switch (block.kind) {
+    case 'text':
+      lines.push(decodeEntities(stripTags(block.html)).trim());
+      return;
+    case 'heading':
+      lines.push(block.text);
+      lines.push('');
+      return;
+    case 'image':
+      appendImagePlainText(lines, block);
+      return;
+    case 'button':
+      lines.push(`${block.label}: ${block.href}`);
+      return;
+    case 'divider':
+      lines.push('---');
+      return;
+    case 'spacer':
+      lines.push('');
+      return;
+  }
+};
+
+const appendContainerPlainTextBlock = (lines: string[], block: EmailContainerBlock): void => {
+  switch (block.kind) {
+    case 'section':
+    case 'row':
+      lines.push(compileBlocksToPlainText(block.children));
+      return;
+    case 'columns':
+      block.children.forEach((row: EmailRowBlock) => {
+        lines.push(compileBlocksToPlainText(row.children));
+      });
+  }
+};
+
+const appendPlainTextBlock = (lines: string[], block: EmailBlock): void => {
+  if (isContainerBlock(block)) {
+    appendContainerPlainTextBlock(lines, block);
+    return;
+  }
+  appendLeafPlainTextBlock(lines, block);
 };

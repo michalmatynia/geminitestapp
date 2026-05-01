@@ -31,7 +31,9 @@ export function useProductFormValidator(
   );
   useProductFormValidatorSettingsReset({ ...context.settings, ...identity });
   const validatorValues = useProductFormValidatorValues({
-    ...context.metadata, fallbackCatalogId: context.productCatalogId, watch: context.form.watch,
+    ...context.metadata,
+    control: context.form.control,
+    fallbackCatalogId: context.productCatalogId,
   });
   const latestProductValues = useProductFormValidatorLatestProductValues({
     currentProductId: context.productId, validatorEnabled: context.settings.validatorEnabled, validatorPatterns: context.validatorPatterns,

@@ -15,8 +15,8 @@ export const RunMetricsSection = ({
   metrics,
   deliveries,
   queuedDeliveryCount,
-}: RunMetricsSectionProps) => {
-  const progressBase = metrics.recipientCount || 1;
+}: RunMetricsSectionProps): React.JSX.Element => {
+  const progressBase = metrics.recipientCount > 0 ? metrics.recipientCount : 1;
   const progressPercent = Math.round(
     ((metrics.deliveredCount + metrics.failedCount + metrics.skippedCount) / progressBase) * 100
   );
@@ -79,6 +79,38 @@ interface RunAnalyticsOverviewSectionProps {
   sentCount: number;
 }
 
+const formatLatestActivity = (value: string | null, fallback: string): string =>
+  value !== null ? formatTimestamp(value) : fallback;
+
+function RunAnalyticsLatestActivityGrid({
+  latestOpenedAt,
+  latestClickedAt,
+  latestUnsubscribedAt,
+  latestResubscribedAt,
+}: Pick<
+  RunAnalyticsOverviewSectionProps,
+  'latestOpenedAt' | 'latestClickedAt' | 'latestUnsubscribedAt' | 'latestResubscribedAt'
+>): React.JSX.Element {
+  return (
+    <div className='grid gap-3 text-[11px] text-gray-500 md:grid-cols-2'>
+      <div>
+        Latest open: {formatLatestActivity(latestOpenedAt, 'No opens tracked yet')}
+      </div>
+      <div>
+        Latest click: {formatLatestActivity(latestClickedAt, 'No clicks tracked yet')}
+      </div>
+      <div>
+        Latest opt-out:{' '}
+        {formatLatestActivity(latestUnsubscribedAt, 'No opt-outs yet')}
+      </div>
+      <div>
+        Latest restore:{' '}
+        {formatLatestActivity(latestResubscribedAt, 'No restores yet')}
+      </div>
+    </div>
+  );
+}
+
 export const RunAnalyticsOverviewSection = ({
   unsubscribeEventCount,
   openedEventCount,
@@ -91,7 +123,7 @@ export const RunAnalyticsOverviewSection = ({
   uniqueOpenCount,
   uniqueClickCount,
   sentCount,
-}: RunAnalyticsOverviewSectionProps) => {
+}: RunAnalyticsOverviewSectionProps): React.JSX.Element => {
   const openRate = sentCount > 0 ? Math.round((openedEventCount / sentCount) * 100) : 0;
   const uniqueOpenRate = sentCount > 0 ? Math.round((uniqueOpenCount / sentCount) * 100) : 0;
   const clickRate = sentCount > 0 ? Math.round((clickedEventCount / sentCount) * 100) : 0;
@@ -127,22 +159,12 @@ export const RunAnalyticsOverviewSection = ({
           <div className='text-[11px] text-gray-500'>Restored subscriptions</div>
         </div>
       </div>
-      <div className='grid gap-3 text-[11px] text-gray-500 md:grid-cols-2'>
-        <div>
-          Latest open: {latestOpenedAt ? formatTimestamp(latestOpenedAt) : 'No opens tracked yet'}
-        </div>
-        <div>
-          Latest click: {latestClickedAt ? formatTimestamp(latestClickedAt) : 'No clicks tracked yet'}
-        </div>
-        <div>
-          Latest opt-out:{' '}
-          {latestUnsubscribedAt ? formatTimestamp(latestUnsubscribedAt) : 'No opt-outs yet'}
-        </div>
-        <div>
-          Latest restore:{' '}
-          {latestResubscribedAt ? formatTimestamp(latestResubscribedAt) : 'No restores yet'}
-        </div>
-      </div>
+      <RunAnalyticsLatestActivityGrid
+        latestOpenedAt={latestOpenedAt}
+        latestClickedAt={latestClickedAt}
+        latestUnsubscribedAt={latestUnsubscribedAt}
+        latestResubscribedAt={latestResubscribedAt}
+      />
     </FormSection>
   );
 };

@@ -317,6 +317,72 @@ describe('useProductFormValidator latest SKU source', () => {
     expect(apiPostMock).toHaveBeenCalledTimes(1);
   });
 
+  it('refreshes validator values after auto-applied formatter field updates', async () => {
+    vi.useFakeTimers();
+
+    const sizeLengthPattern = createPattern({
+      id: 'pattern-size-length-name-segment',
+      regex: '^0$',
+      target: 'size_length',
+      replacementValue: '4',
+      replacementFields: ['sizeLength'],
+    });
+
+    useProductValidatorConfigMock.mockReturnValue({
+      data: {
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        instanceDenyBehavior: null,
+        patterns: [sizeLengthPattern],
+      },
+    });
+    useProductValidatorIssuesMock.mockReturnValue({
+      visibleFieldIssues: {
+        sizeLength: [
+          {
+            patternId: 'pattern-size-length-name-segment',
+            message: 'Length mismatch',
+            severity: 'warning',
+            matchText: '0',
+            index: 0,
+            length: 1,
+            regex: '^0$',
+            flags: null,
+            replacementValue: '4',
+            replacementApplyMode: 'replace_whole_field',
+            replacementScope: 'field',
+            replacementActive: true,
+            postAcceptBehavior: 'revalidate',
+            debounceMs: 0,
+          },
+        ],
+      },
+    });
+
+    renderHook(() => useProductFormValidator(), {
+      wrapper: createWrapper({ defaultSizeLength: 0 }),
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(250);
+    });
+
+    expect(setValueSpy).toHaveBeenCalledWith(
+      'sizeLength',
+      4,
+      expect.objectContaining({
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      })
+    );
+
+    const observedSizeLengthValues = useProductValidatorIssuesMock.mock.calls.map(
+      ([args]) => (args as { values: { sizeLength?: unknown } }).values.sizeLength
+    );
+    expect(observedSizeLengthValues).toContain(4);
+  });
+
   it('requests a fresh latest-product source snapshot for SKU sequencing', async () => {
     renderHook(() => useProductFormValidator(), {
       wrapper: createWrapper(),

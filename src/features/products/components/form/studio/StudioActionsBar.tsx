@@ -15,9 +15,11 @@ type StudioActionsContext = Pick<
   | 'accepting'
   | 'blockSendForSequenceReadiness'
   | 'handleAcceptVariant'
+  | 'handleConvertLinkImageToFile'
   | 'handleOpenInImageStudio'
   | 'handleRotateImageSlot'
   | 'handleSendToStudio'
+  | 'convertingLinkImageIndex'
   | 'openingInImageStudio'
   | 'refreshVariants'
   | 'rotatingDirection'
@@ -50,7 +52,28 @@ const isBaseActionDisabled = ({
   accepting ||
   rotatingDirection !== null ||
   selectedImageIndex === null ||
-  selectedSourcePreview === null;
+  selectedSourcePreview === null ||
+  selectedSourcePreview.sourceType === 'link';
+
+function StudioConvertSelectedLinkButton({ context }: { context: StudioActionsContext }): JSX.Element | null {
+  const selectedPreview = context.selectedSourcePreview;
+  if (selectedPreview?.sourceType !== 'link') return null;
+
+  return (
+    <Button
+      size='xs'
+      variant='outline'
+      onClick={createStudioActionClickHandler(() =>
+        context.handleConvertLinkImageToFile(selectedPreview.index)
+      )}
+      disabled={context.convertingLinkImageIndex !== null}
+      loading={context.convertingLinkImageIndex === selectedPreview.index}
+      className='border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
+    >
+      Convert selected link to file
+    </Button>
+  );
+}
 
 function StudioRotateButtons({
   context,
@@ -183,6 +206,11 @@ function StudioActionAlerts({ context }: { context: StudioActionsContext }): JSX
           {context.sequenceReadinessMessage}
         </Alert>
       ) : null}
+      {context.selectedSourcePreview?.sourceType === 'link' ? (
+        <Alert variant='warning' className='py-2 text-xs'>
+          Selected image is a link. Convert it to a product file before using Studio operations.
+        </Alert>
+      ) : null}
     </>
   );
 }
@@ -194,6 +222,7 @@ export function StudioActionsBar(): JSX.Element {
   return (
     <div className='space-y-3'>
       <div className='flex flex-wrap items-center gap-2'>
+        <StudioConvertSelectedLinkButton context={context} />
         <StudioRotateButtons context={context} isDisabled={isDisabled} />
         <StudioOpenButton context={context} isDisabled={isDisabled} />
         <StudioSendButton context={context} isDisabled={isDisabled} />

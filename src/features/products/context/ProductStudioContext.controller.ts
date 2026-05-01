@@ -60,6 +60,7 @@ type ProductStudioRunState = {
 };
 
 type ProductStudioBaseState = {
+  imageLinks: string[];
   imageSlotPreviews: ReturnType<typeof useProductImageSlotPreviews>;
   product: ReturnType<typeof useProductFormCore>['product'];
   productId: string | null;
@@ -102,7 +103,7 @@ const useProductStudioBaseState = (): ProductStudioBaseState => {
   const { studioProjectId, setStudioProjectId, studioConfigLoading, studioConfigSaving } =
     useProductFormStudio();
   const { product } = useProductFormCore();
-  const { imageSlots, refreshImagesFromProduct } = useProductFormImages();
+  const { imageBase64s, imageLinks, imageSlots, refreshImagesFromProduct } = useProductFormImages();
   const studioProjectsQuery = useStudioProjects();
   const { defaultProjectId, getImageExternalBaseUrl } = useProductSettings();
   const productImagesExternalBaseUrl = getImageExternalBaseUrl();
@@ -122,7 +123,12 @@ const useProductStudioBaseState = (): ProductStudioBaseState => {
     studioProjectsLoading: studioProjectsQuery.isLoading,
   });
 
-  const imageSlotPreviews = useProductImageSlotPreviews(imageSlots, productImagesExternalBaseUrl);
+  const imageSlotPreviews = useProductImageSlotPreviews(
+    imageSlots,
+    imageLinks,
+    imageBase64s,
+    productImagesExternalBaseUrl
+  );
   useProductStudioInitialImageSelection({
     imageSlotPreviews,
     selectedImageIndex,
@@ -130,6 +136,7 @@ const useProductStudioBaseState = (): ProductStudioBaseState => {
   });
 
   return {
+    imageLinks,
     imageSlotPreviews,
     product,
     productId,
@@ -193,6 +200,7 @@ const useProductStudioActionArgs = (
   return useMemo(
     () => ({
       contextRegistry,
+      imageLinks: base.imageLinks,
       productId: base.productId,
       refreshAudit: loaded.auditState.refreshAudit,
       refreshImagesFromProduct: base.refreshImagesFromProduct,
@@ -208,6 +216,7 @@ const useProductStudioActionArgs = (
       variantsData: loaded.variantsState.variantsData,
     }),
     [
+      base.imageLinks,
       base.productId,
       base.refreshImagesFromProduct,
       base.selectedImageIndex,
@@ -240,6 +249,7 @@ const useProductStudioContextValues = (
     auditError: loaded.auditState.auditError,
     auditLoading: loaded.auditState.auditLoading,
     deletingVariantId: handlers.deletingVariantId,
+    convertingLinkImageIndex: handlers.convertingLinkImageIndex,
     imageSlotPreviews: base.imageSlotPreviews,
     isStudioLoading: base.studioProjectsLoading || base.studioConfigLoading,
     openingInImageStudio: handlers.openingInImageStudio,

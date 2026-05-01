@@ -79,6 +79,39 @@ describe('resolveEffectiveShippingGroup', () => {
     });
   });
 
+  it('matches category rules across catalog boundaries', () => {
+    const shippingGroup = {
+      id: 'group-auto',
+      name: 'Gaming Figurines 20 EUR',
+      catalogId: 'catalog-main',
+      traderaShippingCondition: 'Buyer pays shipping',
+      traderaShippingPriceEur: 20,
+      autoAssignCategoryIds: ['category-gaming'],
+    };
+
+    expect(
+      resolveEffectiveShippingGroup({
+        product: {
+          shippingGroupId: null,
+          categoryId: 'category-gaming-figurine',
+          catalogId: 'catalog-battlestock',
+        },
+        shippingGroups: [shippingGroup],
+        categories: [
+          { id: 'category-gaming', parentId: null } as never,
+          { id: 'category-gaming-figurine', parentId: 'category-gaming' } as never,
+        ],
+      })
+    ).toEqual({
+      shippingGroup,
+      shippingGroupId: 'group-auto',
+      source: 'category_rule',
+      reason: 'category_rule',
+      matchedCategoryRuleIds: ['category-gaming'],
+      matchingShippingGroupIds: ['group-auto'],
+    });
+  });
+
   it('returns multiple_category_rules when more than one automatic rule matches', () => {
     expect(
       resolveEffectiveShippingGroup({

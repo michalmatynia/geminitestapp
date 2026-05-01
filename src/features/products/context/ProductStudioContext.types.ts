@@ -5,6 +5,7 @@ import type { ProductStudioAuditEntry, ProductStudioRunStatus, ProductStudioVari
 export type ProductImageSlotPreview = {
   index: number;
   label: string;
+  sourceType: 'file' | 'link' | 'base64';
   src: string;
 };
 
@@ -35,6 +36,7 @@ export interface ProductStudioStateContextValue {
   accepting: boolean;
   openingInImageStudio: boolean;
   rotatingDirection: 'left' | 'right' | null;
+  convertingLinkImageIndex: number | null;
   deletingVariantId: string | null;
   studioActionError: string | null;
 }
@@ -49,6 +51,7 @@ export interface ProductStudioActionsContextValue {
   handleAcceptVariant: () => Promise<void>;
   handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
   handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
+  handleConvertLinkImageToFile: (index: number) => Promise<void>;
   refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
 }
 

@@ -4,6 +4,11 @@ import type {
   FilemakerEmailCampaignSuppressionRegistry,
 } from '../types';
 import type { FilemakerEmailCampaignAudienceRecipient } from '../types/campaigns';
+import {
+  buildDuplicateIssues,
+  buildRecipientIssues,
+  type RecentDeliveryIndexes,
+} from './campaign-list-hygiene-issues';
 
 export type CampaignListHygieneSeverity = 'error' | 'warning' | 'info';
 
@@ -33,53 +38,11 @@ export interface CampaignListHygieneSummary {
   affectedAddresses: string[];
 }
 
-const ROLE_LOCAL_PARTS: ReadonlySet<string> = new Set([
-  'admin',
-  'administrator',
-  'info',
-  'sales',
-  'support',
-  'help',
-  'helpdesk',
-  'office',
-  'contact',
-  'enquiries',
-  'inquiry',
-  'marketing',
-  'press',
-  'media',
-  'jobs',
-  'careers',
-  'hr',
-  'finance',
-  'accounts',
-  'accounting',
-  'billing',
-  'noreply',
-  'no-reply',
-  'do-not-reply',
-  'donotreply',
-  'postmaster',
-  'webmaster',
-  'abuse',
-  'security',
-  'legal',
-  'privacy',
-]);
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const DEFAULT_RECENT_BOUNCE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 const DEFAULT_RECENT_FAILURE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const normalizeAddress = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
-
-const localPart = (address: string): string => {
-  const at = address.indexOf('@');
-  if (at < 1) return '';
-  return address.slice(0, at);
-};
 
 const buildEmptyByCode = (): Record<CampaignListHygieneIssueCode, number> => ({
   duplicate_address: 0,
@@ -105,6 +68,93 @@ interface RunListHygieneCheckInput {
   recentFailureWindowMs?: number;
 }
 
+const buildSuppressionReasonByAddress = (
+  registry: FilemakerEmailCampaignSuppressionRegistry
+): Map<string, string> => {
+  const suppressionByAddress = new Map<string, string>();
+  registry.entries.forEach((entry) => {
+    const key = normalizeAddress(entry.emailAddress);
+    if (key.length > 0) suppressionByAddress.set(key, entry.reason);
+  });
+  return suppressionByAddress;
+};
+
+const getDeliveryActivityAt = (delivery: FilemakerEmailCampaignDelivery): number | null => {
+  const parsed = Date.parse(delivery.sentAt ?? delivery.updatedAt ?? delivery.createdAt ?? '');
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const isNewerDelivery = (
+  existing: FilemakerEmailCampaignDelivery | undefined,
+  nextActivityAt: number
+): boolean => {
+  if (existing === undefined) return true;
+  const existingActivityAt = Date.parse(existing.sentAt ?? existing.updatedAt ?? existing.createdAt ?? '0');
+  return existingActivityAt < nextActivityAt;
+};
+
+const maybeIndexRecentBounce = (input: {
+  activityAt: number;
+  delivery: FilemakerEmailCampaignDelivery;
+  key: string;
+  nowMs: number;
+  recentBouncesByAddress: Map<string, FilemakerEmailCampaignDelivery>;
+  windowMs: number;
+}): void => {
+  if (input.delivery.status !== 'bounced') return;
+  if (input.nowMs - input.activityAt > input.windowMs) return;
+  if (isNewerDelivery(input.recentBouncesByAddress.get(input.key), input.activityAt)) {
+    input.recentBouncesByAddress.set(input.key, input.delivery);
+  }
+};
+
+const maybeIndexRecentFailure = (input: {
+  activityAt: number;
+  delivery: FilemakerEmailCampaignDelivery;
+  key: string;
+  nowMs: number;
+  recentFailuresByAddress: Map<string, FilemakerEmailCampaignDelivery>;
+  windowMs: number;
+}): void => {
+  if (input.delivery.status !== 'failed') return;
+  if (input.nowMs - input.activityAt > input.windowMs) return;
+  if (isNewerDelivery(input.recentFailuresByAddress.get(input.key), input.activityAt)) {
+    input.recentFailuresByAddress.set(input.key, input.delivery);
+  }
+};
+
+const indexRecentDeliveries = (input: {
+  deliveries: FilemakerEmailCampaignDelivery[];
+  nowMs: number;
+  bounceWindowMs: number;
+  failureWindowMs: number;
+}): RecentDeliveryIndexes => {
+  const recentBouncesByAddress = new Map<string, FilemakerEmailCampaignDelivery>();
+  const recentFailuresByAddress = new Map<string, FilemakerEmailCampaignDelivery>();
+  input.deliveries.forEach((delivery) => {
+    const key = normalizeAddress(delivery.emailAddress);
+    const activityAt = getDeliveryActivityAt(delivery);
+    if (key.length === 0 || activityAt === null) return;
+    maybeIndexRecentBounce({
+      activityAt,
+      delivery,
+      key,
+      nowMs: input.nowMs,
+      recentBouncesByAddress,
+      windowMs: input.bounceWindowMs,
+    });
+    maybeIndexRecentFailure({
+      activityAt,
+      delivery,
+      key,
+      nowMs: input.nowMs,
+      recentFailuresByAddress,
+      windowMs: input.failureWindowMs,
+    });
+  });
+  return { recentBouncesByAddress, recentFailuresByAddress };
+};
+
 export const runListHygieneCheck = (
   input: RunListHygieneCheckInput
 ): CampaignListHygieneSummary => {
@@ -114,130 +164,29 @@ export const runListHygieneCheck = (
 
   const issues: CampaignListHygieneIssue[] = [];
   const seenCounts = new Map<string, number>();
-
-  // Index suppressions by normalised address.
-  const suppressionByAddress = new Map<string, string>();
-  input.suppressionRegistry.entries.forEach((entry) => {
-    const key = normalizeAddress(entry.emailAddress);
-    if (key) suppressionByAddress.set(key, entry.reason);
-  });
-
-  // Index recent bounces / failures by address.
-  const recentBouncesByAddress = new Map<string, FilemakerEmailCampaignDelivery>();
-  const recentFailuresByAddress = new Map<string, FilemakerEmailCampaignDelivery>();
-  input.deliveryRegistry.deliveries.forEach((delivery) => {
-    const key = normalizeAddress(delivery.emailAddress);
-    if (!key) return;
-    const at = Date.parse(delivery.sentAt ?? delivery.updatedAt ?? delivery.createdAt ?? '');
-    if (!Number.isFinite(at)) return;
-
-    if (delivery.status === 'bounced' && nowMs - at <= bounceWindowMs) {
-      const existing = recentBouncesByAddress.get(key);
-      if (
-        !existing ||
-        Date.parse(existing.sentAt ?? existing.updatedAt ?? existing.createdAt ?? '0') < at
-      ) {
-        recentBouncesByAddress.set(key, delivery);
-      }
-    }
-    if (delivery.status === 'failed' && nowMs - at <= failureWindowMs) {
-      const existing = recentFailuresByAddress.get(key);
-      if (
-        !existing ||
-        Date.parse(existing.sentAt ?? existing.updatedAt ?? existing.createdAt ?? '0') < at
-      ) {
-        recentFailuresByAddress.set(key, delivery);
-      }
-    }
+  const suppressionByAddress = buildSuppressionReasonByAddress(input.suppressionRegistry);
+  const recentDeliveries = indexRecentDeliveries({
+    deliveries: input.deliveryRegistry.deliveries,
+    nowMs,
+    bounceWindowMs,
+    failureWindowMs,
   });
 
   input.recipients.forEach((recipient, index) => {
     const address = normalizeAddress(recipient.email);
     seenCounts.set(address, (seenCounts.get(address) ?? 0) + 1);
-
-    if (!address) {
-      issues.push({
-        code: 'syntax_invalid',
-        severity: 'error',
-        emailAddress: recipient.email ?? '',
-        message: 'Recipient has no email address.',
-        recipientIndex: index,
-        recipientId: recipient.emailId,
-      });
-      return;
-    }
-
-    if (!EMAIL_RE.test(address)) {
-      issues.push({
-        code: 'syntax_invalid',
-        severity: 'error',
-        emailAddress: recipient.email,
-        message: `"${recipient.email}" is not a valid email address.`,
-        recipientIndex: index,
-        recipientId: recipient.emailId,
-      });
-    }
-
-    const local = localPart(address);
-    if (local && ROLE_LOCAL_PARTS.has(local)) {
-      issues.push({
-        code: 'role_address',
-        severity: 'warning',
-        emailAddress: recipient.email,
-        message: `Role address "${recipient.email}" — typically lower engagement, consider replacing with a personal contact.`,
-        recipientIndex: index,
-        recipientId: recipient.emailId,
-      });
-    }
-
-    const suppressionReason = suppressionByAddress.get(address);
-    if (suppressionReason) {
-      issues.push({
-        code: 'currently_suppressed',
-        severity: 'error',
-        emailAddress: recipient.email,
-        message: `"${recipient.email}" is suppressed (${suppressionReason}). It will be skipped at send time.`,
-        recipientIndex: index,
-        recipientId: recipient.emailId,
-      });
-    }
-
-    const recentBounce = recentBouncesByAddress.get(address);
-    if (recentBounce) {
-      issues.push({
-        code: 'recently_bounced',
-        severity: 'warning',
-        emailAddress: recipient.email,
-        message: `"${recipient.email}" bounced on a recent send (${recentBounce.failureCategory ?? 'bounced'}). Sending again risks reputation damage.`,
-        recipientIndex: index,
-        recipientId: recipient.emailId,
-      });
-    } else {
-      const recentFailure = recentFailuresByAddress.get(address);
-      if (recentFailure) {
-        issues.push({
-          code: 'recently_failed',
-          severity: 'info',
-          emailAddress: recipient.email,
-          message: `"${recipient.email}" failed delivery on a recent run (${recentFailure.failureCategory ?? 'unknown'}). Worth verifying before retrying.`,
-          recipientIndex: index,
-          recipientId: recipient.emailId,
-        });
-      }
-    }
+    issues.push(
+      ...buildRecipientIssues({
+        address,
+        index,
+        recipient,
+        recentDeliveries,
+        suppressionByAddress,
+      })
+    );
   });
 
-  // Emit duplicate_address issues exactly once per repeated address.
-  seenCounts.forEach((count, address) => {
-    if (count > 1) {
-      issues.push({
-        code: 'duplicate_address',
-        severity: 'warning',
-        emailAddress: address,
-        message: `"${address}" appears ${count} times in the audience. Enable dedupe in the audience rule, or expect multiple sends to the same person.`,
-      });
-    }
-  });
+  issues.push(...buildDuplicateIssues(seenCounts));
 
   const byCode = buildEmptyByCode();
   const bySeverity = buildEmptyBySeverity();
@@ -246,7 +195,7 @@ export const runListHygieneCheck = (
   issues.forEach((issue) => {
     byCode[issue.code] += 1;
     bySeverity[issue.severity] += 1;
-    if (issue.emailAddress) affected.add(normalizeAddress(issue.emailAddress));
+    if (issue.emailAddress.length > 0) affected.add(normalizeAddress(issue.emailAddress));
   });
 
   return {

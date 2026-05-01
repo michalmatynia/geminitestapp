@@ -9,7 +9,7 @@ import {
   toPersistedFilemakerEmailCampaignSuppressionRegistry,
   upsertFilemakerEmailCampaignSuppressionEntry,
 } from '../settings/campaign-factories';
-import type { FilemakerEmailCampaignSuppressionEntry } from '../types/campaigns';
+import type { FilemakerEmailCampaignSuppressionEntry } from '../types';
 
 import {
   readFilemakerCampaignSettingValue,
@@ -30,7 +30,7 @@ export const findFilemakerMailSuppressionEntry = async (
   emailAddress: string
 ): Promise<FilemakerEmailCampaignSuppressionEntry | null> => {
   const target = normalizeAddress(emailAddress);
-  if (!target) return null;
+  if (target.length === 0) return null;
   const entries = await loadFilemakerMailSuppressionEntries();
   return (
     entries.find((entry) => normalizeAddress(entry.emailAddress) === target) ?? null
@@ -40,7 +40,9 @@ export const findFilemakerMailSuppressionEntry = async (
 export const filterFilemakerMailSuppressionEntries = async (
   emailAddresses: string[]
 ): Promise<FilemakerEmailCampaignSuppressionEntry[]> => {
-  const targets = new Set(emailAddresses.map(normalizeAddress).filter(Boolean));
+  const targets = new Set(
+    emailAddresses.map(normalizeAddress).filter((emailAddress) => emailAddress.length > 0)
+  );
   if (targets.size === 0) return [];
   const entries = await loadFilemakerMailSuppressionEntries();
   return entries.filter((entry) => targets.has(normalizeAddress(entry.emailAddress)));
@@ -58,7 +60,7 @@ export const recordFilemakerMailBounceSuppressions = async (input: {
   deliveryId?: string | null;
 }): Promise<{ addedCount: number; skippedCount: number }> => {
   const targets = Array.from(
-    new Set(input.addresses.map(normalizeAddress).filter(Boolean))
+    new Set(input.addresses.map(normalizeAddress).filter((emailAddress) => emailAddress.length > 0))
   );
   if (targets.length === 0) return { addedCount: 0, skippedCount: 0 };
 
@@ -113,7 +115,7 @@ export const recordFilemakerMailComplaintSuppressions = async (input: {
   deliveryId?: string | null;
 }): Promise<{ addedCount: number; skippedCount: number }> => {
   const targets = Array.from(
-    new Set(input.addresses.map(normalizeAddress).filter(Boolean))
+    new Set(input.addresses.map(normalizeAddress).filter((emailAddress) => emailAddress.length > 0))
   );
   if (targets.length === 0) return { addedCount: 0, skippedCount: 0 };
 
@@ -164,7 +166,7 @@ export const removeFilemakerMailSuppressionEntry = async (
   emailAddress: string
 ): Promise<{ removed: boolean; entry: FilemakerEmailCampaignSuppressionEntry | null }> => {
   const target = normalizeAddress(emailAddress);
-  if (!target) return { removed: false, entry: null };
+  if (target.length === 0) return { removed: false, entry: null };
 
   const raw = await readFilemakerCampaignSettingValue(
     FILEMAKER_EMAIL_CAMPAIGN_SUPPRESSIONS_KEY
@@ -173,7 +175,7 @@ export const removeFilemakerMailSuppressionEntry = async (
   const removed = registry.entries.find(
     (entry) => normalizeAddress(entry.emailAddress) === target
   );
-  if (!removed) return { removed: false, entry: null };
+  if (removed === undefined) return { removed: false, entry: null };
 
   const nextRegistry = {
     ...registry,

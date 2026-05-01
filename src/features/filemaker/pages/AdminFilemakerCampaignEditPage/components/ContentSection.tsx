@@ -1,24 +1,17 @@
 import React from 'react';
-import { View, Text } from '@/shared/ui/react-native-web-shim';
+import { Text } from '@/shared/ui/react-native-web-shim';
 import { Card } from '@/features/kangur/ui/components';
 
 interface ContentSectionProps {
-  draft: any;
-  setDraft: any;
-  database: any;
-  preview: any;
-  contentGroupRegistry: any;
+  contentGroupRegistry: unknown;
   contentLocale: string;
+  database: unknown;
+  draft: unknown;
+  preview: unknown;
+  setDraft: unknown;
 }
 
-export function ContentSection({
-  draft,
-  setDraft,
-  database,
-  preview,
-  contentGroupRegistry,
-  contentLocale,
-}: ContentSectionProps): React.JSX.Element {
+export function ContentSection(_props: ContentSectionProps): React.JSX.Element {
   return (
     <Card>
       <Text style={{ fontSize: 18, fontWeight: '800' }}>

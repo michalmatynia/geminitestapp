@@ -925,6 +925,63 @@ describe('productService parameter normalization', () => {
     );
   });
 
+  it('hydrates category-rule shipping groups across product catalog boundaries', async () => {
+    repositoryMock.getProducts.mockResolvedValue([
+      createProductRecord({
+        categoryId: 'category-gaming-figurine',
+        catalogId: 'catalog-battlestock',
+        shippingGroupId: null,
+      }),
+    ]);
+    shippingGroupRepositoryMock.listShippingGroups.mockResolvedValue([
+      {
+        id: 'shipping-group-20',
+        name: '20 EUR Shipping Toys',
+        description: null,
+        catalogId: 'catalog-main',
+        traderaShippingCondition: 'Buyer pays shipping',
+        traderaShippingPriceEur: 20,
+        autoAssignCategoryIds: ['category-gaming'],
+      },
+    ]);
+    categoryRepositoryMock.listCategories.mockResolvedValue([
+      {
+        id: 'category-gaming',
+        name: 'Gaming',
+        description: null,
+        catalogId: 'catalog-main',
+        parentId: null,
+      },
+      {
+        id: 'category-gaming-figurine',
+        name: 'Gaming Figurine',
+        description: null,
+        catalogId: 'catalog-main',
+        parentId: 'category-gaming',
+      },
+    ]);
+
+    const [product] = await productService.getProducts(
+      { published: true },
+      { provider: 'mongodb' as any }
+    );
+
+    expect(shippingGroupRepositoryMock.listShippingGroups).toHaveBeenCalledWith({});
+    expect(categoryRepositoryMock.listCategories).toHaveBeenCalledWith({});
+    expect(product).toEqual(
+      expect.objectContaining({
+        shippingGroup: expect.objectContaining({
+          id: 'shipping-group-20',
+          name: '20 EUR Shipping Toys',
+        }),
+        shippingGroupSource: 'category_rule',
+        shippingGroupResolutionReason: 'category_rule',
+        shippingGroupMatchedCategoryRuleIds: ['category-gaming'],
+        shippingGroupMatchingGroupNames: ['20 EUR Shipping Toys'],
+      })
+    );
+  });
+
   it('prefers the manual shipping group over category rules on read helpers', async () => {
     repositoryMock.getProductById.mockResolvedValue(
       createProductRecord({

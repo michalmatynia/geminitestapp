@@ -7,7 +7,10 @@ import { useRouter } from 'nextjs-toploader/app';
 
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ContextRegistryConsumerEnvelope } from '@/shared/contracts/ai-context-registry';
-import { productStudioLinkResponseSchema } from '@/shared/contracts/products/studio';
+import {
+  productStudioLinkResponseSchema,
+  productStudioProductResponseSchema,
+} from '@/shared/contracts/products/studio';
 import type { ProductWithImages } from '@/shared/contracts/products/product';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
@@ -83,17 +86,20 @@ export type ProductStudioActionHandlers = {
   accepting: boolean;
   deletingVariantId: string | null;
   handleAcceptVariant: () => Promise<void>;
+  handleConvertLinkImageToFile: (index: number) => Promise<void>;
   handleDeleteVariant: (slot: ImageStudioSlotRecord) => Promise<void>;
   handleOpenInImageStudio: () => Promise<void>;
   handleRotateImageSlot: (direction: 'left' | 'right') => Promise<void>;
   handleSendToStudio: () => Promise<void>;
   openingInImageStudio: boolean;
   rotatingDirection: 'left' | 'right' | null;
+  convertingLinkImageIndex: number | null;
   sending: boolean;
 };
 
 type UseProductStudioActionHandlersArgs = StudioActionTargetInput & {
   contextRegistry: ContextRegistryConsumerEnvelope | null;
+  imageLinks: string[];
   refreshAudit: () => Promise<void>;
   refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
   refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
@@ -104,6 +110,47 @@ type UseProductStudioActionHandlersArgs = StudioActionTargetInput & {
   setRunStatus: Dispatch<SetStateAction<ProductStudioRunStatus | null>>;
   setStudioActionError: Dispatch<SetStateAction<string | null>>;
   variantsData: ProductStudioVariantsResponse | null;
+};
+
+const useConvertLinkImageToFileHandler = (
+  args: UseProductStudioActionHandlersArgs
+): {
+  convertingLinkImageIndex: number | null;
+  handleConvertLinkImageToFile: (index: number) => Promise<void>;
+} => {
+  const { toast } = useToast();
+  const [convertingLinkImageIndex, setConvertingLinkImageIndex] = useState<number | null>(null);
+
+  const handleConvertLinkImageToFile = useCallback(async (index: number): Promise<void> => {
+    const productId = args.productId;
+    const linkValue = args.imageLinks[index]?.trim() ?? '';
+    if (productId === null || productId.length === 0 || linkValue.length === 0) return;
+
+    args.setStudioActionError(null);
+    setConvertingLinkImageIndex(index);
+    try {
+      const response = productStudioProductResponseSchema.parse(
+        await api.post<unknown>(
+          `/api/v2/products/${encodeURIComponent(productId)}/images/link-to-file`,
+          {
+            url: linkValue,
+            imageSlotIndex: index,
+          }
+        )
+      );
+      args.refreshImagesFromProduct(response.product);
+      toast('Link image converted to a product file.', { variant: 'success' });
+    } catch (error) {
+      logClientError(error);
+      args.setStudioActionError(
+        error instanceof Error ? error.message : 'Failed to convert link image.'
+      );
+    } finally {
+      setConvertingLinkImageIndex(null);
+    }
+  }, [args, toast]);
+
+  return { convertingLinkImageIndex, handleConvertLinkImageToFile };
 };
 
 const useSendToStudioHandler = (
@@ -274,6 +321,7 @@ const useRotateImageSlotHandler = (
 export const useProductStudioActionHandlers = (
   args: UseProductStudioActionHandlersArgs
 ): ProductStudioActionHandlers => ({
+  ...useConvertLinkImageToFileHandler(args),
   ...useSendToStudioHandler(args),
   ...useOpenInImageStudioHandler(args),
   ...useAcceptVariantHandler(args),

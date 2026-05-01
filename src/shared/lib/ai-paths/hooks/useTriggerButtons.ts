@@ -522,12 +522,25 @@ export function useTriggerButtons({
               entityType,
             });
           },
-          onError: (): void => {
+          onError: (errorMessage?: string): void => {
+            const errorRun: TriggerButtonLastRun = {
+              runId: `error:${button.id}:${Date.now()}`,
+              status: 'error',
+              updatedAt: new Date().toISOString(),
+              finishedAt: new Date().toISOString(),
+              errorMessage: errorMessage ?? null,
+            };
+            persistTriggerButtonRunFeedback({
+              buttonId: button.id,
+              pathId: button.pathId ?? null,
+              location,
+              entityId: resolvedEntityId,
+              entityType,
+              run: errorRun,
+            });
             setLastRuns((prev) => {
               if (prev[button.id]?.status !== 'waiting') return prev;
-              const next = { ...prev };
-              delete next[button.id];
-              return next;
+              return { ...prev, [button.id]: errorRun };
             });
           },
           onProgress: (payload: {

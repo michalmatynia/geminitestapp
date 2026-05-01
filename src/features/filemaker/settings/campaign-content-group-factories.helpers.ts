@@ -34,6 +34,12 @@ const normalizeLanguageCode = (input: unknown): string => {
   return value.length > 0 ? value : 'en';
 };
 
+const getNonEmptyStringOrFallback = (value: string, fallback: string): string =>
+  value.length > 0 ? value : fallback;
+
+const toNullableNonEmptyString = (value: string): string | null =>
+  value.length > 0 ? value : null;
+
 const resolveVariantBody = (
   input: Partial<FilemakerEmailCampaignContentVariant> | undefined
 ): {
@@ -58,6 +64,50 @@ const toPersistedEmailBlocks = (
 ): NonNullable<FilemakerEmailCampaignContentVariant['bodyBlocks']> =>
   blocks.map((block: EmailBlock): Record<string, unknown> => ({ ...block }));
 
+const resolveContentVariantLabel = (
+  safe: Partial<FilemakerEmailCampaignContentVariant>,
+  languageCode: string
+): string => getNonEmptyStringOrFallback(normalizeString(safe.label), languageCode.toUpperCase());
+
+const resolveContentVariantId = ({
+  groupId,
+  languageCode,
+  label,
+  safe,
+}: {
+  groupId: string;
+  languageCode: string;
+  label: string;
+  safe: Partial<FilemakerEmailCampaignContentVariant>;
+}): string =>
+  getNonEmptyStringOrFallback(
+    normalizeString(safe.id),
+    createCampaignContentVariantId({ groupId, languageCode, label })
+  );
+
+const normalizeContentGroupVariants = (
+  variants: FilemakerEmailCampaignContentGroup['variants'] | undefined,
+  groupId: string
+): FilemakerEmailCampaignContentVariant[] => {
+  if (!Array.isArray(variants)) return [];
+  return variants.map((variant) =>
+    createFilemakerEmailCampaignContentVariant({
+      ...variant,
+      groupId,
+    })
+  );
+};
+
+const resolveDefaultContentVariantId = (
+  variants: FilemakerEmailCampaignContentVariant[],
+  defaultVariantId: string,
+  defaultLanguageCode: string
+): string | null =>
+  variants.find((variant) => variant.id === defaultVariantId)?.id ??
+  variants.find((variant) => variant.languageCode === defaultLanguageCode)?.id ??
+  variants[0]?.id ??
+  null;
+
 export const createFilemakerEmailCampaignContentVariant = (
   input?: Partial<FilemakerEmailCampaignContentVariant> &
     Pick<FilemakerEmailCampaignContentVariant, 'groupId'>
@@ -66,20 +116,20 @@ export const createFilemakerEmailCampaignContentVariant = (
   const now = new Date().toISOString();
   const groupId = normalizeString(safe.groupId);
   const languageCode = normalizeLanguageCode(safe.languageCode);
-  const label = normalizeString(safe.label) || languageCode.toUpperCase();
+  const label = resolveContentVariantLabel(safe, languageCode);
   const previewText = normalizeString(safe.previewText);
   const bodyText = normalizeString(safe.bodyText);
   const body = resolveVariantBody(safe);
 
   return {
-    id: normalizeString(safe.id) || createCampaignContentVariantId({ groupId, languageCode, label }),
+    id: resolveContentVariantId({ groupId, languageCode, label, safe }),
     groupId,
     languageCode,
     label,
     countryIds: normalizeStringList(safe.countryIds),
     subject: normalizeString(safe.subject),
-    previewText: previewText.length > 0 ? previewText : null,
-    bodyText: bodyText.length > 0 ? bodyText : null,
+    previewText: toNullableNonEmptyString(previewText),
+    bodyText: toNullableNonEmptyString(bodyText),
     bodyHtml: body.bodyHtml,
     bodyBlocks: body.bodyBlocks,
     createdAt: safe.createdAt ?? now,
@@ -92,29 +142,22 @@ export const createFilemakerEmailCampaignContentGroup = (
 ): FilemakerEmailCampaignContentGroup => {
   const safe = input ?? {};
   const now = new Date().toISOString();
-  const name = normalizeString(safe.name) || 'Untitled email group';
-  const id = normalizeString(safe.id) || createCampaignContentGroupId(name);
+  const name = getNonEmptyStringOrFallback(normalizeString(safe.name), 'Untitled email group');
+  const id = getNonEmptyStringOrFallback(normalizeString(safe.id), createCampaignContentGroupId(name));
   const defaultLanguageCode = normalizeLanguageCode(safe.defaultLanguageCode);
-  const variants = Array.isArray(safe.variants)
-    ? safe.variants.map((variant) =>
-        createFilemakerEmailCampaignContentVariant({
-          ...variant,
-          groupId: id,
-        })
-      )
-    : [];
+  const variants = normalizeContentGroupVariants(safe.variants, id);
   const defaultVariantId = normalizeString(safe.defaultVariantId);
-  const resolvedDefaultVariantId =
-    variants.find((variant) => variant.id === defaultVariantId)?.id ??
-    variants.find((variant) => variant.languageCode === defaultLanguageCode)?.id ??
-    variants[0]?.id ??
-    null;
+  const resolvedDefaultVariantId = resolveDefaultContentVariantId(
+    variants,
+    defaultVariantId,
+    defaultLanguageCode
+  );
   const description = normalizeString(safe.description);
 
   return {
     id,
     name,
-    description: description.length > 0 ? description : null,
+    description: toNullableNonEmptyString(description),
     defaultLanguageCode,
     defaultVariantId: resolvedDefaultVariantId,
     variants,
@@ -130,7 +173,10 @@ export const createFilemakerEmailCampaignContentGroupFromCampaign = (input: {
 }): FilemakerEmailCampaignContentGroup => {
   const now = new Date().toISOString();
   const languageCode = normalizeLanguageCode(input.languageCode);
-  const name = normalizeString(input.name) || `${input.campaign.name} content`;
+  const name = getNonEmptyStringOrFallback(
+    normalizeString(input.name),
+    `${input.campaign.name} content`
+  );
   const groupId = createCampaignContentGroupId(name);
   const variant = createFilemakerEmailCampaignContentVariant({
     id: createCampaignContentVariantId({

@@ -137,15 +137,8 @@ export const resolveTraderaShippingGroupResolutionForProduct = async ({
     });
   }
 
-  const categoryRepository = await getCategoryRepository();
-  const productCatalogId =
-    toTrimmedString(product.catalogId) ||
-    (Array.isArray(product.catalogs)
-      ? product.catalogs
-          .map((catalog) => toTrimmedString(catalog.catalogId))
-          .find((catalogId) => catalogId.length > 0) ?? ''
-      : '');
-  if (!productCatalogId) {
+  const productCategoryId = toTrimmedString(product.categoryId);
+  if (productCategoryId.length === 0) {
     return selectPreferredTraderaShippingGroupResolution({
       effectiveResolution: resolveEffectiveShippingGroup({
         product,
@@ -154,9 +147,10 @@ export const resolveTraderaShippingGroupResolutionForProduct = async ({
     });
   }
 
+  const categoryRepository = await getCategoryRepository();
   const [shippingGroups, categories] = await Promise.all([
-    shippingGroupRepository.listShippingGroups({ catalogId: productCatalogId }),
-    categoryRepository.listCategories({ catalogId: productCatalogId }),
+    shippingGroupRepository.listShippingGroups({}),
+    categoryRepository.listCategories({}),
   ]);
 
   return selectPreferredTraderaShippingGroupResolution({

@@ -1,36 +1,22 @@
-import { badRequestError } from '@/shared/errors/app-error';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 
-import { buildFilemakerMailPlainText } from '../mail-utils';
 import type {
-  FilemakerAddress,
   FilemakerDatabase,
   FilemakerEmailCampaign,
   FilemakerEmailCampaignContentGroup,
   FilemakerEmailCampaignContentGroupRegistry,
   FilemakerEmailCampaignContentVariant,
   FilemakerEmailCampaignDelivery,
-  FilemakerOrganization,
-  FilemakerPerson,
 } from '../types';
 import {
-  getFilemakerDefaultAddressForOwner,
-} from './database-getters';
-import {
-  getFilemakerOrganizationById,
-  getFilemakerPersonById,
-} from './party-getters';
-import {
-  buildFilemakerCountryList,
   buildFilemakerCountryLookup,
   resolveFilemakerCountry,
 } from './filemaker-country-options';
-
-type ResolvedCountry = {
-  id: string;
-  name: string;
-  code: string;
-} | null;
+import {
+  fallbackCountries,
+  resolveFilemakerCampaignRecipientCountry,
+  type ResolvedCountry,
+} from './campaign-content-country-routing';
 
 export type FilemakerCampaignResolvedContent = {
   subject: string;
@@ -48,98 +34,8 @@ export type FilemakerCampaignResolvedContent = {
   reason: string;
 };
 
-const fallbackCountries = buildFilemakerCountryList([]);
-const fallbackCountryLookup = buildFilemakerCountryLookup(fallbackCountries);
-
 const normalizeToken = (value: string | null | undefined): string =>
   (value ?? '').trim().toLowerCase();
-
-const isUsefulToken = (value: string | null | undefined): boolean =>
-  normalizeToken(value).length > 0;
-
-const collectCountryCandidates = (
-  input:
-    | Pick<
-        FilemakerAddress,
-        'countryId' | 'country' | 'countryValueId' | 'countryValueLabel' | 'legacyCountryUuid'
-      >
-    | Pick<FilemakerOrganization | FilemakerPerson, 'countryId' | 'country'>
-    | null
-    | undefined
-): Array<{ id: string | null | undefined; name: string | null | undefined }> => {
-  if (!input) return [];
-  const candidates: Array<{ id: string | null | undefined; name: string | null | undefined }> = [
-    { id: input.countryId, name: input.country },
-    { id: input.country, name: input.countryId },
-  ];
-  if ('countryValueId' in input) {
-    candidates.push(
-      { id: input.countryValueId, name: input.countryValueLabel },
-      { id: input.legacyCountryUuid, name: input.countryValueLabel }
-    );
-  }
-  return candidates.filter(
-    (candidate) => isUsefulToken(candidate.id) || isUsefulToken(candidate.name)
-  );
-};
-
-const resolveCountryFromCandidates = (
-  candidates: Array<{ id: string | null | undefined; name: string | null | undefined }>,
-  countries: readonly CountryOption[],
-  countryLookup = buildFilemakerCountryLookup(countries)
-): ResolvedCountry => {
-  for (const candidate of candidates) {
-    const country = resolveFilemakerCountry(
-      candidate.id,
-      candidate.name,
-      countries,
-      countryLookup
-    );
-    if (country) {
-      return {
-        id: country.id,
-        name: country.name,
-        code: country.code,
-      };
-    }
-  }
-  const first = candidates[0];
-  const fallback = first?.id ?? first?.name ?? '';
-  return fallback.trim().length > 0
-    ? { id: fallback.trim(), name: (first?.name ?? fallback).trim(), code: '' }
-    : null;
-};
-
-export const resolveFilemakerCampaignRecipientCountry = (input: {
-  database: FilemakerDatabase;
-  partyKind: FilemakerEmailCampaignDelivery['partyKind'];
-  partyId: string;
-  countries?: readonly CountryOption[];
-}): ResolvedCountry => {
-  const countries = input.countries ?? fallbackCountries;
-  const countryLookup = input.countries ? buildFilemakerCountryLookup(countries) : fallbackCountryLookup;
-  if (input.partyKind === 'organization') {
-    const organization = getFilemakerOrganizationById(input.database, input.partyId);
-    const defaultAddress = getFilemakerDefaultAddressForOwner(
-      input.database,
-      'organization',
-      input.partyId
-    );
-    return resolveCountryFromCandidates(
-      collectCountryCandidates(defaultAddress).concat(collectCountryCandidates(organization)),
-      countries,
-      countryLookup
-    );
-  }
-
-  const person = getFilemakerPersonById(input.database, input.partyId);
-  const defaultAddress = getFilemakerDefaultAddressForOwner(input.database, 'person', input.partyId);
-  return resolveCountryFromCandidates(
-    collectCountryCandidates(defaultAddress).concat(collectCountryCandidates(person)),
-    countries,
-    countryLookup
-  );
-};
 
 export const resolveFilemakerEmailCampaignContentGroup = (
   registry: FilemakerEmailCampaignContentGroupRegistry | null | undefined,
@@ -172,7 +68,7 @@ const resolveCountryAssignmentTokens = (
 ): Set<string> => {
   const country = resolveFilemakerCountry(countryId, countryId, countries, countryLookup);
   const tokens = new Set<string>([normalizeToken(countryId)]);
-  if (country) {
+  if (country !== undefined) {
     tokens.add(normalizeToken(country.id));
     tokens.add(normalizeToken(country.code));
     tokens.add(normalizeToken(country.name));
@@ -185,7 +81,7 @@ const variantMatchesCountry = (
   country: ResolvedCountry,
   countries: readonly CountryOption[]
 ): boolean => {
-  if (!country || variant.countryIds.length === 0) return false;
+  if (country === null || variant.countryIds.length === 0) return false;
   const countryLookup = buildFilemakerCountryLookup(countries);
   const targetTokens = new Set<string>([
     normalizeToken(country.id),
@@ -201,6 +97,12 @@ const variantMatchesCountry = (
   });
 };
 
+const getResolvedCountryId = (country: ResolvedCountry): string | null =>
+  country !== null ? country.id : null;
+
+const getResolvedCountryName = (country: ResolvedCountry): string | null =>
+  country !== null ? country.name : null;
+
 const toLegacyCampaignContent = (
   campaign: FilemakerEmailCampaign,
   country: ResolvedCountry,
@@ -214,8 +116,8 @@ const toLegacyCampaignContent = (
   contentGroupId: null,
   contentVariantId: null,
   languageCode: null,
-  resolvedCountryId: country?.id ?? null,
-  resolvedCountryName: country?.name ?? null,
+  resolvedCountryId: getResolvedCountryId(country),
+  resolvedCountryName: getResolvedCountryName(country),
   usedFallbackContent: false,
   source: 'campaign',
   reason,
@@ -237,14 +139,14 @@ const toVariantContent = (input: {
   contentGroupId: input.group.id,
   contentVariantId: input.variant.id,
   languageCode: input.variant.languageCode,
-  resolvedCountryId: input.country?.id ?? null,
-  resolvedCountryName: input.country?.name ?? null,
+  resolvedCountryId: getResolvedCountryId(input.country),
+  resolvedCountryName: getResolvedCountryName(input.country),
   usedFallbackContent: input.usedFallbackContent,
   source: 'content_group',
   reason: input.reason,
 });
 
-export const resolveFilemakerCampaignContentForRecipient = (input: {
+type ResolveCampaignContentInput = {
   campaign: FilemakerEmailCampaign;
   contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry | null;
   database: FilemakerDatabase;
@@ -252,7 +154,55 @@ export const resolveFilemakerCampaignContentForRecipient = (input: {
   partyId: string;
   contentVariantId?: string | null;
   countries?: readonly CountryOption[];
-}): FilemakerCampaignResolvedContent => {
+};
+
+const resolveExplicitContentVariant = (
+  group: FilemakerEmailCampaignContentGroup,
+  contentVariantId: string | null | undefined
+): FilemakerEmailCampaignContentVariant | null => {
+  const normalizedContentVariantId = contentVariantId?.trim() ?? '';
+  if (normalizedContentVariantId.length === 0) return null;
+  return group.variants.find((variant) => variant.id === normalizedContentVariantId) ?? null;
+};
+
+const resolveMatchedContentVariant = (input: {
+  campaign: FilemakerEmailCampaign;
+  countries: readonly CountryOption[];
+  country: ResolvedCountry;
+  group: FilemakerEmailCampaignContentGroup;
+}): FilemakerEmailCampaignContentVariant | null => {
+  if (!input.campaign.translatedSendingEnabled || input.country === null) return null;
+  return (
+    input.group.variants.find((variant) =>
+      variantMatchesCountry(variant, input.country, input.countries)
+    ) ?? null
+  );
+};
+
+const resolveContentRouteReason = (input: {
+  campaign: FilemakerEmailCampaign;
+  explicitVariant: FilemakerEmailCampaignContentVariant | null;
+  matchedVariant: FilemakerEmailCampaignContentVariant | null;
+}): string => {
+  if (input.explicitVariant !== null) return 'explicit-variant';
+  if (input.matchedVariant !== null) return 'country-match';
+  return input.campaign.translatedSendingEnabled
+    ? 'default-fallback'
+    : 'translated-sending-disabled';
+};
+
+const resolveUsedFallbackContent = (input: {
+  campaign: FilemakerEmailCampaign;
+  explicitVariant: FilemakerEmailCampaignContentVariant | null;
+  matchedVariant: FilemakerEmailCampaignContentVariant | null;
+}): boolean =>
+  input.explicitVariant === null &&
+  input.campaign.translatedSendingEnabled &&
+  input.matchedVariant === null;
+
+export const resolveFilemakerCampaignContentForRecipient = (
+  input: ResolveCampaignContentInput
+): FilemakerCampaignResolvedContent => {
   const countries = input.countries ?? fallbackCountries;
   const country = resolveFilemakerCampaignRecipientCountry({
     database: input.database,
@@ -264,122 +214,40 @@ export const resolveFilemakerCampaignContentForRecipient = (input: {
     input.contentGroupRegistry,
     input.campaign.contentGroupId
   );
-  if (!group) {
+  if (group === null) {
     return toLegacyCampaignContent(input.campaign, country, 'campaign-content');
   }
 
-  const explicitVariant = input.contentVariantId
-    ? group.variants.find((variant) => variant.id === input.contentVariantId) ?? null
-    : null;
+  const explicitVariant = resolveExplicitContentVariant(group, input.contentVariantId);
   const defaultVariant = resolveFilemakerEmailCampaignDefaultContentVariant({
     campaign: input.campaign,
     group,
   });
-  const matchedVariant =
-    input.campaign.translatedSendingEnabled && country
-      ? group.variants.find((variant) => variantMatchesCountry(variant, country, countries)) ?? null
-      : null;
+  const matchedVariant = resolveMatchedContentVariant({
+    campaign: input.campaign,
+    countries,
+    country,
+    group,
+  });
   const variant = explicitVariant ?? matchedVariant ?? defaultVariant;
-  if (!variant) {
+  if (variant === null) {
     return toLegacyCampaignContent(input.campaign, country, 'content-group-without-variant');
   }
 
-  const usedFallbackContent = explicitVariant
-    ? false
-    : input.campaign.translatedSendingEnabled && matchedVariant === null;
   return toVariantContent({
     campaign: input.campaign,
     group,
     variant,
     country,
-    usedFallbackContent,
-    reason: explicitVariant
-      ? 'explicit-variant'
-      : matchedVariant
-        ? 'country-match'
-        : input.campaign.translatedSendingEnabled
-          ? 'default-fallback'
-          : 'translated-sending-disabled',
+    usedFallbackContent: resolveUsedFallbackContent({
+      campaign: input.campaign,
+      explicitVariant,
+      matchedVariant,
+    }),
+    reason: resolveContentRouteReason({
+      campaign: input.campaign,
+      explicitVariant,
+      matchedVariant,
+    }),
   });
-};
-
-export const resolveFilemakerCampaignContentBodyText = (
-  content: {
-    bodyHtml?: string | null;
-    bodyText?: string | null;
-  }
-): string => {
-  const text = content.bodyText?.trim() ?? '';
-  if (text.length > 0) return text;
-  const html = content.bodyHtml?.trim() ?? '';
-  return html.length > 0 ? buildFilemakerMailPlainText(html) : '';
-};
-
-export const toFilemakerCampaignContentDeliveryMetadata = (
-  content: FilemakerCampaignResolvedContent
-): Pick<
-  FilemakerEmailCampaignDelivery,
-  | 'contentGroupId'
-  | 'contentVariantId'
-  | 'languageCode'
-  | 'resolvedCountryId'
-  | 'resolvedCountryName'
-  | 'usedFallbackContent'
-> => ({
-  contentGroupId: content.contentGroupId,
-  contentVariantId: content.contentVariantId,
-  languageCode: content.languageCode,
-  resolvedCountryId: content.resolvedCountryId,
-  resolvedCountryName: content.resolvedCountryName,
-  usedFallbackContent: content.usedFallbackContent,
-});
-
-export const validateFilemakerCampaignContentReadiness = (input: {
-  campaign: FilemakerEmailCampaign;
-  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry | null;
-}): string[] => {
-  const group = resolveFilemakerEmailCampaignContentGroup(
-    input.contentGroupRegistry,
-    input.campaign.contentGroupId
-  );
-  if (!input.campaign.contentGroupId) {
-    const blockers: string[] = [];
-    if (input.campaign.subject.trim().length === 0) {
-      blockers.push('Campaign subject is required before launching a live send.');
-    }
-    if (
-      (input.campaign.bodyText?.trim() ?? '').length === 0 &&
-      (input.campaign.bodyHtml?.trim() ?? '').length === 0
-    ) {
-      blockers.push('Campaign body text or HTML is required before launching a live send.');
-    }
-    return blockers;
-  }
-  if (!group) return ['Selected email content group could not be found.'];
-  const defaultVariant = resolveFilemakerEmailCampaignDefaultContentVariant({
-    campaign: input.campaign,
-    group,
-  });
-  if (!defaultVariant) return ['Selected email content group needs a default language variant.'];
-  const variants = input.campaign.translatedSendingEnabled ? group.variants : [defaultVariant];
-  const blockers: string[] = [];
-  variants.forEach((variant) => {
-    if (variant.subject.trim().length === 0) {
-      blockers.push(`${variant.label} variant subject is required before launching a live send.`);
-    }
-    if (resolveFilemakerCampaignContentBodyText(variant).length === 0) {
-      blockers.push(`${variant.label} variant body text or HTML is required before launching a live send.`);
-    }
-  });
-  return blockers;
-};
-
-export const assertFilemakerCampaignContentReadyForDelivery = (input: {
-  campaign: FilemakerEmailCampaign;
-  contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry | null;
-}): void => {
-  const blockers = validateFilemakerCampaignContentReadiness(input);
-  if (blockers.length > 0) {
-    throw badRequestError(blockers[0] ?? 'Campaign content is not ready for delivery.');
-  }
 };

@@ -22,10 +22,12 @@ const resolveEventId = (input: Partial<FilemakerEmailCampaignEvent>): string => 
   if (id !== '') return id;
   const now = new Date().toISOString();
   const msg = normalizeString(input.message);
+  const runId = normalizeString(input.runId);
+  const deliveryId = normalizeString(input.deliveryId);
   const token = toIdToken(
-    `${input.campaignId}-${input.runId || 'campaign'}-${input.deliveryId || 'timeline'}-${
-      input.type
-    }-${msg !== '' ? msg : 'event'}-${now}`
+    `${input.campaignId}-${runId !== '' ? runId : 'campaign'}-${
+      deliveryId !== '' ? deliveryId : 'timeline'
+    }-${input.type}-${msg !== '' ? msg : 'event'}-${now}`
   );
   return `filemaker-email-campaign-event-${token !== '' ? token : 'entry'}`;
 };
@@ -46,7 +48,12 @@ const resolveEventDeliveryStatus = (
   return null;
 };
 
-const resolveEventMetadata = (input: Partial<FilemakerEmailCampaignEvent>) => {
+const resolveEventMetadata = (
+  input: Partial<FilemakerEmailCampaignEvent>
+): Pick<
+  FilemakerEmailCampaignEvent,
+  'actor' | 'targetUrl' | 'mailThreadId' | 'mailMessageId'
+> => {
   const actor = normalizeString(input.actor);
   const targetUrl = normalizeString(input.targetUrl);
   const mailThreadId = normalizeString(input.mailThreadId);
@@ -66,12 +73,14 @@ export const createFilemakerEmailCampaignEvent = (
   const now = new Date().toISOString();
   const normalizedType = normalizeString(input.type).toLowerCase();
   const meta = resolveEventMetadata(input);
+  const runId = normalizeString(input.runId);
+  const deliveryId = normalizeString(input.deliveryId);
 
   return {
     id: resolveEventId(input),
     campaignId: normalizeString(input.campaignId),
-    runId: normalizeString(input.runId) || null,
-    deliveryId: normalizeString(input.deliveryId) || null,
+    runId: runId !== '' ? runId : null,
+    deliveryId: deliveryId !== '' ? deliveryId : null,
     type: isFilemakerEmailCampaignEventType(normalizedType) ? normalizedType : 'status_changed',
     message: normalizeString(input.message),
     ...meta,

@@ -45,7 +45,7 @@ const ensureCounter = (
   emailAddress: string
 ): EmailEngagementCounters => {
   const existing = counters.get(emailAddress);
-  if (existing) return existing;
+  if (existing !== undefined) return existing;
   const created: EmailEngagementCounters = {
     emailAddress,
     sends: 0,
@@ -57,6 +57,53 @@ const ensureCounter = (
   };
   counters.set(emailAddress, created);
   return created;
+};
+
+const updateCounterForEvent = (
+  counter: EmailEngagementCounters,
+  event: FilemakerEmailCampaignEvent
+): EmailEngagementCounters => {
+  switch (event.type) {
+    case 'delivery_sent': {
+      return {
+        ...counter,
+        sends: counter.sends + 1,
+        consecutiveSendsSinceEngagement: counter.consecutiveSendsSinceEngagement + 1,
+        lastSendAt: event.createdAt ?? null,
+      };
+    }
+    case 'opened': {
+      return {
+        ...counter,
+        opens: counter.opens + 1,
+        consecutiveSendsSinceEngagement: 0,
+        lastEngagementAt: event.createdAt ?? null,
+      };
+    }
+    case 'clicked': {
+      return {
+        ...counter,
+        clicks: counter.clicks + 1,
+        consecutiveSendsSinceEngagement: 0,
+        lastEngagementAt: event.createdAt ?? null,
+      };
+    }
+    default:
+      return counter;
+  }
+};
+
+const applyEngagementEvent = (
+  counters: Map<string, EmailEngagementCounters>,
+  deliveryById: Map<string, FilemakerEmailCampaignDelivery>,
+  event: FilemakerEmailCampaignEvent
+): void => {
+  if (event.deliveryId === null || event.deliveryId === undefined || event.deliveryId === '') return;
+  const delivery = deliveryById.get(event.deliveryId);
+  if (delivery === undefined) return;
+  const address = normalizeAddress(delivery.emailAddress);
+  if (address === '') return;
+  counters.set(address, updateCounterForEvent(ensureCounter(counters, address), event));
 };
 
 interface ComputeEngagementSnapshotInput {
@@ -78,35 +125,7 @@ export const computeEngagementSnapshot = (
   const sortedEvents = sortEventsChronologically(input.eventRegistry.events);
 
   sortedEvents.forEach((event) => {
-    if (!event.deliveryId) return;
-    const delivery = deliveryById.get(event.deliveryId);
-    if (!delivery) return;
-    const address = normalizeAddress(delivery.emailAddress);
-    if (!address) return;
-    const counter = ensureCounter(counters, address);
-
-    switch (event.type) {
-      case 'delivery_sent': {
-        counter.sends += 1;
-        counter.consecutiveSendsSinceEngagement += 1;
-        counter.lastSendAt = event.createdAt ?? null;
-        return;
-      }
-      case 'opened': {
-        counter.opens += 1;
-        counter.consecutiveSendsSinceEngagement = 0;
-        counter.lastEngagementAt = event.createdAt ?? null;
-        return;
-      }
-      case 'clicked': {
-        counter.clicks += 1;
-        counter.consecutiveSendsSinceEngagement = 0;
-        counter.lastEngagementAt = event.createdAt ?? null;
-        return;
-      }
-      default:
-        return;
-    }
+    applyEngagementEvent(counters, deliveryById, event);
   });
 
   return { countersByEmailAddress: counters };

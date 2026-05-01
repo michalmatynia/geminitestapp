@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, Text } from '@/shared/ui/react-native-web-shim';
-import { Card, KangurButton } from '@/features/kangur/ui/components';
+import { Text } from '@/shared/ui/react-native-web-shim';
+import { Card } from '@/features/kangur/ui/components';
 
 interface CampaignDetailsSectionProps {
-  campaign: any;
+  campaign: {
+    title: string;
+  };
   copy: (v: Record<string, string>) => string;
 }
 

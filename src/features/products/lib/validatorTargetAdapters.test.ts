@@ -8,6 +8,7 @@ import {
   getProductValidationFieldValueKind,
   getProductValidationTargetAdapter,
   getReplacementFieldsForProductValidationTarget,
+  resolveProductValidationReplacementFieldName,
 } from './validatorTargetAdapters';
 
 describe('validatorTargetAdapters', () => {
@@ -36,6 +37,8 @@ describe('validatorTargetAdapters', () => {
     expect(getProductValidationFieldValueKind('categoryId')).toBe('category');
     expect(getProductValidationFieldValueKind('producerIds')).toBe('producer');
     expect(getProductValidationFieldValueKind('name_en')).toBe('text');
+    expect(resolveProductValidationReplacementFieldName('size_length')).toBe('sizeLength');
+    expect(resolveProductValidationReplacementFieldName('sizeLength')).toBe('sizeLength');
   });
 
   it('tracks category validation dependencies through adapter metadata', () => {
@@ -53,6 +56,9 @@ describe('validatorTargetAdapters', () => {
     expect(coerceProductValidationTargetValue({ target: 'stock', value: '12,9' })).toBe(12);
     expect(coerceProductValidationFieldNumericValue('sizeLength', '4 cm')).toBe(4);
     expect(coerceProductValidationFieldNumericValue('length', '40 mm')).toBe(4);
+    expect(coerceProductValidationFieldNumericValue('sizeLength', 'BattleStock 32mm base')).toBe(
+      3.2
+    );
     expect(coerceProductValidationTargetValue({ target: 'size_length', value: '1.2 m' })).toBe(
       120
     );

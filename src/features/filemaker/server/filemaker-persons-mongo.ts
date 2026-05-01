@@ -88,10 +88,31 @@ type PersonWithLinksDocument = FilemakerPersonMongoDocument & {
   organizationLinks?: FilemakerPersonOrganizationLinkMongoDocument[];
 };
 
+type OptionalPersonMetadataKey =
+  | 'dateOfBirth'
+  | 'legacyDefaultAddressUuid'
+  | 'legacyDefaultBankAccountUuid'
+  | 'legacyDisplayAddressUuid'
+  | 'legacyDisplayBankAccountUuid'
+  | 'legacyParentUuid'
+  | 'legacyUuid'
+  | 'updatedBy';
+
 const optionalMetadataString = (value: string | undefined): string | undefined => {
   const normalized = value?.trim() ?? '';
   return normalized.length > 0 ? normalized : undefined;
 };
+
+const OPTIONAL_PERSON_METADATA_KEYS: OptionalPersonMetadataKey[] = [
+  'dateOfBirth',
+  'legacyDefaultAddressUuid',
+  'legacyDefaultBankAccountUuid',
+  'legacyDisplayAddressUuid',
+  'legacyDisplayBankAccountUuid',
+  'legacyParentUuid',
+  'legacyUuid',
+  'updatedBy',
+];
 
 const buildFullName = (document: FilemakerPersonMongoDocument): string => {
   const fullName = document.fullName?.trim() ?? '';
@@ -123,73 +144,62 @@ const toOrganizationLink = (
     : {}),
 });
 
-// Imported person records intentionally expose legacy metadata alongside the normalized DTO.
-// eslint-disable-next-line complexity
+const createMongoPersonBase = (
+  document: FilemakerPersonMongoDocument
+): FilemakerPerson => createFilemakerPerson({
+  id: document.id,
+  firstName: document.firstName,
+  lastName: document.lastName,
+  addressId: document.addressId,
+  street: document.street,
+  streetNumber: document.streetNumber,
+  city: document.city,
+  postalCode: document.postalCode,
+  country: document.country,
+  countryId: document.countryId,
+  nip: '',
+  regon: '',
+  phoneNumbers: [],
+  linkedinUrl: document.linkedinUrl,
+  githubUrl: document.githubUrl,
+  languageSkills: document.languageSkills,
+  profileEducation: document.profileEducation,
+  profileJobExperience: document.profileJobExperience,
+  cvHeadline: document.cvHeadline,
+  cvProfessionalSummary: document.cvProfessionalSummary,
+  cvCoreStrengths: document.cvCoreStrengths,
+  cvSelectedTechnicalEnvironment: document.cvSelectedTechnicalEnvironment,
+  createdAt: document.createdAt,
+  updatedAt: document.updatedAt,
+});
+
+const buildPersonLegacyMetadata = (
+  document: FilemakerPersonMongoDocument
+): Partial<MongoFilemakerPerson> => {
+  const metadata: Partial<MongoFilemakerPerson> = {};
+  if (document.checked1 !== undefined) metadata.checked1 = document.checked1;
+  if (document.checked2 !== undefined) metadata.checked2 = document.checked2;
+  for (const key of OPTIONAL_PERSON_METADATA_KEYS) {
+    const normalized = optionalMetadataString(document[key]);
+    if (normalized !== undefined) metadata[key] = normalized;
+  }
+  return metadata;
+};
+
 export function toMongoFilemakerPerson(
   document: PersonWithLinksDocument
 ): MongoFilemakerPerson {
   const organizationLinks = document.organizationLinks ?? [];
-  const fullName = buildFullName(document);
   return {
-    ...createFilemakerPerson({
-      id: document.id,
-      firstName: document.firstName,
-      lastName: document.lastName,
-      addressId: document.addressId,
-      street: document.street,
-      streetNumber: document.streetNumber,
-      city: document.city,
-      postalCode: document.postalCode,
-      country: document.country,
-      countryId: document.countryId,
-      nip: '',
-      regon: '',
-      phoneNumbers: [],
-      linkedinUrl: document.linkedinUrl,
-      githubUrl: document.githubUrl,
-      languageSkills: document.languageSkills,
-      profileEducation: document.profileEducation,
-      profileJobExperience: document.profileJobExperience,
-      cvHeadline: document.cvHeadline,
-      cvProfessionalSummary: document.cvProfessionalSummary,
-      cvCoreStrengths: document.cvCoreStrengths,
-      cvSelectedTechnicalEnvironment: document.cvSelectedTechnicalEnvironment,
-      createdAt: document.createdAt,
-      updatedAt: document.updatedAt,
-    }),
-    fullName,
-    ...(document.checked1 !== undefined ? { checked1: document.checked1 } : {}),
-    ...(document.checked2 !== undefined ? { checked2: document.checked2 } : {}),
-    ...(optionalMetadataString(document.dateOfBirth) !== undefined
-      ? { dateOfBirth: optionalMetadataString(document.dateOfBirth) }
-      : {}),
-    ...(optionalMetadataString(document.legacyDefaultAddressUuid) !== undefined
-      ? { legacyDefaultAddressUuid: optionalMetadataString(document.legacyDefaultAddressUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyDefaultBankAccountUuid) !== undefined
-      ? { legacyDefaultBankAccountUuid: optionalMetadataString(document.legacyDefaultBankAccountUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyDisplayAddressUuid) !== undefined
-      ? { legacyDisplayAddressUuid: optionalMetadataString(document.legacyDisplayAddressUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyDisplayBankAccountUuid) !== undefined
-      ? { legacyDisplayBankAccountUuid: optionalMetadataString(document.legacyDisplayBankAccountUuid) }
-      : {}),
+    ...createMongoPersonBase(document),
+    ...buildPersonLegacyMetadata(document),
+    fullName: buildFullName(document),
     legacyOrganizationUuids: document.legacyOrganizationUuids ?? [],
-    ...(optionalMetadataString(document.legacyParentUuid) !== undefined
-      ? { legacyParentUuid: optionalMetadataString(document.legacyParentUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyUuid) !== undefined
-      ? { legacyUuid: optionalMetadataString(document.legacyUuid) }
-      : {}),
     linkedOrganizations: organizationLinks.map(toOrganizationLink),
     organizationLinkCount: organizationLinks.length,
     unresolvedOrganizationLinkCount: organizationLinks.filter(
       (link: FilemakerPersonOrganizationLinkMongoDocument): boolean =>
         optionalMetadataString(link.organizationId) === undefined
     ).length,
-    ...(optionalMetadataString(document.updatedBy) !== undefined
-      ? { updatedBy: optionalMetadataString(document.updatedBy) }
-      : {}),
   };
 }

@@ -5,6 +5,7 @@ import type { ProductWithImages } from '@/shared/contracts/products/product';
 import {
   calculatePriceForCurrency,
   normalizeCurrencyCode,
+  resolveSourcePriceCurrencyCode,
 } from '@/shared/lib/products/utils/priceCalculation';
 
 import {
@@ -114,11 +115,18 @@ const resolveFormattedPrice = (
   return `${displayPrice.toFixed(2)}${currencyLabel.length > 0 ? ` ${currencyLabel}` : ''}`;
 };
 
-const resolveSourcePriceLabel = (product: ProductWithImages): string => {
+const resolveSourcePriceLabel = ({
+  product,
+  rowVisuals,
+}: ProductListMobileCardModelInput): string => {
   const sourcePrice = product.sourcePrice;
   if (resolveProductImportSource(product) !== 'scrape') return '';
   if (typeof sourcePrice !== 'number' || !Number.isFinite(sourcePrice)) return '';
-  return `Source: ${sourcePrice.toFixed(2)}`;
+  const currencyCode = resolveSourcePriceCurrencyCode(
+    product.defaultPriceGroupId,
+    rowVisuals.priceGroups
+  );
+  return `Source: ${sourcePrice.toFixed(2)}${currencyCode.length > 0 ? ` ${currencyCode}` : ''}`;
 };
 
 const resolvePriceModel = ({
@@ -148,7 +156,7 @@ const resolvePriceModel = ({
     formattedPrice: resolveFormattedPrice(result.price, result.currencyCode),
     basePriceLabel:
       product.price !== null ? product.price.toFixed(2) : EMPTY_PRODUCT_LIST_VALUE,
-    sourcePriceLabel: resolveSourcePriceLabel(product),
+    sourcePriceLabel: resolveSourcePriceLabel({ product, rowVisuals }),
   };
 };
 

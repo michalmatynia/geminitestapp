@@ -126,6 +126,7 @@ const FIELD_MEASUREMENT_KIND_BY_FIELD_NAME: Partial<
 const CATEGORY_FIELD_CHANGED_AT_DEPENDENCIES = ['categoryId', 'name_en'] as const;
 const NUMBER_WITH_OPTIONAL_UNIT_PATTERN =
   /^([+-]?\d+(?:[.,]\d+)?)\s*([a-zA-Zµμ]+)?$/u;
+const NUMBER_WITH_UNIT_FRAGMENT_PATTERN = /([+-]?\d+(?:[.,]\d+)?)\s*([a-zA-Zµμ]+)/u;
 const DIMENSION_CM_UNIT_FACTORS: Record<string, number> = {
   cm: 1,
   centimeter: 1,
@@ -168,6 +169,16 @@ export const getProductValidationFieldNumberMode = (
   fieldName: string
 ): ProductValidationNumberMode => FIELD_NUMBER_MODE_BY_FIELD_NAME[fieldName] ?? 'integer';
 
+export const resolveProductValidationReplacementFieldName = (fieldName: string): string => {
+  if (Object.prototype.hasOwnProperty.call(FIELD_VALUE_KIND_BY_FIELD_NAME, fieldName)) {
+    return fieldName;
+  }
+  if (!Object.prototype.hasOwnProperty.call(TARGET_ADAPTERS, fieldName)) return fieldName;
+  const adapter = TARGET_ADAPTERS[fieldName as ProductValidationTarget];
+  if (adapter.replacementFields.length !== 1) return fieldName;
+  return adapter.replacementFields[0] ?? fieldName;
+};
+
 const normalizeNumericText = (value: string): string => value.trim().replace(',', '.');
 
 const normalizeUnitText = (unit: string | undefined): string | null => {
@@ -205,6 +216,17 @@ const convertMeasuredNumericValue = (
 const roundNumericValue = (value: number, mode: ProductValidationNumberMode): number =>
   Math.max(0, mode === 'decimal' ? value : Math.floor(value));
 
+const resolveNumericTextMatch = (
+  value: string,
+  measurementKind: ProductValidationMeasurementKind | undefined
+): RegExpExecArray | null => {
+  const normalized = normalizeNumericText(value);
+  const exactMatch = NUMBER_WITH_OPTIONAL_UNIT_PATTERN.exec(normalized);
+  if (exactMatch !== null) return exactMatch;
+  if (measurementKind === undefined) return null;
+  return NUMBER_WITH_UNIT_FRAGMENT_PATTERN.exec(normalized);
+};
+
 export const getProductValidationFieldChangedAtDependencies = (
   fieldName: string
 ): ReadonlyArray<string> =>
@@ -216,7 +238,7 @@ export const coerceProductValidationNumericValue = (
   measurementKind?: ProductValidationMeasurementKind
 ): number | null => {
   if (typeof value !== 'string') return null;
-  const match = NUMBER_WITH_OPTIONAL_UNIT_PATTERN.exec(normalizeNumericText(value));
+  const match = resolveNumericTextMatch(value, measurementKind);
   if (match === null) return null;
   const numericValue = Number(match[1]);
   if (!Number.isFinite(numericValue)) return null;

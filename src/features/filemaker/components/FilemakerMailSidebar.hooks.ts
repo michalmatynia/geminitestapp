@@ -13,6 +13,12 @@ import { useToast } from '@/shared/ui/primitives.public';
 type AccountsResponse = { accounts: FilemakerMailAccount[] };
 type FoldersResponse = { folders: FilemakerMailFolderSummary[] };
 type ThreadsResponse = { threads: FilemakerMailThread[] };
+type UseFilemakerMailDataParams = {
+  enabled: boolean;
+  refreshKey: number;
+  selectedAccountId: string | null;
+  selectedMailboxPath: string | null;
+};
 type UseFilemakerMailDataResult = {
   accounts: FilemakerMailAccount[];
   setAccounts: Dispatch<SetStateAction<FilemakerMailAccount[]>>;
@@ -27,26 +33,23 @@ type UseFilemakerMailDataResult = {
   setSyncingAccountId: Dispatch<SetStateAction<string | null>>;
   fetchAccountsAndFolders: () => Promise<void>;
 };
+type UseMailNavigationResult = Pick<
+  UseFilemakerMailDataResult,
+  'accounts' | 'setAccounts' | 'folders' | 'setFolders' | 'isLoading' | 'fetchAccountsAndFolders'
+>;
+type UseRecentThreadsResult = Pick<
+  UseFilemakerMailDataResult,
+  'recentThreads' | 'setRecentThreads'
+>;
+type UseFolderThreadsResult = Pick<UseFilemakerMailDataResult, 'threads' | 'setThreads'>;
+type ToastFn = ReturnType<typeof useToast>['toast'];
+
 const RECENT_THREAD_PREVIEW_LIMIT = 5;
 
-export const useFilemakerMailData = ({
-  enabled,
-  refreshKey,
-  selectedAccountId,
-  selectedMailboxPath,
-}: {
-  enabled: boolean;
-  refreshKey: number;
-  selectedAccountId: string | null;
-  selectedMailboxPath: string | null;
-}): UseFilemakerMailDataResult => {
-  const { toast } = useToast();
+const useMailNavigation = (toast: ToastFn): UseMailNavigationResult => {
   const [accounts, setAccounts] = useState<FilemakerMailAccount[]>([]);
   const [folders, setFolders] = useState<FilemakerMailFolderSummary[]>([]);
-  const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
-  const [recentThreads, setRecentThreads] = useState<FilemakerMailThread[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
 
   const fetchAccountsAndFolders = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -65,6 +68,16 @@ export const useFilemakerMailData = ({
       setIsLoading(false);
     }
   }, [toast]);
+
+  return { accounts, setAccounts, folders, setFolders, isLoading, fetchAccountsAndFolders };
+};
+
+const useRecentThreads = (
+  selectedAccountId: string | null,
+  refreshKey: number,
+  toast: ToastFn
+): UseRecentThreadsResult => {
+  const [recentThreads, setRecentThreads] = useState<FilemakerMailThread[]>([]);
 
   const fetchRecentThreads = useCallback(async (): Promise<void> => {
     if (selectedAccountId === null) {
@@ -87,6 +100,21 @@ export const useFilemakerMailData = ({
     }
   }, [selectedAccountId, toast]);
 
+  useEffect((): void => {
+    void fetchRecentThreads();
+  }, [fetchRecentThreads, refreshKey]);
+
+  return { recentThreads, setRecentThreads };
+};
+
+const useFolderThreads = (
+  selectedAccountId: string | null,
+  selectedMailboxPath: string | null,
+  refreshKey: number,
+  toast: ToastFn
+): UseFolderThreadsResult => {
+  const [threads, setThreads] = useState<FilemakerMailThread[]>([]);
+
   const fetchFolderThreads = useCallback(async (): Promise<void> => {
     if (selectedAccountId === null || selectedMailboxPath === null) {
       setThreads([]);
@@ -107,36 +135,47 @@ export const useFilemakerMailData = ({
   }, [selectedAccountId, selectedMailboxPath, toast]);
 
   useEffect((): void => {
+    void fetchFolderThreads();
+  }, [fetchFolderThreads, refreshKey]);
+
+  return { threads, setThreads };
+};
+
+export const useFilemakerMailData = ({
+  enabled,
+  refreshKey,
+  selectedAccountId,
+  selectedMailboxPath,
+}: UseFilemakerMailDataParams): UseFilemakerMailDataResult => {
+  const { toast } = useToast();
+  const navigation = useMailNavigation(toast);
+  const { fetchAccountsAndFolders } = navigation;
+  const recent = useRecentThreads(enabled ? selectedAccountId : null, refreshKey, toast);
+  const folder = useFolderThreads(
+    enabled ? selectedAccountId : null,
+    enabled ? selectedMailboxPath : null,
+    refreshKey,
+    toast
+  );
+  const [syncingAccountId, setSyncingAccountId] = useState<string | null>(null);
+
+  useEffect((): void => {
     if (!enabled) {
       return;
     }
     void fetchAccountsAndFolders();
   }, [enabled, fetchAccountsAndFolders, refreshKey]);
 
-  useEffect((): void => {
-    if (!enabled) {
-      return;
-    }
-    void fetchRecentThreads();
-  }, [enabled, fetchRecentThreads, refreshKey]);
-
-  useEffect((): void => {
-    if (!enabled) {
-      return;
-    }
-    void fetchFolderThreads();
-  }, [enabled, fetchFolderThreads, refreshKey]);
-
   return {
-    accounts,
-    setAccounts,
-    folders,
-    setFolders,
-    threads,
-    setThreads,
-    recentThreads,
-    setRecentThreads,
-    isLoading,
+    accounts: navigation.accounts,
+    setAccounts: navigation.setAccounts,
+    folders: navigation.folders,
+    setFolders: navigation.setFolders,
+    threads: folder.threads,
+    setThreads: folder.setThreads,
+    recentThreads: recent.recentThreads,
+    setRecentThreads: recent.setRecentThreads,
+    isLoading: navigation.isLoading,
     syncingAccountId,
     setSyncingAccountId,
     fetchAccountsAndFolders,

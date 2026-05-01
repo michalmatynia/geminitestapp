@@ -157,6 +157,16 @@ const resolveCampaignMetadata = (input: Partial<FilemakerEmailCampaign>): {
   };
 };
 
+const normalizeNullableCampaignString = (value: unknown): string | null => {
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeNullableCampaignEmail = (value: unknown): string | null => {
+  const normalized = normalizeString(value).toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+};
+
 const resolveCampaignIdentity = (input: Partial<FilemakerEmailCampaign>): {
   description: string | null;
   contentGroupId: string | null;
@@ -167,24 +177,15 @@ const resolveCampaignIdentity = (input: Partial<FilemakerEmailCampaign>): {
   replyToEmail: string | null;
   bodyText: string | null;
 } => {
-  const description = normalizeString(input.description);
-  const contentGroupId = normalizeString(input.contentGroupId);
-  const defaultContentVariantId = normalizeString(input.defaultContentVariantId);
-  const mailAccountId = normalizeString(input.mailAccountId);
-  const fromName = normalizeString(input.fromName);
-  const previewText = normalizeString(input.previewText);
-  const replyToEmail = normalizeString(input.replyToEmail).toLowerCase();
-  const bodyText = normalizeString(input.bodyText);
   return {
-    description: description.length > 0 ? description : null,
-    contentGroupId: contentGroupId.length > 0 ? contentGroupId : null,
-    defaultContentVariantId:
-      defaultContentVariantId.length > 0 ? defaultContentVariantId : null,
-    mailAccountId: mailAccountId.length > 0 ? mailAccountId : null,
-    fromName: fromName.length > 0 ? fromName : null,
-    previewText: previewText.length > 0 ? previewText : null,
-    replyToEmail: replyToEmail.length > 0 ? replyToEmail : null,
-    bodyText: bodyText.length > 0 ? bodyText : null,
+    description: normalizeNullableCampaignString(input.description),
+    contentGroupId: normalizeNullableCampaignString(input.contentGroupId),
+    defaultContentVariantId: normalizeNullableCampaignString(input.defaultContentVariantId),
+    mailAccountId: normalizeNullableCampaignString(input.mailAccountId),
+    fromName: normalizeNullableCampaignString(input.fromName),
+    previewText: normalizeNullableCampaignString(input.previewText),
+    replyToEmail: normalizeNullableCampaignEmail(input.replyToEmail),
+    bodyText: normalizeNullableCampaignString(input.bodyText),
   };
 };
 

@@ -23,10 +23,11 @@ import type {
 import { formatTimestamp } from '../filemaker-page-utils';
 
 const MAX_BAR_HEIGHT_PX = 48;
+type CampaignEngagementTrendSummary = ReturnType<typeof summarizeFilemakerEmailCampaignRunTrend>;
 
 const formatRunLabel = (point: CampaignRunTrendDataPoint, index: number): string => {
   const at = point.completedAt ?? point.startedAt ?? null;
-  if (at) {
+  if (at !== null && at !== '') {
     const parsed = new Date(at);
     if (!Number.isNaN(parsed.getTime())) {
       return parsed.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -65,7 +66,7 @@ export function CampaignEngagementTrendSection(): React.JSX.Element {
   const summary = useMemo(
     () =>
       summarizeFilemakerEmailCampaignRunTrend({
-        campaign: { id: draft.id ?? '' },
+        campaign: { id: draft.id },
         runRegistry,
         deliveryRegistry: deliveriesForCampaign,
         eventRegistry,
@@ -91,55 +92,57 @@ export function CampaignEngagementTrendSection(): React.JSX.Element {
       }
       className='space-y-4 p-4'
     >
-      {summary.points.length === 0 ? (
-        <div className='rounded-md border border-dashed border-border/60 p-4 text-center text-xs text-gray-500'>
-          No completed runs yet. Trend appears after the first run finishes.
-        </div>
-      ) : (
-        <>
-          <div className='flex flex-wrap items-center gap-2 text-[10px]'>
-            <Badge variant='outline'>
-              Avg open: {summary.averages.openRatePercent}%
-            </Badge>
-            <Badge variant='outline'>
-              Avg click: {summary.averages.clickRatePercent}%
-            </Badge>
-            <Badge
-              variant={summary.averages.bounceRatePercent > 5 ? 'destructive' : 'outline'}
-            >
-              Avg bounce: {summary.averages.bounceRatePercent}%
-            </Badge>
-            <Badge variant='outline'>
-              Avg failure: {summary.averages.failureRatePercent}%
-            </Badge>
-            <Badge variant='outline'>
-              Runs analysed: {summary.points.length}
-            </Badge>
-          </div>
-
-          <TrendStrip
-            label='Open rate'
-            colorClass='bg-emerald-500/70'
-            metricKey='openRatePercent'
-            points={summary.points}
-          />
-          <TrendStrip
-            label='Click rate'
-            colorClass='bg-sky-500/70'
-            metricKey='clickRatePercent'
-            points={summary.points}
-          />
-          <TrendStrip
-            label='Bounce rate'
-            colorClass='bg-red-500/70'
-            metricKey='bounceRatePercent'
-            points={summary.points}
-            highlightOver={5}
-          />
-          <ColdStrip points={summary.points} />
-        </>
-      )}
+      <CampaignEngagementTrendContent summary={summary} />
     </FormSection>
+  );
+}
+
+function CampaignEngagementTrendContent({
+  summary,
+}: {
+  summary: CampaignEngagementTrendSummary;
+}): React.JSX.Element {
+  if (summary.points.length === 0) {
+    return (
+      <div className='rounded-md border border-dashed border-border/60 p-4 text-center text-xs text-gray-500'>
+        No completed runs yet. Trend appears after the first run finishes.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className='flex flex-wrap items-center gap-2 text-[10px]'>
+        <Badge variant='outline'>Avg open: {summary.averages.openRatePercent}%</Badge>
+        <Badge variant='outline'>Avg click: {summary.averages.clickRatePercent}%</Badge>
+        <Badge variant={summary.averages.bounceRatePercent > 5 ? 'destructive' : 'outline'}>
+          Avg bounce: {summary.averages.bounceRatePercent}%
+        </Badge>
+        <Badge variant='outline'>Avg failure: {summary.averages.failureRatePercent}%</Badge>
+        <Badge variant='outline'>Runs analysed: {summary.points.length}</Badge>
+      </div>
+
+      <TrendStrip
+        label='Open rate'
+        colorClass='bg-emerald-500/70'
+        metricKey='openRatePercent'
+        points={summary.points}
+      />
+      <TrendStrip
+        label='Click rate'
+        colorClass='bg-sky-500/70'
+        metricKey='clickRatePercent'
+        points={summary.points}
+      />
+      <TrendStrip
+        label='Bounce rate'
+        colorClass='bg-red-500/70'
+        metricKey='bounceRatePercent'
+        points={summary.points}
+        highlightOver={5}
+      />
+      <ColdStrip points={summary.points} />
+    </>
   );
 }
 

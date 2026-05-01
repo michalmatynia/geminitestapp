@@ -262,6 +262,22 @@ const resolveFallbackCurrencyCode = (baseCurrencyCode: string, fallback: string)
 
 export { normalizeCurrencyCode };
 
+export const resolveSourcePriceCurrencyCode = (
+  defaultPriceGroupId: string | null,
+  priceGroups: PriceGroupForCalculation[]
+): string => {
+  const defaultGroup = findPriceGroupById(priceGroups, defaultPriceGroupId);
+  if (defaultGroup?.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) {
+    return getGroupCurrencyCode(defaultGroup);
+  }
+
+  const sourcePriceGroup = priceGroups.find(
+    (group: PriceGroupForCalculation): boolean =>
+      group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD
+  );
+  return sourcePriceGroup === undefined ? '' : getGroupCurrencyCode(sourcePriceGroup);
+};
+
 export function calculatePriceForCurrency(
   ...args: CalculatePriceForCurrencyArgs
 ): { price: number | null; currencyCode: string; baseCurrencyCode: string } {

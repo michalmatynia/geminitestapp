@@ -472,12 +472,12 @@ const startRuntimeCancellationWatcher = (
 const PAUSE_POLL_INTERVAL_MS = 750;
 
 const waitWhilePausedFromStore = async (runId: string, signal: AbortSignal): Promise<void> => {
-  while (!signal.aborted) {
-    const snapshot = await readFilemakerJobBoardScrapeRun(runId);
-    const status = snapshot.run?.status;
-    if (status !== 'paused') return;
-    await sleep(PAUSE_POLL_INTERVAL_MS);
-  }
+  if (signal.aborted) return;
+  const snapshot = await readFilemakerJobBoardScrapeRun(runId);
+  const status = snapshot.run?.status;
+  if (status !== 'paused') return;
+  await sleep(PAUSE_POLL_INTERVAL_MS);
+  await waitWhilePausedFromStore(runId, signal);
 };
 
 const runScraperInRuntime = async (

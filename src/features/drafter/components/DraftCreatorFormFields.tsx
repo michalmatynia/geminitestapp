@@ -344,6 +344,8 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
     setGtin,
     asin,
     setAsin,
+    stock,
+    setStock,
     weight,
     setWeight,
     sizeLength,
@@ -428,7 +430,19 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
           </FormField>
         </div>
 
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
+        <div className='grid grid-cols-2 md:grid-cols-5 gap-4'>
+          <FormField label='Stock' id='stock'>
+            <Input
+              id='stock'
+              type='number'
+              min='0'
+              step='1'
+              inputMode='numeric'
+              value={stock}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
+              placeholder='0'
+            />
+          </FormField>
           <FormField label='Weight (kg)' id='weight'>
             <Input
               id='weight'
@@ -562,8 +576,6 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
   const {
     price,
     setPrice,
-    stock,
-    setStock,
     supplierName,
     setSupplierName,
     supplierLink,
@@ -575,27 +587,16 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
 
   return (
     <FormSection title='Pricing & Supplier Information' className='p-4'>
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-        <FormField label='Base Price' id='price'>
-          <Input
-            id='price'
-            type='number'
-            step='0.01'
-            value={price}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
-            placeholder='0.00'
-           aria-label='0.00' title='0.00'/>
-        </FormField>
-        <FormField label='Stock' id='stock'>
-          <Input
-            id='stock'
-            type='number'
-            value={stock}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setStock(e.target.value)}
-            placeholder='0'
-           aria-label='0' title='0'/>
-        </FormField>
-      </div>
+      <FormField label='Base Price' id='price'>
+        <Input
+          id='price'
+          type='number'
+          step='0.01'
+          value={price}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPrice(e.target.value)}
+          placeholder='0.00'
+         aria-label='0.00' title='0.00'/>
+      </FormField>
 
       <FormField label='Supplier Name' id='supplierName'>
         <DraftPlaceholderTextInput

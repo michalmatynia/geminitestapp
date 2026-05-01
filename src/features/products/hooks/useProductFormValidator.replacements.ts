@@ -50,7 +50,11 @@ export const useProductFormValidatorReplacements = ({
         replacementValue: value,
         setCategoryId,
         setFormFieldValue: (nextFieldName, nextValue) => {
-          setValue(nextFieldName, nextValue, { shouldDirty: true, shouldTouch: true });
+          setValue(nextFieldName, nextValue, {
+            shouldDirty: true,
+            shouldTouch: true,
+            shouldValidate: true,
+          });
         },
         setProducerIds,
       }),

@@ -14,6 +14,9 @@ import {
   DEPRECATED_AI_PATHS_RUNTIME_KERNEL_STRICT_NATIVE_REGISTRY_KEY,
 } from '@/shared/lib/ai-paths/core/runtime/runtime-kernel-legacy-aliases';
 
+import { loadStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
+
 import { compactPathConfigValue } from './settings-store.compaction';
 import {
   AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
@@ -188,6 +191,21 @@ export const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[
   }, 0);
 };
 
+export const countPendingPathConfigCanonicalization = (records: AiPathsSettingRecord[]): number => {
+  let count = 0;
+  for (const entry of records) {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) continue;
+    const pathId = entry.key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length);
+    try {
+      const result = loadStoredPathConfig({ pathId, rawConfig: entry.value });
+      if (result.changed) count++;
+    } catch {
+      // unparseable or invalid configs are skipped — they are not canonical but cannot be repaired here
+    }
+  }
+  return count;
+};
+
 export const needsPathIndexConsistencyRepair = (records: AiPathsSettingRecord[]): boolean => {
   const indexEntry = records.find((r) => r.key === AI_PATHS_INDEX_KEY);
   const metas = parsePathMetas(indexEntry?.value);
@@ -336,6 +354,18 @@ export const buildAiPathsMaintenanceReport = (
     });
   }
 
+  const canonicalizationCount = countPendingPathConfigCanonicalization(records);
+  if (canonicalizationCount > 0) {
+    actions.push({
+      id: 'canonicalize_path_configs',
+      title: 'Canonicalize Path Configs',
+      description: `Re-persist ${canonicalizationCount} path config(s) whose stored values differ from their canonical form.`,
+      blocking: true,
+      status: 'pending',
+      affectedRecords: canonicalizationCount,
+    });
+  }
+
   return {
     scannedAt: new Date().toISOString(),
     pendingActions: actions.length,
@@ -440,6 +470,37 @@ export const runMaintenanceAction = (args: {
       };
     }
 
+    case 'canonicalize_path_configs': {
+      const nextRecords: AiPathsSettingRecord[] = [];
+      let affectedCount = 0;
+      for (const entry of args.records) {
+        if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) {
+          nextRecords.push(entry);
+          continue;
+        }
+        const pathId = entry.key.slice(AI_PATHS_CONFIG_KEY_PREFIX.length);
+        try {
+          const result = loadStoredPathConfig({ pathId, rawConfig: entry.value });
+          if (result.changed) {
+            nextRecords.push({ ...entry, value: stableStringify(result.config) });
+            affectedCount++;
+          } else {
+            nextRecords.push(entry);
+          }
+        } catch {
+          nextRecords.push(entry);
+        }
+      }
+      return {
+        actionId: args.actionId,
+        affectedCount,
+        deletedKeys: [],
+        durationMs: Date.now() - startedAt,
+        nextRecords,
+        success: true,
+      };
+    }
+
     default:
       throw new Error(`Unknown AI Paths maintenance action: ${args.actionId}`);
   }
@@ -467,6 +528,7 @@ export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMain
       'ensure_starter_workflow_defaults',
       'refresh_starter_workflow_configs',
       RUNTIME_KERNEL_SETTINGS_NORMALIZATION_ACTION_ID,
+      'canonicalize_path_configs',
     ] as AiPathsMaintenanceActionId[]
   ).forEach((actionId: AiPathsMaintenanceActionId) => {
     const report = runMaintenanceAction({ actionId, records: currentRecords });

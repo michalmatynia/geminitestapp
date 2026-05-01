@@ -304,7 +304,7 @@ function FilemakerLexiconValidationPatternsModal(props: {
                   disabled={pattern.system && !pattern.enabled}
                   onClick={() => props.onRemove(pattern.id)}
                 >
-                  {pattern.system ? (pattern.enabled ? 'Disable' : 'Disabled') : 'Remove'}
+                  {getValidationPatternActionLabel(pattern)}
                 </Button>
               </div>
               <FormField label='Notes' className='lg:col-span-12'>
@@ -375,15 +375,33 @@ type FilemakerLexiconEditorModalProps = {
   onSave: () => void;
 };
 
+const getValidationPatternActionLabel = (pattern: FilemakerLexiconValidationPattern): string => {
+  if (!pattern.system) return 'Remove';
+  return pattern.enabled ? 'Disable' : 'Disabled';
+};
+
+const resolveLexiconEditorIconPreviewUrl = (
+  form: FilemakerLexiconFormState
+): string => {
+  if (form.category === 'technology' && form.label.trim().length > 0) {
+    return resolveFilemakerTechnologyIconUrl(form.label, form.iconUrl);
+  }
+  return (form.iconUrl ?? '').trim();
+};
+
+const resolveLexiconEditorIconPreviewMessage = (
+  category: FilemakerLexiconTermCategory
+): string =>
+  category === 'technology'
+    ? 'Technology icon preview. Leave URL empty to use the generated default.'
+    : 'Icon preview.';
+
 export function FilemakerLexiconEditorModal(
   props: FilemakerLexiconEditorModalProps
 ): React.JSX.Element {
   const normalizedLabel = normalizeFilemakerLexiconKey(props.editor.form.label);
   const title = props.editor.editing === null ? 'Create Lexicon Term' : 'Edit Lexicon Term';
-  const iconPreviewUrl =
-    props.editor.form.category === 'technology' && props.editor.form.label.trim().length > 0
-      ? resolveFilemakerTechnologyIconUrl(props.editor.form.label, props.editor.form.iconUrl)
-      : (props.editor.form.iconUrl ?? '').trim();
+  const iconPreviewUrl = resolveLexiconEditorIconPreviewUrl(props.editor.form);
   return (
     <FormModal
       open={props.editor.open}
@@ -429,9 +447,7 @@ export function FilemakerLexiconEditorModal(
               className='size-8 rounded border border-border/50 bg-background object-contain p-1'
             />
             <span>
-              {props.editor.form.category === 'technology'
-                ? 'Technology icon preview. Leave URL empty to use the generated default.'
-                : 'Icon preview.'}
+              {resolveLexiconEditorIconPreviewMessage(props.editor.form.category)}
             </span>
           </div>
         ) : null}
@@ -487,12 +503,14 @@ export const createFilemakerLexiconColumns = (
 ];
 
 function TermLabelCell(props: { row: FilemakerLexiconTermRow }): React.JSX.Element {
+  const iconUrl = props.row.term.iconUrl ?? '';
+
   return (
     <div className='min-w-0'>
       <div className='flex min-w-0 items-center gap-2'>
-        {props.row.term.iconUrl ? (
+        {iconUrl !== '' ? (
           <img
-            src={props.row.term.iconUrl}
+            src={iconUrl}
             alt=''
             className='size-5 shrink-0 rounded border border-border/50 bg-background object-contain p-0.5'
           />

@@ -296,7 +296,7 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
   profileEducation: [
     {
       id: 'reference-cv-education-dalarna',
-      degree: "Master's Degree in Media & Communication",
+      degree: 'Master\'s Degree in Media & Communication',
       institution: 'Dalarna University',
       period: '2004 - 2005',
       country: 'Sweden',
@@ -304,7 +304,7 @@ const REFERENCE_CV_PROFILE: Partial<FilemakerPerson> = {
     },
     {
       id: 'reference-cv-education-szczecin',
-      degree: "Bachelor's Degree in English Language & Literature",
+      degree: 'Bachelor\'s Degree in English Language & Literature',
       institution: 'University of Szczecin',
       period: '2001 - 2003',
       country: 'Poland',

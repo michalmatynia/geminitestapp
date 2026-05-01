@@ -34,18 +34,22 @@ const composeCvFilename = (cv: FilemakerCv): string => {
   return `${base}.pdf`;
 };
 
-const resolveCvHtml = (cv: FilemakerCv): string => {
-  if ((cv.bodyBlocks ?? []).length > 0) {
-    return compileCvBlocksToHtml(cv.bodyBlocks ?? [], {
-      highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
-    });
-  }
-  if (cv.bodyHtml !== null && cv.bodyHtml.trim().length > 0) {
-    return cv.bodyHtml;
-  }
-  return compileCvBlocksToHtml(cv.bodyBlocks ?? [], {
+const compileCvHtml = (cv: FilemakerCv): string =>
+  compileCvBlocksToHtml(cv.bodyBlocks ?? [], {
     highlightedTechnologyTerms: cv.highlightTechnologyTerms ?? [],
   });
+
+const hasCvBodyBlocks = (cv: FilemakerCv): boolean => (cv.bodyBlocks ?? []).length > 0;
+
+const resolvePersistedCvHtml = (cv: FilemakerCv): string | null => {
+  if (cv.bodyHtml === null) return null;
+  const normalized = cv.bodyHtml.trim();
+  return normalized.length > 0 ? cv.bodyHtml : null;
+};
+
+const resolveCvHtml = (cv: FilemakerCv): string => {
+  if (hasCvBodyBlocks(cv)) return compileCvHtml(cv);
+  return resolvePersistedCvHtml(cv) ?? compileCvHtml(cv);
 };
 
 export async function createFilemakerCvPdfExport(

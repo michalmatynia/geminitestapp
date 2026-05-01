@@ -491,11 +491,6 @@ function OrganizationRelationLinkNode(props: Pick<
           {normalizedMetaBadge}
         </Badge>
       ) : null}
-      <JobBoardOriginBadge
-        compact
-        sourceSite={jobListing?.sourceSite}
-        sourceUrl={jobListing?.sourceUrl}
-      />
       <ExternalLink className='size-3.5 shrink-0 text-gray-500' aria-hidden='true' />
     </div>
   );
@@ -590,6 +585,11 @@ function FilemakerOrganizationJobListingLinkNode(
           {normalizedMetaBadge}
         </Badge>
       ) : null}
+      <JobBoardOriginBadge
+        compact
+        sourceSite={jobListing?.sourceSite}
+        sourceUrl={jobListing?.sourceUrl}
+      />
       <ExternalLink className='size-3.5 shrink-0 text-gray-500' aria-hidden='true' />
     </div>
   );

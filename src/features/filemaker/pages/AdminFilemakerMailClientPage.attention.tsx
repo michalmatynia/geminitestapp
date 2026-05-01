@@ -2,29 +2,16 @@ import Link from 'next/link';
 import React from 'react';
 
 import { SectionHeader } from '@/shared/ui/navigation-and-layout.public';
-import { Badge, Button, Card, CardContent } from '@/shared/ui/primitives.public';
+import { Button, Card } from '@/shared/ui/primitives.public';
 
-import {
-  formatFilemakerMailFolderLabel,
-  formatFilemakerMailLastSyncedLabel,
-} from '../components/FilemakerMailSidebar.helpers';
-import { formatFilemakerMailboxAllowlist } from '../mail-utils';
-import { buildFilemakerMailSelectionHref } from '../mail-ui-helpers';
 import type { FilemakerMailAccount, FilemakerMailFolderSummary } from '../types';
 import {
-  buildMailClientComposeHref,
   buildMailClientWorkspaceHref,
   buildMailClientSearchHref,
-  getFilemakerMailPrimaryFolder,
-  hasText,
   type MailClientDashboardScope,
 } from './AdminFilemakerMailClientPage.helpers';
+import { MailClientAttentionAccountCard } from './AdminFilemakerMailClientPage.attention-accounts';
 import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.route';
-import {
-  MailClientDashboardFocusButton,
-  MailClientStatusButton,
-  MailClientSyncButton,
-} from './AdminFilemakerMailClientPage.mailbox-actions';
 
 type MailClientAttentionSectionProps = {
   attentionAccounts: FilemakerMailAccount[];
@@ -42,17 +29,6 @@ type MailClientAttentionSectionProps = {
   syncingAccountId: string | null;
   statusUpdatingAccountId: string | null;
 };
-
-const buildAttentionMailboxHref = (
-  accountId: string,
-  primaryFolder: FilemakerMailFolderSummary | null
-): string =>
-  primaryFolder !== null
-    ? buildFilemakerMailSelectionHref({
-        accountId,
-        mailboxPath: primaryFolder.mailboxPath,
-      })
-    : buildFilemakerMailSelectionHref({ accountId, panel: 'settings' });
 
 function MailClientHealthyAttentionCard({
   dashboardAccountId,
@@ -140,191 +116,50 @@ function MailClientFilteredAttentionCard({
   );
 }
 
-function MailClientAttentionAccountHeader({
-  account,
-  unreadCount,
-}: {
-  account: FilemakerMailAccount;
-  unreadCount: number;
-}): React.JSX.Element {
-  return (
-    <div className='flex flex-wrap items-start justify-between gap-3'>
-      <div className='space-y-1'>
-        <div className='text-sm font-semibold text-white'>{account.name}</div>
-        <div className='text-xs text-gray-400'>{account.emailAddress}</div>
-      </div>
-      <div className='flex flex-wrap gap-2'>
-        {account.status !== 'active' ? (
-          <Badge variant='outline' className='capitalize'>
-            {account.status}
-          </Badge>
-        ) : null}
-        {hasText(account.lastSyncError) ? <Badge variant='outline'>Sync error</Badge> : null}
-        <Badge variant='outline'>Unread: {unreadCount}</Badge>
-      </div>
-    </div>
-  );
-}
-
-function MailClientAttentionAccountDetails({
-  account,
-  allowlistLabel,
-  folderCount,
-  primaryFolder,
-}: {
-  account: FilemakerMailAccount;
-  allowlistLabel: string;
-  folderCount: number;
-  primaryFolder: FilemakerMailFolderSummary | null;
-}): React.JSX.Element {
-  return (
-    <div className='grid gap-2 text-xs text-gray-400 md:grid-cols-2'>
-      <div>{formatFilemakerMailLastSyncedLabel(account.lastSyncedAt)}</div>
-      <div>Allowlist: {allowlistLabel}</div>
-      <div>
-        Primary folder:{' '}
-        {primaryFolder !== null ? formatFilemakerMailFolderLabel(primaryFolder.mailboxPath) : 'Not set'}
-      </div>
-      <div>Tracked folders: {folderCount}</div>
-    </div>
-  );
-}
-
-function MailClientAttentionAccountActions({
-  account,
+function MailClientAttentionAccountsGrid({
+  attentionAccounts,
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
   firstActiveAccountId,
-  primaryFolder,
+  foldersByAccount,
   onSyncAccount,
   onToggleAccountStatus,
-  isSyncing,
-  isStatusUpdating,
+  syncingAccountId,
+  statusUpdatingAccountId,
 }: {
-  account: FilemakerMailAccount;
+  attentionAccounts: FilemakerMailAccount[];
   dashboardAccountId: string;
   dashboardQuery: string;
   dashboardScope: MailClientDashboardScope;
   firstActiveAccountId: string | null;
-  primaryFolder: FilemakerMailFolderSummary | null;
+  foldersByAccount: Map<string, FilemakerMailFolderSummary[]>;
   onSyncAccount: (accountId: string) => Promise<void>;
   onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
-  isSyncing: boolean;
-  isStatusUpdating: boolean;
 }): React.JSX.Element {
-  const composeHref = buildMailClientComposeHref({
-    composeAccountId: account.status === 'active' ? account.id : firstActiveAccountId,
-    dashboardQuery,
-    focusedAccountId: account.id,
-  });
-  const searchHref = buildMailClientSearchHref({
-    dashboardQuery,
-    focusedAccountId: account.id,
-  });
-  const trimmedDashboardQuery = dashboardQuery.trim();
-
   return (
-    <div className='flex flex-wrap gap-2'>
-      <MailClientSyncButton
-        accountId={account.id}
-        isSyncing={isSyncing}
-        isStatusUpdating={isStatusUpdating}
-        onSyncAccount={onSyncAccount}
-      />
-      {account.status !== 'active' ? (
-        <MailClientStatusButton
-          account={account}
-          isSyncing={isSyncing}
-          isStatusUpdating={isStatusUpdating}
-          onToggleAccountStatus={onToggleAccountStatus}
-        />
-      ) : null}
-      <Button asChild variant='outline' size='sm'>
-        <Link href={buildAttentionMailboxHref(account.id, primaryFolder)}>Open Mailbox</Link>
-      </Button>
-      <Button asChild variant='outline' size='sm'>
-        <Link href={searchHref}>
-          {trimmedDashboardQuery !== '' ? 'Continue Search' : 'Search Mailbox'}
-        </Link>
-      </Button>
-      <Button asChild variant='outline' size='sm'>
-        <Link
-          href={buildFilemakerMailSelectionHref({
-            accountId: account.id,
-            panel: 'settings',
-          })}
-        >
-          Open Settings
-        </Link>
-      </Button>
-      <Button asChild variant='outline' size='sm'>
-        <Link href={composeHref}>Compose</Link>
-      </Button>
-      <MailClientDashboardFocusButton
-        activeDashboardAccountId={dashboardAccountId}
-        accountId={account.id}
-        dashboardQuery={dashboardQuery}
-        dashboardScope={dashboardScope}
-      />
-    </div>
-  );
-}
-
-function MailClientAttentionAccountCard({
-  account,
-  dashboardAccountId,
-  dashboardQuery,
-  dashboardScope,
-  firstActiveAccountId,
-  folders,
-  onSyncAccount,
-  onToggleAccountStatus,
-  isSyncing,
-  isStatusUpdating,
-}: {
-  account: FilemakerMailAccount;
-  dashboardAccountId: string;
-  dashboardQuery: string;
-  dashboardScope: MailClientDashboardScope;
-  firstActiveAccountId: string | null;
-  folders: FilemakerMailFolderSummary[];
-  onSyncAccount: (accountId: string) => Promise<void>;
-  onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
-  isSyncing: boolean;
-  isStatusUpdating: boolean;
-}): React.JSX.Element {
-  const primaryFolder = getFilemakerMailPrimaryFolder(folders);
-  const unreadCount = folders.reduce((sum, folder) => sum + folder.unreadCount, 0);
-  const allowlistLabel = account.folderAllowlist.length > 0 ? formatFilemakerMailboxAllowlist(account.folderAllowlist) : 'Auto';
-
-  return (
-    <Card data-testid={`mail-client-attention-account-${account.id}`} variant='warning' className='border-amber-500/30 bg-amber-500/5'>
-      <CardContent className='space-y-4 p-4'>
-        <MailClientAttentionAccountHeader account={account} unreadCount={unreadCount} />
-        <MailClientAttentionAccountDetails account={account} allowlistLabel={allowlistLabel} folderCount={folders.length} primaryFolder={primaryFolder} />
-        {hasText(account.lastSyncError) ? <div className='rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-100'>{account.lastSyncError}</div> : null}
-
-        <MailClientAttentionAccountActions
+    <div className='grid gap-3 xl:grid-cols-2'>
+      {attentionAccounts.map((account) => (
+        <MailClientAttentionAccountCard
+          key={account.id}
           account={account}
           dashboardAccountId={dashboardAccountId}
           dashboardQuery={dashboardQuery}
           dashboardScope={dashboardScope}
           firstActiveAccountId={firstActiveAccountId}
-          primaryFolder={primaryFolder}
+          folders={foldersByAccount.get(account.id) ?? []}
           onSyncAccount={onSyncAccount}
           onToggleAccountStatus={onToggleAccountStatus}
-          isSyncing={isSyncing}
-          isStatusUpdating={isStatusUpdating}
+          isSyncing={syncingAccountId === account.id}
+          isStatusUpdating={statusUpdatingAccountId === account.id}
         />
-      </CardContent>
-    </Card>
+      ))}
+    </div>
   );
 }
 
-function MailClientAttentionSection({
+function renderMailClientAttentionContent({
   attentionAccounts,
-  accountCount,
   dashboardAccountId,
   dashboardQuery,
   dashboardScope,
@@ -338,45 +173,43 @@ function MailClientAttentionSection({
   syncingAccountId,
   statusUpdatingAccountId,
 }: MailClientAttentionSectionProps): React.JSX.Element | null {
-  if (accountCount === 0) return null;
-
-  let content: React.JSX.Element;
   if (attentionAccounts.length === 0 && hasAnyAttentionAccounts && hasActiveFilter) {
-    content = (
+    return (
       <MailClientFilteredAttentionCard
         dashboardAccountId={dashboardAccountId}
         dashboardQuery={dashboardQuery}
         onClearFilter={onClearFilter}
       />
     );
-  } else if (attentionAccounts.length === 0) {
-    content = (
+  }
+
+  if (attentionAccounts.length === 0) {
+    return (
       <MailClientHealthyAttentionCard
         dashboardAccountId={dashboardAccountId}
         dashboardQuery={dashboardQuery}
       />
     );
-  } else {
-    content = (
-      <div className='grid gap-3 xl:grid-cols-2'>
-        {attentionAccounts.map((account) => (
-          <MailClientAttentionAccountCard
-            key={account.id}
-            account={account}
-            dashboardAccountId={dashboardAccountId}
-            dashboardQuery={dashboardQuery}
-            dashboardScope={dashboardScope}
-            firstActiveAccountId={firstActiveAccountId}
-            folders={foldersByAccount.get(account.id) ?? []}
-            onSyncAccount={onSyncAccount}
-            onToggleAccountStatus={onToggleAccountStatus}
-            isSyncing={syncingAccountId === account.id}
-            isStatusUpdating={statusUpdatingAccountId === account.id}
-          />
-        ))}
-      </div>
-    );
   }
+
+  return (
+    <MailClientAttentionAccountsGrid
+      attentionAccounts={attentionAccounts}
+      dashboardAccountId={dashboardAccountId}
+      dashboardQuery={dashboardQuery}
+      dashboardScope={dashboardScope}
+      firstActiveAccountId={firstActiveAccountId}
+      foldersByAccount={foldersByAccount}
+      onSyncAccount={onSyncAccount}
+      onToggleAccountStatus={onToggleAccountStatus}
+      syncingAccountId={syncingAccountId}
+      statusUpdatingAccountId={statusUpdatingAccountId}
+    />
+  );
+}
+
+function MailClientAttentionSection(props: MailClientAttentionSectionProps): React.JSX.Element | null {
+  if (props.accountCount === 0) return null;
 
   return (
     <section className='space-y-4'>
@@ -384,7 +217,7 @@ function MailClientAttentionSection({
         title='Needs Attention'
         description='Review paused mailboxes and sync failures directly from the standalone mail client.'
       />
-      {content}
+      {renderMailClientAttentionContent(props)}
     </section>
   );
 }

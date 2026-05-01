@@ -8,6 +8,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'ensure_starter_workflow_defaults',
   'refresh_starter_workflow_configs',
   'normalize_runtime_kernel_settings',
+  'canonicalize_path_configs',
 ] as const;
 export const aiPathsMaintenanceActionIdSchema = z.enum(AI_PATHS_MAINTENANCE_ACTION_IDS);
 export type AiPathsMaintenanceActionId = (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];

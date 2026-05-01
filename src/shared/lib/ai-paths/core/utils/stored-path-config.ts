@@ -22,7 +22,7 @@ export type LoadedStoredPathConfig = {
   changed: boolean;
 };
 
-const loadStoredPathConfig = (args: {
+export const loadStoredPathConfig = (args: {
   pathId: string;
   rawConfig: string;
 }): LoadedStoredPathConfig => {

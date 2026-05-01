@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 
-import { isPatternConfiguredForFormatterAutoApply } from '@/features/products/validation-engine/core';
 import { api } from '@/shared/lib/api-client';
 import type {
   FieldValidatorIssue,
@@ -13,6 +12,7 @@ import type {
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { getOrCreateAutoAcceptedSet } from './validator/validator-auto-accept-registry';
+import { resolveAutoApplyIssue } from './useProductFormValidator.auto-apply';
 import type { ProductValidatorFieldIssues } from './useProductValidatorIssues.types';
 import type { ProductFormValidatorDecisionKeyBuilder } from './useProductFormValidator.types';
 
@@ -56,23 +56,12 @@ const resetAutoAcceptState = (autoAcceptedIssueKeysRef: MutableRefObject<Set<str
   if (autoAcceptedIssueKeysRef.current.size > 0) autoAcceptedIssueKeysRef.current.clear();
 };
 
-const hasAutoReplacementValue = (issue: FieldValidatorIssue): issue is FieldValidatorIssue & { replacementValue: string } =>
-  issue.replacementValue !== null && issue.replacementValue.trim().length > 0;
-
-const shouldAutoApplyIssue = ({
-  fieldName,
-  issue,
-  pattern,
-  validationInstanceScope,
-}: {
-  fieldName: string;
-  issue: FieldValidatorIssue;
-  pattern: ProductValidationPattern | undefined;
-  validationInstanceScope: ProductValidationInstanceScope;
-}): boolean => {
-  if (pattern === undefined) return false;
-  if (!hasAutoReplacementValue(issue)) return false;
-  return isPatternConfiguredForFormatterAutoApply({ fieldName, pattern, validationScope: validationInstanceScope });
+const useAutoAcceptedIssueKeysRef = (entityIdentity: string): MutableRefObject<Set<string>> => {
+  const autoAcceptedIssueKeysRef = useRef<Set<string>>(getOrCreateAutoAcceptedSet(entityIdentity));
+  useEffect(() => {
+    autoAcceptedIssueKeysRef.current = getOrCreateAutoAcceptedSet(entityIdentity);
+  }, [entityIdentity]);
+  return autoAcceptedIssueKeysRef;
 };
 
 const shouldSkipExistingAutoAccept = ({
@@ -110,7 +99,7 @@ const resolvePendingAutoAccept = ({
 }): PendingAutoAccept | null => {
   const issueKey = args.buildIssueDecisionKey(fieldName, issue.patternId);
   nextVisibleIssueKeys.add(issueKey);
-  const shouldAutoApply = shouldAutoApplyIssue({
+  const autoApply = resolveAutoApplyIssue({
     fieldName,
     issue,
     pattern: args.validatorPatternById.get(issue.patternId),
@@ -120,15 +109,18 @@ const resolvePendingAutoAccept = ({
     shouldSkipExistingAutoAccept({
       autoAcceptedIssueKeys: args.autoAcceptedIssueKeys,
       doesAutoReplacementMatchField: args.doesAutoReplacementMatchField,
-      fieldName,
+      fieldName: autoApply.replacementFieldName,
       issueKey,
       replacementValue: issue.replacementValue,
-      shouldAutoApply,
+      shouldAutoApply: autoApply.shouldAutoApply,
     })
   ) {
     return null;
   }
-  if (shouldAutoApply && !args.applyAutoReplacementToField(fieldName, issue.replacementValue ?? '')) {
+  if (
+    autoApply.shouldAutoApply &&
+    !args.applyAutoReplacementToField(autoApply.replacementFieldName, issue.replacementValue ?? '')
+  ) {
     return null;
   }
   args.autoAcceptedIssueKeys.add(issueKey);
@@ -218,16 +210,14 @@ export const useProductFormValidatorAutoAccept = ({
   formatterEnabled,
   productId,
   setAcceptedIssueKeys,
-  validationInstanceScope, validationSessionId,
+  validationInstanceScope,
+  validationSessionId,
   validatorEnabled,
   validatorPatternById,
   visibleFieldIssues,
 }: UseProductFormValidatorAutoAcceptArgs): void => {
   const autoAcceptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoAcceptedIssueKeysRef = useRef<Set<string>>(getOrCreateAutoAcceptedSet(entityIdentity));
-  useEffect(() => {
-    autoAcceptedIssueKeysRef.current = getOrCreateAutoAcceptedSet(entityIdentity);
-  }, [entityIdentity]);
+  const autoAcceptedIssueKeysRef = useAutoAcceptedIssueKeysRef(entityIdentity);
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) {
       autoAcceptTimerRef.current = clearAutoAcceptTimer(autoAcceptTimerRef.current);

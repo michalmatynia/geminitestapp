@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
+import type { MutableRefObject } from 'react';
 
 import type { MasterFolderTreeAdapterV3 } from '@/shared/contracts/master-folder-tree';
 import {
@@ -18,10 +19,29 @@ interface UseCvLayerPanelProps {
   onSelectBlock: (blockId: string | null) => void;
 }
 
+type CvLayerPanelController = ReturnType<typeof useFolderTreeInstanceV2>;
 type UseCvLayerPanelResult = {
-  controller: ReturnType<typeof useFolderTreeInstanceV2>;
+  controller: CvLayerPanelController;
   runtime: ReturnType<typeof useSharedMasterFolderTreeRuntime>;
 };
+
+const useCvControllerForView = (
+  controller: CvLayerPanelController,
+  lastExternalSelectedIdRef: MutableRefObject<string | null>,
+  onSelectBlockRef: MutableRefObject<(blockId: string | null) => void>
+): CvLayerPanelController =>
+  useMemo<CvLayerPanelController>(() => {
+    const selectedIdRef = lastExternalSelectedIdRef;
+    const selectBlockRef = onSelectBlockRef;
+    const selectNode: CvLayerPanelController['selectNode'] = (nodeId): void => {
+      controller.selectNode(nodeId);
+      const selectedId = nodeId ?? null;
+      selectedIdRef.current = selectedId;
+      selectBlockRef.current(selectedId);
+    };
+    const nextController: CvLayerPanelController = { ...controller, selectNode };
+    return nextController;
+  }, [controller, lastExternalSelectedIdRef, onSelectBlockRef]);
 
 export function useCvLayerPanel({
   blocks,
@@ -61,19 +81,10 @@ export function useCvLayerPanel({
   const controllerRef = useRef(controller);
   controllerRef.current = controller;
   const lastExternalSelectedIdRef = useRef<string | null>(selectedBlockId ?? null);
-  const controllerForView = useMemo<ReturnType<typeof useFolderTreeInstanceV2>>(
-    () =>
-      ({
-        ...controller,
-        selectNode: (nodeId: Parameters<typeof controller.selectNode>[0]) => {
-          const result = controller.selectNode(nodeId);
-          const selectedId = nodeId ?? null;
-          lastExternalSelectedIdRef.current = selectedId;
-          onSelectBlockRef.current(selectedId);
-          return result;
-        },
-      }) as ReturnType<typeof useFolderTreeInstanceV2>,
-    [controller]
+  const controllerForView = useCvControllerForView(
+    controller,
+    lastExternalSelectedIdRef,
+    onSelectBlockRef
   );
 
   const lastProjectedSignatureRef = useRef<string>(JSON.stringify(initialNodes));

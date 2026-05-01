@@ -31,31 +31,18 @@ export const buildWriteMessage = (
   result: FilemakerJobBoardScrapeOfferResult
 ): string => {
   const organizationName = result.match?.organizationName ?? result.offer.companyName;
-  if (action === 'organization_created') {
-    return `Created organisation ${organizationName}.`;
-  }
-  if (action === 'organization_linked') {
-    return `Linked existing organisation ${organizationName}.`;
-  }
-  if (action === 'organization_profile_updated') {
-    return `Updated company profile for ${organizationName}.`;
-  }
-  if (action === 'listing_address_updated') {
-    return `Updated job listing address for ${result.offer.title}.`;
-  }
-  if (action === 'listing_created') {
-    return `Created job listing ${result.offer.title}.`;
-  }
-  if (action === 'listing_updated') {
-    return `Updated job listing ${result.offer.title}.`;
-  }
-  if (action === 'listing_skipped') {
-    return `Skipped existing job listing ${result.offer.title}.`;
-  }
-  if (action === 'listing_lexicon_linked') {
-    return `Linked job-board lexicon terms for ${result.offer.title}.`;
-  }
-  return result.reason ?? `No organisation was created for ${result.offer.companyName}.`;
+  const title = result.offer.title;
+  const messages: Partial<Record<FilemakerJobBoardScrapeWriteAction, string>> = {
+    organization_created: `Created organisation ${organizationName}.`,
+    organization_linked: `Linked existing organisation ${organizationName}.`,
+    organization_profile_updated: `Updated company profile for ${organizationName}.`,
+    listing_address_updated: `Updated job listing address for ${title}.`,
+    listing_created: `Created job listing ${title}.`,
+    listing_updated: `Updated job listing ${title}.`,
+    listing_skipped: `Skipped existing job listing ${title}.`,
+    listing_lexicon_linked: `Linked job-board lexicon terms for ${title}.`,
+  };
+  return messages[action] ?? result.reason ?? `No organisation was created for ${result.offer.companyName}.`;
 };
 
 export const buildSummary = (

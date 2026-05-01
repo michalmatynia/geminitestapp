@@ -46,6 +46,82 @@ const pillTypeKey = (
   pill: FilemakerJobBoardScrapedOffer['pills'][number]
 ): FilemakerLexiconTerm['typeKey'] => pill.typeKey;
 
+const findImportedOrganizationWarning = (
+  database: FilemakerDatabase,
+  result: FilemakerJobBoardScrapeOfferResult
+): string | null => {
+  const match = result.match;
+  if (match === null) return null;
+  const organization = database.organizations.find(
+    (entry: FilemakerOrganization): boolean => entry.id === match.organizationId
+  );
+  if (organization === undefined) {
+    return `Import verification could not find organisation ${match.organizationName}.`;
+  }
+  if (
+    result.offer.companyProfile.trim().length > 0 &&
+    organization.jobBoardCompanyProfile !== result.offer.companyProfile
+  ) {
+    return `Import verification could not confirm company profile for ${organization.name}.`;
+  }
+  return null;
+};
+
+const buildListingLinkedTermIds = (
+  database: FilemakerDatabase,
+  listing: FilemakerJobListing
+): Set<string> =>
+  new Set([
+    ...listing.lexiconTermIds,
+    ...database.jobListingLexiconLinks
+      .filter(
+        (link: FilemakerJobListingLexiconLink): boolean => link.jobListingId === listing.id
+      )
+      .map((link: FilemakerJobListingLexiconLink): string => link.lexiconTermId),
+  ]);
+
+const hasMissingLinkedPillTerm = (
+  database: FilemakerDatabase,
+  listingLinkedTermIds: Set<string>,
+  pills: FilemakerJobBoardScrapedOffer['pills']
+): boolean =>
+  pills.some((pill): boolean => {
+    const normalizedLabel = normalizeLexiconKey(pill.label);
+    const typeKey = pillTypeKey(pill);
+    const term = database.lexiconTerms.find(
+      (entry: FilemakerLexiconTerm): boolean =>
+        entry.typeKey === typeKey && entry.normalizedLabel === normalizedLabel
+    );
+    return term === undefined || !listingLinkedTermIds.has(term.id);
+  });
+
+const verifyImportedListing = (
+  database: FilemakerDatabase,
+  result: FilemakerJobBoardScrapeOfferResult
+): { verified: boolean; warning: string | null } => {
+  if (result.listingId === null || result.status === 'unmatched') {
+    return { verified: false, warning: null };
+  }
+  const listing = database.jobListings.find(
+    (entry: FilemakerJobListing): boolean => entry.id === result.listingId
+  );
+  if (listing === undefined) {
+    return {
+      verified: false,
+      warning: `Import verification could not find listing ${result.offer.title}.`,
+    };
+  }
+  const hasMissingTerm =
+    result.offer.pills.length > 0 &&
+    hasMissingLinkedPillTerm(database, buildListingLinkedTermIds(database, listing), result.offer.pills);
+  return {
+    verified: true,
+    warning: hasMissingTerm
+      ? `Import verification could not confirm lexicon terms for ${result.offer.title}.`
+      : null,
+  };
+};
+
 export const verifyImportedResults = (
   database: FilemakerDatabase,
   results: readonly FilemakerJobBoardScrapeOfferResult[]
@@ -54,61 +130,18 @@ export const verifyImportedResults = (
   let verifiedListings = 0;
 
   for (const result of results) {
-    const match = result.match;
-    if (match !== null) {
-      const organization = database.organizations.find(
-        (entry: FilemakerOrganization): boolean => entry.id === match.organizationId
-      );
-      if (organization === undefined) {
-        warnings.push(
-          `Import verification could not find organisation ${match.organizationName}.`
-        );
-      } else if (
-        result.offer.companyProfile.trim().length > 0 &&
-        organization.jobBoardCompanyProfile !== result.offer.companyProfile
-      ) {
-        warnings.push(
-          `Import verification could not confirm company profile for ${organization.name}.`
-        );
-      }
+    const organizationWarning = findImportedOrganizationWarning(database, result);
+    if (organizationWarning !== null) {
+      warnings.push(organizationWarning);
     }
 
-    if (result.listingId === null || result.status === 'unmatched') {
-      continue;
+    const listingVerification = verifyImportedListing(database, result);
+    if (listingVerification.warning !== null) {
+      warnings.push(listingVerification.warning);
     }
-    const listing = database.jobListings.find(
-      (entry: FilemakerJobListing): boolean => entry.id === result.listingId
-    );
-    if (listing === undefined) {
-      warnings.push(`Import verification could not find listing ${result.offer.title}.`);
-      continue;
+    if (listingVerification.verified) {
+      verifiedListings += 1;
     }
-    if (result.offer.pills.length > 0) {
-      const listingLinkedTermIds = new Set([
-        ...listing.lexiconTermIds,
-        ...database.jobListingLexiconLinks
-          .filter(
-            (link: FilemakerJobListingLexiconLink): boolean =>
-              link.jobListingId === listing.id
-          )
-          .map((link: FilemakerJobListingLexiconLink): string => link.lexiconTermId),
-      ]);
-      const missingTerm = result.offer.pills.find((pill): boolean => {
-        const normalizedLabel = normalizeLexiconKey(pill.label);
-        const typeKey = pillTypeKey(pill);
-        const term = database.lexiconTerms.find(
-          (entry: FilemakerLexiconTerm): boolean =>
-            entry.typeKey === typeKey && entry.normalizedLabel === normalizedLabel
-        );
-        return term === undefined || !listingLinkedTermIds.has(term.id);
-      });
-      if (missingTerm !== undefined) {
-        warnings.push(
-          `Import verification could not confirm lexicon terms for ${result.offer.title}.`
-        );
-      }
-    }
-    verifiedListings += 1;
   }
 
   return { verifiedListings, warnings: uniqueStrings(warnings) };

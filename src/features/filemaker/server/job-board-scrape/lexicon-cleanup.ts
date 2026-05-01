@@ -87,6 +87,15 @@ const PRACUJ_LOCATION_NOISE_KEYS = new Set<string>([
   'wojewodztwo zachodniopomorskie',
   'zachodniopomorskie',
 ]);
+const SCRAPED_JOB_BOARD_SOURCE_MARKERS = [
+  'pracuj',
+  'justjoin',
+  'theprotocol',
+  'nofluffjobs',
+  'bulldogjob',
+  'linkedin',
+  'job',
+];
 
 const uniqueStrings = (values: readonly string[]): string[] =>
   Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
@@ -107,14 +116,8 @@ const isPracujSourceValue = (value: string | undefined): boolean =>
 const isScrapedJobBoardSourceValue = (value: string | undefined): boolean => {
   const normalized = normalizeLexiconKey(value ?? '');
   if (normalized.length === 0 || normalized === 'manual') return false;
-  return (
-    normalized.includes('pracuj') ||
-    normalized.includes('justjoin') ||
-    normalized.includes('theprotocol') ||
-    normalized.includes('nofluffjobs') ||
-    normalized.includes('bulldogjob') ||
-    normalized.includes('linkedin') ||
-    normalized.includes('job')
+  return SCRAPED_JOB_BOARD_SOURCE_MARKERS.some((marker): boolean =>
+    normalized.includes(marker)
   );
 };
 
@@ -229,6 +232,34 @@ const remapTermId = (
   return replacementTermIds.get(termId) ?? termId;
 };
 
+const REPAIR_SUMMARY_CHANGE_KEYS: Array<keyof Pick<
+  FilemakerJobBoardLexiconRepairSummary,
+  | 'promotedTechnologyTerms'
+  | 'mergedTechnologyTerms'
+  | 'promotedRequirementTerms'
+  | 'mergedRequirementTerms'
+  | 'promotedValidationPatternTerms'
+  | 'mergedValidationPatternTerms'
+  | 'removedNoiseTerms'
+  | 'removedLexiconLinks'
+  | 'updatedLexiconLinks'
+  | 'updatedListings'
+>> = [
+  'promotedTechnologyTerms',
+  'mergedTechnologyTerms',
+  'promotedRequirementTerms',
+  'mergedRequirementTerms',
+  'promotedValidationPatternTerms',
+  'mergedValidationPatternTerms',
+  'removedNoiseTerms',
+  'removedLexiconLinks',
+  'updatedLexiconLinks',
+  'updatedListings',
+];
+
+const hasRepairSummaryChanges = (summary: FilemakerJobBoardLexiconRepairSummary): boolean =>
+  REPAIR_SUMMARY_CHANGE_KEYS.some((key): boolean => summary[key] > 0);
+
 export const repairFilemakerJobBoardLexicon = (
   database: FilemakerDatabase
 ): FilemakerJobBoardLexiconRepairResult => {
@@ -287,59 +318,66 @@ export const repairFilemakerJobBoardLexicon = (
   const mergedTermsByTargetId = new Map<string, FilemakerLexiconTerm[]>();
   const nextTerms: FilemakerLexiconTerm[] = [];
 
-  normalizedDatabase.lexiconTerms.forEach((term) => {
+  const incrementPromotionCounters = (
+    promotedCategory: FilemakerLexiconTermCategory,
+    mode: 'merged' | 'promoted'
+  ): void => {
+    if (mode === 'merged') {
+      summary.mergedValidationPatternTerms += 1;
+      if (promotedCategory === 'technology') summary.mergedTechnologyTerms += 1;
+      if (promotedCategory === 'requirement') summary.mergedRequirementTerms += 1;
+      return;
+    }
+    summary.promotedValidationPatternTerms += 1;
+    if (promotedCategory === 'technology') summary.promotedTechnologyTerms += 1;
+    if (promotedCategory === 'requirement') summary.promotedRequirementTerms += 1;
+  };
+
+  const processLexiconTerm = (term: FilemakerLexiconTerm): void => {
     if (removedTermIds.has(term.id)) return;
     const termKey = normalizeLexiconKey(term.label);
     const links = linksByTermId.get(term.id) ?? [];
     const promotedCategory = repairPromotionCategory(term, links, normalizedDatabase);
-    if (promotedCategory !== null) {
-      const canonicalIds = canonicalIdsForCategory(promotedCategory);
-      const canonicalId = canonicalIds.get(termKey);
-      if (canonicalId !== undefined && canonicalId !== term.id) {
-        replacementTermIds.set(term.id, canonicalId);
-        const merged = mergedTermsByTargetId.get(canonicalId) ?? [];
-        merged.push(term);
-        mergedTermsByTargetId.set(canonicalId, merged);
-        summary.mergedValidationPatternTerms += 1;
-        if (promotedCategory === 'technology') {
-          summary.mergedTechnologyTerms += 1;
-        } else if (promotedCategory === 'requirement') {
-          summary.mergedRequirementTerms += 1;
-        }
-        samplePush(summary.mergedSamples, {
-          id: term.id,
-          label: term.label,
-          from: term.typeKey,
-          to: promotedCategory,
-        });
-        return;
-      }
-      canonicalIds.set(termKey, term.id);
-      summary.promotedValidationPatternTerms += 1;
-      if (promotedCategory === 'technology') {
-        summary.promotedTechnologyTerms += 1;
-      } else if (promotedCategory === 'requirement') {
-        summary.promotedRequirementTerms += 1;
-      }
-      samplePush(summary.promotedSamples, {
+    if (promotedCategory === null) {
+      nextTerms.push(term);
+      return;
+    }
+    const canonicalIds = canonicalIdsForCategory(promotedCategory);
+    const canonicalId = canonicalIds.get(termKey);
+    if (canonicalId !== undefined && canonicalId !== term.id) {
+      replacementTermIds.set(term.id, canonicalId);
+      const merged = mergedTermsByTargetId.get(canonicalId) ?? [];
+      merged.push(term);
+      mergedTermsByTargetId.set(canonicalId, merged);
+      incrementPromotionCounters(promotedCategory, 'merged');
+      samplePush(summary.mergedSamples, {
         id: term.id,
         label: term.label,
         from: term.typeKey,
         to: promotedCategory,
       });
-      nextTerms.push(
-        createFilemakerLexiconTerm({
-          ...term,
-          normalizedLabel: termKey,
-          typeKey: promotedCategory,
-          category: promotedCategory,
-          updatedAt: now,
-        })
-      );
       return;
     }
-    nextTerms.push(term);
-  });
+    canonicalIds.set(termKey, term.id);
+    incrementPromotionCounters(promotedCategory, 'promoted');
+    samplePush(summary.promotedSamples, {
+      id: term.id,
+      label: term.label,
+      from: term.typeKey,
+      to: promotedCategory,
+    });
+    nextTerms.push(
+      createFilemakerLexiconTerm({
+        ...term,
+        normalizedLabel: termKey,
+        typeKey: promotedCategory,
+        category: promotedCategory,
+        updatedAt: now,
+      })
+    );
+  };
+
+  normalizedDatabase.lexiconTerms.forEach(processLexiconTerm);
 
   const mergedTerms = nextTerms.map((term) =>
     mergeTermStats(term, mergedTermsByTargetId.get(term.id) ?? [], now)
@@ -403,17 +441,7 @@ export const repairFilemakerJobBoardLexicon = (
     jobListingLexiconLinks: nextLinks,
     jobListings: nextListings,
   });
-  const changed =
-    summary.promotedTechnologyTerms > 0 ||
-    summary.mergedTechnologyTerms > 0 ||
-    summary.promotedRequirementTerms > 0 ||
-    summary.mergedRequirementTerms > 0 ||
-    summary.promotedValidationPatternTerms > 0 ||
-    summary.mergedValidationPatternTerms > 0 ||
-    summary.removedNoiseTerms > 0 ||
-    summary.removedLexiconLinks > 0 ||
-    summary.updatedLexiconLinks > 0 ||
-    summary.updatedListings > 0;
+  const changed = hasRepairSummaryChanges(summary);
 
   return { changed, database: nextDatabase, summary };
 };

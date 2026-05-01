@@ -55,20 +55,42 @@ const toCoverLetterFromPayload = (value: unknown): FilemakerJobApplicationCoverL
   };
 };
 
+const findCoverLetterVersion = (
+  versions: FilemakerJobApplicationArtifactVersion[],
+  versionId: string
+): FilemakerJobApplicationArtifactVersion | null =>
+  versions.find((version) => version.id === versionId) ?? null;
+
+const resolveCoverLetterVersions = (
+  application: FilemakerJobApplication
+): FilemakerJobApplicationArtifactVersion[] =>
+  application.persistedArtifactVersions?.coverLetter ?? [];
+
+const resolveOptionalVersionId = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim() ?? '';
+  return normalized.length > 0 ? normalized : null;
+};
+
+const resolveActiveCoverLetterVersion = (
+  application: FilemakerJobApplication,
+  versions: FilemakerJobApplicationArtifactVersion[]
+): FilemakerJobApplicationArtifactVersion | null => {
+  const activeVersionId = resolveOptionalVersionId(
+    application.activeArtifacts?.coverLetterVersionId
+  );
+  return activeVersionId !== null ? findCoverLetterVersion(versions, activeVersionId) : null;
+};
+
 const selectCoverLetterVersion = (
   application: FilemakerJobApplication,
   coverLetterVersionId?: string | null
 ): FilemakerJobApplicationArtifactVersion | null => {
-  const versions = application.persistedArtifactVersions?.coverLetter ?? [];
+  const versions = resolveCoverLetterVersions(application);
   if (versions.length === 0) return null;
-  const requestedVersionId = coverLetterVersionId?.trim() ?? '';
-  if (requestedVersionId.length > 0) {
-    return versions.find((version) => version.id === requestedVersionId) ?? null;
-  }
-  const activeVersionId = application.activeArtifacts?.coverLetterVersionId?.trim() ?? '';
-  if (activeVersionId.length > 0) {
-    return versions.find((version) => version.id === activeVersionId) ?? versions[0] ?? null;
-  }
+  const requestedVersionId = resolveOptionalVersionId(coverLetterVersionId);
+  if (requestedVersionId !== null) return findCoverLetterVersion(versions, requestedVersionId);
+  const activeVersion = resolveActiveCoverLetterVersion(application, versions);
+  if (activeVersion !== null) return activeVersion;
   return versions[0] ?? null;
 };
 

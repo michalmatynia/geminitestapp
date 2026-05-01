@@ -60,7 +60,7 @@ vi.mock('@/shared/ui/form-section', () => ({
   }) => (
     <label>
       <span>{label}</span>
-      {description ? <small>{description}</small> : null}
+      {description !== undefined ? <small>{description}</small> : null}
       {children}
     </label>
   ),
@@ -71,7 +71,20 @@ vi.mock('@/shared/ui/status-badge', () => ({
 }));
 
 vi.mock('@/shared/ui/templates/StandardDataTablePanel', () => ({
-  StandardDataTablePanel: () => <div>Price Groups Overview</div>,
+  StandardDataTablePanel: ({
+    data,
+  }: {
+    data: Array<{ calculatedPrice: number | null; name: string }>;
+  }) => (
+    <div>
+      Price Groups Overview
+      {data.map((row) => (
+        <div key={row.name}>
+          {row.name}: {row.calculatedPrice !== null ? row.calculatedPrice.toFixed(2) : '-'}
+        </div>
+      ))}
+    </div>
+  ),
 }));
 
 import { ProductFormOtherPricingSection } from './ProductFormOther.pricing';
@@ -79,11 +92,11 @@ import { ProductFormOtherPricingSection } from './ProductFormOther.pricing';
 const catalog: CatalogRecord = {
   id: 'catalog-main',
   name: 'Main',
-  defaultPriceGroupId: 'group-pln',
+  defaultPriceGroupId: 'PLN_STANDARD',
   isDefault: true,
   languageIds: [],
   defaultLanguageId: null,
-  priceGroupIds: ['group-pln', 'group-eur'],
+  priceGroupIds: ['PLN_STANDARD', 'EUR_STANDARD'],
   createdAt: '2026-04-04T00:00:00.000Z',
   updatedAt: '2026-04-04T00:00:00.000Z',
 };
@@ -92,7 +105,7 @@ const createPriceGroup = (
   id: string,
   name: string,
   currencyCode: string,
-  isDefault = false
+  overrides: Partial<PriceGroupWithDetails> = {}
 ): PriceGroupWithDetails => ({
   id,
   groupId: id.toUpperCase(),
@@ -108,7 +121,7 @@ const createPriceGroup = (
     createdAt: '2026-04-04T00:00:00.000Z',
     updatedAt: '2026-04-04T00:00:00.000Z',
   },
-  isDefault,
+  isDefault: false,
   type: 'standard',
   basePriceField: 'price',
   sourceGroupId: null,
@@ -116,22 +129,35 @@ const createPriceGroup = (
   addToPrice: 0,
   createdAt: '2026-04-04T00:00:00.000Z',
   updatedAt: '2026-04-04T00:00:00.000Z',
+  ...overrides,
 });
 
 const priceGroups = [
-  createPriceGroup('group-pln', 'Standard PLN', 'PLN', true),
-  createPriceGroup('group-eur', 'Retail EUR', 'EUR'),
+  createPriceGroup('group-pln', 'Standard PLN', 'PLN', {
+    groupId: 'PLN_STANDARD',
+    isDefault: true,
+  }),
+  createPriceGroup('group-eur', 'Retail EUR', 'EUR', { groupId: 'EUR_STANDARD' }),
 ];
 
 function PricingHarness({
+  basePrice = 100,
   defaultPriceGroupId = '',
+  isNewProduct = true,
+  sourcePrice = null,
+  testPriceGroups = priceGroups,
 }: {
+  basePrice?: number;
   defaultPriceGroupId?: string;
+  isNewProduct?: boolean;
+  sourcePrice?: number | null;
+  testPriceGroups?: PriceGroupWithDetails[];
 }): React.JSX.Element {
   const methods = useForm<ProductFormData>({
     defaultValues: {
       defaultPriceGroupId,
-      price: 100,
+      price: basePrice,
+      sourcePrice,
       sku: 'SKU-1',
     },
   });
@@ -142,13 +168,13 @@ function PricingHarness({
     <FormProvider {...methods}>
       <ProductFormOtherPricingSection
         hasCatalogs={true}
-        isNewProduct={true}
+        isNewProduct={isNewProduct}
         catalogs={[catalog]}
         selectedCatalogIds={[catalog.id]}
-        basePrice={100}
-        sourcePrice={null}
+        basePrice={basePrice}
+        sourcePrice={sourcePrice}
         selectedDefaultPriceGroupId={selectedDefaultPriceGroupId}
-        filteredPriceGroups={priceGroups}
+        filteredPriceGroups={testPriceGroups}
         setValue={methods.setValue}
       />
     </FormProvider>
@@ -176,5 +202,46 @@ describe('ProductFormOtherPricingSection', () => {
 
     expect(select).toHaveValue('group-eur');
     expect(select).not.toBeDisabled();
+  });
+
+  it('normalizes an existing legacy default price group id into a selectable option', async () => {
+    render(<PricingHarness defaultPriceGroupId='EUR_STANDARD' isNewProduct={false} />);
+
+    const select = screen.getByLabelText('Default price group');
+
+    await waitFor(() => expect(select).toHaveValue('group-eur'));
+    expect(select).not.toBeDisabled();
+  });
+
+  it('shows dependent EUR recalculation from a PLN sourcePrice-backed group', async () => {
+    const sourcePriceGroups = [
+      createPriceGroup('group-pln-source', 'BattleStock PLN', 'PLN', {
+        basePriceField: 'sourcePrice',
+        groupId: 'PLN_SOURCE',
+        isDefault: true,
+        priceMultiplier: 2,
+        addToPrice: 5,
+      }),
+      createPriceGroup('group-eur-retail', 'BattleStock EUR', 'EUR', {
+        groupId: 'EUR_RETAIL',
+        type: 'dependent',
+        sourceGroupId: 'group-pln-source',
+        priceMultiplier: 0.25,
+        addToPrice: 0,
+      }),
+    ];
+
+    render(
+      <PricingHarness
+        basePrice={125}
+        defaultPriceGroupId='PLN_SOURCE'
+        isNewProduct={false}
+        sourcePrice={60}
+        testPriceGroups={sourcePriceGroups}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByText('BattleStock PLN: 125.00')).toBeInTheDocument());
+    expect(screen.getByText('BattleStock EUR: 31.25')).toBeInTheDocument();
   });
 });

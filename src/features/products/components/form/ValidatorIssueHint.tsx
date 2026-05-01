@@ -1,20 +1,23 @@
 'use client';
 
 import { ArrowRight } from 'lucide-react';
-import { memo, useCallback } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { memo } from 'react';
 
 import { useProductValidationActions } from '@/features/products/context/ProductValidationSettingsContext';
-import { applyValidatorFieldReplacement } from '@/features/products/lib/applyValidatorFieldReplacement';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { type ProductFormData } from '@/shared/contracts/products/drafts';
 import { Button } from '@/shared/ui/button';
 import { Hint } from '@/shared/ui/Hint';
 
 import { cn } from '@/shared/utils/ui-utils';
+
+import {
+  useIssueDenyHandler,
+  useIssueReplacementFieldName,
+  useIssueReplaceHandler,
+} from './ValidatorIssueHint.actions';
 
 const hasNonEmptyString = (value: string | null | undefined): value is string =>
   typeof value === 'string' && value.length > 0;
@@ -227,46 +230,10 @@ export const IssueHintRow = memo((
 ): React.JSX.Element => {
   const { fieldName, issue, fieldValue } = props;
 
-  const { getValues, setValue } = useFormContext<ProductFormData>();
-  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
-
-  const onReplace = useCallback((): void => {
-    const currentValue = (getValues(fieldName as keyof ProductFormData) as string | number | undefined) ?? '';
-    const nextValue = getIssueReplacementPreview(String(currentValue), issue);
-    const applied = applyValidatorFieldReplacement({
-      fieldName,
-      replacementValue: nextValue,
-      getCurrentFieldValue: (nextFieldName: keyof ProductFormData) => getValues(nextFieldName),
-      setFormFieldValue: (
-        nextFieldName: keyof ProductFormData,
-        nextFieldValue: ProductFormData[keyof ProductFormData]
-      ) => {
-        setValue(nextFieldName, nextFieldValue, {
-          shouldDirty: true,
-          shouldTouch: true,
-        });
-      },
-      setCategoryId: () => {},
-      setProducerIds: () => {},
-    });
-    if (!applied) return;
-    void acceptIssue({
-      fieldName,
-      patternId: issue.patternId,
-      postAcceptBehavior: issue.postAcceptBehavior,
-      message: issue.message,
-      replacementValue: issue.replacementValue,
-    });
-  }, [acceptIssue, fieldName, getValues, issue, setValue]);
-
-  const onDeny = useCallback((): void => {
-    void denyIssue({
-      fieldName,
-      patternId: issue.patternId,
-      message: issue.message,
-      replacementValue: issue.replacementValue,
-    });
-  }, [denyIssue, fieldName, issue.message, issue.patternId, issue.replacementValue]);
+  const { getDenyActionLabel } = useProductValidationActions();
+  const replacementFieldName = useIssueReplacementFieldName(fieldName, issue);
+  const onReplace = useIssueReplaceHandler({ fieldName, issue, replacementFieldName });
+  const onDeny = useIssueDenyHandler({ fieldName, issue });
   return (
     <ValidatorIssueHint
       issue={issue}

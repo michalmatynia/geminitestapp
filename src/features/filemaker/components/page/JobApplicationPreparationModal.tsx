@@ -253,7 +253,7 @@ const summarizeLinkedRecords = (value: unknown): Record<string, unknown> | null 
       return fields.reduce<Record<string, unknown>>((picked, field) => {
         const compacted = compactApplicationContextValue(itemRecord[field], 0);
         if (compacted !== undefined && compacted !== null && compacted !== '') {
-          picked[field] = compacted;
+          return { ...picked, [field]: compacted };
         }
         return picked;
       }, {});
@@ -293,7 +293,7 @@ const summarizeCvRecords = (value: unknown): Record<string, unknown> | null => {
     count: value.length,
     preferredSourceCvRecordId,
     preferredSourceCvTitle,
-    items: value.slice(0, 3).map((entry: unknown, index: number): Record<string, unknown> => {
+    items: value.slice(0, 3).map((entry: unknown): Record<string, unknown> => {
       const record = readPlainRecord(entry) ?? {};
       const id = compactContextString(record['id'], 160);
       const title = compactContextString(record['title'], 240);
@@ -321,6 +321,16 @@ const summarizeCvRecords = (value: unknown): Record<string, unknown> | null => {
   };
 };
 
+const summarizeHeavyApplicationContextValue = (
+  key: string,
+  entryValue: unknown
+): Record<string, unknown> | null => {
+  const normalized = key.trim().toLowerCase();
+  if (normalized === 'cvs') return summarizeCvRecords(entryValue);
+  if (normalized === 'linkedrecords') return summarizeLinkedRecords(entryValue);
+  return summarizeCollectionCounts(entryValue);
+};
+
 const compactApplicationContextValue = (value: unknown, depth = 0): unknown => {
   if (value === null || value === undefined) return value;
   if (typeof value === 'string') {
@@ -342,12 +352,7 @@ const compactApplicationContextValue = (value: unknown, depth = 0): unknown => {
   const next: Record<string, unknown> = {};
   Object.entries(value as Record<string, unknown>).forEach(([key, entryValue]) => {
     if (isHeavyApplicationContextKey(key)) {
-      const normalized = key.trim().toLowerCase();
-      const summary = normalized === 'cvs'
-        ? summarizeCvRecords(entryValue)
-        : normalized === 'linkedrecords'
-          ? summarizeLinkedRecords(entryValue)
-        : summarizeCollectionCounts(entryValue);
+      const summary = summarizeHeavyApplicationContextValue(key, entryValue);
       if (summary !== null) next[`${key}Summary`] = summary;
       return;
     }

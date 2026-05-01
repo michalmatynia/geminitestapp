@@ -28,14 +28,33 @@ export type AddressApplyResult = {
   assignedDefault: boolean;
   changed: boolean;
 };
+type ParsedOfferAddress = Pick<
+  FilemakerAddress,
+  'city' | 'country' | 'countryId' | 'postalCode' | 'street' | 'streetNumber'
+>;
+type AddressApplyContext = {
+  listing: FilemakerJobListing;
+  listingIndex: number;
+  parsedAddress: ParsedOfferAddress;
+};
+type EnsureAddressLinkParams = {
+  database: FilemakerDatabase;
+  ownerKind: FilemakerAddressLink['ownerKind'];
+  ownerId: string;
+  addressId: string;
+  isDefault: boolean;
+};
+
+const EMPTY_ADDRESS_APPLY_RESULT: AddressApplyResult = {
+  address: null,
+  assignedDefault: false,
+  changed: false,
+};
 
 export const ensureAddressRecord = (
   database: FilemakerDatabase,
   ownerId: string,
-  parsedAddress: Pick<
-    FilemakerAddress,
-    'city' | 'country' | 'countryId' | 'postalCode' | 'street' | 'streetNumber'
-  >
+  parsedAddress: ParsedOfferAddress
 ): { address: FilemakerAddress; created: boolean } => {
   const comparisonKey = addressComparisonKey(parsedAddress);
   const existing = database.addresses.find(
@@ -50,13 +69,13 @@ export const ensureAddressRecord = (
   return { address, created: true };
 };
 
-export const ensureAddressLink = (
-  database: FilemakerDatabase,
-  ownerKind: FilemakerAddressLink['ownerKind'],
-  ownerId: string,
-  addressId: string,
-  isDefault: boolean
-): boolean => {
+export const ensureAddressLink = ({
+  database,
+  ownerKind,
+  ownerId,
+  addressId,
+  isDefault,
+}: EnsureAddressLinkParams): boolean => {
   const existingIndex = database.addressLinks.findIndex(
     (link: FilemakerAddressLink): boolean =>
       link.ownerKind === ownerKind &&
@@ -85,30 +104,40 @@ export const ensureAddressLink = (
   return true;
 };
 
+const resolveAddressApplyContext = (
+  database: FilemakerDatabase,
+  listingId: string,
+  offer: FilemakerJobBoardScrapedOffer
+): AddressApplyContext | null => {
+  const addressValue = findOfferAddressValue(offer);
+  if (addressValue === null) return null;
+  const parsedAddress = parseScrapedAddressPill(addressValue);
+  if (parsedAddress === null) return null;
+  const listingIndex = database.jobListings.findIndex(
+    (listing: FilemakerJobListing): boolean => listing.id === listingId
+  );
+  if (listingIndex < 0) return null;
+  const listing = database.jobListings[listingIndex];
+  return listing !== undefined ? { listing, listingIndex, parsedAddress } : null;
+};
+
 export const applyOfferAddressToDatabaseJobListing = (
   database: FilemakerDatabase,
   listingId: string,
   offer: FilemakerJobBoardScrapedOffer
 ): AddressApplyResult => {
-  const addressValue = findOfferAddressValue(offer);
-  if (addressValue === null) return { address: null, assignedDefault: false, changed: false };
-  const parsedAddress = parseScrapedAddressPill(addressValue);
-  if (parsedAddress === null) return { address: null, assignedDefault: false, changed: false };
-  const listingIndex = database.jobListings.findIndex(
-    (listing: FilemakerJobListing): boolean => listing.id === listingId
-  );
-  if (listingIndex < 0) return { address: null, assignedDefault: false, changed: false };
-  const listing = database.jobListings[listingIndex];
-  if (listing === undefined) return { address: null, assignedDefault: false, changed: false };
+  const context = resolveAddressApplyContext(database, listingId, offer);
+  if (context === null) return EMPTY_ADDRESS_APPLY_RESULT;
+  const { listing, listingIndex, parsedAddress } = context;
   const addressRecord = ensureAddressRecord(database, listingId, parsedAddress);
   const shouldSetDefaultAddress = normalizeString(listing.addressId).length === 0;
-  const linkChanged = ensureAddressLink(
+  const linkChanged = ensureAddressLink({
     database,
-    'job_listing',
-    listingId,
-    addressRecord.address.id,
-    shouldSetDefaultAddress
-  );
+    ownerKind: 'job_listing',
+    ownerId: listingId,
+    addressId: addressRecord.address.id,
+    isDefault: shouldSetDefaultAddress,
+  });
   let listingChanged = false;
   if (shouldSetDefaultAddress) {
     const nextListing = {

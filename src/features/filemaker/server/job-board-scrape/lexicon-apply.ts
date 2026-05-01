@@ -26,6 +26,25 @@ export type OfferLexiconApplyResult = {
   createdTerms: number;
   linkedTerms: number;
 };
+type LexiconTermUpsertResult = {
+  created: boolean;
+  term: FilemakerLexiconTerm;
+  updated: boolean;
+};
+type PromoteOtherLexiconTermInput = {
+  database: FilemakerDatabase;
+  index: number;
+  now: string;
+  pill: FilemakerJobBoardScrapedOffer['pills'][number];
+  sourceProvider: string;
+};
+type CreateScrapedLexiconTermInput = {
+  database: FilemakerDatabase;
+  normalizedLabel: string;
+  now: string;
+  pill: FilemakerJobBoardScrapedOffer['pills'][number];
+  sourceProvider: string;
+};
 
 export const buildLexiconTermId = (
   category: FilemakerLexiconTermCategory,
@@ -47,58 +66,71 @@ const scrapedPillTypeKey = (
   pill: FilemakerJobBoardScrapedOffer['pills'][number]
 ): FilemakerLexiconTermCategory => pill.typeKey;
 
-export const upsertLexiconTerm = (
+const findLexiconTermIndex = (
   database: FilemakerDatabase,
-  pill: FilemakerJobBoardScrapedOffer['pills'][number],
-  sourceProvider: string
-): { created: boolean; term: FilemakerLexiconTerm; updated: boolean } => {
-  const normalizedLabel = normalizeLexiconKey(pill.label);
-  const typeKey = scrapedPillTypeKey(pill);
-  const existingIndex = database.lexiconTerms.findIndex(
+  typeKey: FilemakerLexiconTermCategory,
+  normalizedLabel: string
+): number =>
+  database.lexiconTerms.findIndex(
     (term: FilemakerLexiconTerm): boolean =>
       term.typeKey === typeKey && term.normalizedLabel === normalizedLabel
   );
-  const now = new Date().toISOString();
-  if (existingIndex >= 0) {
-    const existing = database.lexiconTerms[existingIndex];
-    if (existing === undefined) {
-      throw internalError('Lexicon term index resolved without a term.');
-    }
-    const next = createFilemakerLexiconTerm({
-      ...existing,
-      lastSeenAt: now,
-      occurrenceCount: existing.occurrenceCount + 1,
-      updatedAt: now,
-    });
-    database.lexiconTerms.splice(existingIndex, 1, next);
-    return { created: false, term: next, updated: true };
+
+const updateExistingLexiconTerm = (
+  database: FilemakerDatabase,
+  index: number,
+  now: string,
+  errorMessage: string
+): LexiconTermUpsertResult => {
+  const existing = database.lexiconTerms[index];
+  if (existing === undefined) {
+    throw internalError(errorMessage);
   }
-  const otherIndex =
-    typeKey !== 'other'
-      ? database.lexiconTerms.findIndex(
-          (term: FilemakerLexiconTerm): boolean =>
-            term.typeKey === 'other' && term.normalizedLabel === normalizedLabel
-        )
-      : -1;
-  if (otherIndex >= 0) {
-    const existing = database.lexiconTerms[otherIndex];
-    if (existing === undefined) {
-      throw internalError('Other lexicon term index resolved without a term.');
-    }
-    const next = createFilemakerLexiconTerm({
-      ...existing,
-      label: existing.label.trim().length > 0 ? existing.label : pill.label,
-      typeKey,
-      category: typeKey,
-      sourceSite: existing.sourceSite ?? pill.sourceSite,
-      sourceProvider: existing.sourceProvider ?? sourceProvider,
-      lastSeenAt: now,
-      occurrenceCount: existing.occurrenceCount + 1,
-      updatedAt: now,
-    });
-    database.lexiconTerms.splice(otherIndex, 1, next);
-    return { created: false, term: next, updated: true };
+  const next = createFilemakerLexiconTerm({
+    ...existing,
+    lastSeenAt: now,
+    occurrenceCount: existing.occurrenceCount + 1,
+    updatedAt: now,
+  });
+  database.lexiconTerms.splice(index, 1, next);
+  return { created: false, term: next, updated: true };
+};
+
+const promoteOtherLexiconTerm = ({
+  database,
+  index,
+  now,
+  pill,
+  sourceProvider,
+}: PromoteOtherLexiconTermInput): LexiconTermUpsertResult => {
+  const existing = database.lexiconTerms[index];
+  if (existing === undefined) {
+    throw internalError('Other lexicon term index resolved without a term.');
   }
+  const typeKey = scrapedPillTypeKey(pill);
+  const next = createFilemakerLexiconTerm({
+    ...existing,
+    label: existing.label.trim().length > 0 ? existing.label : pill.label,
+    typeKey,
+    category: typeKey,
+    sourceSite: existing.sourceSite ?? pill.sourceSite,
+    sourceProvider: existing.sourceProvider ?? sourceProvider,
+    lastSeenAt: now,
+    occurrenceCount: existing.occurrenceCount + 1,
+    updatedAt: now,
+  });
+  database.lexiconTerms.splice(index, 1, next);
+  return { created: false, term: next, updated: true };
+};
+
+const createScrapedLexiconTerm = ({
+  database,
+  normalizedLabel,
+  now,
+  pill,
+  sourceProvider,
+}: CreateScrapedLexiconTermInput): LexiconTermUpsertResult => {
+  const typeKey = scrapedPillTypeKey(pill);
   const term = createFilemakerLexiconTerm({
     id: buildLexiconTermId(typeKey, normalizedLabel),
     label: pill.label,
@@ -115,6 +147,58 @@ export const upsertLexiconTerm = (
   return { created: true, term, updated: true };
 };
 
+export const upsertLexiconTerm = (
+  database: FilemakerDatabase,
+  pill: FilemakerJobBoardScrapedOffer['pills'][number],
+  sourceProvider: string
+): LexiconTermUpsertResult => {
+  const normalizedLabel = normalizeLexiconKey(pill.label);
+  const typeKey = scrapedPillTypeKey(pill);
+  const existingIndex = findLexiconTermIndex(database, typeKey, normalizedLabel);
+  const now = new Date().toISOString();
+  if (existingIndex >= 0) {
+    return updateExistingLexiconTerm(
+      database,
+      existingIndex,
+      now,
+      'Lexicon term index resolved without a term.'
+    );
+  }
+  const otherIndex = typeKey !== 'other' ? findLexiconTermIndex(database, 'other', normalizedLabel) : -1;
+  if (otherIndex >= 0) {
+    return promoteOtherLexiconTerm({ database, index: otherIndex, now, pill, sourceProvider });
+  }
+  return createScrapedLexiconTerm({ database, normalizedLabel, now, pill, sourceProvider });
+};
+
+const createUpdatedJobListingLexiconLink = (
+  existing: FilemakerJobListingLexiconLink,
+  pill: FilemakerJobBoardScrapedOffer['pills'][number]
+): FilemakerJobListingLexiconLink => {
+  const typeKey = scrapedPillTypeKey(pill);
+  return createFilemakerJobListingLexiconLink({
+    ...existing,
+    sourceSite: pill.sourceSite,
+    sourceUrl: pill.sourceUrl,
+    sourceValue: pill.label,
+    typeKey,
+    category: typeKey,
+    position: pill.position,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+const hasLexiconLinkChanged = (
+  existing: FilemakerJobListingLexiconLink,
+  next: FilemakerJobListingLexiconLink
+): boolean =>
+  existing.sourceSite !== next.sourceSite ||
+  existing.sourceUrl !== next.sourceUrl ||
+  existing.sourceValue !== next.sourceValue ||
+  existing.typeKey !== next.typeKey ||
+  existing.category !== next.category ||
+  existing.position !== next.position;
+
 export const ensureJobListingLexiconLink = (
   database: FilemakerDatabase,
   jobListingId: string,
@@ -129,24 +213,8 @@ export const ensureJobListingLexiconLink = (
   if (existingIndex >= 0) {
     const existing = database.jobListingLexiconLinks[existingIndex];
     if (existing === undefined) return false;
-    const next = createFilemakerJobListingLexiconLink({
-      ...existing,
-      sourceSite: pill.sourceSite,
-      sourceUrl: pill.sourceUrl,
-      sourceValue: pill.label,
-      typeKey,
-      category: typeKey,
-      position: pill.position,
-      updatedAt: new Date().toISOString(),
-    });
-    if (
-      existing.sourceSite === next.sourceSite &&
-      existing.sourceUrl === next.sourceUrl &&
-      existing.sourceValue === next.sourceValue &&
-      existing.typeKey === next.typeKey &&
-      existing.category === next.category &&
-      existing.position === next.position
-    ) {
+    const next = createUpdatedJobListingLexiconLink(existing, pill);
+    if (!hasLexiconLinkChanged(existing, next)) {
       return false;
     }
     database.jobListingLexiconLinks.splice(existingIndex, 1, next);

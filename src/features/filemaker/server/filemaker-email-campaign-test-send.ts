@@ -22,9 +22,16 @@ import {
   assertCampaignReadyForDelivery,
 } from './campaign-runtime/runtime-utils';
 
+type CampaignTestTemplateUrls = {
+  unsubscribeUrl: string;
+  preferencesUrl: string;
+  manageAllPreferencesUrl: string;
+  openTrackingUrl: string;
+};
+
 const resolveTestSendBaseUrl = (): string => {
   const configured = process.env['NEXT_PUBLIC_APP_URL']?.trim();
-  if (configured) {
+  if (configured !== undefined && configured !== '') {
     return configured.replace(/\/+$/u, '');
   }
   return 'http://localhost:3000';
@@ -39,18 +46,28 @@ const buildCampaignTestPreviewUrl = (input: {
     input.campaignId
   )}&action=${encodeURIComponent(input.action)}`;
 
+const buildCampaignTestTemplateUrls = (
+  baseUrl: string,
+  campaignId: string
+): CampaignTestTemplateUrls => ({
+  unsubscribeUrl: buildCampaignTestPreviewUrl({ baseUrl, campaignId, action: 'unsubscribe' }),
+  preferencesUrl: buildCampaignTestPreviewUrl({ baseUrl, campaignId, action: 'preferences' }),
+  manageAllPreferencesUrl: buildCampaignTestPreviewUrl({
+    baseUrl,
+    campaignId,
+    action: 'manage_all_preferences',
+  }),
+  openTrackingUrl: buildCampaignTestPreviewUrl({ baseUrl, campaignId, action: 'open_tracking' }),
+});
+
 const applyCampaignTestTemplateTokens = (
   value: string | null | undefined,
-  input: {
+  input: CampaignTestTemplateUrls & {
     recipientEmail: string;
-    unsubscribeUrl: string;
-    preferencesUrl: string;
-    manageAllPreferencesUrl: string;
-    openTrackingUrl: string;
     htmlMode: boolean;
   }
 ): string | null => {
-  if (!value) return null;
+  if (value === null || value === undefined || value === '') return null;
   return appendManagedCampaignPreferenceFooter(value, {
     unsubscribeUrl: input.unsubscribeUrl,
     preferencesUrl: input.preferencesUrl,
@@ -73,6 +90,48 @@ const applyCampaignTestTemplateTokens = (
     );
 };
 
+const assertCampaignTestReady = (
+  campaign: FilemakerEmailCampaign,
+  contentGroupRegistry: FilemakerEmailCampaignContentGroupRegistry | undefined
+): void => {
+  const contentGroupId = campaign.contentGroupId ?? '';
+  if (contentGroupId !== '') {
+    assertFilemakerCampaignContentReadyForDelivery({ campaign, contentGroupRegistry });
+    return;
+  }
+  assertCampaignReadyForDelivery(campaign, 'live');
+};
+
+const sendCampaignTestEmail = async (input: {
+  campaign: FilemakerEmailCampaign;
+  content: ReturnType<typeof resolveFilemakerCampaignContentForRecipient>;
+  recipientEmail: string;
+  templateUrls: CampaignTestTemplateUrls;
+}): ReturnType<typeof sendFilemakerCampaignEmail> => {
+  const text = applyCampaignTestTemplateTokens(resolveFilemakerCampaignContentBodyText(input.content), {
+    recipientEmail: input.recipientEmail,
+    ...input.templateUrls,
+    htmlMode: false,
+  });
+  const html = applyCampaignTestTemplateTokens(input.content.bodyHtml ?? null, {
+    recipientEmail: input.recipientEmail,
+    ...input.templateUrls,
+    htmlMode: true,
+  });
+  return sendFilemakerCampaignEmail({
+    to: input.recipientEmail,
+    subject: input.content.subject.trim(),
+    text: text ?? '',
+    html,
+    campaignId: input.campaign.id,
+    runId: `filemaker-email-campaign-test-run-${randomUUID()}`,
+    deliveryId: `filemaker-email-campaign-test-delivery-${randomUUID()}`,
+    mailAccountId: input.campaign.mailAccountId ?? null,
+    replyToEmail: input.campaign.replyToEmail ?? null,
+    fromName: input.campaign.fromName ?? null,
+  });
+};
+
 export const sendFilemakerEmailCampaignTest = async (input: {
   campaign: FilemakerEmailCampaign;
   contentGroupRegistry?: FilemakerEmailCampaignContentGroupRegistry;
@@ -85,14 +144,7 @@ export const sendFilemakerEmailCampaignTest = async (input: {
     throw badRequestError('Campaign must have an email account assigned before sending a test.');
   }
 
-  if (campaign.contentGroupId) {
-    assertFilemakerCampaignContentReadyForDelivery({
-      campaign,
-      contentGroupRegistry: input.contentGroupRegistry,
-    });
-  } else {
-    assertCampaignReadyForDelivery(campaign, 'live');
-  }
+  assertCampaignTestReady(campaign, input.contentGroupRegistry);
   const content = resolveFilemakerCampaignContentForRecipient({
     campaign,
     contentGroupRegistry: input.contentGroupRegistry,
@@ -102,57 +154,9 @@ export const sendFilemakerEmailCampaignTest = async (input: {
     contentVariantId: input.contentVariantId ?? null,
   });
 
-  const baseUrl = resolveTestSendBaseUrl();
-  const unsubscribeUrl = buildCampaignTestPreviewUrl({
-    baseUrl,
-    campaignId: campaign.id,
-    action: 'unsubscribe',
-  });
-  const preferencesUrl = buildCampaignTestPreviewUrl({
-    baseUrl,
-    campaignId: campaign.id,
-    action: 'preferences',
-  });
-  const manageAllPreferencesUrl = buildCampaignTestPreviewUrl({
-    baseUrl,
-    campaignId: campaign.id,
-    action: 'manage_all_preferences',
-  });
-  const openTrackingUrl = buildCampaignTestPreviewUrl({
-    baseUrl,
-    campaignId: campaign.id,
-    action: 'open_tracking',
-  });
+  const templateUrls = buildCampaignTestTemplateUrls(resolveTestSendBaseUrl(), campaign.id);
 
-  const text = applyCampaignTestTemplateTokens(resolveFilemakerCampaignContentBodyText(content), {
-    recipientEmail,
-    unsubscribeUrl,
-    preferencesUrl,
-    manageAllPreferencesUrl,
-    openTrackingUrl,
-    htmlMode: false,
-  });
-  const html = applyCampaignTestTemplateTokens(content.bodyHtml ?? null, {
-    recipientEmail,
-    unsubscribeUrl,
-    preferencesUrl,
-    manageAllPreferencesUrl,
-    openTrackingUrl,
-    htmlMode: true,
-  });
-
-  const result = await sendFilemakerCampaignEmail({
-    to: recipientEmail,
-    subject: content.subject.trim(),
-    text: text ?? '',
-    html,
-    campaignId: campaign.id,
-    runId: `filemaker-email-campaign-test-run-${randomUUID()}`,
-    deliveryId: `filemaker-email-campaign-test-delivery-${randomUUID()}`,
-    mailAccountId: campaign.mailAccountId ?? null,
-    replyToEmail: campaign.replyToEmail ?? null,
-    fromName: campaign.fromName ?? null,
-  });
+  const result = await sendCampaignTestEmail({ campaign, content, recipientEmail, templateUrls });
 
   return {
     campaignId: campaign.id,

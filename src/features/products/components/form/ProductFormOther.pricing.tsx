@@ -1,162 +1,21 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
-import type { UseFormSetValue } from 'react-hook-form';
+import React, { useMemo } from 'react';
 
 import type { LabeledOptionDto } from '@/shared/contracts/base';
-import {
-  PRICE_GROUP_SOURCE_PRICE_FIELD,
-  type CatalogRecord,
-} from '@/shared/contracts/products/catalogs';
-import type { ProductFormData } from '@/shared/contracts/products/drafts';
-import type { PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { FormField, FormSection } from '@/shared/ui/form-section';
 import { SelectSimple } from '@/shared/ui/select-simple';
 import { StatusBadge } from '@/shared/ui/status-badge';
 import { StandardDataTablePanel } from '@/shared/ui/templates/StandardDataTablePanel';
 
+import {
+  buildPriceGroupPrices,
+  resolvePriceGroupCurrencyCode,
+  useCatalogDefaultPriceGroupSelection,
+  type PriceGroupWithCalculatedPrice,
+  type ProductFormOtherPricingSectionProps,
+} from './ProductFormOther.pricing.logic';
 import { ValidatedField } from './ValidatedField';
-
-interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
-  calculatedPrice: number | null;
-  isCalculated: boolean;
-  sourceGroupName: string | undefined;
-}
-
-type ProductFormOtherPricingSectionProps = {
-  hasCatalogs: boolean;
-  isNewProduct: boolean;
-  catalogs: CatalogRecord[];
-  selectedCatalogIds: string[];
-  basePrice: number;
-  sourcePrice: number | null;
-  selectedDefaultPriceGroupId: string;
-  filteredPriceGroups: PriceGroupWithDetails[];
-  setValue: UseFormSetValue<ProductFormData>;
-};
-
-const hasPriceMultiplierSource = (group: PriceGroupWithDetails): boolean =>
-  ((typeof group.sourceGroupId === 'string' && group.sourceGroupId.trim() !== '') ||
-    group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) &&
-  typeof group.priceMultiplier === 'number' &&
-  Number.isFinite(group.priceMultiplier);
-
-const resolvePriceGroupCurrencyCode = (group: PriceGroupWithDetails): string => {
-  const currency = (group as { currency?: { code?: unknown } }).currency;
-  return typeof currency?.code === 'string' ? currency.code : group.currencyCode;
-};
-
-const buildBasePriceGroupPrice = (
-  group: PriceGroupWithDetails,
-  basePrice: number,
-  selectedDefaultPriceGroupId: string
-): PriceGroupWithCalculatedPrice => ({
-  ...group,
-  calculatedPrice: group.id === selectedDefaultPriceGroupId ? basePrice : null,
-  isCalculated: false,
-  sourceGroupName: undefined,
-});
-
-const buildCalculatedPriceGroupPrice = (
-  group: PriceGroupWithDetails,
-  sourcePrice: number | null,
-  sourceGroupName: string | undefined
-): PriceGroupWithCalculatedPrice => ({
-  ...group,
-  calculatedPrice:
-    sourcePrice !== null ? sourcePrice * group.priceMultiplier + group.addToPrice : null,
-  isCalculated: true,
-  sourceGroupName,
-});
-
-const buildPriceGroupPrices = ({
-  filteredPriceGroups,
-  selectedDefaultPriceGroupId,
-  basePrice,
-  sourcePrice,
-}: Pick<
-  ProductFormOtherPricingSectionProps,
-  'filteredPriceGroups' | 'selectedDefaultPriceGroupId' | 'basePrice' | 'sourcePrice'
->): PriceGroupWithCalculatedPrice[] =>
-  filteredPriceGroups.map((group) => {
-    if (hasPriceMultiplierSource(group) === false) {
-      return buildBasePriceGroupPrice(group, basePrice, selectedDefaultPriceGroupId);
-    }
-    if (group.basePriceField === PRICE_GROUP_SOURCE_PRICE_FIELD) {
-      return buildCalculatedPriceGroupPrice(group, sourcePrice, 'Source price');
-    }
-    const sourceGroup =
-      filteredPriceGroups.find((candidate) => candidate.id === group.sourceGroupId) ?? null;
-    const resolvedSourcePrice = sourceGroup?.id === selectedDefaultPriceGroupId ? basePrice : null;
-    return buildCalculatedPriceGroupPrice(group, resolvedSourcePrice, sourceGroup?.name);
-  });
-
-const buildPriceGroupOptions = (
-  filteredPriceGroups: PriceGroupWithDetails[]
-): Array<LabeledOptionDto<string>> =>
-  filteredPriceGroups.map((group) => ({
-    value: group.id,
-    label: `${group.name}${group.isDefault ? ' (Default)' : ''} (${resolvePriceGroupCurrencyCode(group)})`,
-  }));
-
-const resolveCatalogDefaultPriceGroupId = (
-  catalog: CatalogRecord | undefined
-): string => {
-  if (typeof catalog?.defaultPriceGroupId !== 'string') return '';
-  return catalog.defaultPriceGroupId.trim();
-};
-
-const hasPriceGroupOption = (
-  options: Array<LabeledOptionDto<string>>,
-  priceGroupId: string
-): boolean => options.some((option) => option.value === priceGroupId);
-
-const useCatalogDefaultPriceGroupSelection = ({
-  catalogs,
-  filteredPriceGroups,
-  isNewProduct,
-  selectedCatalogIds,
-  selectedDefaultPriceGroupId,
-  setValue,
-}: Pick<
-  ProductFormOtherPricingSectionProps,
-  | 'catalogs'
-  | 'filteredPriceGroups'
-  | 'isNewProduct'
-  | 'selectedCatalogIds'
-  | 'selectedDefaultPriceGroupId'
-  | 'setValue'
->): {
-  isPriceGroupAutoSelected: boolean;
-  priceGroupOptions: Array<LabeledOptionDto<string>>;
-} => {
-  const selectedCatalog = catalogs.find((catalog) => selectedCatalogIds.includes(catalog.id));
-  const priceGroupOptions = useMemo(
-    () => buildPriceGroupOptions(filteredPriceGroups),
-    [filteredPriceGroups]
-  );
-  const catalogDefaultPriceGroupId = resolveCatalogDefaultPriceGroupId(selectedCatalog);
-  const normalizedSelectedPriceGroupId = selectedDefaultPriceGroupId.trim();
-  const canUseCatalogDefault =
-    isNewProduct &&
-    catalogDefaultPriceGroupId !== '' &&
-    hasPriceGroupOption(priceGroupOptions, catalogDefaultPriceGroupId);
-
-  useEffect(() => {
-    if (!canUseCatalogDefault || normalizedSelectedPriceGroupId !== '') return;
-    setValue('defaultPriceGroupId', catalogDefaultPriceGroupId, {
-      shouldDirty: false,
-      shouldTouch: false,
-      shouldValidate: true,
-    });
-  }, [canUseCatalogDefault, catalogDefaultPriceGroupId, normalizedSelectedPriceGroupId, setValue]);
-
-  return {
-    isPriceGroupAutoSelected:
-      canUseCatalogDefault && normalizedSelectedPriceGroupId === catalogDefaultPriceGroupId,
-    priceGroupOptions,
-  };
-};
 
 const DefaultPriceGroupField = ({
   isPriceGroupAutoSelected,
@@ -273,17 +132,17 @@ const PriceGroupPriceCell = ({
 export function ProductFormOtherPricingSection(
   props: ProductFormOtherPricingSectionProps
 ): React.JSX.Element | null {
+  const { isPriceGroupAutoSelected, priceGroupOptions, selectedPriceGroupId } =
+    useCatalogDefaultPriceGroupSelection(props);
   const priceGroupPrices = useMemo(
-    () => buildPriceGroupPrices(props),
+    () => buildPriceGroupPrices({ ...props, selectedDefaultPriceGroupId: selectedPriceGroupId }),
     [
       props.basePrice,
       props.filteredPriceGroups,
-      props.selectedDefaultPriceGroupId,
       props.sourcePrice,
+      selectedPriceGroupId,
     ]
   );
-  const { isPriceGroupAutoSelected, priceGroupOptions } =
-    useCatalogDefaultPriceGroupSelection(props);
   const handlePriceGroupChange = (value: string): void =>
     props.setValue('defaultPriceGroupId', value, {
       shouldDirty: true,
@@ -297,11 +156,11 @@ export function ProductFormOtherPricingSection(
         isPriceGroupAutoSelected={isPriceGroupAutoSelected}
         onChange={handlePriceGroupChange}
         options={priceGroupOptions}
-        value={props.selectedDefaultPriceGroupId}
+        value={selectedPriceGroupId}
       />
       <PriceGroupsOverview
         priceGroupPrices={priceGroupPrices}
-        selectedDefaultPriceGroupId={props.selectedDefaultPriceGroupId}
+        selectedDefaultPriceGroupId={selectedPriceGroupId}
       />
     </FormSection>
   );

@@ -16,12 +16,17 @@ interface UseEmailLayerPanelProps {
   onSelectBlock: (blockId: string | null) => void;
 }
 
+interface UseEmailLayerPanelResult {
+  controller: ReturnType<typeof useFolderTreeInstanceV2>;
+  runtime: ReturnType<typeof useSharedMasterFolderTreeRuntime>;
+}
+
 export function useEmailLayerPanel({
   blocks,
   onChange,
   selectedBlockId,
   onSelectBlock,
-}: UseEmailLayerPanelProps) {
+}: UseEmailLayerPanelProps): UseEmailLayerPanelResult {
   const blocksRef = useRef(blocks);
   blocksRef.current = blocks;
 
@@ -68,7 +73,6 @@ export function useEmailLayerPanel({
     if (selectedBlockId !== controller.selectedNodeId) {
       controller.selectNode(selectedBlockId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedBlockId]);
 
   return { controller, runtime };

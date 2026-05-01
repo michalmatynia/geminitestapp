@@ -17,6 +17,7 @@ import {
 import type { FilemakerEmailCampaignSuppressionRegistry } from '../../types';
 
 type FilterValue = 'all' | CampaignListHygieneIssueCode;
+type CampaignListHygieneSummary = ReturnType<typeof runListHygieneCheck>;
 
 const SEVERITY_BADGE_VARIANT: Record<
   CampaignListHygieneSeverity,
@@ -34,6 +35,24 @@ const ISSUE_LABEL: Record<CampaignListHygieneIssueCode, string> = {
   currently_suppressed: 'Currently suppressed',
   recently_bounced: 'Recently bounced',
   recently_failed: 'Recent delivery failure',
+};
+
+const renderDeliverabilityHeaderIcon = (
+  cleanList: boolean,
+  blocking: boolean
+): React.JSX.Element => {
+  if (cleanList) return <ShieldCheck className='h-4 w-4 text-emerald-400' aria-hidden='true' />;
+  if (blocking) return <ShieldX className='h-4 w-4 text-red-400' aria-hidden='true' />;
+  return <ShieldAlert className='h-4 w-4 text-amber-400' aria-hidden='true' />;
+};
+
+const formatDeliverabilitySummary = (summary: CampaignListHygieneSummary): string => {
+  if (summary.totalRecipients === 0) {
+    return 'No recipients in audience preview yet — adjust the audience rule to see hygiene results.';
+  }
+  const recipientLabel = summary.totalRecipients === 1 ? 'recipient' : 'recipients';
+  const issueLabel = summary.issues.length === 1 ? 'issue' : 'issues';
+  return `${summary.totalRecipients} ${recipientLabel} (${summary.uniqueAddresses} unique). ${summary.issues.length} ${issueLabel} found.`;
 };
 
 export function CampaignDeliverabilityCheckSection(): React.JSX.Element {
@@ -62,14 +81,7 @@ export function CampaignDeliverabilityCheckSection(): React.JSX.Element {
 
   const blocking = isCampaignListHygieneBlocking(summary);
   const cleanList = summary.issues.length === 0;
-
-  const headerIcon = cleanList ? (
-    <ShieldCheck className='h-4 w-4 text-emerald-400' aria-hidden='true' />
-  ) : blocking ? (
-    <ShieldX className='h-4 w-4 text-red-400' aria-hidden='true' />
-  ) : (
-    <ShieldAlert className='h-4 w-4 text-amber-400' aria-hidden='true' />
-  );
+  const headerIcon = renderDeliverabilityHeaderIcon(cleanList, blocking);
 
   return (
     <FormSection
@@ -82,11 +94,7 @@ export function CampaignDeliverabilityCheckSection(): React.JSX.Element {
       className='space-y-3 p-4'
     >
       <div className='flex flex-wrap items-center justify-between gap-2 text-xs text-gray-400'>
-        <div>
-          {summary.totalRecipients === 0
-            ? 'No recipients in audience preview yet — adjust the audience rule to see hygiene results.'
-            : `${summary.totalRecipients} recipient${summary.totalRecipients === 1 ? '' : 's'} (${summary.uniqueAddresses} unique). ${summary.issues.length} issue${summary.issues.length === 1 ? '' : 's'} found.`}
-        </div>
+        <div>{formatDeliverabilitySummary(summary)}</div>
         <div className='flex items-center gap-1 text-[10px]'>
           <Badge variant='destructive'>{summary.bySeverity.error} errors</Badge>
           <Badge variant='outline'>{summary.bySeverity.warning} warnings</Badge>
@@ -101,53 +109,81 @@ export function CampaignDeliverabilityCheckSection(): React.JSX.Element {
         </div>
       ) : null}
 
-      {summary.issues.length > 0 ? (
-        <div className='flex flex-wrap items-center gap-1' role='tablist' aria-label='Filter issues by code'>
-          <FilterButton current={filter} value='all' label={`All (${summary.issues.length})`} setFilter={setFilter} />
-          {(Object.keys(ISSUE_LABEL) as CampaignListHygieneIssueCode[]).map((code) => {
-            const count = summary.byCode[code];
-            if (count === 0) return null;
-            return (
-              <FilterButton
-                key={code}
-                current={filter}
-                value={code}
-                label={`${ISSUE_LABEL[code]} (${count})`}
-                setFilter={setFilter}
-              />
-            );
-          })}
-        </div>
-      ) : null}
+      <DeliverabilityIssueFilters filter={filter} setFilter={setFilter} summary={summary} />
 
       {cleanList ? (
         <div className='rounded-md border border-emerald-500/40 bg-emerald-500/10 p-3 text-xs text-emerald-200'>
           Audience is clean — no hygiene issues detected.
         </div>
       ) : (
-        <ul className='max-h-72 divide-y divide-border/30 overflow-y-auto rounded-md border border-border/60 bg-card/20 text-xs'>
-          {visibleIssues.map((issue, index) => (
-            <li
-              key={`${issue.code}-${issue.recipientId ?? issue.emailAddress}-${index}`}
-              className='flex items-start justify-between gap-3 px-3 py-2'
-            >
-              <div className='min-w-0'>
-                <div className='flex items-center gap-2'>
-                  <Badge variant={SEVERITY_BADGE_VARIANT[issue.severity]} className='text-[10px]'>
-                    {issue.severity}
-                  </Badge>
-                  <span className='text-[10px] uppercase tracking-wide text-gray-500'>
-                    {ISSUE_LABEL[issue.code]}
-                  </span>
-                  <span className='truncate text-white'>{issue.emailAddress}</span>
-                </div>
-                <div className='mt-1 text-[11px] text-gray-400'>{issue.message}</div>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <DeliverabilityIssueList issues={visibleIssues} />
       )}
     </FormSection>
+  );
+}
+
+function DeliverabilityIssueFilters({
+  filter,
+  setFilter,
+  summary,
+}: {
+  filter: FilterValue;
+  setFilter: (value: FilterValue) => void;
+  summary: CampaignListHygieneSummary;
+}): React.JSX.Element | null {
+  if (summary.issues.length === 0) return null;
+  return (
+    <div className='flex flex-wrap items-center gap-1' role='tablist' aria-label='Filter issues by code'>
+      <FilterButton
+        current={filter}
+        value='all'
+        label={`All (${summary.issues.length})`}
+        setFilter={setFilter}
+      />
+      {(Object.keys(ISSUE_LABEL) as CampaignListHygieneIssueCode[]).map((code) => {
+        const count = summary.byCode[code];
+        if (count === 0) return null;
+        return (
+          <FilterButton
+            key={code}
+            current={filter}
+            value={code}
+            label={`${ISSUE_LABEL[code]} (${count})`}
+            setFilter={setFilter}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function DeliverabilityIssueList({
+  issues,
+}: {
+  issues: CampaignListHygieneIssue[];
+}): React.JSX.Element {
+  return (
+    <ul className='max-h-72 divide-y divide-border/30 overflow-y-auto rounded-md border border-border/60 bg-card/20 text-xs'>
+      {issues.map((issue, index) => (
+        <li
+          key={`${issue.code}-${issue.recipientId ?? issue.emailAddress}-${index}`}
+          className='flex items-start justify-between gap-3 px-3 py-2'
+        >
+          <div className='min-w-0'>
+            <div className='flex items-center gap-2'>
+              <Badge variant={SEVERITY_BADGE_VARIANT[issue.severity]} className='text-[10px]'>
+                {issue.severity}
+              </Badge>
+              <span className='text-[10px] uppercase tracking-wide text-gray-500'>
+                {ISSUE_LABEL[issue.code]}
+              </span>
+              <span className='truncate text-white'>{issue.emailAddress}</span>
+            </div>
+            <div className='mt-1 text-[11px] text-gray-400'>{issue.message}</div>
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }
 

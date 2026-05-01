@@ -15,6 +15,7 @@ import {
 } from '@/shared/lib/ai-paths/core/starter-workflows/segments/upgrade';
 import { readStarterProvenance } from '@/shared/lib/ai-paths/core/starter-workflows/segments/utils';
 import { sanitizePathConfig } from '@/shared/lib/ai-paths/core/utils/path-config-sanitization';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import { loadCanonicalStoredPathConfig } from '@/shared/lib/ai-paths/core/utils/stored-path-config';
 import type {
   AiPathTemplateRegistryEntry,
@@ -318,7 +319,19 @@ const buildRefreshedStarterWorkflowConfig = (config: PathConfig): PathConfig | n
     fallbackName: upgraded.config.name,
     applyStarterWorkflowUpgrade: false,
   }).config;
-  return sanitizePathConfig(canonicalized);
+  const refreshed = sanitizePathConfig(canonicalized);
+
+  // If the refreshed result is canonically identical to the current stored config
+  // (e.g. the only difference was sanitization-added fields like writeOutcomePolicy),
+  // skip the update to prevent an infinite refresh cycle.
+  try {
+    const canonicalizedStored = sanitizePathConfig(config);
+    if (stableStringify(refreshed) === stableStringify(canonicalizedStored)) return null;
+  } catch {
+    // stored config is not sanitizable — proceed with the refresh
+  }
+
+  return refreshed;
 };
 
 const buildCanonicalStarterConfigRaw = (args: {

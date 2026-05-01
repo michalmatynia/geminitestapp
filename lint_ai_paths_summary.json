@@ -1,0 +1,866 @@
+[
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/api/client.ts",
+    "errorCount": 42
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/api/client/base.ts",
+    "errorCount": 16
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/api/client/database.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/api/client/triggers.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/client-run-tracker.ts",
+    "errorCount": 38
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/components/trigger-buttons/TriggerButtonBar.tsx",
+    "errorCount": 18
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/context-registry/system-prompt.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/docs/node-docs.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/docs/node-docs/transform.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/ai.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/context.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/control.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/database.ts",
+    "errorCount": 31
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/http.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/mutator.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/parser.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/trigger.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/utils.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/nodes/validation.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/normalization.helpers.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/normalization.nodes.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/stored-trigger-path-config.ts",
+    "errorCount": 24
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/normalization/trigger-normalization.ts",
+    "errorCount": 16
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/playwright/capture-defaults.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/playwright/default-config.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/playwright/script-templates.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/code-object-resolver-registry.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-client.ts",
+    "errorCount": 14
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-core.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-context.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-loop.ts",
+    "errorCount": 15
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-node.ts",
+    "errorCount": 50
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-preparation.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-provenance.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-execution-telemetry.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-hashing.ts",
+    "errorCount": 20
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-input-collector.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-node-input-deriver.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-reachability.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-runtime-status.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-state-manager.ts",
+    "errorCount": 16
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-types.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-utils.ts",
+    "errorCount": 35
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-modules/engine-validation-helpers.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/engine-server.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/execution-helpers.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/graph-model-job.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/auth.ts",
+    "errorCount": 17
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/routing.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/advanced-api/utils.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/agent.ts",
+    "errorCount": 41
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/audio.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/common.ts",
+    "errorCount": 30
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference-utils.ts",
+    "errorCount": 21
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/database-parameter-inference.ts",
+    "errorCount": 43
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/database-write-policies.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/function-node.ts",
+    "errorCount": 19
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/generation.ts",
+    "errorCount": 37
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-api-advanced-handler.ts",
+    "errorCount": 35
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-delete-operation.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-handler.ts",
+    "errorCount": 17
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-input-resolution.ts",
+    "errorCount": 21
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-insert-execution.ts",
+    "errorCount": 21
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-insert-operation.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-insert-payload.ts",
+    "errorCount": 15
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-actions.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-create-action.ts",
+    "errorCount": 15
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-delete-action.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-read-action.ts",
+    "errorCount": 17
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-action.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-collection-executor.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-entity-executor.ts",
+    "errorCount": 11
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-plan-helpers.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-plan.ts",
+    "errorCount": 23
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-execution.ts",
+    "errorCount": 23
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-query-resolution.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-template-context.ts",
+    "errorCount": 15
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-execution.ts",
+    "errorCount": 24
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-mapping-resolution.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-update-operation.ts",
+    "errorCount": 32
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-database-write-guardrails.ts",
+    "errorCount": 27
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-fetcher-handler.ts",
+    "errorCount": 20
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-http-handler.ts",
+    "errorCount": 15
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-notification-handler.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-playwright-handler.ts",
+    "errorCount": 23
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-poll-handler.ts",
+    "errorCount": 12
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-schema-handler.ts",
+    "errorCount": 70
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-simulation-handler.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/integration-trigger-handler.ts",
+    "errorCount": 12
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/json-integrity.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/parameter-inference/parameter-inference.guardrails.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/parameter-inference/parameter-inference.merger.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/parameter-inference/parameter-inference.normalizer.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/state-node.ts",
+    "errorCount": 15
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/switch-node.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/bounds-normalizer-handler.ts",
+    "errorCount": 21
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/canvas-output-handler.ts",
+    "errorCount": 11
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/context.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/iterator.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/mapper.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/mutator.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/parser.ts",
+    "errorCount": 17
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/regex.ts",
+    "errorCount": 18
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/handlers/transform/validator.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/node-code-object-v3-legacy-bridge.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/node-runtime-kernel.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/runtime-kernel-config.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/test-utils.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/runtime/utils.ts",
+    "errorCount": 102
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/semantic-grammar/deserialize.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/semantic-grammar/serialize.ts",
+    "errorCount": 10
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/semantic-grammar/subgraph.ts",
+    "errorCount": 14
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/starter-workflows/segments/api.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/starter-workflows/segments/structural-matchers.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/starter-workflows/segments/upgrade.ts",
+    "errorCount": 38
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/starter-workflows/segments/utils.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/collection-mapping.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/collection-names.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/compile-warning-message.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/context.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/data-contract-preflight.ts",
+    "errorCount": 37
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/dependency-inspector.ts",
+    "errorCount": 20
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/factory.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/graph.compile.ts",
+    "errorCount": 33
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/graph.edges.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/graph.integrity.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/graph.nodes.ts",
+    "errorCount": 14
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/graph.ports.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/image.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/json.ts",
+    "errorCount": 30
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/legacy-node-removal.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/model-capability-preflight.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/node-identity.ts",
+    "errorCount": 34
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/path-config-sanitization.ts",
+    "errorCount": 26
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/port-types.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/provider-actions.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/run-preflight.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/runtime-state.ts",
+    "errorCount": 11
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/runtime.ts",
+    "errorCount": 14
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/stored-path-config.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/template.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/utils/trigger-label-migration.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/defaults.ts",
+    "errorCount": 26
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/docs-inference.ts",
+    "errorCount": 12
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.file-access.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.helpers.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/evaluator.ts",
+    "errorCount": 63
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/loaders/assertion-catalog.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/loaders/assertion-markdown.ts",
+    "errorCount": 11
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/loaders/assertion-snippets.ts",
+    "errorCount": 11
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/loaders/catalog-loaders.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/loaders/manifest-loader.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/core/validation-engine/runtime-middleware.ts",
+    "errorCount": 23
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/error-reporting.ts",
+    "errorCount": 16
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/trigger-event-context.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/trigger-event-invalidation.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/trigger-event-sanitization.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/trigger-event-selection.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/trigger-event-settings.ts",
+    "errorCount": 14
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/trigger-event-utils.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/useAiPathTriggerEvent.ts",
+    "errorCount": 24
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/hooks/useTriggerButtons.ts",
+    "errorCount": 16
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/local-runs.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/optimistic-run-queue.ts",
+    "errorCount": 34
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/node-code-objects-v2-contracts.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/node-code-objects-v2-manifest.ts",
+    "errorCount": 12
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-builders.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-audit-sinks.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-observability.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-signing.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification-async.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification-support.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-envelope-verification-sync.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-execution.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-fingerprints.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-integrity-support.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-migration.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-migrator-observability.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-package-migrators.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-path-canonicalization.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-resolution-support.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-resolvers.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-run-error-normalization.ts",
+    "errorCount": 10
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-run-observability.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-signing-policy.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-validation-error.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/portable-engine-validation.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/receiver-signature.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/server.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/sinks-bootstrap.server.ts",
+    "errorCount": 7
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/sinks-environment.server.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/sinks-settings-store.server.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/sinks-shared.server.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/sinks-trend-reporter.server.ts",
+    "errorCount": 10
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/portable-engine/sinks-trend-state.server.ts",
+    "errorCount": 10
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/regex-templates.ts",
+    "errorCount": 9
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/run-sources.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/index.ts",
+    "errorCount": 10
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/methods/create-run.ts",
+    "errorCount": 4
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/methods/find-run-by-id.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/methods/list-run-events.ts",
+    "errorCount": 3
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/methods/list-runs.ts",
+    "errorCount": 2
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/methods/run-query-helpers.ts",
+    "errorCount": 13
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/methods/shared.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/mongo-path-run-repository.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/path-run-repository/test-utils/in-memory-mongo.ts",
+    "errorCount": 26
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/runtime-analytics/availability.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/runtime-analytics/config.ts",
+    "errorCount": 1
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/runtime-analytics/recording.ts",
+    "errorCount": 6
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/runtime-analytics/summary.ts",
+    "errorCount": 5
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/runtime-analytics/trace.ts",
+    "errorCount": 21
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/services/runtime-analytics/utils.ts",
+    "errorCount": 8
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/settings-store-client.ts",
+    "errorCount": 20
+  },
+  {
+    "filePath": "/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/lib/ai-paths/trigger-button-run-feedback.ts",
+    "errorCount": 29
+  }
+]

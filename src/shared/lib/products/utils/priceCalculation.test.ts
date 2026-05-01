@@ -1,11 +1,16 @@
 /**
  * @vitest-environment node
  */
+/* eslint-disable max-lines-per-function */
 
 import type { PriceGroupForCalculation } from '@/shared/contracts/products/product';
 import { describe, expect, it } from 'vitest';
 
-import { calculatePriceForCurrency, normalizeCurrencyCode } from './priceCalculation';
+import {
+  calculatePriceForCurrency,
+  normalizeCurrencyCode,
+  resolveSourcePriceCurrencyCode,
+} from './priceCalculation';
 
 const createGroup = (overrides: Partial<PriceGroupForCalculation>): PriceGroupForCalculation => ({
   id: 'group-default',
@@ -235,5 +240,28 @@ describe('products priceCalculation utils', () => {
       currencyCode: 'PLN',
       baseCurrencyCode: 'PLN',
     });
+  });
+
+  it('resolves sourcePrice currency from the assigned sourcePrice-backed group', () => {
+    const groups = [
+      createGroup({
+        id: 'group-usd',
+        groupId: 'USD',
+        currencyId: 'USD',
+        currency: { code: 'USD' },
+        currencyCode: 'USD',
+      }),
+      createGroup({
+        id: 'group-retail',
+        groupId: 'RETAIL',
+        currencyId: 'PLN',
+        currency: { code: 'PLN' },
+        currencyCode: 'PLN',
+        basePriceField: 'sourcePrice',
+      }),
+    ];
+
+    expect(resolveSourcePriceCurrencyCode('group-retail', groups)).toBe('PLN');
+    expect(resolveSourcePriceCurrencyCode('group-usd', groups)).toBe('PLN');
   });
 });

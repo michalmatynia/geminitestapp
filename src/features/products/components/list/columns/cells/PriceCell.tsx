@@ -4,7 +4,11 @@ import { memo, type ReactNode } from 'react';
 import type { Row } from '@tanstack/react-table';
 import type { ProductWithImages, PriceGroupWithDetails } from '@/shared/contracts/products/product';
 import { useProductListRowVisualsContext } from '@/features/products/context/ProductListContext';
-import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/shared/lib/products/utils/priceCalculation';
+import {
+  calculatePriceForCurrency,
+  normalizeCurrencyCode,
+  resolveSourcePriceCurrencyCode,
+} from '@/shared/lib/products/utils/priceCalculation';
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { Tooltip } from '@/shared/ui/tooltip';
 
@@ -60,10 +64,18 @@ function resolveVisibleSourcePrice(product: ProductWithImages): number | null {
   return sourcePrice;
 }
 
-function SourcePriceDisplay({ sourcePrice }: { sourcePrice: number | null }): React.JSX.Element | null {
+function SourcePriceDisplay({
+  currencyCode,
+  sourcePrice,
+}: {
+  currencyCode: string;
+  sourcePrice: number | null;
+}): React.JSX.Element | null {
   if (sourcePrice === null) return null;
 
-  const formattedSourcePrice = sourcePrice.toFixed(2);
+  const formattedSourcePrice = `${sourcePrice.toFixed(2)}${
+    currencyCode.length > 0 ? ` ${currencyCode}` : ''
+  }`;
   return (
     <span
       className='text-[11px] leading-none text-muted-foreground/80'
@@ -76,15 +88,20 @@ function SourcePriceDisplay({ sourcePrice }: { sourcePrice: number | null }): Re
 
 function PriceCellFrame({
   product,
+  sourcePriceCurrencyCode,
   children,
 }: {
   product: ProductWithImages;
+  sourcePriceCurrencyCode: string;
   children: ReactNode;
 }): React.JSX.Element {
   return (
     <div className='flex flex-col items-start gap-0.5'>
       {children}
-      <SourcePriceDisplay sourcePrice={resolveVisibleSourcePrice(product)} />
+      <SourcePriceDisplay
+        currencyCode={sourcePriceCurrencyCode}
+        sourcePrice={resolveVisibleSourcePrice(product)}
+      />
     </div>
   );
 }
@@ -119,12 +136,22 @@ const shouldRenderCalculatedPrice = (
   displayPrice: number | null
 ): displayPrice is number => displayPrice !== null && displayPrice !== productPrice;
 
-function PriceCellContent({ product, info, currencyCode }: { product: ProductWithImages, info: PriceInfo, currencyCode: string }): React.JSX.Element {
+function PriceCellContent({
+  currencyCode,
+  info,
+  product,
+  sourcePriceCurrencyCode,
+}: {
+  currencyCode: string;
+  info: PriceInfo;
+  product: ProductWithImages;
+  sourcePriceCurrencyCode: string;
+}): React.JSX.Element {
   const isConverted = resolveConvertedPrice(product.price, info.price, info.baseCurrencyCode, currencyCode);
 
   if (isConverted === true && info.price !== null && product.price !== null && info.baseCurrencyCode !== null) {
     return (
-      <PriceCellFrame product={product}>
+      <PriceCellFrame product={product} sourcePriceCurrencyCode={sourcePriceCurrencyCode}>
         <ConvertedPriceDisplay
           displayPrice={info.price}
           productPrice={product.price}
@@ -136,7 +163,7 @@ function PriceCellContent({ product, info, currencyCode }: { product: ProductWit
 
   if (shouldRenderCalculatedPrice(product.price, info.price)) {
     return (
-      <PriceCellFrame product={product}>
+      <PriceCellFrame product={product} sourcePriceCurrencyCode={sourcePriceCurrencyCode}>
         <CalculatedPriceDisplay displayPrice={info.price} />
       </PriceCellFrame>
     );
@@ -145,7 +172,7 @@ function PriceCellContent({ product, info, currencyCode }: { product: ProductWit
   const showIndicator = info.currencyCode !== null && info.currencyCode !== currencyCode;
 
   return (
-    <PriceCellFrame product={product}>
+    <PriceCellFrame product={product} sourcePriceCurrencyCode={sourcePriceCurrencyCode}>
       <div className='flex items-center gap-1'>
         <PriceCellBase productId={product.id} price={product.price} />
         {showIndicator === true && (
@@ -161,8 +188,19 @@ export const PriceCell: React.FC<{ row: Row<ProductWithImages> }> = memo(({ row 
   const { currencyCode, priceGroups } = useProductListRowVisualsContext();
 
   const info: PriceInfo = resolvePriceInfo(product, currencyCode, priceGroups);
+  const sourcePriceCurrencyCode = resolveSourcePriceCurrencyCode(
+    product.defaultPriceGroupId,
+    priceGroups
+  );
 
-  return <PriceCellContent product={product} info={info} currencyCode={currencyCode} />;
+  return (
+    <PriceCellContent
+      currencyCode={currencyCode}
+      info={info}
+      product={product}
+      sourcePriceCurrencyCode={sourcePriceCurrencyCode}
+    />
+  );
 });
 
 PriceCell.displayName = 'PriceCell';

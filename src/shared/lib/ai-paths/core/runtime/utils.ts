@@ -16,7 +16,10 @@ import {
 } from '../utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
+// Re-export utility modules
+export * from './utils/index';
 
+// Re-export existing utils from the original legacy location
 export {
   appendInputValue,
   cloneValue,
@@ -28,109 +31,8 @@ export {
   safeStringify,
 } from '../utils';
 
-export const looksLikeObjectId = (value: unknown): boolean =>
-  typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
+// ... remaining implementation ...
 
-const createAbortError = (): Error => {
-  const error = new Error('Operation aborted.');
-  (error as { name?: string }).name = 'AbortError';
-  return error;
-};
-
-const AI_JOB_NOT_FOUND_ERROR_NAME = 'AiJobNotFoundError';
-const AI_JOB_TERMINAL_ERROR_NAME = 'AiJobTerminalError';
-
-const isAiJobNotFoundErrorMessage = (message: string): boolean => {
-  const normalized = message.trim().toLowerCase();
-  if (!normalized) return false;
-  if (normalized.includes('job not found')) return true;
-  if (normalized.includes('request failed with status 404')) return true;
-  return normalized.includes('not found') && normalized.includes('job');
-};
-
-const createAiJobNotFoundError = (jobId: string, message: string): Error => {
-  const error = new Error(`AI job "${jobId}" not found while polling: ${message}`);
-  (error as { name?: string }).name = AI_JOB_NOT_FOUND_ERROR_NAME;
-  return error;
-};
-
-const createAiJobTerminalError = (message: string): Error => {
-  const error = new Error(message);
-  (error as { name?: string }).name = AI_JOB_TERMINAL_ERROR_NAME;
-  return error;
-};
-
-const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
-  new Promise((resolve, reject) => {
-    if (!signal) {
-      setTimeout(resolve, ms);
-      return;
-    }
-    if (signal.aborted) {
-      reject(createAbortError());
-      return;
-    }
-    const onAbort = (): void => {
-      clearTimeout(timer);
-      reject(createAbortError());
-    };
-    const timer = setTimeout(() => {
-      signal.removeEventListener('abort', onAbort);
-      resolve();
-    }, ms);
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
-
-export function extractImageUrls(value: unknown, seen: Set<object> = new Set<object>()): string[] {
-  if (!value) return [];
-  if (typeof value === 'string') {
-    const trimmed = value.trim();
-    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed) as unknown;
-        return extractImageUrls(parsed, seen);
-      } catch (error) {
-        logClientError(error);
-        return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value)
-          ? [value]
-          : [];
-      }
-    }
-    return /(\.png|\.jpe?g|\.webp|\.gif|\.svg|\/uploads\/|^https?:\/\/)/i.test(value)
-      ? [value]
-      : [];
-  }
-  if (Array.isArray(value)) {
-    return Array.from(new Set(value.flatMap((item: unknown) => extractImageUrls(item, seen))));
-  }
-  if (typeof value === 'object') {
-    if (seen.has(value)) return [];
-    seen.add(value);
-    const record = value as Record<string, unknown>;
-    const candidates = [
-      'url',
-      'src',
-      'thumbnail',
-      'thumb',
-      'imageUrl',
-      'image',
-      'imageFile',
-      'filepath',
-      'filePath',
-      'path',
-      'file',
-      'previewUrl',
-      'preview',
-    ];
-    const urls: string[] = candidates.flatMap((key: string) => extractImageUrls(record[key], seen));
-    if (urls.length) return Array.from(new Set(urls));
-    const deepUrls: string[] = Object.values(record).flatMap((val: unknown) =>
-      extractImageUrls(val, seen)
-    );
-    return Array.from(new Set(deepUrls));
-  }
-  return [];
-}
 
 export const buildFallbackEntity = (): Record<string, unknown> => ({});
 

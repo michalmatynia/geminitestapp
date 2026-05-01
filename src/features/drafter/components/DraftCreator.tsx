@@ -117,6 +117,7 @@ export function DraftCreator({
       iconColorMode: state.iconColorMode,
       iconColor: state.iconColor,
       openProductFormTab: state.openProductFormTab,
+      stock: state.stock,
     };
     const validation = validateFormData(draftSubmitSchema, formData, 'Draft form is invalid.');
     if (validation.success === false) {
@@ -152,7 +153,7 @@ export function DraftCreator({
         supplierName: state.supplierName.trim() !== '' ? state.supplierName.trim() : null,
         supplierLink: state.supplierLink.trim() !== '' ? state.supplierLink.trim() : null,
         priceComment: state.priceComment.trim() !== '' ? state.priceComment.trim() : null,
-        stock: state.stock !== '' ? parseInt(state.stock, 10) : null,
+        stock: validation.data.stock,
         catalogIds: state.selectedCatalogIds,
         categoryId: state.selectedCategoryId,
         tagIds: state.selectedTagIds,

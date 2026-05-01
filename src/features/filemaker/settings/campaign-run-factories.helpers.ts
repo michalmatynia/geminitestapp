@@ -28,27 +28,34 @@ const resolveRunStatus = (status: string): FilemakerEmailCampaignRunStatus => {
   return 'pending';
 };
 
+const optionalRunString = (value: unknown): string | null => {
+  const normalized = normalizeString(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeRunCount = (value: unknown): number => {
+  const parsed = Number(value);
+  return Math.max(0, Math.trunc(Number.isFinite(parsed) ? parsed : 0));
+};
+
 export const createFilemakerEmailCampaignRun = (
   input: Partial<FilemakerEmailCampaignRun> & Pick<FilemakerEmailCampaignRun, 'campaignId'>
 ): FilemakerEmailCampaignRun => {
   const now = new Date().toISOString();
   const mode = normalizeString(input.mode).toLowerCase();
-  const launchReason = normalizeString(input.launchReason);
-  const startedAt = normalizeString(input.startedAt);
-  const completedAt = normalizeString(input.completedAt);
 
   return {
     id: resolveRunId(input),
     campaignId: normalizeString(input.campaignId),
     mode: mode === 'dry_run' ? 'dry_run' : 'live',
     status: resolveRunStatus(input.status ?? ''),
-    launchReason: launchReason.length > 0 ? launchReason : null,
-    startedAt: startedAt.length > 0 ? startedAt : null,
-    completedAt: completedAt.length > 0 ? completedAt : null,
-    recipientCount: Math.max(0, Math.trunc(Number(input.recipientCount) || 0)),
-    deliveredCount: Math.max(0, Math.trunc(Number(input.deliveredCount) || 0)),
-    failedCount: Math.max(0, Math.trunc(Number(input.failedCount) || 0)),
-    skippedCount: Math.max(0, Math.trunc(Number(input.skippedCount) || 0)),
+    launchReason: optionalRunString(input.launchReason),
+    startedAt: optionalRunString(input.startedAt),
+    completedAt: optionalRunString(input.completedAt),
+    recipientCount: normalizeRunCount(input.recipientCount),
+    deliveredCount: normalizeRunCount(input.deliveredCount),
+    failedCount: normalizeRunCount(input.failedCount),
+    skippedCount: normalizeRunCount(input.skippedCount),
     createdAt: input.createdAt ?? now,
     updatedAt: input.updatedAt ?? input.createdAt ?? now,
   };
@@ -72,9 +79,11 @@ export const normalizeFilemakerEmailCampaignRunRegistry = (
     dedupeByNormalizedId(
       rawRuns.map((entry: unknown): FilemakerEmailCampaignRun => {
         if (entry !== null && typeof entry === 'object') {
-          return createFilemakerEmailCampaignRun(
-            entry as Partial<FilemakerEmailCampaignRun> & Pick<FilemakerEmailCampaignRun, 'campaignId'>
-          );
+          const runInput: Partial<FilemakerEmailCampaignRun> &
+            Pick<FilemakerEmailCampaignRun, 'campaignId'> =
+            entry as Partial<FilemakerEmailCampaignRun> &
+              Pick<FilemakerEmailCampaignRun, 'campaignId'>;
+          return createFilemakerEmailCampaignRun(runInput);
         }
         return {
           id: '',
@@ -87,7 +96,7 @@ export const normalizeFilemakerEmailCampaignRunRegistry = (
           skippedCount: 0,
           createdAt: '',
           updatedAt: '',
-        } as FilemakerEmailCampaignRun;
+        };
       })
     )
   );

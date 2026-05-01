@@ -279,9 +279,34 @@ describe('ProductListMobileCards', () => {
   });
 
   it('renders source price on mobile cards for scraped products', () => {
+    useProductListRowVisualsContextMock.mockReturnValue({
+      productNameKey: 'name_en',
+      priceGroups: [
+        {
+          id: 'group-retail',
+          groupId: 'RETAIL',
+          currencyId: 'PLN',
+          type: 'standard',
+          basePriceField: 'sourcePrice',
+          isDefault: true,
+          sourceGroupId: null,
+          priceMultiplier: 1,
+          addToPrice: 0,
+          currency: { code: 'PLN' },
+          currencyCode: 'PLN',
+        },
+      ],
+      currencyCode: 'USD',
+      categoryNameById: new Map([['category-1', 'Keychains']]),
+      thumbnailSource: 'file',
+      showTriggerRunFeedback: true,
+      triggerButtonsReady: true,
+      imageExternalBaseUrl: null,
+    });
     useProductListSelectionContextMock.mockReturnValue({
       data: [
         createProduct({
+          defaultPriceGroupId: 'group-retail',
           importSource: 'scrape',
           price: 120,
           sourcePrice: 60,
@@ -293,7 +318,7 @@ describe('ProductListMobileCards', () => {
 
     render(<ProductListMobileCards />);
 
-    expect(screen.getByText('Source: 60.00')).toBeInTheDocument();
+    expect(screen.getByText('Source: 60.00 PLN')).toBeInTheDocument();
   });
 
   it('passes product notes into the shared thumbnail cell', () => {

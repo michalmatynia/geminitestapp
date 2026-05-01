@@ -97,6 +97,21 @@ describe('resolveValidatorFieldReplacement numeric values', () => {
     });
   });
 
+  it('normalizes validation target names before resolving numeric replacements', () => {
+    expect(
+      resolveValidatorFieldReplacement({
+        fieldName: 'size_length',
+        replacementValue: '4',
+      })
+    ).toEqual({
+      kind: 'number',
+      fieldName: 'sizeLength',
+      value: 4,
+      comparableValue: '4',
+      displayValue: '4',
+    });
+  });
+
   it('resolves dimension replacements from structured title size segments', () => {
     expect(
       resolveValidatorFieldReplacement({

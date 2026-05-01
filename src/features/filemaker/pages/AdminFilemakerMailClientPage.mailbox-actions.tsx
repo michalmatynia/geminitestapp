@@ -15,6 +15,25 @@ import { buildMailClientDashboardHref } from './AdminFilemakerMailClientPage.rou
 
 const MAILBOX_SHORTCUT_LIMIT = 4;
 
+interface MailClientMailboxActionsProps {
+  account: FilemakerMailAccount;
+  composeHref?: string;
+  dashboardAccountId: string;
+  dashboardQuery: string;
+  dashboardScope: MailClientDashboardScope;
+  primaryFolder: FilemakerMailFolderSummary | null;
+  onSyncAccount: (accountId: string) => Promise<void>;
+  onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
+  isSyncing: boolean;
+  isStatusUpdating: boolean;
+}
+
+interface MailClientMailboxActionHrefs {
+  composeHref: string;
+  searchHref: string;
+  settingsHref: string;
+}
+
 const buildPrimaryMailboxHref = (
   accountId: string,
   primaryFolder: FilemakerMailFolderSummary | null
@@ -23,8 +42,32 @@ const buildPrimaryMailboxHref = (
     ? buildFilemakerMailSelectionHref({
         accountId,
         mailboxPath: primaryFolder.mailboxPath,
-      })
+    })
     : buildFilemakerMailSelectionHref({ accountId, panel: 'settings' });
+
+const buildMailboxActionHrefs = ({
+  account,
+  composeHref,
+  dashboardAccountId,
+  dashboardQuery,
+}: Pick<
+  MailClientMailboxActionsProps,
+  'account' | 'composeHref' | 'dashboardAccountId' | 'dashboardQuery'
+>): MailClientMailboxActionHrefs => {
+  const trimmedDashboardQuery = dashboardQuery.trim();
+  const defaultComposeHref = buildFilemakerMailComposeHref({
+    accountId: account.id,
+    originPanel: trimmedDashboardQuery !== '' ? 'search' : null,
+    searchAccountId: trimmedDashboardQuery !== '' && dashboardAccountId === '' ? 'all' : null,
+    searchQuery: trimmedDashboardQuery,
+  });
+
+  return {
+    composeHref: composeHref ?? defaultComposeHref,
+    searchHref: buildMailClientSearchHref({ dashboardQuery, focusedAccountId: account.id }),
+    settingsHref: buildFilemakerMailSelectionHref({ accountId: account.id, panel: 'settings' }),
+  };
+};
 
 function MailClientMailboxActions({
   account,
@@ -37,33 +80,13 @@ function MailClientMailboxActions({
   onToggleAccountStatus,
   isSyncing,
   isStatusUpdating,
-}: {
-  account: FilemakerMailAccount;
-  composeHref?: string;
-  dashboardAccountId: string;
-  dashboardQuery: string;
-  dashboardScope: MailClientDashboardScope;
-  primaryFolder: FilemakerMailFolderSummary | null;
-  onSyncAccount: (accountId: string) => Promise<void>;
-  onToggleAccountStatus: (account: FilemakerMailAccount) => Promise<void>;
-  isSyncing: boolean;
-  isStatusUpdating: boolean;
-}): React.JSX.Element {
-  const settingsHref = buildFilemakerMailSelectionHref({
-    accountId: account.id,
-    panel: 'settings',
-  });
+}: MailClientMailboxActionsProps): React.JSX.Element {
   const trimmedDashboardQuery = dashboardQuery.trim();
-  const defaultComposeHref = buildFilemakerMailComposeHref({
-    accountId: account.id,
-    originPanel: trimmedDashboardQuery !== '' ? 'search' : null,
-    searchAccountId: trimmedDashboardQuery !== '' && dashboardAccountId === '' ? 'all' : null,
-    searchQuery: trimmedDashboardQuery,
-  });
-  const effectiveComposeHref = composeHrefOverride ?? defaultComposeHref;
-  const searchHref = buildMailClientSearchHref({
+  const actionHrefs = buildMailboxActionHrefs({
+    account,
+    composeHref: composeHrefOverride,
+    dashboardAccountId,
     dashboardQuery,
-    focusedAccountId: account.id,
   });
 
   return (
@@ -86,15 +109,15 @@ function MailClientMailboxActions({
         </Link>
       </Button>
       <Button asChild variant='outline' size='sm'>
-        <Link href={settingsHref}>Settings</Link>
+        <Link href={actionHrefs.settingsHref}>Settings</Link>
       </Button>
       <Button asChild variant='outline' size='sm'>
-        <Link href={searchHref}>
+        <Link href={actionHrefs.searchHref}>
           {trimmedDashboardQuery !== '' ? 'Continue Search' : 'Search Mailbox'}
         </Link>
       </Button>
       <Button asChild variant='outline' size='sm'>
-        <Link href={effectiveComposeHref}>Compose</Link>
+        <Link href={actionHrefs.composeHref}>Compose</Link>
       </Button>
       <MailClientDashboardFocusButton
         activeDashboardAccountId={dashboardAccountId}

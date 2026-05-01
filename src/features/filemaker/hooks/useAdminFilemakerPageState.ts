@@ -2,6 +2,7 @@
 
 import { useRouter } from 'nextjs-toploader/app';
 import { useCallback, useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import { useCountries } from '@/shared/hooks/use-i18n-queries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -9,11 +10,9 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/primitives.public';
 
 import {
-  createFilemakerEvent,
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
   removeFilemakerEmail,
-  removeFilemakerEvent,
   removeFilemakerOrganizationEventLinks,
   removeFilemakerPartyEmailLinks,
   removeFilemakerPartyPhoneNumberLinks,
@@ -24,12 +23,14 @@ import type {
   FilemakerDatabase,
   FilemakerEmail,
   FilemakerEmailStatus,
-  FilemakerEvent,
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
+import {
+  useEventPageState,
+  type EventPageState,
+} from './useAdminFilemakerPageState.events';
 
 type PersonDraft = Partial<Omit<FilemakerPerson, 'phoneNumbers'>> & {
   phoneNumbers?: string;
@@ -40,16 +41,59 @@ type EmailDraft = {
   status?: FilemakerEmailStatus;
 };
 
-type EventDraft = Partial<FilemakerEvent>;
-
-const createId = (prefix: string): string => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
+type PersistDatabase = (next: FilemakerDatabase, message: string) => Promise<void>;
+type BasePageState = {
+  activeTab: string;
+  countries: NonNullable<ReturnType<typeof useCountries>['data']>;
+  database: FilemakerDatabase;
+  emailLinkCountByEmailId: Map<string, number>;
+  router: ReturnType<typeof useRouter>;
+  searchQuery: string;
+  setActiveTab: Dispatch<SetStateAction<string>>;
+  setSearchQuery: Dispatch<SetStateAction<string>>;
+  updateSetting: ReturnType<typeof useUpdateSetting>;
 };
+type InternalBasePageState = BasePageState & {
+  persistDatabase: PersistDatabase;
+};
+type PersonPageState = {
+  editingPerson: FilemakerPerson | null;
+  handleDeletePerson: (id: string) => Promise<void>;
+  handleStartEditPerson: (person: FilemakerPerson) => void;
+  isPersonModalOpen: boolean;
+  openCreatePerson: () => void;
+  personDraft: PersonDraft;
+  setIsPersonModalOpen: Dispatch<SetStateAction<boolean>>;
+  setPersonDraft: Dispatch<SetStateAction<PersonDraft>>;
+};
+type OrganizationPageState = {
+  editingOrg: FilemakerOrganization | null;
+  handleDeleteOrganization: (id: string) => Promise<void>;
+  handleStartEditOrg: (org: FilemakerOrganization) => void;
+  isOrgModalOpen: boolean;
+  openCreateOrg: () => void;
+  orgDraft: Partial<FilemakerOrganization>;
+  setIsOrgModalOpen: Dispatch<SetStateAction<boolean>>;
+  setOrgDraft: Dispatch<SetStateAction<Partial<FilemakerOrganization>>>;
+};
+type EmailPageState = {
+  editingEmail: FilemakerEmail | null;
+  emailDraft: EmailDraft;
+  handleDeleteEmail: (id: string) => Promise<void>;
+  handleStartEditEmail: (email: FilemakerEmail) => void;
+  isEmailModalOpen: boolean;
+  openCreateEmail: () => void;
+  setEmailDraft: Dispatch<SetStateAction<EmailDraft>>;
+  setIsEmailModalOpen: Dispatch<SetStateAction<boolean>>;
+};
+type AdminFilemakerPageState =
+  BasePageState &
+  PersonPageState &
+  OrganizationPageState &
+  EmailPageState &
+  EventPageState;
 
-export function useAdminFilemakerPageState() {
+function useBasePageState(): InternalBasePageState {
   const router = useRouter();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
@@ -63,27 +107,6 @@ export function useAdminFilemakerPageState() {
   const [activeTab, setActiveTab] = useState('persons');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Persons
-  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<FilemakerPerson | null>(null);
-  const [personDraft, setPersonDraft] = useState<PersonDraft>({});
-
-  // Organizations
-  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
-  const [editingOrg, setEditingOrg] = useState<FilemakerOrganization | null>(null);
-  const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
-
-  // Emails
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
-  const [editingEmail, setEditingEmail] = useState<FilemakerEmail | null>(null);
-  const [emailDraft, setEmailDraft] = useState<EmailDraft>({});
-
-  // Events
-  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<FilemakerEvent | null>(null);
-  const [eventDraft, setEventDraft] = useState<EventDraft>({});
-
-  // Derived data
   const emailLinkCountByEmailId = useMemo(() => {
     const counts = new Map<string, number>();
     database.emailLinks.forEach((link) => {
@@ -108,7 +131,28 @@ export function useAdminFilemakerPageState() {
     [updateSetting, toast]
   );
 
-  // Person handlers
+  return {
+    activeTab,
+    countries,
+    database,
+    emailLinkCountByEmailId,
+    persistDatabase,
+    router,
+    searchQuery,
+    setActiveTab,
+    setSearchQuery,
+    updateSetting,
+  };
+}
+
+function usePersonPageState(
+  database: FilemakerDatabase,
+  persistDatabase: PersistDatabase
+): PersonPageState {
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+  const [editingPerson, setEditingPerson] = useState<FilemakerPerson | null>(null);
+  const [personDraft, setPersonDraft] = useState<PersonDraft>({});
+
   const openCreatePerson = useCallback(() => {
     setEditingPerson(null);
     setPersonDraft({});
@@ -137,7 +181,26 @@ export function useAdminFilemakerPageState() {
     [database, persistDatabase]
   );
 
-  // Organization handlers
+  return {
+    editingPerson,
+    handleDeletePerson,
+    handleStartEditPerson,
+    isPersonModalOpen,
+    openCreatePerson,
+    personDraft,
+    setIsPersonModalOpen,
+    setPersonDraft,
+  };
+}
+
+function useOrganizationPageState(
+  database: FilemakerDatabase,
+  persistDatabase: PersistDatabase
+): OrganizationPageState {
+  const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [editingOrg, setEditingOrg] = useState<FilemakerOrganization | null>(null);
+  const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
+
   const openCreateOrg = useCallback(() => {
     setEditingOrg(null);
     setOrgDraft({});
@@ -164,7 +227,26 @@ export function useAdminFilemakerPageState() {
     [database, persistDatabase]
   );
 
-  // Email handlers
+  return {
+    editingOrg,
+    handleDeleteOrganization,
+    handleStartEditOrg,
+    isOrgModalOpen,
+    openCreateOrg,
+    orgDraft,
+    setIsOrgModalOpen,
+    setOrgDraft,
+  };
+}
+
+function useEmailPageState(
+  database: FilemakerDatabase,
+  persistDatabase: PersistDatabase
+): EmailPageState {
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [editingEmail, setEditingEmail] = useState<FilemakerEmail | null>(null);
+  const [emailDraft, setEmailDraft] = useState<EmailDraft>({});
+
   const openCreateEmail = useCallback(() => {
     setEditingEmail(null);
     setEmailDraft({});
@@ -185,101 +267,30 @@ export function useAdminFilemakerPageState() {
     [database, persistDatabase]
   );
 
-  // Event handlers
-  const openCreateEvent = useCallback(() => {
-    setEditingEvent(null);
-    setEventDraft({});
-    setIsEventModalOpen(true);
-  }, []);
-
-  const handleStartEditEvent = useCallback((event: FilemakerEvent) => {
-    setEditingEvent(event);
-    setEventDraft(event);
-    setIsEventModalOpen(true);
-  }, []);
-
-  const handleDeleteEvent = useCallback(
-    async (id: string) => {
-      const nextDatabase = removeFilemakerEvent(database, id);
-      await persistDatabase(nextDatabase, 'Event deleted.');
-    },
-    [database, persistDatabase]
-  );
-
-  const handleCreateEvent = useCallback(async (): Promise<void> => {
-    if (!eventDraft.eventName) {
-      toast('Event name is required.', { variant: 'warning' });
-      return;
-    }
-
-    const newEvent = createFilemakerEvent({
-      eventName: eventDraft.eventName,
-      id: createId('event'),
-      addressId: createId('addr'),
-      street: '',
-      streetNumber: '',
-      city: '',
-      postalCode: '',
-      country: '',
-      countryId: '',
-    });
-
-    const nextDatabase: FilemakerDatabase = {
-      ...database,
-      events: [...database.events, newEvent],
-    };
-
-    await persistDatabase(nextDatabase, 'Event created.');
-    setIsEventModalOpen(false);
-    setEventDraft({});
-  }, [database, eventDraft, persistDatabase, toast]);
-
   return {
-    database,
-    countries,
-    activeTab,
-    setActiveTab,
-    searchQuery,
-    setSearchQuery,
-    updateSetting,
-    emailLinkCountByEmailId,
-    // Persons
-    isPersonModalOpen,
-    setIsPersonModalOpen,
-    editingPerson,
-    personDraft,
-    setPersonDraft,
-    openCreatePerson,
-    handleStartEditPerson,
-    handleDeletePerson,
-    // Organizations
-    isOrgModalOpen,
-    setIsOrgModalOpen,
-    editingOrg,
-    orgDraft,
-    setOrgDraft,
-    openCreateOrg,
-    handleStartEditOrg,
-    handleDeleteOrganization,
-    // Emails
-    isEmailModalOpen,
-    setIsEmailModalOpen,
     editingEmail,
     emailDraft,
-    setEmailDraft,
-    openCreateEmail,
-    handleStartEditEmail,
     handleDeleteEmail,
-    // Events
-    isEventModalOpen,
-    setIsEventModalOpen,
-    editingEvent,
-    eventDraft,
-    setEventDraft,
-    openCreateEvent,
-    handleStartEditEvent,
-    handleDeleteEvent,
-    handleCreateEvent,
-    router,
+    handleStartEditEmail,
+    isEmailModalOpen,
+    openCreateEmail,
+    setEmailDraft,
+    setIsEmailModalOpen,
+  };
+}
+
+export function useAdminFilemakerPageState(): AdminFilemakerPageState {
+  const { persistDatabase, ...baseState } = useBasePageState();
+  const personState = usePersonPageState(baseState.database, persistDatabase);
+  const organizationState = useOrganizationPageState(baseState.database, persistDatabase);
+  const emailState = useEmailPageState(baseState.database, persistDatabase);
+  const eventState = useEventPageState(baseState.database, persistDatabase);
+
+  return {
+    ...baseState,
+    ...personState,
+    ...organizationState,
+    ...emailState,
+    ...eventState,
   };
 }

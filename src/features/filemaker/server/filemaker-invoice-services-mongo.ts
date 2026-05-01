@@ -56,6 +56,37 @@ const optionalMetadataString = (value: string | undefined): string | undefined =
   return normalized.length > 0 ? normalized : undefined;
 };
 
+const OPTIONAL_SERVICE_STRING_KEYS = [
+  'amount',
+  'brutto',
+  'currency',
+  'currencyUuid',
+  'invoiceId',
+  'legacyParentUuid',
+  'legacyUuid',
+  'price',
+  'serviceName',
+  'serviceNameRaw',
+  'serviceNameUuid',
+  'serviceType',
+  'sum',
+  'taxComment',
+  'total',
+  'vatNumber',
+  'vatUuid',
+] as const;
+
+const buildOptionalServiceFields = (
+  document: FilemakerInvoiceServiceMongoDocument
+): Partial<MongoFilemakerInvoiceService> => {
+  const fields: Partial<MongoFilemakerInvoiceService> = {};
+  for (const key of OPTIONAL_SERVICE_STRING_KEYS) {
+    const normalized = optionalMetadataString(document[key]);
+    if (normalized !== undefined) fields[key] = normalized;
+  }
+  return fields;
+};
+
 export const getFilemakerInvoiceServicesCollection = async (): Promise<
   Collection<FilemakerInvoiceServiceMongoDocument>
 > => {
@@ -69,59 +100,9 @@ export function toMongoFilemakerInvoiceService(
   document: FilemakerInvoiceServiceMongoDocument
 ): MongoFilemakerInvoiceService {
   return {
-    ...(optionalMetadataString(document.amount) !== undefined
-      ? { amount: optionalMetadataString(document.amount) }
-      : {}),
-    ...(optionalMetadataString(document.brutto) !== undefined
-      ? { brutto: optionalMetadataString(document.brutto) }
-      : {}),
-    ...(optionalMetadataString(document.currency) !== undefined
-      ? { currency: optionalMetadataString(document.currency) }
-      : {}),
-    ...(optionalMetadataString(document.currencyUuid) !== undefined
-      ? { currencyUuid: optionalMetadataString(document.currencyUuid) }
-      : {}),
+    ...buildOptionalServiceFields(document),
     id: document.id,
-    ...(optionalMetadataString(document.invoiceId) !== undefined
-      ? { invoiceId: optionalMetadataString(document.invoiceId) }
-      : {}),
-    ...(optionalMetadataString(document.legacyParentUuid) !== undefined
-      ? { legacyParentUuid: optionalMetadataString(document.legacyParentUuid) }
-      : {}),
-    ...(optionalMetadataString(document.legacyUuid) !== undefined
-      ? { legacyUuid: optionalMetadataString(document.legacyUuid) }
-      : {}),
-    ...(optionalMetadataString(document.price) !== undefined
-      ? { price: optionalMetadataString(document.price) }
-      : {}),
     rowIndex: typeof document.rowIndex === 'number' ? document.rowIndex : 0,
-    ...(optionalMetadataString(document.serviceName) !== undefined
-      ? { serviceName: optionalMetadataString(document.serviceName) }
-      : {}),
-    ...(optionalMetadataString(document.serviceNameRaw) !== undefined
-      ? { serviceNameRaw: optionalMetadataString(document.serviceNameRaw) }
-      : {}),
-    ...(optionalMetadataString(document.serviceNameUuid) !== undefined
-      ? { serviceNameUuid: optionalMetadataString(document.serviceNameUuid) }
-      : {}),
-    ...(optionalMetadataString(document.serviceType) !== undefined
-      ? { serviceType: optionalMetadataString(document.serviceType) }
-      : {}),
-    ...(optionalMetadataString(document.sum) !== undefined
-      ? { sum: optionalMetadataString(document.sum) }
-      : {}),
-    ...(optionalMetadataString(document.taxComment) !== undefined
-      ? { taxComment: optionalMetadataString(document.taxComment) }
-      : {}),
-    ...(optionalMetadataString(document.total) !== undefined
-      ? { total: optionalMetadataString(document.total) }
-      : {}),
-    ...(optionalMetadataString(document.vatNumber) !== undefined
-      ? { vatNumber: optionalMetadataString(document.vatNumber) }
-      : {}),
-    ...(optionalMetadataString(document.vatUuid) !== undefined
-      ? { vatUuid: optionalMetadataString(document.vatUuid) }
-      : {}),
   };
 }
 

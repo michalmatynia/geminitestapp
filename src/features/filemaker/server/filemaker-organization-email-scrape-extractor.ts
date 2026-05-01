@@ -1,5 +1,3 @@
-/* eslint-disable max-lines */
-
 export type EmailKind = 'role' | 'personal' | 'disposable';
 
 export type ClassifiedEmail = {
@@ -45,6 +43,20 @@ type ExtractorApi = {
   extractEmailsFromPage: (input: ExtractedPageInput) => ExtractedPageResult;
   matchesContactKeyword: (text: string) => boolean;
 };
+
+type ExtractorFunctionKey = Exclude<keyof ExtractorApi, 'EMAIL_REGEX'>;
+
+const EXTRACTOR_FUNCTION_KEYS: ExtractorFunctionKey[] = [
+  'decodeEntities',
+  'foldUnicode',
+  'normalizeEmail',
+  'isPlausibleEmail',
+  'classifyEmail',
+  'decodeCfemail',
+  'extractCfemails',
+  'extractEmailsFromPage',
+  'matchesContactKeyword',
+];
 
 /**
  * The extractor is defined as a JS source string so the same code can run in
@@ -205,10 +217,17 @@ api.matchesContactKeyword = function(text) {
 };
 `;
 
+const isExtractorApi = (api: Partial<ExtractorApi>): api is ExtractorApi =>
+  api.EMAIL_REGEX instanceof RegExp &&
+  EXTRACTOR_FUNCTION_KEYS.every((key: ExtractorFunctionKey): boolean => typeof api[key] === 'function');
+
 const buildExtractorApi = (): ExtractorApi => {
-  const api = {} as ExtractorApi;
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-  new Function('api', EXTRACTOR_BODY)(api);
+  const api: Partial<ExtractorApi> = {};
+  const installExtractor = Function('api', EXTRACTOR_BODY) as (api: Partial<ExtractorApi>) => void;
+  installExtractor(api);
+  if (!isExtractorApi(api)) {
+    throw new Error('Failed to initialize Filemaker organization email extractor.');
+  }
   return api;
 };
 

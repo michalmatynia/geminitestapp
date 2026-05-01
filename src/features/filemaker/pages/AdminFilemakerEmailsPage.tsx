@@ -14,25 +14,28 @@ import { buildFilemakerNavActions } from '../components/shared/filemaker-nav-act
 import { FilemakerEntityTablePage } from '../components/shared/FilemakerEntityTablePage';
 
 import type { FilemakerEmail } from '../types';
+import type { FilemakerDatabase } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
-export function AdminFilemakerEmailsPage(): React.JSX.Element {
-  const router = useRouter();
-  const settingsStore = useSettingsStore();
-  const [query, setQuery] = useState('');
-  const deferredQuery = useDeferredValue(query.trim());
+type EmailLinkCounts = {
+  total: number;
+  persons: number;
+  organizations: number;
+};
 
-  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
-  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+const EMPTY_EMAIL_LINK_COUNTS: EmailLinkCounts = {
+  total: 0,
+  persons: 0,
+  organizations: 0,
+};
 
-  const linkCountsByEmailId = useMemo(() => {
-    const map = new Map<string, { total: number; persons: number; organizations: number }>();
+const useEmailLinkCounts = (
+  database: FilemakerDatabase
+): Map<string, EmailLinkCounts> =>
+  useMemo(() => {
+    const map = new Map<string, EmailLinkCounts>();
     database.emailLinks.forEach((link) => {
-      const current = map.get(link.emailId) ?? {
-        total: 0,
-        persons: 0,
-        organizations: 0,
-      };
+      const current = map.get(link.emailId) ?? EMPTY_EMAIL_LINK_COUNTS;
       map.set(link.emailId, {
         total: current.total + 1,
         persons: current.persons + (link.partyKind === 'person' ? 1 : 0),
@@ -42,8 +45,12 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
     return map;
   }, [database.emailLinks]);
 
-  const emails = useMemo(
-    () =>
+const useFilteredEmails = (
+  database: FilemakerDatabase,
+  deferredQuery: string
+): FilemakerEmail[] =>
+  useMemo(
+    (): FilemakerEmail[] =>
       [...database.emails]
         .filter((email: FilemakerEmail) => includeQuery([email.email, email.status], deferredQuery))
         .sort((left: FilemakerEmail, right: FilemakerEmail) =>
@@ -52,39 +59,69 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
     [database.emails, deferredQuery]
   );
 
-  const columns = useMemo<ColumnDef<FilemakerEmail>[]>(
-    () => [
+function EmailIdentityCell({ email }: { email: FilemakerEmail }): React.JSX.Element {
+  return (
+    <div className='min-w-0 flex-1 space-y-1'>
+      <div className='text-sm font-semibold text-white'>{email.email}</div>
+      <div className='text-[11px] text-gray-500'>Status: {email.status}</div>
+    </div>
+  );
+}
+
+function EmailLinksCell({ linkCount }: { linkCount: EmailLinkCounts }): React.JSX.Element {
+  return (
+    <div className='space-y-0.5'>
+      <div className='text-[11px] text-gray-500'>Total: {linkCount.total}</div>
+      <div className='text-[11px] text-gray-500'>Persons: {linkCount.persons}</div>
+      <div className='text-[11px] text-gray-500'>
+        Organizations: {linkCount.organizations}
+      </div>
+    </div>
+  );
+}
+
+function EmailActionsCell({
+  email,
+  router,
+}: {
+  email: FilemakerEmail;
+  router: ReturnType<typeof useRouter>;
+}): React.JSX.Element {
+  return (
+    <div className='flex justify-end'>
+      <ActionMenu ariaLabel={`Actions for email ${email.email}`}>
+        <DropdownMenuItem
+          onSelect={(event: Event): void => {
+            event.preventDefault();
+            startTransition(() => {
+              router.push(`/admin/filemaker/emails/${encodeURIComponent(email.id)}`);
+            });
+          }}
+        >
+          Edit Details
+        </DropdownMenuItem>
+      </ActionMenu>
+    </div>
+  );
+}
+
+const useEmailColumns = (
+  linkCountsByEmailId: Map<string, EmailLinkCounts>,
+  router: ReturnType<typeof useRouter>
+): ColumnDef<FilemakerEmail>[] =>
+  useMemo<ColumnDef<FilemakerEmail>[]>(
+    (): ColumnDef<FilemakerEmail>[] => [
       {
         id: 'email',
         header: 'Email',
-        cell: ({ row }) => {
-          const email = row.original;
-          return (
-            <div className='min-w-0 flex-1 space-y-1'>
-              <div className='text-sm font-semibold text-white'>{email.email}</div>
-              <div className='text-[11px] text-gray-500'>Status: {email.status}</div>
-            </div>
-          );
-        },
+        cell: ({ row }) => <EmailIdentityCell email={row.original} />,
       },
       {
         id: 'links',
         header: 'Links',
         cell: ({ row }) => {
-          const linkCount = linkCountsByEmailId.get(row.original.id) ?? {
-            total: 0,
-            persons: 0,
-            organizations: 0,
-          };
-          return (
-            <div className='space-y-0.5'>
-              <div className='text-[11px] text-gray-500'>Total: {linkCount.total}</div>
-              <div className='text-[11px] text-gray-500'>Persons: {linkCount.persons}</div>
-              <div className='text-[11px] text-gray-500'>
-                Organizations: {linkCount.organizations}
-              </div>
-            </div>
-          );
+          const linkCount = linkCountsByEmailId.get(row.original.id) ?? EMPTY_EMAIL_LINK_COUNTS;
+          return <EmailLinksCell linkCount={linkCount} />;
         },
       },
       {
@@ -99,24 +136,42 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
       {
         id: 'actions',
         header: () => <div className='text-right'>Actions</div>,
-        cell: ({ row }) => (
-          <div className='flex justify-end'>
-            <ActionMenu ariaLabel={`Actions for email ${row.original.email}`}>
-              <DropdownMenuItem
-                onSelect={(event: Event): void => {
-                  event.preventDefault();
-                  startTransition(() => { router.push(`/admin/filemaker/emails/${encodeURIComponent(row.original.id)}`); });
-                }}
-              >
-                Edit Details
-              </DropdownMenuItem>
-            </ActionMenu>
-          </div>
-        ),
+        cell: ({ row }) => <EmailActionsCell email={row.original} router={router} />,
       },
     ],
     [linkCountsByEmailId, router]
   );
+
+function EmailPageBadges({
+  emailCount,
+  linkCount,
+}: {
+  emailCount: number;
+  linkCount: number;
+}): React.JSX.Element {
+  return (
+    <>
+      <Badge variant='outline' className='text-[10px]'>
+        Emails: {emailCount}
+      </Badge>
+      <Badge variant='outline' className='text-[10px]'>
+        Total Links: {linkCount}
+      </Badge>
+    </>
+  );
+}
+
+export function AdminFilemakerEmailsPage(): React.JSX.Element {
+  const router = useRouter();
+  const settingsStore = useSettingsStore();
+  const [query, setQuery] = useState('');
+  const deferredQuery = useDeferredValue(query.trim());
+  const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
+  const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const linkCountsByEmailId = useEmailLinkCounts(database);
+  const emails = useFilteredEmails(database, deferredQuery);
+  const columns = useEmailColumns(linkCountsByEmailId, router);
+  const hasQuery = query !== '';
 
   return (
     <FilemakerEntityTablePage
@@ -124,25 +179,16 @@ export function AdminFilemakerEmailsPage(): React.JSX.Element {
       description='Search and browse emails with linked persons and organizations.'
       icon={<Mail className='size-4' />}
       actions={buildFilemakerNavActions(router, 'emails')}
-      badges={
-        <>
-          <Badge variant='outline' className='text-[10px]'>
-            Emails: {emails.length}
-          </Badge>
-          <Badge variant='outline' className='text-[10px]'>
-            Total Links: {database.emailLinks.length}
-          </Badge>
-        </>
-      }
+      badges={<EmailPageBadges emailCount={emails.length} linkCount={database.emailLinks.length} />}
       query={query}
       onQueryChange={setQuery}
       queryPlaceholder='Search email or status...'
       columns={columns}
       data={emails}
       isLoading={settingsStore.isLoading}
-      emptyTitle={query ? 'No emails found' : 'No emails found in database.'}
+      emptyTitle={hasQuery ? 'No emails found' : 'No emails found in database.'}
       emptyDescription={
-        query ? 'Try adjusting your search terms.' : 'Add your first email in Filemaker Database.'
+        hasQuery ? 'Try adjusting your search terms.' : 'Add your first email in Filemaker Database.'
       }
     />
   );

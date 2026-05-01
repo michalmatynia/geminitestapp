@@ -159,6 +159,21 @@ describe('applyValidatorFieldReplacement numeric values', () => {
     expect(applyApi.setCategoryId).not.toHaveBeenCalled();
   });
 
+  it('applies BattleStock dimension replacements embedded in source text', () => {
+    const applyApi = createApplyApi({ sizeLength: 0 });
+
+    expect(
+      applyValidatorFieldReplacement({
+        fieldName: 'sizeLength',
+        replacementValue: 'BattleStock 32mm base',
+        ...applyApi,
+      })
+    ).toBe(true);
+
+    expect(applyApi.setFormFieldValue).toHaveBeenCalledWith('sizeLength', 3.2);
+    expect(applyApi.setCategoryId).not.toHaveBeenCalled();
+  });
+
   it('detects when a decimal dimension replacement is already applied', () => {
     const applyApi = createApplyApi({ sizeLength: 12.5 });
 

@@ -4,12 +4,12 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 import { resolveFilemakerCountryId } from '../settings/filemaker-country-options';
 
 export const includeQuery = (values: string[], query: string): boolean => {
-  if (!query) return true;
+  if (query === '') return true;
   return values.join(' ').toLowerCase().includes(query.toLowerCase());
 };
 
 export const formatTimestamp = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown';
+  if (value === null || value === undefined || value === '') return 'Unknown';
   const parsed = Date.parse(value);
   if (Number.isNaN(parsed)) return 'Unknown';
   return new Date(parsed).toLocaleString();
@@ -23,12 +23,19 @@ export const createClientFilemakerId = (prefix: string): string => {
 };
 
 export const hasAddressFields = (
-  street: string,
-  streetNumber: string,
-  city: string,
-  postalCode: string,
-  countryId: string
-): boolean => Boolean(street && streetNumber && city && postalCode && countryId);
+  fields: {
+    city: string;
+    countryId: string;
+    postalCode: string;
+    street: string;
+    streetNumber: string;
+  }
+): boolean =>
+  fields.street !== '' &&
+  fields.streetNumber !== '' &&
+  fields.city !== '' &&
+  fields.postalCode !== '' &&
+  fields.countryId !== '';
 
 export const resolveCountryId = (
   countryId: string,
@@ -39,7 +46,7 @@ export const resolveCountryId = (
 
 export const decodeRouteParam = (value: string | string[] | undefined): string => {
   const raw = Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
-  if (!raw) return '';
+  if (raw === '') return '';
   try {
     return decodeURIComponent(raw);
   } catch (error) {

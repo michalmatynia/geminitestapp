@@ -440,13 +440,13 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     });
     const hasInvalidAddress = preparedAddresses.some(
       (address): boolean =>
-        !hasAddressFields(
-          address.street,
-          address.streetNumber,
-          address.city,
-          address.postalCode,
-          address.countryId
-        )
+        !hasAddressFields({
+          city: address.city,
+          countryId: address.countryId,
+          postalCode: address.postalCode,
+          street: address.street,
+          streetNumber: address.streetNumber,
+        })
     );
     if (hasInvalidAddress) {
       toast('Every linked address requires street, street number, city, postal code, and country.', {

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { createTransport } from 'nodemailer';
+import { createTransport, type Transporter } from 'nodemailer';
 import { configurationError } from '@/shared/errors/app-error';
 import type {
   FilemakerMailAccount,
@@ -12,38 +12,45 @@ export type FilemakerMailDkimConfig = {
   privateKey: string;
 };
 
+const normalizeOptionalString = (value: string | null | undefined): string =>
+  value?.trim() ?? '';
+
 export const resolveFilemakerMailDkimConfig = (
   account: FilemakerMailAccount,
   dkimPrivateKey?: string | null
 ): FilemakerMailDkimConfig | null => {
-  const domain = account.dkimDomain?.trim();
-  const selector = account.dkimKeySelector?.trim();
-  const privateKey = dkimPrivateKey?.trim();
-  if (!domain || !selector || !privateKey) return null;
+  const domain = normalizeOptionalString(account.dkimDomain);
+  const selector = normalizeOptionalString(account.dkimKeySelector);
+  const privateKey = normalizeOptionalString(dkimPrivateKey);
+  if ([domain, selector, privateKey].some((value: string): boolean => value === '')) return null;
   return { domainName: domain, keySelector: selector, privateKey };
 };
+
+const isInvalidSmtpEndpoint = (host: string, port: number): boolean =>
+  host === '' || !Number.isFinite(port) || port <= 0;
 
 export const createSmtpTransport = (
   account: FilemakerMailAccount,
   password?: string,
   dkimPrivateKey?: string | null
-) => {
-  const host = account.smtpHost;
+): Transporter => {
+  const host = account.smtpHost.trim();
   const port = account.smtpPort;
-  if (!host || !port) {
+  if (isInvalidSmtpEndpoint(host, port)) {
     throw configurationError(`SMTP configuration missing for account ${account.id}`);
   }
 
   const dkim = resolveFilemakerMailDkimConfig(account, dkimPrivateKey);
+  const user = account.smtpUser.trim() !== '' ? account.smtpUser : account.emailAddress;
 
   return createTransport({
     host,
     port,
     secure: account.smtpSecure,
     auth: {
-      user: account.smtpUser || account.emailAddress,
-      pass: password || '',
+      user,
+      pass: password ?? '',
     },
-    ...(dkim ? { dkim } : {}),
+    ...(dkim !== null ? { dkim } : {}),
   });
 };

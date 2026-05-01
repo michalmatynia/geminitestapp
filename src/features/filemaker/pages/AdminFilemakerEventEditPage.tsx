@@ -588,13 +588,13 @@ export function AdminFilemakerEventEditPage(): React.JSX.Element {
 
     const hasInvalidAddress = preparedAddresses.some(
       (address): boolean =>
-        !hasAddressFields(
-          address.street,
-          address.streetNumber,
-          address.city,
-          address.postalCode,
-          address.countryId
-        )
+        !hasAddressFields({
+          city: address.city,
+          countryId: address.countryId,
+          postalCode: address.postalCode,
+          street: address.street,
+          streetNumber: address.streetNumber,
+        })
     );
     if (hasInvalidAddress) {
       toast(

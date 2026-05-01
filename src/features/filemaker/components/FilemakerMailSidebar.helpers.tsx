@@ -25,6 +25,26 @@ import type {
   FilemakerMailThread,
 } from '../types';
 
+type RecentThreadFilterInput = {
+  recentMailboxFilter?: string | null;
+  recentUnreadOnly?: boolean;
+  recentQuery?: string | null;
+};
+type MailSearchUrlInput = {
+  accountId?: string | null;
+  mailboxPath?: string | null;
+  originPanel?: 'recent' | 'search' | null;
+  recentMailboxFilter?: string | null;
+  recentUnreadOnly?: boolean;
+  recentCampaignId?: string | null;
+  recentRunId?: string | null;
+  recentDeliveryId?: string | null;
+  searchContextAccountId?: string | null;
+  recentQuery?: string | null;
+  searchAccountId?: string | null;
+  searchQuery?: string | null;
+};
+
 const getFilemakerMailFolderIcon = (
   role: FilemakerMailFolderRole
 ): React.ComponentType<{ className?: string }> => {
@@ -108,23 +128,36 @@ const toFilemakerAccountStatusToggleDraft = (
   maxMessagesPerSync: account.maxMessagesPerSync,
 });
 
+const hasParamValue = (value: string | null | undefined): value is string =>
+  value !== null && value !== undefined && value !== '';
+
+const setParamIfPresent = (
+  search: URLSearchParams,
+  key: string,
+  value: string | null | undefined
+): void => {
+  if (hasParamValue(value)) search.set(key, value);
+};
+
+const matchesRecentMailboxFilter = (
+  thread: FilemakerMailThread,
+  filter: string | null | undefined
+): boolean => !hasParamValue(filter) || thread.mailboxPath === filter;
+
+const matchesRecentUnreadFilter = (
+  thread: FilemakerMailThread,
+  unreadOnly: boolean | undefined
+): boolean => unreadOnly !== true || thread.unreadCount >= 1;
+
 const matchesFilemakerMailRecentThreadFilters = (
   thread: FilemakerMailThread,
-  input: {
-    recentMailboxFilter?: string | null;
-    recentUnreadOnly?: boolean;
-    recentQuery?: string | null;
-  }
+  input: RecentThreadFilterInput
 ): boolean => {
-  if (input.recentMailboxFilter !== null && input.recentMailboxFilter !== undefined && thread.mailboxPath !== input.recentMailboxFilter) {
-    return false;
-  }
-  if (input.recentUnreadOnly === true && thread.unreadCount < 1) {
-    return false;
-  }
+  if (!matchesRecentMailboxFilter(thread, input.recentMailboxFilter)) return false;
+  if (!matchesRecentUnreadFilter(thread, input.recentUnreadOnly)) return false;
   const query = (input.recentQuery?.trim().toLowerCase()) ?? '';
   if (query === '') return true;
-  
+
   const haystack = [
     thread.subject,
     thread.snippet ?? '',
@@ -136,83 +169,60 @@ const matchesFilemakerMailRecentThreadFilters = (
   return haystack.includes(query);
 };
 
-const buildCommonSearchUrl = (search: URLSearchParams, input: {
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | 'search' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentCampaignId?: string | null;
-  recentRunId?: string | null;
-  recentDeliveryId?: string | null;
-  searchContextAccountId?: string | null;
-  recentQuery?: string | null;
-  searchAccountId?: string | null;
-  searchQuery?: string | null;
-}): void => {
-  if (input.accountId !== null && input.accountId !== undefined && input.accountId !== '') search.set('accountId', input.accountId);
-  if (input.mailboxPath !== null && input.mailboxPath !== undefined && input.mailboxPath !== '') search.set('mailboxPath', input.mailboxPath);
-  if (input.accountId !== null && input.accountId !== undefined && input.accountId !== '' && input.originPanel === 'recent') search.set('panel', 'recent');
-  if (input.originPanel === 'search') search.set('panel', 'search');
-  if (input.accountId !== null && input.accountId !== undefined && input.accountId !== '' && input.originPanel === 'recent') {
-    if (input.recentMailboxFilter !== null && input.recentMailboxFilter !== undefined && input.recentMailboxFilter !== '') search.set('recentMailbox', input.recentMailboxFilter);
-    if (input.recentUnreadOnly === true) search.set('recentUnread', '1');
-    if (input.recentQuery !== null && input.recentQuery !== undefined && input.recentQuery !== '') search.set('recentQuery', input.recentQuery);
-    if (input.recentCampaignId !== null && input.recentCampaignId !== undefined && input.recentCampaignId !== '') search.set('campaignId', input.recentCampaignId);
-    if (input.recentRunId !== null && input.recentRunId !== undefined && input.recentRunId !== '') search.set('runId', input.recentRunId);
-    if (input.recentDeliveryId !== null && input.recentDeliveryId !== undefined && input.recentDeliveryId !== '') search.set('deliveryId', input.recentDeliveryId);
+const setRecentPanelSearchParams = (
+  search: URLSearchParams,
+  input: MailSearchUrlInput
+): void => {
+  if (!hasParamValue(input.accountId) || input.originPanel !== 'recent') return;
+  search.set('panel', 'recent');
+  setParamIfPresent(search, 'recentMailbox', input.recentMailboxFilter);
+  if (input.recentUnreadOnly === true) {
+    search.set('recentUnread', '1');
   }
-  if (input.originPanel === 'search') {
-    if (input.searchQuery !== null && input.searchQuery !== undefined && input.searchQuery !== '') search.set('searchQuery', input.searchQuery);
-    if (input.searchAccountId === 'all') search.set('searchAccountId', 'all');
-    if (
-      input.searchAccountId !== 'all' &&
-      input.searchContextAccountId !== null &&
-      input.searchContextAccountId !== undefined &&
-      input.searchContextAccountId !== '' &&
-      input.searchContextAccountId !== input.accountId
-    ) {
-      search.set('searchContextAccountId', input.searchContextAccountId);
-    }
+  setParamIfPresent(search, 'recentQuery', input.recentQuery);
+  setParamIfPresent(search, 'campaignId', input.recentCampaignId);
+  setParamIfPresent(search, 'runId', input.recentRunId);
+  setParamIfPresent(search, 'deliveryId', input.recentDeliveryId);
+};
+
+const setSearchPanelSearchParams = (
+  search: URLSearchParams,
+  input: MailSearchUrlInput
+): void => {
+  if (input.originPanel !== 'search') return;
+  search.set('panel', 'search');
+  setParamIfPresent(search, 'searchQuery', input.searchQuery);
+  if (input.searchAccountId === 'all') {
+    search.set('searchAccountId', 'all');
+  }
+  if (
+    input.searchAccountId !== 'all' &&
+    hasParamValue(input.searchContextAccountId) &&
+    input.searchContextAccountId !== input.accountId
+  ) {
+    search.set('searchContextAccountId', input.searchContextAccountId);
   }
 };
 
-const buildFilemakerMailComposeHref = (input: {
-  accountId?: string | null;
+const buildCommonSearchUrl = (search: URLSearchParams, input: MailSearchUrlInput): void => {
+  setParamIfPresent(search, 'accountId', input.accountId);
+  setParamIfPresent(search, 'mailboxPath', input.mailboxPath);
+  setRecentPanelSearchParams(search, input);
+  setSearchPanelSearchParams(search, input);
+};
+
+const buildFilemakerMailComposeHref = (input: MailSearchUrlInput & {
   forwardThreadId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | 'search' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-  recentCampaignId?: string | null;
-  recentRunId?: string | null;
-  recentDeliveryId?: string | null;
-  searchContextAccountId?: string | null;
-  searchAccountId?: string | null;
-  searchQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
-  if (input.forwardThreadId !== null && input.forwardThreadId !== undefined && input.forwardThreadId !== '') search.set('forwardThreadId', input.forwardThreadId);
+  setParamIfPresent(search, 'forwardThreadId', input.forwardThreadId);
   buildCommonSearchUrl(search, input);
   const nextSearch = search.toString();
   return nextSearch !== '' ? `/admin/filemaker/mail/compose?${nextSearch}` : '/admin/filemaker/mail/compose';
 };
 
-const buildFilemakerMailThreadHref = (input: {
+const buildFilemakerMailThreadHref = (input: MailSearchUrlInput & {
   threadId: string;
-  accountId?: string | null;
-  mailboxPath?: string | null;
-  originPanel?: 'recent' | 'search' | null;
-  recentMailboxFilter?: string | null;
-  recentUnreadOnly?: boolean;
-  recentQuery?: string | null;
-  recentCampaignId?: string | null;
-  recentRunId?: string | null;
-  recentDeliveryId?: string | null;
-  searchContextAccountId?: string | null;
-  searchAccountId?: string | null;
-  searchQuery?: string | null;
 }): string => {
   const search = new URLSearchParams();
   buildCommonSearchUrl(search, input);

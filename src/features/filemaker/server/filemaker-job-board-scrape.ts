@@ -672,13 +672,13 @@ const applyOfferAddressToDatabaseOrganization = (
   if (organization === undefined) return false;
   const addressRecord = ensureAddressRecord(database, organizationId, parsedAddress);
   const shouldSetDefaultAddress = normalizeString(organization.addressId).length === 0;
-  const linkChanged = ensureAddressLink(
+  const linkChanged = ensureAddressLink({
     database,
-    'organization',
-    organizationId,
-    addressRecord.address.id,
-    shouldSetDefaultAddress
-  );
+    ownerKind: 'organization',
+    ownerId: organizationId,
+    addressId: addressRecord.address.id,
+    isDefault: shouldSetDefaultAddress,
+  });
   if (!shouldSetDefaultAddress) return addressRecord.created || linkChanged;
   const nextOrganization = createFilemakerOrganization({
     ...organization,

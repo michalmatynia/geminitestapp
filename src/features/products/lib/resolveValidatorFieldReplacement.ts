@@ -8,6 +8,7 @@ import type { Producer } from '@/shared/contracts/products/producers';
 import {
   coerceProductValidationFieldNumericValue,
   getProductValidationFieldValueKind,
+  resolveProductValidationReplacementFieldName,
 } from './validatorTargetAdapters';
 import { resolveValidatorCategoryReplacementId } from './resolveValidatorCategoryReplacement';
 import {
@@ -143,24 +144,25 @@ export const resolveValidatorFieldReplacement = (
 ): ResolvedValidatorFieldReplacement | null => {
   const normalizedReplacement = toTrimmedString(input.replacementValue);
   if (normalizedReplacement.length === 0) return null;
+  const fieldName = resolveProductValidationReplacementFieldName(input.fieldName);
 
-  if (input.fieldName === 'categoryId') {
+  if (fieldName === 'categoryId') {
     return resolveCategoryFieldReplacement(input, normalizedReplacement);
   }
 
-  if (input.fieldName === 'producerIds') {
+  if (fieldName === 'producerIds') {
     return resolveProducerFieldReplacement(input, normalizedReplacement);
   }
 
-  if (getProductValidationFieldValueKind(input.fieldName) === 'number') {
+  if (getProductValidationFieldValueKind(fieldName) === 'number') {
     const normalizedNumericValue = coerceProductValidationFieldNumericValue(
-      input.fieldName,
+      fieldName,
       normalizedReplacement
     );
     if (normalizedNumericValue === null || !Number.isFinite(normalizedNumericValue)) return null;
     return {
       kind: 'number',
-      fieldName: input.fieldName,
+      fieldName,
       value: normalizedNumericValue,
       comparableValue: String(normalizedNumericValue),
       displayValue: String(normalizedNumericValue),
@@ -169,7 +171,7 @@ export const resolveValidatorFieldReplacement = (
 
   return {
     kind: 'text',
-    fieldName: input.fieldName,
+    fieldName,
     value: normalizedReplacement,
     comparableValue: normalizedReplacement,
     displayValue: normalizedReplacement,

@@ -168,7 +168,22 @@ it('renders a dependent price calculated from scraped sourcePrice', () => {
   expect(screen.getByText('120.00')).toBeInTheDocument();
 });
 
-it('renders scraped sourcePrice under the visible product price', () => {
+it('renders scraped sourcePrice with its inferred source currency under the visible product price', () => {
+  useProductListRowVisualsContextMock.mockReturnValue(
+    createRowVisualsContext({
+      priceGroups: [
+        createPriceGroup({
+          id: 'group-retail',
+          groupId: 'RETAIL',
+          currencyId: 'PLN',
+          currency: { code: 'PLN' },
+          currencyCode: 'PLN',
+          basePriceField: 'sourcePrice',
+        }),
+      ],
+    })
+  );
+
   render(
     <PriceCell
       row={createRow(
@@ -176,13 +191,14 @@ it('renders scraped sourcePrice under the visible product price', () => {
           importSource: 'scrape',
           price: 120,
           sourcePrice: 60,
+          defaultPriceGroupId: 'group-retail',
         })
       )}
     />
   );
 
   expect(screen.getByText('120.00')).toBeInTheDocument();
-  expect(screen.getByText('Source: 60.00')).toBeInTheDocument();
+  expect(screen.getByText('Source: 60.00 PLN')).toBeInTheDocument();
 });
 
 it('does not render sourcePrice for non-scraped products', () => {

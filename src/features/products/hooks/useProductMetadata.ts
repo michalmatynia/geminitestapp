@@ -27,6 +27,7 @@ import {
   useProducers,
   useShippingGroups,
   useTags,
+  useTitleTerms,
 } from './useProductMetadataQueries';
 
 export type { ProductMetadataHookResult, UseProductMetadataProps };
@@ -63,6 +64,9 @@ export function useProductMetadata(props: UseProductMetadataProps): ProductMetad
   const categoriesQuery = useCategoriesForCatalogs(
     resolveCategoryTreeCatalogIds(catalogs, catalogsQuery.isLoading)
   );
+  useTitleTerms(undefined, 'size', { allowWithoutCatalog: true });
+  useTitleTerms(undefined, 'material', { allowWithoutCatalog: true });
+  useTitleTerms(undefined, 'theme', { allowWithoutCatalog: true });
   const shippingGroupsQuery = useShippingGroups(primaryCatalogId);
   const tagsQuery = useTags(primaryCatalogId);
   const parametersQuery = useParameters(primaryCatalogId);

@@ -160,9 +160,9 @@ export const useProductFilterMetadata = ({
   });
   const { data: rawAvailableTags } = useFilterTags(selectedCatalogId, { enabled });
   const titleTermQueryOptions = { enabled, allowWithoutCatalog: true } as const;
-  const { data: rawSizeTerms } = useTitleTerms(selectedCatalogId, 'size', titleTermQueryOptions);
-  const { data: rawMaterialTerms } = useTitleTerms(selectedCatalogId, 'material', titleTermQueryOptions);
-  const { data: rawThemeTerms } = useTitleTerms(selectedCatalogId, 'theme', titleTermQueryOptions);
+  const { data: rawSizeTerms } = useTitleTerms(undefined, 'size', titleTermQueryOptions);
+  const { data: rawMaterialTerms } = useTitleTerms(undefined, 'material', titleTermQueryOptions);
+  const { data: rawThemeTerms } = useTitleTerms(undefined, 'theme', titleTermQueryOptions);
   const { data: rawProducers } = useProducers({ enabled });
   const categories = filterRecords(rawCategories, isProductCategory);
   const availableTags = filterRecords(rawAvailableTags, isProductTag);

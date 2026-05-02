@@ -2,7 +2,7 @@
 
 import { Eye, EyeOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
@@ -40,7 +40,8 @@ export function ProductFormModalBridge(props: {
   submitRef: React.MutableRefObject<(() => void) | null>;
 }): null {
   const { onIsSavingChange, onHasUnsavedChangesChange, submitRef } = props;
-  const { handleSubmit, uploading, hasUnsavedChanges } = useProductFormCore();
+  const { handleSubmit, uploading, hasUnsavedChanges, uploadSuccess } = useProductFormCore();
+  const prevUploadSuccessRef = useRef(uploadSuccess);
 
   submitRef.current = () => {
     handleSubmit().catch((error: unknown) => {
@@ -55,6 +56,14 @@ export function ProductFormModalBridge(props: {
   useEffect(() => {
     onHasUnsavedChangesChange(hasUnsavedChanges);
   }, [hasUnsavedChanges, onHasUnsavedChangesChange]);
+
+  useEffect(() => {
+    const becameSuccessful = uploadSuccess && !prevUploadSuccessRef.current;
+    prevUploadSuccessRef.current = uploadSuccess;
+    if (becameSuccessful) {
+      onHasUnsavedChangesChange(false);
+    }
+  }, [uploadSuccess, onHasUnsavedChangesChange]);
 
   return null;
 }

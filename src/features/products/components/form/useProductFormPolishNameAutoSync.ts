@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useLayoutEffect, useMemo, useRef } from 'react';
 import type { UseFormGetValues, UseFormSetValue } from 'react-hook-form';
 
 import { useTitleTerms } from '@/features/products/hooks/useProductMetadataQueries';
@@ -21,7 +21,6 @@ type PolishBaseNameAutoSyncStateUpdate = {
 };
 
 type UseProductFormPolishNameAutoSyncInput = {
-  primaryCatalogId: string | undefined;
   languageTabValues: string[];
   categories: StructuredNameCategories;
   nameEn: unknown;
@@ -64,7 +63,6 @@ const buildGeneratedPolishName = ({
 };
 
 export const useProductFormPolishNameAutoSync = ({
-  primaryCatalogId,
   languageTabValues,
   categories,
   nameEn,
@@ -72,9 +70,9 @@ export const useProductFormPolishNameAutoSync = ({
   getValues,
   setValue,
 }: UseProductFormPolishNameAutoSyncInput): void => {
-  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
-  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
-  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
+  const sizeTermsQuery = useTitleTerms(undefined, 'size', { allowWithoutCatalog: true });
+  const materialTermsQuery = useTitleTerms(undefined, 'material', { allowWithoutCatalog: true });
+  const themeTermsQuery = useTitleTerms(undefined, 'theme', { allowWithoutCatalog: true });
   const lastGeneratedPolishNameRef = useRef<string>('');
   const polishBaseNameAutoSyncRef = useRef<boolean>(true);
   const generatedPolishName = useMemo(
@@ -101,7 +99,7 @@ export const useProductFormPolishNameAutoSync = ({
     ]
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (languageTabValues.includes('pl') === false) return;
     if (generatedPolishName === null) return;
 

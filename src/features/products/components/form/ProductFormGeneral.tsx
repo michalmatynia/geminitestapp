@@ -42,14 +42,12 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const categories = readMetadataArray<ProductFormPolishNameCategories[number]>(
     productFormMetadata.categories
   );
-  const primaryCatalogId = readMetadataArray<string>(productFormMetadata.selectedCatalogIds)[0];
   const focusedFieldName = useProductFormGeneralFocus();
   const { watchedValues, displayValues } = useProductFormGeneralWatchedValues(watch);
   const languageTabs = useProductFormLanguageTabs(filteredLanguages);
   const compiledPatterns = useCompiledProductValidationPatterns(validationState.validatorPatterns);
 
   useProductFormPolishNameAutoSync({
-    primaryCatalogId,
     languageTabValues: languageTabs.languageTabValues,
     categories,
     nameEn: watchedValues.nameEn,

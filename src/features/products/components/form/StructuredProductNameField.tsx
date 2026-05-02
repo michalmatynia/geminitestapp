@@ -30,13 +30,8 @@ function TitleTermsAction({ href }: { href: string }): React.JSX.Element {
   );
 }
 
-function CatalogHint({ primaryCatalogId }: { primaryCatalogId?: string }): React.JSX.Element | null {
-  if (typeof primaryCatalogId === 'string' && primaryCatalogId !== '') return null;
-  return (
-    <p className='text-[10px] italic leading-relaxed text-gray-500'>
-      Select a catalog first to load size, material, category, and theme suggestions.
-    </p>
-  );
+function CatalogHint(): null {
+  return null;
 }
 
 function SelectedCategoryHint({ label }: { label: string | null }): React.JSX.Element | null {

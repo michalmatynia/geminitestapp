@@ -103,12 +103,11 @@ const useStructuredProductNameMetadata = (): StructuredProductNameMetadata => {
   };
 };
 
-const useStructuredProductTitleTerms = (
-  primaryCatalogId: string | undefined
-): StructuredProductTitleTerms => {
-  const sizeTermsQuery = useTitleTerms(primaryCatalogId, 'size');
-  const materialTermsQuery = useTitleTerms(primaryCatalogId, 'material');
-  const themeTermsQuery = useTitleTerms(primaryCatalogId, 'theme');
+const useStructuredProductTitleTerms = (): StructuredProductTitleTerms => {
+  const opts = { allowWithoutCatalog: true } as const;
+  const sizeTermsQuery = useTitleTerms(undefined, 'size', opts);
+  const materialTermsQuery = useTitleTerms(undefined, 'material', opts);
+  const themeTermsQuery = useTitleTerms(undefined, 'theme', opts);
   return {
     sizeTerms: toTitleTerms(sizeTermsQuery.data),
     materialTerms: toTitleTerms(materialTermsQuery.data),
@@ -208,7 +207,7 @@ const useStructuredNameSuggestionsController = ({
 }: UseStructuredNameSuggestionsControllerArgs): ReturnType<
   typeof useStructuredProductNameSuggestions
 > => {
-  const { sizeTerms, materialTerms, themeTerms } = useStructuredProductTitleTerms(primaryCatalogId);
+  const { sizeTerms, materialTerms, themeTerms } = useStructuredProductTitleTerms();
   return useStructuredProductNameSuggestions({
     categorySuggestions,
     fieldName,
@@ -218,6 +217,7 @@ const useStructuredNameSuggestionsController = ({
     materialTerms,
     nameValue,
     primaryCatalogId,
+    requireCatalogForSuggestions: false,
     setCategoryId,
     setNormalizeNameError,
     setValue,

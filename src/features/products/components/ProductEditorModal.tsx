@@ -74,6 +74,8 @@ function useProductEditorModalState(args: {
     if (isOpen === true && wasOpenRef.current === false) {
       openSessionCounterRef.current += 1;
       setValidatorSessionKey(`${providerKey}:session:${openSessionCounterRef.current}`);
+      setFormHasUnsavedChanges(false);
+      setFormIsSaving(false);
     }
     wasOpenRef.current = isOpen;
   }, [isOpen, providerKey]);

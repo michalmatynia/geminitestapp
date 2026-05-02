@@ -314,6 +314,9 @@ const loadSettingsJobListings = async (): Promise<FilemakerJobListing[]> => {
   }
 };
 
+export const listAllSettingsFilemakerJobListings = async (): Promise<FilemakerJobListing[]> =>
+  loadSettingsJobListings();
+
 export const listSettingsFilemakerJobListingsForOrganizationIds = async (
   organizationIds: ReadonlyArray<string | null | undefined>
 ): Promise<FilemakerJobListing[]> => {
@@ -683,6 +686,25 @@ export const getMongoFilemakerOrganizationById = async (
   const collection = await getFilemakerOrganizationsCollection();
   const document = await findMongoFilemakerOrganizationDocument(collection, organizationId);
   return document ? toFilemakerOrganization(document) : null;
+};
+
+export const getMongoFilemakerOrganizationNamesByIds = async (
+  organizationIds: readonly string[]
+): Promise<Map<string, string>> => {
+  const ids = normalizeUniqueOrganizationIds(organizationIds as string[]);
+  if (ids.length === 0) return new Map();
+  const collection = await getFilemakerOrganizationsCollection();
+  const documents = await collection
+    .find({ $or: [{ _id: { $in: ids } }, { id: { $in: ids } }] }, { projection: { _id: 1, id: 1, name: 1 } })
+    .toArray();
+  const map = new Map<string, string>();
+  documents.forEach((doc): void => {
+    const name = typeof doc['name'] === 'string' ? doc['name'].trim() : '';
+    if (name.length === 0) return;
+    if (typeof doc['_id'] === 'string' && doc['_id'].trim().length > 0) map.set(doc['_id'], name);
+    if (typeof doc['id'] === 'string' && doc['id'].trim().length > 0) map.set(doc['id'], name);
+  });
+  return map;
 };
 
 const findMongoFilemakerOrganizationDocument = async (

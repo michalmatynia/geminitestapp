@@ -159,6 +159,10 @@ export const createKangurAuthSessionRequest = ({
     }
   );
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
 export const awaitKangurTimedAuthCheck = async ({
   authCheck,
   timeoutMs,
@@ -174,11 +178,11 @@ export const awaitKangurTimedAuthCheck = async ({
   }
 
   let didSoftTimeout = false;
-  let timeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
   const currentUser = await Promise.race([
     authCheck,
     new Promise<null>((resolve) => {
-      timeoutId = globalThis.setTimeout(() => {
+      timeoutId = safeSetTimeout(() => {
         didSoftTimeout = true;
         resolve(null);
       }, timeoutMs);
@@ -186,7 +190,7 @@ export const awaitKangurTimedAuthCheck = async ({
   ]);
 
   if (timeoutId !== null) {
-    globalThis.clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   }
 
   return { currentUser, didSoftTimeout };

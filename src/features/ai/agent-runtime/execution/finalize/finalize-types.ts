@@ -1,3 +1,5 @@
+import type { AgentExecutionContext, PlanStep } from '@/shared/contracts/agent-runtime';
+
 export interface ImprovementReview {
   summary: string;
   mistakes: string[];
@@ -8,8 +10,8 @@ export interface ImprovementReview {
 }
 
 export interface FinalizeRunInput {
-  context: any; // Ideally typed from AgentExecutionContext
-  planSteps: any[];
+  context: AgentExecutionContext;
+  planSteps: PlanStep[];
   taskType: string | null;
   overallOk: boolean;
   requiresHuman: boolean;

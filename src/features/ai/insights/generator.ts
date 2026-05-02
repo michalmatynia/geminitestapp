@@ -45,6 +45,7 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from './settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 const AI_INSIGHTS_MODEL_MAX_RETRIES = Math.max(
   0,
@@ -56,7 +57,7 @@ const AI_INSIGHTS_MODEL_RETRY_BASE_MS = Math.max(
 );
 
 const sleep = async (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise((resolve) => safeSetTimeout(resolve, ms));
 
 export type InsightScheduleSettings = {
   analyticsEnabled: boolean;

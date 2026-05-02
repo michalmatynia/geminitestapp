@@ -11,6 +11,7 @@ import {
 import { readKangurSettingValue } from '@/features/kangur/services/kangur-settings-repository';
 import type { KangurLesson } from '@kangur/contracts/kangur';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import type { KangurLessonListInput, KangurLessonRepository } from './types';
 
@@ -36,7 +37,7 @@ const waitForBootstrapIfFast = async (task: Promise<void>): Promise<void> => {
   const guardedTask = task.catch(() => undefined);
   await Promise.race([
     guardedTask,
-    new Promise((resolve) => setTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
+    new Promise((resolve) => safeSetTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
   ]);
 };
 

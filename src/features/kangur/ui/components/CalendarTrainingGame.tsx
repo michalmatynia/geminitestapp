@@ -221,7 +221,12 @@ export default function CalendarTrainingGame({
     const newScore = correct ? score + 1 : score;
     if (correct) setScore(newScore);
 
-    setTimeout(() => {
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+    safeSetTimeout(() => {
       setSelected(null);
       if (current + 1 >= TOTAL) {
         handleDone(newScore);

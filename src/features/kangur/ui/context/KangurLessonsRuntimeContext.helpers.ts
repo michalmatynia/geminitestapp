@@ -192,24 +192,21 @@ export const resolveOrderedKangurLessons = ({
 
 // scheduleKangurAssignmentsReady defers the ready callback by one rAF tick
 // (or a zero-timeout fallback) so assignment fetching doesn't compete with
-// the lesson render on the same frame.
-const scheduleKangurAssignmentsReady = (onReady: () => void): (() => void) => {
-  if (
-    typeof window.requestAnimationFrame === 'function' &&
-    typeof window.cancelAnimationFrame === 'function'
-  ) {
-    const frameId = window.requestAnimationFrame(onReady);
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }
+import {
+  safeSetTimeout,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+  safeCancelAnimationFrame,
+} from '@/shared/lib/timers';
 
-  const timeoutId = window.setTimeout(onReady, 0);
+// ... (existing imports)
+
+const scheduleKangurAssignmentsReady = (onReady: () => void): (() => void) => {
+  const frameId = safeRequestAnimationFrame(onReady);
   return () => {
-    window.clearTimeout(timeoutId);
+    safeCancelAnimationFrame(frameId);
   };
 };
-
 // useKangurAssignmentsReady gates assignment fetching behind a rAF tick.
 // Returns false immediately on mount, then true after the first paint when
 // canAccessParentAssignments is true. During SSR it resolves synchronously.

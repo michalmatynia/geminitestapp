@@ -18,14 +18,14 @@ export function useKangurMusicSynthAudioContext() {
     if (idleSuspendTimeoutRef.current === null) {
       return;
     }
-    window.clearTimeout(idleSuspendTimeoutRef.current);
+    safeClearTimeout(idleSuspendTimeoutRef.current);
     idleSuspendTimeoutRef.current = null;
   }, []);
 
   const scheduleAudioContextIdleSuspend = useCallback(
     (shouldDeferSuspend?: () => boolean): void => {
       clearAudioContextIdleSuspend();
-      idleSuspendTimeoutRef.current = window.setTimeout(() => {
+      idleSuspendTimeoutRef.current = safeSetTimeout(() => {
         idleSuspendTimeoutRef.current = null;
 
         const context = audioContextRef.current;

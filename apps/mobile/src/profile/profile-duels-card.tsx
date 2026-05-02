@@ -33,7 +33,7 @@ export type ProfileDuelsState = {
   refresh: () => Promise<void>;
 };
 
-const DuelStatsPanel = ({
+function DuelStatsPanel({
   duelProfile,
   copy,
   locale,
@@ -41,8 +41,8 @@ const DuelStatsPanel = ({
   duelProfile: ProfileDuelsState;
   copy: KangurMobileCopy;
   locale: string;
-}): React.JSX.Element | null => {
-  const currentEntry = duelProfile.currentEntry;
+}): React.JSX.Element {
+  const { currentEntry, currentRank } = duelProfile;
   if (currentEntry === null) {
     return (
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -55,25 +55,10 @@ const DuelStatsPanel = ({
     );
   }
 
-  const currentRank = duelProfile.currentRank;
   return (
-    <InsetPanel
-      gap={8}
-      style={{
-        borderColor: '#bfdbfe',
-        backgroundColor: '#eff6ff',
-      }}
-    >
-      <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>
-        {copy({
-          de: 'DEIN DUELLSTAND',
-          en: 'YOUR DUEL SNAPSHOT',
-          pl: 'TWÓJ WYNIK W POJEDYNKACH',
-        })}
-      </Text>
-      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-        #{currentRank ?? 0} {currentEntry.displayName}
-      </Text>
+    <InsetPanel gap={8} style={{ borderColor: '#bfdbfe', backgroundColor: '#eff6ff' }}>
+      <Text style={{ color: '#1d4ed8', fontSize: 12, fontWeight: '800' }}>{copy({ de: 'DEIN DUELLSTAND', en: 'YOUR DUEL SNAPSHOT', pl: 'TWÓJ WYNIK W POJEDYNKACH' })}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>#{currentRank ?? 0} {currentEntry.displayName}</Text>
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
         {copy({
           de: `Siege ${currentEntry.wins} • Niederlagen ${currentEntry.losses} • Unentschieden ${currentEntry.ties}`,
@@ -90,9 +75,9 @@ const DuelStatsPanel = ({
       </Text>
     </InsetPanel>
   );
-};
+}
 
-const OpponentListItem = ({
+function OpponentListItem({
   opponent,
   duelProfile,
   openDuelSession,
@@ -104,44 +89,31 @@ const OpponentListItem = ({
   openDuelSession: (sessionId: string) => void;
   copy: KangurMobileCopy;
   locale: string;
-}): React.JSX.Element => (
-  <InsetPanel gap={8}>
-    <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>
-      {opponent.displayName}
-    </Text>
-    <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
-      {copy({
-        de: `Letztes Duell ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
-        en: `Last duel ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
-        pl: `Ostatni pojedynek ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
-      })}
-    </Text>
-    <ActionButton
-      disabled={duelProfile.isActionPending}
-      label={
-        duelProfile.pendingOpponentLearnerId === opponent.learnerId
-          ? copy({
-              de: 'Rückkampf wird gesendet...',
-              en: 'Sending rematch...',
-              pl: 'Wysyłanie rewanżu...',
-            })
-          : copy({
-              de: 'Schneller Rückkampf',
-              en: 'Quick rematch',
-              pl: 'Szybki rewanż',
-            })
-      }
-      onPress={async () => {
-        const sessionId = await duelProfile.createRematch(opponent.learnerId);
-        if (sessionId) {
-          openDuelSession(sessionId);
-        }
-      }}
-    />
-  </InsetPanel>
-);
+}): React.JSX.Element {
+  const isPending = duelProfile.pendingOpponentLearnerId === opponent.learnerId;
+  return (
+    <InsetPanel gap={8}>
+      <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '800' }}>{opponent.displayName}</Text>
+      <Text style={{ color: '#64748b', fontSize: 12, lineHeight: 18 }}>
+        {copy({
+          de: `Letztes Duell ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+          en: `Last duel ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+          pl: `Ostatni pojedynek ${formatProfileDateTime(opponent.lastPlayedAt, locale)}`,
+        })}
+      </Text>
+      <ActionButton
+        disabled={duelProfile.isActionPending}
+        label={isPending ? copy({ de: 'Rückkampf wird gesendet...', en: 'Sending rematch...', pl: 'Wysyłanie rewanżu...' }) : copy({ de: 'Schneller Rückkampf', en: 'Quick rematch', pl: 'Szybki rewanż' })}
+        onPress={async () => {
+          const sid = await duelProfile.createRematch(opponent.learnerId);
+          if (sid) openDuelSession(sid);
+        }}
+      />
+    </InsetPanel>
+  );
+}
 
-const OpponentListPanel = ({
+function OpponentListPanel({
   duelProfile,
   openDuelSession,
   copy,
@@ -151,7 +123,7 @@ const OpponentListPanel = ({
   openDuelSession: (sessionId: string) => void;
   copy: KangurMobileCopy;
   locale: string;
-}): React.JSX.Element | null => {
+}): React.JSX.Element {
   if (duelProfile.opponents.length === 0) {
     return (
       <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
@@ -166,26 +138,13 @@ const OpponentListPanel = ({
 
   return (
     <View style={{ gap: 10 }}>
-      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>
-        {copy({
-          de: 'Letzte Rivalen',
-          en: 'Recent rivals',
-          pl: 'Ostatni rywale',
-        })}
-      </Text>
-      {duelProfile.opponents.map((opponent) => (
-        <OpponentListItem
-          key={opponent.learnerId}
-          opponent={opponent}
-          duelProfile={duelProfile}
-          openDuelSession={openDuelSession}
-          copy={copy}
-          locale={locale}
-        />
+      <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '800' }}>{copy({ de: 'Letzte Rivalen', en: 'Recent rivals', pl: 'Ostatni rywale' })}</Text>
+      {duelProfile.opponents.map((o) => (
+        <OpponentListItem key={o.learnerId} opponent={o} duelProfile={duelProfile} openDuelSession={openDuelSession} copy={copy} locale={locale} />
       ))}
     </View>
   );
-};
+}
 
 export function ProfileDuelsCard({
   duelProfile,
@@ -197,107 +156,39 @@ export function ProfileDuelsCard({
   openDuelSession: (sessionId: string) => void;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
+  const count = duelProfile.opponents.length;
+  const rank = duelProfile.currentRank;
 
   return (
     <Card>
       <View style={{ gap: 4 }}>
-        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>
-          {copy({ de: 'Duelle', en: 'Duels', pl: 'Pojedynki' })}
-        </Text>
-        <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>
-          {copy({
-            de: 'Schneller Rückweg zu Rivalen',
-            en: 'Quick return to rivals',
-            pl: 'Szybki powrót do rywali',
-          })}
-        </Text>
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Prüfe direkt im Profil den aktuellen Duellstand, springe zu den letzten Rivalen zurück und öffne einen Rückkampf ohne den Verlauf zu verlassen.',
-            en: 'Check the current duel standing right in the profile, return to recent rivals, and open a rematch without leaving your history.',
-            pl: 'Sprawdź bezpośrednio w profilu aktualny stan pojedynków, wróć do ostatnich rywali i otwórz rewanż bez wychodzenia z historii.',
-          })}
-        </Text>
+        <Text style={{ color: '#64748b', fontSize: 12, fontWeight: '700' }}>{copy({ de: 'Duelle', en: 'Duels', pl: 'Pojedynki' })}</Text>
+        <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>{copy({ de: 'Schneller Rückweg zu Rivalen', en: 'Quick return to rivals', pl: 'Szybki powrót do rywali' })}</Text>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Prüfe direkt im Profil den aktuellen Duellstand, springe zu den letzten Rivalen zurück und öffne einen Rückkampf ohne den Verlauf zu verlassen.', en: 'Check the current duel standing right in the profile, return to recent rivals, and open a rematch without leaving your history.', pl: 'Sprawdź bezpośrednio w profilu aktualny stan pojedynków, wróć do ostatnich rywali i otwórz rewanż bez wychodzenia z historii.' })}</Text>
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Pill
-          label={copy({
-            de: `Rivalen ${duelProfile.opponents.length}`,
-            en: `Rivals ${duelProfile.opponents.length}`,
-            pl: `Rywale ${duelProfile.opponents.length}`,
-          })}
-          tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }}
-        />
-        <Pill
-          label={
-            duelProfile.currentRank !== null
-              ? copy({
-                  de: `Deine Position #${duelProfile.currentRank}`,
-                  en: `Your rank #${duelProfile.currentRank}`,
-                  pl: `Twoja pozycja #${duelProfile.currentRank}`,
-                })
-              : copy({ de: 'Position ausstehend', en: 'Rank pending', pl: 'Pozycja czeka' })
-          }
-          tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }}
-        />
+        <Pill label={copy({ de: `Rivalen ${count}`, en: `Rivals ${count}`, pl: `Rywale ${count}` })} tone={{ backgroundColor: '#eef2ff', borderColor: '#c7d2fe', textColor: '#4338ca' }} />
+        <Pill label={rank !== null ? copy({ de: `Deine Position #${rank}`, en: `Your rank #${rank}`, pl: `Twoja pozycja #${rank}` }) : copy({ de: 'Position ausstehend', en: 'Rank pending', pl: 'Pozycja czeka' })} tone={{ backgroundColor: '#ecfdf5', borderColor: '#a7f3d0', textColor: '#047857' }} />
       </View>
 
       {!duelProfile.isAuthenticated ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Melde dich an, um hier Duellstand, letzte Rivalen und schnelle Rückkämpfe aus dem Profil zu sehen.',
-            en: 'Sign in to see duel standing, recent rivals, and quick rematches here in the profile.',
-            pl: 'Zaloguj się, aby zobaczyć tutaj w profilu stan w pojedynkach, ostatnich rywali i szybkie rewanże.',
-          })}
-        </Text>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Melde dich an, um hier Duellstand, letzte Rivalen und schnelle Rückkämpfe aus dem Profil zu sehen.', en: 'Sign in to see duel standing, recent rivals, and quick rematches here in the profile.', pl: 'Zaloguj się, aby zobaczyć tutaj w profilu stan w pojedynkach, ostatnich rywali i szybkie rewanże.' })}</Text>
       ) : duelProfile.isRestoringAuth || duelProfile.isLoading ? (
-        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>
-          {copy({
-            de: 'Rivalen und Duellrangliste werden geladen.',
-            en: 'Loading rivals and the duel leaderboard.',
-            pl: 'Pobieramy rywali i ranking pojedynków.',
-          })}
-        </Text>
+        <Text style={{ color: '#475569', fontSize: 14, lineHeight: 20 }}>{copy({ de: 'Rivalen und Duellrangliste werden geladen.', en: 'Loading rivals and the duel leaderboard.', pl: 'Pobieramy rywali i ranking pojedynków.' })}</Text>
       ) : duelProfile.error !== null ? (
         <View style={{ gap: 10 }}>
           <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{duelProfile.error}</Text>
-          <ActionButton
-            label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-            onPress={() => {
-              void duelProfile.refresh();
-            }}
-            stretch
-          />
+          <ActionButton label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })} onPress={() => void duelProfile.refresh()} stretch />
         </View>
       ) : (
         <View style={{ gap: 12 }}>
           <DuelStatsPanel duelProfile={duelProfile} copy={copy} locale={locale} />
-          {duelProfile.actionError !== null ? (
-            <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>
-              {duelProfile.actionError}
-            </Text>
-          ) : null}
-          <OpponentListPanel
-            duelProfile={duelProfile}
-            openDuelSession={openDuelSession}
-            copy={copy}
-            locale={locale}
-          />
+          {duelProfile.actionError && <Text style={{ color: '#b91c1c', fontSize: 14, lineHeight: 20 }}>{duelProfile.actionError}</Text>}
+          <OpponentListPanel duelProfile={duelProfile} openDuelSession={openDuelSession} copy={copy} locale={locale} />
           <View style={{ alignSelf: 'stretch', gap: 10 }}>
-            <ActionButton
-              label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })}
-              onPress={() => {
-                void duelProfile.refresh();
-              }}
-              stretch
-              tone='secondary'
-            />
-            <LinkButton
-              href={duelsHref}
-              label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })}
-              stretch
-            />
+            <ActionButton label={copy({ de: 'Duelle aktualisieren', en: 'Refresh duels', pl: 'Odśwież pojedynki' })} onPress={() => void duelProfile.refresh()} stretch tone='secondary' style={{ borderRadius: 16 }} verticalPadding={12} />
+            <LinkButton href={duelsHref} label={copy({ de: 'Duelle öffnen', en: 'Open duels', pl: 'Otwórz pojedynki' })} stretch style={{ borderRadius: 16 }} verticalPadding={12} />
           </View>
         </View>
       )}

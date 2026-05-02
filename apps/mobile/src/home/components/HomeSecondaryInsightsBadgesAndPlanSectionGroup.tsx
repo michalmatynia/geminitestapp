@@ -26,24 +26,30 @@ export function HomeSecondaryInsightsBadgesAndPlanSectionGroup(): React.JSX.Elem
     areDeferredHomeInsightPlanAssignmentsReady,
   ] = useHomeScreenDeferredPanelSequence(HOME_PLAN_PANEL_SEQUENCE, false);
 
+  let badgesContent: React.JSX.Element;
+  if (!areDeferredHomeInsightBadgesReady) {
+    badgesContent = <DeferredHomeInsightsBadgesCard />;
+  } else if (!areDeferredHomeInsightBadgesDetailsReady) {
+    badgesContent = <DeferredHomeInsightsBadgesDetailsCard />;
+  } else {
+    badgesContent = <HomeSecondaryInsightsBadgesSectionGroup />;
+  }
+
+  let planContent: React.JSX.Element;
+  if (!areDeferredHomeInsightPlanReady) {
+    planContent = <DeferredHomeInsightsPlanCard />;
+  } else if (!areDeferredHomeInsightPlanDetailsReady) {
+    planContent = <DeferredHomeInsightsPlanDetailsCard />;
+  } else if (!areDeferredHomeInsightPlanAssignmentsReady) {
+    planContent = <DeferredHomeInsightsPlanAssignmentsCard />;
+  } else {
+    planContent = <HomeSecondaryInsightsPlanSection />;
+  }
+
   return (
     <>
-      {!areDeferredHomeInsightBadgesReady ? (
-        <DeferredHomeInsightsBadgesCard />
-      ) : !areDeferredHomeInsightBadgesDetailsReady ? (
-        <DeferredHomeInsightsBadgesDetailsCard />
-      ) : (
-        <HomeSecondaryInsightsBadgesSectionGroup />
-      )}
-      {!areDeferredHomeInsightPlanReady ? (
-        <DeferredHomeInsightsPlanCard />
-      ) : !areDeferredHomeInsightPlanDetailsReady ? (
-        <DeferredHomeInsightsPlanDetailsCard />
-      ) : !areDeferredHomeInsightPlanAssignmentsReady ? (
-        <DeferredHomeInsightsPlanAssignmentsCard />
-      ) : (
-        <HomeSecondaryInsightsPlanSection />
-      )}
+      {badgesContent}
+      {planContent}
     </>
   );
 }

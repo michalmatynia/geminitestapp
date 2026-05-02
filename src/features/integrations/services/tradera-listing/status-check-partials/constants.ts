@@ -41,7 +41,9 @@ ${selectorRegistryRuntime}
     },
   ];
 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  import { safeSetTimeout } from '@/shared/lib/timers';
+
+  const wait = (ms: number) => new Promise((resolve) => safeSetTimeout(resolve, ms));
 
   const normalizeWhitespace = (value) =>
     String(value || '')

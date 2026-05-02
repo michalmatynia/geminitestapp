@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState, type ComponentProps } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 import { useTranslations } from 'next-intl';
 
 import { useOptionalKangurRouteTransitionState } from '@/features/kangur/ui/context/KangurRouteTransitionContext';
@@ -119,12 +121,12 @@ function useLessonsDeferredEnhancementsState(input: {
       };
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setIsDeferredEnhancementsReady(true);
     }, LESSONS_DEFERRED_ENHANCEMENTS_IDLE_TIMEOUT_MS);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [activeLesson, canStartDeferredEnhancements, isDeferredEnhancementsReady, isRouteTransitionIdle]);
 

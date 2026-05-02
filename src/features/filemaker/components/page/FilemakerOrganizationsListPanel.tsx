@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable max-lines */
 
-import { ArrowUpDown, PlusIcon } from 'lucide-react';
+import { ArrowUpDown, BriefcaseBusiness, PlusIcon } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import type { PanelAction } from '@/shared/contracts/ui/panels';
@@ -18,6 +18,7 @@ import {
   Pagination,
 } from '@/shared/ui/navigation-and-layout.public';
 import { Button } from '@/shared/ui/button';
+import Link from 'next/link';
 import { FilterPanel, StandardDataTablePanel } from '@/shared/ui/templates.public';
 import type { FolderTreeInstance } from '@/shared/utils/folder-tree-profiles-v2';
 
@@ -143,6 +144,14 @@ function OrganizationPrimaryHeaderControls(props: OrganizationListState): React.
   return (
     <>
       <OrganizationCreateActionRail {...props} />
+      <Link
+        href='/admin/filemaker/job-listings'
+        className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-3 text-xs text-gray-300 hover:bg-white/5'
+        title='View all job listings'
+      >
+        <BriefcaseBusiness className='size-3.5' aria-hidden='true' />
+        Job Listings
+      </Link>
       <OrganizationPaginationControl {...props} />
     </>
   );

@@ -1,7 +1,9 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   fetchProductListings,
@@ -245,7 +247,7 @@ export function useMarketplaceQuickExportFeedback(
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setFeedbackStatus('failed', {
         runId: localFeedback.runId ?? null,
         requestId: localFeedback.requestId ?? null,
@@ -258,7 +260,7 @@ export function useMarketplaceQuickExportFeedback(
     }, remainingMs);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [localFeedback, setFeedbackStatus]);
 

@@ -35,20 +35,8 @@ export function LanguageModal(): React.JSX.Element | null {
   };
 
   const fields: SettingsPanelField<LanguageFormState>[] = [
-    {
-      key: 'code',
-      label: 'Code',
-      type: 'text',
-      placeholder: 'e.g. EN',
-      required: true,
-    },
-    {
-      key: 'name',
-      label: 'Name',
-      type: 'text',
-      placeholder: 'e.g. English',
-      required: true,
-    },
+    { key: 'code', label: 'Code', type: 'text', placeholder: 'e.g. EN', required: true },
+    { key: 'name', label: 'Name', type: 'text', placeholder: 'e.g. English', required: true },
     {
       key: 'nativeName',
       label: 'Native Name',
@@ -57,7 +45,7 @@ export function LanguageModal(): React.JSX.Element | null {
       required: true,
     },
     {
-      key: 'name', // Using existing key for custom field as key is required
+      key: 'name',
       label: 'Associated Countries',
       type: 'custom',
       render: () =>
@@ -74,18 +62,19 @@ export function LanguageModal(): React.JSX.Element | null {
     },
   ];
 
-  const handleChange = (values: Partial<LanguageFormState>) => {
-    if (values.code) {
-      values.code = values.code.toUpperCase();
+  const handleChange = (values: Partial<LanguageFormState>): void => {
+    const updatedValues = { ...values };
+    if (updatedValues.code !== undefined && updatedValues.code !== '') {
+      updatedValues.code = updatedValues.code.toUpperCase();
     }
-    setForm((prev) => ({ ...prev, ...values }));
+    setForm((prev) => ({ ...prev, ...updatedValues }));
   };
 
   return (
     <SettingsPanelBuilder
       open={isLanguageModalOpen}
       onClose={handleCloseLanguageModal}
-      title={activeLanguage ? 'Edit Language' : 'Add Language'}
+      title={activeLanguage !== null ? 'Edit Language' : 'Add Language'}
       onSave={handleSaveClick}
       isSaving={isSaving}
       fields={fields}

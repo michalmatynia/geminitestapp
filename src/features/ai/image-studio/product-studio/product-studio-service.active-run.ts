@@ -84,7 +84,7 @@ export async function resolveProductStudioActiveRunInfo(params: {
       runStatus = (run?.status as ProductStudioRunStatus | undefined) ?? 'failed';
     } else {
       const run = await getImageStudioRunById(stored.runId);
-      runStatus = (run?.status as ProductStudioRunStatus | undefined) ?? 'failed';
+      runStatus = (run?.status) ?? 'failed';
     }
   } catch {
     return null;

@@ -59,7 +59,11 @@ export const scrollToAndSpotlightAnchor = (
   let fadeOutTimer: ReturnType<typeof setTimeout> | null = null;
   let removeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  const spotlightTimer = setTimeout(() => {
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (imports)
+
+  const spotlightTimer = safeSetTimeout(() => {
     const rect = element.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) {
       return;
@@ -74,12 +78,12 @@ export const scrollToAndSpotlightAnchor = (
       }
     });
 
-    fadeOutTimer = setTimeout(() => {
+    fadeOutTimer = safeSetTimeout(() => {
       if (overlay) {
         overlay.style.opacity = '0';
       }
 
-      removeTimer = setTimeout(() => {
+      removeTimer = safeSetTimeout(() => {
         if (overlay?.parentNode) {
           overlay.parentNode.removeChild(overlay);
           overlay = null;

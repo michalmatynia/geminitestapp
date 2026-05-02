@@ -50,7 +50,7 @@ export function KangurLessonsScreen(): React.JSX.Element {
         <LessonsHeader 
             copy={copy} 
             lessonMastery={lessonMastery} 
-            planHref="/plan" 
+            planHref='/plan' 
             resultsHref={createKangurResultsHref()} 
         />
         <KangurMobileAiTutorCard context={tutorContext} />

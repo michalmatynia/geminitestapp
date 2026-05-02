@@ -982,7 +982,14 @@ const runPracujApplySequence = async (
 
         appendStep(run.id, 'Submit application', 'ok', 'External employer form submitted and confirmation received.');
         await completeRun(run.id, 'submitted', { confirmationUrl: activePage.url() });
-        await updateMongoFilemakerJobApplicationStatus(context.application.id, 'applied');
+        await updateMongoFilemakerJobApplicationStatus(context.application.id, 'applied', {
+          id: randomUUID(),
+          appliedAt: new Date().toISOString(),
+          method: 'apply_script',
+          personId: context.application.personId,
+          personName: context.application.personName,
+          toStatus: 'applied',
+        });
         return;
       }
     }
@@ -1046,7 +1053,12 @@ const runPracujApplySequence = async (
 
     appendStep(run.id, 'Submit application', 'ok', 'Application submission confirmed.');
     await completeRun(run.id, 'submitted', { confirmationUrl: activePage.url() });
-    await updateMongoFilemakerJobApplicationStatus(context.application.id, 'applied');
+    await updateMongoFilemakerJobApplicationStatus(context.application.id, 'applied', {
+      appliedAt: new Date().toISOString(),
+      method: 'apply_script',
+      personId: context.application.personId,
+      personName: context.application.personName,
+    });
   } finally {
     await session.close().catch(() => undefined);
   }

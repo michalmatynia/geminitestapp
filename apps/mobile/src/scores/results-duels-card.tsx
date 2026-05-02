@@ -150,7 +150,7 @@ export function ResultsDuelsCard({
 
       {renderDuelStatus(duelResults, copy)}
 
-      {Boolean(duelResults.currentRank) duelResults.currentRank !== null && duelResults.currentRank !== 0 && duelResults.currentEntry !== nullduelResults.currentRank !== null && duelResults.currentRank !== 0 && duelResults.currentEntry !== null duelResults.currentEntry !== null ? (
+      {duelResults.currentRank !== null && duelResults.currentRank !== 0 && duelResults.currentEntry !== null ? (
         <InsetPanel
           gap={10}
           style={{

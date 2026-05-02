@@ -208,8 +208,12 @@ function CopyValueButton({
         navigator.clipboard
           .writeText(normalized)
           .then(() => {
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing code, ensure safeSetTimeout is added to imports)
+
             setCopied(true);
-            window.setTimeout(() => setCopied(false), 1200);
+            safeSetTimeout(() => setCopied(false), 1200);
           })
           .catch(() => undefined);
       }}

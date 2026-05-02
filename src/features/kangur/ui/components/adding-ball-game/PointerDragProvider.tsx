@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
 
@@ -265,7 +266,7 @@ export function PointerDragProvider({
     ) => {
       if (disabled) return;
       if (completionTimerRef.current !== null) {
-        window.clearTimeout(completionTimerRef.current);
+        safeClearTimeout(completionTimerRef.current);
         completionTimerRef.current = null;
       }
       const rect = element.getBoundingClientRect();
@@ -347,8 +348,7 @@ export function PointerDragProvider({
           previewTop: previewPosition.top,
           tiltDeg: 0,
         });
-        completionTimerRef.current = window.setTimeout(() => {
-          const latest = dragStateRef.current;
+        completionTimerRef.current = safeSetTimeout(() => {          const latest = dragStateRef.current;
           if (latest?.ballId !== current.ballId || latest?.phase !== 'settling') {
             return;
           }
@@ -368,8 +368,7 @@ export function PointerDragProvider({
         tiltDeg: 0,
       });
       setHoveredZoneId(null);
-      completionTimerRef.current = window.setTimeout(() => {
-        const latest = dragStateRef.current;
+      completionTimerRef.current = safeSetTimeout(() => {        const latest = dragStateRef.current;
         if (latest?.ballId !== current.ballId || latest?.phase !== 'returning') {
           return;
         }
@@ -381,7 +380,7 @@ export function PointerDragProvider({
 
     const handleCancel = (): void => {
       if (completionTimerRef.current !== null) {
-        window.clearTimeout(completionTimerRef.current);
+        safeClearTimeout(completionTimerRef.current);
         completionTimerRef.current = null;
       }
       setDragState(null);

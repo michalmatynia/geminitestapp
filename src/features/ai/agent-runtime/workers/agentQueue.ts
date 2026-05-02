@@ -40,8 +40,10 @@ const queue = createManagedQueue<AgentJobData>({
 });
 
 const AGENT_RECOVERY_REPEAT_EVERY_MS = 120_000;
-let workerStarted = false;
-let recoveryJobRegistered = false;
+const queueState = {
+  workerStarted: false,
+  recoveryJobRegistered: false,
+};
 let reconcileInFlight: Promise<void> | null = null;
 
 const hasRepeatableQueueApi = (
@@ -81,10 +83,10 @@ const stopAgentQueueInternal = async (): Promise<void> => {
       action: 'removeRecoverySchedule',
     });
   }
-  recoveryJobRegistered = false;
-  if (!workerStarted) return;
+  queueState.recoveryJobRegistered = false;
+  if (!queueState.workerStarted) return;
   await queue.stopWorker();
-  workerStarted = false;
+  queueState.workerStarted = false;
 };
 
 export function startAgentQueue(): void {
@@ -97,19 +99,21 @@ export function startAgentQueue(): void {
         return;
       }
 
+      const { workerStarted, recoveryJobRegistered } = queueState;
+
       if (!workerStarted) {
         queue.startWorker();
-        workerStarted = true;
+        queueState.workerStarted = true;
       }
 
-      if (recoveryJobRegistered) return;
-      recoveryJobRegistered = true;
-      await queue.enqueue(
-        { runId: '__recovery__', type: 'recovery' },
-        { repeat: { every: AGENT_RECOVERY_REPEAT_EVERY_MS }, jobId: 'agent-recovery' }
-      );
+      if (!recoveryJobRegistered) {
+        await queue.enqueue(
+          { runId: '__recovery__', type: 'recovery' },
+          { repeat: { every: AGENT_RECOVERY_REPEAT_EVERY_MS }, jobId: 'agent-recovery' }
+        );
+        queueState.recoveryJobRegistered = true;
+      }
     } catch (err) {
-      recoveryJobRegistered = false;
       await ErrorSystem.captureException(err, {
         service: 'agent-queue',
         action: 'reconcileQueue',

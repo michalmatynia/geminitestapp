@@ -4,6 +4,7 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'nextjs-toploader/app';
 import { usePathname } from 'next/navigation';
 import { startTransition, useCallback, useMemo } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { KANGUR_BASE_PATH } from '@/features/kangur/config/routing';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
@@ -334,10 +335,10 @@ const resolveManagedBackPageKey = (
 let queuedManagedNavigationTimeoutId: number | null = null;
 
 const clearQueuedManagedNavigation = (): void => {
-  if (queuedManagedNavigationTimeoutId === null || typeof window === 'undefined') {
+  if (queuedManagedNavigationTimeoutId === null) {
     return;
   }
-  window.clearTimeout(queuedManagedNavigationTimeoutId);
+  safeClearTimeout(queuedManagedNavigationTimeoutId);
   queuedManagedNavigationTimeoutId = null;
 };
 
@@ -477,7 +478,7 @@ export function useKangurRouteNavigator(): {
       }
 
       clearQueuedNavigation();
-      queuedManagedNavigationTimeoutId = window.setTimeout(() => {
+      queuedManagedNavigationTimeoutId = safeSetTimeout(() => {
         queuedManagedNavigationTimeoutId = null;
         navigate();
       }, acknowledgeMs);

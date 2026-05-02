@@ -44,7 +44,7 @@ const createDailyPlanFocus = (
   operation: ReturnType<typeof useKangurMobileTrainingFocus>['strongestOperation'],
   lessonFocus: string | null,
 ): KangurMobileDailyPlanFocus | null => {
-  if (!operation) {
+  if (operation === null) {
     return null;
   }
 
@@ -52,7 +52,7 @@ const createDailyPlanFocus = (
     historyHref: createKangurResultsHref({
       operation: operation.operation,
     }),
-    lessonHref: lessonFocus ? createKangurLessonHref(lessonFocus) : null,
+    lessonHref: lessonFocus !== null ? createKangurLessonHref(lessonFocus) : null,
     operation,
     practiceHref: createKangurPracticeHref(operation.operation),
   };

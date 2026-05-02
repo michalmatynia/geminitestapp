@@ -2,6 +2,12 @@ import 'server-only';
 
 import type { ImapFlow } from 'imapflow';
 
+import {
+  safeSetInterval,
+  safeClearInterval,
+  safeSetTimeout,
+  safeClearTimeout,
+} from '@/shared/lib/timers';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { readSecretSettingValues } from '@/shared/lib/settings/secret-settings';
 
@@ -34,8 +40,8 @@ const scheduleReconnect = (state: AccountState): void => {
     MAX_BACKOFF_MS,
     MIN_BACKOFF_MS * 2 ** Math.max(0, current.failureCount - 1)
   );
-  if (current.reconnectTimer !== null) clearTimeout(current.reconnectTimer);
-  const reconnectTimer = setTimeout(() => {
+  if (current.reconnectTimer !== null) safeClearTimeout(current.reconnectTimer);
+  const reconnectTimer = safeSetTimeout(() => {
     const nextState = patchIdleAccountState(state.accountId, { reconnectTimer: null });
     if (nextState !== null) startIdleConnection(nextState).catch(() => {});
   }, delay);
@@ -64,7 +70,7 @@ const runDebouncedSync = async (accountId: string): Promise<void> => {
 const scheduleDebouncedSync = (state: AccountState): void => {
   const current = getIdleAccountState(state.accountId);
   if (current === null || current.stopped || current.syncTimer !== null) return;
-  const syncTimer = setTimeout(() => {
+  const syncTimer = safeSetTimeout(() => {
     runDebouncedSync(state.accountId).catch(() => {});
   }, SYNC_DEBOUNCE_MS);
   patchIdleAccountState(state.accountId, { syncTimer });
@@ -181,11 +187,11 @@ const startIdleConnection = async (state: AccountState): Promise<void> => {
 const closeClient = async (state: AccountState): Promise<void> => {
   const current = getIdleAccountState(state.accountId) ?? state;
   if (current.reconnectTimer !== null) {
-    clearTimeout(current.reconnectTimer);
+    safeClearTimeout(current.reconnectTimer);
     patchIdleAccountState(state.accountId, { reconnectTimer: null });
   }
   if (current.syncTimer !== null) {
-    clearTimeout(current.syncTimer);
+    safeClearTimeout(current.syncTimer);
     patchIdleAccountState(state.accountId, { syncTimer: null });
   }
   const client = current.client;
@@ -271,7 +277,7 @@ export const startFilemakerMailIdleManager = (): void => {
   managerState.started = true;
 
   refreshAccounts().catch(() => {});
-  managerState.refreshTimer = setInterval(() => {
+  managerState.refreshTimer = safeSetInterval(() => {
     refreshAccounts().catch(() => {});
   }, 60_000);
   if (typeof managerState.refreshTimer.unref === 'function') {
@@ -281,7 +287,7 @@ export const startFilemakerMailIdleManager = (): void => {
 
 export const stopFilemakerMailIdleManager = (): void => {
   if (managerState.refreshTimer !== null) {
-    clearInterval(managerState.refreshTimer);
+    safeClearInterval(managerState.refreshTimer);
     managerState.refreshTimer = null;
   }
   const accountIds = Array.from(managerState.accountsById.keys());

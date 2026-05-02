@@ -3,6 +3,8 @@
 import { FileCode2, FileImage, FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
 import {
   FolderTreeViewportV2,
   handleMasterTreeDrop,
@@ -188,7 +190,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
       return;
     }
 
-    const timeoutId = window.setTimeout((): void => {
+    const timeoutId = safeSetTimeout((): void => {
       if (pendingNodeCanvasAction.kind === 'drop') {
         emitCaseResolverDropDocumentToCanvas({
           fileId: pendingNodeCanvasAction.fileId,
@@ -207,7 +209,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     }, 0);
 
     return (): void => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [
     isNodeFileCanvasActive,

@@ -89,6 +89,48 @@ async function handleStorageUnavailable(): Promise<void> {
   }
 }
 
+async function saveAuditLog(options: {
+  agentAuditLog: { create: (args: Record<string, unknown>) => Promise<unknown> };
+  runId: string | null;
+  level: AuditLevel;
+  message: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { agentAuditLog, runId, level, message, metadata } = options;
+  const serializedMetadata = toInputJsonValue(metadata);
+  await agentAuditLog.create({
+    data: {
+      runId,
+      level,
+      message,
+      ...(serializedMetadata !== undefined && { metadata: serializedMetadata }),
+    },
+  });
+}
+
+async function handleAuditError(options: {
+  error: unknown;
+  agentAuditLog: { create: (args: Record<string, unknown>) => Promise<unknown> };
+  runId: string | null;
+  level: AuditLevel;
+  message: string;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const { error, agentAuditLog, runId, level, message, metadata } = options;
+  await ErrorSystem.captureException(error);
+  if (runId !== null && runId !== '' && isRunIdForeignKeyViolation(error)) {
+    try {
+      await retryLogWithoutRunId({ agentAuditLog, runId, level, message, metadata });
+      return;
+    } catch (fallbackError) {
+      await ErrorSystem.captureException(fallbackError);
+      await reportError(fallbackError, runId, level, message);
+      return;
+    }
+  }
+  await reportError(error, runId, level, message);
+}
+
 export async function logAgentAudit(
   runId: string | null,
   level: AuditLevel,
@@ -101,30 +143,9 @@ export async function logAgentAudit(
     return;
   }
 
-  const serializedMetadata = toInputJsonValue(metadata);
-
   try {
-    await agentAuditLog.create({
-      data: {
-        runId,
-        level,
-        message,
-        ...(serializedMetadata !== undefined && { metadata: serializedMetadata }),
-      },
-    });
+    await saveAuditLog({ agentAuditLog, runId, level, message, metadata });
   } catch (error) {
-    await ErrorSystem.captureException(error);
-    const canRetry = runId !== null && runId !== '' && isRunIdForeignKeyViolation(error);
-    if (canRetry) {
-      try {
-        await retryLogWithoutRunId({ agentAuditLog, runId, level, message, metadata });
-        return;
-      } catch (fallbackError) {
-        await ErrorSystem.captureException(fallbackError);
-        await reportError(fallbackError, runId, level, message);
-        return;
-      }
-    }
-    await reportError(error, runId, level, message);
+    await handleAuditError({ error, agentAuditLog, runId, level, message, metadata });
   }
 }

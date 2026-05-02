@@ -14,6 +14,7 @@ import {
   Loader2,
   MailSearch,
 } from 'lucide-react';
+import Link from 'next/link';
 import React from 'react';
 
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/public';
@@ -300,10 +301,11 @@ function OrganizationUpdatedAtColumn(props: {
 
 function OrganizationRelationCountColumn(props: {
   count: number;
+  href?: string;
   label: string;
   widthClassName: string;
 }): React.JSX.Element {
-  const { count, label, widthClassName } = props;
+  const { count, href, label, widthClassName } = props;
 
   return (
     <div
@@ -314,9 +316,20 @@ function OrganizationRelationCountColumn(props: {
       aria-label={`${label}: ${count}`}
     >
       {count > 0 ? (
-        <Badge variant='outline' className='h-5 max-w-full truncate text-[10px]'>
-          {label} {count}
-        </Badge>
+        href !== undefined ? (
+          <Link
+            href={href}
+            onClick={(event: React.MouseEvent<HTMLAnchorElement>): void => { event.stopPropagation(); }}
+          >
+            <Badge variant='outline' className='h-5 max-w-full truncate text-[10px] hover:border-sky-400 hover:text-sky-300'>
+              {label} {count}
+            </Badge>
+          </Link>
+        ) : (
+          <Badge variant='outline' className='h-5 max-w-full truncate text-[10px]'>
+            {label} {count}
+          </Badge>
+        )
       ) : null}
     </div>
   );
@@ -377,9 +390,23 @@ function FilemakerOrganizationLeafNode(props: OrganizationLeafNodeProps): React.
         onOpenOrganization={onOpenOrganization}
       />
       <OrganizationRelationCountColumn count={eventCount} label='Events' widthClassName='w-20' />
-      <OrganizationRelationCountColumn count={jobListingCount} label='Jobs' widthClassName='w-16' />
+      <OrganizationRelationCountColumn
+        count={jobListingCount}
+        href={`/admin/filemaker/organizations/${encodeURIComponent(organization.id)}/job-listings`}
+        label='Jobs'
+        widthClassName='w-16'
+      />
       <OrganizationUpdatedAtColumn organization={organization} />
       <OrganizationCreatedAtColumn organization={organization} />
+      <Link
+        href={`/admin/filemaker/organizations/${encodeURIComponent(organization.id)}/job-listings`}
+        className='inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+        aria-label={`Open job listings for ${organization.name}`}
+        title={`Open job listings for ${organization.name}`}
+        onClick={(event: React.MouseEvent<HTMLAnchorElement>): void => { event.stopPropagation(); }}
+      >
+        <BriefcaseBusiness className='size-3.5' aria-hidden='true' />
+      </Link>
       <Button
         type='button'
         variant='outline'

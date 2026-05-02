@@ -52,9 +52,13 @@ export function PickAnswer({
 
     setDropped(ball);
     const ok = ball.num === round.correct;
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
     setChecked(true);
     setSelectedBallId(null);
-    setTimeout(() => onResult(ok), 1400);
+    safeSetTimeout(() => onResult(ok), 1400);
   };
 
   const selectedBall = resolveSelectedBall(balls, selectedBallId);
@@ -65,7 +69,7 @@ export function PickAnswer({
     const ok = selectedBall.num === round.correct;
     setChecked(true);
     setSelectedBallId(null);
-    setTimeout(() => onResult(ok), 1400);
+    safeSetTimeout(() => onResult(ok), 1400);
   };
 
   return (

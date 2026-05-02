@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
 import type {
   Company,
   FilemakerOrganisationHit,
@@ -80,10 +82,10 @@ export function PromoteToOrganiserDialog({
   // Debounced auto-search.
   useEffect(() => {
     if (!open) return;
-    const handle = window.setTimeout(() => {
+    const handle = safeSetTimeout(() => {
       void runSearch(query);
     }, 300);
-    return () => window.clearTimeout(handle);
+    return () => safeClearTimeout(handle);
   }, [open, query, runSearch]);
 
   const handlePromote = useCallback(

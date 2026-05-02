@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useUsersData, useUsersDialogs, useUsersRoles, useUsersSearch } from '../../../context/UsersContext';
+import { useUsersData, useUsersDialogs, useUsersRoles, useUsersSearch } from '@/features/auth/context/UsersContext';
 import type { LabeledOptionDto } from '@/shared/contracts/base';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 

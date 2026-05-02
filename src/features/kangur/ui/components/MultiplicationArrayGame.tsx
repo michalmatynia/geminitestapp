@@ -129,11 +129,10 @@ const resolveMultiplicationArraySummaryMessage = ({
 };
 
 const clearMultiplicationArrayAdvanceTimeout = (
-  advanceTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>
+  advanceTimeoutRef: React.MutableRefObject<ReturnType<typeof safeSetTimeout> | null>
 ): void => {
   if (advanceTimeoutRef.current) {
-    clearTimeout(advanceTimeoutRef.current);
-    advanceTimeoutRef.current = null;
+    safeClearTimeout(advanceTimeoutRef.current);    advanceTimeoutRef.current = null;
   }
 };
 
@@ -587,7 +586,7 @@ export default function MultiplicationArrayGame({
     }
 
     setCelebrating(true);
-    advanceTimeoutRef.current = setTimeout(() => {
+    advanceTimeoutRef.current = safeSetTimeout(() => {
       advanceTimeoutRef.current = null;
       const newScore = score + 1;
       advanceMultiplicationArrayGameRound({

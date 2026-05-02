@@ -30,7 +30,7 @@ export async function runPlaywrightVerificationInjectionLoop<TReview>(
 ): Promise<any> {
   const currentUrl = capture.currentUrl ?? '';
   let iterationsRun = 0;
-  let done = false;
+  const done = false;
   let activeUrl = currentUrl;
   const iterationRecords: PlaywrightInjectionIterationRecord[] = [];
 

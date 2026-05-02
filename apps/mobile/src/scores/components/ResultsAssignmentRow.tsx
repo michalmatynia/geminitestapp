@@ -53,7 +53,7 @@ function AssignmentInfo({ item, copy }: { item: KangurMobileResultsAssignmentIte
 
 function AssignmentAction({ item, copy, locale }: { item: KangurMobileResultsAssignmentItem; copy: ReturnType<typeof useKangurMobileI18n>['copy']; locale: string }) {
   const label = translateKangurMobileActionLabel(item.action.label, locale);
-  if (item.href) return <LinkButton href={item.href} label={label} tone="primary" />;
+  if (item.href) return <LinkButton href={item.href} label={label} tone='primary' />;
   
   return (
     <MutedActionChip

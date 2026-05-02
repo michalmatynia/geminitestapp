@@ -220,12 +220,16 @@ export function useKangurAiTutorLifecycleEffects(input: UseKangurAiTutorLifecycl
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+    const timeoutId = safeSetTimeout(() => {
       setContextSwitchNotice(null);
     }, 4_000);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [contextSwitchNotice, isOpen, setContextSwitchNotice]);
 }

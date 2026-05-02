@@ -52,9 +52,13 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
     };
   }
 
-  const timeoutId = window.setTimeout(callback, 1);
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+  const timeoutId = safeSetTimeout(callback, 1);
   return () => {
-    window.clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   };
 };
 

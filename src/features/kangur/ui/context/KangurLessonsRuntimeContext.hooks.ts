@@ -22,22 +22,17 @@ import {
   type KangurFocusedLessonAction,
 } from './KangurLessonsRuntimeContext.utils';
 
+import {
+  safeCancelAnimationFrame,
+  safeRequestAnimationFrame,
+} from '@/shared/lib/timers';
+
 export const scheduleKangurAssignmentsReady = (
   onReady: () => void
 ): (() => void) => {
-  if (
-    typeof window.requestAnimationFrame === 'function' &&
-    typeof window.cancelAnimationFrame === 'function'
-  ) {
-    const frameId = window.requestAnimationFrame(onReady);
-    return () => {
-      window.cancelAnimationFrame(frameId);
-    };
-  }
-
-  const timeoutId = window.setTimeout(onReady, 0);
+  const frameId = safeRequestAnimationFrame(onReady);
   return () => {
-    window.clearTimeout(timeoutId);
+    safeCancelAnimationFrame(frameId);
   };
 };
 

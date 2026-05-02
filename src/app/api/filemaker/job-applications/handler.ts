@@ -1,11 +1,27 @@
 import { type NextRequest } from 'next/server';
+import { z } from 'zod';
 
 import {
   collapseLegacyMongoFilemakerJobApplicationsForListing,
   listMongoFilemakerJobApplications,
   requireFilemakerMailAdminSession,
+  upsertManualAppliedMongoFilemakerJobApplication,
 } from '@/features/filemaker/server';
+import type { JsonParseResult } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
+
+const manualAppliedJobApplicationSchema = z.object({
+  action: z.literal('mark_applied_manual'),
+  jobListingId: z.string().trim().min(1),
+  jobTitle: z.string().trim().nullable().optional(),
+  organizationId: z.string().trim().min(1),
+  organizationName: z.string().trim().nullable().optional(),
+  personId: z.string().trim().min(1),
+  personName: z.string().trim().nullable().optional(),
+  sourceSite: z.string().trim().nullable().optional(),
+  sourceUrl: z.string().trim().nullable().optional(),
+});
 
 const readSearchParam = (url: URL, key: string): string | null => {
   const value = url.searchParams.get(key)?.trim() ?? '';
@@ -82,4 +98,25 @@ export async function getHandler(req: NextRequest): Promise<Response> {
     personId,
   });
   return Response.json({ applications });
+}
+
+export async function postHandler(req: NextRequest): Promise<Response> {
+  await requireFilemakerMailAdminSession();
+  const result: JsonParseResult<z.infer<typeof manualAppliedJobApplicationSchema>> =
+    await parseJsonBody(req, manualAppliedJobApplicationSchema, {
+      logPrefix: 'filemaker.job-applications.POST',
+    });
+  if (!result.ok) return result.response;
+
+  const application = await upsertManualAppliedMongoFilemakerJobApplication({
+    jobListingId: result.data.jobListingId,
+    jobTitle: result.data.jobTitle,
+    organizationId: result.data.organizationId,
+    organizationName: result.data.organizationName,
+    personId: result.data.personId,
+    personName: result.data.personName,
+    sourceSite: result.data.sourceSite,
+    sourceUrl: result.data.sourceUrl,
+  });
+  return Response.json({ application });
 }

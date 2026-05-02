@@ -9,6 +9,7 @@ import type { KangurLesson, KangurLessonDocument } from '@/features/kangur/share
 import { Badge, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from '@/features/kangur/shared/ui';
 import { ConfirmModal } from '@/features/kangur/shared/ui/templates/modals';
 import { KANGUR_GRID_RELAXED_CLASSNAME } from '@/features/kangur/ui/design/tokens';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { validateKangurLessonDocumentDraft } from '../content-creator-insights';
 import {
@@ -254,7 +255,7 @@ function LessonContentEditorDialogContent({
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       const savedAt = writeLessonContentEditorDraft({ lesson, document });
       if (savedAt) {
         setLocalDraftSavedAt(savedAt);
@@ -262,7 +263,7 @@ function LessonContentEditorDialogContent({
     }, 300);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [currentSnapshot, document, isDirty, lesson, lessonId]);
 

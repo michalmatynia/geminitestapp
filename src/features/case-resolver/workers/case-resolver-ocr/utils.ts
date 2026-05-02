@@ -1,3 +1,8 @@
+import {
+  safeSetTimeout,
+  safeClearInterval,
+  safeClearTimeout,
+} from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 export const fetchWithTimeout = async (
   input: RequestInfo | URL,
@@ -6,7 +11,7 @@ export const fetchWithTimeout = async (
   source: string
 ): Promise<Response> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = safeSetTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(input, {
       ...init,
@@ -19,7 +24,7 @@ export const fetchWithTimeout = async (
     }
     throw error;
   } finally {
-    clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   }
 };
 
@@ -28,16 +33,16 @@ export const withPromiseTimeout = async <T>(
   timeoutMs: number,
   source: string
 ): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
   const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutId = setTimeout(() => {
+    timeoutId = safeSetTimeout(() => {
       reject(new Error(`${source} request timed out after ${timeoutMs}ms.`));
     }, timeoutMs);
   });
   try {
     return await Promise.race([promise, timeoutPromise]);
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutId) safeClearTimeout(timeoutId);
   }
 };
 

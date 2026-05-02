@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { KANGUR_AI_TUTOR_PAGE_COVERAGE_READY_FOR_MONGO } from '@/features/kangur/ai-tutor/page-coverage-manifest';
 import {
@@ -141,16 +142,16 @@ export function KangurAiTutorNativeGuideSettingsPanel(): React.JSX.Element {
   useEffect(() => {
     // Clear previous timer if user is still typing
     if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
+      safeClearTimeout(debounceTimerRef.current);
     }
     // Set new timer: update parsed state 300ms after user stops typing
-    debounceTimerRef.current = setTimeout(() => {
+    debounceTimerRef.current = safeSetTimeout(() => {
       setDebouncedEditorValue(editorValue);
     }, 300);
 
     return () => {
       if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
+        safeClearTimeout(debounceTimerRef.current);
       }
     };
   }, [editorValue]);

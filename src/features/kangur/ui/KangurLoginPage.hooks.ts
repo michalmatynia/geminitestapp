@@ -37,6 +37,7 @@ import {
   type KangurLoginSubmitStage,
   type VerificationCardState,
 } from './KangurLoginPage.utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const resolveKangurLoginCurrentOrigin = (): string | null =>
   typeof window === 'undefined' ? null : window.location.origin;
@@ -382,7 +383,8 @@ export function useKangurLoginPageState() {
 
       const label = formatCooldownLabel(nextMs);
       setResendCooldownLabel(label);
-      resendTimerRef.current = setTimeout(() => {
+
+      resendTimerRef.current = safeSetTimeout(() => {
         setResendCooldownLabel(null);
         resendTimerRef.current = null;
       }, nextMs);
@@ -395,10 +397,10 @@ export function useKangurLoginPageState() {
       return;
     }
     if (focusTimerRef.current) {
-      clearTimeout(focusTimerRef.current);
+      safeClearTimeout(focusTimerRef.current);
       focusTimerRef.current = null;
     }
-    focusTimerRef.current = window.setTimeout(() => {
+    focusTimerRef.current = safeSetTimeout(() => {
       focusTimerRef.current = null;
       const field =
         target === 'password' ? passwordInputRef.current : identifierInputRef.current;

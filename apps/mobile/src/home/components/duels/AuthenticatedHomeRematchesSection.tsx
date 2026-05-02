@@ -17,12 +17,14 @@ import { getHomeDuelDifficultyLabel } from '../../homeScreenLabels';
 
 const DUELS_ROUTE = createKangurDuelsHref();
 
-type Props = {
+type RematchesSectionProps = {
   areDeferredHomeDuelAdvancedReady: boolean;
   areDeferredHomePanelsReady: boolean;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: string;
 };
 
-function RematchesLoading({ copy }: { copy: Props['copy'] }) {
+function RematchesLoading({ copy }: { copy: RematchesSectionProps['copy'] }): React.JSX.Element {
   return (
     <Text style={{ color: '#475569', lineHeight: 20 }}>
       {copy({
@@ -34,7 +36,7 @@ function RematchesLoading({ copy }: { copy: Props['copy'] }) {
   );
 }
 
-function RematchesError({ copy, error, refresh }: { copy: Props['copy']; error: string; refresh: () => void }) {
+function RematchesError({ copy, error, refresh }: { copy: RematchesSectionProps['copy']; error: string; refresh: () => void }): React.JSX.Element {
   return (
     <View style={{ gap: 10 }}>
       <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{error}</Text>
@@ -55,7 +57,7 @@ function RematchesError({ copy, error, refresh }: { copy: Props['copy']; error: 
   );
 }
 
-function RematchesEmpty({ copy }: { copy: Props['copy'] }) {
+function RematchesEmpty({ copy }: { copy: RematchesSectionProps['copy'] }): React.JSX.Element {
   return (
     <View style={{ gap: 10 }}>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
@@ -83,12 +85,12 @@ function RematchesList({
   onRematch,
 }: {
   opponents: ReturnType<typeof useKangurMobileHomeDuelsRematches>['opponents'];
-  copy: Props['copy'];
+  copy: RematchesSectionProps['copy'];
   locale: string;
   actionError: string | null;
   isActionPending: boolean;
   onRematch: (learnerId: string) => void;
-}) {
+}): React.JSX.Element {
   return (
     <View style={{ gap: 12 }}>
       {actionError !== null && actionError !== '' && <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{actionError}</Text>}
@@ -106,17 +108,10 @@ function RematchesList({
   );
 }
 
-type Props = {
-  areDeferredHomeDuelAdvancedReady: boolean;
-  areDeferredHomePanelsReady: boolean;
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-  locale: string;
-};
-
 export function AuthenticatedHomeRematchesSection({
   areDeferredHomeDuelAdvancedReady,
   areDeferredHomePanelsReady,
-}: Omit<Props, 'copy' | 'locale'>): React.JSX.Element {
+}: Omit<RematchesSectionProps, 'copy' | 'locale'>): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const router = useRouter();
   const duelRematches = useKangurMobileHomeDuelsRematches({ enabled: areDeferredHomeDuelAdvancedReady });
@@ -136,9 +131,11 @@ export function AuthenticatedHomeRematchesSection({
         locale={locale}
         actionError={duelRematches.actionError}
         isActionPending={duelRematches.isActionPending}
-        onRematch={async (learnerId: string) => {
-          const nextSessionId = await duelRematches.createRematch(learnerId);
-          if (nextSessionId !== null && nextSessionId !== '') openDuelSession(nextSessionId);
+        onRematch={(learnerId: string) => {
+          void (async () => {
+            const nextSessionId = await duelRematches.createRematch(learnerId);
+            if (nextSessionId !== null && nextSessionId !== '') openDuelSession(nextSessionId);
+          })();
         }}
       />
     );

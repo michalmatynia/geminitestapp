@@ -4,7 +4,7 @@ import {
   createFilemakerEmailCampaign,
   createFilemakerEmailCampaignDelivery,
   createFilemakerEmailCampaignDeliveryAttempt,
-} from '../../../settings/campaign-factories';
+} from '@/features/filemaker/settings/campaign-factories';
 
 import {
   FILEMAKER_CAMPAIGN_BOUNCE_CIRCUIT_BREAKER_MIN_SAMPLE_SIZE,

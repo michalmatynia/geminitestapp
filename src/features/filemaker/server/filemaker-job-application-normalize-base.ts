@@ -43,6 +43,21 @@ export const normalizeStatus = (value: unknown): FilemakerJobApplicationStatus =
   return 'draft';
 };
 
+export const normalizeOptionalStatus = (
+  value: unknown
+): FilemakerJobApplicationStatus | null => {
+  if (
+    value === 'ready' ||
+    value === 'applied' ||
+    value === 'rejected' ||
+    value === 'archived' ||
+    value === 'draft'
+  ) {
+    return value;
+  }
+  return null;
+};
+
 export const normalizeMatchAnalysisStatus = (
   value: unknown
 ): FilemakerJobApplicationMatchAnalysisStatus | null => {

@@ -1,5 +1,6 @@
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { stableStringify } from '@/shared/lib/ai-paths/core/utils';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 export {
   buildCaseResolverDraftCanonicalState,
@@ -85,5 +86,5 @@ export const serializeWorkspaceForUnsavedChangesCheck = (
 
 export const sleep = (durationMs: number): Promise<void> =>
   new Promise((resolve) => {
-    setTimeout(resolve, Math.max(0, durationMs));
+    safeSetTimeout(resolve, Math.max(0, durationMs));
   });

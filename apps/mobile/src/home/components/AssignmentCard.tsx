@@ -23,14 +23,8 @@ export function AssignmentCard({
   item: KangurMobileHomeAssignmentItem;
 }): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
-  const assignment = item.assignment as {
-    priority: string | undefined;
-    title: string;
-    description: string;
-    target: string;
-    action: { label: unknown };
-  };
-  const actionLabel = translateKangurMobileActionLabel(assignment.action.label as string, locale);
+  const assignment = item;
+  const actionLabel = translateKangurMobileActionLabel(assignment.action.label, locale);
   const { accent, label } = getPriorityConfig(assignment.priority, copy);
   
   const assignmentAction = item.href !== null ? (

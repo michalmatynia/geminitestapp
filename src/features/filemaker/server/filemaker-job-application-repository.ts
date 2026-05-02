@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { randomUUID } from 'crypto';
+
 import type { Filter } from 'mongodb';
 
 import { notFoundError } from '@/shared/errors/app-error';
@@ -9,6 +11,7 @@ import type {
   FilemakerJobApplicationArtifactVersion,
   FilemakerJobApplicationArtifactVersionSet,
   FilemakerJobApplication,
+  FilemakerJobApplicationLogEntry,
   FilemakerJobApplicationStatus,
 } from '../filemaker-job-application.types';
 import {
@@ -102,18 +105,26 @@ export const listMongoFilemakerJobApplications = async (
 
 export const updateMongoFilemakerJobApplicationStatus = async (
   applicationId: string,
-  status: FilemakerJobApplicationStatus
+  status: FilemakerJobApplicationStatus,
+  logEntry?: FilemakerJobApplicationLogEntry
 ): Promise<FilemakerJobApplication> => {
   const collection = await getFilemakerJobApplicationsCollection();
   const existing = await findApplicationDocumentById(applicationId);
   if (existing === null) throw notFoundError('Filemaker job application was not found.');
+  const now = new Date().toISOString();
+  const entry: FilemakerJobApplicationLogEntry = logEntry ?? {
+    id: randomUUID(),
+    appliedAt: now,
+    method: 'manual',
+    personId: normalizeString(existing.personId),
+    personName: normalizeString(existing.personName),
+    toStatus: status,
+  };
   await collection.updateOne(
     { _id: existing._id },
     {
-      $set: {
-        status,
-        updatedAt: new Date().toISOString(),
-      },
+      $set: { status, updatedAt: now },
+      $push: { applicationLog: { ...entry, toStatus: entry.toStatus ?? status } },
     }
   );
   return requireMongoFilemakerJobApplicationById(normalizeId(existing));
@@ -228,6 +239,20 @@ export const updateMongoFilemakerJobApplicationActiveArtifacts = async (
         persistedVersions,
       }),
     }
+  );
+  return requireMongoFilemakerJobApplicationById(normalizeId(existing));
+};
+
+export const removeMongoFilemakerJobApplicationLogEntry = async (
+  applicationId: string,
+  logEntryId: string
+): Promise<FilemakerJobApplication> => {
+  const collection = await getFilemakerJobApplicationsCollection();
+  const existing = await findApplicationDocumentById(applicationId);
+  if (existing === null) throw notFoundError('Filemaker job application was not found.');
+  await collection.updateOne(
+    { _id: existing._id },
+    { $pull: { applicationLog: { id: logEntryId } } }
   );
   return requireMongoFilemakerJobApplicationById(normalizeId(existing));
 };

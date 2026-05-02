@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+
 export function useCarouselController(totalSlides: number, autoplayDelay: number = 5000) {
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -12,8 +14,8 @@ export function useCarouselController(totalSlides: number, autoplayDelay: number
   }, [totalSlides]);
 
   useEffect(() => {
-    const timer = setInterval(next, autoplayDelay);
-    return () => clearInterval(timer);
+    const timer = safeSetInterval(next, autoplayDelay);
+    return () => safeClearInterval(timer);
   }, [next, autoplayDelay]);
 
   return { activeIndex, setActiveIndex, next, prev };

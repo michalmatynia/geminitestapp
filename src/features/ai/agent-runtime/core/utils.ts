@@ -1,3 +1,5 @@
+import { safeSetTimeout } from '@/shared/lib/timers';
+
 export function jsonValueToRecord(value: unknown): Record<string, unknown> | null {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;
@@ -10,7 +12,7 @@ export function reminderList(label: string, items: string[]): string | null {
 
 export function sleep(ms: number): Promise<void> {
   return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
+    safeSetTimeout(resolve, ms);
   });
 }
 

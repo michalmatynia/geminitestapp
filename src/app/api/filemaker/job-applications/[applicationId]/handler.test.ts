@@ -5,11 +5,13 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 
 const {
   deleteMongoFilemakerJobApplicationMock,
+  removeMongoFilemakerJobApplicationLogEntryMock,
   requireFilemakerMailAdminSessionMock,
   requireMongoFilemakerJobApplicationByIdMock,
   updateMongoFilemakerJobApplicationStatusMock,
 } = vi.hoisted(() => ({
   deleteMongoFilemakerJobApplicationMock: vi.fn(),
+  removeMongoFilemakerJobApplicationLogEntryMock: vi.fn(),
   requireFilemakerMailAdminSessionMock: vi.fn(),
   requireMongoFilemakerJobApplicationByIdMock: vi.fn(),
   updateMongoFilemakerJobApplicationStatusMock: vi.fn(),
@@ -17,6 +19,7 @@ const {
 
 vi.mock('@/features/filemaker/server', () => ({
   deleteMongoFilemakerJobApplication: deleteMongoFilemakerJobApplicationMock,
+  removeMongoFilemakerJobApplicationLogEntry: removeMongoFilemakerJobApplicationLogEntryMock,
   requireFilemakerMailAdminSession: requireFilemakerMailAdminSessionMock,
   requireMongoFilemakerJobApplicationById: requireMongoFilemakerJobApplicationByIdMock,
   updateMongoFilemakerJobApplicationStatus: updateMongoFilemakerJobApplicationStatusMock,
@@ -32,25 +35,27 @@ const requestContext = {
   getElapsedMs: () => 1,
 } as ApiHandlerContext;
 
+const baseApplication = {
+  id: 'application-1',
+  status: 'draft',
+  jobListingId: 'job-1',
+  organizationId: 'org-1',
+  personId: 'person-1',
+};
+
+const appliedApplication = { ...baseApplication, status: 'applied' };
+
 describe('filemaker job application by-id handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     requireFilemakerMailAdminSessionMock.mockResolvedValue(undefined);
-    requireMongoFilemakerJobApplicationByIdMock.mockResolvedValue({
-      id: 'application-1',
-      status: 'draft',
-      jobListingId: 'job-1',
-      organizationId: 'org-1',
-      personId: 'person-1',
-    });
-    updateMongoFilemakerJobApplicationStatusMock.mockResolvedValue({
-      id: 'application-1',
-      status: 'applied',
-      jobListingId: 'job-1',
-      organizationId: 'org-1',
-      personId: 'person-1',
-    });
+    requireMongoFilemakerJobApplicationByIdMock.mockResolvedValue(baseApplication);
+    updateMongoFilemakerJobApplicationStatusMock.mockResolvedValue(appliedApplication);
     deleteMongoFilemakerJobApplicationMock.mockResolvedValue(undefined);
+    removeMongoFilemakerJobApplicationLogEntryMock.mockResolvedValue({
+      ...baseApplication,
+      applicationLog: [],
+    });
   });
 
   it('returns the requested application package', async () => {
@@ -62,15 +67,7 @@ describe('filemaker job application by-id handler', () => {
 
     expect(requireFilemakerMailAdminSessionMock).toHaveBeenCalled();
     expect(requireMongoFilemakerJobApplicationByIdMock).toHaveBeenCalledWith('application-1');
-    await expect(response.json()).resolves.toEqual({
-      application: {
-        id: 'application-1',
-        status: 'draft',
-        jobListingId: 'job-1',
-        organizationId: 'org-1',
-        personId: 'person-1',
-      },
-    });
+    await expect(response.json()).resolves.toEqual({ application: baseApplication });
   });
 
   it('updates the application status', async () => {
@@ -88,15 +85,42 @@ describe('filemaker job application by-id handler', () => {
       'application-1',
       'applied'
     );
-    await expect(response.json()).resolves.toEqual({
-      application: {
-        id: 'application-1',
-        status: 'applied',
-        jobListingId: 'job-1',
-        organizationId: 'org-1',
-        personId: 'person-1',
-      },
-    });
+    await expect(response.json()).resolves.toEqual({ application: appliedApplication });
+  });
+
+  it('removes a log entry by id', async () => {
+    const response = await patchHandler(
+      new NextRequest('http://localhost/api/filemaker/job-applications/application-1', {
+        body: JSON.stringify({ removeLogEntryId: 'log-entry-uuid-1' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      }),
+      requestContext,
+      { applicationId: 'application-1' }
+    );
+
+    expect(removeMongoFilemakerJobApplicationLogEntryMock).toHaveBeenCalledWith(
+      'application-1',
+      'log-entry-uuid-1'
+    );
+    expect(updateMongoFilemakerJobApplicationStatusMock).not.toHaveBeenCalled();
+    const body = (await response.json()) as { application: unknown };
+    expect(body.application).toMatchObject({ id: 'application-1', applicationLog: [] });
+  });
+
+  it('rejects removeLogEntryId that is empty', async () => {
+    const response = await patchHandler(
+      new NextRequest('http://localhost/api/filemaker/job-applications/application-1', {
+        body: JSON.stringify({ removeLogEntryId: '' }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'PATCH',
+      }),
+      requestContext,
+      { applicationId: 'application-1' }
+    );
+
+    expect(response.status).toBe(400);
+    expect(removeMongoFilemakerJobApplicationLogEntryMock).not.toHaveBeenCalled();
   });
 
   it('deletes the requested application package', async () => {

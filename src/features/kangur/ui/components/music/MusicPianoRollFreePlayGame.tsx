@@ -56,9 +56,13 @@ export default function MusicPianoRollFreePlayGame({
   const [pressedNoteId, setPressedNoteId] = useState<DiatonicNoteId | null>(null);
   const [pressedVelocity, setPressedVelocity] = useState<number | null>(null);
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
   const clearPressedResetTimeout = useCallback((): void => {
     if (pressedResetTimeoutRef.current !== null) {
-      globalThis.clearTimeout(pressedResetTimeoutRef.current);
+      safeClearTimeout(pressedResetTimeoutRef.current);
       pressedResetTimeoutRef.current = null;
     }
   }, []);
@@ -68,7 +72,7 @@ export default function MusicPianoRollFreePlayGame({
       clearPressedResetTimeout();
       setPressedNoteId(noteId);
       setPressedVelocity(velocity);
-      pressedResetTimeoutRef.current = globalThis.setTimeout(() => {
+      pressedResetTimeoutRef.current = safeSetTimeout(() => {
         setPressedNoteId(null);
         setPressedVelocity(null);
         pressedResetTimeoutRef.current = null;

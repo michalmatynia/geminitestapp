@@ -1,5 +1,5 @@
 import { Text, View } from 'react-native';
-import { SectionCard, PrimaryButton } from '../homeScreenPrimitives';
+import { PrimaryButton } from '../homeScreenPrimitives';
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 export function DeferredHomeAccountDetails(): React.JSX.Element {

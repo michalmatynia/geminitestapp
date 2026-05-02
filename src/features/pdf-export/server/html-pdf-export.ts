@@ -44,7 +44,7 @@ const decodeBasicHtmlEntities = (value: string): string =>
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'");
+    .replace(/&#39;/gi, '\'');
 
 const htmlToFallbackPdfText = (html: string): string =>
   decodeBasicHtmlEntities(
@@ -91,7 +91,8 @@ const escapePdfText = (value: string): string =>
   value.replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)');
 
 const createFallbackPdfBuffer = (html: string): Buffer => {
-  const sourceText = toPdfAsciiText(htmlToFallbackPdfText(html)) || 'Document export';
+  const result = toPdfAsciiText(htmlToFallbackPdfText(html));
+  const sourceText = result !== '' ? result : 'Document export';
   const lines = sourceText
     .split('\n')
     .flatMap((line: string): string[] =>

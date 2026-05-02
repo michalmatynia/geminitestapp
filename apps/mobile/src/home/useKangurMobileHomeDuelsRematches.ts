@@ -31,6 +31,11 @@ type UseKangurMobileHomeDuelsRematchesOptions = {
   enabled?: boolean;
 };
 
+function resolveRematchesIdentity(session: ReturnType<typeof useKangurMobileAuth>['session']): string {
+    const user = session.user;
+    return user?.activeLearner?.id ?? user?.email ?? user?.id ?? 'guest';
+}
+
 export const useKangurMobileHomeDuelsRematches = ({
   enabled = true,
 }: UseKangurMobileHomeDuelsRematchesOptions = {}): UseKangurMobileHomeDuelsRematchesResult => {
@@ -40,114 +45,63 @@ export const useKangurMobileHomeDuelsRematches = ({
   const { isLoadingAuth, session } = useKangurMobileAuth();
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, setIsActionPending] = useState(false);
-  const learnerIdentity =
-    session.user?.activeLearner?.id ??
-    session.user?.email ??
-    session.user?.id ??
-    'guest';
+  
+  const learnerIdentity = resolveRematchesIdentity(session);
   const isAuthenticated = session.status === 'authenticated';
   const isRestoringAuth = isLoadingAuth && !isAuthenticated;
   const isQueryEnabled = enabled && isAuthenticated;
-  const rematchesQueryKey = [
-    'kangur-mobile',
-    'home',
-    'duels-rematches',
-    apiBaseUrl,
-    learnerIdentity,
-  ] as const;
+  const rematchesQueryKey = ['kangur-mobile', 'home', 'duels-rematches', apiBaseUrl, learnerIdentity] as const;
 
   const rematchesQuery = useQuery({
     enabled: isQueryEnabled,
     queryKey: rematchesQueryKey,
-    queryFn: async () =>
-      apiClient.listDuelOpponents(
-        { limit: MOBILE_HOME_DUELS_REMATCH_LIMIT },
-        { cache: 'no-store' },
-      ),
+    queryFn: async () => apiClient.listDuelOpponents({ limit: MOBILE_HOME_DUELS_REMATCH_LIMIT }, { cache: 'no-store' }),
     staleTime: 30_000,
   });
 
   const opponents = useMemo(
-    () =>
-      [...(rematchesQuery.data?.entries ?? [])]
-        .sort((left, right) => Date.parse(right.lastPlayedAt) - Date.parse(left.lastPlayedAt))
+    () => [...(rematchesQuery.data?.entries ?? [])]
+        .sort((l, r) => Date.parse(r.lastPlayedAt) - Date.parse(l.lastPlayedAt))
         .slice(0, MOBILE_HOME_DUELS_REMATCH_LIMIT),
     [rematchesQuery.data?.entries],
   );
 
-  return {
-    actionError,
-    createRematch: async (opponentLearnerId) => {
+  const createRematch = async (opponentLearnerId: string): Promise<string | null> => {
       setActionError(null);
       setIsActionPending(true);
-
       try {
-        const response = await apiClient.createDuel(
-          {
-            mode: 'challenge',
-            visibility: 'private',
-            opponentLearnerId,
-            operation: MOBILE_DUEL_DEFAULT_OPERATION,
-            difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
-            questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT,
-            timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
-          },
-          { cache: 'no-store' },
-        );
-
+        const response = await apiClient.createDuel({
+            mode: 'challenge', visibility: 'private', opponentLearnerId,
+            operation: MOBILE_DUEL_DEFAULT_OPERATION, difficulty: MOBILE_DUEL_DEFAULT_DIFFICULTY,
+            questionCount: MOBILE_DUEL_DEFAULT_QUESTION_COUNT, timePerQuestionSec: MOBILE_DUEL_DEFAULT_TIME_PER_QUESTION_SEC,
+        }, { cache: 'no-store' });
         await queryClient.invalidateQueries({ queryKey: rematchesQueryKey });
         return response.session.id;
-      } catch (error) {
-        setActionError(
-          resolveMobileDuelErrorMessage({
-            error,
-            copy,
-            fallback: {
-              de: 'Der private Rückkampf konnte nicht erstellt werden.',
-              en: 'Could not create the private rematch.',
-              pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-            },
-            unauthorized: {
-              de: 'Melde dich an, um ein privates Rückspiel zu senden.',
-              en: 'Sign in to send a private rematch.',
-              pl: 'Zaloguj się, aby wysłać prywatny rewanż.',
-            },
-          }) ?? copy({
-            de: 'Der private Rückkampf konnte nicht erstellt werden.',
-            en: 'Could not create the private rematch.',
-            pl: 'Nie udało się utworzyć prywatnego rewanżu.',
-          }),
-        );
+      } catch (err: unknown) {
+        const fallback = { de: 'Der private Rückkampf konnte nicht erstellt werden.', en: 'Could not create the private rematch.', pl: 'Nie udało się utworzyć prywatnego rewanżu.' };
+        setActionError(resolveMobileDuelErrorMessage({
+            error: err, copy, fallback,
+            unauthorized: { de: 'Melde dich an, um ein privates Rückspiel zu senden.', en: 'Sign in to send a private rematch.', pl: 'Zaloguj się, aby wysłać prywatny rewanż.' },
+        }) ?? copy(fallback));
         return null;
       } finally {
         setIsActionPending(false);
       }
-    },
+  };
+
+  return {
+    actionError,
+    createRematch,
     error: resolveMobileDuelErrorMessage({
-      error: rematchesQuery.error,
-      copy,
-      fallback: {
-        de: 'Die letzten Rivalen konnten nicht geladen werden.',
-        en: 'Could not load recent opponents.',
-        pl: 'Nie udało się pobrać ostatnich rywali.',
-      },
-      unauthorized: {
-        de: 'Melde dich an, um letzte Rivalen zu laden.',
-        en: 'Sign in to load recent opponents.',
-        pl: 'Zaloguj się, aby pobrać ostatnich rywali.',
-      },
+      error: rematchesQuery.error, copy,
+      fallback: { de: 'Die letzten Rivalen konnten nicht geladen werden.', en: 'Could not load recent opponents.', pl: 'Nie udało się pobrać ostatnich rywali.' },
+      unauthorized: { de: 'Melde dich an, um letzte Rivalen zu laden.', en: 'Sign in to load recent opponents.', pl: 'Zaloguj się, aby pobrać ostatnich rywali.' },
     }),
     isActionPending,
     isAuthenticated,
     isLoading: isRestoringAuth || (isQueryEnabled && rematchesQuery.isLoading),
     isRestoringAuth,
     opponents,
-    refresh: async () => {
-      if (!isQueryEnabled) {
-        return;
-      }
-
-      await rematchesQuery.refetch();
-    },
+    refresh: async () => { if (isQueryEnabled) await rematchesQuery.refetch(); },
   };
 };

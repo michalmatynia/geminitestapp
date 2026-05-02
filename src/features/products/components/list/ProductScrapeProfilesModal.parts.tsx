@@ -1,7 +1,5 @@
 'use client';
 
-import { CheckCircle2, Globe2, TriangleAlert } from 'lucide-react';
-
 import type {
   ProductScrapeProfileImageImportMode,
   ProductScrapeProfile,
@@ -10,14 +8,17 @@ import type {
 } from '@/shared/contracts/products/scrape-profiles';
 import type { ProductDraft } from '@/shared/contracts/products/drafts';
 import { Alert } from '@/shared/ui/alert';
-import { Checkbox } from '@/shared/ui/checkbox';
-import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
-import { SelectSimple } from '@/shared/ui/forms-and-actions.public';
-import { cn } from '@/shared/utils/ui-utils';
 
 import { ProductScrapeProfilesResult } from './ProductScrapeProfilesModal.result';
 import { ProductScrapeProfilesSourceCurrencyField } from './ProductScrapeProfilesModal.source-currency';
+import { ProductScrapeProfileButton } from './ProductScrapeProfilesModal.profile-button';
+import {
+  ProductScrapeProfilesLimitField,
+  ProductScrapeProfilesDraftTemplateField,
+  ProductScrapeProfilesImageModeField,
+  ProductScrapeProfilesDryRunField,
+  type ProductScrapeDraftTemplateOption,
+} from './ProductScrapeProfilesModal.form-fields';
 
 type ProductScrapeProfilesBodyProps = {
   dryRun: boolean;
@@ -62,21 +63,6 @@ type ProductScrapeProfilesFormProps = {
 
 const NO_DRAFT_TEMPLATE_VALUE = '__no_draft_template__';
 
-type ProductScrapeDraftTemplateOption = {
-  value: string;
-  label: string;
-  description?: string;
-};
-
-const profileMeta = (profile: ProductScrapeProfile): string =>
-  [
-    profile.targetCatalogName,
-    profile.maxPages !== null ? `${profile.maxPages} pages` : null,
-    profile.defaultLimit !== null ? `${profile.defaultLimit} products` : null,
-  ]
-    .filter((entry): entry is string => entry !== null)
-    .join(' / ');
-
 const hasAssignedScrapeProfile = (draft: ProductDraft): boolean =>
   typeof draft.scrapeProfileId === 'string' && draft.scrapeProfileId.trim().length > 0;
 
@@ -91,152 +77,7 @@ const buildDraftTemplateOptions = (
   })),
 ];
 
-function ProductScrapeProfileButton(props: {
-  profile: ProductScrapeProfile;
-  selected: boolean;
-  onSelect: (profileId: string) => void;
-}): React.JSX.Element {
-  const { profile, selected, onSelect } = props;
-  return (
-    <button
-      type='button'
-      onClick={() => onSelect(profile.id)}
-      className={cn(
-        'rounded-md border p-3 text-left transition-colors',
-        selected ? 'border-blue-400/60 bg-blue-500/10' : 'border-border/60 bg-card/35 hover:bg-card/55'
-      )}
-      aria-pressed={selected}
-    >
-      <div className='flex items-start gap-2'>
-        <Globe2 className='mt-0.5 size-4 shrink-0 text-blue-300' aria-hidden='true' />
-        <div className='min-w-0 flex-1'>
-          <div className='truncate text-sm font-medium text-foreground'>{profile.label}</div>
-          <div className='mt-1 text-xs text-muted-foreground'>{profile.siteHost}</div>
-          <div className='mt-2 text-[11px] text-muted-foreground'>{profileMeta(profile)}</div>
-        </div>
-        {selected ? (
-          <CheckCircle2 className='size-4 shrink-0 text-emerald-300' aria-hidden='true' />
-        ) : null}
-      </div>
-    </button>
-  );
-}
-
-function ProductScrapeProfilesLimitField({
-  limitError,
-  limitInput,
-  onLimitInputChange,
-}: Pick<
-  ProductScrapeProfilesFormProps,
-  'limitError' | 'limitInput' | 'onLimitInputChange'
->): React.JSX.Element {
-  return (
-    <div className='space-y-2'>
-      <Label htmlFor='product-scrape-profile-limit'>Limit</Label>
-      <Input
-        id='product-scrape-profile-limit'
-        value={limitInput}
-        onChange={(event) => onLimitInputChange(event.target.value)}
-        placeholder='All products'
-        inputMode='numeric'
-        aria-invalid={limitError !== null ? 'true' : undefined}
-      />
-      {limitError !== null ? (
-        <div className='flex items-center gap-1 text-xs text-red-300'>
-          <TriangleAlert className='size-3' aria-hidden='true' />
-          {limitError}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function ProductScrapeProfilesDraftTemplateField({
-  isDraftTemplatesLoading,
-  selectedDraftTemplateId,
-  draftTemplateOptions,
-  onDraftTemplateSelect,
-}: Pick<
-  ProductScrapeProfilesFormProps,
-  'isDraftTemplatesLoading' | 'selectedDraftTemplateId' | 'onDraftTemplateSelect'
-> & {
-  draftTemplateOptions: ProductScrapeDraftTemplateOption[];
-}): React.JSX.Element {
-  return (
-    <div className='space-y-2'>
-      <Label htmlFor='product-scrape-profile-draft-template'>Draft template</Label>
-      <SelectSimple
-        id='product-scrape-profile-draft-template'
-        size='sm'
-        options={draftTemplateOptions}
-        value={
-          selectedDraftTemplateId.length > 0
-            ? selectedDraftTemplateId
-            : NO_DRAFT_TEMPLATE_VALUE
-        }
-        onValueChange={(value): void =>
-          onDraftTemplateSelect(value === NO_DRAFT_TEMPLATE_VALUE ? '' : value)
-        }
-        placeholder={isDraftTemplatesLoading ? 'Loading templates...' : 'No template'}
-        ariaLabel='Select scrape draft template'
-        title='Select scrape draft template'
-        disabled={isDraftTemplatesLoading}
-      />
-    </div>
-  );
-}
-
-function ProductScrapeProfilesImageModeField({
-  imageImportMode,
-  onImageImportModeChange,
-}: Pick<
-  ProductScrapeProfilesFormProps,
-  'imageImportMode' | 'onImageImportModeChange'
->): React.JSX.Element {
-  return (
-    <div className='space-y-2'>
-      <Label htmlFor='product-scrape-profile-image-mode'>Images</Label>
-      <SelectSimple
-        id='product-scrape-profile-image-mode'
-        size='sm'
-        options={[
-          { value: 'links', label: 'Keep image links' },
-          { value: 'files', label: 'Download as files' },
-        ]}
-        value={imageImportMode}
-        onValueChange={(value): void =>
-          onImageImportModeChange(value === 'files' ? 'files' : 'links')
-        }
-        placeholder='Keep image links'
-        ariaLabel='Select scrape image import mode'
-        title='Select scrape image import mode'
-      />
-      <p className='text-xs text-muted-foreground'>
-        File mode downloads scraped images and attaches them to the product record.
-      </p>
-    </div>
-  );
-}
-
-function ProductScrapeProfilesDryRunField({
-  dryRun,
-  onDryRunChange,
-}: Pick<ProductScrapeProfilesFormProps, 'dryRun' | 'onDryRunChange'>): React.JSX.Element {
-  return (
-    <div className='flex items-center gap-2 self-end pb-2'>
-      <Checkbox
-        id='product-scrape-profile-dry-run'
-        checked={dryRun}
-        onCheckedChange={(checked) => onDryRunChange(checked === true)}
-      />
-      <Label htmlFor='product-scrape-profile-dry-run'>Dry run</Label>
-    </div>
-  );
-}
-
-function ProductScrapeProfilesForm(
-  props: ProductScrapeProfilesFormProps
-): React.JSX.Element {
+function ProductScrapeProfilesForm(props: ProductScrapeProfilesFormProps): React.JSX.Element {
   const {
     dryRun,
     isDraftTemplatesLoading,
@@ -256,8 +97,7 @@ function ProductScrapeProfilesForm(
     onProfileSelect,
   } = props;
   const draftTemplateOptions = buildDraftTemplateOptions(draftTemplates);
-  const selectedProfile =
-    profiles.find((profile) => profile.id === selectedProfileId) ?? null;
+  const selectedProfile = profiles.find((profile) => profile.id === selectedProfileId) ?? null;
   return (
     <>
       <div className='grid gap-2 md:grid-cols-2'>
@@ -297,9 +137,7 @@ function ProductScrapeProfilesForm(
   );
 }
 
-export function ProductScrapeProfilesBody(
-  props: ProductScrapeProfilesBodyProps
-): React.JSX.Element {
+export function ProductScrapeProfilesBody(props: ProductScrapeProfilesBodyProps): React.JSX.Element {
   const { error, isLoading, profiles, result, ...formProps } = props;
   let mainContent: React.JSX.Element;
   if (isLoading) {

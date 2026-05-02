@@ -70,7 +70,7 @@ function MenuHeader({
             className='h-9 flex-1 bg-gray-900/40'
             onClear={() => onQueryChange('')}
           />
-          {sidebarCollapseControl ? (
+          {sidebarCollapseControl !== null && sidebarCollapseControl !== undefined ? (
             <div className='shrink-0'>{sidebarCollapseControl}</div>
           ) : null}
         </div>
@@ -121,7 +121,7 @@ function CollapsedMenuToggle({
     <TreeHeader>
       <div className='flex flex-col gap-2'>
         <div className='flex h-9 items-center justify-end'>
-          {sidebarCollapseControl ? sidebarCollapseControl : null}
+          {sidebarCollapseControl ?? null}
         </div>
         <div className='flex justify-start'>
           <Button

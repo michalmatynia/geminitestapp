@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { PrimaryButton } from '../../homeScreenPrimitives';
-import { type useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n, type KangurMobileLocale } from '../../../i18n/kangurMobileI18n';
 import { type useKangurMobileHomeDuelsInvites } from '../../useKangurMobileHomeDuelsInvites';
 import { DuelInviteCard } from '../../home-duel-section-cards';
 import { createKangurDuelsHref } from '../../../duels/duelsHref';
@@ -9,7 +9,7 @@ import { DeferredDuelSectionPlaceholder, DeferredDuelAdvancedSectionPlaceholder 
 
 const DUELS_ROUTE = createKangurDuelsHref();
 
-type Props = {
+type AuthenticatedHomeInvitesContentProps = {
   areDeferredHomePanelsReady: boolean;
   areDeferredHomeDuelSecondaryReady: boolean;
   invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
@@ -64,9 +64,7 @@ function InvitesError({
           en: 'Refresh invites',
           pl: 'Odśwież zaproszenia',
         })}
-        onPress={() => {
-          refresh();
-        }}
+        onPress={refresh}
       />
     </View>
   );
@@ -99,37 +97,51 @@ function InvitesEmpty({ copy }: { copy: ReturnType<typeof useKangurMobileI18n>['
   );
 }
 
+function InvitesStatusSwitch({
+  invites,
+  copy,
+}: {
+  invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+}): React.JSX.Element | null {
+  if (invites.isRestoringAuth || invites.isLoading) {
+    return <InvitesLoading copy={copy} />;
+  }
+  if (invites.isDeferred && invites.invites.length === 0) {
+    return <InvitesDeferred copy={copy} />;
+  }
+  if (invites.error !== null && invites.error !== '') {
+    return <InvitesError copy={copy} error={invites.error} refresh={() => { void invites.refresh(); }} />;
+  }
+  if (invites.invites.length === 0) {
+    return <InvitesEmpty copy={copy} />;
+  }
+  return null;
+}
+
 export function AuthenticatedHomeInvitesContent({
   areDeferredHomePanelsReady,
   areDeferredHomeDuelSecondaryReady,
   invites,
   copy,
   locale,
-}: Props): React.JSX.Element {
+}: AuthenticatedHomeInvitesContentProps): React.JSX.Element {
   if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
   if (!areDeferredHomeDuelSecondaryReady) return <DeferredDuelAdvancedSectionPlaceholder />;
 
-  const renderContent = (): React.JSX.Element => {
-    if (invites.isRestoringAuth || invites.isLoading) return <InvitesLoading copy={copy} />;
-    if (invites.isDeferred && invites.invites.length === 0) return <InvitesDeferred copy={copy} />;
-    if (invites.error !== null && invites.error !== '') {
-      return <InvitesError copy={copy} error={invites.error} refresh={() => { void invites.refresh(); }} />;
-    }
-    if (invites.invites.length === 0) return <InvitesEmpty copy={copy} />;
+  const statusContent = <InvitesStatusSwitch invites={invites} copy={copy} />;
+  if (statusContent !== null) return statusContent;
 
-    return (
-      <View style={{ gap: 12 }}>
-        {invites.invites.map((invite) => (
-          <DuelInviteCard
-            key={invite.sessionId}
-            copy={copy}
-            invite={invite}
-            locale={locale}
-          />
-        ))}
-      </View>
-    );
-  };
-
-  return renderContent();
+  return (
+    <View style={{ gap: 12 }}>
+      {invites.invites.map((invite) => (
+        <DuelInviteCard
+          key={invite.sessionId}
+          copy={copy}
+          invite={invite}
+          locale={locale as KangurMobileLocale}
+        />
+      ))}
+    </View>
+  );
 }

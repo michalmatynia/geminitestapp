@@ -44,9 +44,13 @@ function CopySnippetButton({ value }: { value: string }): React.JSX.Element {
         if (!navigator.clipboard) return;
         void navigator.clipboard
           .writeText(value)
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (imports)
+
           .then(() => {
             setCopied(true);
-            window.setTimeout(() => setCopied(false), 1200);
+            safeSetTimeout(() => setCopied(false), 1200);
           })
           .catch(() => undefined);
       }}

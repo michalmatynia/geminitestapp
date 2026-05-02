@@ -1,10 +1,10 @@
-import type { KangurDuelLobbyEntry, KangurDuelLobbyPresenceEntry } from '@kangur/contracts/kangur-duels';
+import type { KangurDuelLobbyEntry } from '@kangur/contracts/kangur-duels';
 import { Text, View } from 'react-native';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { type useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
 import { formatKangurMobileScoreOperation } from '../scores/mobileScoreSummary';
-import { OutlineLink, PrimaryButton } from './homeScreenPrimitives';
+import { OutlineLink } from './homeScreenPrimitives';
 import {
   formatHomeRelativeAge,
   getHomeDuelDifficultyLabel,
@@ -15,7 +15,7 @@ import {
 type HomeCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 const DUELS_ROUTE = createKangurDuelsHref();
 
-function DuelInviteCardActions({ invite, copy }: { invite: KangurDuelLobbyEntry; copy: HomeCopy }) {
+function DuelInviteCardActions({ invite, copy }: { invite: KangurDuelLobbyEntry; copy: HomeCopy }): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'column', gap: 8 }}>
       <OutlineLink
@@ -28,7 +28,7 @@ function DuelInviteCardActions({ invite, copy }: { invite: KangurDuelLobbyEntry;
   );
 }
 
-export function DuelInviteCard({ copy, invite, locale }: { copy: HomeCopy; invite: KangurDuelLobbyEntry; locale: KangurMobileLocale }) {
+export function DuelInviteCard({ copy, invite, locale }: { copy: HomeCopy; invite: KangurDuelLobbyEntry; locale: KangurMobileLocale }): React.JSX.Element {
   return (
     <View style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>{invite.host.displayName}</Text>
@@ -42,7 +42,7 @@ export function DuelInviteCard({ copy, invite, locale }: { copy: HomeCopy; invit
           pl: `${invite.questionCount} pytań • ${invite.timePerQuestionSec}s na pytanie • aktualizacja ${formatHomeRelativeAge(invite.updatedAt, locale)}`,
         })}
       </Text>
-      {invite.series ? <Text style={{ color: '#4338ca', lineHeight: 20 }}>{getHomeDuelSeriesLabel(invite.series, locale)}</Text> : null}
+      {invite.series !== null && invite.series !== undefined && invite.series !== '' ? <Text style={{ color: '#4338ca', lineHeight: 20 }}>{getHomeDuelSeriesLabel(invite.series, locale)}</Text> : null}
       <DuelInviteCardActions invite={invite} copy={copy} />
     </View>
   );

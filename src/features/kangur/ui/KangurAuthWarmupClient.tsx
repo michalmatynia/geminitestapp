@@ -46,9 +46,14 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
     };
   }
 
-  const timeoutId = window.setTimeout(callback, 1);
+import { useEffect } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing code)
+
+  const timeoutId = safeSetTimeout(callback, 1);
   return () => {
-    window.clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   };
 };
 

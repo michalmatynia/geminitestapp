@@ -38,7 +38,7 @@ export const useKangurIdleReady = (options: UseKangurIdleReadyOptions = {}): boo
         return;
       }
 
-      timeoutId = window.setTimeout(() => {
+      timeoutId = safeSetTimeout(() => {
         setReady(true);
       }, remainingDelay);
     };
@@ -54,16 +54,15 @@ export const useKangurIdleReady = (options: UseKangurIdleReadyOptions = {}): boo
       return () => {
         hostWindow.cancelIdleCallback(idleId);
         if (timeoutId !== null) {
-          window.clearTimeout(timeoutId);
+          safeClearTimeout(timeoutId);
         }
       };
     }
 
-    timeoutId = window.setTimeout(markReady, Math.max(IDLE_READY_FALLBACK_TIMEOUT_MS, minimumDelayMs));
-
+    timeoutId = safeSetTimeout(markReady, Math.max(IDLE_READY_FALLBACK_TIMEOUT_MS, minimumDelayMs));
     return () => {
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
     };
   }, [minimumDelayMs]);

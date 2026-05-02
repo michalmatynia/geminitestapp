@@ -82,20 +82,48 @@ function resolveActorTypeLabel(
   return actorType ?? null;
 }
 
-function resolveDeveloperAutoSignInLabel(
-  enabled: boolean,
-  status: string,
-  hasAttempted: boolean,
-  isLoading: boolean,
-  authError: string | null,
-): string | null {
+type DeveloperAutoSignInLabelProps = {
+  authError: string | null;
+  enabled: boolean;
+  hasAttempted: boolean;
+  isLoading: boolean;
+  status: string;
+};
+
+function resolveDeveloperAutoSignInLabel({
+  authError,
+  enabled,
+  hasAttempted,
+  isLoading,
+  status,
+}: DeveloperAutoSignInLabelProps): string | null {
   if (!enabled) return null;
   if (status === 'authenticated') return 'authenticated';
+  
   if (!hasAttempted) {
     return isLoading ? 'waiting' : 'ready';
   }
-  if (isLoading) return 'attempting';
+  
+  if (isLoading) {
+    return 'attempting';
+  }
+  
   return authError !== null ? 'failed' : 'attempted';
+}
+
+function resolveUserLabel(
+  isRestoring: boolean,
+  session: KangurAuthSession,
+  actorTypeLabel: string | null,
+  locale: KangurMobileLocale,
+): string {
+  if (isRestoring) {
+    return getKangurMobileLocalizedValue(RESTORING_SESSION_LABEL, locale);
+  }
+  if (session.user) {
+    return `${session.user.full_name} (${actorTypeLabel ?? '?'})`;
+  }
+  return getKangurMobileLocalizedValue(STATUS_LABELS.anonymous, locale);
 }
 
 export const getKangurHomeAuthBoundaryViewModel = ({
@@ -117,21 +145,17 @@ export const getKangurHomeAuthBoundaryViewModel = ({
 }): KangurHomeAuthBoundaryViewModel => {
   const isRestoringLearnerSession = isLoadingAuth && session.status !== 'authenticated';
   const statusLabel = resolveStatusLabel(isRestoringLearnerSession, isLoadingAuth, session.status, locale);
-  const actorTypeLabel = resolveActorTypeLabel(session.user?.actorType as string | undefined, locale);
+  const actorTypeLabel = resolveActorTypeLabel(session.user?.actorType, locale);
 
-  const developerAutoSignInLabel = resolveDeveloperAutoSignInLabel(
-    developerAutoSignInEnabled,
-    session.status,
-    hasAttemptedDeveloperAutoSignIn,
-    isLoadingAuth,
+  const developerAutoSignInLabel = resolveDeveloperAutoSignInLabel({
     authError,
-  );
+    enabled: developerAutoSignInEnabled,
+    hasAttempted: hasAttemptedDeveloperAutoSignIn,
+    isLoading: isLoadingAuth,
+    status: session.status,
+  });
 
-  const userLabel = isRestoringLearnerSession
-    ? getKangurMobileLocalizedValue(RESTORING_SESSION_LABEL, locale)
-    : session.user
-      ? `${session.user.full_name} (${actorTypeLabel ?? '?'})`
-      : getKangurMobileLocalizedValue(STATUS_LABELS.anonymous, locale);
+  const userLabel = resolveUserLabel(isRestoringLearnerSession, session, actorTypeLabel, locale);
 
   return {
     developerAutoSignInLabel,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { resolveFilemakerMailDkimConfig } from '../mail-smtp';
-import type { FilemakerMailAccount } from '../../../types';
+import type { FilemakerMailAccount } from '@/features/filemaker/types';
 
 const buildAccount = (
   overrides: Partial<FilemakerMailAccount> = {}

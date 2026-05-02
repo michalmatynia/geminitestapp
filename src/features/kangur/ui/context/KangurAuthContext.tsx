@@ -60,6 +60,13 @@ type IdleCallbackHost = Window &
     cancelIdleCallback?: (handle: number) => void;
   };
 
+import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+
+// ... (existing code)
+
 const scheduleCachedAuthRevalidation = (callback: () => void): (() => void) => {
   if (typeof window === 'undefined') {
     return () => undefined;
@@ -82,9 +89,9 @@ const scheduleCachedAuthRevalidation = (callback: () => void): (() => void) => {
     };
   }
 
-  const timeoutId = window.setTimeout(callback, CACHED_AUTH_REVALIDATION_DELAY_MS);
+  const timeoutId = safeSetTimeout(callback, CACHED_AUTH_REVALIDATION_DELAY_MS);
   return () => {
-    window.clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   };
 };
 

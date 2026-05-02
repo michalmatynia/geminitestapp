@@ -194,14 +194,14 @@ export default function QuestionCard(props: QuestionCardProps): React.JSX.Elemen
       setShowResult(true);
       onAnswerChoice?.(null, isServerMode ? undefined : false);
       if (!isServerMode) {
-        const timeoutId = setTimeout(() => onAnswer(false), 900);
-        return () => clearTimeout(timeoutId);
+        const timeoutId = safeSetTimeout(() => onAnswer(false), 900);
+        return () => safeClearTimeout(timeoutId);
       }
       return;
     }
 
-    const timeoutId = setTimeout(() => setTimeLeft((remaining) => remaining - 1), 1000);
-    return () => clearTimeout(timeoutId);
+    const timeoutId = safeSetTimeout(() => setTimeLeft((remaining) => remaining - 1), 1000);
+    return () => safeClearTimeout(timeoutId);
   }, [isServerMode, onAnswer, onAnswerChoice, showResult, timeLeft]);
 
   const handleChoice = (choice: KangurQuestionChoice): void => {

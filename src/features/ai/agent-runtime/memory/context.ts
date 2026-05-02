@@ -18,20 +18,37 @@ export async function addProblemSolutionMemory(
 ): Promise<void> {
   const {
     memoryKey,
+    problem,
+    countermeasure,
+    tags = [],
+  } = options;
+
+  if (memoryKey === '' || problem === '' || countermeasure === '') return;
+  const summary = `Problem: ${problem} \u00b7 Countermeasure: ${countermeasure}`;
+  
+  const payload = buildMemoryPayload(options, summary, tags);
+  
+  await validateAndAddAgentLongTermMemory(payload);
+}
+
+function buildMemoryPayload(
+  options: AddProblemSolutionMemoryOptions,
+  summary: string,
+  tags: string[],
+): Parameters<typeof validateAndAddAgentLongTermMemory>[0] {
+  const {
+    memoryKey,
     runId,
     personaId,
     problem,
     countermeasure,
     context,
-    tags = [],
     model,
     prompt,
     summaryModel,
   } = options;
 
-  if (!memoryKey || !problem || !countermeasure) return;
-  const summary = `Problem: ${problem} \u00b7 Countermeasure: ${countermeasure}`;
-  await validateAndAddAgentLongTermMemory({
+  return {
     memoryKey,
     runId,
     personaId: personaId ?? null,
@@ -44,8 +61,8 @@ export async function addProblemSolutionMemory(
       ...context,
     },
     importance: 4,
-    ...(model !== undefined && { model }),
-    ...(summaryModel !== undefined && { summaryModel }),
-    ...(prompt !== undefined && { prompt }),
-  });
+    model: model ?? undefined,
+    summaryModel: summaryModel ?? undefined,
+    prompt: prompt ?? undefined,
+  };
 }

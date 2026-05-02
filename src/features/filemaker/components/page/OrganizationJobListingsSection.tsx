@@ -4,6 +4,7 @@
 
 import {
   BriefcaseBusiness,
+  CheckCircle2,
   Download,
   ExternalLink,
   Eye,
@@ -15,6 +16,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
 
 import type { MultiSelectOption } from '@/shared/ui/forms-and-actions.public';
 import {
@@ -83,6 +86,7 @@ import type {
   FilemakerJobApplicationApplyRunResponse,
   FilemakerJobApplicationApplyRunStep,
   FilemakerJobApplicationArtifactVersion,
+  FilemakerJobApplicationLogEntry,
   FilemakerJobApplicationStatus,
   FilemakerJobListing,
   FilemakerJobListingSalaryPeriod,
@@ -272,6 +276,10 @@ type JobApplicationsState = {
   isLoading: boolean;
 };
 
+type ManualAppliedJobApplicationResponse = {
+  application?: FilemakerJobApplication;
+};
+
 type PreparedApplicationArtifactVersions = {
   applicationEmail: FilemakerJobApplication[];
   coverLetter: FilemakerJobApplication[];
@@ -281,6 +289,7 @@ type PreparedApplicationArtifactVersions = {
 type PreparedJobApplication = FilemakerJobApplication & {
   applicationIds: string[];
   artifactVersions: PreparedApplicationArtifactVersions;
+  baseApplicationId: string;
   canonicalApplicationKey: string;
 };
 
@@ -688,6 +697,7 @@ const createPreparedJobApplication = (
     ...baseApplication,
     id: `prepared:${canonicalApplicationKey}`,
     applicationIds: storageApplicationIds,
+    baseApplicationId: baseApplication.id,
     artifactVersions,
     canonicalApplicationKey,
     applicationEmail: latestApplicationEmail?.applicationEmail ?? null,
@@ -1088,12 +1098,14 @@ function JobApplicationsInline({
   isCollapsingLegacy,
   onCollapseLegacy,
   onOpenApplication,
+  onRemoveLogEntry,
 }: {
   applications: PreparedJobApplication[];
   isCollapsingLegacy: boolean;
   jobListing: FilemakerJobListing;
   onCollapseLegacy: (jobListingId: string) => void;
   onOpenApplication: (applicationId: string) => void;
+  onRemoveLogEntry: (applicationId: string, logEntryId: string) => void;
 }): React.JSX.Element | null {
   if (applications.length === 0) return null;
   const hasCollapsibleLegacyApplications = applications.some(
@@ -1218,6 +1230,9 @@ function JobApplicationsInline({
                 {emailVersionCount > 0 ? (
                   <Badge variant='outline'>Email v{emailVersionCount}</Badge>
                 ) : null}
+                {application.status === 'applied' ? (
+                  <Badge variant='success'>Applied</Badge>
+                ) : null}
                 {hasMatchAnalysis ? (
                   <Badge variant='success'>
                     Match {latestMatchScore ?? 'analysis'}
@@ -1246,6 +1261,35 @@ function JobApplicationsInline({
                   </Badge>
                 ) : null}
               </div>
+              {(application.applicationLog?.length ?? 0) > 0 ? (
+                <div className='mt-1.5 space-y-0.5'>
+                  {(application.applicationLog as FilemakerJobApplicationLogEntry[]).map(
+                    (entry: FilemakerJobApplicationLogEntry, i: number) => (
+                      <div key={entry.id ?? i} className='flex items-center gap-1.5 text-[11px] text-gray-500'>
+                        <span className='font-medium text-emerald-400'>
+                          {entry.method === 'manual' ? 'Manual' : 'Apply script'}
+                        </span>
+                        {' · '}
+                        {formatTimestamp(entry.appliedAt)}
+                        {entry.personName !== null
+                          ? ` · ${entry.personName}`
+                          : entry.personId !== null
+                            ? ` · ${entry.personId}`
+                            : ''}
+                        <button
+                          type='button'
+                          className='ml-1 text-gray-700 hover:text-red-400'
+                          title='Remove this log entry'
+                          onClick={(): void => onRemoveLogEntry(application.baseApplicationId, entry.id)}
+                          aria-label='Remove log entry'
+                        >
+                          <Trash2 className='h-2.5 w-2.5' aria-hidden='true' />
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : null}
               <p className='mt-1 line-clamp-2 text-xs text-gray-400'>
                 {formatApplicationPreview(application)}
               </p>
@@ -1556,6 +1600,7 @@ function ApplicationPackageModal({
   onClose,
   onDelete,
   onActiveArtifactsChange,
+  onRemoveLogEntry,
   onStatusChange,
   onAnalysisRunQueued,
 }: {
@@ -1568,6 +1613,7 @@ function ApplicationPackageModal({
     applicationId: string,
     activeArtifacts: FilemakerJobApplicationActiveArtifacts
   ) => void;
+  onRemoveLogEntry: (applicationId: string, logEntryId: string) => void;
   onStatusChange: (applicationId: string, status: FilemakerJobApplicationStatus) => void;
   onAnalysisRunQueued?: () => void;
 }): React.JSX.Element {
@@ -2230,10 +2276,10 @@ function ApplicationPackageModal({
 
   useEffect(() => {
     if (applyApplicationId === null || !isActiveApplicationApplyRun(applyRun)) return undefined;
-    const intervalId = window.setInterval(() => {
+    const intervalId = safeSetInterval(() => {
       void loadLatestApplyRun(applyApplicationId, { silent: true });
     }, 2500);
-    return (): void => window.clearInterval(intervalId);
+    return (): void => safeClearInterval(intervalId);
   }, [applyApplicationId, applyRun, loadLatestApplyRun]);
 
   useEffect(() => {
@@ -2629,6 +2675,49 @@ function ApplicationPackageModal({
               {applyRun.error !== null ? (
                 <p className='mt-2 text-xs text-red-300'>{applyRun.error}</p>
               ) : null}
+            </div>
+          ) : null}
+
+          {(application.applicationLog?.length ?? 0) > 0 ? (
+            <div className='rounded-md border border-border/70 bg-black/20 p-3'>
+              <div className='mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400'>
+                Status log
+              </div>
+              <ol className='space-y-1.5 border-l border-border/70 pl-3'>
+                {(application.applicationLog as FilemakerJobApplicationLogEntry[]).map(
+                  (entry: FilemakerJobApplicationLogEntry, i: number) => (
+                    <li key={entry.id ?? i} className='flex flex-wrap items-center gap-x-2 gap-y-0.5'>
+                      <span className='text-xs font-medium text-gray-100'>
+                        {entry.toStatus !== null && entry.toStatus !== undefined
+                          ? entry.toStatus.charAt(0).toUpperCase() + entry.toStatus.slice(1)
+                          : 'Applied'}
+                      </span>
+                      <Badge variant={entry.method === 'apply_script' ? 'success' : 'outline'}>
+                        {entry.method === 'apply_script' ? 'Apply script' : 'Manual'}
+                      </Badge>
+                      <span className='text-[11px] text-gray-500'>
+                        {formatTimestamp(entry.appliedAt)}
+                      </span>
+                      {entry.personName !== null ? (
+                        <span className='text-[11px] text-gray-500'>{entry.personName}</span>
+                      ) : entry.personId !== null ? (
+                        <span className='text-[11px] text-gray-500'>{entry.personId}</span>
+                      ) : null}
+                      <button
+                        type='button'
+                        className='ml-auto text-[10px] text-gray-600 hover:text-red-400'
+                        title='Remove this log entry'
+                        onClick={(): void => {
+                          onRemoveLogEntry(application.baseApplicationId, entry.id);
+                        }}
+                        aria-label='Remove log entry'
+                      >
+                        <Trash2 className='h-3 w-3' aria-hidden='true' />
+                      </button>
+                    </li>
+                  )
+                )}
+              </ol>
             </div>
           ) : null}
 
@@ -3448,6 +3537,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const [collapsingLegacyJobListingId, setCollapsingLegacyJobListingId] = useState<string | null>(
     null
   );
+  const [markingAppliedJobListingId, setMarkingAppliedJobListingId] = useState<string | null>(
+    null
+  );
   const [isMutatingApplication, setIsMutatingApplication] = useState(false);
   const [applicationsState, setApplicationsState] = useState<JobApplicationsState>({
     applications: [],
@@ -3460,6 +3552,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
   const rawJobApplicationSettings = settingsStore.get(FILEMAKER_JOB_APPLICATION_SETTINGS_KEY);
   const isJobApplicationSettingsLoading = applicationListingId !== null && settingsStore.isLoading;
   const organizationId = organization?.id ?? '';
+  const organizationName = organization?.name ?? '';
   useEffect(() => {
     if (applicationListingId === null) {
       lastSettingsRefreshListingIdRef.current = null;
@@ -3485,6 +3578,12 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     () => parseFilemakerJobApplicationSettings(rawJobApplicationSettings),
     [rawJobApplicationSettings]
   );
+  const defaultApplicationPersonId = jobApplicationSettings.defaultPersonId.trim();
+  const defaultApplicationPersonName = jobApplicationSettings.defaultPersonName.trim();
+  const defaultApplicationPersonLabel =
+    defaultApplicationPersonName.length > 0
+      ? defaultApplicationPersonName
+      : defaultApplicationPersonId;
   const lexiconTypeMetadata = useMemo(
     () => buildFilemakerLexiconTypeMetadata(filemakerDatabase),
     [filemakerDatabase]
@@ -3673,13 +3772,13 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     };
 
     void pollEntries();
-    const intervalId = window.setInterval(() => {
+    const intervalId = safeSetInterval(() => {
       void pollEntries();
     }, JOB_APPLICATION_RUN_POLL_INTERVAL_MS);
     return () => {
       isDisposed = true;
       controller.abort();
-      window.clearInterval(intervalId);
+      safeClearInterval(intervalId);
     };
   }, [jobApplicationRunEntries, loadApplications, organizationId]);
 
@@ -3824,6 +3923,35 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
     []
   );
 
+  const handleRemoveLogEntry = useCallback(
+    async (applicationId: string, logEntryId: string): Promise<void> => {
+      const response = await fetch(
+        `/api/filemaker/job-applications/${encodeURIComponent(applicationId)}`,
+        {
+          method: 'PATCH',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ removeLogEntryId: logEntryId }),
+        }
+      );
+      if (!response.ok) {
+        toast(`Failed to remove log entry (${response.status}).`, { variant: 'error' });
+        return;
+      }
+      const payload = (await response.json()) as { application?: FilemakerJobApplication };
+      const nextApplication = payload.application;
+      if (nextApplication !== undefined) {
+        setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+          ...current,
+          applications: current.applications.map(
+            (application: FilemakerJobApplication): FilemakerJobApplication =>
+              application.id === nextApplication.id ? nextApplication : application
+          ),
+        }));
+      }
+    },
+    [toast]
+  );
+
   const handleCollapseLegacyApplications = useCallback(
     async (jobListingId: string): Promise<void> => {
       if (organizationId.trim().length === 0 || jobListingId.trim().length === 0) return;
@@ -3871,6 +3999,93 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
       }
     },
     [loadApplications, organizationId, toast]
+  );
+
+  const handleManualAppliedMark = useCallback(
+    async (listing: FilemakerJobListing): Promise<void> => {
+      const personId = defaultApplicationPersonId.trim();
+      if (organizationId.trim().length === 0 || listing.id.trim().length === 0) return;
+      if (personId.length === 0) {
+        toast('Set a Filemaker default person before marking a job as applied.', {
+          variant: 'error',
+        });
+        return;
+      }
+      setMarkingAppliedJobListingId(listing.id);
+      try {
+        const response = await fetch('/api/filemaker/job-applications', {
+          method: 'POST',
+          headers: withCsrfHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            action: 'mark_applied_manual',
+            jobListingId: listing.id,
+            jobTitle: listing.title,
+            organizationId,
+            organizationName,
+            personId,
+            personName: defaultApplicationPersonName,
+            sourceSite: listing.sourceSite ?? null,
+            sourceUrl: listing.sourceUrl ?? null,
+          }),
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to mark application applied (${response.status}).`);
+        }
+        const payload = (await response.json()) as ManualAppliedJobApplicationResponse;
+        const nextApplication = payload.application;
+        if (nextApplication !== undefined) {
+          setApplicationsState((current: JobApplicationsState): JobApplicationsState => {
+            const existingIndex = current.applications.findIndex(
+              (application: FilemakerJobApplication): boolean =>
+                application.id === nextApplication.id
+            );
+            if (existingIndex === -1) {
+              return {
+                ...current,
+                applications: [nextApplication, ...current.applications],
+              };
+            }
+            return {
+              ...current,
+              applications: current.applications.map(
+                (application: FilemakerJobApplication): FilemakerJobApplication =>
+                  application.id === nextApplication.id ? nextApplication : application
+              ),
+            };
+          });
+        }
+        await loadApplications();
+        toast(
+          `Marked applied for ${
+            defaultApplicationPersonLabel.length > 0 ? defaultApplicationPersonLabel : personId
+          }.`,
+          { variant: 'success' }
+        );
+      } catch (error: unknown) {
+        logClientError(error);
+        setApplicationsState((current: JobApplicationsState): JobApplicationsState => ({
+          ...current,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'Failed to mark job listing as applied.',
+        }));
+        toast(error instanceof Error ? error.message : 'Failed to mark job listing as applied.', {
+          variant: 'error',
+        });
+      } finally {
+        setMarkingAppliedJobListingId(null);
+      }
+    },
+    [
+      defaultApplicationPersonId,
+      defaultApplicationPersonLabel,
+      defaultApplicationPersonName,
+      loadApplications,
+      organizationName,
+      organizationId,
+      toast,
+    ]
   );
 
   const handleApplicationDelete = useCallback(async (applicationId: string): Promise<void> => {
@@ -3981,6 +4196,29 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
               editableLexiconTermIds
             );
             const applications = applicationsByJobListingId.get(listing.id) ?? [];
+            const isAppliedForDefaultPerson =
+              defaultApplicationPersonId.length > 0 &&
+              applications.some(
+                (application: PreparedJobApplication): boolean =>
+                  application.status === 'applied' &&
+                  application.personId === defaultApplicationPersonId
+              );
+            const hasAppliedApplication = applications.some(
+              (application: PreparedJobApplication): boolean => application.status === 'applied'
+            );
+            const isMarkingApplied = markingAppliedJobListingId === listing.id;
+            const canMarkAppliedManually =
+              defaultApplicationPersonId.length > 0 &&
+              !isAppliedForDefaultPerson &&
+              !applicationsState.isLoading &&
+              !isMarkingApplied;
+            let manualAppliedButtonTitle = `Mark applied for ${defaultApplicationPersonLabel}`;
+            if (defaultApplicationPersonId.length === 0) {
+              manualAppliedButtonTitle =
+                'Set a Filemaker default person before marking applications manually';
+            } else if (isAppliedForDefaultPerson) {
+              manualAppliedButtonTitle = `Already applied for ${defaultApplicationPersonLabel}`;
+            }
             const runEntries = jobApplicationRunEntries.filter(
               (entry: JobApplicationRunEntry): boolean =>
                 entry.context.organizationId === organization.id &&
@@ -3998,22 +4236,47 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     <FileText className='h-3.5 w-3.5' aria-hidden='true' />
                     Prepare application
                   </div>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    className='h-8 gap-1.5'
-                    onClick={(): void => setApplicationListingId(listing.id)}
-                    aria-label={`Prepare application for ${
-                      listing.title.trim().length > 0
-                        ? listing.title
-                        : `Job listing ${index + 1}`
-                    }`}
-                    title='Prepare application'
-                  >
-                    <FileText className='h-3.5 w-3.5' aria-hidden='true' />
-                    Prepare
-                  </Button>
+                  <div className='flex flex-wrap items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-8 gap-1.5'
+                      onClick={(): void => {
+                        void handleManualAppliedMark(listing);
+                      }}
+                      disabled={!canMarkAppliedManually}
+                      aria-label={`Mark applied manually for ${
+                        listing.title.trim().length > 0
+                          ? listing.title
+                          : `Job listing ${index + 1}`
+                      }`}
+                      title={manualAppliedButtonTitle}
+                    >
+                      {isMarkingApplied ? (
+                        <Loader2 className='h-3.5 w-3.5 animate-spin' aria-hidden='true' />
+                      ) : (
+                        <CheckCircle2 className='h-3.5 w-3.5' aria-hidden='true' />
+                      )}
+                      {isAppliedForDefaultPerson ? 'Applied' : 'Mark applied'}
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      className='h-8 gap-1.5'
+                      onClick={(): void => setApplicationListingId(listing.id)}
+                      aria-label={`Prepare application for ${
+                        listing.title.trim().length > 0
+                          ? listing.title
+                          : `Job listing ${index + 1}`
+                      }`}
+                      title='Prepare application'
+                    >
+                      <FileText className='h-3.5 w-3.5' aria-hidden='true' />
+                      Prepare
+                    </Button>
+                  </div>
                 </div>
 
                 <JobApplicationRunStatusBadges entries={runEntries} />
@@ -4026,6 +4289,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     void handleCollapseLegacyApplications(jobListingId);
                   }}
                   onOpenApplication={setSelectedPreparedApplicationId}
+                  onRemoveLogEntry={(applicationId: string, logEntryId: string): void => {
+                    void handleRemoveLogEntry(applicationId, logEntryId);
+                  }}
                 />
 
                 <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -4033,6 +4299,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                     <Badge variant={targeted ? 'success' : 'warning'}>
                       {targeted ? 'Targeted' : 'Not targeted'}
                     </Badge>
+                    {hasAppliedApplication ? <Badge variant='success'>Applied</Badge> : null}
                     <span className='min-w-0 text-sm font-medium text-gray-100'>
                       {listing.title.trim().length > 0
                         ? listing.title
@@ -4422,6 +4689,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
           activeArtifacts: FilemakerJobApplicationActiveArtifacts
         ): void => {
           void handleApplicationActiveArtifactsChange(applicationId, activeArtifacts);
+        }}
+        onRemoveLogEntry={(applicationId: string, logEntryId: string): void => {
+          void handleRemoveLogEntry(applicationId, logEntryId);
         }}
         onStatusChange={(applicationId: string, status: FilemakerJobApplicationStatus): void => {
           void handleApplicationStatusChange(applicationId, status);

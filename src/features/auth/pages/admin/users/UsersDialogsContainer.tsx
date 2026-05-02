@@ -1,7 +1,7 @@
 import { ConfirmModal } from '@/shared/ui/templates/modals';
-import { MockSignInModal } from '../../../components/admin/MockSignInModal';
-import { UserCreateModal } from '../../../components/admin/UserCreateModal';
-import { UserEditModal } from '../../../components/admin/UserEditModal';
+import { MockSignInModal } from '@/features/auth/components/admin/MockSignInModal';
+import { UserCreateModal } from '@/features/auth/components/admin/UserCreateModal';
+import { UserEditModal } from '@/features/auth/components/admin/UserEditModal';
 
 export function UsersDialogsContainer({ userToDelete, setUserToDelete, deleteUser }: any) {
   return (

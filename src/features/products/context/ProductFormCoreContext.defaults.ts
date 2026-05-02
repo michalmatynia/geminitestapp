@@ -55,7 +55,7 @@ const resolveLocalizedProductName = (
 const hasText = (value: string | null): boolean => value !== null && value.length > 0;
 
 const stripDraftPlaceholderBaseName = (value: string | null | undefined): string => {
-  if (!value) return '';
+  if (value === null || value === undefined || value === '') return '';
   const [baseName = ''] = splitStructuredProductName(value);
   return isGenericProductNamePlaceholder(baseName) ? '' : value;
 };

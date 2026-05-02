@@ -267,7 +267,11 @@ export const scheduleNumberBalanceStatusReset = ({
     return;
   }
 
-  timeoutRef.current = window.setTimeout(() => {
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+  timeoutRef.current = safeSetTimeout(() => {
     timeoutRef.current = null;
     onReset();
   }, delayMs);

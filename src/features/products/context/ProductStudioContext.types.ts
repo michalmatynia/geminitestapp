@@ -56,6 +56,57 @@ export interface ProductStudioActionsContextValue {
   refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
 }
 
+export type ProductStudioRunState = {
+  activeRunBaselineVariantIds: string[];
+  activeRunId: string | null;
+  pendingExpectedOutputs: number;
+  runStatus: ProductStudioRunStatus | null;
+  setActiveRunBaselineVariantIds: (ids: string[] | ((prev: string[]) => string[])) => void;
+  setActiveRunId: (id: string | null | ((prev: string | null) => string | null)) => void;
+  setPendingExpectedOutputs: (count: number | ((prev: number) => number)) => void;
+  setRunStatus: (status: ProductStudioRunStatus | null | ((prev: ProductStudioRunStatus | null) => ProductStudioRunStatus | null)) => void;
+};
+
+export type ProductStudioBaseState = {
+  imageLinks: string[];
+  imageSlotPreviews: ProductImageSlotPreview[];
+  product: any; // Using any to avoid circularity if needed, but ideally typed
+  productId: string | null;
+  productImagesExternalBaseUrl: string;
+  refreshImagesFromProduct: () => Promise<void>;
+  selectedImageIndex: number | null;
+  setSelectedImageIndex: (index: number | null | ((prev: number | null) => number | null)) => void;
+  setStudioProjectId: (id: string | null) => void;
+  studioConfigLoading: boolean;
+  studioProjectId: string | null;
+  studioProjectOptions: Array<LabeledOptionDto<string>>;
+  studioProjectsLoading: boolean;
+};
+
+export type ProductStudioLoadedState = {
+  auditState: {
+    auditEntries: ProductStudioAuditEntry[];
+    auditError: string | null;
+    auditLoading: boolean;
+    refreshAudit: () => Promise<void>;
+  };
+  derivedState: {
+    registrySource: any;
+    pendingVariantPlaceholderCount: number;
+    // ... rest of derived state used in controller
+    [key: string]: any;
+  };
+  variantsState: {
+    variantsData: ProductStudioVariantsResponse | null;
+    variantsLoading: boolean;
+    selectedVariantSlotId: string | null;
+    studioActionError: string | null;
+    refreshVariants: () => Promise<ProductStudioVariantsResponse | null>;
+    setSelectedVariantSlotId: (id: string | null) => void;
+    setStudioActionError: (error: string | null) => void;
+  };
+};
+
 export type ProductStudioContextValue = ProductStudioStateContextValue &
   ProductStudioActionsContextValue;
 

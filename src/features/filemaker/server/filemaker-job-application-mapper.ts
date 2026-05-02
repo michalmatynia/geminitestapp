@@ -1,4 +1,8 @@
-import type { FilemakerJobApplication } from '../filemaker-job-application.types';
+import type {
+  FilemakerJobApplication,
+  FilemakerJobApplicationLogEntry,
+  FilemakerJobApplicationLogMethod,
+} from '../filemaker-job-application.types';
 import { buildFilemakerJobApplicationCanonicalKey } from './filemaker-job-application-canonical-key';
 import type { FilemakerJobApplicationMongoDocument } from './filemaker-job-application-repository.types';
 import {
@@ -10,6 +14,7 @@ import {
   normalizeArtifactKind,
   normalizeMatchAnalysisStatus,
   normalizeNumber,
+  normalizeOptionalStatus,
   normalizeRecord,
   normalizeRequiredString,
   normalizeStatus,
@@ -25,6 +30,36 @@ import {
   normalizeMatchAnalysisHistory,
   toMatchAnalysis,
 } from './filemaker-job-application-normalize-match';
+
+const normalizeLogMethod = (value: unknown): FilemakerJobApplicationLogMethod => {
+  if (value === 'manual' || value === 'apply_script') return value;
+  return 'manual';
+};
+
+const normalizeLogEntry = (value: unknown): FilemakerJobApplicationLogEntry | null => {
+  if (value === null || value === undefined || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+  const record = value as Record<string, unknown>;
+  const appliedAt = normalizeString(record['appliedAt']);
+  if (appliedAt === null) return null;
+  return {
+    id: normalizeString(record['id']) ?? `log-${appliedAt}`,
+    appliedAt,
+    method: normalizeLogMethod(record['method']),
+    personId: normalizeString(record['personId']),
+    personName: normalizeString(record['personName']),
+    toStatus: normalizeOptionalStatus(record['toStatus']),
+  };
+};
+
+const normalizeApplicationLog = (value: unknown): FilemakerJobApplicationLogEntry[] | null => {
+  if (!Array.isArray(value)) return null;
+  const entries = value
+    .map((entry: unknown) => normalizeLogEntry(entry))
+    .filter((entry): entry is FilemakerJobApplicationLogEntry => entry !== null);
+  return entries.length > 0 ? entries : null;
+};
 
 export const normalizeId = (document: FilemakerJobApplicationMongoDocument): string => {
   const id = normalizeString(document.id);
@@ -136,6 +171,7 @@ export const toFilemakerJobApplication = (
     source: normalizeString(document.source),
     sourceEntityId: normalizeString(document.sourceEntityId),
     sourceApplicationContext,
+    applicationLog: normalizeApplicationLog(document.applicationLog),
     createdAt: normalizeRequiredString(document.createdAt),
     updatedAt: normalizeRequiredString(document.updatedAt),
     ...identity,

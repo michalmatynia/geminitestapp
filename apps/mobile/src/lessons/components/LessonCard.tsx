@@ -78,7 +78,7 @@ function LessonShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }
         </Text>
       </InsetPanel>
       <View style={{ gap: 10 }}>
-        <LinkButton href="/lessons" label={copy({ de: 'Otwórz pełny katalog', en: 'Open full catalog', pl: 'Otwórz pełny katalog' })} stretch tone="primary" />
+        <LinkButton href='/lessons' label={copy({ de: 'Otwórz pełny katalog', en: 'Open full catalog', pl: 'Otwórz pełny katalog' })} stretch tone='primary' />
         <ActionButton
           label={copy({ de: 'Zurück zur Liste', en: 'Back to list', pl: 'Wróć do listy' })}
           onPress={() => {
@@ -86,7 +86,7 @@ function LessonShortcutHelp({ copy, focusToken, setDismissedFocusToken, router }
             router.replace('/lessons');
           }}
           stretch
-          tone="secondary"
+          tone='secondary'
         />
       </View>
     </Card>

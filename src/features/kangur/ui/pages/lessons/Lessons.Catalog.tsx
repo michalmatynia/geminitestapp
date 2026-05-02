@@ -677,27 +677,26 @@ export function LessonsCatalog() {
     // Keep effect for potential side effects but don't gate rendering
     if (typeof window === 'undefined') return;
 
+import {
+  safeCancelAnimationFrame,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+
+// ... (existing imports)
+
     let timeoutId: number | null = null;
-    const frameId =
-      typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame(() => {
-            setIsPageContentReady(true);
-          })
-        : window.setTimeout(() => {
-            timeoutId = null;
-            setIsPageContentReady(true);
-          }, 0);
+    const frameId = safeRequestAnimationFrame(() => {
+      setIsPageContentReady(true);
+    });
 
     return () => {
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        return;
+        safeClearTimeout(timeoutId);
       }
-
-      if (typeof window.cancelAnimationFrame === 'function') {
-        window.cancelAnimationFrame(frameId);
-      } else {
-        window.clearTimeout(frameId);
+      safeCancelAnimationFrame(frameId);
+    };
       }
     };
   }, []);

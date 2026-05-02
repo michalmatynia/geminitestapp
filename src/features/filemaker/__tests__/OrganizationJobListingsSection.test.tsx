@@ -540,6 +540,91 @@ describe('OrganizationJobListingsSection', () => {
           }
           return createJsonResponse({ application: jobApplicationsPayload.applications[0] });
         }
+        if (href.endsWith('/api/filemaker/job-applications') && method === 'POST') {
+          const body =
+            typeof init?.body === 'string'
+              ? (JSON.parse(init.body) as {
+                  jobListingId: string;
+                  jobTitle?: string;
+                  organizationId: string;
+                  organizationName?: string;
+                  personId: string;
+                  personName?: string;
+                  sourceSite?: string | null;
+                  sourceUrl?: string | null;
+                })
+              : null;
+          if (body === null) return new Response(null, { status: 400 });
+          const existing = jobApplicationsPayload.applications.find(
+            (application: unknown): boolean => {
+              const record = application as FilemakerJobApplication;
+              return (
+                record.jobListingId === body.jobListingId &&
+                record.organizationId === body.organizationId &&
+                record.personId === body.personId
+              );
+            }
+          ) as FilemakerJobApplication | undefined;
+          const application: FilemakerJobApplication =
+            existing !== undefined
+              ? {
+                  ...existing,
+                  status: 'applied',
+                  updatedAt: '2026-04-29T11:00:00.000Z',
+                }
+              : ({
+                  id: `manual-${body.organizationId}-${body.jobListingId}-${body.personId}`,
+                  activeArtifacts: {
+                    applicationEmailVersionId: null,
+                    coverLetterVersionId: null,
+                    tailoredCvVersionId: null,
+                  },
+                  artifactVersions: {
+                    applicationEmail: [],
+                    coverLetter: [],
+                    tailoredCv: [],
+                  },
+                  canonicalApplicationKey: `${body.personId}::${body.organizationId}::${body.jobListingId}::default`,
+                  status: 'applied',
+                  personId: body.personId,
+                  personName: body?.personName ?? null,
+                  organizationId: body.organizationId,
+                  organizationName: body?.organizationName ?? null,
+                  jobListingId: body.jobListingId,
+                  jobTitle: body?.jobTitle ?? null,
+                  integrationId: null,
+                  integrationSlug: null,
+                  connectionId: null,
+                  tailoredCvId: null,
+                  tailoredCv: null,
+                  coverLetter: null,
+                  applicationEmail: null,
+                  matchAnalysis: null,
+                  applicationNotes: ['Marked applied manually.'],
+                  missingInformation: [],
+                  confidence: null,
+                  source: 'filemaker-manual-applied',
+                  sourceEntityId: `${body.organizationId}:${body.jobListingId}:${body.personId}:manual_applied`,
+                  sourceApplicationContext: {
+                    jobContext: {
+                      listing: {
+                        sourceUrl: body?.sourceUrl ?? null,
+                      },
+                    },
+                  },
+                  createdAt: '2026-04-29T10:00:00.000Z',
+                  updatedAt: '2026-04-29T10:00:00.000Z',
+                } as FilemakerJobApplication);
+          jobApplicationsPayload = {
+            applications:
+              existing !== undefined
+                ? jobApplicationsPayload.applications.map((entry: unknown): unknown =>
+                    (entry as FilemakerJobApplication).id === existing.id ? application : entry
+                  )
+                : [application, ...jobApplicationsPayload.applications],
+          };
+          return createJsonResponse({ application });
+        }
         if (href.includes('/api/filemaker/job-applications?')) {
           return createJsonResponse(jobApplicationsPayload);
         }
@@ -821,6 +906,80 @@ describe('OrganizationJobListingsSection', () => {
     });
     expect(screen.getByText('Filemaker default · Grace Hopper')).toBeInTheDocument();
     expect(screen.getByText('Pracuj.pl · Main Pracuj')).toBeInTheDocument();
+  });
+
+  it('marks a job listing as applied manually for the Filemaker default person', async () => {
+    mocks.settingsGet.mockImplementation((key: string) => {
+      if (key === FILEMAKER_DATABASE_KEY) return createSettingsValue();
+      if (key === FILEMAKER_EMAIL_CAMPAIGNS_KEY) return createCampaignsValue();
+      if (key === FILEMAKER_JOB_APPLICATION_SETTINGS_KEY) {
+        return JSON.stringify({
+          defaultPersonId: 'person-2',
+          defaultPersonName: 'Grace Hopper',
+        });
+      }
+      return undefined;
+    });
+
+    render(
+      <JobListingsHarness
+        initialJobListings={[
+          createFilemakerJobListing({
+            id: 'job-1',
+            organizationId: 'org-1',
+            title: 'FileMaker Consultant',
+            sourceSite: 'pracuj.pl',
+            sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+          }),
+        ]}
+      />
+    );
+
+    const markAppliedButton = screen.getByRole('button', {
+      name: /Mark applied manually for FileMaker Consultant/i,
+    });
+    await waitFor(() => {
+      expect(markAppliedButton).not.toBeDisabled();
+    });
+
+    fireEvent.click(markAppliedButton);
+
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledWith(
+        '/api/filemaker/job-applications',
+        expect.objectContaining({
+          method: 'POST',
+        })
+      );
+    });
+    const fetchCalls = (
+      fetch as unknown as {
+        mock: { calls: Array<[string | URL | Request, RequestInit | undefined]> };
+      }
+    ).mock.calls;
+    const postCall = fetchCalls.find(
+      ([url, init]) => String(url) === '/api/filemaker/job-applications' && init?.method === 'POST'
+    );
+    expect(JSON.parse(String(postCall?.[1]?.body))).toMatchObject({
+      action: 'mark_applied_manual',
+      jobListingId: 'job-1',
+      jobTitle: 'FileMaker Consultant',
+      organizationId: 'org-1',
+      organizationName: 'Acme Hiring',
+      personId: 'person-2',
+      personName: 'Grace Hopper',
+      sourceSite: 'pracuj.pl',
+      sourceUrl: 'https://www.pracuj.pl/praca/filemaker-consultant,oferta,1001',
+    });
+
+    expect(await screen.findByText('Prepared applications')).toBeInTheDocument();
+    expect(screen.getAllByText('Applied').length).toBeGreaterThan(0);
+    expect(jobApplicationsPayload.applications[0]).toMatchObject({
+      jobListingId: 'job-1',
+      organizationId: 'org-1',
+      personId: 'person-2',
+      status: 'applied',
+    });
   });
 
   it('lists prepared application packages for the matching job listing', async () => {

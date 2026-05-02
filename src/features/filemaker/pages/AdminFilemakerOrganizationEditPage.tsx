@@ -43,6 +43,13 @@ const resolveOrganizationPageItemName = ({
 };
 
 function OrganizationEditTabs({ isCreateMode }: { isCreateMode: boolean }): React.JSX.Element {
+  const { organization } = useAdminFilemakerOrganizationEditPageStateContext();
+  const organizationId = organization?.id ?? '';
+  const jobListingsHref =
+    organizationId.length > 0
+      ? `/admin/filemaker/organizations/${encodeURIComponent(organizationId)}/job-listings`
+      : null;
+
   return (
     <Tabs defaultValue='details' className='w-full space-y-4'>
       <TabsList className='bg-card/40' aria-label='Organization page tabs'>
@@ -57,6 +64,16 @@ function OrganizationEditTabs({ isCreateMode }: { isCreateMode: boolean }): Reac
       </TabsContent>
       {!isCreateMode ? (
         <TabsContent value='job-listings' className='m-0 space-y-4 outline-none'>
+          {jobListingsHref !== null ? (
+            <div className='flex justify-end'>
+              <a
+                href={jobListingsHref}
+                className='inline-flex h-8 items-center gap-1.5 rounded-md border border-border/70 px-3 text-xs text-gray-300 hover:bg-white/5'
+              >
+                Open full job listings page
+              </a>
+            </div>
+          ) : null}
           <OrganizationLegacyDemandSection />
           <OrganizationJobListingsSection />
         </TabsContent>

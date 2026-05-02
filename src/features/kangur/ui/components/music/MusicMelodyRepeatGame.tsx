@@ -310,14 +310,17 @@ export default function MusicMelodyRepeatGame({
 
       setPressedNoteId(noteId);
       setPressedVelocity(pressDetails.velocity);
-      if (pressedResetTimeoutRef.current !== null) {
-        globalThis.clearTimeout(pressedResetTimeoutRef.current);
-      }
-      pressedResetTimeoutRef.current = globalThis.setTimeout(() => {
-        setPressedNoteId(null);
-        setPressedVelocity(null);
-      }, 220);
+      import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
+      // ... (existing imports)
+
+             if (pressedResetTimeoutRef.current !== null) {
+               safeClearTimeout(pressedResetTimeoutRef.current);
+             }
+             pressedResetTimeoutRef.current = safeSetTimeout(() => {
+               setPressedNoteId(null);
+               setPressedVelocity(null);
+             }, 220);
       if (pressDetails.keyboardMode === 'piano') {
         await playNote({
           brightness: pressDetails.brightness,

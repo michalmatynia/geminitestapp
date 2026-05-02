@@ -93,9 +93,13 @@ function useCompleteEquationState(round: CompleteEquationRound) {
     (onResult: (correct: boolean) => void): void => {
       const ok = isAcceptedCountSplit(state.slotA.length, state.slotB.length, round.a, round.b);
       setCorrect(ok);
-      setChecked(true);
-      setTimeout(() => onResult(ok), 1400);
-    },
+      import { safeSetTimeout } from '@/shared/lib/timers';
+
+      // ... (existing imports)
+
+          setChecked(true);
+          safeSetTimeout(() => onResult(ok), 1400);
+        };
     [round.a, round.b, state.slotA.length, state.slotB.length]
   );
 

@@ -32,9 +32,9 @@ function LessonMasteryStatus({ mastery, copy }: { mastery: ResultsLessonMasteryS
           en: `Mastered ${mastery.masteredLessons}`,
           pl: `Opanowane ${mastery.masteredLessons}`,
         })}
-        backgroundColor="#ecfdf5"
-        borderColor="#a7f3d0"
-        textColor="#047857"
+        backgroundColor='#ecfdf5'
+        borderColor='#a7f3d0'
+        textColor='#047857'
       />
       <KangurMobileSummaryChip
         label={copy({
@@ -42,9 +42,9 @@ function LessonMasteryStatus({ mastery, copy }: { mastery: ResultsLessonMasteryS
           en: `Needs review ${mastery.lessonsNeedingPractice}`,
           pl: `Do powtórki ${mastery.lessonsNeedingPractice}`,
         })}
-        backgroundColor="#fffbeb"
-        borderColor="#fde68a"
-        textColor="#b45309"
+        backgroundColor='#fffbeb'
+        borderColor='#fde68a'
+        textColor='#b45309'
       />
     </View>
   );
@@ -58,7 +58,7 @@ function MasteryButtons({ weakestLesson, strongestLesson, copy }: { weakestLesso
           href={weakestLesson.lessonHref}
           label={copy({ de: `Fokus: ${weakestLesson.title}`, en: `Focus: ${weakestLesson.title}`, pl: `Skup się: ${weakestLesson.title}` })}
           stretch
-          tone="primary"
+          tone='primary'
         />
       )}
       {strongestLesson && (

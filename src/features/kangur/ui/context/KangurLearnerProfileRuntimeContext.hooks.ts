@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import type { KangurScoreRecord } from '@kangur/platform';
 import { isKangurAuthStatusError } from '@/features/kangur/services/status-errors';
 import { logKangurClientError, withKangurClientError } from '@/features/kangur/observability/client';
@@ -125,7 +126,7 @@ export const useLearnerProfileScores = ({
     const stop = (): void => {
       isActive = false;
       if (timeoutId !== null) {
-        globalThis.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
     };
     const mode = resolveLearnerProfileScoreLoadMode({
@@ -155,7 +156,7 @@ export const useLearnerProfileScores = ({
       isLoadingScores: true,
       scoresError: null,
     });
-    timeoutId = globalThis.setTimeout(() => {
+    timeoutId = safeSetTimeout(() => {
       void loadDeferredLearnerProfileScores({
         hasUser,
         isActive: () => isActive,

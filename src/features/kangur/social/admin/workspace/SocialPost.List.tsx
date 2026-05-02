@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import {
   ActionMenu,
   Badge,
@@ -91,10 +92,10 @@ export function SocialPostList(): React.JSX.Element {
   };
 
   React.useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setDebouncedSearchValue(searchValue.trim());
     }, 200);
-    return () => window.clearTimeout(timeoutId);
+    return () => safeClearTimeout(timeoutId);
   }, [searchValue]);
 
   React.useEffect(() => {

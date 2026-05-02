@@ -5,31 +5,33 @@ import { createKangurPracticeHref } from '../../practice/practiceHref';
 import { PRACTICE_ROUTE } from '../home-screen-constants';
 import { formatKangurMobileScoreOperation } from '../../scores/mobileScoreSummary';
 import { createHomeDebugProofViewModel } from './debug';
-import { type HomeScoreStateProps, type HomeRecentResultsViewModel, type HomeScoreViewModel } from './types';
+import { type HomeScoreStateProps, type HomeRecentResultsViewModel } from './types';
 
 function resolveRecentResults(
   trainingFocus: ReturnType<typeof useKangurMobileTrainingFocus>,
   cachedRecentResults: ReturnType<typeof useKangurMobileRecentResults>,
 ): HomeRecentResultsViewModel {
-  const hasResolvedHomeScoreInsights =
-    trainingFocus.isEnabled &&
-    !trainingFocus.isLoading &&
-    !trainingFocus.isRestoringAuth &&
-    !trainingFocus.error;
+  const isEnabled = trainingFocus.isEnabled;
+  if (!isEnabled) {
+    return {
+      error: cachedRecentResults.error,
+      isEnabled: false,
+      isLoading: cachedRecentResults.isLoading,
+      isRestoringAuth: cachedRecentResults.isRestoringAuth,
+      refresh: cachedRecentResults.refresh,
+      results: cachedRecentResults.results,
+    };
+  }
+
+  const hasResolvedInsights = !trainingFocus.isLoading && !trainingFocus.isRestoringAuth && (trainingFocus.error === null || trainingFocus.error === '');
 
   return {
-    error: trainingFocus.isEnabled ? trainingFocus.error : cachedRecentResults.error,
-    isEnabled: trainingFocus.isEnabled,
-    isLoading: trainingFocus.isEnabled
-      ? trainingFocus.isLoading
-      : cachedRecentResults.isLoading,
-    isRestoringAuth: trainingFocus.isEnabled
-      ? trainingFocus.isRestoringAuth
-      : cachedRecentResults.isRestoringAuth,
-    refresh: trainingFocus.isEnabled ? trainingFocus.refresh : cachedRecentResults.refresh,
-    results: hasResolvedHomeScoreInsights
-      ? trainingFocus.recentResults
-      : cachedRecentResults.results,
+    error: trainingFocus.error,
+    isEnabled: true,
+    isLoading: trainingFocus.isLoading,
+    isRestoringAuth: trainingFocus.isRestoringAuth,
+    refresh: trainingFocus.refresh,
+    results: hasResolvedInsights ? trainingFocus.recentResults : cachedRecentResults.results,
   };
 }
 
@@ -68,10 +70,10 @@ export function LiveAuthenticatedHomeScoreState({
     <>
       {children({
         homeDebugProof,
-        homeHeroFocusHref: trainingFocus.weakestOperation
+        homeHeroFocusHref: (trainingFocus.weakestOperation !== null)
           ? createKangurPracticeHref(trainingFocus.weakestOperation.operation)
           : PRACTICE_ROUTE,
-        homeHeroFocusLabel: trainingFocus.weakestOperation
+        homeHeroFocusLabel: (trainingFocus.weakestOperation !== null)
           ? formatKangurMobileScoreOperation(
               trainingFocus.weakestOperation.operation,
               locale,

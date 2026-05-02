@@ -54,7 +54,7 @@ function LessonItemRow({ item, copy, locale, onOpenCatalogLesson }: { item: Less
       }}
     >
       <Link href={href} asChild>
-        <Pressable accessibilityRole="button" onPress={onOpenCatalogLesson} style={{ gap: 10 }}>
+        <Pressable accessibilityRole='button' onPress={onOpenCatalogLesson} style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
             <View style={{ flex: 1, gap: 4 }}>
               <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '800' }}>{item.lesson.emoji} {item.lesson.title}</Text>
@@ -69,7 +69,7 @@ function LessonItemRow({ item, copy, locale, onOpenCatalogLesson }: { item: Less
         </Pressable>
       </Link>
       <View style={{ flexDirection: 'column', gap: 8 }}>
-        <LinkButton href={href} label={`${copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}: ${item.lesson.title}`} onPress={onOpenCatalogLesson} stretch textStyle={{ textAlign: 'left' }} tone="primary" />
+        <LinkButton href={href} label={`${copy({ de: 'Lektion öffnen', en: 'Open lesson', pl: 'Otwórz lekcję' })}: ${item.lesson.title}`} onPress={onOpenCatalogLesson} stretch textStyle={{ textAlign: 'left' }} tone='primary' />
         {item.practiceHref && (
           <LinkButton href={item.practiceHref} label={`${copy({ de: 'Training starten', en: 'Start practice', pl: 'Uruchom trening' })}: ${item.lesson.title}`} stretch textStyle={{ textAlign: 'left' }} tone='secondary' />
         )}

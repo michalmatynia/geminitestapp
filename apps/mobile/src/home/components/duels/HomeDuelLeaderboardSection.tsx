@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native';
+import type { KangurDuelLeaderboardEntry } from '@kangur/contracts/kangur-duels';
 import { useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
 import { useKangurMobileHomeDuelsLeaderboard } from '../../useKangurMobileHomeDuelsLeaderboard';
 import { PrimaryButton, OutlineLink, SectionCard } from '../../homeScreenPrimitives';
@@ -7,7 +8,14 @@ import { createKangurDuelsHref } from '../../../duels/duelsHref';
 
 const DUELS_ROUTE = createKangurDuelsHref();
 
-function LeaderboardLoading({ copy }: { copy: Props['copy'] }) {
+type LeaderboardSectionProps = {
+  activeDuelLearnerId: string | null;
+  isAuthenticated: boolean;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+  locale: string;
+};
+
+function LeaderboardLoading({ copy }: { copy: LeaderboardSectionProps['copy'] }): React.JSX.Element {
   return (
     <Text style={{ color: '#475569', lineHeight: 20 }}>
       {copy({
@@ -19,7 +27,7 @@ function LeaderboardLoading({ copy }: { copy: Props['copy'] }) {
   );
 }
 
-function LeaderboardError({ copy, error, refresh }: { copy: Props['copy']; error: string; refresh: () => void }) {
+function LeaderboardError({ copy, error, refresh }: { copy: LeaderboardSectionProps['copy']; error: string; refresh: () => void }): React.JSX.Element {
   return (
     <View style={{ gap: 10 }}>
       <Text style={{ color: '#b91c1c', lineHeight: 20 }}>{error}</Text>
@@ -40,7 +48,7 @@ function LeaderboardError({ copy, error, refresh }: { copy: Props['copy']; error
   );
 }
 
-function LeaderboardEmpty({ copy }: { copy: Props['copy'] }) {
+function LeaderboardEmpty({ copy }: { copy: LeaderboardSectionProps['copy'] }): React.JSX.Element {
   return (
     <View style={{ gap: 10 }}>
       <Text style={{ color: '#475569', lineHeight: 20 }}>
@@ -68,24 +76,27 @@ function LeaderboardEntries({
   copy,
   locale,
 }: {
-  entries: ReturnType<typeof useKangurMobileHomeDuelsLeaderboard>['entries'];
+  entries: KangurDuelLeaderboardEntry[];
   activeDuelLearnerId: string | null;
   isAuthenticated: boolean;
-  currentLearnerDuelEntry: any;
+  currentLearnerDuelEntry: KangurDuelLeaderboardEntry | null;
   currentLearnerDuelRank: number;
-  copy: Props['copy'];
+  copy: LeaderboardSectionProps['copy'];
   locale: string;
-}) {
-  return (
-    <View style={{ gap: 12 }}>
-      {isAuthenticated && currentLearnerDuelEntry !== null ? (
+}): React.JSX.Element {
+  let snapshotContent: React.ReactNode = null;
+  if (isAuthenticated) {
+    if (currentLearnerDuelEntry !== null) {
+      snapshotContent = (
         <DuelLeaderboardSnapshotCard
           copy={copy}
           entry={currentLearnerDuelEntry}
           locale={locale}
           rank={currentLearnerDuelRank + 1}
         />
-      ) : isAuthenticated ? (
+      );
+    } else {
+      snapshotContent = (
         <Text style={{ color: '#64748b', lineHeight: 20 }}>
           {copy({
             de: 'Dein Konto ist in diesem Duellstand noch nicht sichtbar.',
@@ -93,7 +104,13 @@ function LeaderboardEntries({
             pl: 'Twojego konta nie widać jeszcze w tym stanie pojedynków.',
           })}
         </Text>
-      ) : null}
+      );
+    }
+  }
+
+  return (
+    <View style={{ gap: 12 }}>
+      {snapshotContent}
       {entries.map((entry, index) => (
         <DuelLeaderboardEntryCard
           key={entry.learnerId}
@@ -113,42 +130,55 @@ function LeaderboardEntries({
   );
 }
 
-type Props = {
-  activeDuelLearnerId: string | null;
-  isAuthenticated: boolean;
-  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
-};
+function LeaderboardContent({
+  activeDuelLearnerId,
+  isAuthenticated,
+  copy,
+  locale,
+  duelLeaderboard,
+}: LeaderboardSectionProps & { duelLeaderboard: ReturnType<typeof useKangurMobileHomeDuelsLeaderboard> }): React.JSX.Element {
+  if (duelLeaderboard.isLoading) return <LeaderboardLoading copy={copy} />;
+  
+  if (duelLeaderboard.error !== null && duelLeaderboard.error !== '') {
+    return <LeaderboardError copy={copy} error={duelLeaderboard.error} refresh={duelLeaderboard.refresh} />;
+  }
+  
+  if (duelLeaderboard.entries.length === 0) return <LeaderboardEmpty copy={copy} />;
+
+  const currentLearnerDuelRank = activeDuelLearnerId !== null && activeDuelLearnerId !== '' 
+    ? duelLeaderboard.entries.findIndex((e) => e.learnerId === activeDuelLearnerId) 
+    : -1;
+  const currentLearnerDuelEntry = currentLearnerDuelRank >= 0 ? (duelLeaderboard.entries[currentLearnerDuelRank] ?? null) : null;
+
+  return (
+    <LeaderboardEntries
+      entries={duelLeaderboard.entries}
+      activeDuelLearnerId={activeDuelLearnerId}
+      isAuthenticated={isAuthenticated}
+      currentLearnerDuelEntry={currentLearnerDuelEntry}
+      currentLearnerDuelRank={currentLearnerDuelRank}
+      copy={copy}
+      locale={locale}
+    />
+  );
+}
 
 export function HomeDuelLeaderboardSection({
   activeDuelLearnerId,
   isAuthenticated,
-}: Omit<Props, 'copy'>): React.JSX.Element {
+}: Omit<LeaderboardSectionProps, 'copy' | 'locale'>): React.JSX.Element {
   const { copy, locale } = useKangurMobileI18n();
   const duelLeaderboard = useKangurMobileHomeDuelsLeaderboard({ enabled: true });
-  const currentLearnerDuelRank = activeDuelLearnerId !== null && activeDuelLearnerId !== '' ? duelLeaderboard.entries.findIndex((e) => e.learnerId === activeDuelLearnerId) : -1;
-  const currentLearnerDuelEntry = currentLearnerDuelRank >= 0 ? duelLeaderboard.entries[currentLearnerDuelRank] : null;
-
-  let content: React.ReactNode = null;
-  if (duelLeaderboard.isLoading) content = <LeaderboardLoading copy={copy} />;
-  else if (duelLeaderboard.error !== null && duelLeaderboard.error !== '') content = <LeaderboardError copy={copy} error={duelLeaderboard.error} refresh={duelLeaderboard.refresh} />;
-  else if (duelLeaderboard.entries.length === 0) content = <LeaderboardEmpty copy={copy} />;
-  else {
-    content = (
-      <LeaderboardEntries
-        entries={duelLeaderboard.entries}
-        activeDuelLearnerId={activeDuelLearnerId}
-        isAuthenticated={isAuthenticated}
-        currentLearnerDuelEntry={currentLearnerDuelEntry}
-        currentLearnerDuelRank={currentLearnerDuelRank}
-        copy={copy}
-        locale={locale}
-      />
-    );
-  }
 
   return (
     <SectionCard title={copy({ de: 'Duell-Rangliste', en: 'Duel leaderboard', pl: 'Ranking pojedynków' })}>
-      {content}
+      <LeaderboardContent
+        activeDuelLearnerId={activeDuelLearnerId}
+        copy={copy}
+        duelLeaderboard={duelLeaderboard}
+        isAuthenticated={isAuthenticated}
+        locale={locale}
+      />
     </SectionCard>
   );
 }

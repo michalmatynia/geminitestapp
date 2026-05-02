@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
+  safeCancelAnimationFrame,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+} from '@/shared/lib/timers';
+import {
   getKangurHomeHref,
   getKangurInternalQueryParamName,
   readKangurUrlParam,
@@ -233,27 +238,12 @@ export function useLessonsLogic() {
     }
 
     let timeoutId: number | null = null;
-    const frameId =
-      typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame(() => {
-            setIsDeferredContentReady(true);
-          })
-        : window.setTimeout(() => {
-            timeoutId = null;
-            setIsDeferredContentReady(true);
-          }, 0);
+    const frameId = safeRequestAnimationFrame(() => {
+      setIsDeferredContentReady(true);
+    });
 
     return () => {
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        return;
-      }
-
-      if (typeof window.cancelAnimationFrame === 'function') {
-        window.cancelAnimationFrame(frameId);
-      } else {
-        window.clearTimeout(frameId);
-      }
+      safeCancelAnimationFrame(frameId);
     };
   }, []);
 
@@ -281,29 +271,13 @@ export function useLessonsLogic() {
       return;
     }
 
-    let timeoutId: number | null = null;
-    const frameId =
-      typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame(() => {
-            setIsAssignmentsReady(true);
-          })
-        : window.setTimeout(() => {
-            timeoutId = null;
-            setIsAssignmentsReady(true);
-          }, 0);
+    const frameId = safeRequestAnimationFrame(() => {
+      setIsAssignmentsReady(true);
+    });
 
     return () => {
       setIsAssignmentsReady(false);
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-        return;
-      }
-
-      if (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
-        window.cancelAnimationFrame(frameId);
-      } else {
-        window.clearTimeout(frameId);
-      }
+      safeCancelAnimationFrame(frameId);
     };
   }, [canAccessParentAssignments, isDeferredContentReady, shouldLoadLessonRuntimeMetadata]);
 

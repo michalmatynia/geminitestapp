@@ -415,8 +415,13 @@ export function useGeometryDrawingGameState(props: GeometryDrawingGameProps) {
   const moveToNextRound = useCallback(
     (wasCorrect: boolean): void => {
       const nextScore = wasCorrect ? score + 1 : score;
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing code)
+
       const isLastRound = roundIndex + 1 >= totalRounds;
-      window.setTimeout((): void => {
+      safeSetTimeout((): void => {
         dispatch({ type: 'clear_feedback' });
         clearDrawing();
         if (isLastRound) {

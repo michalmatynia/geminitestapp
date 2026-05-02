@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native';
 import { PrimaryButton, OutlineLink } from '../../homeScreenPrimitives';
-import { type useKangurMobileI18n } from '../../../i18n/kangurMobileI18n';
+import { type useKangurMobileI18n, type KangurMobileLocale } from '../../../i18n/kangurMobileI18n';
 import { type useKangurMobileHomeDuelsInvites } from '../../useKangurMobileHomeDuelsInvites';
 import { OutgoingChallengeCard } from '../../home-duel-section-cards';
 import { createKangurDuelsHref } from '../../../duels/duelsHref';
@@ -8,7 +8,7 @@ import { DeferredDuelSectionPlaceholder, DeferredDuelAdvancedSectionPlaceholder 
 
 const DUELS_ROUTE = createKangurDuelsHref();
 
-type Props = {
+type AuthenticatedHomeOutgoingChallengesContentProps = {
   areDeferredHomePanelsReady: boolean;
   areDeferredHomeDuelSecondaryReady: boolean;
   invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
@@ -99,6 +99,28 @@ function ChallengesEmpty({ copy }: { copy: ReturnType<typeof useKangurMobileI18n
   );
 }
 
+function ChallengesStatusSwitch({
+  invites,
+  copy,
+}: {
+  invites: ReturnType<typeof useKangurMobileHomeDuelsInvites>;
+  copy: ReturnType<typeof useKangurMobileI18n>['copy'];
+}): React.JSX.Element | null {
+  if (invites.isRestoringAuth || invites.isLoading) {
+    return <ChallengesLoading copy={copy} />;
+  }
+  if (invites.isDeferred && invites.outgoingChallenges.length === 0) {
+    return <ChallengesDeferred copy={copy} />;
+  }
+  if (invites.error !== null && invites.error !== '') {
+    return <ChallengesError copy={copy} error={invites.error} refresh={() => { void invites.refresh(); }} />;
+  }
+  if (invites.outgoingChallenges.length === 0) {
+    return <ChallengesEmpty copy={copy} />;
+  }
+  return null;
+}
+
 function ChallengesList({
   invites,
   copy,
@@ -112,14 +134,10 @@ function ChallengesList({
   locale: string;
   duelInviteShareError: string | null;
   sharingDuelSessionId: string | null;
-  onShare: (sessionId: string) => Promise<void>;
+  onShare: (sessionId: string) => void;
 }): React.JSX.Element {
-  if (invites.isRestoringAuth || invites.isLoading) return <ChallengesLoading copy={copy} />;
-  if (invites.isDeferred && invites.outgoingChallenges.length === 0) return <ChallengesDeferred copy={copy} />;
-  if (invites.error !== null && invites.error !== '') {
-    return <ChallengesError copy={copy} error={invites.error} refresh={invites.refresh} />;
-  }
-  if (invites.outgoingChallenges.length === 0) return <ChallengesEmpty copy={copy} />;
+  const statusContent = <ChallengesStatusSwitch invites={invites} copy={copy} />;
+  if (statusContent !== null) return statusContent;
 
   return (
     <View style={{ gap: 12 }}>
@@ -132,7 +150,7 @@ function ChallengesList({
           copy={copy}
           entry={entry}
           isSharing={sharingDuelSessionId === entry.sessionId}
-          locale={locale as any}
+          locale={locale as KangurMobileLocale}
           onShare={() => onShare(entry.sessionId)}
         />
       ))}
@@ -149,9 +167,13 @@ export function AuthenticatedHomeOutgoingChallengesContent({
   duelInviteShareError,
   sharingDuelSessionId,
   onShare,
-}: Props): React.JSX.Element {
+}: AuthenticatedHomeOutgoingChallengesContentProps): React.JSX.Element {
   if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
   if (!areDeferredHomeDuelSecondaryReady) return <DeferredDuelAdvancedSectionPlaceholder />;
+
+  const handleShare = (sessionId: string): void => {
+    void onShare(sessionId);
+  };
 
   return (
     <ChallengesList 
@@ -160,7 +182,7 @@ export function AuthenticatedHomeOutgoingChallengesContent({
       locale={locale}
       duelInviteShareError={duelInviteShareError}
       sharingDuelSessionId={sharingDuelSessionId}
-      onShare={onShare}
+      onShare={handleShare}
     />
   );
 }

@@ -240,6 +240,7 @@ export type {
   FilemakerJobApplicationCoverLetter,
   FilemakerJobApplicationEmail,
   FilemakerJobApplicationListResponse,
+  FilemakerJobApplicationLogEntry,
   FilemakerJobApplicationResponse,
   FilemakerJobApplicationStatus,
   FilemakerJobApplicationTailoredCv,

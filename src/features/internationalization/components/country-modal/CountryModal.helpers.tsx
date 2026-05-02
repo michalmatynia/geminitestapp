@@ -31,7 +31,7 @@ export const resolveCountryFormChange = (
   values: Partial<CodeNameDto>,
   options: readonly CodeNameDto[]
 ): CodeNameDto => {
-  if (values.code) {
+  if (values.code !== undefined && values.code !== '') {
     const selectedOption = options.find((option) => option.code === values.code);
     return {
       code: values.code,

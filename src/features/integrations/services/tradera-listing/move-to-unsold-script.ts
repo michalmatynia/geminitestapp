@@ -89,7 +89,9 @@ ${selectorRegistryRuntime}
 
   ${executionStepsInit}
 
-  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  import { safeSetTimeout } from '@/shared/lib/timers';
+
+  const wait = (ms: number) => new Promise((resolve) => safeSetTimeout(resolve, ms));
 
   const updateStep = (id, status, message = null) => {
     const step = executionSteps.find((entry) => entry.id === id);

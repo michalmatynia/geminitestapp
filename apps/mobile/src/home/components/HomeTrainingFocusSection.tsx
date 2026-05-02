@@ -9,7 +9,7 @@ import {
 import { FocusCard } from './FocusCard';
 import { createKangurLessonHref } from '../../lessons/lessonHref';
 import { createKangurPracticeHref } from '../../practice/practiceHref';
-import { type HomeScoreViewModel } from '../home-screen-score-state';
+import { type HomeScoreViewModel } from '../score-state/types';
 import { type useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 
 type HomeTrainingFocusSectionProps = {

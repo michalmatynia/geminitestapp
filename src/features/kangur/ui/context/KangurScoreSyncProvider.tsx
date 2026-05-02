@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from 'react';
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import {
   trackKangurClientEvent,
   withKangurClientError,
@@ -83,7 +84,7 @@ const scheduleGuestScoreSync = (
   delayMs: number
 ): number => {
   if (delayMs > 0) {
-    return window.setTimeout(() => {
+    return safeSetTimeout(() => {
       syncScores().catch((error: unknown) => {
         trackKangurClientEvent('kangur_guest_scores_sync_failed', {
           learnerKey: 'unknown',
@@ -96,7 +97,7 @@ const scheduleGuestScoreSync = (
   const scheduleSync =
     typeof globalThis.requestIdleCallback === 'function'
       ? globalThis.requestIdleCallback
-      : (cb: () => void): number => window.setTimeout(cb, 1);
+      : (cb: () => void): number => safeSetTimeout(cb, 1);
 
   return scheduleSync(() => {
     syncScores().catch((error: unknown) => {
@@ -114,7 +115,7 @@ const cancelGuestScoreSync = (idleHandle: number): void => {
     return;
   }
 
-  window.clearTimeout(idleHandle);
+  safeClearTimeout(idleHandle);
 };
 
 const useGuestScoreSync = ({

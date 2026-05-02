@@ -160,11 +160,15 @@ const useObservedNarrationText = ({
       return;
     }
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
     const observer = new MutationObserver(() => {
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
-      timeoutId = window.setTimeout(updateText, 120);
+      timeoutId = safeSetTimeout(updateText, 120);
     });
 
     observer.observe(root, {
@@ -176,7 +180,7 @@ const useObservedNarrationText = ({
     return () => {
       observer.disconnect();
       if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
     };
   }, [lessonContentMode, lessonId, lessonContentRef, lessonDocument, shouldObserveText]);

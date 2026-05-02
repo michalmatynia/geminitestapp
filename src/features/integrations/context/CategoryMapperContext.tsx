@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
 import {
   useIntegrationCatalogs,
   useIntegrationProductCategories,
@@ -111,18 +113,18 @@ export function CategoryMapperProvider({
 
   // Auto-select default catalog
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof safeSetTimeout> | null = null;
     if (!selectedCatalogId && catalogs.length > 0 && !hasInitializedCatalog.current) {
       const defaultCatalog = catalogs.find((c: CatalogRecord) => c.isDefault) ?? catalogs[0];
       if (defaultCatalog) {
-        timer = setTimeout(() => {
+        timer = safeSetTimeout(() => {
           setSelectedCatalogId(defaultCatalog.id);
           hasInitializedCatalog.current = true;
         }, 0);
       }
     }
     return (): void => {
-      if (timer) clearTimeout(timer);
+      if (timer) safeClearTimeout(timer);
     };
   }, [catalogs, selectedCatalogId]);
 
@@ -195,9 +197,9 @@ export function CategoryMapperProvider({
 
   // Initialize expansion state
   useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
+    let timer: ReturnType<typeof safeSetTimeout> | null = null;
     if (externalCategories.length > 0 && !hasInitializedExpansion.current) {
-      timer = setTimeout(() => {
+      timer = safeSetTimeout(() => {
         setExpandedIds((prev: Set<string>) => {
           if (prev.size === 0) {
             return buildInitialExpandedIds(externalCategories, externalIds);
@@ -208,16 +210,16 @@ export function CategoryMapperProvider({
       }, 0);
     }
     return (): void => {
-      if (timer) clearTimeout(timer);
+      if (timer) safeClearTimeout(timer);
     };
   }, [externalCategories, externalIds]);
 
   // Reset pending mappings when catalog changes
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = safeSetTimeout(() => {
       setPendingMappings(new Map());
     }, 0);
-    return (): void => clearTimeout(timer);
+    return (): void => safeClearTimeout(timer);
   }, [selectedCatalogId]);
 
   const handleFetchExternalCategories = useCallback(async (): Promise<void> => {

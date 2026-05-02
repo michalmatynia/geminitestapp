@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { useToast } from '@/features/kangur/shared/ui';
 import {
   usePatchKangurSocialPost,
@@ -72,9 +73,9 @@ export function useSocialContext(deps: SocialContextDeps) {
           docRefs.length > 0 ? `?refs=${encodeURIComponent(docRefs.join(','))}` : ''
         }`;
         const contextAbort = new AbortController();
-        const contextTimer = setTimeout(() => contextAbort.abort(), 30_000);
+        const contextTimer = safeSetTimeout(() => contextAbort.abort(), 30_000);
         const contextResponse = await fetch(contextUrl, { signal: contextAbort.signal }).finally(
-          () => clearTimeout(contextTimer)
+          () => safeClearTimeout(contextTimer)
         );
         if (!contextResponse.ok) {
           if (notify) {

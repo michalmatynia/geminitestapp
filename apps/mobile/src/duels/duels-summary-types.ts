@@ -1,4 +1,3 @@
-import type { Href } from 'expo-router';
 import type { KangurDuelLeaderboardEntry, KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
 
 export type UseKangurMobileLearnerDuelsSummaryResult = {

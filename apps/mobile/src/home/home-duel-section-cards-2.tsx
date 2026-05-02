@@ -1,23 +1,17 @@
 import type { KangurDuelLeaderboardEntry, KangurDuelOpponentEntry } from '@kangur/contracts/kangur-duels';
 import { Text, View } from 'react-native';
-import { type Href } from 'expo-router';
 
 import { createKangurDuelsHref } from '../duels/duelsHref';
 import { type useKangurMobileI18n, type KangurMobileLocale } from '../i18n/kangurMobileI18n';
-import { formatKangurMobileScoreOperation } from '../scores/mobileScoreSummary';
 import { OutlineLink, PrimaryButton } from './homeScreenPrimitives';
 import {
   formatHomeRelativeAge,
-  getHomeDuelDifficultyLabel,
-  getHomeDuelModeLabel,
-  getHomeDuelSeriesLabel,
-  getHomeDuelStatusLabel,
 } from './homeScreenLabels';
 
 type HomeCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 const DUELS_ROUTE = createKangurDuelsHref();
 
-export function RecentOpponentCard({ copy, entry, isPending, locale, onRematch }: { copy: HomeCopy; entry: KangurDuelOpponentEntry; isPending: boolean; locale: KangurMobileLocale; onRematch: () => Promise<void> }) {
+export function RecentOpponentCard({ copy, entry, isPending, locale, onRematch }: { copy: HomeCopy; entry: KangurDuelOpponentEntry; isPending: boolean; locale: KangurMobileLocale; onRematch: () => void }): React.JSX.Element {
   return (
     <View style={{ backgroundColor: '#f8fafc', borderColor: '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>{entry.displayName}</Text>
@@ -30,7 +24,7 @@ export function RecentOpponentCard({ copy, entry, isPending, locale, onRematch }
   );
 }
 
-export function DuelLeaderboardEntryCard({ copy, entry, isCurrentLearner, locale, rank }: { copy: HomeCopy; entry: KangurDuelLeaderboardEntry; isCurrentLearner: boolean; locale: KangurMobileLocale; rank: number }) {
+export function DuelLeaderboardEntryCard({ copy, entry, isCurrentLearner, locale, rank }: { copy: HomeCopy; entry: KangurDuelLeaderboardEntry; isCurrentLearner: boolean; locale: KangurMobileLocale; rank: number }): React.JSX.Element {
   return (
     <View style={{ backgroundColor: isCurrentLearner ? '#eff6ff' : '#f8fafc', borderColor: isCurrentLearner ? '#bfdbfe' : '#e2e8f0', borderRadius: 20, borderWidth: 1, gap: 8, padding: 14 }}>
       <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '700' }}>#{rank} {entry.displayName}{isCurrentLearner ? copy({ de: ' · Du', en: ' · You', pl: ' · Ty' }) : ''}</Text>

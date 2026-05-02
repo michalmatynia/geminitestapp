@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useReducer, useRef } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import type { KangurGameInstanceId } from '@/shared/contracts/kangur-game-instances';
 import type {
   KangurDifficulty,
@@ -43,10 +44,10 @@ export function useKangurGameCore() {
   useEffect(
     () => () => {
       if (xpToastTimeoutRef.current) {
-        window.clearTimeout(xpToastTimeoutRef.current);
+        safeClearTimeout(xpToastTimeoutRef.current);
       }
       if (gameLoopTimeoutRef.current) {
-        window.clearTimeout(gameLoopTimeoutRef.current);
+        safeClearTimeout(gameLoopTimeoutRef.current);
       }
     },
     []
@@ -130,9 +131,9 @@ export function useKangurGameCore() {
   // is active at a time (prevents double-advance on rapid re-renders).
   const runGameLoopTimer = useCallback((fn: () => void, ms: number): void => {
     if (gameLoopTimeoutRef.current) {
-      window.clearTimeout(gameLoopTimeoutRef.current);
+      safeClearTimeout(gameLoopTimeoutRef.current);
     }
-    gameLoopTimeoutRef.current = window.setTimeout(() => {
+    gameLoopTimeoutRef.current = safeSetTimeout(() => {
       gameLoopTimeoutRef.current = null;
       fn();
     }, ms);
@@ -151,7 +152,7 @@ export function useKangurGameCore() {
     recommendation: KangurXpToastState['recommendation'] = null
   ): void => {
     if (xpToastTimeoutRef.current) {
-      window.clearTimeout(xpToastTimeoutRef.current);
+      safeClearTimeout(xpToastTimeoutRef.current);
     }
 
     dispatch({
@@ -166,7 +167,7 @@ export function useKangurGameCore() {
         recommendation,
       },
     });
-    xpToastTimeoutRef.current = window.setTimeout(() => {
+    xpToastTimeoutRef.current = safeSetTimeout(() => {
       dispatch({ type: 'DISMISS_XP_TOAST' });
       xpToastTimeoutRef.current = null;
     }, 2800);

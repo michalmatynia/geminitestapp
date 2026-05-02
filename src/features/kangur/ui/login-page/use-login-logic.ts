@@ -2,6 +2,7 @@
 
 import { startTransition, useCallback, useState } from 'react';
 import { useRouter } from 'nextjs-toploader/app';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import { useTranslations } from 'next-intl';
 import {
   withKangurClientErrorSync,
@@ -101,8 +102,8 @@ const syncKangurLoginSuccessLearnerState = ({
 };
 
 const waitForKangurLoginSuccessNotice = async (): Promise<void> => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
+  await new Promise<void>((resolve) => {
+    safeSetTimeout(resolve, LOGIN_SUCCESS_NOTICE_DELAY_MS);
   });
 };
 

@@ -5,6 +5,8 @@ import { CheckCircle, Printer, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
+import { safeSetTimeout } from '@/shared/lib/timers';
+
 import { KangurAnswerChoiceBadge } from '@/features/kangur/ui/components/KangurAnswerChoiceBadge';
 import KangurAnswerChoiceCard from '@/features/kangur/ui/components/KangurAnswerChoiceCard';
 import KangurExam from '@/features/kangur/ui/components/KangurExam';
@@ -152,7 +154,7 @@ function QuestionView({ q, qIndex, total, onAnswer }: QuestionViewProps): React.
     }
     setConfirmed(true);
     const correct = selected === q.answer;
-    setTimeout(() => onAnswer(correct), 1400);
+    safeSetTimeout(() => onAnswer(correct), 1400);
   };
   const handleChoiceConfirm = (choice: KangurQuestionChoice): void => {
     handleSelect(choice);

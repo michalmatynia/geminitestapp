@@ -5,14 +5,16 @@ export const REFRESH_TIMEOUT_MS = 8_000;
 export const PRIMARY_DATA_LOAD_DEFER_MS = 0;
 export const SCORES_LOAD_DEFER_MS = 200;
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
 export async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number,
   message: string
 ): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
   const timeoutPromise = new Promise<never>((_resolve, reject) => {
-    timeoutId = setTimeout(() => {
+    timeoutId = safeSetTimeout(() => {
       reject(new Error(message));
     }, timeoutMs);
   });
@@ -20,8 +22,8 @@ export async function withTimeout<T>(
   try {
     return await Promise.race([promise, timeoutPromise]);
   } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    if (timeoutId !== null) {
+      safeClearTimeout(timeoutId);
     }
   }
 }

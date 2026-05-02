@@ -29,6 +29,7 @@ import {
   KangurInfoCard,
 } from '@/features/kangur/ui/design/primitives';
 import { cn } from '@/features/kangur/shared/utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { SEASONS, WEEKDAYS } from './CalendarInteractiveGame.constants';
 import { type useCalendarInteractiveGameState } from './CalendarInteractiveGame.hooks';
@@ -508,12 +509,12 @@ function CalendarInteractiveGameContent(): React.JSX.Element {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       handleNext();
     }, 1200);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [done, feedback, handleNext]);
 

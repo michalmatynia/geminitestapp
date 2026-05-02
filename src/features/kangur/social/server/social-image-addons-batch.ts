@@ -213,8 +213,12 @@ const resolvePlaywrightStorageState = (params: {
   return resolved;
 };
 
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
 const sleep = async (ms: number): Promise<void> =>
-  await new Promise((resolve) => setTimeout(resolve, ms));
+  await new Promise((resolve) => safeSetTimeout(resolve, ms));
 
 const toRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === 'object' ? (value as Record<string, unknown>) : null;

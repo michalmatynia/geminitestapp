@@ -5,6 +5,17 @@ export type FilemakerJobApplicationStatus =
   | 'rejected'
   | 'archived';
 
+export type FilemakerJobApplicationLogMethod = 'manual' | 'apply_script';
+
+export type FilemakerJobApplicationLogEntry = {
+  id: string;
+  appliedAt: string;
+  method: FilemakerJobApplicationLogMethod;
+  personId: string | null;
+  personName: string | null;
+  toStatus?: FilemakerJobApplicationStatus | null;
+};
+
 export type FilemakerJobApplicationArtifactKind =
   | 'application_email'
   | 'cover_letter'
@@ -217,6 +228,7 @@ export type FilemakerJobApplication = {
   sourceEntityId: string | null;
   sourceApplicationContext: Record<string, unknown> | null;
   storageApplicationId?: string | null;
+  applicationLog?: FilemakerJobApplicationLogEntry[] | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -30,13 +30,9 @@ export async function maybeUpdateCheckpointBrief(args: {
     runId,
     memoryContext,
     planSteps,
-    summaryCheckpoint,
-    taskType,
-    approvalRequestedStepId,
-    approvalGrantedStepId,
   } = args;
 
-  if (!activeStepIdForBrief) return checkpointContext;
+  if (activeStepIdForBrief === null) return checkpointContext;
   if (
     checkpointContext.checkpointBriefStepId === activeStepIdForBrief &&
     checkpointContext.checkpointBriefError === (lastError ?? null)
@@ -63,24 +59,7 @@ export async function maybeUpdateCheckpointBrief(args: {
     checkpointBriefError: lastError ?? null,
   };
 
-  await persistCheckpoint({
-    runId,
-    steps: planSteps,
-    activeStepId: activeStepIdForBrief,
-    lastError,
-    taskType,
-    approvalRequestedStepId,
-    approvalGrantedStepId,
-    checkpointBrief: brief.summary,
-    checkpointNextActions: brief.nextActions,
-    checkpointRisks: brief.risks,
-    checkpointStepId: nextContext.checkpointBriefStepId,
-    checkpointCreatedAt: new Date().toISOString(),
-    summaryCheckpoint,
-    settings: context.settings,
-    preferences: context.preferences,
-    contextRegistry: context.contextRegistry,
-  });
+  await saveCheckpoint(args, brief, nextContext.checkpointBriefStepId);
 
   await logAgentAudit(runId, 'info', 'Checkpoint brief saved.', {
     type: 'checkpoint-brief',
@@ -89,4 +68,38 @@ export async function maybeUpdateCheckpointBrief(args: {
   });
 
   return nextContext;
+}
+
+async function saveCheckpoint(
+  args: {
+    planSteps: PlanStep[];
+    lastError: string | null;
+    taskType: PlannerMeta['taskType'] | null;
+    approvalRequestedStepId: string | null;
+    approvalGrantedStepId: string | null;
+    summaryCheckpoint: number;
+    context: AgentExecutionContext;
+    runId: string;
+  },
+  brief: { summary: string; nextActions: string[]; risks: string[] },
+  checkpointStepId: string
+): Promise<void> {
+  await persistCheckpoint({
+    runId: args.runId,
+    steps: args.planSteps,
+    activeStepId: checkpointStepId,
+    lastError: args.lastError,
+    taskType: args.taskType,
+    approvalRequestedStepId: args.approvalRequestedStepId,
+    approvalGrantedStepId: args.approvalGrantedStepId,
+    checkpointBrief: brief.summary,
+    checkpointNextActions: brief.nextActions,
+    checkpointRisks: brief.risks,
+    checkpointStepId,
+    checkpointCreatedAt: new Date().toISOString(),
+    summaryCheckpoint: args.summaryCheckpoint,
+    settings: args.context.settings,
+    preferences: args.context.preferences,
+    contextRegistry: args.context.contextRegistry,
+  });
 }

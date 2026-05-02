@@ -2,8 +2,12 @@ export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { getHandler } from './handler';
+import { getHandler, postHandler } from './handler';
 
 export const GET = apiHandler(getHandler, {
   source: 'filemaker.job-applications.GET',
+});
+
+export const POST = apiHandler(postHandler, {
+  source: 'filemaker.job-applications.POST',
 });

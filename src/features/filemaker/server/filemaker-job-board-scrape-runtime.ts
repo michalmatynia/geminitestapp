@@ -35,6 +35,8 @@ import 'server-only';
 
 import { createHash, randomUUID } from 'crypto';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
   filemakerJobBoardScrapeDraftSaveRequestSchema,
@@ -459,13 +461,13 @@ const startRuntimeCancellationWatcher = (
       });
     }
   };
-  const interval = setInterval(() => {
+  const interval = safeSetInterval(() => {
     void checkCancellation();
   }, CANCEL_POLL_INTERVAL_MS);
   void checkCancellation();
   return () => {
     stopped = true;
-    clearInterval(interval);
+    safeClearInterval(interval);
   };
 };
 

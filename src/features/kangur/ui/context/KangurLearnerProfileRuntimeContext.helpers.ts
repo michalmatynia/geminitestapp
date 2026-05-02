@@ -293,13 +293,18 @@ export const useLearnerProfileScores = ({
     scoresError: null,
   }));
 
+import { useEffect, useState } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing code, note: updated imports below for clarity)
+
   useEffect(() => {
     let isActive = true;
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+    let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
     const stop = (): void => {
       isActive = false;
       if (timeoutId !== null) {
-        globalThis.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
     };
     const mode = resolveLearnerProfileScoreLoadMode({
@@ -329,7 +334,7 @@ export const useLearnerProfileScores = ({
       isLoadingScores: true,
       scoresError: null,
     });
-    timeoutId = globalThis.setTimeout(() => {
+    timeoutId = safeSetTimeout(() => {
       void loadDeferredLearnerProfileScores({
         hasUser,
         isActive: () => isActive,

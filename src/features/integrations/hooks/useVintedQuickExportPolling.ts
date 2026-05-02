@@ -1,7 +1,9 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   fetchProductListings,
@@ -191,7 +193,7 @@ export function useVintedQuickExportPolling(
       if (cancelled) return;
       const delay = getBackoffDelay(attemptRef.current);
       attemptRef.current += 1;
-      timeoutId = setTimeout(() => {
+      timeoutId = safeSetTimeout(() => {
         if (!cancelled) void syncTrackedListing();
       }, delay);
     };
@@ -201,12 +203,12 @@ export function useVintedQuickExportPolling(
       if (document.visibilityState === 'visible') {
         attemptRef.current = 0;
         if (timeoutId !== null) {
-          clearTimeout(timeoutId);
+          safeClearTimeout(timeoutId);
           timeoutId = null;
         }
         void syncTrackedListing();
       } else if (timeoutId !== null) {
-        clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
         timeoutId = null;
       }
     };
@@ -218,7 +220,7 @@ export function useVintedQuickExportPolling(
     return () => {
       cancelled = true;
       if (timeoutId !== null) {
-        clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };

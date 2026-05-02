@@ -182,8 +182,12 @@ export function useMonitoringWidgetState() {
       setIsInteractionQueryReady(false);
       return;
     }
-    const timeoutId = setTimeout(() => setIsInteractionQueryReady(true), INTERACTIONS_LOAD_DEFER_MS);
-    return () => clearTimeout(timeoutId);
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+    const timeoutId = safeSetTimeout(() => setIsInteractionQueryReady(true), INTERACTIONS_LOAD_DEFER_MS);
+    return () => safeClearTimeout(timeoutId);
   }, [activeLearnerId]);
 
   useEffect(() => {

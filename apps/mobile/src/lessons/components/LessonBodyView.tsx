@@ -22,14 +22,14 @@ function SectionNavigation({ copy, activeSectionIndex, totalSections, setActiveS
         disabled={activeSectionIndex === 0}
         label={copy({ de: 'Zurück', en: 'Previous', pl: 'Poprzednia' })}
         onPress={() => setActiveSectionIndex(Math.max(0, activeSectionIndex - 1))}
-        tone="secondary"
+        tone='secondary'
       />
       <ActionButton
         centered
         disabled={activeSectionIndex >= totalSections - 1}
         label={copy({ de: 'Weiter', en: 'Next', pl: 'Następna' })}
         onPress={() => setActiveSectionIndex(Math.min(totalSections - 1, activeSectionIndex + 1))}
-        tone="primary"
+        tone='primary'
       />
     </View>
   );
@@ -101,7 +101,7 @@ export function LessonBodyView({
         label={copy({ de: 'Zapisz checkpoint', en: 'Save checkpoint', pl: 'Zapisz checkpoint' })}
         onPress={onSave}
         stretch
-        tone="primary"
+        tone='primary'
       />
     </View>
   );

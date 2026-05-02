@@ -1,7 +1,7 @@
 import { type Href } from 'expo-router';
 import type { KangurScore } from '@kangur/contracts/kangur';
-import { type buildKangurHomeDebugProofViewModel } from './homeDebugProof';
-import { type KangurMobileOperationPerformance } from '../scores/mobileScoreSummary';
+import { type buildKangurHomeDebugProofViewModel } from '../homeDebugProof';
+import { type KangurMobileOperationPerformance } from '../../scores/mobileScoreSummary';
 
 export type HomeRecentResultsViewModel = {
   error: string | null;

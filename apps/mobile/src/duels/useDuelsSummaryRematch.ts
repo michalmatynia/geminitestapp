@@ -51,7 +51,7 @@ export function useDuelsSummaryRematch(
           queryClient.invalidateQueries({ queryKey: queryKeyBase.opponents }),
         ]);
 
-        return resp.session?.id ?? null;
+        return resp.session.id;
       } catch (err: unknown) {
         setActionError(toDuelsSummaryActionErrorMessage(err, copy));
         return null;

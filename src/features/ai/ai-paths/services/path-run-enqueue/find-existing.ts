@@ -1,6 +1,6 @@
-import { type AiPathRunRecord, type EnqueueRunInput, type AiPathRunListOptions } from '@/shared/contracts/ai-paths';
+import { type AiPathRunRecord, type AiPathRunListOptions } from '@/shared/contracts/ai-paths';
+import { type EnqueueRunInput, ACTIVE_RUN_STATUS_FILTER } from './types';
 import { getPathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
-import { ACTIVE_RUN_STATUS_FILTER } from '../path-run-enqueue-service';
 
 export const findExistingPathRun = async (
   input: EnqueueRunInput,

@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic';
 import { useLocale } from 'next-intl';
 import { memo, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
@@ -656,9 +658,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
       };
     }
 
-    const timeoutId = window.setTimeout(preload, 0);
+    const timeoutId = safeSetTimeout(preload, 0);
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [
     isBootLoading,
@@ -700,9 +702,9 @@ const AuthenticatedApp = (): JSX.Element | null => {
       };
     }
 
-    const timeoutId = window.setTimeout(prefetch, 0);
+    const timeoutId = safeSetTimeout(prefetch, 0);
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [
     isBootLoading,
@@ -781,13 +783,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }
 
     const remainingMs = Math.max(0, BOOT_SKELETON_MIN_VISIBLE_MS - (Date.now() - shownAt));
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       bootSkeletonShownAtRef.current = null;
       setIsBootSkeletonVisible(false);
     }, remainingMs);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [shouldShowBootLoader]);
 
@@ -878,13 +880,13 @@ const AuthenticatedApp = (): JSX.Element | null => {
     }
 
     if (isRoutePending) {
-      const timeoutId = window.setTimeout(() => {
+      const timeoutId = safeSetTimeout(() => {
         navigationSkeletonShownRef.current = true;
         setIsNavigationSkeletonVisible(true);
       }, NAVIGATION_SKELETON_DELAY_MS);
 
       return () => {
-        window.clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       };
     }
 

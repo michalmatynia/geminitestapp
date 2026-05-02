@@ -11,7 +11,7 @@ import { PrimaryButton, OutlineLink } from '../../homeScreenPrimitives';
 
 const DUELS_ROUTE = createKangurDuelsHref();
 
-type Props = {
+type AuthenticatedHomeActiveRivalsContentProps = {
   areDeferredHomePanelsReady: boolean;
   areDeferredHomeDuelAdvancedReady: boolean;
   presence: UseKangurMobileHomeDuelsPresenceResult;
@@ -95,6 +95,13 @@ function RivalItem({
   isCurrentLearner: boolean;
   onChallenge: (sessionId: string) => void;
 }): React.JSX.Element {
+  const handleChallenge = (): void => {
+    void (async () => {
+      const sid = await presence.createPrivateChallenge(entry.learnerId);
+      if (sid !== null && sid !== '') onChallenge(sid);
+    })();
+  };
+
   return (
     <ActiveRivalCard
       key={entry.learnerId}
@@ -104,16 +111,7 @@ function RivalItem({
       isCurrentLearner={isCurrentLearner}
       isPending={presence.pendingLearnerId === entry.learnerId}
       locale={locale}
-      onChallenge={
-        isCurrentLearner
-          ? null
-          : () => {
-              void (async () => {
-                const sid = await presence.createPrivateChallenge(entry.learnerId);
-                if (sid !== null && sid !== '') onChallenge(sid);
-              })();
-            }
-      }
+      onChallenge={isCurrentLearner ? null : handleChallenge}
     />
   );
 }
@@ -163,24 +161,24 @@ function ActiveRivalsList({
   );
 }
 
-export function AuthenticatedHomeActiveRivalsContent({
-  areDeferredHomePanelsReady,
-  areDeferredHomeDuelAdvancedReady,
+function RivalsContentSwitch({
   presence,
   copy,
   locale,
+  activeDuelLearnerId,
   onChallenge,
-}: Props): React.JSX.Element {
-  const { session } = useKangurMobileAuth();
-  const activeDuelLearnerId = session.user?.activeLearner?.id ?? session.user?.id ?? null;
+}: Omit<AuthenticatedHomeActiveRivalsContentProps, 'areDeferredHomePanelsReady' | 'areDeferredHomeDuelAdvancedReady'> & { activeDuelLearnerId: string | null }): React.JSX.Element {
+  if (presence.isRestoringAuth || presence.isLoading) {
+    return <RivalsLoading copy={copy} />;
+  }
+  
+  if (presence.error !== null && presence.error !== '') {
+    return <RivalsError copy={copy} error={presence.error} refresh={() => { void presence.refresh(); }} />;
+  }
 
-  if (!areDeferredHomePanelsReady) return <DeferredDuelSectionPlaceholder />;
-  if (!areDeferredHomeDuelAdvancedReady) return <DeferredDuelAdvancedSectionPlaceholder />;
-
-  if (presence.isRestoringAuth || presence.isLoading) return <RivalsLoading copy={copy} />;
-  if (presence.error !== null && presence.error !== '') return <RivalsError copy={copy} error={presence.error} refresh={() => { void presence.refresh(); }} />;
-
-  if (presence.entries.length === 0) return <RivalsEmpty copy={copy} />;
+  if (presence.entries.length === 0) {
+    return <RivalsEmpty copy={copy} />;
+  }
 
   return (
     <ActiveRivalsList 
@@ -189,6 +187,37 @@ export function AuthenticatedHomeActiveRivalsContent({
       locale={locale}
       activeDuelLearnerId={activeDuelLearnerId}
       onChallenge={onChallenge}
+    />
+  );
+}
+
+export function AuthenticatedHomeActiveRivalsContent({
+  areDeferredHomePanelsReady,
+  areDeferredHomeDuelAdvancedReady,
+  presence,
+  copy,
+  locale,
+  onChallenge,
+}: AuthenticatedHomeActiveRivalsContentProps): React.JSX.Element {
+  const { session } = useKangurMobileAuth();
+  const learnerId = session.user?.activeLearner?.id;
+  const userId = session.user?.id;
+  const activeDuelLearnerId = learnerId ?? userId ?? null;
+
+  if (!areDeferredHomePanelsReady) {
+    return <DeferredDuelSectionPlaceholder />;
+  }
+  if (!areDeferredHomeDuelAdvancedReady) {
+    return <DeferredDuelAdvancedSectionPlaceholder />;
+  }
+
+  return (
+    <RivalsContentSwitch
+      activeDuelLearnerId={activeDuelLearnerId}
+      copy={copy}
+      locale={locale}
+      onChallenge={onChallenge}
+      presence={presence}
     />
   );
 }

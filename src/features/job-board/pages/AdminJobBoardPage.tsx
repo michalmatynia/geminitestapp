@@ -3,6 +3,8 @@
 import { Briefcase } from 'lucide-react';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+
 import type {
   Company,
   CompanyListResponse,
@@ -174,10 +176,10 @@ export function AdminJobBoardPage(): React.JSX.Element {
 
   useEffect(() => {
     if (!hasActiveScan) return;
-    const handle = window.setInterval(() => {
+    const handle = safeSetInterval(() => {
       void loadAll();
     }, 3000);
-    return () => window.clearInterval(handle);
+    return () => safeClearInterval(handle);
   }, [hasActiveScan, loadAll]);
 
   // Keep the open scan-detail dialog's data in sync with refreshed scans (e.g. after a manual

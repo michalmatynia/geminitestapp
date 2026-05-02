@@ -2,7 +2,7 @@ import { type useKangurMobileI18n } from '../i18n/kangurMobileI18n';
 
 type DuelCopy = ReturnType<typeof useKangurMobileI18n>['copy'];
 
-function getErrorFallback(error: unknown, copy: DuelCopy, fallback: { de: string; en: string; pl: string }) {
+function getErrorFallback(error: unknown, copy: DuelCopy, fallback: { de: string; en: string; pl: string }): string {
   if (error instanceof Error && error.message.trim() !== '') {
     const normalized = error.message.trim().toLowerCase();
     if (normalized !== 'failed to fetch' && !normalized.includes('networkerror')) {
@@ -16,9 +16,9 @@ export const toDuelsSummaryErrorMessage = (
   error: unknown,
   copy: DuelCopy,
 ): string | null => {
-  if (!error) return null;
+  if (error === null || error === undefined || error === false) return null;
 
-  if (typeof error === 'object' && 'status' in error && (error as { status?: number }).status === 401) {
+  if (typeof error === 'object' && error !== null && 'status' in error && (error as { status?: number }).status === 401) {
     return copy({
       de: 'Melde dich an, um Duellstatistiken zu laden.',
       en: 'Sign in to load duel stats.',

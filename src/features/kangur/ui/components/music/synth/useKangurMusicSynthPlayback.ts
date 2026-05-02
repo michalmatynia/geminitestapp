@@ -31,7 +31,7 @@ export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
 
   const clearScheduledTimeouts = useCallback((): void => {
     timeoutIdsRef.current.forEach((timeoutId) => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     });
     timeoutIdsRef.current = [];
   }, []);
@@ -44,7 +44,11 @@ export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
 
   const schedulePlaybackTimeout = useCallback(
     (callback: () => void, ms: number): number => {
-      const timeoutId = window.setTimeout(() => {
+  import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+    const timeoutId = safeSetTimeout(() => {
         timeoutIdsRef.current = timeoutIdsRef.current.filter((candidate) => candidate !== timeoutId);
         callback();
       }, Math.max(0, ms));

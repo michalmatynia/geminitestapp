@@ -2,6 +2,8 @@
 
 import { useCallback, useRef, useState } from 'react';
 
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver/workspace';
 import { type Toast } from '@/shared/contracts/ui';
 import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
@@ -130,7 +132,7 @@ export function useCaseResolverPersistence({
 
   const clearConflictRetryTimer = useCallback((): void => {
     if (conflictRetryTimerRef.current === null) return;
-    window.clearTimeout(conflictRetryTimerRef.current);
+    safeClearTimeout(conflictRetryTimerRef.current);
     conflictRetryTimerRef.current = null;
   }, []);
 
@@ -139,7 +141,7 @@ export function useCaseResolverPersistence({
     clearConflictRetryTimer();
 
     if (settingsStoreRef.current.isFetching) {
-      persistWorkspaceTimerRef.current = window.setTimeout(() => {
+      persistWorkspaceTimerRef.current = safeSetTimeout(() => {
         persistWorkspaceTimerRef.current = null;
         flushWorkspacePersist();
       }, 100);
@@ -246,7 +248,7 @@ export function useCaseResolverPersistence({
           setWorkspaceSaveStatus('saving');
           setWorkspaceSaveError(null);
           clearConflictRetryTimer();
-          conflictRetryTimerRef.current = window.setTimeout((): void => {
+          conflictRetryTimerRef.current = safeSetTimeout((): void => {
             conflictRetryTimerRef.current = null;
             flushWorkspacePersist();
           }, retryDelayMs);

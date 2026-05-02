@@ -83,16 +83,21 @@ export const useKangurDrawingDraftStorage = (
     setDraftSnapshotState(nextDraftSnapshot);
   }, [flushPendingPersist, storageKey]);
 
+import { useCallback, useEffect, useRef } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
   const schedulePersist = useCallback(() => {
     if (typeof window === 'undefined') {
       return;
     }
 
     if (persistTimeoutRef.current !== null) {
-      window.clearTimeout(persistTimeoutRef.current);
+      safeClearTimeout(persistTimeoutRef.current);
     }
 
-    persistTimeoutRef.current = window.setTimeout(() => {
+    persistTimeoutRef.current = safeSetTimeout(() => {
       persistTimeoutRef.current = null;
       persistKangurDrawingDraftSnapshot(
         activeStorageKeyRef.current,

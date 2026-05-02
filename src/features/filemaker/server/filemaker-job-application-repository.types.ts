@@ -7,6 +7,7 @@ export type FilemakerJobApplicationMongoDocument = Document & {
   activeCoverLetterVersionId?: unknown;
   activeTailoredCvVersionId?: unknown;
   applicationEmail?: unknown;
+  applicationLog?: unknown;
   applicationNotes?: unknown;
   artifactVersions?: unknown;
   artifactKind?: unknown;

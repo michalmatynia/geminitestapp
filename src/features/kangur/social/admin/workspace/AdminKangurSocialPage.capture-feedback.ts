@@ -1,3 +1,4 @@
+import { safeSetTimeout } from '@/shared/lib/timers';
 import type {
   KangurSocialImageAddonsBatchJob,
   KangurSocialImageAddonsBatchResult,
@@ -12,7 +13,7 @@ export const isBatchCaptureJobTerminal = (
 ): boolean => status === 'completed' || status === 'failed';
 
 export const waitForDelay = async (ms: number): Promise<void> => {
-  await new Promise((resolve) => setTimeout(resolve, ms));
+  await new Promise<void>((resolve) => safeSetTimeout(resolve, ms));
 };
 
 export const appendCaptureFailureSummary = (

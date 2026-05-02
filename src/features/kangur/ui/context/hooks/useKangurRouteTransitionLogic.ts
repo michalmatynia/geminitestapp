@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
 import {
   type KangurRouteTransitionSkeletonVariant,
@@ -262,7 +264,7 @@ export function useKangurRouteTransitionLogic({
       return;
     }
 
-    window.clearTimeout(acknowledgementTimeoutRef.current);
+    safeClearTimeout(acknowledgementTimeoutRef.current);
     acknowledgementTimeoutRef.current = null;
   }, []);
 
@@ -386,7 +388,7 @@ export function useKangurRouteTransitionLogic({
           ? LOCALE_SWITCH_ROUTE_TRANSITION_READY_TIMEOUT_MS
           : ROUTE_TRANSITION_READY_TIMEOUT_MS;
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       shouldResetScrollOnCommitRef.current = false;
 
       if (transitionState.phase === 'waiting_for_ready') {
@@ -406,7 +408,7 @@ export function useKangurRouteTransitionLogic({
     }, timeoutMs);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [setNextTransitionState, transitionState, updateTransitionState]);
 
@@ -420,7 +422,7 @@ export function useKangurRouteTransitionLogic({
         ? LOCALE_SWITCH_ROUTE_TRANSITION_REVEAL_MS
         : ROUTE_TRANSITION_REVEAL_MS;
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       if (transitionState.phase === 'revealing') {
         recordKangurRouteTransitionPerformancePhase(transitionState, 'complete');
       }
@@ -430,7 +432,7 @@ export function useKangurRouteTransitionLogic({
     }, revealMs);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [transitionState, updateTransitionState]);
 
@@ -525,8 +527,8 @@ export function useKangurRouteTransitionLogic({
       setNextTransitionState(nextState);
       recordKangurRouteTransitionPerformancePhase(nextState, 'start');
 
-      if (requestedAcknowledgeMs > 0 && typeof window !== 'undefined') {
-        acknowledgementTimeoutRef.current = window.setTimeout(() => {
+      if (requestedAcknowledgeMs > 0) {
+        acknowledgementTimeoutRef.current = safeSetTimeout(() => {
           acknowledgementTimeoutRef.current = null;
           updateTransitionState((currentState) =>
             currentState?.phase === 'acknowledging'

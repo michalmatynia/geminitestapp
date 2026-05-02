@@ -5,6 +5,7 @@ import type { Collection, Db, Document, Filter } from 'mongodb';
 import { createDefaultKangurSections } from '@/features/kangur/lessons/lesson-section-defaults';
 import type { KangurLessonSection } from '@/shared/contracts/kangur-lesson-sections';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import type { KangurLessonSectionListInput, KangurLessonSectionRepository } from './types';
 import { normalizeKangurLessonSection } from './normalize-kangur-lesson-section';
@@ -30,7 +31,7 @@ const waitForBootstrapIfFast = async (task: Promise<void>): Promise<void> => {
   const guardedTask = task.catch(() => undefined);
   await Promise.race([
     guardedTask,
-    new Promise((resolve) => setTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
+    new Promise((resolve) => safeSetTimeout(resolve, READ_BOOTSTRAP_SOFT_TIMEOUT_MS)),
   ]);
 };
 

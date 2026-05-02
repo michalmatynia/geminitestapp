@@ -108,8 +108,16 @@ export function KangurParentDashboardRuntimeProvider({
       setIsPrimaryQueriesReady(false);
       return;
     }
-    const timeoutId = setTimeout(() => setIsPrimaryQueriesReady(true), PRIMARY_DATA_LOAD_DEFER_MS);
-    return () => clearTimeout(timeoutId);
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+    const timeoutId = safeSetTimeout(() => setIsPrimaryQueriesReady(true), PRIMARY_DATA_LOAD_DEFER_MS);
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
+    return () => safeClearTimeout(timeoutId);
   }, [activeLearnerId, canAccessDashboard]);
 
   const lessonsQuery = useKangurLessons({

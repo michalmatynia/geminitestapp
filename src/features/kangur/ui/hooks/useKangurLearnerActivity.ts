@@ -349,11 +349,11 @@ const useKangurLearnerActivityDeferredReady = ({
     }
 
     setIsDeferredReady(false);
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setIsDeferredReady(true);
     }, deferInitialRefreshMs);
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [deferInitialRefreshMs, enabled, learnerId]);
 

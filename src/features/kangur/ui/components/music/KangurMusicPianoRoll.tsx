@@ -521,9 +521,13 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     phase: KeyPulsePhase
   ): void => {
     const normalizedEnergy = Number(clamp(energy, 0.24, 1).toFixed(2));
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
     const existingTimeoutId = keyPulseTimeoutIdsRef.current.get(noteId);
     if (existingTimeoutId !== undefined) {
-      globalThis.clearTimeout(existingTimeoutId);
+      safeClearTimeout(existingTimeoutId);
     }
 
     setRecentKeyPulses((current) => {
@@ -532,7 +536,7 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
       return next;
     });
 
-    const timeoutId = globalThis.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       keyPulseTimeoutIdsRef.current.delete(noteId);
       setRecentKeyPulses((current) => {
         if (!current.has(noteId)) {

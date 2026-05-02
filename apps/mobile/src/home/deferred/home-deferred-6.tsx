@@ -1,4 +1,4 @@
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import { SectionCard } from '../homeScreenPrimitives';
 import { useKangurMobileI18n } from '../../i18n/kangurMobileI18n';
 

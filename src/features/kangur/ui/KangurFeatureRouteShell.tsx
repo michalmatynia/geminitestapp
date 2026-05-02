@@ -23,6 +23,7 @@ import {
 import { useKangurStorefrontAppearance } from '@/features/kangur/ui/useKangurStorefrontAppearance';
 import { cn } from '@/features/kangur/shared/utils';
 import { withKangurClientErrorSync } from '@/features/kangur/observability/client';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import type { CSSProperties, JSX } from 'react';
 
@@ -323,11 +324,11 @@ const useKangurDedicatedAppLaunchPrompt = ({
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setPendingDedicatedAppHref(dedicatedAppHref);
     }, KANGUR_DEDICATED_APP_LAUNCH_DELAY_MS);
 
-    return () => window.clearTimeout(timeoutId);
+    return () => safeClearTimeout(timeoutId);
   }, [dedicatedAppHref, launchIntent, router, sanitizedRequestedHref]);
 
   const openDedicatedApp = (): void => {

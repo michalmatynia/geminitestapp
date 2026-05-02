@@ -14,6 +14,7 @@ import {
   startFilemakerMailSyncQueue,
 } from '@/features/filemaker/workers/filemakerMailSyncQueue';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 type TraderaEmailVerificationCodeResolution = {
   code: string;
@@ -42,7 +43,7 @@ const normalizeComparableEmail = (value: unknown): string =>
 
 const wait = async (timeoutMs: number): Promise<void> => {
   await new Promise<void>((resolve) => {
-    setTimeout(resolve, timeoutMs);
+    safeSetTimeout(resolve, timeoutMs);
   });
 };
 

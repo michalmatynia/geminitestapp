@@ -373,12 +373,12 @@ export function ArtShapesRotationGapGame({
       return;
     }
 
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       advanceRound();
     }, ROUND_ADVANCE_DELAY_MS);
 
     return () => {
-      window.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [advanceRound, round, selectedOptionId]);
 

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import {
   deleteMongoFilemakerJobApplication,
+  removeMongoFilemakerJobApplicationLogEntry,
   requireFilemakerMailAdminSession,
   requireMongoFilemakerJobApplicationById,
   updateMongoFilemakerJobApplicationActiveArtifacts,
@@ -19,6 +20,7 @@ const jobApplicationPatchSchema = z.object({
       tailoredCvVersionId: z.string().trim().nullable().optional(),
     })
     .optional(),
+  removeLogEntryId: z.string().trim().min(1).optional(),
   status: z.enum(['draft', 'ready', 'applied', 'rejected', 'archived']).optional(),
 });
 
@@ -56,15 +58,21 @@ export async function patchHandler(
   if (!result.ok) return result.response;
 
   const applicationId = resolveApplicationId(params);
-  if (result.data.status === undefined && result.data.activeArtifacts === undefined) {
+  if (
+    result.data.status === undefined &&
+    result.data.activeArtifacts === undefined &&
+    result.data.removeLogEntryId === undefined
+  ) {
     const application = await requireMongoFilemakerJobApplicationById(applicationId);
     return Response.json({ application });
   }
 
   let application =
-    result.data.status !== undefined
-      ? await updateMongoFilemakerJobApplicationStatus(applicationId, result.data.status)
-      : await requireMongoFilemakerJobApplicationById(applicationId);
+    result.data.removeLogEntryId !== undefined
+      ? await removeMongoFilemakerJobApplicationLogEntry(applicationId, result.data.removeLogEntryId)
+      : result.data.status !== undefined
+        ? await updateMongoFilemakerJobApplicationStatus(applicationId, result.data.status)
+        : await requireMongoFilemakerJobApplicationById(applicationId);
   if (result.data.activeArtifacts !== undefined) {
     application = await updateMongoFilemakerJobApplicationActiveArtifacts(applicationId, {
       applicationEmailVersionId: result.data.activeArtifacts.applicationEmailVersionId ?? null,

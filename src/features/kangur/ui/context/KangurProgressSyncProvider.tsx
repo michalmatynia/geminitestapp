@@ -102,6 +102,13 @@ const loadRemoteHydrationProgress = async (
   return cloneKangurProgressHydrationState(await inflightPromise);
 };
 
+import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+
+// ... (existing imports)
+
 const scheduleDeferredCallback = (callback: () => void): (() => void) => {
   if (typeof globalThis.requestIdleCallback === 'function') {
     const idleCallbackId = globalThis.requestIdleCallback(() => {
@@ -115,9 +122,9 @@ const scheduleDeferredCallback = (callback: () => void): (() => void) => {
     };
   }
 
-  const timeoutId = globalThis.setTimeout(callback, 1);
+  const timeoutId = safeSetTimeout(callback, 1);
   return () => {
-    globalThis.clearTimeout(timeoutId);
+    safeClearTimeout(timeoutId);
   };
 };
 
@@ -126,18 +133,18 @@ const scheduleInitialProgressHydration = (
   delayMs: number
 ): (() => void) => {
   if (delayMs > 0) {
-    const timeoutId = globalThis.setTimeout(callback, delayMs);
+    const timeoutId = safeSetTimeout(callback, delayMs);
     return () => {
-      globalThis.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }
 
   let rafId: number | undefined;
-  let deferredTimeoutId: ReturnType<typeof globalThis.setTimeout> | undefined;
+  let deferredTimeoutId: ReturnType<typeof safeSetTimeout> | undefined;
 
   rafId = requestAnimationFrame(() => {
     rafId = undefined;
-    deferredTimeoutId = globalThis.setTimeout(() => {
+    deferredTimeoutId = safeSetTimeout(() => {
       deferredTimeoutId = undefined;
       callback();
     }, 0);
@@ -145,7 +152,7 @@ const scheduleInitialProgressHydration = (
 
   return () => {
     if (rafId !== undefined) cancelAnimationFrame(rafId);
-    if (deferredTimeoutId !== undefined) globalThis.clearTimeout(deferredTimeoutId);
+    if (deferredTimeoutId !== undefined) safeClearTimeout(deferredTimeoutId);
   };
 };
 

@@ -20,6 +20,8 @@ export * from './pages/AdminFilemakerCampaignControlCentrePage';
 export * from './pages/AdminFilemakerCampaignSuppressionsPage';
 export * from './pages/AdminFilemakerPersonEditPage';
 export * from './pages/AdminFilemakerOrganizationEditPage';
+export * from './pages/AdminFilemakerOrganizationJobListingsPage';
+export * from './pages/AdminFilemakerJobListingsPage';
 export * from './pages/AdminFilemakerEventEditPage';
 export * from './pages/AdminFilemakerEmailEditPage';
 export * from './pages/AdminFilemakerWebsiteEditPage';

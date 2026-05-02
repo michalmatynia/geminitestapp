@@ -4,6 +4,8 @@
 import { Play, Save, Search, Square } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+
 import {
   FILEMAKER_JOB_BOARD_SCRAPE_ENDPOINT,
   filemakerJobBoardLexiconClassificationApplyResponseSchema,
@@ -1489,8 +1491,8 @@ const createInitialState = (): ScrapeModalInitialState => {
 function DraftSavedPill(props: { savedAt: number }): React.JSX.Element {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 5000);
-    return () => window.clearInterval(id);
+    const id = safeSetInterval(() => setNow(Date.now()), 5000);
+    return () => safeClearInterval(id);
   }, []);
   return (
     <Badge variant='secondary' className='text-xs'>

@@ -437,10 +437,14 @@ function ResolvedActiveLessonView({
     let focusCleanupTimer: number | null = null;
 
     const handleWindowFocus = (): void => {
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
       if (focusCleanupTimer !== null) {
-        window.clearTimeout(focusCleanupTimer);
+        safeClearTimeout(focusCleanupTimer);
       }
-      focusCleanupTimer = window.setTimeout(() => {
+      focusCleanupTimer = safeSetTimeout(() => {
         cleanup();
       }, 0);
     };

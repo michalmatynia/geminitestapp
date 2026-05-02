@@ -64,8 +64,12 @@ export const verifyKangurParentCaptcha = async ({
     form.set('remoteip', ip);
   }
 
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing code)
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), TURNSTILE_TIMEOUT_MS);
+  const timeout = safeSetTimeout(() => controller.abort(), TURNSTILE_TIMEOUT_MS);
 
   try {
     const response = await fetch(TURNSTILE_VERIFY_URL, {
@@ -100,6 +104,6 @@ export const verifyKangurParentCaptcha = async ({
     logger.error('[kangur.captcha] verification error', error);
     return { ok: false, required: true, reason: 'verification_error' };
   } finally {
-    clearTimeout(timeout);
+    safeClearTimeout(timeout);
   }
 };

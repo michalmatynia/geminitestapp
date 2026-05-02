@@ -39,7 +39,7 @@ export function HomeSecondaryInsightsPlanSection(): React.JSX.Element {
       ) : (
         <View style={{ gap: 12 }}>
           {homeAssignments.assignmentItems.map((item) => (
-            <AssignmentCard key={item.assignment.id} item={item} />
+            <AssignmentCard key={item.id} item={item} />
           ))}
           <OutlineLink
             href={PLAN_ROUTE}

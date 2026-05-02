@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import KangurLearnerAssignmentsPanel from '@/features/kangur/ui/components/assignments/KangurLearnerAssignmentsPanel';
 import { useKangurAuthSessionState } from '@/features/kangur/ui/context/KangurAuthContext';
 import { useKangurLearnerProfileRuntime } from '@/features/kangur/ui/context/KangurLearnerProfileRuntimeContext';
@@ -20,12 +21,12 @@ export function KangurLearnerProfileAssignmentsWidget(): React.JSX.Element {
     }
 
     setIsAssignmentsReady(false);
-    const timeoutId = globalThis.setTimeout(() => {
+    const timeoutId = safeSetTimeout(() => {
       setIsAssignmentsReady(true);
     }, LEARNER_PROFILE_ASSIGNMENTS_LOAD_DEFER_MS);
 
     return (): void => {
-      globalThis.clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     };
   }, [canAccessParentAssignments]);
 

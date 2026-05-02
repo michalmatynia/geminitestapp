@@ -1,7 +1,9 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
+
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
+import { useQueryClient } from '@tanstack/react-query';
 
 import {
   fetchProductListings,
@@ -193,7 +195,7 @@ export function useTraderaQuickExportPolling(
       if (cancelled) return;
       const delay = getBackoffDelay(attemptRef.current);
       attemptRef.current += 1;
-      timeoutId = setTimeout(() => {
+      timeoutId = safeSetTimeout(() => {
         if (!cancelled) void syncTrackedListing();
       }, delay);
     };
@@ -205,14 +207,14 @@ export function useTraderaQuickExportPolling(
         // Tab became visible — reset backoff and poll immediately
         attemptRef.current = 0;
         if (timeoutId !== null) {
-          clearTimeout(timeoutId);
+          safeClearTimeout(timeoutId);
           timeoutId = null;
         }
         void syncTrackedListing();
       } else {
         // Tab hidden — cancel scheduled poll to save resources
         if (timeoutId !== null) {
-          clearTimeout(timeoutId);
+          safeClearTimeout(timeoutId);
           timeoutId = null;
         }
       }
@@ -226,7 +228,7 @@ export function useTraderaQuickExportPolling(
     return () => {
       cancelled = true;
       if (timeoutId !== null) {
-        clearTimeout(timeoutId);
+        safeClearTimeout(timeoutId);
       }
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };

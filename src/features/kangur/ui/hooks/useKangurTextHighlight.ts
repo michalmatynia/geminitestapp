@@ -385,18 +385,28 @@ export function useKangurTextHighlight(): KangurTextHighlightResult {
     const clearToken = selectionClearTokenRef.current + 1;
     selectionClearTokenRef.current = clearToken;
     clearBrowserSelection(clearToken, selectionClearTokenRef);
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  safeCancelAnimationFrame,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+
+// ... existing code
+
     if (typeof window !== 'undefined') {
       if (clearSelectionTimeoutRef.current !== null) {
-        window.clearTimeout(clearSelectionTimeoutRef.current);
+        safeClearTimeout(clearSelectionTimeoutRef.current);
       }
-      clearSelectionTimeoutRef.current = window.setTimeout(() => {
+      clearSelectionTimeoutRef.current = safeSetTimeout(() => {
         clearSelectionTimeoutRef.current = null;
         clearBrowserSelection(clearToken, selectionClearTokenRef);
       }, 0);
       if (clearSelectionRafRef.current !== null) {
-        window.cancelAnimationFrame(clearSelectionRafRef.current);
+        safeCancelAnimationFrame(clearSelectionRafRef.current);
       }
-      clearSelectionRafRef.current = window.requestAnimationFrame(() => {
+      clearSelectionRafRef.current = safeRequestAnimationFrame(() => {
         clearSelectionRafRef.current = null;
         clearBrowserSelection(clearToken, selectionClearTokenRef);
       });

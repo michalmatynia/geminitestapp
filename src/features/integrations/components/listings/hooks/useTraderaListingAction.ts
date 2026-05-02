@@ -54,6 +54,6 @@ export function useTraderaListingAction(): TraderaListingActionInfo {
     actionKey,
     action,
     actionName: action?.name ?? null,
-    defaultConcurrencyMode: (action?.concurrencyMode ?? null) as 'sequential' | 'concurrent' | null,
+    defaultConcurrencyMode: (action?.concurrencyMode ?? null),
   };
 }

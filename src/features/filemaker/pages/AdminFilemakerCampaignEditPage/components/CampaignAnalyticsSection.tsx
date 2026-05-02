@@ -6,7 +6,7 @@ import { formatTimestamp } from '../../filemaker-page-utils';
 import type {
   FilemakerEmailCampaignAnalytics,
   FilemakerEmailCampaignLinkPerformance,
-} from '../../../types/campaigns';
+} from '@/features/filemaker/types/campaigns';
 import { useCampaignEditContext } from '../../AdminFilemakerCampaignEditPage.context';
 import { CampaignAnalyticsSegmentSummary } from '../../campaign-edit-sections/CampaignAnalyticsSegmentSummary';
 import type { ReactElement } from 'react';

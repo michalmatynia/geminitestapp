@@ -26,7 +26,7 @@ export function PracticeAssignmentsPanel({
       ) : (
         <View style={{ gap: 10 }}>
           {practiceAssignments.assignmentItems.map((item) => (
-            <PracticeAssignmentRow key={item.assignment.id} item={item} />
+            <PracticeAssignmentRow key={item.id} item={item} />
           ))}
         </View>
       )}

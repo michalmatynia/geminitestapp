@@ -113,12 +113,16 @@ export const createPlaywrightPageDriver = (page: Page): PageDriver => ({
     );
   },
 
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
   async scrollToBottom() {
     await page.evaluate(
       () =>
         new Promise<void>((resolve) => {
           window.scrollTo(0, document.body.scrollHeight);
-          window.setTimeout(resolve, 250);
+          safeSetTimeout(resolve, 250);
         })
     );
   },

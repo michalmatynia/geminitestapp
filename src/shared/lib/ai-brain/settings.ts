@@ -459,6 +459,9 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
     { pool: 'modelPresets', value: 'claude-3-5-haiku-20241022' },
     { pool: 'modelPresets', value: 'gemini-1.5-pro' },
     { pool: 'modelPresets', value: 'gemini-1.5-flash' },
+    { pool: 'paidModels', value: 'gpt-image-1' },
+    { pool: 'paidModels', value: 'dall-e-3' },
+    { pool: 'paidModels', value: 'dall-e-2' },
   ],
 };
 

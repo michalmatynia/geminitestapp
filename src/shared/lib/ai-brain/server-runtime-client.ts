@@ -136,15 +136,17 @@ export const supportsBrainStreaming = (modelId: string): boolean => {
 };
 
 const createOpenAiCompatibleClient = async (
-  modelId: string
+  modelId: string,
+  apiKeyOverride?: string
 ): Promise<{
   client: OpenAI;
   vendor: 'openai' | 'ollama';
 }> => {
   const vendor = inferBrainRuntimeVendor(modelId);
   if (vendor === 'openai') {
+    const apiKey = apiKeyOverride?.trim() || await resolveOpenAiApiKey();
     return {
-      client: new OpenAI({ apiKey: await resolveOpenAiApiKey() }),
+      client: new OpenAI({ apiKey }),
       vendor,
     };
   }
@@ -236,6 +238,7 @@ export const runBrainChatCompletion = async (input: {
   temperature?: number;
   maxTokens?: number;
   jsonMode?: boolean;
+  apiKeyOverride?: string;
 }): Promise<{
   text: string;
   vendor: BrainRuntimeVendor;
@@ -246,7 +249,8 @@ export const runBrainChatCompletion = async (input: {
 
   if (vendor === 'openai' || vendor === 'ollama') {
     const { client, vendor: openAiCompatibleVendor } = await createOpenAiCompatibleClient(
-      input.modelId
+      input.modelId,
+      input.apiKeyOverride
     );
     const completion = await client.chat.completions.create({
       model: normalizedModelId,
@@ -280,11 +284,12 @@ export const runBrainChatCompletion = async (input: {
 
   if (vendor === 'anthropic') {
     const { systemPrompt, chatMessages } = buildAnthropicMessages(input.messages);
+    const anthropicKey = input.apiKeyOverride?.trim() || await resolveAnthropicApiKey();
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': await resolveAnthropicApiKey(),
+        'x-api-key': anthropicKey,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
@@ -320,10 +325,11 @@ export const runBrainChatCompletion = async (input: {
   }
 
   const { systemPrompt, contents } = buildGeminiMessages(input.messages);
+  const geminiKey = input.apiKeyOverride?.trim() || await resolveGeminiApiKey();
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       normalizedModelId
-    )}:generateContent?key=${encodeURIComponent(await resolveGeminiApiKey())}`,
+    )}:generateContent?key=${encodeURIComponent(geminiKey)}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

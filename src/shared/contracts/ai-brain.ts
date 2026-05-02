@@ -98,6 +98,7 @@ export const aiBrainAssignmentSchema = z
     provider: aiBrainProviderSchema.default('model'),
     modelId: z.string().trim().default(''),
     agentId: z.string().trim().default(''),
+    apiKey: z.string().trim().optional(),
     temperature: numberField(0, 2),
     maxTokens: numberField(1, 8192),
     systemPrompt: z.string().trim().optional(),

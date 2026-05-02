@@ -59,6 +59,7 @@ const buildGeneratedPolishName = ({
   ...syncInput
 }: BuildGeneratedPolishNameInput): PolishStructuredProductNameSyncResult | null => {
   if (languageTabValues.includes('pl') === false) return null;
+  if (syncInput.englishTitle.trim() === '') return null;
   return syncPolishStructuredProductName(syncInput);
 };
 

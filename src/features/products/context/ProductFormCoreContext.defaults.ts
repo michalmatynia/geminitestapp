@@ -5,6 +5,10 @@ import {
   type ProductWithImages,
 } from '@/shared/contracts/products/product';
 import { PRODUCT_SKU_AUTO_INCREMENT_PLACEHOLDER } from '@/shared/lib/products/constants';
+import {
+  isGenericProductNamePlaceholder,
+  splitStructuredProductName,
+} from '@/shared/lib/products/title-terms';
 
 type ProductFormDefaultsInput = {
   product?: ProductWithImages;
@@ -49,6 +53,12 @@ const resolveLocalizedProductName = (
 };
 
 const hasText = (value: string | null): boolean => value !== null && value.length > 0;
+
+const stripDraftPlaceholderBaseName = (value: string | null | undefined): string => {
+  if (!value) return '';
+  const [baseName = ''] = splitStructuredProductName(value);
+  return isGenericProductNamePlaceholder(baseName) ? '' : value;
+};
 
 const resolveStringDefault = (
   { product, draft }: ProductFormDefaultsInput,
@@ -106,11 +116,11 @@ const resolveNameDefaults = ({ product, draft }: ProductFormDefaultsInput): Pick
 > => ({
   name_en: firstNonEmptyString(
     firstNonEmptyString(product?.name_en, resolveLocalizedProductName(product, 'en')),
-    draft?.name_en
+    stripDraftPlaceholderBaseName(draft?.name_en)
   ),
   name_pl: firstNonEmptyString(
     firstNonEmptyString(product?.name_pl, resolveLocalizedProductName(product, 'pl')),
-    draft?.name_pl
+    stripDraftPlaceholderBaseName(draft?.name_pl)
   ),
   name_de: firstNonEmptyString(
     firstNonEmptyString(product?.name_de, resolveLocalizedProductName(product, 'de')),

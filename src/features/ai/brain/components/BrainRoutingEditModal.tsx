@@ -144,6 +144,7 @@ export function BrainRoutingEditModal(props: BrainRoutingEditModalProps): React.
           }}
           readOnly={!state.overrideEnabled}
           allowedProviders={[...allowedProviders]}
+          modelFamily={capabilityDefinition.modelFamily}
         />
         {!featureEnabled ? (
           <div className='text-[11px] text-amber-300'>

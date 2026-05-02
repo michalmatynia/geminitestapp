@@ -40,7 +40,7 @@ function ProductCreateModalWrapper(): React.JSX.Element {
       onSuccess={onCreateSuccess}
       initialSku={initialSku}
       initialCatalogId={initialCatalogId ?? undefined}
-      validationInstanceScopeOverride={createDraft !== null ? 'draft_template' : 'product_create'}
+      validationInstanceScopeOverride='product_create'
     />
   );
 }

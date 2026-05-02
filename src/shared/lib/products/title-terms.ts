@@ -262,7 +262,19 @@ const GENERIC_POLISH_BASE_NAME_VALUES = new Set([
   '<nazwa produktu>',
   '<parameter name>',
   '<product name>',
+  '[name]',
+  '[nazwa]',
+  '[nazwa parametru]',
+  '[nazwa produktu]',
+  '[parameter name]',
+  '[product name]',
+  '[title]',
+  '[tytul]',
+  '[tytuł]',
 ]);
+
+export const isGenericProductNamePlaceholder = (baseName: string): boolean =>
+  GENERIC_POLISH_BASE_NAME_VALUES.has(normalizeTitleTermName(baseName));
 
 const shouldSyncPolishBaseName = ({
   currentBaseName,

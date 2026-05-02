@@ -597,6 +597,33 @@ describe('ProductFormGeneral structured name editing', () => {
     });
   });
 
+  it('preserves a structured Polish title from a draft when the English title is empty', async () => {
+    useProductFormMetadataMock.mockReturnValue({
+      filteredLanguages: [
+        { code: 'en', name: 'English' },
+        { code: 'pl', name: 'Polish' },
+      ],
+      selectedCatalogIds: ['catalog-a'],
+      categories: [],
+      selectedCategoryId: null,
+      setCategoryId: vi.fn(),
+    });
+    useTitleTermsMock.mockReturnValue({
+      data: [],
+      isLoading: false,
+    });
+
+    renderProductFormGeneral('', '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k');
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByTestId('polish-name-value')).toHaveTextContent(
+      '[name] | 5 cm | Metal | Gaming Pendant | Warhammer 40k'
+    );
+  });
+
   it('immediately syncs changed English size, material, category, and theme into Polish', async () => {
     useProductFormMetadataMock.mockReturnValue({
       filteredLanguages: [

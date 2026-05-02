@@ -4,13 +4,14 @@ import { useMemo } from 'react';
 
 import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths-analytics';
 import type { AnalyticsSummary } from '@/shared/contracts/analytics';
-import type { BrainOperationsRange } from '@/shared/contracts/ai-brain';
+import type { BrainModelDescriptor, BrainOperationsRange } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui/queries';
 import {
   catalogToEntries,
   entriesToCatalogArrays,
 } from '@/shared/lib/ai-brain/catalog-entries';
+import { inferBrainModelVendor } from '@/shared/lib/ai-brain/model-vendor';
 import {
   useBrainAnalyticsSummary,
   useBrainInsights,
@@ -54,6 +55,7 @@ interface BrainDerivedStateResult {
   insightsQuery: SingleQuery<InsightsSnapshot>;
   liveOllamaModels: string[];
   logMetricsQuery: SingleQuery<SystemLogMetrics>;
+  modelDescriptors: Record<string, BrainModelDescriptor>;
   modelQuickPicks: SelectSimpleOption[];
   ollamaModelsQuery: SingleQuery<BrainModelsResponse>;
   operationsOverviewQuery: SingleQuery<BrainOperationsOverviewResponse>;
@@ -129,26 +131,40 @@ export function useBrainDerivedState({
     return models.map((model: string) => model.trim()).filter((model: string) => model.length > 0);
   }, [ollamaModelsQuery.data?.sources?.liveOllamaModels]);
 
+  const VENDOR_GROUP_LABELS: Record<string, string> = {
+    openai: 'OpenAI',
+    anthropic: 'Anthropic',
+    gemini: 'Google Gemini',
+    ollama: 'Ollama / Local',
+  };
+
+  const modelDescriptors = useMemo(
+    (): Record<string, BrainModelDescriptor> => ollamaModelsQuery.data?.descriptors ?? {},
+    [ollamaModelsQuery.data?.descriptors]
+  );
+
   const modelQuickPicks = useMemo((): SelectSimpleOption[] => {
     const normalizedCatalogArrays = entriesToCatalogArrays(catalogToEntries(providerCatalog));
     const seen = new Set<string>();
     const options: SelectSimpleOption[] = [];
-    const append = (values: string[], source: string): void => {
+    const append = (values: string[], poolLabel: string): void => {
       values.forEach((value: string) => {
         const trimmed = value.trim();
         if (!trimmed || seen.has(trimmed)) return;
         seen.add(trimmed);
+        const vendor = inferBrainModelVendor(trimmed);
         options.push({
           value: trimmed,
           label: trimmed,
-          description: source,
+          description: poolLabel,
+          group: VENDOR_GROUP_LABELS[vendor] ?? vendor,
         });
       });
     };
-    append(normalizedCatalogArrays.modelPresets, 'model preset');
-    append(normalizedCatalogArrays.paidModels, 'paid model');
-    append(normalizedCatalogArrays.ollamaModels, 'ollama');
-    append(liveOllamaModels, 'ollama (live)');
+    append(normalizedCatalogArrays.modelPresets, 'preset');
+    append(normalizedCatalogArrays.paidModels, 'paid');
+    append(normalizedCatalogArrays.ollamaModels, 'configured');
+    append(liveOllamaModels, 'live');
     return options;
   }, [liveOllamaModels, providerCatalog]);
 
@@ -198,6 +214,7 @@ export function useBrainDerivedState({
     insightsQuery,
     liveOllamaModels,
     logMetricsQuery,
+    modelDescriptors,
     modelQuickPicks,
     ollamaModelsQuery,
     operationsOverviewQuery,

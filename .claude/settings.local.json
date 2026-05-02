@@ -93,7 +93,8 @@
       "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npx vitest run src/features/ai/ai-paths/context/__tests__/AiPathsProvider.integration.test.tsx)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts)",
       "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionTriggers.test.tsx src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useLocalExecutionLoop.runtime-kernel.test.ts src/features/ai/ai-paths/components/ai-paths-settings/runtime/__tests__/useAiPathsLocalExecution.logic.test.ts)",
-      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts)"
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=8192\" npx vitest run src/features/ai/ai-paths/context/ src/shared/lib/ai-paths/core/__tests__/node-handler-registry.test.ts src/features/ai/ai-paths/services/__tests__/path-run-executor.callbacks.test.ts)",
+      "Bash(vitest run *)"
     ]
   }
 }

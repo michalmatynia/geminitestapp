@@ -5,6 +5,7 @@ import {
   PRODUCT_TITLE_SEPARATOR,
   composeStructuredProductNameSegments,
   composeStructuredProductName,
+  isGenericProductNamePlaceholder,
   normalizeStructuredProductName,
   normalizeTitleTermName,
   parseStructuredProductName,
@@ -17,6 +18,17 @@ import {
 describe('product title term helpers', () => {
   it('normalizes English term names for case-insensitive lookup', () => {
     expect(normalizeTitleTermName('  Metal   Alloy ')).toBe('metal alloy');
+  });
+
+  it('identifies generic placeholder base names used in draft templates', () => {
+    expect(isGenericProductNamePlaceholder('[name]')).toBe(true);
+    expect(isGenericProductNamePlaceholder('[nazwa]')).toBe(true);
+    expect(isGenericProductNamePlaceholder('[title]')).toBe(true);
+    expect(isGenericProductNamePlaceholder('Parameter Name')).toBe(true);
+    expect(isGenericProductNamePlaceholder('  [NAME]  ')).toBe(true);
+    expect(isGenericProductNamePlaceholder('Scout Regiment')).toBe(false);
+    expect(isGenericProductNamePlaceholder('Oddzial Zwiadowcow')).toBe(false);
+    expect(isGenericProductNamePlaceholder('')).toBe(false);
   });
 
   it('normalizes structured titles into a consistent separator format', () => {
@@ -204,6 +216,29 @@ describe('product title term helpers', () => {
         polishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
         previousGeneratedPolishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
         syncPreviousGeneratedBaseName: false,
+      }).polishTitle
+    ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+  });
+
+  it('replaces square-bracket placeholder base names from draft templates', () => {
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        polishTitle: '[name] | 4 cm | Metal | Anime Pin | Attack On Titan',
+      }).polishTitle
+    ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        polishTitle: '[nazwa] | 4 cm | Metal | Anime Pin | Attack On Titan',
+      }).polishTitle
+    ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+
+    expect(
+      syncPolishStructuredProductName({
+        englishTitle: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+        polishTitle: '[title] | 4 cm | Metal | Anime Pin | Attack On Titan',
       }).polishTitle
     ).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
   });

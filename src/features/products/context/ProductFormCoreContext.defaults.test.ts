@@ -82,4 +82,34 @@ describe('resolveProductFormDefaultValues', () => {
 
     expect(defaults.name_en).toBe('Canonical scalar name');
   });
+
+  it('strips generic placeholder base names from draft defaults so the field starts empty', () => {
+    const draft = {
+      id: 'draft-1',
+      name: 'Draft',
+      name_en: '[name] | 4 cm | Metal | Anime Pin | Attack On Titan',
+      name_pl: '[nazwa] | 4 cm | Metal | Przypinka Anime | Atak Tytanow',
+      name_de: null,
+    };
+
+    const defaults = resolveProductFormDefaultValues({ draft: draft as never });
+
+    expect(defaults.name_en).toBe('');
+    expect(defaults.name_pl).toBe('');
+  });
+
+  it('preserves real draft names that are not placeholders', () => {
+    const draft = {
+      id: 'draft-1',
+      name: 'Draft',
+      name_en: 'Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan',
+      name_pl: 'Oddzial Zwiadowcow | 4 cm | Metal | Przypinka Anime | Atak Tytanow',
+      name_de: null,
+    };
+
+    const defaults = resolveProductFormDefaultValues({ draft: draft as never });
+
+    expect(defaults.name_en).toBe('Scout Regiment | 4 cm | Metal | Anime Pin | Attack On Titan');
+    expect(defaults.name_pl).toBe('Oddzial Zwiadowcow | 4 cm | Metal | Przypinka Anime | Atak Tytanow');
+  });
 });

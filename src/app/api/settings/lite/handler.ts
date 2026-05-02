@@ -26,6 +26,10 @@ import {
   type LiteSettingRecord,
 } from '@/shared/lib/settings-lite-server-cache';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
 
 type SettingRecord = LiteSettingRecord;
 
@@ -60,13 +64,6 @@ class LiteSettingsFetchTimeoutError extends Error {
 
 const isLiteSettingsFetchTimeoutError = (error: unknown): error is LiteSettingsFetchTimeoutError =>
   error instanceof LiteSettingsFetchTimeoutError;
-
-import {
-  safeClearTimeout,
-  safeSetTimeout,
-} from '@/shared/lib/timers';
-
-// ... (existing imports)
 
 const withLiteSettingsTimeout = async <T>(promise: Promise<T>): Promise<T> => {
   let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;

@@ -16,6 +16,7 @@ import {
 import { useAccessibleKangurPrimaryNavigation } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.access';
 import { internalError } from '@/features/kangur/shared/errors/app-error';
 import type { KangurPrimaryNavigationProps } from '@/features/kangur/ui/components/primary-navigation/KangurPrimaryNavigation.types';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 type KangurTopNavigationRegistration = {
   ownerId: string;
@@ -74,11 +75,6 @@ export function KangurTopNavigationProvider({
         setVisibleRegistration(null);
         return;
       }
-
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
       clearTimeoutRef.current = safeSetTimeout(() => {
         clearTimeoutRef.current = null;

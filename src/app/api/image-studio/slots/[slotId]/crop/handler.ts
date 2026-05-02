@@ -38,6 +38,7 @@ import { parseObjectJsonBody } from '@/shared/lib/api/parse-json';
 import { studioRoot } from '@/shared/lib/files/server-constants';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 
 const uploadsRoot = path.join(studioRoot, 'crops');
@@ -204,12 +205,6 @@ async function loadSourceBuffer(
       'Slot source image path is invalid.'
     );
   }
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-// ... (rest of code)
 
   if (/^https?:\/\//i.test(normalizedPath)) {
     const controller = new AbortController();

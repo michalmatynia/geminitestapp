@@ -7,6 +7,7 @@ import { stripSiteLocalePrefix } from '@/shared/lib/i18n/site-locale';
 import type { FrontendPublicOwnerKangurShellInitialAppearance } from '@/features/kangur/ui/FrontendPublicOwnerKangurShell';
 
 import type { JSX } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const KANGUR_COARSE_POINTER_QUERY = '(pointer: coarse)';
 const KANGUR_HOVER_NONE_QUERY = '(hover: none)';
@@ -51,10 +52,6 @@ const scheduleKangurWarmupTask = (callback: () => void): (() => void) => {
       }
     };
   }
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
   const timeoutId = safeSetTimeout(callback, 1);
   return () => {

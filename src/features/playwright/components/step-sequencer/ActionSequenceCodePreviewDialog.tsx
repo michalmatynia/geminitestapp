@@ -23,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/primitives.public';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 type ActionPreviewEntry = {
   id: string;
@@ -48,10 +49,6 @@ function CopyButton({ value }: { value: string }): React.JSX.Element {
         if (!navigator.clipboard) return;
         void navigator.clipboard
           .writeText(value)
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (imports)
-
           .then(() => {
             setCopied(true);
             safeSetTimeout(() => setCopied(false), 1200);

@@ -32,6 +32,10 @@ import {
   resolveKangurUserScopeKey,
 } from '@/features/kangur/ui/context/kangur-user-scope';
 import { useOptionalKangurRouting } from '@/features/kangur/ui/context/KangurRoutingContext';
+import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
 
 const kangurPlatform = getKangurPlatform();
 const KANGUR_PROGRESS_HYDRATION_CACHE_TTL_MS = 30_000;
@@ -101,13 +105,6 @@ const loadRemoteHydrationProgress = async (
   kangurProgressHydrationInflight.set(cacheKey, inflightPromise);
   return cloneKangurProgressHydrationState(await inflightPromise);
 };
-
-import {
-  safeClearTimeout,
-  safeSetTimeout,
-} from '@/shared/lib/timers';
-
-// ... (existing imports)
 
 const scheduleDeferredCallback = (callback: () => void): (() => void) => {
   if (typeof globalThis.requestIdleCallback === 'function') {

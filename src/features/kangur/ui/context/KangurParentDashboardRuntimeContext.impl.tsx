@@ -42,6 +42,7 @@ import {
   REFRESH_TIMEOUT_MS,
   withTimeout,
 } from './KangurParentDashboardRuntimeContext.utils';
+import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
 
 export * from './KangurParentDashboardRuntimeContext.types';
 export * from './KangurParentDashboardRuntimeContext.utils';
@@ -108,15 +109,7 @@ export function KangurParentDashboardRuntimeProvider({
       setIsPrimaryQueriesReady(false);
       return;
     }
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
-
     const timeoutId = safeSetTimeout(() => setIsPrimaryQueriesReady(true), PRIMARY_DATA_LOAD_DEFER_MS);
-import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
-
     return () => safeClearTimeout(timeoutId);
   }, [activeLearnerId, canAccessDashboard]);
 

@@ -15,6 +15,8 @@ import type {
   KangurAuthRuntimeSetters,
   KangurAuthError,
 } from '@/shared/contracts/kangur-auth';
+import { withKangurClientError } from '@/features/kangur/observability/client';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 export type {
   KangurAuthBootstrapSnapshot,
@@ -115,8 +117,6 @@ export const handleKangurAuthCheckError = ({
   });
 };
 
-import { withKangurClientError } from '@/features/kangur/observability/client';
-
 export const resolveKangurAuthCheckTimeoutMs = (
   options?: KangurAuthCheckAppStateOptions
 ): number | null =>
@@ -158,10 +158,6 @@ export const createKangurAuthSessionRequest = ({
         }),
     }
   );
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
 export const awaitKangurTimedAuthCheck = async ({
   authCheck,

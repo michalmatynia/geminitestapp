@@ -35,6 +35,7 @@ import {
 } from '@/shared/lib/ai-paths/core/utils/legacy-trigger-context-mode';
 import { resolvePathRunRepository } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { buildPathRunPayload, logEnqueueTiming, resolveMetaRecord, runCompileGraphSync, type ContextBundle } from './handler.helpers';
 
@@ -42,10 +43,6 @@ const QUEUE_PREFLIGHT_TIMEOUT_MS = Number.parseInt(
   process.env['AI_PATHS_ENQUEUE_QUEUE_PREFLIGHT_TIMEOUT_MS'] ?? '10000',
   10
 );
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (imports)
 
 const withTimeout = async <T>(
   promise: Promise<T>,

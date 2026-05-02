@@ -16,6 +16,10 @@ import {
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { resolveBrainExecutionConfigForCapability } from '@/shared/lib/ai-brain/server';
 import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+import {
   runBrainChatCompletion,
   supportsBrainJsonMode,
 } from '@/shared/lib/ai-brain/server-runtime-client';
@@ -257,14 +261,6 @@ export const buildRuntimeFieldEntries = (values: Record<string, unknown>): Runti
       },
     ];
   });
-
-import {
-  safeClearTimeout,
-  safeSetTimeout,
-} from '@/shared/lib/timers';
-import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
-
-// ... (existing code)
 
 const withTimeout = async <T>(
   promise: Promise<T>,

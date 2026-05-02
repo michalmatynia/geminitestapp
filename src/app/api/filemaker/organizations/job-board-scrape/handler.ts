@@ -8,6 +8,7 @@ import {
 } from '@/features/filemaker/server/filemaker-job-board-scrape-runtime';
 import type { ApiHandlerContext } from '@/shared/contracts/ui/api';
 import { badRequestError } from '@/shared/errors/app-error';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 const readOptionalJsonBody = async (req: NextRequest): Promise<unknown> => {
   const contentType = req.headers.get('content-type') ?? '';
@@ -29,10 +30,6 @@ const wantsLiveStream = (body: unknown): boolean =>
 
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Job-board scrape failed.';
-
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
 const sleep = async (delayMs: number): Promise<void> => {
   await new Promise<void>((resolve) => {

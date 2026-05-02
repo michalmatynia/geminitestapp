@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/primitives.public';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 function CopySnippetButton({ value }: { value: string }): React.JSX.Element {
   const [copied, setCopied] = useState(false);
@@ -44,10 +45,6 @@ function CopySnippetButton({ value }: { value: string }): React.JSX.Element {
         if (!navigator.clipboard) return;
         void navigator.clipboard
           .writeText(value)
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (imports)
-
           .then(() => {
             setCopied(true);
             safeSetTimeout(() => setCopied(false), 1200);

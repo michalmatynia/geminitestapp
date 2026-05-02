@@ -18,6 +18,7 @@ import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { normalizeProductPageSize } from '@/shared/lib/products/constants';
 import { parseUserPreferencesUpdatePayload } from '@/shared/validations/user-preferences';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 
 // For now, we'll use a hardcoded user ID
@@ -42,11 +43,6 @@ const normalizeProductListNameLocale = (
 
   return 'name_en';
 };
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-
-// ...
 
 const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
   let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;

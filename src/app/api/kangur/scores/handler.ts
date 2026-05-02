@@ -23,6 +23,7 @@ import {
 } from '@/shared/lib/api/query-schema';
 import { normalizeKangurSort, parseKangurScoreCreatePayload } from '@/shared/validations/kangur';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 const KANGUR_SCORES_CACHE_TTL_MS = 30_000;
 const KANGUR_SCORES_FETCH_TIMEOUT_MS = 2_500;
@@ -48,10 +49,6 @@ class KangurScoresFetchTimeoutError extends Error {
 
 const isKangurScoresFetchTimeoutError = (error: unknown): error is KangurScoresFetchTimeoutError =>
   error instanceof KangurScoresFetchTimeoutError;
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
 const withKangurScoresTimeout = async <T>(promise: Promise<T>): Promise<T> => {
   let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;

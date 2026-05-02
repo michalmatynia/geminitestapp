@@ -7,9 +7,13 @@ import { type PlaywrightStepSequencerContextType } from '../../context/Playwrigh
 import { useStepFormState } from './useStepFormState';
 import { StepFormInputs } from './StepFormInputs';
 import { StepFormSelectorRegistry } from './StepFormSelectorRegistry';
-import { 
-  Button, Dialog, DialogContent, DialogFooter, Separator, Textarea 
+import {
+  Button, Dialog, DialogContent, DialogFooter, Separator, Textarea
 } from '@/shared/ui/primitives.public';
+import { type SelectorRegistryEntry } from '@/shared/contracts/integrations/selector-registry';
+import { type PlaywrightWebsite, type PlaywrightFlow } from '@/shared/contracts/playwright-steps';
+import { StepFormScope } from './StepFormScope';
+import { TagsInput } from './TagsInput';
 
 export function StepFormModal(): React.JSX.Element | null {
   const {
@@ -20,11 +24,6 @@ export function StepFormModal(): React.JSX.Element | null {
     websites,
     flows,
   } = usePlaywrightStepSequencer() as PlaywrightStepSequencerContextType;
-
-import { type SelectorRegistryEntry } from '@/shared/contracts/integrations/selector-registry';
-import { type PlaywrightWebsite, type PlaywrightFlow } from '@/shared/contracts/playwright-steps';
-
-// ... inside StepFormModal ...
 
   const {
     draft, setDraft,
@@ -378,9 +377,6 @@ function getProcessedInputBindings(
 
           <Separator />
 
-import { StepFormScope } from './StepFormScope';
-import { TagsInput } from './TagsInput';
-...
           <StepFormScope 
             draft={draft} 
             set={set} 

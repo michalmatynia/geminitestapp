@@ -205,9 +205,15 @@ async function loadSourceBuffer(
     );
   }
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+// ... (rest of code)
+
   if (/^https?:\/\//i.test(normalizedPath)) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
+    const timeoutId = safeSetTimeout(() => controller.abort(), SOURCE_FETCH_TIMEOUT_MS);
     try {
       const response = await fetch(normalizedPath, { signal: controller.signal });
       if (!response.ok) {
@@ -224,7 +230,7 @@ async function loadSourceBuffer(
         mimeHint: contentType ? contentType.toLowerCase() : null,
       };
     } finally {
-      clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     }
   }
 

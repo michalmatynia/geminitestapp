@@ -1,3 +1,5 @@
+import { safeSetTimeout } from '@/shared/lib/timers';
+
 const SPOTLIGHT_DURATION_MS = 4_000;
 const SCROLL_DELAY_MS = 80;
 const SPOTLIGHT_PADDING = 8;
@@ -58,10 +60,6 @@ export const scrollToAndSpotlightAnchor = (
   let overlay: HTMLDivElement | null = null;
   let fadeOutTimer: ReturnType<typeof setTimeout> | null = null;
   let removeTimer: ReturnType<typeof setTimeout> | null = null;
-
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (imports)
 
   const spotlightTimer = safeSetTimeout(() => {
     const rect = element.getBoundingClientRect();

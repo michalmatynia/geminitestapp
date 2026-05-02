@@ -55,9 +55,12 @@ const ENABLE_LOGGING_MIDDLEWARE = isEnabled(
 const queryStartTimes = new WeakMap<Query<unknown, Error, unknown, readonly unknown[]>, number>();
 const slowQueryLastReportedAt = new Map<string, number>();
 const queryWarningLastReportedAt = new Map<string, number>();
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+// ... existing imports
+
 const errorRecoveryTimerByQuery = new WeakMap<
   Query<unknown, Error, unknown, readonly unknown[]>,
-  ReturnType<typeof setTimeout>
+  ReturnType<typeof safeSetTimeout>
 >();
 
 const scheduleErrorRecoveryRetry = (
@@ -66,10 +69,10 @@ const scheduleErrorRecoveryRetry = (
 ): void => {
   const existingTimer = errorRecoveryTimerByQuery.get(query);
   if (existingTimer !== undefined) {
-    clearTimeout(existingTimer);
+    safeClearTimeout(existingTimer);
   }
-  const retryTimer = setTimeout((): void => {
-    clearTimeout(retryTimer);
+  const retryTimer = safeSetTimeout((): void => {
+    safeClearTimeout(retryTimer);
     errorRecoveryTimerByQuery.delete(query);
     void query.fetch();
   }, delayMs);

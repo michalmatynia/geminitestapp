@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 
 import { prefetchQueryV2 } from '@/shared/lib/query-factories-v2';
-import { type SafeTimeout } from '@/shared/lib/runtime/timeout';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import type { TanstackFactoryDomain } from '@/shared/lib/tanstack-factory-v2.types';
 
 interface CacheWarmupConfig {
@@ -20,7 +20,7 @@ export function useCacheWarmup(
   options?: { domain?: TanstackFactoryDomain }
 ): void {
   const queryClient = useQueryClient();
-  const warmupTimeouts = useRef<Map<string, SafeTimeout>>(new Map());
+  const warmupTimeouts = useRef<Map<string, ReturnType<typeof safeSetTimeout>>>(new Map());
   const domain = options?.domain ?? 'global';
 
   const warmupQuery = useCallback(
@@ -36,7 +36,7 @@ export function useCacheWarmup(
 
       const delay = config.priority === 'high' ? 100 : config.priority === 'medium' ? 500 : 1000;
 
-      const timeout = setTimeout(() => {
+      const timeout = safeSetTimeout(() => {
         void prefetchQueryV2(queryClient, {
           queryKey: config.queryKey,
           queryFn: config.queryFn,
@@ -50,7 +50,7 @@ export function useCacheWarmup(
             description: 'Loads cache warmup.'},
         })();
         warmupTimeouts.current.delete(key);
-      }, delay) as SafeTimeout;
+      }, delay);
 
       warmupTimeouts.current.set(key, timeout);
     },
@@ -63,7 +63,7 @@ export function useCacheWarmup(
     const currentTimeouts = warmupTimeouts.current;
     return (): void => {
       // Cleanup timeouts
-      currentTimeouts.forEach((timeout: SafeTimeout) => clearTimeout(timeout));
+      currentTimeouts.forEach((timeout) => safeClearTimeout(timeout));
       currentTimeouts.clear();
     };
   }, [configs, warmupQuery]);
@@ -90,11 +90,11 @@ export function useSmartPrefetch(options?: { domain?: TanstackFactoryDomain }): 
       queryFn: () => Promise<unknown>,
       delay: number = 300
     ): { onMouseEnter: () => void; onMouseLeave: () => void } => {
-      let timeout: NodeJS.Timeout;
+      let timeout: ReturnType<typeof safeSetTimeout> | null = null;
 
       return {
         onMouseEnter: (): void => {
-          timeout = setTimeout(() => {
+          timeout = safeSetTimeout(() => {
             void prefetchQueryV2(queryClient, {
               queryKey,
               queryFn,
@@ -110,7 +110,7 @@ export function useSmartPrefetch(options?: { domain?: TanstackFactoryDomain }): 
           }, delay);
         },
         onMouseLeave: (): void => {
-          if (timeout) clearTimeout(timeout);
+          if (timeout) safeClearTimeout(timeout);
         },
       };
     },

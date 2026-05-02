@@ -1,19 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
-export function useDebounce<T>(value: T, delay: number): T {
+export const useDebounce = <T>(value: T, delay: number): T => {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer = safeSetTimeout(() => {
       setDebouncedValue(value);
     }, delay);
 
-    return (): void => {
-      clearTimeout(timer);
+    return () => {
+      safeClearTimeout(timer);
     };
   }, [value, delay]);
 
   return debouncedValue;
-}
+};

@@ -192,7 +192,11 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const queryClient = useQueryClient();
   const errorToastSignaturesRef = useRef<Map<string, number>>(new Map());
   const autoRetryCountByQueryRef = useRef<Map<string, number>>(new Map());
-  const autoRetryTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ...
+
+  const autoRetryTimersRef = useRef<Map<string, ReturnType<typeof safeSetTimeout>>>(new Map());
 
   const showToast = config.showToast ?? false;
   const logErrors = config.logErrors !== false;
@@ -215,12 +219,11 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         autoRetryCountByQueryRef.current.delete(queryKeySignature);
         const retryTimer = autoRetryTimersRef.current.get(queryKeySignature);
         if (retryTimer !== undefined) {
-          clearTimeout(retryTimer);
+          safeClearTimeout(retryTimer);
           autoRetryTimersRef.current.delete(queryKeySignature);
         }
         return;
       }
-
       if (event.query.state.status === 'error') {
         const error = event.query.state.error as unknown;
 
@@ -305,10 +308,10 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           autoRetryCountByQueryRef.current.set(queryKeySignature, retriesPerformed + 1);
           const existingRetryTimer = autoRetryTimersRef.current.get(queryKeySignature);
           if (existingRetryTimer !== undefined) {
-            clearTimeout(existingRetryTimer);
+            safeClearTimeout(existingRetryTimer);
           }
-          const retryTimer = setTimeout((): void => {
-            clearTimeout(retryTimer);
+          const retryTimer = safeSetTimeout((): void => {
+            safeClearTimeout(retryTimer);
             autoRetryTimersRef.current.delete(queryKeySignature);
             void queryClient.invalidateQueries({ queryKey });
           }, Math.max(0, retryDelayMs));
@@ -319,8 +322,8 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
 
     return (): void => {
       unsubscribe();
-      autoRetryTimersRef.current.forEach((timerId: ReturnType<typeof setTimeout>): void => {
-        clearTimeout(timerId);
+      autoRetryTimersRef.current.forEach((timerId: ReturnType<typeof safeSetTimeout>): void => {
+        safeClearTimeout(timerId);
       });
       autoRetryTimersRef.current.clear();
     };

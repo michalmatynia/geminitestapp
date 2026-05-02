@@ -125,7 +125,7 @@ async function fetchRemoteFile(
   url: string
 ): Promise<{ buffer: Buffer; mime: string | null; filename: string }> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REMOTE_FETCH_TIMEOUT_MS);
+  const timeoutId = safeSetTimeout(() => controller.abort(), REMOTE_FETCH_TIMEOUT_MS);
   try {
     const response = await fetch(url, { signal: controller.signal });
     if (!response.ok) {
@@ -154,7 +154,7 @@ async function fetchRemoteFile(
     }
     return { buffer, mime, filename };
   } finally {
-    clearTimeout(timeout);
+    safeClearTimeout(timeoutId);
   }
 }
 

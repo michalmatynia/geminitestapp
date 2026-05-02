@@ -43,25 +43,29 @@ const QUEUE_PREFLIGHT_TIMEOUT_MS = Number.parseInt(
   10
 );
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (imports)
+
 const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
   timeoutMessage: string
 ): Promise<T> => {
   if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return promise;
-  let tId: ReturnType<typeof setTimeout> | null = null;
+  let tId: ReturnType<typeof safeSetTimeout> | null = null;
   try {
     return await Promise.race<T>([
       promise,
       new Promise<T>((_resolve, reject) => {
-        tId = setTimeout(() => {
+        tId = safeSetTimeout(() => {
           reject(new Error(timeoutMessage));
         }, timeoutMs);
       }),
     ]);
   } finally {
     if (tId) {
-      clearTimeout(tId);
+      safeClearTimeout(tId);
     }
   }
 };

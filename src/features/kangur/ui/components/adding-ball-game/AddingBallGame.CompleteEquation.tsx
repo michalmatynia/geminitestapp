@@ -13,6 +13,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 
 import { DraggableBall, PointerDropZone, SlotZone } from './AddingBallGame.Shared';
 import { PointerDragProvider } from './PointerDragProvider';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import type {
   BallItem,
   CompleteEquationRound,
@@ -93,13 +94,9 @@ function useCompleteEquationState(round: CompleteEquationRound) {
     (onResult: (correct: boolean) => void): void => {
       const ok = isAcceptedCountSplit(state.slotA.length, state.slotB.length, round.a, round.b);
       setCorrect(ok);
-      import { safeSetTimeout } from '@/shared/lib/timers';
-
-      // ... (existing imports)
-
-          setChecked(true);
-          safeSetTimeout(() => onResult(ok), 1400);
-        };
+      setChecked(true);
+      safeSetTimeout(() => onResult(ok), 1400);
+    },
     [round.a, round.b, state.slotA.length, state.slotB.length]
   );
 

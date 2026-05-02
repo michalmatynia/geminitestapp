@@ -23,6 +23,7 @@ import {
   BALL_POOL_CLASSNAME,
   getAnswerSlotSurface,
 } from './utils';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import { DraggableBall } from './AddingBallGame.Shared';
 
 export function PickAnswer({
@@ -52,10 +53,6 @@ export function PickAnswer({
 
     setDropped(ball);
     const ok = ball.num === round.correct;
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
-
     setChecked(true);
     setSelectedBallId(null);
     safeSetTimeout(() => onResult(ok), 1400);

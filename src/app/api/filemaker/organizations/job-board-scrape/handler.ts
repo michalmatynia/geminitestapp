@@ -30,9 +30,13 @@ const wantsLiveStream = (body: unknown): boolean =>
 const errorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : 'Job-board scrape failed.';
 
+import { safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
 const sleep = async (delayMs: number): Promise<void> => {
   await new Promise<void>((resolve) => {
-    setTimeout(resolve, delayMs);
+    safeSetTimeout(resolve, delayMs);
   });
 };
 

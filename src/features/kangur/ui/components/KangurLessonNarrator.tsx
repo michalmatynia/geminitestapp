@@ -28,6 +28,7 @@ import {
 import { buildContextRegistryConsumerEnvelope } from '@/shared/lib/ai-context-registry/page-context-shared';
 import { useSettingsStore } from '@/features/kangur/shared/providers/SettingsStoreProvider';
 import { cn } from '@/features/kangur/shared/utils';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { useKangurElevatedSession } from '@/features/kangur/ui/hooks/useKangurElevatedSession';
 
 import { extractNarrationTextFromElement } from './kangur-narrator-utils';
@@ -159,10 +160,6 @@ const useObservedNarrationText = ({
     if (typeof MutationObserver === 'undefined') {
       return;
     }
-
-import { safeSetTimeout, safeClearTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
     const observer = new MutationObserver(() => {
       if (timeoutId !== null) {

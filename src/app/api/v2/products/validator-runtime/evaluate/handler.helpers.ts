@@ -258,23 +258,31 @@ export const buildRuntimeFieldEntries = (values: Record<string, unknown>): Runti
     ];
   });
 
+import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
+
+// ... (existing code)
+
 const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number,
   timeoutMessage: string
 ): Promise<T> =>
   await new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => {
+    const timer = safeSetTimeout(() => {
       reject(new Error(timeoutMessage));
     }, timeoutMs);
 
     promise
       .then((value: T) => {
-        clearTimeout(timer);
+        safeClearTimeout(timer);
         resolve(value);
       })
       .catch((error: unknown) => {
-        clearTimeout(timer);
+        safeClearTimeout(timer);
         reject(error);
       });
   });

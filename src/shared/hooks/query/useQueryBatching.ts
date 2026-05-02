@@ -123,16 +123,16 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 
         // Clear existing timeout
         if (batchTimeout.current) {
-          clearTimeout(batchTimeout.current);
+          safeClearTimeout(batchTimeout.current);
         }
 
         // Process batch when full or after delay
         if (batchQueue.current.size >= maxBatchSize) {
           void processBatch();
         } else {
-          batchTimeout.current = setTimeout(() => {
+          batchTimeout.current = safeSetTimeout(() => {
             void processBatch();
-          }, batchDelay) as SafeTimeout;
+          }, batchDelay);
         }
       });
     },
@@ -142,7 +142,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
   useEffect((): (() => void) => {
     return (): void => {
       if (batchTimeout.current) {
-        clearTimeout(batchTimeout.current);
+        safeClearTimeout(batchTimeout.current);
       }
     };
   }, []);

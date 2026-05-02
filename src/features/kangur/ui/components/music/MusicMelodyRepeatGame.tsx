@@ -58,6 +58,7 @@ import {
   type DiatonicNoteId,
 } from './music-theory';
 import { useKangurMusicSynth } from './useKangurMusicSynth';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 type MusicRoundFeedback = {
   accent: KangurAccent;
@@ -310,10 +311,6 @@ export default function MusicMelodyRepeatGame({
 
       setPressedNoteId(noteId);
       setPressedVelocity(pressDetails.velocity);
-      import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-      // ... (existing imports)
-
              if (pressedResetTimeoutRef.current !== null) {
                safeClearTimeout(pressedResetTimeoutRef.current);
              }

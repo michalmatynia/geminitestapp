@@ -1,7 +1,5 @@
 'use client';
 
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
-import type { PlaywrightFlow, PlaywrightWebsite } from '@/shared/contracts/playwright-steps';
 import {
   Label,
   Select,
@@ -10,18 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/primitives.public';
-
-type Props = {
-  websites: PlaywrightWebsite[];
-  flows: PlaywrightFlow[];
-  personas: PlaywrightPersona[];
-  websiteId: string | null;
-  flowId: string | null;
-  personaId: string | null;
-  onWebsiteChange: (websiteId: string | null) => void;
-  onFlowChange: (flowId: string | null) => void;
-  onPersonaChange: (personaId: string | null) => void;
-};
+import { useLiveScripterPanelContext } from './LiveScripterPanelContext';
 
 function LiveScripterScopeSelect({
   id,
@@ -62,38 +49,32 @@ function LiveScripterScopeSelect({
   );
 }
 
-export function LiveScripterScopeControls({
-  websites,
-  flows,
-  personas,
-  websiteId,
-  flowId,
-  personaId,
-  onWebsiteChange,
-  onFlowChange,
-  onPersonaChange,
-}: Props): React.JSX.Element {
+export function LiveScripterScopeControls(): React.JSX.Element {
+  const model = useLiveScripterPanelContext();
+  const { sequencer, flowsForWebsite, personas, personaId, handleWebsiteChange, setPersonaId } = model;
+  const { websites, filterWebsiteId, filterFlowId, setFilterFlowId } = sequencer;
+
   return (
     <div className='grid gap-3 rounded-lg border border-white/10 bg-black/10 p-4 md:grid-cols-3'>
       <LiveScripterScopeSelect
         id='live-scripter-website'
         label='Website'
-        value={websiteId ?? '__shared__'}
+        value={filterWebsiteId ?? '__shared__'}
         placeholder='Choose website scope'
         emptyValue='__shared__'
         emptyLabel='Shared'
         options={websites.map((website) => ({ value: website.id, label: website.name }))}
-        onValueChange={(value) => onWebsiteChange(value === '__shared__' ? null : value)}
+        onValueChange={(value) => handleWebsiteChange(value === '__shared__' ? null : value)}
       />
       <LiveScripterScopeSelect
         id='live-scripter-flow'
         label='Flow'
-        value={flowId ?? '__none__'}
+        value={filterFlowId ?? '__none__'}
         placeholder='Choose flow scope'
         emptyValue='__none__'
         emptyLabel='No flow'
-        options={flows.map((flow) => ({ value: flow.id, label: flow.name }))}
-        onValueChange={(value) => onFlowChange(value === '__none__' ? null : value)}
+        options={flowsForWebsite.map((flow) => ({ value: flow.id, label: flow.name }))}
+        onValueChange={(value) => setFilterFlowId(value === '__none__' ? null : value)}
       />
       <LiveScripterScopeSelect
         id='live-scripter-persona'
@@ -103,7 +84,7 @@ export function LiveScripterScopeControls({
         emptyValue='__none__'
         emptyLabel='Default'
         options={personas.map((persona) => ({ value: persona.id, label: persona.name }))}
-        onValueChange={(value) => onPersonaChange(value === '__none__' ? null : value)}
+        onValueChange={(value) => setPersonaId(value === '__none__' ? null : value)}
       />
     </div>
   );

@@ -66,6 +66,7 @@ import {
 import { MasterTreeSettingsButton } from '@/shared/ui/navigation-and-layout.public';
 import { getFolderTreeInstanceSettingsHref } from '@/shared/utils/folder-tree-profiles-v2';
 import { cn } from '@/shared/utils/ui-utils';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 const HISTORY_TREE_INSTANCE = 'playwright_step_seq_action_runs';
 const HISTORY_TREE_SETTINGS_HREF = getFolderTreeInstanceSettingsHref(HISTORY_TREE_INSTANCE);
@@ -208,10 +209,6 @@ function CopyValueButton({
         navigator.clipboard
           .writeText(normalized)
           .then(() => {
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing code, ensure safeSetTimeout is added to imports)
-
             setCopied(true);
             safeSetTimeout(() => setCopied(false), 1200);
           })

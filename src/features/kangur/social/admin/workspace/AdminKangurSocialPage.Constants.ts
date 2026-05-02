@@ -1,4 +1,5 @@
 import { ApiError } from '@/shared/lib/api-client';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import type {
   KangurSocialPost,
   KangurSocialPostEditorStateDto,
@@ -145,34 +146,33 @@ export function isTransientError(error: unknown): boolean {
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
     return msg.includes('failed to fetch') || msg.includes('timeout') || msg.includes('network');
-  import { ApiError } from '@/shared/lib/api-client';
-  import { safeSetTimeout } from '@/shared/lib/timers';
-  import type {
-    KangurSocialPost,
-  // ...
-  export async function withRetry<T>(
-    fn: () => Promise<T>,
-    options?: {
-      maxAttempts?: number;
-      delayMs?: number;
-      retryable?: (error: unknown) => boolean;
-    }
-  ): Promise<T> {
-    const maxAttempts = options?.maxAttempts ?? 2;
-    const delayMs = options?.delayMs ?? 2000;
-    const retryable = options?.retryable ?? isTransientError;
-    let lastError: unknown;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        return await fn();
-      } catch (error) {
-        lastError = error;
-        if (attempt < maxAttempts && retryable(error)) {
-          await new Promise<void>((resolve) => safeSetTimeout(resolve, delayMs * attempt));
-          continue;
-        }
-        throw error;
-      }
-    }
-    throw lastError;
   }
+  return false;
+}
+
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  options?: {
+    maxAttempts?: number;
+    delayMs?: number;
+    retryable?: (error: unknown) => boolean;
+  }
+): Promise<T> {
+  const maxAttempts = options?.maxAttempts ?? 2;
+  const delayMs = options?.delayMs ?? 2000;
+  const retryable = options?.retryable ?? isTransientError;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxAttempts && retryable(error)) {
+        await new Promise<void>((resolve) => safeSetTimeout(resolve, delayMs * attempt));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}

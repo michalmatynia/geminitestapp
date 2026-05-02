@@ -82,9 +82,6 @@ const parseTagInput = (input: string): string[] => {
   return Array.from(new Set(raw));
 };
 
-import { useFileManagerUIStateLogic } from '@/features/files/hooks/useFileManagerUIStateLogic';
-// ... rest of imports
-
 export function FileManagerProvider(props: {
   children: ReactNode;
   onSelectFile?: (files: ImageFileSelection[]) => void;

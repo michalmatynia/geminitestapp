@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState, type MutableRefObject } from 'react';
 import { stopActiveNode } from '../useKangurMusicSynth.utils';
 import type { ActiveNode } from '../useKangurMusicSynth.types';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 type KangurMusicSynthPlayback = {
   activeNodesRef: MutableRefObject<ActiveNode[]>;
@@ -44,10 +45,6 @@ export function useKangurMusicSynthPlayback(): KangurMusicSynthPlayback {
 
   const schedulePlaybackTimeout = useCallback(
     (callback: () => void, ms: number): number => {
-  import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
-
     const timeoutId = safeSetTimeout(() => {
         timeoutIdsRef.current = timeoutIdsRef.current.filter((candidate) => candidate !== timeoutId);
         callback();

@@ -61,21 +61,28 @@ class LiteSettingsFetchTimeoutError extends Error {
 const isLiteSettingsFetchTimeoutError = (error: unknown): error is LiteSettingsFetchTimeoutError =>
   error instanceof LiteSettingsFetchTimeoutError;
 
+import {
+  safeClearTimeout,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
+
+// ... (existing imports)
+
 const withLiteSettingsTimeout = async <T>(promise: Promise<T>): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
 
   try {
     return await Promise.race([
       promise,
       new Promise<T>((_resolve, reject) => {
-        timeoutId = setTimeout(() => {
+        timeoutId = safeSetTimeout(() => {
           reject(new LiteSettingsFetchTimeoutError(LITE_SETTINGS_FETCH_TIMEOUT_MS));
         }, LITE_SETTINGS_FETCH_TIMEOUT_MS);
       }),
     ]);
   } finally {
     if (timeoutId !== null) {
-      clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     }
   }
 };

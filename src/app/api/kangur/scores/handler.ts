@@ -49,21 +49,25 @@ class KangurScoresFetchTimeoutError extends Error {
 const isKangurScoresFetchTimeoutError = (error: unknown): error is KangurScoresFetchTimeoutError =>
   error instanceof KangurScoresFetchTimeoutError;
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+
+// ... (existing imports)
+
 const withKangurScoresTimeout = async <T>(promise: Promise<T>): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
 
   try {
     return await Promise.race([
       promise,
       new Promise<T>((_resolve, reject) => {
-        timeoutId = setTimeout(() => {
+        timeoutId = safeSetTimeout(() => {
           reject(new KangurScoresFetchTimeoutError(KANGUR_SCORES_FETCH_TIMEOUT_MS));
         }, KANGUR_SCORES_FETCH_TIMEOUT_MS);
       }),
     ]);
   } finally {
     if (timeoutId !== null) {
-      clearTimeout(timeoutId);
+      safeClearTimeout(timeoutId);
     }
   }
 };

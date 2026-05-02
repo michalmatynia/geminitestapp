@@ -84,6 +84,11 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
 
   // Sync when coming back online (skip initial mount — only on false→true transition)
   const wasOfflineRef = useRef(false);
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { safeClearTimeout, safeSetTimeout, safeSetInterval, safeClearInterval } from '@/shared/lib/timers';
+// ... existing imports
+
   useEffect(() => {
     if (!isOnline) {
       wasOfflineRef.current = true;
@@ -91,10 +96,10 @@ export function useSystemSync({ enabled = true, interval = 60000 }: SystemSyncOp
     }
     if (wasOfflineRef.current && enabled) {
       wasOfflineRef.current = false;
-      const timer = setTimeout(() => {
+      const timer = safeSetTimeout(() => {
         void performSync();
       }, 0);
-      return (): void => clearTimeout(timer);
+      return (): void => safeClearTimeout(timer);
     }
     return undefined;
   }, [isOnline, enabled, performSync]);

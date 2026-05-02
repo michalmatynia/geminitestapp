@@ -1,6 +1,7 @@
 import 'server-only';
 
 import type { Page } from 'playwright';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import type {
   ExtractFieldSpec,
@@ -112,10 +113,6 @@ export const createPlaywrightPageDriver = (page: Page): PageDriver => ({
       { itemSelector, fields: serialized }
     );
   },
-
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
   async scrollToBottom() {
     await page.evaluate(

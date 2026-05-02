@@ -1,6 +1,7 @@
 import { getActionStepManifest } from '@/shared/lib/browser-execution/action-constructor';
 import { generateBrowserExecutionStepsInit } from '@/shared/lib/browser-execution/generate-browser-steps';
 import { TRADERA_SELECTOR_REGISTRY_RUNTIME } from '@/shared/lib/browser-execution/selectors/tradera';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import { TRADERA_COOKIE_DISMISSAL_SNIPPET } from './script-partials/cookie-dismissal';
 
@@ -88,8 +89,6 @@ ${selectorRegistryRuntime}
   ];
 
   ${executionStepsInit}
-
-  import { safeSetTimeout } from '@/shared/lib/timers';
 
   const wait = (ms: number) => new Promise((resolve) => safeSetTimeout(resolve, ms));
 

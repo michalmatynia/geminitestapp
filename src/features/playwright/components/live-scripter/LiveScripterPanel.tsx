@@ -7,6 +7,7 @@ import { LiveScripterPreview } from './LiveScripterPreview';
 import { LiveScripterScopeControls } from './LiveScripterScopeControls';
 import { LiveScripterUrlBar } from './LiveScripterUrlBar';
 import { useLiveScripterPanelModel } from './useLiveScripterPanelModel';
+import { LiveScripterPanelProvider } from './LiveScripterPanelContext';
 
 type Props = {
   initialUrl?: string | null;
@@ -15,11 +16,9 @@ type Props = {
   initialPersonaId?: string | null;
 };
 
-function LiveScripterErrorBanner({
-  errorMessage,
-}: {
-  errorMessage: string | null;
-}): React.JSX.Element | null {
+function LiveScripterErrorBanner(): React.JSX.Element | null {
+  const model = useLiveScripterPanelContext();
+  const errorMessage = model.liveScripter.errorMessage;
   if (typeof errorMessage !== 'string' || errorMessage.length === 0) {
     return null;
   }
@@ -30,26 +29,21 @@ function LiveScripterErrorBanner({
   );
 }
 
-function LiveScripterCurrentTitle({
-  title,
-}: {
-  title: string | null;
-}): React.JSX.Element | null {
+function LiveScripterCurrentTitle(): React.JSX.Element | null {
+  const model = useLiveScripterPanelContext();
+  const title = model.liveScripter.currentTitle;
   if (typeof title !== 'string' || title.length === 0) {
     return null;
   }
   return <div className='text-xs text-muted-foreground'>Current page title: {title}</div>;
 }
 
-function LiveScripterWorkspace({
-  liveScripter,
-  websiteId,
-  flowId,
-}: {
-  liveScripter: ReturnType<typeof useLiveScripterPanelModel>['liveScripter'];
-  websiteId: string | null;
-  flowId: string | null;
-}): React.JSX.Element {
+function LiveScripterWorkspace(): React.JSX.Element {
+  const model = useLiveScripterPanelContext();
+  const { liveScripter, sequencer } = model;
+  const websiteId = sequencer.filterWebsiteId;
+  const flowId = sequencer.filterFlowId;
+
   return (
     <div className='space-y-4'>
       <LiveScripterProbePanel liveScripter={liveScripter} />
@@ -79,40 +73,11 @@ function LiveScripterWorkspace({
   );
 }
 
-function LiveScripterPanelControls({
-  model,
-}: {
-  model: ReturnType<typeof useLiveScripterPanelModel>;
-}): React.JSX.Element {
+function LiveScripterPanelControls(): React.JSX.Element {
   return (
     <>
-      <LiveScripterUrlBar
-        url={model.urlInput}
-        onUrlChange={model.setUrlInput}
-        currentUrl={model.liveScripter.currentUrl}
-        status={model.liveScripter.status}
-        mode={model.liveScripter.mode}
-        onModeChange={model.liveScripter.setMode}
-        onStartOrNavigate={model.handleStartOrNavigate}
-        onBack={model.liveScripter.back}
-        onForward={model.liveScripter.forward}
-        onReload={model.liveScripter.reload}
-        onDispose={model.handleDispose}
-        typingValue={model.typingValue}
-        onTypingValueChange={model.setTypingValue}
-        onDriveType={model.handleDriveType}
-      />
-      <LiveScripterScopeControls
-        websites={model.sequencer.websites}
-        flows={model.flowsForWebsite}
-        personas={model.personas}
-        websiteId={model.sequencer.filterWebsiteId}
-        flowId={model.sequencer.filterFlowId}
-        personaId={model.personaId}
-        onWebsiteChange={model.handleWebsiteChange}
-        onFlowChange={model.sequencer.setFilterFlowId}
-        onPersonaChange={model.setPersonaId}
-      />
+      <LiveScripterUrlBar />
+      <LiveScripterScopeControls />
     </>
   );
 }
@@ -131,15 +96,13 @@ export function LiveScripterPanel({
   });
 
   return (
-    <div className='space-y-4'>
-      <LiveScripterPanelControls model={model} />
-      <LiveScripterErrorBanner errorMessage={model.liveScripter.errorMessage} />
-      <LiveScripterWorkspace
-        liveScripter={model.liveScripter}
-        websiteId={model.sequencer.filterWebsiteId}
-        flowId={model.sequencer.filterFlowId}
-      />
-      <LiveScripterCurrentTitle title={model.liveScripter.currentTitle} />
-    </div>
+    <LiveScripterPanelProvider model={model}>
+      <div className='space-y-4'>
+        <LiveScripterPanelControls />
+        <LiveScripterErrorBanner />
+        <LiveScripterWorkspace />
+        <LiveScripterCurrentTitle />
+      </div>
+    </LiveScripterPanelProvider>
   );
 }

@@ -12,7 +12,7 @@ import {
   resolvePathRunRepository,
 } from '@/shared/lib/ai-paths/services/path-run-repository';
 import { getRedisSubscriber, isSubscriberConnected } from '@/shared/lib/redis-pubsub';
-import { safeClearInterval, safeSetInterval } from '@/shared/lib/timers';
+import { safeClearInterval, safeSetInterval, safeSetTimeout } from '@/shared/lib/timers';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 
@@ -38,7 +38,7 @@ const STREAM_KEEPALIVE_INTERVAL_MS = 15_000;
 
 export const querySchema = aiPathRunStreamQuerySchema;
 
-const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+const sleep = (ms: number): Promise<void> => new Promise((resolve) => safeSetTimeout(resolve, ms));
 
 const toISOStringSafe = (value?: Date | string | null): string | null => {
   if (!value) return null;

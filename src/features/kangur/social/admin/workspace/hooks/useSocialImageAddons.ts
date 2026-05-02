@@ -2,6 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 import { useOptionalCmsStorefrontAppearance } from '@/features/cms/public';
 import { useToast } from '@/features/kangur/shared/ui';
@@ -306,7 +307,7 @@ export function useSocialImageAddons(deps: SocialImageAddonsDeps) {
         return currentJob;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, BATCH_CAPTURE_POLL_INTERVAL_MS));
+      await new Promise((resolve) => safeSetTimeout(resolve, BATCH_CAPTURE_POLL_INTERVAL_MS));
     }
 
     throw new Error('Timed out waiting for Playwright capture job.');

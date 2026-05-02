@@ -5,6 +5,7 @@ import { Draggable, Droppable } from '@hello-pangea/dnd';
 import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import {
   KangurDragDropContext,
   getKangurMobileDragHandleStyle,
@@ -279,17 +280,14 @@ export default function LogicalAnalogiesRelationGame({
     if (timeLeft <= 0) {
       setTimeExpired(true);
       finalizeRound(true);
-      import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-      import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-      // ... existing code
-
-          const timerId = safeSetTimeout(() => {
-            setTimeLeft((prev) => (prev === null ? prev : Math.max(prev - 1, 0)));
-          }, 1000);
-          return () => {
-            safeClearTimeout(timerId);
-          };
+      return;
+    }
+    const timerId = safeSetTimeout(() => {
+      setTimeLeft((prev) => (prev === null ? prev : Math.max(prev - 1, 0)));
+    }, 1000);
+    return () => {
+      safeClearTimeout(timerId);
+    };
   }, [isRushMode, timeLeft, checked, done, finalizeRound]);
 
   const goToNextRound = (): void => {

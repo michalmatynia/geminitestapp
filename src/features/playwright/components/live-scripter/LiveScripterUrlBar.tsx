@@ -11,23 +11,7 @@ import {
 } from 'lucide-react';
 
 import { Badge, Button, Input } from '@/shared/ui/primitives.public';
-
-type Props = {
-  url: string;
-  onUrlChange: (value: string) => void;
-  currentUrl: string;
-  status: 'idle' | 'starting' | 'live' | 'error';
-  mode: 'drive' | 'pick';
-  onModeChange: (mode: 'drive' | 'pick') => void;
-  onStartOrNavigate: () => void;
-  onBack: () => void;
-  onForward: () => void;
-  onReload: () => void;
-  onDispose: () => void;
-  typingValue: string;
-  onTypingValueChange: (value: string) => void;
-  onDriveType: () => void;
-};
+import { useLiveScripterPanelContext } from './LiveScripterPanelContext';
 
 function LiveScripterStartButton({
   isLive,
@@ -47,76 +31,54 @@ function LiveScripterStartButton({
   );
 }
 
-function LiveScripterNavigationRow({
-  isLive,
-  url,
-  status,
-  onUrlChange,
-  onBack,
-  onForward,
-  onReload,
-  onStartOrNavigate,
-  onDispose,
-}: {
-  isLive: boolean;
-  url: string;
-  status: Props['status'];
-  onUrlChange: Props['onUrlChange'];
-  onBack: Props['onBack'];
-  onForward: Props['onForward'];
-  onReload: Props['onReload'];
-  onStartOrNavigate: Props['onStartOrNavigate'];
-  onDispose: Props['onDispose'];
-}): React.JSX.Element {
+function LiveScripterNavigationRow(): React.JSX.Element {
+  const model = useLiveScripterPanelContext();
+  const { urlInput, setUrlInput, liveScripter, handleStartOrNavigate, handleDispose } = model;
+  const isLive = liveScripter.status === 'live';
+
   return (
     <div className='flex flex-wrap items-center gap-2'>
-      <Button type='button' size='icon' variant='outline' onClick={onBack} disabled={!isLive}>
+      <Button type='button' size='icon' variant='outline' onClick={liveScripter.back} disabled={!isLive}>
         <ArrowLeft className='size-4' />
       </Button>
-      <Button type='button' size='icon' variant='outline' onClick={onForward} disabled={!isLive}>
+      <Button type='button' size='icon' variant='outline' onClick={liveScripter.forward} disabled={!isLive}>
         <ArrowRight className='size-4' />
       </Button>
-      <Button type='button' size='icon' variant='outline' onClick={onReload} disabled={!isLive}>
+      <Button type='button' size='icon' variant='outline' onClick={liveScripter.reload} disabled={!isLive}>
         <RefreshCcw className='size-4' />
       </Button>
       <Input
-        value={url}
-        onChange={(event) => onUrlChange(event.target.value)}
+        value={urlInput}
+        onChange={(event) => setUrlInput(event.target.value)}
         placeholder='https://example.com'
         className='min-w-[280px] flex-1'
       />
       <Button
         type='button'
-        onClick={onStartOrNavigate}
-        disabled={url.trim().length === 0 || status === 'starting'}
+        onClick={handleStartOrNavigate}
+        disabled={urlInput.trim().length === 0 || liveScripter.status === 'starting'}
       >
         <LiveScripterStartButton isLive={isLive} />
       </Button>
-      <Button type='button' variant='outline' onClick={onDispose} disabled={!isLive && status !== 'error'}>
+      <Button type='button' variant='outline' onClick={handleDispose} disabled={!isLive && liveScripter.status !== 'error'}>
         Stop
       </Button>
     </div>
   );
 }
 
-function LiveScripterModeRow({
-  mode,
-  status,
-  currentUrl,
-  onModeChange,
-}: {
-  mode: Props['mode'];
-  status: Props['status'];
-  currentUrl: string;
-  onModeChange: Props['onModeChange'];
-}): React.JSX.Element {
+function LiveScripterModeRow(): React.JSX.Element {
+  const model = useLiveScripterPanelContext();
+  const { liveScripter } = model;
+  const { mode, status, currentUrl, setMode } = liveScripter;
+
   return (
     <div className='flex flex-wrap items-center gap-2'>
       <Button
         type='button'
         size='sm'
         variant={mode === 'drive' ? 'default' : 'outline'}
-        onClick={() => onModeChange('drive')}
+        onClick={() => setMode('drive')}
       >
         <MousePointerClick className='mr-2 size-4' />
         Drive
@@ -125,7 +87,7 @@ function LiveScripterModeRow({
         type='button'
         size='sm'
         variant={mode === 'pick' ? 'default' : 'outline'}
-        onClick={() => onModeChange('pick')}
+        onClick={() => setMode('pick')}
       >
         <Search className='mr-2 size-4' />
         Pick
@@ -140,29 +102,23 @@ function LiveScripterModeRow({
   );
 }
 
-function LiveScripterTypingRow({
-  isLive,
-  typingValue,
-  onTypingValueChange,
-  onDriveType,
-}: {
-  isLive: boolean;
-  typingValue: string;
-  onTypingValueChange: Props['onTypingValueChange'];
-  onDriveType: Props['onDriveType'];
-}): React.JSX.Element {
+function LiveScripterTypingRow(): React.JSX.Element {
+  const model = useLiveScripterPanelContext();
+  const { typingValue, setTypingValue, handleDriveType, liveScripter } = model;
+  const isLive = liveScripter.status === 'live';
+
   return (
     <div className='flex flex-wrap items-center gap-2'>
       <Input
         value={typingValue}
-        onChange={(event) => onTypingValueChange(event.target.value)}
+        onChange={(event) => setTypingValue(event.target.value)}
         placeholder='Type into the focused page element'
         className='min-w-[260px] flex-1'
       />
       <Button
         type='button'
         variant='outline'
-        onClick={onDriveType}
+        onClick={handleDriveType}
         disabled={!isLive || typingValue.trim().length === 0}
       >
         <Type className='mr-2 size-4' />
@@ -172,49 +128,12 @@ function LiveScripterTypingRow({
   );
 }
 
-export function LiveScripterUrlBar({
-  url,
-  onUrlChange,
-  currentUrl,
-  status,
-  mode,
-  onModeChange,
-  onStartOrNavigate,
-  onBack,
-  onForward,
-  onReload,
-  onDispose,
-  typingValue,
-  onTypingValueChange,
-  onDriveType,
-}: Props): React.JSX.Element {
-  const isLive = status === 'live';
-
+export function LiveScripterUrlBar(): React.JSX.Element {
   return (
     <div className='space-y-3 rounded-lg border border-white/10 bg-black/10 p-4'>
-      <LiveScripterNavigationRow
-        isLive={isLive}
-        url={url}
-        status={status}
-        onUrlChange={onUrlChange}
-        onBack={onBack}
-        onForward={onForward}
-        onReload={onReload}
-        onStartOrNavigate={onStartOrNavigate}
-        onDispose={onDispose}
-      />
-      <LiveScripterModeRow
-        mode={mode}
-        status={status}
-        currentUrl={currentUrl}
-        onModeChange={onModeChange}
-      />
-      <LiveScripterTypingRow
-        isLive={isLive}
-        typingValue={typingValue}
-        onTypingValueChange={onTypingValueChange}
-        onDriveType={onDriveType}
-      />
+      <LiveScripterNavigationRow />
+      <LiveScripterModeRow />
+      <LiveScripterTypingRow />
     </div>
   );
 }

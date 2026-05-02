@@ -43,10 +43,15 @@ const normalizeProductListNameLocale = (
   return 'name_en';
 };
 
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+
+// ...
+
 const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> => {
-  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timeoutId: ReturnType<typeof safeSetTimeout> | null = null;
   const timeoutPromise = new Promise<T>((_, reject) => {
-    timeoutId = setTimeout(() => {
+    timeoutId = safeSetTimeout(() => {
       reject(
         new Error(
           `[user-preferences] ${label} timed out after ${USER_PREFERENCES_REPOSITORY_TIMEOUT_MS}ms`
@@ -58,7 +63,9 @@ const withTimeout = async <T>(label: string, fn: () => Promise<T>): Promise<T> =
   try {
     return await Promise.race([fn(), timeoutPromise]);
   } finally {
-    if (timeoutId) clearTimeout(timeoutId);
+    if (timeoutId !== null) {
+      safeClearTimeout(timeoutId);
+    }
   }
 };
 

@@ -13,6 +13,7 @@ import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoar
 
 import { DraggableBall, PointerDropZone } from './AddingBallGame.Shared';
 import { PointerDragProvider } from './PointerDragProvider';
+import { safeSetTimeout } from '@/shared/lib/timers';
 import type { BallItem, GroupSlotId, GroupSumRound, GroupSumState } from './types';
 import {
   BALL_POOL_CLASSNAME,
@@ -92,13 +93,9 @@ function useGroupSumState(round: GroupSumRound) {
     (onResult: (correct: boolean) => void): void => {
       const ok = isAcceptedCountSplit(state.group1.length, state.group2.length, round.a, round.b);
       setCorrect(ok);
-      import { safeSetTimeout } from '@/shared/lib/timers';
-
-      // ... (existing imports)
-
-          setChecked(true);
-          safeSetTimeout(() => onResult(ok), 1400);
-        };
+      setChecked(true);
+      safeSetTimeout(() => onResult(ok), 1400);
+    },
     [round.a, round.b, state.group1.length, state.group2.length]
   );
 

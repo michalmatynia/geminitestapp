@@ -854,11 +854,17 @@ const buildMongoNumericCondition = (
   if (value === null) return null;
 
   if (condition.operator === 'eq') return { [field]: value } as Filter<ProductDocument>;
-  if (condition.operator === 'neq') return { [field]: { $ne: value } } as Filter<ProductDocument>;
-  if (condition.operator === 'gt') return { [field]: { $gt: value } } as Filter<ProductDocument>;
-  if (condition.operator === 'gte') return { [field]: { $gte: value } } as Filter<ProductDocument>;
-  if (condition.operator === 'lt') return { [field]: { $lt: value } } as Filter<ProductDocument>;
-  if (condition.operator === 'lte') return { [field]: { $lte: value } } as Filter<ProductDocument>;
+  if (condition.operator === 'neq') {
+    // Exclude both the numeric value and its string representation — MongoDB does not coerce types
+    // in $ne comparisons, so stock stored as "0" (string) would pass { $ne: 0 } otherwise.
+    return { [field]: { $nin: [value, String(value), null], $exists: true } } as Filter<ProductDocument>;
+  }
+  // $type:"number" excludes string-stored values; MongoDB BSON ordering treats strings > all numbers,
+  // so { $gt: 0 } alone would match stock:"0" (string) and make it appear as in-stock.
+  if (condition.operator === 'gt') return { [field]: { $gt: value, $type: 'number' } } as Filter<ProductDocument>;
+  if (condition.operator === 'gte') return { [field]: { $gte: value, $type: 'number' } } as Filter<ProductDocument>;
+  if (condition.operator === 'lt') return { [field]: { $lt: value, $type: 'number' } } as Filter<ProductDocument>;
+  if (condition.operator === 'lte') return { [field]: { $lte: value, $type: 'number' } } as Filter<ProductDocument>;
 
   return null;
 };
@@ -1147,7 +1153,7 @@ export const buildMongoWhere = async (
     filter = appendAndCondition(
       filter,
       (mongoOperator
-        ? { stock: { [mongoOperator]: filters.stockValue } }
+        ? { stock: { [mongoOperator]: filters.stockValue, $type: 'number' } }
         : { stock: filters.stockValue }) as Filter<ProductDocument>
     );
   }

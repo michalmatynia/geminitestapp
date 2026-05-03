@@ -18,6 +18,7 @@ const STATUSES = new Set(['draft', 'open', 'paused', 'closed']);
 export type EnrichedJobListing = FilemakerJobListing & {
   organizationName: string | null;
   isApplied: boolean;
+  applicationId: string | null;
   applicationLog: FilemakerJobApplicationLogEntry[];
 };
 
@@ -52,6 +53,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
 
   let appliedListingIds = new Set<string>();
   const appliedLogsByListingId = new Map<string, FilemakerJobApplicationLogEntry[]>();
+  const applicationIdByListingId = new Map<string, string>();
   if (personId.length > 0) {
     const applications = await listMongoFilemakerJobApplications({ personId, limit: 5000 });
     applications
@@ -61,6 +63,9 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
         if ((app.applicationLog?.length ?? 0) > 0) {
           appliedLogsByListingId.set(app.jobListingId, app.applicationLog ?? []);
         }
+        if (!applicationIdByListingId.has(app.jobListingId)) {
+          applicationIdByListingId.set(app.jobListingId, app.id);
+        }
       });
   }
 
@@ -68,6 +73,7 @@ export async function getHandler(req: NextRequest, _ctx: ApiHandlerContext): Pro
     ...listing,
     organizationName: orgNames.get(listing.organizationId) ?? null,
     isApplied: appliedListingIds.has(listing.id),
+    applicationId: applicationIdByListingId.get(listing.id) ?? null,
     applicationLog: appliedLogsByListingId.get(listing.id) ?? [],
   }));
 

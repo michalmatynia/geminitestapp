@@ -1,6 +1,6 @@
 'use client';
 
-import { BriefcaseBusiness, CheckCircle2, ExternalLink, Loader2, Search, X } from 'lucide-react';
+import { BriefcaseBusiness, CheckCircle2, ExternalLink, Loader2, Search, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useDeferredValue, useEffect, useRef, useState } from 'react';
 
@@ -26,6 +26,7 @@ import { formatTimestamp } from './filemaker-page-utils';
 type EnrichedJobListing = FilemakerJobListing & {
   organizationName: string | null;
   isApplied: boolean;
+  applicationId: string | null;
   applicationLog: FilemakerJobApplicationLogEntry[];
 };
 
@@ -206,6 +207,10 @@ function JobListingRow({
   const [logEntries, setLogEntries] = useState<FilemakerJobApplicationLogEntry[]>(
     listing.applicationLog
   );
+  const [applicationId, setApplicationId] = useState<string | null>(listing.applicationId);
+  const [isApplied, setIsApplied] = useState(listing.isApplied || listing.applicationLog.length > 0);
+  const [deleteGen, setDeleteGen] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const orgHref = `/admin/filemaker/organizations/${encodeURIComponent(listing.organizationId)}/job-listings`;
   const statusVariant = STATUS_VARIANT_MAP[listing.status] ?? 'outline';
@@ -215,7 +220,31 @@ function JobListingRow({
     if ((application.applicationLog?.length ?? 0) > 0) {
       setLogEntries(application.applicationLog ?? []);
     }
+    setApplicationId(application.id);
+    setIsApplied(true);
   }, []);
+
+  const handleDeleteApplication = useCallback(async (): Promise<void> => {
+    const targetId = applicationId;
+    if (targetId === null) return;
+    if (!window.confirm('Delete this application record? This cannot be undone.')) return;
+    setIsDeleting(true);
+    try {
+      const response = await fetch(
+        `/api/filemaker/job-applications/${encodeURIComponent(targetId)}`,
+        { method: 'DELETE', headers: withCsrfHeaders({}) }
+      );
+      if (!response.ok) throw new Error(`Failed to delete application (${response.status}).`);
+      setLogEntries([]);
+      setApplicationId(null);
+      setIsApplied(false);
+      setDeleteGen((n) => n + 1);
+    } catch {
+      // allow retry
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [applicationId]);
 
   return (
     <div className='rounded-md border border-border/40 bg-background/20 transition hover:bg-background/40'>
@@ -231,7 +260,7 @@ function JobListingRow({
             <Badge variant={statusVariant} className='h-5 text-[10px] capitalize'>
               {listing.status}
             </Badge>
-            {(listing.isApplied || logEntries.length > 0) ? (
+            {isApplied ? (
               <Badge variant='success' className='h-5 text-[10px]'>Applied</Badge>
             ) : null}
             <JobBoardOriginBadge compact sourceSite={listing.sourceSite} sourceUrl={listing.sourceUrl} />
@@ -249,10 +278,11 @@ function JobListingRow({
         </div>
         <div className='flex shrink-0 flex-wrap items-center gap-2'>
           <MarkAppliedButton
+            key={deleteGen}
             listing={listing}
             personId={personId}
             personName={personName}
-            initialApplied={listing.isApplied || logEntries.length > 0}
+            initialApplied={isApplied}
             onApplied={handleApplied}
           />
           <span className='text-xs text-gray-600'>{formatTimestamp(listing.updatedAt)}</span>
@@ -268,7 +298,26 @@ function JobListingRow({
       </div>
       {logEntries.length > 0 ? (
         <div className='border-t border-border/30 px-4 pb-2.5 pt-2'>
-          <p className='mb-1 text-[10px] font-medium uppercase tracking-wide text-gray-600'>Application log</p>
+          <div className='mb-1 flex items-center justify-between'>
+            <p className='text-[10px] font-medium uppercase tracking-wide text-gray-600'>Application log</p>
+            {applicationId !== null ? (
+              <button
+                type='button'
+                className='flex items-center gap-1 text-[10px] text-gray-600 hover:text-red-400 disabled:opacity-50'
+                title='Delete application record'
+                aria-label='Delete application record'
+                disabled={isDeleting}
+                onClick={(): void => { void handleDeleteApplication(); }}
+              >
+                {isDeleting ? (
+                  <Loader2 className='size-3 animate-spin' aria-hidden='true' />
+                ) : (
+                  <Trash2 className='size-3' aria-hidden='true' />
+                )}
+                Delete
+              </button>
+            ) : null}
+          </div>
           <div className='flex flex-col gap-1'>
             {logEntries.map((entry) => (
               <div key={entry.id} className='flex items-center gap-2 text-xs text-gray-400'>

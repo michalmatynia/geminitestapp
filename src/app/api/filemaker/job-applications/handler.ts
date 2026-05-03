@@ -73,7 +73,8 @@ export async function getHandler(req: NextRequest): Promise<Response> {
                 (application.artifactVersions === null ||
                   application.artifactVersions === undefined) &&
                 (application.persistedArtifactVersions === null ||
-                  application.persistedArtifactVersions === undefined)
+                  application.persistedArtifactVersions === undefined) &&
+                application.source !== 'filemaker-manual-applied'
             )
             .map((application) => application.jobListingId.trim())
             .filter((candidateJobListingId) => candidateJobListingId.length > 0)

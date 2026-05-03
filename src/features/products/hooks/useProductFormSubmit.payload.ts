@@ -102,9 +102,14 @@ const appendValueToFormData = (formData: FormData, key: string, value: unknown):
 
 const appendBaseFormDataEntries = (formData: FormData, data: ProductFormData): void => {
   Object.entries(data).forEach(([key, value]: [string, unknown]): void => {
-    if (!MANAGED_FORM_DATA_FIELDS.has(key)) {
-      appendValueToFormData(formData, key, value);
+    if (MANAGED_FORM_DATA_FIELDS.has(key)) return;
+    // notes=undefined means the user cleared all note content. Send 'null' so the server
+    // interprets it as an explicit clear rather than "field not provided, leave unchanged".
+    if (key === 'notes' && value === undefined) {
+      formData.append(key, 'null');
+      return;
     }
+    appendValueToFormData(formData, key, value);
   });
 };
 

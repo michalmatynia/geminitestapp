@@ -56,7 +56,11 @@ const groupLegacyApplications = (
 ): Map<string, FilemakerJobApplication[]> => {
   const groups = new Map<string, FilemakerJobApplication[]>();
   applications
-    .filter((application) => application.artifactVersions === null || application.artifactVersions === undefined)
+    .filter(
+      (application) =>
+        (application.artifactVersions === null || application.artifactVersions === undefined) &&
+        application.source !== 'filemaker-manual-applied'
+    )
     .forEach((application) => {
       const canonicalKey = application.canonicalApplicationKey;
       if (canonicalKey === null || canonicalKey.trim().length === 0) return;

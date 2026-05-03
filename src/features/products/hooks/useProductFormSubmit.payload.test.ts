@@ -36,4 +36,16 @@ describe('buildProductFormData', () => {
     expect(formData.get('sourcePrice')).toBe('42.5');
     expect(formData.get('price')).toBe('100');
   });
+
+  it('sends "null" string for notes when notes is undefined (user cleared note content)', () => {
+    const formData = buildProductFormData(buildInput({ sku: 'SKU-1', notes: undefined }));
+    expect(formData.get('notes')).toBe('null');
+  });
+
+  it('serializes non-null notes as JSON when notes has content', () => {
+    const formData = buildProductFormData(
+      buildInput({ sku: 'SKU-1', notes: { text: 'hello', color: '#ff0' } as never })
+    );
+    expect(formData.get('notes')).toBe(JSON.stringify({ text: 'hello', color: '#ff0' }));
+  });
 });

@@ -1097,6 +1097,7 @@ function JobApplicationsInline({
   jobListing,
   isCollapsingLegacy,
   onCollapseLegacy,
+  onDelete,
   onOpenApplication,
   onRemoveLogEntry,
 }: {
@@ -1104,6 +1105,7 @@ function JobApplicationsInline({
   isCollapsingLegacy: boolean;
   jobListing: FilemakerJobListing;
   onCollapseLegacy: (jobListingId: string) => void;
+  onDelete: (applicationId: string) => void;
   onOpenApplication: (applicationId: string) => void;
   onRemoveLogEntry: (applicationId: string, logEntryId: string) => void;
 }): React.JSX.Element | null {
@@ -1201,6 +1203,21 @@ function JobApplicationsInline({
                   >
                     <Eye className='h-3.5 w-3.5' aria-hidden='true' />
                     View
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    className='h-7 w-7 p-0 text-gray-500 hover:text-red-400'
+                    title='Delete application record'
+                    aria-label='Delete application record'
+                    onClick={(): void => {
+                      if (window.confirm('Delete this application record? This cannot be undone.')) {
+                        onDelete(application.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className='h-3.5 w-3.5' aria-hidden='true' />
                   </Button>
                   {cvHref !== null ? (
                     <a className='text-xs text-emerald-300 hover:underline' href={cvHref}>
@@ -4097,7 +4114,7 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
         targetApplicationIds.map(async (targetApplicationId: string): Promise<void> => {
           const response = await fetch(
             `/api/filemaker/job-applications/${encodeURIComponent(targetApplicationId)}`,
-            { method: 'DELETE' }
+            { method: 'DELETE', headers: withCsrfHeaders({}) }
           );
           if (!response.ok) {
             throw new Error(`Failed to delete application (${response.status}).`);
@@ -4287,6 +4304,9 @@ export function OrganizationJobListingsSection(): React.JSX.Element | null {
                   isCollapsingLegacy={collapsingLegacyJobListingId === listing.id}
                   onCollapseLegacy={(jobListingId: string): void => {
                     void handleCollapseLegacyApplications(jobListingId);
+                  }}
+                  onDelete={(applicationId: string): void => {
+                    void handleApplicationDelete(applicationId);
                   }}
                   onOpenApplication={setSelectedPreparedApplicationId}
                   onRemoveLogEntry={(applicationId: string, logEntryId: string): void => {

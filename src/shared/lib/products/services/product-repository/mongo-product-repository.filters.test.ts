@@ -1151,7 +1151,7 @@ describe('mongo-product-repository.filters', () => {
         },
         { price: { $gt: 5 } },
         { price: { $lte: 12 } },
-        { stock: { $ne: 0 } },
+        { stock: { $nin: [0, '0', null], $exists: true } },
         { stock: { $exists: true, $ne: null } },
         { createdAt: new Date('2026-03-01T00:00:00.000Z') },
         { createdAt: { $ne: new Date('2026-03-02T00:00:00.000Z') } },
@@ -1211,7 +1211,7 @@ describe('mongo-product-repository.filters', () => {
     expect(loadMongoBaseExportLookupContextMock).not.toHaveBeenCalled();
     const serialized = JSON.stringify(filter);
     expect(serialized).toContain('"sku":{"$regex":"SKU","$options":"i"}');
-    expect(serialized).toContain('"stock":{"$lt":2}');
+    expect(serialized).toContain('"stock":{"$lt":2,"$type":"number"}');
     expect(serialized).toContain('"createdAt":{"$lte":"2026-02-01T00:00:00.000Z"}');
     expect(serialized).toContain('"categoryId":"category-9"');
   });

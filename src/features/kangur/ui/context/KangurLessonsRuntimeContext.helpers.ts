@@ -1,6 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import {
+  safeCancelAnimationFrame,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
 
 import {
   getKangurInternalQueryParamName,
@@ -192,15 +198,6 @@ export const resolveOrderedKangurLessons = ({
 
 // scheduleKangurAssignmentsReady defers the ready callback by one rAF tick
 // (or a zero-timeout fallback) so assignment fetching doesn't compete with
-import {
-  safeSetTimeout,
-  safeClearTimeout,
-  safeRequestAnimationFrame,
-  safeCancelAnimationFrame,
-} from '@/shared/lib/timers';
-
-// ... (existing imports)
-
 const scheduleKangurAssignmentsReady = (onReady: () => void): (() => void) => {
   const frameId = safeRequestAnimationFrame(onReady);
   return () => {

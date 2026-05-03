@@ -2,6 +2,7 @@ import { type NextRequest } from 'next/server';
 
 import { createServiceLogger } from '@/features/kangur/shared/utils/logger';
 import { ErrorSystem } from '@/features/kangur/shared/utils/observability/error-system';
+import { safeSetTimeout } from '@/shared/lib/timers';
 
 type TurnstileVerifyResponse = {
   success: boolean;
@@ -63,10 +64,6 @@ export const verifyKangurParentCaptcha = async ({
   if (ip) {
     form.set('remoteip', ip);
   }
-
-import { safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing code)
 
   const controller = new AbortController();
   const timeout = safeSetTimeout(() => controller.abort(), TURNSTILE_TIMEOUT_MS);

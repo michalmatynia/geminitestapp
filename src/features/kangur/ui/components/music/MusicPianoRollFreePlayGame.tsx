@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { KANGUR_MUSIC_PIANO_ROLL_WRAPPER_TEST_IDS } from '@/features/kangur/games/music-piano-roll-contract';
 import { KangurButton } from '@/features/kangur/ui/design/primitives';
@@ -55,10 +56,6 @@ export default function MusicPianoRollFreePlayGame({
   );
   const [pressedNoteId, setPressedNoteId] = useState<DiatonicNoteId | null>(null);
   const [pressedVelocity, setPressedVelocity] = useState<number | null>(null);
-
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
 
   const clearPressedResetTimeout = useCallback((): void => {
     if (pressedResetTimeoutRef.current !== null) {

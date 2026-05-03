@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import { ChevronsLeft } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
@@ -437,10 +438,6 @@ function ResolvedActiveLessonView({
     let focusCleanupTimer: number | null = null;
 
     const handleWindowFocus = (): void => {
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
-
       if (focusCleanupTimer !== null) {
         safeClearTimeout(focusCleanupTimer);
       }

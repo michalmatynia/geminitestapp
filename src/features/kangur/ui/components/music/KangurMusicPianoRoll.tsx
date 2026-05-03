@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 import type { ReactNode } from 'react';
 
 import { useKangurCoarsePointer } from '@/features/kangur/ui/hooks/useKangurCoarsePointer';
@@ -521,10 +522,6 @@ export default function KangurMusicPianoRoll<NoteId extends string>({
     phase: KeyPulsePhase
   ): void => {
     const normalizedEnergy = Number(clamp(energy, 0.24, 1).toFixed(2));
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ... (existing imports)
-
     const existingTimeoutId = keyPulseTimeoutIdsRef.current.get(noteId);
     if (existingTimeoutId !== undefined) {
       safeClearTimeout(existingTimeoutId);

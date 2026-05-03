@@ -2,6 +2,12 @@
 
 import React from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import {
+  safeCancelAnimationFrame,
+  safeClearTimeout,
+  safeRequestAnimationFrame,
+  safeSetTimeout,
+} from '@/shared/lib/timers';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   getLocalizedKangurAgeGroupLabel,
@@ -677,14 +683,6 @@ export function LessonsCatalog() {
     // Keep effect for potential side effects but don't gate rendering
     if (typeof window === 'undefined') return;
 
-import {
-  safeCancelAnimationFrame,
-  safeClearTimeout,
-  safeRequestAnimationFrame,
-  safeSetTimeout,
-} from '@/shared/lib/timers';
-
-// ... (existing imports)
 
     let timeoutId: number | null = null;
     const frameId = safeRequestAnimationFrame(() => {
@@ -696,8 +694,6 @@ import {
         safeClearTimeout(timeoutId);
       }
       safeCancelAnimationFrame(frameId);
-    };
-      }
     };
   }, []);
 

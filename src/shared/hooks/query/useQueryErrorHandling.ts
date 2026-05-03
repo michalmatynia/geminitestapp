@@ -2,6 +2,7 @@
 
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef } from 'react';
+import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
 
 import { ERROR_CATEGORY } from '@/shared/contracts/observability';
 import { classifyError } from '@/shared/errors/error-classifier';
@@ -192,10 +193,6 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
   const queryClient = useQueryClient();
   const errorToastSignaturesRef = useRef<Map<string, number>>(new Map());
   const autoRetryCountByQueryRef = useRef<Map<string, number>>(new Map());
-import { safeClearTimeout, safeSetTimeout } from '@/shared/lib/timers';
-
-// ...
-
   const autoRetryTimersRef = useRef<Map<string, ReturnType<typeof safeSetTimeout>>>(new Map());
 
   const showToast = config.showToast ?? false;
